@@ -7,3 +7,7 @@ The shader uses a metallic-roughness physically based rendering model vs Unity's
 The metallic and roughness channels are stored in a single texture with the metallic channel on red and the roughness channel on green.
 
 It's a work in progress and does not currently support opacity. There are likely bugs and we could use some help fixing them.
+
+## Shader Forge Screenshot
+
+![GLTFMetallicRoughness.shader](../../../Screenshots/sf_gltfmetallicroughness_392017.png)
