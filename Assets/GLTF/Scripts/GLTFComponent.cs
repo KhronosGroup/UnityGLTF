@@ -33,7 +33,7 @@ namespace GLTF {
                 }
             }
 
-            GLTFRoot gltf = GLTFParser.Parse(url, www.downloadHandler.text);
+            GLTFRoot gltf = GLTFParser.Parse(url, www.downloadHandler.data);
 
             if (gltf.scenes == null || gltf.scenes.Length == 0)
             {
