@@ -22,7 +22,7 @@ namespace GLTF
         public GameObject Create(GameObject gltfRoot)
         {
             GameObject sceneObj = new GameObject(name ?? "GLTFScene");
-            sceneObj.transform.parent = gltfRoot.transform;
+            sceneObj.transform.SetParent(gltfRoot.transform, false);
 
             foreach (var node in nodes)
             {
