@@ -12,6 +12,7 @@ namespace GLTF
     public class GLTFRootRef
     {
         public GLTFRoot root;
+        public byte[] internalDataBuffer;
     }
 
     /// <summary>

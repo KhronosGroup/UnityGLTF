@@ -4,9 +4,10 @@ using System;
 namespace GLTF {
     public class GLTFParser
     {
-        public enum ContentFormat : uint
+        public enum ChunkFormat : uint
         {
-            JSON = 0x0
+            JSON = 0x4e4f534a,
+            BIN = 0x004e4942
         }
 
         /// <summary>
@@ -19,42 +20,57 @@ namespace GLTF {
         {
             GLTFRootRef rootRef = new GLTFRootRef();
             string gltfContent;
-            byte[] unifiedBuffer;
 
             // check for binary format magic bytes
-            byte[] b = gltfBinary;
-            if (b[0] == 0x67 && b[1] == 0x6c && b[2] == 0x54 && b[3] == 0x46)
+            if( BitConverter.ToUInt32(gltfBinary, 0) == 0x46546c67 )
             {
                 // parse header information
 
-                //uint version = BitConverter.ToUInt32(gltfBinary, 4);
+                uint version = BitConverter.ToUInt32(gltfBinary, 4);
+                if( version != 2)
+                {
+                    throw new GLTFHeaderInvalidException("Unsupported glTF version");
+                }
 
                 uint length = BitConverter.ToUInt32(gltfBinary, 8);
                 if( length != gltfBinary.Length)
                 {
-                    throw new GLTF.GLTFHeaderInvalidException("File length does not match header.");
+                    throw new GLTFHeaderInvalidException("File length does not match header.");
                 }
 
-                uint contentLength = BitConverter.ToUInt32(gltfBinary, 12);
-                uint contentFormat = BitConverter.ToUInt32(gltfBinary, 16);
-                // test models not compliant
-                /*if(contentFormat != (uint)ContentFormat.JSON)
+                uint chunkLength = BitConverter.ToUInt32(gltfBinary, 12);
+                uint chunkFormat = BitConverter.ToUInt32(gltfBinary, 16);
+                if(chunkFormat != (uint)ChunkFormat.JSON)
                 {
-                    throw new GLTF.GLTFHeaderInvalidException("Content format not recognized");
-                }*/
+                    throw new GLTFHeaderInvalidException("First chunk must be of type JSON");
+                }
 
                 // load content
-                gltfContent = System.Text.Encoding.UTF8.GetString(gltfBinary, 20, (int)contentLength);
+                gltfContent = System.Text.Encoding.UTF8.GetString(gltfBinary, 20, (int)chunkLength);
 
                 // load integrated buffer
-                int unifiedLength = (int)(length - contentLength - 20);
-                unifiedBuffer = new byte[unifiedLength];
-                Array.ConstrainedCopy(gltfBinary, (int)contentLength + 20, unifiedBuffer, 0, unifiedLength);
-                }
-                else
+                if (20 + chunkLength < length)
                 {
+                    int start = 20 + (int)chunkLength;
+                    chunkLength = BitConverter.ToUInt32(gltfBinary, start);
+                    if(start + chunkLength > length)
+                    {
+                        throw new GLTFHeaderInvalidException("File length does not match chunk header.");
+                    }
+
+                    chunkFormat = BitConverter.ToUInt32(gltfBinary, start + 4);
+                    if(chunkFormat != (uint)ChunkFormat.BIN)
+                    {
+                        throw new GLTFHeaderInvalidException("Second chunk must be of type BIN if present");
+                    }
+
+                    rootRef.internalDataBuffer = new byte[chunkLength];
+                    Array.ConstrainedCopy(gltfBinary, start + 8, rootRef.internalDataBuffer, 0, (int)chunkLength);
+                }
+            }
+            else
+            {
                 gltfContent = System.Text.Encoding.UTF8.GetString(gltfBinary);
-                unifiedBuffer = new byte[0];
             }
 
             // Register all of the JSON converters for the various ID types.

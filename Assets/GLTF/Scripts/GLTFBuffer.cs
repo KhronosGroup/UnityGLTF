@@ -13,7 +13,7 @@ namespace GLTF
         /// Relative paths are relative to the .gltf file.
         /// Instead of referencing an external file, the uri can also be a data-uri.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
+        [JsonProperty(Required = Required.DisallowNull)]
         public GLTFUri uri;
 
         /// <summary>
