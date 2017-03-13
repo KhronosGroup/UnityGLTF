@@ -48,7 +48,7 @@ namespace GLTF {
                 // load content
                 gltfContent = System.Text.Encoding.UTF8.GetString(gltfBinary, 20, (int)chunkLength);
 
-                // load integrated buffer
+                // load internal buffer
                 if (20 + chunkLength < length)
                 {
                     int start = 20 + (int)chunkLength;
@@ -64,8 +64,8 @@ namespace GLTF {
                         throw new GLTFHeaderInvalidException("Second chunk must be of type BIN if present");
                     }
 
-                    rootRef.internalDataBuffer = new byte[chunkLength];
-                    Array.ConstrainedCopy(gltfBinary, start + 8, rootRef.internalDataBuffer, 0, (int)chunkLength);
+                    rootRef.internalDataArray = new byte[chunkLength];
+                    Buffer.BlockCopy(gltfBinary, start + 8, rootRef.internalDataArray, 0, (int)chunkLength);
                 }
             }
             else
