@@ -12,8 +12,6 @@ namespace GLTF
     public class GLTFRootRef
     {
         public GLTFRoot root;
-        public byte[] internalDataArray = null;
-        public GLTFInternalBuffer internalDataBuffer = null;
     }
 
     /// <summary>
@@ -101,19 +99,7 @@ namespace GLTF
         {
             get
             {
-                if (rootRef.internalDataArray != null && id == 0)
-                {
-                    if (rootRef.internalDataBuffer == null)
-                    {
-                        rootRef.internalDataBuffer = new GLTFInternalBuffer(rootRef.root.buffers[0], rootRef.internalDataArray);
-                    }
-
-                    return rootRef.internalDataBuffer;
-                }
-                else
-                {
-                    return rootRef.root.buffers[id];
-                }
+                return rootRef.root.buffers[id];
             }
         }
     }

@@ -14,7 +14,6 @@ namespace GLTF
         /// Relative paths are relative to the .gltf file.
         /// Instead of referencing an external file, the uri can also be a data-uri.
         /// </summary>
-        [JsonProperty(Required = Required.DisallowNull)]
         public GLTFUri uri;
 
         /// <summary>
@@ -40,21 +39,24 @@ namespace GLTF
         }
     }
 
+    /// <summary>
+    /// The internal buffer references data stored in the binary chunk of a .glb file.
+    /// </summary>
     public class GLTFInternalBuffer : GLTFBuffer
     {
-        private byte[] _data;
+        private byte[] data;
 
-        public GLTFInternalBuffer(GLTFBuffer json, byte[] data)
+        public GLTFInternalBuffer(GLTFBuffer gltfBuffer, byte[] data)
         {
-            name = json.name;
-            _data = data;
+            name = gltfBuffer.name;
+            this.data = data;
         }
 
         public override byte[] Data
         {
             get
             {
-                return _data;
+                return data;
             }
         }
 
@@ -62,7 +64,7 @@ namespace GLTF
         {
             get
             {
-                return _data.Length;
+                return data.Length;
             }
         }
     }
