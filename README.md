@@ -33,6 +33,6 @@ You should see something like this:
 - [ ] Loading animations
 - [ ] Loading cameras
 - [ ] Sparse array storage
-- [ ] Loading binary GLTF files
+- [x] Loading binary GLTF files
 - [ ] Downloadable as a UnityPackage
 - [ ] Published in the Unity Asset Store
