@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using Newtonsoft.Json;
 
 namespace GLTF
@@ -13,7 +14,7 @@ namespace GLTF
         /// Relative paths are relative to the .gltf file.
         /// Instead of referencing an external file, the uri can also be a data-uri.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
+        [JsonProperty(Required = Required.DisallowNull)]
         public GLTFUri uri;
 
         /// <summary>
@@ -24,7 +25,7 @@ namespace GLTF
 
         public string name;
 
-        public byte[] Data
+        public virtual byte[] Data
         {
             get
             {
@@ -34,7 +35,35 @@ namespace GLTF
 
         public IEnumerator Load()
         {
-            yield return uri.Load();
+            if(uri != null)
+                yield return uri.Load();
+        }
+    }
+
+    public class GLTFInternalBuffer : GLTFBuffer
+    {
+        private byte[] _data;
+
+        public GLTFInternalBuffer(GLTFBuffer json, byte[] data)
+        {
+            name = json.name;
+            _data = data;
+        }
+
+        public override byte[] Data
+        {
+            get
+            {
+                return _data;
+            }
+        }
+
+        public new int byteLength
+        {
+            get
+            {
+                return _data.Length;
+            }
         }
     }
 }
