@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using UnityEngine;
 
 namespace GLTF
 {
@@ -96,6 +97,59 @@ namespace GLTF
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public GLTFAccessorId output;
+
+        /// <summary>
+        /// Create AnimationCurves from glTF animation sampler data
+        /// </summary>
+        /// <returns>AnimationCurve[]</returns>
+        public AnimationCurve[] Create()
+        {
+            AnimationCurve[] curves;
+            float[] timeArray = input.Value.AsFloatArray();
+            float[] animArray = output.Value.AsFloatArray();
+
+            if (output.Value.type == GLTFAccessorAttributeType.VEC3)
+            {
+                // check types
+                if(timeArray.Length *3 != animArray.Length)
+                {
+                    throw new GLTFTypeMismatchException("Animation sampler input and output accessors incompatible");
+                }
+
+                curves = new AnimationCurve[3];
+
+                for (int i = 0; i < timeArray.Length; i++)
+                {
+                    curves[0].AddKey(timeArray[i], animArray[3 * i]);
+                    curves[1].AddKey(timeArray[i], animArray[3 * i + 1]);
+                    curves[2].AddKey(timeArray[i], animArray[3 * i + 2]);
+                }
+            }
+            else if(output.Value.type == GLTFAccessorAttributeType.VEC4)
+            {
+                // check types
+                if (timeArray.Length * 4 != animArray.Length)
+                {
+                    throw new GLTFTypeMismatchException("Animation sampler input and output accessors incompatible");
+                }
+
+                curves = new AnimationCurve[4];
+
+                for (int i = 0; i < timeArray.Length; i++)
+                {
+                    curves[0].AddKey(timeArray[i], animArray[4 * i]);
+                    curves[1].AddKey(timeArray[i], animArray[4 * i + 1]);
+                    curves[2].AddKey(timeArray[i], animArray[4 * i + 2]);
+                    curves[3].AddKey(timeArray[i], animArray[4 * i + 3]);
+                }
+            }
+            else
+            {
+                throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor");
+            }
+
+            return curves;
+        }
     }
 
     public enum GLTFInterpolationType

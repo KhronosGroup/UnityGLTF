@@ -101,6 +101,26 @@ namespace GLTF
 
         public string name;
 
+        public float[] AsFloatArray()
+        {
+            if(componentType != GLTFComponentType.FLOAT)
+            {
+                throw new GLTFTypeMismatchException("Requested type does not match accessor type");
+            }
+
+            float[] arr = new float[count];
+            int totalByteOffset = bufferView.Value.byteOffset + byteOffset;
+            int stride = bufferView.Value.byteStride + sizeof(float);
+            byte[] bytes = bufferView.Value.buffer.Value.Data;
+
+            for(int idx = 0; idx < count; idx++)
+            {
+                arr[idx] = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
+            }
+
+            return arr;
+        }
+
         public int[] AsIntArray()
         {
             int[] arr = new int[count];
