@@ -67,13 +67,20 @@ namespace GLTF
         public string name;
 
         /// <summary>
+        /// Cache of a previously Created GameObject
+        /// </summary>
+        private GameObject gameObject;
+
+        /// <summary>
         /// Create the GameObject for the GLTFNode and set it as a child of the parent GameObject.
         /// </summary>
         /// <param name="parent">This node's parent GameObject</param>
-        public void Create(GameObject parent)
+        public GameObject AsGameObject()
         {
+            if (gameObject != null)
+                return gameObject;
+
             GameObject nodeObj = new GameObject(name ?? "GLTFNode");
-            nodeObj.transform.parent = parent.transform;
 
             // Set the transform properties from the GLTFNode's values.
             // Use the matrix first if set.
@@ -143,8 +150,12 @@ namespace GLTF
 
             foreach(var child in children)
             {
-                child.Value.Create(nodeObj);
+                GameObject childObj = child.Value.AsGameObject();
+                childObj.transform.SetParent(nodeObj.transform, false);
             }
+
+            gameObject = nodeObj;
+            return nodeObj;
         }
     }
 }

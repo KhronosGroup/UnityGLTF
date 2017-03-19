@@ -26,7 +26,8 @@ namespace GLTF
 
             foreach (var node in nodes)
             {
-                node.Value.Create(sceneObj); 
+                GameObject nodeObj = node.Value.AsGameObject();
+                nodeObj.transform.SetParent(sceneObj.transform, false);
             }
 
             return sceneObj;

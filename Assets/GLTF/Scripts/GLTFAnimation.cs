@@ -22,6 +22,52 @@ namespace GLTF
         public GLTFAnimationSampler[] samplers;
 
         public string name;
+
+        /// <summary>
+        /// Generate Animation components from glTF animations, and attach to game objects
+        /// </summary>
+        public void AttachToGameObjects()
+        {
+            // create the animation clip that will contain animation data
+            AnimationClip clip = new AnimationClip();
+            clip.name = name ?? "GLTFAnimation";
+
+            // needed because Animator component is unavailable at runtime
+            clip.legacy = true;
+
+            foreach(var channel in channels)
+            {
+                AnimationCurve[] sampler = samplers[channel.sampler].AsAnimationCurves();
+                if(channel.target.path == GLTFAnimationChannelPath.translation)
+                {
+                    clip.SetCurve("", typeof(Transform), "localPosition.x", sampler[0]);
+                    clip.SetCurve("", typeof(Transform), "localPosition.y", sampler[1]);
+                    clip.SetCurve("", typeof(Transform), "localPosition.z", sampler[2]);
+                }
+                else if (channel.target.path == GLTFAnimationChannelPath.rotation)
+                {
+                    clip.SetCurve("", typeof(Transform), "localRotation.x", sampler[0]);
+                    clip.SetCurve("", typeof(Transform), "localRotation.y", sampler[1]);
+                    clip.SetCurve("", typeof(Transform), "localRotation.z", sampler[2]);
+                    clip.SetCurve("", typeof(Transform), "localRotation.w", sampler[3]);
+                }
+                else if (channel.target.path == GLTFAnimationChannelPath.scale)
+                {
+                    clip.SetCurve("", typeof(Transform), "localScale.x", sampler[0]);
+                    clip.SetCurve("", typeof(Transform), "localScale.y", sampler[1]);
+                    clip.SetCurve("", typeof(Transform), "localScale.z", sampler[2]);
+                }
+                else
+                {
+                    Debug.LogWarning("Cannot read GLTF animation path");
+                }
+
+                GameObject target = channel.target.node.Value.AsGameObject();
+                // TODO: figure out how to build relative paths for glTF nodes
+            }
+
+            // TODO: figure out what to do with the clip once it's built
+        }
     }
 
     /// <summary>
@@ -34,7 +80,7 @@ namespace GLTF
         /// target, e.g., a node's translation, rotation, or scale (TRS).
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public GLTFSamplerId sampler;
+        public uint sampler;
 
         /// <summary>
         /// The index of the node and TRS property to target.
@@ -98,54 +144,43 @@ namespace GLTF
         [JsonProperty(Required = Required.Always)]
         public GLTFAccessorId output;
 
+        private AnimationCurve[] curves;
+
         /// <summary>
         /// Create AnimationCurves from glTF animation sampler data
         /// </summary>
         /// <returns>AnimationCurve[]</returns>
-        public AnimationCurve[] Create()
+        public AnimationCurve[] AsAnimationCurves()
         {
-            AnimationCurve[] curves;
+            if (curves != null)
+                return curves;
+
             float[] timeArray = input.Value.AsFloatArray();
             float[] animArray = output.Value.AsFloatArray();
+            int vecSize;
 
+            // check transform stride
             if (output.Value.type == GLTFAccessorAttributeType.VEC3)
-            {
-                // check types
-                if(timeArray.Length *3 != animArray.Length)
-                {
-                    throw new GLTFTypeMismatchException("Animation sampler input and output accessors incompatible");
-                }
-
-                curves = new AnimationCurve[3];
-
-                for (int i = 0; i < timeArray.Length; i++)
-                {
-                    curves[0].AddKey(timeArray[i], animArray[3 * i]);
-                    curves[1].AddKey(timeArray[i], animArray[3 * i + 1]);
-                    curves[2].AddKey(timeArray[i], animArray[3 * i + 2]);
-                }
-            }
-            else if(output.Value.type == GLTFAccessorAttributeType.VEC4)
-            {
-                // check types
-                if (timeArray.Length * 4 != animArray.Length)
-                {
-                    throw new GLTFTypeMismatchException("Animation sampler input and output accessors incompatible");
-                }
-
-                curves = new AnimationCurve[4];
-
-                for (int i = 0; i < timeArray.Length; i++)
-                {
-                    curves[0].AddKey(timeArray[i], animArray[4 * i]);
-                    curves[1].AddKey(timeArray[i], animArray[4 * i + 1]);
-                    curves[2].AddKey(timeArray[i], animArray[4 * i + 2]);
-                    curves[3].AddKey(timeArray[i], animArray[4 * i + 3]);
-                }
-            }
+                vecSize = 3;
+            else if (output.Value.type == GLTFAccessorAttributeType.VEC4)
+                vecSize = 4;
             else
-            {
                 throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor");
+
+            // check types
+            if(timeArray.Length * vecSize != animArray.Length)
+            {
+                throw new GLTFTypeMismatchException("Animation sampler input and output accessors incompatible");
+            }
+
+            curves = new AnimationCurve[vecSize];
+
+            for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
+            {
+                for(int vecIdx = 0; vecIdx < vecSize; vecIdx++)
+                {
+                    curves[vecIdx].AddKey(timeArray[timeIdx], animArray[vecSize * timeIdx + vecIdx]);
+                }
             }
 
             return curves;
