@@ -110,9 +110,6 @@ namespace GLTF
             {
                 yield return image.Load();
             }
-
-            // Return null in case there are no buffers or images.
-            yield return null;
         }
     }
 

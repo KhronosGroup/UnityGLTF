@@ -41,28 +41,22 @@ namespace GLTF
         /// </summary>
         public IEnumerator Load()
         {
-            if (data != null)
+            if (data == null)
             {
-                yield return null;
-            }
-            else
-            {
-                if (uri.StartsWith(BASE64_STR))
-                {
-                    string base64Data = uri.Substring(BASE64_STR.Length);
-                    data = Convert.FromBase64String(base64Data);
-                    yield return null;
-                }
-                else
-                {
-                    UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfPath, uri));
+				if (uri.StartsWith(BASE64_STR))
+				{
+					string base64Data = uri.Substring(BASE64_STR.Length);
+					data = Convert.FromBase64String(base64Data);
+				}
+				else
+				{
+					UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfPath, uri));
 
-                    yield return www.Send();
+					yield return www.Send();
 
-                    data = www.downloadHandler.data;
-                    yield return null;
-                }
-            }
+					data = www.downloadHandler.data;
+				}
+			}
         }
 
         /// <summary>
