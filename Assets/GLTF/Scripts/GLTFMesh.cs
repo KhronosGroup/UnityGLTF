@@ -31,7 +31,8 @@ namespace GLTF
         /// Build the meshes and materials for the GLTFMesh and attach them to the parent object.
         /// </summary>
         /// <param name="parent">GameObject of the parent GLTFNode</param>
-        public void SetMeshesAndMaterials(GameObject parent)
+        /// <param name="config">Config for GLTF scene creation.</param>
+        public void SetMeshesAndMaterials(GameObject parent, GLTFConfig config)
         {
             string meshName = name ?? "GLTFMesh";
             GameObject meshObj = new GameObject(meshName);
@@ -44,7 +45,7 @@ namespace GLTF
 
             if (primitives.Length == 1)
             {
-                primitives[0].SetMeshAndMaterial(meshObj, meshName);
+                primitives[0].SetMeshAndMaterial(meshObj, meshName, config);
             }
             else
             {
@@ -53,7 +54,7 @@ namespace GLTF
                     string primitiveName = (name ?? "GLTFMesh") + "_Primitive" + i;
                     GameObject primitiveObj = new GameObject(primitiveName);
                     primitiveObj.transform.SetParent(meshObj.transform, false);
-                    primitives[0].SetMeshAndMaterial(primitiveObj, primitiveName);
+                    primitives[0].SetMeshAndMaterial(primitiveObj, primitiveName, config);
                 }
             }
         }
@@ -110,8 +111,9 @@ namespace GLTF
         /// Build the mesh and material for the GLTFPrimitive and attach them to the primitive object.
         /// </summary>
         /// <param name="parent">GameObject of the parent GLTFNode</param>
-        /// /// <param name="meshName">The name to be assigned to the Mesh object</param>
-        public void SetMeshAndMaterial(GameObject primitiveObj, string meshName)
+        /// <param name="meshName">The name to be assigned to the Mesh object</param>
+        /// <param name="config">Config for GLTF scene creation.</param>
+        public void SetMeshAndMaterial(GameObject primitiveObj, string meshName, GLTFConfig config)
         {
             MeshFilter meshFilter = primitiveObj.AddComponent<MeshFilter>();
 
@@ -158,7 +160,7 @@ namespace GLTF
 
             MeshRenderer meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
             
-            meshRenderer.material = material.Value.Material;
+            meshRenderer.material = material.Value.GetMaterial(config);
         }
 
 

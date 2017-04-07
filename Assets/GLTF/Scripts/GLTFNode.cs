@@ -70,7 +70,8 @@ namespace GLTF
         /// Create the GameObject for the GLTFNode and set it as a child of the parent GameObject.
         /// </summary>
         /// <param name="parent">This node's parent GameObject</param>
-        public void Create(GameObject parent)
+        /// <param name="config">Config for GLTF scene creation.</param>
+        public void Create(GameObject parent, GLTFConfig config)
         {
             GameObject nodeObj = new GameObject(name ?? "GLTFNode");
             nodeObj.transform.parent = parent.transform;
@@ -130,7 +131,7 @@ namespace GLTF
             // TODO: Add support for skin/morph targets
             if (mesh != null)
             {
-                mesh.Value.SetMeshesAndMaterials(nodeObj);
+                mesh.Value.SetMeshesAndMaterials(nodeObj, config);
             }
 
             /* TODO: implement camera (probably a flag to disable for VR as well)
@@ -143,7 +144,7 @@ namespace GLTF
 
             foreach(var child in children)
             {
-                child.Value.Create(nodeObj);
+                child.Value.Create(nodeObj, config);
             }
         }
     }

@@ -51,72 +51,14 @@ namespace GLTF
         /// <summary>
         /// Construct or return the Unity Material for this GLTFMaterial.
         /// </summary>
-        public Material Material
+        public Material GetMaterial(GLTFConfig config)
         {
-            get
+            if (material == null)
             {
-                if (material != null)
-                {
-                    return material;
-                }
-
-                material = new Material(Shader.Find("GLTF/GLTFMetallicRoughness"));
-
-                if (pbrMetallicRoughness != null)
-                {
-                    GLTFPBRMetallicRoughness pbr = pbrMetallicRoughness;
-
-                    double[] colorFactor = pbr.baseColorFactor;
-                    Color baseColor = new Color((float)colorFactor[0], (float)colorFactor[1], (float)colorFactor[2], (float)colorFactor[3]);
-                    material.SetColor("_BaseColorFactor", baseColor);
-
-                    if (pbr.baseColorTexture != null)
-                    {
-                        GLTFTexture texture = pbr.baseColorTexture.index.Value;
-                        material.SetTexture("_MainTex", texture.Texture);
-                        material.SetTextureScale("_MainTex", new Vector2(1, -1));
-                    }
-
-                    material.SetFloat("_MetallicFactor", (float)pbr.metallicFactor);
-
-                    if (pbr.metallicRoughnessTexture != null)
-                    {
-                        GLTFTexture texture = pbr.metallicRoughnessTexture.index.Value;
-                        material.SetTexture("_MetallicRoughnessMap", texture.Texture);
-                        material.SetTextureScale("_MetallicRoughnessMap", new Vector2(1, -1));
-                    }
-
-                    material.SetFloat("_RoughnessFactor", (float)pbr.roughnessFactor);
-                }
-
-                if (normalTexture != null)
-                {
-                    GLTFTexture texture = normalTexture.index.Value;
-                    material.SetTexture("_NormalMap", texture.Texture);
-                    material.SetTextureScale("_NormalMap", new Vector2(1, -1));
-                    material.SetFloat("_NormalScale", (float)normalTexture.scale);
-                }
-
-                if (occlusionTexture != null)
-                {
-                    GLTFTexture texture = occlusionTexture.index.Value;
-                    material.SetTexture("_OcclusionMap", texture.Texture);
-                    material.SetTextureScale("_OcclusionMap", new Vector2(1, -1));
-                    material.SetFloat("_OcclusionStrength", (float)occlusionTexture.strength);
-                }
-
-                if (emissiveTexture != null)
-                {
-                    GLTFTexture texture = emissiveTexture.index.Value;
-                    material.SetTextureScale("_EmissiveMap", new Vector2(1, -1));
-                    material.SetTexture("_EmissiveMap", texture.Texture);
-                }
-
-                Color emissiveColor = new Color((float)emissiveFactor[0], (float)emissiveFactor[1], (float)emissiveFactor[2], 1.0f);
-                material.SetColor("_EmissiveFactor", emissiveColor);
-
-                return material;
+                material = config.MaterialFactory.CreateMaterial(this);
             }
+
+            return material;
         }
     }
 

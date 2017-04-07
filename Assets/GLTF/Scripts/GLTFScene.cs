@@ -18,15 +18,25 @@ namespace GLTF
         /// <summary>
         /// Create the GameObject for the GLTFScene and set it as a child of the gltfRoot's GameObject.
         /// </summary>
-        /// <param name="parent">The gltfRoot's GameObject</param>
+        /// <param name="gltfRoot">The GLTFRoot object</param>
         public GameObject Create(GameObject gltfRoot)
+        {
+            return Create(gltfRoot, new GLTFConfig());
+        }
+
+        /// <summary>
+        /// Create the GameObject for the GLTFScene and set it as a child of the gltfRoot's GameObject.
+        /// </summary>
+        /// <param name="gltfRoot">The GLTFRoot object</param>
+        /// <param name="config">Config for GLTF scene creation.</param>
+        public GameObject Create(GameObject gltfRoot, GLTFConfig config)
         {
             GameObject sceneObj = new GameObject(name ?? "GLTFScene");
             sceneObj.transform.SetParent(gltfRoot.transform, false);
 
             foreach (var node in nodes)
             {
-                node.Value.Create(sceneObj); 
+                node.Value.Create(sceneObj, config); 
             }
 
             return sceneObj;
