@@ -13,12 +13,13 @@ namespace GLTF
     [System.Serializable]
     public class GLTFUri
     {
+
         public static string BASE64_STR = "data:application/octet-stream;base64,";
 
         /// <summary>
         /// The path to the .gltf file.
         /// </summary>
-        public string gltfPath;
+        private readonly string gltfUrl;
 
         /// <summary>
         /// The GLTF uri string. 
@@ -38,9 +39,9 @@ namespace GLTF
         /// </summary>
         public Texture2D texture;
 
-        public GLTFUri(string gltfPath, string uri)
+        public GLTFUri(string gltfUrl, string uri)
         {
-            this.gltfPath = gltfPath;
+            this.gltfUrl = gltfUrl;
             this.uri = uri;
         }
 
@@ -58,7 +59,7 @@ namespace GLTF
 				}
 				else
 				{
-					UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfPath, uri));
+					UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfUrl, uri));
 
 					yield return www.Send();
 
@@ -83,7 +84,7 @@ namespace GLTF
                 }
                 else
                 {
-                    UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfPath, uri));
+                    UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfUrl, uri));
                     www.downloadHandler = new DownloadHandlerTexture();
 
                     yield return www.Send();
@@ -108,7 +109,7 @@ namespace GLTF
 
         public static GLTFUri Deserialize(GLTFRoot root, JsonTextReader reader)
         {
-            return new GLTFUri(root.gltfPath, reader.ReadAsString());
+            return new GLTFUri(root.Url, reader.ReadAsString());
         }
     }
 
@@ -121,11 +122,11 @@ namespace GLTF
         /// <summary>
         /// The path to the GLTF file.
         /// </summary>
-        string gltfPath;
+        string gltfUrl;
 
-        public GLTFUriConverter(string gltfPath)
+        public GLTFUriConverter(string gltfUrl)
         {
-            this.gltfPath = gltfPath;
+            this.gltfUrl = gltfUrl;
         }
 
         /// <summary>
@@ -148,7 +149,7 @@ namespace GLTF
 
             string uri = serializer.Deserialize<string>(reader);
 
-            return new GLTFUri(gltfPath, uri);
+            return new GLTFUri(gltfUrl, uri);
         }
 
         /// <summary>

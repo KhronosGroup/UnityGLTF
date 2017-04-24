@@ -12,7 +12,17 @@ namespace GLTF
     [System.Serializable]
     public class GLTFRoot : GLTFProperty
     {
-        public string gltfPath;
+	    public GLTFRoot(string url)
+	    {
+		    this.url = url;
+	    }
+
+        private readonly string url;
+
+	    public string Url
+	    {
+		    get { return url; }
+	    }
 
         /// <summary>
         /// Names of glTF extensions used somewhere in this asset.
@@ -119,9 +129,9 @@ namespace GLTF
 		    return null;
 	    }
 
-        public static GLTFRoot Deserialize(string gltfPath, JsonTextReader reader)
+        public static GLTFRoot Deserialize(string url, JsonTextReader reader)
         {
-            var root = new GLTFRoot { gltfPath = gltfPath };
+            var root = new GLTFRoot(url);
 
             if (reader.Read() && reader.TokenType != JsonToken.StartObject)
             {
