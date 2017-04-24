@@ -9,14 +9,14 @@ namespace GLTF
     public class GLTFParser
     {
 
-        public GLTFRoot Parse(string gltfPath, string gltf)
+        public GLTFRoot Parse(string gltfUrl, string gltf)
         {
-            return Parse(gltfPath, new StringReader(gltf));
+            return Parse(gltfUrl, new StringReader(gltf));
         }
 
-        public GLTFRoot Parse(string gltfPath, TextReader gltfReader)
+        public GLTFRoot Parse(string gltfUrl, TextReader gltfReader)
         {
-            return GLTFRoot.Deserialize(gltfPath, new JsonTextReader(gltfReader));
+            return GLTFRoot.Deserialize(gltfUrl, new JsonTextReader(gltfReader));
         }
     }
 
