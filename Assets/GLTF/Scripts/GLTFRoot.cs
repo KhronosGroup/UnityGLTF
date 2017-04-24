@@ -100,6 +100,25 @@ namespace GLTF
         /// </summary>
         public List<GLTFTexture> textures;
 
+		/// <summary>
+		/// Return the default scene. When scene is null, scene of index 0 will be returned.
+		/// When scenes list is null or empty, returns null.
+		/// </summary>
+		public GLTFScene GetDefaultScene()
+	    {
+		    if (scene != null)
+		    {
+			    return scene.Value;
+		    }
+
+		    if (scenes != null && scenes.Count > 0)
+		    {
+			    return scenes[0];
+		    }
+
+		    return null;
+	    }
+
         public static GLTFRoot Deserialize(string gltfPath, JsonTextReader reader)
         {
             var root = new GLTFRoot { gltfPath = gltfPath };

@@ -24,9 +24,11 @@ namespace GLTF {
 
             yield return ParseGLTF(text);
 
-            if (gltf.scenes == null || gltf.scenes.Count == 0)
+	        var scene = gltf.GetDefaultScene();
+
+			if (scene == null)
             {
-                throw new Exception("No scene in gltf file.");
+                throw new Exception("No default scene in gltf file.");
             }
 
             foreach (var buffer in gltf.buffers)
@@ -41,15 +43,8 @@ namespace GLTF {
 
             yield return BuildVertexAttributes();
 
-            if (gltf.scene != null)
-            {
-                scene = gltf.scene.Value.Create(gameObject);
-            }
-            else
-            {
-                scene = gltf.scenes[0].Create(gameObject);
-            }
-        }
+			scene.Create(gameObject);
+		}
 
         private IEnumerator ParseGLTF(string text)
         {
