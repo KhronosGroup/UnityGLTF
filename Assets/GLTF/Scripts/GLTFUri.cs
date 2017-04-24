@@ -16,10 +16,7 @@ namespace GLTF
 
         public static string BASE64_STR = "data:application/octet-stream;base64,";
 
-        /// <summary>
-        /// The path to the .gltf file.
-        /// </summary>
-        private readonly string gltfUrl;
+	    private GLTFRoot root;
 
         /// <summary>
         /// The GLTF uri string. 
@@ -39,9 +36,9 @@ namespace GLTF
         /// </summary>
         public Texture2D texture;
 
-        public GLTFUri(string gltfUrl, string uri)
+        public GLTFUri(GLTFRoot root, string uri)
         {
-            this.gltfUrl = gltfUrl;
+            this.root = root;
             this.uri = uri;
         }
 
@@ -59,7 +56,7 @@ namespace GLTF
 				}
 				else
 				{
-					UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfUrl, uri));
+					UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(root.Url, uri));
 
 					yield return www.Send();
 
@@ -84,7 +81,7 @@ namespace GLTF
                 }
                 else
                 {
-                    UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(gltfUrl, uri));
+                    UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(root.Url, uri));
                     www.downloadHandler = new DownloadHandlerTexture();
 
                     yield return www.Send();
@@ -109,56 +106,7 @@ namespace GLTF
 
         public static GLTFUri Deserialize(GLTFRoot root, JsonTextReader reader)
         {
-            return new GLTFUri(root.Url, reader.ReadAsString());
-        }
-    }
-
-    /// <summary>
-    /// Converts a JSON string to a GLTFUri object.
-    /// It also stores the path to the gltf file so we can load files from relative paths.
-    /// </summary>
-    public class GLTFUriConverter : JsonConverter
-    {
-        /// <summary>
-        /// The path to the GLTF file.
-        /// </summary>
-        string gltfUrl;
-
-        public GLTFUriConverter(string gltfUrl)
-        {
-            this.gltfUrl = gltfUrl;
-        }
-
-        /// <summary>
-        /// This converter will be used if the referenced object is of the type: GLTFUri
-        /// </summary>
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(GLTFUri);
-        }
-
-        /// <summary>
-        /// Deserialize the JSON string into a GLTFUri instance.
-        /// </summary>
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            if (reader.TokenType != JsonToken.String)
-            {
-                throw new Exception("Invalid URI type.");
-            }
-
-            string uri = serializer.Deserialize<string>(reader);
-
-            return new GLTFUri(gltfUrl, uri);
-        }
-
-        /// <summary>
-        /// Serialize the GLTFUri instance into a JSON string.
-        /// </summary>
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            GLTFUri gltfUri = (GLTFUri)value;
-            serializer.Serialize(writer, gltfUri.uri);
+            return new GLTFUri(root, reader.ReadAsString());
         }
     }
 }
