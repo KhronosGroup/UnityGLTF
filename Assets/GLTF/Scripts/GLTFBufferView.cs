@@ -7,26 +7,24 @@ namespace GLTF
     /// <summary>
     /// A view into a buffer generally representing a subset of the buffer.
     /// </summary>
-    public class GLTFBufferView
+    [System.Serializable]
+    public class GLTFBufferView : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The index of the buffer.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFBufferId buffer;
 
         /// <summary>
         /// The offset into the buffer in bytes.
         /// <minimum>0</minimum>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public int byteOffset;
 
         /// <summary>
         /// The length of the bufferView in bytes.
         /// <minimum>0</minimum>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public int byteLength;
 
         /// <summary>
@@ -43,8 +41,6 @@ namespace GLTF
         /// When this is not provided, the bufferView contains animation or skin data.
         /// </summary>
         public GLTFBufferViewTarget target;
-
-        public string name;
 
         private byte[] data;
 
@@ -76,6 +72,45 @@ namespace GLTF
                 
                 return data;
             }
+        }
+
+        public static GLTFBufferView Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var bufferView = new GLTFBufferView();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "buffer":
+                        bufferView.buffer = GLTFBufferId.Deserialize(root, reader);
+                        break;
+                    case "byteOffset":
+                        bufferView.byteOffset = reader.ReadAsInt32().Value;
+                        break;
+                    case "byteLength":
+                        bufferView.byteLength = reader.ReadAsInt32().Value;
+                        break;
+                    case "byteStride":
+                        bufferView.byteStride = reader.ReadAsInt32().Value;
+                        break;
+                    case "target":
+                        bufferView.target = (GLTFBufferViewTarget) reader.ReadAsInt32().Value;
+                        break;
+                    case "name":
+                        bufferView.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return bufferView;
         }
     }
 

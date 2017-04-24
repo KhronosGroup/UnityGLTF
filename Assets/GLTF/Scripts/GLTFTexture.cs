@@ -1,13 +1,15 @@
 ﻿using System.Collections;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace GLTF
 {
     /// <summary>
     /// A texture and its sampler.
     /// </summary>
-    public class GLTFTexture
+    [System.Serializable]
+    public class GLTFTexture : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The texture's format.  Valid values correspond to WebGL enums:
@@ -32,13 +34,11 @@ namespace GLTF
         /// <summary>
         /// The index of the sampler used by this texture.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFSamplerId sampler;
 
         /// <summary>
         /// The index of the image used by this texture.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFImageId source;
 
         /// <summary>
@@ -57,27 +57,54 @@ namespace GLTF
         /// </summary>
         public GLTFTexelDataType type = GLTFTexelDataType.UNSIGNED_BYTE;
 
-        public string name;
-
-        // Stored reference to the Texture so we don't have to regenerate it if
-        // used in multiple materials.
-        private Texture2D texture;
-
         /// <summary>
         /// Return or create the GLTFTexture's Texture object.
         /// </summary>
         public Texture2D Texture
         {
-            get
-            {
-                if (texture == null)
-                {
-                    texture = new Texture2D(0, 0);
-                    texture.LoadImage(source.Value.Data);
-                }
+            get { return source.Value.texture; }
+        }
 
-                return texture;
+        public static GLTFTexture Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var texture = new GLTFTexture();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "format":
+                        texture.format = (GLTFTextureFormat) reader.ReadAsInt32().Value;
+                        break;
+                    case "internalFormat":
+                        texture.internalFormat = (GLTFTextureFormat) reader.ReadAsInt32().Value;
+                        break;
+                    case "sampler":
+                        texture.sampler = GLTFSamplerId.Deserialize(root, reader);
+                        break;
+                    case "source":
+                        texture.source = GLTFImageId.Deserialize(root, reader);
+                        break;
+                    case "target":
+                        texture.target = (GLTFTextureTarget) reader.ReadAsInt32().Value;
+                        break;
+                    case "type":
+                        texture.type = (GLTFTexelDataType) reader.ReadAsInt32().Value;
+                        break;
+                    case "name":
+                        texture.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
             }
+
+            return texture;
         }
     }
 

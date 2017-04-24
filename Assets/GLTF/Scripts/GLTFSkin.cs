@@ -1,10 +1,13 @@
-using System.Collections;
+using System.Collections.Generic;
+using GLTF.JsonExtensions;
+using Newtonsoft.Json;
 
 namespace GLTF
 {
     /// <summary>
     /// Joints and matrices defining a skin.
     /// </summary>
+    [System.Serializable]
     public class GLTFSkin
     {
         /// <summary>
@@ -24,8 +27,36 @@ namespace GLTF
         /// Indices of skeleton nodes, used as joints in this skin.  The array length must be the
         // same as the `count` property of the `inverseBindMatrices` accessor (when defined).
         /// </summary>
-        public GLTFNodeId[] joints;
+        public List<GLTFNodeId> joints;
 
-        public string name;
+        public static GLTFSkin Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var skin = new GLTFSkin();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "inverseBindMatrices":
+                        skin.inverseBindMatrices = GLTFAccessorId.Deserialize(root, reader);
+                        break;
+                    case "skeleton":
+                        skin.skeleton = GLTFNodeId.Deserialize(root, reader);
+                        break;
+                    case "joints":
+                        skin.joints = reader.ReadList(() => GLTFNodeId.Deserialize(root, reader));
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return skin;
+        }
     }
 }

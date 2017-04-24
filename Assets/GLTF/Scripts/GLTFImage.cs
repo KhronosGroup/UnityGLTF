@@ -1,4 +1,7 @@
 ﻿using System.Collections;
+using Newtonsoft.Json;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace GLTF
 {
@@ -6,7 +9,8 @@ namespace GLTF
     /// Image data used to create a texture. Image can be referenced by URI or
     /// `bufferView` index. `mimeType` is required in the latter case.
     /// </summary>
-    public class GLTFImage
+    [System.Serializable]
+    public class GLTFImage : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The uri of the image.  Relative paths are relative to the .gltf file.
@@ -27,24 +31,10 @@ namespace GLTF
         /// </summary>
         public GLTFBufferViewId bufferView;
 
-        public string name;
-
         /// <summary>
-        /// Get the image buffer data as a byte array.
-        /// (Note: this creates a copy of the data inside the buffer)
+        /// Return the GLTFTexture's Texture object.
         /// </summary>
-        public byte[] Data
-        {
-            get
-            {
-                if (bufferView != null)
-                {
-                    return bufferView.Value.Data;
-                }
-
-                return uri.data;
-            }
-        }
+        public Texture2D texture;
 
         /// <summary>
         /// Ensure the image is loaded from its URI.
@@ -55,8 +45,47 @@ namespace GLTF
         {
             if (uri != null)
             {
-                yield return uri.Load();
+                yield return uri.LoadTexture();
+                texture = uri.texture;
             }
+            else
+            {
+                texture = new Texture2D(0, 0);
+                texture.LoadImage(bufferView.Value.Data);
+            }
+        }
+
+        public static GLTFImage Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var image = new GLTFImage();
+            
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "uri":
+                        image.uri = GLTFUri.Deserialize(root, reader);
+                        break;
+                    case "mimeType":
+                        image.mimeType = reader.ReadAsString();
+                        break;
+                    case "bufferView":
+                        image.bufferView = GLTFBufferViewId.Deserialize(root, reader);
+                        break;
+                    case "name":
+                        image.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return image;
         }
     }
 }

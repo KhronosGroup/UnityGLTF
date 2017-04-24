@@ -1,3 +1,5 @@
+using System;
+using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -7,20 +9,19 @@ namespace GLTF
     /// A camera's projection.  A node can reference a camera to apply a transform
     /// to place the camera in the scene
     /// </summary>
+    [System.Serializable]
     public class GLTFCamera
     {
         /// <summary>
         /// An orthographic camera containing properties to create an orthographic
         /// projection matrix.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFCameraOrthographic orthographic;
 
         /// <summary>
         /// A perspective camera containing properties to create a perspective
         /// projection matrix.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFCameraPerspective perspective;
 
         /// <summary>
@@ -28,8 +29,31 @@ namespace GLTF
         /// Based on this, either the camera's `perspective` or `orthographic` property
         /// will be defined.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
         public GLTFCameraType type;
+
+        public static GLTFCamera Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var camera = new GLTFCamera();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "orthographic":
+                        camera.orthographic = GLTFCameraOrthographic.Deserialize(root, reader);
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return camera;
+        }
     }
 
     /// <summary>
@@ -41,26 +65,60 @@ namespace GLTF
         /// <summary>
         /// The floating-point horizontal magnification of the view.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public double xmag;
 
         /// <summary>
         /// The floating-point vertical magnification of the view.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public double ymag;
 
         /// <summary>
         /// The floating-point distance to the far clipping plane.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public double zfar;
 
         /// <summary>
         /// The floating-point distance to the near clipping plane.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public double znear;
+
+        public static GLTFCameraOrthographic Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var cameraOrthographic = new GLTFCameraOrthographic();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Orthographic camera must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "xmag":
+                        cameraOrthographic.xmag = reader.ReadAsDouble().Value;
+                        break;
+                    case "ymag":
+                        cameraOrthographic.ymag = reader.ReadAsDouble().Value;
+                        break;
+                    case "zfar":
+                        cameraOrthographic.zfar = reader.ReadAsDouble().Value;
+                        break;
+                    case "znear":
+                        cameraOrthographic.znear = reader.ReadAsDouble().Value;
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return cameraOrthographic;
+        }
     }
 
     /// <summary>
@@ -80,7 +138,6 @@ namespace GLTF
         /// The floating-point vertical field of view in radians.
         /// <minimum>0.0</minimum>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public double yfov;
 
         /// <summary>
@@ -95,8 +152,45 @@ namespace GLTF
         /// The floating-point distance to the near clipping plane.
         /// <minimum>0.0</minimum>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public double znear;
+
+        public static GLTFCameraPerspective Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var cameraPerspective = new GLTFCameraPerspective();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Perspective camera must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "aspectRatio":
+                        cameraPerspective.aspectRatio = reader.ReadAsDouble().Value;
+                        break;
+                    case "yfov":
+                        cameraPerspective.yfov = reader.ReadAsDouble().Value;
+                        break;
+                    case "zfar":
+                        cameraPerspective.zfar = reader.ReadAsDouble().Value;
+                        break;
+                    case "znear":
+                        cameraPerspective.znear = reader.ReadAsDouble().Value;
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return cameraPerspective;
+        }
     }
 
     public enum GLTFCameraType

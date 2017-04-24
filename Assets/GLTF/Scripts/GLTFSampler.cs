@@ -1,8 +1,11 @@
-﻿namespace GLTF
+﻿using Newtonsoft.Json;
+
+namespace GLTF
 {
     /// <summary>
     /// Texture sampler properties for filtering and wrapping modes.
     /// </summary>
+    [System.Serializable]
     public class GLTFSampler
     {
         /// <summary>
@@ -25,6 +28,39 @@
         /// t wrapping mode.  All valid values correspond to WebGL enums.
         /// </summary>
         public GLTFWrapMode wrapT = GLTFWrapMode.REPEAT;
+
+        public static GLTFSampler Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var sampler = new GLTFSampler();
+            
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "magFilter":
+                        sampler.magFilter = (GLTFMagFilterMode) reader.ReadAsInt32();
+                        break;
+                    case "minFilter":
+                        sampler.minFilter = (GLTFMinFilterMode)reader.ReadAsInt32();
+                        break;
+                    case "wrapS":
+                        sampler.wrapS = (GLTFWrapMode)reader.ReadAsInt32();
+                        break;
+                    case "wrapT":
+                        sampler.wrapT = (GLTFWrapMode)reader.ReadAsInt32();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return sampler;
+        }
     }
 
     /// <summary>

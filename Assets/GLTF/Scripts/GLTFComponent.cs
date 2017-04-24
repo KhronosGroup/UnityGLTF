@@ -1,46 +1,45 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using System.Threading;
 using UnityEngine.Networking;
 
 namespace GLTF {
 
     class GLTFComponent : MonoBehaviour
     {
-
         public string url = "http://localhost:8080/samples/Lantern/glTF/Lantern.gltf";
         private GameObject scene;
+        public GLTFRoot gltf;
+        private bool workerThreadRunning = false;
 
         IEnumerator Start()
         {
-            UnityWebRequest www = UnityWebRequest.Get(url);
+
+            var www = UnityWebRequest.Get(url);
 
             yield return www.Send();
 
-            if (www.isError)
-            {
-                if (www.responseCode == 404)
-                {
-                    throw new Exception("GLTF file could not be found. Are you sure the url is correct?");
-                }
-                else if (www.responseCode == 0)
-                {
-                    throw new Exception("Could not connect to the host. Have you started the web server yet?");
-                }
-                else
-                {
-                    throw new Exception(www.error);
-                }
-            }
+            var text = www.downloadHandler.text;
 
-            GLTFRoot gltf = GLTFParser.Parse(url, www.downloadHandler.data);
+            yield return ParseGLTF(text);
 
-            if (gltf.scenes == null || gltf.scenes.Length == 0)
+            if (gltf.scenes == null || gltf.scenes.Count == 0)
             {
                 throw new Exception("No scene in gltf file.");
             }
 
-            yield return gltf.LoadAllScenes();
+            foreach (var buffer in gltf.buffers)
+            {
+                yield return buffer.Load();
+            }
+
+            foreach (var image in gltf.images)
+            {
+                yield return image.Load();
+            }
+
+            yield return BuildVertexAttributes();
 
             if (gltf.scene != null)
             {
@@ -49,6 +48,48 @@ namespace GLTF {
             else
             {
                 scene = gltf.scenes[0].Create(gameObject);
+            }
+        }
+
+        private IEnumerator ParseGLTF(string text)
+        {
+            workerThreadRunning = true;
+
+            ThreadPool.QueueUserWorkItem((_) =>
+            {
+                var parser = new GLTFParser();
+
+                gltf = parser.Parse(url, text);
+
+                workerThreadRunning = false;
+            });
+
+            yield return Wait();
+        }
+
+        private IEnumerator BuildVertexAttributes()
+        {
+            workerThreadRunning = true;
+
+            ThreadPool.QueueUserWorkItem((_) =>
+            {
+
+                foreach (var mesh in gltf.meshes)
+                {
+                    mesh.BuildVertexAttributes();
+                }
+
+                workerThreadRunning = false;
+            });
+
+            yield return Wait();
+        }
+
+        private IEnumerator Wait()
+        {
+            while (workerThreadRunning)
+            {
+                yield return null;
             }
         }
     }

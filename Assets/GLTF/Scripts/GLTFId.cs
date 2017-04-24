@@ -1,18 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using GLTF.JsonExtensions;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace GLTF
 {
-    /// <summary>
-    /// Create an object that we can use to reference the GLTF root
-    /// from any GLTFId. Used to access the objects referenced by the id.
-    /// It allows us to main type safety and do error handling for missing
-    /// references.
-    /// </summary>
-    public class GLTFRootRef
-    {
-        public GLTFRoot root;
-    }
 
     /// <summary>
     /// Abstract class that stores a reference to the root GLTF object and an id
@@ -22,272 +15,247 @@ namespace GLTF
     public abstract class GLTFId<T>
     {
         public int id;
-        public GLTFRootRef rootRef;
+        [System.NonSerialized]
+        public GLTFRoot root;
         public abstract T Value { get; }
     }
 
-    /// <summary>
-    /// Convert from JSON number values to GLTFId instances and back.
-    /// </summary>
-    /// <typeparam name="T">The subclass of GLTFId.</typeparam>
-    /// <typeparam name="V">The value type returned by the GLTFId reference.</typeparam>
-    public class GLTFIdConverter<T, V> : JsonConverter where T: GLTFId<V>, new()
-    {
-        private GLTFRootRef rootRef;
-
-        public GLTFIdConverter(GLTFRootRef rootRef) {
-            this.rootRef = rootRef;
-        }
-
-        /// <summary>
-        /// This converter will be used if the object is of type T.
-        /// </summary>
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(T);
-        }
-
-        /// <summary>
-        /// Parse the GLTFId from a JSON number value.
-        /// </summary>
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            if (reader.TokenType != JsonToken.Integer)
-            {
-                throw new Exception("Invalid Id type.");
-            }
-
-            int id = serializer.Deserialize<int>(reader);
-
-            T idRef = new T();
-            idRef.id = id;
-            idRef.rootRef = rootRef;
-
-            return idRef;
-        }
-
-        /// <summary>
-        /// Write the GLTFId to JSON as a number.
-        /// </summary>
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            T gltfId = (T)value;
-            serializer.Serialize(writer, gltfId.id);
-        }
-    }
-
+    [System.Serializable]
     public class GLTFAccessorId : GLTFId<GLTFAccessor>
     {
-        override public GLTFAccessor Value
+        public override GLTFAccessor Value
         {
-            get {
-                return rootRef.root.accessors[id];
-            }
+            get { return root.accessors[id]; }
+        }
+
+        public static GLTFAccessorId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFAccessorId
+            {
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFAccessorIdConverter : GLTFIdConverter<GLTFAccessorId, GLTFAccessor>
-    {
-        public GLTFAccessorIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFBufferId : GLTFId<GLTFBuffer>
     {
-        override public GLTFBuffer Value
+        public override GLTFBuffer Value
         {
-            get
+            get { return root.buffers[id]; }
+        }
+
+        public static GLTFBufferId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFBufferId
             {
-                return rootRef.root.buffers[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFBufferIdConverter : GLTFIdConverter<GLTFBufferId, GLTFBuffer>
-    {
-        public GLTFBufferIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFBufferViewId: GLTFId<GLTFBufferView>
     {
-        override public GLTFBufferView Value
+        public override GLTFBufferView Value
         {
-            get
+            get { return root.bufferViews[id]; }
+        }
+
+        public static GLTFBufferViewId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFBufferViewId
             {
-                return rootRef.root.bufferViews[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFBufferViewIdConverter : GLTFIdConverter<GLTFBufferViewId, GLTFBufferView>
-    {
-        public GLTFBufferViewIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFCameraId : GLTFId<GLTFCamera>
     {
-        override public GLTFCamera Value
+        public override GLTFCamera Value
         {
-            get
+            get { return root.cameras[id]; }
+        }
+
+        public static GLTFCameraId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFCameraId
             {
-                return rootRef.root.cameras[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFCameraIdConverter : GLTFIdConverter<GLTFCameraId, GLTFCamera>
-    {
-        public GLTFCameraIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFImageId : GLTFId<GLTFImage>
     {
-        override public GLTFImage Value
+        public override GLTFImage Value
         {
-            get
+            get { return root.images[id]; }
+        }
+
+        public static GLTFImageId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFImageId
             {
-                return rootRef.root.images[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFImageIdConverter : GLTFIdConverter<GLTFImageId, GLTFImage>
-    {
-        public GLTFImageIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFMaterialId : GLTFId<GLTFMaterial>
     {
-        override public GLTFMaterial Value
+        public override GLTFMaterial Value
         {
-            get
+            get { return root.materials[id]; }
+        }
+
+        public static GLTFMaterialId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFMaterialId
             {
-                return rootRef.root.materials[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFMaterialIdConverter : GLTFIdConverter<GLTFMaterialId, GLTFMaterial>
-    {
-        public GLTFMaterialIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFMeshId : GLTFId<GLTFMesh>
     {
-        override public GLTFMesh Value
+        public override GLTFMesh Value
         {
-            get
+            get { return root.meshes[id]; }
+        }
+
+        public static GLTFMeshId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFMeshId
             {
-                return rootRef.root.meshes[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFMeshIdConverter : GLTFIdConverter<GLTFMeshId, GLTFMesh>
-    {
-        public GLTFMeshIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFNodeId : GLTFId<GLTFNode>
     {
-        override public GLTFNode Value
+        public override GLTFNode Value
         {
-            get
+            get  { return root.nodes[id]; }
+        }
+
+        public static GLTFNodeId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFNodeId
             {
-                return rootRef.root.nodes[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
-    }
 
-    public class GLTFNodeIdConverter : GLTFIdConverter<GLTFNodeId, GLTFNode>
-    {
-        public GLTFNodeIdConverter(GLTFRootRef rootRef) : base(rootRef)
+        public static List<GLTFNodeId> ReadList(GLTFRoot root, JsonTextReader reader)
         {
+            if (reader.Read() && reader.TokenType != JsonToken.StartArray)
+            {
+                throw new Exception("Invalid array.");
+            }
+
+            var list = new List<GLTFNodeId>();
+
+            while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+            {
+                var node = new GLTFNodeId
+                {
+                    id = int.Parse(reader.Value.ToString()),
+                    root = root
+                };
+
+                list.Add(node);
+            }
+
+            return list;
         }
     }
 
+    [System.Serializable]
     public class GLTFSamplerId : GLTFId<GLTFSampler>
     {
-        override public GLTFSampler Value
+        public override GLTFSampler Value
         {
-            get
+            get { return root.samplers[id]; }
+        }
+
+        public static GLTFSamplerId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFSamplerId
             {
-                return rootRef.root.samplers[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFSamplerIdConverter : GLTFIdConverter<GLTFSamplerId, GLTFSampler>
-    {
-        public GLTFSamplerIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFSceneId : GLTFId<GLTFScene>
     {
-        override public GLTFScene Value
+        public override GLTFScene Value
         {
-            get
+            get { return root.scenes[id]; }
+        }
+
+        public static GLTFSceneId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFSceneId
             {
-                return rootRef.root.scenes[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFSceneIdConverter : GLTFIdConverter<GLTFSceneId, GLTFScene>
-    {
-        public GLTFSceneIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFSkinId : GLTFId<GLTFSkin>
     {
-        override public GLTFSkin Value
+        public override GLTFSkin Value
         {
-            get
+            get { return root.skins[id];}
+        }
+
+        public static GLTFSkinId Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            return new GLTFSkinId
             {
-                return rootRef.root.skins[id];
-            }
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 
-    public class GLTFSkinIdConverter : GLTFIdConverter<GLTFSkinId, GLTFSkin>
-    {
-        public GLTFSkinIdConverter(GLTFRootRef rootRef) : base(rootRef)
-        {
-        }
-    }
-
+    [System.Serializable]
     public class GLTFTextureId : GLTFId<GLTFTexture>
     {
-        override public GLTFTexture Value
+        public override GLTFTexture Value
         {
-            get
-            {
-                return rootRef.root.textures[id];
-            }
+            get { return root.textures[id]; }
         }
-    }
 
-    public class GLTFTextureIdConverter : GLTFIdConverter<GLTFTextureId, GLTFTexture>
-    {
-        public GLTFTextureIdConverter(GLTFRootRef rootRef) : base(rootRef)
+        public static GLTFTextureId Deserialize(GLTFRoot root, JsonTextReader reader)
         {
+            return new GLTFTextureId
+            {
+                id = reader.ReadAsInt32().Value,
+                root = root
+            };
         }
     }
 }

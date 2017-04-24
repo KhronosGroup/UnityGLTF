@@ -1,12 +1,16 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using GLTF.JsonExtensions;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace GLTF
 {
-    public class GLTFMaterial
+    /// <summary>
+    /// The material appearance of a primitive.
+    /// </summary>
+    [System.Serializable]
+    public class GLTFMaterial : GLTFChildOfRootProperty
     {
-        public string name;
-
         /// <summary>
         /// A set of parameter values that are used to define the metallic-roughness
         /// material model from Physically-Based Rendering (PBR) methodology.
@@ -44,7 +48,33 @@ namespace GLTF
         /// <minItems>3</minItems>
         /// <maxItems>3</maxItems>
         /// </summary>
-        public double[] emissiveFactor = { 0.0f, 0.0f, 0.0f };
+        public Color emissiveFactor = Color.black;
+
+        /// <summary>
+        /// The material's alpha rendering mode enumeration specifying the interpretation of the
+        /// alpha value of the main factor and texture. In `OPAQUE` mode, the alpha value is
+        /// ignored and the rendered output is fully opaque. In `MASK` mode, the rendered output
+        /// is either fully opaque or fully transparent depending on the alpha value and the
+        /// specified alpha cutoff value. In `BLEND` mode, the alpha value is used to composite
+        /// the source and destination areas. The rendered output is combined with the background
+        /// using the normal painting operation (i.e. the Porter and Duff over operator).
+        /// </summary>
+        public GLTFAlphaMode alphaMode = GLTFAlphaMode.OPAQUE;
+
+        /// <summary>
+        /// Specifies the cutoff threshold when in `MASK` mode. If the alpha value is greater than
+        /// or equal to this value then it is rendered as fully opaque, otherwise, it is rendered
+        /// as fully transparent. This value is ignored for other modes.
+        /// </summary>
+        public double alphaCutoff = 0.5;
+
+        /// <summary>
+        /// Specifies whether the material is double sided. When this value is false, back-face
+        /// culling is enabled. When this value is true, back-face culling is disabled and double
+        /// sided lighting is enabled. The back-face must have its normals reversed before the
+        /// lighting equation is evaluated.
+        /// </summary>
+        public bool doubleSided = false;
 
         private Material material;
 
@@ -60,17 +90,72 @@ namespace GLTF
 
             return material;
         }
+
+        public static GLTFMaterial Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var material = new GLTFMaterial();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "pbrMetallicRoughness":
+                        material.pbrMetallicRoughness = GLTFPBRMetallicRoughness.Deserialize(root, reader);
+                        break;
+                    case "normalTexture":
+                        material.normalTexture = GLTFNormalTextureInfo.Deserialize(root, reader);
+                        break;
+                    case "occlusionTexture":
+                        material.occlusionTexture = GLTFOcclusionTextureInfo.Deserialize(root, reader);
+                        break;
+                    case "emissiveTexture":
+                        material.emissiveTexture = GLTFTextureInfo.Deserialize(root, reader);
+                        break;
+                    case "emissiveFactor":
+                        material.emissiveFactor = reader.ReadAsRGBColor();
+                        break;
+                    case "alphaMode":
+                        material.alphaMode = reader.ReadStringEnum<GLTFAlphaMode>();
+                        break;
+                    case "alphaCutoff":
+                        material.alphaCutoff = reader.ReadAsDouble().Value;
+                        break;
+                    case "doubleSided":
+                        material.doubleSided = reader.ReadAsBoolean().Value;
+                        break;
+                    case "name":
+                        material.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return material;
+        }
+    }
+
+    public enum GLTFAlphaMode
+    {
+        OPAQUE,
+        MASK,
+        BLEND
     }
 
     /// <summary>
     /// Reference to a texture.
     /// </summary>
-    public class GLTFTextureInfoBase
+    [System.Serializable]
+    public class GLTFTextureInfoBase : GLTFProperty
     {
         /// <summary>
         /// The index of the texture.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFTextureId index;
 
         /// <summary>
@@ -81,8 +166,43 @@ namespace GLTF
         public int texCoord = 0;
     }
 
-    public class GLTFTextureInfo : GLTFTextureInfoBase { }
+    [System.Serializable]
+    public class GLTFTextureInfo : GLTFTextureInfoBase
+    {
+        public static GLTFTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var textureInfo = new GLTFTextureInfo();
 
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Asset must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "index":
+                        textureInfo.index = GLTFTextureId.Deserialize(root, reader);
+                        break;
+                    case "texCoord":
+                        textureInfo.texCoord = reader.ReadAsInt32().Value;
+                        break;
+	                case "extensions":
+	                case "extras":
+	                default:
+		                reader.Read();
+		                break;
+				}
+            }
+
+            return textureInfo;
+        }
+    }
+
+    [System.Serializable]
     public class GLTFNormalTextureInfo : GLTFTextureInfoBase
     {
         /// <summary>
@@ -91,8 +211,44 @@ namespace GLTF
         /// This value is linear.
         /// </summary>
         public double scale = 1.0f;
+
+        public static GLTFNormalTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var textureInfo = new GLTFNormalTextureInfo();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Asset must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "index":  
+                        textureInfo.index = GLTFTextureId.Deserialize(root, reader);
+                        break;
+                    case "texCoord":
+                        textureInfo.texCoord = reader.ReadAsInt32().Value;
+                        break;
+                    case "scale":
+                        textureInfo.scale = reader.ReadAsDouble().Value;
+                        break;
+	                case "extensions":
+	                case "extras":
+	                default:
+		                reader.Read();
+		                break;
+				}
+            }
+
+            return textureInfo;
+        }
     }
 
+    [System.Serializable]
     public class GLTFOcclusionTextureInfo : GLTFTextureInfoBase
     {
         /// <summary>
@@ -105,12 +261,48 @@ namespace GLTF
         /// <maximum>1.0</maximum>
         /// </summary>
         public double strength = 1.0f;
+
+        public static GLTFOcclusionTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var textureInfo = new GLTFOcclusionTextureInfo();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Asset must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "index":
+                        textureInfo.index = GLTFTextureId.Deserialize(root, reader);
+                        break;
+                    case "texCoord":
+                        textureInfo.texCoord = reader.ReadAsInt32().Value;
+                        break;
+                    case "scale":
+                        textureInfo.strength = reader.ReadAsDouble().Value;
+                        break;
+	                case "extensions":
+	                case "extras":
+	                default:
+		                reader.Read();
+		                break;
+				}
+            }
+
+            return textureInfo;
+        }
     }
 
     /// <summary>
     /// A set of parameter values that are used to define the metallic-roughness
     /// material model from Physically-Based Rendering (PBR) methodology.
     /// </summary>
+    [System.Serializable]
     public class GLTFPBRMetallicRoughness
     {
         /// <summary>
@@ -118,7 +310,7 @@ namespace GLTF
         /// The fourth component (A) is the opacity of the material.
         /// These values are linear.
         /// </summary>
-        public double[] baseColorFactor = { 1, 1, 1, 1 };
+        public Color baseColorFactor = Color.white;
 
         /// <summary>
         /// The base color texture.
@@ -156,5 +348,46 @@ namespace GLTF
         /// they are ignored.
         /// </summary>
         public GLTFTextureInfo metallicRoughnessTexture;
+
+        public static GLTFPBRMetallicRoughness Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var metallicRoughness = new GLTFPBRMetallicRoughness();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Asset must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "baseColorFactor":
+                        metallicRoughness.baseColorFactor = reader.ReadAsRGBAColor();
+                        break;
+                    case "baseColorTexture":
+                        metallicRoughness.baseColorTexture = GLTFTextureInfo.Deserialize(root, reader);
+                        break;
+                    case "metallicFactor":
+                        metallicRoughness.metallicFactor = reader.ReadAsDouble().Value;
+                        break;
+                    case "roughnessFactor":
+                        metallicRoughness.roughnessFactor = reader.ReadAsDouble().Value;
+                        break;
+                    case "metallicRoughnessTexture":
+                        metallicRoughness.metallicRoughnessTexture = GLTFTextureInfo.Deserialize(root, reader);
+                        break;
+	                case "extensions":
+	                case "extras":
+	                default:
+		                reader.Read();
+		                break;
+				}
+            }
+
+            return metallicRoughness;
+        }
     }
 }

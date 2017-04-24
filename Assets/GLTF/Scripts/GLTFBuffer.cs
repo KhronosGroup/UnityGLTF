@@ -7,7 +7,8 @@ namespace GLTF
     /// <summary>
     /// A buffer points to binary geometry, animation, or skins.
     /// </summary>
-    public class GLTFBuffer
+    [System.Serializable]
+    public class GLTFBuffer : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The uri of the buffer.
@@ -22,8 +23,6 @@ namespace GLTF
         /// </summary>
         public int byteLength = 0;
 
-        public string name;
-
         public virtual byte[] Data
         {
             get
@@ -34,14 +33,48 @@ namespace GLTF
 
         public IEnumerator Load()
         {
-            if(uri != null)
-                yield return uri.Load();
+            if (uri != null)
+            {
+                yield return uri.LoadBuffer();
+            }
+                
+        }
+
+        public static GLTFBuffer Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var buffer = new GLTFBuffer();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "uri":
+                        buffer.uri = GLTFUri.Deserialize(root, reader);
+                        break;
+                    case "byteLength":
+                        buffer.byteLength = reader.ReadAsInt32().Value;
+                        break;
+                    case "name":
+                        buffer.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return buffer;
         }
     }
 
     /// <summary>
     /// The internal buffer references data stored in the binary chunk of a .glb file.
     /// </summary>
+    [System.Serializable]
     public class GLTFInternalBuffer : GLTFBuffer
     {
         private byte[] data;

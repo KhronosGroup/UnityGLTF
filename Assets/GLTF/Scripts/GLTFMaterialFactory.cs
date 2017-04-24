@@ -22,9 +22,7 @@ namespace GLTF
             {
                 GLTFPBRMetallicRoughness pbr = def.pbrMetallicRoughness;
 
-                double[] colorFactor = pbr.baseColorFactor;
-                Color baseColor = new Color((float)colorFactor[0], (float)colorFactor[1], (float)colorFactor[2], (float)colorFactor[3]);
-                material.SetColor("_BaseColorFactor", baseColor);
+                material.SetColor("_BaseColorFactor", pbr.baseColorFactor);
 
                 if (pbr.baseColorTexture != null)
                 {
@@ -68,8 +66,7 @@ namespace GLTF
                 material.SetTexture("_EmissiveMap", texture.Texture);
             }
 
-            Color emissiveColor = new Color((float)def.emissiveFactor[0], (float)def.emissiveFactor[1], (float)def.emissiveFactor[2], 1.0f);
-            material.SetColor("_EmissiveFactor", emissiveColor);
+            material.SetColor("_EmissiveFactor", def.emissiveFactor);
 
             return material;
         }

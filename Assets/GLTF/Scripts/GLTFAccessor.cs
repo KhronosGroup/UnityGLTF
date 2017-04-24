@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using GLTF.JsonExtensions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using UnityEngine;
 
 namespace GLTF
 {
-    public class GLTFAccessor
+    [System.Serializable]
+    public class GLTFAccessor : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The index of the bufferView.
@@ -28,7 +30,6 @@ namespace GLTF
         /// 5125 (UNSIGNED_INT) is only allowed when the accessor contains indices
         /// i.e., the accessor is only referenced by `primitive.indices`.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFComponentType componentType;
 
         /// <summary>
@@ -44,15 +45,12 @@ namespace GLTF
         /// with the number of bytes or number of components.
         /// <minimum>1</minimum>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public int count;
 
         /// <summary>
         /// Specifies if the attribute is a scalar, vector, or matrix,
         /// and the number of elements in the vector or matrix.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        [JsonConverter(typeof(StringEnumConverter))]
         public GLTFAccessorAttributeType type;
 
         /// <summary>
@@ -72,8 +70,7 @@ namespace GLTF
         /// <minItems>1</minItems>
         /// <maxItems>16</maxItems>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        public double[] max;
+        public List<double> max;
 
         /// <summary>
         /// Minimum value of each component in this attribute.
@@ -91,15 +88,63 @@ namespace GLTF
         /// <minItems>1</minItems>
         /// <maxItems>16</maxItems>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        public double[] min;
+        public List<double> min;
 
         /// <summary>
         /// Sparse storage of attributes that deviate from their initialization value.
         /// </summary>
         public GLTFAccessorSparse sparse;
 
-        public string name;
+        public static GLTFAccessor Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var accessor = new GLTFAccessor();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "bufferView":
+                        accessor.bufferView = GLTFBufferViewId.Deserialize(root, reader);
+                        break;
+                    case "byteOffset":
+                        accessor.byteOffset = reader.ReadAsInt32().Value;
+                        break;
+                    case "componentType":
+                        accessor.componentType = (GLTFComponentType) reader.ReadAsInt32().Value;
+                        break;
+                    case "normalized":
+                        accessor.normalized = reader.ReadAsBoolean().Value;
+                        break;
+                    case "count":
+                        accessor.count = reader.ReadAsInt32().Value;
+                        break;
+                    case "type":
+                        accessor.type = reader.ReadStringEnum<GLTFAccessorAttributeType>();
+                        break;
+                    case "max":
+                        accessor.max = reader.ReadDoubleList();
+                        break;
+                    case "min":
+                        accessor.min = reader.ReadDoubleList();
+                        break;
+                    case "sparse":
+                        // TODO: Implement Deserialization of Sparse Arrays
+                        break;
+                    case "name":
+                        accessor.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return accessor;
+        }
 
         public int[] AsIntArray()
         {
@@ -132,17 +177,41 @@ namespace GLTF
                     }
                     break;
                 case GLTFComponentType.UNSIGNED_SHORT:
-                    stride = bufferView.Value.byteStride + sizeof(UInt16);
-                    for (int idx = 0; idx < count; idx++)
+                    if (bufferView.Value.byteStride == 0)
                     {
-                        arr[idx] = BitConverter.ToUInt16(bytes, totalByteOffset + (idx * stride));
+                        UInt16[] intermediateArr = new UInt16[count];
+                        Buffer.BlockCopy(bytes, totalByteOffset, intermediateArr, 0, count * sizeof(UInt16));
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            arr[idx] = (int)intermediateArr[idx];
+                        }
+                    }
+                    else
+                    {
+                        stride = bufferView.Value.byteStride + sizeof(UInt16);
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            arr[idx] = BitConverter.ToUInt16(bytes, totalByteOffset + (idx * stride));
+                        }
                     }
                     break;
                 case GLTFComponentType.FLOAT:
-                    stride = bufferView.Value.byteStride + sizeof(sbyte);
-                    for (int idx = 0; idx < count; idx++)
+                    if (bufferView.Value.byteStride == 0)
                     {
-                        arr[idx] = (int)BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
+                        int[] intermediateArr = new int[count];
+                        Buffer.BlockCopy(bytes, totalByteOffset, intermediateArr, 0, count * sizeof(int));
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            arr[idx] = intermediateArr[idx];
+                        }
+                    }
+                    else
+                    {
+                        stride = bufferView.Value.byteStride + sizeof(sbyte);
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            arr[idx] = (int)BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
+                        }
                     }
                     break;
             }
@@ -206,12 +275,28 @@ namespace GLTF
                     }
                     break;
                 case GLTFComponentType.FLOAT:
-                    stride = numComponents * sizeof(float) + bufferView.Value.byteStride;
-                    for (int idx = 0; idx < count; idx++)
+                    if (bufferView.Value.byteStride == 0)
                     {
-                        float x = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
-                        float y = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride) + sizeof(float));
-                        arr[idx] = new Vector2(x, y);
+                        int totalComponents = count * 2;
+                        float[] intermediateArr = new float[totalComponents];
+                        Buffer.BlockCopy(bytes, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            arr[idx] = new Vector2(
+                                intermediateArr[idx * 2],
+                                intermediateArr[idx * 2 + 1]
+                            );
+                        }
+                    }
+                    else
+                    {
+                        stride = numComponents * sizeof(float) + bufferView.Value.byteStride;
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            float x = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
+                            float y = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride) + sizeof(float));
+                            arr[idx] = new Vector2(x, y);
+                        }
                     }
                     break;
             }
@@ -280,13 +365,31 @@ namespace GLTF
                     }
                     break;
                 case GLTFComponentType.FLOAT:
-                    stride = numComponents * sizeof(float) + bufferView.Value.byteStride;
-                    for (int idx = 0; idx < count; idx++)
+                    if (bufferView.Value.byteStride == 0)
                     {
-                        float x = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
-                        float y = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride) + sizeof(float));
-                        float z = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride) + (2 * sizeof(float)));
-                        arr[idx] = new Vector3(x, y, z);
+                        int totalComponents = count * 3;
+                        float[] intermediateArr = new float[totalComponents];
+                        Buffer.BlockCopy(bytes, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            arr[idx] = new Vector3(
+                               intermediateArr[idx * 3],
+                               intermediateArr[idx * 3 + 1],
+                               intermediateArr[idx * 3 + 2]
+                            );
+                        }
+                    }
+                    else
+                    {
+                        stride = numComponents * sizeof(float) + bufferView.Value.byteStride;
+                        for (int idx = 0; idx < count; idx++)
+                        {
+                            float x = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride));
+                            float y = BitConverter.ToSingle(bytes, totalByteOffset + (idx * stride) + sizeof(float));
+                            float z = BitConverter.ToSingle(bytes,
+                                totalByteOffset + (idx * stride) + (2 * sizeof(float)));
+                            arr[idx] = new Vector3(x, y, z);
+                        }
                     }
                     break;
             }
@@ -354,20 +457,19 @@ namespace GLTF
         }
     }
 
+    [System.Serializable]
     public class GLTFAccessorSparse
     {
         /// <summary>
         /// Number of entries stored in the sparse array.
         /// <minimum>1</minimum>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public int count;
 
         /// <summary>
         /// Index array of size `count` that points to those accessor attributes that
         /// deviate from their initialization value. Indices must strictly increase.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFAccessorSparseIndices indices;
 
         /// <summary>
@@ -375,17 +477,16 @@ namespace GLTF
         /// accessor attributes pointed by `indices`. Substituted values must have
         /// the same `componentType` and number of components as the base accessor.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFAccessorSparseValues values;
     }
 
+    [System.Serializable]
     public class GLTFAccessorSparseIndices
     {
         /// <summary>
         /// The index of the bufferView with sparse indices.
         /// Referenced bufferView can't have ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER target.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFBufferViewId bufferView;
 
         /// <summary>
@@ -400,17 +501,16 @@ namespace GLTF
         /// `5123` (UNSIGNED_SHORT)
         /// `5125` (UNSIGNED_INT)
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public GLTFComponentType componentType;
     }
 
+    [System.Serializable]
     public class GLTFAccessorSparseValues
     {
         /// <summary>
         /// The index of the bufferView with sparse values.
         /// Referenced bufferView can't have ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER target.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         private GLTFBufferViewId bufferView;
 
         /// <summary>

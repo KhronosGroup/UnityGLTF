@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
+using GLTF.JsonExtensions;
+using Newtonsoft.Json;
 
 namespace GLTF
 {
@@ -15,7 +18,8 @@ namespace GLTF
     /// (referenced by an animation.channel.target), only TRS properties may be present;
     /// `matrix` will not be present.
     /// </summary>
-    public class GLTFNode
+    [System.Serializable]
+    public class GLTFNode : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The index of the camera referenced by this node.
@@ -25,7 +29,7 @@ namespace GLTF
         /// <summary>
         /// The indices of this node's children.
         /// </summary>
-        public GLTFNodeId[] children = { };
+        public List<GLTFNodeId> children;
 
         /// <summary>
         /// The index of the skin referenced by this node.
@@ -35,7 +39,7 @@ namespace GLTF
         /// <summary>
         /// A floating-point 4x4 transformation matrix stored in column-major order.
         /// </summary>
-        public double[] matrix;
+        public List<double> matrix;
 
         /// <summary>
         /// The index of the mesh in this node.
@@ -46,25 +50,74 @@ namespace GLTF
         /// The node's unit quaternion rotation in the order (x, y, z, w),
         /// where w is the scalar.
         /// </summary>
-        public double[] rotation = { 0, 0, 0, 1 };
+        public Quaternion rotation = new Quaternion(0, 0, 0, 1);
 
         /// <summary>
         /// The node's non-uniform scale.
         /// </summary>
-        public double[] scale = { 1, 1, 1 };
+        public Vector3 scale = Vector3.one;
 
         /// <summary>
         /// The node's translation.
         /// </summary>
-        public double[] translation = { 0, 0, 0 };
+        public Vector3 translation = Vector3.zero;
 
         /// <summary>
         /// The weights of the instantiated Morph Target.
         /// Number of elements must match number of Morph Targets of used mesh.
         /// </summary>
-        public double[] weights;
+        public List<double> weights;
 
-        public string name;
+        public static GLTFNode Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var node = new GLTFNode();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "camera":
+                        node.camera = GLTFCameraId.Deserialize(root, reader);
+                        break;
+                    case "children":
+                        node.children = GLTFNodeId.ReadList(root, reader);
+                        break;
+                    case "skin":
+                        node.skin = GLTFSkinId.Deserialize(root, reader);
+                        break;
+                    case "matrix":
+                        node.matrix = reader.ReadDoubleList();
+                        break;
+                    case "mesh":
+                        node.mesh = GLTFMeshId.Deserialize(root, reader);
+                        break;
+                    case "rotation":
+                        node.rotation = reader.ReadAsQuaternion();
+                        break;
+                    case "scale":
+                        node.scale = reader.ReadAsVector3();
+                        break;
+                    case "translation":
+                        node.translation = reader.ReadAsVector3();
+                        break;
+                    case "weights":
+                        node.weights = reader.ReadDoubleList();
+                        break;
+                    case "name":
+                        node.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return node;
+        }
 
         /// <summary>
         /// Create the GameObject for the GLTFNode and set it as a child of the parent GameObject.
@@ -110,22 +163,9 @@ namespace GLTF
             // Otherwise fall back to the TRS properties.
             else
             {
-                nodeObj.transform.localPosition = new Vector3(
-                    (float)translation[0],
-                    (float)translation[1],
-                    (float)translation[2]
-                );
-                nodeObj.transform.localScale = new Vector3(
-                    (float)scale[0],
-                    (float)scale[1],
-                    (float)scale[2]
-                );
-                nodeObj.transform.localRotation = new Quaternion(
-                    (float)rotation[0],
-                    (float)rotation[1],
-                    (float)rotation[2],
-                    (float)rotation[3]
-                );
+                nodeObj.transform.localPosition = translation;
+                nodeObj.transform.localScale = scale;
+                nodeObj.transform.localRotation = rotation;
             }
 
             // TODO: Add support for skin/morph targets

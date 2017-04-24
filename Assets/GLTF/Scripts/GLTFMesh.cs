@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
+using GLTF.JsonExtensions;
 using UnityEngine;
 
 namespace GLTF
@@ -8,6 +9,7 @@ namespace GLTF
     /// A set of primitives to be rendered. A node can contain one or more meshes.
     /// A node's transform places the mesh in the scene.
     /// </summary>
+    [System.Serializable]
     public class GLTFMesh
     {
         /// <summary>
@@ -15,17 +17,52 @@ namespace GLTF
         /// a material.
         /// <minItems>1</minItems>
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
-        public GLTFMeshPrimitive[] primitives;
+        public List<GLTFMeshPrimitive> primitives;
 
         /// <summary>
         /// Array of weights to be applied to the Morph Targets.
         /// <minItems>0</minItems>
         /// </summary>
-        public double[] weights;
+        public List<double> weights;
 
         public string name;
 
+        public static GLTFMesh Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var mesh = new GLTFMesh();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "primitives":
+                        mesh.primitives = reader.ReadList(() => GLTFMeshPrimitive.Deserialize(root, reader));
+                        break;
+                    case "weights":
+                        mesh.weights = reader.ReadDoubleList();
+                        break;
+                    case "name":
+                        mesh.name = reader.ReadAsString();
+                        break;
+                    case "extensions":
+                        break;
+                    case "extras":
+                        break;
+                }
+            }
+
+            return mesh;
+        }
+
+        public void BuildVertexAttributes()
+        {
+            foreach (var primitive in primitives)
+            {
+                primitive.BuildVertexAttributes();
+            }
+        }
 
         /// <summary>
         /// Build the meshes and materials for the GLTFMesh and attach them to the parent object.
@@ -43,13 +80,13 @@ namespace GLTF
             scale.z *= -1;
             meshObj.transform.localScale = scale;
 
-            if (primitives.Length == 1)
+            if (primitives.Count == 1)
             {
                 primitives[0].SetMeshAndMaterial(meshObj, meshName, config);
             }
             else
             {
-                for (int i = 0; i < primitives.Length; i++)
+                for (int i = 0; i < primitives.Count; i++)
                 {
                     string primitiveName = (name ?? "GLTFMesh") + "_Primitive" + i;
                     GameObject primitiveObj = new GameObject(primitiveName);
@@ -63,13 +100,13 @@ namespace GLTF
     /// <summary>
     /// Geometry to be rendered with the given material.
     /// </summary>
+    [System.Serializable]
     public class GLTFMeshPrimitive
     {
         /// <summary>
         /// A dictionary object, where each key corresponds to mesh attribute semantic
         /// and each value is the index of the accessor containing attribute's data.
         /// </summary>
-        [JsonProperty(Required = Required.Always)]
         public Dictionary<string, GLTFAccessorId> attributes = new Dictionary<string, GLTFAccessorId>();
 
         /// <summary>
@@ -102,10 +139,103 @@ namespace GLTF
         /// displacements' data).
         /// </summary>
         /// TODO: Make dictionary key enums?
-        public Dictionary<string, GLTFAccessorId>[] targets;
+        public List<Dictionary<string, GLTFAccessorId>> targets;
+
+        public static GLTFMeshPrimitive Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var primitive = new GLTFMeshPrimitive();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "attributes":
+                        primitive.attributes = reader.ReadAsDictionary(() => new GLTFAccessorId
+                        {
+                            id = reader.ReadAsInt32().Value,
+                            root = root
+                        });
+                        break;
+                    case "indices":
+                        primitive.indices = GLTFAccessorId.Deserialize(root, reader);
+                        break;
+                    case "material":
+                        primitive.material = GLTFMaterialId.Deserialize(root, reader);
+                        break;
+                    case "mode":
+                        primitive.mode = (GLTFDrawMode) reader.ReadAsInt32().Value;
+                        break;
+                    case "targets":
+                        primitive.targets = reader.ReadList(() =>
+                        {
+                            return reader.ReadAsDictionary(() => new GLTFAccessorId
+                            {
+                                id = reader.ReadAsInt32().Value,
+                                root = root
+                            });
+                        });
+                        break;
+                    case "extensions":
+                    case "extras":
+                    default:
+                        reader.Read();
+                        break;
+                }
+            }
+
+            return primitive;
+        }
 
         // Stored reference to the Mesh so we don't have to regenerate it if used in multiple nodes.
         private Mesh mesh;
+
+        private Vector3[] vertices;
+        private Vector3[] normals;
+        private Vector2[] uv;
+        private Vector2[] uv2;
+        private Vector2[] uv3;
+        private Vector2[] uv4;
+        private Color[] colors;
+        private int[] triangles;
+        private Vector4[] tangents;
+
+        public void BuildVertexAttributes()
+        {
+            if (attributes.ContainsKey(GLTFSemanticProperties.POSITION))
+            {
+                vertices = attributes[GLTFSemanticProperties.POSITION].Value.AsVector3Array();
+            }
+            if (attributes.ContainsKey(GLTFSemanticProperties.NORMAL))
+            {
+                normals = attributes[GLTFSemanticProperties.NORMAL].Value.AsVector3Array();
+            }
+            if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(0)))
+            {
+                uv = attributes[GLTFSemanticProperties.TexCoord(0)].Value.AsVector2Array();
+            }
+            if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(1)))
+            {
+                uv2 = attributes[GLTFSemanticProperties.TexCoord(1)].Value.AsVector2Array();
+            }
+            if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(2)))
+            {
+                uv3 = attributes[GLTFSemanticProperties.TexCoord(2)].Value.AsVector2Array();
+            }
+            if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(3)))
+            {
+                uv4 = attributes[GLTFSemanticProperties.TexCoord(3)].Value.AsVector2Array();
+            }
+            if (attributes.ContainsKey(GLTFSemanticProperties.Color(0)))
+            {
+                colors = attributes[GLTFSemanticProperties.Color(0)].Value.AsColorArray();
+            }
+
+            triangles = indices.Value.AsIntArray();
+
+            CalculateMeshTangents();
+        }
 
         /// <summary>
         /// Build the mesh and material for the GLTFPrimitive and attach them to the primitive object.
@@ -121,39 +251,15 @@ namespace GLTF
             {
                 mesh = new Mesh();
                 mesh.name = meshName;
-
-                if (attributes.ContainsKey(GLTFSemanticProperties.POSITION))
-                {
-                    mesh.vertices = attributes[GLTFSemanticProperties.POSITION].Value.AsVector3Array();
-                }
-                if (attributes.ContainsKey(GLTFSemanticProperties.NORMAL))
-                {
-                    mesh.normals = attributes[GLTFSemanticProperties.NORMAL].Value.AsVector3Array();
-                }
-                if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(0)))
-                {
-                    mesh.uv = attributes[GLTFSemanticProperties.TexCoord(0)].Value.AsVector2Array();
-                }
-                if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(1)))
-                {
-                    mesh.uv2 = attributes[GLTFSemanticProperties.TexCoord(1)].Value.AsVector2Array();
-                }
-                if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(2)))
-                {
-                    mesh.uv3 = attributes[GLTFSemanticProperties.TexCoord(2)].Value.AsVector2Array();
-                }
-                if (attributes.ContainsKey(GLTFSemanticProperties.TexCoord(3)))
-                {
-                    mesh.uv4 = attributes[GLTFSemanticProperties.TexCoord(3)].Value.AsVector2Array();
-                }
-                if (attributes.ContainsKey(GLTFSemanticProperties.Color(0)))
-                {
-                    mesh.colors = attributes[GLTFSemanticProperties.Color(0)].Value.AsColorArray();
-                }
-
-                mesh.triangles = indices.Value.AsIntArray();
-
-                CalculateMeshTangents(mesh);
+                mesh.vertices = vertices;
+                mesh.normals = normals;
+                mesh.uv = uv;
+                mesh.uv2 = uv2;
+                mesh.uv3 = uv3;
+                mesh.uv4 = uv4;
+                mesh.colors = colors;
+                mesh.triangles = triangles;
+                mesh.tangents = tangents;
             }
 
             meshFilter.mesh = mesh;
@@ -167,20 +273,15 @@ namespace GLTF
         // Taken from: http://answers.unity3d.com/comments/190515/view.html
         // Official support for Mesh.RecalculateTangents should be coming in 5.6
         // https://feedback.unity3d.com/suggestions/recalculatetangents
-        private void CalculateMeshTangents(Mesh mesh)
+        private void CalculateMeshTangents()
         {
-            int[] triangles = mesh.triangles;
-            Vector3[] vertices = mesh.vertices;
-            Vector2[] uv = mesh.uv;
-            Vector3[] normals = mesh.normals;
-
             int triangleCount = triangles.Length;
             int vertexCount = vertices.Length;
 
             Vector3[] tan1 = new Vector3[vertexCount];
             Vector3[] tan2 = new Vector3[vertexCount];
 
-            Vector4[] tangents = new Vector4[vertexCount];
+            tangents = new Vector4[vertexCount];
 
             for (long a = 0; a < triangleCount; a += 3)
             {
@@ -236,8 +337,6 @@ namespace GLTF
 
                 tangents[a].w = (Vector3.Dot(Vector3.Cross(n, t), tan2[a]) < 0.0f) ? -1.0f : 1.0f;
             }
-
-            mesh.tangents = tangents;
         }
     }
 
