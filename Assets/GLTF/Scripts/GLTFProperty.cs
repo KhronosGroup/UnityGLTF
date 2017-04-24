@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace GLTF
 {
     public class GLTFProperty
     {
-        public Dictionary<string, object> extensions;
-        public Dictionary<string, object> extras;
+        public Dictionary<string, object> Extensions;
+        public Dictionary<string, object> Extras;
     }
 }

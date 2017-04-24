@@ -8,34 +8,34 @@ namespace GLTF
     /// <summary>
     /// The material appearance of a primitive.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFMaterial : GLTFChildOfRootProperty
     {
         /// <summary>
         /// A set of parameter values that are used to define the metallic-roughness
         /// material model from Physically-Based Rendering (PBR) methodology.
         /// </summary>
-        public GLTFPBRMetallicRoughness pbrMetallicRoughness;
+        public GLTFPBRMetallicRoughness PbrMetallicRoughness;
 
         /// <summary>
         /// A tangent space normal map. Each texel represents the XYZ components of a
         /// normal vector in tangent space.
         /// </summary>
-        public GLTFNormalTextureInfo normalTexture;
+        public GLTFNormalTextureInfo NormalTexture;
 
         /// <summary>
         /// The occlusion map is a greyscale texture, with white indicating areas that
         /// should receive full indirect lighting and black indicating no indirect
         /// lighting.
         /// </summary>
-        public GLTFOcclusionTextureInfo occlusionTexture;
+        public GLTFOcclusionTextureInfo OcclusionTexture;
 
         /// <summary>
         /// The emissive map controls the color and intensity of the light being emitted
         /// by the material. This texture contains RGB components in sRGB color space.
         /// If a fourth component (A) is present, it is ignored.
         /// </summary>
-        public GLTFTextureInfo emissiveTexture;
+        public GLTFTextureInfo EmissiveTexture;
 
         /// <summary>
         /// The RGB components of the emissive color of the material.
@@ -48,7 +48,7 @@ namespace GLTF
         /// <minItems>3</minItems>
         /// <maxItems>3</maxItems>
         /// </summary>
-        public Color emissiveFactor = Color.black;
+        public Color EmissiveFactor = Color.black;
 
         /// <summary>
         /// The material's alpha rendering mode enumeration specifying the interpretation of the
@@ -59,14 +59,14 @@ namespace GLTF
         /// the source and destination areas. The rendered output is combined with the background
         /// using the normal painting operation (i.e. the Porter and Duff over operator).
         /// </summary>
-        public GLTFAlphaMode alphaMode = GLTFAlphaMode.OPAQUE;
+        public GLTFAlphaMode AlphaMode = GLTFAlphaMode.OPAQUE;
 
         /// <summary>
         /// Specifies the cutoff threshold when in `MASK` mode. If the alpha value is greater than
         /// or equal to this value then it is rendered as fully opaque, otherwise, it is rendered
         /// as fully transparent. This value is ignored for other modes.
         /// </summary>
-        public double alphaCutoff = 0.5;
+        public double AlphaCutoff = 0.5;
 
         /// <summary>
         /// Specifies whether the material is double sided. When this value is false, back-face
@@ -74,21 +74,21 @@ namespace GLTF
         /// sided lighting is enabled. The back-face must have its normals reversed before the
         /// lighting equation is evaluated.
         /// </summary>
-        public bool doubleSided = false;
+        public bool DoubleSided;
 
-        private Material material;
+        private Material _material;
 
         /// <summary>
         /// Construct or return the Unity Material for this GLTFMaterial.
         /// </summary>
         public Material GetMaterial(GLTFConfig config)
         {
-            if (material == null)
+            if (_material == null)
             {
-                material = config.MaterialFactory.CreateMaterial(this);
+                _material = config.MaterialFactory.CreateMaterial(this);
             }
 
-            return material;
+            return _material;
         }
 
         public static GLTFMaterial Deserialize(GLTFRoot root, JsonTextReader reader)
@@ -102,31 +102,31 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "pbrMetallicRoughness":
-                        material.pbrMetallicRoughness = GLTFPBRMetallicRoughness.Deserialize(root, reader);
+                        material.PbrMetallicRoughness = GLTFPBRMetallicRoughness.Deserialize(root, reader);
                         break;
                     case "normalTexture":
-                        material.normalTexture = GLTFNormalTextureInfo.Deserialize(root, reader);
+                        material.NormalTexture = GLTFNormalTextureInfo.Deserialize(root, reader);
                         break;
                     case "occlusionTexture":
-                        material.occlusionTexture = GLTFOcclusionTextureInfo.Deserialize(root, reader);
+                        material.OcclusionTexture = GLTFOcclusionTextureInfo.Deserialize(root, reader);
                         break;
                     case "emissiveTexture":
-                        material.emissiveTexture = GLTFTextureInfo.Deserialize(root, reader);
+                        material.EmissiveTexture = GLTFTextureInfo.Deserialize(root, reader);
                         break;
                     case "emissiveFactor":
-                        material.emissiveFactor = reader.ReadAsRGBColor();
+                        material.EmissiveFactor = reader.ReadAsRGBColor();
                         break;
                     case "alphaMode":
-                        material.alphaMode = reader.ReadStringEnum<GLTFAlphaMode>();
+                        material.AlphaMode = reader.ReadStringEnum<GLTFAlphaMode>();
                         break;
                     case "alphaCutoff":
-                        material.alphaCutoff = reader.ReadAsDouble().Value;
+                        material.AlphaCutoff = reader.ReadAsDouble().Value;
                         break;
                     case "doubleSided":
-                        material.doubleSided = reader.ReadAsBoolean().Value;
+                        material.DoubleSided = reader.ReadAsBoolean().Value;
                         break;
                     case "name":
-                        material.name = reader.ReadAsString();
+                        material.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":
@@ -150,23 +150,23 @@ namespace GLTF
     /// <summary>
     /// Reference to a texture.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFTextureInfoBase : GLTFProperty
     {
         /// <summary>
         /// The index of the texture.
         /// </summary>
-        public GLTFTextureId index;
+        public GLTFTextureId Index;
 
         /// <summary>
         /// This integer value is used to construct a string in the format
         /// TEXCOORD_<set index> which is a reference to a key in
         /// mesh.primitives.attributes (e.g. A value of 0 corresponds to TEXCOORD_0).
         /// </summary>
-        public int texCoord = 0;
+        public int TexCoord = 0;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class GLTFTextureInfo : GLTFTextureInfoBase
     {
         public static GLTFTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
@@ -185,10 +185,10 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "index":
-                        textureInfo.index = GLTFTextureId.Deserialize(root, reader);
+                        textureInfo.Index = GLTFTextureId.Deserialize(root, reader);
                         break;
                     case "texCoord":
-                        textureInfo.texCoord = reader.ReadAsInt32().Value;
+                        textureInfo.TexCoord = reader.ReadAsInt32().Value;
                         break;
 	                case "extensions":
 	                case "extras":
@@ -202,7 +202,7 @@ namespace GLTF
         }
     }
 
-    [System.Serializable]
+    [Serializable]
     public class GLTFNormalTextureInfo : GLTFTextureInfoBase
     {
         /// <summary>
@@ -210,7 +210,7 @@ namespace GLTF
         /// This value is ignored if normalTexture is not specified.
         /// This value is linear.
         /// </summary>
-        public double scale = 1.0f;
+        public double Scale = 1.0f;
 
         public static GLTFNormalTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -228,13 +228,13 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "index":  
-                        textureInfo.index = GLTFTextureId.Deserialize(root, reader);
+                        textureInfo.Index = GLTFTextureId.Deserialize(root, reader);
                         break;
                     case "texCoord":
-                        textureInfo.texCoord = reader.ReadAsInt32().Value;
+                        textureInfo.TexCoord = reader.ReadAsInt32().Value;
                         break;
                     case "scale":
-                        textureInfo.scale = reader.ReadAsDouble().Value;
+                        textureInfo.Scale = reader.ReadAsDouble().Value;
                         break;
 	                case "extensions":
 	                case "extras":
@@ -248,7 +248,7 @@ namespace GLTF
         }
     }
 
-    [System.Serializable]
+    [Serializable]
     public class GLTFOcclusionTextureInfo : GLTFTextureInfoBase
     {
         /// <summary>
@@ -260,7 +260,7 @@ namespace GLTF
         /// <minimum>0.0</minimum>
         /// <maximum>1.0</maximum>
         /// </summary>
-        public double strength = 1.0f;
+        public double Strength = 1.0f;
 
         public static GLTFOcclusionTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -278,13 +278,13 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "index":
-                        textureInfo.index = GLTFTextureId.Deserialize(root, reader);
+                        textureInfo.Index = GLTFTextureId.Deserialize(root, reader);
                         break;
                     case "texCoord":
-                        textureInfo.texCoord = reader.ReadAsInt32().Value;
+                        textureInfo.TexCoord = reader.ReadAsInt32().Value;
                         break;
-                    case "scale":
-                        textureInfo.strength = reader.ReadAsDouble().Value;
+                    case "strength":
+                        textureInfo.Strength = reader.ReadAsDouble().Value;
                         break;
 	                case "extensions":
 	                case "extras":
@@ -302,7 +302,7 @@ namespace GLTF
     /// A set of parameter values that are used to define the metallic-roughness
     /// material model from Physically-Based Rendering (PBR) methodology.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFPBRMetallicRoughness
     {
         /// <summary>
@@ -310,7 +310,7 @@ namespace GLTF
         /// The fourth component (A) is the opacity of the material.
         /// These values are linear.
         /// </summary>
-        public Color baseColorFactor = Color.white;
+        public Color BaseColorFactor = Color.white;
 
         /// <summary>
         /// The base color texture.
@@ -319,7 +319,7 @@ namespace GLTF
         /// If the fourth component (A) is present, it represents the opacity of the
         /// material. Otherwise, an opacity of 1.0 is assumed.
         /// </summary>
-        public GLTFTextureInfo baseColorTexture;
+        public GLTFTextureInfo BaseColorTexture;
 
         /// <summary>
         /// The metalness of the material.
@@ -329,7 +329,7 @@ namespace GLTF
         /// dirty metallic surfaces.
         /// This value is linear.
         /// </summary>
-        public double metallicFactor = 1;
+        public double MetallicFactor = 1;
 
         /// <summary>
         /// The roughness of the material.
@@ -337,7 +337,7 @@ namespace GLTF
         /// A value of 0.0 means the material is completely smooth.
         /// This value is linear.
         /// </summary>
-        public double roughnessFactor = 1;
+        public double RoughnessFactor = 1;
 
         /// <summary>
         /// The metallic-roughness texture has two components.
@@ -347,7 +347,7 @@ namespace GLTF
         /// If the third component (B) and/or the fourth component (A) are present,
         /// they are ignored.
         /// </summary>
-        public GLTFTextureInfo metallicRoughnessTexture;
+        public GLTFTextureInfo MetallicRoughnessTexture;
 
         public static GLTFPBRMetallicRoughness Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -365,19 +365,19 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "baseColorFactor":
-                        metallicRoughness.baseColorFactor = reader.ReadAsRGBAColor();
+                        metallicRoughness.BaseColorFactor = reader.ReadAsRGBAColor();
                         break;
                     case "baseColorTexture":
-                        metallicRoughness.baseColorTexture = GLTFTextureInfo.Deserialize(root, reader);
+                        metallicRoughness.BaseColorTexture = GLTFTextureInfo.Deserialize(root, reader);
                         break;
                     case "metallicFactor":
-                        metallicRoughness.metallicFactor = reader.ReadAsDouble().Value;
+                        metallicRoughness.MetallicFactor = reader.ReadAsDouble().Value;
                         break;
                     case "roughnessFactor":
-                        metallicRoughness.roughnessFactor = reader.ReadAsDouble().Value;
+                        metallicRoughness.RoughnessFactor = reader.ReadAsDouble().Value;
                         break;
                     case "metallicRoughnessTexture":
-                        metallicRoughness.metallicRoughnessTexture = GLTFTextureInfo.Deserialize(root, reader);
+                        metallicRoughness.MetallicRoughnessTexture = GLTFTextureInfo.Deserialize(root, reader);
                         break;
 	                case "extensions":
 	                case "extras":

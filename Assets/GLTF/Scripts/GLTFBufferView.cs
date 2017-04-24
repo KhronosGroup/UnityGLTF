@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using Newtonsoft.Json;
 
 namespace GLTF
@@ -7,25 +6,25 @@ namespace GLTF
     /// <summary>
     /// A view into a buffer generally representing a subset of the buffer.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFBufferView : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The index of the buffer.
         /// </summary>
-        public GLTFBufferId buffer;
+        public GLTFBufferId Buffer;
 
         /// <summary>
         /// The offset into the buffer in bytes.
         /// <minimum>0</minimum>
         /// </summary>
-        public int byteOffset;
+        public int ByteOffset;
 
         /// <summary>
         /// The length of the bufferView in bytes.
         /// <minimum>0</minimum>
         /// </summary>
-        public int byteLength;
+        public int ByteLength;
 
         /// <summary>
         /// The stride, in bytes, between vertex attributes or other interleavable data.
@@ -33,46 +32,14 @@ namespace GLTF
         /// <minimum>0</minimum>
         /// <maximum>255</maximum>
         /// </summary>
-        public int byteStride = 0;
+        public int ByteStride;
 
         /// <summary>
         /// The target that the WebGL buffer should be bound to.
         /// All valid values correspond to WebGL enums.
         /// When this is not provided, the bufferView contains animation or skin data.
         /// </summary>
-        public GLTFBufferViewTarget target;
-
-        private byte[] data;
-
-        public byte[] Data
-        {
-            get
-            {
-                if (data != null)
-                {
-                    return data;
-                }
-
-                data = new byte[byteLength];
-
-                byte[] source = buffer.Value.Data;
-
-                if (byteStride != 0)
-                {
-                    for (int i = 0; i < byteLength; i++)
-                    {
-                        data[i] = source[byteOffset + (i * byteStride)];
-                    }
-                }
-                else
-                {
-                    Buffer.BlockCopy(source, byteOffset, data, 0, byteLength);
-                }
-                
-                
-                return data;
-            }
-        }
+        public GLTFBufferViewTarget Target;
 
         public static GLTFBufferView Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -85,22 +52,22 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "buffer":
-                        bufferView.buffer = GLTFBufferId.Deserialize(root, reader);
+                        bufferView.Buffer = GLTFBufferId.Deserialize(root, reader);
                         break;
                     case "byteOffset":
-                        bufferView.byteOffset = reader.ReadAsInt32().Value;
+                        bufferView.ByteOffset = reader.ReadAsInt32().Value;
                         break;
                     case "byteLength":
-                        bufferView.byteLength = reader.ReadAsInt32().Value;
+                        bufferView.ByteLength = reader.ReadAsInt32().Value;
                         break;
                     case "byteStride":
-                        bufferView.byteStride = reader.ReadAsInt32().Value;
+                        bufferView.ByteStride = reader.ReadAsInt32().Value;
                         break;
                     case "target":
-                        bufferView.target = (GLTFBufferViewTarget) reader.ReadAsInt32().Value;
+                        bufferView.Target = (GLTFBufferViewTarget) reader.ReadAsInt32().Value;
                         break;
                     case "name":
-                        bufferView.name = reader.ReadAsString();
+                        bufferView.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":
@@ -116,7 +83,7 @@ namespace GLTF
 
     public enum GLTFBufferViewTarget
     {
-        ARRAY_BUFFER = 34962,
-        ELEMENT_ARRAY_BUFFER = 34963
+        ArrayBuffer = 34962,
+        ElementArrayBuffer = 34963
     }
 }

@@ -1,14 +1,13 @@
-﻿using System.Collections;
+﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace GLTF
 {
     /// <summary>
     /// A texture and its sampler.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFTexture : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -19,7 +18,7 @@ namespace GLTF
         /// `6409` (LUMINANCE)
         /// `6410` (LUMINANCE_ALPHA)
         /// </summary>
-        public GLTFTextureFormat format = GLTFTextureFormat.RGBA;
+        public GLTFTextureFormat Format = GLTFTextureFormat.Rgba;
 
         /// <summary>
         /// The texture's internal format.  Valid values correspond to WebGL enums:
@@ -29,23 +28,23 @@ namespace GLTF
         /// `6409` (LUMINANCE)
         /// `6410` (LUMINANCE_ALPHA)
         /// </summary>
-        public GLTFTextureFormat internalFormat = GLTFTextureFormat.RGBA;
+        public GLTFTextureFormat InternalFormat = GLTFTextureFormat.Rgba;
 
         /// <summary>
         /// The index of the sampler used by this texture.
         /// </summary>
-        public GLTFSamplerId sampler;
+        public GLTFSamplerId Sampler;
 
         /// <summary>
         /// The index of the image used by this texture.
         /// </summary>
-        public GLTFImageId source;
+        public GLTFImageId Source;
 
         /// <summary>
         /// The target that the WebGL texture should be bound to.
         /// Valid values correspond to WebGL enums: `3553` (TEXTURE_2D).
         /// </summary>
-        public GLTFTextureTarget target = GLTFTextureTarget.TEXTURE_2D;
+        public GLTFTextureTarget Target = GLTFTextureTarget.Texture2D;
 
         /// <summary>
         /// Texel datatype.
@@ -55,14 +54,14 @@ namespace GLTF
         /// `32819` (UNSIGNED_SHORT_4_4_4_4)
         /// `32820` (UNSIGNED_SHORT_5_5_5_1)
         /// </summary>
-        public GLTFTexelDataType type = GLTFTexelDataType.UNSIGNED_BYTE;
+        public GLTFTexelDataType Type = GLTFTexelDataType.UnsignedByte;
 
         /// <summary>
         /// Return or create the GLTFTexture's Texture object.
         /// </summary>
         public Texture2D Texture
         {
-            get { return source.Value.texture; }
+            get { return Source.Value.Texture; }
         }
 
         public static GLTFTexture Deserialize(GLTFRoot root, JsonTextReader reader)
@@ -76,25 +75,25 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "format":
-                        texture.format = (GLTFTextureFormat) reader.ReadAsInt32().Value;
+                        texture.Format = (GLTFTextureFormat) reader.ReadAsInt32().Value;
                         break;
                     case "internalFormat":
-                        texture.internalFormat = (GLTFTextureFormat) reader.ReadAsInt32().Value;
+                        texture.InternalFormat = (GLTFTextureFormat) reader.ReadAsInt32().Value;
                         break;
                     case "sampler":
-                        texture.sampler = GLTFSamplerId.Deserialize(root, reader);
+                        texture.Sampler = GLTFSamplerId.Deserialize(root, reader);
                         break;
                     case "source":
-                        texture.source = GLTFImageId.Deserialize(root, reader);
+                        texture.Source = GLTFImageId.Deserialize(root, reader);
                         break;
                     case "target":
-                        texture.target = (GLTFTextureTarget) reader.ReadAsInt32().Value;
+                        texture.Target = (GLTFTextureTarget) reader.ReadAsInt32().Value;
                         break;
                     case "type":
-                        texture.type = (GLTFTexelDataType) reader.ReadAsInt32().Value;
+                        texture.Type = (GLTFTexelDataType) reader.ReadAsInt32().Value;
                         break;
                     case "name":
-                        texture.name = reader.ReadAsString();
+                        texture.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":
@@ -113,11 +112,11 @@ namespace GLTF
     /// </summary>
     public enum GLTFTextureFormat
     {
-        ALPHA = 6406,
-        RGB = 6407,
-        RGBA = 6408,
-        LUMINANCE = 6409,
-        LUMINANCE_ALPHA = 6410
+        Alpha = 6406,
+        Rgb = 6407,
+        Rgba = 6408,
+        Luminance = 6409,
+        LuminanceAlpha = 6410
     }
 
     /// <summary>
@@ -125,7 +124,7 @@ namespace GLTF
     /// </summary>
     public enum GLTFTextureTarget
     {
-        TEXTURE_2D = 3553
+        Texture2D = 3553
     }
 
     /// <summary>
@@ -133,9 +132,9 @@ namespace GLTF
     /// </summary>
     public enum GLTFTexelDataType
     {
-        UNSIGNED_BYTE = 5121,
-        UNSIGNED_SHORT_5_6_5 = 33635,
-        UNSIGNED_SHORT_4_4_4_4 = 32819,
-        UNSIGNED_SHORT_5_5_5_1 = 32820
+        UnsignedByte = 5121,
+        UnsignedShort_5_6_5 = 33635,
+	    UnsignedShort_4_4_4_4 = 32819,
+	    UnsignedShort_5_5_5_1 = 32820
     }
 }

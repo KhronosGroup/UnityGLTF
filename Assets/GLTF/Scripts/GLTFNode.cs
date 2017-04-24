@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections.Generic;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
@@ -18,55 +19,55 @@ namespace GLTF
     /// (referenced by an animation.channel.target), only TRS properties may be present;
     /// `matrix` will not be present.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFNode : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The index of the camera referenced by this node.
         /// </summary>
-        public GLTFCameraId camera;
+        public GLTFCameraId Camera;
 
         /// <summary>
         /// The indices of this node's children.
         /// </summary>
-        public List<GLTFNodeId> children;
+        public List<GLTFNodeId> Children;
 
         /// <summary>
         /// The index of the skin referenced by this node.
         /// </summary>
-        public GLTFSkinId skin;
+        public GLTFSkinId Skin;
 
         /// <summary>
         /// A floating-point 4x4 transformation matrix stored in column-major order.
         /// </summary>
-        public List<double> matrix;
+        public List<double> Matrix;
 
         /// <summary>
         /// The index of the mesh in this node.
         /// </summary>
-        public GLTFMeshId mesh;
+        public GLTFMeshId Mesh;
 
         /// <summary>
         /// The node's unit quaternion rotation in the order (x, y, z, w),
         /// where w is the scalar.
         /// </summary>
-        public Quaternion rotation = new Quaternion(0, 0, 0, 1);
+        public Quaternion Rotation = new Quaternion(0, 0, 0, 1);
 
         /// <summary>
         /// The node's non-uniform scale.
         /// </summary>
-        public Vector3 scale = Vector3.one;
+        public Vector3 Scale = Vector3.one;
 
         /// <summary>
         /// The node's translation.
         /// </summary>
-        public Vector3 translation = Vector3.zero;
+        public Vector3 Translation = Vector3.zero;
 
         /// <summary>
         /// The weights of the instantiated Morph Target.
         /// Number of elements must match number of Morph Targets of used mesh.
         /// </summary>
-        public List<double> weights;
+        public List<double> Weights;
 
         public static GLTFNode Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -79,34 +80,34 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "camera":
-                        node.camera = GLTFCameraId.Deserialize(root, reader);
+                        node.Camera = GLTFCameraId.Deserialize(root, reader);
                         break;
                     case "children":
-                        node.children = GLTFNodeId.ReadList(root, reader);
+                        node.Children = GLTFNodeId.ReadList(root, reader);
                         break;
                     case "skin":
-                        node.skin = GLTFSkinId.Deserialize(root, reader);
+                        node.Skin = GLTFSkinId.Deserialize(root, reader);
                         break;
                     case "matrix":
-                        node.matrix = reader.ReadDoubleList();
+                        node.Matrix = reader.ReadDoubleList();
                         break;
                     case "mesh":
-                        node.mesh = GLTFMeshId.Deserialize(root, reader);
+                        node.Mesh = GLTFMeshId.Deserialize(root, reader);
                         break;
                     case "rotation":
-                        node.rotation = reader.ReadAsQuaternion();
+                        node.Rotation = reader.ReadAsQuaternion();
                         break;
                     case "scale":
-                        node.scale = reader.ReadAsVector3();
+                        node.Scale = reader.ReadAsVector3();
                         break;
                     case "translation":
-                        node.translation = reader.ReadAsVector3();
+                        node.Translation = reader.ReadAsVector3();
                         break;
                     case "weights":
-                        node.weights = reader.ReadDoubleList();
+                        node.Weights = reader.ReadDoubleList();
                         break;
                     case "name":
-                        node.name = reader.ReadAsString();
+                        node.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":
@@ -126,18 +127,18 @@ namespace GLTF
         /// <param name="config">Config for GLTF scene creation.</param>
         public void Create(GameObject parent, GLTFConfig config)
         {
-            GameObject nodeObj = new GameObject(name ?? "GLTFNode");
+            var nodeObj = new GameObject(Name ?? "GLTFNode");
             nodeObj.transform.parent = parent.transform;
 
             // Set the transform properties from the GLTFNode's values.
             // Use the matrix first if set.
-            if (matrix != null)
+            if (Matrix != null)
             {
-                Matrix4x4 mat = new Matrix4x4();
+                var mat = new Matrix4x4();
 
-                for (int i = 0; i < 16; i++)
+                for (var i = 0; i < 16; i++)
                 {
-                    mat[i] = (float)matrix[i];
+                    mat[i] = (float)Matrix[i];
                 }
 
                 nodeObj.transform.localPosition = mat.GetColumn(3);
@@ -148,11 +149,11 @@ namespace GLTF
                     mat.GetColumn(2).magnitude
                 );
 
-                float w = Mathf.Sqrt(1.0f + mat.m00 + mat.m11 + mat.m22) / 2.0f;
-                float w4 = 4.0f * w;
-                float x = (mat.m21 - mat.m12) / w4;
-                float y = (mat.m02 - mat.m20) / w4;
-                float z = (mat.m10 - mat.m01) / w4;
+                var w = Mathf.Sqrt(1.0f + mat.m00 + mat.m11 + mat.m22) / 2.0f;
+	            var w4 = 4.0f * w;
+	            var x = (mat.m21 - mat.m12) / w4;
+	            var y = (mat.m02 - mat.m20) / w4;
+	            var z = (mat.m10 - mat.m01) / w4;
 
                 x = float.IsNaN(x) ? 0 : x;
                 y = float.IsNaN(y) ? 0 : y;
@@ -163,15 +164,15 @@ namespace GLTF
             // Otherwise fall back to the TRS properties.
             else
             {
-                nodeObj.transform.localPosition = translation;
-                nodeObj.transform.localScale = scale;
-                nodeObj.transform.localRotation = rotation;
+                nodeObj.transform.localPosition = Translation;
+                nodeObj.transform.localScale = Scale;
+                nodeObj.transform.localRotation = Rotation;
             }
 
             // TODO: Add support for skin/morph targets
-            if (mesh != null)
+            if (Mesh != null)
             {
-                mesh.Value.SetMeshesAndMaterials(nodeObj, config);
+                Mesh.Value.SetMeshesAndMaterials(nodeObj, config);
             }
 
             /* TODO: implement camera (probably a flag to disable for VR as well)
@@ -182,7 +183,7 @@ namespace GLTF
             }
             */
 
-            foreach(var child in children)
+            foreach(var child in Children)
             {
                 child.Value.Create(nodeObj, config);
             }

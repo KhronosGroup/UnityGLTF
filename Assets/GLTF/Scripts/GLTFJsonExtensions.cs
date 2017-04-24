@@ -65,13 +65,15 @@ namespace GLTF.JsonExtensions
                 throw new Exception("Invalid color value.");
             }
 
-            var color = new Color();
-            color.r = (float)reader.ReadAsDouble().Value;
-            color.g = (float)reader.ReadAsDouble().Value;
-            color.b = (float)reader.ReadAsDouble().Value;
-            color.a = (float)reader.ReadAsDouble().Value;
+	        var color = new Color
+	        {
+		        r = (float) reader.ReadAsDouble().Value,
+		        g = (float) reader.ReadAsDouble().Value,
+		        b = (float) reader.ReadAsDouble().Value,
+		        a = (float) reader.ReadAsDouble().Value
+	        };
 
-            if (reader.Read() && reader.TokenType != JsonToken.EndArray)
+	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 throw new Exception("Invalid color value.");
             }
@@ -86,13 +88,15 @@ namespace GLTF.JsonExtensions
                 throw new Exception("Invalid color value.");
             }
 
-            var color = new Color();
-            color.r = (float)reader.ReadAsDouble().Value;
-            color.g = (float)reader.ReadAsDouble().Value;
-            color.b = (float)reader.ReadAsDouble().Value;
-            color.a = 1.0f;
+	        var color = new Color
+	        {
+		        r = (float) reader.ReadAsDouble().Value,
+		        g = (float) reader.ReadAsDouble().Value,
+		        b = (float) reader.ReadAsDouble().Value,
+		        a = 1.0f
+	        };
 
-            if (reader.Read() && reader.TokenType != JsonToken.EndArray)
+	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 throw new Exception("Invalid color value.");
             }
@@ -107,12 +111,14 @@ namespace GLTF.JsonExtensions
                 throw new Exception("Invalid vector value.");
             }
 
-            var vector = new Vector3();
-            vector.x = (float)reader.ReadAsDouble().Value;
-            vector.y = (float)reader.ReadAsDouble().Value;
-            vector.z = (float)reader.ReadAsDouble().Value;
+	        var vector = new Vector3
+	        {
+		        x = (float) reader.ReadAsDouble().Value,
+		        y = (float) reader.ReadAsDouble().Value,
+		        z = (float) reader.ReadAsDouble().Value
+	        };
 
-            if (reader.Read() && reader.TokenType != JsonToken.EndArray)
+	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 throw new Exception("Invalid vector value.");
             }
@@ -127,13 +133,15 @@ namespace GLTF.JsonExtensions
                 throw new Exception("Invalid vector value.");
             }
 
-            var quat = new Quaternion();
-            quat.x = (float)reader.ReadAsDouble().Value;
-            quat.y = (float)reader.ReadAsDouble().Value;
-            quat.z = (float)reader.ReadAsDouble().Value;
-            quat.w = (float)reader.ReadAsDouble().Value;
+	        var quat = new Quaternion
+	        {
+		        x = (float) reader.ReadAsDouble().Value,
+		        y = (float) reader.ReadAsDouble().Value,
+		        z = (float) reader.ReadAsDouble().Value,
+		        w = (float) reader.ReadAsDouble().Value
+	        };
 
-            if (reader.Read() && reader.TokenType != JsonToken.EndArray)
+	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 throw new Exception("Invalid vector value.");
             }

@@ -1,7 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.ComponentModel;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace GLTF
 {
@@ -9,7 +10,7 @@ namespace GLTF
     /// Image data used to create a texture. Image can be referenced by URI or
     /// `bufferView` index. `mimeType` is required in the latter case.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFImage : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -17,24 +18,24 @@ namespace GLTF
         /// Instead of referencing an external file, the uri can also be a data-uri.
         /// The image format must be jpg, png, bmp, or gif.
         /// </summary>
-        public GLTFUri uri;
+        public GLTFUri Uri;
 
         /// <summary>
         /// The image's MIME type.
         /// <minLength>1</minLength>
         /// </summary>
-        public string mimeType;
+        public string MimeType;
 
         /// <summary>
         /// The index of the bufferView that contains the image.
         /// Use this instead of the image's uri property.
         /// </summary>
-        public GLTFBufferViewId bufferView;
+        public GLTFBufferViewId BufferView;
 
         /// <summary>
         /// Return the GLTFTexture's Texture object.
         /// </summary>
-        public Texture2D texture;
+        public Texture2D Texture;
 
         /// <summary>
         /// Ensure the image is loaded from its URI.
@@ -43,15 +44,19 @@ namespace GLTF
         /// </summary>
         public IEnumerator Load()
         {
-            if (uri != null)
+            if (Uri != null)
             {
-                yield return uri.LoadTexture();
-                texture = uri.texture;
+                yield return Uri.LoadTexture();
+                Texture = Uri.Texture;
             }
             else
             {
-                texture = new Texture2D(0, 0);
-                texture.LoadImage(bufferView.Value.Data);
+                Texture = new Texture2D(0, 0);
+	            var bufferView = BufferView.Value;
+				var bufferData = bufferView.Buffer.Value.Data;
+	            var data = new byte[bufferView.ByteLength];
+	            Buffer.BlockCopy(bufferData, bufferView.ByteOffset, data, 0, data.Length);
+                Texture.LoadImage(data);
             }
         }
 
@@ -66,16 +71,16 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "uri":
-                        image.uri = GLTFUri.Deserialize(root, reader);
+                        image.Uri = GLTFUri.Deserialize(root, reader);
                         break;
                     case "mimeType":
-                        image.mimeType = reader.ReadAsString();
+                        image.MimeType = reader.ReadAsString();
                         break;
                     case "bufferView":
-                        image.bufferView = GLTFBufferViewId.Deserialize(root, reader);
+                        image.BufferView = GLTFBufferViewId.Deserialize(root, reader);
                         break;
                     case "name":
-                        image.name = reader.ReadAsString();
+                        image.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":

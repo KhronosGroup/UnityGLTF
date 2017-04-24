@@ -10,36 +10,36 @@ namespace GLTF
     /// A wrapper around the GLTF URI string with utility functions to load
     /// or parse its data.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFUri
     {
 
-        public static string BASE64_STR = "data:application/octet-stream;base64,";
+        public static string Base64StringInitializer = "data:application/octet-stream;base64,";
 
-	    private GLTFRoot root;
+	    private readonly GLTFRoot _root;
 
         /// <summary>
         /// The GLTF uri string. 
         /// This can either be a url or base64 encoded string.
         /// </summary>
-        public string uri;
+        public string Uri;
 
-        /// <summary>
-        /// The fetched uri data.
-        /// This will be null until it is done downloading.
-        /// </summary>
-        public byte[] data;
+	    /// <summary>
+	    /// The fetched buffer data.
+	    /// This will be null until it is done downloading.
+	    /// </summary>
+		public byte[] Data { get; private set; }
 
-        /// <summary>
-        /// The fetched uri texture.
-        /// This will be null until it is done downloading.
-        /// </summary>
-        public Texture2D texture;
+		/// <summary>
+		/// The fetched uri texture.
+		/// This will be null until it is done downloading.
+		/// </summary>
+		public Texture2D Texture { get; private set; }
 
-        public GLTFUri(GLTFRoot root, string uri)
+		public GLTFUri(GLTFRoot root, string uri)
         {
-            this.root = root;
-            this.uri = uri;
+            _root = root;
+            Uri = uri;
         }
 
         /// <summary>
@@ -47,20 +47,20 @@ namespace GLTF
         /// </summary>
         public IEnumerator LoadBuffer()
         {
-            if (data == null)
+            if (Data == null)
             {
-				if (uri.StartsWith(BASE64_STR))
+				if (Uri.StartsWith(Base64StringInitializer))
 				{
-					string base64Data = uri.Substring(BASE64_STR.Length);
-					data = Convert.FromBase64String(base64Data);
+					var base64Data = Uri.Substring(Base64StringInitializer.Length);
+					Data = Convert.FromBase64String(base64Data);
 				}
 				else
 				{
-					UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(root.Url, uri));
+					var www = UnityWebRequest.Get(AbsolutePath(_root.Url, Uri));
 
 					yield return www.Send();
 
-					data = www.downloadHandler.data;
+					Data = www.downloadHandler.data;
 				}
 			}
         }
@@ -70,23 +70,23 @@ namespace GLTF
         /// </summary>
         public IEnumerator LoadTexture()
         {
-            if (data == null)
+            if (Data == null)
             {
-                if (uri.StartsWith(BASE64_STR))
+                if (Uri.StartsWith(Base64StringInitializer))
                 {
-                    string base64Data = uri.Substring(BASE64_STR.Length);
+                    var base64Data = Uri.Substring(Base64StringInitializer.Length);
                     var textureData = Convert.FromBase64String(base64Data);
-                    texture = new Texture2D(0, 0);
-                    texture.LoadImage(textureData);
+                    Texture = new Texture2D(0, 0);
+                    Texture.LoadImage(textureData);
                 }
                 else
                 {
-                    UnityWebRequest www = UnityWebRequest.Get(AbsolutePath(root.Url, uri));
+                    var www = UnityWebRequest.Get(AbsolutePath(_root.Url, Uri));
                     www.downloadHandler = new DownloadHandlerTexture();
 
                     yield return www.Send();
 
-                    texture = DownloadHandlerTexture.GetContent(www);
+                    Texture = DownloadHandlerTexture.GetContent(www);
                 }
             }
         }

@@ -31,12 +31,12 @@ namespace GLTF {
                 throw new Exception("No default scene in gltf file.");
             }
 
-            foreach (var buffer in gltf.buffers)
+            foreach (var buffer in gltf.Buffers)
             {
                 yield return buffer.Load();
             }
 
-            foreach (var image in gltf.images)
+            foreach (var image in gltf.Images)
             {
                 yield return image.Load();
             }
@@ -69,7 +69,7 @@ namespace GLTF {
             ThreadPool.QueueUserWorkItem((_) =>
             {
 
-                foreach (var mesh in gltf.meshes)
+                foreach (var mesh in gltf.Meshes)
                 {
                     mesh.BuildVertexAttributes();
                 }

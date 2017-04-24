@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using GLTF.JsonExtensions;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -8,13 +8,13 @@ namespace GLTF
     /// <summary>
     /// The root nodes of a scene.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFScene : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The indices of each root node.
         /// </summary>
-        public List<GLTFNodeId> nodes;
+        public List<GLTFNodeId> Nodes;
 
         public static GLTFScene Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -27,10 +27,10 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "nodes":
-                        scene.nodes = GLTFNodeId.ReadList(root, reader);
+                        scene.Nodes = GLTFNodeId.ReadList(root, reader);
                         break;
                     case "name":
-                        scene.name = reader.ReadAsString();
+                        scene.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":
@@ -59,10 +59,10 @@ namespace GLTF
         /// <param name="config">Config for GLTF scene creation.</param>
         public GameObject Create(GameObject gltfRoot, GLTFConfig config)
         {
-            GameObject sceneObj = new GameObject(name ?? "GLTFScene");
+            var sceneObj = new GameObject(Name ?? "GLTFScene");
             sceneObj.transform.SetParent(gltfRoot.transform, false);
 
-            foreach (var node in nodes)
+            foreach (var node in Nodes)
             {
                 node.Value.Create(sceneObj, config); 
             }

@@ -1,5 +1,4 @@
 ﻿using System;
-using UnityEngine;
 using Newtonsoft.Json;
 
 namespace GLTF
@@ -7,28 +6,28 @@ namespace GLTF
     /// <summary>
     /// Metadata about the glTF asset.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFAsset : GLTFProperty
     {
         /// <summary>
         /// A copyright message suitable for display to credit the content creator.
         /// </summary>
-        public string copyright;
+        public string Copyright;
 
         /// <summary>
         /// Tool that generated this glTF model. Useful for debugging.
         /// </summary>
-        public string generator;
+        public string Generator;
 
         /// <summary>
         /// The glTF version.
         /// </summary>
-        public string version;
+        public string Version;
 
         /// <summary>
         /// The minimum glTF version that this asset targets.
         /// </summary>
-        public string minVersion;
+        public string MinVersion;
 
         public static GLTFAsset Deserialize(JsonTextReader reader)
         {
@@ -46,16 +45,16 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "copyright":
-                        asset.copyright = reader.ReadAsString();
+                        asset.Copyright = reader.ReadAsString();
                         break;
                     case "generator":
-                        asset.generator = reader.ReadAsString();
+                        asset.Generator = reader.ReadAsString();
                         break;
                     case "version":
-                        asset.version = reader.ReadAsString();
+                        asset.Version = reader.ReadAsString();
                         break;
                     case "minVersion":
-                        asset.minVersion = reader.ReadAsString();
+                        asset.MinVersion = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":

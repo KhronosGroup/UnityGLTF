@@ -1,7 +1,5 @@
 using System;
-using GLTF.JsonExtensions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace GLTF
 {
@@ -9,27 +7,27 @@ namespace GLTF
     /// A camera's projection.  A node can reference a camera to apply a transform
     /// to place the camera in the scene
     /// </summary>
-    [System.Serializable]
-    public class GLTFCamera
+    [Serializable]
+    public class GLTFCamera : GLTFProperty
     {
         /// <summary>
         /// An orthographic camera containing properties to create an orthographic
         /// projection matrix.
         /// </summary>
-        public GLTFCameraOrthographic orthographic;
+        public GLTFCameraOrthographic Orthographic;
 
         /// <summary>
         /// A perspective camera containing properties to create a perspective
         /// projection matrix.
         /// </summary>
-        public GLTFCameraPerspective perspective;
+        public GLTFCameraPerspective Perspective;
 
         /// <summary>
         /// Specifies if the camera uses a perspective or orthographic projection.
         /// Based on this, either the camera's `perspective` or `orthographic` property
         /// will be defined.
         /// </summary>
-        public GLTFCameraType type;
+        public GLTFCameraType Type;
 
         public static GLTFCamera Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -42,7 +40,7 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "orthographic":
-                        camera.orthographic = GLTFCameraOrthographic.Deserialize(root, reader);
+                        camera.Orthographic = GLTFCameraOrthographic.Deserialize(root, reader);
                         break;
                     case "extensions":
                     case "extras":
@@ -56,31 +54,32 @@ namespace GLTF
         }
     }
 
-    /// <summary>
-    /// An orthographic camera containing properties to create an orthographic
-    /// projection matrix.
-    /// </summary>
-    public class GLTFCameraOrthographic
-    {
+	/// <summary>
+	/// An orthographic camera containing properties to create an orthographic
+	/// projection matrix.
+	/// </summary>
+	[Serializable]
+	public class GLTFCameraOrthographic : GLTFProperty
+	{
         /// <summary>
         /// The floating-point horizontal magnification of the view.
         /// </summary>
-        public double xmag;
+        public double XMag;
 
         /// <summary>
         /// The floating-point vertical magnification of the view.
         /// </summary>
-        public double ymag;
+        public double YMag;
 
         /// <summary>
         /// The floating-point distance to the far clipping plane.
         /// </summary>
-        public double zfar;
+        public double ZFar;
 
         /// <summary>
         /// The floating-point distance to the near clipping plane.
         /// </summary>
-        public double znear;
+        public double ZNear;
 
         public static GLTFCameraOrthographic Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -98,16 +97,16 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "xmag":
-                        cameraOrthographic.xmag = reader.ReadAsDouble().Value;
+                        cameraOrthographic.XMag = reader.ReadAsDouble().Value;
                         break;
                     case "ymag":
-                        cameraOrthographic.ymag = reader.ReadAsDouble().Value;
+                        cameraOrthographic.YMag = reader.ReadAsDouble().Value;
                         break;
                     case "zfar":
-                        cameraOrthographic.zfar = reader.ReadAsDouble().Value;
+                        cameraOrthographic.ZFar = reader.ReadAsDouble().Value;
                         break;
                     case "znear":
-                        cameraOrthographic.znear = reader.ReadAsDouble().Value;
+                        cameraOrthographic.ZNear = reader.ReadAsDouble().Value;
                         break;
                     case "extensions":
                     case "extras":
@@ -121,24 +120,25 @@ namespace GLTF
         }
     }
 
-    /// <summary>
-    /// A perspective camera containing properties to create a perspective projection
-    /// matrix.
-    /// </summary>
-    public class GLTFCameraPerspective
+	/// <summary>
+	/// A perspective camera containing properties to create a perspective projection
+	/// matrix.
+	/// </summary>
+	[Serializable]
+	public class GLTFCameraPerspective : GLTFProperty
     {
         /// <summary>
         /// The floating-point aspect ratio of the field of view.
         /// When this is undefined, the aspect ratio of the canvas is used.
         /// <minimum>0.0</minimum>
         /// </summary>
-        public double aspectRatio;
+        public double AspectRatio;
 
         /// <summary>
         /// The floating-point vertical field of view in radians.
         /// <minimum>0.0</minimum>
         /// </summary>
-        public double yfov;
+        public double YFov;
 
         /// <summary>
         /// The floating-point distance to the far clipping plane. When defined,
@@ -146,13 +146,13 @@ namespace GLTF
         /// If `zfar` is undefined, runtime must use infinite projection matrix.
         /// <minimum>0.0</minimum>
         /// </summary>
-        public double zfar;
+        public double ZFar;
 
         /// <summary>
         /// The floating-point distance to the near clipping plane.
         /// <minimum>0.0</minimum>
         /// </summary>
-        public double znear;
+        public double ZNear;
 
         public static GLTFCameraPerspective Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -170,16 +170,16 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "aspectRatio":
-                        cameraPerspective.aspectRatio = reader.ReadAsDouble().Value;
+                        cameraPerspective.AspectRatio = reader.ReadAsDouble().Value;
                         break;
                     case "yfov":
-                        cameraPerspective.yfov = reader.ReadAsDouble().Value;
+                        cameraPerspective.YFov = reader.ReadAsDouble().Value;
                         break;
                     case "zfar":
-                        cameraPerspective.zfar = reader.ReadAsDouble().Value;
+                        cameraPerspective.ZFar = reader.ReadAsDouble().Value;
                         break;
                     case "znear":
-                        cameraPerspective.znear = reader.ReadAsDouble().Value;
+                        cameraPerspective.ZNear = reader.ReadAsDouble().Value;
                         break;
                     case "extensions":
                     case "extras":

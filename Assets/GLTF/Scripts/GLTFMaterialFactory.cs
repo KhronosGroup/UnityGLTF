@@ -16,57 +16,57 @@ namespace GLTF
     {
         public Material CreateMaterial(GLTFMaterial def)
         {
-            Material material = new Material(Shader.Find("GLTF/GLTFMetallicRoughness"));
+            var material = new Material(Shader.Find("GLTF/GLTFMetallicRoughness"));
 
-            if (def.pbrMetallicRoughness != null)
+            if (def.PbrMetallicRoughness != null)
             {
-                GLTFPBRMetallicRoughness pbr = def.pbrMetallicRoughness;
+                var pbr = def.PbrMetallicRoughness;
 
-                material.SetColor("_BaseColorFactor", pbr.baseColorFactor);
+                material.SetColor("_BaseColorFactor", pbr.BaseColorFactor);
 
-                if (pbr.baseColorTexture != null)
+                if (pbr.BaseColorTexture != null)
                 {
-                    GLTFTexture texture = pbr.baseColorTexture.index.Value;
+                    var texture = pbr.BaseColorTexture.Index.Value;
                     material.SetTexture("_MainTex", texture.Texture);
                     material.SetTextureScale("_MainTex", new Vector2(1, -1));
                 }
 
-                material.SetFloat("_MetallicFactor", (float)pbr.metallicFactor);
+                material.SetFloat("_MetallicFactor", (float)pbr.MetallicFactor);
 
-                if (pbr.metallicRoughnessTexture != null)
+                if (pbr.MetallicRoughnessTexture != null)
                 {
-                    GLTFTexture texture = pbr.metallicRoughnessTexture.index.Value;
+                    var texture = pbr.MetallicRoughnessTexture.Index.Value;
                     material.SetTexture("_MetallicRoughnessMap", texture.Texture);
                     material.SetTextureScale("_MetallicRoughnessMap", new Vector2(1, -1));
                 }
 
-                material.SetFloat("_RoughnessFactor", (float)pbr.roughnessFactor);
+                material.SetFloat("_RoughnessFactor", (float)pbr.RoughnessFactor);
             }
 
-            if (def.normalTexture != null)
+            if (def.NormalTexture != null)
             {
-                GLTFTexture texture = def.normalTexture.index.Value;
+                var texture = def.NormalTexture.Index.Value;
                 material.SetTexture("_NormalMap", texture.Texture);
                 material.SetTextureScale("_NormalMap", new Vector2(1, -1));
-                material.SetFloat("_NormalScale", (float)def.normalTexture.scale);
+                material.SetFloat("_NormalScale", (float)def.NormalTexture.Scale);
             }
 
-            if (def.occlusionTexture != null)
+            if (def.OcclusionTexture != null)
             {
-                GLTFTexture texture = def.occlusionTexture.index.Value;
+                var texture = def.OcclusionTexture.Index.Value;
                 material.SetTexture("_OcclusionMap", texture.Texture);
                 material.SetTextureScale("_OcclusionMap", new Vector2(1, -1));
-                material.SetFloat("_OcclusionStrength", (float)def.occlusionTexture.strength);
+                material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
             }
 
-            if (def.emissiveTexture != null)
+            if (def.EmissiveTexture != null)
             {
-                GLTFTexture texture = def.emissiveTexture.index.Value;
+                var texture = def.EmissiveTexture.Index.Value;
                 material.SetTextureScale("_EmissiveMap", new Vector2(1, -1));
                 material.SetTexture("_EmissiveMap", texture.Texture);
             }
 
-            material.SetColor("_EmissiveFactor", def.emissiveFactor);
+            material.SetColor("_EmissiveFactor", def.EmissiveFactor);
 
             return material;
         }

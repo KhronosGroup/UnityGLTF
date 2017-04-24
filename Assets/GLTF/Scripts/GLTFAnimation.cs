@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace GLTF
 {
     /// <summary>
     /// A keyframe animation.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFAnimation : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -17,13 +16,13 @@ namespace GLTF
         /// node's property. Different channels of the same animation can't have equal
         /// targets.
         /// </summary>
-        public List<GLTFAnimationChannel> channels;
+        public List<GLTFAnimationChannel> Channels;
 
         /// <summary>
         /// An array of samplers that combines input and output accessors with an
         /// interpolation algorithm to define a keyframe graph (but not its target).
         /// </summary>
-        public List<GLTFAnimationSampler> samplers;
+        public List<GLTFAnimationSampler> Samplers;
 
         public static GLTFAnimation Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -36,10 +35,10 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "channels":
-                        animation.channels = reader.ReadList(() => GLTFAnimationChannel.Deserialize(root, reader));
+                        animation.Channels = reader.ReadList(() => GLTFAnimationChannel.Deserialize(root, reader));
                         break;
                     case "samplers":
-                        animation.samplers = reader.ReadList(() => GLTFAnimationSampler.Deserialize(root, reader));
+                        animation.Samplers = reader.ReadList(() => GLTFAnimationSampler.Deserialize(root, reader));
                         break;
                     case "extensions":
                     case "extras":
@@ -57,19 +56,19 @@ namespace GLTF
     /// <summary>
     /// Targets an animation's sampler at a node's property.
     /// </summary>
-    [System.Serializable]
-    public class GLTFAnimationChannel
+    [Serializable]
+    public class GLTFAnimationChannel : GLTFProperty
     {
         /// <summary>
         /// The index of a sampler in this animation used to compute the value for the
         /// target, e.g., a node's translation, rotation, or scale (TRS).
         /// </summary>
-        public GLTFSamplerId sampler;
+        public GLTFSamplerId Sampler;
 
         /// <summary>
         /// The index of the node and TRS property to target.
         /// </summary>
-        public GLTFAnimationChannelTarget target;
+        public GLTFAnimationChannelTarget Target;
 
         public static GLTFAnimationChannel Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -87,10 +86,10 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "sampler":
-                        animationChannel.sampler = GLTFSamplerId.Deserialize(root, reader);
+                        animationChannel.Sampler = GLTFSamplerId.Deserialize(root, reader);
                         break;
                     case "target":
-                        animationChannel.target = GLTFAnimationChannelTarget.Deserialize(root, reader);
+                        animationChannel.Target = GLTFAnimationChannelTarget.Deserialize(root, reader);
                         break;
                     case "extensions":
                     case "extras":
@@ -107,18 +106,18 @@ namespace GLTF
     /// <summary>
     /// The index of the node and TRS property that an animation channel targets.
     /// </summary>
-    [System.Serializable]
-    public class GLTFAnimationChannelTarget
+    [Serializable]
+    public class GLTFAnimationChannelTarget : GLTFProperty
     {
         /// <summary>
         /// The index of the node to target.
         /// </summary>
-        public GLTFNodeId node;
+        public GLTFNodeId Node;
 
         /// <summary>
         /// The name of the node's TRS property to modify.
         /// </summary>
-        public GLTFAnimationChannelPath path;
+        public GLTFAnimationChannelPath Path;
 
         public static GLTFAnimationChannelTarget Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -136,10 +135,10 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "node":
-                        animationChannelTarget.node = GLTFNodeId.Deserialize(root, reader);
+                        animationChannelTarget.Node = GLTFNodeId.Deserialize(root, reader);
                         break;
                     case "path":
-                        animationChannelTarget.path = reader.ReadStringEnum<GLTFAnimationChannelPath>();
+                        animationChannelTarget.Path = reader.ReadStringEnum<GLTFAnimationChannelPath>();
                         break;
                     case "extensions":
                     case "extras":
@@ -163,8 +162,8 @@ namespace GLTF
     /// <summary>
     /// Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
     /// </summary>
-    [System.Serializable]
-    public class GLTFAnimationSampler
+    [Serializable]
+    public class GLTFAnimationSampler : GLTFProperty
     {
         /// <summary>
         /// The index of an accessor containing keyframe input values, e.g., time.
@@ -172,7 +171,7 @@ namespace GLTF
         /// seconds with `time[0] >= 0.0`, and strictly increasing values,
         /// i.e., `time[n + 1] > time[n]`
         /// </summary>
-        public GLTFAccessorId input;
+        public GLTFAccessorId Input;
 
         /// <summary>
         /// Interpolation algorithm. When an animation targets a node's rotation,
@@ -181,14 +180,14 @@ namespace GLTF
         /// interpolation is `\"STEP\"`, animated value remains constant to the value
         /// of the first point of the timeframe, until the next timeframe.
         /// </summary>
-        public GLTFInterpolationType interpolation;
+        public GLTFInterpolationType Interpolation;
 
         /// <summary>
         /// The index of an accessor, containing keyframe output values. Output and input
         /// accessors must have the same `count`. When sampler is used with TRS target,
         /// output accessor's componentType must be `FLOAT`.
         /// </summary>
-        public GLTFAccessorId output;
+        public GLTFAccessorId Output;
 
         public static GLTFAnimationSampler Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -206,13 +205,13 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "input":
-                        animationSampler.input = GLTFAccessorId.Deserialize(root, reader);
+                        animationSampler.Input = GLTFAccessorId.Deserialize(root, reader);
                         break;
                     case "interpolation":
-                        animationSampler.interpolation = reader.ReadStringEnum<GLTFInterpolationType>();
+                        animationSampler.Interpolation = reader.ReadStringEnum<GLTFInterpolationType>();
                         break;
                     case "output":
-                        animationSampler.output = GLTFAccessorId.Deserialize(root, reader);
+                        animationSampler.Output = GLTFAccessorId.Deserialize(root, reader);
                         break;
                     case "extensions":
                     case "extras":

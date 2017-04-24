@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
@@ -7,7 +8,7 @@ namespace GLTF
     /// <summary>
     /// Joints and matrices defining a skin.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFSkin
     {
         /// <summary>
@@ -15,19 +16,19 @@ namespace GLTF
         /// The default is that each matrix is a 4x4 identity matrix, which implies that inverse-bind
         /// matrices were pre-applied.
         /// </summary>
-        public GLTFAccessorId inverseBindMatrices;
+        public GLTFAccessorId InverseBindMatrices;
 
         /// <summary>
         /// The index of the node used as a skeleton root.
         /// When undefined, joints transforms resolve to scene root.
         /// </summary>
-        public GLTFNodeId skeleton;
+        public GLTFNodeId Skeleton;
 
         /// <summary>
         /// Indices of skeleton nodes, used as joints in this skin.  The array length must be the
         // same as the `count` property of the `inverseBindMatrices` accessor (when defined).
         /// </summary>
-        public List<GLTFNodeId> joints;
+        public List<GLTFNodeId> Joints;
 
         public static GLTFSkin Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -40,13 +41,13 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "inverseBindMatrices":
-                        skin.inverseBindMatrices = GLTFAccessorId.Deserialize(root, reader);
+                        skin.InverseBindMatrices = GLTFAccessorId.Deserialize(root, reader);
                         break;
                     case "skeleton":
-                        skin.skeleton = GLTFNodeId.Deserialize(root, reader);
+                        skin.Skeleton = GLTFNodeId.Deserialize(root, reader);
                         break;
                     case "joints":
-                        skin.joints = reader.ReadList(() => GLTFNodeId.Deserialize(root, reader));
+                        skin.Joints = reader.ReadList(() => GLTFNodeId.Deserialize(root, reader));
                         break;
                     case "extensions":
                     case "extras":

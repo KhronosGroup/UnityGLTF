@@ -1,33 +1,34 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace GLTF
 {
     /// <summary>
     /// Texture sampler properties for filtering and wrapping modes.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFSampler
     {
         /// <summary>
         /// Magnification filter.
         /// Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729` (LINEAR).
         /// </summary>
-        public GLTFMagFilterMode magFilter = GLTFMagFilterMode.LINEAR;
+        public GLTFMagFilterMode MagFilter = GLTFMagFilterMode.Linear;
 
         /// <summary>
         /// Minification filter. All valid values correspond to WebGL enums.
         /// </summary>
-        public GLTFMinFilterMode minFilter = GLTFMinFilterMode.NEAREST_MIPMAP_LINEAR;
+        public GLTFMinFilterMode MinFilter = GLTFMinFilterMode.NearestMipmapLinear;
 
         /// <summary>
         /// s wrapping mode.  All valid values correspond to WebGL enums.
         /// </summary>
-        public GLTFWrapMode wrapS = GLTFWrapMode.REPEAT;
+        public GLTFWrapMode WrapS = GLTFWrapMode.Repeat;
 
         /// <summary>
         /// t wrapping mode.  All valid values correspond to WebGL enums.
         /// </summary>
-        public GLTFWrapMode wrapT = GLTFWrapMode.REPEAT;
+        public GLTFWrapMode WrapT = GLTFWrapMode.Repeat;
 
         public static GLTFSampler Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -40,16 +41,16 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "magFilter":
-                        sampler.magFilter = (GLTFMagFilterMode) reader.ReadAsInt32();
+                        sampler.MagFilter = (GLTFMagFilterMode) reader.ReadAsInt32();
                         break;
                     case "minFilter":
-                        sampler.minFilter = (GLTFMinFilterMode)reader.ReadAsInt32();
+                        sampler.MinFilter = (GLTFMinFilterMode)reader.ReadAsInt32();
                         break;
                     case "wrapS":
-                        sampler.wrapS = (GLTFWrapMode)reader.ReadAsInt32();
+                        sampler.WrapS = (GLTFWrapMode)reader.ReadAsInt32();
                         break;
                     case "wrapT":
-                        sampler.wrapT = (GLTFWrapMode)reader.ReadAsInt32();
+                        sampler.WrapT = (GLTFWrapMode)reader.ReadAsInt32();
                         break;
                     case "extensions":
                     case "extras":
@@ -68,8 +69,8 @@ namespace GLTF
     /// </summary>
     public enum GLTFMagFilterMode
     {
-        NEAREST = 9728,
-        LINEAR = 9729,
+        Nearest = 9728,
+        Linear = 9729,
     }
 
     /// <summary>
@@ -77,12 +78,12 @@ namespace GLTF
     /// </summary>
     public enum GLTFMinFilterMode
     {
-        NEAREST = 9728,
-        LINEAR = 9729,
-        NEAREST_MIPMAP_NEAREST = 9984,
-        LINEAR_MIPMAP_NEAREST = 9985,
-        NEAREST_MIPMAP_LINEAR = 9986,
-        LINEAR_MIPMAP_LINEAR = 9987
+        Nearest = 9728,
+        Linear = 9729,
+        NearestMipmapNearest = 9984,
+        LinearMipmapNearest = 9985,
+        NearestMipmapLinear = 9986,
+        LinearMipmapLinear = 9987
     }
 
     /// <summary>
@@ -90,8 +91,8 @@ namespace GLTF
     /// </summary>
     public enum GLTFWrapMode
     {
-        CLAMP_TO_EDGE = 33071,
-        MIRRORED_REPEAT = 33648,
-        REPEAT = 10497
+        ClampToEdge = 33071,
+        MirroredRepeat = 33648,
+        Repeat = 10497
     }
 }

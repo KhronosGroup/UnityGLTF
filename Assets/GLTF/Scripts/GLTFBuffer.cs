@@ -7,7 +7,7 @@ namespace GLTF
     /// <summary>
     /// A buffer points to binary geometry, animation, or skins.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFBuffer : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -15,27 +15,27 @@ namespace GLTF
         /// Relative paths are relative to the .gltf file.
         /// Instead of referencing an external file, the uri can also be a data-uri.
         /// </summary>
-        public GLTFUri uri;
+        public GLTFUri Uri;
 
         /// <summary>
         /// The length of the buffer in bytes.
         /// <minimum>0</minimum>
         /// </summary>
-        public int byteLength = 0;
+        public int ByteLength;
 
         public virtual byte[] Data
         {
             get
             {
-                return uri.data;
+                return Uri.Data;
             }
         }
 
         public IEnumerator Load()
         {
-            if (uri != null)
+            if (Uri != null)
             {
-                yield return uri.LoadBuffer();
+                yield return Uri.LoadBuffer();
             }
                 
         }
@@ -51,13 +51,13 @@ namespace GLTF
                 switch (curProp)
                 {
                     case "uri":
-                        buffer.uri = GLTFUri.Deserialize(root, reader);
+                        buffer.Uri = GLTFUri.Deserialize(root, reader);
                         break;
                     case "byteLength":
-                        buffer.byteLength = reader.ReadAsInt32().Value;
+                        buffer.ByteLength = reader.ReadAsInt32().Value;
                         break;
                     case "name":
-                        buffer.name = reader.ReadAsString();
+                        buffer.Name = reader.ReadAsString();
                         break;
                     case "extensions":
                     case "extras":
@@ -74,31 +74,26 @@ namespace GLTF
     /// <summary>
     /// The internal buffer references data stored in the binary chunk of a .glb file.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public class GLTFInternalBuffer : GLTFBuffer
-    {
-        private byte[] data;
+    { 
 
         public GLTFInternalBuffer(GLTFBuffer gltfBuffer, byte[] data)
         {
-            name = gltfBuffer.name;
-            this.data = data;
+            Name = gltfBuffer.Name;
+            _data = data;
         }
 
-        public override byte[] Data
+	    private readonly byte[] _data;
+
+		public override byte[] Data
         {
-            get
-            {
-                return data;
-            }
+            get { return _data; }
         }
 
-        public new int byteLength
+        public new int ByteLength
         {
-            get
-            {
-                return data.Length;
-            }
+            get { return _data.Length; }
         }
     }
 }
