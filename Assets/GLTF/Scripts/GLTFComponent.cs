@@ -20,9 +20,9 @@ namespace GLTF {
 
             yield return www.Send();
 
-            var text = www.downloadHandler.text;
+            var gltfData = www.downloadHandler.data;
 
-            yield return ParseGLTF(text);
+            yield return ParseGLTF(gltfData);
 
 	        var scene = gltf.GetDefaultScene();
 
@@ -46,15 +46,13 @@ namespace GLTF {
 			scene.Create(gameObject);
 		}
 
-        private IEnumerator ParseGLTF(string text)
+        private IEnumerator ParseGLTF(byte[] gltfData)
         {
             workerThreadRunning = true;
 
             ThreadPool.QueueUserWorkItem((_) =>
             {
-                var parser = new GLTFParser();
-
-                gltf = parser.Parse(url, text);
+                gltf = GLTFParser.Parse(url, gltfData);
 
                 workerThreadRunning = false;
             });

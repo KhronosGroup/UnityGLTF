@@ -75,10 +75,10 @@ namespace GLTF
     /// The internal buffer references data stored in the binary chunk of a .glb file.
     /// </summary>
     [Serializable]
-    public class GLTFInternalBuffer : GLTFBuffer
+    public class GLTFGLBBuffer : GLTFBuffer
     { 
 
-        public GLTFInternalBuffer(GLTFBuffer gltfBuffer, byte[] data)
+        public GLTFGLBBuffer(GLTFBuffer gltfBuffer, byte[] data)
         {
             Name = gltfBuffer.Name;
             _data = data;
