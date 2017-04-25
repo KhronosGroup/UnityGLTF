@@ -129,7 +129,7 @@ namespace GLTF
                         accessor.Min = reader.ReadDoubleList();
                         break;
 					case "sparse":
-						// TODO: Implement Deserialization of Sparse Arrays
+						accessor.Sparse = GLTFAccessorSparse.Deserialize(root, reader);
 						break;
 					default:
 						accessor.DefaultPropertyDeserializer(root, reader);
@@ -478,7 +478,7 @@ namespace GLTF
         }
     }
 
-    public class GLTFAccessorSparse
+    public class GLTFAccessorSparse : GLTFProperty
     {
         /// <summary>
         /// Number of entries stored in the sparse array.
@@ -498,9 +498,37 @@ namespace GLTF
         /// the same `componentType` and number of components as the base accessor.
         /// </summary>
         public GLTFAccessorSparseValues Values;
+
+        public static GLTFAccessorSparse Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var accessorSparse = new GLTFAccessorSparse();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "count":
+                        accessorSparse.Count = reader.ReadAsInt32().Value;
+                        break;
+                    case "indices":
+                        accessorSparse.Indices = GLTFAccessorSparseIndices.Deserialize(root, reader);
+                        break;
+                    case "values":
+                        accessorSparse.Values = GLTFAccessorSparseValues.Deserialize(root, reader);
+                        break;
+					default:
+						accessorSparse.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
+            }
+
+            return accessorSparse;
+        }
     }
 
-    public class GLTFAccessorSparseIndices
+    public class GLTFAccessorSparseIndices : GLTFProperty
     {
         /// <summary>
         /// The index of the bufferView with sparse indices.
@@ -521,9 +549,37 @@ namespace GLTF
         /// `5125` (UNSIGNED_INT)
         /// </summary>
         public GLTFComponentType ComponentType;
+
+        public static GLTFAccessorSparseIndices Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var indices = new GLTFAccessorSparseIndices();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "bufferView":
+                        indices.BufferView = GLTFBufferViewId.Deserialize(root, reader);
+                        break;
+                    case "byteOffset":
+                        indices.ByteOffset = reader.ReadAsInt32().Value;
+                        break;
+                    case "componentType":
+                        indices.ComponentType = (GLTFComponentType) reader.ReadAsInt32().Value;
+                        break;
+					default:
+						indices.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
+            }
+
+            return indices;
+        }
     }
 
-    public class GLTFAccessorSparseValues
+    public class GLTFAccessorSparseValues : GLTFProperty
     {
         /// <summary>
         /// The index of the bufferView with sparse values.
@@ -536,6 +592,31 @@ namespace GLTF
         /// <minimum>0</minimum>
         /// </summary>
         public int ByteOffset = 0;
+
+        public static GLTFAccessorSparseValues Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var values = new GLTFAccessorSparseValues();
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "bufferView":
+                        values.BufferView = GLTFBufferViewId.Deserialize(root, reader);
+                        break;
+                    case "byteOffset":
+                        values.ByteOffset = reader.ReadAsInt32().Value;
+                        break;
+					default:
+						values.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
+            }
+
+            return values;
+        }
     }
 
     public enum GLTFComponentType
