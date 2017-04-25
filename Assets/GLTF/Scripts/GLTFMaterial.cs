@@ -34,14 +34,6 @@ namespace GLTF
 	    /// by the material. This texture contains RGB components in sRGB color space.
 	    /// If a fourth component (A) is present, it is ignored.
 	    /// </summary>
-	    /*private GLTFTextureInfo _emissiveTexture;
-	    public GLTFTextureInfo EmissiveTexture {
-			get { return _emissiveTexture; }
-			set {
-				Debug.Log("Emissive texture set.");
-				_emissiveTexture = value;
-			}
-		}*/
 	    public GLTFTextureInfo EmissiveTexture;
 
 		/// <summary>

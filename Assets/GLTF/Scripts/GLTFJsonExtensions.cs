@@ -190,8 +190,6 @@ namespace GLTF.JsonExtensions
 			    return null;
 		    }
 
-			Debug.LogFormat("Read dictionary value {0}", reader.Path);
-
 		    switch (reader.TokenType)
 		    {
 				case JsonToken.StartArray:
