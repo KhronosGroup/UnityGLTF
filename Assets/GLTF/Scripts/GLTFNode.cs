@@ -19,7 +19,6 @@ namespace GLTF
     /// (referenced by an animation.channel.target), only TRS properties may be present;
     /// `matrix` will not be present.
     /// </summary>
-    [Serializable]
     public class GLTFNode : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -106,15 +105,10 @@ namespace GLTF
                     case "weights":
                         node.Weights = reader.ReadDoubleList();
                         break;
-                    case "name":
-                        node.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						node.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return node;

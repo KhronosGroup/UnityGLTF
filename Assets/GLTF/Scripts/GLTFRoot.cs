@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace GLTF
 {
     /// <summary>
     /// The root object for a glTF asset.
     /// </summary>
-    [Serializable]
     public class GLTFRoot : GLTFProperty
     {
 	    public GLTFRoot(string url)
@@ -156,7 +156,7 @@ namespace GLTF
                         root.Animations = reader.ReadList(() => GLTFAnimation.Deserialize(root, reader));
                         break;
                     case "asset":
-                        root.Asset = GLTFAsset.Deserialize(reader);
+                        root.Asset = GLTFAsset.Deserialize(root, reader);
                         break;
                     case "buffers":
                         root.Buffers = reader.ReadList(() => GLTFBuffer.Deserialize(root, reader));
@@ -194,12 +194,10 @@ namespace GLTF
                     case "textures":
                         root.Textures = reader.ReadList(() => GLTFTexture.Deserialize(root, reader));
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						root.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return root;

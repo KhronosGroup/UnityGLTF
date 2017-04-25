@@ -10,7 +10,6 @@ namespace GLTF
     /// A set of primitives to be rendered. A node can contain one or more meshes.
     /// A node's transform places the mesh in the scene.
     /// </summary>
-    [Serializable]
     public class GLTFMesh : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -42,15 +41,10 @@ namespace GLTF
                     case "weights":
                         mesh.Weights = reader.ReadDoubleList();
                         break;
-                    case "name":
-                        mesh.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
 					default:
-	                    reader.Read();
-	                    break;
-                }
+						mesh.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return mesh;
@@ -100,8 +94,7 @@ namespace GLTF
     /// <summary>
     /// Geometry to be rendered with the given material.
     /// </summary>
-    [Serializable]
-    public class GLTFMeshPrimitive
+    public class GLTFMeshPrimitive: GLTFProperty
     {
         /// <summary>
         /// A dictionary object, where each key corresponds to mesh attribute semantic
@@ -177,12 +170,10 @@ namespace GLTF
                             });
                         });
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						primitive.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return primitive;
@@ -267,8 +258,8 @@ namespace GLTF
             meshFilter.mesh = _mesh;
 
             var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
-            
-            meshRenderer.material = Material.Value.GetMaterial(config);
+
+			meshRenderer.material = Material.Value.GetMaterial(config);
         }
 
 

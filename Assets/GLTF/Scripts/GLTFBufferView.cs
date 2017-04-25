@@ -1,4 +1,5 @@
 ﻿using System;
+using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 
 namespace GLTF
@@ -6,7 +7,6 @@ namespace GLTF
     /// <summary>
     /// A view into a buffer generally representing a subset of the buffer.
     /// </summary>
-    [Serializable]
     public class GLTFBufferView : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -69,12 +69,15 @@ namespace GLTF
                     case "name":
                         bufferView.Name = reader.ReadAsString();
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					case "extensions":
+		                bufferView.Extensions = reader.ReadAsObjectDictionary();
+		                break;
+	                case "extras":
+		                bufferView.Extras = reader.ReadAsObjectDictionary();
+		                break;
+	                default:
+		                throw new Exception("Unexpected property.");
+				}
             }
 
             return bufferView;

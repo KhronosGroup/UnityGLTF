@@ -8,8 +8,7 @@ namespace GLTF
     /// <summary>
     /// Joints and matrices defining a skin.
     /// </summary>
-    [Serializable]
-    public class GLTFSkin
+    public class GLTFSkin : GLTFChildOfRootProperty
     {
         /// <summary>
         /// The index of the accessor containing the floating-point 4x4 inverse-bind matrices.
@@ -49,12 +48,10 @@ namespace GLTF
                     case "joints":
                         skin.Joints = reader.ReadList(() => GLTFNodeId.Deserialize(root, reader));
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						skin.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return skin;

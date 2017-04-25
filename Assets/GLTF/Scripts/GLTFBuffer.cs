@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 
 namespace GLTF
@@ -7,7 +8,6 @@ namespace GLTF
     /// <summary>
     /// A buffer points to binary geometry, animation, or skins.
     /// </summary>
-    [Serializable]
     public class GLTFBuffer : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -56,15 +56,10 @@ namespace GLTF
                     case "byteLength":
                         buffer.ByteLength = reader.ReadAsInt32().Value;
                         break;
-                    case "name":
-                        buffer.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+	                default:
+		                buffer.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return buffer;
@@ -74,7 +69,6 @@ namespace GLTF
     /// <summary>
     /// The internal buffer references data stored in the binary chunk of a .glb file.
     /// </summary>
-    [Serializable]
     public class GLTFGLBBuffer : GLTFBuffer
     { 
 

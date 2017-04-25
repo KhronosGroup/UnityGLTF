@@ -8,7 +8,6 @@ namespace GLTF
     /// <summary>
     /// The material appearance of a primitive.
     /// </summary>
-    [Serializable]
     public class GLTFMaterial : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -30,25 +29,33 @@ namespace GLTF
         /// </summary>
         public GLTFOcclusionTextureInfo OcclusionTexture;
 
-        /// <summary>
-        /// The emissive map controls the color and intensity of the light being emitted
-        /// by the material. This texture contains RGB components in sRGB color space.
-        /// If a fourth component (A) is present, it is ignored.
-        /// </summary>
-        public GLTFTextureInfo EmissiveTexture;
+	    /// <summary>
+	    /// The emissive map controls the color and intensity of the light being emitted
+	    /// by the material. This texture contains RGB components in sRGB color space.
+	    /// If a fourth component (A) is present, it is ignored.
+	    /// </summary>
+	    /*private GLTFTextureInfo _emissiveTexture;
+	    public GLTFTextureInfo EmissiveTexture {
+			get { return _emissiveTexture; }
+			set {
+				Debug.Log("Emissive texture set.");
+				_emissiveTexture = value;
+			}
+		}*/
+	    public GLTFTextureInfo EmissiveTexture;
 
-        /// <summary>
-        /// The RGB components of the emissive color of the material.
-        /// If an emissiveTexture is specified, this value is multiplied with the texel
-        /// values.
-        /// <items>
-        ///     <minimum>0.0</minimum>
-        ///     <maximum>1.0</maximum>
-        /// </items>
-        /// <minItems>3</minItems>
-        /// <maxItems>3</maxItems>
-        /// </summary>
-        public Color EmissiveFactor = Color.black;
+		/// <summary>
+		/// The RGB components of the emissive color of the material.
+		/// If an emissiveTexture is specified, this value is multiplied with the texel
+		/// values.
+		/// <items>
+		///     <minimum>0.0</minimum>
+		///     <maximum>1.0</maximum>
+		/// </items>
+		/// <minItems>3</minItems>
+		/// <maxItems>3</maxItems>
+		/// </summary>
+		public Color EmissiveFactor = Color.black;
 
         /// <summary>
         /// The material's alpha rendering mode enumeration specifying the interpretation of the
@@ -85,7 +92,7 @@ namespace GLTF
         {
             if (_material == null)
             {
-                _material = config.MaterialFactory.CreateMaterial(this);
+				_material = config.MaterialFactory.CreateMaterial(this);
             }
 
             return _material;
@@ -125,15 +132,10 @@ namespace GLTF
                     case "doubleSided":
                         material.DoubleSided = reader.ReadAsBoolean().Value;
                         break;
-                    case "name":
-                        material.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						material.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return material;
@@ -150,7 +152,6 @@ namespace GLTF
     /// <summary>
     /// Reference to a texture.
     /// </summary>
-    [Serializable]
     public class GLTFTextureInfoBase : GLTFProperty
     {
         /// <summary>
@@ -166,9 +167,9 @@ namespace GLTF
         public int TexCoord = 0;
     }
 
-    [Serializable]
     public class GLTFTextureInfo : GLTFTextureInfoBase
     {
+
         public static GLTFTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
         {
             var textureInfo = new GLTFTextureInfo();
@@ -190,11 +191,9 @@ namespace GLTF
                     case "texCoord":
                         textureInfo.TexCoord = reader.ReadAsInt32().Value;
                         break;
-	                case "extensions":
-	                case "extras":
-	                default:
-		                reader.Read();
-		                break;
+					default:
+						textureInfo.DefaultPropertyDeserializer(root, reader);
+						break;
 				}
             }
 
@@ -202,7 +201,6 @@ namespace GLTF
         }
     }
 
-    [Serializable]
     public class GLTFNormalTextureInfo : GLTFTextureInfoBase
     {
         /// <summary>
@@ -236,11 +234,9 @@ namespace GLTF
                     case "scale":
                         textureInfo.Scale = reader.ReadAsDouble().Value;
                         break;
-	                case "extensions":
-	                case "extras":
-	                default:
-		                reader.Read();
-		                break;
+					default:
+						textureInfo.DefaultPropertyDeserializer(root, reader);
+						break;
 				}
             }
 
@@ -248,7 +244,6 @@ namespace GLTF
         }
     }
 
-    [Serializable]
     public class GLTFOcclusionTextureInfo : GLTFTextureInfoBase
     {
         /// <summary>
@@ -286,11 +281,9 @@ namespace GLTF
                     case "strength":
                         textureInfo.Strength = reader.ReadAsDouble().Value;
                         break;
-	                case "extensions":
-	                case "extras":
-	                default:
-		                reader.Read();
-		                break;
+					default:
+						textureInfo.DefaultPropertyDeserializer(root, reader);
+						break;
 				}
             }
 
@@ -302,8 +295,7 @@ namespace GLTF
     /// A set of parameter values that are used to define the metallic-roughness
     /// material model from Physically-Based Rendering (PBR) methodology.
     /// </summary>
-    [Serializable]
-    public class GLTFPBRMetallicRoughness
+    public class GLTFPBRMetallicRoughness : GLTFProperty
     {
         /// <summary>
         /// The RGBA components of the base color of the material.
@@ -379,11 +371,9 @@ namespace GLTF
                     case "metallicRoughnessTexture":
                         metallicRoughness.MetallicRoughnessTexture = GLTFTextureInfo.Deserialize(root, reader);
                         break;
-	                case "extensions":
-	                case "extras":
-	                default:
-		                reader.Read();
-		                break;
+					default:
+						metallicRoughness.DefaultPropertyDeserializer(root, reader);
+						break;
 				}
             }
 

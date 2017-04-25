@@ -15,6 +15,7 @@ namespace GLTF {
 
         IEnumerator Start()
         {
+	        yield return new WaitForSeconds(1.0f);
 
             var www = UnityWebRequest.Get(url);
 
@@ -44,7 +45,9 @@ namespace GLTF {
             yield return BuildVertexAttributes();
 
 			scene.Create(gameObject);
-		}
+
+			gltf = null;
+        }
 
         private IEnumerator ParseGLTF(byte[] gltfData)
         {

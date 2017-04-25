@@ -149,24 +149,74 @@ namespace GLTF.JsonExtensions
             return quat;
         }
 
-        public static Dictionary<string, T> ReadAsDictionary<T>(this JsonTextReader reader, Func<T> deserializerFunc)
+	    public static Dictionary<string, T> ReadAsDictionary<T>(this JsonTextReader reader, Func<T> deserializerFunc)
+	    {
+		    if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+		    {
+			    throw new Exception("Dictionary must be an object.");
+		    }
+
+		    var dict = new Dictionary<string, T>();
+
+		    while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+		    {
+			    dict.Add(reader.Value.ToString(), deserializerFunc());
+		    }
+
+		    return dict;
+	    }
+
+	    public static Dictionary<string, object> ReadAsObjectDictionary(this JsonTextReader reader, bool skipStartObjectRead = false)
         {
-            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            if (!skipStartObjectRead && reader.Read() && reader.TokenType != JsonToken.StartObject)
             {
                 throw new Exception("Dictionary must be an object.");
             }
 
-            var dict = new Dictionary<string, T>();
+            var dict = new Dictionary<string, object>();
 
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
             {
-                dict.Add(reader.Value.ToString(), deserializerFunc());
+	           dict.Add(reader.Value.ToString(), ReadDictionaryValue(reader));
             }
 
             return dict;
         }
 
-        public static T ReadStringEnum<T>(this JsonTextReader reader)
+	    private static object ReadDictionaryValue(JsonTextReader reader)
+	    {
+		    if (!reader.Read())
+		    {
+			    return null;
+		    }
+
+			Debug.LogFormat("Read dictionary value {0}", reader.Path);
+
+		    switch (reader.TokenType)
+		    {
+				case JsonToken.StartArray:
+					return reader.ReadObjectList();
+				case JsonToken.StartObject:
+					return reader.ReadAsObjectDictionary(true);
+				default:
+					return reader.Value;
+		    }
+		}
+
+	    private static List<object> ReadObjectList(this JsonTextReader reader)
+	    {
+
+		    var list = new List<object>();
+
+		    while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+		    {
+			    list.Add(reader.Value);
+		    }
+
+		    return list;
+	    }
+
+		public static T ReadStringEnum<T>(this JsonTextReader reader)
         {
             return (T) Enum.Parse(typeof(T), reader.ReadAsString());
         }

@@ -13,12 +13,10 @@ namespace GLTF
     public abstract class GLTFId<T>
     {
         public int Id;
-        [NonSerialized]
         public GLTFRoot Root;
         public abstract T Value { get; }
     }
 
-    [Serializable]
     public class GLTFAccessorId : GLTFId<GLTFAccessor>
     {
         public override GLTFAccessor Value
@@ -36,7 +34,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFBufferId : GLTFId<GLTFBuffer>
     {
         public override GLTFBuffer Value
@@ -54,7 +51,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFBufferViewId: GLTFId<GLTFBufferView>
     {
         public override GLTFBufferView Value
@@ -72,7 +68,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFCameraId : GLTFId<GLTFCamera>
     {
         public override GLTFCamera Value
@@ -90,7 +85,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFImageId : GLTFId<GLTFImage>
     {
         public override GLTFImage Value
@@ -108,7 +102,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFMaterialId : GLTFId<GLTFMaterial>
     {
         public override GLTFMaterial Value
@@ -126,7 +119,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFMeshId : GLTFId<GLTFMesh>
     {
         public override GLTFMesh Value
@@ -144,7 +136,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFNodeId : GLTFId<GLTFNode>
     {
         public override GLTFNode Value
@@ -185,7 +176,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFSamplerId : GLTFId<GLTFSampler>
     {
         public override GLTFSampler Value
@@ -203,7 +193,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFSceneId : GLTFId<GLTFScene>
     {
         public override GLTFScene Value
@@ -221,7 +210,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFSkinId : GLTFId<GLTFSkin>
     {
         public override GLTFSkin Value
@@ -239,7 +227,6 @@ namespace GLTF
         }
     }
 
-	[Serializable]
 	public class GLTFTextureId : GLTFId<GLTFTexture>
     {
         public override GLTFTexture Value

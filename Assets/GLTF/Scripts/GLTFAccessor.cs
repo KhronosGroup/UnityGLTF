@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace GLTF
 {
-    [Serializable]
     public class GLTFAccessor : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -129,17 +128,13 @@ namespace GLTF
                     case "min":
                         accessor.Min = reader.ReadDoubleList();
                         break;
-                    case "name":
-                        accessor.Name = reader.ReadAsString();
-                        break;
-	                case "sparse":
-		                // TODO: Implement Deserialization of Sparse Arrays
-					case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					case "sparse":
+						// TODO: Implement Deserialization of Sparse Arrays
+						break;
+					default:
+						accessor.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return accessor;
@@ -483,7 +478,6 @@ namespace GLTF
         }
     }
 
-    [Serializable]
     public class GLTFAccessorSparse
     {
         /// <summary>
@@ -506,7 +500,6 @@ namespace GLTF
         public GLTFAccessorSparseValues Values;
     }
 
-    [Serializable]
     public class GLTFAccessorSparseIndices
     {
         /// <summary>
@@ -530,7 +523,6 @@ namespace GLTF
         public GLTFComponentType ComponentType;
     }
 
-    [Serializable]
     public class GLTFAccessorSparseValues
     {
         /// <summary>

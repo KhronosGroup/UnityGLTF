@@ -7,7 +7,6 @@ namespace GLTF
     /// <summary>
     /// A texture and its sampler.
     /// </summary>
-    [Serializable]
     public class GLTFTexture : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -92,15 +91,10 @@ namespace GLTF
                     case "type":
                         texture.Type = (GLTFTexelDataType) reader.ReadAsInt32().Value;
                         break;
-                    case "name":
-                        texture.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						texture.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return texture;

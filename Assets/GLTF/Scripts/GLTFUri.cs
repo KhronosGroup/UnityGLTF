@@ -10,7 +10,6 @@ namespace GLTF
     /// A wrapper around the GLTF URI string with utility functions to load
     /// or parse its data.
     /// </summary>
-    [Serializable]
     public class GLTFUri
     {
 

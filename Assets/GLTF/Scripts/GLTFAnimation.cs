@@ -8,7 +8,6 @@ namespace GLTF
     /// <summary>
     /// A keyframe animation.
     /// </summary>
-    [Serializable]
     public class GLTFAnimation : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -40,12 +39,10 @@ namespace GLTF
                     case "samplers":
                         animation.Samplers = reader.ReadList(() => GLTFAnimationSampler.Deserialize(root, reader));
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						animation.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return animation;
@@ -56,7 +53,6 @@ namespace GLTF
     /// <summary>
     /// Targets an animation's sampler at a node's property.
     /// </summary>
-    [Serializable]
     public class GLTFAnimationChannel : GLTFProperty
     {
         /// <summary>
@@ -91,12 +87,10 @@ namespace GLTF
                     case "target":
                         animationChannel.Target = GLTFAnimationChannelTarget.Deserialize(root, reader);
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                    }
+	                default:
+		                animationChannel.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return animationChannel;
@@ -106,7 +100,6 @@ namespace GLTF
     /// <summary>
     /// The index of the node and TRS property that an animation channel targets.
     /// </summary>
-    [Serializable]
     public class GLTFAnimationChannelTarget : GLTFProperty
     {
         /// <summary>
@@ -140,12 +133,10 @@ namespace GLTF
                     case "path":
                         animationChannelTarget.Path = reader.ReadStringEnum<GLTFAnimationChannelPath>();
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                    }
+	                default:
+		                animationChannelTarget.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return animationChannelTarget;
@@ -162,7 +153,6 @@ namespace GLTF
     /// <summary>
     /// Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
     /// </summary>
-    [Serializable]
     public class GLTFAnimationSampler : GLTFProperty
     {
         /// <summary>
@@ -213,12 +203,10 @@ namespace GLTF
                     case "output":
                         animationSampler.Output = GLTFAccessorId.Deserialize(root, reader);
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+	                default:
+		                animationSampler.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return animationSampler;

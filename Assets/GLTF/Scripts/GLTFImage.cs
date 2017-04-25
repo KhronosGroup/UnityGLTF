@@ -10,7 +10,6 @@ namespace GLTF
     /// Image data used to create a texture. Image can be referenced by URI or
     /// `bufferView` index. `mimeType` is required in the latter case.
     /// </summary>
-    [Serializable]
     public class GLTFImage : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -79,15 +78,10 @@ namespace GLTF
                     case "bufferView":
                         image.BufferView = GLTFBufferViewId.Deserialize(root, reader);
                         break;
-                    case "name":
-                        image.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						image.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return image;

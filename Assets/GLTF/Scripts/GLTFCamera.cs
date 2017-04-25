@@ -1,4 +1,5 @@
 using System;
+using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 
 namespace GLTF
@@ -7,8 +8,7 @@ namespace GLTF
     /// A camera's projection.  A node can reference a camera to apply a transform
     /// to place the camera in the scene
     /// </summary>
-    [Serializable]
-    public class GLTFCamera : GLTFProperty
+    public class GLTFCamera : GLTFChildOfRootProperty
     {
         /// <summary>
         /// An orthographic camera containing properties to create an orthographic
@@ -42,12 +42,13 @@ namespace GLTF
                     case "orthographic":
                         camera.Orthographic = GLTFCameraOrthographic.Deserialize(root, reader);
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+	                case "perspective":
+		                camera.Perspective = GLTFCameraPerspective.Deserialize(root, reader);
+		                break;
+					default:
+		                camera.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return camera;
@@ -58,7 +59,6 @@ namespace GLTF
 	/// An orthographic camera containing properties to create an orthographic
 	/// projection matrix.
 	/// </summary>
-	[Serializable]
 	public class GLTFCameraOrthographic : GLTFProperty
 	{
         /// <summary>
@@ -108,12 +108,10 @@ namespace GLTF
                     case "znear":
                         cameraOrthographic.ZNear = reader.ReadAsDouble().Value;
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+	                default:
+		                cameraOrthographic.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return cameraOrthographic;
@@ -124,7 +122,6 @@ namespace GLTF
 	/// A perspective camera containing properties to create a perspective projection
 	/// matrix.
 	/// </summary>
-	[Serializable]
 	public class GLTFCameraPerspective : GLTFProperty
     {
         /// <summary>
@@ -181,12 +178,10 @@ namespace GLTF
                     case "znear":
                         cameraPerspective.ZNear = reader.ReadAsDouble().Value;
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+	                default:
+		                cameraPerspective.DefaultPropertyDeserializer(root, reader);
+		                break;
+				}
             }
 
             return cameraPerspective;

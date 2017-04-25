@@ -1,12 +1,12 @@
 ﻿using System;
 using Newtonsoft.Json;
+using GLTF.JsonExtensions;
 
 namespace GLTF
 {
     /// <summary>
     /// Metadata about the glTF asset.
     /// </summary>
-    [Serializable]
     public class GLTFAsset : GLTFProperty
     {
         /// <summary>
@@ -29,7 +29,7 @@ namespace GLTF
         /// </summary>
         public string MinVersion;
 
-        public static GLTFAsset Deserialize(JsonTextReader reader)
+        public static GLTFAsset Deserialize(GLTFRoot root, JsonTextReader reader)
         {
             var asset = new GLTFAsset();
 
@@ -38,33 +38,31 @@ namespace GLTF
                 throw new Exception("Asset must be an object.");
             }
 
-            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-            {
-                var curProp = reader.Value.ToString();
+	        while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+	        {
+		        var curProp = reader.Value.ToString();
 
-                switch (curProp)
-                {
-                    case "copyright":
-                        asset.Copyright = reader.ReadAsString();
-                        break;
-                    case "generator":
-                        asset.Generator = reader.ReadAsString();
-                        break;
-                    case "version":
-                        asset.Version = reader.ReadAsString();
-                        break;
-                    case "minVersion":
-                        asset.MinVersion = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
-            }
+		        switch (curProp)
+		        {
+			        case "copyright":
+				        asset.Copyright = reader.ReadAsString();
+				        break;
+			        case "generator":
+				        asset.Generator = reader.ReadAsString();
+				        break;
+			        case "version":
+				        asset.Version = reader.ReadAsString();
+				        break;
+			        case "minVersion":
+				        asset.MinVersion = reader.ReadAsString();
+				        break;
+			        default:
+				        asset.DefaultPropertyDeserializer(root, reader);
+				        break;
+		        }
+	        }
 
-            return asset;
+	        return asset;
         }
     }
 }

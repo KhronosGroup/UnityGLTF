@@ -8,7 +8,6 @@ namespace GLTF
     /// <summary>
     /// The root nodes of a scene.
     /// </summary>
-    [Serializable]
     public class GLTFScene : GLTFChildOfRootProperty
     {
         /// <summary>
@@ -29,15 +28,10 @@ namespace GLTF
                     case "nodes":
                         scene.Nodes = GLTFNodeId.ReadList(root, reader);
                         break;
-                    case "name":
-                        scene.Name = reader.ReadAsString();
-                        break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						scene.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return scene;

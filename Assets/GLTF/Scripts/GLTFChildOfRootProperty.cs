@@ -1,4 +1,8 @@
-﻿namespace GLTF
+﻿using System;
+using GLTF.JsonExtensions;
+using Newtonsoft.Json;
+
+namespace GLTF
 {
     public class GLTFChildOfRootProperty : GLTFProperty
     {
@@ -8,5 +12,18 @@
         /// or two accessors could even have the same name.
         /// </summary>
         public string Name;
-    }
+
+	    public new void DefaultPropertyDeserializer(GLTFRoot root, JsonTextReader reader)
+	    {
+		    switch (reader.Value.ToString())
+		    {
+			    case "name":
+				    Name = reader.ReadAsString();
+				    break;
+			    default:
+				    base.DefaultPropertyDeserializer(root, reader);
+				    break;
+		    }
+	    }
+	}
 }

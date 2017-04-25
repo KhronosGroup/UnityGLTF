@@ -6,8 +6,7 @@ namespace GLTF
     /// <summary>
     /// Texture sampler properties for filtering and wrapping modes.
     /// </summary>
-    [Serializable]
-    public class GLTFSampler
+    public class GLTFSampler : GLTFChildOfRootProperty
     {
         /// <summary>
         /// Magnification filter.
@@ -52,12 +51,10 @@ namespace GLTF
                     case "wrapT":
                         sampler.WrapT = (GLTFWrapMode)reader.ReadAsInt32();
                         break;
-                    case "extensions":
-                    case "extras":
-                    default:
-                        reader.Read();
-                        break;
-                }
+					default:
+						sampler.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
             }
 
             return sampler;
