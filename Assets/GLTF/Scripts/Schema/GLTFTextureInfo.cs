@@ -1,0 +1,53 @@
+﻿using System;
+using Newtonsoft.Json;
+
+namespace GLTF
+{
+    /// <summary>
+    /// Reference to a texture.
+    /// </summary>
+    public class GLTFTextureInfo : GLTFProperty
+    {
+        /// <summary>
+        /// The index of the texture.
+        /// </summary>
+        public GLTFTextureId Index;
+
+        /// <summary>
+        /// This integer value is used to construct a string in the format
+        /// TEXCOORD_<set index> which is a reference to a key in
+        /// mesh.primitives.attributes (e.g. A value of 0 corresponds to TEXCOORD_0).
+        /// </summary>
+        public int TexCoord = 0;
+
+        public static GLTFTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        {
+            var textureInfo = new GLTFTextureInfo();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Asset must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case "index":
+                        textureInfo.Index = GLTFTextureId.Deserialize(root, reader);
+                        break;
+                    case "texCoord":
+                        textureInfo.TexCoord = reader.ReadAsInt32().Value;
+                        break;
+					default:
+						textureInfo.DefaultPropertyDeserializer(root, reader);
+						break;
+				}
+            }
+
+            return textureInfo;
+        }
+    }
+}

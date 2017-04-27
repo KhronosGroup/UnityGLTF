@@ -11,7 +11,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid array.");
+                throw new Exception(string.Format("Invalid array at: {0}", reader.Path));
             }
 
             var list = new List<string>();
@@ -28,7 +28,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid array.");
+                throw new Exception(string.Format("Invalid array at: {0}", reader.Path));
             }
 
             var list = new List<double>();
@@ -45,7 +45,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid array.");
+                throw new Exception(string.Format("Invalid array at: {0}", reader.Path));
             }
 
             var list = new List<T>();
@@ -62,7 +62,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid color value.");
+                throw new Exception(string.Format("Invalid color value at: {0}", reader.Path));
             }
 
 	        var color = new Color
@@ -75,7 +75,7 @@ namespace GLTF.JsonExtensions
 
 	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
-                throw new Exception("Invalid color value.");
+                throw new Exception(string.Format("Invalid color value at: {0}", reader.Path));
             }
 
             return color;
@@ -85,7 +85,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid color value.");
+                throw new Exception(string.Format("Invalid vector value at: {0}", reader.Path));
             }
 
 	        var color = new Color
@@ -98,7 +98,7 @@ namespace GLTF.JsonExtensions
 
 	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
-                throw new Exception("Invalid color value.");
+                throw new Exception(string.Format("Invalid color value at: {0}", reader.Path));
             }
 
             return color;
@@ -108,7 +108,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid vector value.");
+                throw new Exception(string.Format("Invalid vector value at: {0}", reader.Path));
             }
 
 	        var vector = new Vector3
@@ -120,7 +120,7 @@ namespace GLTF.JsonExtensions
 
 	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
-                throw new Exception("Invalid vector value.");
+                throw new Exception(string.Format("Invalid vector value at: {0}", reader.Path));
             }
 
             return vector;
@@ -130,7 +130,7 @@ namespace GLTF.JsonExtensions
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
-                throw new Exception("Invalid vector value.");
+                throw new Exception(string.Format("Invalid vector value at: {0}", reader.Path));
             }
 
 	        var quat = new Quaternion
@@ -143,7 +143,7 @@ namespace GLTF.JsonExtensions
 
 	        if (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
-                throw new Exception("Invalid vector value.");
+                throw new Exception(string.Format("Invalid vector value at: {0}", reader.Path));
             }
 
             return quat;
@@ -153,8 +153,8 @@ namespace GLTF.JsonExtensions
 	    {
 		    if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 		    {
-			    throw new Exception("Dictionary must be an object.");
-		    }
+                throw new Exception(string.Format("Dictionary must be an object at: {0}", reader.Path));
+            }
 
 		    var dict = new Dictionary<string, T>();
 
@@ -170,7 +170,7 @@ namespace GLTF.JsonExtensions
         {
             if (!skipStartObjectRead && reader.Read() && reader.TokenType != JsonToken.StartObject)
             {
-                throw new Exception("Dictionary must be an object.");
+                throw new Exception(string.Format("Dictionary must be an object at: {0}", reader.Path));
             }
 
             var dict = new Dictionary<string, object>();
