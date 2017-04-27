@@ -11,22 +11,23 @@ namespace GLTF
 {
     public class GLTFLoader
     {
-        private string _gltfUrl;
+        private readonly string _gltfUrl;
         private GLTFRoot _root;
-	    private Transform _sceneParent;
-        private bool workerThreadRunning = false;
-        private Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
-        private Dictionary<GLTFMaterial, Material> _materialCache = new Dictionary<GLTFMaterial, Material>();
-        private Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
-        private Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
-        private Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
+	    private readonly Transform _sceneParent;
+	    private readonly bool _multithreaded;
+        private bool _workerThreadRunning = false;
+        private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
+        private readonly Dictionary<GLTFMaterial, Material> _materialCache = new Dictionary<GLTFMaterial, Material>();
+        private readonly Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
+        private readonly Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
+        private readonly Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
 
-        public GLTFLoader(string gltfUrl, Transform parent = null)
-        {
+        public GLTFLoader(string gltfUrl, Transform parent = null, bool multithreaded = true)
+		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
-
-        }
+			_multithreaded = multithreaded;
+		}
 
         public IEnumerator Load()
         {
@@ -36,7 +37,14 @@ namespace GLTF
 
             var gltfData = www.downloadHandler.data;
 
-            yield return ParseGLTFAsync(gltfData);
+	        if (_multithreaded)
+	        {
+		        yield return ParseGLTFAsync(gltfData);
+	        }
+	        else
+	        {
+		        _root = ParseGLTF(gltfData);
+	        }
 
             var scene = _root.GetDefaultScene();
 
@@ -52,11 +60,17 @@ namespace GLTF
 
             foreach (var image in _root.Images)
             {
-
                 yield return LoadImage(image);
             }
 
-            yield return BuildMeshAttributesAsync();
+	        if (_multithreaded)
+	        {
+		        yield return BuildMeshAttributesAsync();
+	        }
+	        else
+	        {
+		        BuildMeshAttributes();
+	        }
 
             var sceneObj = CreateScene(scene);
 
@@ -70,13 +84,13 @@ namespace GLTF
 
         private IEnumerator ParseGLTFAsync(byte[] gltfData)
         {
-            workerThreadRunning = true;
+            _workerThreadRunning = true;
 
             ThreadPool.QueueUserWorkItem((_) =>
             {
                 _root = ParseGLTF(gltfData);
 
-                workerThreadRunning = false;
+                _workerThreadRunning = false;
             });
 
             yield return Wait();
@@ -163,29 +177,32 @@ namespace GLTF
 
         private IEnumerator BuildMeshAttributesAsync()
         {
-            workerThreadRunning = true;
+            _workerThreadRunning = true;
 
             ThreadPool.QueueUserWorkItem((_) =>
             {
-
-                foreach (var mesh in _root.Meshes)
-                {
-                    foreach (var primitive in mesh.Primitives)
-                    {
-                        var attributes = primitive.BuildMeshAttributes(_bufferCache);
-                        _attributesCache[primitive] = attributes;
-                    }
-                }
-
-                workerThreadRunning = false;
+                BuildMeshAttributes();
+                _workerThreadRunning = false;
             });
 
             yield return Wait();
         }
 
+	    private void BuildMeshAttributes()
+	    {
+			foreach (var mesh in _root.Meshes)
+			{
+				foreach (var primitive in mesh.Primitives)
+				{
+					var attributes = primitive.BuildMeshAttributes(_bufferCache);
+					_attributesCache[primitive] = attributes;
+				}
+			}
+		}
+
         private IEnumerator Wait()
         {
-            while (workerThreadRunning)
+            while (_workerThreadRunning)
             {
                 yield return null;
             }
@@ -219,7 +236,7 @@ namespace GLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
             {
-                var meshObj = FindOrCreateMeshObject(node.Mesh);
+                var meshObj = FindOrCreateMeshObject(node.Mesh.Value);
 	            meshObj.transform.SetParent(nodeObj.transform, false);
 			}
 
@@ -240,16 +257,20 @@ namespace GLTF
             return nodeObj;
         }
 
-        private GameObject FindOrCreateMeshObject(GLTFMeshId meshId)
+        private GameObject FindOrCreateMeshObject(GLTFMesh mesh)
         {
             GameObject meshObj;
 
-            if (_meshCache.TryGetValue(meshId.Value, out meshObj))
+			if (_meshCache.TryGetValue(mesh, out meshObj))
             {
                 return GameObject.Instantiate(meshObj);
             }
 
-            return CreateMeshObject(meshId.Value);
+            meshObj = CreateMeshObject(mesh);
+
+			_meshCache.Add(mesh, meshObj);
+
+	        return meshObj;
         }
 
         private GameObject CreateMeshObject(GLTFMesh mesh)
@@ -296,16 +317,20 @@ namespace GLTF
             return primitiveObj;
         }
 
-        private Material FindOrCreateMaterial(GLTFMaterial materialDef)
+        private Material FindOrCreateMaterial(GLTFMaterial gltfMaterial)
         {
             Material material;
 
-            if (_materialCache.TryGetValue(materialDef, out material))
+            if (_materialCache.TryGetValue(gltfMaterial, out material))
             {
                 return material;
             }
 
-            return CreateMaterial(materialDef);
+	        material = CreateMaterial(gltfMaterial);
+
+			_materialCache.Add(gltfMaterial, material);
+
+	        return material;
         }
 
         private Material CreateMaterial(GLTFMaterial def)
