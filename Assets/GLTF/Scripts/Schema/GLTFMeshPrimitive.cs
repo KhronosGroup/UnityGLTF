@@ -48,7 +48,153 @@ namespace GLTF
         /// TODO: Make dictionary key enums?
         public List<Dictionary<string, GLTFAccessorId>> Targets;
 
-        public static GLTFMeshPrimitive Deserialize(GLTFRoot root, JsonTextReader reader)
+	    public GLTFMeshPrimitiveAttributes BuildMeshAttributes(Dictionary<GLTFBuffer, byte[]> bufferCache)
+	    {
+		    var attributes = new GLTFMeshPrimitiveAttributes();
+
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.POSITION))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.POSITION].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Vertices = accessor.AsVector3Array(bufferData);
+		    }
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.NORMAL))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.NORMAL].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Normals = accessor.AsVector3Array(bufferData);
+		    }
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.TexCoord(0)))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.TexCoord(0)].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Uv = accessor.AsVector2Array(bufferData);
+		    }
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.TexCoord(1)))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.TexCoord(1)].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Uv2 = accessor.AsVector2Array(bufferData);
+		    }
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.TexCoord(2)))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.TexCoord(2)].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Uv3 = accessor.AsVector2Array(bufferData);
+		    }
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.TexCoord(3)))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.TexCoord(3)].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Uv4 = accessor.AsVector2Array(bufferData);
+		    }
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.Color(0)))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.Color(0)].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Colors = accessor.AsColorArray(bufferData);
+		    }
+
+		    {
+			    var accessor = Indices.Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    var unflippedTriangles = accessor.AsIntArray(bufferData);
+			    var triangles = new int[unflippedTriangles.Length];
+			    for (int i = 0; i < unflippedTriangles.Length; i += 3)
+			    {
+				    triangles[i + 2] = unflippedTriangles[i];
+				    triangles[i + 1] = unflippedTriangles[i + 1];
+				    triangles[i] = unflippedTriangles[i + 2];
+			    }
+			    attributes.Triangles = triangles;
+		    }
+
+		    if (Attributes.ContainsKey(GLTFSemanticProperties.TANGENT))
+		    {
+			    var accessor = Attributes[GLTFSemanticProperties.TANGENT].Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    attributes.Tangents = accessor.AsVector4Array(bufferData);
+
+			    return attributes;
+		    }
+		    else
+		    {
+			    return CalculateAndSetTangents(attributes);
+		    }
+	    }
+
+	    // Taken from: http://answers.unity3d.com/comments/190515/view.html
+	    // Official support for Mesh.RecalculateTangents should be coming in 5.6
+	    // https://feedback.unity3d.com/suggestions/recalculatetangents
+	    private GLTFMeshPrimitiveAttributes CalculateAndSetTangents(GLTFMeshPrimitiveAttributes attributes)
+	    {
+		    var triangleCount = attributes.Triangles.Length;
+		    var vertexCount = attributes.Vertices.Length;
+
+		    var tan1 = new Vector3[vertexCount];
+		    var tan2 = new Vector3[vertexCount];
+
+		    attributes.Tangents = new Vector4[vertexCount];
+
+		    for (long a = 0; a < triangleCount; a += 3)
+		    {
+			    long i1 = attributes.Triangles[a + 0];
+			    long i2 = attributes.Triangles[a + 1];
+			    long i3 = attributes.Triangles[a + 2];
+
+			    var v1 = attributes.Vertices[i1];
+			    var v2 = attributes.Vertices[i2];
+			    var v3 = attributes.Vertices[i3];
+
+			    var w1 = attributes.Uv[i1];
+			    var w2 = attributes.Uv[i2];
+			    var w3 = attributes.Uv[i3];
+
+			    var x1 = v2.x - v1.x;
+			    var x2 = v3.x - v1.x;
+			    var y1 = v2.y - v1.y;
+			    var y2 = v3.y - v1.y;
+			    var z1 = v2.z - v1.z;
+			    var z2 = v3.z - v1.z;
+
+			    var s1 = w2.x - w1.x;
+			    var s2 = w3.x - w1.x;
+			    var t1 = w2.y - w1.y;
+			    var t2 = w3.y - w1.y;
+
+			    var r = 1.0f / (s1 * t2 - s2 * t1);
+
+			    var sdir = new Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+			    var tdir = new Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+			    tan1[i1] += sdir;
+			    tan1[i2] += sdir;
+			    tan1[i3] += sdir;
+
+			    tan2[i1] += tdir;
+			    tan2[i2] += tdir;
+			    tan2[i3] += tdir;
+		    }
+
+
+		    for (long a = 0; a < vertexCount; ++a)
+		    {
+			    var n = attributes.Normals[a];
+			    var t = tan1[a];
+
+			    Vector3.OrthoNormalize(ref n, ref t);
+
+			    attributes.Tangents[a].x = t.x;
+			    attributes.Tangents[a].y = t.y;
+			    attributes.Tangents[a].z = t.z;
+
+			    attributes.Tangents[a].w = (Vector3.Dot(Vector3.Cross(n, t), tan2[a]) < 0.0f) ? -1.0f : 1.0f;
+		    }
+
+		    return attributes;
+	    }
+
+		public static GLTFMeshPrimitive Deserialize(GLTFRoot root, JsonTextReader reader)
         {
             var primitive = new GLTFMeshPrimitive();
 
@@ -113,13 +259,14 @@ namespace GLTF
         public static readonly string NORMAL = "NORMAL";
         public static readonly string JOINT = "JOINT";
         public static readonly string WEIGHT = "WEIGHT";
+	    public static readonly string TANGENT = "TANGENT";
 
-        /// <summary>
-        /// Return the semantic property for the uv buffer.
-        /// </summary>
-        /// <param name="index">The index of the uv buffer</param>
-        /// <returns>The semantic property for the uv buffer</returns>
-        public static string TexCoord(int index)
+		/// <summary>
+		/// Return the semantic property for the uv buffer.
+		/// </summary>
+		/// <param name="index">The index of the uv buffer</param>
+		/// <returns>The semantic property for the uv buffer</returns>
+		public static string TexCoord(int index)
         {
             return "TEXCOORD_" + index;
         }

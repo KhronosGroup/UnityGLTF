@@ -68,6 +68,51 @@ namespace GLTF
         /// </summary>
         public List<double> Weights;
 
+		private static readonly Matrix4x4 InvertZMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(1, 1, -1));
+
+		public void GetTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
+	    {
+		    var mat = new Matrix4x4();
+
+			// Set the transform properties from the GLTFNode's values.
+
+			// Use the matrix first if set.
+			if (Matrix != null)
+		    {
+			    for (var i = 0; i < 16; i++)
+			    {
+				    mat[i] = (float)Matrix[i];
+			    }		
+		    }
+		    // Otherwise fall back to the TRS properties.
+		    else
+		    {
+			    mat = Matrix4x4.TRS(Translation, Rotation, Scale);
+		    }
+
+		    mat = InvertZMatrix * mat * InvertZMatrix;
+
+			position = mat.GetColumn(3);
+
+		    scale = new Vector3(
+			    mat.GetColumn(0).magnitude,
+			    mat.GetColumn(1).magnitude,
+			    mat.GetColumn(2).magnitude
+		    );
+
+		    var w = Mathf.Sqrt(1.0f + mat.m00 + mat.m11 + mat.m22) / 2.0f;
+		    var w4 = 4.0f * w;
+		    var x = (mat.m21 - mat.m12) / w4;
+		    var y = (mat.m02 - mat.m20) / w4;
+		    var z = (mat.m10 - mat.m01) / w4;
+
+		    x = float.IsNaN(x) ? 0 : x;
+		    y = float.IsNaN(y) ? 0 : y;
+		    z = float.IsNaN(z) ? 0 : z;
+
+		    rotation = new Quaternion(x, y, z, w);
+		}
+
         public static GLTFNode Deserialize(GLTFRoot root, JsonTextReader reader)
         {
             var node = new GLTFNode();

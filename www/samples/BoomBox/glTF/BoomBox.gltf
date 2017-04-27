@@ -13,13 +13,7 @@
       "min": [
         0.0006585993,
         -0.996773958
-      ],
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      ]
     },
     {
       "bufferView": 1,
@@ -43,6 +37,25 @@
       "byteOffset": 0,
       "componentType": 5126,
       "count": 3575,
+      "type": "VEC4",
+      "max": [
+        1.0,
+        0.9999976,
+        1.0,
+        1.0
+      ],
+      "min": [
+        -0.9991289,
+        -0.999907851,
+        -1.0,
+        1.0
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 3575,
       "type": "VEC3",
       "max": [
         0.009921154,
@@ -56,7 +69,7 @@
       ]
     },
     {
-      "bufferView": 3,
+      "bufferView": 4,
       "byteOffset": 0,
       "componentType": 5123,
       "count": 18108,
@@ -71,56 +84,39 @@
   ],
   "asset": {
     "generator": "glTF Tools for Unity",
-    "version": "2.0",
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+    "version": "2.0"
   },
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 28600,
-      "target": 34962
+      "byteLength": 28600
     },
     {
       "buffer": 0,
       "byteOffset": 28600,
-      "byteLength": 42900,
-      "target": 34962
+      "byteLength": 42900
     },
     {
       "buffer": 0,
       "byteOffset": 71500,
-      "byteLength": 42900,
-      "target": 34962,
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      "byteLength": 57200
     },
     {
       "buffer": 0,
-      "byteOffset": 114400,
-      "byteLength": 36216,
-      "target": 34963
+      "byteOffset": 128700,
+      "byteLength": 42900
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 171600,
+      "byteLength": 36216
     }
   ],
   "buffers": [
     {
       "uri": "BoomBox.bin",
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      },
-      "byteLength": 150616
+      "byteLength": 207816
     }
   ],
   "images": [
@@ -128,19 +124,10 @@
       "uri": "BoomBox_baseColor.png"
     },
     {
-      "uri": "BoomBox_metallicRoughness.png",
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      "uri": "BoomBox_occlusionRoughnessMetallic.png"
     },
     {
       "uri": "BoomBox_normal.png"
-    },
-    {
-      "uri": "BoomBox_occlusion.png"
     },
     {
       "uri": "BoomBox_emissive.png"
@@ -153,27 +140,15 @@
           "attributes": {
             "TEXCOORD_0": 0,
             "NORMAL": 1,
-            "POSITION": 2
+            "TANGENT": 2,
+            "POSITION": 3
           },
-          "indices": 3,
+          "indices": 4,
           "material": 0,
-          "mode": 4,
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
-          
+          "mode": 4
         }
       ],
-      "name": "BoomBox",
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      "name": "BoomBox"
     }
   ],
   "materials": [
@@ -184,31 +159,13 @@
         },
         "metallicRoughnessTexture": {
           "index": 1
-        },
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+        }
       },
       "normalTexture": {
-        "index": 2,
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+        "index": 2
       },
       "occlusionTexture": {
-        "index": 3,
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+        "index": 1
       },
       "emissiveFactor": [
         1.0,
@@ -216,15 +173,9 @@
         1.0
       ],
       "emissiveTexture": {
-        "index": 4
+        "index": 3
       },
-      "name": "BoomBox_Mat",
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      "name": "BoomBox_Mat"
     }
   ],
   "nodes": [
@@ -241,64 +192,29 @@
         0.163,
         0.053
       ],
-      "name": "BoomBox",
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      "name": "BoomBox"
     }
-  ],
-  "samplers": [
-    {
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }}
   ],
   "scene": 0,
   "scenes": [
     {
       "nodes": [
         0
-      ],
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      ]
     }
   ],
   "textures": [
     {
-      "sampler": 0,
-      "source": 0,
-      "extensions": {
-        "test": true
-      },
-      "extras": {
-        "test": true
-      }
+      "source": 0
     },
     {
-      "sampler": 0,
       "source": 1
     },
     {
-      "sampler": 0,
       "source": 2
     },
     {
-      "sampler": 0,
       "source": 3
-    },
-    {
-      "sampler": 0,
-      "source": 4
     }
   ]
 }

@@ -12,8 +12,8 @@ namespace GLTF {
 
         IEnumerator Start()
         {
-            var loader = new GLTFLoader(url);
-            yield return loader.Load(gameObject);
+            var loader = new GLTFLoader(url, gameObject.transform);
+            yield return loader.Load();
         }
     }
 }
