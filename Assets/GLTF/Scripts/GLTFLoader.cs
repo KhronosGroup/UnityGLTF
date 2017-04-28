@@ -3,30 +3,37 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using UnityEngine.Networking;
-using System.Threading;
-using System.IO;
-using Newtonsoft.Json;
 
 namespace GLTF
 {
     public class GLTFLoader
     {
-        private readonly string _gltfUrl;
+	    public bool Multithreaded = true;
+
+	    private Shader _shader;
+		private readonly string _gltfUrl;
         private GLTFRoot _root;
+        private AsyncAction asyncAction;
 	    private readonly Transform _sceneParent;
-	    private readonly bool _multithreaded;
-        private bool _workerThreadRunning = false;
         private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
         private readonly Dictionary<GLTFMaterial, Material> _materialCache = new Dictionary<GLTFMaterial, Material>();
         private readonly Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
         private readonly Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
         private readonly Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
 
-        public GLTFLoader(string gltfUrl, Transform parent = null, bool multithreaded = true)
+        public GLTFLoader(string gltfUrl)
+        {
+            _gltfUrl = gltfUrl;
+            _shader = Shader.Find("GLTF/GLTFStandardShader");
+            asyncAction = new AsyncAction();
+        }
+
+        public GLTFLoader(string gltfUrl, Shader shader, Transform parent = null)
 		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
-			_multithreaded = multithreaded;
+			_shader = shader;
+            asyncAction = new AsyncAction();
 		}
 
         public IEnumerator Load()
@@ -37,13 +44,13 @@ namespace GLTF
 
             var gltfData = www.downloadHandler.data;
 
-	        if (_multithreaded)
+	        if (Multithreaded)
 	        {
-		        yield return ParseGLTFAsync(gltfData);
+		        yield return asyncAction.RunOnWorkerThread(() => ParseGLTF(gltfData));
 	        }
 	        else
 	        {
-		        _root = ParseGLTF(gltfData);
+                ParseGLTF(gltfData);
 	        }
 
             var scene = _root.GetDefaultScene();
@@ -63,9 +70,9 @@ namespace GLTF
                 yield return LoadImage(image);
             }
 
-	        if (_multithreaded)
+	        if (Multithreaded)
 	        {
-		        yield return BuildMeshAttributesAsync();
+		        yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
 	        }
 	        else
 	        {
@@ -82,129 +89,26 @@ namespace GLTF
 			_root = null;
         }
 
-        private IEnumerator ParseGLTFAsync(byte[] gltfData)
+        private void ParseGLTF(byte[] gltfData)
         {
-            _workerThreadRunning = true;
+            byte[] glbBuffer;
+            _root = GLTFParser.ParseBinary(gltfData, out glbBuffer);
 
-            ThreadPool.QueueUserWorkItem((_) =>
+            if (glbBuffer != null)
             {
-                _root = ParseGLTF(gltfData);
-
-                _workerThreadRunning = false;
-            });
-
-            yield return Wait();
-        }
-
-        private enum ChunkFormat : uint
-        {
-            JSON = 0x4e4f534a,
-            BIN = 0x004e4942
-        }
-
-        private GLTFRoot ParseGLTF(byte[] gltfBinary)
-        {
-            string gltfContent;
-            byte[] gltfBinaryChunk = null;
-
-            // Check for binary format magic bytes
-            if (BitConverter.ToUInt32(gltfBinary, 0) == 0x46546c67)
-            {
-                // Parse header information
-
-                var version = BitConverter.ToUInt32(gltfBinary, 4);
-                if (version != 2)
-                {
-                    throw new GLTFHeaderInvalidException("Unsupported glTF version");
-                }
-
-                var length = BitConverter.ToUInt32(gltfBinary, 8);
-                if (length != gltfBinary.Length)
-                {
-                    throw new GLTFHeaderInvalidException("File length does not match header.");
-                }
-
-                var chunkLength = BitConverter.ToUInt32(gltfBinary, 12);
-                var chunkType = BitConverter.ToUInt32(gltfBinary, 16);
-                if (chunkType != (uint)ChunkFormat.JSON)
-                {
-                    throw new GLTFHeaderInvalidException("First chunk must be of type JSON");
-                }
-
-                // Load JSON chunk
-                gltfContent = System.Text.Encoding.UTF8.GetString(gltfBinary, 20, (int)chunkLength);
-
-                // Load Binary Chunk
-                if (20 + chunkLength < length)
-                {
-                    var start = 20 + (int)chunkLength;
-                    chunkLength = BitConverter.ToUInt32(gltfBinary, start);
-                    if (start + chunkLength > length)
-                    {
-                        throw new GLTFHeaderInvalidException("File length does not match chunk header.");
-                    }
-
-                    chunkType = BitConverter.ToUInt32(gltfBinary, start + 4);
-                    if (chunkType != (uint)ChunkFormat.BIN)
-                    {
-                        throw new GLTFHeaderInvalidException("Second chunk must be of type BIN if present");
-                    }
-
-                    gltfBinaryChunk = new byte[chunkLength];
-                    Buffer.BlockCopy(gltfBinary, start + 8, gltfBinaryChunk, 0, (int)chunkLength);
-                }
+                _bufferCache[_root.Buffers[0]] = glbBuffer;
             }
-            else
-            {
-                gltfContent = System.Text.Encoding.UTF8.GetString(gltfBinary);
-            }
+        }
 
-            var stringReader = new StringReader(gltfContent);
-            var root = GLTFRoot.Deserialize(new JsonTextReader(stringReader));
-
-            if (gltfBinaryChunk != null)
+        private void BuildMeshAttributes()
+        {
+            foreach (var mesh in _root.Meshes)
             {
-                if (root.Buffers == null || root.Buffers.Count == 0)
+                foreach (var primitive in mesh.Primitives)
                 {
-                    throw new Exception("Binary buffer not defined in buffers array.");
+                    var attributes = primitive.BuildMeshAttributes(_bufferCache);
+                    _attributesCache[primitive] = attributes;
                 }
-
-				_bufferCache[root.Buffers[0]] = gltfBinaryChunk;
-			}
-
-            return root;
-        }
-
-        private IEnumerator BuildMeshAttributesAsync()
-        {
-            _workerThreadRunning = true;
-
-            ThreadPool.QueueUserWorkItem((_) =>
-            {
-                BuildMeshAttributes();
-                _workerThreadRunning = false;
-            });
-
-            yield return Wait();
-        }
-
-	    private void BuildMeshAttributes()
-	    {
-			foreach (var mesh in _root.Meshes)
-			{
-				foreach (var primitive in mesh.Primitives)
-				{
-					var attributes = primitive.BuildMeshAttributes(_bufferCache);
-					_attributesCache[primitive] = attributes;
-				}
-			}
-		}
-
-        private IEnumerator Wait()
-        {
-            while (_workerThreadRunning)
-            {
-                yield return null;
             }
         }
 
@@ -335,7 +239,7 @@ namespace GLTF
 
         private Material CreateMaterial(GLTFMaterial def)
         {
-            var material = new Material(Shader.Find("GLTF/GLTFStandardShader"));
+            var material = new Material(_shader);
 
             if (def.PbrMetallicRoughness != null)
             {

@@ -6,13 +6,7 @@ The specification isn't finalized yet and this loader is a work in progress. Fee
 ## Examples
 
 1. Clone or download the repository.
-2. Start the web server.
-    ```
-    cd GLTFLoader/www/
-    npm install
-    npm start
-    ```
-3. Open up the Unity project and run any of the example scenes in `Assets/GLTF/Examples`
+2. Open up the Unity project and run any of the example scenes in `Assets/GLTF/Examples`
 
 You should see something like this:
 

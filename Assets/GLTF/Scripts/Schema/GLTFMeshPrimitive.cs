@@ -136,7 +136,10 @@ namespace GLTF
 
 		    attributes.Tangents = new Vector4[vertexCount];
 
-		    for (long a = 0; a < triangleCount; a += 3)
+		    Debug.Log("verts " + attributes.Vertices.Length);
+		    Debug.Log("triangles " + attributes.Triangles.Length);
+
+			for (long a = 0; a < triangleCount; a += 3)
 		    {
 			    long i1 = attributes.Triangles[a + 0];
 			    long i2 = attributes.Triangles[a + 1];
