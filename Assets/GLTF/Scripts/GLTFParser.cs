@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace GLTF
 {
-    public class GLTFParser : MonoBehaviour
+    public class GLTFParser
     {
 
         private enum ChunkFormat : uint
