@@ -132,7 +132,7 @@ namespace GLTF
 			Vector3 position;
 	        Quaternion rotation;
 	        Vector3 scale;
-			node.GetTRSProperties(out position, out rotation, out scale);
+			node.GetUnityTRSProperties(out position, out rotation, out scale);
 			nodeObj.transform.localPosition = position;
 	        nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;

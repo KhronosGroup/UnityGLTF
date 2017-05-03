@@ -70,7 +70,7 @@ namespace GLTF
 
 		private static readonly Matrix4x4 InvertZMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(1, 1, -1));
 
-		public void GetTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
+		public void GetUnityTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
 	    {
 		    Matrix4x4 mat;
 
@@ -89,6 +89,18 @@ namespace GLTF
 
 		    mat = InvertZMatrix * mat * InvertZMatrix;
 
+			GetTRSProperties(mat, out position, out rotation, out scale);
+		}
+
+        public void SetUnityTransform(Transform transform)
+        {
+            var unityMat = Matrix4x4.TRS(transform.localPosition, transform.localRotation, transform.localScale);
+            var gltfMat = InvertZMatrix * unityMat * InvertZMatrix;
+            GetTRSProperties(gltfMat, out Translation, out Rotation, out Scale);
+        }
+
+        private void GetTRSProperties(Matrix4x4 mat, out Vector3 position, out Quaternion rotation, out Vector3 scale)
+        {
 			position = mat.GetColumn(3);
 
 		    scale = new Vector3(
@@ -108,7 +120,7 @@ namespace GLTF
 		    z = float.IsNaN(z) ? 0 : z;
 
 		    rotation = new Quaternion(x, y, z, w);
-		}
+        }
 
         public static GLTFNode Deserialize(GLTFRoot root, JsonTextReader reader)
         {
