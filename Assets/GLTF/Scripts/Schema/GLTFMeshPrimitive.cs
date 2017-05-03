@@ -241,6 +241,60 @@ namespace GLTF
 
             return primitive;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("attributes");
+            writer.WriteStartObject();
+            foreach (var attribute in Attributes)
+            {
+                writer.WritePropertyName(attribute.Key);
+                writer.WriteValue(attribute.Value.Id);
+            }
+            writer.WriteEndObject();
+
+            if (Indices != null)
+            {
+                writer.WritePropertyName("indices");
+                writer.WriteValue(Indices.Id);
+            }
+
+            if (Material != null)
+            {
+                writer.WritePropertyName("material");
+                writer.WriteValue(Material.Id);
+            }
+
+            if (Mode != GLTFDrawMode.Triangles)
+            {
+                writer.WritePropertyName("mode");
+                writer.WriteValue((int)Mode);
+            }
+
+            if (Targets != null && Targets.Count > 0)
+            {
+                writer.WritePropertyName("targets");
+                writer.WriteStartArray();
+                foreach (var target in Targets)
+                {
+                    writer.WriteStartObject();
+                    
+                    foreach (var attribute in target) {
+                        writer.WritePropertyName(attribute.Key);
+                        writer.WriteValue(attribute.Value.Id);
+                    }
+                    
+                    writer.WriteEndObject();
+                }
+                writer.WriteEndArray();
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
+        }
     }
 
     public struct GLTFMeshPrimitiveAttributes

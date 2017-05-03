@@ -44,5 +44,21 @@ namespace GLTF
 
             return textureInfo;
         }
+
+        public override void Serialize(JsonWriter writer) {
+            writer.WriteStartObject();
+
+            if (Scale != 1.0f)
+            {
+                writer.WritePropertyName("scale");
+                writer.WriteValue(Scale);
+            }
+            
+            // Write the parent class' properties only.
+            // Don't accidentally call write start/end object. 
+            base.SerializeProperties(writer);
+
+            writer.WriteEndObject();
+        }
     }
 }

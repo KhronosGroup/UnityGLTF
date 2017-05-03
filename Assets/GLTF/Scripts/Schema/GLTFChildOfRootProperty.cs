@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace GLTF
 {
@@ -11,17 +12,29 @@ namespace GLTF
         /// </summary>
         public string Name;
 
-	    public new void DefaultPropertyDeserializer(GLTFRoot root, JsonTextReader reader)
-	    {
-		    switch (reader.Value.ToString())
-		    {
-			    case "name":
-				    Name = reader.ReadAsString();
-				    break;
-			    default:
-				    base.DefaultPropertyDeserializer(root, reader);
-				    break;
-		    }
-	    }
-	}
+        public new void DefaultPropertyDeserializer(GLTFRoot root, JsonTextReader reader)
+        {
+            switch (reader.Value.ToString())
+            {
+                case "name":
+                    Name = reader.ReadAsString();
+                    break;
+                default:
+                    base.DefaultPropertyDeserializer(root, reader);
+                    break;
+            }
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+
+            if (Name != null)
+            {
+                writer.WritePropertyName("name");
+                writer.WriteValue(Name);
+            }
+
+            base.Serialize(writer);
+        }
+    }
 }

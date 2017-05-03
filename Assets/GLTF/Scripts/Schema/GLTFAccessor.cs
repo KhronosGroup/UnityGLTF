@@ -111,7 +111,7 @@ namespace GLTF
                         accessor.ByteOffset = reader.ReadAsInt32().Value;
                         break;
                     case "componentType":
-                        accessor.ComponentType = (GLTFComponentType) reader.ReadAsInt32().Value;
+                        accessor.ComponentType = (GLTFComponentType)reader.ReadAsInt32().Value;
                         break;
                     case "normalized":
                         accessor.Normalized = reader.ReadAsBoolean().Value;
@@ -128,23 +128,81 @@ namespace GLTF
                     case "min":
                         accessor.Min = reader.ReadDoubleList();
                         break;
-					case "sparse":
-						accessor.Sparse = GLTFAccessorSparse.Deserialize(root, reader);
-						break;
-					default:
-						accessor.DefaultPropertyDeserializer(root, reader);
-						break;
-				}
+                    case "sparse":
+                        accessor.Sparse = GLTFAccessorSparse.Deserialize(root, reader);
+                        break;
+                    default:
+                        accessor.DefaultPropertyDeserializer(root, reader);
+                        break;
+                }
             }
 
             return accessor;
         }
 
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (BufferView != null)
+            {
+                writer.WritePropertyName("bufferView");
+                writer.WriteValue(BufferView);
+            }
+
+            if (ByteOffset != 0)
+            {
+                writer.WritePropertyName("byteOffset");
+                writer.WriteValue(ByteOffset);
+            }
+
+            writer.WritePropertyName("componentType");
+            writer.WriteValue(ComponentType);
+
+            if (Normalized != false)
+            {
+                writer.WritePropertyName("normalized");
+                writer.WriteValue(true);
+            }
+
+            writer.WritePropertyName("count");
+            writer.WriteValue(Count);
+
+            writer.WritePropertyName("type");
+            writer.WriteValue(Type.ToString());
+
+            writer.WritePropertyName("max");
+            writer.WriteStartArray();
+            foreach (var item in Max)
+            {
+                writer.WriteValue(item);
+            }
+            writer.WriteEndArray();
+
+            writer.WritePropertyName("min");
+            writer.WriteStartArray();
+            foreach (var item in Min)
+            {
+                writer.WriteValue(item);
+            }
+            writer.WriteEndArray();
+
+            if (Sparse != null)
+            {
+                writer.WritePropertyName("sparse");
+                Sparse.Serialize(writer);
+            }
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
+
         public int[] AsIntArray(byte[] bufferData)
         {
             var arr = new int[Count];
-	        var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
-	        var stride = 0;
+            var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+            var stride = 0;
 
             switch (ComponentType)
             {
@@ -172,7 +230,7 @@ namespace GLTF
                 case GLTFComponentType.UnsignedShort:
                     if (BufferView.Value.ByteStride == 0)
                     {
-	                    var intermediateArr = new short[Count];
+                        var intermediateArr = new short[Count];
                         Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(short));
                         for (var idx = 0; idx < Count; idx++)
                         {
@@ -188,29 +246,29 @@ namespace GLTF
                         }
                     }
                     break;
-	            case GLTFComponentType.UnsignedInt:
-		            if (BufferView.Value.ByteStride == 0)
-		            {
-			            var intermediateArr = new uint[Count];
-			            Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(uint));
-			            for (var idx = 0; idx < Count; idx++)
-			            {
-				            arr[idx] = (int)intermediateArr[idx];
-			            }
-		            }
-		            else
-		            {
-			            stride = BufferView.Value.ByteStride + sizeof(uint);
-			            for (var idx = 0; idx < Count; idx++)
-			            {
-				            arr[idx] = (int)BitConverter.ToUInt32(bufferData, totalByteOffset + (idx * stride));
-			            }
-		            }
-		            break;
-				case GLTFComponentType.Float:
+                case GLTFComponentType.UnsignedInt:
                     if (BufferView.Value.ByteStride == 0)
                     {
-	                    var intermediateArr = new int[Count];
+                        var intermediateArr = new uint[Count];
+                        Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(uint));
+                        for (var idx = 0; idx < Count; idx++)
+                        {
+                            arr[idx] = (int)intermediateArr[idx];
+                        }
+                    }
+                    else
+                    {
+                        stride = BufferView.Value.ByteStride + sizeof(uint);
+                        for (var idx = 0; idx < Count; idx++)
+                        {
+                            arr[idx] = (int)BitConverter.ToUInt32(bufferData, totalByteOffset + (idx * stride));
+                        }
+                    }
+                    break;
+                case GLTFComponentType.Float:
+                    if (BufferView.Value.ByteStride == 0)
+                    {
+                        var intermediateArr = new int[Count];
                         Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(int));
                         for (var idx = 0; idx < Count; idx++)
                         {
@@ -226,8 +284,8 @@ namespace GLTF
                         }
                     }
                     break;
-				default:
-					throw new Exception("Unsupported component type.");
+                default:
+                    throw new Exception("Unsupported component type.");
             }
 
             return arr;
@@ -236,8 +294,8 @@ namespace GLTF
         public Vector2[] AsVector2Array(byte[] bufferData)
         {
             var arr = new Vector2[Count];
-	        var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
-	        var stride = 0;
+            var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+            var stride = 0;
             const int numComponents = 2;
 
             switch (ComponentType)
@@ -246,8 +304,8 @@ namespace GLTF
                     stride = numComponents * sizeof(sbyte) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-						var x = (sbyte)bufferData[totalByteOffset + (idx * stride)];
-	                    var y = (sbyte)bufferData[totalByteOffset + (idx * stride) + sizeof(sbyte)];
+                        var x = (sbyte)bufferData[totalByteOffset + (idx * stride)];
+                        var y = (sbyte)bufferData[totalByteOffset + (idx * stride) + sizeof(sbyte)];
                         arr[idx] = new Vector2(x, -y);
                     }
                     break;
@@ -255,8 +313,8 @@ namespace GLTF
                     stride = numComponents * sizeof(byte) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var x = bufferData[totalByteOffset + (idx * stride)];
-	                    var y = bufferData[totalByteOffset + (idx * stride) + sizeof(byte)];
+                        var x = bufferData[totalByteOffset + (idx * stride)];
+                        var y = bufferData[totalByteOffset + (idx * stride) + sizeof(byte)];
                         arr[idx] = new Vector2(x, -y);
                     }
                     break;
@@ -264,7 +322,7 @@ namespace GLTF
                     stride = numComponents * sizeof(short) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var x = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride));
+                        var x = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride));
                         float y = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(short));
                         arr[idx] = new Vector2(x, -y);
                     }
@@ -273,8 +331,8 @@ namespace GLTF
                     stride = numComponents * sizeof(ushort) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var x = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
-	                    var y = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(ushort));
+                        var x = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
+                        var y = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(ushort));
                         arr[idx] = new Vector2(x, -y);
                     }
                     break;
@@ -282,16 +340,16 @@ namespace GLTF
                     stride = numComponents * sizeof(uint) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var x = BitConverter.ToUInt32(bufferData, totalByteOffset + (idx * stride));
-	                    var y = BitConverter.ToUInt32(bufferData, totalByteOffset + (idx * stride) + sizeof(uint));
+                        var x = BitConverter.ToUInt32(bufferData, totalByteOffset + (idx * stride));
+                        var y = BitConverter.ToUInt32(bufferData, totalByteOffset + (idx * stride) + sizeof(uint));
                         arr[idx] = new Vector2(x, -y);
                     }
                     break;
                 case GLTFComponentType.Float:
                     if (BufferView.Value.ByteStride == 0)
                     {
-	                    var totalComponents = Count * 2;
-	                    var intermediateArr = new float[totalComponents];
+                        var totalComponents = Count * 2;
+                        var intermediateArr = new float[totalComponents];
                         Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
                         for (var idx = 0; idx < Count; idx++)
                         {
@@ -306,24 +364,24 @@ namespace GLTF
                         stride = numComponents * sizeof(float) + BufferView.Value.ByteStride;
                         for (var idx = 0; idx < Count; idx++)
                         {
-	                        var x = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
-	                        var y = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
+                            var x = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
+                            var y = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
                             arr[idx] = new Vector2(x, -y);
                         }
                     }
                     break;
-	            default:
-		            throw new Exception("Unsupported component type.");
-			}
+                default:
+                    throw new Exception("Unsupported component type.");
+            }
 
             return arr;
         }
 
         public Vector3[] AsVector3Array(byte[] bufferData)
         {
-	        var arr = new Vector3[Count];
-	        var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
-	        int stride;
+            var arr = new Vector3[Count];
+            var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+            int stride;
             const int numComponents = 3;
 
             switch (ComponentType)
@@ -381,8 +439,8 @@ namespace GLTF
                 case GLTFComponentType.Float:
                     if (BufferView.Value.ByteStride == 0)
                     {
-	                    var totalComponents = Count * 3;
-	                    var intermediateArr = new float[totalComponents];
+                        var totalComponents = Count * 3;
+                        var intermediateArr = new float[totalComponents];
                         Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
                         for (var idx = 0; idx < Count; idx++)
                         {
@@ -398,114 +456,25 @@ namespace GLTF
                         stride = numComponents * sizeof(float) + BufferView.Value.ByteStride;
                         for (var idx = 0; idx < Count; idx++)
                         {
-	                        var x = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
-	                        var y = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
-							var z = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(float)));
+                            var x = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
+                            var y = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
+                            var z = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(float)));
                             arr[idx] = new Vector3(x, y, -z);
                         }
                     }
                     break;
-	            default:
-		            throw new Exception("Unsupported component type.");
-			}
+                default:
+                    throw new Exception("Unsupported component type.");
+            }
 
             return arr;
         }
 
-	    public Vector4[] AsVector4Array(byte[] bufferData)
-	    {
-		    var arr = new Vector4[Count];
-		    var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
-		    int stride;
-		    const int numComponents = 4;
-
-		    switch (ComponentType)
-		    {
-			    case GLTFComponentType.Byte:
-				    stride = numComponents * sizeof(sbyte) + BufferView.Value.ByteStride;
-				    for (var idx = 0; idx < Count; idx++)
-				    {
-					    var x = (sbyte)bufferData[totalByteOffset + (idx * stride)];
-					    var y = (sbyte)bufferData[totalByteOffset + (idx * stride) + sizeof(sbyte)];
-					    var z = (sbyte)bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(sbyte))];
-					    var w = (sbyte)bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(sbyte))];
-					    arr[idx] = new Vector4(x, y, z, -w);
-				    }
-				    break;
-			    case GLTFComponentType.UnsignedByte:
-				    stride = numComponents * sizeof(byte) + BufferView.Value.ByteStride;
-				    for (var idx = 0; idx < Count; idx++)
-				    {
-					    var x = bufferData[totalByteOffset + (idx * stride)];
-					    var y = bufferData[totalByteOffset + (idx * stride) + sizeof(byte)];
-					    var z = bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(byte))];
-					    var w = bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(byte))];
-						arr[idx] = new Vector4(x, y, z, -w);
-					}
-				    break;
-			    case GLTFComponentType.Short:
-				    stride = numComponents * sizeof(short) + BufferView.Value.ByteStride;
-				    for (var idx = 0; idx < Count; idx++)
-				    {
-					    var x = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride));
-					    var y = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(short));
-					    var z = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(short)));
-					    var w = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(short)));
-						arr[idx] = new Vector4(x, y, z, -w);
-					}
-				    break;
-			    case GLTFComponentType.UnsignedShort:
-				    stride = numComponents * sizeof(ushort) + BufferView.Value.ByteStride;
-				    for (var idx = 0; idx < Count; idx++)
-				    {
-					    var x = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
-					    var y = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(ushort));
-					    var z = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(ushort)));
-					    var w = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(ushort)));
-						arr[idx] = new Vector4(x, y, z, -w);
-					}
-				    break;
-			    case GLTFComponentType.Float:
-				    if (BufferView.Value.ByteStride == 0)
-				    {
-					    var totalComponents = Count * 4;
-					    var intermediateArr = new float[totalComponents];
-					    Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
-					    for (var idx = 0; idx < Count; idx++)
-					    {
-						    arr[idx] = new Vector4(
-							    intermediateArr[idx * 4],
-							    intermediateArr[idx * 4 + 1],
-							    intermediateArr[idx * 4 + 2],
-							    -intermediateArr[idx * 4 + 3]
-						    );
-					    }
-				    }
-				    else
-				    {
-					    stride = numComponents * sizeof(float) + BufferView.Value.ByteStride;
-					    for (var idx = 0; idx < Count; idx++)
-					    {
-						    var x = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
-						    var y = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
-						    var z = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(float)));
-						    var w = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(float)));
-							arr[idx] = new Vector4(x, y, z, -w);
-					    }
-				    }
-				    break;
-				default:
-				    throw new Exception("Unsupported component type.");
-		    }
-
-		    return arr;
-	    }
-
-		public Color[] AsColorArray(byte[] bufferData)
+        public Vector4[] AsVector4Array(byte[] bufferData)
         {
-	        var arr = new Color[Count];
-	        var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
-	        int stride;
+            var arr = new Vector4[Count];
+            var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+            int stride;
             const int numComponents = 4;
 
             switch (ComponentType)
@@ -514,10 +483,99 @@ namespace GLTF
                     stride = numComponents * sizeof(sbyte) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var r = (sbyte)bufferData[totalByteOffset + (idx * stride)];
-	                    var g = (sbyte)bufferData[totalByteOffset + (idx * stride) + sizeof(sbyte)];
-	                    var b = (sbyte)bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(sbyte))];
-	                    var a = (sbyte)bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(sbyte))];
+                        var x = (sbyte)bufferData[totalByteOffset + (idx * stride)];
+                        var y = (sbyte)bufferData[totalByteOffset + (idx * stride) + sizeof(sbyte)];
+                        var z = (sbyte)bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(sbyte))];
+                        var w = (sbyte)bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(sbyte))];
+                        arr[idx] = new Vector4(x, y, z, -w);
+                    }
+                    break;
+                case GLTFComponentType.UnsignedByte:
+                    stride = numComponents * sizeof(byte) + BufferView.Value.ByteStride;
+                    for (var idx = 0; idx < Count; idx++)
+                    {
+                        var x = bufferData[totalByteOffset + (idx * stride)];
+                        var y = bufferData[totalByteOffset + (idx * stride) + sizeof(byte)];
+                        var z = bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(byte))];
+                        var w = bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(byte))];
+                        arr[idx] = new Vector4(x, y, z, -w);
+                    }
+                    break;
+                case GLTFComponentType.Short:
+                    stride = numComponents * sizeof(short) + BufferView.Value.ByteStride;
+                    for (var idx = 0; idx < Count; idx++)
+                    {
+                        var x = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride));
+                        var y = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(short));
+                        var z = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(short)));
+                        var w = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(short)));
+                        arr[idx] = new Vector4(x, y, z, -w);
+                    }
+                    break;
+                case GLTFComponentType.UnsignedShort:
+                    stride = numComponents * sizeof(ushort) + BufferView.Value.ByteStride;
+                    for (var idx = 0; idx < Count; idx++)
+                    {
+                        var x = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
+                        var y = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(ushort));
+                        var z = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(ushort)));
+                        var w = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(ushort)));
+                        arr[idx] = new Vector4(x, y, z, -w);
+                    }
+                    break;
+                case GLTFComponentType.Float:
+                    if (BufferView.Value.ByteStride == 0)
+                    {
+                        var totalComponents = Count * 4;
+                        var intermediateArr = new float[totalComponents];
+                        Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
+                        for (var idx = 0; idx < Count; idx++)
+                        {
+                            arr[idx] = new Vector4(
+                                intermediateArr[idx * 4],
+                                intermediateArr[idx * 4 + 1],
+                                intermediateArr[idx * 4 + 2],
+                                -intermediateArr[idx * 4 + 3]
+                            );
+                        }
+                    }
+                    else
+                    {
+                        stride = numComponents * sizeof(float) + BufferView.Value.ByteStride;
+                        for (var idx = 0; idx < Count; idx++)
+                        {
+                            var x = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
+                            var y = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
+                            var z = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(float)));
+                            var w = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(float)));
+                            arr[idx] = new Vector4(x, y, z, -w);
+                        }
+                    }
+                    break;
+                default:
+                    throw new Exception("Unsupported component type.");
+            }
+
+            return arr;
+        }
+
+        public Color[] AsColorArray(byte[] bufferData)
+        {
+            var arr = new Color[Count];
+            var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+            int stride;
+            const int numComponents = 4;
+
+            switch (ComponentType)
+            {
+                case GLTFComponentType.Byte:
+                    stride = numComponents * sizeof(sbyte) + BufferView.Value.ByteStride;
+                    for (var idx = 0; idx < Count; idx++)
+                    {
+                        var r = (sbyte)bufferData[totalByteOffset + (idx * stride)];
+                        var g = (sbyte)bufferData[totalByteOffset + (idx * stride) + sizeof(sbyte)];
+                        var b = (sbyte)bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(sbyte))];
+                        var a = (sbyte)bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(sbyte))];
                         arr[idx] = new Color(r, g, b, a);
                     }
                     break;
@@ -525,10 +583,10 @@ namespace GLTF
                     stride = numComponents * sizeof(byte) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var r = bufferData[totalByteOffset + (idx * stride)];
-	                    var g = bufferData[totalByteOffset + (idx * stride) + sizeof(byte)];
-	                    var b = bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(byte))];
-	                    var a = bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(byte))];
+                        var r = bufferData[totalByteOffset + (idx * stride)];
+                        var g = bufferData[totalByteOffset + (idx * stride) + sizeof(byte)];
+                        var b = bufferData[totalByteOffset + (idx * stride) + (2 * sizeof(byte))];
+                        var a = bufferData[totalByteOffset + (idx * stride) + (3 * sizeof(byte))];
                         arr[idx] = new Color(r, g, b, a);
                     }
                     break;
@@ -536,10 +594,10 @@ namespace GLTF
                     stride = numComponents * sizeof(short) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var r = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride));
-	                    var g = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(short));
-	                    var b = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(short)));
-	                    var a = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(short)));
+                        var r = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride));
+                        var g = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(short));
+                        var b = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(short)));
+                        var a = BitConverter.ToInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(short)));
                         arr[idx] = new Color(r, g, b, a);
                     }
                     break;
@@ -547,16 +605,16 @@ namespace GLTF
                     stride = numComponents * sizeof(ushort) + BufferView.Value.ByteStride;
                     for (var idx = 0; idx < Count; idx++)
                     {
-	                    var r = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
-	                    var g = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(ushort));
-	                    var b = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(ushort)));
-	                    var a = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(ushort)));
+                        var r = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
+                        var g = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + sizeof(ushort));
+                        var b = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(ushort)));
+                        var a = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(ushort)));
                         arr[idx] = new Color(r, g, b, a);
                     }
                     break;
-	            default:
-		            throw new Exception("Unsupported component type.");
-			}
+                default:
+                    throw new Exception("Unsupported component type.");
+            }
 
             return arr;
         }

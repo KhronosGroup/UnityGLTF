@@ -49,5 +49,28 @@ namespace GLTF
 
             return textureInfo;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            SerializeProperties(writer);
+            
+            writer.WriteEndObject();
+        }
+
+        public void SerializeProperties(JsonWriter writer)
+        {
+            writer.WritePropertyName("index");
+            writer.WriteValue(Index.Id);
+
+            if (TexCoord != 0)
+            {
+                writer.WritePropertyName("texCoord");
+                writer.WriteValue(TexCoord);
+            }
+            
+            base.Serialize(writer);
+        }
     }
 }

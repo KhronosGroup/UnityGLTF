@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace GLTF
 {
@@ -96,24 +98,24 @@ namespace GLTF
         /// </summary>
         public List<GLTFTexture> Textures;
 
-		/// <summary>
-		/// Return the default scene. When scene is null, scene of index 0 will be returned.
-		/// When scenes list is null or empty, returns null.
-		/// </summary>
-		public GLTFScene GetDefaultScene()
-	    {
-		    if (Scene != null)
-		    {
-			    return Scene.Value;
-		    }
+        /// <summary>
+        /// Return the default scene. When scene is null, scene of index 0 will be returned.
+        /// When scenes list is null or empty, returns null.
+        /// </summary>
+        public GLTFScene GetDefaultScene()
+        {
+            if (Scene != null)
+            {
+                return Scene.Value;
+            }
 
-		    if (Scenes != null && Scenes.Count > 0)
-		    {
-			    return Scenes[0];
-		    }
+            if (Scenes != null && Scenes.Count > 0)
+            {
+                return Scenes[0];
+            }
 
-		    return null;
-	    }
+            return null;
+        }
 
         public static GLTFRoot Deserialize(JsonTextReader reader)
         {
@@ -181,13 +183,196 @@ namespace GLTF
                     case "textures":
                         root.Textures = reader.ReadList(() => GLTFTexture.Deserialize(root, reader));
                         break;
-					default:
-						root.DefaultPropertyDeserializer(root, reader);
-						break;
-				}
+                    default:
+                        root.DefaultPropertyDeserializer(root, reader);
+                        break;
+                }
             }
 
             return root;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (ExtensionsUsed != null && ExtensionsUsed.Count > 0)
+            {
+                writer.WritePropertyName("extensionsUsed");
+                writer.WriteStartArray();
+                foreach (var extension in ExtensionsUsed)
+                {
+                    writer.WriteValue(extension);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (ExtensionsRequired != null && ExtensionsRequired.Count > 0)
+            {
+                writer.WritePropertyName("extensionsRequired");
+                writer.WriteStartArray();
+                foreach (var extension in ExtensionsRequired)
+                {
+                    writer.WriteValue(extension);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Accessors != null && Accessors.Count > 0)
+            {
+                writer.WritePropertyName("accessors");
+                writer.WriteStartArray();
+                foreach (var accessor in Accessors)
+                {
+                    accessor.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Animations != null && Animations.Count > 0)
+            {
+                writer.WritePropertyName("animations");
+                writer.WriteStartArray();
+                foreach (var animation in Animations)
+                {
+                    animation.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            writer.WritePropertyName("asset");
+            Asset.Serialize(writer);
+
+            if (Buffers != null && Buffers.Count > 0)
+            {
+                writer.WritePropertyName("buffers");
+                writer.WriteStartArray();
+                foreach (var buffer in Buffers)
+                {
+                    buffer.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (BufferViews != null && BufferViews.Count > 0)
+            {
+                writer.WritePropertyName("bufferViews");
+                writer.WriteStartArray();
+                foreach (var bufferView in BufferViews)
+                {
+                    bufferView.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Cameras != null && Cameras.Count > 0)
+            {
+                writer.WritePropertyName("cameras");
+                writer.WriteStartArray();
+                foreach (var camera in Cameras)
+                {
+                    camera.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Images != null && Images.Count > 0)
+            {
+                writer.WritePropertyName("images");
+                writer.WriteStartArray();
+                foreach (var image in Images)
+                {
+                    image.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Materials != null && Materials.Count > 0)
+            {
+                writer.WritePropertyName("materials");
+                writer.WriteStartArray();
+                foreach (var material in Materials)
+                {
+                    material.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Meshes != null && Meshes.Count > 0)
+            {
+                writer.WritePropertyName("meshes");
+                writer.WriteStartArray();
+                foreach (var mesh in Meshes)
+                {
+                    mesh.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Nodes != null && Nodes.Count > 0)
+            {
+                writer.WritePropertyName("nodes");
+                writer.WriteStartArray();
+                foreach (var node in Nodes)
+                {
+                    node.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Samplers != null && Samplers.Count > 0)
+            {
+                writer.WritePropertyName("samplers");
+                writer.WriteStartArray();
+                foreach (var sampler in Samplers)
+                {
+                    sampler.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Scene != null)
+            {
+                writer.WritePropertyName("scene");
+                Scene.Serialize(writer);
+            }
+
+            if (Scenes != null && Scenes.Count > 0)
+            {
+                writer.WritePropertyName("scenes");
+                writer.WriteStartArray();
+                foreach (var scene in Scenes)
+                {
+                    scene.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Skins != null && Skins.Count > 0)
+            {
+                writer.WritePropertyName("skins");
+                writer.WriteStartArray();
+                foreach (var skin in Skins)
+                {
+                    skin.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Textures != null && Textures.Count > 0)
+            {
+                writer.WritePropertyName("textures");
+                writer.WriteStartArray();
+                foreach (var texture in Textures)
+                {
+                    texture.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }
 }

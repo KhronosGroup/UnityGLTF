@@ -55,5 +55,37 @@ namespace GLTF
 
             return skin;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (InverseBindMatrices != null)
+            {
+                writer.WritePropertyName("inverseBindMatrices");
+                writer.WriteValue(InverseBindMatrices.Id);
+            }
+
+            if (Skeleton != null)
+            {
+                writer.WritePropertyName("skeleton");
+                writer.WriteValue(Skeleton.Id);
+            }
+
+            if (Joints != null && Joints.Count > 0)
+            {
+                writer.WritePropertyName("joints");
+                writer.WriteStartArray();
+                foreach (var joint in Joints)
+                {
+                    writer.WriteValue(joint.Id);
+                }
+                writer.WriteEndArray();
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
+        }
     }
 }

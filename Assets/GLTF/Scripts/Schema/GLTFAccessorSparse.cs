@@ -50,5 +50,23 @@ namespace GLTF
 
             return accessorSparse;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("count");
+            writer.WriteValue(Count);
+
+            writer.WritePropertyName("indices");
+            Indices.Serialize(writer);
+
+            writer.WritePropertyName("values");
+            Values.Serialize(writer);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 }

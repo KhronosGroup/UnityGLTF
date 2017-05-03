@@ -28,7 +28,7 @@ namespace GLTF
         /// If `zfar` is undefined, runtime must use infinite projection matrix.
         /// <minimum>0.0</minimum>
         /// </summary>
-        public double ZFar;
+        public double ZFar = double.PositiveInfinity;
 
         /// <summary>
         /// The floating-point distance to the near clipping plane.
@@ -70,6 +70,33 @@ namespace GLTF
             }
 
             return cameraPerspective;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (AspectRatio != 0)
+            {
+                writer.WritePropertyName("aspectRatio");
+                writer.WriteValue(AspectRatio);
+            }
+
+            writer.WritePropertyName("yfov");
+            writer.WriteValue(YFov);
+
+            if (ZFar != double.PositiveInfinity)
+            {
+                writer.WritePropertyName("zfar");
+                writer.WriteValue(ZFar);
+            }       
+
+            writer.WritePropertyName("ZNear");
+            writer.WriteValue(ZNear);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }
 }

@@ -37,7 +37,7 @@ namespace GLTF
         /// All valid values correspond to WebGL enums.
         /// When this is not provided, the bufferView contains animation or skin data.
         /// </summary>
-        public GLTFBufferViewTarget Target;
+        public GLTFBufferViewTarget Target = GLTFBufferViewTarget.None;
 
         public static GLTFBufferView Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -62,7 +62,7 @@ namespace GLTF
                         bufferView.ByteStride = reader.ReadAsInt32().Value;
                         break;
                     case "target":
-                        bufferView.Target = (GLTFBufferViewTarget) reader.ReadAsInt32().Value;
+                        bufferView.Target = (GLTFBufferViewTarget)reader.ReadAsInt32().Value;
                         break;
                     default:
                         bufferView.DefaultPropertyDeserializer(root, reader);
@@ -72,11 +72,45 @@ namespace GLTF
 
             return bufferView;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("buffer");
+            writer.WriteValue(Buffer.Id);
+
+            if (ByteOffset != 0)
+            {
+                writer.WritePropertyName("byteOffset");
+                writer.WriteValue(ByteOffset);
+            }
+
+            writer.WritePropertyName("byteLength");
+            writer.WriteValue(ByteLength);
+
+            if (ByteStride != 0)
+            {
+                writer.WritePropertyName("byteStride");
+                writer.WriteValue(ByteStride);
+            }
+
+            if (Target != GLTFBufferViewTarget.None)
+            {
+                writer.WritePropertyName("target");
+                writer.WriteValue((int)Target);
+            }
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 
     public enum GLTFBufferViewTarget
     {
+        None = 0,
         ArrayBuffer = 34962,
-        ElementArrayBuffer = 34963
+        ElementArrayBuffer = 34963,
     }
 }

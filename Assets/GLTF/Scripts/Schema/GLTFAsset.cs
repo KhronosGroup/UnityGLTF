@@ -37,31 +37,55 @@ namespace GLTF
                 throw new Exception("Asset must be an object.");
             }
 
-	        while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-	        {
-		        var curProp = reader.Value.ToString();
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
 
-		        switch (curProp)
-		        {
-			        case "copyright":
-				        asset.Copyright = reader.ReadAsString();
-				        break;
-			        case "generator":
-				        asset.Generator = reader.ReadAsString();
-				        break;
-			        case "version":
-				        asset.Version = reader.ReadAsString();
-				        break;
-			        case "minVersion":
-				        asset.MinVersion = reader.ReadAsString();
-				        break;
-			        default:
-				        asset.DefaultPropertyDeserializer(root, reader);
-				        break;
-		        }
-	        }
+                switch (curProp)
+                {
+                    case "copyright":
+                        asset.Copyright = reader.ReadAsString();
+                        break;
+                    case "generator":
+                        asset.Generator = reader.ReadAsString();
+                        break;
+                    case "version":
+                        asset.Version = reader.ReadAsString();
+                        break;
+                    case "minVersion":
+                        asset.MinVersion = reader.ReadAsString();
+                        break;
+                    default:
+                        asset.DefaultPropertyDeserializer(root, reader);
+                        break;
+                }
+            }
 
-	        return asset;
+            return asset;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (Copyright != null)
+            {
+                writer.WritePropertyName("copyright");
+                writer.WriteValue(Copyright);
+            }
+
+            if (Generator != null)
+            {
+                writer.WritePropertyName("generator");
+                writer.WriteValue(Generator);
+            }
+
+            writer.WritePropertyName("version");
+            writer.WriteValue(Version);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }
 }

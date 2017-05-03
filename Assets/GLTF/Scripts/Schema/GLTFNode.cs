@@ -39,7 +39,7 @@ namespace GLTF
         /// <summary>
         /// A floating-point 4x4 transformation matrix stored in column-major order.
         /// </summary>
-        public List<double> Matrix;
+        public Matrix4x4 Matrix;
 
         /// <summary>
         /// The index of the mesh in this node.
@@ -70,19 +70,16 @@ namespace GLTF
 
 		private static readonly Matrix4x4 InvertZMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(1, 1, -1));
 
-		public void GetTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
+		public void GetUnityTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
 	    {
-		    var mat = new Matrix4x4();
+		    Matrix4x4 mat;
 
 			// Set the transform properties from the GLTFNode's values.
 
 			// Use the matrix first if set.
 			if (Matrix != null)
 		    {
-			    for (var i = 0; i < 16; i++)
-			    {
-				    mat[i] = (float)Matrix[i];
-			    }		
+			    mat = Matrix;		
 		    }
 		    // Otherwise fall back to the TRS properties.
 		    else
@@ -92,6 +89,18 @@ namespace GLTF
 
 		    mat = InvertZMatrix * mat * InvertZMatrix;
 
+			GetTRSProperties(mat, out position, out rotation, out scale);
+		}
+
+        public void SetUnityTransform(Transform transform)
+        {
+            var unityMat = Matrix4x4.TRS(transform.localPosition, transform.localRotation, transform.localScale);
+            var gltfMat = InvertZMatrix * unityMat * InvertZMatrix;
+            GetTRSProperties(gltfMat, out Translation, out Rotation, out Scale);
+        }
+
+        private void GetTRSProperties(Matrix4x4 mat, out Vector3 position, out Quaternion rotation, out Vector3 scale)
+        {
 			position = mat.GetColumn(3);
 
 		    scale = new Vector3(
@@ -111,7 +120,7 @@ namespace GLTF
 		    z = float.IsNaN(z) ? 0 : z;
 
 		    rotation = new Quaternion(x, y, z, w);
-		}
+        }
 
         public static GLTFNode Deserialize(GLTFRoot root, JsonTextReader reader)
         {
@@ -133,7 +142,13 @@ namespace GLTF
                         node.Skin = GLTFSkinId.Deserialize(root, reader);
                         break;
                     case "matrix":
-                        node.Matrix = reader.ReadDoubleList();
+                        var list = reader.ReadDoubleList();
+                        var mat = new Matrix4x4();
+                        for (var i = 0; i < 16; i++)
+                        {
+                            mat[i] = (float)list[i];
+                        }
+                        node.Matrix = mat;
                         break;
                     case "mesh":
                         node.Mesh = GLTFMeshId.Deserialize(root, reader);
@@ -157,6 +172,97 @@ namespace GLTF
             }
 
             return node;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (Camera != null)
+            {
+                writer.WritePropertyName("camera");
+                writer.WriteValue(Camera.Id);
+            }
+
+            if (Children != null && Children.Count > 0)
+            {
+                writer.WritePropertyName("children");
+                writer.WriteStartArray();
+                foreach (var child in Children)
+                {
+                    writer.WriteValue(child.Id);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Skin != null)
+            {
+                writer.WritePropertyName("skin");
+                writer.WriteValue(Skin.Id);
+            }
+
+            if (Matrix != null && Matrix != Matrix4x4.identity)
+            {
+                writer.WritePropertyName("matrix");
+                writer.WriteStartArray();
+                for (var i = 0; i < 16; i++)
+                {
+                   writer.WriteValue(Matrix[i]);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Mesh != null)
+            {
+                writer.WritePropertyName("mesh");
+                writer.WriteValue(Mesh.Id);
+            }
+
+            if (Rotation != null && Rotation != Quaternion.identity)
+            {
+                writer.WritePropertyName("rotation");
+                writer.WriteStartArray();
+                writer.WriteValue(Rotation.x);
+                writer.WriteValue(Rotation.y);
+                writer.WriteValue(Rotation.z);
+                writer.WriteValue(Rotation.w);
+                writer.WriteEndArray();
+            }
+
+            if (Scale != null && Scale != Vector3.one)
+            {
+                writer.WritePropertyName("scale");
+                writer.WriteStartArray();
+                writer.WriteValue(Scale.x);
+                writer.WriteValue(Scale.y);
+                writer.WriteValue(Scale.z);
+                writer.WriteEndArray();
+            }
+
+            if (Translation != null && Translation != Vector3.zero)
+            {
+                writer.WritePropertyName("translation");
+                writer.WriteStartArray();
+                writer.WriteValue(Translation.x);
+                writer.WriteValue(Translation.y);
+                writer.WriteValue(Translation.z);
+                writer.WriteEndArray();
+            }
+
+            if (Weights != null && Weights.Count > 0)
+            {
+                writer.WritePropertyName("weights");
+                writer.WriteStartArray();
+                foreach (var weight in Weights)
+                {
+                    writer.WriteValue(weight);
+                }
+                writer.WriteEndArray();
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
         }
     }
 }

@@ -34,5 +34,25 @@ namespace GLTF
 
             return scene;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (Nodes != null && Nodes.Count > 0)
+            {
+                writer.WritePropertyName("nodes");
+                writer.WriteStartArray();
+                foreach (var node in Nodes)
+                {
+                    writer.WriteValue(node.Id);
+                }
+                writer.WriteEndArray();
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
+        }
     }
 }

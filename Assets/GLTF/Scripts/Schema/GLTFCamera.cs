@@ -51,6 +51,30 @@ namespace GLTF
 
             return camera;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (Orthographic != null)
+            {
+                writer.WritePropertyName("orthographic");
+                Orthographic.Serialize(writer);
+            }
+
+            if (Perspective != null)
+            {
+                writer.WritePropertyName("perspective");
+                Perspective.Serialize(writer);
+            }
+
+            writer.WritePropertyName("type");
+            writer.WriteValue(Type.ToString());
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 
     public enum GLTFCameraType

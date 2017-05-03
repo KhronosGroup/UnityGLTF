@@ -116,6 +116,65 @@ namespace GLTF
 
             return material;
         }
+
+        public override void Serialize(JsonWriter writer) {
+            writer.WriteStartObject();
+
+            if (PbrMetallicRoughness != null)
+            {
+                writer.WritePropertyName("pbrMetallicRoughness");
+                PbrMetallicRoughness.Serialize(writer);
+            }
+            
+            if (NormalTexture != null)
+            {
+                writer.WritePropertyName("normalTexture");
+                NormalTexture.Serialize(writer);
+            }
+
+            if (OcclusionTexture != null)
+            {
+                writer.WritePropertyName("occlusionTexture");
+                OcclusionTexture.Serialize(writer);
+            }
+
+            if (EmissiveTexture != null)
+            {
+                writer.WritePropertyName("emissiveTexture");
+                EmissiveTexture.Serialize(writer);
+            }
+
+            if (EmissiveFactor != Color.black)
+            {
+                writer.WritePropertyName("emissiveFactor");
+                writer.WriteStartArray();
+                writer.WriteValue(EmissiveFactor.r);
+                writer.WriteValue(EmissiveFactor.g);
+                writer.WriteValue(EmissiveFactor.b);
+                writer.WriteEndArray();
+            }
+
+            if (AlphaMode != GLTFAlphaMode.OPAQUE)
+            {
+                writer.WritePropertyName("alphaMode");
+                writer.WriteValue(AlphaMode.ToString());
+            }
+
+            if (AlphaCutoff != 0.5)
+            {
+                writer.WritePropertyName("alphaCutoff");
+                writer.WriteValue(AlphaCutoff);
+            }
+
+            if (DoubleSided) {
+                writer.WritePropertyName("doubleSided");
+                writer.WriteValue(true);
+            }
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 
     public enum GLTFAlphaMode

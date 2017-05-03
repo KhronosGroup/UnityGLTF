@@ -45,7 +45,31 @@ namespace GLTF
             }
 
             return animation;
+        }
 
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("channels");
+            writer.WriteStartArray();
+            foreach (var channel in Channels)
+            {
+                channel.Serialize(writer);
+            }
+            writer.WriteEndArray();
+
+            writer.WritePropertyName("samplers");
+            writer.WriteStartArray();
+            foreach (var sampler in Samplers)
+            {
+                sampler.Serialize(writer);
+            }
+            writer.WriteEndArray();
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }   
 }

@@ -64,5 +64,26 @@ namespace GLTF
 
             return cameraOrthographic;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("xmag");
+            writer.WriteValue(XMag);
+
+            writer.WritePropertyName("Ymag");
+            writer.WriteValue(YMag);
+
+            writer.WritePropertyName("ZFar");
+            writer.WriteValue(ZFar);
+
+            writer.WritePropertyName("ZNear");
+            writer.WriteValue(ZNear);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 }

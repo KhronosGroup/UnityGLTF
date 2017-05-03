@@ -37,11 +37,6 @@ namespace GLTF
         {
             var animationSampler = new GLTFAnimationSampler();
 
-            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
-            {
-                throw new Exception("Animation sampler must be an object.");
-            }
-
             while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
             {
                 var curProp = reader.Value.ToString();
@@ -64,6 +59,27 @@ namespace GLTF
             }
 
             return animationSampler;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("input");
+            writer.WriteValue(Input.Id);
+
+            if (Interpolation != GLTFInterpolationType.LINEAR)
+            {
+                writer.WritePropertyName("interpolation");
+                writer.WriteValue(Interpolation.ToString());
+            }
+
+            writer.WritePropertyName("output");
+            writer.WriteValue(Output.Id);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }
 

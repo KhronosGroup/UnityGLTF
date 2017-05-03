@@ -58,6 +58,39 @@ namespace GLTF
 
             return sampler;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (MagFilter != GLTFMagFilterMode.Linear)
+            {
+                writer.WritePropertyName("magFilter");
+                writer.WriteValue((int)MagFilter);
+            }
+
+            if (MinFilter != GLTFMinFilterMode.NearestMipmapLinear)
+            {
+                writer.WritePropertyName("minFilter");
+                writer.WriteValue((int)MinFilter);  
+            }
+
+            if (WrapS != GLTFWrapMode.Repeat)
+            {
+                writer.WritePropertyName("WrapS");
+                writer.WriteValue((int)WrapS);
+            }
+
+            if (WrapT != GLTFWrapMode.Repeat)
+            {
+                writer.WritePropertyName("WrapT");
+                writer.WriteValue((int)WrapT);        
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
+        }
     }
 
     /// <summary>
@@ -65,6 +98,7 @@ namespace GLTF
     /// </summary>
     public enum GLTFMagFilterMode
     {
+        None = 0,
         Nearest = 9728,
         Linear = 9729,
     }
@@ -74,6 +108,7 @@ namespace GLTF
     /// </summary>
     public enum GLTFMinFilterMode
     {
+        None = 0,
         Nearest = 9728,
         Linear = 9729,
         NearestMipmapNearest = 9984,
@@ -87,6 +122,7 @@ namespace GLTF
     /// </summary>
     public enum GLTFWrapMode
     {
+        None = 0,
         ClampToEdge = 33071,
         MirroredRepeat = 33648,
         Repeat = 10497

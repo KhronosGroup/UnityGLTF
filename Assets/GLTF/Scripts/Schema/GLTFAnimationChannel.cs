@@ -23,11 +23,6 @@ namespace GLTF
         {
             var animationChannel = new GLTFAnimationChannel();
 
-            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
-            {
-                throw new Exception("Animation channel must be an object.");
-            }
-
             while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
             {
                 var curProp = reader.Value.ToString();
@@ -46,7 +41,24 @@ namespace GLTF
                 }
             }
 
+            UnityEngine.Debug.LogFormat("End {0}", reader.TokenType);
+
             return animationChannel;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("sampler");
+            writer.WriteValue(Sampler.Id);
+
+            writer.WritePropertyName("target");
+            Target.Serialize(writer);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }   
 }

@@ -58,5 +58,22 @@ namespace GLTF
 
             return extensions;
         }
+
+        public virtual void Serialize(JsonWriter writer)
+        {
+            if (Extensions != null && Extensions.Count > 0)
+            {
+                writer.WritePropertyName("extensions");
+                writer.WriteStartArray();
+                foreach (var extension in Extensions)
+                {
+                    writer.WritePropertyName(extension.Key);
+                    extension.Value.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            // TODO: Extras serialization.
+        }
     }
 }

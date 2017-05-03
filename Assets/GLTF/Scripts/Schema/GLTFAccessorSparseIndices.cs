@@ -14,7 +14,7 @@ namespace GLTF
         /// The offset relative to the start of the bufferView in bytes. Must be aligned.
         /// <minimum>0</minimum>
         /// </summary>
-        public int ByteOffset = 0;
+        public int ByteOffset;
 
         /// <summary>
         /// The indices data type. Valid values correspond to WebGL enums:
@@ -50,6 +50,27 @@ namespace GLTF
             }
 
             return indices;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("bufferView");
+            writer.WriteValue(BufferView.Id);
+
+            if (ByteOffset != 0)
+            {
+                writer.WritePropertyName("byteOffset");
+                writer.WriteValue(ByteOffset);
+            }
+
+            writer.WritePropertyName("componentType");
+            writer.WriteValue((int)ComponentType);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }
 }
