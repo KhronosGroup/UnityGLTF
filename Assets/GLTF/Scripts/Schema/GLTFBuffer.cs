@@ -36,13 +36,31 @@ namespace GLTF
                     case "byteLength":
                         buffer.ByteLength = reader.ReadAsInt32().Value;
                         break;
-	                default:
-		                buffer.DefaultPropertyDeserializer(root, reader);
-		                break;
-				}
+                    default:
+                        buffer.DefaultPropertyDeserializer(root, reader);
+                        break;
+                }
             }
 
             return buffer;
+        }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (Uri != null)
+            {
+                writer.WritePropertyName("uri");
+                writer.WriteValue(Uri);
+            }
+
+            writer.WritePropertyName("byteLength");
+            writer.WriteValue(ByteLength);
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
         }
     }
 }

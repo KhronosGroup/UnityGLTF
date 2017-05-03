@@ -40,5 +40,23 @@ namespace GLTF
 
             return values;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("bufferView");
+            writer.WriteValue(BufferView.Id);
+
+            if (ByteOffset != 0)
+            {
+                writer.WritePropertyName("byteOffset");
+                writer.WriteValue(ByteOffset);
+            }
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 }

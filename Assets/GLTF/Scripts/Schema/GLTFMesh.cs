@@ -47,5 +47,36 @@ namespace GLTF
 
             return mesh;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (Primitives != null && Primitives.Count > 0)
+            {
+                writer.WritePropertyName("primitives");
+                writer.WriteStartArray();
+                foreach (var primitive in Primitives)
+                {
+                    primitive.Serialize(writer);
+                }
+                writer.WriteEndArray();
+            }
+
+            if (Weights != null && Weights.Count > 0)
+            {
+                writer.WritePropertyName("weights");
+                writer.WriteStartArray();
+                foreach (var weight in Weights)
+                {
+                    writer.WriteValue(weight);
+                }
+                writer.WriteEndArray();
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
+        }
     }
 }

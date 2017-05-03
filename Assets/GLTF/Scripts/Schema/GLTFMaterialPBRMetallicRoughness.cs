@@ -93,5 +93,41 @@ namespace GLTF
 
             return metallicRoughness;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            if (BaseColorFactor != Color.white)
+            {
+                writer.WritePropertyName("baseColorFactor");
+                writer.WriteValue(BaseColorFactor.r);
+                writer.WriteValue(BaseColorFactor.g);
+                writer.WriteValue(BaseColorFactor.b);
+                writer.WriteValue(BaseColorFactor.a);
+            }
+
+            if (BaseColorTexture != null)
+            {
+                writer.WritePropertyName("baseColorTexture");
+                BaseColorTexture.Serialize(writer);
+            }
+
+            if (MetallicFactor != 1.0f)
+            {
+                writer.WritePropertyName("metallicFactor");
+                writer.WriteValue(MetallicFactor);
+            }
+
+            if (MetallicRoughnessTexture != null)
+            {
+                writer.WritePropertyName("metallicRoughnessTexture");
+                MetallicRoughnessTexture.Serialize(writer);
+            }
+
+            base.Serialize(writer);
+            
+            writer.WriteEndObject();
+        }
     }
 }

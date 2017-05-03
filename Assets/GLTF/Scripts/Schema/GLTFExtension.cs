@@ -4,6 +4,7 @@ namespace GLTF
 {
     public interface GLTFExtension
     {
+        void Serialize(JsonWriter writer);
     }
 
     public abstract class GLTFExtensionFactory

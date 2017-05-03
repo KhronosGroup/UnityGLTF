@@ -48,6 +48,21 @@ namespace GLTF
 
             return animationChannelTarget;
         }
+
+        public override void Serialize(JsonWriter writer)
+        {
+            writer.WriteStartObject();
+
+            writer.WritePropertyName("node");
+            writer.WriteValue(Node.Id);
+
+            writer.WritePropertyName("path");
+            writer.WriteValue(Path.ToString());
+
+            base.Serialize(writer);
+
+            writer.WriteEndObject();
+        }
     }
 
     public enum GLTFAnimationChannelPath

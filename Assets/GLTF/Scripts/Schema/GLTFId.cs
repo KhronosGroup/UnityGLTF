@@ -15,6 +15,11 @@ namespace GLTF
         public int Id;
         public GLTFRoot Root;
         public abstract T Value { get; }
+
+        public void Serialize(JsonWriter writer)
+        {
+            writer.WriteValue(Id);
+        }
     }
 
     public class GLTFAccessorId : GLTFId<GLTFAccessor>
@@ -29,12 +34,12 @@ namespace GLTF
             return new GLTFAccessorId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFBufferId : GLTFId<GLTFBuffer>
+    public class GLTFBufferId : GLTFId<GLTFBuffer>
     {
         public override GLTFBuffer Value
         {
@@ -46,12 +51,12 @@ namespace GLTF
             return new GLTFBufferId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFBufferViewId: GLTFId<GLTFBufferView>
+    public class GLTFBufferViewId : GLTFId<GLTFBufferView>
     {
         public override GLTFBufferView Value
         {
@@ -63,12 +68,12 @@ namespace GLTF
             return new GLTFBufferViewId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFCameraId : GLTFId<GLTFCamera>
+    public class GLTFCameraId : GLTFId<GLTFCamera>
     {
         public override GLTFCamera Value
         {
@@ -80,12 +85,12 @@ namespace GLTF
             return new GLTFCameraId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFImageId : GLTFId<GLTFImage>
+    public class GLTFImageId : GLTFId<GLTFImage>
     {
         public override GLTFImage Value
         {
@@ -97,12 +102,12 @@ namespace GLTF
             return new GLTFImageId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFMaterialId : GLTFId<GLTFMaterial>
+    public class GLTFMaterialId : GLTFId<GLTFMaterial>
     {
         public override GLTFMaterial Value
         {
@@ -114,12 +119,12 @@ namespace GLTF
             return new GLTFMaterialId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFMeshId : GLTFId<GLTFMesh>
+    public class GLTFMeshId : GLTFId<GLTFMesh>
     {
         public override GLTFMesh Value
         {
@@ -131,16 +136,16 @@ namespace GLTF
             return new GLTFMeshId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFNodeId : GLTFId<GLTFNode>
+    public class GLTFNodeId : GLTFId<GLTFNode>
     {
         public override GLTFNode Value
         {
-            get  { return Root.Nodes[Id]; }
+            get { return Root.Nodes[Id]; }
         }
 
         public static GLTFNodeId Deserialize(GLTFRoot root, JsonTextReader reader)
@@ -148,7 +153,7 @@ namespace GLTF
             return new GLTFNodeId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
 
@@ -166,7 +171,7 @@ namespace GLTF
                 var node = new GLTFNodeId
                 {
                     Id = int.Parse(reader.Value.ToString()),
-	                Root = root
+                    Root = root
                 };
 
                 list.Add(node);
@@ -176,7 +181,7 @@ namespace GLTF
         }
     }
 
-	public class GLTFSamplerId : GLTFId<GLTFSampler>
+    public class GLTFSamplerId : GLTFId<GLTFSampler>
     {
         public override GLTFSampler Value
         {
@@ -188,12 +193,12 @@ namespace GLTF
             return new GLTFSamplerId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFSceneId : GLTFId<GLTFScene>
+    public class GLTFSceneId : GLTFId<GLTFScene>
     {
         public override GLTFScene Value
         {
@@ -205,16 +210,16 @@ namespace GLTF
             return new GLTFSceneId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFSkinId : GLTFId<GLTFSkin>
+    public class GLTFSkinId : GLTFId<GLTFSkin>
     {
         public override GLTFSkin Value
         {
-            get { return Root.Skins[Id];}
+            get { return Root.Skins[Id]; }
         }
 
         public static GLTFSkinId Deserialize(GLTFRoot root, JsonTextReader reader)
@@ -222,12 +227,12 @@ namespace GLTF
             return new GLTFSkinId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
 
-	public class GLTFTextureId : GLTFId<GLTFTexture>
+    public class GLTFTextureId : GLTFId<GLTFTexture>
     {
         public override GLTFTexture Value
         {
@@ -239,7 +244,7 @@ namespace GLTF
             return new GLTFTextureId
             {
                 Id = reader.ReadAsInt32().Value,
-	            Root = root
+                Root = root
             };
         }
     }
