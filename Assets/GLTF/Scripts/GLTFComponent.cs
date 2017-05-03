@@ -17,7 +17,6 @@ namespace GLTF {
             var loader = new GLTFLoader(Url, Shader, gameObject.transform);
 	        loader.Multithreaded = Multithreaded;
             yield return loader.Load();
-            IntegrationTest.Pass();
         }
     }
 }
