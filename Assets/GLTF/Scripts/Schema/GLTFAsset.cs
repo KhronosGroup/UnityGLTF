@@ -28,7 +28,7 @@ namespace GLTF
         /// </summary>
         public string MinVersion;
 
-        public static GLTFAsset Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAsset Deserialize(GLTFRoot root, JsonReader reader)
         {
             var asset = new GLTFAsset();
 

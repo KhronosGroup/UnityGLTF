@@ -117,7 +117,7 @@ namespace GLTF
             return null;
         }
 
-        public static GLTFRoot Deserialize(JsonTextReader reader)
+        public static GLTFRoot Deserialize(JsonReader reader)
         {
             var root = new GLTFRoot();
 

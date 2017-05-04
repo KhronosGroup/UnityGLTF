@@ -33,7 +33,7 @@ namespace GLTF
         /// </summary>
         public GLTFAccessorId Output;
 
-        public static GLTFAnimationSampler Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAnimationSampler Deserialize(GLTFRoot root, JsonReader reader)
         {
             var animationSampler = new GLTFAnimationSampler();
 

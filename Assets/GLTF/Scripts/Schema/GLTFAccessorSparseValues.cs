@@ -16,7 +16,7 @@ namespace GLTF
         /// </summary>
         public int ByteOffset = 0;
 
-        public static GLTFAccessorSparseValues Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAccessorSparseValues Deserialize(GLTFRoot root, JsonReader reader)
         {
             var values = new GLTFAccessorSparseValues();
 

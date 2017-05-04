@@ -27,7 +27,7 @@ namespace GLTF
         /// </summary>
         public GLTFCameraType Type;
 
-        public static GLTFCamera Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFCamera Deserialize(GLTFRoot root, JsonReader reader)
         {
             var camera = new GLTFCamera();
 

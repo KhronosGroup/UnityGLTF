@@ -22,7 +22,7 @@ namespace GLTF
         /// </summary>
         public List<GLTFAnimationSampler> Samplers;
 
-        public static GLTFAnimation Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAnimation Deserialize(GLTFRoot root, JsonReader reader)
         {
             var animation = new GLTFAnimation();
 

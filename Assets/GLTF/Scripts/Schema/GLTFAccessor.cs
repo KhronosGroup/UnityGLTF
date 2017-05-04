@@ -94,7 +94,7 @@ namespace GLTF
         /// </summary>
         public GLTFAccessorSparse Sparse;
 
-        public static GLTFAccessor Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAccessor Deserialize(GLTFRoot root, JsonReader reader)
         {
             var accessor = new GLTFAccessor();
 

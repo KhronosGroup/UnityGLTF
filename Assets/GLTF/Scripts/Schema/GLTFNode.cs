@@ -117,7 +117,7 @@ namespace GLTF
 		    rotation = new Quaternion(x, y, z, w);
         }
 
-        public static GLTFNode Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFNode Deserialize(GLTFRoot root, JsonReader reader)
         {
             var node = new GLTFNode();
 

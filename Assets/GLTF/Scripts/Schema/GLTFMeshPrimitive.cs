@@ -197,7 +197,7 @@ namespace GLTF
 		    return attributes;
 	    }
 
-		public static GLTFMeshPrimitive Deserialize(GLTFRoot root, JsonTextReader reader)
+		public static GLTFMeshPrimitive Deserialize(GLTFRoot root, JsonReader reader)
         {
             var primitive = new GLTFMeshPrimitive();
 

@@ -12,7 +12,7 @@ namespace GLTF
         /// </summary>
         public double Scale = 1.0f;
 
-        public static new GLTFNormalTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static new GLTFNormalTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
         {
             var textureInfo = new GLTFNormalTextureInfo();
 

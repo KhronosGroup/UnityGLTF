@@ -29,7 +29,7 @@ namespace GLTF
         /// </summary>
         public double ZNear;
 
-        public static GLTFCameraOrthographic Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFCameraOrthographic Deserialize(GLTFRoot root, JsonReader reader)
         {
             var cameraOrthographic = new GLTFCameraOrthographic();
 

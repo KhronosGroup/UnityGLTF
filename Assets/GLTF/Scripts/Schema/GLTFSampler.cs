@@ -28,7 +28,7 @@ namespace GLTF
         /// </summary>
         public GLTFWrapMode WrapT = GLTFWrapMode.Repeat;
 
-        public static GLTFSampler Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFSampler Deserialize(GLTFRoot root, JsonReader reader)
         {
             var sampler = new GLTFSampler();
             

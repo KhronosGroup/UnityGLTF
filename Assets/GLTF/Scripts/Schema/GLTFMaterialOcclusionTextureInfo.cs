@@ -16,7 +16,7 @@ namespace GLTF
         /// </summary>
         public double Strength = 1.0f;
 
-        public static new GLTFOcclusionTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static new GLTFOcclusionTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
         {
             var textureInfo = new GLTFOcclusionTextureInfo();
 

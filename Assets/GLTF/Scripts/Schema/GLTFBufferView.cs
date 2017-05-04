@@ -39,7 +39,7 @@ namespace GLTF
         /// </summary>
         public GLTFBufferViewTarget Target = GLTFBufferViewTarget.None;
 
-        public static GLTFBufferView Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFBufferView Deserialize(GLTFRoot root, JsonReader reader)
         {
             var bufferView = new GLTFBufferView();
 

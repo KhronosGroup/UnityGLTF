@@ -23,7 +23,7 @@ namespace GLTF
         /// </summary>
         public List<double> Weights;
 
-        public static GLTFMesh Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFMesh Deserialize(GLTFRoot root, JsonReader reader)
         {
             var mesh = new GLTFMesh();
 

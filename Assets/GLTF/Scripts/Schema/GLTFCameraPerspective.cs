@@ -36,7 +36,7 @@ namespace GLTF
         /// </summary>
         public double ZNear;
 
-        public static GLTFCameraPerspective Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFCameraPerspective Deserialize(GLTFRoot root, JsonReader reader)
         {
             var cameraPerspective = new GLTFCameraPerspective();
 

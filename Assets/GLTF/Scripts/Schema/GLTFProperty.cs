@@ -17,7 +17,7 @@ namespace GLTF
         public Dictionary<string, GLTFExtension> Extensions;
         public Dictionary<string, object> Extras;
 
-        public void DefaultPropertyDeserializer(GLTFRoot root, JsonTextReader reader)
+        public void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
         {
             switch (reader.Value.ToString())
             {
@@ -78,7 +78,7 @@ namespace GLTF
             }
         }
 
-        private Dictionary<string, GLTFExtension> DeserializeExtensions(GLTFRoot root, JsonTextReader reader)
+        private Dictionary<string, GLTFExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartObject)
             {

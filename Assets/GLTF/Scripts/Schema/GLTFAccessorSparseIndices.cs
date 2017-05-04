@@ -24,7 +24,7 @@ namespace GLTF
         /// </summary>
         public GLTFComponentType ComponentType;
 
-        public static GLTFAccessorSparseIndices Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAccessorSparseIndices Deserialize(GLTFRoot root, JsonReader reader)
         {
             var indices = new GLTFAccessorSparseIndices();
 

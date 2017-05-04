@@ -12,7 +12,7 @@ namespace GLTF
         /// </summary>
         public string Name;
 
-        public new void DefaultPropertyDeserializer(GLTFRoot root, JsonTextReader reader)
+        public new void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
         {
             switch (reader.Value.ToString())
             {

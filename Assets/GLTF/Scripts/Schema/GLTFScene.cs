@@ -13,7 +13,7 @@ namespace GLTF
         /// </summary>
         public List<GLTFNodeId> Nodes;
 
-        public static GLTFScene Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFScene Deserialize(GLTFRoot root, JsonReader reader)
         {
             var scene = new GLTFScene();
 

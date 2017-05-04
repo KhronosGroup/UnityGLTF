@@ -55,7 +55,7 @@ namespace GLTF
         /// </summary>
         public GLTFTextureInfo MetallicRoughnessTexture;
 
-        public static GLTFPBRMetallicRoughness Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFPBRMetallicRoughness Deserialize(GLTFRoot root, JsonReader reader)
         {
             var metallicRoughness = new GLTFPBRMetallicRoughness();
 

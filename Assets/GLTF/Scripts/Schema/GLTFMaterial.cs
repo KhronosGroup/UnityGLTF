@@ -74,7 +74,7 @@ namespace GLTF
         /// </summary>
         public bool DoubleSided;
 
-        public static GLTFMaterial Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFMaterial Deserialize(GLTFRoot root, JsonReader reader)
         {
             var material = new GLTFMaterial();
 

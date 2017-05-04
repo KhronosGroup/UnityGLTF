@@ -17,7 +17,7 @@ namespace GLTF
         /// </summary>
         public GLTFImageId Source;
 
-        public static GLTFTexture Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFTexture Deserialize(GLTFRoot root, JsonReader reader)
         {
             var texture = new GLTFTexture();
 

@@ -20,7 +20,7 @@ namespace GLTF
         /// </summary>
         public int TexCoord = 0;
 
-        public static GLTFTextureInfo Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
         {
             var textureInfo = new GLTFTextureInfo();
 

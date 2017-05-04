@@ -19,7 +19,7 @@ namespace GLTF
         /// </summary>
         public GLTFAnimationChannelPath Path;
 
-        public static GLTFAnimationChannelTarget Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAnimationChannelTarget Deserialize(GLTFRoot root, JsonReader reader)
         {
             var animationChannelTarget = new GLTFAnimationChannelTarget();
 

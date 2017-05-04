@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace GLTF.JsonExtensions
 {
-    public static class JsonTextReaderExtensions
+    public static class JsonReaderExtensions
     {
-        public static List<string> ReadStringList(this JsonTextReader reader)
+        public static List<string> ReadStringList(this JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -24,7 +24,7 @@ namespace GLTF.JsonExtensions
             return list;
         }
 
-        public static List<double> ReadDoubleList(this JsonTextReader reader)
+        public static List<double> ReadDoubleList(this JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -41,7 +41,7 @@ namespace GLTF.JsonExtensions
             return list;
         }
 
-        public static List<T> ReadList<T>(this JsonTextReader reader, Func<T> deserializerFunc)
+        public static List<T> ReadList<T>(this JsonReader reader, Func<T> deserializerFunc)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -58,7 +58,7 @@ namespace GLTF.JsonExtensions
             return list;
         }
 
-        public static Color ReadAsRGBAColor(this JsonTextReader reader)
+        public static Color ReadAsRGBAColor(this JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -81,7 +81,7 @@ namespace GLTF.JsonExtensions
             return color;
         }
 
-        public static Color ReadAsRGBColor(this JsonTextReader reader)
+        public static Color ReadAsRGBColor(this JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -104,7 +104,7 @@ namespace GLTF.JsonExtensions
             return color;
         }
 
-        public static Vector3 ReadAsVector3(this JsonTextReader reader)
+        public static Vector3 ReadAsVector3(this JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -126,7 +126,7 @@ namespace GLTF.JsonExtensions
             return vector;
         }
 
-        public static Quaternion ReadAsQuaternion(this JsonTextReader reader)
+        public static Quaternion ReadAsQuaternion(this JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -149,7 +149,7 @@ namespace GLTF.JsonExtensions
             return quat;
         }
 
-	    public static Dictionary<string, T> ReadAsDictionary<T>(this JsonTextReader reader, Func<T> deserializerFunc)
+	    public static Dictionary<string, T> ReadAsDictionary<T>(this JsonReader reader, Func<T> deserializerFunc)
 	    {
 		    if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 		    {
@@ -166,7 +166,7 @@ namespace GLTF.JsonExtensions
 		    return dict;
 	    }
 
-	    public static Dictionary<string, object> ReadAsObjectDictionary(this JsonTextReader reader, bool skipStartObjectRead = false)
+	    public static Dictionary<string, object> ReadAsObjectDictionary(this JsonReader reader, bool skipStartObjectRead = false)
         {
             if (!skipStartObjectRead && reader.Read() && reader.TokenType != JsonToken.StartObject)
             {
@@ -183,7 +183,7 @@ namespace GLTF.JsonExtensions
             return dict;
         }
 
-	    private static object ReadDictionaryValue(JsonTextReader reader)
+	    private static object ReadDictionaryValue(JsonReader reader)
 	    {
 		    if (!reader.Read())
 		    {
@@ -201,7 +201,7 @@ namespace GLTF.JsonExtensions
 		    }
 		}
 
-	    private static List<object> ReadObjectList(this JsonTextReader reader)
+	    private static List<object> ReadObjectList(this JsonReader reader)
 	    {
 
 		    var list = new List<object>();
@@ -214,7 +214,7 @@ namespace GLTF.JsonExtensions
 		    return list;
 	    }
 
-		public static T ReadStringEnum<T>(this JsonTextReader reader)
+		public static T ReadStringEnum<T>(this JsonReader reader)
         {
             return (T) Enum.Parse(typeof(T), reader.ReadAsString());
         }

@@ -28,7 +28,7 @@ namespace GLTF
         /// </summary>
         public List<GLTFNodeId> Joints;
 
-        public static GLTFSkin Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFSkin Deserialize(GLTFRoot root, JsonReader reader)
         {
             var skin = new GLTFSkin();
 

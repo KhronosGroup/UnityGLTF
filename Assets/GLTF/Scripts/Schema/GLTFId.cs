@@ -29,7 +29,7 @@ namespace GLTF
             get { return Root.Accessors[Id]; }
         }
 
-        public static GLTFAccessorId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAccessorId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFAccessorId
             {
@@ -46,7 +46,7 @@ namespace GLTF
             get { return Root.Buffers[Id]; }
         }
 
-        public static GLTFBufferId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFBufferId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFBufferId
             {
@@ -63,7 +63,7 @@ namespace GLTF
             get { return Root.BufferViews[Id]; }
         }
 
-        public static GLTFBufferViewId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFBufferViewId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFBufferViewId
             {
@@ -80,7 +80,7 @@ namespace GLTF
             get { return Root.Cameras[Id]; }
         }
 
-        public static GLTFCameraId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFCameraId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFCameraId
             {
@@ -97,7 +97,7 @@ namespace GLTF
             get { return Root.Images[Id]; }
         }
 
-        public static GLTFImageId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFImageId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFImageId
             {
@@ -114,7 +114,7 @@ namespace GLTF
             get { return Root.Materials[Id]; }
         }
 
-        public static GLTFMaterialId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFMaterialId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFMaterialId
             {
@@ -131,7 +131,7 @@ namespace GLTF
             get { return Root.Meshes[Id]; }
         }
 
-        public static GLTFMeshId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFMeshId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFMeshId
             {
@@ -148,7 +148,7 @@ namespace GLTF
             get { return Root.Nodes[Id]; }
         }
 
-        public static GLTFNodeId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFNodeId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFNodeId
             {
@@ -157,7 +157,7 @@ namespace GLTF
             };
         }
 
-        public static List<GLTFNodeId> ReadList(GLTFRoot root, JsonTextReader reader)
+        public static List<GLTFNodeId> ReadList(GLTFRoot root, JsonReader reader)
         {
             if (reader.Read() && reader.TokenType != JsonToken.StartArray)
             {
@@ -188,7 +188,7 @@ namespace GLTF
             get { return Root.Samplers[Id]; }
         }
 
-        public static GLTFSamplerId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFSamplerId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFSamplerId
             {
@@ -205,7 +205,7 @@ namespace GLTF
             get { return Root.Scenes[Id]; }
         }
 
-        public static GLTFSceneId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFSceneId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFSceneId
             {
@@ -222,7 +222,7 @@ namespace GLTF
             get { return Root.Skins[Id]; }
         }
 
-        public static GLTFSkinId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFSkinId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFSkinId
             {
@@ -239,7 +239,7 @@ namespace GLTF
             get { return Root.Textures[Id]; }
         }
 
-        public static GLTFTextureId Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFTextureId Deserialize(GLTFRoot root, JsonReader reader)
         {
             return new GLTFTextureId
             {

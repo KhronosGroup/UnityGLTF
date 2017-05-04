@@ -27,7 +27,7 @@ namespace GLTF
         /// </summary>
         public GLTFBufferViewId BufferView;
 
-        public static GLTFImage Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFImage Deserialize(GLTFRoot root, JsonReader reader)
         {
             var image = new GLTFImage();
             

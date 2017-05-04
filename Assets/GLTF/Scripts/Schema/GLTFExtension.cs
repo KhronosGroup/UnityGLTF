@@ -10,6 +10,6 @@ namespace GLTF
     public abstract class GLTFExtensionFactory
     {
         public string ExtensionName;
-        public abstract GLTFExtension Deserialize(GLTFRoot root, JsonTextReader reader);
+        public abstract GLTFExtension Deserialize(GLTFRoot root, JsonReader reader);
     }
 }

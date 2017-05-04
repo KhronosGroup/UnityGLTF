@@ -23,7 +23,7 @@ namespace GLTF
         /// </summary>
         public GLTFAccessorSparseValues Values;
 
-        public static GLTFAccessorSparse Deserialize(GLTFRoot root, JsonTextReader reader)
+        public static GLTFAccessorSparse Deserialize(GLTFRoot root, JsonReader reader)
         {
             var accessorSparse = new GLTFAccessorSparse();
 
