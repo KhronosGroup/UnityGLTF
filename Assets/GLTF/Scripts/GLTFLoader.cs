@@ -152,12 +152,15 @@ namespace GLTF
             }
             */
 
-            foreach (var child in node.Children)
+            if (node.Children != null)
             {
-                var childObj = CreateNode(child.Value);
-	            childObj.transform.SetParent(nodeObj.transform, false);
-			}
-
+                foreach (var child in node.Children)
+                {
+                    var childObj = CreateNode(child.Value);
+                    childObj.transform.SetParent(nodeObj.transform, false);
+                }
+            }
+            
             return nodeObj;
         }
 
