@@ -41,8 +41,6 @@ namespace GLTF
                 }
             }
 
-            UnityEngine.Debug.LogFormat("End {0}", reader.TokenType);
-
             return animationChannel;
         }
 
