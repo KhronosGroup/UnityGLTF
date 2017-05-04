@@ -612,6 +612,35 @@ namespace GLTF
                         arr[idx] = new Color(r, g, b, a);
                     }
                     break;
+                case GLTFComponentType.Float:
+                    if (BufferView.Value.ByteStride == 0)
+                    {
+                        var totalComponents = Count * 4;
+                        var intermediateArr = new float[totalComponents];
+                        Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, totalComponents * sizeof(float));
+                        for (var idx = 0; idx < Count; idx++)
+                        {
+                            arr[idx] = new Color(
+                                intermediateArr[idx * 4],
+                                intermediateArr[idx * 4 + 1],
+                                intermediateArr[idx * 4 + 2],
+                                intermediateArr[idx * 4 + 3]
+                            );
+                        }
+                    }
+                    else
+                    {
+                        stride = numComponents * sizeof(float) + BufferView.Value.ByteStride;
+                        for (var idx = 0; idx < Count; idx++)
+                        {
+                            var r = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
+                            var g = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + sizeof(float));
+                            var b = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (2 * sizeof(float)));
+                            var a = BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride) + (3 * sizeof(float)));
+                            arr[idx] = new Color(r, g, b, a);
+                        }
+                    }
+                    break;
                 default:
                     throw new Exception("Unsupported component type.");
             }

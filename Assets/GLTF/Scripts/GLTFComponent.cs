@@ -9,12 +9,11 @@ namespace GLTF {
     class GLTFComponent : MonoBehaviour
     {
         public string Url;
-	    public Shader Shader;
 	    public bool Multithreaded = true;
 
         IEnumerator Start()
         {
-            var loader = new GLTFLoader(Url, Shader, gameObject.transform);
+            var loader = new GLTFLoader(Url, gameObject.transform);
 	        loader.Multithreaded = Multithreaded;
             yield return loader.Load();
         }

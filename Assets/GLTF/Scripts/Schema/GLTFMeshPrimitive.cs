@@ -113,14 +113,10 @@ namespace GLTF
 		    {
 			    var accessor = Attributes[GLTFSemanticProperties.TANGENT].Value;
 			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-			    attributes.Tangents = accessor.AsVector4Array(bufferData);
+			    attributes.Tangents = accessor.AsVector4Array(bufferData);  
+		    }
 
-			    return attributes;
-		    }
-		    else
-		    {
-			    return CalculateAndSetTangents(attributes);
-		    }
+            return attributes;
 	    }
 
 	    // Taken from: http://answers.unity3d.com/comments/190515/view.html

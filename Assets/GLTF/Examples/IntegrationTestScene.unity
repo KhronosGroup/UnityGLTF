@@ -140,7 +140,58 @@ Transform:
   m_Children:
   - {fileID: 1220954046}
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 11
+--- !u!1 &13098817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 13098819}
+  - 114: {fileID: 13098818}
+  m_Layer: 0
+  m_Name: BinaryFarmLandDioramaTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &13098818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 13098817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 5
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &13098819
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 13098817}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 1535537474}
+  m_Father: {fileID: 0}
+  m_RootOrder: 22
 --- !u!1001 &13959981
 Prefab:
   m_ObjectHideFlags: 0
@@ -347,7 +398,162 @@ Transform:
   m_Children:
   - {fileID: 1769019402}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
+--- !u!1 &213055853
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 213055855}
+  - 114: {fileID: 213055854}
+  m_Layer: 0
+  m_Name: WaterBottleTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &213055854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 213055853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 5
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &213055855
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 213055853}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 344702669}
+  m_Father: {fileID: 0}
+  m_RootOrder: 18
+--- !u!1001 &276424569
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 2105768796}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://rawgit.com/sbtron/BabylonJS-glTFLoader/master/src/models/2.0/png/Hourglass/glTF/Hourglass.gltf
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &276424570 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 276424569}
+--- !u!1001 &319565371
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 213055855}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://rawgit.com/sbtron/BabylonJS-glTFLoader/master/src/models/2.0/png/WaterBottle/glTF/WaterBottle.gltf
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &344702669 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 319565371}
 --- !u!1001 &364390322
 Prefab:
   m_ObjectHideFlags: 0
@@ -395,6 +601,57 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
   m_IsPrefabParent: 0
+--- !u!1 &385964460
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 385964462}
+  - 114: {fileID: 385964461}
+  m_Layer: 0
+  m_Name: FarmLandDioramaTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &385964461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 385964460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 15
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &385964462
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 385964460}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 2134766042}
+  m_Father: {fileID: 0}
+  m_RootOrder: 21
 --- !u!4 &481572470 stripped
 Transform:
   m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
@@ -450,7 +707,110 @@ Transform:
   m_Children:
   - {fileID: 1333784637}
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 10
+--- !u!1001 &687133818
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 751215787}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://rawgit.com/sbtron/BabylonJS-glTFLoader/master/src/models/2.0/png/Hourglass/glTF-Binary/Hourglass.glb
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &687133819 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 687133818}
+--- !u!1 &751215785
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 751215787}
+  - 114: {fileID: 751215786}
+  m_Layer: 0
+  m_Name: BinaryHourglassTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &751215786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 751215785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 5
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &751215787
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 751215785}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 687133819}
+  m_Father: {fileID: 0}
+  m_RootOrder: 20
 --- !u!1001 &763064492
 Prefab:
   m_ObjectHideFlags: 0
@@ -600,7 +960,7 @@ Transform:
   m_Children:
   - {fileID: 2124777146}
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 8
 --- !u!1 &1166340655
 GameObject:
   m_ObjectHideFlags: 0
@@ -651,7 +1011,7 @@ Transform:
   m_Children:
   - {fileID: 1191439052}
   m_Father: {fileID: 0}
-  m_RootOrder: 12
+  m_RootOrder: 13
 --- !u!1 &1173200257
 GameObject:
   m_ObjectHideFlags: 0
@@ -702,7 +1062,7 @@ Transform:
   m_Children:
   - {fileID: 1068475875}
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 12
 --- !u!4 &1191439052 stripped
 Transform:
   m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
@@ -763,7 +1123,7 @@ Transform:
   m_Children:
   - {fileID: 160266357}
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 9
 --- !u!1 &1314114736
 GameObject:
   m_ObjectHideFlags: 0
@@ -814,7 +1174,12 @@ Transform:
   m_Children:
   - {fileID: 1786849220}
   m_Father: {fileID: 0}
-  m_RootOrder: 14
+  m_RootOrder: 15
+--- !u!4 &1321051577 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 1831371993}
 --- !u!1001 &1333784636
 Prefab:
   m_ObjectHideFlags: 0
@@ -1028,7 +1393,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 21.796001, y: 150, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
 --- !u!1 &1434000117
 GameObject:
   m_ObjectHideFlags: 0
@@ -1079,7 +1444,7 @@ Transform:
   m_Children:
   - {fileID: 1384595454}
   m_Father: {fileID: 0}
-  m_RootOrder: 13
+  m_RootOrder: 14
 --- !u!4 &1435882339 stripped
 Transform:
   m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
@@ -1097,6 +1462,7 @@ GameObject:
   - 92: {fileID: 1513217570}
   - 124: {fileID: 1513217569}
   - 81: {fileID: 1513217568}
+  - 114: {fileID: 1513217567}
   m_Layer: 0
   m_Name: Camera
   m_TagString: MainCamera
@@ -1104,6 +1470,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1513217567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1513217566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 126f2190caa6d024fbf0d50a0b798b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 1904599578}
+  distance: 5
+  xSpeed: 120
+  ySpeed: 120
+  yMinLimit: -20
+  yMaxLimit: 80
+  distanceMin: 0.5
+  distanceMax: 15
 --- !u!81 &1513217568
 AudioListener:
   m_ObjectHideFlags: 0
@@ -1176,6 +1561,62 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!4 &1535537474 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 1822862190}
+--- !u!1 &1600544899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1600544901}
+  - 114: {fileID: 1600544900}
+  m_Layer: 0
+  m_Name: BinaryPillowPlaneTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1600544900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1600544899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 5
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &1600544901
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1600544899}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 1321051577}
+  m_Father: {fileID: 0}
+  m_RootOrder: 23
 --- !u!1 &1619439211
 GameObject:
   m_ObjectHideFlags: 0
@@ -1216,7 +1657,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
 --- !u!1001 &1688363577
 Prefab:
   m_ObjectHideFlags: 0
@@ -1321,6 +1762,100 @@ Transform:
   m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
     type: 2}
   m_PrefabInternal: {fileID: 1786849219}
+--- !u!1001 &1822862190
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 13098819}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://rawgit.com/sbtron/BabylonJS-glTFLoader/master/src/models/2.0/png/FarmLandDiorama/glTF-Binary/FarmLandDiorama.glb
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1831371993
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 1600544901}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://raw.githubusercontent.com/sbtron/BabylonJS-glTFLoader/master/src/models/2.0/png/SmilingFace/glTF/SmilingFace.gltf
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
 --- !u!1 &1870736786
 GameObject:
   m_ObjectHideFlags: 0
@@ -1336,7 +1871,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1870736787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1371,7 +1906,7 @@ Transform:
   m_Children:
   - {fileID: 2143281329}
   m_Father: {fileID: 0}
-  m_RootOrder: 16
+  m_RootOrder: 17
 --- !u!1 &1904599574
 GameObject:
   m_ObjectHideFlags: 0
@@ -1450,7 +1985,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
 --- !u!1 &1906748396
 GameObject:
   m_ObjectHideFlags: 0
@@ -1501,7 +2036,7 @@ Transform:
   m_Children:
   - {fileID: 13959982}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
 --- !u!1 &1934619299
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,7 +2087,86 @@ Transform:
   m_Children:
   - {fileID: 481572470}
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 7
+--- !u!1 &1991876525
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1991876526}
+  m_Layer: 0
+  m_Name: CameraTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1991876526
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1991876525}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+--- !u!1 &2105768794
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 2105768796}
+  - 114: {fileID: 2105768795}
+  m_Layer: 0
+  m_Name: HourglassTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &2105768795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2105768794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 5
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &2105768796
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2105768794}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 276424570}
+  m_Father: {fileID: 0}
+  m_RootOrder: 19
 --- !u!1 &2123975600
 GameObject:
   m_ObjectHideFlags: 0
@@ -1603,7 +2217,7 @@ Transform:
   m_Children:
   - {fileID: 1435882339}
   m_Father: {fileID: 0}
-  m_RootOrder: 15
+  m_RootOrder: 16
 --- !u!1001 &2124777145
 Prefab:
   m_ObjectHideFlags: 0
@@ -1661,6 +2275,58 @@ Transform:
   m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
     type: 2}
   m_PrefabInternal: {fileID: 2124777145}
+--- !u!1001 &2134766041
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 385964462}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://raw.githubusercontent.com/sbtron/BabylonJS-glTFLoader/master/src/models/2.0/png/FarmLandDiorama/glTF/FarmLandDiorama.gltf
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &2134766042 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 2134766041}
 --- !u!1001 &2143281328
 Prefab:
   m_ObjectHideFlags: 0

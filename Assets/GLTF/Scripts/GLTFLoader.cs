@@ -9,8 +9,6 @@ namespace GLTF
     public class GLTFLoader
     {
 	    public bool Multithreaded = true;
-
-	    private Shader _shader;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -24,15 +22,13 @@ namespace GLTF
         public GLTFLoader(string gltfUrl)
         {
             _gltfUrl = gltfUrl;
-            _shader = Shader.Find("GLTF/GLTFStandardShader");
             asyncAction = new AsyncAction();
         }
 
-        public GLTFLoader(string gltfUrl, Shader shader, Transform parent = null)
+        public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
-			_shader = shader;
             asyncAction = new AsyncAction();
 		}
 
@@ -60,14 +56,20 @@ namespace GLTF
                 throw new Exception("No default scene in gltf file.");
             }
 
-            foreach (var buffer in _root.Buffers)
+            if (_root.Buffers != null)
             {
-                yield return LoadBuffer(buffer);
+                foreach (var buffer in _root.Buffers)
+                {
+                    yield return LoadBuffer(buffer);
+                }
             }
 
-            foreach (var image in _root.Images)
+            if (_root.Images != null)
             {
-                yield return LoadImage(image);
+                foreach (var image in _root.Images)
+                {
+                    yield return LoadImage(image);
+                }
             }
 
 	        if (Multithreaded)
@@ -242,13 +244,52 @@ namespace GLTF
 
         private Material CreateMaterial(GLTFMaterial def)
         {
-            var material = new Material(_shader);
+
+            Shader shader;
+
+            if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
+            {
+                if (def.DoubleSided)
+                {
+                    shader = Shader.Find("GLTF/GLTFStandardDoubleSided");
+                }
+                else
+                {
+                    shader = Shader.Find("GLTF/GLTFStandard");
+                }
+            }
+            else if (def.AlphaMode == GLTFAlphaMode.MASK)
+            {
+                if (def.DoubleSided)
+                {
+                    shader = Shader.Find("GLTF/GLTFStandardTransparentMaskDoubleSided");
+                }
+                else
+                {
+                    shader = Shader.Find("GLTF/GLTFStandardTransparentMask");
+                }
+            }
+            else
+            {
+                if (def.DoubleSided)
+                {
+                    shader = Shader.Find("GLTF/GLTFStandardTransparentBlendDoubleSided");
+                }
+                else
+                {
+                    shader = Shader.Find("GLTF/GLTFStandardTransparentBlend");
+                }
+            }
+
+            var material = new Material(shader);
 
             if (def.PbrMetallicRoughness != null)
             {
                 var pbr = def.PbrMetallicRoughness;
 
                 material.SetColor("_Color", pbr.BaseColorFactor);
+
+                material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
 
                 if (pbr.BaseColorTexture != null)
                 {
