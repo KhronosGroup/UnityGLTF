@@ -28,7 +28,53 @@ namespace GLTF
                     Extras = reader.ReadAsObjectDictionary();
                     break;
                 default:
-                    throw new Exception(string.Format("Unexpected property: {0} at: {1}", reader.Value, reader.Path));
+                    SkipValue(reader);
+                    break;
+            }
+        }
+
+        private void SkipValue(JsonReader reader)
+        {
+            if (!reader.Read())
+            {
+                throw new Exception("No value found.");
+            }
+
+            if (reader.TokenType == JsonToken.StartObject)
+            {
+                SkipObject(reader);
+            }
+            else if (reader.TokenType == JsonToken.StartArray)
+            {
+                SkipArray(reader);
+            }
+        }
+
+        private void SkipObject(JsonReader reader)
+        {
+            while (reader.Read() && reader.TokenType != JsonToken.EndObject) {
+                if (reader.TokenType == JsonToken.StartArray)
+                {
+                    SkipArray(reader);
+                }
+                else if (reader.TokenType == JsonToken.StartObject)
+                {
+                    SkipObject(reader);
+                }
+            }
+        }
+
+        private void SkipArray(JsonReader reader)
+        {
+            while (reader.Read() && reader.TokenType != JsonToken.EndArray) {
+                if (reader.TokenType == JsonToken.StartArray)
+                {
+                    SkipArray(reader);
+                }
+                else if (reader.TokenType == JsonToken.StartObject)
+                {
+                    SkipObject(reader);
+                }
             }
         }
 
@@ -52,7 +98,7 @@ namespace GLTF
                 }
                 else
                 {
-                    reader.ReadAsObjectDictionary();
+                    SkipValue(reader);
                 }
             }
 
