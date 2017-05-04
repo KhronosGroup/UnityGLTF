@@ -21,6 +21,8 @@ namespace GLTF
     public class GLTFNode : GLTFChildOfRootProperty
     {
 
+        private bool _useTRS;
+
         /// <summary>
         /// The index of the camera referenced by this node.
         /// </summary>
@@ -39,7 +41,7 @@ namespace GLTF
         /// <summary>
         /// A floating-point 4x4 transformation matrix stored in column-major order.
         /// </summary>
-        public Matrix4x4 Matrix;
+        public Matrix4x4 Matrix = Matrix4x4.identity;
 
         /// <summary>
         /// The index of the mesh in this node.
@@ -72,20 +74,13 @@ namespace GLTF
 
 		public void GetUnityTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
 	    {
-		    Matrix4x4 mat;
+            var mat = Matrix;
 
-			// Set the transform properties from the GLTFNode's values.
-
-			// Use the matrix first if set.
-			if (Matrix != null)
+			if (_useTRS)
 		    {
-			    mat = Matrix;		
+			    mat = Matrix4x4.TRS(Translation, Rotation, Scale);	
 		    }
-		    // Otherwise fall back to the TRS properties.
-		    else
-		    {
-			    mat = Matrix4x4.TRS(Translation, Rotation, Scale);
-		    }
+            
 
 		    mat = InvertZMatrix * mat * InvertZMatrix;
 
@@ -154,12 +149,15 @@ namespace GLTF
                         node.Mesh = GLTFMeshId.Deserialize(root, reader);
                         break;
                     case "rotation":
+                        node._useTRS = true;
                         node.Rotation = reader.ReadAsQuaternion();
                         break;
                     case "scale":
+                        node._useTRS = true;
                         node.Scale = reader.ReadAsVector3();
                         break;
                     case "translation":
+                        node._useTRS = true;
                         node.Translation = reader.ReadAsVector3();
                         break;
                     case "weights":

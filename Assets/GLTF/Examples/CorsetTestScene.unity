@@ -90,6 +90,11 @@ NavMeshSettings:
     cellSize: 0.16666667
     manualCellSize: 0
   m_NavMeshData: {fileID: 0}
+--- !u!4 &132902434 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000011406631220, guid: c1f18c4a06bb9214fa40b0020f67788c,
+    type: 2}
+  m_PrefabInternal: {fileID: 2124777145}
 --- !u!1 &1430240377
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,7 +189,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 126f2190caa6d024fbf0d50a0b798b1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 0}
+  target: {fileID: 132902434}
   distance: 5
   xSpeed: 120
   ySpeed: 120
