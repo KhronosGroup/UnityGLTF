@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using UnityEngine.Networking;
+using GLTF.Extensions;
 
 namespace GLTF
 {
@@ -25,17 +26,14 @@ namespace GLTF
             public bool UseVertexColors;
         }
 
-        public GLTFLoader(string gltfUrl)
-        {
-            _gltfUrl = gltfUrl;
-            asyncAction = new AsyncAction();
-        }
-
         public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
             asyncAction = new AsyncAction();
+
+            var specGlossExtension = new KHRMaterialPBRSpecularGlossinessFactory();
+            GLTFMaterial.RegisterExtension(specGlossExtension);
 		}
 
         public IEnumerator Load()
@@ -255,6 +253,14 @@ namespace GLTF
         private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
         {
 
+            GLTFExtension extension;
+            if (def.Extensions.TryGetValue(KHRMaterialPBRSpecularGlossiness.ExtensionName, out extension))
+            {
+                var specDef = (KHRMaterialPBRSpecularGlossiness) extension;
+
+                return CreateSpecularMaterial(def, specDef, useVertexColors);
+            }
+
             Shader shader;
 
             if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
@@ -311,7 +317,6 @@ namespace GLTF
                 {
                     var texture = pbr.BaseColorTexture.Index.Value;
                     material.SetTexture("_MainTex", _imageCache[texture.Source.Value]);
-                    material.SetTextureScale("_MainTex", new Vector2(1, 1));
                 }
 
                 material.SetFloat("_Metallic", (float)pbr.MetallicFactor);
@@ -320,10 +325,99 @@ namespace GLTF
                 {
                     var texture = pbr.MetallicRoughnessTexture.Index.Value;
                     material.SetTexture("_MetallicRoughness", _imageCache[texture.Source.Value]);
-                    material.SetTextureScale("_MetallicRoughness", new Vector2(1, 1));
                 }
 
                 material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
+            }
+
+            if (def.NormalTexture != null)
+            {
+                var texture = def.NormalTexture.Index.Value;
+                material.SetTexture("_BumpMap", _imageCache[texture.Source.Value]);
+                material.SetFloat("_Bump", (float)def.NormalTexture.Scale);
+            }
+
+            if (def.OcclusionTexture != null)
+            {
+                var texture = def.OcclusionTexture.Index.Value;
+                material.SetTexture("_AOTex", _imageCache[texture.Source.Value]);
+                material.SetFloat("_Occlusion", (float)def.OcclusionTexture.Strength);
+            }
+
+            if (def.EmissiveTexture != null)
+            {
+                var texture = def.EmissiveTexture.Index.Value;
+                material.SetTexture("_EmissionTex", _imageCache[texture.Source.Value]);
+            }
+
+            material.SetColor("_Emission", def.EmissiveFactor);
+
+            return material;
+        }
+
+        private Material CreateSpecularMaterial(GLTFMaterial def, KHRMaterialPBRSpecularGlossiness specDef, bool useVertexColors)
+        {
+            Shader shader;
+
+            if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
+            {
+                if (def.DoubleSided)
+                {
+                    shader = Shader.Find("GLTF/GLTFSpecularDoubleSided");
+                }
+                else
+                {
+                    shader = Shader.Find("GLTF/GLTFSpecular");
+                }
+            }
+            else if (def.AlphaMode == GLTFAlphaMode.MASK)
+            {
+                if (def.DoubleSided)
+                {
+                    shader = Shader.Find("GLTF/GLTFSpecularTransparentMaskDoubleSided");
+                }
+                else
+                {
+                    shader = Shader.Find("GLTF/GLTFSpecularTransparentMask");
+                }
+            }
+            else
+            {
+                if (def.DoubleSided)
+                {
+                    shader = Shader.Find("GLTF/GLTFSpecularTransparentBlendDoubleSided");
+                }
+                else
+                {
+                    shader = Shader.Find("GLTF/GLTFSpecularTransparentBlend");
+                }
+            }
+
+            var material = new Material(shader);
+
+            if (useVertexColors)
+            {
+                Debug.Log("Enabling vertex colors.");
+                material.EnableKeyword("VERTEX_COLOR_ON");
+            }
+
+            material.SetColor("_Diffuse", specDef.DiffuseFactor);
+
+            material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
+
+            if (specDef.DiffuseTexture != null)
+            {
+                var texture = specDef.DiffuseTexture.Index.Value;
+                material.SetTexture("_MainTex", _imageCache[texture.Source.Value]);
+            }
+
+            material.SetFloat("_Glossiness", (float)specDef.GlossinessFactor);
+            material.SetColor("_Specular", specDef.SpecularFactor);
+
+            if (specDef.SpecularGlossinessTexture != null)
+            {
+                var texture = specDef.SpecularGlossinessTexture.Index.Value;
+                material.SetTexture("_SpecularGlossinessTex", _imageCache[texture.Source.Value]);
             }
 
             if (def.NormalTexture != null)
@@ -338,14 +432,12 @@ namespace GLTF
             {
                 var texture = def.OcclusionTexture.Index.Value;
                 material.SetTexture("_AOTex", _imageCache[texture.Source.Value]);
-                material.SetTextureScale("_AOTex", new Vector2(1, 1));
                 material.SetFloat("_Occlusion", (float)def.OcclusionTexture.Strength);
             }
 
             if (def.EmissiveTexture != null)
             {
                 var texture = def.EmissiveTexture.Index.Value;
-                material.SetTextureScale("_EmissionTex", new Vector2(1, 1));
                 material.SetTexture("_EmissionTex", _imageCache[texture.Source.Value]);
             }
 
