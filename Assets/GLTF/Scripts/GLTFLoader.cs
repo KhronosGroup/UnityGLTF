@@ -14,10 +14,16 @@ namespace GLTF
         private AsyncAction asyncAction;
 	    private readonly Transform _sceneParent;
         private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
-        private readonly Dictionary<GLTFMaterial, Material> _materialCache = new Dictionary<GLTFMaterial, Material>();
+        private readonly Dictionary<MaterialCacheKey, Material> _materialCache = new Dictionary<MaterialCacheKey, Material>();
         private readonly Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
         private readonly Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
         private readonly Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
+
+        private struct MaterialCacheKey
+        {
+            public GLTFMaterial Material;
+            public bool UseVertexColors;
+        }
 
         public GLTFLoader(string gltfUrl)
         {
@@ -221,28 +227,32 @@ namespace GLTF
 
             var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
-            meshRenderer.material = FindOrCreateMaterial(primitive.Material.Value);
+            var materialCacheKey = new MaterialCacheKey {
+                Material = primitive.Material.Value,
+                UseVertexColors = attributes.Colors != null
+            };
+            meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
 
             return primitiveObj;
         }
 
-        private Material FindOrCreateMaterial(GLTFMaterial gltfMaterial)
+        private Material FindOrCreateMaterial(MaterialCacheKey materialKey)
         {
             Material material;
 
-            if (_materialCache.TryGetValue(gltfMaterial, out material))
+            if (_materialCache.TryGetValue(materialKey, out material))
             {
                 return material;
             }
 
-	        material = CreateMaterial(gltfMaterial);
+	        material = CreateMaterial(materialKey.Material, materialKey.UseVertexColors);
 
-			_materialCache.Add(gltfMaterial, material);
+			_materialCache.Add(materialKey, material);
 
 	        return material;
         }
 
-        private Material CreateMaterial(GLTFMaterial def)
+        private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
         {
 
             Shader shader;
@@ -282,6 +292,12 @@ namespace GLTF
             }
 
             var material = new Material(shader);
+
+            if (useVertexColors)
+            {
+                Debug.Log("Enabling vertex colors.");
+                material.EnableKeyword("VERTEX_COLOR_ON");
+            }
 
             if (def.PbrMetallicRoughness != null)
             {

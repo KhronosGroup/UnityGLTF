@@ -18,6 +18,9 @@
 		
 		CGPROGRAM
 		
+		#define ALPHA_ON
+		#pragma target 3.0
+		#pragma multi_compile _ VERTEX_COLOR_ON
 		#include "GLTFStandardCommon.cginc"
 		#pragma surface gltf_standard_surf Standard fullforwardshadows alpha:blend
 
