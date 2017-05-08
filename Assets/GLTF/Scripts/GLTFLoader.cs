@@ -227,11 +227,23 @@ namespace GLTF
 
             var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
-            var materialCacheKey = new MaterialCacheKey {
-                Material = primitive.Material.Value,
-                UseVertexColors = attributes.Colors != null
-            };
-            meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+            if (primitive.Material != null)
+            {
+                var materialCacheKey = new MaterialCacheKey {
+                    Material = primitive.Material.Value,
+                    UseVertexColors = attributes.Colors != null
+                };
+                meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+            }
+            else
+            {
+                var materialCacheKey = new MaterialCacheKey {
+                    Material = new GLTFMaterial(),
+                    UseVertexColors = attributes.Colors != null
+                };
+                meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+            }
+            
 
             return primitiveObj;
         }

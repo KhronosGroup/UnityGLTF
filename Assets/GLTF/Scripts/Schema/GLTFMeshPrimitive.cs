@@ -58,6 +58,32 @@ namespace GLTF
 			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
 			    attributes.Vertices = accessor.AsVector3Array(bufferData);
 		    }
+
+            if (Indices != null) {
+			    var accessor = Indices.Value;
+			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
+			    var unflippedTriangles = accessor.AsIntArray(bufferData);
+			    var triangles = new int[unflippedTriangles.Length];
+			    for (int i = 0; i < unflippedTriangles.Length; i += 3)
+			    {
+				    triangles[i + 2] = unflippedTriangles[i];
+				    triangles[i + 1] = unflippedTriangles[i + 1];
+				    triangles[i] = unflippedTriangles[i + 2];
+			    }
+			    attributes.Triangles = triangles;
+		    }
+            else
+            {
+                var triangles = new int[attributes.Vertices.Length];
+                for (int i = 0; i < triangles.Length; i += 3)
+			    {
+				    triangles[i + 2] = i;
+				    triangles[i + 1] = i + 1;
+				    triangles[i] = i + 2;
+			    }
+                attributes.Triangles = triangles;
+            }
+
 		    if (Attributes.ContainsKey(GLTFSemanticProperties.NORMAL))
 		    {
 			    var accessor = Attributes[GLTFSemanticProperties.NORMAL].Value;
@@ -94,21 +120,6 @@ namespace GLTF
 			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
 			    attributes.Colors = accessor.AsColorArray(bufferData);
 		    }
-
-		    {
-			    var accessor = Indices.Value;
-			    var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-			    var unflippedTriangles = accessor.AsIntArray(bufferData);
-			    var triangles = new int[unflippedTriangles.Length];
-			    for (int i = 0; i < unflippedTriangles.Length; i += 3)
-			    {
-				    triangles[i + 2] = unflippedTriangles[i];
-				    triangles[i + 1] = unflippedTriangles[i + 1];
-				    triangles[i] = unflippedTriangles[i + 2];
-			    }
-			    attributes.Triangles = triangles;
-		    }
-
 		    if (Attributes.ContainsKey(GLTFSemanticProperties.TANGENT))
 		    {
 			    var accessor = Attributes[GLTFSemanticProperties.TANGENT].Value;
