@@ -9,6 +9,7 @@ namespace GLTF
     public class GLTFLoader
     {
 	    public bool Multithreaded = true;
+        public bool UseMobileShader = false;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -269,37 +270,75 @@ namespace GLTF
 
             Shader shader;
 
-            if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
-            {
-                if (def.DoubleSided)
+            if (UseMobileShader) {
+                if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
                 {
-                    shader = Shader.Find("GLTF/GLTFStandardDoubleSided");
+                    if (def.DoubleSided)
+                    {
+                        shader = Shader.Find("GLTF/GLTFMobileDoubleSided");
+                    }
+                    else
+                    {
+                        shader = Shader.Find("GLTF/GLTFMobile");
+                    }
+                }
+                else if (def.AlphaMode == GLTFAlphaMode.MASK)
+                {
+                    if (def.DoubleSided)
+                    {
+                        shader = Shader.Find("GLTF/GLTFMobileTransparentMaskDoubleSided");
+                    }
+                    else
+                    {
+                        shader = Shader.Find("GLTF/GLTFMobileTransparentMask");
+                    }
                 }
                 else
                 {
-                    shader = Shader.Find("GLTF/GLTFStandard");
-                }
-            }
-            else if (def.AlphaMode == GLTFAlphaMode.MASK)
-            {
-                if (def.DoubleSided)
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentMaskDoubleSided");
-                }
-                else
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentMask");
+                    if (def.DoubleSided)
+                    {
+                        shader = Shader.Find("GLTF/GLTFMobileTransparentBlendDoubleSided");
+                    }
+                    else
+                    {
+                        shader = Shader.Find("GLTF/GLTFMobileTransparentBlend");
+                    }
                 }
             }
             else
             {
-                if (def.DoubleSided)
+                if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
                 {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentBlendDoubleSided");
+                    if (def.DoubleSided)
+                    {
+                        shader = Shader.Find("GLTF/GLTFStandardDoubleSided");
+                    }
+                    else
+                    {
+                        shader = Shader.Find("GLTF/GLTFStandard");
+                    }
+                }
+                else if (def.AlphaMode == GLTFAlphaMode.MASK)
+                {
+                    if (def.DoubleSided)
+                    {
+                        shader = Shader.Find("GLTF/GLTFStandardTransparentMaskDoubleSided");
+                    }
+                    else
+                    {
+                        shader = Shader.Find("GLTF/GLTFStandardTransparentMask");
+                    }
                 }
                 else
                 {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentBlend");
+                    if (def.DoubleSided)
+                    {
+                        shader = Shader.Find("GLTF/GLTFStandardTransparentBlendDoubleSided");
+                    }
+                    else
+                    {
+                        shader = Shader.Find("GLTF/GLTFStandardTransparentBlend");
+                    }
                 }
             }
 
@@ -323,7 +362,6 @@ namespace GLTF
                 {
                     var texture = pbr.BaseColorTexture.Index.Value;
                     material.SetTexture("_MainTex", _imageCache[texture.Source.Value]);
-                    material.SetTextureScale("_MainTex", new Vector2(1, 1));
                 }
 
                 material.SetFloat("_Metallic", (float)pbr.MetallicFactor);
@@ -331,8 +369,7 @@ namespace GLTF
                 if (pbr.MetallicRoughnessTexture != null)
                 {
                     var texture = pbr.MetallicRoughnessTexture.Index.Value;
-                    material.SetTexture("_MetallicRoughness", _imageCache[texture.Source.Value]);
-                    material.SetTextureScale("_MetallicRoughness", new Vector2(1, 1));
+                    material.SetTexture("_MetallicRoughnessMap", _imageCache[texture.Source.Value]);
                 }
 
                 material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
@@ -342,26 +379,23 @@ namespace GLTF
             {
                 var texture = def.NormalTexture.Index.Value;
                 material.SetTexture("_BumpMap", _imageCache[texture.Source.Value]);
-                material.SetTextureScale("_BumpMap", new Vector2(1, 1));
-                material.SetFloat("_Bump", (float)def.NormalTexture.Scale);
+                material.SetFloat("_BumpScale", (float)def.NormalTexture.Scale);
             }
 
             if (def.OcclusionTexture != null)
             {
                 var texture = def.OcclusionTexture.Index.Value;
-                material.SetTexture("_AOTex", _imageCache[texture.Source.Value]);
-                material.SetTextureScale("_AOTex", new Vector2(1, 1));
-                material.SetFloat("_Occlusion", (float)def.OcclusionTexture.Strength);
+                material.SetTexture("_OcclusionMap", _imageCache[texture.Source.Value]);
+                material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
             }
 
             if (def.EmissiveTexture != null)
             {
                 var texture = def.EmissiveTexture.Index.Value;
-                material.SetTextureScale("_EmissionTex", new Vector2(1, 1));
-                material.SetTexture("_EmissionTex", _imageCache[texture.Source.Value]);
+                material.SetTexture("_EmissionMap", _imageCache[texture.Source.Value]);
             }
 
-            material.SetColor("_Emission", def.EmissiveFactor);
+            material.SetColor("_EmissionColor", def.EmissiveFactor);
 
             return material;
         }
