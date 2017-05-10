@@ -11,13 +11,13 @@ namespace GLTF {
         public string Url;
 	    public bool Multithreaded = true;
 
-        public bool UseMobileShader = false;
+        public int MaximumLod = 300;
 
         IEnumerator Start()
         {
             var loader = new GLTFLoader(Url, gameObject.transform);
 	        loader.Multithreaded = Multithreaded;
-            loader.UseMobileShader = UseMobileShader;
+            loader.MaximumLod = MaximumLod;
             yield return loader.Load();
         }
     }

@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using UnityEngine.Networking;
+using UnityEngine.Rendering;
 
 namespace GLTF
 {
     public class GLTFLoader
     {
 	    public bool Multithreaded = true;
-        public bool UseMobileShader = false;
+        public int MaximumLod = 300;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -266,87 +267,42 @@ namespace GLTF
         }
 
         private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
-        {
-
+        {            
             Shader shader;
 
-            if (UseMobileShader) {
-                if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
-                {
-                    if (def.DoubleSided)
-                    {
-                        shader = Shader.Find("GLTF/GLTFMobileDoubleSided");
-                    }
-                    else
-                    {
-                        shader = Shader.Find("GLTF/GLTFMobile");
-                    }
-                }
-                else if (def.AlphaMode == GLTFAlphaMode.MASK)
-                {
-                    if (def.DoubleSided)
-                    {
-                        shader = Shader.Find("GLTF/GLTFMobileTransparentMaskDoubleSided");
-                    }
-                    else
-                    {
-                        shader = Shader.Find("GLTF/GLTFMobileTransparentMask");
-                    }
-                }
-                else
-                {
-                    if (def.DoubleSided)
-                    {
-                        shader = Shader.Find("GLTF/GLTFMobileTransparentBlendDoubleSided");
-                    }
-                    else
-                    {
-                        shader = Shader.Find("GLTF/GLTFMobileTransparentBlend");
-                    }
-                }
+            if (def.AlphaMode == GLTFAlphaMode.BLEND)
+            {
+                shader = Shader.Find("GLTF/GLTFStandardAlphaBlend");
+            }
+            else if (def.AlphaMode == GLTFAlphaMode.MASK)
+            {
+                shader = Shader.Find("GLTF/GLTFStandardAlphaMask");
             }
             else
             {
-                if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
-                {
-                    if (def.DoubleSided)
-                    {
-                        shader = Shader.Find("GLTF/GLTFStandardDoubleSided");
-                    }
-                    else
-                    {
-                        shader = Shader.Find("GLTF/GLTFStandard");
-                    }
-                }
-                else if (def.AlphaMode == GLTFAlphaMode.MASK)
-                {
-                    if (def.DoubleSided)
-                    {
-                        shader = Shader.Find("GLTF/GLTFStandardTransparentMaskDoubleSided");
-                    }
-                    else
-                    {
-                        shader = Shader.Find("GLTF/GLTFStandardTransparentMask");
-                    }
-                }
-                else
-                {
-                    if (def.DoubleSided)
-                    {
-                        shader = Shader.Find("GLTF/GLTFStandardTransparentBlendDoubleSided");
-                    }
-                    else
-                    {
-                        shader = Shader.Find("GLTF/GLTFStandardTransparentBlend");
-                    }
-                }
+                shader = Shader.Find("GLTF/GLTFStandard");
             }
+
+            shader.maximumLOD = MaximumLod;
 
             var material = new Material(shader);
 
+            if (def.AlphaMode == GLTFAlphaMode.MASK)
+            {
+                material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
+            }
+
+            if (def.DoubleSided)
+            {
+                material.SetInt("_Cull", (int)CullMode.Off);
+            }
+            else
+            {
+                material.SetInt("_Cull", (int)CullMode.Back);
+            }
+ 
             if (useVertexColors)
             {
-                Debug.Log("Enabling vertex colors.");
                 material.EnableKeyword("VERTEX_COLOR_ON");
             }
 
@@ -355,8 +311,6 @@ namespace GLTF
                 var pbr = def.PbrMetallicRoughness;
 
                 material.SetColor("_Color", pbr.BaseColorFactor);
-
-                material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
 
                 if (pbr.BaseColorTexture != null)
                 {
@@ -384,9 +338,19 @@ namespace GLTF
 
             if (def.OcclusionTexture != null)
             {
-                var texture = def.OcclusionTexture.Index.Value;
-                material.SetTexture("_OcclusionMap", _imageCache[texture.Source.Value]);
+                var texture = def.OcclusionTexture.Index;
+                
                 material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
+
+                if (def.PbrMetallicRoughness != null
+                    && def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == texture.Id)
+                {
+                    material.EnableKeyword("OCC_METAL_ROUGH_ON");
+                }
+                else
+                {
+                    material.SetTexture("_OcclusionMap", _imageCache[texture.Value.Source.Value]);
+                }
             }
 
             if (def.EmissiveTexture != null)

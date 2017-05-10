@@ -12,7 +12,10 @@ half _BumpScale;
 sampler2D _BumpMap;
 
 half _OcclusionStrength;
+
+#ifndef OCC_METAL_ROUGH_ON
 sampler2D _OcclusionMap;
+#endif
 
 fixed3 _EmissionColor;
 sampler2D _EmissionMap;
@@ -41,12 +44,18 @@ void gltf_standard_surf (Input IN, inout SurfaceOutputStandard o) {
 
     fixed4 mr = tex2D(_MetallicRoughnessMap, IN.uv_MainTex);
     o.Albedo = c.rgb;
-    #ifdef ALPHA_ON
+    #if defined(ALPHA_MODE_MASK_ON) || defined(ALPHA_MODE_BLEND_ON)
     o.Alpha = c.a;
     #endif
     o.Metallic = mr.b * _Metallic;
     o.Smoothness = mr.g * (1 - _Roughness);
+
+    #ifdef OCC_METAL_ROUGH_ON
+    o.Occlusion = mr.r * _OcclusionStrength;
+    #else
     o.Occlusion = tex2D(_OcclusionMap, IN.uv_MainTex).r * _OcclusionStrength;
+    #endif
+
     o.Emission = tex2D(_EmissionMap, IN.uv_MainTex).rgb * _EmissionColor;
     o.Normal = normalize((normalize(tex2D(_BumpMap, IN.uv_MainTex)) * 2.0 - 1.0) * fixed3(_BumpScale, _BumpScale, 1.0));
 }

@@ -6,7 +6,7 @@
 #include "UnityPBSLighting.cginc"
 #include "UnityStandardBRDF.cginc"
 
-#ifdef ALPHA_MASK_ON
+#ifdef ALPHA_MODE_MASK_ON
 half _Cutoff;
 #endif
 
@@ -57,23 +57,32 @@ v2f gltf_mobile_vert (appdata v)
 
 fixed4 gltf_mobile_frag (v2f i) : SV_Target
 {
-    #ifdef ALPHA_MASK_ON
-    float4 color = tex2D(_MainTex, i.uv) * _Color;
+    #if defined(ALPHA_MODE_MASK_ON)
+    fixed4 color = tex2D(_MainTex, i.uv) * _Color;
     clip(color.a - _Cutoff);
-    float3 albedo = color.rgb;
+    fixed3 albedo = color.rgb;
+    #elif defined(ALPHA_MODE_BLEND_ON)
+    fixed4 color = tex2D(_MainTex, i.uv) * _Color;
+    fixed3 albedo = color.rgb;
     #else
-    float3 albedo = tex2D(_MainTex, i.uv) * _Color;
+    fixed3 albedo = tex2D(_MainTex, i.uv) * _Color;
     #endif
 
-    float3 metallicRoughness = tex2D(_MetallicRoughnessMap, i.uv);
-    float metallic = metallicRoughness.b * _Metallic;
-    float3 specularTint;
-    float oneMinusReflectivity;
+    fixed3 metallicRoughness = tex2D(_MetallicRoughnessMap, i.uv);
+    fixed metallic = metallicRoughness.b * _Metallic;
+
+    #ifdef OCC_METAL_ROUGH_ON
+    fixed4 occlusion = metallicRoughness.r * _OcclusionStrength;
+    #else
+    fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
+    #endif
+
+    fixed3 specularTint;
+    fixed oneMinusReflectivity;
     albedo = DiffuseAndSpecularFromMetallic(
         albedo, metallic, specularTint, oneMinusReflectivity
     );
-
-    fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
+    
     fixed4 emmission = fixed4(tex2D(_EmissionMap, i.uv).rgb * _EmissionColor, 1.0);
 
     UnityLight light;
@@ -85,15 +94,20 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
     indirectLight.diffuse = fixed4(0.04, 0.04, 0.04, 1);
     indirectLight.specular = 0;
 
-    float smoothness = metallicRoughness.g * (1 - _Roughness);
+    fixed smoothness = metallicRoughness.g * (1 - _Roughness);
 
-    float3 diffuse = BRDF3_Unity_PBS(
+    fixed3 diffuse = BRDF3_Unity_PBS(
         albedo, specularTint,
         oneMinusReflectivity, smoothness,
         i.normal, i.viewDir,
         light, indirectLight
     );
 
-    return float4(diffuse, 1) * occlusion + emmission;
+    #ifdef ALPHA_MODE_BLEND_ON
+    return fixed4(diffuse, color.a) * occlusion + emmission;
+    #else
+    return fixed4(diffuse, 1) * occlusion + emmission;
+    #endif
+    
 }
 #endif // GLTF_MOBILE_COMMON_INCLUDED
