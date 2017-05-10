@@ -11,6 +11,10 @@ namespace GLTF
     {
 	    public bool Multithreaded = true;
         public int MaximumLod = 300;
+        public Shader GLTFStandard;
+        public Shader GLTFStandardAlphaBlend;
+        public Shader GLTFStandardAlphaMask;
+
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -272,15 +276,15 @@ namespace GLTF
 
             if (def.AlphaMode == GLTFAlphaMode.BLEND)
             {
-                shader = Shader.Find("GLTF/GLTFStandardAlphaBlend");
+                shader = GLTFStandardAlphaBlend;
             }
             else if (def.AlphaMode == GLTFAlphaMode.MASK)
             {
-                shader = Shader.Find("GLTF/GLTFStandardAlphaMask");
+                shader = GLTFStandardAlphaMask;
             }
             else
             {
-                shader = Shader.Find("GLTF/GLTFStandard");
+                shader = GLTFStandard;
             }
 
             shader.maximumLOD = MaximumLod;
