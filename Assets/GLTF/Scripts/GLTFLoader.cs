@@ -11,10 +11,9 @@ namespace GLTF
     {
 	    public bool Multithreaded = true;
         public int MaximumLod = 300;
-        public Shader GLTFStandard;
-        public Shader GLTFStandardAlphaBlend;
-        public Shader GLTFStandardAlphaMask;
-
+        private Shader _standardShader;
+        private Shader _alphaBlendShader;
+        private Shader _alphaMaskShader;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -31,16 +30,22 @@ namespace GLTF
             public bool UseVertexColors;
         }
 
-        public GLTFLoader(string gltfUrl)
+        public GLTFLoader(string gltfUrl, Shader standardShader, Shader alphaBlendShader, Shader alphaMaskShader)
         {
             _gltfUrl = gltfUrl;
+            _standardShader = standardShader;
+            _alphaBlendShader = alphaBlendShader;
+            _alphaMaskShader = alphaMaskShader;
             asyncAction = new AsyncAction();
         }
 
-        public GLTFLoader(string gltfUrl, Transform parent = null)
+        public GLTFLoader(string gltfUrl, Shader standardShader, Shader alphaBlendShader, Shader alphaMaskShader, Transform parent = null)
 		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
+            _standardShader = standardShader;
+            _alphaBlendShader = alphaBlendShader;
+            _alphaMaskShader = alphaMaskShader;
             asyncAction = new AsyncAction();
 		}
 
@@ -276,15 +281,15 @@ namespace GLTF
 
             if (def.AlphaMode == GLTFAlphaMode.BLEND)
             {
-                shader = GLTFStandardAlphaBlend;
+                shader = _alphaBlendShader;
             }
             else if (def.AlphaMode == GLTFAlphaMode.MASK)
             {
-                shader = GLTFStandardAlphaMask;
+                shader = _alphaMaskShader;
             }
             else
             {
-                shader = GLTFStandard;
+                shader = _standardShader;
             }
 
             shader.maximumLOD = MaximumLod;

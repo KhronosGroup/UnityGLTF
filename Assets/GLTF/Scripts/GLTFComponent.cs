@@ -19,12 +19,15 @@ namespace GLTF {
 
         IEnumerator Start()
         {
-            var loader = new GLTFLoader(Url, gameObject.transform);
+            var loader = new GLTFLoader(
+                Url,
+                GLTFStandard,
+                GLTFStandardAlphaBlend,
+                GLTFStandardAlphaMask,
+                gameObject.transform
+            );
 	        loader.Multithreaded = Multithreaded;
             loader.MaximumLod = MaximumLod;
-            loader.GLTFStandard = GLTFStandard;
-            loader.GLTFStandardAlphaBlend = GLTFStandardAlphaBlend;
-            loader.GLTFStandardAlphaMask = GLTFStandardAlphaMask;
             yield return loader.Load();
         }
     }
