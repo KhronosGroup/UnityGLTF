@@ -21,7 +21,7 @@ Shader "GLTF/GLTFStandardAlphaMask" {
 	}
 
     SubShader {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
+        Tags { "Queue"="AlphaTest" "RenderType"="TransparentCutout" "IgnoreProjector"="True" }
         LOD 300
         Cull [_Cull]
         
@@ -41,7 +41,7 @@ Shader "GLTF/GLTFStandardAlphaMask" {
     }
 
     SubShader {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
+        Tags { "Queue"="AlphaTest" "RenderType"="TransparentCutout" "IgnoreProjector"="True" }
         LOD 200
         Cull [_Cull]
         
@@ -62,7 +62,7 @@ Shader "GLTF/GLTFStandardAlphaMask" {
     }
 
     SubShader {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
+        Tags { "Queue"="AlphaTest" "RenderType"="TransparentCutout" "IgnoreProjector"="True" }
         LOD 100
         Cull [_Cull]
 

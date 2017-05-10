@@ -57,7 +57,7 @@ void gltf_standard_surf (Input IN, inout SurfaceOutputStandard o) {
     #endif
 
     o.Emission = tex2D(_EmissionMap, IN.uv_MainTex).rgb * _EmissionColor;
-    o.Normal = normalize((normalize(tex2D(_BumpMap, IN.uv_MainTex)) * 2.0 - 1.0) * fixed3(_BumpScale, _BumpScale, 1.0));
+    o.Normal = _BumpScale*UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));//normalize((normalize(tex2D(_BumpMap, IN.uv_MainTex)) * 2.0 - 1.0) * fixed3(_BumpScale, _BumpScale, 1.0));
 }
 
 #endif // GLTF_STANDARD_COMMON_INCLUDED
