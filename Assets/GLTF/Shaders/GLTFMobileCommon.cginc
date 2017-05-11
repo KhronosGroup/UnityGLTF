@@ -29,6 +29,9 @@ struct appdata
     float4 vertex : POSITION;
     float2 uv : TEXCOORD0;
     float3 normal : NORMAL;
+    #ifdef VERTEX_COLOR_ON
+    float4 vertColor : COLOR;
+    #endif
 };
 
 struct v2f
@@ -38,6 +41,9 @@ struct v2f
     float3 ndotl : TEXCOORD1;
     float3 normal : TEXCOORD2;
     float3 viewDir : TEXCOORD3;
+    #ifdef VERTEX_COLOR_ON
+    float4 vertColor : COLOR;
+    #endif
 };
 
 v2f gltf_mobile_vert (appdata v)
@@ -45,6 +51,10 @@ v2f gltf_mobile_vert (appdata v)
     v2f o;
     o.vertex = UnityObjectToClipPos(v.vertex);
     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+
+    #ifdef VERTEX_COLOR_ON
+    o.vertColor = v.vertColor;
+    #endif
 
     o.normal = normalize(UnityObjectToWorldNormal(v.normal));
     o.ndotl = DotClamped(o.normal, _WorldSpaceLightPos0.xyz);
@@ -58,15 +68,35 @@ v2f gltf_mobile_vert (appdata v)
 fixed4 gltf_mobile_frag (v2f i) : SV_Target
 {
     #if defined(ALPHA_MODE_MASK_ON)
+
+    #ifdef VERTEX_COLOR_ON
+    fixed4 color = tex2D(_MainTex, i.uv) * _Color * v.vertColor;
+    #else
     fixed4 color = tex2D(_MainTex, i.uv) * _Color;
+    #endif 
+    
     clip(color.a - _Cutoff);
     fixed3 albedo = color.rgb;
+
     #elif defined(ALPHA_MODE_BLEND_ON)
+
+    #ifdef VERTEX_COLOR_ON
+    fixed4 color = tex2D(_MainTex, i.uv) * _Color * v.vertColor;
+    #else
     fixed4 color = tex2D(_MainTex, i.uv) * _Color;
+    #endif
+    
     fixed3 albedo = color.rgb;
+
+    #else // ALPHA_MODE
+
+    #ifdef VERTEX_COLOR_ON
+    fixed3 albedo = tex2D(_MainTex, i.uv) * _Color * i.vertColor;
     #else
     fixed3 albedo = tex2D(_MainTex, i.uv) * _Color;
     #endif
+
+    #endif // ALPHA_MODE
 
     fixed3 metallicRoughness = tex2D(_MetallicRoughnessMap, i.uv);
     fixed metallic = metallicRoughness.b * _Metallic;

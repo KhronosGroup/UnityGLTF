@@ -15,6 +15,9 @@ struct v2f {
 	float4 pos : SV_POSITION;
 	float2 uv : TEXCOORD0;
 	fixed3 vlight : TEXCOORD2;
+	#ifdef VERTEX_COLOR_ON
+    float4 vertColor : COLOR;
+    #endif
 	LIGHTING_COORDS(3,4)
 	UNITY_FOG_COORDS(5)
 };
@@ -46,12 +49,19 @@ v2f gltf_vertex_lit_vert(appdata_full v)
 	o.vlight += LightingLambertVS(worldN, _WorldSpaceLightPos0.xyz);
 	TRANSFER_VERTEX_TO_FRAGMENT(o);
 	UNITY_TRANSFER_FOG(o, o.pos);
+	#ifdef VERTEX_COLOR_ON
+	o.vertColor = v.color;
+	#endif
 	return o;
 }
 
 fixed4 gltf_vertex_lit_frag(v2f i) : SV_Target
 {
+	#ifdef VERTEX_COLOR_ON
+	half4 albedo = tex2D(_MainTex, i.uv) * _Color * i.vertColor;
+	#else
 	half4 albedo = tex2D(_MainTex, i.uv) * _Color;
+	#endif
 	fixed4 mainColor = fixed4(albedo.rgb * i.vlight, albedo.a);
 
 	UNITY_APPLY_FOG(i.fogCoord, mainColor);
