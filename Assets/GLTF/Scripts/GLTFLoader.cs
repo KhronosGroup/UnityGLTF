@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using UnityEngine.Networking;
+using UnityEngine.Rendering;
 
 namespace GLTF
 {
     public class GLTFLoader
     {
 	    public bool Multithreaded = true;
+        public int MaximumLod = 300;
+        private Shader _standardShader;
+        private Shader _alphaBlendShader;
+        private Shader _alphaMaskShader;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -25,16 +30,22 @@ namespace GLTF
             public bool UseVertexColors;
         }
 
-        public GLTFLoader(string gltfUrl)
+        public GLTFLoader(string gltfUrl, Shader standardShader, Shader alphaBlendShader, Shader alphaMaskShader)
         {
             _gltfUrl = gltfUrl;
+            _standardShader = standardShader;
+            _alphaBlendShader = alphaBlendShader;
+            _alphaMaskShader = alphaMaskShader;
             asyncAction = new AsyncAction();
         }
 
-        public GLTFLoader(string gltfUrl, Transform parent = null)
+        public GLTFLoader(string gltfUrl, Shader standardShader, Shader alphaBlendShader, Shader alphaMaskShader, Transform parent = null)
 		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
+            _standardShader = standardShader;
+            _alphaBlendShader = alphaBlendShader;
+            _alphaMaskShader = alphaMaskShader;
             asyncAction = new AsyncAction();
 		}
 
@@ -265,49 +276,42 @@ namespace GLTF
         }
 
         private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
-        {
-
+        {            
             Shader shader;
 
-            if (def.AlphaMode == GLTFAlphaMode.OPAQUE)
+            if (def.AlphaMode == GLTFAlphaMode.BLEND)
             {
-                if (def.DoubleSided)
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardDoubleSided");
-                }
-                else
-                {
-                    shader = Shader.Find("GLTF/GLTFStandard");
-                }
+                shader = _alphaBlendShader;
             }
             else if (def.AlphaMode == GLTFAlphaMode.MASK)
             {
-                if (def.DoubleSided)
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentMaskDoubleSided");
-                }
-                else
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentMask");
-                }
+                shader = _alphaMaskShader;
             }
             else
             {
-                if (def.DoubleSided)
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentBlendDoubleSided");
-                }
-                else
-                {
-                    shader = Shader.Find("GLTF/GLTFStandardTransparentBlend");
-                }
+                shader = _standardShader;
             }
+
+            shader.maximumLOD = MaximumLod;
 
             var material = new Material(shader);
 
+            if (def.AlphaMode == GLTFAlphaMode.MASK)
+            {
+                material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
+            }
+
+            if (def.DoubleSided)
+            {
+                material.SetInt("_Cull", (int)CullMode.Off);
+            }
+            else
+            {
+                material.SetInt("_Cull", (int)CullMode.Back);
+            }
+ 
             if (useVertexColors)
             {
-                Debug.Log("Enabling vertex colors.");
                 material.EnableKeyword("VERTEX_COLOR_ON");
             }
 
@@ -317,13 +321,10 @@ namespace GLTF
 
                 material.SetColor("_Color", pbr.BaseColorFactor);
 
-                material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
-
                 if (pbr.BaseColorTexture != null)
                 {
                     var texture = pbr.BaseColorTexture.Index.Value;
                     material.SetTexture("_MainTex", _imageCache[texture.Source.Value]);
-                    material.SetTextureScale("_MainTex", new Vector2(1, 1));
                 }
 
                 material.SetFloat("_Metallic", (float)pbr.MetallicFactor);
@@ -331,8 +332,7 @@ namespace GLTF
                 if (pbr.MetallicRoughnessTexture != null)
                 {
                     var texture = pbr.MetallicRoughnessTexture.Index.Value;
-                    material.SetTexture("_MetallicRoughness", _imageCache[texture.Source.Value]);
-                    material.SetTextureScale("_MetallicRoughness", new Vector2(1, 1));
+                    material.SetTexture("_MetallicRoughnessMap", _imageCache[texture.Source.Value]);
                 }
 
                 material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
@@ -342,26 +342,33 @@ namespace GLTF
             {
                 var texture = def.NormalTexture.Index.Value;
                 material.SetTexture("_BumpMap", _imageCache[texture.Source.Value]);
-                material.SetTextureScale("_BumpMap", new Vector2(1, 1));
-                material.SetFloat("_Bump", (float)def.NormalTexture.Scale);
+                material.SetFloat("_BumpScale", (float)def.NormalTexture.Scale);
             }
 
             if (def.OcclusionTexture != null)
             {
-                var texture = def.OcclusionTexture.Index.Value;
-                material.SetTexture("_AOTex", _imageCache[texture.Source.Value]);
-                material.SetTextureScale("_AOTex", new Vector2(1, 1));
-                material.SetFloat("_Occlusion", (float)def.OcclusionTexture.Strength);
+                var texture = def.OcclusionTexture.Index;
+                
+                material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
+
+                if (def.PbrMetallicRoughness != null
+                    && def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == texture.Id)
+                {
+                    material.EnableKeyword("OCC_METAL_ROUGH_ON");
+                }
+                else
+                {
+                    material.SetTexture("_OcclusionMap", _imageCache[texture.Value.Source.Value]);
+                }
             }
 
             if (def.EmissiveTexture != null)
             {
                 var texture = def.EmissiveTexture.Index.Value;
-                material.SetTextureScale("_EmissionTex", new Vector2(1, 1));
-                material.SetTexture("_EmissionTex", _imageCache[texture.Source.Value]);
+                material.SetTexture("_EmissionMap", _imageCache[texture.Source.Value]);
             }
 
-            material.SetColor("_Emission", def.EmissiveFactor);
+            material.SetColor("_EmissionColor", def.EmissiveFactor);
 
             return material;
         }

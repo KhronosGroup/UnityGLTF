@@ -199,7 +199,7 @@ namespace GLTF
                 writer.WriteValue(Skin.Id);
             }
 
-            if (Matrix != null && Matrix != Matrix4x4.identity)
+            if (Matrix != Matrix4x4.identity)
             {
                 writer.WritePropertyName("matrix");
                 writer.WriteStartArray();
@@ -216,7 +216,7 @@ namespace GLTF
                 writer.WriteValue(Mesh.Id);
             }
 
-            if (Rotation != null && Rotation != Quaternion.identity)
+            if (Rotation != Quaternion.identity)
             {
                 writer.WritePropertyName("rotation");
                 writer.WriteStartArray();
@@ -227,7 +227,7 @@ namespace GLTF
                 writer.WriteEndArray();
             }
 
-            if (Scale != null && Scale != Vector3.one)
+            if (Scale != Vector3.one)
             {
                 writer.WritePropertyName("scale");
                 writer.WriteStartArray();
@@ -237,7 +237,7 @@ namespace GLTF
                 writer.WriteEndArray();
             }
 
-            if (Translation != null && Translation != Vector3.zero)
+            if (Translation != Vector3.zero)
             {
                 writer.WritePropertyName("translation");
                 writer.WriteStartArray();
