@@ -51,20 +51,13 @@ v2f gltf_vertex_lit_vert(appdata_full v)
 
 fixed4 gltf_vertex_lit_frag(v2f i) : SV_Target
 {
-	half4 color = tex2D(_MainTex, i.uv) * _Color;
-	half3 albedo = color.rgb;
-	half4 alpha = color.a;
+	half4 albedo = tex2D(_MainTex, i.uv) * _Color;
+	fixed4 mainColor = fixed4(albedo.rgb * i.vlight, albedo.a);
 
-	fixed atten = 1.0;
-	fixed4 c = 0;
+	UNITY_APPLY_FOG(i.fogCoord, mainColor);
 
-	c.rgb = albedo * i.vlight * atten;
-
-	UNITY_APPLY_FOG(i.fogCoord, c);
-	#if defined(ALPHA_MODE_BLEND_ON)
-	UNITY_OPAQUE_ALPHA(c.a);
-	#elif defined(ALPHA_MODE_MASK_ON)
-	clip(c.a  - _Cutoff);
+	#ifdef ALPHA_MODE_MASK_ON
+	clip(mainColor.a  - _Cutoff);
 	#endif
 
 	#ifdef OCC_METAL_ROUGH_ON
@@ -75,6 +68,6 @@ fixed4 gltf_vertex_lit_frag(v2f i) : SV_Target
 
 	fixed4 emission = tex2D(_EmissionMap, i.uv) * _EmissionColor;
 
-	return c * occlusion + emission;
+	return mainColor * fixed4(occlusion.rgb, 1.0) + fixed4(emission.rgb, 0.0);
 }
 #endif
