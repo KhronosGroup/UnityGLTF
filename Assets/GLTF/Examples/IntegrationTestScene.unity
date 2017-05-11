@@ -1650,12 +1650,12 @@ GameObject:
   - component: {fileID: 1600544901}
   - component: {fileID: 1600544900}
   m_Layer: 0
-  m_Name: BinaryPillowPlaneTest
+  m_Name: SmilingFaceTest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1600544900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2182,7 +2182,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1939999687
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -6,7 +6,7 @@
 #include "UnityPBSLighting.cginc"
 #include "UnityStandardBRDF.cginc"
 
-#ifdef ALPHA_MODE_MASK_ON
+#ifdef _ALPHATEST_ON
 half _Cutoff;
 #endif
 
@@ -67,7 +67,7 @@ v2f gltf_mobile_vert (appdata v)
 
 fixed4 gltf_mobile_frag (v2f i) : SV_Target
 {
-    #if defined(ALPHA_MODE_MASK_ON)
+    #if defined(_ALPHATEST_ON)
 
     #ifdef VERTEX_COLOR_ON
     fixed4 color = tex2D(_MainTex, i.uv) * _Color * v.vertColor;
@@ -78,7 +78,7 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
     clip(color.a - _Cutoff);
     fixed3 albedo = color.rgb;
 
-    #elif defined(ALPHA_MODE_BLEND_ON)
+    #elif defined(_ALPHABLEND_ON)
 
     #ifdef VERTEX_COLOR_ON
     fixed4 color = tex2D(_MainTex, i.uv) * _Color * v.vertColor;
@@ -102,9 +102,9 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
     fixed metallic = metallicRoughness.b * _Metallic;
 
     #ifdef OCC_METAL_ROUGH_ON
-    fixed4 occlusion = metallicRoughness.r * _OcclusionStrength;
+    fixed3 occlusion = metallicRoughness.r * _OcclusionStrength;
     #else
-    fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
+    fixed3 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
     #endif
 
     fixed3 specularTint;
@@ -113,7 +113,7 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
         albedo, metallic, specularTint, oneMinusReflectivity
     );
     
-    fixed4 emmission = fixed4(tex2D(_EmissionMap, i.uv).rgb * _EmissionColor, 1.0);
+    fixed3 emmission = tex2D(_EmissionMap, i.uv).rgb * _EmissionColor;
 
     UnityLight light;
     light.color = _LightColor0.rgb;
@@ -133,10 +133,10 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
         light, indirectLight
     );
 
-    #ifdef ALPHA_MODE_BLEND_ON
-    return fixed4(diffuse, color.a) * occlusion + emmission;
+    #ifdef _ALPHABLEND_ON
+    return fixed4(diffuse * occlusion + emmission, color.a);
     #else
-    return fixed4(diffuse, 1) * occlusion + emmission;
+    return fixed4(diffuse * occlusion + emmission, 1);
     #endif
     
 }

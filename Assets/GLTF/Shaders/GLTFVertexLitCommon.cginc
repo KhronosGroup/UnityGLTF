@@ -22,7 +22,7 @@ struct v2f {
 	UNITY_FOG_COORDS(5)
 };
 
-#ifdef ALPHA_MODE_MASK_ON
+#ifdef _ALPHATEST_ON
 half _Cutoff;
 #endif
 
@@ -66,7 +66,7 @@ fixed4 gltf_vertex_lit_frag(v2f i) : SV_Target
 
 	UNITY_APPLY_FOG(i.fogCoord, mainColor);
 
-	#ifdef ALPHA_MODE_MASK_ON
+	#ifdef _ALPHATEST_ON
 	clip(mainColor.a  - _Cutoff);
 	#endif
 

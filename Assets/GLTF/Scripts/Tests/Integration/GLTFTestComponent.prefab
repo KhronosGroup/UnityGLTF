@@ -16,10 +16,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 4: {fileID: 4000010219582968}
-  - 114: {fileID: 114000011737172762}
+  - component: {fileID: 4000010219582968}
+  - component: {fileID: 114000011737172762}
   m_Layer: 0
   m_Name: GLTFTestComponent
   m_TagString: Untagged
@@ -36,10 +36,10 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &114000011737172762
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -52,5 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Url: http://localhost:8080/samples/Corset/glTF/Corset.gltf
-  Shader: {fileID: 4800000, guid: 4784c922f48527146a631c00834f6c12, type: 3}
   Multithreaded: 1
+  GLTFStandard: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}
+  GLTFStandardAlphaBlend: {fileID: 0}
+  GLTFStandardAlphaMask: {fileID: 0}

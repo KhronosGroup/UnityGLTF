@@ -7,8 +7,6 @@ public class GLTFTestComponent : MonoBehaviour {
     public bool Multithreaded = true;
 
     public Shader GLTFStandard;
-    public Shader GLTFStandardAlphaBlend;
-    public Shader GLTFStandardAlphaMask;
 
 
     IEnumerator Start()
@@ -16,8 +14,6 @@ public class GLTFTestComponent : MonoBehaviour {
         var loader = new GLTFLoader(
             Url,
             GLTFStandard,
-            GLTFStandardAlphaBlend,
-            GLTFStandardAlphaMask,
             gameObject.transform
         );
         loader.Multithreaded = Multithreaded;

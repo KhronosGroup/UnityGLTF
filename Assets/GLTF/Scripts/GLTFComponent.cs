@@ -14,16 +14,12 @@ namespace GLTF {
         public int MaximumLod = 300;
 
         public Shader GLTFStandard;
-        public Shader GLTFStandardAlphaBlend;
-        public Shader GLTFStandardAlphaMask;
 
         IEnumerator Start()
         {
             var loader = new GLTFLoader(
                 Url,
                 GLTFStandard,
-                GLTFStandardAlphaBlend,
-                GLTFStandardAlphaMask,
                 gameObject.transform
             );
 	        loader.Multithreaded = Multithreaded;

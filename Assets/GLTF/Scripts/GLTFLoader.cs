@@ -12,8 +12,6 @@ namespace GLTF
 	    public bool Multithreaded = true;
         public int MaximumLod = 300;
         private Shader _standardShader;
-        private Shader _alphaBlendShader;
-        private Shader _alphaMaskShader;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
         private AsyncAction asyncAction;
@@ -30,22 +28,18 @@ namespace GLTF
             public bool UseVertexColors;
         }
 
-        public GLTFLoader(string gltfUrl, Shader standardShader, Shader alphaBlendShader, Shader alphaMaskShader)
+        public GLTFLoader(string gltfUrl, Shader standardShader)
         {
             _gltfUrl = gltfUrl;
             _standardShader = standardShader;
-            _alphaBlendShader = alphaBlendShader;
-            _alphaMaskShader = alphaMaskShader;
             asyncAction = new AsyncAction();
         }
 
-        public GLTFLoader(string gltfUrl, Shader standardShader, Shader alphaBlendShader, Shader alphaMaskShader, Transform parent = null)
+        public GLTFLoader(string gltfUrl, Shader standardShader, Transform parent = null)
 		{
             _gltfUrl = gltfUrl;
 	        _sceneParent = parent;
             _standardShader = standardShader;
-            _alphaBlendShader = alphaBlendShader;
-            _alphaMaskShader = alphaMaskShader;
             asyncAction = new AsyncAction();
 		}
 
@@ -277,20 +271,7 @@ namespace GLTF
 
         private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
         {            
-            Shader shader;
-
-            if (def.AlphaMode == GLTFAlphaMode.BLEND)
-            {
-                shader = _alphaBlendShader;
-            }
-            else if (def.AlphaMode == GLTFAlphaMode.MASK)
-            {
-                shader = _alphaMaskShader;
-            }
-            else
-            {
-                shader = _standardShader;
-            }
+            Shader shader = _standardShader;
 
             shader.maximumLOD = MaximumLod;
 
@@ -298,7 +279,37 @@ namespace GLTF
 
             if (def.AlphaMode == GLTFAlphaMode.MASK)
             {
+                material.SetOverrideTag("RenderType", "TransparentCutout");
+				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+				material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+				material.SetInt("_ZWrite", 1);
+				material.EnableKeyword("_ALPHATEST_ON");
+				material.DisableKeyword("_ALPHABLEND_ON");
+				material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+				material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
                 material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
+            }
+            else if (def.AlphaMode == GLTFAlphaMode.BLEND)
+            {
+                material.SetOverrideTag("RenderType", "Transparent");
+				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+				material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+				material.SetInt("_ZWrite", 0);
+				material.DisableKeyword("_ALPHATEST_ON");
+				material.EnableKeyword("_ALPHABLEND_ON");
+				material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+				material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            }
+            else
+            {
+                material.SetOverrideTag("RenderType", "");
+				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+				material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+				material.SetInt("_ZWrite", 1);
+				material.DisableKeyword("_ALPHATEST_ON");
+				material.DisableKeyword("_ALPHABLEND_ON");
+				material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+				material.renderQueue = -1;
             }
 
             if (def.DoubleSided)
@@ -309,6 +320,8 @@ namespace GLTF
             {
                 material.SetInt("_Cull", (int)CullMode.Back);
             }
+
+
  
             if (useVertexColors)
             {

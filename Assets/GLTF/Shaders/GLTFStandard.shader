@@ -16,30 +16,115 @@
 
 		_EmissionColor("Color", Color) = (1,1,1,0)
 		_EmissionMap("Emission", 2D) = "black" {}
+
+		[HideInInspector] _Mode ("__mode", Float) = 0.0
+		[HideInInspector] _SrcBlend ("__src", Float) = 1.0
+		[HideInInspector] _DstBlend ("__dst", Float) = 0.0
+		[HideInInspector] _ZWrite ("__zw", Float) = 1.0
 	}
 
-	SubShader {
-		Tags { "RenderType"="Opaque" }
-		Cull [_Cull]
+	CGINCLUDE
+	#define UNITY_SETUP_BRDF_INPUT MetallicSetup
+	ENDCG
+
+	SubShader
+	{
+		Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
 		LOD 300
-		
-		CGPROGRAM
-		// Standard Desktop Shader
-		#pragma target 3.0
-		// Vertex Colors
-		#pragma multi_compile _ VERTEX_COLOR_ON
-		// Occlusion packed in red channel of MetallicRoughnessMap
-		#pragma multi_compile _ OCC_METAL_ROUGH_ON
-		#include "GLTFStandardCommon.cginc"
-		
-		#pragma surface gltf_standard_surf Standard fullforwardshadows
+	
 
-		ENDCG
+		// ------------------------------------------------------------------
+		//  Base forward pass (directional light, emission, lightmaps, ...)
+		Pass
+		{
+			Name "FORWARD" 
+			Tags { "LightMode" = "ForwardBase" }
+
+			Blend [_SrcBlend] [_DstBlend]
+			ZWrite [_ZWrite]
+			Cull [_Cull]
+
+			CGPROGRAM
+			#pragma target 3.0
+
+			// -------------------------------------
+
+			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+			#define _NORMALMAP 1
+			#define _EMISSION 1
+			#define _METALLICGLOSSMAP 1
+			#pragma multi_compile_fwdbase
+			#pragma multi_compile_fog
+
+			#pragma vertex vertBase
+			#pragma fragment fragBase
+			#include "GLTFStandardInput.cginc"
+			#include "UnityStandardCoreForward.cginc"
+
+			ENDCG
+		}
+		// ------------------------------------------------------------------
+		//  Additive forward pass (one light per pass)
+		Pass
+		{
+			Name "FORWARD_DELTA"
+			Tags { "LightMode" = "ForwardAdd" }
+			Cull [_Cull]
+			Blend [_SrcBlend] One
+			Fog { Color (0,0,0,0) } // in additive pass fog should be black
+			ZWrite Off
+			ZTest LEqual
+
+			CGPROGRAM
+			#pragma target 3.0
+
+			// -------------------------------------
+
+			#define _NORMALMAP 1
+			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+			#define _METALLICGLOSSMAP 1
+
+			#pragma multi_compile_fwdadd_fullshadows
+			#pragma multi_compile_fog
+
+
+			#pragma vertex vertAdd
+			#pragma fragment fragAdd
+			#include "GLTFStandardInput.cginc"
+			#include "UnityStandardCoreForward.cginc"
+
+			ENDCG
+		}
+		// ------------------------------------------------------------------
+		//  Shadow rendering pass
+		Pass {
+			Name "ShadowCaster"
+			Tags { "LightMode" = "ShadowCaster" }
+
+			ZWrite On ZTest LEqual
+
+			CGPROGRAM
+			#pragma target 3.0
+
+			// -------------------------------------
+
+
+			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+			#pragma multi_compile_shadowcaster
+
+			#pragma vertex vertShadowCaster
+			#pragma fragment fragShadowCaster
+
+			#include "UnityStandardShadow.cginc"
+
+			ENDCG
+		}
 	}
 
 	SubShader {
-		Tags { "RenderType"="Opaque" }
 		Cull [_Cull]
+		Blend [_SrcBlend] [_DstBlend]
+		ZWrite [_ZWrite]
 		LOD 200
 		
 		Pass {
@@ -50,6 +135,7 @@
 			#pragma multi_compile _ VERTEX_COLOR_ON
 			// Occlusion packed in red channel of MetallicRoughnessMap
 			#pragma multi_compile _ OCC_METAL_ROUGH_ON
+			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
 			#include "GLTFMobileCommon.cginc"
 			#pragma vertex gltf_mobile_vert
 			#pragma fragment gltf_mobile_frag
@@ -58,8 +144,9 @@
 	}
 
 	SubShader {
-		Tags { "RenderType"="Opaque" }
 		Cull [_Cull]
+		Blend [_SrcBlend] [_DstBlend]
+		ZWrite [_ZWrite]
 		LOD 100
 
 		Pass {
@@ -70,6 +157,7 @@
 			#pragma multi_compile _ VERTEX_COLOR_ON
 			// Occlusion packed in red channel of MetallicRoughnessMap
 			#pragma multi_compile _ OCC_METAL_ROUGH_ON
+			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
 			#pragma multi_compile_fwdbase	
 			#pragma multi_compile_fog
 			#include "GLTFVertexLitCommon.cginc"
