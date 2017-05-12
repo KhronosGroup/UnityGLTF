@@ -1,5 +1,5 @@
-# GLTF Loader for Unity
-Unity3D library for loading, parsing, and rendering assets stored in the [GLTF 2.0](https://github.com/KhronosGroup/glTF/tree/2.0) file format at runtime.
+# UnityGLTF
+Unity3D library for exporting, loading, parsing, and rendering assets stored in the [GLTF 2.0](https://github.com/KhronosGroup/glTF/tree/2.0) file format at runtime.
 
 The specification isn't finalized yet and this loader is a work in progress. Feel free to check it out and contribute, but don't use it for anything serious yet.
 
