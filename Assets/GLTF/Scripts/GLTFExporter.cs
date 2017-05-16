@@ -13,6 +13,7 @@ namespace GLTF
         private GLTFBufferId _bufferId;
         private GLTFBuffer _buffer;
         private BinaryWriter _bufferWriter;
+        private List<Texture2D> _images;
 
         public bool ExportNames = true;
 
@@ -33,6 +34,8 @@ namespace GLTF
                 Scenes = new List<GLTFScene>(),
                 Textures = new List<GLTFTexture>(),
             };
+
+            _images = new List<Texture2D>();
 
             _buffer = new GLTFBuffer();
             _bufferId = new GLTFBufferId {
@@ -62,6 +65,19 @@ namespace GLTF
             
             gltfFile.Close();
             binFile.Close();
+
+            foreach (var image in _images)
+            {
+                var renderTexture = RenderTexture.GetTemporary(image.width, image.height);
+                Graphics.Blit(image, renderTexture);
+                RenderTexture.active = renderTexture;
+                var exportTexture = new Texture2D(image.width, image.height);
+                exportTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+                exportTexture.Apply();
+                Debug.LogFormat("{0} {1} {2} {3}", image.width, image.height, renderTexture.width, renderTexture.height);   
+                Debug.Log(exportTexture.EncodeToPNG().Length);            
+                File.WriteAllBytes(Path.Combine(path, image.name + ".png"), exportTexture.EncodeToPNG());
+            }
         }
 
         public string SerializeGLTF()
@@ -398,7 +414,7 @@ namespace GLTF
                 image.Name = texture.name;
             }
 
-            // TODO: Export image data
+            _images.Add(texture as Texture2D);
 
             image.Uri = Uri.EscapeUriString(texture.name + ".png");
 
