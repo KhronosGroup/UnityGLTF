@@ -101,10 +101,12 @@ namespace GLTF
             if (BaseColorFactor != Color.white)
             {
                 writer.WritePropertyName("baseColorFactor");
+                writer.WriteStartArray();
                 writer.WriteValue(BaseColorFactor.r);
                 writer.WriteValue(BaseColorFactor.g);
                 writer.WriteValue(BaseColorFactor.b);
                 writer.WriteValue(BaseColorFactor.a);
+                writer.WriteEndArray();
             }
 
             if (BaseColorTexture != null)
@@ -117,6 +119,12 @@ namespace GLTF
             {
                 writer.WritePropertyName("metallicFactor");
                 writer.WriteValue(MetallicFactor);
+            }
+
+            if (RoughnessFactor != 1.0f)
+            {
+                writer.WritePropertyName("roughnessFactor");
+                writer.WriteValue(RoughnessFactor);
             }
 
             if (MetallicRoughnessTexture != null)

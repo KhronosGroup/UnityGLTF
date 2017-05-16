@@ -147,7 +147,7 @@ namespace GLTF
             if (BufferView != null)
             {
                 writer.WritePropertyName("bufferView");
-                writer.WriteValue(BufferView);
+                writer.WriteValue(BufferView.Id);
             }
 
             if (ByteOffset != 0)

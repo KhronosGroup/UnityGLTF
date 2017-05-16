@@ -10,28 +10,72 @@ namespace GLTF
     {
         private Transform _rootTransform;
         private GLTFRoot _root;
+        private GLTFBufferId _bufferId;
+        private GLTFBuffer _buffer;
+        private BinaryWriter _bufferWriter;
 
         public bool ExportNames = true;
 
         public GLTFExporter(Transform rootTransform)
         {
             _rootTransform = rootTransform;
-            _root = new GLTFRoot();
-            _root.Asset = new GLTFAsset {
-                Version = "2.0"
+            _root = new GLTFRoot{
+                Accessors = new List<GLTFAccessor>(),
+                Asset = new GLTFAsset {
+                    Version = "2.0"
+                },
+                Buffers = new List<GLTFBuffer>(),
+                BufferViews = new List<GLTFBufferView>(),
+                Images = new List<GLTFImage>(),
+                Materials = new List<GLTFMaterial>(),
+                Meshes = new List<GLTFMesh>(),
+                Nodes = new List<GLTFNode>(),
+                Scenes = new List<GLTFScene>(),
+                Textures = new List<GLTFTexture>(),
             };
-            _root.Accessors = new List<GLTFAccessor>();
-            _root.Scenes = new List<GLTFScene>();
-            _root.Nodes = new List<GLTFNode>();
-            _root.Materials = new List<GLTFMaterial>();
-            _root.Meshes = new List<GLTFMesh>();
+
+            _buffer = new GLTFBuffer();
+            _bufferId = new GLTFBufferId {
+                Id = _root.Buffers.Count,
+                Root = _root
+            };
+            _root.Buffers.Add(_buffer);
+        }
+
+        public GLTFRoot GetRoot() {
+            return _root;
+        }
+
+        public void SaveGLTFandBin(string path, string fileName)
+        {
+            var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
+            _bufferWriter = new BinaryWriter(binFile);
+
             _root.Scene = ExportScene(_rootTransform);
+
+            _buffer.Uri = fileName + ".bin";
+            _buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
+       
+            var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
+            var writer = new JsonTextWriter(gltfFile);
+            _root.Serialize(writer);
+            
+            gltfFile.Close();
+            binFile.Close();
         }
 
         public string SerializeGLTF()
         {
             var stringWriter = new StringWriter();
             var writer = new JsonTextWriter(stringWriter);
+
+            var memoryStream = new MemoryStream();
+            _bufferWriter = new BinaryWriter(memoryStream);
+
+            _root.Scene = ExportScene(_rootTransform);
+
+            _buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
+
             _root.Serialize(writer);
             return stringWriter.ToString();
         }
@@ -161,11 +205,209 @@ namespace GLTF
         {
             var material = new GLTFMaterial();
 
+            if (ExportNames)
+            {
+                material.Name = materialObj.name;
+            }
+
+            if (materialObj.HasProperty("_Cutoff"))
+            {
+                material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
+            }
+
+            switch (materialObj.GetTag("RenderType", false, ""))
+            {
+                case "TransparentCutout":
+                    material.AlphaMode = GLTFAlphaMode.MASK;
+                    break;
+                case "Transparent":
+                    material.AlphaMode = GLTFAlphaMode.BLEND;
+                    break;
+                default:
+                    material.AlphaMode = GLTFAlphaMode.OPAQUE;
+                    break;
+            }
+
+            material.DoubleSided = materialObj.HasProperty("_Cull") &&
+                materialObj.GetInt("_Cull") == (float)UnityEngine.Rendering.CullMode.Off;
+            
+            if (materialObj.HasProperty("_EmissionColor"))
+            {
+                material.EmissiveFactor = materialObj.GetColor("_EmissionColor");
+            }
+
+            if (materialObj.HasProperty("_EmissionMap"))
+            {
+                var emissionTex = materialObj.GetTexture("_EmissionMap");
+
+                if (emissionTex != null)
+                {
+                    material.EmissiveTexture = ExportTextureInfo(emissionTex);
+                }
+            }
+
+            if (materialObj.HasProperty("_BumpMap"))
+            {
+                var normalTex = materialObj.GetTexture("_BumpMap");
+
+                if (normalTex != null)
+                {
+                    material.NormalTexture = ExportNormalTextureInfo(normalTex, materialObj);
+                }
+            }
+
+            if (materialObj.HasProperty("_OcclusionMap"))
+            {
+                var occTex = materialObj.GetTexture("_OcclusionMap");
+                if (occTex != null)
+                {
+                    material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, materialObj);
+                }  
+            }
+
+            material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
+
             var id = new GLTFMaterialId {
                 Id = _root.Materials.Count,
                 Root = _root
             };
             _root.Materials.Add(material);
+
+            return id;
+        }
+
+        private GLTFNormalTextureInfo ExportNormalTextureInfo(Texture texture, Material material)
+        {
+            var info = new GLTFNormalTextureInfo();
+
+            info.Index = ExportTexture(texture);
+
+            if (material.HasProperty("_BumpScale"))
+            {
+                info.Scale = material.GetFloat("_BumpScale");
+            }
+
+            return info;
+        }
+
+        private GLTFOcclusionTextureInfo ExportOcclusionTextureInfo(Texture texture, Material material)
+        {
+            var info = new GLTFOcclusionTextureInfo();
+
+            info.Index = ExportTexture(texture);
+
+            if (material.HasProperty("_OcclusionStrength"))
+            {
+                info.Strength = material.GetFloat("_OcclusionStrength");
+            }
+
+            return info;
+        }
+
+        private GLTFPBRMetallicRoughness ExportPBRMetallicRoughness(Material material)
+        {
+            var pbr = new GLTFPBRMetallicRoughness();
+
+            if (material.HasProperty("_Color"))
+            {
+                pbr.BaseColorFactor = material.GetColor("_Color");
+            }
+
+            if (material.HasProperty("_MainTex"))
+            {
+                var mainTex = material.GetTexture("_MainTex");
+
+                if (mainTex != null)
+                {
+                    pbr.BaseColorTexture = ExportTextureInfo(mainTex);
+                }
+            }
+
+            if (material.HasProperty("_Metallic"))
+            {
+                pbr.MetallicFactor = material.GetFloat("_Metallic");
+            }
+
+            if (material.HasProperty("_Roughness"))
+            {
+                pbr.RoughnessFactor = material.GetFloat("_Roughness");
+            }
+            else if (material.HasProperty("_Glossiness"))
+            {
+                pbr.RoughnessFactor = 1 - material.GetFloat("_Glossiness");
+            }
+
+            if (material.HasProperty("_MetallicRoughnessMap"))
+            {
+                var mrTex = material.GetTexture("_MetallicRoughnessMap");
+
+                if (mrTex != null)
+                {
+                    pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex);
+                }
+            }
+            else if (material.HasProperty("_MetallicGlossMap"))
+            {
+                var mgTex = material.GetTexture("_MetallicGlossMap");
+
+                if (mgTex != null)
+                {
+                    pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex);
+                }
+            }
+            
+            return pbr;            
+        }
+
+        private GLTFTextureInfo ExportTextureInfo(Texture texture)
+        {
+            var info = new GLTFTextureInfo();
+
+            info.Index = ExportTexture(texture);
+
+            return info;
+        }
+
+        private GLTFTextureId ExportTexture(Texture textureObj)
+        {
+            var texture = new GLTFTexture();
+
+            if (ExportNames)
+            {
+                texture.Name = textureObj.name;
+            }
+
+            texture.Source = ExportImage(textureObj);
+
+            var id = new GLTFTextureId {
+                Id = _root.Textures.Count,
+                Root = _root
+            };
+
+            _root.Textures.Add(texture);
+
+            return id;
+        }
+
+        private GLTFImageId ExportImage(Texture texture)
+        {
+            var image = new GLTFImage();
+
+            if (ExportNames)
+            {
+                image.Name = texture.name;
+            }
+
+            // TODO: Export image data
+
+            image.Uri = Uri.EscapeUriString(texture.name + ".png");
+
+            var id = new GLTFImageId {
+                Id = _root.Images.Count,
+                Root = _root
+            };
+
+            _root.Images.Add(image);
 
             return id;
         }
@@ -242,33 +484,63 @@ namespace GLTF
                 }
             }
 
+            var byteOffset = _bufferWriter.BaseStream.Position;
+
             if (max < byte.MaxValue && min > byte.MinValue)
             {
                 accessor.ComponentType = GLTFComponentType.UnsignedByte;
+                
+                foreach (var v in arr) {
+                    _bufferWriter.Write((byte)v);
+                }
             }
             else if (max < sbyte.MaxValue && min > sbyte.MinValue)
             {
                 accessor.ComponentType = GLTFComponentType.Byte;
+
+                foreach (var v in arr) {
+                    _bufferWriter.Write((sbyte)v);
+                }
             }
             else if (max < short.MaxValue && min > short.MinValue)
             {
                 accessor.ComponentType = GLTFComponentType.Short;
+
+                foreach (var v in arr) {
+                    _bufferWriter.Write((short)v);
+                }
             }
             else if (max < ushort.MaxValue && min > ushort.MinValue)
             {
                 accessor.ComponentType = GLTFComponentType.UnsignedShort;
+
+                foreach (var v in arr) {
+                    _bufferWriter.Write((ushort)v);
+                }
             }
             else if (min > uint.MinValue)
             {
                 accessor.ComponentType = GLTFComponentType.UnsignedInt;
+
+                foreach (var v in arr) {
+                    _bufferWriter.Write((uint)v);
+                }
             }
             else
             {
                 accessor.ComponentType = GLTFComponentType.Float;
+
+                foreach (var v in arr) {
+                    _bufferWriter.Write((float)v);
+                }
             }
 
             accessor.Min = new List<double> { min };
             accessor.Max = new List<double> { max };
+
+            var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+            
+            accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
             var id = new GLTFAccessorId {
                 Id = _root.Accessors.Count,
@@ -322,6 +594,17 @@ namespace GLTF
 
             accessor.Min = new List<double> { minX, minY };
             accessor.Max = new List<double> { maxX, maxY };
+
+            var byteOffset = _bufferWriter.BaseStream.Position;
+
+            foreach (var vec in arr) {
+                _bufferWriter.Write(vec.x);
+                _bufferWriter.Write(vec.y);
+            }
+
+            var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+            
+            accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
             var id = new GLTFAccessorId {
                 Id = _root.Accessors.Count,
@@ -385,6 +668,18 @@ namespace GLTF
 
             accessor.Min = new List<double> { minX, minY, minZ };
             accessor.Max = new List<double> { maxX, maxY, maxZ };
+
+            var byteOffset = _bufferWriter.BaseStream.Position;
+
+            foreach (var vec in arr) {
+                _bufferWriter.Write(vec.x);
+                _bufferWriter.Write(vec.y);
+                _bufferWriter.Write(vec.z);
+            }
+
+            var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+            
+            accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
             var id = new GLTFAccessorId {
                 Id = _root.Accessors.Count,
@@ -459,6 +754,19 @@ namespace GLTF
             accessor.Min = new List<double> { minX, minY, minZ, minW };
             accessor.Max = new List<double> { maxX, maxY, maxZ, maxW };
 
+            var byteOffset = _bufferWriter.BaseStream.Position;
+
+            foreach (var vec in arr) {
+                _bufferWriter.Write(vec.x);
+                _bufferWriter.Write(vec.y);
+                _bufferWriter.Write(vec.z);
+                _bufferWriter.Write(vec.w);
+            }
+
+            var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+            
+            accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+
             var id = new GLTFAccessorId {
                 Id = _root.Accessors.Count,
                 Root = _root
@@ -532,6 +840,19 @@ namespace GLTF
             accessor.Min = new List<double> { minR, minG, minB, minA };
             accessor.Max = new List<double> { maxR, maxG, maxB, maxA };
 
+            var byteOffset = _bufferWriter.BaseStream.Position;
+
+            foreach (var color in arr) {
+                _bufferWriter.Write(color.r);
+                _bufferWriter.Write(color.g);
+                _bufferWriter.Write(color.b);
+                _bufferWriter.Write(color.a);
+            }
+
+            var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+            
+            accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+
             var id = new GLTFAccessorId {
                 Id = _root.Accessors.Count,
                 Root = _root
@@ -541,6 +862,22 @@ namespace GLTF
             return id;
         }
 
-        
+        private GLTFBufferViewId ExportBufferView(int byteOffset, int byteLength)
+        {
+            var bufferView = new GLTFBufferView {
+                Buffer = _bufferId,
+                ByteOffset = byteOffset,
+                ByteLength = byteLength,
+            };
+
+            var id = new GLTFBufferViewId {
+                Id = _root.BufferViews.Count,
+                Root = _root
+            };
+
+            _root.BufferViews.Add(bufferView);
+
+            return id;
+        }
     }
 }

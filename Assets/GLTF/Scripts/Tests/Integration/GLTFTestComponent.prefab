@@ -54,5 +54,3 @@ MonoBehaviour:
   Url: http://localhost:8080/samples/Corset/glTF/Corset.gltf
   Multithreaded: 1
   GLTFStandard: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}
-  GLTFStandardAlphaBlend: {fileID: 0}
-  GLTFStandardAlphaMask: {fileID: 0}
