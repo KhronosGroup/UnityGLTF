@@ -74,8 +74,6 @@ namespace GLTF
                 var exportTexture = new Texture2D(image.width, image.height);
                 exportTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
                 exportTexture.Apply();
-                Debug.LogFormat("{0} {1} {2} {3}", image.width, image.height, renderTexture.width, renderTexture.height);   
-                Debug.Log(exportTexture.EncodeToPNG().Length);            
                 File.WriteAllBytes(Path.Combine(path, image.name + ".png"), exportTexture.EncodeToPNG());
             }
         }
