@@ -54,20 +54,23 @@ namespace GLTF
 
         public IEnumerator Load(int sceneIndex = -1)
         {
-            var www = UnityWebRequest.Get(_gltfUrl);
+            if (_root == null)
+            {
+                var www = UnityWebRequest.Get(_gltfUrl);
 
-            yield return www.Send();
+                yield return www.Send();
 
-            var gltfData = www.downloadHandler.data;
+                var gltfData = www.downloadHandler.data;
 
-	        if (Multithreaded)
-	        {
-		        yield return asyncAction.RunOnWorkerThread(() => ParseGLTF(gltfData));
-	        }
-	        else
-	        {
-                ParseGLTF(gltfData);
-	        }
+                if (Multithreaded)
+                {
+                    yield return asyncAction.RunOnWorkerThread(() => ParseGLTF(gltfData));
+                }
+                else
+                {
+                    ParseGLTF(gltfData);
+                }
+            }
 
 	        GLTFScene scene;
 	        if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
@@ -84,30 +87,33 @@ namespace GLTF
                 throw new Exception("No default scene in gltf file.");
             }
 
-            if (_root.Buffers != null)
+            if (_lastLoadedScene == null)
             {
-                foreach (var buffer in _root.Buffers)
+                if (_root.Buffers != null)
                 {
-                    yield return LoadBuffer(buffer);
+                    foreach (var buffer in _root.Buffers)
+                    {
+                        yield return LoadBuffer(buffer);
+                    }
+                }
+
+                if (_root.Images != null)
+                {
+                    foreach (var image in _root.Images)
+                    {
+                        yield return LoadImage(image);
+                    }
+                }
+
+                if (Multithreaded)
+                {
+                    yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
+                }
+                else
+                {
+                    BuildMeshAttributes();
                 }
             }
-
-            if (_root.Images != null)
-            {
-                foreach (var image in _root.Images)
-                {
-                    yield return LoadImage(image);
-                }
-            }
-
-	        if (Multithreaded)
-	        {
-		        yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
-	        }
-	        else
-	        {
-		        BuildMeshAttributes();
-	        }
 
             var sceneObj = CreateScene(scene);
 
@@ -116,7 +122,6 @@ namespace GLTF
 		        sceneObj.transform.SetParent(_sceneParent, false);
 	        }
 
-			_root = null;
 	        _lastLoadedScene = sceneObj;
         }
 
