@@ -20,7 +20,7 @@ namespace GLTF
         private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
         private readonly Dictionary<MaterialCacheKey, Material> _materialCache = new Dictionary<MaterialCacheKey, Material>();
         private readonly Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
-        private readonly Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
+        private Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
         private readonly Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
 
         private struct MaterialCacheKey
@@ -113,6 +113,10 @@ namespace GLTF
                 {
                     BuildMeshAttributes();
                 }
+            }
+            else
+            {
+                _meshCache = new Dictionary<GLTFMesh, GameObject>();
             }
 
             var sceneObj = CreateScene(scene);
