@@ -2,14 +2,14 @@
 
 namespace GLTF
 {
-    public interface GLTFExtension
-    {
-        void Serialize(JsonWriter writer);
-    }
+	public interface GLTFExtension
+	{
+		void Serialize(JsonWriter writer);
+	}
 
-    public abstract class GLTFExtensionFactory
-    {
-        public string ExtensionName;
-        public abstract GLTFExtension Deserialize(GLTFRoot root, JsonReader reader);
-    }
+	public abstract class GLTFExtensionFactory
+	{
+		public string ExtensionName;
+		public abstract GLTFExtension Deserialize(GLTFRoot root, JsonReader reader);
+	}
 }
