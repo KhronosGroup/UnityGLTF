@@ -43,7 +43,7 @@ namespace GLTF
             asyncAction = new AsyncAction();
 		}
 
-        public IEnumerator Load()
+        public IEnumerator Load(int sceneIndex = -1)
         {
             var www = UnityWebRequest.Get(_gltfUrl);
 
@@ -60,7 +60,15 @@ namespace GLTF
                 ParseGLTF(gltfData);
 	        }
 
-            var scene = _root.GetDefaultScene();
+	        GLTFScene scene;
+	        if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
+	        {
+		        scene = _root.Scenes[sceneIndex];
+	        }
+	        else
+	        {
+				scene = _root.GetDefaultScene();
+			}
 
             if (scene == null)
             {

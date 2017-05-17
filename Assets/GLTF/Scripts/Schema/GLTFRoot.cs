@@ -109,7 +109,7 @@ namespace GLTF
                 return Scene.Value;
             }
 
-            if (Scenes != null && Scenes.Count > 0)
+            if (Scenes.Count > 0)
             {
                 return Scenes[0];
             }
