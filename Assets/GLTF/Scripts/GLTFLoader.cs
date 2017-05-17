@@ -28,7 +28,17 @@ namespace GLTF
             public bool UseVertexColors;
         }
 
-        public GLTFLoader(string gltfUrl, Shader standardShader)
+		private GameObject lastLoadedModel;
+
+	    public GameObject LastLoadedModel
+	    {
+		    get
+		    {
+			    return lastLoadedModel;
+		    }
+	    }
+
+	    public GLTFLoader(string gltfUrl, Shader standardShader)
         {
             _gltfUrl = gltfUrl;
             _standardShader = standardShader;
@@ -100,6 +110,7 @@ namespace GLTF
 	        }
 
 			_root = null;
+	        lastLoadedModel = sceneObj;
         }
 
         private void ParseGLTF(byte[] gltfData)
