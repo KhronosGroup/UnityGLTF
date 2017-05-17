@@ -17,7 +17,7 @@
 		_EmissionColor("Color", Color) = (1,1,1,0)
 		_EmissionMap("Emission", 2D) = "black" {}
 
-		[HideInInspector] _Mode ("__mode", Float) = 0.0
+		[Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode", Float) = 0.0
 		[HideInInspector] _SrcBlend ("__src", Float) = 1.0
 		[HideInInspector] _DstBlend ("__dst", Float) = 0.0
 		[HideInInspector] _ZWrite ("__zw", Float) = 1.0
