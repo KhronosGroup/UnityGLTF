@@ -74,24 +74,30 @@ namespace GLTF
 
 		public void GetUnityTRSProperties(out Vector3 position, out Quaternion rotation, out Vector3 scale)
 		{
-			var mat = Matrix;
+			Vector3 localPosition, localScale;
+			Quaternion localRotation;
 
-			if (_useTRS)
+			if (!_useTRS)
 			{
-				mat = Matrix4x4.TRS(Translation, Rotation, Scale);
+				GetTRSProperties(Matrix, out localPosition, out localRotation, out localScale);
+			}
+			else
+			{
+				localPosition = Translation;
+				localRotation = Rotation;
+				localScale = Scale;
 			}
 
-
-			mat = InvertZMatrix * mat * InvertZMatrix;
-
-			GetTRSProperties(mat, out position, out rotation, out scale);
+			position = new Vector3(localPosition.x, localPosition.y, -localPosition.z);
+			rotation = new Quaternion(-localRotation.x, -localRotation.y, localRotation.z, localRotation.w);
+			scale = new Vector3(localScale.x, localScale.y, -localScale.z);
 		}
 
 		public void SetUnityTransform(Transform transform)
 		{
-			var unityMat = Matrix4x4.TRS(transform.localPosition, transform.localRotation, transform.localScale);
-			var gltfMat = InvertZMatrix * unityMat * InvertZMatrix;
-			GetTRSProperties(gltfMat, out Translation, out Rotation, out Scale);
+			Translation.Set(transform.localPosition.x, transform.localPosition.y, -transform.localPosition.z);
+			Rotation.Set(-transform.localRotation.x, -transform.localRotation.y, transform.localRotation.z, transform.localRotation.w);
+			Scale.Set(transform.localScale.x, transform.localScale.y, -transform.localScale.z);
 		}
 
 		private void GetTRSProperties(Matrix4x4 mat, out Vector3 position, out Quaternion rotation, out Vector3 scale)
