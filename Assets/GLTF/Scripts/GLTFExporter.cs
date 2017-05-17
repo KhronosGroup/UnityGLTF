@@ -68,6 +68,7 @@ namespace GLTF
 
             foreach (var image in _images)
             {
+                Debug.Log(image.name);
                 var renderTexture = RenderTexture.GetTemporary(image.width, image.height);
                 Graphics.Blit(image, renderTexture);
                 RenderTexture.active = renderTexture;
@@ -127,7 +128,8 @@ namespace GLTF
 
             var meshFilter = nodeTransform.GetComponent<MeshFilter>();
             var meshRenderer = nodeTransform.GetComponent<MeshRenderer>();
-            if (meshFilter != null && meshFilter.mesh != null)
+
+            if (meshFilter != null && meshFilter.sharedMesh != null)
             {
                 node.Mesh = ExportMesh(meshFilter.sharedMesh, meshRenderer.sharedMaterial);
             }
@@ -202,7 +204,10 @@ namespace GLTF
                 primitive.Attributes.Add("COLOR_0", ExportAccessor(colors));
             }
 
-            primitive.Material = ExportMaterial(materialObj);
+            if (materialObj != null)
+            {
+                primitive.Material = ExportMaterial(materialObj);
+            }
 
             mesh.Primitives = new List<GLTFMeshPrimitive> { primitive };
 
