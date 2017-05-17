@@ -55,7 +55,7 @@ namespace GLTF
 			writer.WriteStartObject();
 
 			SerializeProperties(writer);
-			
+
 			writer.WriteEndObject();
 		}
 
@@ -69,7 +69,7 @@ namespace GLTF
 				writer.WritePropertyName("texCoord");
 				writer.WriteValue(TexCoord);
 			}
-			
+
 			base.Serialize(writer);
 		}
 	}

@@ -25,7 +25,7 @@ namespace GLTF
 		/// The datatype of components in the attribute.
 		/// All valid values correspond to WebGL enums.
 		/// The corresponding typed arrays are: `Int8Array`, `Uint8Array`, `Int16Array`,
-		/// `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively. 
+		/// `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively.
 		/// 5125 (UNSIGNED_INT) is only allowed when the accessor contains indices
 		/// i.e., the accessor is only referenced by `primitive.indices`.
 		/// </summary>
@@ -57,11 +57,11 @@ namespace GLTF
 		/// Both min and max arrays have the same length.
 		/// The length is determined by the value of the type property;
 		/// it can be 1, 2, 3, 4, 9, or 16.
-		/// 
+		///
 		/// When `componentType` is `5126` (FLOAT) each array value must be stored as
 		/// double-precision JSON number with numerical value which is equal to
 		/// buffer-stored single-precision value to avoid extra runtime conversions.
-		/// 
+		///
 		/// `normalized` property has no effect on array values: they always correspond
 		/// to the actual values stored in the buffer. When accessor is sparse, this
 		/// property must contain max values of accessor data with sparse substitution
@@ -75,11 +75,11 @@ namespace GLTF
 		/// Minimum value of each component in this attribute.
 		/// Both min and max arrays have the same length.  The length is determined by
 		/// the value of the type property; it can be 1, 2, 3, 4, 9, or 16.
-		/// 
+		///
 		/// When `componentType` is `5126` (FLOAT) each array value must be stored as
 		/// double-precision JSON number with numerical value which is equal to
 		/// buffer-stored single-precision value to avoid extra runtime conversions.
-		/// 
+		///
 		/// `normalized` property has no effect on array values: they always correspond
 		/// to the actual values stored in the buffer. When accessor is sparse, this
 		/// property must contain min values of accessor data with sparse substitution

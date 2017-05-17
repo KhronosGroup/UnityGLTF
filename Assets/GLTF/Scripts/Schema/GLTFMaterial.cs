@@ -125,7 +125,7 @@ namespace GLTF
 				writer.WritePropertyName("pbrMetallicRoughness");
 				PbrMetallicRoughness.Serialize(writer);
 			}
-			
+
 			if (NormalTexture != null)
 			{
 				writer.WritePropertyName("normalTexture");

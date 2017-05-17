@@ -31,7 +31,7 @@ namespace GLTF
 		public static GLTFSampler Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var sampler = new GLTFSampler();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -72,7 +72,7 @@ namespace GLTF
 			if (MinFilter != GLTFMinFilterMode.NearestMipmapLinear)
 			{
 				writer.WritePropertyName("minFilter");
-				writer.WriteValue((int)MinFilter);  
+				writer.WriteValue((int)MinFilter);
 			}
 
 			if (WrapS != GLTFWrapMode.Repeat)
@@ -84,11 +84,11 @@ namespace GLTF
 			if (WrapT != GLTFWrapMode.Repeat)
 			{
 				writer.WritePropertyName("WrapT");
-				writer.WriteValue((int)WrapT);		
+				writer.WriteValue((int)WrapT);
 			}
 
 			base.Serialize(writer);
-			
+
 			writer.WriteEndObject();
 		}
 	}

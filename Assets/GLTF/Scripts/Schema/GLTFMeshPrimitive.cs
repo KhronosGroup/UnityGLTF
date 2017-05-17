@@ -124,7 +124,7 @@ namespace GLTF
 			{
 				var accessor = Attributes[GLTFSemanticProperties.TANGENT].Value;
 				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Tangents = accessor.AsVector4Array(bufferData);  
+				attributes.Tangents = accessor.AsVector4Array(bufferData);
 			}
 
 			return attributes;
@@ -284,19 +284,19 @@ namespace GLTF
 				foreach (var target in Targets)
 				{
 					writer.WriteStartObject();
-					
+
 					foreach (var attribute in target) {
 						writer.WritePropertyName(attribute.Key);
 						writer.WriteValue(attribute.Value.Id);
 					}
-					
+
 					writer.WriteEndObject();
 				}
 				writer.WriteEndArray();
 			}
 
 			base.Serialize(writer);
-			
+
 			writer.WriteEndObject();
 		}
 	}

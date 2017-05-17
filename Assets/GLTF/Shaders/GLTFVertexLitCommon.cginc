@@ -16,8 +16,8 @@ struct v2f {
 	float2 uv : TEXCOORD0;
 	fixed3 vlight : TEXCOORD2;
 	#ifdef VERTEX_COLOR_ON
-    float4 vertColor : COLOR;
-    #endif
+	float4 vertColor : COLOR;
+	#endif
 	LIGHTING_COORDS(3,4)
 	UNITY_FOG_COORDS(5)
 };
@@ -71,10 +71,10 @@ fixed4 gltf_vertex_lit_frag(v2f i) : SV_Target
 	#endif
 
 	#ifdef OCC_METAL_ROUGH_ON
-    fixed4 occlusion = tex2D(_MetallicRoughnessMap, i.uv).r * _OcclusionStrength;
-    #else
-    fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
-    #endif
+	fixed4 occlusion = tex2D(_MetallicRoughnessMap, i.uv).r * _OcclusionStrength;
+	#else
+	fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
+	#endif
 
 	fixed4 emission = tex2D(_EmissionMap, i.uv) * _EmissionColor;
 

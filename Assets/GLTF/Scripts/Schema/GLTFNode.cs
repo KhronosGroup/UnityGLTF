@@ -78,9 +78,9 @@ namespace GLTF
 
 			if (_useTRS)
 			{
-				mat = Matrix4x4.TRS(Translation, Rotation, Scale);	
+				mat = Matrix4x4.TRS(Translation, Rotation, Scale);
 			}
-			
+
 
 			mat = InvertZMatrix * mat * InvertZMatrix;
 
@@ -259,7 +259,7 @@ namespace GLTF
 			}
 
 			base.Serialize(writer);
-			
+
 			writer.WriteEndObject();
 		}
 	}

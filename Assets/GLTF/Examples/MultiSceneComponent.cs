@@ -16,7 +16,7 @@ public class MultiSceneComponent : MonoBehaviour {
 		StartCoroutine(LoadScene(SceneIndex));
 	}
 
-	void Update () 
+	void Update ()
 	{
 		if (Input.GetKeyDown("space"))
 		{
@@ -31,7 +31,7 @@ public class MultiSceneComponent : MonoBehaviour {
 		foreach (Transform child in transform) {
 			GameObject.Destroy(child.gameObject);
 		}
-		
+
 		yield return loader.Load(SceneIndex);
 	}
 

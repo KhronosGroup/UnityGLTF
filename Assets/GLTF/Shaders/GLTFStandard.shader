@@ -1,16 +1,16 @@
 ﻿Shader "GLTF/GLTFStandard" {
-	
+
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
 		_MainTex ("Albedo (RGB)", 2D) = "white" {}
 
-        _Metallic("Metallic", Range(0,1)) = 0.0
+		_Metallic("Metallic", Range(0,1)) = 0.0
 		_Roughness("Roughness", Range(0,1)) = 0.5
 		_MetallicRoughnessMap("Metallic Roughness", 2D) = "black" {}
 
-        _BumpScale("Scale", Float) = 1.0
+		_BumpScale("Scale", Float) = 1.0
 		_BumpMap("Normal Map", 2D) = "bump" {}
-		
+
 		_OcclusionMap("Occlusion", 2D) = "white" {}
 		_OcclusionStrength("Strength", Range(0.0, 1.0)) = 1.0
 
@@ -31,13 +31,13 @@
 	{
 		Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
 		LOD 300
-	
+
 
 		// ------------------------------------------------------------------
 		//  Base forward pass (directional light, emission, lightmaps, ...)
 		Pass
 		{
-			Name "FORWARD" 
+			Name "FORWARD"
 			Tags { "LightMode" = "ForwardBase" }
 
 			Blend [_SrcBlend] [_DstBlend]
@@ -126,7 +126,7 @@
 		Blend [_SrcBlend] [_DstBlend]
 		ZWrite [_ZWrite]
 		LOD 200
-		
+
 		Pass {
 			CGPROGRAM
 			// Mobile Shader
@@ -158,7 +158,7 @@
 			// Occlusion packed in red channel of MetallicRoughnessMap
 			#pragma multi_compile _ OCC_METAL_ROUGH_ON
 			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
-			#pragma multi_compile_fwdbase	
+			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog
 			#include "GLTFVertexLitCommon.cginc"
 			#pragma vertex gltf_vertex_lit_vert

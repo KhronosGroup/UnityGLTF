@@ -58,5 +58,5 @@ namespace GLTF
 
 			writer.WriteEndObject();
 		}
-	}   
+	}
 }

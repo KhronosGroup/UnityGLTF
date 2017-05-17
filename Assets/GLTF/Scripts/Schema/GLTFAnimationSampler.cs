@@ -87,5 +87,5 @@ namespace GLTF
 	{
 		LINEAR,
 		STEP
-	}   
+	}
 }

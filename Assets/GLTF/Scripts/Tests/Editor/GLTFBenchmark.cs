@@ -50,8 +50,8 @@ public class GLTFBenchmark : MonoBehaviour
 			csv.AppendFormat("{0}, {1}\n", gltfUrl, avgTime);
 		}
 
-		
-		
+
+
 		Debug.Log("End Parsing Benchmark.");
 
 		Debug.Log("Done.");

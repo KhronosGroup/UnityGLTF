@@ -51,7 +51,7 @@ namespace GLTF
 			}
 
 			base.Serialize(writer);
-			
+
 			writer.WriteEndObject();
 		}
 	}

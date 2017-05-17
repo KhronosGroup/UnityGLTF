@@ -71,5 +71,5 @@ namespace GLTF
 
 			writer.WriteEndObject();
 		}
-	}   
+	}
 }

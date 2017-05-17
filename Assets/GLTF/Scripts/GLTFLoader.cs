@@ -200,7 +200,7 @@ namespace GLTF
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
-			
+
 			return nodeObj;
 		}
 
@@ -237,7 +237,7 @@ namespace GLTF
 		private GameObject CreateMeshPrimitive(GLTFMeshPrimitive primitive)
 		{
 			var primitiveObj = new GameObject("Primitive");
-			
+
 			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 
 			var attributes = _attributesCache[primitive];
@@ -275,7 +275,7 @@ namespace GLTF
 				};
 				meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
 			}
-			
+
 
 			return primitiveObj;
 		}
@@ -297,7 +297,7 @@ namespace GLTF
 		}
 
 		private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
-		{			
+		{
 			Shader shader = _standardShader;
 
 			shader.maximumLOD = MaximumLod;
@@ -349,7 +349,7 @@ namespace GLTF
 			}
 
 
- 
+
 			if (useVertexColors)
 			{
 				material.EnableKeyword("VERTEX_COLOR_ON");
@@ -388,7 +388,7 @@ namespace GLTF
 			if (def.OcclusionTexture != null)
 			{
 				var texture = def.OcclusionTexture.Index;
-				
+
 				material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
 
 				if (def.PbrMetallicRoughness != null

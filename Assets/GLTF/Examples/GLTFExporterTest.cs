@@ -13,9 +13,9 @@ public class GLTFExporterTest : MonoBehaviour {
 		var wwwPath = appPath.Substring(0, appPath.LastIndexOf("Assets")) + "www";
 		exporter.SaveGLTFandBin(Path.Combine(wwwPath, "TestScene"), "TestScene");
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
-		
+
 	}
 }

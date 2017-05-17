@@ -58,11 +58,11 @@ namespace GLTF
 
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
-	   
+
 			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
 			var writer = new JsonTextWriter(gltfFile);
 			_root.Serialize(writer);
-			
+
 			gltfFile.Close();
 			binFile.Close();
 
@@ -106,7 +106,7 @@ namespace GLTF
 
 			scene.Nodes = new List<GLTFNodeId>(1);
 			scene.Nodes.Add(ExportNode(sceneTransform));
-			
+
 			_root.Scenes.Add(scene);
 
 			return new GLTFSceneId {
@@ -151,7 +151,7 @@ namespace GLTF
 					node.Children.Add(ExportNode(childTransform));
 				}
 			}
-			
+
 			return id;
 		}
 
@@ -167,7 +167,7 @@ namespace GLTF
 			var primitive = new GLTFMeshPrimitive();
 
 			primitive.Attributes = new Dictionary<string, GLTFAccessorId>();
-			
+
 			var vertices = meshObj.vertices;
 			primitive.Attributes.Add("POSITION", ExportAccessor(InvertZ(vertices)));
 
@@ -249,7 +249,7 @@ namespace GLTF
 
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
 				materialObj.GetInt("_Cull") == (float)UnityEngine.Rendering.CullMode.Off;
-			
+
 			if (materialObj.HasProperty("_EmissionColor"))
 			{
 				material.EmissiveFactor = materialObj.GetColor("_EmissionColor");
@@ -281,7 +281,7 @@ namespace GLTF
 				if (occTex != null)
 				{
 					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, materialObj);
-				}  
+				}
 			}
 
 			material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
@@ -374,8 +374,8 @@ namespace GLTF
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex);
 				}
 			}
-			
-			return pbr;			
+
+			return pbr;
 		}
 
 		private GLTFTextureInfo ExportTextureInfo(Texture texture)
@@ -476,7 +476,7 @@ namespace GLTF
 		private GLTFAccessorId ExportAccessor(int[] arr)
 		{
 			var count = arr.Length;
-			
+
 			if (count == 0)
 			{
 				throw new Exception("Accessors can not have a count of 0.");
@@ -485,7 +485,7 @@ namespace GLTF
 			var accessor = new GLTFAccessor();
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.SCALAR;
-			
+
 			int min = arr[0];
 			int max = arr[0];
 
@@ -508,7 +508,7 @@ namespace GLTF
 			if (max < byte.MaxValue && min > byte.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedByte;
-				
+
 				foreach (var v in arr) {
 					_bufferWriter.Write((byte)v);
 				}
@@ -558,7 +558,7 @@ namespace GLTF
 			accessor.Max = new List<double> { max };
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-			
+
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new GLTFAccessorId {
@@ -573,7 +573,7 @@ namespace GLTF
 		private GLTFAccessorId ExportAccessor(Vector2[] arr)
 		{
 			var count = arr.Length;
-			
+
 			if (count == 0)
 			{
 				throw new Exception("Accessors can not have a count of 0.");
@@ -583,7 +583,7 @@ namespace GLTF
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC2;
-			
+
 			float minX = arr[0].x;
 			float minY = arr[0].y;
 			float maxX = arr[0].x;
@@ -622,7 +622,7 @@ namespace GLTF
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-			
+
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new GLTFAccessorId {
@@ -637,7 +637,7 @@ namespace GLTF
 		private GLTFAccessorId ExportAccessor(Vector3[] arr)
 		{
 			var count = arr.Length;
-			
+
 			if (count == 0)
 			{
 				throw new Exception("Accessors can not have a count of 0.");
@@ -647,7 +647,7 @@ namespace GLTF
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC3;
-			
+
 			float minX = arr[0].x;
 			float minY = arr[0].y;
 			float minZ = arr[0].z;
@@ -697,7 +697,7 @@ namespace GLTF
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-			
+
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new GLTFAccessorId {
@@ -712,7 +712,7 @@ namespace GLTF
 		private GLTFAccessorId ExportAccessor(Vector4[] arr)
 		{
 			var count = arr.Length;
-			
+
 			if (count == 0)
 			{
 				throw new Exception("Accessors can not have a count of 0.");
@@ -722,7 +722,7 @@ namespace GLTF
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
-			
+
 			float minX = arr[0].x;
 			float minY = arr[0].y;
 			float minZ = arr[0].z;
@@ -783,7 +783,7 @@ namespace GLTF
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-			
+
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new GLTFAccessorId {
@@ -798,7 +798,7 @@ namespace GLTF
 		private GLTFAccessorId ExportAccessor(Color[] arr)
 		{
 			var count = arr.Length;
-			
+
 			if (count == 0)
 			{
 				throw new Exception("Accessors can not have a count of 0.");
@@ -808,7 +808,7 @@ namespace GLTF
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
-			
+
 			float minR = arr[0].r;
 			float minG = arr[0].g;
 			float minB = arr[0].b;
@@ -869,7 +869,7 @@ namespace GLTF
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-			
+
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new GLTFAccessorId {

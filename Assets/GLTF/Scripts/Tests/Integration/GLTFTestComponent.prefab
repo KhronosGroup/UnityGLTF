@@ -49,8 +49,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 072f58e4262c1b945bade176dd410719, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   Url: http://localhost:8080/samples/Corset/glTF/Corset.gltf
   Multithreaded: 1
   GLTFStandard: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}

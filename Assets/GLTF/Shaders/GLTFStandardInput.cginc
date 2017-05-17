@@ -13,7 +13,7 @@
 //---------------------------------------
 // Directional lightmaps & Parallax require tangent space too
 #if (_NORMALMAP || DIRLIGHTMAP_COMBINED || DIRLIGHTMAP_SEPARATE || _PARALLAXMAP)
-	#define _TANGENT_TO_WORLD 1 
+	#define _TANGENT_TO_WORLD 1
 #endif
 
 #if (_DETAIL_MULX2 || _DETAIL_MUL || _DETAIL_ADD || _DETAIL_LERP)
@@ -79,7 +79,7 @@ float4 TexCoords(VertexInput v)
 	texcoord.xy = TRANSFORM_TEX(v.uv0, _MainTex); // Always source from uv0
 	texcoord.zw = TRANSFORM_TEX(((_UVSec == 0) ? v.uv0 : v.uv1), _DetailAlbedoMap);
 	return texcoord;
-}		
+}
 
 half DetailMask(float2 uv)
 {
@@ -93,7 +93,7 @@ half3 Albedo(float4 texcoords)
 	#if (SHADER_TARGET < 30)
 		// SM20: instruction count limitation
 		// SM20: no detail mask
-		half mask = 1; 
+		half mask = 1;
 	#else
 		half mask = DetailMask(texcoords.xy);
 	#endif
@@ -118,7 +118,7 @@ half Alpha(float2 uv)
 #else
 	return tex2D(_MainTex, uv).a * _Color.a;
 #endif
-}		
+}
 
 half Occlusion(float2 uv)
 {
@@ -157,10 +157,10 @@ half4 SpecularGloss(float2 uv)
 half2 MetallicGloss(float2 uv)
 {
 	half2 mg;
-	
-    fixed4 mr = tex2D(_MetallicRoughnessMap, uv);
-    mg.x = mr.b * _Metallic;
-    mg.y = 1 - (mr.g * _Roughness);
+
+	fixed4 mr = tex2D(_MetallicRoughnessMap, uv);
+	mg.x = mr.b * _Metallic;
+	mg.y = 1 - (mr.g * _Roughness);
 
 	return mg;
 }
@@ -180,7 +180,7 @@ half3 NormalInTangentSpace(float4 texcoords)
 	half3 normalTangent = UnpackScaleNormal(tex2D (_BumpMap, texcoords.xy), _BumpScale);
 	// SM20: instruction count limitation
 	// SM20: no detail normalmaps
-#if _DETAIL && !defined(SHADER_API_MOBILE) && (SHADER_TARGET >= 30) 
+#if _DETAIL && !defined(SHADER_API_MOBILE) && (SHADER_TARGET >= 30)
 	half mask = DetailMask(texcoords.xy);
 	half3 detailNormalTangent = UnpackScaleNormal(tex2D (_DetailNormalMap, texcoords.zw), _DetailNormalMapScale);
 	#if _DETAIL_LERP
@@ -188,7 +188,7 @@ half3 NormalInTangentSpace(float4 texcoords)
 			normalTangent,
 			detailNormalTangent,
 			mask);
-	#else				
+	#else
 		normalTangent = lerp(
 			normalTangent,
 			BlendNormals(normalTangent, detailNormalTangent),
@@ -217,5 +217,5 @@ float4 Parallax (float4 texcoords, half3 viewDir)
 
 #undef EXCEEDS_D3D9_SM3_MAX_SAMPLER_COUNT
 }
-			
+
 #endif // UNITY_STANDARD_INPUT_INCLUDED

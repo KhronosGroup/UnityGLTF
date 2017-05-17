@@ -89,7 +89,7 @@ namespace GLTF
 			{
 				writer.WritePropertyName("zfar");
 				writer.WriteValue(ZFar);
-			}	   
+			}
 
 			writer.WritePropertyName("ZNear");
 			writer.WriteValue(ZNear);

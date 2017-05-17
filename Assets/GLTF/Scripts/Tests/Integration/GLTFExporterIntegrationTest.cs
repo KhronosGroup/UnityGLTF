@@ -13,11 +13,11 @@ public class GLTFExporterIntegrationTest : MonoBehaviour {
 
 		IntegrationTest.Assert(scene.Name == gameObject.name);
 
-		
-		
+
+
 		IntegrationTest.Assert(root.Materials[0].AlphaMode == GLTFAlphaMode.BLEND);
-		
+
 		IntegrationTest.Pass();
 	}
-	
+
 }

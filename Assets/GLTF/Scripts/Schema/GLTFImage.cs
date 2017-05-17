@@ -30,7 +30,7 @@ namespace GLTF
 		public static GLTFImage Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var image = new GLTFImage();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -62,7 +62,7 @@ namespace GLTF
 				writer.WritePropertyName("uri");
 				writer.WriteValue(Uri);
 			}
-			
+
 			if (MimeType != null) {
 				writer.WritePropertyName("mimeType");
 				writer.WriteValue(MimeType);
