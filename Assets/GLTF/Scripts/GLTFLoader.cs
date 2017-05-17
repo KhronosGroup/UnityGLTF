@@ -14,6 +14,7 @@ namespace GLTF
         private Shader _standardShader;
 		private readonly string _gltfUrl;
         private GLTFRoot _root;
+        private GameObject _lastLoadedScene;
         private AsyncAction asyncAction;
 	    private readonly Transform _sceneParent;
         private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
@@ -28,7 +29,7 @@ namespace GLTF
             public bool UseVertexColors;
         }
 
-        public GLTFLoader(string gltfUrl, Shader standardShader)
+	    public GLTFLoader(string gltfUrl, Shader standardShader)
         {
             _gltfUrl = gltfUrl;
             _standardShader = standardShader;
@@ -42,6 +43,14 @@ namespace GLTF
             _standardShader = standardShader;
             asyncAction = new AsyncAction();
 		}
+
+	    public GameObject LastLoadedScene
+	    {
+		    get
+		    {
+			    return _lastLoadedScene;
+		    }
+	    }
 
         public IEnumerator Load()
         {
@@ -100,6 +109,7 @@ namespace GLTF
 	        }
 
 			_root = null;
+	        _lastLoadedScene = sceneObj;
         }
 
         private void ParseGLTF(byte[] gltfData)
