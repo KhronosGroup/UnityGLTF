@@ -20,7 +20,7 @@ namespace GLTF
         private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
         private readonly Dictionary<MaterialCacheKey, Material> _materialCache = new Dictionary<MaterialCacheKey, Material>();
         private readonly Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
-        private readonly Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
+        private Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
         private readonly Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
 
         private struct MaterialCacheKey
@@ -52,54 +52,72 @@ namespace GLTF
 		    }
 	    }
 
-        public IEnumerator Load()
+        public IEnumerator Load(int sceneIndex = -1)
         {
-            var www = UnityWebRequest.Get(_gltfUrl);
+            if (_root == null)
+            {
+                var www = UnityWebRequest.Get(_gltfUrl);
 
-            yield return www.Send();
+                yield return www.Send();
 
-            var gltfData = www.downloadHandler.data;
+                var gltfData = www.downloadHandler.data;
 
-	        if (Multithreaded)
+                if (Multithreaded)
+                {
+                    yield return asyncAction.RunOnWorkerThread(() => ParseGLTF(gltfData));
+                }
+                else
+                {
+                    ParseGLTF(gltfData);
+                }
+            }
+
+	        GLTFScene scene;
+	        if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
 	        {
-		        yield return asyncAction.RunOnWorkerThread(() => ParseGLTF(gltfData));
+		        scene = _root.Scenes[sceneIndex];
 	        }
 	        else
 	        {
-                ParseGLTF(gltfData);
-	        }
-
-            var scene = _root.GetDefaultScene();
+				scene = _root.GetDefaultScene();
+			}
 
             if (scene == null)
             {
                 throw new Exception("No default scene in gltf file.");
             }
 
-            if (_root.Buffers != null)
+            if (_lastLoadedScene == null)
             {
-                foreach (var buffer in _root.Buffers)
+                if (_root.Buffers != null)
                 {
-                    yield return LoadBuffer(buffer);
+                    foreach (var buffer in _root.Buffers)
+                    {
+                        yield return LoadBuffer(buffer);
+                    }
+                }
+
+                if (_root.Images != null)
+                {
+                    foreach (var image in _root.Images)
+                    {
+                        yield return LoadImage(image);
+                    }
+                }
+
+                if (Multithreaded)
+                {
+                    yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
+                }
+                else
+                {
+                    BuildMeshAttributes();
                 }
             }
-
-            if (_root.Images != null)
+            else
             {
-                foreach (var image in _root.Images)
-                {
-                    yield return LoadImage(image);
-                }
+                _meshCache = new Dictionary<GLTFMesh, GameObject>();
             }
-
-	        if (Multithreaded)
-	        {
-		        yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
-	        }
-	        else
-	        {
-		        BuildMeshAttributes();
-	        }
 
             var sceneObj = CreateScene(scene);
 
@@ -108,7 +126,6 @@ namespace GLTF
 		        sceneObj.transform.SetParent(_sceneParent, false);
 	        }
 
-			_root = null;
 	        _lastLoadedScene = sceneObj;
         }
 
