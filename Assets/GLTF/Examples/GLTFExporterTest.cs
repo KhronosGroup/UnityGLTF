@@ -10,7 +10,7 @@ public class GLTFExporterTest : MonoBehaviour {
 	void Awake () {
 		var exporter = new GLTFExporter(transform);
 		var appPath = Application.dataPath;
-        var wwwPath = appPath.Substring(0, appPath.LastIndexOf("Assets")) + "www";
+		var wwwPath = appPath.Substring(0, appPath.LastIndexOf("Assets")) + "www";
 		exporter.SaveGLTFandBin(Path.Combine(wwwPath, "TestScene"), "TestScene");
 	}
 	

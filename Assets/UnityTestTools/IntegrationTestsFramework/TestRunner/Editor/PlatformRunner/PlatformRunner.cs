@@ -9,120 +9,120 @@ using System.Linq;
 
 namespace UnityTest.IntegrationTests
 {
-    public class PlatformRunner
-    {
-        public static BuildTarget defaultBuildTarget
-        {
-            get
-            {
-                var target = EditorPrefs.GetString("ITR-platformRunnerBuildTarget");
-                BuildTarget buildTarget;
-                try
-                {
-                    buildTarget = (BuildTarget)Enum.Parse(typeof(BuildTarget), target);
-                }
-                catch
-                {
-                    return GetDefaultBuildTarget();
-                }
-                return buildTarget;
-            }
-            set { EditorPrefs.SetString("ITR-platformRunnerBuildTarget", value.ToString()); }
-        }
+	public class PlatformRunner
+	{
+		public static BuildTarget defaultBuildTarget
+		{
+			get
+			{
+				var target = EditorPrefs.GetString("ITR-platformRunnerBuildTarget");
+				BuildTarget buildTarget;
+				try
+				{
+					buildTarget = (BuildTarget)Enum.Parse(typeof(BuildTarget), target);
+				}
+				catch
+				{
+					return GetDefaultBuildTarget();
+				}
+				return buildTarget;
+			}
+			set { EditorPrefs.SetString("ITR-platformRunnerBuildTarget", value.ToString()); }
+		}
 
-        [MenuItem("Unity Test Tools/Platform Runner/Run current scene %#&r")]
-        public static void BuildAndRunCurrentScene()
-        {
-            Debug.Log("Building and running current test for " + defaultBuildTarget);
-            BuildAndRunInPlayer(new PlatformRunnerConfiguration(defaultBuildTarget));
-        }
+		[MenuItem("Unity Test Tools/Platform Runner/Run current scene %#&r")]
+		public static void BuildAndRunCurrentScene()
+		{
+			Debug.Log("Building and running current test for " + defaultBuildTarget);
+			BuildAndRunInPlayer(new PlatformRunnerConfiguration(defaultBuildTarget));
+		}
 
-        [MenuItem("Unity Test Tools/Platform Runner/Run on platform %#r")]
-        public static void RunInPlayer()
-        {
-            var w = EditorWindow.GetWindow(typeof(PlatformRunnerSettingsWindow));
-            w.Show();
-        }
+		[MenuItem("Unity Test Tools/Platform Runner/Run on platform %#r")]
+		public static void RunInPlayer()
+		{
+			var w = EditorWindow.GetWindow(typeof(PlatformRunnerSettingsWindow));
+			w.Show();
+		}
 
-        public static void BuildAndRunInPlayer(PlatformRunnerConfiguration configuration)
-        {
-            NetworkResultsReceiver.StopReceiver();
+		public static void BuildAndRunInPlayer(PlatformRunnerConfiguration configuration)
+		{
+			NetworkResultsReceiver.StopReceiver();
 
-            var settings = new PlayerSettingConfigurator(false);
+			var settings = new PlayerSettingConfigurator(false);
 
-            if (configuration.sendResultsOverNetwork)
-            {
-                try
-                {
-                    var l = new TcpListener(IPAddress.Any, configuration.port);
-                    l.Start();
-                    configuration.port = ((IPEndPoint)l.Server.LocalEndPoint).Port;
-                    l.Stop();
-                }
-                catch (SocketException e)
-                {
-                    Debug.LogException(e);
-                    if (InternalEditorUtility.inBatchMode)
-                        EditorApplication.Exit(Batch.returnCodeRunError);
-                }
-            }
+			if (configuration.sendResultsOverNetwork)
+			{
+				try
+				{
+					var l = new TcpListener(IPAddress.Any, configuration.port);
+					l.Start();
+					configuration.port = ((IPEndPoint)l.Server.LocalEndPoint).Port;
+					l.Stop();
+				}
+				catch (SocketException e)
+				{
+					Debug.LogException(e);
+					if (InternalEditorUtility.inBatchMode)
+						EditorApplication.Exit(Batch.returnCodeRunError);
+				}
+			}
 
-            if (InternalEditorUtility.inBatchMode)
-                settings.AddConfigurationFile(TestRunnerConfigurator.batchRunFileMarker, "");
+			if (InternalEditorUtility.inBatchMode)
+				settings.AddConfigurationFile(TestRunnerConfigurator.batchRunFileMarker, "");
 
-            if (configuration.sendResultsOverNetwork)
-                settings.AddConfigurationFile(TestRunnerConfigurator.integrationTestsNetwork,
-                                              string.Join("\n", configuration.GetConnectionIPs()));
+			if (configuration.sendResultsOverNetwork)
+				settings.AddConfigurationFile(TestRunnerConfigurator.integrationTestsNetwork,
+											  string.Join("\n", configuration.GetConnectionIPs()));
 
-            settings.AddConfigurationFile (TestRunnerConfigurator.testScenesToRun, string.Join ("\n", configuration.testScenes.ToArray()));
+			settings.AddConfigurationFile (TestRunnerConfigurator.testScenesToRun, string.Join ("\n", configuration.testScenes.ToArray()));
 
-            settings.ChangeSettingsForIntegrationTests();
+			settings.ChangeSettingsForIntegrationTests();
 
-            AssetDatabase.Refresh();
+			AssetDatabase.Refresh();
 
-            var result = BuildPipeline.BuildPlayer(configuration.testScenes.Concat(configuration.buildScenes).ToArray(),
-                                                   configuration.GetTempPath(),
-                                                   configuration.buildTarget,
-                                                   BuildOptions.AutoRunPlayer | BuildOptions.Development);
+			var result = BuildPipeline.BuildPlayer(configuration.testScenes.Concat(configuration.buildScenes).ToArray(),
+												   configuration.GetTempPath(),
+												   configuration.buildTarget,
+												   BuildOptions.AutoRunPlayer | BuildOptions.Development);
 
-            settings.RevertSettingsChanges();
-            settings.RemoveAllConfigurationFiles();
+			settings.RevertSettingsChanges();
+			settings.RemoveAllConfigurationFiles();
 
-            AssetDatabase.Refresh();
+			AssetDatabase.Refresh();
 
-            if (!string.IsNullOrEmpty(result))
-            {
-                if (InternalEditorUtility.inBatchMode)
-                    EditorApplication.Exit(Batch.returnCodeRunError);
-                return;
-            }
+			if (!string.IsNullOrEmpty(result))
+			{
+				if (InternalEditorUtility.inBatchMode)
+					EditorApplication.Exit(Batch.returnCodeRunError);
+				return;
+			}
 
-            if (configuration.sendResultsOverNetwork)
-                NetworkResultsReceiver.StartReceiver(configuration);
-            else if (InternalEditorUtility.inBatchMode)
-                EditorApplication.Exit(Batch.returnCodeTestsOk);
-        }
+			if (configuration.sendResultsOverNetwork)
+				NetworkResultsReceiver.StartReceiver(configuration);
+			else if (InternalEditorUtility.inBatchMode)
+				EditorApplication.Exit(Batch.returnCodeTestsOk);
+		}
 
-        private static BuildTarget GetDefaultBuildTarget()
-        {
-            switch (EditorUserBuildSettings.selectedBuildTargetGroup)
-            {
-                case BuildTargetGroup.Android:
-                    return BuildTarget.Android;
-                default:
-                {
-                    switch (Application.platform)
-                    {
-                        case RuntimePlatform.WindowsPlayer:
-                            return BuildTarget.StandaloneWindows;
-                        case RuntimePlatform.OSXPlayer:
-                            return BuildTarget.StandaloneOSXIntel;
-                        case RuntimePlatform.LinuxPlayer:
-                            return BuildTarget.StandaloneLinux;
-                    }
-                    return BuildTarget.WebGL;
-                }
-            }
-        }
-    }
+		private static BuildTarget GetDefaultBuildTarget()
+		{
+			switch (EditorUserBuildSettings.selectedBuildTargetGroup)
+			{
+				case BuildTargetGroup.Android:
+					return BuildTarget.Android;
+				default:
+				{
+					switch (Application.platform)
+					{
+						case RuntimePlatform.WindowsPlayer:
+							return BuildTarget.StandaloneWindows;
+						case RuntimePlatform.OSXPlayer:
+							return BuildTarget.StandaloneOSXIntel;
+						case RuntimePlatform.LinuxPlayer:
+							return BuildTarget.StandaloneLinux;
+					}
+					return BuildTarget.WebGL;
+				}
+			}
+		}
+	}
 }
