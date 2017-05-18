@@ -29,13 +29,6 @@ namespace GLTF
 			public bool UseVertexColors;
 		}
 
-		public GLTFLoader(string gltfUrl, Shader standardShader)
-		{
-			_gltfUrl = gltfUrl;
-			_standardShader = standardShader;
-			asyncAction = new AsyncAction();
-		}
-
 		public GLTFLoader(string gltfUrl, Shader standardShader, Transform parent = null)
 		{
 			_gltfUrl = gltfUrl;
