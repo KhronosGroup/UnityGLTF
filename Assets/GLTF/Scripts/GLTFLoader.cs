@@ -449,7 +449,11 @@ namespace GLTF
 
 					yield return www.Send();
 
-					texture = DownloadHandlerTexture.GetContent(www);
+					// HACK to enable mipmaps :(
+					var tempTexture = DownloadHandlerTexture.GetContent(www);
+					texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
+					texture.SetPixels(tempTexture.GetPixels());
+					texture.Apply(true);
 				}
 			}
 			else
