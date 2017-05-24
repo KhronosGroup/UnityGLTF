@@ -9,19 +9,15 @@ namespace GLTF
 {
 	public class GLTFLoader
 	{
-		public bool Multithreaded = true;
-		public int MaximumLod = 300;
-		private Shader _standardShader;
-		private readonly string _gltfUrl;
-		private GLTFRoot _root;
-		private GameObject _lastLoadedScene;
-		private AsyncAction asyncAction;
-		private readonly Transform _sceneParent;
-		private readonly Dictionary<Buffer, byte[]> _bufferCache = new Dictionary<Buffer, byte[]>();
-		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
-		private readonly Dictionary<Image, Texture2D> _imageCache = new Dictionary<Image, Texture2D>();
-		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
-		private readonly Dictionary<MeshPrimitive, MeshPrimitiveAttributes> _attributesCache = new Dictionary<MeshPrimitive, MeshPrimitiveAttributes>();
+		public enum MaterialType
+		{
+			PbrMetallicRoughness,
+			PbrSpecularGlossiness,
+			CommonConstant,
+			CommonPhong,
+			CommonBlinn,
+			CommonLambert
+		}
 
 		private struct MaterialCacheKey
 		{
@@ -29,11 +25,25 @@ namespace GLTF
 			public bool UseVertexColors;
 		}
 
-		public GLTFLoader(string gltfUrl, Shader standardShader, Transform parent = null)
+		public bool Multithreaded = true;
+		public int MaximumLod = 300;
+		private readonly string _gltfUrl;
+		private GLTFRoot _root;
+		private GameObject _lastLoadedScene;
+		private AsyncAction asyncAction;
+		private readonly Transform _sceneParent;
+
+		private readonly Dictionary<Buffer, byte[]> _bufferCache = new Dictionary<Buffer, byte[]>();
+		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
+		private readonly Dictionary<Image, Texture2D> _imageCache = new Dictionary<Image, Texture2D>();
+		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
+		private readonly Dictionary<MeshPrimitive, MeshPrimitiveAttributes> _attributesCache = new Dictionary<MeshPrimitive, MeshPrimitiveAttributes>();
+		private readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
+
+		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
 			_gltfUrl = gltfUrl;
 			_sceneParent = parent;
-			_standardShader = standardShader;
 			asyncAction = new AsyncAction();
 		}
 
@@ -43,6 +53,11 @@ namespace GLTF
 			{
 				return _lastLoadedScene;
 			}
+		}
+
+		public void SetShaderForMaterialType(MaterialType type, Shader shader)
+		{
+			_shaderCache.Add(type, shader);
 		}
 
 		public IEnumerator Load(int sceneIndex = -1)
@@ -291,7 +306,24 @@ namespace GLTF
 
 		private UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
 		{
-			Shader shader = _standardShader;
+			Shader shader;
+
+			// get the shader to use for this material
+			try
+			{
+				if (def.PbrMetallicRoughness != null)
+					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+				else
+					shader = _shaderCache[MaterialType.CommonConstant];
+			}
+			catch (KeyNotFoundException e)
+			{
+				Debug.LogWarningFormat("No shader supplied for glTF material {0}, using fallback", def.Name);
+				if (!_shaderCache.TryGetValue(MaterialType.CommonConstant, out shader))
+				{
+					throw new ShaderNotFoundException("No fallback shader specified", e);
+				}
+			}
 
 			shader.maximumLOD = MaximumLod;
 

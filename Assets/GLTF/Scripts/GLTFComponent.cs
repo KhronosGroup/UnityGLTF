@@ -19,9 +19,9 @@ namespace GLTF {
 		{
 			var loader = new GLTFLoader(
 				Url,
-				GLTFStandard,
 				gameObject.transform
 			);
+			loader.SetShaderForMaterialType(GLTFLoader.MaterialType.PbrMetallicRoughness, GLTFStandard);
 			loader.Multithreaded = Multithreaded;
 			loader.MaximumLod = MaximumLod;
 			yield return loader.Load();
