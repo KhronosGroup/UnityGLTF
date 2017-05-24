@@ -131,7 +131,7 @@ namespace GLTF
 
 			if (meshFilter != null && meshFilter.sharedMesh != null)
 			{
-				node.Mesh = ExportMesh(meshFilter.sharedMesh, meshRenderer.sharedMaterial);
+				node.Mesh = ExportMesh(meshFilter.sharedMesh, meshRenderer.sharedMaterials);
 			}
 
 			var id = new GLTFNodeId {
@@ -155,7 +155,7 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFMeshId ExportMesh(Mesh meshObj, Material materialObj)
+		private GLTFMeshId ExportMesh(Mesh meshObj, Material[] materialsObj)
 		{
 			var mesh = new GLTFMesh();
 
@@ -164,52 +164,71 @@ namespace GLTF
 				mesh.Name = meshObj.name;
 			}
 
-			var primitive = new GLTFMeshPrimitive();
+			GLTFAccessorId aPosition = null, aNormal = null, aTangent = null,
+				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
-			primitive.Attributes = new Dictionary<string, GLTFAccessorId>();
+			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
 
-			var vertices = meshObj.vertices;
-			primitive.Attributes.Add("POSITION", ExportAccessor(InvertZ(vertices)));
-
-			var triangles = meshObj.triangles;
-			primitive.Indices = ExportAccessor(FlipFaces(triangles));
-
-			var normals = meshObj.normals;
-			if (normals.Length != 0)
+			if (meshObj.normals.Length != 0)
 			{
-				primitive.Attributes.Add("NORMAL", ExportAccessor(InvertZ(normals)));
+				aNormal = ExportAccessor(InvertZ(meshObj.normals));
 			}
 
-			var tangents = meshObj.tangents;
-			if (tangents.Length != 0)
+			if (meshObj.tangents.Length != 0)
 			{
-				primitive.Attributes.Add("TANGENT", ExportAccessor(InvertW(tangents)));
+				aTangent = ExportAccessor(InvertW(meshObj.tangents));
 			}
 
-			var uv = meshObj.uv;
-			if (uv.Length != 0)
+			if (meshObj.uv.Length != 0)
 			{
-				primitive.Attributes.Add("TEXCOORD_0", ExportAccessor(InvertY(uv)));
+				aTexcoord0 = ExportAccessor(InvertY(meshObj.uv));
 			}
 
-			var uv2 = meshObj.uv2;
-			if (uv2.Length != 0)
+			if (meshObj.uv2.Length != 0)
 			{
-				primitive.Attributes.Add("TEXCOORD_1", ExportAccessor(InvertY(uv2)));
+				aTexcoord1 = ExportAccessor(InvertY(meshObj.uv2));
 			}
 
-			var colors = meshObj.colors;
-			if (colors.Length != 0)
+			if (meshObj.colors.Length != 0)
 			{
-				primitive.Attributes.Add("COLOR_0", ExportAccessor(colors));
+				aColor0 = ExportAccessor(meshObj.colors);
 			}
 
-			if (materialObj != null)
-			{
-				primitive.Material = ExportMaterial(materialObj);
-			}
+			mesh.Primitives = new List<GLTFMeshPrimitive>();
+			GLTFMaterialId lastMaterialId = null;
 
-			mesh.Primitives = new List<GLTFMeshPrimitive> { primitive };
+			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
+			{
+				var primitive = new GLTFMeshPrimitive();
+				var triangles = meshObj.GetTriangles(submesh);
+				primitive.Indices = ExportAccessor(FlipFaces(triangles));
+
+				primitive.Attributes = new Dictionary<string, GLTFAccessorId>();
+				primitive.Attributes.Add("POSITION", aPosition);
+
+				if (aNormal != null)
+					primitive.Attributes.Add("NORMAL", aNormal);
+				if (aTangent != null)
+					primitive.Attributes.Add("TANGENT", aTangent);
+				if (aTexcoord0 != null)
+					primitive.Attributes.Add("TEXCOORD_0", aTexcoord0);
+				if (aTexcoord1 != null)
+					primitive.Attributes.Add("TEXCOORD_1", aTexcoord1);
+				if (aColor0 != null)
+					primitive.Attributes.Add("COLOR_0", aColor0);
+
+				if (submesh < materialsObj.Length)
+				{
+					primitive.Material = ExportMaterial(materialsObj[submesh]);
+					lastMaterialId = primitive.Material;
+				}
+				else
+				{
+					primitive.Material = lastMaterialId;
+				}
+
+				mesh.Primitives.Add(primitive);
+			}
 
 			var id = new GLTFMeshId {
 				Id = _root.Meshes.Count,
