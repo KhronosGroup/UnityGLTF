@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GLTF
 {
-	public class ChildOfRootProperty : GLTFProperty
+	public class GLTFChildOfRootProperty : GLTFProperty
 	{
 		/// <summary>
 		/// The user-defined name of this object.

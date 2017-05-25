@@ -5,7 +5,7 @@ namespace GLTF
 	/// <summary>
 	/// A buffer points to binary geometry, animation, or skins.
 	/// </summary>
-	public class Buffer : ChildOfRootProperty
+	public class Buffer : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The uri of the buffer.

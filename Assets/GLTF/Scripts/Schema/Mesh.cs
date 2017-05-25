@@ -8,7 +8,7 @@ namespace GLTF
 	/// A set of primitives to be rendered. A node can contain one or more meshes.
 	/// A node's transform places the mesh in the scene.
 	/// </summary>
-	public class Mesh : ChildOfRootProperty
+	public class Mesh : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// An array of primitives, each defining geometry to be rendered with

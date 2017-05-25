@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace GLTF
 {
-	public class Accessor : ChildOfRootProperty
+	public class Accessor : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The index of the bufferView.

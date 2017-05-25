@@ -7,7 +7,7 @@ namespace GLTF
 	/// <summary>
 	/// Joints and matrices defining a skin.
 	/// </summary>
-	public class Skin : ChildOfRootProperty
+	public class Skin : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The index of the accessor containing the floating-point 4x4 inverse-bind matrices.

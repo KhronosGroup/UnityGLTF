@@ -6,7 +6,7 @@ namespace GLTF
 	/// <summary>
 	/// The root nodes of a scene.
 	/// </summary>
-	public class Scene : ChildOfRootProperty
+	public class Scene : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The indices of each root node.

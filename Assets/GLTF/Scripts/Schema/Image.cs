@@ -6,7 +6,7 @@ namespace GLTF
 	/// Image data used to create a texture. Image can be referenced by URI or
 	/// `bufferView` index. `mimeType` is required in the latter case.
 	/// </summary>
-	public class Image : ChildOfRootProperty
+	public class Image : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The uri of the image.  Relative paths are relative to the .gltf file.

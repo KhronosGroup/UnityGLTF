@@ -5,7 +5,7 @@ namespace GLTF
 	/// <summary>
 	/// Texture sampler properties for filtering and wrapping modes.
 	/// </summary>
-	public class Sampler : ChildOfRootProperty
+	public class Sampler : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// Magnification filter.

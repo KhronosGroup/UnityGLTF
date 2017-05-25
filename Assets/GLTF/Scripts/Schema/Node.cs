@@ -18,7 +18,7 @@ namespace GLTF
 	/// (referenced by an animation.channel.target), only TRS properties may be present;
 	/// `matrix` will not be present.
 	/// </summary>
-	public class Node : ChildOfRootProperty
+	public class Node : GLTFChildOfRootProperty
 	{
 
 		private bool _useTRS;

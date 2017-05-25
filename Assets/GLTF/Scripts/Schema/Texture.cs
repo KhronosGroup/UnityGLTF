@@ -5,7 +5,7 @@ namespace GLTF
 	/// <summary>
 	/// A texture and its sampler.
 	/// </summary>
-	public class Texture : ChildOfRootProperty
+	public class Texture : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The index of the sampler used by this texture.

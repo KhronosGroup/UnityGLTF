@@ -12,7 +12,7 @@ namespace GLTF
 	/// <summary>
 	/// A view into a buffer generally representing a subset of the buffer.
 	/// </summary>
-	public class BufferView : ChildOfRootProperty
+	public class BufferView : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The index of the buffer.

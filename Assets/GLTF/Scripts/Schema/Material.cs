@@ -7,7 +7,7 @@ namespace GLTF
 	/// <summary>
 	/// The material appearance of a primitive.
 	/// </summary>
-	public class Material : ChildOfRootProperty
+	public class Material : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// A set of parameter values that are used to define the metallic-roughness

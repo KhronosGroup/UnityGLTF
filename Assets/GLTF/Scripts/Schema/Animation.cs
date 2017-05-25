@@ -7,7 +7,7 @@ namespace GLTF
 	/// <summary>
 	/// A keyframe animation.
 	/// </summary>
-	public class Animation : ChildOfRootProperty
+	public class Animation : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// An array of channels, each of which targets an animation's sampler at a

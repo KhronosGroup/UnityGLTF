@@ -6,7 +6,7 @@ namespace GLTF
 	/// A camera's projection.  A node can reference a camera to apply a transform
 	/// to place the camera in the scene
 	/// </summary>
-	public class Camera : ChildOfRootProperty
+	public class Camera : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// An orthographic camera containing properties to create an orthographic
