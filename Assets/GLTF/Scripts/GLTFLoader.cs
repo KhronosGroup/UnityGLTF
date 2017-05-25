@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using System.Text.RegularExpressions;
 using System;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
@@ -406,7 +407,7 @@ namespace GLTF
 			return material;
 		}
 
-		private const string Base64StringInitializer = "data:application/octet-stream;base64,";
+		private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
 
 		/// <summary>
 		///  Get the absolute path to a gltf uri reference.
@@ -428,9 +429,11 @@ namespace GLTF
 			{
 				var uri = image.Uri;
 
-				if (uri.StartsWith(Base64StringInitializer))
+				Regex regex = new Regex(Base64StringInitializer);
+				Match match = regex.Match(uri);
+				if (match.Success)
 				{
-					var base64Data = uri.Substring(Base64StringInitializer.Length);
+					var base64Data = uri.Substring(match.Length);
 					var textureData = Convert.FromBase64String(base64Data);
 					texture = new Texture2D(0, 0);
 					texture.LoadImage(textureData);
@@ -473,9 +476,11 @@ namespace GLTF
 				byte[] bufferData;
 				var uri = buffer.Uri;
 
-				if (uri.StartsWith(Base64StringInitializer))
+				Regex regex = new Regex(Base64StringInitializer);
+				Match match = regex.Match(uri);
+				if (match.Success)
 				{
-					var base64Data = uri.Substring(Base64StringInitializer.Length);
+					var base64Data = uri.Substring(match.Length);
 					bufferData = Convert.FromBase64String(base64Data);
 				}
 				else
