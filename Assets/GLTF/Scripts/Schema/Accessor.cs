@@ -269,7 +269,7 @@ namespace GLTF
 					if (BufferView.Value.ByteStride == 0)
 					{
 						var intermediateArr = new int[Count];
-						System.Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(int));
+						System.Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(float));
 						for (var idx = 0; idx < Count; idx++)
 						{
 							arr[idx] = intermediateArr[idx];
@@ -277,7 +277,7 @@ namespace GLTF
 					}
 					else
 					{
-						stride = BufferView.Value.ByteStride + sizeof(sbyte);
+						stride = BufferView.Value.ByteStride + sizeof(float);
 						for (var idx = 0; idx < Count; idx++)
 						{
 							arr[idx] = (int)BitConverter.ToSingle(bufferData, totalByteOffset + (idx * stride));
