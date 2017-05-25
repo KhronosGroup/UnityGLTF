@@ -25,84 +25,84 @@ namespace GLTF
 		/// <summary>
 		/// An array of accessors. An accessor is a typed view into a bufferView.
 		/// </summary>
-		public List<GLTFAccessor> Accessors;
+		public List<Accessor> Accessors;
 
 		/// <summary>
 		/// An array of keyframe animations.
 		/// </summary>
-		public List<GLTFAnimation> Animations;
+		public List<Animation> Animations;
 
 		/// <summary>
 		/// Metadata about the glTF asset.
 		/// </summary>
-		public GLTFAsset Asset;
+		public Asset Asset;
 
 		/// <summary>
 		/// An array of buffers. A buffer points to binary geometry, animation, or skins.
 		/// </summary>
-		public List<GLTFBuffer> Buffers;
+		public List<Buffer> Buffers;
 
 		/// <summary>
 		/// An array of bufferViews.
 		/// A bufferView is a view into a buffer generally representing a subset of the buffer.
 		/// </summary>
-		public List<GLTFBufferView> BufferViews;
+		public List<BufferView> BufferViews;
 
 		/// <summary>
 		/// An array of cameras. A camera defines a projection matrix.
 		/// </summary>
-		public List<GLTFCamera> Cameras;
+		public List<Camera> Cameras;
 
 		/// <summary>
 		/// An array of images. An image defines data used to create a texture.
 		/// </summary>
-		public List<GLTFImage> Images;
+		public List<Image> Images;
 
 		/// <summary>
 		/// An array of materials. A material defines the appearance of a primitive.
 		/// </summary>
-		public List<GLTFMaterial> Materials;
+		public List<Material> Materials;
 
 		/// <summary>
 		/// An array of meshes. A mesh is a set of primitives to be rendered.
 		/// </summary>
-		public List<GLTFMesh> Meshes;
+		public List<Mesh> Meshes;
 
 		/// <summary>
 		/// An array of nodes.
 		/// </summary>
-		public List<GLTFNode> Nodes;
+		public List<Node> Nodes;
 
 		/// <summary>
 		/// An array of samplers. A sampler contains properties for texture filtering and wrapping modes.
 		/// </summary>
-		public List<GLTFSampler> Samplers;
+		public List<Sampler> Samplers;
 
 		/// <summary>
 		/// The index of the default scene.
 		/// </summary>
-		public GLTFSceneId Scene;
+		public SceneId Scene;
 
 		/// <summary>
 		/// An array of scenes.
 		/// </summary>
-		public List<GLTFScene> Scenes;
+		public List<Scene> Scenes;
 
 		/// <summary>
 		/// An array of skins. A skin is defined by joints and matrices.
 		/// </summary>
-		public List<GLTFSkin> Skins;
+		public List<Skin> Skins;
 
 		/// <summary>
 		/// An array of textures.
 		/// </summary>
-		public List<GLTFTexture> Textures;
+		public List<Texture> Textures;
 
 		/// <summary>
 		/// Return the default scene. When scene is null, scene of index 0 will be returned.
 		/// When scenes list is null or empty, returns null.
 		/// </summary>
-		public GLTFScene GetDefaultScene()
+		public Scene GetDefaultScene()
 		{
 			if (Scene != null)
 			{
@@ -139,49 +139,49 @@ namespace GLTF
 						root.ExtensionsRequired = reader.ReadStringList();
 						break;
 					case "accessors":
-						root.Accessors = reader.ReadList(() => GLTFAccessor.Deserialize(root, reader));
+						root.Accessors = reader.ReadList(() => Accessor.Deserialize(root, reader));
 						break;
 					case "animations":
-						root.Animations = reader.ReadList(() => GLTFAnimation.Deserialize(root, reader));
+						root.Animations = reader.ReadList(() => Animation.Deserialize(root, reader));
 						break;
 					case "asset":
-						root.Asset = GLTFAsset.Deserialize(root, reader);
+						root.Asset = Asset.Deserialize(root, reader);
 						break;
 					case "buffers":
-						root.Buffers = reader.ReadList(() => GLTFBuffer.Deserialize(root, reader));
+						root.Buffers = reader.ReadList(() => Buffer.Deserialize(root, reader));
 						break;
 					case "bufferViews":
-						root.BufferViews = reader.ReadList(() => GLTFBufferView.Deserialize(root, reader));
+						root.BufferViews = reader.ReadList(() => BufferView.Deserialize(root, reader));
 						break;
 					case "cameras":
-						root.Cameras = reader.ReadList(() => GLTFCamera.Deserialize(root, reader));
+						root.Cameras = reader.ReadList(() => Camera.Deserialize(root, reader));
 						break;
 					case "images":
-						root.Images = reader.ReadList(() => GLTFImage.Deserialize(root, reader));
+						root.Images = reader.ReadList(() => Image.Deserialize(root, reader));
 						break;
 					case "materials":
-						root.Materials = reader.ReadList(() => GLTFMaterial.Deserialize(root, reader));
+						root.Materials = reader.ReadList(() => Material.Deserialize(root, reader));
 						break;
 					case "meshes":
-						root.Meshes = reader.ReadList(() => GLTFMesh.Deserialize(root, reader));
+						root.Meshes = reader.ReadList(() => Mesh.Deserialize(root, reader));
 						break;
 					case "nodes":
-						root.Nodes = reader.ReadList(() => GLTFNode.Deserialize(root, reader));
+						root.Nodes = reader.ReadList(() => Node.Deserialize(root, reader));
 						break;
 					case "samplers":
-						root.Samplers = reader.ReadList(() => GLTFSampler.Deserialize(root, reader));
+						root.Samplers = reader.ReadList(() => Sampler.Deserialize(root, reader));
 						break;
 					case "scene":
-						root.Scene = GLTFSceneId.Deserialize(root, reader);
+						root.Scene = SceneId.Deserialize(root, reader);
 						break;
 					case "scenes":
-						root.Scenes = reader.ReadList(() => GLTFScene.Deserialize(root, reader));
+						root.Scenes = reader.ReadList(() => GLTF.Scene.Deserialize(root, reader));
 						break;
 					case "skins":
-						root.Skins = reader.ReadList(() => GLTFSkin.Deserialize(root, reader));
+						root.Skins = reader.ReadList(() => Skin.Deserialize(root, reader));
 						break;
 					case "textures":
-						root.Textures = reader.ReadList(() => GLTFTexture.Deserialize(root, reader));
+						root.Textures = reader.ReadList(() => Texture.Deserialize(root, reader));
 						break;
 					default:
 						root.DefaultPropertyDeserializer(root, reader);

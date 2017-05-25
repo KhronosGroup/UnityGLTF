@@ -10,8 +10,8 @@ namespace GLTF
 	{
 		private Transform _rootTransform;
 		private GLTFRoot _root;
-		private GLTFBufferId _bufferId;
-		private GLTFBuffer _buffer;
+		private BufferId _bufferId;
+		private Buffer _buffer;
 		private BinaryWriter _bufferWriter;
 		private List<Texture2D> _images;
 
@@ -21,24 +21,24 @@ namespace GLTF
 		{
 			_rootTransform = rootTransform;
 			_root = new GLTFRoot{
-				Accessors = new List<GLTFAccessor>(),
-				Asset = new GLTFAsset {
+				Accessors = new List<Accessor>(),
+				Asset = new Asset {
 					Version = "2.0"
 				},
-				Buffers = new List<GLTFBuffer>(),
-				BufferViews = new List<GLTFBufferView>(),
-				Images = new List<GLTFImage>(),
-				Materials = new List<GLTFMaterial>(),
-				Meshes = new List<GLTFMesh>(),
-				Nodes = new List<GLTFNode>(),
-				Scenes = new List<GLTFScene>(),
-				Textures = new List<GLTFTexture>(),
+				Buffers = new List<Buffer>(),
+				BufferViews = new List<BufferView>(),
+				Images = new List<Image>(),
+				Materials = new List<Material>(),
+				Meshes = new List<Mesh>(),
+				Nodes = new List<Node>(),
+				Scenes = new List<Scene>(),
+				Textures = new List<Texture>(),
 			};
 
 			_images = new List<Texture2D>();
 
-			_buffer = new GLTFBuffer();
-			_bufferId = new GLTFBufferId {
+			_buffer = new Buffer();
+			_bufferId = new BufferId {
 				Id = _root.Buffers.Count,
 				Root = _root
 			};
@@ -95,29 +95,29 @@ namespace GLTF
 			return stringWriter.ToString();
 		}
 
-		private GLTFSceneId ExportScene(Transform sceneTransform)
+		private SceneId ExportScene(Transform sceneTransform)
 		{
-			var scene = new GLTFScene();
+			var scene = new Scene();
 
 			if (ExportNames)
 			{
 				scene.Name = sceneTransform.name;
 			}
 
-			scene.Nodes = new List<GLTFNodeId>(1);
+			scene.Nodes = new List<NodeId>(1);
 			scene.Nodes.Add(ExportNode(sceneTransform));
 
 			_root.Scenes.Add(scene);
 
-			return new GLTFSceneId {
+			return new SceneId {
 				Id = _root.Scenes.Count - 1,
 				Root = _root
 			};
 		}
 
-		private GLTFNodeId ExportNode(Transform nodeTransform)
+		private NodeId ExportNode(Transform nodeTransform)
 		{
-			var node = new GLTFNode();
+			var node = new Node();
 
 			if (ExportNames)
 			{
@@ -134,7 +134,7 @@ namespace GLTF
 				node.Mesh = ExportMesh(meshFilter.sharedMesh, meshRenderer.sharedMaterials);
 			}
 
-			var id = new GLTFNodeId {
+			var id = new NodeId {
 				Id = _root.Nodes.Count,
 				Root = _root
 			};
@@ -144,7 +144,7 @@ namespace GLTF
 
 			if (childCount > 0)
 			{
-				node.Children = new List<GLTFNodeId>(childCount);
+				node.Children = new List<NodeId>(childCount);
 				for(var i = 0; i < childCount; i++)
 				{
 					var childTransform = nodeTransform.GetChild(i);
@@ -155,16 +155,16 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFMeshId ExportMesh(Mesh meshObj, Material[] materialsObj)
+		private MeshId ExportMesh(UnityEngine.Mesh meshObj, UnityEngine.Material[] materialsObj)
 		{
-			var mesh = new GLTFMesh();
+			var mesh = new Mesh();
 
 			if (ExportNames)
 			{
 				mesh.Name = meshObj.name;
 			}
 
-			GLTFAccessorId aPosition = null, aNormal = null, aTangent = null,
+			AccessorId aPosition = null, aNormal = null, aTangent = null,
 				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
 			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
@@ -194,16 +194,16 @@ namespace GLTF
 				aColor0 = ExportAccessor(meshObj.colors);
 			}
 
-			mesh.Primitives = new List<GLTFMeshPrimitive>();
-			GLTFMaterialId lastMaterialId = null;
+			mesh.Primitives = new List<MeshPrimitive>();
+			MaterialId lastMaterialId = null;
 
 			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
 			{
-				var primitive = new GLTFMeshPrimitive();
+				var primitive = new MeshPrimitive();
 				var triangles = meshObj.GetTriangles(submesh);
 				primitive.Indices = ExportAccessor(FlipFaces(triangles));
 
-				primitive.Attributes = new Dictionary<string, GLTFAccessorId>();
+				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add("POSITION", aPosition);
 
 				if (aNormal != null)
@@ -230,7 +230,7 @@ namespace GLTF
 				mesh.Primitives.Add(primitive);
 			}
 
-			var id = new GLTFMeshId {
+			var id = new MeshId {
 				Id = _root.Meshes.Count,
 				Root = _root
 			};
@@ -239,9 +239,9 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFMaterialId ExportMaterial(Material materialObj)
+		private MaterialId ExportMaterial(UnityEngine.Material materialObj)
 		{
-			var material = new GLTFMaterial();
+			var material = new Material();
 
 			if (ExportNames)
 			{
@@ -256,13 +256,13 @@ namespace GLTF
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
 				case "TransparentCutout":
-					material.AlphaMode = GLTFAlphaMode.MASK;
+					material.AlphaMode = AlphaMode.MASK;
 					break;
 				case "Transparent":
-					material.AlphaMode = GLTFAlphaMode.BLEND;
+					material.AlphaMode = AlphaMode.BLEND;
 					break;
 				default:
-					material.AlphaMode = GLTFAlphaMode.OPAQUE;
+					material.AlphaMode = AlphaMode.OPAQUE;
 					break;
 			}
 
@@ -305,7 +305,7 @@ namespace GLTF
 
 			material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
 
-			var id = new GLTFMaterialId {
+			var id = new MaterialId {
 				Id = _root.Materials.Count,
 				Root = _root
 			};
@@ -314,9 +314,9 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFNormalTextureInfo ExportNormalTextureInfo(Texture texture, Material material)
+		private NormalTextureInfo ExportNormalTextureInfo(UnityEngine.Texture texture, UnityEngine.Material material)
 		{
-			var info = new GLTFNormalTextureInfo();
+			var info = new NormalTextureInfo();
 
 			info.Index = ExportTexture(texture);
 
@@ -328,9 +328,9 @@ namespace GLTF
 			return info;
 		}
 
-		private GLTFOcclusionTextureInfo ExportOcclusionTextureInfo(Texture texture, Material material)
+		private OcclusionTextureInfo ExportOcclusionTextureInfo(UnityEngine.Texture texture, UnityEngine.Material material)
 		{
-			var info = new GLTFOcclusionTextureInfo();
+			var info = new OcclusionTextureInfo();
 
 			info.Index = ExportTexture(texture);
 
@@ -342,9 +342,9 @@ namespace GLTF
 			return info;
 		}
 
-		private GLTFPBRMetallicRoughness ExportPBRMetallicRoughness(Material material)
+		private PbrMetallicRoughness ExportPBRMetallicRoughness(UnityEngine.Material material)
 		{
-			var pbr = new GLTFPBRMetallicRoughness();
+			var pbr = new PbrMetallicRoughness();
 
 			if (material.HasProperty("_Color"))
 			{
@@ -397,18 +397,18 @@ namespace GLTF
 			return pbr;
 		}
 
-		private GLTFTextureInfo ExportTextureInfo(Texture texture)
+		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture)
 		{
-			var info = new GLTFTextureInfo();
+			var info = new TextureInfo();
 
 			info.Index = ExportTexture(texture);
 
 			return info;
 		}
 
-		private GLTFTextureId ExportTexture(Texture textureObj)
+		private TextureId ExportTexture(UnityEngine.Texture textureObj)
 		{
-			var texture = new GLTFTexture();
+			var texture = new Texture();
 
 			if (ExportNames)
 			{
@@ -417,7 +417,7 @@ namespace GLTF
 
 			texture.Source = ExportImage(textureObj);
 
-			var id = new GLTFTextureId {
+			var id = new TextureId {
 				Id = _root.Textures.Count,
 				Root = _root
 			};
@@ -427,9 +427,9 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFImageId ExportImage(Texture texture)
+		private ImageId ExportImage(UnityEngine.Texture texture)
 		{
-			var image = new GLTFImage();
+			var image = new Image();
 
 			if (ExportNames)
 			{
@@ -440,7 +440,7 @@ namespace GLTF
 
 			image.Uri = Uri.EscapeUriString(texture.name + ".png");
 
-			var id = new GLTFImageId {
+			var id = new ImageId {
 				Id = _root.Images.Count,
 				Root = _root
 			};
@@ -492,7 +492,7 @@ namespace GLTF
 			return triangles;
 		}
 
-		private GLTFAccessorId ExportAccessor(int[] arr)
+		private AccessorId ExportAccessor(int[] arr)
 		{
 			var count = arr.Length;
 
@@ -501,7 +501,7 @@ namespace GLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new GLTFAccessor();
+			var accessor = new Accessor();
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.SCALAR;
 
@@ -580,7 +580,7 @@ namespace GLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new GLTFAccessorId {
+			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -589,7 +589,7 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFAccessorId ExportAccessor(Vector2[] arr)
+		private AccessorId ExportAccessor(Vector2[] arr)
 		{
 			var count = arr.Length;
 
@@ -598,7 +598,7 @@ namespace GLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new GLTFAccessor();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC2;
@@ -644,7 +644,7 @@ namespace GLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new GLTFAccessorId {
+			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -653,7 +653,7 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFAccessorId ExportAccessor(Vector3[] arr)
+		private AccessorId ExportAccessor(Vector3[] arr)
 		{
 			var count = arr.Length;
 
@@ -662,7 +662,7 @@ namespace GLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new GLTFAccessor();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC3;
@@ -719,7 +719,7 @@ namespace GLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new GLTFAccessorId {
+			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -728,7 +728,7 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFAccessorId ExportAccessor(Vector4[] arr)
+		private AccessorId ExportAccessor(Vector4[] arr)
 		{
 			var count = arr.Length;
 
@@ -737,7 +737,7 @@ namespace GLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new GLTFAccessor();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
@@ -805,7 +805,7 @@ namespace GLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new GLTFAccessorId {
+			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -814,7 +814,7 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFAccessorId ExportAccessor(Color[] arr)
+		private AccessorId ExportAccessor(Color[] arr)
 		{
 			var count = arr.Length;
 
@@ -823,7 +823,7 @@ namespace GLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new GLTFAccessor();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
@@ -891,7 +891,7 @@ namespace GLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new GLTFAccessorId {
+			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -900,15 +900,15 @@ namespace GLTF
 			return id;
 		}
 
-		private GLTFBufferViewId ExportBufferView(int byteOffset, int byteLength)
+		private BufferViewId ExportBufferView(int byteOffset, int byteLength)
 		{
-			var bufferView = new GLTFBufferView {
+			var bufferView = new BufferView {
 				Buffer = _bufferId,
 				ByteOffset = byteOffset,
 				ByteLength = byteLength,
 			};
 
-			var id = new GLTFBufferViewId {
+			var id = new BufferViewId {
 				Id = _root.BufferViews.Count,
 				Root = _root
 			};

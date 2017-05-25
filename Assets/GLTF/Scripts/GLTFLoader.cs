@@ -17,15 +17,15 @@ namespace GLTF
 		private GameObject _lastLoadedScene;
 		private AsyncAction asyncAction;
 		private readonly Transform _sceneParent;
-		private readonly Dictionary<GLTFBuffer, byte[]> _bufferCache = new Dictionary<GLTFBuffer, byte[]>();
-		private readonly Dictionary<MaterialCacheKey, Material> _materialCache = new Dictionary<MaterialCacheKey, Material>();
-		private readonly Dictionary<GLTFImage, Texture2D> _imageCache = new Dictionary<GLTFImage, Texture2D>();
-		private Dictionary<GLTFMesh, GameObject> _meshCache = new Dictionary<GLTFMesh, GameObject>();
-		private readonly Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes> _attributesCache = new Dictionary<GLTFMeshPrimitive, GLTFMeshPrimitiveAttributes>();
+		private readonly Dictionary<Buffer, byte[]> _bufferCache = new Dictionary<Buffer, byte[]>();
+		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
+		private readonly Dictionary<Image, Texture2D> _imageCache = new Dictionary<Image, Texture2D>();
+		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
+		private readonly Dictionary<MeshPrimitive, MeshPrimitiveAttributes> _attributesCache = new Dictionary<MeshPrimitive, MeshPrimitiveAttributes>();
 
 		private struct MaterialCacheKey
 		{
-			public GLTFMaterial Material;
+			public Material Material;
 			public bool UseVertexColors;
 		}
 
@@ -65,7 +65,7 @@ namespace GLTF
 				}
 			}
 
-			GLTFScene scene;
+			Scene scene;
 			if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
 			{
 				scene = _root.Scenes[sceneIndex];
@@ -109,7 +109,7 @@ namespace GLTF
 			}
 			else
 			{
-				_meshCache = new Dictionary<GLTFMesh, GameObject>();
+				_meshCache = new Dictionary<Mesh, GameObject>();
 			}
 
 			var sceneObj = CreateScene(scene);
@@ -145,7 +145,7 @@ namespace GLTF
 			}
 		}
 
-		private GameObject CreateScene(GLTFScene scene)
+		private GameObject CreateScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
 
@@ -158,7 +158,7 @@ namespace GLTF
 			return sceneObj;
 		}
 
-		private GameObject CreateNode(GLTFNode node)
+		private GameObject CreateNode(Node node)
 		{
 			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
 
@@ -197,7 +197,7 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		private GameObject FindOrCreateMeshObject(GLTFMesh mesh)
+		private GameObject FindOrCreateMeshObject(Mesh mesh)
 		{
 			GameObject meshObj;
 
@@ -213,7 +213,7 @@ namespace GLTF
 			return meshObj;
 		}
 
-		private GameObject CreateMeshObject(GLTFMesh mesh)
+		private GameObject CreateMeshObject(Mesh mesh)
 		{
 			var meshName = mesh.Name ?? "GLTFMesh";
 			var meshObj = new GameObject(meshName);
@@ -227,7 +227,7 @@ namespace GLTF
 			return meshObj;
 		}
 
-		private GameObject CreateMeshPrimitive(GLTFMeshPrimitive primitive)
+		private GameObject CreateMeshPrimitive(MeshPrimitive primitive)
 		{
 			var primitiveObj = new GameObject("Primitive");
 
@@ -235,7 +235,7 @@ namespace GLTF
 
 			var attributes = _attributesCache[primitive];
 
-			var mesh = new Mesh
+			var mesh = new UnityEngine.Mesh
 			{
 				vertices = attributes.Vertices,
 				normals = attributes.Normals,
@@ -263,7 +263,7 @@ namespace GLTF
 			else
 			{
 				var materialCacheKey = new MaterialCacheKey {
-					Material = new GLTFMaterial(),
+					Material = new Material(),
 					UseVertexColors = attributes.Colors != null
 				};
 				meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
@@ -273,9 +273,9 @@ namespace GLTF
 			return primitiveObj;
 		}
 
-		private Material FindOrCreateMaterial(MaterialCacheKey materialKey)
+		private UnityEngine.Material FindOrCreateMaterial(MaterialCacheKey materialKey)
 		{
-			Material material;
+			UnityEngine.Material material;
 
 			if (_materialCache.TryGetValue(materialKey, out material))
 			{
@@ -289,15 +289,15 @@ namespace GLTF
 			return material;
 		}
 
-		private Material CreateMaterial(GLTFMaterial def, bool useVertexColors)
+		private UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
 		{
 			Shader shader = _standardShader;
 
 			shader.maximumLOD = MaximumLod;
 
-			var material = new Material(shader);
+			var material = new UnityEngine.Material(shader);
 
-			if (def.AlphaMode == GLTFAlphaMode.MASK)
+			if (def.AlphaMode == AlphaMode.MASK)
 			{
 				material.SetOverrideTag("RenderType", "TransparentCutout");
 				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
@@ -309,7 +309,7 @@ namespace GLTF
 				material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
 				material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
 			}
-			else if (def.AlphaMode == GLTFAlphaMode.BLEND)
+			else if (def.AlphaMode == AlphaMode.BLEND)
 			{
 				material.SetOverrideTag("RenderType", "Transparent");
 				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -420,7 +420,7 @@ namespace GLTF
 			return partialPath + relativePath;
 		}
 
-		private IEnumerator LoadImage(GLTFImage image)
+		private IEnumerator LoadImage(Image image)
 		{
 			Texture2D texture;
 
@@ -456,7 +456,7 @@ namespace GLTF
 				var buffer = bufferView.Buffer.Value;
 				var bufferData = _bufferCache[buffer];
 				var data = new byte[bufferView.ByteLength];
-				Buffer.BlockCopy(bufferData, bufferView.ByteOffset, data, 0, data.Length);
+				System.Buffer.BlockCopy(bufferData, bufferView.ByteOffset, data, 0, data.Length);
 				texture.LoadImage(data);
 			}
 
@@ -466,7 +466,7 @@ namespace GLTF
 		/// <summary>
 		/// Load the remote URI data into a byte array.
 		/// </summary>
-		private IEnumerator LoadBuffer(GLTFBuffer buffer)
+		private IEnumerator LoadBuffer(Buffer buffer)
 		{
 			if (buffer.Uri != null)
 			{

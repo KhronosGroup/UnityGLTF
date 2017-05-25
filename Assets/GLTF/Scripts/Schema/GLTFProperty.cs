@@ -7,14 +7,14 @@ namespace GLTF
 {
 	public class GLTFProperty
 	{
-		private static Dictionary<string, GLTFExtensionFactory> _extensionRegistry = new Dictionary<string, GLTFExtensionFactory>();
+		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>();
 
-		public static void RegisterExtension(GLTFExtensionFactory extensionFactory)
+		public static void RegisterExtension(ExtensionFactory extensionFactory)
 		{
 			_extensionRegistry.Add(extensionFactory.ExtensionName, extensionFactory);
 		}
 
-		public Dictionary<string, GLTFExtension> Extensions;
+		public Dictionary<string, Extension> Extensions;
 		public Dictionary<string, object> Extras;
 
 		public void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
@@ -78,19 +78,19 @@ namespace GLTF
 			}
 		}
 
-		private Dictionary<string, GLTFExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
+		private Dictionary<string, Extension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
 				throw new Exception("GLTF extensions must be an object");
 			}
 
-			var extensions = new Dictionary<string, GLTFExtension>();
+			var extensions = new Dictionary<string, Extension>();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var extensionName = reader.Value.ToString();
-				GLTFExtensionFactory extensionFactory;
+				ExtensionFactory extensionFactory;
 
 				if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 				{

@@ -15,7 +15,7 @@ public class GLTFExporterIntegrationTest : MonoBehaviour {
 
 
 
-		IntegrationTest.Assert(root.Materials[0].AlphaMode == GLTFAlphaMode.BLEND);
+		IntegrationTest.Assert(root.Materials[0].AlphaMode == AlphaMode.BLEND);
 
 		IntegrationTest.Pass();
 	}

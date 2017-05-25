@@ -64,7 +64,7 @@ namespace GLTF
 					}
 
 					glbBuffer = new byte[chunkLength];
-					Buffer.BlockCopy(gltfBinary, start + 8, glbBuffer, 0, (int)chunkLength);
+					System.Buffer.BlockCopy(gltfBinary, start + 8, glbBuffer, 0, (int)chunkLength);
 				}
 			}
 			else
