@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 using UnityEngine;
