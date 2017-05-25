@@ -230,8 +230,8 @@ namespace GLTF
 				case GLTFComponentType.UnsignedShort:
 					if (BufferView.Value.ByteStride == 0)
 					{
-						var intermediateArr = new short[Count];
-						System.Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(short));
+						var intermediateArr = new ushort[Count];
+						System.Buffer.BlockCopy(bufferData, totalByteOffset, intermediateArr, 0, Count * sizeof(ushort));
 						for (var idx = 0; idx < Count; idx++)
 						{
 							arr[idx] = (int)intermediateArr[idx];
@@ -239,7 +239,7 @@ namespace GLTF
 					}
 					else
 					{
-						stride = BufferView.Value.ByteStride + sizeof(short);
+						stride = BufferView.Value.ByteStride + sizeof(ushort);
 						for (var idx = 0; idx < Count; idx++)
 						{
 							arr[idx] = BitConverter.ToUInt16(bufferData, totalByteOffset + (idx * stride));
