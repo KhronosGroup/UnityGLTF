@@ -2,22 +2,23 @@
 
 uniform fixed4 _AmbientFactor;
 uniform fixed4 _EmissionFactor;
-uniform fixed4 _LightmapFactor;
+uniform fixed4 _LightFactor;
 
-#ifdef USE_MAINMAP
-	uniform sampler2D _MainTex;
-	uniform float4 _MainTex_ST;
-	uniform half _EmissionUV;
-#endif
-#ifdef USE_LIGHTMAP
-	uniform sampler2D _LightmapTex;
-	uniform float4 _LightmapTex_ST;
-	uniform half _LightmapUV;
+uniform sampler2D _EmissionMap;
+uniform float4 _EmissionMap_ST;
+uniform half _EmissionUV;
+
+#ifdef LIGHTMAP_ON
+	uniform sampler2D _LightMap;
+	uniform float4 _LightMap_ST;
+	uniform half _LightUV;
 #endif
 
 struct vertexInput {
 	float4 vertex : POSITION;
-	fixed4 color : COLOR;
+	#ifdef VERTEX_COLOR_ON
+		fixed4 color : COLOR;
+	#endif
 	float2 uv0 : TEXCOORD0;
 	float2 uv1 : TEXCOORD1;
 	float2 uv2 : TEXCOORD2;
@@ -25,16 +26,19 @@ struct vertexInput {
 };
 struct vertexOutput {
 	float4 pos : SV_POSITION;
-	fixed4 color : COLOR;
+	#ifdef VERTEX_COLOR_ON
+		fixed4 color : COLOR;
+	#endif
 	float2 emissionCoord : TEXCOORD0;
-	float2 lightmapCoord : TEXCOORD1;
+	#ifdef LIGHTMAP_ON
+		float2 lightmapCoord : TEXCOORD1;
+	#endif
 };
 
 vertexOutput vert(vertexInput input)
 {
 	vertexOutput output;
 
-#ifdef USE_MAINMAP
 	float2 emissionCoord;
 	switch (_EmissionUV) {
 	case 0: emissionCoord = input.uv0; break;
@@ -43,41 +47,46 @@ vertexOutput vert(vertexInput input)
 	case 3: emissionCoord = input.uv3; break;
 	default: emissionCoord = input.uv0; break;
 	}
-	output.emissionCoord = TRANSFORM_TEX(emissionCoord, _MainTex);
-#endif
+	output.emissionCoord = TRANSFORM_TEX(emissionCoord, _EmissionMap);
 
-#ifdef USE_LIGHTMAP
-	float2 lightmapCoord;
-	switch (_LightmapUV) {
-	case 0: lightmapCoord = input.uv0; break;
-	case 1: lightmapCoord = input.uv1; break;
-	case 2: lightmapCoord = input.uv2; break;
-	case 3: lightmapCoord = input.uv3; break;
-	default: lightmapCoord = input.uv0; break;
-	}
-	output.lightmapCoord = TRANSFORM_TEX(lightmapCoord, _LightTex);
-#endif
+	#ifdef LIGHTMAP_ON
+		float2 lightmapCoord;
+		switch (_LightUV) {
+		case 0: lightmapCoord = input.uv0; break;
+		case 1: lightmapCoord = input.uv1; break;
+		case 2: lightmapCoord = input.uv2; break;
+		case 3: lightmapCoord = input.uv3; break;
+		default: lightmapCoord = input.uv0; break;
+		}
+		output.lightmapCoord = TRANSFORM_TEX(lightmapCoord, _LightMap);
+	#endif
 
 	output.pos = UnityObjectToClipPos(input.vertex);
-	output.color = (fixed4) input.color;
+	#ifdef VERTEX_COLOR_ON
+		output.color = (fixed4) input.color;
+	#endif
 	return output;
 }
 
 fixed4 frag(vertexOutput input) : COLOR
 {
-	fixed4 finalColor = input.color;
+	#ifdef VERTEX_COLOR_ON
+		fixed4 finalColor = input.color;
+	#else
+		fixed4 finalColor = fixed4(1,1,1,1);
+	#endif
 
-#ifdef USE_MAINMAP
-	finalColor = finalColor * _EmissionFactor * tex2D(_MainTex, input.emissionCoord);
-#endif
+	fixed4 texColor = tex2D(_EmissionMap, input.emissionCoord);
+	finalColor = finalColor * _EmissionFactor * texColor;
 
-#ifdef USE_LIGHTMAP
-	// mix(textureColor, lightColor*textureColor, _LightmapFactor)
-	fixed4 lightColor = tex2D(_LightTex, input.lightmapCoord) * finalColor;
-	finalColor = (fixed4(1) - _LightmapFactor) * finalColor + _LightmapFactor * lightColor;
-#endif
+	#ifdef LIGHTMAP_ON
+		// mix(textureColor, lightColor*textureColor, _LightmapFactor)
+		fixed4 lightColor = tex2D(_LightMap, input.lightmapCoord) * finalColor;
+		finalColor = (fixed4(1,1,1,1) - _LightFactor) * finalColor + _LightFactor * lightColor;
+	#endif
 
-	fixed4 ambient = unity_AmbientSky * _AmbientFactor, 1.0;
+	fixed4 ambient = unity_AmbientSky * _AmbientFactor;
+	finalColor = ambient + finalColor;
 
-	return ambient + finalColor;
+	return fixed4(finalColor.rgb, texColor.a);
 }

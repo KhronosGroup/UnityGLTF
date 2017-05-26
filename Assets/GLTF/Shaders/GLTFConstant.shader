@@ -3,20 +3,28 @@ Shader "GLTF/GLTFConstant" {
 		_AmbientFactor ("Ambient Factor", Color) = (1,1,1,1)
 		_EmissionFactor("Emission Factor", Color) = (1,1,1,1)
 		_LightmapFactor("Lightmap Factor", Color) = (1,1,1,1)
-		_MainTex ("Emission (RGB)", 2D) = "white" {}
-		_LightmapTex("Lightmap (RGB)", 2D) = "white" {}
+		_EmissionMap("Emission (RGB)", 2D) = "white" {}
+		_LightMap("Lightmap (RGB)", 2D) = "white" {}
 		_EmissionUV ("Emission UV Index", Int) = 0
-		_LightmapUV("Lightmap UV Index", Int) = 0
+		_LightUV("Lightmap UV Index", Int) = 0
+
+		[Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode", Float) = 0.0
+		[HideInInspector] _SrcBlend ("__src", Float) = 1.0
+		[HideInInspector] _DstBlend ("__dst", Float) = 0.0
+		[HideInInspector] _ZWrite ("__zw", Float) = 1.0
 	}
 	SubShader {
 		Pass {
-			Tags { "RenderType" = "Opaque" }
+			Tags { "PerformanceChecks"="False" }
 			LOD 200
-			Cull Back
+			Blend [_SrcBlend] [_DstBlend]
+			ZWrite [_ZWrite]
+			Cull [_Cull]
+
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			#pragma multi_compile _ USE_MAINMAP USE_LIGHTMAP
+			#pragma multi_compile _ VERTEX_COLOR_ON LIGHTMAP_ON
 			#include "GLTFConstant.cginc"
 			ENDCG
 		}

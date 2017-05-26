@@ -407,6 +407,22 @@ namespace GLTF
 				material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
 			}
 
+			if(def.CommonConstant != null)
+			{
+				material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor);
+
+				if(def.CommonConstant.LightmapTexture != null)
+				{
+					material.EnableKeyword("LIGHTMAP_ON");
+
+					var texture = def.CommonConstant.LightmapTexture.Index.Value;
+					material.SetTexture("_LightMap", _imageCache[texture.Source.Value]);
+					material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
+				}
+
+				material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor);
+			}
+
 			if (def.NormalTexture != null)
 			{
 				var texture = def.NormalTexture.Index.Value;
@@ -435,6 +451,7 @@ namespace GLTF
 			{
 				var texture = def.EmissiveTexture.Index.Value;
 				material.SetTexture("_EmissionMap", _imageCache[texture.Source.Value]);
+				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 			}
 
 			material.SetColor("_EmissionColor", def.EmissiveFactor);
