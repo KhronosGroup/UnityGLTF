@@ -313,15 +313,19 @@ namespace GLTF
 			{
 				if (def.PbrMetallicRoughness != null)
 					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-				else
+				else if(_root.ExtensionsUsed.Contains("KHR_materials_common") && def.CommonConstant != null)
 					shader = _shaderCache[MaterialType.CommonConstant];
+				else
+				{
+					throw new NotImplementedException(def.Name + " uses unimplemented material model");
+				}
 			}
 			catch (KeyNotFoundException e)
 			{
-				Debug.LogWarningFormat("No shader supplied for glTF material {0}, using fallback", def.Name);
-				if (!_shaderCache.TryGetValue(MaterialType.CommonConstant, out shader))
+				Debug.LogWarningFormat("No shader supplied for type of glTF material {0}, using PBR fallback", def.Name);
+				if (!_shaderCache.TryGetValue(MaterialType.PbrMetallicRoughness, out shader))
 				{
-					throw new ShaderNotFoundException("No fallback shader specified", e);
+					throw new ShaderNotFoundException("No fallback shader supplied", e);
 				}
 			}
 
