@@ -80,7 +80,7 @@ fixed4 frag(vertexOutput input) : COLOR
 	finalColor = finalColor * _EmissionFactor * texColor;
 
 	#ifdef LIGHTMAP_ON
-		// mix(textureColor, lightColor*textureColor, _LightmapFactor)
+		// lerp(textureColor, lightColor*textureColor, _LightmapFactor)
 		fixed4 lightColor = tex2D(_LightMap, input.lightmapCoord) * finalColor;
 		finalColor = (fixed4(1,1,1,1) - _LightFactor) * finalColor + _LightFactor * lightColor;
 	#endif

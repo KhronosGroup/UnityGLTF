@@ -454,7 +454,7 @@ namespace GLTF
 				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 			}
 
-			material.SetColor("_EmissionColor", def.EmissiveFactor);
+			material.SetColor("_EmissionFactor", def.EmissiveFactor);
 
 			return material;
 		}
@@ -497,9 +497,17 @@ namespace GLTF
 
 					// HACK to enable mipmaps :(
 					var tempTexture = DownloadHandlerTexture.GetContent(www);
-					texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
-					texture.SetPixels(tempTexture.GetPixels());
-					texture.Apply(true);
+					if (tempTexture != null)
+					{
+						texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
+						texture.SetPixels(tempTexture.GetPixels());
+						texture.Apply(true);
+					}
+					else
+					{
+						Debug.LogFormat("{0} {1}", www.responseCode, www.url);
+						texture = new Texture2D(16, 16);
+					}
 				}
 			}
 			else
