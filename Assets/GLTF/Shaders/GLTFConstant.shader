@@ -26,6 +26,8 @@ Shader "GLTF/GLTFConstant" {
 			#pragma fragment frag
 			#pragma multi_compile _ VERTEX_COLOR_ON
 			#pragma multi_compile _ LIGHTMAP_ON
+			#pragma multi_compile _ _ALPHATEST_ON
+
 			#include "GLTFConstant.cginc"
 			ENDCG
 		}

@@ -8,6 +8,8 @@ uniform sampler2D _EmissionMap;
 uniform float4 _EmissionMap_ST;
 uniform half _EmissionUV;
 
+uniform half _Cutoff;
+
 #ifdef LIGHTMAP_ON
 	uniform sampler2D _LightMap;
 	uniform float4 _LightMap_ST;
@@ -70,13 +72,20 @@ vertexOutput vert(vertexInput input)
 
 fixed4 frag(vertexOutput input) : COLOR
 {
+	// do the alpha test immediately if enabled
+	fixed4 texColor = tex2D(_EmissionMap, input.emissionCoord);
+	#ifdef _ALPHATEST_ON
+		if (texColor.a*_EmissionFactor.a < _Cutoff) {
+			discard;
+		}
+	#endif
+
 	#ifdef VERTEX_COLOR_ON
 		fixed4 finalColor = input.color;
 	#else
 		fixed4 finalColor = fixed4(1,1,1,1);
 	#endif
 
-	fixed4 texColor = tex2D(_EmissionMap, input.emissionCoord);
 	finalColor = finalColor * _EmissionFactor * texColor;
 
 	#ifdef LIGHTMAP_ON
@@ -88,5 +97,5 @@ fixed4 frag(vertexOutput input) : COLOR
 	fixed4 ambient = unity_AmbientSky * _AmbientFactor;
 	finalColor = ambient + finalColor;
 
-	return fixed4(finalColor.rgb, texColor.a);
+	return fixed4(finalColor.rgb, texColor.a * _EmissionFactor.a);
 }

@@ -9,8 +9,8 @@ public class GLTFExportMenu
 	static void ExportSelected()
 	{
 		var obj = Selection.activeGameObject;
-			var exporter = new GLTFExporter(obj.transform);
-			var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-			exporter.SaveGLTFandBin(path, obj.name);
+		var exporter = new GLTFExporter(obj.transform);
+		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
+		exporter.SaveGLTFandBin(path, obj.name);
 	}
 }

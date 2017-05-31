@@ -319,8 +319,7 @@
     ],
     "materials" : [
         {
-            "alphaMode" : "BLEND",
-            "alphaCutoff": 0.5,
+            "alphaMode" : "MASK",
             "doubleSided" : true,
             "emissiveFactor" : [
                 0.0,
