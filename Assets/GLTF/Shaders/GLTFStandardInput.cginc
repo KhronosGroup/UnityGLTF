@@ -52,7 +52,7 @@ sampler2D	_ParallaxMap;
 half		_Parallax;
 half		_UVSec;
 
-half4 		_EmissionFactor;
+half4 		_EmissionColor;
 sampler2D	_EmissionMap;
 
 //-------------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ half3 Emission(float2 uv)
 #ifndef _EMISSION
 	return 0;
 #else
-	return tex2D(_EmissionMap, uv).rgb * _EmissionFactor.rgb;
+	return tex2D(_EmissionMap, uv).rgb * _EmissionColor.rgb;
 #endif
 }
 

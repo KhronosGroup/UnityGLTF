@@ -269,9 +269,9 @@ namespace GLTF
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
 				materialObj.GetInt("_Cull") == (float)UnityEngine.Rendering.CullMode.Off;
 
-			if (materialObj.HasProperty("_EmissionFactor"))
+			if (materialObj.HasProperty("_EmissionColor"))
 			{
-				material.EmissiveFactor = materialObj.GetColor("_EmissionFactor");
+				material.EmissiveFactor = materialObj.GetColor("_EmissionColor");
 			}
 
 			if (materialObj.HasProperty("_EmissionMap"))

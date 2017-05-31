@@ -14,7 +14,7 @@
 		_OcclusionMap("Occlusion", 2D) = "white" {}
 		_OcclusionStrength("Strength", Range(0.0, 1.0)) = 1.0
 
-		_EmissionFactor("Color", Color) = (1,1,1,0)
+		_EmissionColor("Color", Color) = (1,1,1,0)
 		_EmissionMap("Emission", 2D) = "black" {}
 
 		[Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode", Float) = 0.0

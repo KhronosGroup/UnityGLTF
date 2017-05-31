@@ -21,7 +21,7 @@ sampler2D _MetallicRoughnessMap;
 half _OcclusionStrength;
 sampler2D _OcclusionMap;
 
-fixed3 _EmissionFactor;
+fixed3 _EmissionColor;
 sampler2D _EmissionMap;
 
 struct appdata
@@ -113,7 +113,7 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
 		albedo, metallic, specularTint, oneMinusReflectivity
 	);
 
-	fixed3 emmission = tex2D(_EmissionMap, i.uv).rgb * _EmissionFactor;
+	fixed3 emmission = tex2D(_EmissionMap, i.uv).rgb * _EmissionColor;
 
 	UnityLight light;
 	light.color = _LightColor0.rgb;

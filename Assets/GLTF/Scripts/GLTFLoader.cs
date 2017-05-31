@@ -454,7 +454,7 @@ namespace GLTF
 				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 			}
 
-			material.SetColor("_EmissionFactor", def.EmissiveFactor);
+			material.SetColor("_EmissionColor", def.EmissiveFactor);
 
 			return material;
 		}

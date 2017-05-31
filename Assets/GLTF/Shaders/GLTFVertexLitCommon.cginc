@@ -35,7 +35,7 @@ sampler2D _MetallicRoughnessMap;
 #else
 sampler2D _OcclusionMap;
 #endif
-fixed4 _EmissionFactor;
+fixed4 _EmissionColor;
 sampler2D _EmissionMap;
 
 
@@ -76,7 +76,7 @@ fixed4 gltf_vertex_lit_frag(v2f i) : SV_Target
 	fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
 	#endif
 
-	fixed4 emission = tex2D(_EmissionMap, i.uv) * _EmissionFactor;
+	fixed4 emission = tex2D(_EmissionMap, i.uv) * _EmissionColor;
 
 	return mainColor * fixed4(occlusion.rgb, 1.0) + fixed4(emission.rgb, 0.0);
 }

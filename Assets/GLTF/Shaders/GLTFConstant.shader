@@ -1,7 +1,7 @@
 Shader "GLTF/GLTFConstant" {
 	Properties {
 		_AmbientFactor ("Ambient Factor", Color) = (1,1,1,1)
-		_EmissionFactor("Emission Factor", Color) = (1,1,1,1)
+		_EmissionColor("Emission Factor", Color) = (1,1,1,1)
 		_LightmapFactor("Lightmap Factor", Color) = (1,1,1,1)
 		_EmissionMap("Emission (RGB)", 2D) = "white" {}
 		_LightMap("Lightmap (RGB)", 2D) = "white" {}

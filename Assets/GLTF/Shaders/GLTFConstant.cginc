@@ -1,7 +1,7 @@
 #include "UnityCG.cginc"
 
 uniform fixed4 _AmbientFactor;
-uniform fixed4 _EmissionFactor;
+uniform fixed4 _EmissionColor;
 uniform fixed4 _LightFactor;
 
 uniform sampler2D _EmissionMap;
@@ -75,7 +75,7 @@ fixed4 frag(vertexOutput input) : COLOR
 	// do the alpha test immediately if enabled
 	fixed4 texColor = tex2D(_EmissionMap, input.emissionCoord);
 	#ifdef _ALPHATEST_ON
-		if (texColor.a*_EmissionFactor.a < _Cutoff) {
+		if (texColor.a*_EmissionColor.a < _Cutoff) {
 			discard;
 		}
 	#endif
@@ -86,7 +86,7 @@ fixed4 frag(vertexOutput input) : COLOR
 		fixed4 finalColor = fixed4(1,1,1,1);
 	#endif
 
-	finalColor = finalColor * _EmissionFactor * texColor;
+	finalColor = finalColor * _EmissionColor * texColor;
 
 	#ifdef LIGHTMAP_ON
 		// lerp(textureColor, lightColor*textureColor, _LightmapFactor)
@@ -97,5 +97,5 @@ fixed4 frag(vertexOutput input) : COLOR
 	fixed4 ambient = unity_AmbientSky * _AmbientFactor;
 	finalColor = ambient + finalColor;
 
-	return fixed4(finalColor.rgb, texColor.a * _EmissionFactor.a);
+	return fixed4(finalColor.rgb, texColor.a * _EmissionColor.a);
 }
