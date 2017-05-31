@@ -386,6 +386,7 @@ namespace GLTF
 
 			if (def.PbrMetallicRoughness != null)
 			{
+				material.EnableKeyword("GLTF_PBR");
 				var pbr = def.PbrMetallicRoughness;
 
 				material.SetColor("_Color", pbr.BaseColorFactor);
@@ -409,6 +410,7 @@ namespace GLTF
 
 			if(def.CommonConstant != null)
 			{
+				material.EnableKeyword("GLTF_CONSTANT");
 				material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor);
 
 				if(def.CommonConstant.LightmapTexture != null)
