@@ -303,10 +303,15 @@ namespace GLTF
 				}
 			}
 
-			if(materialObj.IsKeywordEnabled("GLTF_PBR"))
-				material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
-			else if (materialObj.IsKeywordEnabled("GLTF_CONSTANT"))
-				material.CommonConstant = ExportCommonConstant(materialObj);
+			switch (materialObj.shader.name)
+			{
+				case "GLTF/GLTFStandard":
+					material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
+					break;
+				case "GLTF/GLTFConstant":
+					material.CommonConstant = ExportCommonConstant(materialObj);
+					break;
+			}
 
 			var id = new MaterialId {
 				Id = _root.Materials.Count,
