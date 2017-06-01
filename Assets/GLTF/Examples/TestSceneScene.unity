@@ -370,6 +370,11 @@ Prefab:
       propertyPath: Url
       value: http://localhost:8080/TestScene/TestScene.gltf
       objectReference: {fileID: 0}
+    - target: {fileID: 114000010638385648, guid: c1f18c4a06bb9214fa40b0020f67788c,
+        type: 2}
+      propertyPath: GLTFConstant
+      value: 
+      objectReference: {fileID: 4800000, guid: 8fef65ef68470964e89f95b0834e8982, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: c1f18c4a06bb9214fa40b0020f67788c, type: 2}
   m_IsPrefabParent: 0

@@ -305,6 +305,7 @@ namespace GLTF
 
 			switch (materialObj.shader.name)
 			{
+				case "Standard":
 				case "GLTF/GLTFStandard":
 					material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
 					break;
@@ -407,6 +408,9 @@ namespace GLTF
 
 		private MaterialCommonConstant ExportCommonConstant(UnityEngine.Material materialObj)
 		{
+			if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+				_root.ExtensionsUsed.Add("KHR_materials_common");
+
 			var constant = new MaterialCommonConstant();
 
 			if (materialObj.HasProperty("_AmbientFactor"))

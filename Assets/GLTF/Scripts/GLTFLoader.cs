@@ -267,23 +267,36 @@ namespace GLTF
 
 			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
+			UnityEngine.Material material = null;
+
 			if (primitive.Material != null)
 			{
 				var materialCacheKey = new MaterialCacheKey {
 					Material = primitive.Material.Value,
 					UseVertexColors = attributes.Colors != null
 				};
-				meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+
+				try
+				{
+					material = FindOrCreateMaterial(materialCacheKey);
+				}
+				catch (Exception e)
+				{
+					Debug.LogException(e);
+					Debug.LogWarningFormat("Failed to create material from {0}, using default", materialCacheKey.Material.Name);
+				}
 			}
-			else
+
+			if(material == null)
 			{
 				var materialCacheKey = new MaterialCacheKey {
 					Material = new Material(),
 					UseVertexColors = attributes.Colors != null
 				};
-				meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+				material = FindOrCreateMaterial(materialCacheKey);
 			}
 
+			meshRenderer.material = material;
 
 			return primitiveObj;
 		}
@@ -317,7 +330,8 @@ namespace GLTF
 					shader = _shaderCache[MaterialType.CommonConstant];
 				else
 				{
-					throw new NotImplementedException(def.Name + " uses unimplemented material model");
+					//throw new NotImplementedException(def.Name + " uses unimplemented material model");
+					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
 				}
 			}
 			catch (KeyNotFoundException e)
