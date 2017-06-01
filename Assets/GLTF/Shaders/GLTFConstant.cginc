@@ -41,25 +41,19 @@ vertexOutput vert(vertexInput input)
 {
 	vertexOutput output;
 
-	float2 emissionCoord;
-	switch (_EmissionUV) {
-	case 0: emissionCoord = input.uv0; break;
-	case 1: emissionCoord = input.uv1; break;
-	case 2: emissionCoord = input.uv2; break;
-	case 3: emissionCoord = input.uv3; break;
-	default: emissionCoord = input.uv0; break;
-	}
+	float2 emissionCoord =
+		(_EmissionUV == 0) * input.uv0 +
+		(_EmissionUV == 1) * input.uv1 +
+		(_EmissionUV == 2) * input.uv2 +
+		(_EmissionUV == 3) * input.uv3;
 	output.emissionCoord = TRANSFORM_TEX(emissionCoord, _EmissionMap);
 
 	#ifdef LIGHTMAP_ON
-		float2 lightmapCoord;
-		switch (_LightUV) {
-		case 0: lightmapCoord = input.uv0; break;
-		case 1: lightmapCoord = input.uv1; break;
-		case 2: lightmapCoord = input.uv2; break;
-		case 3: lightmapCoord = input.uv3; break;
-		default: lightmapCoord = input.uv0; break;
-		}
+		float2 lightmapCoord =
+			(_LightUV == 0) * input.uv0 +
+			(_LightUV == 1) * input.uv1 +
+			(_LightUV == 2) * input.uv2 +
+			(_LightUV == 3) * input.uv3;
 		output.lightmapCoord = TRANSFORM_TEX(lightmapCoord, _LightMap);
 	#endif
 

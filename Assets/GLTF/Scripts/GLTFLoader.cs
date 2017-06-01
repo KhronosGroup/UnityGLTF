@@ -326,7 +326,8 @@ namespace GLTF
 			{
 				if (def.PbrMetallicRoughness != null)
 					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-				else if(_root.ExtensionsUsed.Contains("KHR_materials_common") && def.CommonConstant != null)
+				else if(_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
+					&& def.CommonConstant != null)
 					shader = _shaderCache[MaterialType.CommonConstant];
 				else
 				{

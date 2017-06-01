@@ -15,12 +15,12 @@ namespace GLTF
 		/// <summary>
 		/// Names of glTF extensions used somewhere in this asset.
 		/// </summary>
-		public List<string> ExtensionsUsed = new List<string>();
+		public List<string> ExtensionsUsed;
 
 		/// <summary>
 		/// Names of glTF extensions required to properly load this asset.
 		/// </summary>
-		public List<string> ExtensionsRequired = new List<string>();
+		public List<string> ExtensionsRequired;
 
 		/// <summary>
 		/// An array of accessors. An accessor is a typed view into a bufferView.
