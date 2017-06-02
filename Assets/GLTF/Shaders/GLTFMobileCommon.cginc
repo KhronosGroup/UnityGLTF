@@ -30,7 +30,7 @@ struct appdata
 	float2 uv : TEXCOORD0;
 	float3 normal : NORMAL;
 	#ifdef VERTEX_COLOR_ON
-	float4 vertColor : COLOR;
+	fixed4 vertColor : COLOR;
 	#endif
 };
 
@@ -38,15 +38,14 @@ struct v2f
 {
 	float2 uv : TEXCOORD0;
 	float4 vertex : SV_POSITION;
-	float3 ndotl : TEXCOORD1;
 	float3 normal : TEXCOORD2;
 	float3 viewDir : TEXCOORD3;
 	#ifdef VERTEX_COLOR_ON
-	float4 vertColor : COLOR;
+	fixed4 vertColor : COLOR;
 	#endif
 };
 
-v2f gltf_mobile_vert (appdata v)
+v2f gltfMobileVert (appdata v)
 {
 	v2f o;
 	o.vertex = UnityObjectToClipPos(v.vertex);
@@ -57,7 +56,6 @@ v2f gltf_mobile_vert (appdata v)
 	#endif
 
 	o.normal = normalize(UnityObjectToWorldNormal(v.normal));
-	o.ndotl = DotClamped(o.normal, _WorldSpaceLightPos0.xyz);
 
 	float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
 	o.viewDir = normalize(_WorldSpaceCameraPos - worldPos);
@@ -65,8 +63,10 @@ v2f gltf_mobile_vert (appdata v)
 	return o;
 }
 
-fixed4 gltf_mobile_frag (v2f i) : SV_Target
+// NOTE: assumes that this is only used with directional light pass
+fixed4 gltfMobileFrag (v2f i) : SV_Target
 {
+	i.normal = normalize(i.normal);
 	#if defined(_ALPHATEST_ON)
 
 	#ifdef VERTEX_COLOR_ON
@@ -118,7 +118,7 @@ fixed4 gltf_mobile_frag (v2f i) : SV_Target
 	UnityLight light;
 	light.color = _LightColor0.rgb;
 	light.dir = _WorldSpaceLightPos0.xyz;
-	light.ndotl = i.ndotl;
+	light.ndotl = DotClamped(i.normal, light.dir);
 
 	UnityIndirect indirectLight;
 	indirectLight.diffuse = fixed4(0.04, 0.04, 0.04, 1);

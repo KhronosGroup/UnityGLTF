@@ -144,8 +144,8 @@ Shader "GLTF/GLTFStandard" {
 			#pragma multi_compile _ OCC_METAL_ROUGH_ON
 			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
 			#include "GLTFMobileCommon.cginc"
-			#pragma vertex gltf_mobile_vert
-			#pragma fragment gltf_mobile_frag
+			#pragma vertex gltfMobileVert
+			#pragma fragment gltfMobileFrag
 			ENDCG
 		}
 	}
