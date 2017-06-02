@@ -50,7 +50,7 @@ v2f gltfVertexFunc(vertIn v)
 
 	float3 worldNormal = UnityObjectToWorldNormal(v.normal);
 	// add ambient via spherical harmonics
-	o.computedShading = ShadeSH9(float4(worldNormal, 1.0));
+	o.computedShading = max(0, ShadeSH9(float4(v.normal, 1)));
 	fixed lambertianValue = DotClamped(worldNormal, _WorldSpaceLightPos0.xyz);
 	o.computedShading += lambertianValue * _LightColor0.rgb;
 

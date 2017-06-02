@@ -121,7 +121,7 @@ fixed4 gltfMobileFrag (v2f i) : SV_Target
 	light.ndotl = DotClamped(i.normal, light.dir);
 
 	UnityIndirect indirectLight;
-	indirectLight.diffuse = fixed4(0.04, 0.04, 0.04, 1);
+	indirectLight.diffuse = max(0, ShadeSH9(float4(i.normal, 1)));
 	indirectLight.specular = 0;
 
 	fixed smoothness = metallicRoughness.g * (1 - _Roughness);
