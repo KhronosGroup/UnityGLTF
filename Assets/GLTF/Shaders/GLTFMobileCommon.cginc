@@ -55,7 +55,7 @@ v2f gltfMobileVert (appdata v)
 	o.vertColor = v.vertColor;
 	#endif
 
-	o.normal = normalize(UnityObjectToWorldNormal(v.normal));
+	o.normal = UnityObjectToWorldNormal(v.normal);
 
 	float3 worldPos = mul(unity_ObjectToWorld, v.vertex);
 	o.viewDir = normalize(_WorldSpaceCameraPos - worldPos);
