@@ -121,13 +121,20 @@ Shader "GLTF/GLTFStandard" {
 		}
 	}
 
-	SubShader {
+	SubShader 
+	{
+		Tags{ "RenderType" = "Opaque" "Queue" = "Geometry" "PerformanceChecks" = "False" }
+
 		Cull [_Cull]
 		Blend [_SrcBlend] [_DstBlend]
 		ZWrite [_ZWrite]
 		LOD 200
 
-		Pass {
+		Pass 
+		{
+			Name "ForwardBaseMobile"
+			Tags{ "LightMode" = "ForwardBase" }
+
 			CGPROGRAM
 			// Mobile Shader
 			#pragma target 2.0
@@ -143,13 +150,20 @@ Shader "GLTF/GLTFStandard" {
 		}
 	}
 
-	SubShader {
+	SubShader 
+	{
+		Tags{ "RenderType" = "Opaque" "Queue" = "Geometry" "PerformanceChecks" = "False" }
+
 		Cull [_Cull]
 		Blend [_SrcBlend] [_DstBlend]
 		ZWrite [_ZWrite]
 		LOD 100
 
-		Pass {
+		Pass 
+		{
+			Name "ForwardBaseVertexLit"
+			Tags{ "LightMode" = "ForwardBase" }
+
 			CGPROGRAM
 			// Vertex Lit Shader
 			#pragma target 2.0
@@ -161,8 +175,10 @@ Shader "GLTF/GLTFStandard" {
 			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog
 			#include "GLTFVertexLitCommon.cginc"
-			#pragma vertex gltf_vertex_lit_vert
-			#pragma fragment gltf_vertex_lit_frag
+
+			#pragma vertex gltfVertexFunc
+			#pragma fragment gltfFragFunc
+
 			ENDCG
 		}
 	}
