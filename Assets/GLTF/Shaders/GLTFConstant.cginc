@@ -23,8 +23,6 @@ struct vertexInput {
 	#endif
 	float2 uv0 : TEXCOORD0;
 	float2 uv1 : TEXCOORD1;
-	float2 uv2 : TEXCOORD2;
-	float2 uv3 : TEXCOORD3;
 };
 struct vertexOutput {
 	float4 pos : SV_POSITION;
@@ -43,17 +41,13 @@ vertexOutput vert(vertexInput input)
 
 	float2 emissionCoord =
 		(_EmissionUV == 0) * input.uv0 +
-		(_EmissionUV == 1) * input.uv1 +
-		(_EmissionUV == 2) * input.uv2 +
-		(_EmissionUV == 3) * input.uv3;
+		(_EmissionUV == 1) * input.uv1;
 	output.emissionCoord = TRANSFORM_TEX(emissionCoord, _EmissionMap);
 
 	#ifdef LIGHTMAP_ON
 		float2 lightmapCoord =
 			(_LightUV == 0) * input.uv0 +
-			(_LightUV == 1) * input.uv1 +
-			(_LightUV == 2) * input.uv2 +
-			(_LightUV == 3) * input.uv3;
+			(_LightUV == 1) * input.uv1;
 		output.lightmapCoord = TRANSFORM_TEX(lightmapCoord, _LightMap);
 	#endif
 
