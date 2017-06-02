@@ -1,4 +1,6 @@
-﻿Shader "GLTF/GLTFStandard" {
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "GLTF/GLTFStandard" {
 
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
@@ -29,9 +31,8 @@
 
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
+		Tags { "RenderType"="Opaque" "Queue"="Geometry" "PerformanceChecks"="False" }
 		LOD 300
-
 
 		// ------------------------------------------------------------------
 		//  Base forward pass (directional light, emission, lightmaps, ...)
@@ -60,7 +61,7 @@
 			#pragma fragment fragBase
 			#include "GLTFStandardInput.cginc"
 			#include "UnityStandardCoreForward.cginc"
-
+	
 			ENDCG
 		}
 		// ------------------------------------------------------------------
@@ -86,7 +87,6 @@
 
 			#pragma multi_compile_fwdadd_fullshadows
 			#pragma multi_compile_fog
-
 
 			#pragma vertex vertAdd
 			#pragma fragment fragAdd
@@ -121,13 +121,20 @@
 		}
 	}
 
-	SubShader {
+	SubShader 
+	{
+		Tags{ "RenderType" = "Opaque" "Queue" = "Geometry" "PerformanceChecks" = "False" }
+
 		Cull [_Cull]
 		Blend [_SrcBlend] [_DstBlend]
 		ZWrite [_ZWrite]
 		LOD 200
 
-		Pass {
+		Pass 
+		{
+			Name "ForwardBaseMobile"
+			Tags{ "LightMode" = "ForwardBase" }
+
 			CGPROGRAM
 			// Mobile Shader
 			#pragma target 2.0
@@ -143,13 +150,20 @@
 		}
 	}
 
-	SubShader {
+	SubShader 
+	{
+		Tags{ "RenderType" = "Opaque" "Queue" = "Geometry" "PerformanceChecks" = "False" }
+
 		Cull [_Cull]
 		Blend [_SrcBlend] [_DstBlend]
 		ZWrite [_ZWrite]
 		LOD 100
 
-		Pass {
+		Pass 
+		{
+			Name "ForwardBaseVertexLit"
+			Tags{ "LightMode" = "ForwardBase" }
+
 			CGPROGRAM
 			// Vertex Lit Shader
 			#pragma target 2.0
@@ -161,8 +175,10 @@
 			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog
 			#include "GLTFVertexLitCommon.cginc"
-			#pragma vertex gltf_vertex_lit_vert
-			#pragma fragment gltf_vertex_lit_frag
+
+			#pragma vertex gltfVertexFunc
+			#pragma fragment gltfFragFunc
+
 			ENDCG
 		}
 	}
