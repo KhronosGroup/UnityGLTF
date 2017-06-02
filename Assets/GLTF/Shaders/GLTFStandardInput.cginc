@@ -174,6 +174,8 @@ half3 Emission(float2 uv)
 #endif
 }
 
+// see this link regarding unpacking instructions:
+// https://github.com/KhronosGroup/glTF/blob/2.0/specification/2.0/schema/material.normalTextureInfo.schema.json#L13
 half3 UnpackScaleNormalGLTF(half4 packednormal, half bumpScale)
 {
 	float3 normal = packednormal.xyz;
