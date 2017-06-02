@@ -16,6 +16,11 @@ namespace GLTF
 		public PbrMetallicRoughness PbrMetallicRoughness;
 
 		/// <summary>
+		/// A set of parameter values used to light flat-shaded materials
+		/// </summary>
+		public MaterialCommonConstant CommonConstant;
+
+		/// <summary>
 		/// A tangent space normal map. Each texel represents the XYZ components of a
 		/// normal vector in tangent space.
 		/// </summary>
@@ -87,6 +92,9 @@ namespace GLTF
 					case "pbrMetallicRoughness":
 						material.PbrMetallicRoughness = PbrMetallicRoughness.Deserialize(root, reader);
 						break;
+					case "commonConstant":
+						material.CommonConstant = MaterialCommonConstant.Deserialize(root, reader);
+						break;
 					case "normalTexture":
 						material.NormalTexture = NormalTextureInfo.Deserialize(root, reader);
 						break;
@@ -124,6 +132,12 @@ namespace GLTF
 			{
 				writer.WritePropertyName("pbrMetallicRoughness");
 				PbrMetallicRoughness.Serialize(writer);
+			}
+
+			if (CommonConstant != null)
+			{
+				writer.WritePropertyName("commonConstant");
+				CommonConstant.Serialize(writer);
 			}
 
 			if (NormalTexture != null)

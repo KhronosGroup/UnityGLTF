@@ -12,10 +12,10 @@ public class GLTFTestComponent : MonoBehaviour {
 	IEnumerator Start()
 	{
 		var loader = new GLTFLoader(
-			Url,
-			GLTFStandard,
-			gameObject.transform
-		);
+				Url,
+				gameObject.transform
+			);
+		loader.SetShaderForMaterialType(GLTFLoader.MaterialType.PbrMetallicRoughness, GLTFStandard);
 		loader.Multithreaded = Multithreaded;
 		yield return loader.Load();
 		IntegrationTest.Pass();
