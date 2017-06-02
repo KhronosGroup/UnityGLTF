@@ -126,17 +126,18 @@ fixed4 gltfMobileFrag (v2f i) : SV_Target
 
 	fixed smoothness = metallicRoughness.g * (1 - _Roughness);
 
-	fixed3 diffuse = BRDF3_Unity_PBS(
+	// we might want to also consider BRDF2_Unity_PBS
+	fixed3 pbsValue = BRDF3_Unity_PBS(
 		albedo, specularTint,
 		oneMinusReflectivity, smoothness,
 		i.normal, i.viewDir,
 		light, indirectLight
 	);
-
+	// TODO: are we using occlusion and emission correctly??
 	#ifdef _ALPHABLEND_ON
-	return fixed4(diffuse * occlusion + emmission, color.a);
+	return fixed4(pbsValue * occlusion + emmission, color.a);
 	#else
-	return fixed4(diffuse * occlusion + emmission, 1);
+	return fixed4(pbsValue * occlusion + emmission, 1);
 	#endif
 
 }
