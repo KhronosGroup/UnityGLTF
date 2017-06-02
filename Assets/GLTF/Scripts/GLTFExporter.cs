@@ -303,7 +303,16 @@ namespace GLTF
 				}
 			}
 
-			material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
+			switch (materialObj.shader.name)
+			{
+				case "Standard":
+				case "GLTF/GLTFStandard":
+					material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
+					break;
+				case "GLTF/GLTFConstant":
+					material.CommonConstant = ExportCommonConstant(materialObj);
+					break;
+			}
 
 			var id = new MaterialId {
 				Id = _root.Materials.Count,
@@ -395,6 +404,34 @@ namespace GLTF
 			}
 
 			return pbr;
+		}
+
+		private MaterialCommonConstant ExportCommonConstant(UnityEngine.Material materialObj)
+		{
+			if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+				_root.ExtensionsUsed.Add("KHR_materials_common");
+
+			var constant = new MaterialCommonConstant();
+
+			if (materialObj.HasProperty("_AmbientFactor"))
+			{
+				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor");
+			}
+
+			if (materialObj.HasProperty("_LightMap"))
+			{
+				var lmTex = materialObj.GetTexture("_LightMap");
+
+				if (lmTex != null)
+					constant.LightmapTexture = ExportTextureInfo(lmTex);
+			}
+
+			if (materialObj.HasProperty("_LightFactor"))
+			{
+				constant.LightmapFactor = materialObj.GetColor("_LightFactor");
+			}
+
+			return constant;
 		}
 
 		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture)

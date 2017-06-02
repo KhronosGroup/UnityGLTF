@@ -12,7 +12,11 @@ public class MultiSceneComponent : MonoBehaviour {
 	void Start ()
 	{
 		Debug.Log("Hit spacebar to change the scene.");
-		loader = new GLTFLoader(Url, GLTFStandardShader, transform);
+		loader = new GLTFLoader(
+				Url,
+				gameObject.transform
+			);
+		loader.SetShaderForMaterialType(GLTFLoader.MaterialType.PbrMetallicRoughness, GLTFStandardShader);
 		StartCoroutine(LoadScene(SceneIndex));
 	}
 

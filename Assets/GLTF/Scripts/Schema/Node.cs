@@ -88,14 +88,14 @@ namespace GLTF
 
 			position = new Vector3(localPosition.x, localPosition.y, -localPosition.z);
 			rotation = new Quaternion(-localRotation.x, -localRotation.y, localRotation.z, localRotation.w);
-			scale = new Vector3(localScale.x, localScale.y, -localScale.z);
+			scale = new Vector3(localScale.x, localScale.y, localScale.z);
 		}
 
 		public void SetUnityTransform(Transform transform)
 		{
 			Translation.Set(transform.localPosition.x, transform.localPosition.y, -transform.localPosition.z);
 			Rotation.Set(-transform.localRotation.x, -transform.localRotation.y, transform.localRotation.z, transform.localRotation.w);
-			Scale.Set(transform.localScale.x, transform.localScale.y, -transform.localScale.z);
+			Scale.Set(transform.localScale.x, transform.localScale.y, transform.localScale.z);
 		}
 
 		private void GetTRSProperties(Matrix4x4 mat, out Vector3 position, out Quaternion rotation, out Vector3 scale)

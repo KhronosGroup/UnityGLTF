@@ -10,19 +10,15 @@ namespace GLTF
 {
 	public class GLTFLoader
 	{
-		public bool Multithreaded = true;
-		public int MaximumLod = 300;
-		private Shader _standardShader;
-		private readonly string _gltfUrl;
-		private GLTFRoot _root;
-		private GameObject _lastLoadedScene;
-		private AsyncAction asyncAction;
-		private readonly Transform _sceneParent;
-		private readonly Dictionary<Buffer, byte[]> _bufferCache = new Dictionary<Buffer, byte[]>();
-		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
-		private readonly Dictionary<Image, Texture2D> _imageCache = new Dictionary<Image, Texture2D>();
-		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
-		private readonly Dictionary<MeshPrimitive, MeshPrimitiveAttributes> _attributesCache = new Dictionary<MeshPrimitive, MeshPrimitiveAttributes>();
+		public enum MaterialType
+		{
+			PbrMetallicRoughness,
+			PbrSpecularGlossiness,
+			CommonConstant,
+			CommonPhong,
+			CommonBlinn,
+			CommonLambert
+		}
 
 		private struct MaterialCacheKey
 		{
@@ -30,11 +26,25 @@ namespace GLTF
 			public bool UseVertexColors;
 		}
 
-		public GLTFLoader(string gltfUrl, Shader standardShader, Transform parent = null)
+		public bool Multithreaded = true;
+		public int MaximumLod = 300;
+		private readonly string _gltfUrl;
+		private GLTFRoot _root;
+		private GameObject _lastLoadedScene;
+		private AsyncAction asyncAction;
+		private readonly Transform _sceneParent;
+
+		private readonly Dictionary<Buffer, byte[]> _bufferCache = new Dictionary<Buffer, byte[]>();
+		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
+		private readonly Dictionary<Image, Texture2D> _imageCache = new Dictionary<Image, Texture2D>();
+		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
+		private readonly Dictionary<MeshPrimitive, MeshPrimitiveAttributes> _attributesCache = new Dictionary<MeshPrimitive, MeshPrimitiveAttributes>();
+		private readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
+
+		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
 			_gltfUrl = gltfUrl;
 			_sceneParent = parent;
-			_standardShader = standardShader;
 			asyncAction = new AsyncAction();
 		}
 
@@ -44,6 +54,11 @@ namespace GLTF
 			{
 				return _lastLoadedScene;
 			}
+		}
+
+		public void SetShaderForMaterialType(MaterialType type, Shader shader)
+		{
+			_shaderCache.Add(type, shader);
 		}
 
 		public IEnumerator Load(int sceneIndex = -1)
@@ -253,23 +268,36 @@ namespace GLTF
 
 			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
+			UnityEngine.Material material = null;
+
 			if (primitive.Material != null)
 			{
 				var materialCacheKey = new MaterialCacheKey {
 					Material = primitive.Material.Value,
 					UseVertexColors = attributes.Colors != null
 				};
-				meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+
+				try
+				{
+					material = FindOrCreateMaterial(materialCacheKey);
+				}
+				catch (Exception e)
+				{
+					Debug.LogException(e);
+					Debug.LogWarningFormat("Failed to create material from {0}, using default", materialCacheKey.Material.Name);
+				}
 			}
-			else
+
+			if(material == null)
 			{
 				var materialCacheKey = new MaterialCacheKey {
 					Material = new Material(),
 					UseVertexColors = attributes.Colors != null
 				};
-				meshRenderer.material = FindOrCreateMaterial(materialCacheKey);
+				material = FindOrCreateMaterial(materialCacheKey);
 			}
 
+			meshRenderer.material = material;
 
 			return primitiveObj;
 		}
@@ -292,7 +320,30 @@ namespace GLTF
 
 		private UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
 		{
-			Shader shader = _standardShader;
+			Shader shader;
+
+			// get the shader to use for this material
+			try
+			{
+				if (def.PbrMetallicRoughness != null)
+					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+				else if(_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
+					&& def.CommonConstant != null)
+					shader = _shaderCache[MaterialType.CommonConstant];
+				else
+				{
+					//throw new NotImplementedException(def.Name + " uses unimplemented material model");
+					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+				}
+			}
+			catch (KeyNotFoundException e)
+			{
+				Debug.LogWarningFormat("No shader supplied for type of glTF material {0}, using PBR fallback", def.Name);
+				if (!_shaderCache.TryGetValue(MaterialType.PbrMetallicRoughness, out shader))
+				{
+					throw new ShaderNotFoundException("No fallback shader supplied", e);
+				}
+			}
 
 			shader.maximumLOD = MaximumLod;
 
@@ -372,6 +423,22 @@ namespace GLTF
 				material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
 			}
 
+			if(def.CommonConstant != null)
+			{
+				material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor);
+
+				if(def.CommonConstant.LightmapTexture != null)
+				{
+					material.EnableKeyword("LIGHTMAP_ON");
+
+					var texture = def.CommonConstant.LightmapTexture.Index.Value;
+					material.SetTexture("_LightMap", _imageCache[texture.Source.Value]);
+					material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
+				}
+
+				material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor);
+			}
+
 			if (def.NormalTexture != null)
 			{
 				var texture = def.NormalTexture.Index.Value;
@@ -400,6 +467,7 @@ namespace GLTF
 			{
 				var texture = def.EmissiveTexture.Index.Value;
 				material.SetTexture("_EmissionMap", _imageCache[texture.Source.Value]);
+				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 			}
 
 			material.SetColor("_EmissionColor", def.EmissiveFactor);
@@ -447,9 +515,17 @@ namespace GLTF
 
 					// HACK to enable mipmaps :(
 					var tempTexture = DownloadHandlerTexture.GetContent(www);
-					texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
-					texture.SetPixels(tempTexture.GetPixels());
-					texture.Apply(true);
+					if (tempTexture != null)
+					{
+						texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
+						texture.SetPixels(tempTexture.GetPixels());
+						texture.Apply(true);
+					}
+					else
+					{
+						Debug.LogFormat("{0} {1}", www.responseCode, www.url);
+						texture = new Texture2D(16, 16);
+					}
 				}
 			}
 			else
