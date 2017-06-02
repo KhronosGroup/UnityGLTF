@@ -174,26 +174,34 @@ half3 Emission(float2 uv)
 #endif
 }
 
+half3 UnpackScaleNormalGLTF(half4 packednormal, half bumpScale)
+{
+	float3 normal = packednormal.xyz;
+	normal = (normal*2.0 - 1.0);
+	normal.xy *= bumpScale;
+	return normal;
+}
+
 #ifdef _NORMALMAP
 half3 NormalInTangentSpace(float4 texcoords)
 {
-	half3 normalTangent = UnpackScaleNormal(tex2D (_BumpMap, texcoords.xy), _BumpScale);
+	half3 normalTangent = UnpackScaleNormalGLTF(tex2D(_BumpMap, texcoords.xy), _BumpScale);
 	// SM20: instruction count limitation
 	// SM20: no detail normalmaps
-#if _DETAIL && !defined(SHADER_API_MOBILE) && (SHADER_TARGET >= 30)
+#if _DETAIL && !defined(SHADER_API_MOBILE) && (SHADER_TARGET >= 30) 
 	half mask = DetailMask(texcoords.xy);
-	half3 detailNormalTangent = UnpackScaleNormal(tex2D (_DetailNormalMap, texcoords.zw), _DetailNormalMapScale);
-	#if _DETAIL_LERP
-		normalTangent = lerp(
-			normalTangent,
-			detailNormalTangent,
-			mask);
-	#else
-		normalTangent = lerp(
-			normalTangent,
-			BlendNormals(normalTangent, detailNormalTangent),
-			mask);
-	#endif
+	half3 detailNormalTangent = UnpackScaleNormalGLTF(tex2D(_DetailNormalMap, texcoords.zw), _DetailNormalMapScale);
+#if _DETAIL_LERP
+	normalTangent = lerp(
+		normalTangent,
+		detailNormalTangent,
+		mask);
+#else				
+	normalTangent = lerp(
+		normalTangent,
+		BlendNormals(normalTangent, detailNormalTangent),
+		mask);
+#endif
 #endif
 	return normalTangent;
 }
