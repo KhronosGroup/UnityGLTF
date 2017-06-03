@@ -374,7 +374,7 @@ namespace GLTF
 			}
 			else
 			{
-				material.SetOverrideTag("RenderType", "");
+				material.SetOverrideTag("RenderType", "Opaque");
 				material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
 				material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
 				material.SetInt("_ZWrite", 1);
@@ -466,6 +466,7 @@ namespace GLTF
 			if (def.EmissiveTexture != null)
 			{
 				var texture = def.EmissiveTexture.Index.Value;
+				material.EnableKeyword("EMISSION_MAP_ON");
 				material.SetTexture("_EmissionMap", _imageCache[texture.Source.Value]);
 				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 			}

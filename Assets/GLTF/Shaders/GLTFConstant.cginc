@@ -4,11 +4,13 @@ uniform fixed4 _AmbientFactor;
 uniform fixed4 _EmissionColor;
 uniform fixed4 _LightFactor;
 
-uniform sampler2D _EmissionMap;
-uniform float4 _EmissionMap_ST;
-uniform half _EmissionUV;
-
 uniform half _Cutoff;
+
+#ifdef EMISSION_MAP_ON
+	uniform sampler2D _EmissionMap;
+	uniform float4 _EmissionMap_ST;
+	uniform half _EmissionUV;
+#endif
 
 #ifdef LIGHTMAP_ON
 	uniform sampler2D _LightMap;
@@ -21,15 +23,19 @@ struct vertexInput {
 	#ifdef VERTEX_COLOR_ON
 		fixed4 color : COLOR;
 	#endif
-	float2 uv0 : TEXCOORD0;
-	float2 uv1 : TEXCOORD1;
+	#if defined(EMISSION_MAP_ON) || defined(LIGHTMAP_ON)
+		float2 uv0 : TEXCOORD0;
+		float2 uv1 : TEXCOORD1;
+	#endif
 };
 struct vertexOutput {
 	float4 pos : SV_POSITION;
 	#ifdef VERTEX_COLOR_ON
 		fixed4 color : COLOR;
 	#endif
-	float2 emissionCoord : TEXCOORD0;
+	#ifdef EMISSION_MAP_ON
+		float2 emissionCoord : TEXCOORD0;
+	#endif
 	#ifdef LIGHTMAP_ON
 		float2 lightmapCoord : TEXCOORD1;
 	#endif
@@ -39,11 +45,12 @@ vertexOutput vert(vertexInput input)
 {
 	vertexOutput output;
 
-	float2 emissionCoord =
-		(_EmissionUV == 0) * input.uv0 +
-		(_EmissionUV == 1) * input.uv1;
-	output.emissionCoord = TRANSFORM_TEX(emissionCoord, _EmissionMap);
-
+	#ifdef EMISSION_MAP_ON
+		float2 emissionCoord =
+			(_EmissionUV == 0) * input.uv0 +
+			(_EmissionUV == 1) * input.uv1;
+		output.emissionCoord = TRANSFORM_TEX(emissionCoord, _EmissionMap);
+	#endif
 	#ifdef LIGHTMAP_ON
 		float2 lightmapCoord =
 			(_LightUV == 0) * input.uv0 +
@@ -60,30 +67,29 @@ vertexOutput vert(vertexInput input)
 
 fixed4 frag(vertexOutput input) : COLOR
 {
-	// do the alpha test immediately if enabled
-	fixed4 texColor = tex2D(_EmissionMap, input.emissionCoord);
+	fixed4 finalColor = _EmissionColor;
+
+	#ifdef EMISSION_MAP_ON
+		finalColor *= tex2D(_EmissionMap, input.emissionCoord);
+	#endif
+
 	#ifdef _ALPHATEST_ON
-		if (texColor.a*_EmissionColor.a < _Cutoff) {
+		if (finalColor.a < _Cutoff) {
 			discard;
 		}
 	#endif
 
 	#ifdef VERTEX_COLOR_ON
-		fixed4 finalColor = input.color;
-	#else
-		fixed4 finalColor = fixed4(1,1,1,1);
+		finalColor *= fixed4(input.color.rgb, 1);
 	#endif
 
-	finalColor = finalColor * _EmissionColor * texColor;
-
 	#ifdef LIGHTMAP_ON
-		// lerp(textureColor, lightColor*textureColor, _LightmapFactor)
-		fixed4 lightColor = tex2D(_LightMap, input.lightmapCoord) * finalColor;
-		finalColor = (fixed4(1,1,1,1) - _LightFactor) * finalColor + _LightFactor * lightColor;
+		fixed4 lightmapColor = tex2D(_LightMap, input.lightmapCoord);
+		finalColor = lerp(finalColor, finalColor*lightmapColor, fixed4(_LightFactor.rgb, 0));
 	#endif
 
 	fixed4 ambient = unity_AmbientSky * _AmbientFactor;
 	finalColor = ambient + finalColor;
 
-	return fixed4(finalColor.rgb, texColor.a * _EmissionColor.a);
+	return finalColor;
 }

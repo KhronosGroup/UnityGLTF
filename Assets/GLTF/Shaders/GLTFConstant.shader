@@ -25,6 +25,7 @@ Shader "GLTF/GLTFConstant" {
 			#pragma vertex vert
 			#pragma fragment frag
 			#pragma shader_feature VERTEX_COLOR_ON
+			#pragma shader_feature EMISSION_MAP_ON
 			#pragma shader_feature LIGHTMAP_ON
 			#pragma shader_feature _ALPHATEST_ON
 
