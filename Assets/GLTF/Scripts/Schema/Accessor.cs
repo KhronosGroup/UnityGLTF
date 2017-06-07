@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -93,6 +94,8 @@ namespace GLTF
 		/// Sparse storage of attributes that deviate from their initialization value.
 		/// </summary>
 		public AccessorSparse Sparse;
+
+		public NumericArray Contents;
 
 		public static Accessor Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -198,11 +201,12 @@ namespace GLTF
 			writer.WriteEndObject();
 		}
 
-		public int[] AsIntArray(byte[] bufferData)
+		public int[] AsIntArray()
 		{
 			var arr = new int[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			var stride = 0;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
 
 			switch (ComponentType)
 			{
@@ -288,15 +292,17 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
+			Contents.ints = arr;
 			return arr;
 		}
 
-		public Vector2[] AsVector2Array(byte[] bufferData)
+		public Vector2[] AsVector2Array()
 		{
 			var arr = new Vector2[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			var stride = 0;
 			const int numComponents = 2;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
 
 			switch (ComponentType)
 			{
@@ -374,15 +380,17 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
+			Contents.vec2s = arr;
 			return arr;
 		}
 
-		public Vector3[] AsVector3Array(byte[] bufferData)
+		public Vector3[] AsVector3Array()
 		{
 			var arr = new Vector3[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			int stride;
 			const int numComponents = 3;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
 
 			switch (ComponentType)
 			{
@@ -467,15 +475,17 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
+			Contents.vec3s = arr;
 			return arr;
 		}
 
-		public Vector4[] AsVector4Array(byte[] bufferData)
+		public Vector4[] AsVector4Array()
 		{
 			var arr = new Vector4[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			int stride;
 			const int numComponents = 4;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
 
 			switch (ComponentType)
 			{
@@ -556,15 +566,17 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
+			Contents.vec4s = arr;
 			return arr;
 		}
 
-		public Color[] AsColorArray(byte[] bufferData)
+		public Color[] AsColorArray()
 		{
 			var arr = new Color[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			int stride;
 			const int numComponents = 4;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
 
 			switch (ComponentType)
 			{
@@ -645,6 +657,7 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
+			Contents.colors = arr;
 			return arr;
 		}
 	}
@@ -668,5 +681,15 @@ namespace GLTF
 		MAT2,
 		MAT3,
 		MAT4
+	}
+
+	[StructLayout(LayoutKind.Explicit)]
+	public struct NumericArray
+	{
+		[FieldOffset(0)] public int[] ints;
+		[FieldOffset(0)] public Vector2[] vec2s;
+		[FieldOffset(0)] public Vector3[] vec3s;
+		[FieldOffset(0)] public Vector4[] vec4s;
+		[FieldOffset(0)] public Color[] colors;
 	}
 }

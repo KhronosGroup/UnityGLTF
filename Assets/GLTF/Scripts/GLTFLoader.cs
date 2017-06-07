@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System;
+using Boo.Lang.Environments;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
 
@@ -34,9 +35,7 @@ namespace GLTF
 		private AsyncAction asyncAction;
 		private readonly Transform _sceneParent;
 
-		private readonly Dictionary<Buffer, byte[]> _bufferCache = new Dictionary<Buffer, byte[]>();
 		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
-		private readonly Dictionary<Image, Texture2D> _imageCache = new Dictionary<Image, Texture2D>();
 		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
 		private readonly Dictionary<MeshPrimitive, MeshPrimitiveAttributes> _attributesCache = new Dictionary<MeshPrimitive, MeshPrimitiveAttributes>();
 		private readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
@@ -145,7 +144,7 @@ namespace GLTF
 
 			if (glbBuffer != null)
 			{
-				_bufferCache[_root.Buffers[0]] = glbBuffer;
+				_root.Buffers[0].Contents = glbBuffer;
 			}
 		}
 
@@ -155,7 +154,7 @@ namespace GLTF
 			{
 				foreach (var primitive in mesh.Primitives)
 				{
-					var attributes = primitive.BuildMeshAttributes(_bufferCache);
+					var attributes = primitive.BuildMeshAttributes();
 					_attributesCache[primitive] = attributes;
 				}
 			}
@@ -393,8 +392,6 @@ namespace GLTF
 				material.SetInt("_Cull", (int)CullMode.Back);
 			}
 
-
-
 			if (useVertexColors)
 			{
 				material.EnableKeyword("VERTEX_COLOR_ON");
@@ -409,7 +406,7 @@ namespace GLTF
 				if (pbr.BaseColorTexture != null)
 				{
 					var texture = pbr.BaseColorTexture.Index.Value;
-					material.SetTexture("_MainTex", _imageCache[texture.Source.Value]);
+					material.SetTexture("_MainTex", CreateTexture(texture));
 				}
 
 				material.SetFloat("_Metallic", (float)pbr.MetallicFactor);
@@ -417,7 +414,7 @@ namespace GLTF
 				if (pbr.MetallicRoughnessTexture != null)
 				{
 					var texture = pbr.MetallicRoughnessTexture.Index.Value;
-					material.SetTexture("_MetallicRoughnessMap", _imageCache[texture.Source.Value]);
+					material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
 				}
 
 				material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
@@ -432,7 +429,7 @@ namespace GLTF
 					material.EnableKeyword("LIGHTMAP_ON");
 
 					var texture = def.CommonConstant.LightmapTexture.Index.Value;
-					material.SetTexture("_LightMap", _imageCache[texture.Source.Value]);
+					material.SetTexture("_LightMap", CreateTexture(texture));
 					material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
 				}
 
@@ -442,7 +439,7 @@ namespace GLTF
 			if (def.NormalTexture != null)
 			{
 				var texture = def.NormalTexture.Index.Value;
-				material.SetTexture("_BumpMap", _imageCache[texture.Source.Value]);
+				material.SetTexture("_BumpMap", CreateTexture(texture));
 				material.SetFloat("_BumpScale", (float)def.NormalTexture.Scale);
 			}
 
@@ -459,7 +456,7 @@ namespace GLTF
 				}
 				else
 				{
-					material.SetTexture("_OcclusionMap", _imageCache[texture.Value.Source.Value]);
+					material.SetTexture("_OcclusionMap", CreateTexture(texture.Value));
 				}
 			}
 
@@ -467,13 +464,62 @@ namespace GLTF
 			{
 				var texture = def.EmissiveTexture.Index.Value;
 				material.EnableKeyword("EMISSION_MAP_ON");
-				material.SetTexture("_EmissionMap", _imageCache[texture.Source.Value]);
+				material.SetTexture("_EmissionMap", CreateTexture(texture));
 				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 			}
 
 			material.SetColor("_EmissionColor", def.EmissiveFactor);
 
 			return material;
+		}
+
+		private Texture2D CreateTexture(Texture texture)
+		{
+			if (texture.Contents)
+				return texture.Contents;
+
+			var source = texture.Source.Value.Contents;
+			var desiredFilterMode = FilterMode.Bilinear;
+			var desiredWrapMode = UnityEngine.TextureWrapMode.Repeat;
+
+			if (texture.Sampler != null)
+			{
+				var sampler = texture.Sampler.Value;
+				switch (sampler.MinFilter)
+				{
+					case MinFilterMode.Nearest:
+						desiredFilterMode = FilterMode.Point;
+						break;
+					case MinFilterMode.Linear:
+					default:
+						desiredFilterMode = FilterMode.Bilinear;
+						break;
+				}
+
+				switch (sampler.WrapS)
+				{
+					case GLTF.WrapMode.ClampToEdge:
+						desiredWrapMode = UnityEngine.TextureWrapMode.Clamp;
+						break;
+					case GLTF.WrapMode.Repeat:
+					default:
+						desiredWrapMode = UnityEngine.TextureWrapMode.Repeat;
+						break;
+				}
+			}
+
+			if (source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode)
+			{
+				texture.Contents = source;
+			}
+			else
+			{
+				texture.Contents = UnityEngine.Object.Instantiate(source);
+				texture.Contents.filterMode = desiredFilterMode;
+				texture.Contents.wrapMode = desiredWrapMode;
+			}
+
+			return texture.Contents;
 		}
 
 		private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
@@ -534,13 +580,12 @@ namespace GLTF
 				texture = new Texture2D(0, 0);
 				var bufferView = image.BufferView.Value;
 				var buffer = bufferView.Buffer.Value;
-				var bufferData = _bufferCache[buffer];
 				var data = new byte[bufferView.ByteLength];
-				System.Buffer.BlockCopy(bufferData, bufferView.ByteOffset, data, 0, data.Length);
+				System.Buffer.BlockCopy(buffer.Contents, bufferView.ByteOffset, data, 0, data.Length);
 				texture.LoadImage(data);
 			}
 
-			_imageCache[image] = texture;
+			image.Contents = texture;
 		}
 
 		/// <summary>
@@ -569,7 +614,7 @@ namespace GLTF
 					bufferData = www.downloadHandler.data;
 				}
 
-				_bufferCache[buffer] = bufferData;
+				buffer.Contents = bufferData;
 			}
 		}
 	}

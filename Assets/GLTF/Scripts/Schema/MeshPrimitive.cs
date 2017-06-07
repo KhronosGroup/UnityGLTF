@@ -48,21 +48,19 @@ namespace GLTF
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
-		public MeshPrimitiveAttributes BuildMeshAttributes(Dictionary<Buffer, byte[]> bufferCache)
+		public MeshPrimitiveAttributes BuildMeshAttributes()
 		{
 			var attributes = new MeshPrimitiveAttributes();
 
 			if (Attributes.ContainsKey(SemanticProperties.POSITION))
 			{
 				var accessor = Attributes[SemanticProperties.POSITION].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Vertices = accessor.AsVector3Array(bufferData);
+				attributes.Vertices = accessor.AsVector3Array();
 			}
 
 			if (Indices != null) {
 				var accessor = Indices.Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				var unflippedTriangles = accessor.AsIntArray(bufferData);
+				var unflippedTriangles = accessor.AsIntArray();
 				var triangles = new int[unflippedTriangles.Length];
 				for (int i = 0; i < unflippedTriangles.Length; i += 3)
 				{
@@ -87,44 +85,37 @@ namespace GLTF
 			if (Attributes.ContainsKey(SemanticProperties.NORMAL))
 			{
 				var accessor = Attributes[SemanticProperties.NORMAL].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Normals = accessor.AsVector3Array(bufferData);
+				attributes.Normals = accessor.AsVector3Array();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(0)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(0)].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Uv = accessor.AsVector2Array(bufferData);
+				attributes.Uv = accessor.AsVector2Array();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(1)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(1)].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Uv2 = accessor.AsVector2Array(bufferData);
+				attributes.Uv2 = accessor.AsVector2Array();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(2)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(2)].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Uv3 = accessor.AsVector2Array(bufferData);
+				attributes.Uv3 = accessor.AsVector2Array();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(3)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(3)].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Uv4 = accessor.AsVector2Array(bufferData);
+				attributes.Uv4 = accessor.AsVector2Array();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.Color(0)))
 			{
 				var accessor = Attributes[SemanticProperties.Color(0)].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Colors = accessor.AsColorArray(bufferData);
+				attributes.Colors = accessor.AsVector4Array();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TANGENT))
 			{
 				var accessor = Attributes[SemanticProperties.TANGENT].Value;
-				var bufferData = bufferCache[accessor.BufferView.Value.Buffer.Value];
-				attributes.Tangents = accessor.AsVector4Array(bufferData);
+				attributes.Tangents = accessor.AsVector4Array();
 			}
 
 			return attributes;
