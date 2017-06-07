@@ -89,4 +89,62 @@ fixed4 gltfFragFunc(v2f i) : SV_Target
 
 	return mainColor * fixed4(occlusion.rgb, 1.0) + fixed4(emission.rgb, 0.0);
 }
+
+struct vertInUnlit
+{
+	float4 vertex : POSITION;
+	float2 uv : TEXCOORD0;
+	fixed4 color : COLOR;
+};
+
+struct v2fUnlit
+{
+	float4 pos : SV_POSITION;
+	float2 uv : TEXCOORD0;
+#ifdef VERTEX_COLOR_ON
+	fixed4 vertColor : COLOR;
+#endif
+	UNITY_FOG_COORDS(4)
+};
+
+v2fUnlit gltfVertexUnlit(vertInUnlit v)
+{
+	v2fUnlit o;
+	o.pos = UnityObjectToClipPos(v.vertex);
+	o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
+
+	UNITY_TRANSFER_FOG(o, o.pos);
+
+#ifdef VERTEX_COLOR_ON
+	o.vertColor = v.color;
+#endif
+
+	return o;
+}
+
+fixed4 gltfFragUnlit(v2fUnlit i) : SV_Target
+{
+#ifdef VERTEX_COLOR_ON
+	half4 mainColor = tex2D(_MainTex, i.uv) * _Color * i.vertColor;
+#else
+	half4 mainColor = tex2D(_MainTex, i.uv) * _Color;
+#endif
+
+	UNITY_APPLY_FOG(i.fogCoord, mainColor);
+
+#ifdef _ALPHATEST_ON
+	clip(mainColor.a - _Cutoff);
+#endif
+
+#ifdef OCC_METAL_ROUGH_ON
+	fixed4 occlusion = tex2D(_MetallicRoughnessMap, i.uv).r * _OcclusionStrength;
+#else
+	fixed4 occlusion = tex2D(_OcclusionMap, i.uv).r * _OcclusionStrength;
+#endif
+
+	fixed4 emission = tex2D(_EmissionMap, i.uv) * _EmissionColor;
+
+	return mainColor * fixed4(occlusion.rgb, 1.0) + fixed4(emission.rgb, 0.0);
+}
+
 #endif

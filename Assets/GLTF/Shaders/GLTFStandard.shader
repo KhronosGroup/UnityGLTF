@@ -182,4 +182,37 @@ Shader "GLTF/GLTFStandard" {
 			ENDCG
 		}
 	}
+
+	SubShader
+	{
+		Tags{ "RenderType" = "Opaque" "Queue" = "Geometry" "PerformanceChecks" = "False" }
+
+		Cull[_Cull]
+		Blend[_SrcBlend][_DstBlend]
+		ZWrite[_ZWrite]
+		LOD 50
+
+		Pass
+		{
+			Name "ForwardBaseUnlit"
+			Tags{ "LightMode" = "ForwardBase" }
+
+			CGPROGRAM
+			// unlit 
+			#pragma target 2.0
+			// Vertex Colors
+			#pragma multi_compile _ VERTEX_COLOR_ON
+			// Occlusion packed in red channel of MetallicRoughnessMap
+			#pragma multi_compile _ OCC_METAL_ROUGH_ON
+			#pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+			#pragma multi_compile_fwdbase
+			#pragma multi_compile_fog
+			#include "GLTFVertexLitCommon.cginc"
+
+			#pragma vertex gltfVertexUnlit
+			#pragma fragment gltfFragUnlit
+
+			ENDCG
+		}
+	}
 }
