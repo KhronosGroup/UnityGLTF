@@ -110,7 +110,7 @@ namespace GLTF
 			if (Attributes.ContainsKey(SemanticProperties.Color(0)))
 			{
 				var accessor = Attributes[SemanticProperties.Color(0)].Value;
-				attributes.Colors = accessor.AsVector4Array();
+				attributes.Colors = accessor.AsColorArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TANGENT))
 			{

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using GLTF.JsonExtensions;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -203,6 +202,8 @@ namespace GLTF
 
 		public int[] AsIntArray()
 		{
+			if (Contents.AsInts != null) return Contents.AsInts;
+
 			var arr = new int[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			var stride = 0;
@@ -292,12 +293,14 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
-			Contents.ints = arr;
+			Contents.AsInts = arr;
 			return arr;
 		}
 
 		public Vector2[] AsVector2Array()
 		{
+			if (Contents.AsVec2s != null) return Contents.AsVec2s;
+
 			var arr = new Vector2[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			var stride = 0;
@@ -380,12 +383,14 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
-			Contents.vec2s = arr;
+			Contents.AsVec2s = arr;
 			return arr;
 		}
 
 		public Vector3[] AsVector3Array()
 		{
+			if (Contents.AsVec3s != null) return Contents.AsVec3s;
+
 			var arr = new Vector3[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			int stride;
@@ -475,12 +480,14 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
-			Contents.vec3s = arr;
+			Contents.AsVec3s = arr;
 			return arr;
 		}
 
 		public Vector4[] AsVector4Array()
 		{
+			if (Contents.AsVec4s != null) return Contents.AsVec4s;
+
 			var arr = new Vector4[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			int stride;
@@ -566,12 +573,14 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
-			Contents.vec4s = arr;
+			Contents.AsVec4s = arr;
 			return arr;
 		}
 
 		public Color[] AsColorArray()
 		{
+			if (Contents.AsColors != null) return Contents.AsColors;
+
 			var arr = new Color[Count];
 			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
 			int stride;
@@ -657,7 +666,7 @@ namespace GLTF
 					throw new Exception("Unsupported component type.");
 			}
 
-			Contents.colors = arr;
+			Contents.AsColors = arr;
 			return arr;
 		}
 	}
@@ -683,13 +692,12 @@ namespace GLTF
 		MAT4
 	}
 
-	[StructLayout(LayoutKind.Explicit)]
 	public struct NumericArray
 	{
-		[FieldOffset(0)] public int[] ints;
-		[FieldOffset(0)] public Vector2[] vec2s;
-		[FieldOffset(0)] public Vector3[] vec3s;
-		[FieldOffset(0)] public Vector4[] vec4s;
-		[FieldOffset(0)] public Color[] colors;
+		public int[] AsInts;
+		public Vector2[] AsVec2s;
+		public Vector3[] AsVec3s;
+		public Vector4[] AsVec4s;
+		public Color[] AsColors;
 	}
 }
