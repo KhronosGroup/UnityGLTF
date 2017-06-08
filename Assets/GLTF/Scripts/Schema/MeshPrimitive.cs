@@ -48,83 +48,73 @@ namespace GLTF
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
-		public MeshPrimitiveAttributes BuildMeshAttributes()
+		public void BuildMeshAttributes()
 		{
-			var attributes = new MeshPrimitiveAttributes();
-
 			if (Attributes.ContainsKey(SemanticProperties.POSITION))
 			{
 				var accessor = Attributes[SemanticProperties.POSITION].Value;
-				attributes.Vertices = accessor.AsVector3Array();
+				accessor.AsVertexArray();
 			}
 
 			if (Indices != null) {
 				var accessor = Indices.Value;
-				var unflippedTriangles = accessor.AsIntArray();
-				var triangles = new int[unflippedTriangles.Length];
-				for (int i = 0; i < unflippedTriangles.Length; i += 3)
-				{
-					triangles[i + 2] = unflippedTriangles[i];
-					triangles[i + 1] = unflippedTriangles[i + 1];
-					triangles[i] = unflippedTriangles[i + 2];
-				}
-				attributes.Triangles = triangles;
-			}
-			else
-			{
-				var triangles = new int[attributes.Vertices.Length];
-				for (int i = 0; i < triangles.Length; i += 3)
-				{
-					triangles[i + 2] = i;
-					triangles[i + 1] = i + 1;
-					triangles[i] = i + 2;
-				}
-				attributes.Triangles = triangles;
+				accessor.AsTriangles();
 			}
 
 			if (Attributes.ContainsKey(SemanticProperties.NORMAL))
 			{
 				var accessor = Attributes[SemanticProperties.NORMAL].Value;
-				attributes.Normals = accessor.AsVector3Array();
+				accessor.AsNormalArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(0)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(0)].Value;
-				attributes.Uv = accessor.AsVector2Array();
+				accessor.AsTexcoordArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(1)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(1)].Value;
-				attributes.Uv2 = accessor.AsVector2Array();
+				accessor.AsTexcoordArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(2)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(2)].Value;
-				attributes.Uv3 = accessor.AsVector2Array();
+				accessor.AsTexcoordArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TexCoord(3)))
 			{
 				var accessor = Attributes[SemanticProperties.TexCoord(3)].Value;
-				attributes.Uv4 = accessor.AsVector2Array();
+				accessor.AsTexcoordArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.Color(0)))
 			{
 				var accessor = Attributes[SemanticProperties.Color(0)].Value;
-				attributes.Colors = accessor.AsColorArray();
+				accessor.AsColorArray();
 			}
 			if (Attributes.ContainsKey(SemanticProperties.TANGENT))
 			{
 				var accessor = Attributes[SemanticProperties.TANGENT].Value;
-				attributes.Tangents = accessor.AsVector4Array();
+				accessor.AsTangentArray();
+			}
+		}
+
+		public static int[] GenerateTriangles(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount; i+=3)
+			{
+				arr[i] = i + 2;
+				arr[i + 1] = i + 1;
+				arr[i + 2] = i;
 			}
 
-			return attributes;
+			return arr;
 		}
 
 		// Taken from: http://answers.unity3d.com/comments/190515/view.html
 		// Official support for Mesh.RecalculateTangents should be coming in 5.6
 		// https://feedback.unity3d.com/suggestions/recalculatetangents
-		private MeshPrimitiveAttributes CalculateAndSetTangents(MeshPrimitiveAttributes attributes)
+		/*private MeshPrimitiveAttributes CalculateAndSetTangents(MeshPrimitiveAttributes attributes)
 		{
 			var triangleCount = attributes.Triangles.Length;
 			var vertexCount = attributes.Vertices.Length;
@@ -190,7 +180,7 @@ namespace GLTF
 			}
 
 			return attributes;
-		}
+		}*/
 
 		public static MeshPrimitive Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -290,19 +280,6 @@ namespace GLTF
 
 			writer.WriteEndObject();
 		}
-	}
-
-	public struct MeshPrimitiveAttributes
-	{
-		public Vector3[] Vertices;
-		public Vector3[] Normals;
-		public Vector2[] Uv;
-		public Vector2[] Uv2;
-		public Vector2[] Uv3;
-		public Vector2[] Uv4;
-		public Color[] Colors;
-		public int[] Triangles;
-		public Vector4[] Tangents;
 	}
 
 	public static class SemanticProperties
