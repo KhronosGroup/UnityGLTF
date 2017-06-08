@@ -136,7 +136,7 @@ namespace GLTF
 			_lastLoadedScene = sceneObj;
 		}
 
-		private void ParseGLTF(byte[] gltfData)
+		protected void ParseGLTF(byte[] gltfData)
 		{
 			byte[] glbBuffer;
 			_root = GLTFParser.ParseBinary(gltfData, out glbBuffer);
@@ -147,7 +147,7 @@ namespace GLTF
 			}
 		}
 
-		private void BuildMeshAttributes()
+		protected void BuildMeshAttributes()
 		{
 			foreach (var mesh in _root.Meshes)
 			{
@@ -158,7 +158,7 @@ namespace GLTF
 			}
 		}
 
-		private GameObject CreateScene(Scene scene)
+		protected GameObject CreateScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
 
@@ -171,7 +171,7 @@ namespace GLTF
 			return sceneObj;
 		}
 
-		private GameObject CreateNode(Node node)
+		protected GameObject CreateNode(Node node)
 		{
 			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
 
@@ -210,7 +210,7 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		private GameObject FindOrCreateMeshObject(Mesh mesh)
+		protected GameObject FindOrCreateMeshObject(Mesh mesh)
 		{
 			GameObject meshObj;
 
@@ -226,7 +226,7 @@ namespace GLTF
 			return meshObj;
 		}
 
-		private GameObject CreateMeshObject(Mesh mesh)
+		protected GameObject CreateMeshObject(Mesh mesh)
 		{
 			var meshName = mesh.Name ?? "GLTFMesh";
 			var meshObj = new GameObject(meshName);
@@ -240,7 +240,7 @@ namespace GLTF
 			return meshObj;
 		}
 
-		private GameObject CreateMeshPrimitive(MeshPrimitive primitive)
+		protected GameObject CreateMeshPrimitive(MeshPrimitive primitive)
 		{
 			var primitiveObj = new GameObject("Primitive");
 
@@ -314,7 +314,7 @@ namespace GLTF
 			return primitiveObj;
 		}
 
-		private UnityEngine.Material FindOrCreateMaterial(MaterialCacheKey materialKey)
+		protected UnityEngine.Material FindOrCreateMaterial(MaterialCacheKey materialKey)
 		{
 			UnityEngine.Material material;
 
@@ -330,7 +330,7 @@ namespace GLTF
 			return material;
 		}
 
-		private UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
+		protected UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
 		{
 			Shader shader;
 
@@ -487,7 +487,7 @@ namespace GLTF
 			return material;
 		}
 
-		private Texture2D CreateTexture(Texture texture)
+		protected Texture2D CreateTexture(Texture texture)
 		{
 			if (texture.Contents)
 				return texture.Contents;
@@ -536,21 +536,21 @@ namespace GLTF
 			return texture.Contents;
 		}
 
-		private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
+		protected const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
 
 		/// <summary>
 		///  Get the absolute path to a gltf uri reference.
 		/// </summary>
 		/// <param name="relativePath">The relative path stored in the uri.</param>
 		/// <returns></returns>
-		private string AbsolutePath(string relativePath)
+		protected string AbsolutePath(string relativePath)
 		{
 			var uri = new Uri(_gltfUrl);
 			var partialPath = uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length - 1].Length);
 			return partialPath + relativePath;
 		}
 
-		private IEnumerator LoadImage(Image image)
+		protected IEnumerator LoadImage(Image image)
 		{
 			Texture2D texture;
 
@@ -605,7 +605,7 @@ namespace GLTF
 		/// <summary>
 		/// Load the remote URI data into a byte array.
 		/// </summary>
-		private IEnumerator LoadBuffer(Buffer buffer)
+		protected IEnumerator LoadBuffer(Buffer buffer)
 		{
 			if (buffer.Uri != null)
 			{
