@@ -21,7 +21,7 @@ namespace GLTF
 			CommonLambert
 		}
 
-		private struct MaterialCacheKey
+		protected struct MaterialCacheKey
 		{
 			public Material Material;
 			public bool UseVertexColors;
