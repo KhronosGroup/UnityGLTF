@@ -444,7 +444,7 @@ namespace GLTF
 		{
 			if (Contents.AsColors != null) return Contents.AsColors;
 
-			if (Type != GLTFAccessorAttributeType.VEC3 || Type != GLTFAccessorAttributeType.VEC4)
+			if (Type != GLTFAccessorAttributeType.VEC3 && Type != GLTFAccessorAttributeType.VEC4)
 				return null;
 
 			var arr = new Color[Count];
