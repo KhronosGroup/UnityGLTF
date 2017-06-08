@@ -104,13 +104,10 @@ namespace GLTF
 					}
 				}
 
+				// generate these in advance instead of as-needed
 				if (Multithreaded)
 				{
 					yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
-				}
-				else
-				{
-					BuildMeshAttributes();
 				}
 			}
 
