@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using GLTF.JsonExtensions;
+using UnityEngine;
 
 namespace GLTF
 {
@@ -22,6 +23,8 @@ namespace GLTF
 		/// <minItems>0</minItems>
 		/// </summary>
 		public List<double> Weights;
+
+		public GameObject Contents;
 
 		public static Mesh Deserialize(GLTFRoot root, JsonReader reader)
 		{

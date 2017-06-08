@@ -48,6 +48,8 @@ namespace GLTF
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
+		public UnityEngine.Mesh Contents;
+
 		public void BuildMeshAttributes()
 		{
 			if (Attributes.ContainsKey(SemanticProperties.POSITION))

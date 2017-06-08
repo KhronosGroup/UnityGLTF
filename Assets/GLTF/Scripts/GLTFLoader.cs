@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System;
-using Boo.Lang.Environments;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
 
@@ -36,7 +35,6 @@ namespace GLTF
 		private readonly Transform _sceneParent;
 
 		private readonly Dictionary<MaterialCacheKey, UnityEngine.Material> _materialCache = new Dictionary<MaterialCacheKey, UnityEngine.Material>();
-		private Dictionary<Mesh, GameObject> _meshCache = new Dictionary<Mesh, GameObject>();
 		private readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
 
 		public GLTFLoader(string gltfUrl, Transform parent = null)
@@ -121,10 +119,6 @@ namespace GLTF
 					BuildMeshAttributes();
 				}
 			}
-			else
-			{
-				_meshCache = new Dictionary<Mesh, GameObject>();
-			}
 
 			var sceneObj = CreateScene(scene);
 
@@ -186,8 +180,9 @@ namespace GLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				var meshObj = FindOrCreateMeshObject(node.Mesh.Value);
+				var meshObj = CreateMeshObject(node.Mesh.Value);
 				meshObj.transform.SetParent(nodeObj.transform, false);
+				meshObj.SetActive(true);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -210,34 +205,24 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		protected GameObject FindOrCreateMeshObject(Mesh mesh)
-		{
-			GameObject meshObj;
-
-			if (_meshCache.TryGetValue(mesh, out meshObj))
-			{
-				return GameObject.Instantiate(meshObj);
-			}
-
-			meshObj = CreateMeshObject(mesh);
-
-			_meshCache.Add(mesh, meshObj);
-
-			return meshObj;
-		}
-
 		protected GameObject CreateMeshObject(Mesh mesh)
 		{
-			var meshName = mesh.Name ?? "GLTFMesh";
-			var meshObj = new GameObject(meshName);
-
-			foreach (var primitive in mesh.Primitives)
+			if (mesh.Contents == null)
 			{
-				var primitiveObj = CreateMeshPrimitive(primitive);
-				primitiveObj.transform.SetParent(meshObj.transform, false);
+				var meshName = mesh.Name ?? "GLTFMesh";
+				var meshObj = new GameObject(meshName);
+
+				foreach (var primitive in mesh.Primitives)
+				{
+					var primitiveObj = CreateMeshPrimitive(primitive);
+					primitiveObj.transform.SetParent(meshObj.transform, false);
+				}
+
+				meshObj.SetActive(false);
+				mesh.Contents = meshObj;
 			}
 
-			return meshObj;
+			return GameObject.Instantiate(mesh.Contents);
 		}
 
 		protected GameObject CreateMeshPrimitive(MeshPrimitive primitive)
@@ -247,36 +232,47 @@ namespace GLTF
 			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
-			var mesh = new UnityEngine.Mesh
+			if (primitive.Contents == null)
 			{
-				vertices = primitive.Attributes[SemanticProperties.POSITION].Value.AsVertexArray(),
+				primitive.Contents = new UnityEngine.Mesh
+				{
+					vertices = primitive.Attributes[SemanticProperties.POSITION].Value.AsVertexArray(),
 
-				normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL) ?
-					primitive.Attributes[SemanticProperties.NORMAL].Value.AsNormalArray() : null,
+					normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
+						? primitive.Attributes[SemanticProperties.NORMAL].Value.AsNormalArray()
+						: null,
 
-				uv = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0)) ?
-					primitive.Attributes[SemanticProperties.TexCoord(0)].Value.AsTexcoordArray() : null,
+					uv = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0))
+						? primitive.Attributes[SemanticProperties.TexCoord(0)].Value.AsTexcoordArray()
+						: null,
 
-				uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(1)) ?
-					primitive.Attributes[SemanticProperties.TexCoord(1)].Value.AsTexcoordArray() : null,
+					uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(1))
+						? primitive.Attributes[SemanticProperties.TexCoord(1)].Value.AsTexcoordArray()
+						: null,
 
-				uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(2)) ?
-					primitive.Attributes[SemanticProperties.TexCoord(2)].Value.AsTexcoordArray() : null,
+					uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(2))
+						? primitive.Attributes[SemanticProperties.TexCoord(2)].Value.AsTexcoordArray()
+						: null,
 
-				uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(3)) ?
-					primitive.Attributes[SemanticProperties.TexCoord(3)].Value.AsTexcoordArray() : null,
+					uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(3))
+						? primitive.Attributes[SemanticProperties.TexCoord(3)].Value.AsTexcoordArray()
+						: null,
 
-				colors = primitive.Attributes.ContainsKey(SemanticProperties.Color(0)) ?
-					primitive.Attributes[SemanticProperties.Color(0)].Value.AsColorArray() : null,
+					colors = primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
+						? primitive.Attributes[SemanticProperties.Color(0)].Value.AsColorArray()
+						: null,
 
-				triangles = primitive.Indices != null ?
-					primitive.Indices.Value.AsTriangles() : MeshPrimitive.GenerateTriangles(vertexCount),
+					triangles = primitive.Indices != null
+						? primitive.Indices.Value.AsTriangles()
+						: MeshPrimitive.GenerateTriangles(vertexCount),
 
-				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT) ?
-					primitive.Attributes[SemanticProperties.TANGENT].Value.AsTangentArray() : null
-			};
+					tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
+						? primitive.Attributes[SemanticProperties.TANGENT].Value.AsTangentArray()
+						: null
+				};
+			}
 
-			meshFilter.mesh = mesh;
+			meshFilter.sharedMesh = primitive.Contents;
 
 			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
@@ -286,7 +282,7 @@ namespace GLTF
 			{
 				var materialCacheKey = new MaterialCacheKey {
 					Material = primitive.Material.Value,
-					UseVertexColors = mesh.colors != null
+					UseVertexColors = primitive.Contents.colors != null
 				};
 
 				try
@@ -304,7 +300,7 @@ namespace GLTF
 			{
 				var materialCacheKey = new MaterialCacheKey {
 					Material = new Material(),
-					UseVertexColors = mesh.colors != null
+					UseVertexColors = primitive.Contents.colors != null
 				};
 				material = FindOrCreateMaterial(materialCacheKey);
 			}
