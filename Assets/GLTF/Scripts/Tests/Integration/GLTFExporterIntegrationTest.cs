@@ -6,7 +6,7 @@ using GLTF;
 public class GLTFExporterIntegrationTest : MonoBehaviour {
 
 	void Start () {
-		var exporter = new GLTFExporter(transform);
+		var exporter = new GLTFExporter(new [] {transform});
 		var root = exporter.GetRoot();
 
 		var scene = root.GetDefaultScene();
