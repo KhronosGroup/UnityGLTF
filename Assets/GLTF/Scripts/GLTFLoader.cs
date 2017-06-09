@@ -46,12 +46,12 @@ namespace GLTF
 			}
 		}
 
-		public void SetShaderForMaterialType(MaterialType type, Shader shader)
+		public virtual void SetShaderForMaterialType(MaterialType type, Shader shader)
 		{
 			_shaderCache.Add(type, shader);
 		}
 
-		public IEnumerator Load(int sceneIndex = -1)
+		public virtual IEnumerator Load(int sceneIndex = -1)
 		{
 			if (_root == null)
 			{
@@ -121,7 +121,7 @@ namespace GLTF
 			_lastLoadedScene = sceneObj;
 		}
 
-		protected void ParseGLTF(byte[] gltfData)
+		protected virtual void ParseGLTF(byte[] gltfData)
 		{
 			byte[] glbBuffer;
 			_root = GLTFParser.ParseBinary(gltfData, out glbBuffer);
@@ -132,7 +132,7 @@ namespace GLTF
 			}
 		}
 
-		protected void BuildMeshAttributes()
+		protected virtual void BuildMeshAttributes()
 		{
 			foreach (var mesh in _root.Meshes)
 			{
@@ -143,7 +143,7 @@ namespace GLTF
 			}
 		}
 
-		protected GameObject CreateScene(Scene scene)
+		protected virtual GameObject CreateScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
 
@@ -156,7 +156,7 @@ namespace GLTF
 			return sceneObj;
 		}
 
-		protected GameObject CreateNode(Node node)
+		protected virtual GameObject CreateNode(Node node)
 		{
 			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
 
@@ -196,7 +196,7 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		protected GameObject CreateMeshObject(Mesh mesh)
+		protected virtual GameObject CreateMeshObject(Mesh mesh)
 		{
 			if (mesh.Contents == null)
 			{
@@ -216,7 +216,7 @@ namespace GLTF
 			return GameObject.Instantiate(mesh.Contents);
 		}
 
-		protected GameObject CreateMeshPrimitive(MeshPrimitive primitive)
+		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive)
 		{
 			var primitiveObj = new GameObject("Primitive");
 
@@ -276,7 +276,7 @@ namespace GLTF
 			return primitiveObj;
 		}
 
-		protected UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
+		protected virtual UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
 		{
 			if (def.ContentsWithVC == null || def.ContentsWithoutVC == null)
 			{
@@ -429,7 +429,7 @@ namespace GLTF
 			return def.GetContents(useVertexColors);
 		}
 
-		protected Texture2D CreateTexture(Texture texture)
+		protected virtual Texture2D CreateTexture(Texture texture)
 		{
 			if (texture.Contents)
 				return texture.Contents;
@@ -485,14 +485,14 @@ namespace GLTF
 		/// </summary>
 		/// <param name="relativePath">The relative path stored in the uri.</param>
 		/// <returns></returns>
-		protected string AbsolutePath(string relativePath)
+		protected virtual string AbsolutePath(string relativePath)
 		{
 			var uri = new Uri(_gltfUrl);
 			var partialPath = uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length - 1].Length);
 			return partialPath + relativePath;
 		}
 
-		protected IEnumerator LoadImage(Image image)
+		protected virtual IEnumerator LoadImage(Image image)
 		{
 			Texture2D texture;
 
@@ -547,7 +547,7 @@ namespace GLTF
 		/// <summary>
 		/// Load the remote URI data into a byte array.
 		/// </summary>
-		protected IEnumerator LoadBuffer(Buffer buffer)
+		protected virtual IEnumerator LoadBuffer(Buffer buffer)
 		{
 			if (buffer.Uri != null)
 			{
@@ -571,6 +571,14 @@ namespace GLTF
 				}
 
 				buffer.Contents = bufferData;
+			}
+		}
+
+		public virtual void Dispose()
+		{
+			foreach (var mesh in _root.Meshes)
+			{
+				GameObject.Destroy(mesh.Contents);
 			}
 		}
 	}
