@@ -14,6 +14,7 @@ namespace GLTF
 		private Buffer _buffer;
 		private BinaryWriter _bufferWriter;
 		private List<Texture2D> _images;
+		private readonly Dictionary<UnityEngine.Mesh, MeshId> _primOwner = new Dictionary<UnityEngine.Mesh, MeshId>();
 
 		public bool ExportNames = true;
 
@@ -140,7 +141,15 @@ namespace GLTF
 			FilterPrimitives(nodeTransform, out primitives, out nonPrimitives);
 			if (primitives.Length > 0)
 			{
-				node.Mesh = ExportMesh(primitives);
+				node.Mesh = ExportMesh(nodeTransform.name, primitives);
+
+				// associate unity meshes with gltf mesh id
+				foreach (var prim in primitives)
+				{
+					var filter = prim.GetComponent<MeshFilter>();
+					var meshObj = filter.sharedMesh;
+					_primOwner[meshObj] = node.Mesh;
+				}
 			}
 
 			// children that are not primitives get added as child nodes
@@ -159,8 +168,15 @@ namespace GLTF
 		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
 		{
 			var childCount = transform.childCount;
-			var prims = new List<GameObject>(childCount);
+			var prims = new List<GameObject>(childCount+1);
 			var nonPrims = new List<GameObject>(childCount);
+
+			// add another primitive if the root object also has a mesh
+			if (transform.gameObject.GetComponent<MeshFilter>() != null
+				&& transform.gameObject.GetComponent<MeshRenderer>() != null)
+			{
+				prims.Add(transform.gameObject);
+			}
 
 			for (var i = 0; i < childCount; i++)
 			{
@@ -175,7 +191,7 @@ namespace GLTF
 			nonPrimitives = nonPrims.ToArray();
 		}
 
-		private bool IsPrimitive(GameObject gameObject)
+		private static bool IsPrimitive(GameObject gameObject)
 		{
 			/*
 			 * Primitives have the following properties:
@@ -191,17 +207,132 @@ namespace GLTF
 				&& gameObject.GetComponent<MeshRenderer>() != null;
 		}
 
-		private MeshId ExportMesh(GameObject[] primitives)
+		private MeshId ExportMesh(string name, GameObject[] primitives)
 		{
 			// check if this set of primitives is already a mesh
+			MeshId existingMeshId = null;
+			foreach (var prim in primitives)
+			{
+				var filter = prim.GetComponent<MeshFilter>();
+				var meshObj = filter.sharedMesh;
+				MeshId tempMeshId;
+				if (_primOwner.TryGetValue(meshObj, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
+				{
+					existingMeshId = tempMeshId;
+				}
+				else
+				{
+					existingMeshId = null;
+					break;
+				}
+			}
+
 			// if so, return that mesh id
+			if(existingMeshId != null)
+				return existingMeshId;
 
 			// if not, create new mesh and return its id
+			var mesh = new Mesh();
+
+			if (ExportNames)
+			{
+				mesh.Name = name;
+			}
+
+			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
+			foreach (var prim in primitives)
+			{
+				mesh.Primitives.AddRange(ExportPrimitive(prim));
+			}
+
+			var id = new MeshId
+			{
+				Id = _root.Meshes.Count,
+				Root = _root
+			};
+			_root.Meshes.Add(mesh);
+
+			return id;
 		}
 
-		private MeshPrimitive[] ExportPrimitives(GameObject gameObject)
+		// a mesh *might* decode to multiple prims if there are submeshes
+		private MeshPrimitive[] ExportPrimitive(GameObject gameObject)
 		{
+			var filter = gameObject.GetComponent<MeshFilter>();
+			var meshObj = filter.sharedMesh;
 
+			var renderer = gameObject.GetComponent<MeshRenderer>();
+			var materialsObj = renderer.sharedMaterials;
+
+			var prims = new MeshPrimitive[meshObj.subMeshCount];
+			AccessorId aPosition = null, aNormal = null, aTangent = null,
+				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
+
+			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
+
+			if (meshObj.normals.Length != 0)
+			{
+				aNormal = ExportAccessor(InvertZ(meshObj.normals));
+			}
+
+			if (meshObj.tangents.Length != 0)
+			{
+				aTangent = ExportAccessor(InvertW(meshObj.tangents));
+			}
+
+			if (meshObj.uv.Length != 0)
+			{
+				aTexcoord0 = ExportAccessor(InvertY(meshObj.uv));
+			}
+
+			if (meshObj.uv2.Length != 0)
+			{
+				aTexcoord1 = ExportAccessor(InvertY(meshObj.uv2));
+			}
+
+			if (meshObj.colors.Length != 0)
+			{
+				aColor0 = ExportAccessor(meshObj.colors);
+			}
+
+			MaterialId lastMaterialId = null;
+
+			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
+			{
+				var primitive = new MeshPrimitive();
+				primitive.Contents = meshObj;
+
+				var triangles = meshObj.GetTriangles(submesh);
+				primitive.Indices = ExportAccessor(FlipFaces(triangles));
+
+				primitive.Attributes = new Dictionary<string, AccessorId>();
+				primitive.Attributes.Add("POSITION", aPosition);
+
+				if (aNormal != null)
+					primitive.Attributes.Add("NORMAL", aNormal);
+				if (aTangent != null)
+					primitive.Attributes.Add("TANGENT", aTangent);
+				if (aTexcoord0 != null)
+					primitive.Attributes.Add("TEXCOORD_0", aTexcoord0);
+				if (aTexcoord1 != null)
+					primitive.Attributes.Add("TEXCOORD_1", aTexcoord1);
+				if (aColor0 != null)
+					primitive.Attributes.Add("COLOR_0", aColor0);
+
+				if (submesh < materialsObj.Length)
+				{
+					primitive.Material = ExportMaterial(materialsObj[submesh]);
+					lastMaterialId = primitive.Material;
+				}
+				else
+				{
+					primitive.Material = lastMaterialId;
+				}
+
+				prims[submesh] = primitive;
+			}
+
+			return prims;
 		}
 
 		/*private MeshId ExportMesh(UnityEngine.Mesh meshObj, UnityEngine.Material[] materialsObj)
