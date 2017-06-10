@@ -21,6 +21,7 @@ namespace GLTF
 			public UnityEngine.Material Material;
 		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
+		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
 
 		public bool ExportNames = true;
 
@@ -275,35 +276,40 @@ namespace GLTF
 			var materialsObj = renderer.sharedMaterials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
+
+			// don't export any more accessors if this mesh is already exported
+			MeshPrimitive[] primVariations;
+			if (_meshToPrims.TryGetValue(meshObj, out primVariations)
+				&& meshObj.subMeshCount == primVariations.Length)
+			{
+				for (var i = 0; i < primVariations.Length; i++)
+				{
+					prims[i] = primVariations[i].Clone();
+					prims[i].Material = ExportMaterial(materialsObj[i]);
+				}
+
+				return prims;
+			}
+
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
 				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
 			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
 
 			if (meshObj.normals.Length != 0)
-			{
 				aNormal = ExportAccessor(InvertZ(meshObj.normals));
-			}
 
 			if (meshObj.tangents.Length != 0)
-			{
 				aTangent = ExportAccessor(InvertW(meshObj.tangents));
-			}
 
 			if (meshObj.uv.Length != 0)
-			{
 				aTexcoord0 = ExportAccessor(InvertY(meshObj.uv));
-			}
 
 			if (meshObj.uv2.Length != 0)
-			{
 				aTexcoord1 = ExportAccessor(InvertY(meshObj.uv2));
-			}
 
 			if (meshObj.colors.Length != 0)
-			{
 				aColor0 = ExportAccessor(meshObj.colors);
-			}
 
 			MaterialId lastMaterialId = null;
 
@@ -316,18 +322,18 @@ namespace GLTF
 				primitive.Indices = ExportAccessor(FlipFaces(triangles));
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
-				primitive.Attributes.Add("POSITION", aPosition);
+				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
 
 				if (aNormal != null)
-					primitive.Attributes.Add("NORMAL", aNormal);
+					primitive.Attributes.Add(SemanticProperties.NORMAL, aNormal);
 				if (aTangent != null)
-					primitive.Attributes.Add("TANGENT", aTangent);
+					primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
 				if (aTexcoord0 != null)
-					primitive.Attributes.Add("TEXCOORD_0", aTexcoord0);
+					primitive.Attributes.Add(SemanticProperties.TexCoord(0), aTexcoord0);
 				if (aTexcoord1 != null)
-					primitive.Attributes.Add("TEXCOORD_1", aTexcoord1);
+					primitive.Attributes.Add(SemanticProperties.TexCoord(1), aTexcoord1);
 				if (aColor0 != null)
-					primitive.Attributes.Add("COLOR_0", aColor0);
+					primitive.Attributes.Add(SemanticProperties.Color(0), aColor0);
 
 				if (submesh < materialsObj.Length)
 				{
@@ -341,6 +347,8 @@ namespace GLTF
 
 				prims[submesh] = primitive;
 			}
+
+			_meshToPrims[meshObj] = prims;
 
 			return prims;
 		}

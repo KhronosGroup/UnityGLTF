@@ -113,6 +113,19 @@ namespace GLTF
 			return arr;
 		}
 
+		public MeshPrimitive Clone()
+		{
+			return new MeshPrimitive
+			{
+				Attributes = Attributes,
+				Indices = Indices,
+				Material = Material,
+				Mode = Mode,
+				Targets = Targets,
+				Contents = Contents
+			};
+		}
+
 		// Taken from: http://answers.unity3d.com/comments/190515/view.html
 		// Official support for Mesh.RecalculateTangents should be coming in 5.6
 		// https://feedback.unity3d.com/suggestions/recalculatetangents
