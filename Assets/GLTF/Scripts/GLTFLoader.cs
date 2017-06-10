@@ -171,9 +171,7 @@ namespace GLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				var meshObj = CreateMeshObject(node.Mesh.Value);
-				meshObj.transform.SetParent(nodeObj.transform, false);
-				meshObj.SetActive(true);
+				CreateMeshObject(node.Mesh.Value, nodeObj.transform);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -196,24 +194,14 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		protected virtual GameObject CreateMeshObject(Mesh mesh)
+		protected virtual void CreateMeshObject(Mesh mesh, Transform parent)
 		{
-			if (mesh.Contents == null)
+			foreach (var primitive in mesh.Primitives)
 			{
-				var meshName = mesh.Name ?? "GLTFMesh";
-				var meshObj = new GameObject(meshName);
-
-				foreach (var primitive in mesh.Primitives)
-				{
-					var primitiveObj = CreateMeshPrimitive(primitive);
-					primitiveObj.transform.SetParent(meshObj.transform, false);
-				}
-
-				meshObj.SetActive(false);
-				mesh.Contents = meshObj;
+				var primitiveObj = CreateMeshPrimitive(primitive);
+				primitiveObj.transform.SetParent(parent, false);
+				primitiveObj.SetActive(true);
 			}
-
-			return GameObject.Instantiate(mesh.Contents);
 		}
 
 		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive)
@@ -578,7 +566,10 @@ namespace GLTF
 		{
 			foreach (var mesh in _root.Meshes)
 			{
-				GameObject.Destroy(mesh.Contents);
+				foreach (var prim in mesh.Primitives)
+				{
+					GameObject.Destroy(prim.Contents);
+				}
 			}
 		}
 	}

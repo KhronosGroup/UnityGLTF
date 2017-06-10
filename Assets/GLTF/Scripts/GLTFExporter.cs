@@ -14,7 +14,13 @@ namespace GLTF
 		private Buffer _buffer;
 		private BinaryWriter _bufferWriter;
 		private List<Texture2D> _images;
-		private readonly Dictionary<UnityEngine.Mesh, MeshId> _primOwner = new Dictionary<UnityEngine.Mesh, MeshId>();
+
+		protected struct PrimKey
+		{
+			public UnityEngine.Mesh Mesh;
+			public UnityEngine.Material Material;
+		}
+		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 
 		public bool ExportNames = true;
 
@@ -147,8 +153,8 @@ namespace GLTF
 				foreach (var prim in primitives)
 				{
 					var filter = prim.GetComponent<MeshFilter>();
-					var meshObj = filter.sharedMesh;
-					_primOwner[meshObj] = node.Mesh;
+					var renderer = prim.GetComponent<MeshRenderer>();
+					_primOwner[new PrimKey {Mesh = filter.sharedMesh, Material = renderer.sharedMaterial}] = node.Mesh;
 				}
 			}
 
@@ -211,12 +217,16 @@ namespace GLTF
 		{
 			// check if this set of primitives is already a mesh
 			MeshId existingMeshId = null;
+			var key = new PrimKey();
 			foreach (var prim in primitives)
 			{
 				var filter = prim.GetComponent<MeshFilter>();
-				var meshObj = filter.sharedMesh;
+				var renderer = prim.GetComponent<MeshRenderer>();
+				key.Mesh = filter.sharedMesh;
+				key.Material = renderer.sharedMaterial;
+
 				MeshId tempMeshId;
-				if (_primOwner.TryGetValue(meshObj, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
+				if (_primOwner.TryGetValue(key, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
 				{
 					existingMeshId = tempMeshId;
 				}
@@ -334,90 +344,6 @@ namespace GLTF
 
 			return prims;
 		}
-
-		/*private MeshId ExportMesh(UnityEngine.Mesh meshObj, UnityEngine.Material[] materialsObj)
-		{
-			var mesh = new Mesh();
-
-			if (ExportNames)
-			{
-				mesh.Name = meshObj.name;
-			}
-
-			AccessorId aPosition = null, aNormal = null, aTangent = null,
-				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
-
-			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
-
-			if (meshObj.normals.Length != 0)
-			{
-				aNormal = ExportAccessor(InvertZ(meshObj.normals));
-			}
-
-			if (meshObj.tangents.Length != 0)
-			{
-				aTangent = ExportAccessor(InvertW(meshObj.tangents));
-			}
-
-			if (meshObj.uv.Length != 0)
-			{
-				aTexcoord0 = ExportAccessor(InvertY(meshObj.uv));
-			}
-
-			if (meshObj.uv2.Length != 0)
-			{
-				aTexcoord1 = ExportAccessor(InvertY(meshObj.uv2));
-			}
-
-			if (meshObj.colors.Length != 0)
-			{
-				aColor0 = ExportAccessor(meshObj.colors);
-			}
-
-			mesh.Primitives = new List<MeshPrimitive>();
-			MaterialId lastMaterialId = null;
-
-			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
-			{
-				var primitive = new MeshPrimitive();
-				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(FlipFaces(triangles));
-
-				primitive.Attributes = new Dictionary<string, AccessorId>();
-				primitive.Attributes.Add("POSITION", aPosition);
-
-				if (aNormal != null)
-					primitive.Attributes.Add("NORMAL", aNormal);
-				if (aTangent != null)
-					primitive.Attributes.Add("TANGENT", aTangent);
-				if (aTexcoord0 != null)
-					primitive.Attributes.Add("TEXCOORD_0", aTexcoord0);
-				if (aTexcoord1 != null)
-					primitive.Attributes.Add("TEXCOORD_1", aTexcoord1);
-				if (aColor0 != null)
-					primitive.Attributes.Add("COLOR_0", aColor0);
-
-				if (submesh < materialsObj.Length)
-				{
-					primitive.Material = ExportMaterial(materialsObj[submesh]);
-					lastMaterialId = primitive.Material;
-				}
-				else
-				{
-					primitive.Material = lastMaterialId;
-				}
-
-				mesh.Primitives.Add(primitive);
-			}
-
-			var id = new MeshId {
-				Id = _root.Meshes.Count,
-				Root = _root
-			};
-			_root.Meshes.Add(mesh);
-
-			return id;
-		}*/
 
 		private MaterialId ExportMaterial(UnityEngine.Material materialObj)
 		{
@@ -588,7 +514,12 @@ namespace GLTF
 
 		private MaterialCommonConstant ExportCommonConstant(UnityEngine.Material materialObj)
 		{
-			if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>();
+				_root.ExtensionsUsed.Add("KHR_materials_common");
+			}
+			else if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
 				_root.ExtensionsUsed.Add("KHR_materials_common");
 
 			var constant = new MaterialCommonConstant();

@@ -24,8 +24,6 @@ namespace GLTF
 		/// </summary>
 		public List<double> Weights;
 
-		public GameObject Contents;
-
 		public static Mesh Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var mesh = new Mesh();
