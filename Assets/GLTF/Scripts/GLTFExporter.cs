@@ -87,22 +87,6 @@ namespace GLTF
 			}
 		}
 
-		/*public string SerializeGLTF()
-		{
-			var stringWriter = new StringWriter();
-			var writer = new JsonTextWriter(stringWriter);
-
-			var memoryStream = new MemoryStream();
-			_bufferWriter = new BinaryWriter(memoryStream);
-
-			_root.Scene = ExportScene(_rootTransform);
-
-			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
-
-			_root.Serialize(writer);
-			return stringWriter.ToString();
-		}*/
-
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
 			var scene = new Scene();
@@ -355,6 +339,12 @@ namespace GLTF
 
 		private MaterialId ExportMaterial(UnityEngine.Material materialObj)
 		{
+			var id = _root.GetMaterialId(materialObj);
+			if (id != null)
+			{
+				return id;
+			}
+
 			var material = new Material();
 
 			if (ExportNames)
@@ -428,7 +418,9 @@ namespace GLTF
 					break;
 			}
 
-			var id = new MaterialId {
+			material.ContentsWithoutVC = materialObj;
+
+			id = new MaterialId {
 				Id = _root.Materials.Count,
 				Root = _root
 			};
@@ -564,6 +556,12 @@ namespace GLTF
 
 		private TextureId ExportTexture(UnityEngine.Texture textureObj)
 		{
+			TextureId id = _root.GetTextureId(textureObj);
+			if (id != null)
+			{
+				return id;
+			}
+
 			var texture = new Texture();
 
 			if (ExportNames)
@@ -572,8 +570,11 @@ namespace GLTF
 			}
 
 			texture.Source = ExportImage(textureObj);
+			texture.Sampler = ExportSampler(textureObj);
 
-			var id = new TextureId {
+			texture.Contents = textureObj;
+
+			id = new TextureId {
 				Id = _root.Textures.Count,
 				Root = _root
 			};
@@ -585,6 +586,12 @@ namespace GLTF
 
 		private ImageId ExportImage(UnityEngine.Texture texture)
 		{
+			ImageId id = _root.GetImageId(texture);
+			if(id != null)
+			{
+				return id;
+			}
+
 			var image = new Image();
 
 			if (ExportNames)
@@ -595,8 +602,9 @@ namespace GLTF
 			_images.Add(texture as Texture2D);
 
 			image.Uri = Uri.EscapeUriString(texture.name + ".png");
+			image.Contents = texture;
 
-			var id = new ImageId {
+			id = new ImageId {
 				Id = _root.Images.Count,
 				Root = _root
 			};
@@ -604,6 +612,52 @@ namespace GLTF
 			_root.Images.Add(image);
 
 			return id;
+		}
+
+		private SamplerId ExportSampler(UnityEngine.Texture texture)
+		{
+			var samplerId = _root.GetSamplerId(texture);
+			if (samplerId != null)
+				return samplerId;
+
+			var sampler = new Sampler();
+
+			if (texture.wrapMode == TextureWrapMode.Clamp)
+			{
+				sampler.WrapS = WrapMode.ClampToEdge;
+				sampler.WrapT = WrapMode.ClampToEdge;
+			}
+			else
+			{
+				sampler.WrapS = WrapMode.Repeat;
+				sampler.WrapT = WrapMode.Repeat;
+			}
+
+			if(texture.filterMode == FilterMode.Point)
+			{
+				sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
+				sampler.MagFilter = MagFilterMode.Nearest;
+			}
+			else if(texture.filterMode == FilterMode.Bilinear)
+			{
+				sampler.MinFilter = MinFilterMode.NearestMipmapLinear;
+				sampler.MagFilter = MagFilterMode.Linear;
+			}
+			else
+			{
+				sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
+				sampler.MagFilter = MagFilterMode.Linear;
+			}
+
+			samplerId = new SamplerId
+			{
+				Id = _root.Samplers.Count,
+				Root = _root
+			};
+
+			_root.Samplers.Add(sampler);
+
+			return samplerId;
 		}
 
 		private Vector2[] InvertY(Vector2[] arr)

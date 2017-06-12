@@ -27,7 +27,7 @@ namespace GLTF
 		/// </summary>
 		public BufferViewId BufferView;
 
-		public UnityEngine.Texture2D Contents;
+		public UnityEngine.Texture Contents;
 
 		public static Image Deserialize(GLTFRoot root, JsonReader reader)
 		{

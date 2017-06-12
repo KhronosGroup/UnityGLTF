@@ -17,7 +17,7 @@ namespace GLTF
 		/// </summary>
 		public ImageId Source;
 
-		public UnityEngine.Texture2D Contents;
+		public UnityEngine.Texture Contents;
 
 		public static Texture Deserialize(GLTFRoot root, JsonReader reader)
 		{

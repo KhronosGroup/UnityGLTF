@@ -417,7 +417,7 @@ namespace GLTF
 			return def.GetContents(useVertexColors);
 		}
 
-		protected virtual Texture2D CreateTexture(Texture texture)
+		protected virtual UnityEngine.Texture CreateTexture(Texture texture)
 		{
 			if (texture.Contents)
 				return texture.Contents;
