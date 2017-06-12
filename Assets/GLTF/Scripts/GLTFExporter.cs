@@ -39,6 +39,7 @@ namespace GLTF
 				Materials = new List<Material>(),
 				Meshes = new List<Mesh>(),
 				Nodes = new List<Node>(),
+				Samplers = new List<Sampler>(),
 				Scenes = new List<Scene>(),
 				Textures = new List<Texture>(),
 			};
