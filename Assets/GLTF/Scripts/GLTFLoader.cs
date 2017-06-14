@@ -36,6 +36,8 @@ namespace GLTF
 			_gltfUrl = gltfUrl;
 			_sceneParent = parent;
 			asyncAction = new AsyncAction();
+
+			TextureInfo.RegisterExtension(new TextureOffsetTileFactory());
 		}
 
 		public GameObject LastLoadedScene
@@ -350,6 +352,16 @@ namespace GLTF
 					{
 						var texture = pbr.BaseColorTexture.Index.Value;
 						material.SetTexture("_MainTex", CreateTexture(texture));
+
+						Extension temp;
+						if (pbr.BaseColorTexture.Extensions.TryGetValue("AVR_texture_offset_tile", out temp))
+						{
+							var offsetTileData = (TextureOffsetTileExtension) temp;
+							var offset = new Vector2((float)offsetTileData.OffsetS, (float)offsetTileData.OffsetT);
+							var scale = new Vector2((float)offsetTileData.TileS, (float)offsetTileData.TileT);
+							material.SetTextureOffset("_MainTex", offset);
+							material.SetTextureScale("_MainTex", scale);
+						}
 					}
 
 					material.SetFloat("_Metallic", (float) pbr.MetallicFactor);
@@ -358,6 +370,16 @@ namespace GLTF
 					{
 						var texture = pbr.MetallicRoughnessTexture.Index.Value;
 						material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
+
+						Extension temp;
+						if (pbr.MetallicRoughnessTexture.Extensions.TryGetValue("AVR_texture_offset_tile", out temp))
+						{
+							var offsetTileData = (TextureOffsetTileExtension)temp;
+							var offset = new Vector2((float)offsetTileData.OffsetS, (float)offsetTileData.OffsetT);
+							var scale = new Vector2((float)offsetTileData.TileS, (float)offsetTileData.TileT);
+							material.SetTextureOffset("_MetallicRoughnessMap", offset);
+							material.SetTextureScale("_MetallicRoughnessMap", scale);
+						}
 					}
 
 					material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
@@ -384,6 +406,16 @@ namespace GLTF
 					var texture = def.NormalTexture.Index.Value;
 					material.SetTexture("_BumpMap", CreateTexture(texture));
 					material.SetFloat("_BumpScale", (float) def.NormalTexture.Scale);
+
+					Extension temp;
+					if (def.NormalTexture.Extensions.TryGetValue("AVR_texture_offset_tile", out temp))
+					{
+						var offsetTileData = (TextureOffsetTileExtension)temp;
+						var offset = new Vector2((float)offsetTileData.OffsetS, (float)offsetTileData.OffsetT);
+						var scale = new Vector2((float)offsetTileData.TileS, (float)offsetTileData.TileT);
+						material.SetTextureOffset("_BumpMap", offset);
+						material.SetTextureScale("_BumpMap", scale);
+					}
 				}
 
 				if (def.OcclusionTexture != null)
@@ -401,6 +433,15 @@ namespace GLTF
 					else
 					{
 						material.SetTexture("_OcclusionMap", CreateTexture(texture.Value));
+						Extension temp;
+						if (def.OcclusionTexture.Extensions.TryGetValue("AVR_texture_offset_tile", out temp))
+						{
+							var offsetTileData = (TextureOffsetTileExtension)temp;
+							var offset = new Vector2((float)offsetTileData.OffsetS, (float)offsetTileData.OffsetT);
+							var scale = new Vector2((float)offsetTileData.TileS, (float)offsetTileData.TileT);
+							material.SetTextureOffset("_OcclusionMap", offset);
+							material.SetTextureScale("_OcclusionMap", scale);
+						}
 					}
 				}
 
@@ -410,6 +451,16 @@ namespace GLTF
 					material.EnableKeyword("EMISSION_MAP_ON");
 					material.SetTexture("_EmissionMap", CreateTexture(texture));
 					material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
+
+					Extension temp;
+					if (def.EmissiveTexture.Extensions.TryGetValue("AVR_texture_offset_tile", out temp))
+					{
+						var offsetTileData = (TextureOffsetTileExtension)temp;
+						var offset = new Vector2((float)offsetTileData.OffsetS, (float)offsetTileData.OffsetT);
+						var scale = new Vector2((float)offsetTileData.TileS, (float)offsetTileData.TileT);
+						material.SetTextureOffset("_EmissionMap", offset);
+						material.SetTextureScale("_EmissionMap", scale);
+					}
 				}
 
 				material.SetColor("_EmissionColor", def.EmissiveFactor);
