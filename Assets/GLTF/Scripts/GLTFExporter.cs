@@ -8,18 +8,26 @@ namespace GLTF
 {
 	public class GLTFExporter
 	{
-		private Transform _rootTransform;
+		private Transform[] _rootTransforms;
 		private GLTFRoot _root;
 		private BufferId _bufferId;
 		private Buffer _buffer;
 		private BinaryWriter _bufferWriter;
 		private List<Texture2D> _images;
 
+		protected struct PrimKey
+		{
+			public UnityEngine.Mesh Mesh;
+			public UnityEngine.Material Material;
+		}
+		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
+		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
+
 		public bool ExportNames = true;
 
-		public GLTFExporter(Transform rootTransform)
+		public GLTFExporter(Transform[] rootTransforms)
 		{
-			_rootTransform = rootTransform;
+			_rootTransforms = rootTransforms;
 			_root = new GLTFRoot{
 				Accessors = new List<Accessor>(),
 				Asset = new Asset {
@@ -31,6 +39,7 @@ namespace GLTF
 				Materials = new List<Material>(),
 				Meshes = new List<Mesh>(),
 				Nodes = new List<Node>(),
+				Samplers = new List<Sampler>(),
 				Scenes = new List<Scene>(),
 				Textures = new List<Texture>(),
 			};
@@ -54,7 +63,7 @@ namespace GLTF
 			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
 			_bufferWriter = new BinaryWriter(binFile);
 
-			_root.Scene = ExportScene(_rootTransform);
+			_root.Scene = ExportScene(fileName, _rootTransforms);
 
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
@@ -79,33 +88,20 @@ namespace GLTF
 			}
 		}
 
-		public string SerializeGLTF()
-		{
-			var stringWriter = new StringWriter();
-			var writer = new JsonTextWriter(stringWriter);
-
-			var memoryStream = new MemoryStream();
-			_bufferWriter = new BinaryWriter(memoryStream);
-
-			_root.Scene = ExportScene(_rootTransform);
-
-			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
-
-			_root.Serialize(writer);
-			return stringWriter.ToString();
-		}
-
-		private SceneId ExportScene(Transform sceneTransform)
+		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
 			var scene = new Scene();
 
 			if (ExportNames)
 			{
-				scene.Name = sceneTransform.name;
+				scene.Name = name;
 			}
 
-			scene.Nodes = new List<NodeId>(1);
-			scene.Nodes.Add(ExportNode(sceneTransform));
+			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
+			foreach (var transform in rootObjTransforms)
+			{
+				scene.Nodes.Add(ExportNode(transform));
+			}
 
 			_root.Scenes.Add(scene);
 
@@ -126,42 +122,158 @@ namespace GLTF
 
 			node.SetUnityTransform(nodeTransform);
 
-			var meshFilter = nodeTransform.GetComponent<MeshFilter>();
-			var meshRenderer = nodeTransform.GetComponent<MeshRenderer>();
-
-			if (meshFilter != null && meshFilter.sharedMesh != null)
-			{
-				node.Mesh = ExportMesh(meshFilter.sharedMesh, meshRenderer.sharedMaterials);
-			}
-
 			var id = new NodeId {
 				Id = _root.Nodes.Count,
 				Root = _root
 			};
 			_root.Nodes.Add(node);
 
-			var childCount = nodeTransform.childCount;
-
-			if (childCount > 0)
+			// children that are primitives get put in a mesh
+			GameObject[] primitives, nonPrimitives;
+			FilterPrimitives(nodeTransform, out primitives, out nonPrimitives);
+			if (primitives.Length > 0)
 			{
-				node.Children = new List<NodeId>(childCount);
-				for(var i = 0; i < childCount; i++)
+				node.Mesh = ExportMesh(nodeTransform.name, primitives);
+
+				// associate unity meshes with gltf mesh id
+				foreach (var prim in primitives)
 				{
-					var childTransform = nodeTransform.GetChild(i);
-					node.Children.Add(ExportNode(childTransform));
+					var filter = prim.GetComponent<MeshFilter>();
+					var renderer = prim.GetComponent<MeshRenderer>();
+					_primOwner[new PrimKey {Mesh = filter.sharedMesh, Material = renderer.sharedMaterial}] = node.Mesh;
+				}
+			}
+
+			// children that are not primitives get added as child nodes
+			if (nonPrimitives.Length > 0)
+			{
+				node.Children = new List<NodeId>(nonPrimitives.Length);
+				foreach(var child in nonPrimitives)
+				{
+					node.Children.Add(ExportNode(child.transform));
 				}
 			}
 
 			return id;
 		}
 
-		private MeshId ExportMesh(UnityEngine.Mesh meshObj, UnityEngine.Material[] materialsObj)
+		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
 		{
+			var childCount = transform.childCount;
+			var prims = new List<GameObject>(childCount+1);
+			var nonPrims = new List<GameObject>(childCount);
+
+			// add another primitive if the root object also has a mesh
+			if (transform.gameObject.GetComponent<MeshFilter>() != null
+				&& transform.gameObject.GetComponent<MeshRenderer>() != null)
+			{
+				prims.Add(transform.gameObject);
+			}
+
+			for (var i = 0; i < childCount; i++)
+			{
+				var go = transform.GetChild(i).gameObject;
+				if (IsPrimitive(go))
+					prims.Add(go);
+				else
+					nonPrims.Add(go);
+			}
+
+			primitives = prims.ToArray();
+			nonPrimitives = nonPrims.ToArray();
+		}
+
+		private static bool IsPrimitive(GameObject gameObject)
+		{
+			/*
+			 * Primitives have the following properties:
+			 * - have no children
+			 * - have no non-default local transform properties
+			 * - have MeshFilter and MeshRenderer components
+			 */
+			return gameObject.transform.childCount == 0
+				&& gameObject.transform.localPosition == Vector3.zero
+				&& gameObject.transform.localRotation == Quaternion.identity
+				&& gameObject.transform.localScale == Vector3.one
+				&& gameObject.GetComponent<MeshFilter>() != null
+				&& gameObject.GetComponent<MeshRenderer>() != null;
+		}
+
+		private MeshId ExportMesh(string name, GameObject[] primitives)
+		{
+			// check if this set of primitives is already a mesh
+			MeshId existingMeshId = null;
+			var key = new PrimKey();
+			foreach (var prim in primitives)
+			{
+				var filter = prim.GetComponent<MeshFilter>();
+				var renderer = prim.GetComponent<MeshRenderer>();
+				key.Mesh = filter.sharedMesh;
+				key.Material = renderer.sharedMaterial;
+
+				MeshId tempMeshId;
+				if (_primOwner.TryGetValue(key, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
+				{
+					existingMeshId = tempMeshId;
+				}
+				else
+				{
+					existingMeshId = null;
+					break;
+				}
+			}
+
+			// if so, return that mesh id
+			if(existingMeshId != null)
+				return existingMeshId;
+
+			// if not, create new mesh and return its id
 			var mesh = new Mesh();
 
 			if (ExportNames)
 			{
-				mesh.Name = meshObj.name;
+				mesh.Name = name;
+			}
+
+			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
+			foreach (var prim in primitives)
+			{
+				mesh.Primitives.AddRange(ExportPrimitive(prim));
+			}
+
+			var id = new MeshId
+			{
+				Id = _root.Meshes.Count,
+				Root = _root
+			};
+			_root.Meshes.Add(mesh);
+
+			return id;
+		}
+
+		// a mesh *might* decode to multiple prims if there are submeshes
+		private MeshPrimitive[] ExportPrimitive(GameObject gameObject)
+		{
+			var filter = gameObject.GetComponent<MeshFilter>();
+			var meshObj = filter.sharedMesh;
+
+			var renderer = gameObject.GetComponent<MeshRenderer>();
+			var materialsObj = renderer.sharedMaterials;
+
+			var prims = new MeshPrimitive[meshObj.subMeshCount];
+
+			// don't export any more accessors if this mesh is already exported
+			MeshPrimitive[] primVariations;
+			if (_meshToPrims.TryGetValue(meshObj, out primVariations)
+				&& meshObj.subMeshCount == primVariations.Length)
+			{
+				for (var i = 0; i < primVariations.Length; i++)
+				{
+					prims[i] = primVariations[i].Clone();
+					prims[i].Material = ExportMaterial(materialsObj[i]);
+				}
+
+				return prims;
 			}
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
@@ -170,52 +282,43 @@ namespace GLTF
 			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
 
 			if (meshObj.normals.Length != 0)
-			{
 				aNormal = ExportAccessor(InvertZ(meshObj.normals));
-			}
 
 			if (meshObj.tangents.Length != 0)
-			{
 				aTangent = ExportAccessor(InvertW(meshObj.tangents));
-			}
 
 			if (meshObj.uv.Length != 0)
-			{
 				aTexcoord0 = ExportAccessor(InvertY(meshObj.uv));
-			}
 
 			if (meshObj.uv2.Length != 0)
-			{
 				aTexcoord1 = ExportAccessor(InvertY(meshObj.uv2));
-			}
 
 			if (meshObj.colors.Length != 0)
-			{
 				aColor0 = ExportAccessor(meshObj.colors);
-			}
 
-			mesh.Primitives = new List<MeshPrimitive>();
 			MaterialId lastMaterialId = null;
 
 			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
 			{
 				var primitive = new MeshPrimitive();
+				primitive.Contents = meshObj;
+
 				var triangles = meshObj.GetTriangles(submesh);
 				primitive.Indices = ExportAccessor(FlipFaces(triangles));
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
-				primitive.Attributes.Add("POSITION", aPosition);
+				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
 
 				if (aNormal != null)
-					primitive.Attributes.Add("NORMAL", aNormal);
+					primitive.Attributes.Add(SemanticProperties.NORMAL, aNormal);
 				if (aTangent != null)
-					primitive.Attributes.Add("TANGENT", aTangent);
+					primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
 				if (aTexcoord0 != null)
-					primitive.Attributes.Add("TEXCOORD_0", aTexcoord0);
+					primitive.Attributes.Add(SemanticProperties.TexCoord(0), aTexcoord0);
 				if (aTexcoord1 != null)
-					primitive.Attributes.Add("TEXCOORD_1", aTexcoord1);
+					primitive.Attributes.Add(SemanticProperties.TexCoord(1), aTexcoord1);
 				if (aColor0 != null)
-					primitive.Attributes.Add("COLOR_0", aColor0);
+					primitive.Attributes.Add(SemanticProperties.Color(0), aColor0);
 
 				if (submesh < materialsObj.Length)
 				{
@@ -227,20 +330,22 @@ namespace GLTF
 					primitive.Material = lastMaterialId;
 				}
 
-				mesh.Primitives.Add(primitive);
+				prims[submesh] = primitive;
 			}
 
-			var id = new MeshId {
-				Id = _root.Meshes.Count,
-				Root = _root
-			};
-			_root.Meshes.Add(mesh);
+			_meshToPrims[meshObj] = prims;
 
-			return id;
+			return prims;
 		}
 
 		private MaterialId ExportMaterial(UnityEngine.Material materialObj)
 		{
+			var id = _root.GetMaterialId(materialObj);
+			if (id != null)
+			{
+				return id;
+			}
+
 			var material = new Material();
 
 			if (ExportNames)
@@ -314,7 +419,9 @@ namespace GLTF
 					break;
 			}
 
-			var id = new MaterialId {
+			material.ContentsWithoutVC = materialObj;
+
+			id = new MaterialId {
 				Id = _root.Materials.Count,
 				Root = _root
 			};
@@ -408,7 +515,12 @@ namespace GLTF
 
 		private MaterialCommonConstant ExportCommonConstant(UnityEngine.Material materialObj)
 		{
-			if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>();
+				_root.ExtensionsUsed.Add("KHR_materials_common");
+			}
+			else if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
 				_root.ExtensionsUsed.Add("KHR_materials_common");
 
 			var constant = new MaterialCommonConstant();
@@ -445,6 +557,12 @@ namespace GLTF
 
 		private TextureId ExportTexture(UnityEngine.Texture textureObj)
 		{
+			TextureId id = _root.GetTextureId(textureObj);
+			if (id != null)
+			{
+				return id;
+			}
+
 			var texture = new Texture();
 
 			if (ExportNames)
@@ -453,8 +571,11 @@ namespace GLTF
 			}
 
 			texture.Source = ExportImage(textureObj);
+			texture.Sampler = ExportSampler(textureObj);
 
-			var id = new TextureId {
+			texture.Contents = textureObj;
+
+			id = new TextureId {
 				Id = _root.Textures.Count,
 				Root = _root
 			};
@@ -466,6 +587,12 @@ namespace GLTF
 
 		private ImageId ExportImage(UnityEngine.Texture texture)
 		{
+			ImageId id = _root.GetImageId(texture);
+			if(id != null)
+			{
+				return id;
+			}
+
 			var image = new Image();
 
 			if (ExportNames)
@@ -476,8 +603,9 @@ namespace GLTF
 			_images.Add(texture as Texture2D);
 
 			image.Uri = Uri.EscapeUriString(texture.name + ".png");
+			image.Contents = texture;
 
-			var id = new ImageId {
+			id = new ImageId {
 				Id = _root.Images.Count,
 				Root = _root
 			};
@@ -485,6 +613,52 @@ namespace GLTF
 			_root.Images.Add(image);
 
 			return id;
+		}
+
+		private SamplerId ExportSampler(UnityEngine.Texture texture)
+		{
+			var samplerId = _root.GetSamplerId(texture);
+			if (samplerId != null)
+				return samplerId;
+
+			var sampler = new Sampler();
+
+			if (texture.wrapMode == TextureWrapMode.Clamp)
+			{
+				sampler.WrapS = WrapMode.ClampToEdge;
+				sampler.WrapT = WrapMode.ClampToEdge;
+			}
+			else
+			{
+				sampler.WrapS = WrapMode.Repeat;
+				sampler.WrapT = WrapMode.Repeat;
+			}
+
+			if(texture.filterMode == FilterMode.Point)
+			{
+				sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
+				sampler.MagFilter = MagFilterMode.Nearest;
+			}
+			else if(texture.filterMode == FilterMode.Bilinear)
+			{
+				sampler.MinFilter = MinFilterMode.NearestMipmapLinear;
+				sampler.MagFilter = MagFilterMode.Linear;
+			}
+			else
+			{
+				sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
+				sampler.MagFilter = MagFilterMode.Linear;
+			}
+
+			samplerId = new SamplerId
+			{
+				Id = _root.Samplers.Count,
+				Root = _root
+			};
+
+			_root.Samplers.Add(sampler);
+
+			return samplerId;
 		}
 
 		private Vector2[] InvertY(Vector2[] arr)

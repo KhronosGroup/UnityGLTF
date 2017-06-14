@@ -89,6 +89,7 @@ namespace GLTF
 			position = new Vector3(localPosition.x, localPosition.y, -localPosition.z);
 			rotation = new Quaternion(-localRotation.x, -localRotation.y, localRotation.z, localRotation.w);
 			scale = new Vector3(localScale.x, localScale.y, localScale.z);
+			// normally you would flip scale.z here too, but that's done in Accessor
 		}
 
 		public void SetUnityTransform(Transform transform)
