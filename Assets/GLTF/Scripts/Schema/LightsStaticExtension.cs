@@ -13,9 +13,29 @@ namespace GLTF
 		/// </summary>
 		public double Strength = 1.0;
 
+		public static bool Equivalent(double a, double b, double e = 1e-6)
+		{
+			return a <= b + e && a >= b - e;
+		}
+
 		public override void Serialize(JsonWriter writer)
 		{
+			writer.WriteStartObject();
 
+			SerializeProperties(writer);
+			base.SerializeProperties(writer);
+
+			writer.WriteEndObject();
+		}
+
+		public new void SerializeProperties(JsonWriter writer)
+		{
+			// get around float precision equality bugs
+			if (!Equivalent(Strength, 1))
+			{
+				writer.WritePropertyName("strength");
+				writer.WriteValue(Strength);
+			}
 		}
 	}
 
