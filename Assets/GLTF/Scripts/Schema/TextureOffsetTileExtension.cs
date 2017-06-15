@@ -78,7 +78,7 @@ namespace GLTF
 			return DeserializeSpecific(root, reader);
 		}
 
-		public TextureOffsetTileExtension DeserializeSpecific(GLTFRoot root, JsonReader reader)
+		private TextureOffsetTileExtension DeserializeSpecific(GLTFRoot root, JsonReader reader)
 		{
 			var offsetTileData = new TextureOffsetTileExtension();
 
