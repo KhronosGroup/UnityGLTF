@@ -309,7 +309,7 @@ namespace GLTF
 			Func<byte[], int, float> getContinuousElement;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
 
-			var stride = BufferView.Value.ByteStride + componentSize;
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
 
 			for (var idx = 0; idx < Count; idx++)
 			{
@@ -339,7 +339,7 @@ namespace GLTF
 			Func<byte[], int, float> getContinuousElement;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
 
-			var stride = BufferView.Value.ByteStride + componentSize * 2;
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 2;
 			if (normalizeIntValues) maxValue = 1;
 
 			for (var idx = 0; idx < Count; idx++)
@@ -376,7 +376,7 @@ namespace GLTF
 			Func<byte[], int, float> getContinuousElement;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
 
-			var stride = BufferView.Value.ByteStride + componentSize * 3;
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 3;
 			if (normalizeIntValues) maxValue = 1;
 
 			for (var idx = 0; idx < Count; idx++)
@@ -415,7 +415,7 @@ namespace GLTF
 			Func<byte[], int, float> getContinuousElement;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
 
-			var stride = BufferView.Value.ByteStride + componentSize * 4;
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 4;
 			if (normalizeIntValues) maxValue = 1;
 
 			for (var idx = 0; idx < Count; idx++)
@@ -457,7 +457,7 @@ namespace GLTF
 			Func<byte[], int, float> getContinuousElement;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
 
-			var stride = BufferView.Value.ByteStride + componentSize * (Type == GLTFAccessorAttributeType.VEC3 ? 3 : 4);
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * (Type == GLTFAccessorAttributeType.VEC3 ? 3 : 4);
 
 			for (var idx = 0; idx < Count; idx++)
 			{
