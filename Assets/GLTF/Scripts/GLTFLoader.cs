@@ -30,6 +30,7 @@ namespace GLTF
 
 		protected readonly Material DefaultMaterial = new Material();
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
+		protected readonly Dictionary<Texture, int> _lightmapIndices = new Dictionary<Texture, int>();
 
 		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
@@ -178,7 +179,9 @@ namespace GLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				CreateMeshObject(node.Mesh.Value, nodeObj.transform);
+				Extension lightmapInfo;
+				node.Extensions.TryGetValue("AVR_lights_static", out lightmapInfo);
+				CreateMeshObject(node.Mesh.Value, nodeObj, (LightsStaticExtension) lightmapInfo);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -201,20 +204,26 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		protected virtual void CreateMeshObject(Mesh mesh, Transform parent)
+		protected virtual void CreateMeshObject(Mesh mesh, GameObject parent, LightsStaticExtension lightmapInfo)
 		{
-			foreach (var primitive in mesh.Primitives)
+			if (mesh.Primitives.Count == 1)
 			{
-				var primitiveObj = CreateMeshPrimitive(primitive);
-				primitiveObj.transform.SetParent(parent, false);
-				primitiveObj.SetActive(true);
+				CreateMeshPrimitive(mesh.Primitives[0], parent, lightmapInfo);
+			}
+			else
+			{
+				foreach (var primitive in mesh.Primitives)
+				{
+					var primitiveObj = new GameObject("Primitive");
+					CreateMeshPrimitive(primitive, primitiveObj, lightmapInfo);
+					primitiveObj.transform.SetParent(parent.transform, false);
+					primitiveObj.SetActive(true);
+				}
 			}
 		}
 
-		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive)
+		protected virtual void CreateMeshPrimitive(MeshPrimitive primitive, GameObject primitiveObj, LightsStaticExtension lightmapInfo)
 		{
-			var primitiveObj = new GameObject("Primitive");
-
 			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
@@ -268,7 +277,36 @@ namespace GLTF
 			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 			meshRenderer.material = material;
 
-			return primitiveObj;
+			// load lightmaps
+			if (lightmapInfo != null && LightmapSettings.lightmapsMode == LightmapsMode.NonDirectional)
+			{
+				int index;
+				if (!_lightmapIndices.TryGetValue(lightmapInfo.Index.Value, out index))
+				{
+					var newData = LightmapSettings.lightmaps;
+					index = LightmapSettings.lightmaps.Length;
+					Array.Resize(ref newData, index + 1);
+					LightmapSettings.lightmaps = newData;
+					LightmapSettings.lightmaps[index] = new LightmapData()
+					{
+						lightmapColor = CreateTexture(lightmapInfo.Index.Value) as Texture2D
+					};
+
+					_lightmapIndices[lightmapInfo.Index.Value] = index;
+				}
+
+				meshRenderer.lightmapIndex = index;
+
+				Extension temp;
+				if (lightmapInfo.Extensions.TryGetValue("AVR_texture_offset_tile", out temp))
+				{
+					var tileInfo = (TextureOffsetTileExtension) temp;
+					meshRenderer.lightmapScaleOffset.Set(
+						(float)tileInfo.TileS, (float)tileInfo.TileT,
+						(float)tileInfo.OffsetS, (float)tileInfo.OffsetT
+					);
+				}
+			}
 		}
 
 		protected virtual UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
