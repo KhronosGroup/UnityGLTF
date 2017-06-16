@@ -130,6 +130,8 @@ namespace GLTF
 
 			// children that are primitives get put in a mesh
 			GameObject[] primitives, nonPrimitives;
+			MeshRenderer renderer;
+			MeshFilter filter;
 			FilterPrimitives(nodeTransform, out primitives, out nonPrimitives);
 			if (primitives.Length > 0)
 			{
@@ -138,9 +140,43 @@ namespace GLTF
 				// associate unity meshes with gltf mesh id
 				foreach (var prim in primitives)
 				{
-					var filter = prim.GetComponent<MeshFilter>();
-					var renderer = prim.GetComponent<MeshRenderer>();
+					filter = prim.GetComponent<MeshFilter>();
+					renderer = prim.GetComponent<MeshRenderer>();
 					_primOwner[new PrimKey {Mesh = filter.sharedMesh, Material = renderer.sharedMaterial}] = node.Mesh;
+				}
+
+				// export lightmap data
+				var go = nodeTransform.gameObject;
+				renderer = go.GetComponent<MeshRenderer>();
+				filter = go.GetComponent<MeshFilter>();
+				if(renderer != null && renderer.lightmapIndex > -1 && renderer.lightmapIndex < 0xfffe)
+				{
+					if (_root.ExtensionsUsed == null)
+					{
+						_root.ExtensionsUsed = new List<string>(new string[] { "AVR_texture_offset_tile", "AVR_lights_static" });
+					}
+					else
+					{
+						if (!_root.ExtensionsUsed.Contains("AVR_texture_offset_tile"))
+							_root.ExtensionsUsed.Add("AVR_texture_offset_tile");
+						if (!_root.ExtensionsUsed.Contains("AVR_lights_static"))
+							_root.ExtensionsUsed.Add("AVR_lights_static");
+					}
+
+					node.Extensions = new Dictionary<string, Extension>();
+
+					var lightmap = new LightsStaticExtension();
+					node.Extensions.Add("AVR_lights_static", lightmap);
+					lightmap.Index = ExportTexture(LightmapSettings.lightmaps[renderer.lightmapIndex].lightmapColor);
+					lightmap.TexCoord = filter.sharedMesh.uv2.Length > 0 ? 1 : 0;
+					lightmap.Extensions = new Dictionary<string, Extension>();
+
+					var offset = new TextureOffsetTileExtension();
+					lightmap.Extensions.Add("AVR_texture_offset_tile", offset);
+					offset.TileS = renderer.lightmapScaleOffset.x;
+					offset.TileT = renderer.lightmapScaleOffset.y;
+					offset.OffsetS = renderer.lightmapScaleOffset.z;
+					offset.OffsetT = renderer.lightmapScaleOffset.w;
 				}
 			}
 

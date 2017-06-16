@@ -110,13 +110,13 @@ namespace GLTF
 			if (Extensions != null && Extensions.Count > 0)
 			{
 				writer.WritePropertyName("extensions");
-				writer.WriteStartArray();
+				writer.WriteStartObject();
 				foreach (var extension in Extensions)
 				{
 					writer.WritePropertyName(extension.Key);
 					extension.Value.Serialize(writer);
 				}
-				writer.WriteEndArray();
+				writer.WriteEndObject();
 			}
 
 			// TODO: Extras serialization.
