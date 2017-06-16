@@ -179,8 +179,10 @@ namespace GLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				Extension lightmapInfo;
-				node.Extensions.TryGetValue("AVR_lights_static", out lightmapInfo);
+				Extension lightmapInfo = null;
+				if(node.Extensions != null)
+					node.Extensions.TryGetValue("AVR_lights_static", out lightmapInfo);
+
 				CreateMeshObject(node.Mesh.Value, nodeObj, (LightsStaticExtension) lightmapInfo);
 			}
 
