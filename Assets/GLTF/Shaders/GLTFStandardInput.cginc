@@ -178,10 +178,10 @@ half3 Emission(float2 uv)
 // https://github.com/KhronosGroup/glTF/blob/2.0/specification/2.0/schema/material.normalTextureInfo.schema.json#L13
 half3 UnpackScaleNormalGLTF(half4 packednormal, half bumpScale)
 {
-	float3 normal = packednormal.xyz;
+	float3 normal = normalize(packednormal.xyz);
 	normal = (normal*2.0 - 1.0);
 	normal.xy *= bumpScale;
-	return normal;
+	return normalize(normal);
 }
 
 #ifdef _NORMALMAP
@@ -190,7 +190,7 @@ half3 NormalInTangentSpace(float4 texcoords)
 	half3 normalTangent = UnpackScaleNormalGLTF(tex2D(_BumpMap, texcoords.xy), _BumpScale);
 	// SM20: instruction count limitation
 	// SM20: no detail normalmaps
-#if _DETAIL && !defined(SHADER_API_MOBILE) && (SHADER_TARGET >= 30) 
+#if _DETAIL && !defined(SHADER_API_MOBILE) && (SHADER_TARGET >= 30)
 	half mask = DetailMask(texcoords.xy);
 	half3 detailNormalTangent = UnpackScaleNormalGLTF(tex2D(_DetailNormalMap, texcoords.zw), _DetailNormalMapScale);
 #if _DETAIL_LERP
@@ -198,7 +198,7 @@ half3 NormalInTangentSpace(float4 texcoords)
 		normalTangent,
 		detailNormalTangent,
 		mask);
-#else				
+#else
 	normalTangent = lerp(
 		normalTangent,
 		BlendNormals(normalTangent, detailNormalTangent),
