@@ -22,6 +22,7 @@ namespace GLTF
 
 		public bool Multithreaded = true;
 		public int MaximumLod = 300;
+		protected Dictionary<string, string> _reqHeaders;
 		protected readonly string _gltfUrl;
 		protected GLTFRoot _root;
 		protected GameObject _lastLoadedScene;
@@ -31,10 +32,11 @@ namespace GLTF
 		protected readonly Material DefaultMaterial = new Material();
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
 
-		public GLTFLoader(string gltfUrl, Transform parent = null)
+		public GLTFLoader(string gltfUrl, Transform parent = null, Dictionary<string, string> reqHeaders = null)
 		{
 			_gltfUrl = gltfUrl;
 			_sceneParent = parent;
+			_reqHeaders = reqHeaders;
 			asyncAction = new AsyncAction();
 		}
 
@@ -55,8 +57,11 @@ namespace GLTF
 		{
 			if (_root == null)
 			{
-				var www = UnityWebRequest.Get(_gltfUrl);
-
+				/* encoding URI for request */
+				var www = UnityWebRequest.Get(EncodeURI(_gltfUrl));
+				/* set headers if present */
+				SetRequestHeaders(www);
+				
 				yield return www.Send();
 				if (www.responseCode >= 400)
 				{
@@ -485,13 +490,30 @@ namespace GLTF
 			return partialPath + relativePath;
 		}
 
+		protected virtual string EncodeURI(string URI)
+		{
+			return WWW.EscapeURL(URI);
+		}
+
+		protected virtual void SetRequestHeaders(UnityWebRequest www)
+		{	
+			if(_reqHeaders)
+			{
+				foreach(KeyValuePair<string, string> entry in _reqHeaders)
+				{
+					www.SetRequestHeader(entry.Key, entry.Value);
+				}
+			}
+		}
+
 		protected virtual IEnumerator LoadImage(Image image)
 		{
 			Texture2D texture;
 
 			if (image.Uri != null)
-			{
-				var uri = image.Uri;
+			{	
+				/* encoding URI first */
+				var uri = EncodeURI(image.Uri);
 
 				Regex regex = new Regex(Base64StringInitializer);
 				Match match = regex.Match(uri);
@@ -504,7 +526,9 @@ namespace GLTF
 				}
 				else
 				{
-					var www = UnityWebRequest.Get(AbsolutePath(uri));
+					var www = UnityWebRequest.GetAbsolutePath(uri));
+					/* set headers if present */
+					SetRequestHeader(www);
 					www.downloadHandler = new DownloadHandlerTexture();
 
 					yield return www.Send();
@@ -545,7 +569,8 @@ namespace GLTF
 			if (buffer.Uri != null)
 			{
 				byte[] bufferData;
-				var uri = buffer.Uri;
+				/* encoding URI for request */
+				var uri = EncodeURI(buffer.Uri);
 
 				Regex regex = new Regex(Base64StringInitializer);
 				Match match = regex.Match(uri);
@@ -557,6 +582,8 @@ namespace GLTF
 				else
 				{
 					var www = UnityWebRequest.Get(AbsolutePath(uri));
+					/* set headers if present */
+					SetRequestHeaders(www);
 
 					yield return www.Send();
 
