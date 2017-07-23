@@ -526,7 +526,7 @@ namespace GLTF
 				}
 				else
 				{
-					var www = UnityWebRequest.GetAbsolutePath(uri));
+					var www = UnityWebRequest.Get(AbsolutePath(uri));
 					/* set headers if present */
 					SetRequestHeader(www);
 					www.downloadHandler = new DownloadHandlerTexture();
