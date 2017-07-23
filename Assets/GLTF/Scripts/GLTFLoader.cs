@@ -497,7 +497,7 @@ namespace GLTF
 
 		protected virtual void SetRequestHeaders(UnityWebRequest www)
 		{	
-			if(_reqHeaders)
+			if(_reqHeaders != null)
 			{
 				foreach(KeyValuePair<string, string> entry in _reqHeaders)
 				{
@@ -528,7 +528,7 @@ namespace GLTF
 				{
 					var www = UnityWebRequest.Get(AbsolutePath(uri));
 					/* set headers if present */
-					SetRequestHeader(www);
+					SetRequestHeaders(www);
 					www.downloadHandler = new DownloadHandlerTexture();
 
 					yield return www.Send();
