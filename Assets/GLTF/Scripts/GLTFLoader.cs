@@ -22,18 +22,19 @@ namespace GLTF
 
 		public bool Multithreaded = true;
 		public int MaximumLod = 300;
-		protected Dictionary<string, string> _reqHeaders;
 		protected readonly string _gltfUrl;
 		protected GLTFRoot _root;
 		protected GameObject _lastLoadedScene;
 		protected AsyncAction asyncAction;
 		protected readonly Transform _sceneParent;
+		protected Dictionary<string, string> _reqHeaders;
 
 		protected readonly Material DefaultMaterial = new Material();
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
 
 		public GLTFLoader(string gltfUrl, Transform parent = null, Dictionary<string, string> reqHeaders = null)
 		{
+
 			_gltfUrl = gltfUrl;
 			_sceneParent = parent;
 			_reqHeaders = reqHeaders;
@@ -57,8 +58,7 @@ namespace GLTF
 		{
 			if (_root == null)
 			{
-				/* encoding URI for request */
-				var www = UnityWebRequest.Get(EncodeURI(_gltfUrl));
+				var www = UnityWebRequest.Get(_gltfUrl);
 				/* set headers if present */
 				SetRequestHeaders(www);
 				

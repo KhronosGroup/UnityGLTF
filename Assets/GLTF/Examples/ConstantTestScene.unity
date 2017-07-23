@@ -135,7 +135,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3628db10e32278e499da95887f1bc989, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  webServer: {fileID: 492783221}
   Url: http://localhost:8080/Constant/Constant.gltf
+  Headers: []
   Multithreaded: 1
   MaximumLod: 300
   GLTFStandard: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}
@@ -269,6 +271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0be99a1796ece0b4581c1fde52a1e4df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isRunning: 0
 --- !u!4 &492783223
 Transform:
   m_ObjectHideFlags: 0
