@@ -360,7 +360,7 @@ namespace GLTF
 						material.SetTexture("_MetallicGlossMap", CreateTexture(texture));
 					}
 
-					material.SetFloat("_Smoothness", (float) (1-pbr.RoughnessFactor));
+					material.SetFloat("_Glossiness", (float) (1-pbr.RoughnessFactor));
 				}
 
 				if (def.CommonConstant != null)
