@@ -357,10 +357,10 @@ namespace GLTF
 					if (pbr.MetallicRoughnessTexture != null)
 					{
 						var texture = pbr.MetallicRoughnessTexture.Index.Value;
-						material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
+						material.SetTexture("_MetallicGlossMap", CreateTexture(texture));
 					}
 
-					material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
+					material.SetFloat("_Smoothness", (float) (1-pbr.RoughnessFactor));
 				}
 
 				if (def.CommonConstant != null)
