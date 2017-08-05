@@ -1,6 +1,10 @@
 using System;
 using System.Collections;
+#if NETFX_CORE
+using Windows.System.Threading;
+#else
 using System.Threading;
+#endif
 
 namespace GLTF
 {
@@ -13,7 +17,11 @@ namespace GLTF
 		{
 			_workerThreadRunning = true;
 
+#if NETFX_CORE
+			ThreadPool.RunAsync((_) =>
+#else
 			ThreadPool.QueueUserWorkItem((_) =>
+#endif
 			{
 				try
 				{

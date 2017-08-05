@@ -72,8 +72,13 @@ namespace GLTF
 			var writer = new JsonTextWriter(gltfFile);
 			_root.Serialize(writer);
 
+#if NETFX_CORE
+			gltfFile.Dispose();
+			binFile.Dispose();
+#else
 			gltfFile.Close();
 			binFile.Close();
+#endif
 
 			foreach (var image in _images)
 			{
