@@ -12,14 +12,14 @@ namespace GLTF
 		/// The index of a sampler in this animation used to compute the value for the
 		/// target, e.g., a node's translation, rotation, or scale (TRS).
 		/// </summary>
-		public SamplerId Sampler;
+		public AnimationSamplerID Sampler;
 
 		/// <summary>
 		/// The index of the node and TRS property to target.
 		/// </summary>
 		public AnimationChannelTarget Target;
 
-		public static AnimationChannel Deserialize(GLTFRoot root, JsonReader reader)
+		public static AnimationChannel Deserialize(GLTFRoot root, JsonReader reader, Animation animation)
 		{
 			var animationChannel = new AnimationChannel();
 
@@ -30,7 +30,7 @@ namespace GLTF
 				switch (curProp)
 				{
 					case "sampler":
-						animationChannel.Sampler = SamplerId.Deserialize(root, reader);
+						animationChannel.Sampler = AnimationSamplerID.Deserialize(root, reader, animation);
 						break;
 					case "target":
 						animationChannel.Target = AnimationChannelTarget.Deserialize(root, reader);

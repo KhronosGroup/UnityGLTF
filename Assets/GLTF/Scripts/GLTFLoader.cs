@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using System;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
+using UnityEditor;
+using System.Reflection;
 
 namespace GLTF
 {
@@ -115,6 +117,20 @@ namespace GLTF
 					yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
 				}
 			}
+			Debug.Log("Animation input type " + _root.Animations[0].Samplers[0].Input.Value.Type);
+			Debug.Log("Animation input Count " + _root.Animations[0].Samplers[0].Input.Value.Count);
+			var floats = _root.Animations[0].Samplers[0].Input.Value.AsFloatArray();
+			Debug.Log("Input array");
+			foreach (var f in floats)
+				Debug.Log(f);
+
+			Debug.Log("Animation output type " + _root.Animations[0].Samplers[0].Output.Value.Type);
+			Debug.Log("Animation output Count " + _root.Animations[0].Samplers[0].Output.Value.Count);
+			var vecs = _root.Animations[0].Samplers[0].Output.Value.AsVector4Array();
+			Debug.Log("Output array");
+			foreach (var v in vecs)
+				Debug.Log(v);
+
 
 			var sceneObj = CreateScene(scene);
 
@@ -179,6 +195,8 @@ namespace GLTF
 				CreateMeshObject(node.Mesh.Value, nodeObj.transform);
 			}
 
+
+
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
 			{
@@ -196,7 +214,236 @@ namespace GLTF
 				}
 			}
 
+			//TODO: how to do this?
+			foreach (var animation in _root.Animations)
+				AddAnimationToGameObject(animation, nodeObj);
+
 			return nodeObj;
+		}
+
+		/// <summary>
+		/// Generate Animation components from glTF animations, and attach to game objects
+		/// </summary>
+		protected void AddAnimationToGameObject(Animation animation, GameObject gameObject)
+		{
+			// create the animation clip that will contain animation data
+			AnimationClip clip = new AnimationClip();
+			clip.name = animation.Name ?? "GLTFAnimation";
+
+			//TODO: Necessary?
+			// needed because Animator component is unavailable at runtime
+			clip.legacy = true;
+
+			foreach (var channel in animation.Channels)
+			{
+				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value);
+				if (channel.Target.Path == GLTFAnimationChannelPath.translation)
+				{
+					clip.SetCurve("", typeof(Transform), "localPosition.x", curves[0]);
+					clip.SetCurve("", typeof(Transform), "localPosition.y", curves[1]);
+					clip.SetCurve("", typeof(Transform), "localPosition.z", curves[2]);
+				}
+				else if (channel.Target.Path == GLTFAnimationChannelPath.rotation)
+				{
+					clip.SetCurve("", typeof(Transform), "localRotation.x", curves[0]);
+					clip.SetCurve("", typeof(Transform), "localRotation.y", curves[1]);
+					clip.SetCurve("", typeof(Transform), "localRotation.z", curves[2]);
+					clip.SetCurve("", typeof(Transform), "localRotation.w", curves[3]);
+				}
+				else if (channel.Target.Path == GLTFAnimationChannelPath.scale)
+				{
+					clip.SetCurve("", typeof(Transform), "localScale.x", curves[0]);
+					clip.SetCurve("", typeof(Transform), "localScale.y", curves[1]);
+					clip.SetCurve("", typeof(Transform), "localScale.z", curves[2]);
+				}
+				else
+				{
+					Debug.LogWarning("Cannot read GLTF animation path");
+				}
+
+				GameObject target = gameObject;
+				// TODO: figure out how to build relative paths for glTF nodes
+			}
+
+			var a = gameObject.GetComponent<UnityEngine.Animation>();
+			if(a == null)
+				a = gameObject.AddComponent<UnityEngine.Animation>();
+			a.AddClip(clip, animation.Name);
+			// TODO: figure out what to do with the clip once it's built
+		}
+
+		/// <summary>
+		/// Create AnimationCurves from glTF animation sampler data
+		/// </summary>
+		/// <returns>AnimationCurve[]</returns>
+		protected AnimationCurve[] AsAnimationCurves(AnimationSampler animationSampler)
+		{
+			float[] timeArray = animationSampler.Input.Value.AsFloatArray();
+
+			// check transform stride
+			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3)
+			{
+				var curves = new AnimationCurve[3];
+				for (int i = 0; i < 3; i++)
+					curves[i] = new AnimationCurve();
+
+
+				var animArray = animationSampler.Output.Value.AsVector3Array();
+				for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
+				{
+					curves[0].AddKey(timeArray[timeIdx], animArray[timeIdx].x);
+
+					curves[1].AddKey(timeArray[timeIdx], animArray[timeIdx].y);
+					curves[2].AddKey(timeArray[timeIdx], animArray[timeIdx].z);
+				}
+
+				return curves;
+			}
+			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
+			{
+				var curves = new AnimationCurve[4];
+				var animArray = animationSampler.Output.Value.AsVector4Array();
+
+				//for(int i = 0; i < curves.Length; i++)
+				//{
+				//	curves[0] = AnimationCurve.Linear(timeArray[0], animArray[0].x, timeArray[1], animArray[1].x);
+				//	curves[1] = AnimationCurve.Linear(timeArray[0], animArray[0].y, timeArray[1], animArray[1].y);
+				//	curves[2] = AnimationCurve.Linear(timeArray[0], animArray[0].z, timeArray[1], animArray[1].z);
+				//	curves[3] = AnimationCurve.Linear(timeArray[0], animArray[0].w, timeArray[1], animArray[1].w);
+				//}
+				////for (int timeIdx = 2; timeIdx < timeArray.Length; timeIdx++)
+				////{
+				////	curves[0].AddKey(timeArray[timeIdx], animArray[timeIdx].x);
+				////	curves[1].AddKey(timeArray[timeIdx], animArray[timeIdx].y);
+				////	curves[2].AddKey(timeArray[timeIdx], animArray[timeIdx].z);
+				////	curves[3].AddKey(timeArray[timeIdx], animArray[timeIdx].w);
+				////}
+
+				System.Func<float, float, float, float, float> calcTangent = (valueStart, valueEnd, timeStart, timeEnd) =>
+				{
+					return (valueEnd - valueStart) / (timeEnd - timeStart);
+				};
+
+				System.Func<int, Vector4> inTangentCalc = (timeIdx) =>
+				{
+					if(timeIdx == 0)
+						return Vector4.zero;
+
+					var timeStart = timeArray[timeIdx - 1];
+					var timeEnd = timeArray[timeIdx];
+					return new Vector4(calcTangent(animArray[timeIdx - 1].x, animArray[timeIdx].x, timeStart, timeEnd),
+						calcTangent(animArray[timeIdx - 1].y, animArray[timeIdx].y, timeStart, timeEnd),
+						calcTangent(animArray[timeIdx - 1].z, animArray[timeIdx].z, timeStart, timeEnd),
+						calcTangent(animArray[timeIdx - 1].w, animArray[timeIdx].w, timeStart, timeEnd));
+				};
+
+				System.Func<int, Vector4> outTangentCalc = (timeIdx) =>
+				{
+					if (timeIdx == timeArray.Length - 1)
+						return Vector4.zero;
+
+					var timeStart = timeArray[timeIdx];
+					var timeEnd = timeArray[timeIdx+1];
+					return new Vector4(calcTangent(animArray[timeIdx].x, animArray[timeIdx+1].x, timeStart, timeEnd),
+						calcTangent(animArray[timeIdx].y, animArray[timeIdx+1].y, timeStart, timeEnd),
+						calcTangent(animArray[timeIdx].z, animArray[timeIdx+1].z, timeStart, timeEnd),
+						calcTangent(animArray[timeIdx].w, animArray[timeIdx+1].w, timeStart, timeEnd));
+				};
+
+				System.Action<bool, Keyframe> breakShit = (broken, kf) =>
+				{
+					Type t = typeof(UnityEngine.Keyframe);
+					FieldInfo field = t.GetField("m_TangentMode", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+					int tangentMode = (int)field.GetValue(kf);
+
+					if (broken)
+						tangentMode |= 1;
+					else
+						tangentMode &= -2;
+					field.SetValue(kf, tangentMode);
+				};
+
+				var ksx = new Keyframe[timeArray.Length];
+				var ksy = new Keyframe[timeArray.Length];
+				var ksz = new Keyframe[timeArray.Length];
+				var ksw = new Keyframe[timeArray.Length];
+				for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
+				{
+					var inTangents = inTangentCalc(timeIdx);
+					var outTangents = inTangentCalc(timeIdx);
+					Debug.Log(calcTangent(1.0f, 0.0f, 0.0f, 1.0f));
+					Debug.Log("in " + inTangents + ", out " + outTangents);
+
+					ksx[timeIdx] = new Keyframe(timeArray[timeIdx], animArray[timeIdx].x, inTangents.x, outTangents.x);
+					ksy[timeIdx] = new Keyframe(timeArray[timeIdx], animArray[timeIdx].y, inTangents.y, outTangents.y);
+					ksz[timeIdx] = new Keyframe(timeArray[timeIdx], animArray[timeIdx].z, inTangents.z, outTangents.z);
+					ksw[timeIdx] = new Keyframe(timeArray[timeIdx], animArray[timeIdx].w, inTangents.w, outTangents.w);
+
+					breakShit(true, ksx[timeIdx]);
+					breakShit(true, ksy[timeIdx]);
+					breakShit(true, ksz[timeIdx]);
+					breakShit(true, ksw[timeIdx]);
+
+				}
+				curves[0] = new AnimationCurve(ksx);
+				curves[1] = new AnimationCurve(ksy);
+				curves[2] = new AnimationCurve(ksz);
+				curves[3] = new AnimationCurve(ksw);
+				for(int i = 0; i < curves.Length; i++)
+				{
+					//for (int time = 0; time < timeArray.Length; time++)
+					//{
+					//	AnimationUtility.SetKeyBroken(curves[i], time, true);
+					//	AnimationUtility.SetKeyLeftTangentMode(curves[i], time, AnimationUtility.TangentMode.Linear);
+					//	AnimationUtility.SetKeyRightTangentMode(curves[i], time, AnimationUtility.TangentMode.Linear);
+					//}
+
+					//curves[1].keys[1].inTangent = 0;
+					//curves[1].keys[1].outTangent = 0;
+					//curves[3].keys[1].inTangent = 0;
+					//curves[3].keys[1].outTangent = 0;
+				}
+
+				//for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
+				//{
+				//	var index = curves[0].AddKey(timeArray[timeIdx], animArray[timeIdx].x);
+
+				//	//curves[0].keys[index].tangentMode = tangentMode;
+				//	curves[0].keys[index].inTangent = Mathf.PI/2;
+				//	curves[0].keys[index].outTangent = Mathf.PI/2;
+				//	index = curves[1].AddKey(timeArray[timeIdx], animArray[timeIdx].y);
+
+				//	//curves[1].keys[index].tangentMode = tangentMode;
+				//	curves[1].keys[index].inTangent = Mathf.PI/2;
+				//	curves[1].keys[index].outTangent = Mathf.PI/2;
+				//	index = curves[2].AddKey(timeArray[timeIdx], animArray[timeIdx].z);
+
+				//	//curves[2].keys[index].tangentMode = tangentMode;
+				//	curves[2].keys[index].inTangent = 0;
+				//	curves[2].keys[index].outTangent = 0;
+				//	index = curves[3].AddKey(timeArray[timeIdx], animArray[timeIdx].w);
+
+				//	//curves[3].keys[index].tangentMode = tangentMode;
+				//	curves[3].keys[index].inTangent = 0;
+				//	curves[3].keys[index].outTangent = 0;
+				//}
+				//for(int i = 0; i < timeArray.Length; i++)
+				//{
+				//	curves[0].keys[i].inTangent = 0;
+				//	curves[0].keys[i].outTangent = 0;
+				//	curves[1].keys[i].inTangent = 0;
+				//	curves[1].keys[i].outTangent = 0;
+				//	curves[3].keys[i].inTangent = 0;
+				//	curves[3].keys[i].outTangent = 0;
+				//	curves[2].keys[i].inTangent = 0;
+				//	curves[2].keys[i].outTangent = 0;
+				//}
+
+				return curves;
+			}
+			else
+				throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor");
+
 		}
 
 		protected virtual void CreateMeshObject(Mesh mesh, Transform parent)
@@ -472,6 +719,7 @@ namespace GLTF
 		}
 
 		protected const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
+		private object keyframe;
 
 		/// <summary>
 		///  Get the absolute path to a gltf uri reference.

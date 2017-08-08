@@ -248,4 +248,27 @@ namespace GLTF
 			};
 		}
 	}
+
+	public class AnimationSamplerID : GLTFId<AnimationSampler>
+	{
+		public Animation Animation;
+
+		public override AnimationSampler Value
+		{
+			get
+			{
+				return Animation.Samplers[Id];
+			}
+		}
+
+		public static AnimationSamplerID Deserialize(GLTFRoot root, JsonReader reader, Animation a)
+		{
+			return new AnimationSamplerID
+			{
+				Id = reader.ReadAsInt32().Value,
+				Root = root,
+				Animation = a
+			};
+		}
+	}
 }

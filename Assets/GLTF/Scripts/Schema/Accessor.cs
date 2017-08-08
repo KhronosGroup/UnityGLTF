@@ -293,6 +293,33 @@ namespace GLTF
 			}
 		}
 
+		public float[] AsFloatArray()
+		{
+			if (Contents.AsFloats != null) return Contents.AsFloats;
+
+			if (Type != GLTFAccessorAttributeType.SCALAR) return null;
+
+			var arr = new float[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = getContinuousElement(bufferData, totalByteOffset + idx * stride);
+			}
+
+			Contents.AsFloats = arr;
+			return arr;
+		}
+
 		public int[] AsIntArray()
 		{
 			if (Contents.AsInts != null) return Contents.AsInts;
@@ -593,6 +620,7 @@ namespace GLTF
 
 	public struct NumericArray
 	{
+		public float[] AsFloats;
 		public int[] AsInts;
 		public Vector2[] AsVec2s;
 		public Vector3[] AsVec3s;
