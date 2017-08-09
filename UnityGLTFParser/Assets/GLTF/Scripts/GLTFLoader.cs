@@ -10,27 +10,13 @@ namespace GLTF
 {
 	public class GLTFLoader
 	{
-		public enum MaterialType
-		{
-			PbrMetallicRoughness,
-			PbrSpecularGlossiness,
-			CommonConstant,
-			CommonPhong,
-			CommonBlinn,
-			CommonLambert
-		}
-
-		public bool Multithreaded = true;
-		public int MaximumLod = 300;
-		protected readonly string _gltfUrl;
-		protected GLTFRoot _root;
-		protected GameObject _lastLoadedScene;
-		protected AsyncAction asyncAction;
-		protected readonly Transform _sceneParent;
-
-		protected readonly Material DefaultMaterial = new Material();
+        protected GameObject _lastLoadedScene;
+        protected readonly Transform _sceneParent;
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
-
+        public int MaximumLod = 300;
+		protected readonly Material DefaultMaterial = new Material();
+		
+		// todo blgross modify to be compliant with gltf loader
 		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
 			_gltfUrl = gltfUrl;
@@ -53,29 +39,7 @@ namespace GLTF
 
 		public virtual IEnumerator Load(int sceneIndex = -1)
 		{
-			if (_root == null)
-			{
-				var www = UnityWebRequest.Get(_gltfUrl);
-
-				yield return www.Send();
-				if (www.responseCode >= 400)
-				{
-					Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
-					yield break;
-				}
-
-				var gltfData = www.downloadHandler.data;
-
-				if (Multithreaded)
-				{
-					yield return asyncAction.RunOnWorkerThread(() => ParseGLTF(gltfData));
-				}
-				else
-				{
-					ParseGLTF(gltfData);
-				}
-			}
-
+			// todo call c# library
 			Scene scene;
 			if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
 			{
@@ -124,17 +88,6 @@ namespace GLTF
 			}
 
 			_lastLoadedScene = sceneObj;
-		}
-
-		protected virtual void ParseGLTF(byte[] gltfData)
-		{
-			byte[] glbBuffer;
-			_root = GLTFParser.ParseBinary(gltfData, out glbBuffer);
-
-			if (glbBuffer != null)
-			{
-				_root.Buffers[0].Contents = glbBuffer;
-			}
 		}
 
 		protected virtual void BuildMeshAttributes()

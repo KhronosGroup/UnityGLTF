@@ -1,6 +1,7 @@
 ﻿{
   "dependencies": {
-    "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.3"
+    "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.3",
+    "System.Numerics.Vectors.WindowsRuntime": "4.3.0"
   },
   "frameworks": {
     "uap10.0": {}

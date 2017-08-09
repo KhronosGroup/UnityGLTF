@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializer", "GLTFSeria
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializerUWP", "GLTFSerializerUWP\GLTFSerializerUWP.csproj", "{D228AE89-BE53-474F-AB7C-04A3293F59C1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9CD17DD3-D23B-41FF-938C-023A5F26D438}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializerTests", "Tests\GLTFSerializerTests\GLTFSerializerTests.csproj", "{821B87A3-D8FA-407A-BC58-928A859C71C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,8 +55,27 @@ Global
 		{D228AE89-BE53-474F-AB7C-04A3293F59C1}.Release|x64.Build.0 = Release|x64
 		{D228AE89-BE53-474F-AB7C-04A3293F59C1}.Release|x86.ActiveCfg = Release|x86
 		{D228AE89-BE53-474F-AB7C-04A3293F59C1}.Release|x86.Build.0 = Release|x86
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|ARM.Build.0 = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|x64.Build.0 = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Debug|x86.Build.0 = Debug|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|ARM.ActiveCfg = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|ARM.Build.0 = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x64.ActiveCfg = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x64.Build.0 = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x86.ActiveCfg = Release|Any CPU
+		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{821B87A3-D8FA-407A-BC58-928A859C71C4} = {9CD17DD3-D23B-41FF-938C-023A5F26D438}
 	EndGlobalSection
 EndGlobal
