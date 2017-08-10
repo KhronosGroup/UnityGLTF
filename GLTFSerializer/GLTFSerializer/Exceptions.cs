@@ -8,7 +8,7 @@ namespace GLTFSerializer
         public GLTFHeaderInvalidException() : base() { }
         public GLTFHeaderInvalidException(string message) : base(message) { }
         public GLTFHeaderInvalidException(string message, Exception inner) : base(message, inner) { }
-#if !NETFX_CORE
+#if !WINDOWS_UWP
         protected GLTFHeaderInvalidException(System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context)
         { }
@@ -22,7 +22,7 @@ namespace GLTFSerializer
         public ShaderNotFoundException() : base() { }
         public ShaderNotFoundException(string message) : base(message) { }
         public ShaderNotFoundException(string message, Exception inner) : base(message, inner) { }
-#if !NETFX_CORE
+#if !WINDOWS_UWP
         protected ShaderNotFoundException(System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context)
         { }

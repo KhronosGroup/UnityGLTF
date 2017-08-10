@@ -6,6 +6,9 @@ namespace GLTFSerializer
     {
         Task<GLTFRoot> Load(string gltfUrl);
         Task<GLTFRoot> Load(System.IO.Stream stream);
+#if WINDOWS_UWP
+        Task<GLTFRoot> Load(Windows.Storage.Streams.IRandomAccessStream stream);
+#endif
         Task<GLTFRoot> Load(byte[] gltfData);
     }
 }

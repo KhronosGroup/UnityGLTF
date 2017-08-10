@@ -1,5 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Net;
+#if WINDOWS_UWP
+using Windows.Storage.Streams;
+#endif
 
 namespace GLTFSerializer
 {
@@ -52,6 +56,30 @@ namespace GLTFSerializer
                 return Task.FromResult(ParseGLTF(gltfData));
             }
         }
+
+#if WINDOWS_UWP
+        public async Task<GLTFRoot> Load(IRandomAccessStream stream)
+        {
+            // todo: this code does not work if file is greater than 4 gb
+            uint streamLength = (uint)stream.Size;
+            DataReader reader = new DataReader(stream.GetInputStreamAt(0));
+            byte[] gltfData = new byte[streamLength];
+            await reader.LoadAsync(streamLength);
+            reader.ReadBytes(gltfData);
+
+            if (Multithreaded)
+            {
+                return await Task.Run(() =>
+                {
+                    return ParseGLTF(gltfData);
+                });
+            }
+            else
+            {
+                return ParseGLTF(gltfData);
+            }
+        }
+#endif
 
         public Task<GLTFRoot> Load(byte[] gltfData)
         {

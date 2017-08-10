@@ -27,6 +27,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -36,6 +37,7 @@
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -47,6 +49,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -58,6 +61,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
     <PlatformTarget>ARM</PlatformTarget>
@@ -69,6 +73,7 @@
     <PlatformTarget>ARM</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
     <PlatformTarget>ARM</PlatformTarget>
@@ -80,6 +85,7 @@
     <PlatformTarget>ARM</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <PlatformTarget>x64</PlatformTarget>
@@ -91,6 +97,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <PlatformTarget>x64</PlatformTarget>
@@ -102,17 +109,129 @@
     <PlatformTarget>x64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\GLTFSerializer\Exceptions.cs">
+      <Link>Exceptions.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerializer\GLTFLoader.cs">
       <Link>GLTFLoader.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerializer\GLTFParser.cs">
+      <Link>GLTFParser.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Helpers\Color.cs">
+      <Link>Helpers\Color.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Helpers\GLTFJsonExtensions.cs">
+      <Link>Helpers\GLTFJsonExtensions.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerializer\IGLTFLoader.cs">
       <Link>IGLTFLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Accessor.cs">
+      <Link>Schema\Accessor.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\AccessorSparse.cs">
+      <Link>Schema\AccessorSparse.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\AccessorSparseIndices.cs">
+      <Link>Schema\AccessorSparseIndices.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\AccessorSparseValues.cs">
+      <Link>Schema\AccessorSparseValues.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Animation.cs">
+      <Link>Schema\Animation.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\AnimationChannel.cs">
+      <Link>Schema\AnimationChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\AnimationChannelTarget.cs">
+      <Link>Schema\AnimationChannelTarget.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\AnimationSampler.cs">
+      <Link>Schema\AnimationSampler.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Asset.cs">
+      <Link>Schema\Asset.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Buffer.cs">
+      <Link>Schema\Buffer.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\BufferView.cs">
+      <Link>Schema\BufferView.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Camera.cs">
+      <Link>Schema\Camera.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\CameraOrthographic.cs">
+      <Link>Schema\CameraOrthographic.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\CameraPerspective.cs">
+      <Link>Schema\CameraPerspective.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Extension.cs">
+      <Link>Schema\Extension.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\GLTFChildOfRootProperty.cs">
+      <Link>Schema\GLTFChildOfRootProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\GLTFId.cs">
+      <Link>Schema\GLTFId.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\GLTFProperty.cs">
+      <Link>Schema\GLTFProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\GLTFRoot.cs">
+      <Link>Schema\GLTFRoot.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Image.cs">
+      <Link>Schema\Image.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Material.cs">
+      <Link>Schema\Material.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\MaterialCommonConstant.cs">
+      <Link>Schema\MaterialCommonConstant.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\MaterialNormalTextureInfo.cs">
+      <Link>Schema\MaterialNormalTextureInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\MaterialOcclusionTextureInfo.cs">
+      <Link>Schema\MaterialOcclusionTextureInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\MaterialPBRMetallicRoughness.cs">
+      <Link>Schema\MaterialPBRMetallicRoughness.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Mesh.cs">
+      <Link>Schema\Mesh.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\MeshPrimitive.cs">
+      <Link>Schema\MeshPrimitive.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Node.cs">
+      <Link>Schema\Node.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Sampler.cs">
+      <Link>Schema\Sampler.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Scene.cs">
+      <Link>Schema\Scene.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Skin.cs">
+      <Link>Schema\Skin.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\Texture.cs">
+      <Link>Schema\Texture.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerializer\Schema\TextureInfo.cs">
+      <Link>Schema\TextureInfo.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

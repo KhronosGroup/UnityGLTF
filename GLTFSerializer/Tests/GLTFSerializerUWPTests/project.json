@@ -1,8 +1,8 @@
 ﻿{
   "dependencies": {
     "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.3",
-    "Newtonsoft.Json": "10.0.3",
-    "System.Numerics.Vectors.WindowsRuntime": "4.3.0"
+    "MSTest.TestAdapter": "1.1.11",
+    "MSTest.TestFramework": "1.1.11"
   },
   "frameworks": {
     "uap10.0": {}

@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9CD17DD3
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializerTests", "Tests\GLTFSerializerTests\GLTFSerializerTests.csproj", "{821B87A3-D8FA-407A-BC58-928A859C71C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializerUWPTests", "Tests\GLTFSerializerUWPTests\GLTFSerializerUWPTests.csproj", "{EAD1EF7E-A898-4741-9DF5-269A33E6F875}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,11 +73,32 @@ Global
 		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x64.Build.0 = Release|Any CPU
 		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x86.ActiveCfg = Release|Any CPU
 		{821B87A3-D8FA-407A-BC58-928A859C71C4}.Release|x86.Build.0 = Release|Any CPU
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|ARM.ActiveCfg = Debug|ARM
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|ARM.Build.0 = Debug|ARM
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|ARM.Deploy.0 = Debug|ARM
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x64.ActiveCfg = Debug|x64
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x64.Build.0 = Debug|x64
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x64.Deploy.0 = Debug|x64
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x86.ActiveCfg = Debug|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x86.Build.0 = Debug|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x86.Deploy.0 = Debug|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|Any CPU.ActiveCfg = Release|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|ARM.ActiveCfg = Release|ARM
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|ARM.Build.0 = Release|ARM
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|ARM.Deploy.0 = Release|ARM
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x64.ActiveCfg = Release|x64
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x64.Build.0 = Release|x64
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x64.Deploy.0 = Release|x64
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.ActiveCfg = Release|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.Build.0 = Release|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{821B87A3-D8FA-407A-BC58-928A859C71C4} = {9CD17DD3-D23B-41FF-938C-023A5F26D438}
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875} = {9CD17DD3-D23B-41FF-938C-023A5F26D438}
 	EndGlobalSection
 EndGlobal
