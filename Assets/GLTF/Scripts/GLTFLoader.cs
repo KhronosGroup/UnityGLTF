@@ -214,7 +214,6 @@ namespace GLTF
 			AnimationClip clip = new AnimationClip();
 			clip.name = animation.Name ?? "GLTFAnimation";
 
-			//TODO: Necessary?
 			// needed because Animator component is unavailable at runtime
 			clip.legacy = true;
 
