@@ -115,21 +115,6 @@ namespace GLTF
 					yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
 				}
 			}
-			Debug.Log("Animation input type " + _root.Animations[0].Samplers[0].Input.Value.Type);
-			Debug.Log("Animation input Count " + _root.Animations[0].Samplers[0].Input.Value.Count);
-			var floats = _root.Animations[0].Samplers[0].Input.Value.AsFloatArray();
-			Debug.Log("Input array");
-			foreach (var f in floats)
-				Debug.Log(f);
-
-			Debug.Log("Animation output type " + _root.Animations[0].Samplers[0].Output.Value.Type);
-			Debug.Log("Animation output Count " + _root.Animations[0].Samplers[0].Output.Value.Count);
-			var vecs = _root.Animations[0].Samplers[0].Output.Value.AsVector4Array();
-			Debug.Log("Output array");
-			foreach (var v in vecs)
-				Debug.Log(v);
-
-
 			var sceneObj = CreateScene(scene);
 
 			if (_sceneParent != null)
