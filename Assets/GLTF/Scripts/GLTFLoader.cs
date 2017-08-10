@@ -247,8 +247,6 @@ namespace GLTF
 					node = node.transform.parent.gameObject;
 				} while (node != null && node != sceneObj);
 
-				Debug.Log(nodePath);
-
 				if (channel.Target.Path == GLTFAnimationChannelPath.translation)
 				{
 					clip.SetCurve(nodePath, typeof(Transform), "localPosition.x", curves[0]);
@@ -279,14 +277,11 @@ namespace GLTF
 			if(a == null)
 				a = sceneObj.AddComponent<UnityEngine.Animation>();
 
-			if (animation.Name == null)
-			{
-				a.AddClip(clip, "Animation " + a.GetClipCount());
-			}
-			else
-			{
-				a.AddClip(clip, animation.Name);
-			}
+			string name = animation.Name ?? ("Animation " + a.GetClipCount());
+			a.AddClip(clip, "Animation " + a.GetClipCount());
+
+			if (!a.isPlaying)
+				a.Play(name);
 		}
 
 		/// <summary>
