@@ -266,7 +266,15 @@ namespace GLTF
 			var a = gameObject.GetComponent<UnityEngine.Animation>();
 			if(a == null)
 				a = gameObject.AddComponent<UnityEngine.Animation>();
-			a.AddClip(clip, animation.Name);
+
+			if (animation.Name == null)
+			{
+				a.AddClip(clip, "Animation " + a.GetClipCount());
+			}
+			else
+			{
+				a.AddClip(clip, animation.Name);
+			}
 			// TODO: figure out what to do with the clip once it's built
 		}
 
