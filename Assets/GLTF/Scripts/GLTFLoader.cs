@@ -319,6 +319,10 @@ namespace GLTF
 				for (int i = 0; i < curves.Length; i++)
 					LinearizeCurve(curves[i]);
 
+			if(animationSampler.Interpolation == InterpolationType.STEP)
+				for (int i = 0; i < curves.Length; i++)
+					StepCurve(curves[i]);
+
 			return curves;
 		}
 
@@ -330,13 +334,29 @@ namespace GLTF
 				if (timeIdx >= 1)
 				{
 					key.inTangent = CalculateLinearTangent(curve[timeIdx - 1].value, curve[timeIdx].value, curve[timeIdx - 1].time, curve[timeIdx].time);
-					curve.MoveKey(timeIdx, key);
 				}
 				if (timeIdx + 1 < curve.length)
 				{
 					key.outTangent = CalculateLinearTangent(curve[timeIdx].value, curve[timeIdx + 1].value, curve[timeIdx].time, curve[timeIdx + 1].time);
-					curve.MoveKey(timeIdx, key);
 				}
+				curve.MoveKey(timeIdx, key);
+			}
+		}
+
+		public void StepCurve(AnimationCurve curve)
+		{
+			for (int timeIdx = 0; timeIdx < curve.length; timeIdx++)
+			{
+				Keyframe key = curve[timeIdx];
+				if (timeIdx >= 1)
+				{
+					key.inTangent = float.PositiveInfinity;
+				}
+				if (timeIdx + 1 < curve.length)
+				{
+					key.outTangent = float.PositiveInfinity;
+				}
+				curve.MoveKey(timeIdx, key);
 			}
 		}
 
