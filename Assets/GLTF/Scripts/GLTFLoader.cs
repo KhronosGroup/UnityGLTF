@@ -408,6 +408,10 @@ namespace GLTF
 
 					tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 						? primitive.Attributes[SemanticProperties.TANGENT].Value.AsTangentArray()
+						: null,
+
+					boneWeights = primitive.Attributes.ContainsKey(SemanticProperties.Weight(0)) && primitive.Attributes.ContainsKey(SemanticProperties.Joint(0))
+						? CreateBoneWeightArray(primitive.Attributes[SemanticProperties.Joint(0)].Value.AsVector4Array(), primitive.Attributes[SemanticProperties.Weight(0)].Value.AsVector4Array())
 						: null
 				};
 			}
@@ -423,6 +427,25 @@ namespace GLTF
 			meshRenderer.material = material;
 
 			return primitiveObj;
+		}
+
+		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights)
+		{
+			var boneWeights = new BoneWeight[joints.Length];
+			for(int i = 0; i < joints.Length; i++)
+			{
+				boneWeights[i].boneIndex0 = (int)joints[i].x;
+				boneWeights[i].boneIndex1 = (int)joints[i].y;
+				boneWeights[i].boneIndex2 = (int)joints[i].z;
+				boneWeights[i].boneIndex3 = (int)joints[i].w;
+
+				boneWeights[i].weight0 = weights[i].x;
+				boneWeights[i].weight1 = weights[i].y;
+				boneWeights[i].weight2 = weights[i].z;
+				boneWeights[i].weight3 = weights[i].w;
+			}
+
+			return boneWeights;
 		}
 
 		protected virtual UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
