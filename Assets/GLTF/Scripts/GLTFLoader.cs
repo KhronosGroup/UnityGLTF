@@ -165,19 +165,26 @@ namespace GLTF
 		protected virtual GameObject CreateScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
+			Dictionary<int, GameObject> nodeMap = new Dictionary<int, GameObject>();
 
 			foreach (var node in scene.Nodes)
 			{
-				var nodeObj = CreateNode(node.Value);
+				var nodeObj = CreateNode(node, nodeMap);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 			}
+
+			// Add animations to scene
+			foreach (var animation in _root.Animations)
+				AddAnimationToScene(scene, sceneObj, nodeMap, animation);
 
 			return sceneObj;
 		}
 
-		protected virtual GameObject CreateNode(Node node)
+		protected virtual GameObject CreateNode(NodeId nodeId, Dictionary<int, GameObject> nodeMap)
 		{
-			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
+			var node = nodeId.Value;
+			var nodeObj = new GameObject(node.Name ?? ("GLTFNode" + nodeId.Id));
+			nodeMap[nodeId.Id] = nodeObj;
 
 			Vector3 position;
 			Quaternion rotation;
@@ -193,8 +200,6 @@ namespace GLTF
 				CreateMeshObject(node.Mesh.Value, nodeObj.transform);
 			}
 
-
-
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
 			{
@@ -207,14 +212,10 @@ namespace GLTF
 			{
 				foreach (var child in node.Children)
 				{
-					var childObj = CreateNode(child.Value);
+					var childObj = CreateNode(child, nodeMap);
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
-
-			//TODO: how to do this?
-			foreach (var animation in _root.Animations)
-				AddAnimationToGameObject(animation, nodeObj);
 
 			return nodeObj;
 		}
@@ -222,7 +223,7 @@ namespace GLTF
 		/// <summary>
 		/// Generate Animation components from glTF animations, and attach to game objects
 		/// </summary>
-		protected void AddAnimationToGameObject(Animation animation, GameObject gameObject)
+		protected void AddAnimationToScene(Scene scene, GameObject sceneObj, Dictionary<int, GameObject> nodeMap, Animation animation)
 		{
 			// create the animation clip that will contain animation data
 			AnimationClip clip = new AnimationClip();
@@ -235,37 +236,48 @@ namespace GLTF
 			foreach (var channel in animation.Channels)
 			{
 				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value);
+
+				// TODO Memoize
+				// Map the target Node ID to a GameObject, get its name, and prepend parents' names to generate a path.
+				GameObject node = nodeMap[channel.Target.Node.Id];
+				string nodePath = "";
+				do
+				{
+					nodePath = node.name + (nodePath == "" ? nodePath : "/" + nodePath);
+					node = node.transform.parent.gameObject;
+				} while (node != null && node != sceneObj);
+
+				Debug.Log(nodePath);
+
 				if (channel.Target.Path == GLTFAnimationChannelPath.translation)
 				{
-					clip.SetCurve("", typeof(Transform), "localPosition.x", curves[0]);
-					clip.SetCurve("", typeof(Transform), "localPosition.y", curves[1]);
-					clip.SetCurve("", typeof(Transform), "localPosition.z", curves[2]);
+					clip.SetCurve(nodePath, typeof(Transform), "localPosition.x", curves[0]);
+					clip.SetCurve(nodePath, typeof(Transform), "localPosition.y", curves[1]);
+					clip.SetCurve(nodePath, typeof(Transform), "localPosition.z", curves[2]);
 				}
 				else if (channel.Target.Path == GLTFAnimationChannelPath.rotation)
 				{
-					clip.SetCurve("", typeof(Transform), "localRotation.x", curves[0]);
-					clip.SetCurve("", typeof(Transform), "localRotation.y", curves[1]);
-					clip.SetCurve("", typeof(Transform), "localRotation.z", curves[2]);
-					clip.SetCurve("", typeof(Transform), "localRotation.w", curves[3]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.x", curves[0]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.y", curves[1]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.z", curves[2]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.w", curves[3]);
 				}
 				else if (channel.Target.Path == GLTFAnimationChannelPath.scale)
 				{
-					clip.SetCurve("", typeof(Transform), "localScale.x", curves[0]);
-					clip.SetCurve("", typeof(Transform), "localScale.y", curves[1]);
-					clip.SetCurve("", typeof(Transform), "localScale.z", curves[2]);
+					clip.SetCurve(nodePath, typeof(Transform), "localScale.x", curves[0]);
+					clip.SetCurve(nodePath, typeof(Transform), "localScale.y", curves[1]);
+					clip.SetCurve(nodePath, typeof(Transform), "localScale.z", curves[2]);
 				}
 				else
 				{
 					Debug.LogWarning("Cannot read GLTF animation path");
 				}
-
-				GameObject target = gameObject;
-				// TODO: figure out how to build relative paths for glTF nodes
 			}
 
-			var a = gameObject.GetComponent<UnityEngine.Animation>();
+			var a = sceneObj.GetComponent<UnityEngine.Animation>();
+
 			if(a == null)
-				a = gameObject.AddComponent<UnityEngine.Animation>();
+				a = sceneObj.AddComponent<UnityEngine.Animation>();
 
 			if (animation.Name == null)
 			{
@@ -275,7 +287,6 @@ namespace GLTF
 			{
 				a.AddClip(clip, animation.Name);
 			}
-			// TODO: figure out what to do with the clip once it's built
 		}
 
 		/// <summary>
