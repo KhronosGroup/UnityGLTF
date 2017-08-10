@@ -230,7 +230,7 @@ namespace GLTF
 							{
 								Id = reader.ReadAsInt32().Value,
 								Root = root
-							});
+							}, true);
 						});
 						break;
 					default:

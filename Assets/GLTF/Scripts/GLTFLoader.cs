@@ -283,7 +283,7 @@ namespace GLTF
 			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
 				stride = 4;
 			else
-				throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor");
+				throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor " + animationSampler.Output.Value.Type);
 
 			var curves = new AnimationCurve[stride];
 

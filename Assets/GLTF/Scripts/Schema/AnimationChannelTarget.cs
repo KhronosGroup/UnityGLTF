@@ -69,6 +69,7 @@ namespace GLTF
 	{
 		translation,
 		rotation,
-		scale
+		scale,
+		weights
 	}
 }
