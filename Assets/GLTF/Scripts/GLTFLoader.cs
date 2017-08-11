@@ -452,7 +452,7 @@ namespace GLTF
 					// bindPoses[i] = skin.InverseBindMatrices.Value.Contents.AsMatrices(); // halp pls
 				}
 
-				primitive.Contents.bindposes = bindPoses;
+				//primitive.Contents.bindposes = bindPoses;
 
 				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 				skinnedMeshRenderer.material = material;

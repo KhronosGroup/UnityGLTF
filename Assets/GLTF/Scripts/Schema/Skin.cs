@@ -45,7 +45,13 @@ namespace GLTF
 						skin.Skeleton = NodeId.Deserialize(root, reader);
 						break;
 					case "joints":
-						skin.Joints = reader.ReadList(() => NodeId.Deserialize(root, reader));
+						skin.Joints = reader.ReadList(() =>
+							new NodeId
+							{
+								Id = int.Parse(reader.Value.ToString()),
+								Root = root
+							}
+						);
 						break;
 					default:
 						skin.DefaultPropertyDeserializer(root, reader);
