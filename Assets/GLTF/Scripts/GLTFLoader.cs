@@ -30,6 +30,8 @@ namespace GLTF
 
 		protected readonly Material DefaultMaterial = new Material();
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
+		protected readonly Dictionary<int, GameObject> _nodeMap = new Dictionary<int, GameObject>();
+		protected readonly Dictionary<MeshPrimitive, GameObject> _primitiveMap = new Dictionary<MeshPrimitive, GameObject>();
 
 		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
@@ -115,20 +117,6 @@ namespace GLTF
 					yield return asyncAction.RunOnWorkerThread(() => BuildMeshAttributes());
 				}
 			}
-			Debug.Log("Animation input type " + _root.Animations[0].Samplers[0].Input.Value.Type);
-			Debug.Log("Animation input Count " + _root.Animations[0].Samplers[0].Input.Value.Count);
-			var floats = _root.Animations[0].Samplers[0].Input.Value.AsFloatArray();
-			Debug.Log("Input array");
-			foreach (var f in floats)
-				Debug.Log(f);
-
-			Debug.Log("Animation output type " + _root.Animations[0].Samplers[0].Output.Value.Type);
-			Debug.Log("Animation output Count " + _root.Animations[0].Samplers[0].Output.Value.Count);
-			var vecs = _root.Animations[0].Samplers[0].Output.Value.AsVector4Array();
-			Debug.Log("Output array");
-			foreach (var v in vecs)
-				Debug.Log(v);
-
 
 			var sceneObj = CreateScene(scene);
 
@@ -165,26 +153,31 @@ namespace GLTF
 		protected virtual GameObject CreateScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
-			Dictionary<int, GameObject> nodeMap = new Dictionary<int, GameObject>();
 
 			foreach (var node in scene.Nodes)
 			{
-				var nodeObj = CreateNode(node, nodeMap);
+				var nodeObj = CreateNode(node);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 			}
 
-			// Add animations to scene
+			foreach (var node in scene.Nodes)
+			{
+				AttachMeshRenderers(node.Value, _nodeMap[node.Id]);
+			}
+
 			foreach (var animation in _root.Animations)
-				AddAnimationToScene(scene, sceneObj, nodeMap, animation);
+			{
+				AddAnimationToScene(scene, sceneObj, animation);
+			}
 
 			return sceneObj;
 		}
 
-		protected virtual GameObject CreateNode(NodeId nodeId, Dictionary<int, GameObject> nodeMap)
+		protected virtual GameObject CreateNode(NodeId nodeId)
 		{
 			var node = nodeId.Value;
 			var nodeObj = new GameObject(node.Name ?? ("GLTFNode" + nodeId.Id));
-			nodeMap[nodeId.Id] = nodeObj;
+			_nodeMap[nodeId.Id] = nodeObj;
 
 			Vector3 position;
 			Quaternion rotation;
@@ -197,7 +190,7 @@ namespace GLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				CreateMeshObject(node.Mesh.Value, nodeObj.transform);
+				CreateMeshObject(node.Mesh.Value, nodeObj.transform, nodeId);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -212,7 +205,7 @@ namespace GLTF
 			{
 				foreach (var child in node.Children)
 				{
-					var childObj = CreateNode(child, nodeMap);
+					var childObj = CreateNode(child);
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
@@ -223,7 +216,7 @@ namespace GLTF
 		/// <summary>
 		/// Generate Animation components from glTF animations, and attach to game objects
 		/// </summary>
-		protected void AddAnimationToScene(Scene scene, GameObject sceneObj, Dictionary<int, GameObject> nodeMap, Animation animation)
+		protected void AddAnimationToScene(Scene scene, GameObject sceneObj, Animation animation)
 		{
 			// create the animation clip that will contain animation data
 			AnimationClip clip = new AnimationClip();
@@ -239,7 +232,7 @@ namespace GLTF
 
 				// TODO Memoize
 				// Map the target Node ID to a GameObject, get its name, and prepend parents' names to generate a path.
-				GameObject node = nodeMap[channel.Target.Node.Id];
+				GameObject node = _nodeMap[channel.Target.Node.Id];
 				string nodePath = "";
 				do
 				{
@@ -371,13 +364,14 @@ namespace GLTF
 			return (valueEnd - valueStart) / (timeEnd - timeStart);
 		}
 
-		protected virtual void CreateMeshObject(Mesh mesh, Transform parent)
+		protected virtual void CreateMeshObject(Mesh mesh, Transform parent, NodeId nodeId)
 		{
 			foreach (var primitive in mesh.Primitives)
 			{
 				var primitiveObj = CreateMeshPrimitive(primitive);
 				primitiveObj.transform.SetParent(parent, false);
 				primitiveObj.SetActive(true);
+				_primitiveMap[primitive] = primitiveObj;
 			}
 		}
 
@@ -430,15 +424,59 @@ namespace GLTF
 
 			meshFilter.sharedMesh = primitive.Contents;
 
+			return primitiveObj;
+		}
+
+		protected virtual void AttachMeshRenderers(Node node, GameObject nodeObj)
+		{
+			if (node.Mesh != null)
+			{
+				foreach (var primitive in node.Mesh.Value.Primitives)
+				{
+					CreateMeshRenderer(primitive, node.Skin != null ? node.Skin.Value : null);
+				}
+			}
+
+			if (node.Children != null)
+			{
+				foreach (var child in node.Children)
+				{
+					AttachMeshRenderers(child.Value, _nodeMap[child.Id]);
+				}
+			}
+		}
+
+		protected void CreateMeshRenderer(MeshPrimitive primitive, Skin skin)
+		{
+			var primitiveObj = _primitiveMap[primitive];
+
 			var material = CreateMaterial(
 				primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
 				primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
 			);
 
-			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
-			meshRenderer.material = material;
+			if (skin == null)
+			{
+				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+				meshRenderer.material = material;
+			}
+			else
+			{
+				var meshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+				meshRenderer.material = material;
 
-			return primitiveObj;
+				var boneCount = skin.Joints.Count;
+				Transform[] bones = new Transform[boneCount];
+				Matrix4x4[] bindPoses = new Matrix4x4[boneCount];
+
+				for (int i = 0; i < boneCount; i++)
+				{
+					bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+				}
+
+				primitive.Contents.bindposes = bindPoses;
+				meshRenderer.bones = bones;
+			}
 		}
 
 		protected virtual UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
