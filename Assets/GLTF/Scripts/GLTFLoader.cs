@@ -31,7 +31,6 @@ namespace GLTF
 		protected readonly Material DefaultMaterial = new Material();
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
 		protected readonly Dictionary<int, GameObject> _nodeMap = new Dictionary<int, GameObject>();
-		protected readonly Dictionary<MeshPrimitive, GameObject> _primitiveMap = new Dictionary<MeshPrimitive, GameObject>();
 
 		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
@@ -162,7 +161,7 @@ namespace GLTF
 
 			foreach (var node in scene.Nodes)
 			{
-				AttachMeshRenderers(node.Value, _nodeMap[node.Id]);
+				CreateNodePrimitives(node.Value, _nodeMap[node.Id]);
 			}
 
 			foreach (var animation in _root.Animations)
@@ -186,12 +185,6 @@ namespace GLTF
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
-
-			// TODO: Add support for skin/morph targets
-			if (node.Mesh != null)
-			{
-				CreateMeshObject(node.Mesh.Value, nodeObj.transform, nodeId);
-			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
@@ -363,22 +356,37 @@ namespace GLTF
 			return (valueEnd - valueStart) / (timeEnd - timeStart);
 		}
 
-		protected virtual void CreateMeshObject(Mesh mesh, Transform parent, NodeId nodeId)
+		protected virtual void CreateNodePrimitives(Node node, GameObject nodeObj)
 		{
-			foreach (var primitive in mesh.Primitives)
+			if (node.Mesh != null)
 			{
-				var primitiveObj = CreateMeshPrimitive(primitive);
-				primitiveObj.transform.SetParent(parent, false);
-				primitiveObj.SetActive(true);
-				_primitiveMap[primitive] = primitiveObj;
+				foreach (var primitive in node.Mesh.Value.Primitives)
+				{
+					var primitiveObj = new GameObject("Primitive");
+
+					CreateMeshRenderer(primitive, primitiveObj, node.Skin != null ? node.Skin.Value : null);
+
+					primitiveObj.transform.SetParent(nodeObj.transform);
+					primitiveObj.SetActive(true);
+				}
+			}
+
+			if (node.Children != null)
+			{
+				foreach (var child in node.Children)
+				{
+					CreateNodePrimitives(child.Value, _nodeMap[child.Id]);
+				}
 			}
 		}
 
-		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive)
+		protected void CreateMeshRenderer(MeshPrimitive primitive, GameObject primitiveObj, Skin skin)
 		{
-			var primitiveObj = new GameObject("Primitive");
+			var material = CreateMaterial(
+				primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
+				primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
+			);
 
-			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
 			if (primitive.Contents == null)
@@ -425,49 +433,15 @@ namespace GLTF
 				};
 			}
 
-			meshFilter.sharedMesh = primitive.Contents;
-
-			return primitiveObj;
-		}
-
-		protected virtual void AttachMeshRenderers(Node node, GameObject nodeObj)
-		{
-			if (node.Mesh != null)
-			{
-				foreach (var primitive in node.Mesh.Value.Primitives)
-				{
-					CreateMeshRenderer(primitive, node.Skin != null ? node.Skin.Value : null);
-				}
-			}
-
-			if (node.Children != null)
-			{
-				foreach (var child in node.Children)
-				{
-					AttachMeshRenderers(child.Value, _nodeMap[child.Id]);
-				}
-			}
-		}
-
-		protected void CreateMeshRenderer(MeshPrimitive primitive, Skin skin)
-		{
-			var primitiveObj = _primitiveMap[primitive];
-
-			var material = CreateMaterial(
-				primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
-				primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
-			);
-
 			if (skin == null)
 			{
+				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+				meshFilter.sharedMesh = primitive.Contents;
 				meshRenderer.material = material;
 			}
 			else
 			{
-				var meshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
-				meshRenderer.material = material;
-
 				var boneCount = skin.Joints.Count;
 				Transform[] bones = new Transform[boneCount];
 				Matrix4x4[] bindPoses = new Matrix4x4[boneCount];
@@ -475,10 +449,16 @@ namespace GLTF
 				for (int i = 0; i < boneCount; i++)
 				{
 					bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+					// bindPoses[i] = skin.InverseBindMatrices.Value.Contents.AsMatrices(); // halp pls
 				}
 
 				primitive.Contents.bindposes = bindPoses;
-				meshRenderer.bones = bones;
+
+				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+				skinnedMeshRenderer.material = material;
+				skinnedMeshRenderer.bones = bones;
+				skinnedMeshRenderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
+				skinnedMeshRenderer.sharedMesh = primitive.Contents;
 			}
 		}
 
