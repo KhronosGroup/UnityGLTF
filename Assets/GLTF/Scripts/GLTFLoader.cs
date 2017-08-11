@@ -259,7 +259,7 @@ namespace GLTF
 
 			var a = sceneObj.GetComponent<UnityEngine.Animation>();
 
-			if(a == null)
+			if (a == null)
 				a = sceneObj.AddComponent<UnityEngine.Animation>();
 
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
@@ -444,20 +444,18 @@ namespace GLTF
 			{
 				var boneCount = skin.Joints.Count;
 				Transform[] bones = new Transform[boneCount];
-				Matrix4x4[] bindPoses = new Matrix4x4[boneCount];
+				Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
 
 				for (int i = 0; i < boneCount; i++)
 				{
 					bones[i] = _nodeMap[skin.Joints[i].Id].transform;
-					// bindPoses[i] = skin.InverseBindMatrices.Value.Contents.AsMatrices(); // halp pls
 				}
 
-				//primitive.Contents.bindposes = bindPoses;
+				primitive.Contents.bindposes = bindPoses;
 
 				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 				skinnedMeshRenderer.material = material;
 				skinnedMeshRenderer.bones = bones;
-				skinnedMeshRenderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
 				skinnedMeshRenderer.sharedMesh = primitive.Contents;
 			}
 		}
