@@ -362,12 +362,12 @@ namespace GLTF
 			{
 				foreach (var primitive in node.Mesh.Value.Primitives)
 				{
-					var primitiveObj = new GameObject("Primitive");
+					//var primitiveObj = new GameObject("Primitive");
 
-					CreateMeshRenderer(primitive, primitiveObj, node.Skin != null ? node.Skin.Value : null);
+					CreateMeshRenderer(primitive, nodeObj, node.Skin != null ? node.Skin.Value : null);
 
-					primitiveObj.transform.SetParent(nodeObj.transform);
-					primitiveObj.SetActive(true);
+					//primitiveObj.transform.SetParent(nodeObj.transform);
+					//primitiveObj.SetActive(true);
 				}
 			}
 
@@ -449,6 +449,9 @@ namespace GLTF
 				for (int i = 0; i < boneCount; i++)
 				{
 					bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+					if(primitiveObj.transform.parent != null)
+					Debug.Log("Matrix" + skin.Joints[i].Id +  "\n" + bindPoses[i] + "vs\n" + 
+						(primitiveObj.transform.localToWorldMatrix * bones[i].worldToLocalMatrix));
 				}
 
 				primitive.Contents.bindposes = bindPoses;
