@@ -362,12 +362,15 @@ namespace GLTF
 			{
 				foreach (var primitive in node.Mesh.Value.Primitives)
 				{
-					//var primitiveObj = new GameObject("Primitive");
+					var primitiveObj = new GameObject("Primitive");
+					primitiveObj.transform.SetParent(nodeObj.transform);
+					primitiveObj.transform.localPosition = Vector3.zero;
+					primitiveObj.transform.localRotation = Quaternion.identity;
+					primitiveObj.transform.localScale = Vector3.one;
 
-					CreateMeshRenderer(primitive, nodeObj, node.Skin != null ? node.Skin.Value : null);
+					CreateMeshRenderer(primitive, primitiveObj, node.Skin != null ? node.Skin.Value : null);
 
-					//primitiveObj.transform.SetParent(nodeObj.transform);
-					//primitiveObj.SetActive(true);
+					primitiveObj.SetActive(true);
 				}
 			}
 
@@ -449,9 +452,8 @@ namespace GLTF
 				for (int i = 0; i < boneCount; i++)
 				{
 					bones[i] = _nodeMap[skin.Joints[i].Id].transform;
-					if(primitiveObj.transform.parent != null)
-					Debug.Log("Matrix" + skin.Joints[i].Id +  "\n" + bindPoses[i] + "vs\n" + 
-						(primitiveObj.transform.localToWorldMatrix * bones[i].worldToLocalMatrix));
+					//TODO: The bind poses don't appear to work with how Unity is trying to use them.
+					bindPoses[i] = bones[i].worldToLocalMatrix * primitiveObj.transform.localToWorldMatrix;
 				}
 
 				primitive.Contents.bindposes = bindPoses;
