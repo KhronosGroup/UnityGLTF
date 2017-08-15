@@ -251,6 +251,12 @@ namespace GLTF
 					clip.SetCurve(nodePath, typeof(Transform), "localScale.y", curves[1]);
 					clip.SetCurve(nodePath, typeof(Transform), "localScale.z", curves[2]);
 				}
+				else if (channel.Target.Path == GLTFAnimationChannelPath.weights)
+				{
+					//TODO: Actually Get Primitive Object Path
+					string primitiveObjPath = nodePath;
+					clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendWeight", curves[0]);
+				}
 				else
 				{
 					Debug.LogWarning("Cannot read GLTF animation path");
@@ -265,8 +271,9 @@ namespace GLTF
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
 			a.AddClip(clip, "Animation " + a.GetClipCount());
 
-			if (!a.isPlaying)
-				a.Play(name);
+			//TODO: Do we really want to do this?
+			//if (!a.isPlaying)
+			//	a.Play(name);
 		}
 
 		/// <summary>
@@ -283,6 +290,8 @@ namespace GLTF
 				stride = 3;
 			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
 				stride = 4;
+			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.SCALAR)
+				stride = 1;
 			else
 				throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor " + animationSampler.Output.Value.Type);
 
@@ -291,6 +300,11 @@ namespace GLTF
 			for (int i = 0; i < stride; i++)
 				curves[i] = new AnimationCurve();
 
+			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.SCALAR) {
+				var animArray = animationSampler.Output.Value.AsFloatArray();
+				for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
+					curves[0].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx]));
+			}
 			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3) { 
 				var animArray = animationSampler.Output.Value.AsVector3Array();
 				for (int i = 0; i < stride; i++)
@@ -436,14 +450,8 @@ namespace GLTF
 				};
 			}
 
-			if (skin == null)
-			{
-				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
-				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
-				meshFilter.sharedMesh = primitive.Contents;
-				meshRenderer.material = material;
-			}
-			else
+			//TODO: Bones and blendshapes should NOT be mutually exclusive.
+			if(skin != null)
 			{
 				var boneCount = skin.Joints.Count;
 				Transform[] bones = new Transform[boneCount];
@@ -462,6 +470,20 @@ namespace GLTF
 				skinnedMeshRenderer.material = material;
 				skinnedMeshRenderer.bones = bones;
 				skinnedMeshRenderer.sharedMesh = primitive.Contents;
+			}
+			else if(primitive.Targets != null)
+			{
+				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+				//TODO: Add Blend Shapes
+				skinnedMeshRenderer.material = material;
+				skinnedMeshRenderer.sharedMesh = primitive.Contents;
+			}
+			else
+			{
+				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
+				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+				meshFilter.sharedMesh = primitive.Contents;
+				meshRenderer.material = material;
 			}
 		}
 
