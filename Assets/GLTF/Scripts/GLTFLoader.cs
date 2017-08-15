@@ -220,7 +220,7 @@ namespace GLTF
 
 			foreach (var channel in animation.Channels)
 			{
-				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value);
+				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value, channel.Target.Node.Value);
 
 				// TODO Memoize
 				// Map the target Node ID to a GameObject, get its name, and prepend parents' names to generate a path.
@@ -254,8 +254,16 @@ namespace GLTF
 				else if (channel.Target.Path == GLTFAnimationChannelPath.weights)
 				{
 					//TODO: Actually Get Primitive Object Path
-					string primitiveObjPath = nodePath;
-					clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendWeight", curves[0]);
+					var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+					var targetCount = primitives[0].Targets.Count;
+					for(int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+					{
+						string primitiveObjPath = nodePath + "/Primitive" + primitiveIndex;
+						for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+						{
+							clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape."+targetIndex, curves[targetIndex]);
+						}
+					}
 				}
 				else
 				{
@@ -280,30 +288,33 @@ namespace GLTF
 		/// Create AnimationCurves from glTF animation sampler data
 		/// </summary>
 		/// <returns>AnimationCurve[]</returns>
-		protected AnimationCurve[] AsAnimationCurves(AnimationSampler animationSampler)
+		protected AnimationCurve[] AsAnimationCurves(AnimationSampler animationSampler, Node node)
 		{
 			float[] timeArray = animationSampler.Input.Value.AsFloatArray();
 
 			// check transform stride
+			bool isBlendShapes = animationSampler.Output.Value.Type == GLTFAccessorAttributeType.SCALAR && node.Mesh != null && node.Mesh.Value.Primitives[0].Targets != null;
 			int stride = 3;
 			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3)
 				stride = 3;
 			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
 				stride = 4;
-			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.SCALAR)
-				stride = 1;
+			else if (isBlendShapes)
+				stride = node.Mesh.Value.Primitives[0].Targets.Count;
 			else
 				throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor " + animationSampler.Output.Value.Type);
 
 			var curves = new AnimationCurve[stride];
-
 			for (int i = 0; i < stride; i++)
 				curves[i] = new AnimationCurve();
 
-			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.SCALAR) {
+			if (isBlendShapes) {
+				var numTargets = node.Mesh.Value.Primitives[0].Targets.Count;
 				var animArray = animationSampler.Output.Value.AsFloatArray();
+
 				for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
-					curves[0].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx]));
+					for (int targetIndex = 0; targetIndex < numTargets; targetIndex++)
+						curves[targetIndex].AddKey(new Keyframe(timeArray[timeIdx], animArray[stride * timeIdx + targetIndex]));
 			}
 			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3) { 
 				var animArray = animationSampler.Output.Value.AsVector3Array();
@@ -374,9 +385,10 @@ namespace GLTF
 		{
 			if (node.Mesh != null)
 			{
-				foreach (var primitive in node.Mesh.Value.Primitives)
+				for(int i = 0; i < node.Mesh.Value.Primitives.Count; i++)
 				{
-					var primitiveObj = new GameObject("Primitive");
+					var primitive = node.Mesh.Value.Primitives[i];
+					var primitiveObj = new GameObject("Primitive" + i);
 					primitiveObj.transform.SetParent(nodeObj.transform);
 					primitiveObj.transform.localPosition = Vector3.zero;
 					primitiveObj.transform.localRotation = Quaternion.identity;
@@ -450,33 +462,18 @@ namespace GLTF
 				};
 			}
 
-			//TODO: Bones and blendshapes should NOT be mutually exclusive.
-			if(skin != null)
-			{
-				var boneCount = skin.Joints.Count;
-				Transform[] bones = new Transform[boneCount];
-				Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
-
-				for (int i = 0; i < boneCount; i++)
-				{
-					bones[i] = _nodeMap[skin.Joints[i].Id].transform;
-					//TODO: The bind poses don't appear to work with how Unity is trying to use them.
-					bindPoses[i] = bones[i].worldToLocalMatrix * primitiveObj.transform.localToWorldMatrix;
-				}
-
-				primitive.Contents.bindposes = bindPoses;
-
-				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
-				skinnedMeshRenderer.material = material;
-				skinnedMeshRenderer.bones = bones;
-				skinnedMeshRenderer.sharedMesh = primitive.Contents;
-			}
-			else if(primitive.Targets != null)
+			if(NeedsSkinnedMeshRenderer(primitive, skin))
 			{
 				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
-				//TODO: Add Blend Shapes
 				skinnedMeshRenderer.material = material;
+
+				if (HasBlendShapes(primitive))
+					SetupBlendShapes(primitive);
+
 				skinnedMeshRenderer.sharedMesh = primitive.Contents;
+
+				if (HasBones(skin))
+					SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj);
 			}
 			else
 			{
@@ -484,6 +481,51 @@ namespace GLTF
 				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 				meshFilter.sharedMesh = primitive.Contents;
 				meshRenderer.material = material;
+			}
+		}
+
+		bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		{
+			return HasBones(skin) || HasBlendShapes(primitive);
+		}
+
+		bool HasBones(Skin skin)
+		{
+			return skin != null;
+		}
+
+		void SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj)
+		{
+			var boneCount = skin.Joints.Count;
+			Transform[] bones = new Transform[boneCount];
+			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
+
+			for (int i = 0; i < boneCount; i++)
+			{
+				bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+				//TODO: The bind poses don't appear to work with how Unity is trying to use them, so I'm recalculating them here in a way that seems to work with the samples.
+				bindPoses[i] = bones[i].worldToLocalMatrix * primitiveObj.transform.localToWorldMatrix;
+			}
+
+			primitive.Contents.bindposes = bindPoses;
+			renderer.bones = bones;
+		}
+
+		bool HasBlendShapes(MeshPrimitive primitive)
+		{
+			return primitive.Targets != null;
+		}
+
+		void SetupBlendShapes(MeshPrimitive primitive)
+		{
+			var mesh = primitive.Contents;
+			for (int blendShapeIndex = 0; blendShapeIndex < primitive.Targets.Count; blendShapeIndex++)
+			{
+				var fieldToAccessor = primitive.Targets[blendShapeIndex];
+				var verts = fieldToAccessor["POSITION"].Value.AsVector3Array();
+				var normals = fieldToAccessor["NORMAL"].Value.AsVector3Array();
+				var tangents = fieldToAccessor["TANGENT"].Value.AsVector3Array();
+				mesh.AddBlendShapeFrame(blendShapeIndex.ToString(), 1.0f, verts, normals, tangents);
 			}
 		}
 
