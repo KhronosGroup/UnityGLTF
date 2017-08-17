@@ -4,4 +4,7 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/GLTF/Examples/UWPTestScene.unity
+    guid: 2429b0f8a47aea94db64f64147f75609

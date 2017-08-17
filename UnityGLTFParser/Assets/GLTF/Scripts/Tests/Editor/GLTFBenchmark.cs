@@ -2,11 +2,13 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
-using GLTF;
+using UnityGLTFSerialization;
 using UnityEngine.Networking;
 using System.Text;
 using System.IO;
 
+// todo blgross port to base layer
+#if false
 public class GLTFBenchmark : MonoBehaviour
 {
 	public string[] GLTFUrls = new string[]
@@ -69,3 +71,4 @@ public class GLTFBenchmark : MonoBehaviour
 		}
 	}
 }
+#endif

@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{72AC331F-9810-4DE2-8EA3-84559A787218}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GLTFJsonSerialization</RootNamespace>
+    <AssemblyName>GLTFJsonSerialization</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AttributeAccessor.cs" />
+    <Compile Include="Exceptions.cs" />
+    <Compile Include="GLTFHelpers.cs" />
+    <Compile Include="GLTFJsonLoader.cs" />
+    <Compile Include="GLTFParser.cs" />
+    <Compile Include="Extensions\GLTFJsonExtensions.cs" />
+    <Compile Include="Math\Color.cs" />
+    <Compile Include="Math\Matrix4x4.cs" />
+    <Compile Include="Math\Quaternion.cs" />
+    <Compile Include="Math\Vector2.cs" />
+    <Compile Include="Math\Vector3.cs" />
+    <Compile Include="Math\Vector4.cs" />
+    <Compile Include="IGLTFJsonLoader.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Schema\Accessor.cs" />
+    <Compile Include="Schema\AccessorSparse.cs" />
+    <Compile Include="Schema\AccessorSparseIndices.cs" />
+    <Compile Include="Schema\AccessorSparseValues.cs" />
+    <Compile Include="Schema\Animation.cs" />
+    <Compile Include="Schema\AnimationChannel.cs" />
+    <Compile Include="Schema\AnimationChannelTarget.cs" />
+    <Compile Include="Schema\AnimationSampler.cs" />
+    <Compile Include="Schema\Asset.cs" />
+    <Compile Include="Schema\Buffer.cs" />
+    <Compile Include="Schema\BufferView.cs" />
+    <Compile Include="Schema\Camera.cs" />
+    <Compile Include="Schema\CameraOrthographic.cs" />
+    <Compile Include="Schema\CameraPerspective.cs" />
+    <Compile Include="Schema\Extension.cs" />
+    <Compile Include="Schema\GLTFChildOfRootProperty.cs" />
+    <Compile Include="Schema\GLTFId.cs" />
+    <Compile Include="Schema\GLTFProperty.cs" />
+    <Compile Include="Schema\GLTFRoot.cs" />
+    <Compile Include="Schema\Image.cs" />
+    <Compile Include="Schema\Material.cs" />
+    <Compile Include="Schema\MaterialCommonConstant.cs" />
+    <Compile Include="Schema\MaterialNormalTextureInfo.cs" />
+    <Compile Include="Schema\MaterialOcclusionTextureInfo.cs" />
+    <Compile Include="Schema\MaterialPBRMetallicRoughness.cs" />
+    <Compile Include="Schema\Mesh.cs" />
+    <Compile Include="Schema\MeshPrimitive.cs" />
+    <Compile Include="Schema\Node.cs" />
+    <Compile Include="Schema\Sampler.cs" />
+    <Compile Include="Schema\Scene.cs" />
+    <Compile Include="Schema\Skin.cs" />
+    <Compile Include="Schema\Texture.cs" />
+    <Compile Include="Schema\TextureInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy *.dll ..\..\..\..\UnityGLTFParser\Assets\GLTF\Plugins\ /Y
+xcopy *.pdb ..\..\..\..\UnityGLTFParser\Assets\GLTF\Plugins\ /Y</PostBuildEvent>
+  </PropertyGroup>
+</Project>

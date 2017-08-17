@@ -1,23 +1,25 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using GLTF;
+using UnityGLTFSerialization;
 
 public class GLTFExporterIntegrationTest : MonoBehaviour {
 
-	void Start () {
-		var exporter = new GLTFExporter(new [] {transform});
-		var root = exporter.GetRoot();
+#if false
+    void Start () {
+        var exporter = new GLTFExporter(new [] {transform});
+        var root = exporter.GetRoot();
 
-		var scene = root.GetDefaultScene();
+        var scene = root.GetDefaultScene();
 
-		IntegrationTest.Assert(scene.Name == gameObject.name);
+        IntegrationTest.Assert(scene.Name == gameObject.name);
 
 
 
-		IntegrationTest.Assert(root.Materials[0].AlphaMode == AlphaMode.BLEND);
+        IntegrationTest.Assert(root.Materials[0].AlphaMode == GLTFJsonSerialization.AlphaMode.BLEND);
 
-		IntegrationTest.Pass();
-	}
+        IntegrationTest.Pass();
+    }
+#endif
 
 }

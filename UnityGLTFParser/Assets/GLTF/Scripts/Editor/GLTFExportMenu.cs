@@ -1,6 +1,6 @@
 using System;
 using UnityEditor;
-using GLTF;
+using UnityGLTFSerialization;
 using UnityEngine.SceneManagement;
 
 public class GLTFExportMenu
@@ -16,7 +16,7 @@ public class GLTFExportMenu
 		else
 			throw new Exception("No objects selected, cannot export.");
 
-		var exporter = new GLTFExporter(Selection.transforms);
+		var exporter = new GLTFSceneExporter(Selection.transforms);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
 		exporter.SaveGLTFandBin(path, name);
 	}
@@ -28,7 +28,7 @@ public class GLTFExportMenu
 		var gameObjects = scene.GetRootGameObjects();
 		var transforms = Array.ConvertAll(gameObjects, gameObject => gameObject.transform);
 
-		var exporter = new GLTFExporter(transforms);
+		var exporter = new GLTFSceneExporter(transforms);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
 		exporter.SaveGLTFandBin(path, scene.name);
 	}
