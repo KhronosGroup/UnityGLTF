@@ -279,9 +279,11 @@ namespace GLTF
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
 			a.AddClip(clip, "Animation " + a.GetClipCount());
 
-			//TODO: Do we really want to do this?
-			//if (!a.isPlaying)
-			//	a.Play(name);
+			//TODO: This is a test that should be deleted.
+			//for(int i = 0; i < 31; i++)
+			//{
+			//	a.Blend("Animation " + i, 1.0f, 0.0f);
+			//}		
 		}
 
 		/// <summary>
@@ -470,10 +472,10 @@ namespace GLTF
 				if (HasBlendShapes(primitive))
 					SetupBlendShapes(primitive);
 
-				skinnedMeshRenderer.sharedMesh = primitive.Contents;
-
 				if (HasBones(skin))
 					SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj);
+
+				skinnedMeshRenderer.sharedMesh = primitive.Contents;
 			}
 			else
 			{
@@ -500,11 +502,16 @@ namespace GLTF
 			Transform[] bones = new Transform[boneCount];
 			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
 
+			Matrix4x4 rightToLeftHanded = new Matrix4x4();
+			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
+			rightToLeftHanded.SetRow(1, new Vector4(0, 1, 0, 0));
+			rightToLeftHanded.SetRow(2, new Vector4(0, 0, -1, 0));
+			rightToLeftHanded.SetRow(3, new Vector4(0, 0, 0, 1));
+
 			for (int i = 0; i < boneCount; i++)
 			{
 				bones[i] = _nodeMap[skin.Joints[i].Id].transform;
-				//TODO: The bind poses don't appear to work with how Unity is trying to use them, so I'm recalculating them here in a way that seems to work with the samples.
-				bindPoses[i] = bones[i].worldToLocalMatrix * primitiveObj.transform.localToWorldMatrix;
+				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
 			}
 
 			primitive.Contents.bindposes = bindPoses;
