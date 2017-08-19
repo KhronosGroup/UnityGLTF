@@ -2,13 +2,11 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
-using UnityGLTFSerialization;
+using GLTFJsonSerialization;
 using UnityEngine.Networking;
 using System.Text;
 using System.IO;
 
-// todo blgross port to base layer
-#if false
 public class GLTFBenchmark : MonoBehaviour
 {
 	public string[] GLTFUrls = new string[]
@@ -40,7 +38,7 @@ public class GLTFBenchmark : MonoBehaviour
 			for (var i = 0; i < NumberOfIterations; i++)
 			{
 				timer.Start();
-				GLTFParser.ParseString(www.downloadHandler.text);
+				GLTFParser.ParseJson(Encoding.ASCII.GetBytes(www.downloadHandler.text));
 				timer.Stop();
 
 				Debug.LogFormat("Iteration {0} took: {1}ms", i, timer.ElapsedMilliseconds);
@@ -71,4 +69,3 @@ public class GLTFBenchmark : MonoBehaviour
 		}
 	}
 }
-#endif

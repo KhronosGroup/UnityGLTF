@@ -1,13 +1,14 @@
 using GLTFJsonSerialization;
-using UnityGLTFSerialization.Extensions;
-using UnityGLTFSerialization.CacheData;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
+using UnityGLTFSerialization.CacheData;
+using UnityGLTFSerialization.Extensions;
 
 namespace UnityGLTFSerialization
 {
@@ -23,17 +24,26 @@ namespace UnityGLTFSerialization
             CommonLambert
         }
 
+        private enum LoadType
+        {
+            Uri,
+            Stream
+        }
+
         protected GameObject _lastLoadedScene;
         protected readonly Transform _sceneParent;
         protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
         public int MaximumLod = 300;
-        protected readonly GLTFJsonSerialization.Material DefaultMaterial = null;
+        protected readonly GLTFJsonSerialization.Material DefaultMaterial = new GLTFJsonSerialization.Material();
         protected string _gltfUrl;
+        protected string _gltfDirectoryPath;
+        protected Stream _gltfStream;
         protected GLTFRoot _root;
         protected AssetCache _assetCache;
         protected AsyncAction _asyncAction;
-
-        // todo blgross modify to be compliant with gltf loader
+        byte[] _gltfData;
+        LoadType _loadType;
+        
         /// <summary>
         /// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
         /// </summary>
@@ -42,8 +52,20 @@ namespace UnityGLTFSerialization
         public GLTFSceneImporter(string gltfUrl, Transform parent = null)
         {
             _gltfUrl = gltfUrl;
+            _gltfDirectoryPath = AbsoluteUriPath(gltfUrl);
             _sceneParent = parent;
             _asyncAction = new AsyncAction();
+            _loadType = LoadType.Uri;
+        }
+
+        public GLTFSceneImporter(string rootPath, Stream stream, Transform parent = null)
+        {
+            _gltfUrl = rootPath;
+            _gltfDirectoryPath = AbsoluteFilePath(rootPath);
+            _gltfStream = stream;
+            _sceneParent = parent;
+            _asyncAction = new AsyncAction();
+            _loadType = LoadType.Stream;
         }
 
         public GameObject LastLoadedScene
@@ -72,19 +94,32 @@ namespace UnityGLTFSerialization
         /// <returns></returns>
         public IEnumerator Load(int sceneIndex = -1, bool isMultithreaded = false)
         {
-            // todo change to file load
-            var www = UnityWebRequest.Get(_gltfUrl);
-
-            yield return www.Send();
-            if (www.responseCode >= 400)
+            if (_loadType == LoadType.Uri)
             {
-                Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
-                yield break;
+                var www = UnityWebRequest.Get(_gltfUrl);
+
+                yield return www.Send();
+                if (www.responseCode >= 400)
+                {
+                    Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
+                    yield break;
+                }
+
+                _gltfData = www.downloadHandler.data;
+            }
+            else if(_loadType == LoadType.Stream)
+            {
+                // todo optimization: add stream support to parsing layer
+                int streamLength = (int)_gltfStream.Length;
+                _gltfData = new byte[streamLength];
+                _gltfStream.Read(_gltfData, 0, streamLength);
+            }
+            else
+            {
+                throw new Exception("Invalid load type specified: " + _loadType);
             }
 
-            var gltfData = www.downloadHandler.data;
-            IGLTFJsonLoader jsonLoader = new GLTFJsonLoader();
-            _root = jsonLoader.Load(gltfData);
+            _root = GLTFParser.ParseJson(_gltfData);
             yield return ImportScene(sceneIndex, isMultithreaded);
         }
 
@@ -96,7 +131,6 @@ namespace UnityGLTFSerialization
         /// <returns></returns>
         protected IEnumerator ImportScene(int sceneIndex = -1, bool isMultithreaded = false)
         {
-            // todo call c# library
             Scene scene;
             if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
             {
@@ -124,10 +158,20 @@ namespace UnityGLTFSerialization
             {
                 if (_root.Buffers != null)
                 {
+                    // todo add fuzzing to verify that buffers are before uri
                     for(int i = 0; i < _root.Buffers.Count; ++i)
                     {
                         GLTFJsonSerialization.Buffer buffer = _root.Buffers[i];
-                        yield return LoadBuffer(_gltfUrl, buffer, i);
+                        if (buffer.Uri != null)
+                        {
+                            yield return LoadBuffer(_gltfDirectoryPath, buffer, i);
+                        }
+                        else //null buffer uri indicates GLB buffer loading
+                        {
+                            byte[] glbBuffer;
+                            GLTFParser.ExtractBinaryChunk(_gltfData, i, out glbBuffer);
+                            _assetCache.BufferCache[i] = glbBuffer;
+                        }
                     }
                 }
                 
@@ -136,7 +180,7 @@ namespace UnityGLTFSerialization
                     for(int i = 0; i < _root.Images.Count; ++i)
                     {
                         Image image = _root.Images[i];
-                        yield return LoadImage(_gltfUrl, image, i);
+                        yield return LoadImage(_gltfDirectoryPath, image, i);
                     }
                 }
 #if !WINDOWS_UWP
@@ -190,13 +234,16 @@ namespace UnityGLTFSerialization
                     attributeAccessors[attributePair.Key] = AttributeAccessor;
                 }
 
-                AttributeAccessor indexBuilder = new AttributeAccessor()
+                if (primitive.Indices != null)
                 {
-                    AccessorId = primitive.Indices,
-                    Buffer = _assetCache.BufferCache[primitive.Indices.Value.BufferView.Value.Buffer.Id]
-                };
+                    AttributeAccessor indexBuilder = new AttributeAccessor()
+                    {
+                        AccessorId = primitive.Indices,
+                        Buffer = _assetCache.BufferCache[primitive.Indices.Value.BufferView.Value.Buffer.Id]
+                    };
 
-                attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
+                    attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
+                }
 
                 GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
                 _assetCache.MeshCache[meshID].MeshAttributes = attributeAccessors;
@@ -328,7 +375,8 @@ namespace UnityGLTFSerialization
             meshFilter.sharedMesh = _assetCache.MeshCache[meshID].LoadedMesh;
 
             var materialWrapper = CreateMaterial(
-                primitive.Material != null ? primitive.Material.Value : DefaultMaterial
+                primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
+                primitive.Material != null ? primitive.Material.Id : -1
                 );
 
             var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
@@ -337,159 +385,168 @@ namespace UnityGLTFSerialization
             return primitiveObj;
         }
 
-        protected virtual MaterialCacheData CreateMaterial(GLTFJsonSerialization.Material def)
+        protected virtual MaterialCacheData CreateMaterial(GLTFJsonSerialization.Material def, int materialIndex)
         {
-            // todo reenable caching
-            Shader shader;
-
-            // get the shader to use for this material
-            try
+            MaterialCacheData materialWrapper = null;
+            if (materialIndex < 0 || _assetCache.MaterialCache[materialIndex] == null)
             {
+                Shader shader;
+
+                // get the shader to use for this material
+                try
+                {
+                    if (def.PbrMetallicRoughness != null)
+                        shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+                    else if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
+                             && def.CommonConstant != null)
+                        shader = _shaderCache[MaterialType.CommonConstant];
+                    else
+                        shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+                }
+                catch (KeyNotFoundException)
+                {
+                    Debug.LogWarningFormat("No shader supplied for type of glTF material {0}, using Standard fallback", def.Name);
+                    shader = Shader.Find("Standard");
+                }
+
+                shader.maximumLOD = MaximumLod;
+
+                var material = new UnityEngine.Material(shader);
+
+                if (def.AlphaMode == AlphaMode.MASK)
+                {
+                    material.SetOverrideTag("RenderType", "TransparentCutout");
+                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                    material.SetInt("_ZWrite", 1);
+                    material.EnableKeyword("_ALPHATEST_ON");
+                    material.DisableKeyword("_ALPHABLEND_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+                    material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
+                }
+                else if (def.AlphaMode == AlphaMode.BLEND)
+                {
+                    material.SetOverrideTag("RenderType", "Transparent");
+                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    material.SetInt("_ZWrite", 0);
+                    material.DisableKeyword("_ALPHATEST_ON");
+                    material.EnableKeyword("_ALPHABLEND_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                }
+                else
+                {
+                    material.SetOverrideTag("RenderType", "Opaque");
+                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                    material.SetInt("_ZWrite", 1);
+                    material.DisableKeyword("_ALPHATEST_ON");
+                    material.DisableKeyword("_ALPHABLEND_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.renderQueue = -1;
+                }
+
+                if (def.DoubleSided)
+                {
+                    material.SetInt("_Cull", (int)CullMode.Off);
+                }
+                else
+                {
+                    material.SetInt("_Cull", (int)CullMode.Back);
+                }
+
                 if (def.PbrMetallicRoughness != null)
-                    shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-                else if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
-                         && def.CommonConstant != null)
-                    shader = _shaderCache[MaterialType.CommonConstant];
-                else
-                    shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-            }
-            catch (KeyNotFoundException)
-            {
-                Debug.LogWarningFormat("No shader supplied for type of glTF material {0}, using Standard fallback", def.Name);
-                shader = Shader.Find("Standard");
-            }
-
-            shader.maximumLOD = MaximumLod;
-
-            var material = new UnityEngine.Material(shader);
-
-            if (def.AlphaMode == AlphaMode.MASK)
-            {
-                material.SetOverrideTag("RenderType", "TransparentCutout");
-                material.SetInt("_SrcBlend", (int) UnityEngine.Rendering.BlendMode.One);
-                material.SetInt("_DstBlend", (int) UnityEngine.Rendering.BlendMode.Zero);
-                material.SetInt("_ZWrite", 1);
-                material.EnableKeyword("_ALPHATEST_ON");
-                material.DisableKeyword("_ALPHABLEND_ON");
-                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                material.renderQueue = (int) UnityEngine.Rendering.RenderQueue.AlphaTest;
-                material.SetFloat("_Cutoff", (float) def.AlphaCutoff);
-            }
-            else if (def.AlphaMode == AlphaMode.BLEND)
-            {
-                material.SetOverrideTag("RenderType", "Transparent");
-                material.SetInt("_SrcBlend", (int) UnityEngine.Rendering.BlendMode.SrcAlpha);
-                material.SetInt("_DstBlend", (int) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                material.SetInt("_ZWrite", 0);
-                material.DisableKeyword("_ALPHATEST_ON");
-                material.EnableKeyword("_ALPHABLEND_ON");
-                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                material.renderQueue = (int) UnityEngine.Rendering.RenderQueue.Transparent;
-            }
-            else
-            {
-                material.SetOverrideTag("RenderType", "Opaque");
-                material.SetInt("_SrcBlend", (int) UnityEngine.Rendering.BlendMode.One);
-                material.SetInt("_DstBlend", (int) UnityEngine.Rendering.BlendMode.Zero);
-                material.SetInt("_ZWrite", 1);
-                material.DisableKeyword("_ALPHATEST_ON");
-                material.DisableKeyword("_ALPHABLEND_ON");
-                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                material.renderQueue = -1;
-            }
-
-            if (def.DoubleSided)
-            {
-                material.SetInt("_Cull", (int) CullMode.Off);
-            }
-            else
-            {
-                material.SetInt("_Cull", (int) CullMode.Back);
-            }
-
-            if (def.PbrMetallicRoughness != null)
-            {
-                var pbr = def.PbrMetallicRoughness;
-
-                material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColor());
-
-                if (pbr.BaseColorTexture != null)
                 {
-                    var texture = pbr.BaseColorTexture.Index.Value;
-                    material.SetTexture("_MainTex", CreateTexture(texture));
+                    var pbr = def.PbrMetallicRoughness;
+
+                    material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColor());
+
+                    if (pbr.BaseColorTexture != null)
+                    {
+                        var texture = pbr.BaseColorTexture.Index.Value;
+                        material.SetTexture("_MainTex", CreateTexture(texture));
+                    }
+
+                    material.SetFloat("_Metallic", (float)pbr.MetallicFactor);
+
+                    if (pbr.MetallicRoughnessTexture != null)
+                    {
+                        var texture = pbr.MetallicRoughnessTexture.Index.Value;
+                        material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
+                    }
+
+                    material.SetFloat("_Roughness", (float)pbr.RoughnessFactor);
                 }
 
-                material.SetFloat("_Metallic", (float) pbr.MetallicFactor);
-
-                if (pbr.MetallicRoughnessTexture != null)
+                if (def.CommonConstant != null)
                 {
-                    var texture = pbr.MetallicRoughnessTexture.Index.Value;
-                    material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
+                    material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor.ToUnityColor());
+
+                    if (def.CommonConstant.LightmapTexture != null)
+                    {
+                        material.EnableKeyword("LIGHTMAP_ON");
+
+                        var texture = def.CommonConstant.LightmapTexture.Index.Value;
+                        material.SetTexture("_LightMap", CreateTexture(texture));
+                        material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
+                    }
+
+                    material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor.ToUnityColor());
                 }
 
-                material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
-            }
-
-            if (def.CommonConstant != null)
-            {
-                material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor.ToUnityColor());
-
-                if (def.CommonConstant.LightmapTexture != null)
+                if (def.NormalTexture != null)
                 {
-                    material.EnableKeyword("LIGHTMAP_ON");
-
-                    var texture = def.CommonConstant.LightmapTexture.Index.Value;
-                    material.SetTexture("_LightMap", CreateTexture(texture));
-                    material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
+                    var texture = def.NormalTexture.Index.Value;
+                    material.SetTexture("_BumpMap", CreateTexture(texture));
+                    material.SetFloat("_BumpScale", (float)def.NormalTexture.Scale);
                 }
 
-                material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor.ToUnityColor());
-            }
-
-            if (def.NormalTexture != null)
-            {
-                var texture = def.NormalTexture.Index.Value;
-                material.SetTexture("_BumpMap", CreateTexture(texture));
-                material.SetFloat("_BumpScale", (float) def.NormalTexture.Scale);
-            }
-
-            if (def.OcclusionTexture != null)
-            {
-                var texture = def.OcclusionTexture.Index;
-
-                material.SetFloat("_OcclusionStrength", (float) def.OcclusionTexture.Strength);
-
-                if (def.PbrMetallicRoughness != null
-                    && def.PbrMetallicRoughness.MetallicRoughnessTexture != null
-                    && def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == texture.Id)
+                if (def.OcclusionTexture != null)
                 {
-                    material.EnableKeyword("OCC_METAL_ROUGH_ON");
+                    var texture = def.OcclusionTexture.Index;
+
+                    material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
+
+                    if (def.PbrMetallicRoughness != null
+                        && def.PbrMetallicRoughness.MetallicRoughnessTexture != null
+                        && def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == texture.Id)
+                    {
+                        material.EnableKeyword("OCC_METAL_ROUGH_ON");
+                    }
+                    else
+                    {
+                        material.SetTexture("_OcclusionMap", CreateTexture(texture.Value));
+                    }
                 }
-                else
+
+                if (def.EmissiveTexture != null)
                 {
-                    material.SetTexture("_OcclusionMap", CreateTexture(texture.Value));
+                    var texture = def.EmissiveTexture.Index.Value;
+                    material.EnableKeyword("EMISSION_MAP_ON");
+                    material.SetTexture("_EmissionMap", CreateTexture(texture));
+                    material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
+                }
+
+                material.SetColor("_EmissionColor", def.EmissiveFactor.ToUnityColor());
+
+                materialWrapper = new MaterialCacheData
+                {
+                    UnityMaterial = material,
+                    UnityMaterialWithVertexColor = new UnityEngine.Material(material),
+                    GLTFMaterial = def
+                };
+
+                materialWrapper.UnityMaterialWithVertexColor.EnableKeyword("VERTEX_COLOR_ON");
+
+                if (materialIndex > 0)
+                {
+                    _assetCache.MaterialCache[materialIndex] = materialWrapper;
                 }
             }
 
-            if (def.EmissiveTexture != null)
-            {
-                var texture = def.EmissiveTexture.Index.Value;
-                material.EnableKeyword("EMISSION_MAP_ON");
-                material.SetTexture("_EmissionMap", CreateTexture(texture));
-                material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
-            }
-
-            material.SetColor("_EmissionColor", def.EmissiveFactor.ToUnityColor());
-
-            MaterialCacheData materialWrapper = new MaterialCacheData
-            {
-                UnityMaterial = material,
-                UnityMaterialWithVertexColor = new UnityEngine.Material(material),
-                GLTFMaterial = def
-            };
-
-            materialWrapper.UnityMaterialWithVertexColor.EnableKeyword("VERTEX_COLOR_ON");
-            return materialWrapper;
+            return materialIndex > 0 ? _assetCache.MaterialCache[materialIndex] : materialWrapper;
         }
 
         protected virtual UnityEngine.Texture CreateTexture(GLTFJsonSerialization.Texture texture)
@@ -548,7 +605,7 @@ namespace UnityGLTFSerialization
         {
             if (_assetCache.ImageCache[imageID] == null)
             {
-                Texture2D texture;
+                Texture2D texture = null;
                 if (image.Uri != null)
                 {
                     var uri = image.Uri;
@@ -562,9 +619,9 @@ namespace UnityGLTFSerialization
                         texture = new Texture2D(0, 0);
                         texture.LoadImage(textureData);
                     }
-                    else
+                    else if(_loadType == LoadType.Uri)
                     {
-                        var www = UnityWebRequest.Get(AbsolutePath(rootPath, uri));
+                        var www = UnityWebRequest.Get(Path.Combine(rootPath, uri));
                         www.downloadHandler = new DownloadHandlerTexture();
 
                         yield return www.Send();
@@ -582,6 +639,20 @@ namespace UnityGLTFSerialization
                             Debug.LogFormat("{0} {1}", www.responseCode, www.url);
                             texture = new Texture2D(16, 16);
                         }
+                    }
+                    else if(_loadType == LoadType.Stream)
+                    {
+                        var pathToLoad = Path.Combine(rootPath, uri);
+                        var file = File.OpenRead(pathToLoad);
+                        byte[] bufferData = new byte[file.Length];
+                        file.Read(bufferData, 0, (int)file.Length);
+#if !WINDOWS_UWP
+                        file.Close();
+#else
+                        file.Dispose();
+#endif
+                        texture = new Texture2D(0, 0);
+                        texture.LoadImage(bufferData);
                     }
                 }
                 else
@@ -607,7 +678,7 @@ namespace UnityGLTFSerialization
         {
             if (buffer.Uri != null)
             {
-                byte[] bufferData;
+                byte[] bufferData = null;
                 var uri = buffer.Uri;
 
                 Regex regex = new Regex(Base64StringInitializer);
@@ -617,13 +688,25 @@ namespace UnityGLTFSerialization
                     var base64Data = uri.Substring(match.Length);
                     bufferData = Convert.FromBase64String(base64Data);
                 }
-                else
+                else if (_loadType == LoadType.Uri)
                 {
-                    var www = UnityWebRequest.Get(AbsolutePath(sourceUri, uri));
+                    var www = UnityWebRequest.Get(Path.Combine(sourceUri, uri));
 
                     yield return www.Send();
 
                     bufferData = www.downloadHandler.data;
+                }
+                else if(_loadType == LoadType.Stream)
+                {
+                    var pathToLoad = Path.Combine(sourceUri, uri);
+                    var file = File.OpenRead(pathToLoad);
+                    bufferData = new byte[buffer.ByteLength];
+                    file.Read(bufferData, 0, buffer.ByteLength);
+#if !WINDOWS_UWP
+                    file.Close();
+#else
+                    file.Dispose();
+#endif
                 }
 
                 _assetCache.BufferCache[bufferIndex] = bufferData;
@@ -633,13 +716,26 @@ namespace UnityGLTFSerialization
         /// <summary>
         ///  Get the absolute path to a gltf uri reference.
         /// </summary>
-        /// <param name="relativePath">The relative path stored in the uri.</param>
-        /// <returns></returns>
-        protected static string AbsolutePath(string rootPath, string relativePath)
+        /// <param name="gltfPath">The path to the gltf file</param>
+        /// <returns>A path without the filename or extension</returns>
+        protected static string AbsoluteUriPath(string gltfPath)
         {
-            var uri = new Uri(rootPath);
+            var uri = new Uri(gltfPath);
             var partialPath = uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length - 1].Length);
-            return partialPath + relativePath;
+            return partialPath;
+        }
+
+        /// <summary>
+        /// Get the absolute path a gltf file directory
+        /// </summary>
+        /// <param name="gltfPath">The path to the gltf file</param>
+        /// <returns>A path without the filename or extension</returns>
+        protected static string AbsoluteFilePath(string gltfPath)
+        {
+            var fileName = Path.GetFileName(gltfPath);
+            var lastIndex = gltfPath.IndexOf(fileName);
+            var partialPath = gltfPath.Substring(0, lastIndex);
+            return partialPath;
         }
     }
 }

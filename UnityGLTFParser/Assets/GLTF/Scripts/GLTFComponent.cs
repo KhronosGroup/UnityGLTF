@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
+using System.IO;
 
 namespace UnityGLTFSerialization {
 
@@ -13,6 +14,7 @@ namespace UnityGLTFSerialization {
     {
         public string Url;
         public bool Multithreaded = true;
+        public bool UseStream = false;
 
         public int MaximumLod = 300;
 
@@ -21,14 +23,34 @@ namespace UnityGLTFSerialization {
 
         IEnumerator Start()
         {
-            var loader = new GLTFSceneImporter(
-                Url,
-                gameObject.transform
-            );
+            GLTFSceneImporter loader = null;
+            FileStream gltfStream = null;
+            if (UseStream)
+            {
+                var fullPath = Application.streamingAssetsPath + Url;
+                gltfStream = File.OpenRead(fullPath);
+                loader = new GLTFSceneImporter(
+                    fullPath,
+                    gltfStream,
+                    gameObject.transform
+                    );
+            }
+            else
+            {
+                loader = new GLTFSceneImporter(
+                    Url,
+                    gameObject.transform
+                    );
+            }
+
             loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
             loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
             loader.MaximumLod = MaximumLod;
             yield return loader.Load(-1, Multithreaded);
+            if(gltfStream != null)
+            {
+                gltfStream.Close();
+            }
         }
     }
 }

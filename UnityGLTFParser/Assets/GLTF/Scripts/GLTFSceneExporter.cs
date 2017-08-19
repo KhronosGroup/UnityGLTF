@@ -5,7 +5,6 @@ using UnityEngine;
 using Newtonsoft.Json;
 using GLTFJsonSerialization;
 using UnityGLTFSerialization.Extensions;
-using UnityGLTFSerialization.CacheData;
 
 namespace UnityGLTFSerialization
 {
@@ -89,8 +88,7 @@ namespace UnityGLTFSerialization
             _buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
 
             var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
-            var writer = new JsonTextWriter(gltfFile);
-            _root.Serialize(writer);
+            _root.Serialize(gltfFile);
 
 #if NETFX_CORE
             gltfFile.Dispose();

@@ -7,12 +7,13 @@
   "frameworks": {
     "uap10.0": {}
   },
-  "runtimes": {
-    "win10-arm": {},
-    "win10-arm-aot": {},
-    "win10-x86": {},
-    "win10-x86-aot": {},
-    "win10-x64": {},
-    "win10-x64-aot": {}
-  }
+    "runtimes": {
+        "win10": {},
+        "win10-arm": {},
+        "win10-arm-aot": {},
+        "win10-x86": {},
+        "win10-x86-aot": {},
+        "win10-x64": {},
+        "win10-x64-aot": {}
+    }
 }

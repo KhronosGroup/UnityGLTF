@@ -21,7 +21,7 @@ namespace GLTFJsonSerialization
     public class Node : GLTFChildOfRootProperty
     {
         /// <summary>
-        /// If true, uses the matrix transform, rotation, scale properties. Otherwise uses the transform rotate scale directly.
+        /// If true, extracts transform, rotation, scale values from the Matrix4x4. Otherwise uses the Transform, Rotate, Scale directly as specified by by the node.
         /// </summary>
         public bool UseTRS;
 

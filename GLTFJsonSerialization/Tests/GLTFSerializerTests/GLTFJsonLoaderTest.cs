@@ -16,34 +16,29 @@ namespace GLTFJsonSerializerTests
         [TestMethod]
         public void LoadGLTFFromStream()
         {
-            IGLTFJsonLoader gltfLoader = new GLTFJsonLoader();
             Assert.IsTrue(File.Exists(GLTF_PATH));
             FileStream gltfStream = File.OpenRead(GLTF_PATH);
-            GLTFRoot gltfRoot = gltfLoader.Load(gltfStream);
-            GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
-        }
-
-        [TestMethod]
-        public void LoadGLTFFromByteArray()
-        {
-            IGLTFJsonLoader gltfLoader = new GLTFJsonLoader();
-            Assert.IsTrue(File.Exists(GLTF_PATH));
-            FileStream gltfStream = File.OpenRead(GLTF_PATH);
-
+            // todo: this code does not work if file is greater than 4 gb
             int streamLength = (int)gltfStream.Length;
             byte[] gltfData = new byte[streamLength];
             gltfStream.Read(gltfData, 0, streamLength);
-            GLTFRoot gltfRoot = gltfLoader.Load(gltfData);
+
+            GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
             GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
         }
 
         [TestMethod]
         public void LoadGLBFromStream()
         {
-            IGLTFJsonLoader gltfLoader = new GLTFJsonLoader();
             Assert.IsTrue(File.Exists(GLB_PATH));
             FileStream gltfStream = File.OpenRead(GLB_PATH);
-            GLTFRoot gltfRoot = gltfLoader.Load(gltfStream);
+
+            // todo: this code does not work if file is greater than 4 gb
+            int streamLength = (int)gltfStream.Length;
+            byte[] gltfData = new byte[streamLength];
+            gltfStream.Read(gltfData, 0, streamLength);
+
+            GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
             GLTFJsonLoadTestHelper.TestGLB(gltfRoot);
         }
     }
