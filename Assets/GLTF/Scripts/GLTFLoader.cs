@@ -279,12 +279,12 @@ namespace GLTF
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
 			a.AddClip(clip, "Animation " + a.GetClipCount());
 
-			//TODO: This is a test that should be deleted.
-			//for(int i = 0; i < 31; i++)
-			//{
-			//	a.Blend("Animation " + i, 1.0f, 0.0f);
-			//}		
-		}
+            //TODO: This is a test that should be deleted.
+            for (int i = 0; i < 31; i++)
+            {
+                a.Blend("Animation " + i, 1.0f, 0.0f);
+            }
+        }
 
 		/// <summary>
 		/// Create AnimationCurves from glTF animation sampler data
@@ -546,7 +546,21 @@ namespace GLTF
 				boneWeights[i].boneIndex2 = (int)joints[i].z;
 				boneWeights[i].boneIndex3 = (int)joints[i].w;
 
-				boneWeights[i].weight0 = weights[i].x;
+                //Adjust weights so they add up to 1.
+                var weightSum = 0.0f;
+                for (int y = 0; y < 4; y++)
+                {
+                    weightSum += weights[i][y];
+                }
+
+                if (weightSum < 0.98f)
+                {
+                    Debug.Log("joints " + joints[i] + "\nweights " + weights[i].ToString("F4"));
+                    for (int y = 0; y < 4; y++)
+                        weights[i][y] = weights[i][y] * (1 / weightSum);
+                }
+
+                boneWeights[i].weight0 = weights[i].x;
 				boneWeights[i].weight1 = weights[i].y;
 				boneWeights[i].weight2 = weights[i].z;
 				boneWeights[i].weight3 = weights[i].w;
