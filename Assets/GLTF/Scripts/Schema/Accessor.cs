@@ -571,6 +571,20 @@ namespace GLTF
 			return arr;
 		}
 
+		public Quaternion[] AsQuaternionArray() {
+			if (Contents.AsQuaternions != null) return Contents.AsQuaternions;
+
+			var arr = AsVector4Array();
+			var quats = new Quaternion[arr.Length];
+			for (var i = 0; i < arr.Length; i++)
+				quats[i] = new Quaternion(-arr[i].x, -arr[i].y, arr[i].z, arr[i].w);
+
+			Contents.AsQuaternions = quats;
+			Contents.AsVec4s = null;
+
+			return quats;
+		}
+
 		public Vector3[] AsVertexArray()
 		{
 			if (Contents.AsVertices != null) return Contents.AsVertices;
@@ -673,5 +687,6 @@ namespace GLTF
 		public Vector3[] AsNormals;
 		public Vector4[] AsTangents;
 		public int[] AsTriangles;
+		public Quaternion[] AsQuaternions;
 	}
 }

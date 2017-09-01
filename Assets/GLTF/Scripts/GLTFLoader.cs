@@ -220,7 +220,7 @@ namespace GLTF
 
 			foreach (var channel in animation.Channels)
 			{
-				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value, channel.Target.Node.Value, channel.Target.Path);
+				AnimationCurve[] curves = channel.AsAnimationCurves();
 
 				// TODO Memoize
 				// Map the target Node ID to a GameObject, get its name, and prepend parents' names to generate a path.
@@ -278,117 +278,6 @@ namespace GLTF
 
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
 			a.AddClip(clip, "Animation " + a.GetClipCount());
-		}
-
-		/// <summary>
-		/// Create AnimationCurves from glTF animation sampler data
-		/// </summary>
-		/// <returns>AnimationCurve[]</returns>
-		protected AnimationCurve[] AsAnimationCurves(AnimationSampler animationSampler, Node node, GLTFAnimationChannelPath path)
-		{
-			float[] timeArray = animationSampler.Input.Value.AsFloatArray();
-
-			// check transform stride
-			bool isBlendShapes = animationSampler.Output.Value.Type == GLTFAccessorAttributeType.SCALAR && node.Mesh != null && node.Mesh.Value.Primitives[0].Targets != null;
-			int stride = 3;
-			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3)
-				stride = 3;
-			else if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
-				stride = 4;
-			else if (isBlendShapes)
-				stride = node.Mesh.Value.Primitives[0].Targets.Count;
-			else
-				throw new GLTFTypeMismatchException("Animation sampler output points to invalidly-typed accessor " + animationSampler.Output.Value.Type);
-
-			var curves = new AnimationCurve[stride];
-			for (int i = 0; i < stride; i++)
-				curves[i] = new AnimationCurve();
-
-			if (isBlendShapes) {
-				var numTargets = node.Mesh.Value.Primitives[0].Targets.Count;
-				var animArray = animationSampler.Output.Value.AsFloatArray();
-
-				for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
-					for (int targetIndex = 0; targetIndex < numTargets; targetIndex++)
-						curves[targetIndex].AddKey(new Keyframe(timeArray[timeIdx], animArray[stride * timeIdx + targetIndex]));
-			}
-			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3) { 
-				var animArray = animationSampler.Output.Value.AsVector3Array();
-				for (int i = 0; i < stride; i++)
-				{
-					for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
-					{
-						if(path == GLTFAnimationChannelPath.translation && i == 2)
-							curves[i].AddKey(new Keyframe(timeArray[timeIdx], -animArray[timeIdx][i]));
-						else
-							curves[i].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx][i]));
-					}
-				}
-			}
-
-			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
-			{
-				var animArray = animationSampler.Output.Value.AsVector4Array();
-				for (int i = 0; i < stride; i++)
-				{
-					for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
-					{
-						if(path == GLTFAnimationChannelPath.rotation && (i == 0 || i == 1))
-							curves[i].AddKey(new Keyframe(timeArray[timeIdx], -animArray[timeIdx][i]));
-						else
-							curves[i].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx][i]));
-					}
-				}
-			}
-
-			if(animationSampler.Interpolation == InterpolationType.LINEAR)
-				for (int i = 0; i < curves.Length; i++)
-					LinearizeCurve(curves[i]);
-
-			if(animationSampler.Interpolation == InterpolationType.STEP)
-				for (int i = 0; i < curves.Length; i++)
-					StepCurve(curves[i]);
-
-			return curves;
-		}
-
-		public void LinearizeCurve(AnimationCurve curve)
-		{
-			for (int timeIdx = 0; timeIdx < curve.length; timeIdx++)
-			{
-				Keyframe key = curve[timeIdx];
-				if (timeIdx >= 1)
-				{
-					key.inTangent = CalculateLinearTangent(curve[timeIdx - 1].value, curve[timeIdx].value, curve[timeIdx - 1].time, curve[timeIdx].time);
-				}
-				if (timeIdx + 1 < curve.length)
-				{
-					key.outTangent = CalculateLinearTangent(curve[timeIdx].value, curve[timeIdx + 1].value, curve[timeIdx].time, curve[timeIdx + 1].time);
-				}
-				curve.MoveKey(timeIdx, key);
-			}
-		}
-
-		public void StepCurve(AnimationCurve curve)
-		{
-			for (int timeIdx = 0; timeIdx < curve.length; timeIdx++)
-			{
-				Keyframe key = curve[timeIdx];
-				if (timeIdx >= 1)
-				{
-					key.inTangent = float.PositiveInfinity;
-				}
-				if (timeIdx + 1 < curve.length)
-				{
-					key.outTangent = float.PositiveInfinity;
-				}
-				curve.MoveKey(timeIdx, key);
-			}
-		}
-
-		private float CalculateLinearTangent (float valueStart, float valueEnd, float timeStart, float timeEnd)
-		{
-			return (valueEnd - valueStart) / (timeEnd - timeStart);
 		}
 
 		protected virtual void CreateNodePrimitives(Node node, GameObject nodeObj)
