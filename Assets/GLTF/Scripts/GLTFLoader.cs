@@ -220,7 +220,7 @@ namespace GLTF
 
 			foreach (var channel in animation.Channels)
 			{
-				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value, channel.Target.Node.Value);
+				AnimationCurve[] curves = AsAnimationCurves(channel.Sampler.Value, channel.Target.Node.Value, channel.Target.Path);
 
 				// TODO Memoize
 				// Map the target Node ID to a GameObject, get its name, and prepend parents' names to generate a path.
@@ -278,19 +278,13 @@ namespace GLTF
 
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
 			a.AddClip(clip, "Animation " + a.GetClipCount());
-
-			//TODO: This is a test that should be deleted.
-			//for(int i = 0; i < 31; i++)
-			//{
-			//	a.Blend("Animation " + i, 1.0f, 0.0f);
-			//}		
 		}
 
 		/// <summary>
 		/// Create AnimationCurves from glTF animation sampler data
 		/// </summary>
 		/// <returns>AnimationCurve[]</returns>
-		protected AnimationCurve[] AsAnimationCurves(AnimationSampler animationSampler, Node node)
+		protected AnimationCurve[] AsAnimationCurves(AnimationSampler animationSampler, Node node, GLTFAnimationChannelPath path)
 		{
 			float[] timeArray = animationSampler.Input.Value.AsFloatArray();
 
@@ -321,16 +315,30 @@ namespace GLTF
 			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC3) { 
 				var animArray = animationSampler.Output.Value.AsVector3Array();
 				for (int i = 0; i < stride; i++)
+				{
 					for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
-						curves[i].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx][i]));
+					{
+						if(path == GLTFAnimationChannelPath.translation && i == 2)
+							curves[i].AddKey(new Keyframe(timeArray[timeIdx], -animArray[timeIdx][i]));
+						else
+							curves[i].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx][i]));
+					}
+				}
 			}
 
 			if (animationSampler.Output.Value.Type == GLTFAccessorAttributeType.VEC4)
 			{
 				var animArray = animationSampler.Output.Value.AsVector4Array();
 				for (int i = 0; i < stride; i++)
+				{
 					for (int timeIdx = 0; timeIdx < timeArray.Length; timeIdx++)
-						curves[i].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx][i]));
+					{
+						if(path == GLTFAnimationChannelPath.rotation && (i == 0 || i == 1))
+							curves[i].AddKey(new Keyframe(timeArray[timeIdx], -animArray[timeIdx][i]));
+						else
+							curves[i].AddKey(new Keyframe(timeArray[timeIdx], animArray[timeIdx][i]));
+					}
+				}
 			}
 
 			if(animationSampler.Interpolation == InterpolationType.LINEAR)
@@ -459,7 +467,7 @@ namespace GLTF
 						: null,
 
 					boneWeights = primitive.Attributes.ContainsKey(SemanticProperties.Weight(0)) && primitive.Attributes.ContainsKey(SemanticProperties.Joint(0))
-						? CreateBoneWeightArray(primitive.Attributes[SemanticProperties.Joint(0)].Value.AsVector4Array(), primitive.Attributes[SemanticProperties.Weight(0)].Value.AsVector4Array())
+						? CreateBoneWeightArray(primitive.Attributes[SemanticProperties.Joint(0)].Value.AsVector4Array(), primitive.Attributes[SemanticProperties.Weight(0)].Value.AsVector4Array(), vertexCount)
 						: null
 				};
 			}
@@ -468,6 +476,7 @@ namespace GLTF
 			{
 				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 				skinnedMeshRenderer.material = material;
+				skinnedMeshRenderer.quality = SkinQuality.Bone4;
 
 				if (HasBlendShapes(primitive))
 					SetupBlendShapes(primitive);
@@ -514,6 +523,7 @@ namespace GLTF
 				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
 			}
 
+			renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
 			primitive.Contents.bindposes = bindPoses;
 			renderer.bones = bones;
 		}
@@ -529,22 +539,27 @@ namespace GLTF
 			for (int blendShapeIndex = 0; blendShapeIndex < primitive.Targets.Count; blendShapeIndex++)
 			{
 				var fieldToAccessor = primitive.Targets[blendShapeIndex];
-				var verts = fieldToAccessor["POSITION"].Value.AsVector3Array();
-				var normals = fieldToAccessor["NORMAL"].Value.AsVector3Array();
+				var verts = fieldToAccessor["POSITION"].Value.AsVertexArray();
+				var normals = fieldToAccessor["NORMAL"].Value.AsNormalArray();
 				var tangents = fieldToAccessor["TANGENT"].Value.AsVector3Array();
 				mesh.AddBlendShapeFrame(blendShapeIndex.ToString(), 1.0f, verts, normals, tangents);
 			}
 		}
 
-		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights)
+		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
 		{
-			var boneWeights = new BoneWeight[joints.Length];
-			for(int i = 0; i < joints.Length; i++)
+			var boneWeights = new BoneWeight[vertCount];
+			for(int i = 0; i < vertCount; i++)
 			{
 				boneWeights[i].boneIndex0 = (int)joints[i].x;
 				boneWeights[i].boneIndex1 = (int)joints[i].y;
 				boneWeights[i].boneIndex2 = (int)joints[i].z;
 				boneWeights[i].boneIndex3 = (int)joints[i].w;
+
+				//If weights don't sum to 1, we need to adjust them up until they do.
+				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
+				if (weightSum < 0.98f)
+					weights[i] /= weightSum;
 
 				boneWeights[i].weight0 = weights[i].x;
 				boneWeights[i].weight1 = weights[i].y;
