@@ -7,7 +7,8 @@
     <ProjectGuid>{D228AE89-BE53-474F-AB7C-04A3293F59C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GLTFSerialization</RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <AssemblyName>GLTFSerializationUWP</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
@@ -39,7 +40,7 @@
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <OutputPath>..\..\..\..\..\UnityGLTF\Assets\GLTF\Plugins\Portable\</OutputPath>
+    <OutputPath>..\..\..\UnityGLTF\Assets\GLTF\Plugins\Portable\</OutputPath>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -48,11 +49,32 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\GLTFSerialization\AttributeAccessor.cs">
+      <Link>AttributeAccessor.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\Exceptions.cs">
       <Link>Exceptions.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\GLTFHelpers.cs">
+      <Link>GLTFHelpers.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFParser.cs">
       <Link>GLTFParser.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Math\Matrix4x4.cs">
+      <Link>Math\Matrix4x4.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Math\Quaternion.cs">
+      <Link>Math\Quaternion.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Math\Vector2.cs">
+      <Link>Math\Vector2.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Math\Vector3.cs">
+      <Link>Math\Vector3.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Math\Vector4.cs">
+      <Link>Math\Vector4.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\Accessor.cs">
       <Link>Schema\Accessor.cs</Link>
@@ -153,15 +175,13 @@
     <Compile Include="..\GLTFSerialization\Schema\TextureInfo.cs">
       <Link>Schema\TextureInfo.cs</Link>
     </Compile>
-	<Compile Include="..\GLTFSerialization\Extensions\GLTFJsonExtensions.cs">
+    <Compile Include="..\GLTFSerialization\Extensions\GLTFJsonExtensions.cs">
       <Link>Extensions\GLTFJsonExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Math\Color.cs">
+      <Link>Math\Color.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="UnityEngine">
-      <HintPath>C:\Program Files\Unity 5.6.1f1\Editor\Data\PlaybackEngines\windowsstandalonesupport\Managed\UnityEngine.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
