@@ -222,15 +222,7 @@ namespace GLTF
 			{
 				AnimationCurve[] curves = channel.AsAnimationCurves();
 
-				// TODO Memoize
-				// Map the target Node ID to a GameObject, get its name, and prepend parents' names to generate a path.
-				GameObject node = _nodeMap[channel.Target.Node.Id];
-				string nodePath = "";
-				do
-				{
-					nodePath = node.name + (nodePath == "" ? nodePath : "/" + nodePath);
-					node = node.transform.parent.gameObject;
-				} while (node != null && node != sceneObj);
+				string nodePath = GetFullNodePath(channel.Target.Node.Id, sceneObj);
 
 				if (channel.Target.Path == GLTFAnimationChannelPath.translation)
 				{
@@ -253,7 +245,6 @@ namespace GLTF
 				}
 				else if (channel.Target.Path == GLTFAnimationChannelPath.weights)
 				{
-					//TODO: Actually Get Primitive Object Path
 					var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
 					var targetCount = primitives[0].Targets.Count;
 					for(int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
@@ -278,6 +269,18 @@ namespace GLTF
 
 			string name = animation.Name ?? ("Animation " + a.GetClipCount());
 			a.AddClip(clip, "Animation " + a.GetClipCount());
+		}
+
+		private string GetFullNodePath(int nodeId, GameObject sceneObj) {
+			GameObject node = _nodeMap[nodeId];
+			string nodePath = "";
+			do
+			{
+				nodePath = node.name + (nodePath == "" ? nodePath : "/" + nodePath);
+				node = node.transform.parent.gameObject;
+			} while (node != null && node != sceneObj);
+
+			return nodePath;
 		}
 
 		protected virtual void CreateNodePrimitives(Node node, GameObject nodeObj)
@@ -356,7 +359,8 @@ namespace GLTF
 						: null,
 
 					boneWeights = primitive.Attributes.ContainsKey(SemanticProperties.Weight(0)) && primitive.Attributes.ContainsKey(SemanticProperties.Joint(0))
-						? CreateBoneWeightArray(primitive.Attributes[SemanticProperties.Joint(0)].Value.AsVector4Array(), primitive.Attributes[SemanticProperties.Weight(0)].Value.AsVector4Array(), vertexCount)
+						? CreateBoneWeightArray(primitive.Attributes[SemanticProperties.Joint(0)].Value.AsVector4Array(), 
+							primitive.Attributes[SemanticProperties.Weight(0)].Value.AsVector4Array(), vertexCount)
 						: null
 				};
 			}
@@ -437,6 +441,8 @@ namespace GLTF
 
 		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
 		{
+			MakeSureWeightsAddToOne(weights);
+
 			var boneWeights = new BoneWeight[vertCount];
 			for(int i = 0; i < vertCount; i++)
 			{
@@ -445,11 +451,6 @@ namespace GLTF
 				boneWeights[i].boneIndex2 = (int)joints[i].z;
 				boneWeights[i].boneIndex3 = (int)joints[i].w;
 
-				//If weights don't sum to 1, we need to adjust them up until they do.
-				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
-				if (weightSum < 0.98f)
-					weights[i] /= weightSum;
-
 				boneWeights[i].weight0 = weights[i].x;
 				boneWeights[i].weight1 = weights[i].y;
 				boneWeights[i].weight2 = weights[i].z;
@@ -457,6 +458,15 @@ namespace GLTF
 			}
 
 			return boneWeights;
+		}
+
+		void MakeSureWeightsAddToOne(Vector4[] weights) {
+			for(int i = 0; i < weights.Length; i++)
+			{
+				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
+				if (weightSum < 0.98f)
+					weights[i] /= weightSum;
+			}
 		}
 
 		protected virtual UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
@@ -662,7 +672,6 @@ namespace GLTF
 		}
 
 		protected const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
-		private object keyframe;
 
 		/// <summary>
 		///  Get the absolute path to a gltf uri reference.
