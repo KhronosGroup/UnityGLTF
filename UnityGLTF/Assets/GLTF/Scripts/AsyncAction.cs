@@ -2,14 +2,18 @@ using System;
 using System.Collections;
 using System.Threading;
 
-namespace GLTF
+namespace UnityGLTFSerialization
 {
-	public class AsyncAction
+    /// <summary>
+    /// Creates a thread to run multithreaded operations on
+    /// </summary>
+    public class AsyncAction
 	{
 		private bool _workerThreadRunning = false;
 		private Exception _savedException;
 
-		public IEnumerator RunOnWorkerThread(Action action)
+#if !WINDOWS_UWP
+        public IEnumerator RunOnWorkerThread(Action action)
 		{
 			_workerThreadRunning = true;
 
@@ -42,6 +46,6 @@ namespace GLTF
 				yield return null;
 			}
 		}
-	}
+#endif
+    }
 }
-

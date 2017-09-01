@@ -1,32 +1,55 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using System.Threading;
 using UnityEngine.Networking;
+using System.IO;
 
-namespace GLTF {
+namespace UnityGLTFSerialization {
 
-	class GLTFComponent : MonoBehaviour
-	{
-		public string Url;
-		public bool Multithreaded = true;
+    /// <summary>
+    /// Component to load a GLTF scene with
+    /// </summary>
+    class GLTFComponent : MonoBehaviour
+    {
+        public string Url;
+        public bool Multithreaded = true;
+        public bool UseStream = false;
 
-		public int MaximumLod = 300;
+        public int MaximumLod = 300;
 
-		public Shader GLTFStandard;
-		public Shader GLTFConstant;
+        public Shader GLTFStandard;
+        public Shader GLTFConstant;
 
-		IEnumerator Start()
-		{
-			var loader = new GLTFLoader(
-				Url,
-				gameObject.transform
-			);
-			loader.SetShaderForMaterialType(GLTFLoader.MaterialType.PbrMetallicRoughness, GLTFStandard);
-			loader.SetShaderForMaterialType(GLTFLoader.MaterialType.CommonConstant, GLTFConstant);
-			loader.Multithreaded = Multithreaded;
-			loader.MaximumLod = MaximumLod;
-			yield return loader.Load();
-		}
-	}
+        IEnumerator Start()
+        {
+            GLTFSceneImporter loader = null;
+            FileStream gltfStream = null;
+            if (UseStream)
+            {
+                var fullPath = Application.streamingAssetsPath + Url;
+                gltfStream = File.OpenRead(fullPath);
+                loader = new GLTFSceneImporter(
+                    fullPath,
+                    gltfStream,
+                    gameObject.transform
+                    );
+            }
+            else
+            {
+                loader = new GLTFSceneImporter(
+                    Url,
+                    gameObject.transform
+                    );
+            }
+
+            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
+            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
+            loader.MaximumLod = MaximumLod;
+            yield return loader.Load(-1, Multithreaded);
+            if(gltfStream != null)
+            {
+                gltfStream.Close();
+            }
+        }
+    }
 }

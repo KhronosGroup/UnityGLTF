@@ -28,7 +28,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\Portable\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\UWP\</OutputPath>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -40,7 +40,7 @@
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <OutputPath>..\..\..\UnityGLTF\Assets\GLTF\Plugins\Portable\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\UWP\</OutputPath>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
