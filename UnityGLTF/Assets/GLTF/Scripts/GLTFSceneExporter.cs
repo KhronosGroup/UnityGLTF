@@ -89,7 +89,7 @@ namespace UnityGLTFSerialization
 			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
 			_root.Serialize(gltfFile);
 
-#if NETFX_CORE
+#if WINDOWS_UWP
 			gltfFile.Dispose();
 			binFile.Dispose();
 #else

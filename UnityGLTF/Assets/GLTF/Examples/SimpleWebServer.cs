@@ -19,7 +19,7 @@ class SimpleHTTPServer
 		"default.htm"
 	};
 
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 	private static IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
 #else
 	private static IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
@@ -93,7 +93,7 @@ class SimpleHTTPServer
 	};
 	private Thread _serverThread;
 	private string _rootDirectory;
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 	private HttpListener _listener;
 #endif
 	private int _port;
@@ -120,7 +120,7 @@ class SimpleHTTPServer
 	/// <param name="path">Directory path to serve.</param>
 	public SimpleHTTPServer(string path)
 	{
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 		//get an empty port
 		TcpListener l = new TcpListener(IPAddress.Loopback, 0);
 		l.Start();
@@ -135,7 +135,7 @@ class SimpleHTTPServer
 	/// </summary>
 	public void Stop()
 	{
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 		_serverThread.Abort();
 		_listener.Stop();
 #endif
@@ -143,7 +143,7 @@ class SimpleHTTPServer
 
 	private void Listen()
 	{
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 		_listener = new HttpListener();
 		_listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
 		_listener.Start();
@@ -162,7 +162,7 @@ class SimpleHTTPServer
 #endif
 	}
 
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 	private void Process(HttpListenerContext context)
 	{
 		string filename = context.Request.Url.AbsolutePath;
@@ -222,7 +222,7 @@ class SimpleHTTPServer
 
 	private void Initialize(string path, int port)
 	{
-#if !NETFX_CORE
+#if !WINDOWS_UWP
 		this._rootDirectory = path;
 		this._port = port;
 		_serverThread = new Thread(this.Listen);
