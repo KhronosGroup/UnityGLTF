@@ -4,10 +4,10 @@ using UnityEngine;
 using UnityGLTFSerialization;
 
 public class GLTFExporterIntegrationTest : MonoBehaviour {
-
-#if false
+	
     void Start () {
-        var exporter = new GLTFExporter(new [] {transform});
+        var exporter = new GLTFSceneExporter(new [] {transform});
+		exporter.SaveGLTFandBin("tempDir", "test");
         var root = exporter.GetRoot();
 
         var scene = root.GetDefaultScene();
@@ -20,6 +20,5 @@ public class GLTFExporterIntegrationTest : MonoBehaviour {
 
         IntegrationTest.Pass();
     }
-#endif
 
 }
