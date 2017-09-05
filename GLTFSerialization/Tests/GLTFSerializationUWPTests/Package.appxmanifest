@@ -3,27 +3,27 @@
   <Identity Name="9609a7ba-feb8-458e-ab74-751d97c08b56" Publisher="CN=blgross" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="9609a7ba-feb8-458e-ab74-751d97c08b56" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>GLTFSerializerUWPTests</DisplayName>
-    <PublisherDisplayName>blgross</PublisherDisplayName>
-    <Logo>Assets\StoreLogo.png</Logo>
+	<DisplayName>GLTFSerializerUWPTests</DisplayName>
+	<PublisherDisplayName>blgross</PublisherDisplayName>
+	<Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+	<TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
   </Dependencies>
   <Resources>
-    <Resource Language="x-generate" />
+	<Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="vstest.executionengine.universal.App" Executable="$targetnametoken$.exe" EntryPoint="GLTFSerializerUWPTests.App">
-      <uap:VisualElements DisplayName="GLTFSerializerUWPTests" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="GLTFSerializerUWPTests" BackgroundColor="transparent">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png">
-        </uap:DefaultTile>
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
-      </uap:VisualElements>
-    </Application>
+	<Application Id="vstest.executionengine.universal.App" Executable="$targetnametoken$.exe" EntryPoint="GLTFSerializerUWPTests.App">
+	  <uap:VisualElements DisplayName="GLTFSerializerUWPTests" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="GLTFSerializerUWPTests" BackgroundColor="transparent">
+		<uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png">
+		</uap:DefaultTile>
+		<uap:SplashScreen Image="Assets\SplashScreen.png" />
+	  </uap:VisualElements>
+	</Application>
   </Applications>
   <Capabilities>
-    <Capability Name="internetClientServer" />
-    <Capability Name="internetClient" />
+	<Capability Name="internetClientServer" />
+	<Capability Name="internetClient" />
   </Capabilities>
 </Package>
