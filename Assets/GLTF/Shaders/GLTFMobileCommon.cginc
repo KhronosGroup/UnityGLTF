@@ -70,7 +70,7 @@ fixed4 gltfMobileFrag (v2f i) : SV_Target
 	#if defined(_ALPHATEST_ON)
 
 	#ifdef VERTEX_COLOR_ON
-	fixed4 color = tex2D(_MainTex, i.uv) * _Color * v.vertColor;
+	fixed4 color = tex2D(_MainTex, i.uv) * _Color * i.vertColor;
 	#else
 	fixed4 color = tex2D(_MainTex, i.uv) * _Color;
 	#endif
@@ -81,7 +81,7 @@ fixed4 gltfMobileFrag (v2f i) : SV_Target
 	#elif defined(_ALPHABLEND_ON)
 
 	#ifdef VERTEX_COLOR_ON
-	fixed4 color = tex2D(_MainTex, i.uv) * _Color * v.vertColor;
+	fixed4 color = tex2D(_MainTex, i.uv) * _Color * i.vertColor;
 	#else
 	fixed4 color = tex2D(_MainTex, i.uv) * _Color;
 	#endif
