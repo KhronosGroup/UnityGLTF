@@ -20,6 +20,11 @@ namespace GLTF
 			string gltfContent;
 			glbBuffer = null;
 
+			if (gltfBinary.Length == 0)
+			{
+				throw new GLTFHeaderInvalidException("glTF file cannot be empty.");
+			}
+
 			// Check for binary format magic bytes
 			if (BitConverter.ToUInt32(gltfBinary, 0) == 0x46546c67)
 			{

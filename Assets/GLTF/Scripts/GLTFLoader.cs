@@ -58,13 +58,12 @@ namespace GLTF
 				var www = UnityWebRequest.Get(_gltfUrl);
 
 				yield return www.Send();
-				if (www.responseCode >= 400)
+				if (www.responseCode >= 400 || www.responseCode == 0)
 				{
-					Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
-					yield break;
+					throw new WebRequestException(www);
 				}
 
-				var gltfData = www.downloadHandler.data;
+                var gltfData = www.downloadHandler.data;
 
 				if (Multithreaded)
 				{
