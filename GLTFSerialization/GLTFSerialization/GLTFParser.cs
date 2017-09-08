@@ -25,8 +25,12 @@ namespace GLTFSerialization
 		{
 			string gltfContent;
 
-			// Check for binary format magic bytes
-			if (IsGLB(gltfBinary))
+            if (gltfBinary.Length == 0) {
+                throw new GLTFHeaderInvalidException("glTF file cannot be empty.");
+            }
+
+            // Check for binary format magic bytes
+            if (IsGLB(gltfBinary))
 			{
 				gltfContent = ParseJsonChunk(gltfBinary);
 			}

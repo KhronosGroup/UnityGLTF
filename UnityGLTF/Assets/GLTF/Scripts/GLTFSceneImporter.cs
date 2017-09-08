@@ -99,10 +99,9 @@ namespace UnityGLTFSerialization
 				var www = UnityWebRequest.Get(_gltfUrl);
 
 				yield return www.Send();
-				if (www.responseCode >= 400)
-				{
-					Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
-					yield break;
+
+				if (www.responseCode >= 400 || www.responseCode == 0) {
+					throw new WebRequestException(www);
 				}
 
 				_gltfData = www.downloadHandler.data;
