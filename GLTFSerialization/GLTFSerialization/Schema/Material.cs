@@ -1,8 +1,8 @@
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
-using UnityEngine;
+using GLTFSerialization.Math;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// The material appearance of a primitive.
@@ -51,7 +51,7 @@ namespace GLTF
 		/// <minItems>3</minItems>
 		/// <maxItems>3</maxItems>
 		/// </summary>
-		public Color EmissiveFactor = Color.black;
+		public Color EmissiveFactor = Color.Black;
 
 		/// <summary>
 		/// The material's alpha rendering mode enumeration specifying the interpretation of the
@@ -78,14 +78,6 @@ namespace GLTF
 		/// lighting equation is evaluated.
 		/// </summary>
 		public bool DoubleSided;
-
-		public UnityEngine.Material ContentsWithoutVC;
-		public UnityEngine.Material ContentsWithVC;
-
-		public UnityEngine.Material GetContents(bool useVertexColors)
-		{
-			return useVertexColors ? ContentsWithVC : ContentsWithoutVC;
-		}
 
 		public static Material Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -166,13 +158,13 @@ namespace GLTF
 				EmissiveTexture.Serialize(writer);
 			}
 
-			if (EmissiveFactor != Color.black)
+			if (EmissiveFactor != Color.Black)
 			{
 				writer.WritePropertyName("emissiveFactor");
 				writer.WriteStartArray();
-				writer.WriteValue(EmissiveFactor.r);
-				writer.WriteValue(EmissiveFactor.g);
-				writer.WriteValue(EmissiveFactor.b);
+				writer.WriteValue(EmissiveFactor.R);
+				writer.WriteValue(EmissiveFactor.G);
+				writer.WriteValue(EmissiveFactor.B);
 				writer.WriteEndArray();
 			}
 

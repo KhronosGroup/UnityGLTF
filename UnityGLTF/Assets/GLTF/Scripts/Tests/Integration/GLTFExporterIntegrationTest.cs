@@ -1,12 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using GLTF;
+using UnityGLTFSerialization;
 
 public class GLTFExporterIntegrationTest : MonoBehaviour {
-
+	
 	void Start () {
-		var exporter = new GLTFExporter(new [] {transform});
+		var exporter = new GLTFSceneExporter(new [] {transform});
+		exporter.SaveGLTFandBin("tempDir", "test");
 		var root = exporter.GetRoot();
 
 		var scene = root.GetDefaultScene();
@@ -15,7 +16,7 @@ public class GLTFExporterIntegrationTest : MonoBehaviour {
 
 
 
-		IntegrationTest.Assert(root.Materials[0].AlphaMode == AlphaMode.BLEND);
+		IntegrationTest.Assert(root.Materials[0].AlphaMode == GLTFSerialization.AlphaMode.BLEND);
 
 		IntegrationTest.Pass();
 	}

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
-using UnityEngine;
+using GLTFSerialization.Math;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// The root object for a glTF asset.
@@ -117,74 +117,75 @@ namespace GLTF
 			return null;
 		}
 
-		public static GLTFRoot Deserialize(JsonReader reader)
+		public static GLTFRoot Deserialize(TextReader textReader)
 		{
+			var jsonReader = new JsonTextReader(textReader);
 			var root = new GLTFRoot();
 
-			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+			if (jsonReader.Read() && jsonReader.TokenType != JsonToken.StartObject)
 			{
 				throw new Exception("gltf json must be an object");
 			}
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+			while (jsonReader.Read() && jsonReader.TokenType == JsonToken.PropertyName)
 			{
-				var curProp = reader.Value.ToString();
+				var curProp = jsonReader.Value.ToString();
 
 				switch (curProp)
 				{
 					case "extensionsUsed":
-						root.ExtensionsUsed = reader.ReadStringList();
+						root.ExtensionsUsed = jsonReader.ReadStringList();
 						break;
 					case "extensionsRequired":
-						root.ExtensionsRequired = reader.ReadStringList();
+						root.ExtensionsRequired = jsonReader.ReadStringList();
 						break;
 					case "accessors":
-						root.Accessors = reader.ReadList(() => Accessor.Deserialize(root, reader));
+						root.Accessors = jsonReader.ReadList(() => Accessor.Deserialize(root, jsonReader));
 						break;
 					case "animations":
-						root.Animations = reader.ReadList(() => Animation.Deserialize(root, reader));
+						root.Animations = jsonReader.ReadList(() => Animation.Deserialize(root, jsonReader));
 						break;
 					case "asset":
-						root.Asset = Asset.Deserialize(root, reader);
+						root.Asset = Asset.Deserialize(root, jsonReader);
 						break;
 					case "buffers":
-						root.Buffers = reader.ReadList(() => Buffer.Deserialize(root, reader));
+						root.Buffers = jsonReader.ReadList(() => Buffer.Deserialize(root, jsonReader));
 						break;
 					case "bufferViews":
-						root.BufferViews = reader.ReadList(() => BufferView.Deserialize(root, reader));
+						root.BufferViews = jsonReader.ReadList(() => BufferView.Deserialize(root, jsonReader));
 						break;
 					case "cameras":
-						root.Cameras = reader.ReadList(() => Camera.Deserialize(root, reader));
+						root.Cameras = jsonReader.ReadList(() => Camera.Deserialize(root, jsonReader));
 						break;
 					case "images":
-						root.Images = reader.ReadList(() => Image.Deserialize(root, reader));
+						root.Images = jsonReader.ReadList(() => Image.Deserialize(root, jsonReader));
 						break;
 					case "materials":
-						root.Materials = reader.ReadList(() => Material.Deserialize(root, reader));
+						root.Materials = jsonReader.ReadList(() => Material.Deserialize(root, jsonReader));
 						break;
 					case "meshes":
-						root.Meshes = reader.ReadList(() => Mesh.Deserialize(root, reader));
+						root.Meshes = jsonReader.ReadList(() => Mesh.Deserialize(root, jsonReader));
 						break;
 					case "nodes":
-						root.Nodes = reader.ReadList(() => Node.Deserialize(root, reader));
+						root.Nodes = jsonReader.ReadList(() => Node.Deserialize(root, jsonReader));
 						break;
 					case "samplers":
-						root.Samplers = reader.ReadList(() => Sampler.Deserialize(root, reader));
+						root.Samplers = jsonReader.ReadList(() => Sampler.Deserialize(root, jsonReader));
 						break;
 					case "scene":
-						root.Scene = SceneId.Deserialize(root, reader);
+						root.Scene = SceneId.Deserialize(root, jsonReader);
 						break;
 					case "scenes":
-						root.Scenes = reader.ReadList(() => GLTF.Scene.Deserialize(root, reader));
+						root.Scenes = jsonReader.ReadList(() => GLTFSerialization.Scene.Deserialize(root, jsonReader));
 						break;
 					case "skins":
-						root.Skins = reader.ReadList(() => Skin.Deserialize(root, reader));
+						root.Skins = jsonReader.ReadList(() => Skin.Deserialize(root, jsonReader));
 						break;
 					case "textures":
-						root.Textures = reader.ReadList(() => Texture.Deserialize(root, reader));
+						root.Textures = jsonReader.ReadList(() => Texture.Deserialize(root, jsonReader));
 						break;
 					default:
-						root.DefaultPropertyDeserializer(root, reader);
+						root.DefaultPropertyDeserializer(root, jsonReader);
 						break;
 				}
 			}
@@ -192,269 +193,188 @@ namespace GLTF
 			return root;
 		}
 
-		public override void Serialize(JsonWriter writer)
+		public void Serialize(TextWriter textWriter)
 		{
-			writer.WriteStartObject();
+			JsonWriter jsonWriter = new JsonTextWriter(textWriter);
+			jsonWriter.WriteStartObject();
 
 			if (ExtensionsUsed != null && ExtensionsUsed.Count > 0)
 			{
-				writer.WritePropertyName("extensionsUsed");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("extensionsUsed");
+				jsonWriter.WriteStartArray();
 				foreach (var extension in ExtensionsUsed)
 				{
-					writer.WriteValue(extension);
+					jsonWriter.WriteValue(extension);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (ExtensionsRequired != null && ExtensionsRequired.Count > 0)
 			{
-				writer.WritePropertyName("extensionsRequired");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("extensionsRequired");
+				jsonWriter.WriteStartArray();
 				foreach (var extension in ExtensionsRequired)
 				{
-					writer.WriteValue(extension);
+					jsonWriter.WriteValue(extension);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Accessors != null && Accessors.Count > 0)
 			{
-				writer.WritePropertyName("accessors");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("accessors");
+				jsonWriter.WriteStartArray();
 				foreach (var accessor in Accessors)
 				{
-					accessor.Serialize(writer);
+					accessor.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Animations != null && Animations.Count > 0)
 			{
-				writer.WritePropertyName("animations");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("animations");
+				jsonWriter.WriteStartArray();
 				foreach (var animation in Animations)
 				{
-					animation.Serialize(writer);
+					animation.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
-			writer.WritePropertyName("asset");
-			Asset.Serialize(writer);
+			jsonWriter.WritePropertyName("asset");
+			Asset.Serialize(jsonWriter);
 
 			if (Buffers != null && Buffers.Count > 0)
 			{
-				writer.WritePropertyName("buffers");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("buffers");
+				jsonWriter.WriteStartArray();
 				foreach (var buffer in Buffers)
 				{
-					buffer.Serialize(writer);
+					buffer.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (BufferViews != null && BufferViews.Count > 0)
 			{
-				writer.WritePropertyName("bufferViews");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("bufferViews");
+				jsonWriter.WriteStartArray();
 				foreach (var bufferView in BufferViews)
 				{
-					bufferView.Serialize(writer);
+					bufferView.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Cameras != null && Cameras.Count > 0)
 			{
-				writer.WritePropertyName("cameras");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("cameras");
+				jsonWriter.WriteStartArray();
 				foreach (var camera in Cameras)
 				{
-					camera.Serialize(writer);
+					camera.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Images != null && Images.Count > 0)
 			{
-				writer.WritePropertyName("images");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("images");
+				jsonWriter.WriteStartArray();
 				foreach (var image in Images)
 				{
-					image.Serialize(writer);
+					image.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Materials != null && Materials.Count > 0)
 			{
-				writer.WritePropertyName("materials");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("materials");
+				jsonWriter.WriteStartArray();
 				foreach (var material in Materials)
 				{
-					material.Serialize(writer);
+					material.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Meshes != null && Meshes.Count > 0)
 			{
-				writer.WritePropertyName("meshes");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("meshes");
+				jsonWriter.WriteStartArray();
 				foreach (var mesh in Meshes)
 				{
-					mesh.Serialize(writer);
+					mesh.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Nodes != null && Nodes.Count > 0)
 			{
-				writer.WritePropertyName("nodes");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("nodes");
+				jsonWriter.WriteStartArray();
 				foreach (var node in Nodes)
 				{
-					node.Serialize(writer);
+					node.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Samplers != null && Samplers.Count > 0)
 			{
-				writer.WritePropertyName("samplers");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("samplers");
+				jsonWriter.WriteStartArray();
 				foreach (var sampler in Samplers)
 				{
-					sampler.Serialize(writer);
+					sampler.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Scene != null)
 			{
-				writer.WritePropertyName("scene");
-				Scene.Serialize(writer);
+				jsonWriter.WritePropertyName("scene");
+				Scene.Serialize(jsonWriter);
 			}
 
 			if (Scenes != null && Scenes.Count > 0)
 			{
-				writer.WritePropertyName("scenes");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("scenes");
+				jsonWriter.WriteStartArray();
 				foreach (var scene in Scenes)
 				{
-					scene.Serialize(writer);
+					scene.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Skins != null && Skins.Count > 0)
 			{
-				writer.WritePropertyName("skins");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("skins");
+				jsonWriter.WriteStartArray();
 				foreach (var skin in Skins)
 				{
-					skin.Serialize(writer);
+					skin.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
 			if (Textures != null && Textures.Count > 0)
 			{
-				writer.WritePropertyName("textures");
-				writer.WriteStartArray();
+				jsonWriter.WritePropertyName("textures");
+				jsonWriter.WriteStartArray();
 				foreach (var texture in Textures)
 				{
-					texture.Serialize(writer);
+					texture.Serialize(jsonWriter);
 				}
-				writer.WriteEndArray();
+				jsonWriter.WriteEndArray();
 			}
 
-			base.Serialize(writer);
+			base.Serialize(jsonWriter);
 
-			writer.WriteEndObject();
-		}
-
-		public MaterialId GetMaterialId(UnityEngine.Material materialObj)
-		{
-			for(var i=0; i<Materials.Count; i++)
-			{
-				if(Materials[i].ContentsWithoutVC == materialObj || Materials[i].ContentsWithVC == materialObj)
-				{
-					return new MaterialId
-					{
-						Id = i,
-						Root = this
-					};
-				}
-			}
-
-			return null;
-		}
-
-		public TextureId GetTextureId(UnityEngine.Texture textureObj)
-		{
-			for (var i = 0; i < Textures.Count; i++)
-			{
-				if (Textures[i].Contents == textureObj)
-				{
-					return new TextureId
-					{
-						Id = i,
-						Root = this
-					};
-				}
-			}
-
-			return null;
-		}
-
-		public SamplerId GetSamplerId(UnityEngine.Texture textureObj)
-		{
-			for (var i = 0; i < Samplers.Count; i++)
-			{
-				bool filterIsNearest = Samplers[i].MinFilter == MinFilterMode.Nearest
-					|| Samplers[i].MinFilter == MinFilterMode.NearestMipmapNearest
-					|| Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
-
-				bool filterIsLinear = Samplers[i].MinFilter == MinFilterMode.Linear
-					|| Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
-
-				bool filterMatched = textureObj.filterMode == FilterMode.Point && filterIsNearest
-					|| textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
-					|| textureObj.filterMode == FilterMode.Trilinear && Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
-
-				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && Samplers[i].WrapS == WrapMode.ClampToEdge
-					|| textureObj.wrapMode == TextureWrapMode.Repeat && Samplers[i].WrapS != WrapMode.ClampToEdge;
-
-				if(filterMatched && wrapMatched)
-				{
-					return new SamplerId
-					{
-						Id = i,
-						Root = this
-					};
-				}
-			}
-
-			return null;
-		}
-
-		public ImageId GetImageId(UnityEngine.Texture textureObj)
-		{
-			for (var i = 0; i < Images.Count; i++)
-			{
-				if (Images[i].Contents == textureObj)
-				{
-					return new ImageId
-					{
-						Id = i,
-						Root = this
-					};
-				}
-			}
-
-			return null;
+			jsonWriter.WriteEndObject();
 		}
 	}
 }

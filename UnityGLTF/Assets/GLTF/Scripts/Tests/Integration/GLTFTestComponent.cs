@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using GLTF;
+using UnityGLTFSerialization;
 
 public class GLTFTestComponent : MonoBehaviour {
 	public string Url;
@@ -11,13 +11,13 @@ public class GLTFTestComponent : MonoBehaviour {
 
 	IEnumerator Start()
 	{
-		var loader = new GLTFLoader(
-				Url,
-				gameObject.transform
+		var loader = new GLTFSceneImporter(
+			Url,
+			gameObject.transform
 			);
-		loader.SetShaderForMaterialType(GLTFLoader.MaterialType.PbrMetallicRoughness, GLTFStandard);
-		loader.Multithreaded = Multithreaded;
-		yield return loader.Load();
+
+		loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
+		yield return loader.Load(-1, Multithreaded);
 		IntegrationTest.Pass();
 	}
 }

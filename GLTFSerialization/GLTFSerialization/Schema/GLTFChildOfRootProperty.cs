@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	public class GLTFChildOfRootProperty : GLTFProperty
 	{

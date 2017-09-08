@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using UnityEngine;
+using GLTFSerialization.Math;
 
-namespace GLTF.JsonExtensions
+namespace GLTFSerialization.JsonExtensions
 {
 	public static class JsonReaderExtensions
 	{
@@ -67,10 +67,10 @@ namespace GLTF.JsonExtensions
 
 			var color = new Color
 			{
-				r = (float) reader.ReadAsDouble().Value,
-				g = (float) reader.ReadAsDouble().Value,
-				b = (float) reader.ReadAsDouble().Value,
-				a = (float) reader.ReadAsDouble().Value
+				R = (float) reader.ReadAsDouble().Value,
+				G = (float) reader.ReadAsDouble().Value,
+				B = (float) reader.ReadAsDouble().Value,
+				A = (float) reader.ReadAsDouble().Value
 			};
 
 			if (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -90,10 +90,10 @@ namespace GLTF.JsonExtensions
 
 			var color = new Color
 			{
-				r = (float) reader.ReadAsDouble().Value,
-				g = (float) reader.ReadAsDouble().Value,
-				b = (float) reader.ReadAsDouble().Value,
-				a = 1.0f
+				R = (float) reader.ReadAsDouble().Value,
+				G = (float) reader.ReadAsDouble().Value,
+				B = (float) reader.ReadAsDouble().Value,
+				A = 1.0f
 			};
 
 			if (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -113,9 +113,9 @@ namespace GLTF.JsonExtensions
 
 			var vector = new Vector3
 			{
-				x = (float) reader.ReadAsDouble().Value,
-				y = (float) reader.ReadAsDouble().Value,
-				z = (float) reader.ReadAsDouble().Value
+				X = (float) reader.ReadAsDouble().Value,
+				Y = (float) reader.ReadAsDouble().Value,
+				Z = (float) reader.ReadAsDouble().Value
 			};
 
 			if (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -135,10 +135,10 @@ namespace GLTF.JsonExtensions
 
 			var quat = new Quaternion
 			{
-				x = (float) reader.ReadAsDouble().Value,
-				y = (float) reader.ReadAsDouble().Value,
-				z = (float) reader.ReadAsDouble().Value,
-				w = (float) reader.ReadAsDouble().Value
+				X = (float) reader.ReadAsDouble().Value,
+				Y = (float) reader.ReadAsDouble().Value,
+				Z = (float) reader.ReadAsDouble().Value,
+				W = (float) reader.ReadAsDouble().Value
 			};
 
 			if (reader.Read() && reader.TokenType != JsonToken.EndArray)

@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// A perspective camera containing properties to create a perspective projection

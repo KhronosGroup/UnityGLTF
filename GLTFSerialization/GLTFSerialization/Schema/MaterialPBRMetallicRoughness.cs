@@ -1,9 +1,9 @@
 using System;
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
-using UnityEngine;
+using GLTFSerialization.Math;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// A set of parameter values that are used to define the metallic-roughness
@@ -16,7 +16,7 @@ namespace GLTF
 		/// The fourth component (A) is the opacity of the material.
 		/// These values are linear.
 		/// </summary>
-		public Color BaseColorFactor = Color.white;
+		public Color BaseColorFactor = Color.White;
 
 		/// <summary>
 		/// The base color texture.
@@ -98,14 +98,14 @@ namespace GLTF
 		{
 			writer.WriteStartObject();
 
-			if (BaseColorFactor != Color.white)
+			if (BaseColorFactor != Color.White)
 			{
 				writer.WritePropertyName("baseColorFactor");
 				writer.WriteStartArray();
-				writer.WriteValue(BaseColorFactor.r);
-				writer.WriteValue(BaseColorFactor.g);
-				writer.WriteValue(BaseColorFactor.b);
-				writer.WriteValue(BaseColorFactor.a);
+				writer.WriteValue(BaseColorFactor.R);
+				writer.WriteValue(BaseColorFactor.G);
+				writer.WriteValue(BaseColorFactor.B);
+				writer.WriteValue(BaseColorFactor.A);
 				writer.WriteEndArray();
 			}
 

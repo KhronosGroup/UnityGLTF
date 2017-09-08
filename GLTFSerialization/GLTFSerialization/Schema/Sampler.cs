@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// Texture sampler properties for filtering and wrapping modes.

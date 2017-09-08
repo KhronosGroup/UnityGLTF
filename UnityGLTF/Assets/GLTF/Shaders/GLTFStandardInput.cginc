@@ -52,7 +52,7 @@ sampler2D	_ParallaxMap;
 half		_Parallax;
 half		_UVSec;
 
-half4 		_EmissionColor;
+half4		 _EmissionColor;
 sampler2D	_EmissionMap;
 
 //-------------------------------------------------------------------------------------

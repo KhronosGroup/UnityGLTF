@@ -1,5 +1,5 @@
 using UnityEngine;
-using GLTF;
+using UnityGLTFSerialization;
 using System.Collections;
 
 public class MultiSceneComponent : MonoBehaviour {
@@ -7,16 +7,16 @@ public class MultiSceneComponent : MonoBehaviour {
 	public int SceneIndex = 0;
 	public string Url;
 	public Shader GLTFStandardShader;
-	private GLTFLoader loader;
+	private GLTFSceneImporter loader;
 
 	void Start ()
 	{
 		Debug.Log("Hit spacebar to change the scene.");
-		loader = new GLTFLoader(
+		loader = new GLTFSceneImporter(
 				Url,
 				gameObject.transform
 			);
-		loader.SetShaderForMaterialType(GLTFLoader.MaterialType.PbrMetallicRoughness, GLTFStandardShader);
+		loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandardShader);
 		StartCoroutine(LoadScene(SceneIndex));
 	}
 

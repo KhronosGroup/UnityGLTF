@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// A keyframe animation.

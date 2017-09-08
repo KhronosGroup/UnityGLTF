@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// A buffer points to binary geometry, animation, or skins.
@@ -19,8 +19,6 @@ namespace GLTF
 		/// <minimum>0</minimum>
 		/// </summary>
 		public int ByteLength;
-
-		public byte[] Contents;
 
 		public static Buffer Deserialize(GLTFRoot root, JsonReader reader)
 		{

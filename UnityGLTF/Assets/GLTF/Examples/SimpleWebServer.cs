@@ -19,7 +19,11 @@ class SimpleHTTPServer
 		"default.htm"
 	};
 
+#if !WINDOWS_UWP
 	private static IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
+#else
+	private static IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+#endif
 		#region extension to MIME type list
 		{".asf", "video/x-ms-asf"},
 		{".asx", "video/x-ms-asf"},
@@ -89,7 +93,9 @@ class SimpleHTTPServer
 	};
 	private Thread _serverThread;
 	private string _rootDirectory;
+#if !WINDOWS_UWP
 	private HttpListener _listener;
+#endif
 	private int _port;
 
 	public int Port
@@ -114,12 +120,14 @@ class SimpleHTTPServer
 	/// <param name="path">Directory path to serve.</param>
 	public SimpleHTTPServer(string path)
 	{
+#if !WINDOWS_UWP
 		//get an empty port
 		TcpListener l = new TcpListener(IPAddress.Loopback, 0);
 		l.Start();
 		int port = ((IPEndPoint)l.LocalEndpoint).Port;
 		l.Stop();
 		this.Initialize(path, port);
+#endif
 	}
 
 	/// <summary>
@@ -127,12 +135,15 @@ class SimpleHTTPServer
 	/// </summary>
 	public void Stop()
 	{
+#if !WINDOWS_UWP
 		_serverThread.Abort();
 		_listener.Stop();
+#endif
 	}
 
 	private void Listen()
 	{
+#if !WINDOWS_UWP
 		_listener = new HttpListener();
 		_listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
 		_listener.Start();
@@ -148,8 +159,10 @@ class SimpleHTTPServer
 
 			}
 		}
+#endif
 	}
 
+#if !WINDOWS_UWP
 	private void Process(HttpListenerContext context)
 	{
 		string filename = context.Request.Url.AbsolutePath;
@@ -205,13 +218,16 @@ class SimpleHTTPServer
 
 		context.Response.OutputStream.Close();
 	}
+#endif
 
 	private void Initialize(string path, int port)
 	{
+#if !WINDOWS_UWP
 		this._rootDirectory = path;
 		this._port = port;
 		_serverThread = new Thread(this.Listen);
 		_serverThread.Start();
+#endif
 	}
 
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.3
+VisualStudioVersion = 15.0.26730.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerialization", "GLTFSerialization\GLTFSerialization.csproj", "{72AC331F-9810-4DE2-8EA3-84559A787218}"
 EndProject
@@ -48,6 +48,7 @@ Global
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x86.Build.0 = Debug|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Debug|x86.Deploy.0 = Debug|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|Any CPU.ActiveCfg = Release|x86
+		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|Any CPU.Build.0 = Release|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.ActiveCfg = Release|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.Build.0 = Release|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.Deploy.0 = Release|x86

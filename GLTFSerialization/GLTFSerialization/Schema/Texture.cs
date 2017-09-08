@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// A texture and its sampler.
@@ -16,8 +16,6 @@ namespace GLTF
 		/// The index of the image used by this texture.
 		/// </summary>
 		public ImageId Source;
-
-		public UnityEngine.Texture Contents;
 
 		public static Texture Deserialize(GLTFRoot root, JsonReader reader)
 		{

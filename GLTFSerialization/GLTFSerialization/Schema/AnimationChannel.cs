@@ -1,7 +1,6 @@
-using System;
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// Targets an animation's sampler at a node's property.

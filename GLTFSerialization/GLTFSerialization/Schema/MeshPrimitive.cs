@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using GLTF.JsonExtensions;
-using UnityEngine;
+using GLTFSerialization.JsonExtensions;
+using GLTFSerialization.Math;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// Geometry to be rendered with the given material.
@@ -48,58 +48,6 @@ namespace GLTF
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
-		public UnityEngine.Mesh Contents;
-
-		public void BuildMeshAttributes()
-		{
-			if (Attributes.ContainsKey(SemanticProperties.POSITION))
-			{
-				var accessor = Attributes[SemanticProperties.POSITION].Value;
-				accessor.AsVertexArray();
-			}
-
-			if (Indices != null) {
-				var accessor = Indices.Value;
-				accessor.AsTriangles();
-			}
-
-			if (Attributes.ContainsKey(SemanticProperties.NORMAL))
-			{
-				var accessor = Attributes[SemanticProperties.NORMAL].Value;
-				accessor.AsNormalArray();
-			}
-			if (Attributes.ContainsKey(SemanticProperties.TexCoord(0)))
-			{
-				var accessor = Attributes[SemanticProperties.TexCoord(0)].Value;
-				accessor.AsTexcoordArray();
-			}
-			if (Attributes.ContainsKey(SemanticProperties.TexCoord(1)))
-			{
-				var accessor = Attributes[SemanticProperties.TexCoord(1)].Value;
-				accessor.AsTexcoordArray();
-			}
-			if (Attributes.ContainsKey(SemanticProperties.TexCoord(2)))
-			{
-				var accessor = Attributes[SemanticProperties.TexCoord(2)].Value;
-				accessor.AsTexcoordArray();
-			}
-			if (Attributes.ContainsKey(SemanticProperties.TexCoord(3)))
-			{
-				var accessor = Attributes[SemanticProperties.TexCoord(3)].Value;
-				accessor.AsTexcoordArray();
-			}
-			if (Attributes.ContainsKey(SemanticProperties.Color(0)))
-			{
-				var accessor = Attributes[SemanticProperties.Color(0)].Value;
-				accessor.AsColorArray();
-			}
-			if (Attributes.ContainsKey(SemanticProperties.TANGENT))
-			{
-				var accessor = Attributes[SemanticProperties.TANGENT].Value;
-				accessor.AsTangentArray();
-			}
-		}
-
 		public static int[] GenerateTriangles(int vertCount)
 		{
 			var arr = new int[vertCount];
@@ -121,8 +69,7 @@ namespace GLTF
 				Indices = Indices,
 				Material = Material,
 				Mode = Mode,
-				Targets = Targets,
-				Contents = Contents
+				Targets = Targets
 			};
 		}
 
@@ -153,17 +100,17 @@ namespace GLTF
 				var w2 = attributes.Uv[i2];
 				var w3 = attributes.Uv[i3];
 
-				var x1 = v2.x - v1.x;
-				var x2 = v3.x - v1.x;
-				var y1 = v2.y - v1.y;
-				var y2 = v3.y - v1.y;
-				var z1 = v2.z - v1.z;
-				var z2 = v3.z - v1.z;
+				var x1 = v2.X - v1.X;
+				var x2 = v3.X - v1.X;
+				var y1 = v2.Y - v1.Y;
+				var y2 = v3.Y - v1.Y;
+				var z1 = v2.Z - v1.Z;
+				var z2 = v3.Z - v1.Z;
 
-				var s1 = w2.x - w1.x;
-				var s2 = w3.x - w1.x;
-				var t1 = w2.y - w1.y;
-				var t2 = w3.y - w1.y;
+				var s1 = w2.X - w1.X;
+				var s2 = w3.X - w1.X;
+				var t1 = w2.Y - w1.Y;
+				var t2 = w3.Y - w1.Y;
 
 				var r = 1.0f / (s1 * t2 - s2 * t1);
 
@@ -187,11 +134,11 @@ namespace GLTF
 
 				Vector3.OrthoNormalize(ref n, ref t);
 
-				attributes.Tangents[a].x = t.x;
-				attributes.Tangents[a].y = t.y;
-				attributes.Tangents[a].z = t.z;
+				attributes.Tangents[a].X = t.X;
+				attributes.Tangents[a].Y = t.Y;
+				attributes.Tangents[a].Z = t.Z;
 
-				attributes.Tangents[a].w = (Vector3.Dot(Vector3.Cross(n, t), tan2[a]) < 0.0f) ? -1.0f : 1.0f;
+				attributes.Tangents[a].W = (Vector3.Dot(Vector3.Cross(n, t), tan2[a]) < 0.0f) ? -1.0f : 1.0f;
 			}
 
 			return attributes;
@@ -304,6 +251,7 @@ namespace GLTF
 		public static readonly string JOINT = "JOINT";
 		public static readonly string WEIGHT = "WEIGHT";
 		public static readonly string TANGENT = "TANGENT";
+		public static readonly string INDICES = "INDICIES";
 
 		/// <summary>
 		/// Return the semantic property for the uv buffer.

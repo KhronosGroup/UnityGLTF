@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// Image data used to create a texture. Image can be referenced by URI or
@@ -26,8 +26,6 @@ namespace GLTF
 		/// Use this instead of the image's uri property.
 		/// </summary>
 		public BufferViewId BufferView;
-
-		public UnityEngine.Texture Contents;
 
 		public static Image Deserialize(GLTFRoot root, JsonReader reader)
 		{

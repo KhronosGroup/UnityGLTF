@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using GLTF.JsonExtensions;
-using UnityEngine;
+using GLTFSerialization.JsonExtensions;
+using GLTFSerialization.Math;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// A set of primitives to be rendered. A node can contain one or more meshes.

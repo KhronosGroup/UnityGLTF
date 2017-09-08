@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	/// <summary>
 	/// Joints and matrices defining a skin.
@@ -11,7 +11,7 @@ namespace GLTF
 	{
 		/// <summary>
 		/// The index of the accessor containing the floating-point 4x4 inverse-bind matrices.
-		/// The default is that each matrix is a 4x4 identity matrix, which implies that inverse-bind
+		/// The default is that each matrix is a 4x4 Identity matrix, which implies that inverse-bind
 		/// matrices were pre-applied.
 		/// </summary>
 		public AccessorId InverseBindMatrices;

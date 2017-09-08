@@ -1,17 +1,17 @@
 
 using System;
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
-using UnityEngine;
+using GLTFSerialization.Math;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	public class MaterialCommonConstant : GLTFProperty
 	{
 		/// <summary>
 		/// Used to scale the ambient light contributions to this material
 		/// </summary>
-		public Color AmbientFactor = Color.white;
+		public Color AmbientFactor = Color.White;
 
 		/// <summary>
 		/// Texture used to store pre-computed direct lighting
@@ -21,7 +21,7 @@ namespace GLTF
 		/// <summary>
 		/// Scale factor for the lightmap texture
 		/// </summary>
-		public Color LightmapFactor = Color.white;
+		public Color LightmapFactor = Color.White;
 
 		public static MaterialCommonConstant Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -60,13 +60,13 @@ namespace GLTF
 		{
 			writer.WriteStartObject();
 
-			if (AmbientFactor != Color.white)
+			if (AmbientFactor != Color.White)
 			{
 				writer.WritePropertyName("ambientFactor");
 				writer.WriteStartArray();
-				writer.WriteValue(AmbientFactor.r);
-				writer.WriteValue(AmbientFactor.g);
-				writer.WriteValue(AmbientFactor.b);
+				writer.WriteValue(AmbientFactor.R);
+				writer.WriteValue(AmbientFactor.G);
+				writer.WriteValue(AmbientFactor.B);
 				writer.WriteEndArray();
 			}
 
@@ -76,13 +76,13 @@ namespace GLTF
 				LightmapTexture.Serialize(writer);
 			}
 
-			if (LightmapFactor != Color.white)
+			if (LightmapFactor != Color.White)
 			{
 				writer.WritePropertyName("lightmapFactor");
 				writer.WriteStartArray();
-				writer.WriteValue(LightmapFactor.r);
-				writer.WriteValue(LightmapFactor.g);
-				writer.WriteValue(LightmapFactor.b);
+				writer.WriteValue(LightmapFactor.R);
+				writer.WriteValue(LightmapFactor.G);
+				writer.WriteValue(LightmapFactor.B);
 				writer.WriteEndArray();
 			}
 

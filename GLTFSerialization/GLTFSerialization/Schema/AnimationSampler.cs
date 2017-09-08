@@ -1,7 +1,7 @@
-using GLTF.JsonExtensions;
+using GLTFSerialization.JsonExtensions;
 using Newtonsoft.Json;
 
-namespace GLTF
+namespace GLTFSerialization
 {
 	public enum InterpolationType
 	{
@@ -15,7 +15,7 @@ namespace GLTF
 	public class AnimationSampler : GLTFProperty
 	{
 		/// <summary>
-		/// The index of an accessor containing keyframe input values, e.g., time.
+		/// The index of an accessor containing keyframe input values, e.G., time.
 		/// That accessor must have componentType `FLOAT`. The values represent time in
 		/// seconds with `time[0] >= 0.0`, and strictly increasing values,
 		/// i.e., `time[n + 1] > time[n]`
