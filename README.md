@@ -1,4 +1,6 @@
 # UnityGLTF
+
+[![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Unity3D library for exporting, loading, parsing, and rendering assets stored in the [GLTF 2.0](https://github.com/KhronosGroup/glTF/tree/2.0) file format at runtime.
 
 The specification isn't finalized yet and this loader is a work in progress. Feel free to check it out and contribute, but don't use it for anything serious yet.
