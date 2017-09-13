@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18294223, g: 0.22623602, b: 0.29291394, a: 1}
+  m_IndirectSpecularColor: {r: 0.1829417, g: 0.2262355, b: 0.29291272, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -830,6 +830,57 @@ Transform:
   m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
     type: 2}
   m_PrefabInternal: {fileID: 687133818}
+--- !u!1 &692174352
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 692174354}
+  - component: {fileID: 692174353}
+  m_Layer: 0
+  m_Name: BuggyTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &692174353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 692174352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1dba0b27b0864740a8720e920aa88c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeout: 5
+  ignored: 0
+  succeedAfterAllAssertionsAreExecuted: 0
+  expectException: 0
+  expectedExceptionList: 
+  succeedWhenExceptionIsThrown: 0
+  includedPlatforms: -1
+  platformsToIgnore: []
+  dynamic: 0
+  dynamicTypeName: 
+--- !u!4 &692174354
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 692174352}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 2132887877}
+  m_Father: {fileID: 0}
+  m_RootOrder: 27
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &751215785
 GameObject:
   m_ObjectHideFlags: 0
@@ -1737,7 +1788,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1600544900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2619,6 +2670,58 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2132887876
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 692174354}
+    m_Modifications:
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000011737172762, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+        type: 2}
+      propertyPath: Url
+      value: https://rawgit.com/KhronosGroup/glTF-Sample-Models/master/2.0/Buggy/glTF/Buggy.gltf
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 6bd5d5ae8ae0b0549b60cf460a334cef, type: 2}
+  m_IsPrefabParent: 0
+--- !u!4 &2132887877 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000010219582968, guid: 6bd5d5ae8ae0b0549b60cf460a334cef,
+    type: 2}
+  m_PrefabInternal: {fileID: 2132887876}
 --- !u!1001 &2134766041
 Prefab:
   m_ObjectHideFlags: 0
