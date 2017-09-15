@@ -2,9 +2,20 @@
 
 [![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Unity3D library for exporting, loading, parsing, and rendering assets stored in the [GLTF 2.0](https://github.com/KhronosGroup/glTF/tree/2.0) file format at runtime.
+Unity3D library for importing and exporting [GLTF 2.0](https://github.com/KhronosGroup/glTF/) assets. 
 
-The specification isn't finalized yet and this loader is a work in progress. Feel free to check it out and contribute, but don't use it for anything serious yet.
+The goal of this library is to support the full glTF 2.0 specification and enable the following scenarios:  
+- Run-time import of glTF 2.0 files
+- Run-time export of glTF 2.0 files
+- Design-time import of glTF 2.0 files
+- Design-time export of glTF 2.0 files
+
+The library will be modularized such that it can be extended to support additional capabilities in Unity or support additional extensions to the glTF specification.  
+
+## Current Status
+
+Work Items and Issues targeting a 1.0 release of the library can be found in
+[Road to 1.0](https://github.com/KhronosGroup/UnityGLTF/projects/1)
 
 ## Examples
 
@@ -15,21 +26,3 @@ You should see something like this:
 
 ![GLTF Lantern](/Screenshots/Lantern.png)
 
-## Features
-
-- [x] Unity Component for rendering a GLTF model at runtime ([GLTFComponent](Assets/GLTF/Scripts/GLTFComponent.cs))
-- [x] Parsing GLTF files into an easy to use C# class ([GLTFParser](Assets/GLTF/Scripts/GLTFParser.cs))
-- [x] Loading Meshes
-- [ ] Loading Materials
-    - [x] Base Color/Diffuse texture
-    - [x] Normal/Bumpmap
-    - [x] Metallic Roughness Physically Based Rendering
-    - [ ] Specular Glossiness Physically Based Rendering (extension)
-    - [x] Occlusion map
-    - [ ] Transparent materials
-- [ ] Loading animations
-- [ ] Loading cameras
-- [ ] Sparse array storage
-- [x] Loading binary GLTF files
-- [ ] Downloadable as a UnityPackage
-- [ ] Published in the Unity Asset Store
