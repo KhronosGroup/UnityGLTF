@@ -33,7 +33,7 @@ namespace UnityGLTFSerialization
 		/// <summary>
 		/// Cache of loaded meshes
 		/// </summary>
-		public MeshCacheData[] MeshCache { get; private set; }
+		public List<MeshCacheData[]> MeshCache { get; private set; }
 
 		/// <summary>
 		/// Creates an asset cache which caches objects used in scene
@@ -50,7 +50,11 @@ namespace UnityGLTFSerialization
 			TextureCache = new Texture[textureCacheSize];
 			MaterialCache = new MaterialCacheData[materialCacheSize];
 			BufferCache = new Dictionary<int, byte[]>(bufferCacheSize);
-			MeshCache = new MeshCacheData[meshCacheSize];
+			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
+			for(int i = 0; i < meshCacheSize; ++i)
+			{
+				MeshCache.Add(null);
+			}
 		}
 
 		public void Dispose()
