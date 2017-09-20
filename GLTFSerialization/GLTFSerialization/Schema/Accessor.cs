@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using GLTFSerialization.JsonExtensions;
+using GLTF.Extensions;
+using GLTF.Math;
 using Newtonsoft.Json;
-using GLTFSerialization.Math;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	public class Accessor : GLTFChildOfRootProperty
 	{

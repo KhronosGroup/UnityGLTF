@@ -1,8 +1,8 @@
 using System;
-using GLTFSerialization.JsonExtensions;
+using GLTF.Extensions;
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// The index of the node and TRS property that an animation channel targets.

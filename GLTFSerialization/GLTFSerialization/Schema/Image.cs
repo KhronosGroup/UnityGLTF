@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// Image data used to create a texture. Image can be referenced by URI or

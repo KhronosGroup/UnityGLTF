@@ -1,8 +1,8 @@
-using GLTFSerialization.JsonExtensions;
+using GLTF.Extensions;
+using GLTF.Math;
 using Newtonsoft.Json;
-using GLTFSerialization.Math;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// The material appearance of a primitive.

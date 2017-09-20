@@ -130,7 +130,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\GLTFSerializationUWP\GLTFSerializationUWP.csproj">
       <Project>{d228ae89-be53-474f-ab7c-04a3293f59c1}</Project>
-      <Name>GLTFJsonSerializationUWP</Name>
+      <Name>GLTFSerializationUWP</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
