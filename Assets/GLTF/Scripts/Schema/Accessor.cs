@@ -293,6 +293,33 @@ namespace GLTF
 			}
 		}
 
+		public float[] AsFloatArray()
+		{
+			if (Contents.AsFloats != null) return Contents.AsFloats;
+
+			if (Type != GLTFAccessorAttributeType.SCALAR) return null;
+
+			var arr = new float[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = getContinuousElement(bufferData, totalByteOffset + idx * stride);
+			}
+
+			Contents.AsFloats = arr;
+			return arr;
+		}
+
 		public int[] AsIntArray()
 		{
 			if (Contents.AsInts != null) return Contents.AsInts;
@@ -440,6 +467,47 @@ namespace GLTF
 			return arr;
 		}
 
+		public Matrix4x4[] AsMatrix4x4Array(bool normalizeIntValues = true)
+		{
+			if (Contents.AsMatrix4x4s != null) return Contents.AsMatrix4x4s;
+
+			if (Type != GLTFAccessorAttributeType.MAT4) return null;
+
+			var arr = new Matrix4x4[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16;
+			if (normalizeIntValues) maxValue = 1;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				if (ComponentType == GLTFComponentType.Float)
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						arr[idx][i] = getContinuousElement(bufferData, totalByteOffset + idx * stride + componentSize * i);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						arr[idx][i] = getDiscreteElement(bufferData, totalByteOffset + idx * stride + componentSize * i) / maxValue;
+					}
+				}
+			}
+
+			Contents.AsMatrix4x4s = arr;
+			return arr;
+		}
+
 		public Color[] AsColorArray()
 		{
 			if (Contents.AsColors != null) return Contents.AsColors;
@@ -501,6 +569,20 @@ namespace GLTF
 			Contents.AsVec2s = null;
 
 			return arr;
+		}
+
+		public Quaternion[] AsQuaternionArray() {
+			if (Contents.AsQuaternions != null) return Contents.AsQuaternions;
+
+			var arr = AsVector4Array();
+			var quats = new Quaternion[arr.Length];
+			for (var i = 0; i < arr.Length; i++)
+				quats[i] = new Quaternion(-arr[i].x, -arr[i].y, arr[i].z, arr[i].w);
+
+			Contents.AsQuaternions = quats;
+			Contents.AsVec4s = null;
+
+			return quats;
 		}
 
 		public Vector3[] AsVertexArray()
@@ -593,15 +675,18 @@ namespace GLTF
 
 	public struct NumericArray
 	{
+		public float[] AsFloats;
 		public int[] AsInts;
 		public Vector2[] AsVec2s;
 		public Vector3[] AsVec3s;
 		public Vector4[] AsVec4s;
+		public Matrix4x4[] AsMatrix4x4s;
 		public Color[] AsColors;
 		public Vector2[] AsTexcoords;
 		public Vector3[] AsVertices;
 		public Vector3[] AsNormals;
 		public Vector4[] AsTangents;
 		public int[] AsTriangles;
+		public Quaternion[] AsQuaternions;
 	}
 }

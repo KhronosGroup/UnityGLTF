@@ -39,4 +39,16 @@ namespace GLTF
 			System.Runtime.Serialization.StreamingContext context)
 		{ }
 	}
+
+	[Serializable()]
+	public class GLTFTypeMismatchException : Exception
+	{
+		public GLTFTypeMismatchException() : base() { }
+		public GLTFTypeMismatchException(string message) : base(message) { }
+		public GLTFTypeMismatchException(string message, Exception inner) : base(message, inner) { }
+
+		protected GLTFTypeMismatchException(System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+		{ }
+	}
 }

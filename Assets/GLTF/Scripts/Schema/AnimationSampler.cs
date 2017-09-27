@@ -6,7 +6,9 @@ namespace GLTF
 	public enum InterpolationType
 	{
 		LINEAR,
-		STEP
+		STEP,
+		CATMULLROMSPLINE,
+		CUBICSPLINE
 	}
 
 	/// <summary>

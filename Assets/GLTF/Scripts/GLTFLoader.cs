@@ -30,6 +30,7 @@ namespace GLTF
 
 		protected readonly Material DefaultMaterial = new Material();
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
+		protected readonly Dictionary<int, GameObject> _nodeMap = new Dictionary<int, GameObject>();
 
 		public GLTFLoader(string gltfUrl, Transform parent = null)
 		{
@@ -153,16 +154,28 @@ namespace GLTF
 
 			foreach (var node in scene.Nodes)
 			{
-				var nodeObj = CreateNode(node.Value);
+				var nodeObj = CreateNode(node);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
+			}
+
+			foreach (var node in scene.Nodes)
+			{
+				CreateNodePrimitives(node.Value, _nodeMap[node.Id]);
+			}
+
+			foreach (var animation in _root.Animations)
+			{
+				AddAnimationToScene(scene, sceneObj, animation);
 			}
 
 			return sceneObj;
 		}
 
-		protected virtual GameObject CreateNode(Node node)
+		protected virtual GameObject CreateNode(NodeId nodeId)
 		{
-			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
+			var node = nodeId.Value;
+			var nodeObj = new GameObject(node.Name ?? ("GLTFNode" + nodeId.Id));
+			_nodeMap[nodeId.Id] = nodeObj;
 
 			Vector3 position;
 			Quaternion rotation;
@@ -171,12 +184,6 @@ namespace GLTF
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
-
-			// TODO: Add support for skin/morph targets
-			if (node.Mesh != null)
-			{
-				CreateMeshObject(node.Mesh.Value, nodeObj.transform);
-			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
@@ -190,7 +197,7 @@ namespace GLTF
 			{
 				foreach (var child in node.Children)
 				{
-					var childObj = CreateNode(child.Value);
+					var childObj = CreateNode(child);
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
@@ -198,21 +205,118 @@ namespace GLTF
 			return nodeObj;
 		}
 
-		protected virtual void CreateMeshObject(Mesh mesh, Transform parent)
+		/// <summary>
+		/// Generate Animation components from glTF animations, and attach to game objects
+		/// </summary>
+		protected void AddAnimationToScene(Scene scene, GameObject sceneObj, Animation animation)
 		{
-			foreach (var primitive in mesh.Primitives)
+			// create the animation clip that will contain animation data
+			AnimationClip clip = new AnimationClip();
+			clip.name = animation.Name ?? "GLTFAnimation";
+
+			// needed because Animator component is unavailable at runtime
+			clip.legacy = true;
+
+			foreach (var channel in animation.Channels)
 			{
-				var primitiveObj = CreateMeshPrimitive(primitive);
-				primitiveObj.transform.SetParent(parent, false);
-				primitiveObj.SetActive(true);
+				AnimationCurve[] curves = channel.AsAnimationCurves();
+
+				string nodePath = GetFullNodePath(channel.Target.Node.Id, sceneObj);
+
+				if (channel.Target.Path == GLTFAnimationChannelPath.translation)
+				{
+					clip.SetCurve(nodePath, typeof(Transform), "localPosition.x", curves[0]);
+					clip.SetCurve(nodePath, typeof(Transform), "localPosition.y", curves[1]);
+					clip.SetCurve(nodePath, typeof(Transform), "localPosition.z", curves[2]);
+				}
+				else if (channel.Target.Path == GLTFAnimationChannelPath.rotation)
+				{
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.x", curves[0]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.y", curves[1]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.z", curves[2]);
+					clip.SetCurve(nodePath, typeof(Transform), "localRotation.w", curves[3]);
+				}
+				else if (channel.Target.Path == GLTFAnimationChannelPath.scale)
+				{
+					clip.SetCurve(nodePath, typeof(Transform), "localScale.x", curves[0]);
+					clip.SetCurve(nodePath, typeof(Transform), "localScale.y", curves[1]);
+					clip.SetCurve(nodePath, typeof(Transform), "localScale.z", curves[2]);
+				}
+				else if (channel.Target.Path == GLTFAnimationChannelPath.weights)
+				{
+					var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+					var targetCount = primitives[0].Targets.Count;
+					for(int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+					{
+						string primitiveObjPath = nodePath + "/Primitive" + primitiveIndex;
+						for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+						{
+							clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape."+targetIndex, curves[targetIndex]);
+						}
+					}
+				}
+				else
+				{
+					Debug.LogWarning("Cannot read GLTF animation path");
+				}
+			}
+
+			var a = sceneObj.GetComponent<UnityEngine.Animation>();
+
+			if (a == null)
+				a = sceneObj.AddComponent<UnityEngine.Animation>();
+
+			string name = animation.Name ?? ("Animation " + a.GetClipCount());
+			a.AddClip(clip, "Animation " + a.GetClipCount());
+		}
+
+		private string GetFullNodePath(int nodeId, GameObject sceneObj) {
+			GameObject node = _nodeMap[nodeId];
+			string nodePath = "";
+			do
+			{
+				nodePath = node.name + (nodePath == "" ? nodePath : "/" + nodePath);
+				node = node.transform.parent.gameObject;
+			} while (node != null && node != sceneObj);
+
+			return nodePath;
+		}
+
+		protected virtual void CreateNodePrimitives(Node node, GameObject nodeObj)
+		{
+			if (node.Mesh != null)
+			{
+				for(int i = 0; i < node.Mesh.Value.Primitives.Count; i++)
+				{
+					var primitive = node.Mesh.Value.Primitives[i];
+					var primitiveObj = new GameObject("Primitive" + i);
+					primitiveObj.transform.SetParent(nodeObj.transform);
+					primitiveObj.transform.localPosition = Vector3.zero;
+					primitiveObj.transform.localRotation = Quaternion.identity;
+					primitiveObj.transform.localScale = Vector3.one;
+
+					CreateMeshRenderer(primitive, primitiveObj, node.Skin != null ? node.Skin.Value : null);
+
+					primitiveObj.SetActive(true);
+				}
+			}
+
+			if (node.Children != null)
+			{
+				foreach (var child in node.Children)
+				{
+					CreateNodePrimitives(child.Value, _nodeMap[child.Id]);
+				}
 			}
 		}
 
-		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive)
+		protected void CreateMeshRenderer(MeshPrimitive primitive, GameObject primitiveObj, Skin skin)
 		{
-			var primitiveObj = new GameObject("Primitive");
+			var material = CreateMaterial(
+				primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
+				primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
+			);
 
-			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
 			if (primitive.Contents == null)
@@ -251,21 +355,117 @@ namespace GLTF
 
 					tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 						? primitive.Attributes[SemanticProperties.TANGENT].Value.AsTangentArray()
+						: null,
+
+					boneWeights = primitive.Attributes.ContainsKey(SemanticProperties.Weight(0)) && primitive.Attributes.ContainsKey(SemanticProperties.Joint(0))
+						? CreateBoneWeightArray(primitive.Attributes[SemanticProperties.Joint(0)].Value.AsVector4Array(), 
+							primitive.Attributes[SemanticProperties.Weight(0)].Value.AsVector4Array(), vertexCount)
 						: null
 				};
 			}
 
-			meshFilter.sharedMesh = primitive.Contents;
+			if(NeedsSkinnedMeshRenderer(primitive, skin))
+			{
+				var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+				skinnedMeshRenderer.material = material;
+				skinnedMeshRenderer.quality = SkinQuality.Bone4;
 
-			var material = CreateMaterial(
-				primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
-				primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
-			);
+				if (HasBlendShapes(primitive))
+					SetupBlendShapes(primitive);
 
-			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
-			meshRenderer.material = material;
+				if (HasBones(skin))
+					SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj);
 
-			return primitiveObj;
+				skinnedMeshRenderer.sharedMesh = primitive.Contents;
+			}
+			else
+			{
+				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
+				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+				meshFilter.sharedMesh = primitive.Contents;
+				meshRenderer.material = material;
+			}
+		}
+
+		bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		{
+			return HasBones(skin) || HasBlendShapes(primitive);
+		}
+
+		bool HasBones(Skin skin)
+		{
+			return skin != null;
+		}
+
+		void SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj)
+		{
+			var boneCount = skin.Joints.Count;
+			Transform[] bones = new Transform[boneCount];
+			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
+
+			Matrix4x4 rightToLeftHanded = new Matrix4x4();
+			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
+			rightToLeftHanded.SetRow(1, new Vector4(0, 1, 0, 0));
+			rightToLeftHanded.SetRow(2, new Vector4(0, 0, -1, 0));
+			rightToLeftHanded.SetRow(3, new Vector4(0, 0, 0, 1));
+
+			for (int i = 0; i < boneCount; i++)
+			{
+				bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
+			}
+
+			renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
+			primitive.Contents.bindposes = bindPoses;
+			renderer.bones = bones;
+		}
+
+		bool HasBlendShapes(MeshPrimitive primitive)
+		{
+			return primitive.Targets != null;
+		}
+
+		void SetupBlendShapes(MeshPrimitive primitive)
+		{
+			var mesh = primitive.Contents;
+			for (int blendShapeIndex = 0; blendShapeIndex < primitive.Targets.Count; blendShapeIndex++)
+			{
+				var fieldToAccessor = primitive.Targets[blendShapeIndex];
+				var verts = fieldToAccessor["POSITION"].Value.AsVertexArray();
+				var normals = fieldToAccessor["NORMAL"].Value.AsNormalArray();
+				var tangents = fieldToAccessor["TANGENT"].Value.AsVector3Array();
+				mesh.AddBlendShapeFrame(blendShapeIndex.ToString(), 1.0f, verts, normals, tangents);
+			}
+		}
+
+		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
+		{
+			MakeSureWeightsAddToOne(weights);
+
+			var boneWeights = new BoneWeight[vertCount];
+			for(int i = 0; i < vertCount; i++)
+			{
+				boneWeights[i].boneIndex0 = (int)joints[i].x;
+				boneWeights[i].boneIndex1 = (int)joints[i].y;
+				boneWeights[i].boneIndex2 = (int)joints[i].z;
+				boneWeights[i].boneIndex3 = (int)joints[i].w;
+
+				boneWeights[i].weight0 = weights[i].x;
+				boneWeights[i].weight1 = weights[i].y;
+				boneWeights[i].weight2 = weights[i].z;
+				boneWeights[i].weight3 = weights[i].w;
+			}
+
+			return boneWeights;
+		}
+
+		void MakeSureWeightsAddToOne(Vector4[] weights) {
+			for(int i = 0; i < weights.Length; i++)
+			{
+				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
+				if (weightSum < 0.98f)
+					weights[i] /= weightSum;
+			}
 		}
 
 		protected virtual UnityEngine.Material CreateMaterial(Material def, bool useVertexColors)
@@ -356,10 +556,10 @@ namespace GLTF
 					if (pbr.MetallicRoughnessTexture != null)
 					{
 						var texture = pbr.MetallicRoughnessTexture.Index.Value;
-						material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
+						material.SetTexture("_MetallicGlossMap", CreateTexture(texture));
 					}
 
-					material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
+					material.SetFloat("_Glossiness", (float) (1-pbr.RoughnessFactor));
 				}
 
 				if (def.CommonConstant != null)
