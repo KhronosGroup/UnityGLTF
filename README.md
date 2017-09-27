@@ -10,7 +10,7 @@ The goal of this library is to support the full glTF 2.0 specification and enabl
 - Design-time import of glTF 2.0 files
 - Design-time export of glTF 2.0 files
 
-The library will be modularized such that it can be extended to support additional capabilities in Unity or support additional extensions to the glTF specification.  
+The library will be modularized such that it can be extended to support additional capabilities in Unity or support additional extensions to the glTF specification.  The library is designed to work with Unity 5.6 and above.
 
 ## Current Status
 
