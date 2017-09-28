@@ -48,14 +48,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1000013594771676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3628db10e32278e499da95887f1bc989, type: 3}
+  m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Url: http://localhost:8080/samples/BoomBox/glTF/BoomBox.gltf
+  Url: 
   Multithreaded: 1
+  UseStream: 0
   MaximumLod: 300
-  GLTFStandard: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}
-  GLTFStandardAlphaBlend: {fileID: 4800000, guid: 908dc23800d3e9242a8f44ef438e8695,
-    type: 3}
-  GLTFStandardAlphaMask: {fileID: 4800000, guid: af1833d463c4a554cbe792ad9aca991d,
-    type: 3}
+  GLTFStandard: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
+  GLTFConstant: {fileID: 0}

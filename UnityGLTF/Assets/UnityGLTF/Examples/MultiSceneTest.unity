@@ -286,12 +286,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1647343056}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc19de756b84e734a98e47e66b3e50b5, type: 3}
+  m_Script: {fileID: 11500000, guid: e2719fa7e09cf264492f3aa25409f37e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   SceneIndex: 0
   Url: http://localhost:8080/MultiScene/glTF/MultiScene.gltf
-  GLTFStandardShader: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}
+  GLTFStandardShader: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
 --- !u!4 &1647343058
 Transform:
   m_ObjectHideFlags: 0
@@ -329,7 +329,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2030039726}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0be99a1796ece0b4581c1fde52a1e4df, type: 3}
+  m_Script: {fileID: 11500000, guid: 946dbe02f30bd734c901251fcc62a97a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!4 &2030039728

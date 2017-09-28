@@ -48,9 +48,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1000013333174952}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 072f58e4262c1b945bade176dd410719, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  Url: http://localhost:8080/samples/Corset/glTF/Corset.gltf
+  m_Script: {fileID: 11500000, guid: 41bd8a5daef51444a8f243c2b8ba42f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Url: 
   Multithreaded: 1
-  GLTFStandard: {fileID: 4800000, guid: 00cf7a2eed7b18b42aac2ed4198a3755, type: 3}
+  GLTFStandard: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}

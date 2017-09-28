@@ -207,21 +207,23 @@ namespace UnityGLTF
 				GLTF.Schema.Mesh mesh = _root.Meshes[i];
 				if (_assetCache.MeshCache[i] == null)
 				{
-					_assetCache.MeshCache[i] = new MeshCacheData();
+					_assetCache.MeshCache[i] = new MeshCacheData[mesh.Primitives.Count];
 				}
-				foreach (var primitive in mesh.Primitives)
+
+				for(int j = 0; j < mesh.Primitives.Count; ++j)
 				{
-					BuildMeshAttributes(primitive, i);
+					_assetCache.MeshCache[i][j] = new MeshCacheData();
+					var primitive = mesh.Primitives[j];
+					BuildMeshAttributes(primitive, i, j);
 				}
 			}
 		}
 
-		protected virtual void BuildMeshAttributes(MeshPrimitive primitive, int meshID)
+		protected virtual void BuildMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
 		{
-			if (_assetCache.MeshCache[meshID].MeshAttributes.Count == 0)
+			if (_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes.Count == 0)
 			{
-				Dictionary<string, AttributeAccessor> attributeAccessors =
-					new Dictionary<string, AttributeAccessor>(primitive.Attributes.Count + 1);
+				Dictionary<string, AttributeAccessor> attributeAccessors = new Dictionary<string, AttributeAccessor>(primitive.Attributes.Count + 1);
 				foreach (var attributePair in primitive.Attributes)
 				{
 					AttributeAccessor AttributeAccessor = new AttributeAccessor()
@@ -245,7 +247,7 @@ namespace UnityGLTF
 				}
 
 				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
-				_assetCache.MeshCache[meshID].MeshAttributes = attributeAccessors;
+				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
 		}
 
@@ -302,31 +304,37 @@ namespace UnityGLTF
 
 		protected virtual void CreateMeshObject(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
 		{
-			foreach (var primitive in mesh.Primitives)
+			if(_assetCache.MeshCache[meshId] == null)
 			{
-				var primitiveObj = CreateMeshPrimitive(primitive, meshId);
+				_assetCache.MeshCache[meshId] = new MeshCacheData[mesh.Primitives.Count];
+			}
+
+			for(int i = 0; i < mesh.Primitives.Count; ++i)
+			{
+				var primitive = mesh.Primitives[i];
+				var primitiveObj = CreateMeshPrimitive(primitive, meshId, i);
 				primitiveObj.transform.SetParent(parent, false);
 				primitiveObj.SetActive(true);
 			}
 		}
 
-		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive, int meshID)
+		protected virtual GameObject CreateMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex)
 		{
 			var primitiveObj = new GameObject("Primitive");
 
 			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
-
-			if (_assetCache.MeshCache[meshID] == null)
+			
+			if (_assetCache.MeshCache[meshID][primitiveIndex] == null)
 			{
-				_assetCache.MeshCache[meshID] = new MeshCacheData();
+				_assetCache.MeshCache[meshID][primitiveIndex] = new MeshCacheData();
 			}
-			if (_assetCache.MeshCache[meshID].LoadedMesh == null)
+			if (_assetCache.MeshCache[meshID][primitiveIndex].LoadedMesh == null)
 			{
-				if (_assetCache.MeshCache[meshID].MeshAttributes.Count == 0)
+				if (_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes.Count == 0)
 				{
-					BuildMeshAttributes(primitive, meshID);
+					BuildMeshAttributes(primitive, meshID, primitiveIndex);
 				}
-				var meshAttributes = _assetCache.MeshCache[meshID].MeshAttributes;
+				var meshAttributes = _assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes;
 				var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
 				// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
@@ -368,10 +376,10 @@ namespace UnityGLTF
 						: null
 				};
 
-				_assetCache.MeshCache[meshID].LoadedMesh = mesh;
+				_assetCache.MeshCache[meshID][primitiveIndex].LoadedMesh = mesh;
 			}
 
-			meshFilter.sharedMesh = _assetCache.MeshCache[meshID].LoadedMesh;
+			meshFilter.sharedMesh = _assetCache.MeshCache[meshID][primitiveIndex].LoadedMesh;
 
 			var materialWrapper = CreateMaterial(
 				primitive.Material != null ? primitive.Material.Value : DefaultMaterial,
