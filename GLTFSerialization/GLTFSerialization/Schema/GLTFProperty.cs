@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using GLTFSerialization.JsonExtensions;
+using GLTF.Extensions;
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	public class GLTFProperty
 	{

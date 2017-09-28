@@ -7,7 +7,7 @@
     <ProjectGuid>{72AC331F-9810-4DE2-8EA3-84559A787218}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GLTFSerialization</RootNamespace>
+    <RootNamespace>GLTF</RootNamespace>
     <AssemblyName>GLTFSerialization</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -28,7 +28,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>

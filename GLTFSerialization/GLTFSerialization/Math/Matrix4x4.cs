@@ -1,4 +1,4 @@
-﻿namespace GLTFSerialization.Math
+﻿namespace GLTF.Math
 {
 	// class is naively implemented
     public class Matrix4x4

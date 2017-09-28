@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	public enum BufferViewTarget
 	{

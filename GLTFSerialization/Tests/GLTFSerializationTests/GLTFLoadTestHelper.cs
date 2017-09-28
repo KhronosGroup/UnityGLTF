@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using GLTF.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using GLTFSerialization;
 
-namespace GLTFJsonSerializerTests
+namespace GLTFSerializationTests
 {
 	class GLTFJsonLoadTestHelper
 	{

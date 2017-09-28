@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// Reference to a texture.

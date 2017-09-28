@@ -1,9 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using GLTFSerialization;
 using System.Threading.Tasks;
 using System.IO;
+using GLTF;
+using GLTF.Schema;
 
-namespace GLTFJsonSerializerTests
+namespace GLTFSerializationTests
 {
 	[TestClass]
 	public class GLTFJsonLoaderTest

@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// An orthographic camera containing properties to create an orthographic

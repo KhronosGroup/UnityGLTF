@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using GLTF.Math;
 using Newtonsoft.Json;
-using GLTFSerialization.Math;
 
-namespace GLTFSerialization.JsonExtensions
+namespace GLTF.Extensions
 {
 	public static class JsonReaderExtensions
 	{

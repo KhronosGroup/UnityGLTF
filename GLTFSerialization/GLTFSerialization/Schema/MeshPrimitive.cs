@@ -1,9 +1,8 @@
 using System.Collections.Generic;
+using GLTF.Extensions;
 using Newtonsoft.Json;
-using GLTFSerialization.JsonExtensions;
-using GLTFSerialization.Math;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// Geometry to be rendered with the given material.

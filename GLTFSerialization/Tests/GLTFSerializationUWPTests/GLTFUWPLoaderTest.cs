@@ -1,10 +1,11 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using GLTFSerialization;
-using GLTFJsonSerializerTests;
+using GLTF;
+using GLTFSerializationTests;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using GLTF.Schema;
 
 
 namespace GLTFSerializerUWPTests

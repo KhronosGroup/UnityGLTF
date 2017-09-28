@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using GLTFSerialization.JsonExtensions;
+using GLTF.Extensions;
 using Newtonsoft.Json;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// Joints and matrices defining a skin.

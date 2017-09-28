@@ -1,4 +1,6 @@
-﻿namespace GLTFSerialization
+﻿using GLTF.Schema;
+
+namespace GLTF
 {
 	public class AttributeAccessor
 	{

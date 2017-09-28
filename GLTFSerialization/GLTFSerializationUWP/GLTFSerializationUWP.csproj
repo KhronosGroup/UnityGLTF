@@ -7,8 +7,7 @@
     <ProjectGuid>{D228AE89-BE53-474F-AB7C-04A3293F59C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace>GLTF</RootNamespace>
     <AssemblyName>GLTFSerializationUWP</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
@@ -28,7 +27,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\UWP\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\UWP\</OutputPath>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -40,7 +39,7 @@
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <OutputPath>..\..\UnityGLTF\Assets\GLTF\Plugins\UWP\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\UWP\</OutputPath>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

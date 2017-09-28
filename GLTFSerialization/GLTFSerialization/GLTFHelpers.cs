@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using GLTF.Schema;
 
-namespace GLTFSerialization
+namespace GLTF
 {
 	public static class GLTFHelpers
 	{

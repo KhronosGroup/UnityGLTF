@@ -1,9 +1,9 @@
 using System;
-using GLTFSerialization.JsonExtensions;
+using GLTF.Extensions;
+using GLTF.Math;
 using Newtonsoft.Json;
-using GLTFSerialization.Math;
 
-namespace GLTFSerialization
+namespace GLTF.Schema
 {
 	/// <summary>
 	/// A set of parameter values that are used to define the metallic-roughness
