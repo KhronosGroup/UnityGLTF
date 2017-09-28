@@ -704,7 +704,7 @@ namespace GLTF
 		}
 
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
-    {
+        {
 			var count = arr.Length;
 
 			if (count == 0)
@@ -768,7 +768,7 @@ namespace GLTF
 				}
 			}
 			else if (min >= uint.MinValue)
-      {
+			{
 				accessor.ComponentType = GLTFComponentType.UnsignedInt;
 
 				foreach (var v in arr) {
