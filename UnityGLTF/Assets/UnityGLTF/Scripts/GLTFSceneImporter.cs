@@ -205,7 +205,11 @@ namespace UnityGLTF
 			for (int i = 0; i < _root.Meshes.Count; ++i)
 			{
 				GLTF.Schema.Mesh mesh = _root.Meshes[i];
-				_assetCache.MeshCache[i] = new MeshCacheData[mesh.Primitives.Count];
+				if (_assetCache.MeshCache[i] == null)
+				{
+					_assetCache.MeshCache[i] = new MeshCacheData[mesh.Primitives.Count];
+				}
+
 				for(int j = 0; j < mesh.Primitives.Count; ++j)
 				{
 					_assetCache.MeshCache[i][j] = new MeshCacheData();
