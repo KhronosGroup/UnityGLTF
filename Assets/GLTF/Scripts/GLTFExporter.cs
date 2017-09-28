@@ -304,7 +304,7 @@ namespace GLTF
 				primitive.Contents = meshObj;
 
 				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(FlipFaces(triangles));
+				primitive.Indices = ExportAccessor(FlipFaces(triangles), true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -703,8 +703,8 @@ namespace GLTF
 			return triangles;
 		}
 
-		private AccessorId ExportAccessor(int[] arr)
-		{
+		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
+    {
 			var count = arr.Length;
 
 			if (count == 0)
@@ -735,7 +735,7 @@ namespace GLTF
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			if (max < byte.MaxValue && min > byte.MinValue)
+			if (max <= byte.MaxValue && min >= byte.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
@@ -743,7 +743,7 @@ namespace GLTF
 					_bufferWriter.Write((byte)v);
 				}
 			}
-			else if (max < sbyte.MaxValue && min > sbyte.MinValue)
+			else if (max <= sbyte.MaxValue && min >= sbyte.MinValue && !isIndices)
 			{
 				accessor.ComponentType = GLTFComponentType.Byte;
 
@@ -751,7 +751,7 @@ namespace GLTF
 					_bufferWriter.Write((sbyte)v);
 				}
 			}
-			else if (max < short.MaxValue && min > short.MinValue)
+			else if (max <= short.MaxValue && min >= short.MinValue && !isIndices)
 			{
 				accessor.ComponentType = GLTFComponentType.Short;
 
@@ -759,7 +759,7 @@ namespace GLTF
 					_bufferWriter.Write((short)v);
 				}
 			}
-			else if (max < ushort.MaxValue && min > ushort.MinValue)
+			else if (max <= ushort.MaxValue && min >= ushort.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedShort;
 
@@ -767,8 +767,8 @@ namespace GLTF
 					_bufferWriter.Write((ushort)v);
 				}
 			}
-			else if (min > uint.MinValue)
-			{
+			else if (min >= uint.MinValue)
+      {
 				accessor.ComponentType = GLTFComponentType.UnsignedInt;
 
 				foreach (var v in arr) {
