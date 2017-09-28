@@ -23,7 +23,8 @@ namespace GLTFSerializationTests
 			int streamLength = (int)gltfStream.Length;
 			byte[] gltfData = new byte[streamLength];
 			gltfStream.Read(gltfData, 0, streamLength);
-
+			
+			GLTFRoot.RegisterExtension(new TestExtensionFactory());
 			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}

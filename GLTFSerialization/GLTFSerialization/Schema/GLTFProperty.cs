@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using GLTF.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GLTF.Schema
 {
 	public class GLTFProperty
 	{
 		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>();
+		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
 
 		public static void RegisterExtension(ExtensionFactory extensionFactory)
 		{
@@ -15,7 +17,7 @@ namespace GLTF.Schema
 		}
 
 		public Dictionary<string, Extension> Extensions;
-		public Dictionary<string, object> Extras;
+		public JToken Extras;
 
 		public void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
@@ -25,7 +27,7 @@ namespace GLTF.Schema
 					Extensions = DeserializeExtensions(root, reader);
 					break;
 				case "extras":
-					Extras = reader.ReadAsObjectDictionary();
+					Extras = JToken.ReadFrom(reader);
 					break;
 				default:
 					SkipValue(reader);
@@ -87,18 +89,32 @@ namespace GLTF.Schema
 
 			var extensions = new Dictionary<string, Extension>();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+			bool isOnNextExtension = false;
+			while (isOnNextExtension || (reader.Read() && reader.TokenType == JsonToken.PropertyName))
 			{
+				isOnNextExtension = false;
 				var extensionName = reader.Value.ToString();
 				ExtensionFactory extensionFactory;
 
+				JToken extensionToken = JToken.ReadFrom(reader);
 				if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 				{
-					extensions.Add(extensionName, extensionFactory.Deserialize(root, reader));
+					extensions.Add(extensionName, extensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
 				else
 				{
-					SkipValue(reader);
+					extensions.Add(extensionName, _defaultExtensionFactory.Deserialize(root, (JProperty)extensionToken));
+				}
+
+				// using JToken.ReadFrom can progress the object to be on the next property already. This accounts for that so that we don't read past it
+				isOnNextExtension = reader.TokenType == JsonToken.PropertyName;
+				if (reader.TokenType == JsonToken.PropertyName)
+				{
+					isOnNextExtension = true;
+				}
+				else if (reader.TokenType == JsonToken.EndObject)
+				{
+					break;
 				}
 			}
 
@@ -110,16 +126,19 @@ namespace GLTF.Schema
 			if (Extensions != null && Extensions.Count > 0)
 			{
 				writer.WritePropertyName("extensions");
-				writer.WriteStartArray();
+				writer.WriteStartObject();
 				foreach (var extension in Extensions)
 				{
-					writer.WritePropertyName(extension.Key);
-					extension.Value.Serialize(writer);
+					JToken extensionToken = extension.Value.Serialize();
+					extensionToken.WriteTo(writer);
 				}
-				writer.WriteEndArray();
+				writer.WriteEndObject();
 			}
 
-			// TODO: Extras serialization.
+			if(Extras != null)
+			{
+				Extras.WriteTo(writer);
+			}
 		}
 	}
 }
