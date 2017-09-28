@@ -56,4 +56,4 @@ MonoBehaviour:
   UseStream: 0
   MaximumLod: 300
   GLTFStandard: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
-  GLTFConstant: {fileID: 0}
+  GLTFConstant: {fileID: 4800000, guid: ede6e66a96bc7164abd2a9217b5a8b4c, type: 3}
