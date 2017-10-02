@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 3c86ced524acd594390735e390352bd0
-timeCreated: 1506549707
+guid: 1746099d408d71e41a5e9af8b5cff862
+timeCreated: 1506640562
 licenseType: Pro
 PluginImporter:
   serializedVersion: 2
@@ -15,16 +15,16 @@ PluginImporter:
       second:
         enabled: 0
         settings:
-          Exclude Editor: 1
-          Exclude Linux: 1
-          Exclude Linux64: 1
-          Exclude LinuxUniversal: 1
-          Exclude OSXIntel: 1
-          Exclude OSXIntel64: 1
-          Exclude OSXUniversal: 1
-          Exclude Win: 1
-          Exclude Win64: 1
-          Exclude WindowsStoreApps: 0
+          Exclude Editor: 0
+          Exclude Linux: 0
+          Exclude Linux64: 0
+          Exclude LinuxUniversal: 0
+          Exclude OSXIntel: 0
+          Exclude OSXIntel64: 0
+          Exclude OSXUniversal: 0
+          Exclude Win: 0
+          Exclude Win64: 0
+          Exclude WindowsStoreApps: 1
     data:
       first:
         '': Editor
@@ -43,7 +43,7 @@ PluginImporter:
       first:
         Editor: Editor
       second:
-        enabled: 0
+        enabled: 1
         settings:
           DefaultValueInitialized: true
     data:
@@ -64,63 +64,61 @@ PluginImporter:
       first:
         Standalone: Linux
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: x86
     data:
       first:
         Standalone: Linux64
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: x86_64
     data:
       first:
         Standalone: LinuxUniversal
       second:
-        enabled: 0
-        settings:
-          CPU: None
+        enabled: 1
+        settings: {}
     data:
       first:
         Standalone: OSXIntel
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: AnyCPU
     data:
       first:
         Standalone: OSXIntel64
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: AnyCPU
     data:
       first:
         Standalone: OSXUniversal
       second:
-        enabled: 0
-        settings:
-          CPU: None
+        enabled: 1
+        settings: {}
     data:
       first:
         Standalone: Win
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: AnyCPU
     data:
       first:
         Standalone: Win64
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: AnyCPU
     data:
       first:
         Windows Store Apps: WindowsStoreApps
       second:
-        enabled: 1
+        enabled: 0
         settings:
           CPU: AnyCPU
           DontProcess: False

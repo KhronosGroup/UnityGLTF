@@ -46,7 +46,11 @@ namespace UnityGLTF {
 			yield return loader.Load(-1, Multithreaded);
 			if(gltfStream != null)
 			{
+#if WINDOWS_UWP
+				gltfStream.Dispose();
+#else
 				gltfStream.Close();
+#endif
 			}
 		}
 	}
