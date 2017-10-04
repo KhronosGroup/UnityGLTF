@@ -17,6 +17,11 @@ The library will be modularized such that it can be extended to support addition
 Work Items and Issues targeting a 1.0 release of the library can be found in
 [Road to 1.0](https://github.com/KhronosGroup/UnityGLTF/projects/1)
 
+## Building
+1. Open `GLTFSerialization\GLTFSerialization.sln` and compile for release. This will put the binaries in `UnityGLTF\Assets\UnityGLTF\Plugins`
+2. Open the Unity project located in `UnityGLTF\`
+	* If the meta file gets overridden, the binaries in `UnityGLTF\Assets\UnityGLTF\Plugins` should be configured for everything but UWP. The binaries in `UnityGLTF\Assets\UnityGLTF\Plugins\UWP` should be configured for UWP
+
 ## Examples
 
 1. Clone or download the repository.

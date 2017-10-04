@@ -51,62 +51,10 @@ namespace UnityGLTF.Extensions
 
 			rotation = Quaternion.LookRotation(mat.GetColumn(2), mat.GetColumn(1));
 		}
-
-#if false
-		public static SamplerId GetSamplerId(this GLTFRoot root, UnityEngine.Texture textureObj)
-		{
-			for (var i = 0; i < root.Samplers.Count; i++)
-			{
-				bool filterIsNearest = root.Samplers[i].MinFilter == MinFilterMode.Nearest
-					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapNearest
-					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
-
-				bool filterIsLinear = root.Samplers[i].MinFilter == MinFilterMode.Linear
-					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
-
-				bool filterMatched = textureObj.filterMode == FilterMode.Point && filterIsNearest
-					|| textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
-					|| textureObj.filterMode == FilterMode.Trilinear && root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
-
-				bool wrapMatched =
-textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == GLTFSerialization.WrapMode.ClampToEdge
-					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != GLTFSerialization.WrapMode.ClampToEdge;
-
-				if(filterMatched && wrapMatched)
-				{
-					return new SamplerId
-					{
-						Id = i,
-						Root = root
-					};
-				}
-			}
-
-			return null;
-		}
-
-		//todo blgross unity
-		public static ImageId GetImageId(this GLTFRoot root, UnityEngine.Texture textureObj)
-		{
-			for (var i = 0; i < Images.Count; i++)
-			{
-				if (Images[i].Contents == textureObj)
-				{
-					return new ImageId
-					{
-						Id = i,
-						Root = this
-					};
-				}
-			}
-
-			return null;
-		}
-#endif
-
+		
 		public static Vector3 GetColumn(this GLTF.Math.Matrix4x4 mat, uint columnNum)
 		{
-			switch (columnNum)
+			switch(columnNum)
 			{
 				case 0:
 				{
@@ -192,6 +140,19 @@ textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == GLTFSe
 				outColorArr[i] = inColorArr[i].ToUnityColor();
 			}
 			return outColorArr;
+		}
+
+		public static int[] ToIntArray(this uint[] uintArr)
+		{
+			int[] intArr = new int[uintArr.Length];
+			for (int i = 0; i < uintArr.Length; ++i)
+			{
+				uint uintVal = uintArr[i];
+				Debug.Assert(uintVal <= int.MaxValue);
+				intArr[i] = (int)uintVal;
+			}
+
+			return intArr;
 		}
 
 		public static Quaternion ToUnityQuaternion(this GLTF.Math.Quaternion quaternion)

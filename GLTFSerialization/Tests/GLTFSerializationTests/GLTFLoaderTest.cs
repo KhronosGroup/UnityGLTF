@@ -19,12 +19,9 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsTrue(File.Exists(GLTF_PATH));
 			FileStream gltfStream = File.OpenRead(GLTF_PATH);
-			// todo: this code does not work if file is greater than 4 gb
-			int streamLength = (int)gltfStream.Length;
-			byte[] gltfData = new byte[streamLength];
-			gltfStream.Read(gltfData, 0, streamLength);
 
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
+			GLTFRoot.RegisterExtension(new TestExtensionFactory());
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
@@ -33,13 +30,7 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsTrue(File.Exists(GLB_PATH));
 			FileStream gltfStream = File.OpenRead(GLB_PATH);
-
-			// todo: this code does not work if file is greater than 4 gb
-			int streamLength = (int)gltfStream.Length;
-			byte[] gltfData = new byte[streamLength];
-			gltfStream.Read(gltfData, 0, streamLength);
-
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
 			GLTFJsonLoadTestHelper.TestGLB(gltfRoot);
 		}
 	}

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using GLTF.Schema;
-
+using System.IO;
 
 namespace GLTFSerializerUWPTests
 {
@@ -21,13 +21,8 @@ namespace GLTFSerializerUWPTests
 			StorageFolder localFolder = ApplicationData.Current.LocalFolder;
 			StorageFile sampleFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(GLTF_PATH));
 
-
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
-			var reader = new DataReader(gltfStream.GetInputStreamAt(0));
-			var bytes = new byte[gltfStream.Size];
-			await reader.LoadAsync((uint)gltfStream.Size);
-			reader.ReadBytes(bytes);
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(bytes);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream.AsStream());
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 	}

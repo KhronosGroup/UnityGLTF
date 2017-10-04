@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 namespace UnityGLTF.Cache
 {
@@ -27,7 +28,7 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Byte buffers that represent the binary contents that get parsed
 		/// </summary>
-		public Dictionary<int, byte[]> BufferCache { get; private set; }
+		public BufferCacheData[] BufferCache { get; private set; }
 
 		/// <summary>
 		/// Cache of loaded meshes
@@ -49,7 +50,7 @@ namespace UnityGLTF.Cache
 			ImageCache = new Texture2D[imageCacheSize];
 			TextureCache = new Texture[textureCacheSize];
 			MaterialCache = new MaterialCacheData[materialCacheSize];
-			BufferCache = new Dictionary<int, byte[]>(bufferCacheSize);
+			BufferCache = new BufferCacheData[bufferCacheSize];
 			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
 			for(int i = 0; i < meshCacheSize; ++i)
 			{
@@ -62,7 +63,17 @@ namespace UnityGLTF.Cache
 			ImageCache = null;
 			TextureCache = null;
 			MaterialCache = null;
-			BufferCache.Clear();
+			foreach(BufferCacheData bufferCacheData in BufferCache)
+			{
+				if(bufferCacheData != null && bufferCacheData.Stream != null)
+				{
+#if !WINDOWS_UWP
+					bufferCacheData.Stream.Close();
+#else
+					bufferCacheData.Stream.Dispose();
+#endif
+				}
+			}
 			MeshCache = null;
 		}
 	}

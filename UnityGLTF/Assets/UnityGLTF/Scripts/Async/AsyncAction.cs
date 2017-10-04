@@ -9,10 +9,10 @@ namespace UnityGLTF
 	/// </summary>
 	public class AsyncAction
 	{
+#if !WINDOWS_UWP
 		private bool _workerThreadRunning = false;
 		private Exception _savedException;
 
-#if !WINDOWS_UWP
 		public IEnumerator RunOnWorkerThread(Action action)
 		{
 			_workerThreadRunning = true;
