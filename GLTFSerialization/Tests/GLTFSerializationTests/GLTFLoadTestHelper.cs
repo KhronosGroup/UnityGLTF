@@ -1,9 +1,44 @@
 ﻿using System.Collections.Generic;
 using GLTF.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 
 namespace GLTFSerializationTests
 {
+	public class TestExtension : Extension
+	{
+		public float Glossiness { get; set; }
+
+		public JProperty Serialize()
+		{
+			JProperty glossinessProperty = new JProperty("glossiness", Glossiness);
+			JObject testExtensionObject = new JObject(glossinessProperty);
+			JProperty testExtensionProperty = new JProperty("testExtension", testExtensionObject);
+			return testExtensionProperty;
+		}
+	}
+
+	public class TestExtensionFactory : ExtensionFactory
+	{
+		public TestExtensionFactory()
+		{
+			ExtensionName = "testExtension";
+		}
+
+
+		public override Extension Deserialize(GLTFRoot root, JProperty extensionToken)
+		{
+			Assert.IsNotNull(extensionToken.Value["glossiness"]);
+			float glossiness = (float)extensionToken.Value["glossiness"];
+			Assert.AreEqual(.8, glossiness, .01f);
+
+			return new TestExtension()
+			{
+				Glossiness = glossiness
+			};
+		}
+	}
+
 	class GLTFJsonLoadTestHelper
 	{
 		private static void TestAccessor(Accessor accessor, GLTFAccessorAttributeType type, int count, GLTFComponentType componentType, int bufferViewId, List<float> max, List<float> min)
@@ -171,6 +206,12 @@ namespace GLTFSerializationTests
 
 			Assert.AreEqual(3, materials[0].EmissiveTexture.Index.Id);
 			Assert.AreEqual("BoomBox_Mat", materials[0].Name);
+
+			var extensions = materials[0].Extensions;
+			if (extensions != null)
+			{
+				Assert.AreEqual(1, extensions.Count);
+			}
 		}
 
 		private static void TestNodes(GLTFRoot gltfRoot)
@@ -178,8 +219,25 @@ namespace GLTFSerializationTests
 			List<Node> nodes = gltfRoot.Nodes;
 			Assert.AreEqual(1, nodes.Count);
 
-			Assert.AreEqual(0, nodes[0].Mesh.Id);
-			Assert.AreEqual("BoomBox", nodes[0].Name);
+			Node node = nodes[0];
+			Assert.AreEqual(0, node.Mesh.Id);
+			Assert.AreEqual("BoomBox", node.Name);
+
+			JProperty extras = node.Extras as JProperty;
+			if (extras != null)
+			{
+				Assert.AreEqual(JTokenType.Object, extras.Value.Type);
+
+				JObject jObject = extras.Value as JObject;
+				JToken testFloatProperty = jObject["nodeInfo"];
+				Assert.AreEqual(JTokenType.Float, testFloatProperty.Type);
+				Assert.AreEqual(1000.4f, testFloatProperty.Value<float>());
+
+				JToken testHierarchyProperty = jObject["nodeHierarchy"];
+				Assert.AreEqual(JTokenType.Object, testHierarchyProperty.Type);
+				JToken testHierarchy1Property = (testHierarchyProperty as JObject)["nodeHierarchy1"];
+				Assert.AreEqual(JTokenType.Object, testHierarchyProperty.Type);
+			}
 		}
 
 		private static void TestScenes(GLTFRoot gltfRoot)
@@ -203,6 +261,23 @@ namespace GLTFSerializationTests
 			Assert.AreEqual(3, textures[3].Source.Id);
 		}
 
+		private static void TestExtras(GLTFRoot gltfRoot)
+		{
+			Assert.IsNotNull(gltfRoot.Extras);
+
+			JProperty extras = gltfRoot.Extras as JProperty;
+			Assert.AreEqual(JTokenType.Object, extras.Value.Type);
+
+			JObject jObject = extras.Value as JObject;
+			JToken testIntProperty = (extras.Value as JObject)["testint"];
+			Assert.AreEqual(JTokenType.Integer, testIntProperty.Type);
+			Assert.AreEqual(254, testIntProperty.Value<int>());
+
+			JToken testStringProperty = jObject["teststring"];
+			Assert.AreEqual(JTokenType.String, testStringProperty.Type);
+			Assert.AreEqual("hello", testStringProperty.Value<string>());
+		}
+
 		public static void TestGLTF(GLTFRoot gltfRoot)
 		{
 			TestAccessors(gltfRoot);
@@ -215,6 +290,7 @@ namespace GLTFSerializationTests
 			TestNodes(gltfRoot);
 			TestScenes(gltfRoot);
 			TestTextures(gltfRoot);
+			TestExtras(gltfRoot);
 		}
 
 		public static void TestGLB(GLTFRoot gltfRoot)

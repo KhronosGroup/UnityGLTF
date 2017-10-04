@@ -195,6 +195,7 @@ namespace GLTF.Schema
 		public void Serialize(TextWriter textWriter)
 		{
 			JsonWriter jsonWriter = new JsonTextWriter(textWriter);
+			jsonWriter.Formatting = Formatting.Indented;
 			jsonWriter.WriteStartObject();
 
 			if (ExtensionsUsed != null && ExtensionsUsed.Count > 0)

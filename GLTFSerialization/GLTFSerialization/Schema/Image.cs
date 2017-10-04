@@ -65,7 +65,7 @@ namespace GLTF.Schema
 
 			if (MimeType != null) {
 				writer.WritePropertyName("mimeType");
-				writer.WriteValue(MimeType);
+				writer.WriteValue(Newtonsoft.Json.Linq.JValue.CreateString(MimeType).ToString());
 			}
 
 			if (BufferView != null) {

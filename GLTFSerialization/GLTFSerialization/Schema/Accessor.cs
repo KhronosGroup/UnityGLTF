@@ -171,24 +171,38 @@ namespace GLTF.Schema
 			writer.WritePropertyName("type");
 			writer.WriteValue(Type.ToString());
 
-			writer.WritePropertyName("max");
-			writer.WriteStartArray();
-			foreach (var item in Max)
-			{
-				writer.WriteValue(item);
-			}
-			writer.WriteEndArray();
+			bool isMaxNull = Max == null;
+			bool isMinNull = Min == null;
 
-			writer.WritePropertyName("min");
-			writer.WriteStartArray();
-			foreach (var item in Min)
+			if (!isMaxNull)
 			{
-				writer.WriteValue(item);
+				writer.WritePropertyName("max");
+				writer.WriteStartArray();
+				foreach (var item in Max)
+				{
+					writer.WriteValue(item);
+				}
+				writer.WriteEndArray();
 			}
-			writer.WriteEndArray();
+
+			if(!isMinNull)
+			{
+				writer.WritePropertyName("min");
+				writer.WriteStartArray();
+				foreach (var item in Min)
+				{
+					writer.WriteValue(item);
+				}
+				writer.WriteEndArray();
+			}
 
 			if (Sparse != null)
 			{
+				if(isMinNull || isMaxNull)
+				{
+					throw new JsonSerializationException("Min and max attribute cannot be null when attribute is sparse");
+				}
+
 				writer.WritePropertyName("sparse");
 				Sparse.Serialize(writer);
 			}
