@@ -5,7 +5,7 @@ namespace GLTF.Schema
 {
 	public interface Extension
 	{
-        JProperty Serialize();
+		JProperty Serialize();
 	}
 
 	public abstract class ExtensionFactory
@@ -20,7 +20,7 @@ namespace GLTF.Schema
 
 		public JProperty Serialize()
 		{
-            return ExtensionData;
+			return ExtensionData;
 		}
 	}
 
@@ -31,7 +31,7 @@ namespace GLTF.Schema
 			return new DefaultExtension
 			{
 				ExtensionData = extensionToken
-            };
+			};
 		}
 	}
 }

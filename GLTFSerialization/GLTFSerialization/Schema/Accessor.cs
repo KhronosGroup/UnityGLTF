@@ -171,41 +171,41 @@ namespace GLTF.Schema
 			writer.WritePropertyName("type");
 			writer.WriteValue(Type.ToString());
 
-            bool isMaxNull = Max != null;
-            bool isMinNull = Min != null;
+			bool isMaxNull = Max == null;
+			bool isMinNull = Min == null;
 
-            if (isMaxNull)
-            {
-                writer.WritePropertyName("max");
-                writer.WriteStartArray();
-                foreach (var item in Max)
-                {
-                    writer.WriteValue(item);
-                }
-                writer.WriteEndArray();
-            }
+			if (!isMaxNull)
+			{
+				writer.WritePropertyName("max");
+				writer.WriteStartArray();
+				foreach (var item in Max)
+				{
+					writer.WriteValue(item);
+				}
+				writer.WriteEndArray();
+			}
 
-            if(isMinNull)
-            {
-                writer.WritePropertyName("min");
-                writer.WriteStartArray();
-                foreach (var item in Min)
-                {
-                    writer.WriteValue(item);
-                }
-                writer.WriteEndArray();
-            }
+			if(!isMinNull)
+			{
+				writer.WritePropertyName("min");
+				writer.WriteStartArray();
+				foreach (var item in Min)
+				{
+					writer.WriteValue(item);
+				}
+				writer.WriteEndArray();
+			}
 
-            if (Sparse != null)
-            {
-                if(isMinNull || isMaxNull)
-                {
-                    throw new JsonSerializationException("Min attribute cannot be null when attribute is sparse");
-                }
+			if (Sparse != null)
+			{
+				if(isMinNull || isMaxNull)
+				{
+					throw new JsonSerializationException("Min and max attribute cannot be null when attribute is sparse");
+				}
 
-                writer.WritePropertyName("sparse");
-                Sparse.Serialize(writer);
-            }
+				writer.WritePropertyName("sparse");
+				Sparse.Serialize(writer);
+			}
 
 			base.Serialize(writer);
 

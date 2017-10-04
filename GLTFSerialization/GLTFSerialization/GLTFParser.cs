@@ -23,12 +23,12 @@ namespace GLTF
 		{
 			string gltfContent;
 
-            if (gltfBinary.Length == 0) {
-                throw new GLTFHeaderInvalidException("glTF file cannot be empty.");
-            }
+			if (gltfBinary.Length == 0) {
+				throw new GLTFHeaderInvalidException("glTF file cannot be empty.");
+			}
 
-            // Check for binary format magic bytes
-            if (IsGLB(gltfBinary))
+			// Check for binary format magic bytes
+			if (IsGLB(gltfBinary))
 			{
 				gltfContent = ParseJsonChunk(gltfBinary);
 			}

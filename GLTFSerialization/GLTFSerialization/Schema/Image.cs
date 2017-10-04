@@ -63,10 +63,10 @@ namespace GLTF.Schema
 				writer.WriteValue(Uri);
 			}
 
-            if (MimeType != null) {
-                writer.WritePropertyName("mimeType");
-                writer.WriteValue(Newtonsoft.Json.Linq.JValue.CreateString(MimeType).ToString());
-            }
+			if (MimeType != null) {
+				writer.WritePropertyName("mimeType");
+				writer.WriteValue(Newtonsoft.Json.Linq.JValue.CreateString(MimeType).ToString());
+			}
 
 			if (BufferView != null) {
 				writer.WritePropertyName("bufferView");

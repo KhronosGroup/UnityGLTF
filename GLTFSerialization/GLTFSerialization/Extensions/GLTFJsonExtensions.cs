@@ -50,16 +50,16 @@ namespace GLTF.Extensions
 
 			var list = new List<T>();
 
-            while (reader.Read() && reader.TokenType != JsonToken.EndArray)
-            {
-                list.Add(deserializerFunc());
+			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+			{
+				list.Add(deserializerFunc());
 
-                // deserializerFunc can advance to EndArray. We need to check for this case as well. 
-                if (reader.TokenType == JsonToken.EndArray)
-                {
-                    break;
-                }
-            }
+				// deserializerFunc can advance to EndArray. We need to check for this case as well. 
+				if (reader.TokenType == JsonToken.EndArray)
+				{
+					break;
+				}
+			}
 
 			return list;
 		}

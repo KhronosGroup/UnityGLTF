@@ -192,11 +192,11 @@ namespace GLTF.Schema
 			return root;
 		}
 
-        public void Serialize(TextWriter textWriter)
-        {
-            JsonWriter jsonWriter = new JsonTextWriter(textWriter);
-            jsonWriter.Formatting = Formatting.Indented;
-            jsonWriter.WriteStartObject();
+		public void Serialize(TextWriter textWriter)
+		{
+			JsonWriter jsonWriter = new JsonTextWriter(textWriter);
+			jsonWriter.Formatting = Formatting.Indented;
+			jsonWriter.WriteStartObject();
 
 			if (ExtensionsUsed != null && ExtensionsUsed.Count > 0)
 			{
