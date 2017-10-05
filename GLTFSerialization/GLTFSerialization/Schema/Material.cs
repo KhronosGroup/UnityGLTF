@@ -15,6 +15,12 @@ namespace GLTF.Schema
 		/// </summary>
 		public PbrMetallicRoughness PbrMetallicRoughness;
 
+        /// <summary>
+        /// A set of parameter values that are used to define the specular-glossiness
+        /// material model from Physically-Based Rendering (PBR) methodology.
+        /// </summary>
+        public PbrSpecularGlossiness PbrSpecularGlossiness;
+
 		/// <summary>
 		/// A set of parameter values used to light flat-shaded materials
 		/// </summary>
@@ -92,7 +98,13 @@ namespace GLTF.Schema
 					case "pbrMetallicRoughness":
 						material.PbrMetallicRoughness = PbrMetallicRoughness.Deserialize(root, reader);
 						break;
-					case "commonConstant":
+                    case "pbrSpecularGlossiness":
+                        material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
+                        break;
+                    case "KHR_materials_pbrSpecularGlossiness":
+                        material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
+                        break;
+                    case "commonConstant":
 						material.CommonConstant = MaterialCommonConstant.Deserialize(root, reader);
 						break;
 					case "normalTexture":
