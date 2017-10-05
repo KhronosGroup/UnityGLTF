@@ -8,6 +8,8 @@ namespace GLTF.Schema
     /// <summary>
     /// A set of parameter values that are used to define the specular-glossiness
     /// material model from Physically-Based Rendering (PBR) methodology.
+    /// 
+    /// Supports the KHR_materials_pbrSpecularGlossiness material extension.
     /// </summary>
     public class PbrSpecularGlossiness : GLTFProperty
     {
@@ -28,32 +30,32 @@ namespace GLTF.Schema
         public TextureInfo BaseColorTexture;
 
         /// <summary>
-        /// The metalness of the material.
-        /// A value of 1.0 means the material is a metal.
-        /// A value of 0.0 means the material is a dielectric.
+        /// The specularity of the material.
+        /// A value of 1.0 means the material is shiny and mirror-like.
+        /// A value of 0.0 means the material is completely diffuse.
         /// Values in between are for blending between metals and dielectrics such as
-        /// dirty metallic surfaces.
+        /// plastics.
         /// This value is linear.
         /// </summary>
-        public double MetallicFactor = 1;
+        public double SpecularFactor = 1;
 
         /// <summary>
-        /// The roughness of the material.
+        /// The glossiness of the material.
         /// A value of 1.0 means the material is completely rough.
         /// A value of 0.0 means the material is completely smooth.
         /// This value is linear.
         /// </summary>
-        public double RoughnessFactor = 1;
+        public double GlossinessFactor = 1;
 
         /// <summary>
-        /// The metallic-roughness texture has two components.
-        /// The first component (R) contains the metallic-ness of the material.
-        /// The second component (G) contains the roughness of the material.
+        /// The specular-glossiness texture has two components.
+        /// The first component (R) contains the specularity of the material.
+        /// The second component (G) contains the glossiness of the material.
         /// These values are linear.
         /// If the third component (B) and/or the fourth component (A) are present,
         /// they are ignored.
         /// </summary>
-        public TextureInfo MetallicRoughnessTexture;
+        public TextureInfo SpecularGlossinessTexture;
 
         public static PbrSpecularGlossiness Deserialize(GLTFRoot root, JsonReader reader)
         {
@@ -70,20 +72,20 @@ namespace GLTF.Schema
 
                 switch (curProp)
                 {
-                    case "baseColorFactor":
+                    case "diffuseFactor":
                         specularGlossiness.BaseColorFactor = reader.ReadAsRGBAColor();
                         break;
-                    case "baseColorTexture":
+                    case "diffuseTexture":
                         specularGlossiness.BaseColorTexture = TextureInfo.Deserialize(root, reader);
                         break;
-                    case "metallicFactor":
-                        specularGlossiness.MetallicFactor = reader.ReadAsDouble().Value;
+                    case "specularFactor":
+                        specularGlossiness.SpecularFactor = reader.ReadAsDouble().Value;
                         break;
-                    case "roughnessFactor":
-                        specularGlossiness.RoughnessFactor = reader.ReadAsDouble().Value;
+                    case "glossinessFactor":
+                        specularGlossiness.GlossinessFactor = reader.ReadAsDouble().Value;
                         break;
-                    case "metallicRoughnessTexture":
-                        specularGlossiness.MetallicRoughnessTexture = TextureInfo.Deserialize(root, reader);
+                    case "specularGlossinessTexture":
+                        specularGlossiness.SpecularGlossinessTexture = TextureInfo.Deserialize(root, reader);
                         break;
                     default:
                         specularGlossiness.DefaultPropertyDeserializer(root, reader);
@@ -100,7 +102,7 @@ namespace GLTF.Schema
 
             if (BaseColorFactor != Color.White)
             {
-                writer.WritePropertyName("baseColorFactor");
+                writer.WritePropertyName("diffuseFactor");
                 writer.WriteStartArray();
                 writer.WriteValue(BaseColorFactor.R);
                 writer.WriteValue(BaseColorFactor.G);
@@ -111,26 +113,26 @@ namespace GLTF.Schema
 
             if (BaseColorTexture != null)
             {
-                writer.WritePropertyName("baseColorTexture");
+                writer.WritePropertyName("diffuseTexture");
                 BaseColorTexture.Serialize(writer);
             }
 
-            if (MetallicFactor != 1.0f)
+            if (SpecularFactor != 1.0f)
             {
-                writer.WritePropertyName("metallicFactor");
-                writer.WriteValue(MetallicFactor);
+                writer.WritePropertyName("specularFactor");
+                writer.WriteValue(SpecularFactor);
             }
 
-            if (RoughnessFactor != 1.0f)
+            if (GlossinessFactor != 1.0f)
             {
-                writer.WritePropertyName("roughnessFactor");
-                writer.WriteValue(RoughnessFactor);
+                writer.WritePropertyName("glossinessFactor");
+                writer.WriteValue(GlossinessFactor);
             }
 
-            if (MetallicRoughnessTexture != null)
+            if (SpecularGlossinessTexture != null)
             {
-                writer.WritePropertyName("metallicRoughnessTexture");
-                MetallicRoughnessTexture.Serialize(writer);
+                writer.WritePropertyName("specularGlossinessTexture");
+                SpecularGlossinessTexture.Serialize(writer);
             }
 
             base.Serialize(writer);
