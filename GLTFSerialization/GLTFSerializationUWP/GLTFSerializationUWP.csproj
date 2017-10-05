@@ -150,6 +150,9 @@
     <Compile Include="..\GLTFSerialization\Schema\MaterialPBRMetallicRoughness.cs">
       <Link>Schema\MaterialPBRMetallicRoughness.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Schema\MaterialPBRSpecularGlossiness.cs">
+      <Link>Schema\MaterialPBRSpecularGlossiness.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\Schema\Mesh.cs">
       <Link>Schema\Mesh.cs</Link>
     </Compile>

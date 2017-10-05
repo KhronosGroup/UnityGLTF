@@ -104,6 +104,7 @@
     <Compile Include="Schema\MaterialNormalTextureInfo.cs" />
     <Compile Include="Schema\MaterialOcclusionTextureInfo.cs" />
     <Compile Include="Schema\MaterialPBRMetallicRoughness.cs" />
+    <Compile Include="Schema\MaterialPBRSpecularGlossiness.cs" />
     <Compile Include="Schema\Mesh.cs" />
     <Compile Include="Schema\MeshPrimitive.cs" />
     <Compile Include="Schema\Node.cs" />
