@@ -19,7 +19,8 @@ namespace UnityGLTF
 		{
 			PbrMetallicRoughness,
 			PbrSpecularGlossiness,
-			CommonConstant,
+            KHR_materials_pbrSpecularGlossiness,
+            CommonConstant,
 			CommonPhong,
 			CommonBlinn,
 			CommonLambert
@@ -401,14 +402,18 @@ namespace UnityGLTF
 
 				// get the shader to use for this material
 				try
-				{
-					if (def.PbrMetallicRoughness != null)
-						shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-					else if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
-					         && def.CommonConstant != null)
-						shader = _shaderCache[MaterialType.CommonConstant];
-					else
-						shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+                {
+                    if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_pbrSpecularGlossiness"))
+                        shader = _shaderCache[MaterialType.PbrSpecularGlossiness];
+                    else if (def.PbrSpecularGlossiness != null)
+                        shader = _shaderCache[MaterialType.PbrSpecularGlossiness];
+                    else if (def.PbrMetallicRoughness != null)
+                        shader = _shaderCache[MaterialType.PbrMetallicRoughness];
+                    else if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
+                             && def.CommonConstant != null)
+                        shader = _shaderCache[MaterialType.CommonConstant];
+                    else
+                        shader = _shaderCache[MaterialType.PbrMetallicRoughness];
 				}
 				catch (KeyNotFoundException)
 				{
@@ -463,7 +468,7 @@ namespace UnityGLTF
 				{
 					material.SetInt("_Cull", (int) CullMode.Back);
 				}
-
+                
 				if (def.PbrMetallicRoughness != null)
 				{
 					var pbr = def.PbrMetallicRoughness;
@@ -485,7 +490,31 @@ namespace UnityGLTF
 					}
 
 					material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
-				}
+                }
+
+                if (def.PbrSpecularGlossiness != null || (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_pbrSpecularGlossiness")))
+                {
+                    var pbr = def.PbrSpecularGlossiness;
+
+                    material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColor());
+
+                    if (pbr.BaseColorTexture != null)
+                    {
+                        var texture = pbr.BaseColorTexture.Index.Value;
+                        material.SetTexture("_MainTex", CreateTexture(texture));
+                    }
+
+                    material.SetVector("_SpecColor", pbr.SpecularFactor.ToUnityVector3());
+
+                    if (pbr.SpecularGlossinessTexture != null)
+                    {
+                        var texture = pbr.SpecularGlossinessTexture.Index.Value;
+                        material.SetTexture("_SpecGlossMap", CreateTexture(texture));
+                        material.EnableKeyword("_SPECGLOSSMAP");
+                    }
+
+                    material.SetFloat("_Glossiness", (float)pbr.GlossinessFactor);
+                }
 
 				if (def.CommonConstant != null)
 				{
@@ -508,6 +537,7 @@ namespace UnityGLTF
 					var texture = def.NormalTexture.Index.Value;
 					material.SetTexture("_BumpMap", CreateTexture(texture));
 					material.SetFloat("_BumpScale", (float) def.NormalTexture.Scale);
+                    material.EnableKeyword("_NORMALMAP");
 				}
 
 				if (def.OcclusionTexture != null)

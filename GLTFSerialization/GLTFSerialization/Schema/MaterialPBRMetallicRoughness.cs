@@ -59,12 +59,12 @@ namespace GLTF.Schema
 		{
 			var metallicRoughness = new PbrMetallicRoughness();
 
-			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
-			{
-				throw new Exception("Asset must be an object.");
-			}
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Asset must be an object.");
+            }
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 

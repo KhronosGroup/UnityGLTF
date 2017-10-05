@@ -16,7 +16,8 @@ namespace UnityGLTF {
 		public int MaximumLod = 300;
 
 		public Shader GLTFStandard;
-		public Shader GLTFConstant;
+        public Shader GLTFStandardSpecular;
+        public Shader GLTFConstant;
 
 		IEnumerator Start()
 		{
@@ -40,8 +41,10 @@ namespace UnityGLTF {
 					);
 			}
 
-			loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
-			loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
+            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
+            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrSpecularGlossiness, GLTFStandardSpecular);
+            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.KHR_materials_pbrSpecularGlossiness, GLTFStandardSpecular);
+            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
 			loader.MaximumLod = MaximumLod;
 			yield return loader.Load(-1, Multithreaded);
 			if(gltfStream != null)

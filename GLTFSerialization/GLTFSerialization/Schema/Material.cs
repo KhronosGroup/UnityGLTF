@@ -101,8 +101,20 @@ namespace GLTF.Schema
                     case "pbrSpecularGlossiness":
                         material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
                         break;
-                    case "KHR_materials_pbrSpecularGlossiness":
-                        material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
+                    case "extensions":
+                        reader.Read();
+
+                        while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+                        {
+                            var extensionProp = reader.Value.ToString();
+
+                            switch (extensionProp)
+                            {
+                                case "KHR_materials_pbrSpecularGlossiness":
+                                    material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
+                                    break;
+                            }
+                        }
                         break;
                     case "commonConstant":
 						material.CommonConstant = MaterialCommonConstant.Deserialize(root, reader);
@@ -144,9 +156,15 @@ namespace GLTF.Schema
 			{
 				writer.WritePropertyName("pbrMetallicRoughness");
 				PbrMetallicRoughness.Serialize(writer);
-			}
+            }
 
-			if (CommonConstant != null)
+            if (PbrSpecularGlossiness != null)
+            {
+                writer.WritePropertyName("pbrSpecularGlossiness");
+                PbrSpecularGlossiness.Serialize(writer);
+            }
+
+            if (CommonConstant != null)
 			{
 				writer.WritePropertyName("commonConstant");
 				CommonConstant.Serialize(writer);

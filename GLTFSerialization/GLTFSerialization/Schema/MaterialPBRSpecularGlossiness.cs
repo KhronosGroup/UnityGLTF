@@ -2,6 +2,7 @@
 using GLTF.Extensions;
 using GLTF.Math;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace GLTF.Schema
 {
@@ -10,6 +11,7 @@ namespace GLTF.Schema
     /// material model from Physically-Based Rendering (PBR) methodology.
     /// 
     /// Supports the KHR_materials_pbrSpecularGlossiness material extension.
+    /// https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
     /// </summary>
     public class PbrSpecularGlossiness : GLTFProperty
     {
@@ -30,14 +32,9 @@ namespace GLTF.Schema
         public TextureInfo BaseColorTexture;
 
         /// <summary>
-        /// The specularity of the material.
-        /// A value of 1.0 means the material is shiny and mirror-like.
-        /// A value of 0.0 means the material is completely diffuse.
-        /// Values in between are for blending between metals and dielectrics such as
-        /// plastics.
-        /// This value is linear.
+        /// The color of the material's specular highlights.
         /// </summary>
-        public double SpecularFactor = 1;
+        public Vector3 SpecularFactor = Vector3.One;
 
         /// <summary>
         /// The glossiness of the material.
@@ -79,7 +76,7 @@ namespace GLTF.Schema
                         specularGlossiness.BaseColorTexture = TextureInfo.Deserialize(root, reader);
                         break;
                     case "specularFactor":
-                        specularGlossiness.SpecularFactor = reader.ReadAsDouble().Value;
+                        specularGlossiness.SpecularFactor = reader.ReadAsVector3();
                         break;
                     case "glossinessFactor":
                         specularGlossiness.GlossinessFactor = reader.ReadAsDouble().Value;
@@ -117,7 +114,7 @@ namespace GLTF.Schema
                 BaseColorTexture.Serialize(writer);
             }
 
-            if (SpecularFactor != 1.0f)
+            if (SpecularFactor != Vector3.One)
             {
                 writer.WritePropertyName("specularFactor");
                 writer.WriteValue(SpecularFactor);

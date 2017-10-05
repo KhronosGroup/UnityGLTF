@@ -1,0 +1,194 @@
+{
+    "asset": {
+        "version": "2.0",
+        "generator": "Microsoft GLTF Exporter 2.3.0.1"
+    },
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5123,
+            "count": 15540,
+            "type": "SCALAR"
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 4723,
+            "type": "VEC3",
+            "max": [
+                443.94024658203127,
+                382.9927673339844,
+                268.3670959472656
+            ],
+            "min": [
+                -442.7352294921875,
+                -4.416009902954102,
+                -268.3670959472656
+            ]
+        },
+        {
+            "bufferView": 2,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 4723,
+            "type": "VEC3"
+        },
+        {
+            "bufferView": 3,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 4723,
+            "type": "VEC2"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteLength": 31080,
+            "byteOffset": 0,
+            "target": 34963
+        },
+        {
+            "buffer": 0,
+            "byteLength": 56676,
+            "byteOffset": 31080,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteLength": 56676,
+            "byteOffset": 87756,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteLength": 37784,
+            "byteOffset": 144432,
+            "target": 34962
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 182216,
+            "uri": "1501770225815_buffer_high.bin"
+        }
+    ],
+    "images": [
+        {
+            "uri": "3419137191_2048x2048.png",
+            "mimeType": "image/png"
+        },
+        {
+            "uri": "2636250319_4x4.png",
+            "mimeType": "image/png"
+        }
+    ],
+    "materials": [
+        {
+            "pbrMetallicRoughness": {},
+            "name": "78835395",
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness": {
+                    "diffuseFactor": [
+                        0.800000011920929,
+                        0.800000011920929,
+                        0.800000011920929,
+                        1.0
+                    ],
+                    "diffuseTexture": {
+                        "index": 0
+                    },
+                    "specularFactor": [
+                        0.49803921580314639,
+                        0.49803921580314639,
+                        0.49803921580314639
+                    ],
+                    "glossinessFactor": 0.1882352977991104,
+                    "specularGlossinessTexture": {
+                        "index": 1
+                    }
+                }
+            }
+        }
+    ],
+    "meshes": [
+        {
+            "name": "mesh_id3797714763",
+            "primitives": [
+                {
+                    "attributes": {
+                        "NORMAL": 2,
+                        "POSITION": 1,
+                        "TEXCOORD_0": 3
+                    },
+                    "indices": 0,
+                    "material": 0,
+                    "mode": 4
+                }
+            ]
+        }
+    ],
+    "nodes": [
+        {
+            "matrix": [
+                0.009999999776482582,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.009999999776482582,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.009999999776482582,
+                0.0,
+                0.0,
+                0.04531760886311531,
+                0.0,
+                1.0
+            ],
+            "mesh": 0,
+            "name": "mesh_id3797714763",
+            "extensions": {}
+        },
+        {
+            "children": [
+                0
+            ],
+            "name": "root",
+            "extensions": {}
+        }
+    ],
+    "samplers": [
+        {
+            "minFilter": 9985
+        }
+    ],
+    "scenes": [
+        {
+            "nodes": [
+                1
+            ]
+        }
+    ],
+    "scene": 0,
+    "textures": [
+        {
+            "name": "texture3419137191",
+            "sampler": 0,
+            "source": 0
+        },
+        {
+            "name": "texture2636250319",
+            "sampler": 0,
+            "source": 1
+        }
+    ],
+    "extensionsUsed": [
+        "KHR_materials_pbrSpecularGlossiness",
+        "MSFT_lod"
+    ]
+}
