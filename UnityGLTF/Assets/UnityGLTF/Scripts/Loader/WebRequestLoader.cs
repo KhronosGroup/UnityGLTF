@@ -4,12 +4,14 @@ using GLTF;
 using UnityEngine;
 using System.Text.RegularExpressions;
 using System.Net;
+#if WINDOWS_UWP
+using System.Threading.Tasks;
+#endif
 
 namespace UnityGLTF.Loader
 {
 	public class WebRequestLoader : ILoader
 	{
-		private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
 		private string _rootURI;
 		
 		public WebRequestLoader(string rootURI)
@@ -17,107 +19,51 @@ namespace UnityGLTF.Loader
 			_rootURI = rootURI;
 		}
 
-		public Stream LoadJSON(string gltfFilePath)
+#if WINDOWS_UWP
+		public async Task<Stream> LoadStream(string gltfFilePath)
+#else
+		public Stream LoadStream(string gltfFilePath)
+#endif
 		{
-			if(gltfFilePath == null)
+			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
 
+#if WINDOWS_UWP
+			return await CreateHTTPRequest(_rootURI, gltfFilePath);
+#else
 			return CreateHTTPRequest(_rootURI, gltfFilePath);
+#endif
 		}
 
-		public Stream LoadBuffer(GLTF.Schema.Buffer buffer)
-		{
-			if(buffer == null)
-			{
-				throw new ArgumentNullException("buffer");
-			}
-
-			if(buffer.Uri == null)
-			{
-				throw new ArgumentException("Cannot load buffer with null URI. Should be loaded via GLB method instead", "buffer");
-			}
-
-			Stream bufferDataStream = null;
-			var uri = buffer.Uri;
-
-			Regex regex = new Regex(Base64StringInitializer);
-			Match match = regex.Match(uri);
-			if (match.Success)
-			{
-				var base64Data = uri.Substring(match.Length);
-				byte[] bufferData = Convert.FromBase64String(base64Data);
-				bufferDataStream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
-			}
-			else
-			{
-				bufferDataStream = CreateHTTPRequest(_rootURI, uri);
-			}
-
-			return bufferDataStream;
-		}
-
-		public Texture2D LoadImage(GLTF.Schema.Image image)
-		{
-			if(image == null)
-			{
-				throw new ArgumentNullException("image");
-			}
-
-			Texture2D texture = null;
-			var uri = image.Uri;
-
-			Regex regex = new Regex(Base64StringInitializer);
-			Match match = regex.Match(uri);
-			if (match.Success)
-			{
-				var base64Data = uri.Substring(match.Length);
-				var textureData = Convert.FromBase64String(base64Data);
-				texture = new Texture2D(0, 0);
-				texture.LoadImage(textureData);
-			}
-			else
-			{
-				MemoryStream responseStream = CreateHTTPRequest(_rootURI, uri);
-				
-				if (responseStream != null)
-				{
-					texture = new Texture2D(0, 0);
-					if(responseStream.Length > int.MaxValue)
-					{
-						throw new Exception("Stream is larger than can be copied into byte array");
-					}
-		
-					texture.LoadImage(responseStream.ToArray());
-					texture.Apply();
-				}
-
-				responseStream.Close();
-			}
-
-			return texture;
-		}
-
+#if WINDOWS_UWP
+		private async Task<MemoryStream> CreateHTTPRequest(string rootUri, string httpRequestPath)
+#else
 		private MemoryStream CreateHTTPRequest(string rootUri, string httpRequestPath)
+#endif
 		{
 			HttpWebRequest www = (HttpWebRequest)WebRequest.Create(Path.Combine(_rootURI, httpRequestPath));
+#if WINDOWS_UWP
+			WebResponse webResponse = await www.GetResponseAsync();
+			HttpWebResponse httpWebResponse = webResponse as HttpWebResponse;
+#else
 			www.Timeout = 5000;
-			HttpWebResponse webResponse = (HttpWebResponse)www.GetResponse();
-			
-			if ((int)webResponse.StatusCode >= 400)
+			HttpWebResponse httpWebResponse = (HttpWebResponse)www.GetResponse();
+#endif
+			if ((int)httpWebResponse.StatusCode >= 400)
 			{
-				Debug.LogErrorFormat("{0} - {1}", webResponse.StatusCode, webResponse.ResponseUri);
+				Debug.LogErrorFormat("{0} - {1}", httpWebResponse.StatusCode, httpWebResponse.ResponseUri);
 				return null;
 			}
 			
-			if (webResponse.ContentLength > int.MaxValue)
+			if (httpWebResponse.ContentLength > int.MaxValue)
 			{
 				throw new Exception("Stream is larger than can be copied into byte array");
 			}
 
-			Stream responseStream = webResponse.GetResponseStream();
-			MemoryStream memoryStream = new MemoryStream((int)webResponse.ContentLength);
+			Stream responseStream = httpWebResponse.GetResponseStream();
+			MemoryStream memoryStream = new MemoryStream((int)httpWebResponse.ContentLength);
 
 			byte[] chunk = new byte[4096];
 			int bytesRead;
@@ -126,7 +72,11 @@ namespace UnityGLTF.Loader
 				memoryStream.Write(chunk, 0, bytesRead);
 			}
 
-			webResponse.Close();
+#if WINDOWS_UWP
+			httpWebResponse.Dispose();
+#else
+			httpWebResponse.Close();
+#endif
 			return memoryStream;
 		}
 	}

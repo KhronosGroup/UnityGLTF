@@ -1,8 +1,14 @@
 using System;
 using System.Collections;
 using System.IO;
+#if WINDOWS_UWP
+using System.Threading.Tasks;
+#endif
 using UnityEngine;
 using UnityGLTF.Loader;
+#if WINDOWS_UWP
+using Windows.Storage;
+#endif
 
 namespace UnityGLTF {
 
@@ -20,24 +26,35 @@ namespace UnityGLTF {
 		public Shader GLTFStandard = null;
 		public Shader GLTFConstant = null;
 
+#if WINDOWS_UWP
+		async Task Start()
+#else
 		IEnumerator Start()
+#endif
 		{
 			ILoader loader = null;
 			GLTFSceneImporter importer = null;
 			FileStream gltfStream = null;
+
 			if (UseStream)
 			{
+#if WINDOWS_UWP
+				var objectsLibrary = KnownFolders.Objects3D;
+				loader = new StorageFolderLoader(objectsLibrary);
+				importer = new GLTFSceneImporter(Url, loader);
+#else
 				var fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + Url;
 				gltfStream = File.OpenRead(fullPath);
 				var gltfRoot = GLTF.GLTFParser.ParseJson(gltfStream);
-				var fileName = Path.GetFileName (fullPath);
+				var fileName = Path.GetFileName(fullPath);
 				loader = new FileLoader(fullPath.Substring(0, fullPath.Length - fileName.Length));
-				
+
 				importer = new GLTFSceneImporter(
 					gltfRoot,
 					loader,
 					gltfStream
 					);
+#endif
 			}
 			else
 			{
@@ -55,20 +72,22 @@ namespace UnityGLTF {
 			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
 			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
 			importer.MaximumLod = MaximumLod;
-			if (gltfStream != null)
+
+#if !WINDOWS_UWP
+			if (UseStream)
 			{
 				GameObject node = importer.LoadNode(0);
 				node.transform.SetParent(gameObject.transform, false);
-
-#if !WINDOWS_UWP
 				gltfStream.Close();
-#else
-				gltfStream.Dispose();
-#endif
 			}
 			else
+#endif
 			{
+#if WINDOWS_UWP
+				await importer.LoadScene(-1, Multithreaded);
+#else
 				yield return importer.LoadScene(-1, Multithreaded);
+#endif
 			}
 		}
 	}
