@@ -728,7 +728,7 @@ namespace UnityGLTF
 		protected static string AbsoluteUriPath(string gltfPath)
 		{
 			var uri = new Uri(gltfPath);
-			var partialPath = uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length - 1].Length);
+			var partialPath = uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Query.Length - uri.Segments[uri.Segments.Length - 1].Length);
 			return partialPath;
 		}
 
