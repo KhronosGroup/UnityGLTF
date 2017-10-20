@@ -27,6 +27,10 @@ namespace GLTF.Schema
 					Extensions = DeserializeExtensions(root, reader);
 					break;
 				case "extras":
+					// advance to property value
+					reader.Read();
+					if (reader.TokenType != JsonToken.StartObject)
+						throw new Exception(string.Format("extras must be an object at: {0}", reader.Path));
 					Extras = JToken.ReadFrom(reader);
 					break;
 				default:
