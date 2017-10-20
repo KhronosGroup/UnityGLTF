@@ -1,6 +1,8 @@
-﻿namespace GLTF.Math
+﻿using System;
+
+namespace GLTF.Math
 {
-	public struct Color
+	public struct Color : IEquatable<Color>
 	{
 		public static Color Black { get { return new Color(0f, 0f, 0f, 1f); } }
 		public static Color White { get { return new Color(1f, 1f, 1f, 1f); } }
@@ -18,29 +20,37 @@
 			A = a;
 		}
 
-		public static bool operator ==(Color left, Color right)
-		{
-			return left.R == right.R && left.B == right.B && left.G == right.G && left.A == right.A;
-		}
+	    public bool Equals(Color other)
+	    {
+	        return R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);
+	    }
 
-		public static bool operator !=(Color left, Color right)
-		{
-			return !(left == right);
-		}
+	    public override bool Equals(object obj)
+	    {
+	        if (ReferenceEquals(null, obj)) return false;
+	        return obj is Color && Equals((Color) obj);
+	    }
 
-		public override bool Equals(object obj)
-		{
-			if (!(obj is Color))
-			{
-				base.Equals(obj);
-			}
+	    public override int GetHashCode()
+	    {
+	        unchecked
+	        {
+	            var hashCode = R.GetHashCode();
+	            hashCode = (hashCode * 397) ^ G.GetHashCode();
+	            hashCode = (hashCode * 397) ^ B.GetHashCode();
+	            hashCode = (hashCode * 397) ^ A.GetHashCode();
+	            return hashCode;
+	        }
+	    }
 
-			return this == (Color)obj;
-		}
+	    public static bool operator ==(Color left, Color right)
+	    {
+	        return left.Equals(right);
+	    }
 
-		public override int GetHashCode()
-		{
-			return base.GetHashCode();
-		}
-	}
+	    public static bool operator !=(Color left, Color right)
+	    {
+	        return !left.Equals(right);
+	    }
+    }
 }

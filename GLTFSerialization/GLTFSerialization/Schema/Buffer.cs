@@ -24,7 +24,8 @@ namespace GLTF.Schema
 		{
 			var buffer = new Buffer();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -37,12 +38,12 @@ namespace GLTF.Schema
 						buffer.ByteLength = reader.ReadAsInt32().Value;
 						break;
 					default:
-						buffer.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = buffer.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
-			return buffer;
+            return buffer;
 		}
 
 		public override void Serialize(JsonWriter writer)

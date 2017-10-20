@@ -22,7 +22,8 @@ namespace GLTF.Schema
 		{
 			var animationChannel = new AnimationChannel();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -35,10 +36,10 @@ namespace GLTF.Schema
 						animationChannel.Target = AnimationChannelTarget.Deserialize(root, reader);
 						break;
 					default:
-						animationChannel.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = animationChannel.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
 			return animationChannel;
 		}

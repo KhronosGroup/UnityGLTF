@@ -27,7 +27,8 @@ namespace GLTF.Schema
 		{
 			var mesh = new Mesh();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -40,10 +41,10 @@ namespace GLTF.Schema
 						mesh.Weights = reader.ReadDoubleList();
 						break;
 					default:
-						mesh.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = mesh.DefaultPropertyDeserializer(root, reader);
 						break;
-				}
-			}
+                }
+            }
 
 			return mesh;
 		}

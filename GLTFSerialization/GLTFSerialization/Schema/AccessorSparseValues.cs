@@ -20,7 +20,8 @@ namespace GLTF.Schema
 		{
 			var values = new AccessorSparseValues();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -33,10 +34,10 @@ namespace GLTF.Schema
 						values.ByteOffset = reader.ReadAsInt32().Value;
 						break;
 					default:
-						values.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = values.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
 			return values;
 		}

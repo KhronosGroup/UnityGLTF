@@ -98,8 +98,8 @@ namespace GLTF.Schema
 		public static Accessor Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var accessor = new Accessor();
-
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -133,12 +133,12 @@ namespace GLTF.Schema
 						accessor.Sparse = AccessorSparse.Deserialize(root, reader);
 						break;
 					default:
-						accessor.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = accessor.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
-			return accessor;
+            return accessor;
 		}
 
 		public override void Serialize(JsonWriter writer)

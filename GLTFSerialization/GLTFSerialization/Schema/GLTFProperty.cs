@@ -19,20 +19,24 @@ namespace GLTF.Schema
 		public Dictionary<string, Extension> Extensions;
 		public JToken Extras;
 
-		public void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
+		public bool DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
+            bool shouldSkipRead = false;
 			switch (reader.Value.ToString())
 			{
 				case "extensions":
-					Extensions = DeserializeExtensions(root, reader);
-					break;
+					Extensions = DeserializeExtensions(root, reader, ref shouldSkipRead);
+                    break;
 				case "extras":
 					Extras = JToken.ReadFrom(reader);
-					break;
+                    shouldSkipRead = true;
+                    break;
 				default:
 					SkipValue(reader);
 					break;
 			}
+
+            return shouldSkipRead;
 		}
 
 		private void SkipValue(JsonReader reader)
@@ -80,7 +84,8 @@ namespace GLTF.Schema
 			}
 		}
 
-		private Dictionary<string, Extension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
+        // todo: this should be rewritten so all extensions are a single jproperty and then we parse each jproperty
+		private Dictionary<string, Extension> DeserializeExtensions(GLTFRoot root, JsonReader reader, ref bool shouldSkipRead)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
@@ -114,11 +119,13 @@ namespace GLTF.Schema
 				}
 				else if (reader.TokenType == JsonToken.EndObject)
 				{
+                    reader.Read();  // advance to next property
 					break;
 				}
 			}
 
-			return extensions;
+            shouldSkipRead = extensions.Count != 0;
+            return extensions;
 		}
 
 		public virtual void Serialize(JsonWriter writer)

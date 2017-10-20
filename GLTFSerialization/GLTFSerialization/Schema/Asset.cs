@@ -37,7 +37,8 @@ namespace GLTF.Schema
 				throw new Exception("Asset must be an object.");
 			}
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+            while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -56,12 +57,12 @@ namespace GLTF.Schema
 						asset.MinVersion = reader.ReadAsString();
 						break;
 					default:
-						asset.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = asset.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
-			return asset;
+            return asset;
 		}
 
 		public override void Serialize(JsonWriter writer)

@@ -28,7 +28,8 @@ namespace GLTF.Schema
 		{
 			var indices = new AccessorSparseIndices();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -44,12 +45,12 @@ namespace GLTF.Schema
 						indices.ComponentType = (GLTFComponentType) reader.ReadAsInt32().Value;
 						break;
 					default:
-						indices.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = indices.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
-			return indices;
+            return indices;
 		}
 
 		public override void Serialize(JsonWriter writer)

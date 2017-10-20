@@ -38,7 +38,8 @@ namespace GLTF.Schema
 				throw new Exception("Orthographic camera must be an object.");
 			}
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -57,12 +58,12 @@ namespace GLTF.Schema
 						cameraOrthographic.ZNear = reader.ReadAsDouble().Value;
 						break;
 					default:
-						cameraOrthographic.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = cameraOrthographic.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
-			return cameraOrthographic;
+            return cameraOrthographic;
 		}
 
 		public override void Serialize(JsonWriter writer)

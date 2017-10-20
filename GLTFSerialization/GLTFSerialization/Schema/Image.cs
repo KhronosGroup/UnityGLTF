@@ -31,7 +31,8 @@ namespace GLTF.Schema
 		{
 			var image = new Image();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -47,10 +48,11 @@ namespace GLTF.Schema
 						image.BufferView = BufferViewId.Deserialize(root, reader);
 						break;
 					default:
-						image.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = image.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+
+            }
 
 			return image;
 		}

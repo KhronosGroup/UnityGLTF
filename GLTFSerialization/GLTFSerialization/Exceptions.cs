@@ -2,7 +2,6 @@ using System;
 
 namespace GLTF
 {
-	[Serializable()]
 	public class GLTFHeaderInvalidException : Exception
 	{
 		public GLTFHeaderInvalidException() : base() { }
@@ -16,7 +15,6 @@ namespace GLTF
 	}
 
 	// todo blgross unity - move over when doing unity layer
-	[Serializable()]
 	public class ShaderNotFoundException : Exception
 	{
 		public ShaderNotFoundException() : base() { }

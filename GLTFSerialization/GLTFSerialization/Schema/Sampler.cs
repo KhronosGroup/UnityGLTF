@@ -32,7 +32,8 @@ namespace GLTF.Schema
 		{
 			var sampler = new Sampler();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -51,10 +52,10 @@ namespace GLTF.Schema
 						sampler.WrapT = (WrapMode)reader.ReadAsInt32();
 						break;
 					default:
-						sampler.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = sampler.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
 			return sampler;
 		}

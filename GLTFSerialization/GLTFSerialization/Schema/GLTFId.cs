@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GLTF.Schema
 {
@@ -165,7 +166,7 @@ namespace GLTF.Schema
 			}
 
 			var list = new List<NodeId>();
-
+            
 			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
 			{
 				var node = new NodeId
@@ -247,5 +248,14 @@ namespace GLTF.Schema
 				Root = root
 			};
 		}
-	}
+
+        public static TextureId Deserialize(GLTFRoot root, JProperty jProperty)
+        {
+            return new TextureId
+            {
+                Id = (int)jProperty.Value,
+                Root = root
+            };
+        }
+    }
 }

@@ -83,7 +83,8 @@ namespace GLTF.Schema
 		{
 			var material = new Material();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -117,10 +118,10 @@ namespace GLTF.Schema
 						material.DoubleSided = reader.ReadAsBoolean().Value;
 						break;
 					default:
-						material.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = material.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
 			return material;
 		}

@@ -1,7 +1,9 @@
-﻿namespace GLTF.Math
+﻿using System;
+
+namespace GLTF.Math
 {
 	// class is naively implemented
-	public class Matrix4x4
+	public class Matrix4x4 : IEquatable<Matrix4x4>
 	{
 		public static readonly Matrix4x4 Identity = new Matrix4x4(
 			1f, 0f, 0f, 0f,
@@ -33,21 +35,6 @@
 			M44 = m44;
 		}
 
-		public override bool Equals(object obj)
-		{
-			if (!(obj is Matrix4x4))
-			{
-				base.Equals(obj);
-			}
-
-			return (obj as Matrix4x4) == this;
-		}
-
-		public override int GetHashCode()
-		{
-			return base.GetHashCode();
-		}
-
 		private float[] mat = new float[16];
 
 		public float M11 { get { return mat[0]; } set { mat[0] = value; } }
@@ -67,17 +54,28 @@
 		public float M34 { get { return mat[14]; } set { mat[14] = value; } }
 		public float M44 { get { return mat[15]; } set { mat[15] = value; } }
 
-		public static bool operator ==(Matrix4x4 left, Matrix4x4 right)
-		{
-			return left.M11 == right.M11 && left.M12 == right.M12 && left.M13 == right.M13 && left.M14 == right.M14 &&
-				   left.M21 == right.M21 && left.M22 == right.M22 && left.M23 == right.M23 && left.M24 == right.M24 &&
-				   left.M31 == right.M31 && left.M32 == right.M32 && left.M33 == right.M33 && left.M34 == right.M34 &&
-				   left.M41 == right.M41 && left.M42 == right.M42 && left.M43 == right.M43 && left.M44 == right.M44;
-		}
+	    public bool Equals(Matrix4x4 other)
+	    {
+	        if (ReferenceEquals(null, other)) return false;
+	        if (ReferenceEquals(this, other)) return true;
 
-		public static bool operator !=(Matrix4x4 left, Matrix4x4 right)
-		{
-			return !(left.mat == right.mat);
-		}
+	        return M11 == other.M11 && M12 == other.M12 && M13 == other.M13 && M14 == other.M14 &&
+	               M21 == other.M21 && M22 == other.M22 && M23 == other.M23 && M24 == other.M24 &&
+	               M31 == other.M31 && M32 == other.M32 && M33 == other.M33 && M34 == other.M34 &&
+	               M41 == other.M41 && M42 == other.M42 && M43 == other.M43 && M44 == other.M44;
+        }
+
+	    public override bool Equals(object obj)
+	    {
+	        if (ReferenceEquals(null, obj)) return false;
+	        if (ReferenceEquals(this, obj)) return true;
+	        if (obj.GetType() != this.GetType()) return false;
+	        return Equals((Matrix4x4) obj);
+	    }
+
+	    public override int GetHashCode()
+	    {
+	        return (mat != null ? mat.GetHashCode() : 0);
+	    }
 	}
 }

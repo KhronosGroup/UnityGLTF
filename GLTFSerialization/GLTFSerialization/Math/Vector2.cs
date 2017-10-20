@@ -1,6 +1,8 @@
-﻿namespace GLTF.Math
+﻿using System;
+
+namespace GLTF.Math
 {
-	public struct Vector2
+	public struct Vector2 : IEquatable<Vector2>
 	{
 		public Vector2(float x, float y)
 		{
@@ -8,32 +10,36 @@
 			Y = y;
 		}
 
-		public override bool Equals(object obj)
-		{
-			if (!(obj is Vector2))
-			{
-				base.Equals(obj);
-			}
-
-			return this == (Vector2)obj;
-		}
-
-		public override int GetHashCode()
-		{
-			return base.GetHashCode();
-		}
-
 		public float X { get; set; }
 		public float Y { get; set; }
 
-		public static bool operator ==(Vector2 left, Vector2 right)
-		{
-			return left.X == right.X && left.Y == right.Y;
-		}
+	    public bool Equals(Vector2 other)
+	    {
+	        return X.Equals(other.X) && Y.Equals(other.Y);
+	    }
 
-		public static bool operator !=(Vector2 left, Vector2 right)
-		{
-			return !(left == right);
-		}
-	}
+	    public override bool Equals(object obj)
+	    {
+	        if (ReferenceEquals(null, obj)) return false;
+	        return obj is Vector2 && Equals((Vector2) obj);
+	    }
+
+	    public override int GetHashCode()
+	    {
+	        unchecked
+	        {
+	            return (X.GetHashCode() * 397) ^ Y.GetHashCode();
+	        }
+	    }
+
+	    public static bool operator ==(Vector2 left, Vector2 right)
+	    {
+	        return left.Equals(right);
+	    }
+
+	    public static bool operator !=(Vector2 left, Vector2 right)
+	    {
+	        return !left.Equals(right);
+	    }
+    }
 }

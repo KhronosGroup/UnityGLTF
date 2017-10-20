@@ -17,7 +17,8 @@ namespace GLTF.Schema
 		{
 			var scene = new Scene();
 
-			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            bool shouldSkipRead = false;
+			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -27,10 +28,10 @@ namespace GLTF.Schema
 						scene.Nodes = NodeId.ReadList(root, reader);
 						break;
 					default:
-						scene.DefaultPropertyDeserializer(root, reader);
+                        shouldSkipRead = scene.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-			}
+            }
 
 			return scene;
 		}
