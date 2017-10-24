@@ -18,7 +18,19 @@ namespace GLTF.Schema
 		/// </summary>
 		public AnimationChannelTarget Target;
 
-		public static AnimationChannel Deserialize(GLTFRoot root, JsonReader reader)
+	    public AnimationChannel()
+	    {
+	    }
+
+	    public AnimationChannel(AnimationChannel animationChannel, GLTFRoot root) : base(animationChannel)
+	    {
+	        if (animationChannel == null) return;
+
+	        Sampler = new SamplerId(animationChannel.Sampler, root);
+	        Target = new AnimationChannelTarget(animationChannel.Target, root);
+	    }
+
+        public static AnimationChannel Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var animationChannel = new AnimationChannel();
 
@@ -43,7 +55,7 @@ namespace GLTF.Schema
 			return animationChannel;
 		}
 
-		public override void Serialize(JsonWriter writer)
+        public override void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();
 

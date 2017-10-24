@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Extensions;
 using Newtonsoft.Json;
 
@@ -22,6 +23,31 @@ namespace GLTF.Schema
 		/// <minItems>0</minItems>
 		/// </summary>
 		public List<double> Weights;
+
+	    public Mesh()
+	    {
+	    }
+
+	    public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
+	    {
+	        if (mesh == null) return;
+
+	        if (mesh.Primitives != null)
+	        {
+                Primitives = new List<MeshPrimitive>(mesh.Primitives.Count);
+
+	            foreach (MeshPrimitive primitive in mesh.Primitives)
+	            {
+	                Primitives.Add(new MeshPrimitive(primitive, gltfRoot));
+	            }
+	        }
+
+	        if (mesh.Weights != null)
+	        {
+	            Weights = mesh.Weights.ToList();
+	        }
+	    }
+
 
 		public static Mesh Deserialize(GLTFRoot root, JsonReader reader)
 		{

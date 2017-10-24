@@ -20,7 +20,7 @@ namespace GLTF.Schema
 			ExtensionName = EXTENSION_NAME;
 		}
 
-		public override Extension Deserialize(GLTFRoot root, JProperty extensionToken)
+		public override IExtension Deserialize(GLTFRoot root, JProperty extensionToken)
 		{
 			Color diffuseFactor = Color.White;
 			TextureInfo diffuseTextureInfo = new TextureInfo();

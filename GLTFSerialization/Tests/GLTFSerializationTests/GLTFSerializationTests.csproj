@@ -70,6 +70,7 @@
     <Compile Include="GLTFLoaderTest.cs" />
     <Compile Include="GLTFLoadTestHelper.cs" />
     <Compile Include="GLTFRootTests.cs" />
+    <Compile Include="MergeNodesTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

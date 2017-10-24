@@ -23,7 +23,20 @@ namespace GLTF.Schema
 		/// </summary>
 		public AccessorSparseValues Values;
 
-		public static AccessorSparse Deserialize(GLTFRoot root, JsonReader reader)
+	    public AccessorSparse()
+	    {
+	    }
+        
+        public AccessorSparse(AccessorSparse accessorSparse, GLTFRoot gltfRoot) : base(accessorSparse)
+        {
+            if (accessorSparse == null) return;
+
+            Count = accessorSparse.Count;
+            Indices = new AccessorSparseIndices(accessorSparse.Indices, gltfRoot);
+            Values = new AccessorSparseValues(accessorSparse.Values, gltfRoot);
+        }
+
+        public static AccessorSparse Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var accessorSparse = new AccessorSparse();
 

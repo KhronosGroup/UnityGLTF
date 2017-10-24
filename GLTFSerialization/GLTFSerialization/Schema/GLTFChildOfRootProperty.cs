@@ -11,6 +11,17 @@ namespace GLTF.Schema
 		/// </summary>
 		public string Name;
 
+	    public GLTFChildOfRootProperty()
+	    {
+	    }
+
+		public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty, GLTFRoot gltfRoot) : base(childOfRootProperty, gltfRoot)
+		{
+			if (childOfRootProperty == null) return;
+
+			Name = childOfRootProperty.Name;
+		}
+
 		public new void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
 			switch (reader.Value.ToString())

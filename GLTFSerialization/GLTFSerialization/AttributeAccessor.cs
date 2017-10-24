@@ -6,7 +6,8 @@ namespace GLTF
 	{
 		public AccessorId AccessorId { get; set; }
 		public NumericArray AccessorContent { get; set; }
-		public byte[] Buffer { get; set; }   // todo: should change to IntPtr?
+		public System.IO.Stream Stream { get; set; }
+		public long Offset { get; set; }
 
 		public AttributeAccessor()
 		{

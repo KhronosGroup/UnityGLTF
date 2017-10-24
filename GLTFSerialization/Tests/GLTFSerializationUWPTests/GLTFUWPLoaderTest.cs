@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using GLTF;
 using GLTFSerializationTests;
@@ -25,10 +26,8 @@ namespace GLTFSerializerUWPTests
 
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
 			var reader = new DataReader(gltfStream.GetInputStreamAt(0));
-			var bytes = new byte[gltfStream.Size];
 			await reader.LoadAsync((uint)gltfStream.Size);
-			reader.ReadBytes(bytes);
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(bytes);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream.AsStreamForRead());
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
@@ -41,10 +40,8 @@ namespace GLTFSerializerUWPTests
 
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
 			var reader = new DataReader(gltfStream.GetInputStreamAt(0));
-			var bytes = new byte[gltfStream.Size];
 			await reader.LoadAsync((uint)gltfStream.Size);
-			reader.ReadBytes(bytes);
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(bytes);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream.AsStreamForRead());
 
 			Assert.IsNotNull(gltfRoot.ExtensionsUsed);
 			Assert.IsTrue(gltfRoot.ExtensionsUsed.Contains(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME));

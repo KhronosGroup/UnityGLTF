@@ -11,9 +11,9 @@ namespace GLTFSerializationTests
 	[TestClass]
 	public class GLTFJsonLoaderTest
 	{
-		readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
-		readonly string GLTF_PBR_SPECGLOSS_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-pbrSpecularGlossiness/Lantern.gltf";
-		readonly string GLB_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
+		private readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
+		private readonly string GLTF_PBR_SPECGLOSS_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-pbrSpecularGlossiness/Lantern.gltf";
+		private readonly string GLB_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
 
 		public TestContext TestContext { get; set; }
 
@@ -22,13 +22,9 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsTrue(File.Exists(GLTF_PATH));
 			FileStream gltfStream = File.OpenRead(GLTF_PATH);
-			// todo: this code does not work if file is greater than 4 gb
-			int streamLength = (int)gltfStream.Length;
-			byte[] gltfData = new byte[streamLength];
-			gltfStream.Read(gltfData, 0, streamLength);
-			
+
 			GLTFRoot.RegisterExtension(new TestExtensionFactory());
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
@@ -37,11 +33,8 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsTrue(File.Exists(GLTF_PBR_SPECGLOSS_PATH));
 			FileStream gltfStream = File.OpenRead(GLTF_PBR_SPECGLOSS_PATH);
-			int streamLength = (int)gltfStream.Length;
-			byte[] gltfData = new byte[streamLength];
-			gltfStream.Read(gltfData, 0, streamLength);
 			
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
 
 			Assert.IsNotNull(gltfRoot.ExtensionsUsed);
 			Assert.IsTrue(gltfRoot.ExtensionsUsed.Contains(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME));
@@ -64,13 +57,7 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsTrue(File.Exists(GLB_PATH));
 			FileStream gltfStream = File.OpenRead(GLB_PATH);
-
-			// todo: this code does not work if file is greater than 4 gb
-			int streamLength = (int)gltfStream.Length;
-			byte[] gltfData = new byte[streamLength];
-			gltfStream.Read(gltfData, 0, streamLength);
-
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
 			GLTFJsonLoadTestHelper.TestGLB(gltfRoot);
 		}
 	}

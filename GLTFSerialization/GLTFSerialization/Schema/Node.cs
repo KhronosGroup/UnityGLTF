@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Extensions;
 using GLTF.Math;
 using Newtonsoft.Json;
@@ -71,6 +72,57 @@ namespace GLTF.Schema
 		/// Number of elements must match number of Morph Targets of used mesh.
 		/// </summary>
 		public List<double> Weights;
+
+	    public Node()
+	    {
+	    }
+
+	    public Node(Node node, GLTFRoot gltfRoot) : base(node, gltfRoot)
+	    {
+	        if (node == null) return;
+
+	        UseTRS = node.UseTRS;
+
+	        if (node.Camera != null)
+	        {
+	            Camera = new CameraId(node.Camera, gltfRoot);
+	        }
+
+	        if (node.Children != null)
+	        {
+	            Children = new List<NodeId>(node.Children.Count);
+	            foreach (NodeId child in node.Children)
+	            {
+	                Children.Add(new NodeId(child, gltfRoot));
+	            }
+	        }
+
+	        if (node.Skin != null)
+	        {
+	            Skin = new SkinId(node.Skin, gltfRoot);
+	        }
+
+	        if (node.Matrix != null)
+	        {
+	            Matrix = new Matrix4x4(node.Matrix);
+	        }
+
+	        if (node.Mesh != null)
+	        {
+	            Mesh = new MeshId(node.Mesh, gltfRoot);
+	        }
+
+	        Rotation = node.Rotation;
+
+	        Scale = node.Scale;
+
+	        Translation = node.Translation;
+
+	        if (node.Weights != null)
+	        {
+	            Weights = node.Weights.ToList();
+	        }
+	    }
 
 		public static Node Deserialize(GLTFRoot root, JsonReader reader)
 		{

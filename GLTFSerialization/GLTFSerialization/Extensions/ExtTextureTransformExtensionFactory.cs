@@ -16,7 +16,7 @@ namespace GLTF.Schema
 			ExtensionName = EXTENSION_NAME;
 		}
 
-		public override Extension Deserialize(GLTFRoot root, JProperty extensionToken)
+		public override IExtension Deserialize(GLTFRoot root, JProperty extensionToken)
 		{
 			Vector2 offset = new Vector2(ExtTextureTransformExtension.OFFSET_DEFAULT);
 			Vector2 scale = new Vector2(ExtTextureTransformExtension.SCALE_DEFAULT);

@@ -16,7 +16,19 @@ namespace GLTF.Schema
 		/// </summary>
 		public int ByteOffset = 0;
 
-		public static AccessorSparseValues Deserialize(GLTFRoot root, JsonReader reader)
+	    public AccessorSparseValues()
+	    {
+	    }
+
+	    public AccessorSparseValues(AccessorSparseValues accessorSparseValues, GLTFRoot gltfRoot) : base(accessorSparseValues)
+	    {
+	        if (accessorSparseValues == null) return;
+
+            BufferView = new BufferViewId(accessorSparseValues.BufferView, gltfRoot);
+	        ByteOffset = accessorSparseValues.ByteOffset;
+	    }
+
+        public static AccessorSparseValues Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var values = new AccessorSparseValues();
 
