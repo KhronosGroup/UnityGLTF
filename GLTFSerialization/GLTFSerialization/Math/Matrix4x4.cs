@@ -40,12 +40,6 @@ namespace GLTF.Math
 			Array.Copy(other.mat, 0, mat, 0, 16);
 		}
 
-		public Matrix4x4(Matrix4x4 other)
-		{
-			Array.Copy(other.mat, 0, mat, 0, 16);
-		}
-		
-
 		private float[] mat = new float[16];
 
 		public float M11 { get { return mat[0]; } set { mat[0] = value; } }
