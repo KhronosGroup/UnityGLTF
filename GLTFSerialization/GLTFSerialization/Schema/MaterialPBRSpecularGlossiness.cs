@@ -6,51 +6,52 @@ using System.Diagnostics;
 
 namespace GLTF.Schema
 {
+    // TODO: move this code to KHR_materials_pbrSpecularGlossinessExtension
+
     /// <summary>
-    /// A set of parameter values that are used to define the specular-glossiness
+    /// glTF extension that defines the specular-glossiness 
     /// material model from Physically-Based Rendering (PBR) methodology.
     /// 
-    /// Supports the KHR_materials_pbrSpecularGlossiness material extension.
+    /// Spec can be found here:
     /// https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
     /// </summary>
     public class PbrSpecularGlossiness : GLTFProperty
     {
         /// <summary>
-        /// The RGBA components of the base color of the material.
-        /// The fourth component (A) is the opacity of the material.
-        /// These values are linear.
+        /// The RGBA components of the reflected diffuse color of the material. 
+        /// Metals have a diffuse value of [0.0, 0.0, 0.0]. 
+        /// The fourth component (A) is the alpha coverage of the material. 
+        /// The <see cref="Material.AlphaMode"/> property specifies how alpha is interpreted. 
+        /// The values are linear.
         /// </summary>
-        public Color BaseColorFactor = Color.White;
+        public Color DiffuseFactor = Color.White;
 
         /// <summary>
-        /// The base color texture.
-        /// This texture contains RGB(A) components in sRGB color space.
-        /// The first three components (RGB) specify the base color of the material.
-        /// If the fourth component (A) is present, it represents the opacity of the
-        /// material. Otherwise, an opacity of 1.0 is assumed.
+        /// The diffuse texture. 
+        /// This texture contains RGB(A) components of the reflected diffuse color of the material in sRGB color space. 
+        /// If the fourth component (A) is present, it represents the alpha coverage of the 
+        /// material. Otherwise, an alpha of 1.0 is assumed. 
+        /// The <see cref="Material.AlphaMode"/> property specifies how alpha is interpreted. 
+        /// The stored texels must not be premultiplied.
         /// </summary>
-        public TextureInfo BaseColorTexture;
+        public TextureInfo DiffuseTexture;
 
         /// <summary>
-        /// The color of the material's specular highlights.
+        /// The specular RGB color of the material. This value is linear
         /// </summary>
         public Vector3 SpecularFactor = Vector3.One;
 
         /// <summary>
-        /// The glossiness of the material.
-        /// A value of 1.0 means the material is completely rough.
-        /// A value of 0.0 means the material is completely smooth.
+        /// The glossiness or smoothness of the material. 
+        /// A value of 1.0 means the material has full glossiness or is perfectly smooth. 
+        /// A value of 0.0 means the material has no glossiness or is completely rough. 
         /// This value is linear.
         /// </summary>
         public double GlossinessFactor = 1;
 
         /// <summary>
-        /// The specular-glossiness texture has two components.
-        /// The first component (R) contains the specularity of the material.
-        /// The second component (G) contains the glossiness of the material.
-        /// These values are linear.
-        /// If the third component (B) and/or the fourth component (A) are present,
-        /// they are ignored.
+        /// The specular-glossiness texture is RGBA texture, containing the specular color of the material (RGB components) and its glossiness (A component). 
+        /// The values are in sRGB space.
         /// </summary>
         public TextureInfo SpecularGlossinessTexture;
 
@@ -70,10 +71,10 @@ namespace GLTF.Schema
                 switch (curProp)
                 {
                     case "diffuseFactor":
-                        specularGlossiness.BaseColorFactor = reader.ReadAsRGBAColor();
+                        specularGlossiness.DiffuseFactor = reader.ReadAsRGBAColor();
                         break;
                     case "diffuseTexture":
-                        specularGlossiness.BaseColorTexture = TextureInfo.Deserialize(root, reader);
+                        specularGlossiness.DiffuseTexture = TextureInfo.Deserialize(root, reader);
                         break;
                     case "specularFactor":
                         specularGlossiness.SpecularFactor = reader.ReadAsVector3();
@@ -97,21 +98,21 @@ namespace GLTF.Schema
         {
             writer.WriteStartObject();
 
-            if (BaseColorFactor != Color.White)
+            if (DiffuseFactor != Color.White)
             {
                 writer.WritePropertyName("diffuseFactor");
                 writer.WriteStartArray();
-                writer.WriteValue(BaseColorFactor.R);
-                writer.WriteValue(BaseColorFactor.G);
-                writer.WriteValue(BaseColorFactor.B);
-                writer.WriteValue(BaseColorFactor.A);
+                writer.WriteValue(DiffuseFactor.R);
+                writer.WriteValue(DiffuseFactor.G);
+                writer.WriteValue(DiffuseFactor.B);
+                writer.WriteValue(DiffuseFactor.A);
                 writer.WriteEndArray();
             }
 
-            if (BaseColorTexture != null)
+            if (DiffuseTexture != null)
             {
                 writer.WritePropertyName("diffuseTexture");
-                BaseColorTexture.Serialize(writer);
+                DiffuseTexture.Serialize(writer);
             }
 
             if (SpecularFactor != Vector3.One)
