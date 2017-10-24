@@ -12,6 +12,15 @@ namespace GLTF.Schema
 		/// </summary>
 		public double Scale = 1.0f;
 
+	    public NormalTextureInfo()
+	    {
+	    }
+
+	    public NormalTextureInfo(NormalTextureInfo normalTextureInfo, GLTFRoot gltfRoot) : base(normalTextureInfo, gltfRoot)
+	    {
+	        Scale = normalTextureInfo.Scale;
+	    }
+
 		public static new NormalTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var textureInfo = new NormalTextureInfo();

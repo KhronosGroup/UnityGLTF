@@ -46,8 +46,7 @@ namespace UnityGLTF {
 				var fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + Url;
 				gltfStream = File.OpenRead(fullPath);
 				var gltfRoot = GLTF.GLTFParser.ParseJson(gltfStream);
-				var fileName = Path.GetFileName(fullPath);
-				loader = new FileLoader(fullPath.Substring(0, fullPath.Length - fileName.Length));
+				loader = new FileLoader(URIHelper.GetDirectoryName(fullPath));
 
 				importer = new GLTFSceneImporter(
 					gltfRoot,

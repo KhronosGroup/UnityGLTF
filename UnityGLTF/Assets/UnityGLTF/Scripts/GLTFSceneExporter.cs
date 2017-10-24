@@ -291,8 +291,10 @@ namespace UnityGLTF
 			{
 				for (var i = 0; i < primVariations.Length; i++)
 				{
-					prims[i] = primVariations[i].Clone();
-					prims[i].Material = ExportMaterial(materialsObj[i]);
+					prims[i] = new MeshPrimitive(primVariations[i], _root)
+					{
+						Material = ExportMaterial(materialsObj[i])
+					};
 				}
 
 				return prims;

@@ -2,17 +2,14 @@
 using System.Text;
 using GLTF;
 using System.IO;
+using GLTF.Schema;
 
 namespace GLTFSerializationTests
 {
 	[TestClass]
 	public class GLTFRootTest
 	{
-
-		[TestMethod]
-		public void TestMinimumGLTF()
-		{
-			var testStr = @"
+		private readonly string testStr = @"
 			{
 				""asset"": {
 					""version"": ""2.0""
@@ -20,15 +17,32 @@ namespace GLTFSerializationTests
 			}
 		";
 
+		private GLTFRoot _testRoot;
+
+		[TestInitialize]
+		public void Initialize()
+		{
 			MemoryStream stream = new MemoryStream();
 			StreamWriter writer = new StreamWriter(stream);
 			writer.Write(testStr);
 			writer.Flush();
 			stream.Position = 0;
 
-			var testRoot = GLTFParser.ParseJson(stream);
+			_testRoot = GLTFParser.ParseJson(stream);
 
-			Assert.AreEqual(testRoot.Asset.Version, "2.0");
+		}
+
+		[TestMethod]
+		public void TestMinimumGLTF()
+		{
+			Assert.AreEqual(_testRoot.Asset.Version, "2.0");
+		}
+
+		[TestMethod]
+		public void TestCopyMinGLTF()
+		{
+			GLTFRoot root = new GLTFRoot(_testRoot);
+            Assert.IsNotNull(root);
 		}
 	}
 }

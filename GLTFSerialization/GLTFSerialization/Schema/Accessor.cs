@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Extensions;
 using GLTF.Math;
 using Newtonsoft.Json;
@@ -94,6 +95,33 @@ namespace GLTF.Schema
 		/// Sparse storage of attributes that deviate from their initialization value.
 		/// </summary>
 		public AccessorSparse Sparse;
+
+	    public Accessor()
+	    {
+	    }
+
+	    public Accessor(Accessor accessor, GLTFRoot gltfRoot) : base(accessor)
+	    {
+	        if (accessor == null) return;
+
+	        if (accessor.BufferView != null)
+	        {
+	            BufferView = new BufferViewId(accessor.BufferView, gltfRoot);
+	        }
+
+	        ByteOffset = accessor.ByteOffset;
+	        ComponentType = accessor.ComponentType;
+	        Normalized = accessor.Normalized;
+	        Count = accessor.Count;
+	        Type = accessor.Type;
+	        Max = accessor.Max.ToList();
+	        Min = accessor.Min.ToList();
+
+	        if (accessor.Sparse != null)
+	        {
+	            Sparse = new AccessorSparse(accessor.Sparse, gltfRoot);
+	        }
+	    }
 
 		public static Accessor Deserialize(GLTFRoot root, JsonReader reader)
 		{

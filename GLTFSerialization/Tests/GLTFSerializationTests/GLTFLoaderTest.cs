@@ -9,8 +9,8 @@ namespace GLTFSerializationTests
 	[TestClass]
 	public class GLTFJsonLoaderTest
 	{
-		readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
-		readonly string GLB_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
+		private readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
+		private readonly string GLB_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
 
 		public TestContext TestContext { get; set; }
 

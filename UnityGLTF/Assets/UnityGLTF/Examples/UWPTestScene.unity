@@ -411,7 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Url: BoomBox.gltf
+  Url: BoomBox/glTF/BoomBox.gltf
   Multithreaded: 0
   UseStream: 1
   MaximumLod: 300

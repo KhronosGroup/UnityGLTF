@@ -46,7 +46,20 @@ namespace GLTF.Schema
 		/// </summary>
 		public BufferViewTarget Target = BufferViewTarget.None;
 
-		public static BufferView Deserialize(GLTFRoot root, JsonReader reader)
+	    public BufferView()
+	    {
+	    }
+
+	    public BufferView(BufferView bufferView, GLTFRoot gltfRoot) : base(bufferView)
+	    {
+	        Buffer = new BufferId(bufferView.Buffer, gltfRoot);
+	        ByteOffset = bufferView.ByteOffset;
+	        ByteLength = bufferView.ByteLength;
+	        ByteStride = bufferView.ByteStride;
+	        Target = bufferView.Target;
+	    }
+
+        public static BufferView Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var bufferView = new BufferView();
 

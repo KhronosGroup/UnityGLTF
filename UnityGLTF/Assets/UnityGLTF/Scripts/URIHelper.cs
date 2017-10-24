@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 public static class URIHelper
 {
+	private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
+	
 	/// <summary>
 	///  Get the absolute path to a gltf uri reference.
 	/// </summary>
@@ -19,5 +23,35 @@ public static class URIHelper
 	public static string GetFileFromUri(Uri uri)
 	{
 		return uri.Segments[uri.Segments.Length - 1];
+	}
+	
+	public static string GetDirectoryName(string fullPath)
+	{
+		var fileName = Path.GetFileName(fullPath);
+		return fullPath.Substring(0, fullPath.Length - fileName.Length);
+	}
+	
+	/// <summary>
+	/// Tries to parse the uri as a base 64 encoded string
+	/// </summary>
+	/// <param name="uri">The string that represents the data</param>
+	/// <param name="bufferData">Returns the deencoded bytes</param>
+	public static void TryParseBase64(string uri, out byte[] bufferData)
+	{
+		Regex regex = new Regex(Base64StringInitializer);
+		Match match = regex.Match(uri);
+		bufferData = null;
+		if (match.Success)
+		{
+			var base64Data = uri.Substring(match.Length);
+			bufferData = Convert.FromBase64String(base64Data);
+		}
+	}
+
+	public static bool IsBase64Uri(string uri)
+	{
+		Regex regex = new Regex(Base64StringInitializer);
+		Match match = regex.Match(uri);
+		return match.Success;
 	}
 }

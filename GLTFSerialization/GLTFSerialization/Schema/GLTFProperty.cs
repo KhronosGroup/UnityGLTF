@@ -16,10 +16,33 @@ namespace GLTF.Schema
 			_extensionRegistry.Add(extensionFactory.ExtensionName, extensionFactory);
 		}
 
-		public Dictionary<string, Extension> Extensions;
+		public Dictionary<string, IExtension> Extensions;
 		public JToken Extras;
 
-		public bool DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
+	    public GLTFProperty()
+	    {
+	    }
+
+	    public GLTFProperty(GLTFProperty property)
+	    {
+	        if (property == null) return;
+
+	        if (property.Extensions != null)
+	        {
+                Extensions = new Dictionary<string, IExtension>(property.Extensions.Count);
+	            foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in Extensions)
+	            {
+                    Extensions.Add(extensionKeyValuePair.Key, extensionKeyValuePair.Value.Clone());
+	            }
+	        }
+
+	        if (property.Extras != null)
+	        {
+	            Extras = property.Extras.DeepClone();
+	        }
+	    }
+
+        public bool DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
             bool shouldSkipRead = false;
 			switch (reader.Value.ToString())
@@ -85,14 +108,14 @@ namespace GLTF.Schema
 		}
 
         // todo: this should be rewritten so all extensions are a single jproperty and then we parse each jproperty
-		private Dictionary<string, Extension> DeserializeExtensions(GLTFRoot root, JsonReader reader, ref bool shouldSkipRead)
+		private Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader, ref bool shouldSkipRead)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
 				throw new Exception("GLTF extensions must be an object");
 			}
 
-			var extensions = new Dictionary<string, Extension>();
+			var extensions = new Dictionary<string, IExtension>();
 
 			bool isOnNextExtension = false;
 			while (isOnNextExtension || (reader.Read() && reader.TokenType == JsonToken.PropertyName))

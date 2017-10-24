@@ -35,6 +35,26 @@ namespace GLTF.Math
 			M44 = m44;
 		}
 
+	    public Matrix4x4(Matrix4x4 mat4x4)
+	    {
+	        M11 = mat4x4.M11;
+	        M12 = mat4x4.M12;
+	        M13 = mat4x4.M13;
+	        M14 = mat4x4.M14;
+	        M21 = mat4x4.M21;
+	        M22 = mat4x4.M22;
+	        M23 = mat4x4.M23;
+	        M24 = mat4x4.M24;
+	        M31 = mat4x4.M31;
+	        M32 = mat4x4.M32;
+	        M33 = mat4x4.M33;
+	        M34 = mat4x4.M34;
+	        M41 = mat4x4.M41;
+	        M42 = mat4x4.M42;
+	        M43 = mat4x4.M43;
+	        M44 = mat4x4.M44;
+        }
+
 		private float[] mat = new float[16];
 
 		public float M11 { get { return mat[0]; } set { mat[0] = value; } }

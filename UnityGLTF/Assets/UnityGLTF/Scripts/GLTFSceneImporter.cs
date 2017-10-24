@@ -53,9 +53,7 @@ namespace UnityGLTF
 
 		public int MaximumLod = 300;
 		public Transform SceneParent { get; set; }
-
-		private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
-
+		
 		protected GameObject _lastLoadedScene;
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
 		protected readonly GLTF.Schema.Material DefaultMaterial = new GLTF.Schema.Material();
@@ -301,7 +299,7 @@ namespace UnityGLTF
 				var uri = buffer.Uri;
 
 				byte[] bufferData;
-				TryParseBase64(uri, out bufferData);
+				URIHelper.TryParseBase64(uri, out bufferData);
 				if(bufferData != null)
 				{
 					bufferDataStream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
@@ -337,7 +335,7 @@ namespace UnityGLTF
 				var uri = image.Uri;
 
 				byte[] bufferData;
-				TryParseBase64(uri, out bufferData);
+				URIHelper.TryParseBase64(uri, out bufferData);
 				if(bufferData != null)
 				{
 					texture = new Texture2D(0, 0);
@@ -354,23 +352,6 @@ namespace UnityGLTF
 				}
 				
 				return texture;
-			}
-		}
-
-		/// <summary>
-		/// Tries to parse the uri as a base 64 encoded string
-		/// </summary>
-		/// <param name="uri">The string that represents the data</param>
-		/// <param name="bufferData">Returns the deencoded bytes</param>
-		protected void TryParseBase64(string uri, out byte[] bufferData)
-		{
-			Regex regex = new Regex(Base64StringInitializer);
-			Match match = regex.Match(uri);
-			bufferData = null;
-			if (match.Success)
-			{
-				var base64Data = uri.Substring(match.Length);
-				bufferData = Convert.FromBase64String(base64Data);
 			}
 		}
 
