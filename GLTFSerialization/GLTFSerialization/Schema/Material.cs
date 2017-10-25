@@ -101,21 +101,21 @@ namespace GLTF.Schema
                     case "pbrSpecularGlossiness":
                         material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
                         break;
-                    case "extensions":
-                        reader.Read();
+                    ////case "extensions":
+                        //reader.Read();
 
-                        while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-                        {
-                            var extensionProp = reader.Value.ToString();
+                        //while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+                        //{
+                        //    var extensionProp = reader.Value.ToString();
 
-                            switch (extensionProp)
-                            {
-                                case "KHR_materials_pbrSpecularGlossiness":
-                                    material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
-                                    break;
-                            }
-                        }
-                        break;
+                        //    switch (extensionProp)
+                        //    {
+                        //        case "KHR_materials_pbrSpecularGlossiness":
+                        //            material.PbrSpecularGlossiness = PbrSpecularGlossiness.Deserialize(root, reader);
+                        //            break;
+                        //    }
+                        //}
+                        //break;
                     case "commonConstant":
 						material.CommonConstant = MaterialCommonConstant.Deserialize(root, reader);
 						break;
@@ -141,6 +141,7 @@ namespace GLTF.Schema
 						material.DoubleSided = reader.ReadAsBoolean().Value;
 						break;
 					default:
+                        // trace
 						material.DefaultPropertyDeserializer(root, reader);
 						break;
 				}

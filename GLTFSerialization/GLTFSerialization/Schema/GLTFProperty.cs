@@ -10,8 +10,9 @@ namespace GLTF.Schema
 	{
 		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>();
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
+        private static KHR_materials_pbrSpecularGlossinessExtensionFactory _KHRExtensionFactory = new KHR_materials_pbrSpecularGlossinessExtensionFactory();
 
-		public static void RegisterExtension(ExtensionFactory extensionFactory)
+        public static void RegisterExtension(ExtensionFactory extensionFactory)
 		{
 			_extensionRegistry.Add(extensionFactory.ExtensionName, extensionFactory);
 		}
@@ -24,6 +25,7 @@ namespace GLTF.Schema
 			switch (reader.Value.ToString())
 			{
 				case "extensions":
+                    // trace
 					Extensions = DeserializeExtensions(root, reader);
 					break;
 				case "extras":
@@ -101,7 +103,13 @@ namespace GLTF.Schema
 				{
 					extensions.Add(extensionName, extensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
-				else
+                // TODO: move hardcoded string to static string in material extension
+                else if (_extensionRegistry.TryGetValue("KHR_materials_pbrSpecularGlossiness", out extensionFactory))
+                {
+                    // make sure my KHR_materials_pbrSpecularGlossiness fields get filled in by the Deserializer
+                    extensions.Add("KHR_materials_pbrSpecularGlossiness", _defaultExtensionFactory.Deserialize(root, (JProperty)extensionToken));
+                }
+                else
 				{
 					extensions.Add(extensionName, _defaultExtensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
@@ -118,6 +126,7 @@ namespace GLTF.Schema
 				}
 			}
 
+            // make sure my material is in here - next step is to get the client to create a unity material from this
 			return extensions;
 		}
 

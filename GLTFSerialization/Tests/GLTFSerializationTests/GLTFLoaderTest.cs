@@ -28,7 +28,8 @@ namespace GLTFSerializationTests
 			gltfStream.Read(gltfData, 0, streamLength);
 			
 			GLTFRoot.RegisterExtension(new TestExtensionFactory());
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
+            GLTFRoot.RegisterExtension(new KHR_materials_pbrSpecularGlossinessExtensionFactory());
+            GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
