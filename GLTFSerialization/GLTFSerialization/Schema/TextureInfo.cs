@@ -8,13 +8,13 @@ namespace GLTF.Schema
 	/// </summary>
 	public class TextureInfo : GLTFProperty
 	{
-        public const string INDEX = "index";
-        public const string TEXCOORD = "texCoord";
+		public const string INDEX = "index";
+		public const string TEXCOORD = "texCoord";
 
-        /// <summary>
-        /// The index of the texture.
-        /// </summary>
-        public TextureId Index;
+		/// <summary>
+		/// The index of the texture.
+		/// </summary>
+		public TextureId Index;
 
 		/// <summary>
 		/// This integer value is used to construct a string in the format

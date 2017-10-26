@@ -66,65 +66,64 @@ namespace GLTF.Extensions
 			return list;
 		}
 
-        // TODO: (CR) is it ok to pass the GLTFRoot here and inclue using GLTF.Schema?
-        public static TextureInfo DeserializeAsTexture(this JToken token, GLTFRoot root)
-        {
-            TextureInfo textureInfo = null;
-            
-            if (token != null)
-            {
-                JObject textureObject = token as JObject;
-                if (textureObject == null)
-                {
-                    throw new Exception("JToken used for Texture deserialization was not a JObject. It was a " + token.Type.ToString());
-                }
-                System.Diagnostics.Debug.WriteLine("textureObject is " + textureObject.Type + " with a value of: " + textureObject[TextureInfo.INDEX].Type + " " + textureObject.ToString());
+		public static TextureInfo DeserializeAsTexture(this JToken token, GLTFRoot root)
+		{
+			TextureInfo textureInfo = null;
+			
+			if (token != null)
+			{
+				JObject textureObject = token as JObject;
+				if (textureObject == null)
+				{
+					throw new Exception("JToken used for Texture deserialization was not a JObject. It was a " + token.Type.ToString());
+				}
+				System.Diagnostics.Debug.WriteLine("textureObject is " + textureObject.Type + " with a value of: " + textureObject[TextureInfo.INDEX].Type + " " + textureObject.ToString());
 
-                int indexVal = textureObject[TextureInfo.INDEX].DeserializeAsInt();
-                textureInfo = new TextureInfo()
-                {
-                    Index = new TextureId()
-                    {
-                        Id = indexVal,
-                        Root = root
-                    }
-                };
-            }
+				int indexVal = textureObject[TextureInfo.INDEX].DeserializeAsInt();
+				textureInfo = new TextureInfo()
+				{
+					Index = new TextureId()
+					{
+						Id = indexVal,
+						Root = root
+					}
+				};
+			}
 
-            return textureInfo;
-        }
+			return textureInfo;
+		}
 
-        public static int DeserializeAsInt(this JToken token)
-        {
-            if (token != null)
-            {
-                JValue intValue = token as JValue;
-                if (intValue == null)
-                {
-                    throw new Exception("JToken used for int deserialization was not a JValue. It was a " + token.Type.ToString());
-                }
+		public static int DeserializeAsInt(this JToken token)
+		{
+			if (token != null)
+			{
+				JValue intValue = token as JValue;
+				if (intValue == null)
+				{
+					throw new Exception("JToken used for int deserialization was not a JValue. It was a " + token.Type.ToString());
+				}
 
-                return (int)intValue;
-            }
+				return (int)intValue;
+			}
 
-            return 0;
-        }
+			return 0;
+		}
 
-        public static double DeserializeAsDouble(this JToken token)
-        {
-            if (token != null)
-            {
-                JValue doubleValue = token as JValue;
-                if (doubleValue == null)
-                {
-                    throw new Exception("JToken used for double deserialization was not a JValue. It was a " + token.Type.ToString());
-                }
+		public static double DeserializeAsDouble(this JToken token)
+		{
+			if (token != null)
+			{
+				JValue doubleValue = token as JValue;
+				if (doubleValue == null)
+				{
+					throw new Exception("JToken used for double deserialization was not a JValue. It was a " + token.Type.ToString());
+				}
 
-                return (double)doubleValue;
-            }
+				return (double)doubleValue;
+			}
 
-            return 0d;
-        }
+			return 0d;
+		}
 
 		public static Color ReadAsRGBAColor(this JsonReader reader)
 		{
@@ -148,36 +147,36 @@ namespace GLTF.Extensions
 
 			return color;
 		}
-        
-        public static Color DeserializeAsColor(this JToken token)
-        {
-            Color color = Color.White;
+		
+		public static Color DeserializeAsColor(this JToken token)
+		{
+			Color color = Color.White;
 
-            if (token != null)
-            {
-                JArray colorArray = token as JArray;
-                if (colorArray == null)
-                {
-                    throw new Exception("JToken used for Color deserialization was not a JArray. It was a " + token.Type.ToString());
-                }
-                if (colorArray.Count != 4)
-                {
-                    throw new Exception("JArray used for Color deserialization did not have 4 entries for RGBA. It had " + colorArray.Count);
-                }
+			if (token != null)
+			{
+				JArray colorArray = token as JArray;
+				if (colorArray == null)
+				{
+					throw new Exception("JToken used for Color deserialization was not a JArray. It was a " + token.Type.ToString());
+				}
+				if (colorArray.Count != 4)
+				{
+					throw new Exception("JArray used for Color deserialization did not have 4 entries for RGBA. It had " + colorArray.Count);
+				}
 
-                color = new Color
-                {
-                    R = (float)colorArray[0].DeserializeAsDouble(),
-                    G = (float)colorArray[1].DeserializeAsDouble(),
-                    B = (float)colorArray[2].DeserializeAsDouble(),
-                    A = (float)colorArray[3].DeserializeAsDouble()
-                };
-            }
+				color = new Color
+				{
+					R = (float)colorArray[0].DeserializeAsDouble(),
+					G = (float)colorArray[1].DeserializeAsDouble(),
+					B = (float)colorArray[2].DeserializeAsDouble(),
+					A = (float)colorArray[3].DeserializeAsDouble()
+				};
+			}
 
-            return color;
-        }
+			return color;
+		}
 
-        public static Color ReadAsRGBColor(this JsonReader reader)
+		public static Color ReadAsRGBColor(this JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartArray)
 			{
@@ -222,32 +221,32 @@ namespace GLTF.Extensions
 			return vector;
 		}
 
-        public static Vector3 DeserializeAsVector3(this JToken token)
-        {
-            Vector3 vector = new Vector3();
+		public static Vector3 DeserializeAsVector3(this JToken token)
+		{
+			Vector3 vector = new Vector3();
 
-            if (token != null)
-            {
-                JArray vectorArray = token as JArray;
-                if (vectorArray == null)
-                {
-                    throw new Exception("JToken used for Vector3 deserialization was not a JArray. It was a " + token.Type.ToString());
-                }
-                if (vectorArray.Count != 3)
-                {
-                    throw new Exception("JArray used for Vector3 deserialization did not have 3 entries for XYZ. It had " + vectorArray.Count);
-                }
+			if (token != null)
+			{
+				JArray vectorArray = token as JArray;
+				if (vectorArray == null)
+				{
+					throw new Exception("JToken used for Vector3 deserialization was not a JArray. It was a " + token.Type.ToString());
+				}
+				if (vectorArray.Count != 3)
+				{
+					throw new Exception("JArray used for Vector3 deserialization did not have 3 entries for XYZ. It had " + vectorArray.Count);
+				}
 
-                vector = new Vector3
-                {
-                    X = (float)vectorArray[0].DeserializeAsDouble(),
-                    Y = (float)vectorArray[1].DeserializeAsDouble(),
-                    Z = (float)vectorArray[2].DeserializeAsDouble()
-                };
-            }
+				vector = new Vector3
+				{
+					X = (float)vectorArray[0].DeserializeAsDouble(),
+					Y = (float)vectorArray[1].DeserializeAsDouble(),
+					Z = (float)vectorArray[2].DeserializeAsDouble()
+				};
+			}
 
-            return vector;
-        }
+			return vector;
+		}
 
 		public static Quaternion ReadAsQuaternion(this JsonReader reader)
 		{

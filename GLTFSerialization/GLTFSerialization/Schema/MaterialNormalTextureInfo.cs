@@ -4,15 +4,15 @@ using Newtonsoft.Json;
 namespace GLTF.Schema
 {
 	public class NormalTextureInfo : TextureInfo
-    {
-        public const string SCALE = "scale";
+	{
+		public const string SCALE = "scale";
 
-        /// <summary>
-        /// The scalar multiplier applied to each normal vector of the texture.
-        /// This value is ignored if normalTexture is not specified.
-        /// This value is linear.
-        /// </summary>
-        public double Scale = 1.0f;
+		/// <summary>
+		/// The scalar multiplier applied to each normal vector of the texture.
+		/// This value is ignored if normalTexture is not specified.
+		/// This value is linear.
+		/// </summary>
+		public double Scale = 1.0f;
 
 		public static new NormalTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -35,7 +35,7 @@ namespace GLTF.Schema
 					case TEXCOORD:
 						textureInfo.TexCoord = reader.ReadAsInt32().Value;
 						break;
-                    case SCALE:
+					case SCALE:
 						textureInfo.Scale = reader.ReadAsDouble().Value;
 						break;
 					default:

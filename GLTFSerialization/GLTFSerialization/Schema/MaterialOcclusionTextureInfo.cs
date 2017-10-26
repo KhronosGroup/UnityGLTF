@@ -4,19 +4,19 @@ using Newtonsoft.Json;
 namespace GLTF.Schema
 {
 	public class OcclusionTextureInfo : TextureInfo
-    {
-        public const string STRENGTH = "strength";
+	{
+		public const string STRENGTH = "strength";
 
-        /// <summary>
-        /// A scalar multiplier controlling the amount of occlusion applied.
-        /// A value of 0.0 means no occlusion.
-        /// A value of 1.0 means full occlusion.
-        /// This value is ignored if the corresponding texture is not specified.
-        /// This value is linear.
-        /// <minimum>0.0</minimum>
-        /// <maximum>1.0</maximum>
-        /// </summary>
-        public double Strength = 1.0f;
+		/// <summary>
+		/// A scalar multiplier controlling the amount of occlusion applied.
+		/// A value of 0.0 means no occlusion.
+		/// A value of 1.0 means full occlusion.
+		/// This value is ignored if the corresponding texture is not specified.
+		/// This value is linear.
+		/// <minimum>0.0</minimum>
+		/// <maximum>1.0</maximum>
+		/// </summary>
+		public double Strength = 1.0f;
 
 		public static new OcclusionTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{

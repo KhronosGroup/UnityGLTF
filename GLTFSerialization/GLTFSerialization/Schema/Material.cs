@@ -92,7 +92,7 @@ namespace GLTF.Schema
 					case "pbrMetallicRoughness":
 						material.PbrMetallicRoughness = PbrMetallicRoughness.Deserialize(root, reader);
 						break;
-                    case "commonConstant":
+					case "commonConstant":
 						material.CommonConstant = MaterialCommonConstant.Deserialize(root, reader);
 						break;
 					case "normalTexture":
@@ -117,7 +117,7 @@ namespace GLTF.Schema
 						material.DoubleSided = reader.ReadAsBoolean().Value;
 						break;
 					default:
-                        material.DefaultPropertyDeserializer(root, reader);
+						material.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
 			}
@@ -132,9 +132,9 @@ namespace GLTF.Schema
 			{
 				writer.WritePropertyName("pbrMetallicRoughness");
 				PbrMetallicRoughness.Serialize(writer);
-            }
+			}
 
-            if (CommonConstant != null)
+			if (CommonConstant != null)
 			{
 				writer.WritePropertyName("commonConstant");
 				CommonConstant.Serialize(writer);
