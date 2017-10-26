@@ -108,151 +108,6 @@ NavMeshSettings:
     tileSize: 256
     accuratePlacement: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &10002063
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_RootOrder
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: Url
-      value: http://localhost:8080/Lantern/glTF/LanternSG.gltf
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: GLTFStandard
-      value: 
-      objectReference: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: Multithreaded
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: GLTFStandardSpecular
-      value: 
-      objectReference: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
-    - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_Name
-      value: GLTF Specular Lantern
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-  m_IsPrefabParent: 0
---- !u!4 &10002064 stripped
-Transform:
-  m_PrefabParentObject: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-    type: 2}
-  m_PrefabInternal: {fileID: 10002063}
---- !u!1001 &84356348
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_RootOrder
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: Url
-      value: https://ugcorigin.s-microsoft.com/12/085e1349-0000-0000-7a48-6505fa4bb4f9/952/1508443202410.gltf
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: GLTFStandard
-      value: 
-      objectReference: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: Multithreaded
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: GLTFStandardSpecular
-      value: 
-      objectReference: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
-    - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_Name
-      value: GLTF Extension UGC
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
-  m_IsPrefabParent: 0
 --- !u!1 &328853373
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,7 +139,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70ff706d2c89cc247a850af95597fcbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 10002064}
+  target: {fileID: 0}
   distance: 5
   xSpeed: 120
   ySpeed: 120
@@ -365,6 +220,46 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1039131111
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1039131113}
+  - component: {fileID: 1039131112}
+  m_Layer: 0
+  m_Name: Server
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1039131112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1039131111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946dbe02f30bd734c901251fcc62a97a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1039131113
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1039131111}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1667736112
 GameObject:
@@ -552,12 +447,12 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
       propertyPath: m_RootOrder
-      value: 5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
         type: 2}
       propertyPath: Url
-      value: http://localhost:8080/Lantern/glTF/Lantern.gltf
+      value: http://localhost:8080/Lantern/glTF-pbrSpecularGlossiness/Lantern.gltf
       objectReference: {fileID: 0}
     - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
         type: 2}
@@ -576,11 +471,16 @@ Prefab:
       objectReference: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
       propertyPath: m_Name
-      value: GLTF Standard Lantern
+      value: GLTF
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
+        type: 2}
+      propertyPath: addColliders
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}

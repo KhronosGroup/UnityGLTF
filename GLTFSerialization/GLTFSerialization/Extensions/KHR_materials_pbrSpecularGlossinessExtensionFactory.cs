@@ -22,10 +22,10 @@ namespace GLTF.Schema
 
         public override Extension Deserialize(GLTFRoot root, JProperty extensionToken)
         {
-            Color diffuseFactor = new Color();
+            Color diffuseFactor = Color.White;
             TextureInfo diffuseTextureInfo = new TextureInfo();
-            Vector3 specularFactor = new Vector3();
-            double glossinessFactor = 0f;
+            Vector3 specularFactor = KHR_materials_pbrSpecularGlossinessExtension.SPEC_FACTOR_DEFAULT;
+            double glossinessFactor = KHR_materials_pbrSpecularGlossinessExtension.GLOSS_FACTOR_DEFAULT;
             TextureInfo specularGlossinessTextureInfo = new TextureInfo();
 
             if (extensionToken != null)
@@ -33,10 +33,13 @@ namespace GLTF.Schema
                 System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
                 System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
 
-                diffuseFactor = extensionToken.Value[DIFFUSE_FACTOR].DeserializeAsColor();
+                JToken diffuseFactorToken = extensionToken.Value[DIFFUSE_FACTOR];
+                diffuseFactor = diffuseFactorToken != null ? diffuseFactorToken.DeserializeAsColor() : diffuseFactor;
                 diffuseTextureInfo = extensionToken.Value[DIFFUSE_TEXTURE].DeserializeAsTexture(root);
-                specularFactor = extensionToken.Value[SPECULAR_FACTOR].DeserializeAsVector3();
-                glossinessFactor = extensionToken.Value[GLOSSINESS_FACTOR].DeserializeAsDouble();
+                JToken specularFactorToken = extensionToken.Value[SPECULAR_FACTOR];
+                specularFactor = specularFactorToken != null ? specularFactorToken.DeserializeAsVector3() : specularFactor;
+                JToken glossinessFactorToken = extensionToken.Value[GLOSSINESS_FACTOR];
+                glossinessFactor = glossinessFactorToken != null ? glossinessFactorToken.DeserializeAsDouble() : glossinessFactor;
                 specularGlossinessTextureInfo = extensionToken.Value[SPECULAR_GLOSSINESS_TEXTURE].DeserializeAsTexture(root);
             }
 

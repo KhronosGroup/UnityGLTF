@@ -42,6 +42,7 @@ namespace UnityGLTF
 		protected GLTFRoot _root;
 		protected AssetCache _assetCache;
 		protected AsyncAction _asyncAction;
+        protected bool _addColliders = false;
 		byte[] _gltfData;
 		LoadType _loadType;
 
@@ -50,16 +51,18 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="gltfUrl">URL to load</param>
 		/// <param name="parent"></param>
-		public GLTFSceneImporter(string gltfUrl, Transform parent = null)
+        /// <param name="addColliders">Option to add mesh colliders to primitives</param>
+		public GLTFSceneImporter(string gltfUrl, Transform parent = null, bool addColliders = false)
 		{
 			_gltfUrl = gltfUrl;
 			_gltfDirectoryPath = AbsoluteUriPath(gltfUrl);
 			_sceneParent = parent;
 			_asyncAction = new AsyncAction();
 			_loadType = LoadType.Uri;
+            _addColliders = addColliders;
 		}
 
-		public GLTFSceneImporter(string rootPath, Stream stream, Transform parent = null)
+		public GLTFSceneImporter(string rootPath, Stream stream, Transform parent = null, bool addColliders = false)
 		{
 			_gltfUrl = rootPath;
 			_gltfDirectoryPath = AbsoluteFilePath(rootPath);
@@ -67,6 +70,7 @@ namespace UnityGLTF
 			_sceneParent = parent;
 			_asyncAction = new AsyncAction();
 			_loadType = LoadType.Stream;
+            _addColliders = addColliders;
 		}
 
 		public GameObject LastLoadedScene
@@ -389,7 +393,13 @@ namespace UnityGLTF
 			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 			meshRenderer.material = materialWrapper.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
-			return primitiveObj;
+            if (_addColliders)
+            {
+                var meshCollider = primitiveObj.AddComponent<MeshCollider>();
+                meshCollider.sharedMesh = meshFilter.mesh;
+            }
+
+            return primitiveObj;
 		}
 
 		protected virtual MaterialCacheData CreateMaterial(GLTF.Schema.Material def, int materialIndex)
@@ -559,6 +569,7 @@ namespace UnityGLTF
 				{
 					var texture = def.EmissiveTexture.Index.Value;
 					material.EnableKeyword("EMISSION_MAP_ON");
+                    material.EnableKeyword("_EMISSION");
 					material.SetTexture("_EmissionMap", CreateTexture(texture));
 					material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 				}

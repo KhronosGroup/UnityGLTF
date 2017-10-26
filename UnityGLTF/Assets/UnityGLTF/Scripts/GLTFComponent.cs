@@ -19,6 +19,8 @@ namespace UnityGLTF {
         public Shader GLTFStandardSpecular;
         public Shader GLTFConstant;
 
+        public bool addColliders = false;
+
 		IEnumerator Start()
 		{
 			GLTFSceneImporter loader = null;
@@ -30,14 +32,16 @@ namespace UnityGLTF {
 				loader = new GLTFSceneImporter(
 					fullPath,
 					gltfStream,
-					gameObject.transform
+					gameObject.transform,
+                    addColliders
 					);
 			}
 			else
 			{
 				loader = new GLTFSceneImporter(
 					Url,
-					gameObject.transform
+					gameObject.transform,
+                    addColliders
 					);
 			}
 
