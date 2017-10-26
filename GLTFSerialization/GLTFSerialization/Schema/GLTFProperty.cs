@@ -123,7 +123,6 @@ namespace GLTF.Schema
 				}
 			}
 
-            // make sure my material is in here - next step is to get the client to create a unity material from this
 			return extensions;
 		}
 

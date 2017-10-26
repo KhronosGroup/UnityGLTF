@@ -6,8 +6,6 @@ using GLTF.Extensions;
 
 namespace GLTF.Schema
 {
-    // TODO: (CR) any reason we aren't using JsonConvert.DeserializeObject?
-    // TODO: (CR) does KHR specification require all 5 properties to be defined in the GLTF file? What if one is missing?
     public class KHR_materials_pbrSpecularGlossinessExtensionFactory : ExtensionFactory
     {
         public const string EXTENSION_NAME = "KHR_materials_pbrSpecularGlossiness";
