@@ -9,10 +9,7 @@ namespace GLTFSerializationTests
 	[TestClass]
 	public class GLTFJsonLoaderTest
     {
-        readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/1501770225815.gltf";
-		
-        
-		// readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
+        readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
 		readonly string GLB_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
 
 		public TestContext TestContext { get; set; }
@@ -28,7 +25,6 @@ namespace GLTFSerializationTests
 			gltfStream.Read(gltfData, 0, streamLength);
 			
 			GLTFRoot.RegisterExtension(new TestExtensionFactory());
-            GLTFRoot.RegisterExtension(new KHR_materials_pbrSpecularGlossinessExtensionFactory());
             GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfData);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}

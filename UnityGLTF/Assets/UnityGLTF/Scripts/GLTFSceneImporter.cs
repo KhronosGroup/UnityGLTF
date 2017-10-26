@@ -18,7 +18,6 @@ namespace UnityGLTF
 		public enum MaterialType
 		{
 			PbrMetallicRoughness,
-			PbrSpecularGlossiness,
             KHR_materials_pbrSpecularGlossiness,
             CommonConstant,
 			CommonPhong,
@@ -404,9 +403,7 @@ namespace UnityGLTF
 				try
                 {
                     if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_pbrSpecularGlossiness"))
-                        shader = _shaderCache[MaterialType.PbrSpecularGlossiness];
-                    else if (def.PbrSpecularGlossiness != null)
-                        shader = _shaderCache[MaterialType.PbrSpecularGlossiness];
+                        shader = _shaderCache[MaterialType.KHR_materials_pbrSpecularGlossiness];
                     else if (def.PbrMetallicRoughness != null)
                         shader = _shaderCache[MaterialType.PbrMetallicRoughness];
                     else if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_common")
@@ -491,29 +488,29 @@ namespace UnityGLTF
 
 					material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
                 }
-
-                if (def.PbrSpecularGlossiness != null || (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains("KHR_materials_pbrSpecularGlossiness")))
+                
+                if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
                 {
-                    var pbr = def.PbrSpecularGlossiness;
+                    KHR_materials_pbrSpecularGlossinessExtension specGloss = def.Extensions[KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME] as KHR_materials_pbrSpecularGlossinessExtension;
 
-                    material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColor());
+                    material.SetColor("_Color", specGloss.DiffuseFactor.ToUnityColor());
 
-                    if (pbr.BaseColorTexture != null)
+                    if (specGloss.DiffuseTexture != null)
                     {
-                        var texture = pbr.BaseColorTexture.Index.Value;
+                        var texture = specGloss.DiffuseTexture.Index.Value;
                         material.SetTexture("_MainTex", CreateTexture(texture));
                     }
 
-                    material.SetVector("_SpecColor", pbr.SpecularFactor.ToUnityVector3());
+                    material.SetVector("_SpecColor", specGloss.SpecularFactor.ToUnityVector3());
 
-                    if (pbr.SpecularGlossinessTexture != null)
+                    if (specGloss.SpecularGlossinessTexture != null)
                     {
-                        var texture = pbr.SpecularGlossinessTexture.Index.Value;
+                        var texture = specGloss.SpecularGlossinessTexture.Index.Value;
                         material.SetTexture("_SpecGlossMap", CreateTexture(texture));
                         material.EnableKeyword("_SPECGLOSSMAP");
                     }
 
-                    material.SetFloat("_Glossiness", (float)pbr.GlossinessFactor);
+                    material.SetFloat("_Glossiness", (float)specGloss.GlossinessFactor);
                 }
 
 				if (def.CommonConstant != null)

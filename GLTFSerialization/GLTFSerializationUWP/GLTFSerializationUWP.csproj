@@ -54,6 +54,12 @@
     <Compile Include="..\GLTFSerialization\Exceptions.cs">
       <Link>Exceptions.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs">
+      <Link>Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs">
+      <Link>Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFHelpers.cs">
       <Link>GLTFHelpers.cs</Link>
     </Compile>
@@ -149,9 +155,6 @@
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\MaterialPBRMetallicRoughness.cs">
       <Link>Schema\MaterialPBRMetallicRoughness.cs</Link>
-    </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\MaterialPBRSpecularGlossiness.cs">
-      <Link>Schema\MaterialPBRSpecularGlossiness.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\Mesh.cs">
       <Link>Schema\Mesh.cs</Link>

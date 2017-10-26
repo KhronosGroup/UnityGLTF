@@ -42,7 +42,6 @@ namespace UnityGLTF {
 			}
 
             loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
-            loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrSpecularGlossiness, GLTFStandardSpecular);
             loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.KHR_materials_pbrSpecularGlossiness, GLTFStandardSpecular);
             loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
 			loader.MaximumLod = MaximumLod;

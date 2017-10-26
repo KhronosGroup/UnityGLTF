@@ -25,7 +25,6 @@ namespace GLTF.Schema
 			switch (reader.Value.ToString())
 			{
 				case "extensions":
-                    // trace
 					Extensions = DeserializeExtensions(root, reader);
 					break;
 				case "extras":
@@ -99,15 +98,13 @@ namespace GLTF.Schema
 				ExtensionFactory extensionFactory;
 
 				JToken extensionToken = JToken.ReadFrom(reader);
-				if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
+                if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 				{
 					extensions.Add(extensionName, extensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
-                // TODO: move hardcoded string to static string in material extension
-                else if (_extensionRegistry.TryGetValue("KHR_materials_pbrSpecularGlossiness", out extensionFactory))
+                else if (extensionName.Equals(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
                 {
-                    // make sure my KHR_materials_pbrSpecularGlossiness fields get filled in by the Deserializer
-                    extensions.Add("KHR_materials_pbrSpecularGlossiness", _defaultExtensionFactory.Deserialize(root, (JProperty)extensionToken));
+                    extensions.Add(extensionName, _KHRExtensionFactory.Deserialize(root, (JProperty)extensionToken));
                 }
                 else
 				{

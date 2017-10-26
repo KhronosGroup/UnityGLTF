@@ -225,7 +225,7 @@ Prefab:
     - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
         type: 2}
       propertyPath: Url
-      value: https://ugcorigin.s-microsoft.com/12/2da58b76-0000-0000-7a48-6505f2bbe1f9/952/1501770225815.gltf
+      value: https://ugcorigin.s-microsoft.com/12/18cba1ff-0000-0000-7a48-6505f5b7a779/952/1508441772058.gltf
       objectReference: {fileID: 0}
     - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
         type: 2}

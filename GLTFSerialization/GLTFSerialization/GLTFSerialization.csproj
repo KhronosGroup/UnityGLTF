@@ -99,14 +99,13 @@
     <Compile Include="Schema\GLTFProperty.cs" />
     <Compile Include="Schema\GLTFRoot.cs" />
     <Compile Include="Schema\Image.cs" />
-    <Compile Include="Schema\KHR_materials_pbrSpecularGlossinessExtension.cs" />
-    <Compile Include="Schema\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs" />
+    <Compile Include="Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs" />
+    <Compile Include="Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs" />
     <Compile Include="Schema\Material.cs" />
     <Compile Include="Schema\MaterialCommonConstant.cs" />
     <Compile Include="Schema\MaterialNormalTextureInfo.cs" />
     <Compile Include="Schema\MaterialOcclusionTextureInfo.cs" />
     <Compile Include="Schema\MaterialPBRMetallicRoughness.cs" />
-    <Compile Include="Schema\MaterialPBRSpecularGlossiness.cs" />
     <Compile Include="Schema\Mesh.cs" />
     <Compile Include="Schema\MeshPrimitive.cs" />
     <Compile Include="Schema\Node.cs" />
