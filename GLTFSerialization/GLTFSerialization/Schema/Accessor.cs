@@ -114,8 +114,16 @@ namespace GLTF.Schema
 	        Normalized = accessor.Normalized;
 	        Count = accessor.Count;
 	        Type = accessor.Type;
-	        Max = accessor.Max.ToList();
-	        Min = accessor.Min.ToList();
+
+	        if (accessor.Max != null)
+	        {
+	            Max = accessor.Max.ToList();
+	        }
+
+	        if (accessor.Min != null)
+	        {
+	            Min = accessor.Min.ToList();
+	        }
 
 	        if (accessor.Sparse != null)
 	        {

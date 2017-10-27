@@ -199,6 +199,11 @@ namespace GLTF
 	        // avoid duplicates for extension merging
 	        if (mergeFromRoot.ExtensionsUsed != null)
 	        {
+	            if (mergeToRoot.ExtensionsUsed == null)
+	            {
+	                mergeToRoot.ExtensionsUsed = new List<string>(mergeFromRoot.ExtensionsUsed.Count);
+	            }
+
 	            foreach (string extensionUsedToAdd in mergeFromRoot.ExtensionsUsed)
 	            {
 	                if (!mergeToRoot.ExtensionsUsed.Contains(extensionUsedToAdd))
@@ -210,7 +215,12 @@ namespace GLTF
 
 	        if (mergeFromRoot.ExtensionsRequired != null)
 	        {
-	            foreach (string extensionRequiredToAdd in mergeFromRoot.ExtensionsRequired)
+	            if (mergeToRoot.ExtensionsRequired == null)
+	            {
+	                mergeToRoot.ExtensionsRequired = new List<string>(mergeFromRoot.ExtensionsRequired.Count);
+	            }
+
+                foreach (string extensionRequiredToAdd in mergeFromRoot.ExtensionsRequired)
 	            {
 	                if (!mergeToRoot.ExtensionsRequired.Contains(extensionRequiredToAdd))
 	                {
