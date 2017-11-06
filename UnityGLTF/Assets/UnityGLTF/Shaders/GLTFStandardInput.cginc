@@ -154,6 +154,17 @@ half4 SpecularGloss(float2 uv)
 	return sg;
 }
 
+half2 MetallicRough(float2 uv)
+{
+	half2 mg;
+
+	fixed4 mr = tex2D(_MetallicRoughnessMap, uv);
+	mg.x = mr.b * _Metallic;
+	mg.y = 1 - (mr.g * _Roughness);
+
+	return mg;
+}
+
 half2 MetallicGloss(float2 uv)
 {
 	half2 mg;
