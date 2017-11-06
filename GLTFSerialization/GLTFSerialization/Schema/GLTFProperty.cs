@@ -10,6 +10,7 @@ namespace GLTF.Schema
 	{
 		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>();
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
+		private static KHR_materials_pbrSpecularGlossinessExtensionFactory _KHRExtensionFactory = new KHR_materials_pbrSpecularGlossinessExtensionFactory();
 
 		public static void RegisterExtension(ExtensionFactory extensionFactory)
 		{
@@ -104,6 +105,10 @@ namespace GLTF.Schema
 				if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 				{
 					extensions.Add(extensionName, extensionFactory.Deserialize(root, (JProperty)extensionToken));
+				}
+				else if (extensionName.Equals(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
+				{
+					extensions.Add(extensionName, _KHRExtensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
 				else
 				{

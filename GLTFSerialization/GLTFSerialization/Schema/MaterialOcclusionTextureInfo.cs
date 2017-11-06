@@ -5,6 +5,8 @@ namespace GLTF.Schema
 {
 	public class OcclusionTextureInfo : TextureInfo
 	{
+		public const string STRENGTH = "strength";
+
 		/// <summary>
 		/// A scalar multiplier controlling the amount of occlusion applied.
 		/// A value of 0.0 means no occlusion.
@@ -31,13 +33,13 @@ namespace GLTF.Schema
 
 				switch (curProp)
 				{
-					case "index":
+					case INDEX:
 						textureInfo.Index = TextureId.Deserialize(root, reader);
 						break;
-					case "texCoord":
+					case TEXCOORD:
 						textureInfo.TexCoord = reader.ReadAsInt32().Value;
 						break;
-					case "strength":
+					case STRENGTH:
 						textureInfo.Strength = reader.ReadAsDouble().Value;
 						break;
 					default:
