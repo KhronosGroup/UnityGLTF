@@ -586,6 +586,12 @@ namespace UnityGLTF
 
 			var texture = new GLTF.Schema.Texture();
 
+			//If texture name not set give it a unique name using count
+			if (textureObj.name == "")
+			{
+				textureObj.name = (_root.Textures.Count + 1).ToString();
+			}
+
 			if (ExportNames)
 			{
 				texture.Name = textureObj.name;
