@@ -154,16 +154,18 @@ half4 SpecularGloss(float2 uv)
 	return sg;
 }
 
+#ifdef UNITY_2017
 half2 MetallicRough(float2 uv)
 {
-	half2 mg;
+	half2 mr;
 
-	fixed4 mr = tex2D(_MetallicRoughnessMap, uv);
-	mg.x = mr.b * _Metallic;
-	mg.y = 1 - (mr.g * _Roughness);
+	fixed4 mrmap = tex2D(_MetallicRoughnessMap, uv);
+	mr.x = mrmap.b * _Metallic;
+	mr.y = mrmap.g * _Roughness;
 
-	return mg;
+	return mr;
 }
+#endif
 
 half2 MetallicGloss(float2 uv)
 {
@@ -175,6 +177,7 @@ half2 MetallicGloss(float2 uv)
 
 	return mg;
 }
+
 
 half3 Emission(float2 uv)
 {
