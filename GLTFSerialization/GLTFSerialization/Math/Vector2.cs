@@ -8,11 +8,11 @@
 			Y = y;
 		}
 
-        public Vector2(Vector2 other)
-        {
-            X = other.X;
-            Y = other.Y;
-        }
+		public Vector2(Vector2 other)
+		{
+			X = other.X;
+			Y = other.Y;
+		}
 
 		public override bool Equals(object obj)
 		{

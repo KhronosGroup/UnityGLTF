@@ -35,10 +35,10 @@ namespace GLTF.Math
 			M44 = m44;
 		}
 
-        public Matrix4x4(Matrix4x4 other)
-        {
-            Array.Copy(other.mat, 0, mat, 0, 16);
-        }
+		public Matrix4x4(Matrix4x4 other)
+		{
+			Array.Copy(other.mat, 0, mat, 0, 16);
+		}
 
 		public override bool Equals(object obj)
 		{

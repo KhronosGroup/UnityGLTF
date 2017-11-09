@@ -11,7 +11,7 @@ namespace GLTF.Schema
 		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>();
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
 		private static KHR_materials_pbrSpecularGlossinessExtensionFactory _KHRExtensionFactory = new KHR_materials_pbrSpecularGlossinessExtensionFactory();
-        private static ExtTextureTransformExtensionFactory _TexTransformFactory = new ExtTextureTransformExtensionFactory();
+		private static ExtTextureTransformExtensionFactory _TexTransformFactory = new ExtTextureTransformExtensionFactory();
 
 		public static void RegisterExtension(ExtensionFactory extensionFactory)
 		{
@@ -111,11 +111,11 @@ namespace GLTF.Schema
 				{
 					extensions.Add(extensionName, _KHRExtensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
-                else if (extensionName.Equals(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
-                {
-                    extensions.Add(extensionName, _TexTransformFactory.Deserialize(root, (JProperty)extensionToken));
-                }
-                else
+				else if (extensionName.Equals(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+				{
+					extensions.Add(extensionName, _TexTransformFactory.Deserialize(root, (JProperty)extensionToken));
+				}
+				else
 				{
 					extensions.Add(extensionName, _defaultExtensionFactory.Deserialize(root, (JProperty)extensionToken));
 				}
