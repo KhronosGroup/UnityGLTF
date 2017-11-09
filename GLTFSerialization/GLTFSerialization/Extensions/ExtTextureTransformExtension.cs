@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace GLTF.Schema
 {
-    class ExtTextureTransformExtension : Extension
+    public class ExtTextureTransformExtension : Extension
     {
         /// <summary>
         /// The offset of the UV coordinate origin as a percentage of the texture dimensions.
@@ -28,7 +28,9 @@ namespace GLTF.Schema
 
         public ExtTextureTransformExtension(Vector2 offset, Vector2 scale, int texCoord)
         {
-            
+            Offset = offset;
+            Scale = scale;
+            TexCoord = texCoord;
         }
 
         public JProperty Serialize()

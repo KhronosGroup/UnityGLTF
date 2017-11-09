@@ -4,7 +4,7 @@ using GLTF.Math;
 
 namespace GLTF.Schema
 {
-    class ExtTextureTransformExtensionFactory : ExtensionFactory
+    public class ExtTextureTransformExtensionFactory : ExtensionFactory
     {
         public const string EXTENSION_NAME = "EXT_texture_transform";
         public const string OFFSET = "offset";
@@ -33,7 +33,7 @@ namespace GLTF.Schema
                 JToken texCoordToken = extensionToken.Value[TEXCOORD];
                 texCoord = texCoordToken != null ? texCoordToken.DeserializeAsInt() : texCoord;
             }
-
+            
             return new ExtTextureTransformExtension(offset, scale, texCoord);
         }
     }

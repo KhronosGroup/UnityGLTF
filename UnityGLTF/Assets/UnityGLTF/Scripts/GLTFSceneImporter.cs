@@ -484,8 +484,10 @@ namespace UnityGLTF
 
 					if (pbr.BaseColorTexture != null)
 					{
-						var texture = pbr.BaseColorTexture.Index.Value;
-						material.SetTexture("_MainTex", CreateTexture(texture));
+						var textureDef = pbr.BaseColorTexture.Index.Value;
+						material.SetTexture("_MainTex", CreateTexture(textureDef));
+
+						ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 					}
 
 					material.SetFloat("_Metallic", (float) pbr.MetallicFactor);
@@ -494,6 +496,8 @@ namespace UnityGLTF
 					{
 						var texture = pbr.MetallicRoughnessTexture.Index.Value;
 						material.SetTexture("_MetallicRoughnessMap", CreateTexture(texture));
+
+						ApplyTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicRoughnessMap");
 					}
 
 					material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
@@ -507,7 +511,9 @@ namespace UnityGLTF
                     {
                         var texture = specGloss.DiffuseTexture.Index.Value;
                         material.SetTexture("_MainTex", CreateTexture(texture));
-                    }
+
+						ApplyTextureTransform(specGloss.DiffuseTexture, material, "_MainTex");
+					}
                     else
                     {
                         material.SetColor("_Color", specGloss.DiffuseFactor.ToUnityColor());
@@ -518,7 +524,9 @@ namespace UnityGLTF
                         var texture = specGloss.SpecularGlossinessTexture.Index.Value;
                         material.SetTexture("_SpecGlossMap", CreateTexture(texture));
                         material.EnableKeyword("_SPECGLOSSMAP");
-                    }
+
+						ApplyTextureTransform(specGloss.SpecularGlossinessTexture, material, "_SpecGlossMap");
+					}
                     else
                     {
                         material.SetVector("_SpecColor", specGloss.SpecularFactor.ToUnityVector3());
@@ -537,6 +545,8 @@ namespace UnityGLTF
 						var texture = def.CommonConstant.LightmapTexture.Index.Value;
 						material.SetTexture("_LightMap", CreateTexture(texture));
 						material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
+
+						ApplyTextureTransform(def.CommonConstant.LightmapTexture, material, "_LightMap");
 					}
 
 					material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor.ToUnityColor());
@@ -548,6 +558,8 @@ namespace UnityGLTF
 					material.SetTexture("_BumpMap", CreateTexture(texture));
 					material.SetFloat("_BumpScale", (float) def.NormalTexture.Scale);
                     material.EnableKeyword("_NORMALMAP");
+
+					ApplyTextureTransform(def.NormalTexture, material, "_BumpMap");
 				}
 
 				if (def.OcclusionTexture != null)
@@ -565,6 +577,8 @@ namespace UnityGLTF
 					else
 					{
 						material.SetTexture("_OcclusionMap", CreateTexture(texture.Value));
+
+						ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
 					}
 				}
 
@@ -575,6 +589,8 @@ namespace UnityGLTF
                     material.EnableKeyword("_EMISSION");
 					material.SetTexture("_EmissionMap", CreateTexture(texture));
 					material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
+
+					ApplyTextureTransform(def.EmissiveTexture, material, "_EmissionMap");
 				}
 
 				material.SetColor("_EmissionColor", def.EmissiveFactor.ToUnityColor());
@@ -645,6 +661,22 @@ namespace UnityGLTF
 			}
 
 			return _assetCache.TextureCache[texture.Source.Id];
+		}
+
+		protected virtual void ApplyTextureTransform(TextureInfo def, UnityEngine.Material mat, string texName)
+		{
+			Extension extension;
+			if (def.Extensions != null &&
+				def.Extensions.TryGetValue(ExtTextureTransformExtensionFactory.EXTENSION_NAME, out extension))
+			{
+				ExtTextureTransformExtension ext = (ExtTextureTransformExtension)extension;
+
+				Vector2 temp = ext.Offset.ToUnityVector2();
+				temp = new Vector2(temp.x, 1.0f - temp.y);
+				mat.SetTextureOffset(texName, temp);
+
+				mat.SetTextureScale(texName, ext.Scale.ToUnityVector2());
+			}
 		}
 
 		protected const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
