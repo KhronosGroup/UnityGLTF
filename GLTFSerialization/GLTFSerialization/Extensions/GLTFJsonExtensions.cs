@@ -221,7 +221,33 @@ namespace GLTF.Extensions
 			return vector;
 		}
 
-		public static Vector3 DeserializeAsVector3(this JToken token)
+        public static Vector2 DeserializeAsVector2(this JToken token)
+        {
+            Vector2 vector = new Vector2();
+
+            if (token != null)
+            {
+                JArray vectorArray = token as JArray;
+                if (vectorArray == null)
+                {
+                    throw new Exception("JToken used for Vector2 deserialization was not a JArray. It was a " + token.Type.ToString());
+                }
+                if (vectorArray.Count != 2)
+                {
+                    throw new Exception("JArray used for Vector2 deserialization did not have 2 entries for XY. It had " + vectorArray.Count);
+                }
+
+                vector = new Vector2
+                {
+                    X = (float)vectorArray[0].DeserializeAsDouble(),
+                    Y = (float)vectorArray[1].DeserializeAsDouble()
+                };
+            }
+
+            return vector;
+        }
+
+        public static Vector3 DeserializeAsVector3(this JToken token)
 		{
 			Vector3 vector = new Vector3();
 

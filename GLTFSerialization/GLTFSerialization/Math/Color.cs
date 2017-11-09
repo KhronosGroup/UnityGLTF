@@ -18,6 +18,14 @@
 			A = a;
 		}
 
+        public Color(Color other)
+        {
+            R = other.R;
+            G = other.G;
+            B = other.B;
+            A = other.A;
+        }
+
 		public static bool operator ==(Color left, Color right)
 		{
 			return left.R == right.R && left.B == right.B && left.G == right.G && left.A == right.A;

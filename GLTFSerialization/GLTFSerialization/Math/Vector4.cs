@@ -10,6 +10,14 @@
 			W = w;
 		}
 
+        public Vector4(Vector4 other)
+        {
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+            W = other.W;
+        }
+
 		public override bool Equals(object obj)
 		{
 			if (!(obj is Vector4))

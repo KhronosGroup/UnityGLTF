@@ -71,6 +71,8 @@
   <ItemGroup>
     <Compile Include="AttributeAccessor.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="Extensions\ExtTextureTransformExtension.cs" />
+    <Compile Include="Extensions\ExtTextureTransformExtensionFactory.cs" />
     <Compile Include="GLTFHelpers.cs" />
     <Compile Include="GLTFParser.cs" />
     <Compile Include="Math\Matrix4x4.cs" />

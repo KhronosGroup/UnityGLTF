@@ -12,6 +12,13 @@
 			Z = z;
 		}
 
+        public Vector3(Vector3 other)
+        {
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+        }
+
 		public override bool Equals(object obj)
 		{
 			if (!(obj is Vector3))
