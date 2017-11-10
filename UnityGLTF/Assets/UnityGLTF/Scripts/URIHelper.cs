@@ -25,6 +25,11 @@ public static class URIHelper
 		return uri.Segments[uri.Segments.Length - 1];
 	}
 	
+    /// <summary>
+    /// Gets a directory name from a file path
+    /// </summary>
+    /// <param name="fullPath">Full path of a file</param>
+    /// <returns>The name of directory file is in</returns>
 	public static string GetDirectoryName(string fullPath)
 	{
 		var fileName = Path.GetFileName(fullPath);
@@ -48,6 +53,11 @@ public static class URIHelper
 		}
 	}
 
+    /// <summary>
+    /// Returns whether the input uri is base64 encoded
+    /// </summary>
+    /// <param name="uri">The uri data</param>
+    /// <returns>Whether the uri is base64</returns>
 	public static bool IsBase64Uri(string uri)
 	{
 		Regex regex = new Regex(Base64StringInitializer);

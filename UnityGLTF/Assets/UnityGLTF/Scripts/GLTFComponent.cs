@@ -34,9 +34,11 @@ namespace UnityGLTF {
 		{
 			ILoader loader = null;
 			GLTFSceneImporter importer = null;
-			FileStream gltfStream = null;
+#if !WINDOWS_UWP
+		    FileStream gltfStream = null;
+#endif
 
-			if (UseStream)
+            if (UseStream)
 			{
 #if WINDOWS_UWP
 				var objectsLibrary = KnownFolders.Objects3D;
