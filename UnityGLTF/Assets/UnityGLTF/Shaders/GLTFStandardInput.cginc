@@ -154,7 +154,6 @@ half4 SpecularGloss(float2 uv)
 	return sg;
 }
 
-#ifdef UNITY_2017
 half2 MetallicRough(float2 uv)
 {
 	half2 mr;
@@ -165,7 +164,7 @@ half2 MetallicRough(float2 uv)
 
 	return mr;
 }
-#endif
+
 
 half2 MetallicGloss(float2 uv)
 {
