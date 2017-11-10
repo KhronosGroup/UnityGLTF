@@ -306,5 +306,6 @@
             "sampler" : 0, 
             "source" : 0
         }
-    ]
+    ],
+    "extensionsUsed": ["EXT_texture_transform"]
 }

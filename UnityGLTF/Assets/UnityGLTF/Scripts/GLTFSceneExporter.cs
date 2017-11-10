@@ -407,6 +407,9 @@ namespace UnityGLTF
 				if (emissionTex != null)
 				{
 					material.EmissiveTexture = ExportTextureInfo(emissionTex);
+
+					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+
 				}
 			}
 
@@ -417,6 +420,7 @@ namespace UnityGLTF
 				if (normalTex != null)
 				{
 					material.NormalTexture = ExportNormalTextureInfo(normalTex, materialObj);
+					ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
 				}
 			}
 
@@ -426,6 +430,7 @@ namespace UnityGLTF
 				if (occTex != null)
 				{
 					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, materialObj);
+					ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
 				}
 			}
 
@@ -449,6 +454,34 @@ namespace UnityGLTF
 			_root.Materials.Add(material);
 
 			return id;
+		}
+
+		private void ExportTextureTransform(TextureInfo def, UnityEngine.Material mat, string texName)
+		{
+			Vector2 offset = mat.GetTextureOffset(texName);
+			Vector2 scale = mat.GetTextureScale(texName);
+
+			if (offset == Vector2.zero && scale == Vector2.one) return;
+
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(
+					new string[] { ExtTextureTransformExtensionFactory.EXTENSION_NAME }
+				);
+			}
+			else if (!_root.ExtensionsUsed.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+			{
+				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
+			}
+
+			if (def.Extensions == null)
+				def.Extensions = new Dictionary<string, Extension>();
+
+			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
+				new GLTF.Math.Vector2(offset.x, -offset.y),
+				new GLTF.Math.Vector2(scale.x, scale.y),
+				0 // TODO: support UV channels
+			);
 		}
 
 		private NormalTextureInfo ExportNormalTextureInfo(UnityEngine.Texture texture, UnityEngine.Material material)
@@ -495,6 +528,7 @@ namespace UnityGLTF
 				if (mainTex != null)
 				{
 					pbr.BaseColorTexture = ExportTextureInfo(mainTex);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
 
@@ -519,6 +553,7 @@ namespace UnityGLTF
 				if (mrTex != null)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicRoughnessMap");
 				}
 			}
 			else if (material.HasProperty("_MetallicGlossMap"))
@@ -528,6 +563,7 @@ namespace UnityGLTF
 				if (mgTex != null)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 				}
 			}
 
@@ -538,8 +574,7 @@ namespace UnityGLTF
 		{
 			if (_root.ExtensionsUsed == null)
 			{
-				_root.ExtensionsUsed = new List<string>();
-				_root.ExtensionsUsed.Add("KHR_materials_common");
+				_root.ExtensionsUsed = new List<string>(new string[] { "KHR_materials_common" });
 			}
 			else if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
 				_root.ExtensionsUsed.Add("KHR_materials_common");
@@ -556,7 +591,11 @@ namespace UnityGLTF
 				var lmTex = materialObj.GetTexture("_LightMap");
 
 				if (lmTex != null)
+				{
 					constant.LightmapTexture = ExportTextureInfo(lmTex);
+					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
+				}
+					
 			}
 
 			if (materialObj.HasProperty("_LightFactor"))

@@ -666,13 +666,15 @@ namespace UnityGLTF
 		protected virtual void ApplyTextureTransform(TextureInfo def, UnityEngine.Material mat, string texName)
 		{
 			Extension extension;
-			if (def.Extensions != null &&
+			if (_root.ExtensionsUsed != null &&
+				_root.ExtensionsUsed.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME) &&
+				def.Extensions != null &&
 				def.Extensions.TryGetValue(ExtTextureTransformExtensionFactory.EXTENSION_NAME, out extension))
 			{
 				ExtTextureTransformExtension ext = (ExtTextureTransformExtension)extension;
 
 				Vector2 temp = ext.Offset.ToUnityVector2();
-				temp = new Vector2(temp.x, 1.0f - temp.y);
+				temp = new Vector2(temp.x, -temp.y);
 				mat.SetTextureOffset(texName, temp);
 
 				mat.SetTextureScale(texName, ext.Scale.ToUnityVector2());
