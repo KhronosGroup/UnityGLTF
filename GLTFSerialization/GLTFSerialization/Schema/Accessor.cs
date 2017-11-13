@@ -591,13 +591,13 @@ namespace GLTF.Schema
 				{
 					return GetByteElement(bufferViewData, offset);
 				}
-				case GLTFComponentType.Short:
-				{
-					return GetShortElement(bufferViewData, offset);
-				}
 				case GLTFComponentType.UnsignedByte:
 				{
 					return GetUByteElement(bufferViewData, offset);
+				}
+				case GLTFComponentType.Short:
+				{
+					return GetShortElement(bufferViewData, offset);
 				}
 				case GLTFComponentType.UnsignedShort:
 				{
@@ -610,25 +610,31 @@ namespace GLTF.Schema
 			}
 		}
 
+
+		// technically byte and short are not spec compliant for unsigned types, but various files have it
 		private static uint GetUnsignedDiscreteElement(byte[] bufferViewData, int offset, GLTFComponentType type)
 		{
 			switch(type)
 			{
+				case GLTFComponentType.Byte:
+				{
+					return (uint)GetByteElement(bufferViewData, offset);
+				}
 				case GLTFComponentType.UnsignedByte:
 				{
 					return GetUByteElement(bufferViewData, offset);
+				}
+				case GLTFComponentType.Short:
+				{
+					return (uint)GetShortElement(bufferViewData, offset);
 				}
 				case GLTFComponentType.UnsignedShort:
 				{
 					return GetUShortElement(bufferViewData, offset);
 				}
-				case GLTFComponentType.Byte:
+				case GLTFComponentType.UnsignedInt:
 				{
-					return (uint)GetByteElement(bufferViewData, offset);
-				}
-				case GLTFComponentType.Short:
-				{
-					return (uint)GetShortElement(bufferViewData, offset);
+					return GetUIntElement(bufferViewData, offset);
 				}
 				default:
 				{
