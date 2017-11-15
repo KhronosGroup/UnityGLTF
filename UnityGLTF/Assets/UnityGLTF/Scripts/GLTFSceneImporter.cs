@@ -32,31 +32,38 @@ namespace UnityGLTF
         public int MaterialIndex { get; set; }
     }
 
-	public class GLTFSceneImporter
-	{
-	    public static class MaterialType
-	    {
-	        public const string PbrMetallicRoughness = "PbrMetallicRoughness";
-	        public const string PbrSpecularGlossiness = "PbrSpecularGlossiness";
-	        public const string CommonConstant = "CommonConstant";
-	        public const string CommonPhong = "CommonPhong";
-	        public const string CommonBlinn = "CommonBlinn";
-	        public const string CommonLambert = "CommonLambert";
-	    }
+    public class GLTFSceneImporter
+    {
+        public static class MaterialType
+        {
+            public const string PbrMetallicRoughness = "PbrMetallicRoughness";
+            public const string PbrSpecularGlossiness = "PbrSpecularGlossiness";
+            public const string CommonConstant = "CommonConstant";
+            public const string CommonPhong = "CommonPhong";
+            public const string CommonBlinn = "CommonBlinn";
+            public const string CommonLambert = "CommonLambert";
+        }
+
+        // glTF matrix: column vectors, column-major storage, +Y up, -Z forward, +X right, right-handed
+        // unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
+        // multiply by a negative Z scale to convert handedness and flip forward direction
+        public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(1, 1, -1);
+        public static readonly GLTF.Math.Vector2 TextureSpaceConversionScale = new GLTF.Math.Vector2(1, -1);
+        public static readonly GLTF.Math.Vector4 TangentSpaceConversionScale = new GLTF.Math.Vector4(1, 1, 1, -1);
 
         public int MaximumLod = 300;
-		public Transform SceneParent { get; set; }
-		
-		protected GameObject _lastLoadedScene;
-	    protected readonly Dictionary<string, Shader> _shaderCache = new Dictionary<string, Shader>();
+        public Transform SceneParent { get; set; }
+
+        protected GameObject _lastLoadedScene;
+        protected readonly Dictionary<string, Shader> _shaderCache = new Dictionary<string, Shader>();
         protected readonly GLTF.Schema.Material DefaultMaterial = new GLTF.Schema.Material();
-		protected string _gltfFileName;
-		protected Stream _gltfStream;
-		protected GLTFRoot _gltfRoot;
-		protected AssetCache _assetCache;
-		protected AsyncAction _asyncAction;
-		protected byte[] _gltfData;
-		protected ILoader _loader;
+        protected string _gltfFileName;
+        protected Stream _gltfStream;
+        protected GLTFRoot _gltfRoot;
+        protected AssetCache _assetCache;
+        protected AsyncAction _asyncAction;
+        protected byte[] _gltfData;
+        protected ILoader _loader;
 
         /// <summary>
         /// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
@@ -75,11 +82,11 @@ namespace UnityGLTF
             _gltfStream = glbStream;
         }
 
-		private GLTFSceneImporter(ILoader externalDataLoader)
-		{
-			_loader = externalDataLoader;
-			_asyncAction = new AsyncAction();
-		}
+        private GLTFSceneImporter(ILoader externalDataLoader)
+        {
+            _loader = externalDataLoader;
+            _asyncAction = new AsyncAction();
+        }
 
         public GameObject LastLoadedScene
         {
@@ -182,7 +189,7 @@ namespace UnityGLTF
             {
                 throw new ArgumentException("nodeIndex is out of range");
             }
-            
+
 #if WINDOWS_UWP
             return await CreateNode(_gltfRoot.Nodes[nodeIndex]);
 #else
@@ -200,13 +207,13 @@ namespace UnityGLTF
                 _gltfRoot.Meshes != null ? _gltfRoot.Meshes.Count : 0
                 );
         }
-        
-		/// <summary>
-		/// Creates a scene based off loaded JSON. Includes loading in binary and image data to construct the meshes required.
-		/// </summary>
-		/// <param name="sceneIndex">The index of scene in gltf file to load</param>
-		/// <param name="isMultithreaded">Whether to use a thread to do loading</param>
-		/// <returns></returns>
+
+        /// <summary>
+        /// Creates a scene based off loaded JSON. Includes loading in binary and image data to construct the meshes required.
+        /// </summary>
+        /// <param name="sceneIndex">The index of scene in gltf file to load</param>
+        /// <param name="isMultithreaded">Whether to use a thread to do loading</param>
+        /// <returns></returns>
 #if WINDOWS_UWP
         protected async Task ImportScene(int sceneIndex = -1, bool isMultithreaded = false)
 #else
@@ -250,22 +257,21 @@ namespace UnityGLTF
                     }
                 }
 
-				if (_gltfRoot.Images != null)
-				{
-					for(int i = 0; i < _gltfRoot.Images.Count; ++i)
-					{
-						if (_assetCache.ImageCache[i] == null)
-						{
+                if (_gltfRoot.Images != null)
+                {
+                    for(int i = 0; i < _gltfRoot.Images.Count; ++i)
+                    {
+                        if (_assetCache.ImageCache[i] == null)
+                        {
                             GLTF.Schema.Image image = _gltfRoot.Images[i];
-
 #if WINDOWS_UWP
-							_assetCache.ImageCache[i] = await LoadImage(image, i, true);
+                            _assetCache.ImageCache[i] = await LoadImage(image, i, true);
 #else
                             _assetCache.ImageCache[i] = LoadImage(image, i, true);
 #endif
                         }
                     }
-				}
+                }
 #if !WINDOWS_UWP
                 // generate these in advance instead of as-needed
                 if (isMultithreaded)
@@ -303,14 +309,14 @@ namespace UnityGLTF
                 Stream bufferDataStream = null;
                 var uri = buffer.Uri;
 
-				byte[] bufferData;
-				URIHelper.TryParseBase64(uri, out bufferData);
-				if(bufferData != null)
-				{
-					bufferDataStream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
-				}
-				else
-				{
+                byte[] bufferData;
+                URIHelper.TryParseBase64(uri, out bufferData);
+                if(bufferData != null)
+                {
+                    bufferDataStream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
+                }
+                else
+                {
 #if WINDOWS_UWP
                     bufferDataStream = await _loader.LoadStream(buffer.Uri);
 #else
@@ -325,37 +331,38 @@ namespace UnityGLTF
         }
 
 #if WINDOWS_UWP
-		protected async Task<Texture2D> LoadImage(GLTF.Schema.Image image, int index, bool markGpuOnly = true)
+        protected async Task<Texture2D> LoadImage(GLTF.Schema.Image image, int index, bool markGpuOnly = true)
 #else
         protected Texture2D LoadImage(GLTF.Schema.Image image, int index, bool markGpuOnly = true)
 #endif
-		{
-			if (image.Uri == null)
-			{
-				return LoadImageFromGLB(image, index);
-			}
-			Texture2D texture = null;
-			string uri = image.Uri;
+        {
+            if (image.Uri == null)
+            {
+                return LoadImageFromGLB(image, index);
+            }
 
-			byte[] bufferData;
-			URIHelper.TryParseBase64(uri, out bufferData);
-			if(bufferData != null)
-			{
-				texture = new Texture2D(0, 0);
-				texture.LoadImage(bufferData, true);
-			}
-			else
-			{
+            Texture2D texture = null;
+            string uri = image.Uri;
+
+            byte[] bufferData;
+            URIHelper.TryParseBase64(uri, out bufferData);
+            if(bufferData != null)
+            {
+                texture = new Texture2D(0, 0);
+                texture.LoadImage(bufferData, true);
+            }
+            else
+            {
 #if WINDOWS_UWP
                 Stream stream = await _loader.LoadStream(uri);
 #else
-				Stream stream = _loader.LoadStream(uri);
+                Stream stream = _loader.LoadStream(uri);
 #endif
-				texture = LoadTexture(stream, markGpuOnly, image);
-			}
-
-			return texture;
-		}
+                texture = LoadTexture(stream, markGpuOnly, image);
+            }
+                
+            return texture;
+        }
 
         /// <summary>
         /// Loads texture from a stream. Is responsible for stream clean up
@@ -394,7 +401,6 @@ namespace UnityGLTF
 
             // After we conduct the Apply(), then we can make the texture non-readable and never create a CPU copy
             texture.Apply(true, markGpuOnly);
-
             return texture;
         }
 
@@ -504,10 +510,10 @@ namespace UnityGLTF
 #else
         protected virtual GameObject CreateNode(Node node)
 #endif
-		{
-			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
-		    // If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
-		    nodeObj.SetActive(false);
+        {
+            var nodeObj = new GameObject(node.Name ?? "GLTFNode");
+            // If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
+            nodeObj.SetActive(false);
 
             Vector3 position;
             Quaternion rotation;
@@ -545,13 +551,13 @@ namespace UnityGLTF
                     // todo blgross: replace with an iterartive solution
                     var childObj = CreateNode(child.Value);
 #endif
-					childObj.transform.SetParent(nodeObj.transform, false);
-				}
-			}
+                    childObj.transform.SetParent(nodeObj.transform, false);
+                }
+            }
 
-		    nodeObj.SetActive(true);
-			return nodeObj;
-		}
+            nodeObj.SetActive(true);
+            return nodeObj;
+        }
 
 #if WINDOWS_UWP
         protected virtual async Task CreateMeshObject(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
@@ -573,10 +579,10 @@ namespace UnityGLTF
                 var primitiveObj = CreateMeshPrimitive(primitive, meshId, i);
 #endif
 
-				primitiveObj.transform.SetParent(parent, false);
-				primitiveObj.SetActive(true);
-			}
-		}
+                primitiveObj.transform.SetParent(parent, false);
+                primitiveObj.SetActive(true);
+            }
+        }
 
 #if WINDOWS_UWP
         protected virtual async Task<GameObject> CreateMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex)
@@ -597,29 +603,29 @@ namespace UnityGLTF
 #else
                     BuildMeshAttributes(primitive, meshID, primitiveIndex);
 #endif
-				}
-				var meshAttributes = _assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes;
-				var meshConstructionData = new MeshConstructionData
-				{
-					Primitive = primitive,
-					MeshAttributes = meshAttributes
-				};
+                }
+                var meshAttributes = _assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes;
+                var meshConstructionData = new MeshConstructionData
+                {
+                    Primitive = primitive,
+                    MeshAttributes = meshAttributes
+                };
                 
-				UnityEngine.Mesh mesh = CreateUnityMesh(meshConstructionData);
-				_assetCache.MeshCache[meshID][primitiveIndex].LoadedMesh = mesh;
-			}
+                UnityEngine.Mesh mesh = CreateUnityMesh(meshConstructionData);
+                _assetCache.MeshCache[meshID][primitiveIndex].LoadedMesh = mesh;
+            }
 
             bool shouldUseDefaultMaterial = primitive.Material == null;
 
-			GLTF.Schema.Material materialToLoad = shouldUseDefaultMaterial ? DefaultMaterial : primitive.Material.Value;
-			int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
+            GLTF.Schema.Material materialToLoad = shouldUseDefaultMaterial ? DefaultMaterial : primitive.Material.Value;
+            int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
 
 #if WINDOWS_UWP
-			await LoadMaterialTextures(materialToLoad);
+            await LoadMaterialTextures(materialToLoad);
 #else
             LoadMaterialTextures(materialToLoad);
 #endif
-			var material = CreateMaterial(materialToLoad);
+            var material = CreateMaterial(materialToLoad);
 
             UnityEngine.Material materialToSet = null;
             var primitiveObj = new GameObject("Primitive");
@@ -635,11 +641,11 @@ namespace UnityGLTF
             materialWrapper.UnityMaterialWithVertexColor.EnableKeyword("VERTEX_COLOR_ON");
             materialToSet = materialWrapper.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
-			if (!shouldUseDefaultMaterial)
-			{
-				_assetCache.MaterialCache[materialIndex] = materialWrapper;
-			}
-			meshRenderer.material = materialToSet;
+            if (!shouldUseDefaultMaterial)
+            {
+                _assetCache.MaterialCache[materialIndex] = materialWrapper;
+            }
+            meshRenderer.material = materialToSet;
 
             return primitiveObj;
         }
@@ -730,53 +736,53 @@ namespace UnityGLTF
 #else
                 CreateTexture(texture, textureId);
 #endif
-			}
-		}
-		
-		protected UnityEngine.Mesh CreateUnityMesh(MeshConstructionData meshConstructionData)
-		{
-			MeshPrimitive primitive = meshConstructionData.Primitive;
-			var meshAttributes = meshConstructionData.MeshAttributes;
-			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
+            }
+        }
+        
+        protected UnityEngine.Mesh CreateUnityMesh(MeshConstructionData meshConstructionData)
+        {
+            MeshPrimitive primitive = meshConstructionData.Primitive;
+            var meshAttributes = meshConstructionData.MeshAttributes;
+            var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
             // todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
             UnityEngine.Mesh mesh = new UnityEngine.Mesh
             {
                 vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
-                    ? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3()
+                    ? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
                     : null,
                 normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
-                    ? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3()
+                    ? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
                     : null,
 
                 uv = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0))
-                    ? meshAttributes[SemanticProperties.TexCoord(0)].AccessorContent.AsTexcoords.ToUnityVector2()
+                    ? meshAttributes[SemanticProperties.TexCoord(0)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
                     : null,
 
                 uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(1))
-                    ? meshAttributes[SemanticProperties.TexCoord(1)].AccessorContent.AsTexcoords.ToUnityVector2()
+                    ? meshAttributes[SemanticProperties.TexCoord(1)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
                     : null,
 
                 uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(2))
-                    ? meshAttributes[SemanticProperties.TexCoord(2)].AccessorContent.AsTexcoords.ToUnityVector2()
+                    ? meshAttributes[SemanticProperties.TexCoord(2)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
                     : null,
 
                 uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(3))
-                    ? meshAttributes[SemanticProperties.TexCoord(3)].AccessorContent.AsTexcoords.ToUnityVector2()
+                    ? meshAttributes[SemanticProperties.TexCoord(3)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
                     : null,
 
                 colors = primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
-                    ? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColor()
+                    ? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
                     : null,
 
                 triangles = primitive.Indices != null
-                    ? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArray()
+                    ? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
                     : MeshPrimitive.GenerateTriangles(vertexCount),
 
-				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
-					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4()
-					: null
-			};
+                tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
+                    ? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
+                    : null
+            };
 
             return mesh;
         }
@@ -854,7 +860,7 @@ namespace UnityGLTF
             {
                 var pbr = def.PbrMetallicRoughness;
 
-                material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColor());
+                material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColorRaw());
 
                 if (pbr.BaseColorTexture != null)
                 {
@@ -875,7 +881,7 @@ namespace UnityGLTF
 
             if (def.CommonConstant != null)
             {
-                material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor.ToUnityColor());
+                material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor.ToUnityColorRaw());
 
                 if (def.CommonConstant.LightmapTexture != null)
                 {
@@ -886,7 +892,7 @@ namespace UnityGLTF
                     material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
                 }
 
-                material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor.ToUnityColor());
+                material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor.ToUnityColorRaw());
             }
 
             if (def.NormalTexture != null)
@@ -922,46 +928,45 @@ namespace UnityGLTF
                 material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
             }
 
-            material.SetColor("_EmissionColor", def.EmissiveFactor.ToUnityColor());
+            material.SetColor("_EmissionColor", def.EmissiveFactor.ToUnityColorRaw());
 
             return material;
         }
 
-	    /// <summary>
-	    /// Creates a texture from a glTF texture
-	    /// </summary>
-	    /// <param name="texture">The texture to load</param>
-	    /// <param name="textureIndex">Index of texture for caching. -1 to disable</param>
-	    /// <returns>The loaded unity texture</returns>
+        /// <summary>
+        /// Creates a texture from a glTF texture
+        /// </summary>
+        /// <param name="texture">The texture to load</param>
+        /// <param name="textureIndex">Index of texture for caching. -1 to disable</param>
+        /// <returns>The loaded unity texture</returns>
 #if WINDOWS_UWP
-		public virtual async Task<UnityEngine.Texture> CreateTexture(GLTF.Schema.Texture texture, int textureIndex, bool markGpuOnly = true)
+        public virtual async Task<UnityEngine.Texture> CreateTexture(GLTF.Schema.Texture texture, int textureIndex, bool markGpuOnly = true)
 #else
-	    public virtual UnityEngine.Texture CreateTexture(GLTF.Schema.Texture texture, int textureIndex, bool markGpuOnly = true)
+        public virtual UnityEngine.Texture CreateTexture(GLTF.Schema.Texture texture, int textureIndex, bool markGpuOnly = true)
 #endif
         {
             if (_assetCache == null)
-	        {
-	            InitializeAssetCache();
-	        }
-
-	        UnityEngine.Texture createdTexture = null;
-	        if (textureIndex < 0 || _assetCache.TextureCache[textureIndex] == null)
             {
+                InitializeAssetCache();
+            }
 
+            UnityEngine.Texture createdTexture = null;
+            if (textureIndex < 0 || _assetCache.TextureCache[textureIndex] == null)
+            {
                 if (_assetCache.ImageCache[texture.Source.Id] == null)
-				{
+                {
                     GLTF.Schema.Image image = _gltfRoot.Images[texture.Source.Id];
 
 #if WINDOWS_UWP
-					_assetCache.ImageCache[texture.Source.Id] = await LoadImage(image, texture.Source.Id, markGpuOnly);
+                    _assetCache.ImageCache[texture.Source.Id] = await LoadImage(image, texture.Source.Id, markGpuOnly);
 #else
                     _assetCache.ImageCache[texture.Source.Id] = LoadImage(image, texture.Source.Id, markGpuOnly);
 #endif
                 }
 
                 var source = _assetCache.ImageCache[texture.Source.Id];
-				var desiredFilterMode = FilterMode.Bilinear;
-				var desiredWrapMode = TextureWrapMode.Repeat;
+                var desiredFilterMode = FilterMode.Bilinear;
+                var desiredWrapMode = TextureWrapMode.Repeat;
 
                 if (texture.Sampler != null)
                 {
@@ -989,41 +994,40 @@ namespace UnityGLTF
                     }
                 }
 
-				if (source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode)
-				{
-	                createdTexture = source;
-	                if (textureIndex >= 0)
-	                {
-	                    _assetCache.TextureCache[textureIndex] = source;
-	                }
-	            }
-	            else
-	            {
-					var unityTexture = UnityEngine.Object.Instantiate(source);
-					unityTexture.filterMode = desiredFilterMode;
-	                unityTexture.wrapMode = desiredWrapMode;
+                if (source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode)
+                {
+                    createdTexture = source;
+                    if (textureIndex >= 0)
+                    {
+                        _assetCache.TextureCache[textureIndex] = source;
+                    }
+                }
+                else
+                {
+                    var unityTexture = UnityEngine.Object.Instantiate(source);
+                    unityTexture.filterMode = desiredFilterMode;
+                    unityTexture.wrapMode = desiredWrapMode;
+                    createdTexture = source;
+                    if (textureIndex >= 0)
+                    {
+                        _assetCache.TextureCache[textureIndex] = unityTexture;
+                    }
+                }
+            }
+            else
+            {
+                createdTexture = _assetCache.TextureCache[textureIndex];
+            }
 
-	                createdTexture = source;
-	                if (textureIndex >= 0)
-	                {
-	                    _assetCache.TextureCache[textureIndex] = unityTexture;
-	                }
-	            }
-	        }
-	        else
-	        {
-	            createdTexture = _assetCache.TextureCache[textureIndex];
-	        }
-
-	        return createdTexture;
-	    }
-
+            return createdTexture;
+        }
+        
         protected virtual Texture2D LoadImageFromGLB(Image image, int imageID)
-		{
-			var texture = new Texture2D(0, 0);
-			var bufferView = image.BufferView.Value;
-			var buffer = bufferView.Buffer.Value;
-			var data = new byte[bufferView.ByteLength];
+        {
+            var texture = new Texture2D(0, 0);
+            var bufferView = image.BufferView.Value;
+            var buffer = bufferView.Buffer.Value;
+            var data = new byte[bufferView.ByteLength];
 
             var bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
             bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;

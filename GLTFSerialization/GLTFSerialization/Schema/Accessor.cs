@@ -506,14 +506,15 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector2[] AsTexcoordArray(ref NumericArray contents, byte[] bufferViewData, int offset)
+		public Vector2[] AsTexcoordArray(ref NumericArray contents, byte[] bufferViewData, int offset, Vector2 spaceConversionScale)
 		{
 			if (contents.AsTexcoords != null) return contents.AsTexcoords;
 
 			var arr = AsVector2Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-				arr[i].Y *= -1;
+                arr[i].X *= spaceConversionScale.X;
+				arr[i].Y *= spaceConversionScale.Y;
 			}
 
 			contents.AsTexcoords = arr;
@@ -521,14 +522,16 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector3[] AsVertexArray(ref NumericArray contents, byte[] bufferViewData, int offset)
+		public Vector3[] AsVertexArray(ref NumericArray contents, byte[] bufferViewData, int offset, Vector3 spaceConversionScale)
 		{
 			if (contents.AsVertices != null) return contents.AsVertices;
 
 			var arr = AsVector3Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-				arr[i].Z *= -1;
+                arr[i].X *= spaceConversionScale.X;
+                arr[i].Y *= spaceConversionScale.Y;
+                arr[i].Z *= spaceConversionScale.Z;
 			}
 
 			contents.AsVertices = arr;
@@ -536,49 +539,58 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector3[] AsNormalArray(ref NumericArray contents, byte[] bufferViewData, int offset)
+		public Vector3[] AsNormalArray(ref NumericArray contents, byte[] bufferViewData, int offset, Vector3 spaceConversionScale)
 		{
 			if (contents.AsNormals != null) return contents.AsNormals;
 
 			var arr = AsVector3Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-				arr[i].Z *= -1;
-			}
+                arr[i].X *= spaceConversionScale.X;
+                arr[i].Y *= spaceConversionScale.Y;
+                arr[i].Z *= spaceConversionScale.Z;
+            }
 
-			contents.AsNormals = arr;
+            contents.AsNormals = arr;
 
 			return arr;
 		}
 
-		public Vector4[] AsTangentArray(ref NumericArray contents, byte[] bufferViewData, int offset)
+		public Vector4[] AsTangentArray(ref NumericArray contents, byte[] bufferViewData, int offset, Vector4 spaceConversionScale)
 		{
 			if (contents.AsTangents != null) return contents.AsTangents;
 
 			var arr = AsVector4Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-				arr[i].W *= -1;
-			}
+                arr[i].X *= spaceConversionScale.X;
+                arr[i].Y *= spaceConversionScale.Y;
+                arr[i].Z *= spaceConversionScale.Z;
+                arr[i].W *= spaceConversionScale.W;
+            }
 
-			contents.AsTangents = arr;
+            contents.AsTangents = arr;
 
 			return arr;
 		}
 
-		public uint[] AsTriangles(ref NumericArray contents, byte[] bufferViewData, int offset)
+		public uint[] AsTriangles(ref NumericArray contents, byte[] bufferViewData, int offset, bool rightHandedWinding)
 		{
 			if (contents.AsTriangles != null) return contents.AsTriangles;
 
 			var arr = AsUIntArray(ref contents, bufferViewData, offset);
-			for (var i = 0; i < arr.Length; i += 3)
-			{
-				var temp = arr[i];
-				arr[i] = arr[i + 2];
-				arr[i + 2] = temp;
-			}
 
-			contents.AsTriangles = arr;
+            if (!rightHandedWinding)
+            {
+                for (var i = 0; i < arr.Length; i += 3)
+                {
+                    var temp = arr[i];
+                    arr[i] = arr[i + 2];
+                    arr[i + 2] = temp;
+                }
+            }
+
+            contents.AsTriangles = arr;
 
 			return arr;
 		}

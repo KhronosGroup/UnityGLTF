@@ -291,11 +291,11 @@ namespace UnityGLTF
 			{
 				for (var i = 0; i < primVariations.Length; i++)
 				{
-					prims[i] = new MeshPrimitive(primVariations[i], _root)
-					{
-						Material = ExportMaterial(materialsObj[i])
-					};
-				}
+                    prims[i] = new MeshPrimitive(primVariations[i], _root)
+                    {
+                        Material = ExportMaterial(materialsObj[i])
+                    };
+                }
 
 				return prims;
 			}
@@ -399,7 +399,7 @@ namespace UnityGLTF
 
 			if (materialObj.HasProperty("_EmissionColor"))
 			{
-				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColor();
+				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
 			}
 
 			if (materialObj.HasProperty("_EmissionMap"))
@@ -487,7 +487,7 @@ namespace UnityGLTF
 
 			if (material.HasProperty("_Color"))
 			{
-				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColor();
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorRaw();
 			}
 
 			if (material.HasProperty("_MainTex"))
@@ -550,7 +550,7 @@ namespace UnityGLTF
 
 			if (materialObj.HasProperty("_AmbientFactor"))
 			{
-				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor").ToNumericsColor();
+				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor").ToNumericsColorRaw();
 			}
 
 			if (materialObj.HasProperty("_LightMap"))
@@ -563,7 +563,7 @@ namespace UnityGLTF
 
 			if (materialObj.HasProperty("_LightFactor"))
 			{
-				constant.LightmapFactor = materialObj.GetColor("_LightFactor").ToNumericsColor();
+				constant.LightmapFactor = materialObj.GetColor("_LightFactor").ToNumericsColorRaw();
 			}
 
 			return constant;

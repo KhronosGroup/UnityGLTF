@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
+using GLTF.Math;
 
 namespace GLTF
 {
@@ -28,14 +29,14 @@ namespace GLTF
         /// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
         /// </summary>
         /// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
-        public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes)
+        public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes, Vector3 coordinateSpaceScale, Vector2 textureSpaceScale, Vector4 tangentSpaceScale)
 		{
 			if (attributes.ContainsKey(SemanticProperties.POSITION))
 			{
 				var attributeAccessor = attributes[SemanticProperties.POSITION];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset, coordinateSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.INDICES))
@@ -43,7 +44,8 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.INDICES];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset);
+                bool sameHandedness = coordinateSpaceScale.X * coordinateSpaceScale.Y * coordinateSpaceScale.Z > 0.0f;
+				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset, sameHandedness);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.NORMAL))
@@ -51,7 +53,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.NORMAL];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset, coordinateSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(0)))
@@ -59,7 +61,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(0)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(1)))
@@ -67,7 +69,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(1)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(2)))
@@ -75,7 +77,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(2)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(3)))
@@ -83,7 +85,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(3)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.Color(0)))
@@ -99,7 +101,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TANGENT];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset, tangentSpaceScale);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 		}
