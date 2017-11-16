@@ -1,4 +1,6 @@
-﻿namespace GLTF.Math
+﻿using System;
+
+namespace GLTF.Math
 {
 	// class is naively implemented
 	public class Matrix4x4
@@ -31,6 +33,11 @@
 			M42 = m42;
 			M43 = m43;
 			M44 = m44;
+		}
+
+		public Matrix4x4(Matrix4x4 other)
+		{
+			Array.Copy(other.mat, 0, mat, 0, 16);
 		}
 
 		public override bool Equals(object obj)

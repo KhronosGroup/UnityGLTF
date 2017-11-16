@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerialization", "GLTFSerialization\GLTFSerialization.csproj", "{72AC331F-9810-4DE2-8EA3-84559A787218}"
 EndProject
@@ -12,6 +12,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializationTests", "Tests\GLTFSerializationTests\GLTFSerializationTests.csproj", "{821B87A3-D8FA-407A-BC58-928A859C71C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializationUWPTests", "Tests\GLTFSerializationUWPTests\GLTFSerializationUWPTests.csproj", "{EAD1EF7E-A898-4741-9DF5-269A33E6F875}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLTFSerializationCLI", "GLTFSerializationCLI\GLTFSerializationCLI.csproj", "{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}"
+	ProjectSection(ProjectDependencies) = postProject
+		{72AC331F-9810-4DE2-8EA3-84559A787218} = {72AC331F-9810-4DE2-8EA3-84559A787218}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,6 +57,14 @@ Global
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.ActiveCfg = Release|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.Build.0 = Release|x86
 		{EAD1EF7E-A898-4741-9DF5-269A33E6F875}.Release|x86.Deploy.0 = Release|x86
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Debug|x86.Build.0 = Debug|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Release|x86.ActiveCfg = Release|Any CPU
+		{6D33A58F-E6C8-4BA4-9420-DFF2AFC8D813}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

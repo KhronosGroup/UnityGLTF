@@ -57,6 +57,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net35\Newtonsoft.Json.dll</HintPath>
@@ -71,6 +74,8 @@
   <ItemGroup>
     <Compile Include="AttributeAccessor.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="Extensions\ExtTextureTransformExtension.cs" />
+    <Compile Include="Extensions\ExtTextureTransformExtensionFactory.cs" />
     <Compile Include="GLTFHelpers.cs" />
     <Compile Include="GLTFParser.cs" />
     <Compile Include="Math\Matrix4x4.cs" />

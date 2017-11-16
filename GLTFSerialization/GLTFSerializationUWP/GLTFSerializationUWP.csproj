@@ -54,6 +54,12 @@
     <Compile Include="..\GLTFSerialization\Exceptions.cs">
       <Link>Exceptions.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Extensions\ExtTextureTransformExtension.cs">
+      <Link>Extensions\ExtTextureTransformExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Extensions\ExtTextureTransformExtensionFactory.cs">
+      <Link>Extensions\ExtTextureTransformExtensionFactory.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs">
       <Link>Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs</Link>
     </Compile>
