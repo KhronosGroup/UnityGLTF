@@ -35,7 +35,8 @@ namespace UnityGLTF.Loader
 			string fileName = Path.GetFileName(path);
 			if (path != fileName)
 			{
-				parentFolder = await _rootFolder.GetFolderAsync(path.Substring(0, path.Length - fileName.Length));
+				string folderToLoad = path.Substring(0, path.Length - fileName.Length);
+				parentFolder = await _rootFolder.GetFolderAsync(folderToLoad);
 			}
 
 			StorageFile bufferFile = await parentFolder.GetFileAsync(fileName);

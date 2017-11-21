@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 #if WINDOWS_UWP
@@ -11,40 +12,53 @@ namespace UnityGLTF
 	public class AsyncCoroutineHelper : MonoBehaviour
 	{
 #if WINDOWS_UWP
-		private Queue<IEnumerator> actions = new Queue<IEnumerator>();
+		private Queue<CoroutineInfo> actions = new Queue<CoroutineInfo>();
 		
-		public Task<TResult> RunOnMainThread<T, TResult>(Func<T, TResult> methodToRun, T param1)
+		public Task RunAsTask(IEnumerator coroutine)
 		{
-			TaskCompletionSource<TResult> tcs = new TaskCompletionSource<TResult>();
-			RunOnMainThread(CallMethodOnMainThread<T, TResult>(methodToRun, param1, tcs));
+			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+			lock (actions)
+			{
+				actions.Enqueue(
+					new CoroutineInfo
+					{
+						Coroutine = coroutine,
+						Tcs = tcs
+					}
+				);
+			}
+
 			return tcs.Task;
 		}
 
-		public void RunOnMainThread(IEnumerator coroutine)
+		private IEnumerator CallMethodOnMainThread(CoroutineInfo coroutineInfo)
 		{
-			lock (actions)
-			{
-				actions.Enqueue(coroutine);
-			}
-		}
-
-		private IEnumerator CallMethodOnMainThread<T, TResult>(Func<T, TResult> methodToRun, T param1, TaskCompletionSource<TResult> tcs)
-		{
-			TResult callbackResult = methodToRun(param1);
-			yield return null;
-			tcs.SetResult(callbackResult);
+			yield return coroutineInfo.Coroutine;
+			coroutineInfo.Tcs.SetResult(true);
 		}
 
 		private void Update()
 		{
-			lock(actions)
+			CoroutineInfo? coroutineInfo = null;
+			
+			lock (actions)
 			{
-				while(actions.Count > 0)
+				if (actions.Count > 0)
 				{
-					IEnumerator coroutine = actions.Dequeue();
-					StartCoroutine(coroutine);
+					coroutineInfo = actions.Dequeue();
 				}
 			}
+
+			if (coroutineInfo != null)
+			{
+				StartCoroutine(CallMethodOnMainThread(coroutineInfo.Value));
+			}
+		}
+
+		private struct CoroutineInfo
+		{
+			public IEnumerator Coroutine;
+			public TaskCompletionSource<bool> Tcs;
 		}
 #endif
 	}
