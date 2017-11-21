@@ -73,6 +73,8 @@ namespace UnityGLTF.Cache
 
 		public void Dispose()
 		{
+		    ImageCache = null;
+		    ImageStreamCache = null;
 			TextureCache = null;
 			MaterialCache = null;
 			foreach(BufferCacheData bufferCacheData in BufferCache)
