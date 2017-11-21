@@ -53,11 +53,13 @@ namespace UnityGLTF.Extensions
 		{
 			position = mat.GetColumn(3);
 
-			scale = new Vector3(
-				mat.GetColumn(0).magnitude,
-				mat.GetColumn(1).magnitude,
-				mat.GetColumn(2).magnitude
-			);
+            Vector3 x = mat.GetColumn(0);
+            Vector3 y = mat.GetColumn(1);
+            Vector3 z = mat.GetColumn(2);
+            Vector3 calculatedZ = Vector3.Cross(x, y);
+            bool mirrored = Vector3.Dot(calculatedZ, z) < 0.0f;
+
+            scale = new Vector3(x.magnitude * (mirrored ? -1.0f : 1.0f), y.magnitude, z.magnitude);
 
 			rotation = Quaternion.LookRotation(mat.GetColumn(2), mat.GetColumn(1));
 		}
