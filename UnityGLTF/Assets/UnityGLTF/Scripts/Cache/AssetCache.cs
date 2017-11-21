@@ -11,15 +11,20 @@ namespace UnityGLTF.Cache
 	public class AssetCache : IDisposable
 	{
 		/// <summary>
-		/// Raw loaded images
+		/// Streams to the images to be loaded
+		/// </summary>
+		public Stream[] ImageStreamCache { get; private set; }
+
+		/// <summary>
+		/// Loaded raw texture data
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
-
+		
 		/// <summary>
 		/// Textures to be used for assets. Textures from image cache with samplers applied
 		/// </summary>
-		public Texture[] TextureCache { get; private set; }
-
+		public TextureCacheData[] TextureCache { get; private set; }
+		
 		/// <summary>
 		/// Cache for materials to be applied to the meshes
 		/// </summary>
@@ -36,6 +41,11 @@ namespace UnityGLTF.Cache
 		public List<MeshCacheData[]> MeshCache { get; private set; }
 
 		/// <summary>
+		/// Cache of loaded node objects
+		/// </summary>
+		public GameObject[] NodeCache { get; private set; }
+
+		/// <summary>
 		/// Creates an asset cache which caches objects used in scene
 		/// </summary>
 		/// <param name="imageCacheSize"></param>
@@ -43,12 +53,13 @@ namespace UnityGLTF.Cache
 		/// <param name="materialCacheSize"></param>
 		/// <param name="bufferCacheSize"></param>
 		/// <param name="meshCacheSize"></param>
+		/// <param name="nodeCacheSize"></param>
 		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
-			int meshCacheSize)
+			int meshCacheSize, int nodeCacheSize)
 		{
-			// todo: add optimization to set size to be the JSON size
-			ImageCache = new Texture2D[imageCacheSize];
-			TextureCache = new Texture[textureCacheSize];
+            ImageCache = new Texture2D[imageCacheSize];
+			ImageStreamCache = new Stream[imageCacheSize];
+			TextureCache = new TextureCacheData[textureCacheSize];
 			MaterialCache = new MaterialCacheData[materialCacheSize];
 			BufferCache = new BufferCacheData[bufferCacheSize];
 			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
@@ -56,11 +67,12 @@ namespace UnityGLTF.Cache
 			{
 				MeshCache.Add(null);
 			}
+
+			NodeCache = new GameObject[nodeCacheSize];
 		}
 
 		public void Dispose()
 		{
-			ImageCache = null;
 			TextureCache = null;
 			MaterialCache = null;
 			foreach(BufferCacheData bufferCacheData in BufferCache)

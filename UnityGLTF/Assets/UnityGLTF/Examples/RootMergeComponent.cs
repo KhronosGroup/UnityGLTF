@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 
-using System;
 using System.Collections;
 using System.IO;
-using System.Security.Policy;
 using GLTF;
 using GLTF.Schema;
 using UnityEngine;
@@ -23,7 +21,9 @@ namespace Microsoft.Pisa.App
 	    public Shader GLTFStandard = null;
 	    public Shader GLTFConstant = null;
 
-	    IEnumerator Start()
+		// todo undo
+#if !WINDOWS_UWP
+		IEnumerator Start()
 		{
 			var fullPath0 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset0Path;
 			ILoader loader0 = new FileLoader(URIHelper.GetDirectoryName(fullPath0));
@@ -78,5 +78,6 @@ namespace Microsoft.Pisa.App
 
 			yield return importer.LoadScene(-1, Multithreaded);
 		}
+#endif
 	}
 }

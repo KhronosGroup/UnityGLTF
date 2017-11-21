@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using GLTF.Schema;
 #if WINDOWS_UWP
 using System.Threading.Tasks;
 #endif
@@ -26,24 +27,44 @@ namespace UnityGLTF {
 		public Shader GLTFStandard = null;
 		public Shader GLTFConstant = null;
 
-#if WINDOWS_UWP
-		async Task Start()
+		[SerializeField]
+		private KeyCode KeyToPress = KeyCode.L;
+		private bool didExecute = false;
+		private void Update()
+		{
+			if (Input.GetKeyDown(KeyToPress) && !didExecute)
+			{
+				didExecute = true;
+#if !WINDOWS_UWP
+				StartCoroutine(LoadGLTF());
 #else
-		IEnumerator Start()
+				LoadGLTF();
+#endif
+			}
+		}
+
+#if WINDOWS_UWP
+		async Task LoadGLTF()
+#else
+		private IEnumerator LoadGLTF()
 #endif
 		{
 			ILoader loader = null;
 			GLTFSceneImporter importer = null;
 #if !WINDOWS_UWP
-		    FileStream gltfStream = null;
+			FileStream gltfStream = null;
 #endif
 
-            if (UseStream)
+			if (UseStream)
 			{
 #if WINDOWS_UWP
 				var objectsLibrary = KnownFolders.Objects3D;
 				loader = new StorageFolderLoader(objectsLibrary);
-				importer = new GLTFSceneImporter(Url, loader);
+				Stream gltfStream = await loader.LoadStream(Path.GetFileName(Url));
+				var gltfRoot = GLTF.GLTFParser.ParseJson(gltfStream);
+
+				importer = new GLTFSceneImporter(gltfRoot, loader);
+				importer.AsyncCoroutineHelper = GetComponent<AsyncCoroutineHelper>();
 #else
 				var fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + Url;
 				gltfStream = File.OpenRead(fullPath);
@@ -54,7 +75,7 @@ namespace UnityGLTF {
 					gltfRoot,
 					loader,
 					gltfStream
-					);
+				);
 #endif
 			}
 			else
@@ -65,7 +86,7 @@ namespace UnityGLTF {
 				importer = new GLTFSceneImporter(
 					URIHelper.GetFileFromUri(uri),
 					loader
-					);
+				);
 
 				importer.SceneParent = gameObject.transform;
 			}
@@ -77,7 +98,8 @@ namespace UnityGLTF {
 #if !WINDOWS_UWP
 			if (UseStream)
 			{
-				GameObject node = importer.LoadNode(0);
+				yield return importer.LoadNode(0);
+				GameObject node = importer.CreatedObject;
 				node.transform.SetParent(gameObject.transform, false);
 				gltfStream.Close();
 			}
@@ -85,7 +107,9 @@ namespace UnityGLTF {
 #endif
 			{
 #if WINDOWS_UWP
-				await importer.LoadScene(-1, Multithreaded);
+				await importer.LoadNode(0);
+				GameObject node = importer.CreatedObject;
+				node.transform.SetParent(gameObject.transform, false);
 #else
 				yield return importer.LoadScene(-1, Multithreaded);
 #endif
