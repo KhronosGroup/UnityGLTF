@@ -37,7 +37,17 @@ namespace UnityGLTF
         // glTF matrix: column vectors, column-major storage, +Y up, -Z forward, +X right, right-handed
         // unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
         // multiply by a negative Z scale to convert handedness and flip forward direction
-        public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(1, 1, -1);
+        public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(-1, 1, 1);
+
+        // An even number of mirrored axes is just a rotation, an odd number is a handedness change which requires also flipping the rotation axis
+        public static bool CoordinateSpaceConversionRequiresHandednessFlip
+        {
+            get
+            {
+                return CoordinateSpaceConversionScale.X * CoordinateSpaceConversionScale.Y * CoordinateSpaceConversionScale.Z < 0.0f;
+            }
+        }
+
         public static readonly GLTF.Math.Vector2 TextureSpaceConversionScale = new GLTF.Math.Vector2(1, -1);
         public static readonly GLTF.Math.Vector4 TangentSpaceConversionScale = new GLTF.Math.Vector4(1, 1, 1, -1);
         
@@ -116,7 +126,7 @@ namespace UnityGLTF
                 {
                     if (_isRunning)
                     {
-                        throw new Exception("Cannot call " + nameof(LoadScene) + " while " + nameof(GLTFSceneImporter) +
+                        throw new GLTFLoadException("Cannot call " + nameof(LoadScene) + " while " + nameof(GLTFSceneImporter) +
                                             " is already running");
                     }
 
@@ -148,7 +158,7 @@ namespace UnityGLTF
                 {
                     if (_isRunning)
                     {
-                        throw new Exception("Cannot call LoadScene while GLTFSceneImporter is already running");
+                        throw new GLTFLoadException("Cannot call LoadScene while GLTFSceneImporter is already running");
                     }
 
                     _isRunning = true;
@@ -189,7 +199,7 @@ namespace UnityGLTF
                 {
                     if (_isRunning)
                     {
-                        throw new Exception("Cannot call LoadNode while GLTFSceneImporter is already running");
+                        throw new GLTFLoadException("Cannot call LoadNode while GLTFSceneImporter is already running");
                     }
 
                     _isRunning = true;
@@ -392,9 +402,8 @@ namespace UnityGLTF
 
             if (scene == null)
             {
-                throw new Exception("No default scene in gltf file.");
+                throw new GLTFLoadException("No default scene in gltf file.");
             }
-            
 
             if (_lastLoadedScene == null)
             {
@@ -1097,7 +1106,7 @@ namespace UnityGLTF
                 {
                     if (_isRunning)
                     {
-                        throw new Exception("Cannot CreateTexture while GLTFSceneImporter is already running");
+                        throw new GLTFLoadException("Cannot CreateTexture while GLTFSceneImporter is already running");
                     }
 
                     _isRunning = true;
@@ -1135,7 +1144,7 @@ namespace UnityGLTF
         {
             if (_assetCache == null)
             {
-                throw new Exception("Asset cache needs initialized before calling GetTexture");
+                throw new GLTFLoadException("Asset cache needs initialized before calling GetTexture");
             }
 
             if (_assetCache.TextureCache[textureIndex] == null)

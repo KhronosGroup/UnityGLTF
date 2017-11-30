@@ -115,18 +115,13 @@ namespace UnityGLTF.Extensions
         /// <returns>unity quaternion</returns>
         public static Quaternion ToUnityQuaternionConvert(this GLTF.Math.Quaternion gltfQuat)
         {
-            // get raw matrix conversion (gltf matrix stored in a unity matrix for easier math)
-            Quaternion rawUnityQuat = gltfQuat.ToUnityQuaternionRaw();
-            Matrix4x4 rawUnityMat = Matrix4x4.TRS(Vector3.zero, rawUnityQuat, Vector3.one);
+            // get the original axis and apply conversion scale as well as potential rotation axis flip
+            Vector3 origAxis = new Vector3(gltfQuat.X, gltfQuat.Y, gltfQuat.Z);
+            float axisFlipScale = GLTFSceneImporter.CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
+            Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw());
 
-            // convert matrix coordinate space
-            Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
-            Matrix4x4 convert = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, coordinateSpaceConversionScale);
-            Matrix4x4 unityConvertedMat = convert * rawUnityMat * convert;
-
-            // get quaternion from matrix
-            Quaternion unityConvertedQuat = Quaternion.LookRotation(unityConvertedMat.GetColumn(2), unityConvertedMat.GetColumn(1));
-            return unityConvertedQuat;
+            // then put the quaternion back together and return it
+            return new Quaternion(newAxis.x, newAxis.y, newAxis.z, gltfQuat.W);
         }
 
         /// <summary>
@@ -136,17 +131,13 @@ namespace UnityGLTF.Extensions
         /// <returns>gltf quaternion</returns>
         public static GLTF.Math.Quaternion ToGltfQuaternionConvert(this Quaternion unityQuat)
         {
-            // get unity matrix from quaternion
-            Matrix4x4 unityMat = Matrix4x4.TRS(Vector3.zero, unityQuat, Vector3.one);
+            // get the original axis and apply conversion scale as well as potential rotation axis flip
+            Vector3 origAxis = new Vector3(unityQuat.x, unityQuat.y, unityQuat.z);
+            float axisFlipScale = GLTFSceneImporter.CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
+            Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw());
 
-            // convert matrix coordinate space
-            Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
-            Matrix4x4 convert = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, coordinateSpaceConversionScale);
-            Matrix4x4 unityConvertedMat = convert * unityMat * convert;
-
-            // get quaternion from matrix
-            Quaternion unityConvertedQuat = Quaternion.LookRotation(unityConvertedMat.GetColumn(2), unityConvertedMat.GetColumn(1));
-            return unityConvertedQuat.ToGltfQuaternionRaw();
+            // then put the quaternion back together and return it
+            return new GLTF.Math.Quaternion(newAxis.x, newAxis.y, newAxis.z, unityQuat.w);
         }
 
         /// <summary>
@@ -158,9 +149,22 @@ namespace UnityGLTF.Extensions
         {
             Matrix4x4 rawUnityMat = gltfMat.ToUnityMatrix4x4Raw();
             Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
-            Matrix4x4 convert = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, coordinateSpaceConversionScale);
+            Matrix4x4 convert = Matrix4x4.Scale(coordinateSpaceConversionScale);
             Matrix4x4 unityMat = convert * rawUnityMat * convert;
             return unityMat;
+        }
+
+        /// <summary>
+        /// Convert gltf matrix to a unity matrix
+        /// </summary>
+        /// <param name="unityMat">unity matrix</param>
+        /// <returns>gltf matrix</returns>
+        public static GLTF.Math.Matrix4x4 ToGltfMatrix4x4Convert(this Matrix4x4 unityMat)
+        {
+            Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
+            Matrix4x4 convert = Matrix4x4.Scale(coordinateSpaceConversionScale);
+            GLTF.Math.Matrix4x4 gltfMat = (convert * unityMat * convert).ToGltfMatrix4x4Raw();
+            return gltfMat;
         }
 
         /// <summary>
@@ -193,6 +197,12 @@ namespace UnityGLTF.Extensions
             return gltfVec3;
         }
 
+        public static GLTF.Math.Vector4 ToGltfVector4Raw(this Vector4 unityVec4)
+        {
+            GLTF.Math.Vector4 gltfVec4 = new GLTF.Math.Vector4(unityVec4.x, unityVec4.y, unityVec4.z, unityVec4.w);
+            return gltfVec4;
+        }
+
         public static Matrix4x4 ToUnityMatrix4x4Raw(this GLTF.Math.Matrix4x4 gltfMat)
         {
             Vector4 rawUnityCol0 = gltfMat.GetColumn(0).ToUnityVector4Raw();
@@ -201,6 +211,16 @@ namespace UnityGLTF.Extensions
             Vector4 rawUnityCol3 = gltfMat.GetColumn(3).ToUnityVector4Raw();
             Matrix4x4 rawUnityMat = new UnityEngine.Matrix4x4(rawUnityCol0, rawUnityCol1, rawUnityCol2, rawUnityCol3);
             return rawUnityMat;
+        }
+
+        public static GLTF.Math.Matrix4x4 ToGltfMatrix4x4Raw(this Matrix4x4 unityMat)
+        {
+            GLTF.Math.Vector4 c0 = unityMat.GetColumn(0).ToGltfVector4Raw();
+            GLTF.Math.Vector4 c1 = unityMat.GetColumn(1).ToGltfVector4Raw();
+            GLTF.Math.Vector4 c2 = unityMat.GetColumn(2).ToGltfVector4Raw();
+            GLTF.Math.Vector4 c3 = unityMat.GetColumn(3).ToGltfVector4Raw();
+            GLTF.Math.Matrix4x4 rawGltfMat = new GLTF.Math.Matrix4x4(c0.X, c0.Y, c0.Z, c0.W, c1.X, c1.Y, c1.Z, c1.W, c2.X, c2.Y, c2.Z, c2.W, c3.X, c3.Y, c3.Z, c3.W);
+            return rawGltfMat;
         }
 
         public static Vector2 ToUnityVector2Raw(this GLTF.Math.Vector2 vec2)
