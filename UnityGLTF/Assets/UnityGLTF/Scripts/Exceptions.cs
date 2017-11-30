@@ -13,4 +13,10 @@ namespace UnityGLTF {
 			System.Runtime.Serialization.StreamingContext context) { }
 #endif
 	}
+
+    public class GLTFLoadException : Exception
+    {
+        public GLTFLoadException() : base() { }
+        public GLTFLoadException(string message) : base(message) { }
+    }
 }
