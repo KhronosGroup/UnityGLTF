@@ -7,8 +7,6 @@ public class GLTFTextureUtils
 {
 	private static string _flipTexture = "GLTF/FlipTexture";
 	private static string _packOcclusionMetalRough = "GLTF/PackOcclusionMetalRough";
-	private static string _extractOcclusion = "GLTF/ExtractOcclusion";
-	private static string _extractMetalSmooth =  "GLTF/ExtractMetalSmooth";
 	private static string _convertBump = "GLTF/BumpToNormal";
 	public static bool _useOriginalImages = true;
 
@@ -20,38 +18,6 @@ public class GLTFTextureUtils
 	public static void setSRGB(bool useSRGB)
 	{
 		GL.sRGBWrite = useSRGB;
-	}
-
-	public static void extractMetalRough(Texture2D occlusionMetalRoughMap, string outputPath)
-	{
-		Debug.Log("Extract Metla rough");
-		if (occlusionMetalRoughMap == null)
-		{
-			return;
-		}
-
-		GL.sRGBWrite = true;
-		Material extractMaterial = new Material(Shader.Find(_extractMetalSmooth));
-		extractMaterial.SetTexture("_OcclusionMetallicRoughMap", occlusionMetalRoughMap);
-
-		Texture2D output = processTextureMaterial(occlusionMetalRoughMap, extractMaterial);
-		writeTextureOnDisk(output, outputPath);
-	}
-
-	// IMPORT
-	public static void extractOcclusion(Texture2D occlusionMetalRoughMap, string outputPath)
-	{
-		Debug.Log("Extract occlusion");
-		if (occlusionMetalRoughMap == null)
-		{
-			return;
-		}
-		GL.sRGBWrite = true;
-		Material extractMaterial = new Material(Shader.Find(_extractOcclusion));
-		extractMaterial.SetTexture("_OcclusionMetallicRoughMap", occlusionMetalRoughMap);
-
-		Texture2D output = processTextureMaterial(occlusionMetalRoughMap, extractMaterial);
-		writeTextureOnDisk(output, outputPath);
 	}
 
 	public static string writeTextureOnDisk(Texture2D texture, string outputPath, bool updateExtension=false)
@@ -80,14 +46,6 @@ public class GLTFTextureUtils
 			return false;
 
 		return im.convertToNormalmap;
-	}
-
-	public static void packOcclusionMetalRoughMaterial(ref Material material, string outputPath = "")
-	{
-		Texture2D metalSmooth = material.GetTexture("_MetallicGlossMap") as Texture2D;
-		Texture2D occlusion = material.GetTexture("_OcclusionMap") as Texture2D;
-
-		writeTextureOnDisk(packOcclusionMetalRough(metalSmooth, occlusion), outputPath);
 	}
 
 	public static Texture2D packOcclusionMetalRough(Texture2D metallicSmoothnessMap, Texture2D occlusionMap)
@@ -205,16 +163,12 @@ public class GLTFTextureUtils
 class GLTFTextureUtilsCache
 {
 	private Dictionary<KeyValuePair<Texture2D, Texture2D>, Texture2D> _packedTextures;
-	//private Dictionary<Texture2D, Texture2D> _extractedOcclusion;
-	//private Dictionary<Texture2D, Texture2D> _extractedMetalSmooth;
 	private Dictionary<Texture2D, Texture2D> _convertedBump;
 	private Dictionary<Texture2D, Texture2D> _flippedTextures;
 
 	public GLTFTextureUtilsCache()
 	{
 		_packedTextures = new Dictionary<KeyValuePair<Texture2D, Texture2D>, Texture2D>();
-		//_extractedOcclusion = new Dictionary<Texture2D, Texture2D>();
-		//_extractedMetalSmooth = new Dictionary<Texture2D, Texture2D>();
 		_convertedBump = new Dictionary<Texture2D, Texture2D>();
 		_flippedTextures = new Dictionary<Texture2D, Texture2D>();
 	}
