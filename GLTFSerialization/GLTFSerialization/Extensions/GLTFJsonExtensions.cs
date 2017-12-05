@@ -366,5 +366,46 @@ namespace GLTF.Extensions
 		{
 			return (T) Enum.Parse(typeof(T), reader.ReadAsString());
 		}
+
+		public static JArray asJSONArray(this GLTF.Math.Vector2 color)
+		{
+			JArray array = new JArray();
+			array.Add(color.X);
+			array.Add(color.Y);
+
+			return array;
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Vector3 vector)
+		{
+			JArray array = new JArray();
+			array.Add(vector.X);
+			array.Add(vector.Y);
+			array.Add(vector.Z);
+
+			return array;
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Vector4 vector)
+		{
+			JArray array = new JArray();
+			array.Add(vector.X);
+			array.Add(vector.Y);
+			array.Add(vector.Z);
+			array.Add(vector.W);
+
+			return array;
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Color color)
+		{
+			JArray array = new JArray();
+			array.Add(color.R);
+			array.Add(color.G);
+			array.Add(color.B);
+			array.Add(color.A);
+
+			return array;
+		}
 	}
 }

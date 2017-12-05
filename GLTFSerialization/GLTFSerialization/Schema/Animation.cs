@@ -22,6 +22,12 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<AnimationSampler> Samplers;
 
+		public Animation()
+		{
+			Channels = new List<AnimationChannel>();
+			Samplers = new List<AnimationSampler>();
+		}
+
 		public static Animation Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var animation = new Animation();
