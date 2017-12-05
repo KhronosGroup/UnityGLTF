@@ -40,6 +40,29 @@ namespace GLTF.Math
 			Array.Copy(other.mat, 0, mat, 0, 16);
 		}
 
+		public Matrix4x4(Vector4 column1, Vector4 column2, Vector4 column3, Vector4 column4)
+		{
+			M11 = column1.X;
+			M21 = column1.Y;
+			M31 = column1.Z;
+			M41 = column1.W;
+
+			M12 = column2.X;
+			M22 = column2.Y;
+			M32 = column2.Z;
+			M42 = column2.W;
+
+			M13 = column3.X;
+			M23 = column3.Y;
+			M33 = column3.Z;
+			M43 = column3.W;
+
+			M14 = column4.X;
+			M24 = column4.Y;
+			M34 = column4.Z;
+			M44 = column4.W;
+		}
+
 		public override bool Equals(object obj)
 		{
 			if (!(obj is Matrix4x4))

@@ -448,6 +448,54 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public Matrix4x4[] AsMatrixArray(ref NumericArray contents, byte[] bufferData)
+		{
+			if (contents.AsMatrix4x4s != null) return contents.AsMatrix4x4s;
+
+			if (Type != GLTFAccessorAttributeType.MAT4) return null;
+
+			var arr = new Matrix4x4[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 4;
+			for (var i = 0; i < Count; i++)
+			{
+				for (int idx = i; idx < 16 * (i + 1); ++idx)
+				{
+					Matrix4x4 mat = Matrix4x4.Identity;
+					if (ComponentType == GLTFComponentType.Float)
+					{
+						mat.M11 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 0);
+						mat.M12 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 1);
+						mat.M13 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 2);
+						mat.M14 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 3);
+						mat.M21 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 4);
+						mat.M22 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 5);
+						mat.M23 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 6);
+						mat.M24 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 7);
+						mat.M31 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 8);
+						mat.M32 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 9);
+						mat.M33 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 10);
+						mat.M34 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 11);
+						mat.M41 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 12);
+						mat.M42 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 13);
+						mat.M43 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 14);
+						mat.M44 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 15);
+					}
+					arr[i] = mat;
+				}
+			}
+
+			contents.AsMatrix4x4s = arr;
+			return arr;
+		}
+
 		public Color[] AsColorArray(ref NumericArray contents, byte[] bufferData)
 		{
 			if (contents.AsColors != null) return contents.AsColors;
@@ -499,11 +547,11 @@ namespace GLTF.Schema
 			if (contents.AsTexcoords != null) return contents.AsTexcoords;
 
 			var arr = AsVector2Array(ref contents, bufferData);
-			for (var i = 0; i < arr.Length; i++)
+/*			for (var i = 0; i < arr.Length; i++)
 			{
 				arr[i].Y = 1 - arr[i].Y;
 			}
-
+*/
 			contents.AsTexcoords = arr;
 			contents.AsVec2s = null;
 
@@ -606,6 +654,7 @@ namespace GLTF.Schema
 		public Vector3[] AsVec3s;
 		public Vector4[] AsVec4s;
 		public Color[] AsColors;
+		public Matrix4x4[] AsMatrix4x4s;
 		public Vector2[] AsTexcoords;
 		public Vector3[] AsVertices;
 		public Vector3[] AsNormals;

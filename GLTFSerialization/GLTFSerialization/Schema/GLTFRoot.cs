@@ -141,9 +141,9 @@ namespace GLTF.Schema
 					case "accessors":
 						root.Accessors = jsonReader.ReadList(() => Accessor.Deserialize(root, jsonReader));
 						break;
-					case "animations":
+/*					case "animations":
 						root.Animations = jsonReader.ReadList(() => Animation.Deserialize(root, jsonReader));
-						break;
+						break;*/
 					case "asset":
 						root.Asset = Asset.Deserialize(root, jsonReader);
 						break;
