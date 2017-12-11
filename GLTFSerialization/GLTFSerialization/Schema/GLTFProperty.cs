@@ -90,49 +90,43 @@ namespace GLTF.Schema
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
-				throw new Exception("GLTF extensions must be an object");
+				throw new GLTFParseException("GLTF extensions must be an object");
 			}
 
-			var extensions = new Dictionary<string, Extension>();
+			JObject extensions = (JObject)JToken.ReadFrom(reader);
+			var extensionsCollection = new Dictionary<string, Extension>();
 
 			bool isOnNextExtension = false;
-			while (isOnNextExtension || (reader.Read() && reader.TokenType == JsonToken.PropertyName))
+			foreach(JToken child in extensions.Children())
 			{
-				isOnNextExtension = false;
-				var extensionName = reader.Value.ToString();
-				ExtensionFactory extensionFactory;
+				if (child.Type != JTokenType.Property)
+				{
+					throw new GLTFParseException("Children token of extensions should be properties");
+				}
 
-				JToken extensionToken = JToken.ReadFrom(reader);
+				JProperty childAsJProperty = (JProperty) child;
+				string extensionName = childAsJProperty.Name;
+				ExtensionFactory extensionFactory;
+				
 				if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 				{
-					extensions.Add(extensionName, extensionFactory.Deserialize(root, (JProperty)extensionToken));
+					extensionsCollection.Add(extensionName, extensionFactory.Deserialize(root, childAsJProperty));
 				}
 				else if (extensionName.Equals(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
 				{
-					extensions.Add(extensionName, _KHRExtensionFactory.Deserialize(root, (JProperty)extensionToken));
+					extensionsCollection.Add(extensionName, _KHRExtensionFactory.Deserialize(root, childAsJProperty));
 				}
 				else if (extensionName.Equals(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
 				{
-					extensions.Add(extensionName, _TexTransformFactory.Deserialize(root, (JProperty)extensionToken));
+					extensionsCollection.Add(extensionName, _TexTransformFactory.Deserialize(root, childAsJProperty));
 				}
 				else
 				{
-					extensions.Add(extensionName, _defaultExtensionFactory.Deserialize(root, (JProperty)extensionToken));
-				}
-
-				// using JToken.ReadFrom can progress the object to be on the next property already. This accounts for that so that we don't read past it
-				isOnNextExtension = reader.TokenType == JsonToken.PropertyName;
-				if (reader.TokenType == JsonToken.PropertyName)
-				{
-					isOnNextExtension = true;
-				}
-				else if (reader.TokenType == JsonToken.EndObject)
-				{
-					break;
+					extensionsCollection.Add(extensionName, _defaultExtensionFactory.Deserialize(root, childAsJProperty));
 				}
 			}
 
-			return extensions;
+			return extensionsCollection;
 		}
 
 		public virtual void Serialize(JsonWriter writer)
