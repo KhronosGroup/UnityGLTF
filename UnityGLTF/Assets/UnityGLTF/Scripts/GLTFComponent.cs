@@ -38,10 +38,12 @@ namespace UnityGLTF {
 #if !WINDOWS_UWP
 				StartCoroutine(LoadGLTF());
 #else
+#pragma warning disable 4014    // warning for running async methods without await
 				LoadGLTF();
+#pragma warning restore 4014
 #endif
-			}
-		}
+            }
+        }
 
 #if WINDOWS_UWP
 		async Task LoadGLTF()

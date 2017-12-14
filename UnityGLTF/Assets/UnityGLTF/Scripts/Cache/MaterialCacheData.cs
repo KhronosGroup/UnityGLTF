@@ -1,14 +1,32 @@
-﻿namespace UnityGLTF.Cache
+﻿using UnityEngine;
+
+namespace UnityGLTF.Cache
 {
 	public class MaterialCacheData
 	{
-		public UnityEngine.Material UnityMaterial { get; set; }
-		public UnityEngine.Material UnityMaterialWithVertexColor { get; set; }
+		public Material UnityMaterial { get; set; }
+		public Material UnityMaterialWithVertexColor { get; set; }
 		public GLTF.Schema.Material GLTFMaterial { get; set; }
 
-		public UnityEngine.Material GetContents(bool useVertexColors)
+		public Material GetContents(bool useVertexColors)
 		{
 			return useVertexColors ? UnityMaterialWithVertexColor : UnityMaterial;
 		}
+
+        /// <summary>
+        /// Unloads the materials in this cache.
+        /// </summary>
+	    public void Unload()
+	    {
+	        if (UnityMaterial != null)
+	        {
+	            Object.Destroy(UnityMaterial);
+	        }
+
+	        if (UnityMaterialWithVertexColor != null)
+	        {
+	            Object.Destroy(UnityMaterialWithVertexColor);
+	        }
+        }
 	}
 }

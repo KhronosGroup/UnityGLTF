@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Pisa.DataServices.Profiling;
 #if WINDOWS_UWP
 using System.Threading.Tasks;
 #endif
@@ -216,6 +217,8 @@ namespace UnityGLTF
                 yield return _LoadNode(nodeIndex);
 #endif
                 CreatedObject = _assetCache.NodeCache[nodeIndex];
+                InitializeGltfTopLevelObject();
+
                 // todo: optimially the asset cache can be reused between nodes
                 Cleanup();
 
@@ -230,6 +233,19 @@ namespace UnityGLTF
                     _isRunning = false;
                 }
             }
+        }
+
+        /// <summary>
+        /// Initializes the top-level created node by adding an instantiated GLTF object component to it, 
+        /// so that it can cleanup after itself properly when destroyed
+        /// </summary>
+        private void InitializeGltfTopLevelObject()
+        { 
+            InstantiatedGLTFObject instantiatedGltfObject = CreatedObject.AddComponent<InstantiatedGLTFObject>();
+            instantiatedGltfObject.CachedData = new RefCountedCacheData();
+            instantiatedGltfObject.CachedData.MaterialCache = _assetCache.MaterialCache;
+            instantiatedGltfObject.CachedData.MeshCache = _assetCache.MeshCache;
+            instantiatedGltfObject.CachedData.TextureCache = _assetCache.TextureCache;
         }
 
 #if WINDOWS_UWP
@@ -360,7 +376,7 @@ namespace UnityGLTF
 #endif
 
 #if WINDOWS_UWP
-            await AsyncCoroutineHelper.RunAsTask(CreateNode(nodeToLoad, nodeIndex));
+            await AsyncCoroutineHelper.RunAsTask(CreateNode(nodeToLoad, nodeIndex), nameof(CreateNode));
 #else
             yield return CreateNode(nodeToLoad, nodeIndex);
 #endif
@@ -435,7 +451,7 @@ namespace UnityGLTF
                             GLTF.Schema.Texture texture = _gltfRoot.Textures[i];
 #if WINDOWS_UWP
                             await LoadImageBuffer(texture, i);
-                            await AsyncCoroutineHelper.RunAsTask(LoadImage(texture.Source.Value, texture.Source.Id));
+                            await AsyncCoroutineHelper.RunAsTask(LoadImage(texture.Source.Value, texture.Source.Id), nameof(LoadImage));
 #else
                             LoadImageBuffer(texture, i);
                             yield return LoadImage(texture.Source.Value, texture.Source.Id);
@@ -451,7 +467,7 @@ namespace UnityGLTF
             }
 
 #if WINDOWS_UWP
-            await AsyncCoroutineHelper.RunAsTask(CreateScene(scene));
+            await AsyncCoroutineHelper.RunAsTask(CreateScene(scene), nameof(CreateScene));
 #else
             yield return CreateScene(scene);
 #endif
@@ -502,7 +518,7 @@ namespace UnityGLTF
 
         protected IEnumerator LoadImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true)
         {
-	        if (_assetCache.ImageCache[imageCacheIndex] == null)
+            if (_assetCache.ImageCache[imageCacheIndex] == null)
 	        {
 		        if (image.Uri == null)
 		        {
@@ -673,8 +689,9 @@ namespace UnityGLTF
             }
 
             CreatedObject = sceneObj;
+            InitializeGltfTopLevelObject();
         }
-        
+
         protected virtual IEnumerator CreateNode(Node node, int nodeIndex)
         {
             var nodeObj = new GameObject(node.Name ?? "GLTFNode");
@@ -720,7 +737,7 @@ namespace UnityGLTF
         
         protected virtual IEnumerator CreateMeshObject(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
         {
-            if(_assetCache.MeshCache[meshId] == null)
+            if (_assetCache.MeshCache[meshId] == null)
             {
                 _assetCache.MeshCache[meshId] = new MeshCacheData[mesh.Primitives.Count];
             }
@@ -763,7 +780,8 @@ namespace UnityGLTF
                     Primitive = primitive,
                     MeshAttributes = meshAttributes
                 };
-                
+
+                yield return null;
                 yield return CreateUnityMesh(meshConstructionData, meshID, primitiveIndex);
             }
 
@@ -862,7 +880,7 @@ namespace UnityGLTF
         
         protected virtual IEnumerator LoadMaterialTextures(GLTF.Schema.Material def)
         {
-            for(int i = 0; i < _assetCache.TextureCache.Length; ++i)
+            for (int i = 0; i < _assetCache.TextureCache.Length; ++i)
             {
                 TextureCacheData textureCacheData = _assetCache.TextureCache[i];
                 if (textureCacheData != null && textureCacheData.Texture == null)
@@ -1119,7 +1137,7 @@ namespace UnityGLTF
 
 #if WINDOWS_UWP
                 await LoadImageBuffer(texture, GetTextureSourceId(texture));
-                await AsyncCoroutineHelper.RunAsTask(_CreateTexture(texture, textureIndex, markGpuOnly));
+                await AsyncCoroutineHelper.RunAsTask(_CreateTexture(texture, textureIndex, markGpuOnly), nameof(_CreateTexture));
                 return _assetCache.TextureCache[textureIndex].Texture;
 #else
                 LoadImageBuffer(texture, GetTextureSourceId(texture));
