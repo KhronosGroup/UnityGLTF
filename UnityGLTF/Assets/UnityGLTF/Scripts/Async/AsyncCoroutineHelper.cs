@@ -2,19 +2,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if WINDOWS_UWP
 using System.Threading.Tasks;
-#endif
+using Microsoft.Pisa.DataServices.Profiling;
 using UnityEngine;
 
 namespace UnityGLTF
 {
 	public class AsyncCoroutineHelper : MonoBehaviour
 	{
-#if WINDOWS_UWP
 		private Queue<CoroutineInfo> actions = new Queue<CoroutineInfo>();
 		
-		public Task RunAsTask(IEnumerator coroutine)
+		public Task RunAsTask(IEnumerator coroutine, string name)
 		{
 			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
 			lock (actions)
@@ -23,7 +21,8 @@ namespace UnityGLTF
 					new CoroutineInfo
 					{
 						Coroutine = coroutine,
-						Tcs = tcs
+						Tcs = tcs,
+						Name = name
 					}
 				);
 			}
@@ -33,6 +32,7 @@ namespace UnityGLTF
 
 		private IEnumerator CallMethodOnMainThread(CoroutineInfo coroutineInfo)
 		{
+            Profiler.AddEvent("Running coroutine: " + coroutineInfo.Name);
 			yield return coroutineInfo.Coroutine;
 			coroutineInfo.Tcs.SetResult(true);
 		}
@@ -59,7 +59,7 @@ namespace UnityGLTF
 		{
 			public IEnumerator Coroutine;
 			public TaskCompletionSource<bool> Tcs;
+			public string Name;
 		}
-#endif
 	}
 }
