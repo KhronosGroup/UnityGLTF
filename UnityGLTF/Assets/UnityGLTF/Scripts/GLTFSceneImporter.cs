@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Pisa.DataServices.Profiling;
 #if WINDOWS_UWP
 using System.Threading.Tasks;
 #endif
@@ -119,7 +118,7 @@ namespace UnityGLTF
         /// <param name="sceneIndex">Index into scene to load. -1 means load default</param>
         /// <param name="isMultithreaded">Whether to do loading operation on a thread</param>
 #if WINDOWS_UWP
-        public async Task LoadScene(int sceneIndex = -1, bool isMultithreaded = false)
+        public async Task LoadScene(int sceneIndex = -1, bool isMultithreaded = false, Action<GameObject> onLoadComplete = null)
         {
             try
             {
@@ -149,9 +148,14 @@ namespace UnityGLTF
                     _isRunning = false;
                 }
             }
+
+            if (onLoadComplete != null)
+            {
+                onLoadComplete(LastLoadedScene);
+            }
         }
 #else
-        public IEnumerator LoadScene(int sceneIndex = -1, bool isMultithreaded = false)
+        public IEnumerator LoadScene(int sceneIndex = -1, bool isMultithreaded = false, Action<GameObject> onLoadComplete = null)
         {
             try
             {
@@ -167,7 +171,7 @@ namespace UnityGLTF
 
                 if (_gltfRoot == null)
                 {
-                    LoadJson(_gltfFileName);
+                    yield return LoadJson(_gltfFileName);
                 }
                 yield return ImportScene(sceneIndex, isMultithreaded);
 
@@ -179,6 +183,11 @@ namespace UnityGLTF
                 {
                     _isRunning = false;
                 }
+            }
+
+            if (onLoadComplete != null)
+            {
+                onLoadComplete(LastLoadedScene);
             }
         }
 #endif
@@ -251,7 +260,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
         private async Task LoadBufferData(Node node)
 #else
-        private void LoadBufferData(Node node)
+        private IEnumerator LoadBufferData(Node node)
 #endif
         {
             GLTF.Schema.MeshId mesh = node.Mesh;
@@ -262,7 +271,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     await ConstructMeshAttributes(mesh.Value, mesh);
 #else
-                    ConstructMeshAttributes(mesh.Value, mesh);
+                    yield return ConstructMeshAttributes(mesh.Value, mesh);
 #endif
                 }
             }
@@ -274,7 +283,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     await LoadBufferData(child.Value);
 #else
-                    LoadBufferData(child.Value);
+                    yield return LoadBufferData(child.Value);
 #endif
                 }
             }
@@ -283,7 +292,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
         private async Task ConstructMeshAttributes(GLTF.Schema.Mesh mesh, MeshId meshId)
 #else
-        private void ConstructMeshAttributes(GLTF.Schema.Mesh mesh, MeshId meshId)
+        private IEnumerator ConstructMeshAttributes(GLTF.Schema.Mesh mesh, MeshId meshId)
 #endif
         {
             int meshIdIndex = meshId.Id;
@@ -306,10 +315,8 @@ namespace UnityGLTF
                 {
 #if WINDOWS_UWP
                     await BuildMeshAttributes(primitive, meshIdIndex, i);
-                    await LoadMaterialImageBuffers(primitive.Material.Value);
 #else
-                    BuildMeshAttributes(primitive, meshIdIndex, i);
-                    LoadMaterialImageBuffers(primitive.Material.Value);
+                    yield return BuildMeshAttributes(primitive, meshIdIndex, i);
 #endif
                 }
             }
@@ -318,7 +325,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
         protected async Task LoadImageBuffer(GLTF.Schema.Texture texture, int textureIndex)
 #else
-        protected void LoadImageBuffer(GLTF.Schema.Texture texture, int textureIndex)
+        protected IEnumerator LoadImageBuffer(GLTF.Schema.Texture texture, int textureIndex)
 #endif
         {
             int sourceId = GetTextureSourceId(texture);
@@ -332,7 +339,8 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     _assetCache.ImageStreamCache[sourceId] = await _loader.LoadStream(image.Uri);
 #else
-                    _assetCache.ImageStreamCache[sourceId] = _loader.LoadStream(image.Uri);
+                     yield return _loader.LoadStream(image.Uri);
+                    _assetCache.ImageStreamCache[sourceId] = _loader.LoadedStream;
 #endif
                 }
             }
@@ -346,13 +354,14 @@ namespace UnityGLTF
 #if WINDOWS_UWP
         private async Task LoadJson(string jsonFilePath)
 #else
-        public void LoadJson(string jsonFilePath)
+        public IEnumerator LoadJson(string jsonFilePath)
 #endif
         {
 #if WINDOWS_UWP
             _gltfStream = await _loader.LoadStream(jsonFilePath);
 #else
-            _gltfStream = _loader.LoadStream(jsonFilePath);
+            yield return _loader.LoadStream(jsonFilePath);
+            _gltfStream = _loader.LoadedStream;
 #endif
             _gltfRoot = GLTFParser.ParseJson(_gltfStream);
         }
@@ -372,7 +381,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
             await Task.Run( async () => await LoadBufferData(nodeToLoad));
 #else
-            yield return _asyncAction.RunOnWorkerThread(() => LoadBufferData(nodeToLoad));
+            yield return LoadBufferData(nodeToLoad);
 #endif
 
 #if WINDOWS_UWP
@@ -434,9 +443,9 @@ namespace UnityGLTF
                         if (_assetCache.BufferCache[i] == null)
                         {
 #if WINDOWS_UWP
-                            _assetCache.BufferCache[i] = await LoadBuffer(buffer, i);
+                            await LoadBuffer(buffer, i);
 #else
-                            _assetCache.BufferCache[i] = LoadBuffer(buffer, i);
+                            yield return LoadBuffer(buffer, i);
 #endif
                         }
                     }
@@ -453,7 +462,7 @@ namespace UnityGLTF
                             await LoadImageBuffer(texture, i);
                             await AsyncCoroutineHelper.RunAsTask(LoadImage(texture.Source.Value, texture.Source.Id), nameof(LoadImage));
 #else
-                            LoadImageBuffer(texture, i);
+                            yield return LoadImageBuffer(texture, i);
                             yield return LoadImage(texture.Source.Value, texture.Source.Id);
 #endif
                         }
@@ -462,7 +471,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                 await BuildAttributesForMeshes();
 #else
-                yield return _asyncAction.RunOnWorkerThread(BuildAttributesForMeshes);
+                yield return BuildAttributesForMeshes();
 #endif
             }
 
@@ -481,14 +490,14 @@ namespace UnityGLTF
         }
 
 #if WINDOWS_UWP
-        protected async Task<BufferCacheData> LoadBuffer(GLTF.Schema.Buffer buffer, int bufferIndex)
+        protected async Task LoadBuffer(GLTF.Schema.Buffer buffer, int bufferIndex)
 #else
-        protected BufferCacheData LoadBuffer(GLTF.Schema.Buffer buffer, int bufferIndex)
+        protected IEnumerator LoadBuffer(GLTF.Schema.Buffer buffer, int bufferIndex)
 #endif
         {
             if (buffer.Uri == null)
             {
-                return LoadBufferFromGLB(bufferIndex);
+                _assetCache.BufferCache[bufferIndex] = LoadBufferFromGLB(bufferIndex);
             }
             else
             {
@@ -506,10 +515,12 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     bufferDataStream = await _loader.LoadStream(buffer.Uri);
 #else
-                    bufferDataStream = _loader.LoadStream(buffer.Uri);
+                    yield return _loader.LoadStream(buffer.Uri);
+                    bufferDataStream = _loader.LoadedStream;
 #endif
                 }
-                return new BufferCacheData()
+
+                _assetCache.BufferCache[bufferIndex] = new BufferCacheData()
                 {
                     Stream = bufferDataStream
                 };
@@ -599,7 +610,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
         protected virtual async Task BuildAttributesForMeshes()
 #else
-        protected virtual void BuildAttributesForMeshes()
+        protected virtual IEnumerator BuildAttributesForMeshes()
 #endif
         {
             for (int i = 0; i < _gltfRoot.Meshes.Count; ++i)
@@ -616,17 +627,19 @@ namespace UnityGLTF
                     var primitive = mesh.Primitives[j];
 #if WINDOWS_UWP
                     await BuildMeshAttributes(primitive, i, j);
+                    await LoadMaterialImageBuffers(primitive.Material.Value);
 #else
-                    BuildMeshAttributes(primitive, i, j);
+					yield return BuildMeshAttributes(primitive, i, j);
+                    yield return LoadMaterialImageBuffers(primitive.Material.Value);
 #endif
-                }
+				}
             }
         }
 
 #if WINDOWS_UWP
         protected virtual async Task BuildMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
 #else
-        protected virtual void BuildMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
+        protected virtual IEnumerator BuildMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
 #endif
         {
             if (_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes.Count == 0)
@@ -642,9 +655,9 @@ namespace UnityGLTF
                     if (_assetCache.BufferCache[bufferId] == null)
                     {
 #if WINDOWS_UWP
-                        _assetCache.BufferCache[bufferId] = await LoadBuffer(buffer, bufferId);
+                        await LoadBuffer(buffer, bufferId);
 #else
-                        _assetCache.BufferCache[bufferId] = LoadBuffer(buffer, bufferId);
+                        yield return LoadBuffer(buffer, bufferId);
 #endif
                     }
 
@@ -799,7 +812,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
         protected virtual async Task LoadMaterialImageBuffers(GLTF.Schema.Material def)
 #else
-        protected virtual void LoadMaterialImageBuffers(GLTF.Schema.Material def)
+        protected virtual IEnumerator LoadMaterialImageBuffers(GLTF.Schema.Material def)
 #endif
         {
             if (def.PbrMetallicRoughness != null)
@@ -812,7 +825,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     await LoadImageBuffer(textureId.Value, textureId.Id);
 #else
-                    LoadImageBuffer(textureId.Value, textureId.Id);
+                    yield return LoadImageBuffer(textureId.Value, textureId.Id);
 #endif
                 }
                 if (pbr.MetallicRoughnessTexture != null)
@@ -822,7 +835,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     await LoadImageBuffer(textureId.Value, textureId.Id);
 #else
-                    LoadImageBuffer(textureId.Value, textureId.Id);
+                    yield return LoadImageBuffer(textureId.Value, textureId.Id);
 #endif
 				}
             }
@@ -836,7 +849,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     await LoadImageBuffer(textureId.Value, textureId.Id);
 #else
-                    LoadImageBuffer(textureId.Value, textureId.Id);
+                    yield return LoadImageBuffer(textureId.Value, textureId.Id);
 #endif
                 }
             }
@@ -847,7 +860,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                 await LoadImageBuffer(textureId.Value, textureId.Id);
 #else
-                LoadImageBuffer(textureId.Value, textureId.Id);
+                yield return LoadImageBuffer(textureId.Value, textureId.Id);
 #endif
             }
 
@@ -862,7 +875,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                     await LoadImageBuffer(textureId.Value, textureId.Id);
 #else
-                    LoadImageBuffer(textureId.Value, textureId.Id);
+                    yield return LoadImageBuffer(textureId.Value, textureId.Id);
 #endif
                 }
             }
@@ -873,7 +886,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
                 await LoadImageBuffer(textureId.Value, textureId.Id);
 #else
-                LoadImageBuffer(textureId.Value, textureId.Id);
+                yield return LoadImageBuffer(textureId.Value, textureId.Id);
 #endif
             }
         }
@@ -1140,7 +1153,7 @@ namespace UnityGLTF
                 await AsyncCoroutineHelper.RunAsTask(_CreateTexture(texture, textureIndex, markGpuOnly), nameof(_CreateTexture));
                 return _assetCache.TextureCache[textureIndex].Texture;
 #else
-                LoadImageBuffer(texture, GetTextureSourceId(texture));
+                yield return LoadImageBuffer(texture, GetTextureSourceId(texture));
                 yield return _CreateTexture(texture, textureIndex, markGpuOnly);
 #endif
             }

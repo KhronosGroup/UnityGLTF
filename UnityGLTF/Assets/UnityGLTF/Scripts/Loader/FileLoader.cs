@@ -2,6 +2,8 @@
 using GLTF;
 using UnityEngine;
 using System;
+using System.Collections;
+
 #if WINDOWS_UWP
 using System.Threading.Tasks;
 #endif
@@ -11,6 +13,7 @@ namespace UnityGLTF.Loader
 	public class FileLoader : ILoader
 	{
 		private string _rootDirectoryPath;
+		public Stream LoadedStream { get; private set; }
 
 		public FileLoader(string rootDirectoryPath)
 		{
@@ -20,7 +23,7 @@ namespace UnityGLTF.Loader
 #if WINDOWS_UWP
 		public async Task<Stream> LoadStream(string gltfFilePath)
 #else
-		public Stream LoadStream(string gltfFilePath)
+		public IEnumerator LoadStream(string gltfFilePath)
 #endif
 		{
 			if (gltfFilePath == null)
@@ -31,14 +34,14 @@ namespace UnityGLTF.Loader
 #if WINDOWS_UWP
 			return await LoadFileStream(_rootDirectoryPath, gltfFilePath);
 #else
-			return LoadFileStream(_rootDirectoryPath, gltfFilePath);
+			yield return LoadFileStream(_rootDirectoryPath, gltfFilePath);
 #endif
 		}
 
 #if WINDOWS_UWP
 		private Task<Stream> LoadFileStream(string rootPath, string fileToLoad)
 #else
-		private Stream LoadFileStream(string rootPath, string fileToLoad)
+		private IEnumerator LoadFileStream(string rootPath, string fileToLoad)
 #endif
 		{
 			string pathToLoad = Path.Combine(_rootDirectoryPath, fileToLoad);
@@ -53,7 +56,8 @@ namespace UnityGLTF.Loader
 				return File.OpenRead(pathToLoad);
 			});
 #else
-			return File.OpenRead(pathToLoad);
+			yield return null;
+			LoadedStream = File.OpenRead(pathToLoad);
 #endif
 		}
 	}

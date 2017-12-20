@@ -2,14 +2,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Pisa.DataServices.Profiling;
 using UnityEngine;
-
 namespace UnityGLTF
 {
+
 	public class AsyncCoroutineHelper : MonoBehaviour
 	{
+#if WINDOWS_UWP
 		private Queue<CoroutineInfo> actions = new Queue<CoroutineInfo>();
 		
 		public Task RunAsTask(IEnumerator coroutine, string name)
@@ -61,5 +60,7 @@ namespace UnityGLTF
 			public TaskCompletionSource<bool> Tcs;
 			public string Name;
 		}
+#endif
 	}
 }
+

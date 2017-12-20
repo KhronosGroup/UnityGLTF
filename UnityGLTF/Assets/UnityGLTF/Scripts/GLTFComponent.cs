@@ -26,6 +26,7 @@ namespace UnityGLTF {
 
 		public Shader GLTFStandard = null;
 		public Shader GLTFConstant = null;
+		public AsyncCoroutineHelper AsyncCoroutineHelper { get; set; }
 
 		[SerializeField]
 		private KeyCode KeyToPress = KeyCode.L;
@@ -84,7 +85,7 @@ namespace UnityGLTF {
 			{
 				Uri uri = new Uri(Url);
 				var directoryPath = URIHelper.AbsoluteUriPath(uri);
-				loader = new WebRequestLoader(directoryPath);
+				loader = new WebRequestLoader(directoryPath, AsyncCoroutineHelper);
 				importer = new GLTFSceneImporter(
 					URIHelper.GetFileFromUri(uri),
 					loader

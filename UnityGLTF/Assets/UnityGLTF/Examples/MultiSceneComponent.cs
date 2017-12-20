@@ -10,6 +10,8 @@ namespace UnityGLTF.Examples
 		public int SceneIndex = 0;
 		public string Url;
 		public Shader GLTFStandardShader;
+		public AsyncCoroutineHelper AsyncCoroutineHelper { get; set; }
+
 		private GLTFSceneImporter importer;
 
 		void Start()
@@ -18,7 +20,7 @@ namespace UnityGLTF.Examples
 
 			Uri uri = new Uri(Url);
 			var directoryPath = URIHelper.AbsoluteUriPath(uri);
-			var loader = new WebRequestLoader(directoryPath);
+			var loader = new WebRequestLoader(directoryPath, AsyncCoroutineHelper);
 			importer = new GLTFSceneImporter(
 				URIHelper.GetFileFromUri(uri),
 				loader

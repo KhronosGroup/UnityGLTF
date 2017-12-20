@@ -31,10 +31,12 @@ namespace Microsoft.Pisa.App
 			var fullPath1 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset1Path;
 			ILoader loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
 
-			var asset0Stream = loader0.LoadStream(Path.GetFileName(asset0Path));
+			yield return loader0.LoadStream(Path.GetFileName(asset0Path));
+			var asset0Stream = loader0.LoadedStream;
 			var asset0Root = GLTFParser.ParseJson(asset0Stream);
 
-			var asset1Stream = loader1.LoadStream(Path.GetFileName(asset1Path));
+			yield return loader1.LoadStream(Path.GetFileName(asset1Path));
+			var asset1Stream = loader1.LoadedStream;
 			var asset1Root = GLTFParser.ParseJson(asset1Stream);
 
 			string newPath = "../../" + URIHelper.GetDirectoryName(asset0Path);
