@@ -22,7 +22,7 @@ class SketchfabImporter : EditorWindow
 	// Public
 	public bool _useGLTFMaterial = false;
 
-	private string _defaultImportDirectory = "Import";
+	private string _defaultImportDirectory = "";
 	private static string _currentSampleName = "Imported";
 	GLTFEditorImporter _importer;
 	string _gltfPath = "";
@@ -32,8 +32,7 @@ class SketchfabImporter : EditorWindow
 	bool _isInitialized = false;
 	GUIStyle _header;
 	Sketchfab.SketchfabAPI _api;
-
-	Vector2 loginSize = new Vector2(603, 450);
+	Vector2 minimumSize = new Vector2(603, 450);
 
 	void setupAPI()
 	{
@@ -49,18 +48,16 @@ class SketchfabImporter : EditorWindow
 	{
 		SketchfabPlugin.Initialize(); // Load header image
 		setupAPI();
-		resizeWindow(loginSize);
 
 		_importer = new GLTFEditorImporter(this.Repaint);
 		_unzippedFiles = new List<string>();
 		_isInitialized = true;
 		_unzipDirectory = Application.temporaryCachePath + "/unzip";
 		_header = new GUIStyle(EditorStyles.boldLabel);
-	}
 
-	void resizeWindow(Vector2 size)
-	{
-		this.minSize = size;
+		_defaultImportDirectory = Application.dataPath + "/Import";
+
+		this.minSize = minimumSize;
 	}
 
 	public void displayVersionInfo()
@@ -149,8 +146,6 @@ class SketchfabImporter : EditorWindow
 		{
 			setupAPI();
 		}
-
-		resizeWindow(loginSize);
 	}
 
 	public void OnDestroy()
@@ -188,7 +183,11 @@ class SketchfabImporter : EditorWindow
 		if (Event.current.type == EventType.DragExited)
 		{
 			if(DragAndDrop.paths.Length > 0)
+			{
 				_gltfPath = DragAndDrop.paths[0];
+				string modelfileName = Path.GetFileNameWithoutExtension(_gltfPath);
+				_projectDirectory = Path.Combine(_defaultImportDirectory, modelfileName);
+			}
 		}
 
 		showImportUI();
@@ -210,6 +209,11 @@ class SketchfabImporter : EditorWindow
 		showStatus();
 	}
 
+	private string stripProjectDirectory(string directory)
+	{
+		return directory.Replace(Application.dataPath, "[PROJECT]");
+	}
+
 	// UI FUNCTIONS
 	private void showImportUI()
 	{
@@ -219,18 +223,24 @@ class SketchfabImporter : EditorWindow
 		GUILayout.Label("Import or Drag'n drop glTF asset(gltf, glb, zip supported)", _header);
 		GUILayout.FlexibleSpace();
 		GUILayout.EndHorizontal();
-		if (GUILayout.Button("Import file from disk"))
-		{
-			_gltfPath = EditorUtility.OpenFilePanel("Choose glTF to import", Application.dataPath, "*gl*;*zip");
-			string modeldir = Path.GetFileNameWithoutExtension(_gltfPath);
-			_projectDirectory = Path.Combine(_defaultImportDirectory, modeldir);
-		}
 
-		GUILayout.Label("Paths");
 		GUILayout.BeginVertical("Box");
 		GUILayout.Label("Model to import: " + _gltfPath);
-		GUILayout.Label("Import directory: " + _projectDirectory);
+		GUILayout.Label("Import directory: " + stripProjectDirectory(_projectDirectory));
+
 		GUILayout.EndVertical();
+		GUILayout.BeginHorizontal();
+		if (GUILayout.Button("Import file from disk"))
+		{
+			_gltfPath = EditorUtility.OpenFilePanel("Choose glTF to import", Application.dataPath, "glb,gltf,zip");
+			string modelfileName = Path.GetFileNameWithoutExtension(_gltfPath);
+			_projectDirectory = Path.Combine(_defaultImportDirectory, modelfileName);
+		}
+		if (GUILayout.Button("Change import directory"))
+		{
+			changeDirectory();
+		}
+		GUILayout.EndHorizontal();
 	}
 
 	private void emptyLines(int nbLines)
@@ -241,6 +251,19 @@ class SketchfabImporter : EditorWindow
 		}
 	}
 
+	private void changeDirectory()
+	{
+		_projectDirectory = EditorUtility.OpenFolderPanel("Choose import directory in Project", Application.dataPath, "Assets");
+
+		// Discard if selected directory is outside of the project
+		if (!isDirectoryInProject())
+		{
+			Debug.Log("Import directory is outside of project directory. Please select path in Assets/");
+			_projectDirectory = "";
+			return;
+		}
+	}
+
 	private void showOptions()
 	{
 		GUILayout.Label("Options", _header);
@@ -248,13 +271,26 @@ class SketchfabImporter : EditorWindow
 		GUILayout.Label("Prefab name:");
 		_currentSampleName = GUILayout.TextField(_currentSampleName, GUILayout.Width(250));
 		GUILayout.FlexibleSpace();
-		GUILayout.EndHorizontal();		
+		GUILayout.EndHorizontal();
+	}
+
+	private bool isDirectoryInProject()
+	{
+		return _projectDirectory.Contains(Application.dataPath);
 	}
 
 	private void processImportButton()
 	{
-		_projectDirectory = EditorUtility.OpenFolderPanel("Choose import directory in Project", Application.dataPath, "Assets");
-		Directory.CreateDirectory(_projectDirectory);
+		if(!isDirectoryInProject())
+		{
+			Debug.LogError("Import directory is outside of project directory. Please select path in Assets/");
+			return;
+		}
+
+		if(!Directory.Exists(_projectDirectory))
+		{
+			Directory.CreateDirectory(_projectDirectory);
+		}
 
 		if (Path.GetExtension(_gltfPath) == ".zip")
 		{
