@@ -26,7 +26,6 @@ namespace UnityGLTF {
 
 		public Shader GLTFStandard = null;
 		public Shader GLTFConstant = null;
-		public AsyncCoroutineHelper AsyncCoroutineHelper { get; set; }
 
 		[SerializeField]
 		private KeyCode KeyToPress = KeyCode.L;
@@ -36,21 +35,11 @@ namespace UnityGLTF {
 			if (Input.GetKeyDown(KeyToPress) && !didExecute)
 			{
 				didExecute = true;
-#if !WINDOWS_UWP
 				StartCoroutine(LoadGLTF());
-#else
-#pragma warning disable 4014    // warning for running async methods without await
-				LoadGLTF();
-#pragma warning restore 4014
-#endif
             }
         }
-
-#if WINDOWS_UWP
-		async Task LoadGLTF()
-#else
+		
 		private IEnumerator LoadGLTF()
-#endif
 		{
 			ILoader loader = null;
 			GLTFSceneImporter importer = null;
@@ -63,11 +52,11 @@ namespace UnityGLTF {
 #if WINDOWS_UWP
 				var objectsLibrary = KnownFolders.Objects3D;
 				loader = new StorageFolderLoader(objectsLibrary);
-				Stream gltfStream = await loader.LoadStream(Path.GetFileName(Url));
+				yield return loader.LoadStream(Path.GetFileName(Url));
+				Stream gltfStream = loader.LoadedStream;
 				var gltfRoot = GLTF.GLTFParser.ParseJson(gltfStream);
 
 				importer = new GLTFSceneImporter(gltfRoot, loader);
-				importer.AsyncCoroutineHelper = GetComponent<AsyncCoroutineHelper>();
 #else
 				var fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + Url;
 				gltfStream = File.OpenRead(fullPath);
@@ -85,7 +74,7 @@ namespace UnityGLTF {
 			{
 				Uri uri = new Uri(Url);
 				var directoryPath = URIHelper.AbsoluteUriPath(uri);
-				loader = new WebRequestLoader(directoryPath, AsyncCoroutineHelper);
+				loader = new WebRequestLoader(directoryPath);
 				importer = new GLTFSceneImporter(
 					URIHelper.GetFileFromUri(uri),
 					loader
@@ -110,7 +99,7 @@ namespace UnityGLTF {
 #endif
 			{
 #if WINDOWS_UWP
-				await importer.LoadNode(0);
+				yield return importer.LoadNode(0);
 				GameObject node = importer.CreatedObject;
 				node.transform.SetParent(gameObject.transform, false);
 #else

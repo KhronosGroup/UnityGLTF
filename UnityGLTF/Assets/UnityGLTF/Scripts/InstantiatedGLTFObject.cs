@@ -1,6 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityGLTF.Cache;
 
 namespace UnityGLTF

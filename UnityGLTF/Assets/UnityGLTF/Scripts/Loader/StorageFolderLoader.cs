@@ -1,35 +1,33 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-
-#if WINDOWS_UWP
+﻿#if WINDOWS_UWP
 using System.IO;
 using System.Threading.Tasks;
-using GLTF.Schema;
-using UnityEngine;
 using Windows.Storage;
 using System;
+using System.Collections;
 
 namespace UnityGLTF.Loader
 {
 	public class StorageFolderLoader : ILoader
 	{
 		private StorageFolder _rootFolder;
+		public Stream LoadedStream { get; private set; }
 
 		public StorageFolderLoader(StorageFolder rootFolder)
 		{
 			_rootFolder = rootFolder;
 		}
 
-		public Task<Stream> LoadStream(string gltfFilePath)
+		public IEnumerator LoadStream(string gltfFilePath)
 		{
 			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
-
-			return LoadStorageFile(gltfFilePath);
+			
+			yield return LoadStorageFile(gltfFilePath).AsCoroutine();
 		}
 
-		public async Task<Stream> LoadStorageFile(string path)
+		public async Task LoadStorageFile(string path)
 		{
 			StorageFolder parentFolder = _rootFolder;
 			string fileName = Path.GetFileName(path);
@@ -40,7 +38,7 @@ namespace UnityGLTF.Loader
 			}
 
 			StorageFile bufferFile = await parentFolder.GetFileAsync(fileName);
-			return await bufferFile.OpenStreamForReadAsync();
+			LoadedStream = await bufferFile.OpenStreamForReadAsync();
 		}
 	}
 }

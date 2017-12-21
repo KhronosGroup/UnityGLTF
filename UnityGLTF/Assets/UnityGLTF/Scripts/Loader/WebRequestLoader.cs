@@ -18,35 +18,20 @@ namespace UnityGLTF.Loader
 		public Stream LoadedStream { get; private set; }
 
 		private string _rootURI;
-#if WINDOWS_UWP
-		private AsyncCoroutineHelper _asyncCoroutineHelper;
-#endif
 
-		public WebRequestLoader(string rootURI, AsyncCoroutineHelper asyncCoroutineHelper)
+		public WebRequestLoader(string rootURI)
 		{
 			_rootURI = rootURI;
-#if WINDOWS_UWP
-			_asyncCoroutineHelper = asyncCoroutineHelper;
-#endif
 		}
-
-#if WINDOWS_UWP
-		public async Task<Stream> LoadStream(string gltfFilePath)
-#else
+		
 		public IEnumerator LoadStream(string gltfFilePath)
-#endif
 		{
 			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
-
-#if WINDOWS_UWP
-			await _asyncCoroutineHelper.RunAsTask(CreateHTTPRequest(_rootURI, gltfFilePath), nameof(CreateHTTPRequest));
-			return LoadedStream;
-#else
+			
 			yield return CreateHTTPRequest(_rootURI, gltfFilePath);
-#endif
 		}
 		
 		private IEnumerator CreateHTTPRequest(string rootUri, string httpRequestPath)

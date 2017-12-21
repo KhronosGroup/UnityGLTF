@@ -1,11 +1,13 @@
 ﻿
+#if WINDOWS_UWP
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+#endif
 using UnityEngine;
 namespace UnityGLTF
 {
-
 	public class AsyncCoroutineHelper : MonoBehaviour
 	{
 #if WINDOWS_UWP
@@ -31,7 +33,6 @@ namespace UnityGLTF
 
 		private IEnumerator CallMethodOnMainThread(CoroutineInfo coroutineInfo)
 		{
-            Profiler.AddEvent("Running coroutine: " + coroutineInfo.Name);
 			yield return coroutineInfo.Coroutine;
 			coroutineInfo.Tcs.SetResult(true);
 		}
