@@ -256,12 +256,10 @@ namespace UnityGLTF
 			}
 
 			_root = GLTFParser.ParseJson(_glTFData);
-			setStatus("Parsed glTF data" + _root);
 		}
 
 		private void LoadGLTFScene(int sceneIndex = -1)
 		{
-			setStatus("Load scene");
 			Scene scene;
 			if (sceneIndex >= 0 && sceneIndex < _root.Scenes.Count)
 			{

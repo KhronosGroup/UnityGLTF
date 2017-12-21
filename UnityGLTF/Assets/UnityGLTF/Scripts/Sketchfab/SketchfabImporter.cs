@@ -33,6 +33,8 @@ class SketchfabImporter : EditorWindow
 	GUIStyle _header;
 	Sketchfab.SketchfabAPI _api;
 
+	Vector2 loginSize = new Vector2(603, 450);
+
 	void setupAPI()
 	{
 		_api = new Sketchfab.SketchfabAPI("Unity-exporter");
@@ -47,12 +49,18 @@ class SketchfabImporter : EditorWindow
 	{
 		SketchfabPlugin.Initialize(); // Load header image
 		setupAPI();
+		resizeWindow(loginSize);
 
 		_importer = new GLTFEditorImporter(this.Repaint);
 		_unzippedFiles = new List<string>();
 		_isInitialized = true;
 		_unzipDirectory = Application.temporaryCachePath + "/unzip";
 		_header = new GUIStyle(EditorStyles.boldLabel);
+	}
+
+	void resizeWindow(Vector2 size)
+	{
+		this.minSize = size;
 	}
 
 	public void displayVersionInfo()
@@ -141,6 +149,8 @@ class SketchfabImporter : EditorWindow
 		{
 			setupAPI();
 		}
+
+		resizeWindow(loginSize);
 	}
 
 	public void OnDestroy()
