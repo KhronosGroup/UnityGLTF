@@ -9,6 +9,9 @@ namespace GLTF.Schema
 	/// </summary>
 	public class TextureInfo : GLTFProperty
 	{
+		public const string INDEX = "index";
+		public const string TEXCOORD = "texCoord";
+
 		/// <summary>
 		/// The index of the texture.
 		/// </summary>
@@ -41,22 +44,21 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
 				switch (curProp)
 				{
-					case "index":
+					case INDEX:
 						textureInfo.Index = TextureId.Deserialize(root, reader);
 						break;
-					case "texCoord":
+					case TEXCOORD:
 						textureInfo.TexCoord = reader.ReadAsInt32().Value;
 						break;
 					default:
-                        shouldSkipRead = textureInfo.DefaultPropertyDeserializer(root, reader);
+                        textureInfo.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }
@@ -103,12 +105,12 @@ namespace GLTF.Schema
 
 		public void SerializeProperties(JsonWriter writer)
 		{
-			writer.WritePropertyName("index");
+			writer.WritePropertyName(INDEX);
 			writer.WriteValue(Index.Id);
 
 			if (TexCoord != 0)
 			{
-				writer.WritePropertyName("texCoord");
+				writer.WritePropertyName(TEXCOORD);
 				writer.WriteValue(TexCoord);
 			}
 

@@ -32,7 +32,7 @@ namespace UnityGLTF.Loader
 		
 		private IEnumerator LoadFileStream(string rootPath, string fileToLoad)
 		{
-			string pathToLoad = Path.Combine(_rootDirectoryPath, fileToLoad);
+			string pathToLoad = Path.Combine(rootPath, fileToLoad);
 			if (!File.Exists(pathToLoad))
 			{
 				throw new FileNotFoundException("Buffer file not found", fileToLoad);

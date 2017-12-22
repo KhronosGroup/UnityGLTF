@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Cache
 {
-    public class MeshCacheData
+	public class MeshCacheData
 	{
 		public Mesh LoadedMesh { get; set; }
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
@@ -14,12 +14,12 @@ namespace UnityGLTF.Cache
 			MeshAttributes = new Dictionary<string, AttributeAccessor>();
 		}
 
-	    /// <summary>
-	    /// Unloads the meshes in this cache.
-	    /// </summary>
-        public void Unload()
-	    {
-	        Object.Destroy(LoadedMesh);
-	    }
+		/// <summary>
+		/// Unloads the meshes in this cache.
+		/// </summary>
+		public void Unload()
+		{
+			Object.Destroy(LoadedMesh);
+		}
 	}
 }

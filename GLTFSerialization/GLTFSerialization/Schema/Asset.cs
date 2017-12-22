@@ -50,9 +50,8 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-
-            bool shouldSkipRead = false;
-            while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -71,7 +70,7 @@ namespace GLTF.Schema
 						asset.MinVersion = reader.ReadAsString();
 						break;
 					default:
-                        shouldSkipRead = asset.DefaultPropertyDeserializer(root, reader);
+                        asset.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

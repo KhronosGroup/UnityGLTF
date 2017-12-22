@@ -8,16 +8,16 @@ using UnityGLTF.Loader;
 
 namespace Microsoft.Pisa.App
 {
-    public class RootMergeComponent : MonoBehaviour
-    {
-	    public string asset0Path;
-	    public string asset1Path;
-	    public bool Multithreaded = true;
+	public class RootMergeComponent : MonoBehaviour
+	{
+		public string asset0Path;
+		public string asset1Path;
+		public bool Multithreaded = true;
 
-	    public int MaximumLod = 300;
+		public int MaximumLod = 300;
 
-	    public Shader GLTFStandard = null;
-	    public Shader GLTFConstant = null;
+		public Shader GLTFStandard = null;
+		public Shader GLTFConstant = null;
 
 		// todo undo
 #if !WINDOWS_UWP

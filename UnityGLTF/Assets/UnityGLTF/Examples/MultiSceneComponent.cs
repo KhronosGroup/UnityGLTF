@@ -11,7 +11,9 @@ namespace UnityGLTF.Examples
 		public string Url;
 		public Shader GLTFStandardShader;
 
-		private GLTFSceneImporter importer;
+		private GLTFSceneImporter _importer;
+		private ILoader _loader;
+		private string _fileName;
 
 		void Start()
 		{
@@ -19,14 +21,9 @@ namespace UnityGLTF.Examples
 
 			Uri uri = new Uri(Url);
 			var directoryPath = URIHelper.AbsoluteUriPath(uri);
-			var loader = new WebRequestLoader(directoryPath);
-			importer = new GLTFSceneImporter(
-				URIHelper.GetFileFromUri(uri),
-				loader
-				);
+			_loader = new WebRequestLoader(directoryPath);
+			_fileName = URIHelper.GetFileFromUri(uri);
 
-			importer.SceneParent = gameObject.transform;
-			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandardShader);
 			StartCoroutine(LoadScene(SceneIndex));
 		}
 
@@ -46,8 +43,15 @@ namespace UnityGLTF.Examples
 			{
 				GameObject.Destroy(child.gameObject);
 			}
-			
-			yield return importer.LoadScene(SceneIndex);
+
+			_importer = new GLTFSceneImporter(
+				_fileName,
+				_loader
+				);
+
+			_importer.SceneParent = gameObject.transform;
+			_importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandardShader);
+			yield return _importer.LoadScene(SceneIndex);
 		}
 	}
 }

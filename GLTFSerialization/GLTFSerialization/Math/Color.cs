@@ -20,6 +20,14 @@ namespace GLTF.Math
 			A = a;
 		}
 
+		public Color(Color other)
+		{
+			R = other.R;
+			G = other.G;
+			B = other.B;
+			A = other.A;
+		}
+
 	    public bool Equals(Color other)
 	    {
 	        return R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);

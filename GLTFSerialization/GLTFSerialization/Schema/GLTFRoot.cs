@@ -270,9 +270,8 @@ namespace GLTF.Schema
 			{
 				throw new Exception("gltf json must be an object");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || jsonReader.Read()) && jsonReader.TokenType == JsonToken.PropertyName)
+			
+			while (jsonReader.Read() && jsonReader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = jsonReader.Value.ToString();
 
@@ -330,7 +329,7 @@ namespace GLTF.Schema
 						root.Textures = jsonReader.ReadList(() => Texture.Deserialize(root, jsonReader));
 						break;
 					default:
-                        shouldSkipRead = root.DefaultPropertyDeserializer(root, jsonReader);
+                        root.DefaultPropertyDeserializer(root, jsonReader);
 						break;
 				}
 			}

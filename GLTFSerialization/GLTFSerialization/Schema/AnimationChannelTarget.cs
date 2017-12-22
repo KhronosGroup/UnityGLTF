@@ -27,9 +27,8 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Animation channel target must be an object.");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -42,7 +41,7 @@ namespace GLTF.Schema
 						animationChannelTarget.Path = reader.ReadStringEnum<GLTFAnimationChannelPath>();
 						break;
 					default:
-                        shouldSkipRead = animationChannelTarget.DefaultPropertyDeserializer(root, reader);
+                        animationChannelTarget.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

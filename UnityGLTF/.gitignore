@@ -3,6 +3,7 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Pp]lugins/
 /Assets/AssetStoreTools*
 /Assets/ShaderForge*
 /Assets/VSCode*

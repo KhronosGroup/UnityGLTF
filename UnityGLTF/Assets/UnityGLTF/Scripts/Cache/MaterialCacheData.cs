@@ -13,20 +13,20 @@ namespace UnityGLTF.Cache
 			return useVertexColors ? UnityMaterialWithVertexColor : UnityMaterial;
 		}
 
-        /// <summary>
-        /// Unloads the materials in this cache.
-        /// </summary>
-	    public void Unload()
-	    {
-	        if (UnityMaterial != null)
-	        {
-	            Object.Destroy(UnityMaterial);
-	        }
+		/// <summary>
+		/// Unloads the materials in this cache.
+		/// </summary>
+		public void Unload()
+		{
+			if (UnityMaterial != null)
+			{
+				Object.Destroy(UnityMaterial);
+			}
 
-	        if (UnityMaterialWithVertexColor != null)
-	        {
-	            Object.Destroy(UnityMaterialWithVertexColor);
-	        }
-        }
+			if (UnityMaterialWithVertexColor != null)
+			{
+				Object.Destroy(UnityMaterialWithVertexColor);
+			}
+		}
 	}
 }

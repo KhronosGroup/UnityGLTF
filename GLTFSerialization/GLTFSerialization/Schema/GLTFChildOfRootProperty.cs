@@ -22,20 +22,17 @@ namespace GLTF.Schema
 	        Name = childOfRootProperty.Name;
 	    }
 
-        public new bool DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
+        public new void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
-            bool shouldSkipRead = false;
 			switch (reader.Value.ToString())
 			{
 				case "name":
 					Name = reader.ReadAsString();
 					break;
 				default:
-                    shouldSkipRead = base.DefaultPropertyDeserializer(root, reader);
+                    base.DefaultPropertyDeserializer(root, reader);
 					break;
 			}
-
-            return shouldSkipRead;
 		}
 
 		public override void Serialize(JsonWriter writer)

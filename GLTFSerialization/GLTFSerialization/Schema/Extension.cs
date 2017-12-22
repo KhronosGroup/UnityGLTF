@@ -5,7 +5,7 @@ namespace GLTF.Schema
 {
 	public interface IExtension
 	{
-	    IExtension Clone();
+	    IExtension Clone(GLTFRoot gltfRoot);
 		JProperty Serialize();
 	}
 
@@ -19,7 +19,7 @@ namespace GLTF.Schema
 	{
 		public JProperty ExtensionData { get; internal set; }
 
-	    public IExtension Clone()
+	    public IExtension Clone(GLTFRoot gltfRoot)
 	    {
 	        return new DefaultExtension
 	        {

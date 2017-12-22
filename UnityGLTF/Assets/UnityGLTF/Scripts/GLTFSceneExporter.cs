@@ -291,11 +291,11 @@ namespace UnityGLTF
 			{
 				for (var i = 0; i < primVariations.Length; i++)
 				{
-                    prims[i] = new MeshPrimitive(primVariations[i], _root)
-                    {
-                        Material = ExportMaterial(materialsObj[i])
-                    };
-                }
+					prims[i] = new MeshPrimitive(primVariations[i], _root)
+					{
+						Material = ExportMaterial(materialsObj[i])
+					};
+				}
 
 				return prims;
 			}
@@ -327,7 +327,7 @@ namespace UnityGLTF
 				var primitive = new MeshPrimitive();
 				
 				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(FlipFaces(triangles));
+				primitive.Indices = ExportAccessor(FlipFaces(triangles), true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -409,6 +409,9 @@ namespace UnityGLTF
 				if (emissionTex != null)
 				{
 					material.EmissiveTexture = ExportTextureInfo(emissionTex);
+
+					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+
 				}
 			}
 
@@ -419,6 +422,7 @@ namespace UnityGLTF
 				if (normalTex != null)
 				{
 					material.NormalTexture = ExportNormalTextureInfo(normalTex, materialObj);
+					ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
 				}
 			}
 
@@ -428,6 +432,7 @@ namespace UnityGLTF
 				if (occTex != null)
 				{
 					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, materialObj);
+					ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
 				}
 			}
 
@@ -451,6 +456,34 @@ namespace UnityGLTF
 			_root.Materials.Add(material);
 
 			return id;
+		}
+
+		private void ExportTextureTransform(TextureInfo def, UnityEngine.Material mat, string texName)
+		{
+			Vector2 offset = mat.GetTextureOffset(texName);
+			Vector2 scale = mat.GetTextureScale(texName);
+
+			if (offset == Vector2.zero && scale == Vector2.one) return;
+
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(
+					new string[] { ExtTextureTransformExtensionFactory.EXTENSION_NAME }
+				);
+			}
+			else if (!_root.ExtensionsUsed.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+			{
+				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
+			}
+
+			if (def.Extensions == null)
+				def.Extensions = new Dictionary<string, IExtension>();
+
+			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
+				new GLTF.Math.Vector2(offset.x, -offset.y),
+				new GLTF.Math.Vector2(scale.x, scale.y),
+				0 // TODO: support UV channels
+			);
 		}
 
 		private NormalTextureInfo ExportNormalTextureInfo(UnityEngine.Texture texture, UnityEngine.Material material)
@@ -497,6 +530,7 @@ namespace UnityGLTF
 				if (mainTex != null)
 				{
 					pbr.BaseColorTexture = ExportTextureInfo(mainTex);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
 
@@ -521,6 +555,7 @@ namespace UnityGLTF
 				if (mrTex != null)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicRoughnessMap");
 				}
 			}
 			else if (material.HasProperty("_MetallicGlossMap"))
@@ -530,6 +565,7 @@ namespace UnityGLTF
 				if (mgTex != null)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 				}
 			}
 
@@ -540,8 +576,7 @@ namespace UnityGLTF
 		{
 			if (_root.ExtensionsUsed == null)
 			{
-				_root.ExtensionsUsed = new List<string>();
-				_root.ExtensionsUsed.Add("KHR_materials_common");
+				_root.ExtensionsUsed = new List<string>(new string[] { "KHR_materials_common" });
 			}
 			else if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
 				_root.ExtensionsUsed.Add("KHR_materials_common");
@@ -558,7 +593,11 @@ namespace UnityGLTF
 				var lmTex = materialObj.GetTexture("_LightMap");
 
 				if (lmTex != null)
+				{
 					constant.LightmapTexture = ExportTextureInfo(lmTex);
+					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
+				}
+					
 			}
 
 			if (materialObj.HasProperty("_LightFactor"))
@@ -587,6 +626,12 @@ namespace UnityGLTF
 			}
 
 			var texture = new GLTF.Schema.Texture();
+
+			//If texture name not set give it a unique name using count
+			if (textureObj.name == "")
+			{
+				textureObj.name = (_root.Textures.Count + 1).ToString();
+			}
 
 			if (ExportNames)
 			{
@@ -725,7 +770,7 @@ namespace UnityGLTF
 			return triangles;
 		}
 
-		private AccessorId ExportAccessor(int[] arr)
+		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
 			var count = arr.Length;
 
@@ -757,7 +802,7 @@ namespace UnityGLTF
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			if (max < byte.MaxValue && min > byte.MinValue)
+			if (max <= byte.MaxValue && min >= byte.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
@@ -765,7 +810,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((byte)v);
 				}
 			}
-			else if (max < sbyte.MaxValue && min > sbyte.MinValue)
+			else if (max <= sbyte.MaxValue && min >= sbyte.MinValue && !isIndices)
 			{
 				accessor.ComponentType = GLTFComponentType.Byte;
 
@@ -773,7 +818,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((sbyte)v);
 				}
 			}
-			else if (max < short.MaxValue && min > short.MinValue)
+			else if (max <= short.MaxValue && min >= short.MinValue && !isIndices)
 			{
 				accessor.ComponentType = GLTFComponentType.Short;
 
@@ -781,7 +826,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((short)v);
 				}
 			}
-			else if (max < ushort.MaxValue && min > ushort.MinValue)
+			else if (max <= ushort.MaxValue && min >= ushort.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedShort;
 
@@ -789,7 +834,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((ushort)v);
 				}
 			}
-			else if (min > uint.MinValue)
+			else if (min >= uint.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedInt;
 

@@ -1,111 +1,63 @@
 using System;
 using System.Collections;
 using System.IO;
+using GLTF;
 using GLTF.Schema;
-#if WINDOWS_UWP
-using System.Threading.Tasks;
-#endif
 using UnityEngine;
 using UnityGLTF.Loader;
-#if WINDOWS_UWP
-using Windows.Storage;
-#endif
 
 namespace UnityGLTF {
 
 	/// <summary>
 	/// Component to load a GLTF scene with
 	/// </summary>
-	public class GLTFComponent : MonoBehaviour
+	class GLTFComponent : MonoBehaviour
 	{
-		public string Url;
+		public string GLTFUri;
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 
 		public int MaximumLod = 300;
 
-		public Shader GLTFStandard = null;
-		public Shader GLTFConstant = null;
+		public Shader GLTFStandard;
+		public Shader GLTFStandardSpecular;
+		public Shader GLTFConstant;
 
-		[SerializeField]
-		private KeyCode KeyToPress = KeyCode.L;
-		private bool didExecute = false;
-		private void Update()
+		public bool addColliders = false;
+
+		IEnumerator Start()
 		{
-			if (Input.GetKeyDown(KeyToPress) && !didExecute)
-			{
-				didExecute = true;
-				StartCoroutine(LoadGLTF());
-            }
-        }
-		
-		private IEnumerator LoadGLTF()
-		{
+			GLTFSceneImporter sceneImporter = null;
 			ILoader loader = null;
-			GLTFSceneImporter importer = null;
-#if !WINDOWS_UWP
-			FileStream gltfStream = null;
-#endif
 
 			if (UseStream)
 			{
-#if WINDOWS_UWP
-				var objectsLibrary = KnownFolders.Objects3D;
-				loader = new StorageFolderLoader(objectsLibrary);
-				yield return loader.LoadStream(Path.GetFileName(Url));
-				Stream gltfStream = loader.LoadedStream;
-				var gltfRoot = GLTF.GLTFParser.ParseJson(gltfStream);
-
-				importer = new GLTFSceneImporter(gltfRoot, loader);
-#else
-				var fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + Url;
-				gltfStream = File.OpenRead(fullPath);
-				var gltfRoot = GLTF.GLTFParser.ParseJson(gltfStream);
-				loader = new FileLoader(URIHelper.GetDirectoryName(fullPath));
-
-				importer = new GLTFSceneImporter(
-					gltfRoot,
-					loader,
-					gltfStream
-				);
-#endif
-			}
-			else
-			{
-				Uri uri = new Uri(Url);
-				var directoryPath = URIHelper.AbsoluteUriPath(uri);
-				loader = new WebRequestLoader(directoryPath);
-				importer = new GLTFSceneImporter(
-					URIHelper.GetFileFromUri(uri),
+				string fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri);
+				string directoryPath = URIHelper.GetDirectoryName(fullPath);
+				loader = new FileLoader(directoryPath);
+				sceneImporter = new GLTFSceneImporter(
+					Path.GetFileName(GLTFUri),
 					loader
-				);
-
-				importer.SceneParent = gameObject.transform;
-			}
-
-			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
-			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
-			importer.MaximumLod = MaximumLod;
-
-#if !WINDOWS_UWP
-			if (UseStream)
-			{
-				yield return importer.LoadNode(0);
-				GameObject node = importer.CreatedObject;
-				node.transform.SetParent(gameObject.transform, false);
-				gltfStream.Close();
+					);
 			}
 			else
-#endif
 			{
-#if WINDOWS_UWP
-				yield return importer.LoadNode(0);
-				GameObject node = importer.CreatedObject;
-				node.transform.SetParent(gameObject.transform, false);
-#else
-				yield return importer.LoadScene(-1, Multithreaded);
-#endif
+				string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
+				loader = new WebRequestLoader(directoryPath);
+				sceneImporter = new GLTFSceneImporter(
+					URIHelper.GetFileFromUri(new Uri(GLTFUri)),
+					loader
+					);
+
 			}
+
+			sceneImporter.SceneParent = gameObject.transform;
+			sceneImporter.AddColliders = true;
+			sceneImporter.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
+			sceneImporter.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.KHR_materials_pbrSpecularGlossiness, GLTFStandardSpecular);
+			sceneImporter.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
+			sceneImporter.MaximumLod = MaximumLod;
+			yield return sceneImporter.LoadScene(-1, Multithreaded);
 		}
 	}
 }

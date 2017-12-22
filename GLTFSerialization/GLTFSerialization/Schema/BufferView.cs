@@ -62,9 +62,8 @@ namespace GLTF.Schema
         public static BufferView Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var bufferView = new BufferView();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -86,7 +85,7 @@ namespace GLTF.Schema
 						bufferView.Target = (BufferViewTarget)reader.ReadAsInt32().Value;
 						break;
 					default:
-                        shouldSkipRead = bufferView.DefaultPropertyDeserializer(root, reader);
+                        bufferView.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

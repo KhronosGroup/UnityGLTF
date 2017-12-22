@@ -178,9 +178,8 @@ namespace GLTF.Schema
 		public static MeshPrimitive Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var primitive = new MeshPrimitive();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -213,7 +212,7 @@ namespace GLTF.Schema
 						});
 						break;
 					default:
-                        shouldSkipRead = primitive.DefaultPropertyDeserializer(root, reader);
+                        primitive.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

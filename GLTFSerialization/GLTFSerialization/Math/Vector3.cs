@@ -7,6 +7,10 @@ namespace GLTF.Math
 		public static readonly Vector3 Zero = new Vector3(0f, 0f, 0f);
 		public static readonly Vector3 One = new Vector3(1f, 1f, 1f);
 
+		public float X { get; set; }
+		public float Y { get; set; }
+		public float Z { get; set; }
+		
 		public Vector3(float x, float y, float z)
 		{
 			X = x;
@@ -14,9 +18,13 @@ namespace GLTF.Math
 			Z = z;
 		}
         
-		public float X { get; set; }
-		public float Y { get; set; }
-		public float Z { get; set; }
+
+		public Vector3(Vector3 other)
+		{
+			X = other.X;
+			Y = other.Y;
+			Z = other.Z;
+		}
 
 	    public bool Equals(Vector3 other)
 	    {

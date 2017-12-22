@@ -47,9 +47,8 @@ namespace GLTF.Schema
         public static Image Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var image = new Image();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -65,7 +64,7 @@ namespace GLTF.Schema
 						image.BufferView = BufferViewId.Deserialize(root, reader);
 						break;
 					default:
-                        shouldSkipRead = image.DefaultPropertyDeserializer(root, reader);
+                        image.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
 
