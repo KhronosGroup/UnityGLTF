@@ -142,7 +142,7 @@ namespace GLTF.Schema
 	            Buffers = new List<Buffer>(gltfRoot.Buffers.Count);
 	            foreach (Buffer buffer in gltfRoot.Buffers)
 	            {
-	                Buffers.Add(new Buffer(buffer));
+	                Buffers.Add(new Buffer(buffer, this));
 	            }
 	        }
 
@@ -160,7 +160,7 @@ namespace GLTF.Schema
 	            Cameras = new List<Camera>(gltfRoot.Cameras.Count);
 	            foreach (Camera camera in gltfRoot.Cameras)
 	            {
-	                Cameras.Add(new Camera(camera));
+	                Cameras.Add(new Camera(camera, this));
 	            }
 	        }
 
@@ -205,7 +205,7 @@ namespace GLTF.Schema
 	            Samplers = new List<Sampler>(gltfRoot.Samplers.Count);
 	            foreach (Sampler sampler in gltfRoot.Samplers)
 	            {
-	                Samplers.Add(new Sampler(sampler));
+	                Samplers.Add(new Sampler(sampler, this));
 	            }
 	        }
 
@@ -270,9 +270,8 @@ namespace GLTF.Schema
 			{
 				throw new Exception("gltf json must be an object");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || jsonReader.Read()) && jsonReader.TokenType == JsonToken.PropertyName)
+			
+			while (jsonReader.Read() && jsonReader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = jsonReader.Value.ToString();
 
@@ -330,7 +329,7 @@ namespace GLTF.Schema
 						root.Textures = jsonReader.ReadList(() => Texture.Deserialize(root, jsonReader));
 						break;
 					default:
-                        shouldSkipRead = root.DefaultPropertyDeserializer(root, jsonReader);
+                        root.DefaultPropertyDeserializer(root, jsonReader);
 						break;
 				}
 			}

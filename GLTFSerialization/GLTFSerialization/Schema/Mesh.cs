@@ -28,7 +28,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh)
+	    public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
 	    {
 	        if (mesh == null) return;
 
@@ -52,9 +52,8 @@ namespace GLTF.Schema
 		public static Mesh Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var mesh = new Mesh();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -67,7 +66,7 @@ namespace GLTF.Schema
 						mesh.Weights = reader.ReadDoubleList();
 						break;
 					default:
-                        shouldSkipRead = mesh.DefaultPropertyDeserializer(root, reader);
+                        mesh.DefaultPropertyDeserializer(root, reader);
 						break;
                 }
             }

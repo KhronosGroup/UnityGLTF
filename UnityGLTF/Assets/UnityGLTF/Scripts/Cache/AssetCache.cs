@@ -57,7 +57,7 @@ namespace UnityGLTF.Cache
 		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
 			int meshCacheSize, int nodeCacheSize)
 		{
-            ImageCache = new Texture2D[imageCacheSize];
+			ImageCache = new Texture2D[imageCacheSize];
 			ImageStreamCache = new Stream[imageCacheSize];
 			TextureCache = new TextureCacheData[textureCacheSize];
 			MaterialCache = new MaterialCacheData[materialCacheSize];
@@ -73,8 +73,8 @@ namespace UnityGLTF.Cache
 
 		public void Dispose()
 		{
-		    ImageCache = null;
-		    ImageStreamCache = null;
+			ImageCache = null;
+			ImageStreamCache = null;
 			TextureCache = null;
 			MaterialCache = null;
 			foreach(BufferCacheData bufferCacheData in BufferCache)

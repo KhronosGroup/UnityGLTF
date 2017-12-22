@@ -1,12 +1,11 @@
 ﻿
+#if WINDOWS_UWP
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if WINDOWS_UWP
 using System.Threading.Tasks;
 #endif
 using UnityEngine;
-
 namespace UnityGLTF
 {
 	public class AsyncCoroutineHelper : MonoBehaviour
@@ -14,7 +13,7 @@ namespace UnityGLTF
 #if WINDOWS_UWP
 		private Queue<CoroutineInfo> actions = new Queue<CoroutineInfo>();
 		
-		public Task RunAsTask(IEnumerator coroutine)
+		public Task RunAsTask(IEnumerator coroutine, string name)
 		{
 			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
 			lock (actions)
@@ -23,7 +22,8 @@ namespace UnityGLTF
 					new CoroutineInfo
 					{
 						Coroutine = coroutine,
-						Tcs = tcs
+						Tcs = tcs,
+						Name = name
 					}
 				);
 			}
@@ -59,7 +59,9 @@ namespace UnityGLTF
 		{
 			public IEnumerator Coroutine;
 			public TaskCompletionSource<bool> Tcs;
+			public string Name;
 		}
 #endif
 	}
 }
+

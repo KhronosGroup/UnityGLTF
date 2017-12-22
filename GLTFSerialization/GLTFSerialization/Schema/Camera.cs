@@ -31,7 +31,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Camera(Camera camera) : base(camera)
+	    public Camera(Camera camera, GLTFRoot gltfRoot) : base(camera, gltfRoot)
 	    {
 	        if (camera == null) return;
 
@@ -51,9 +51,8 @@ namespace GLTF.Schema
 		public static Camera Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var camera = new Camera();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -66,7 +65,7 @@ namespace GLTF.Schema
 						camera.Perspective = CameraPerspective.Deserialize(root, reader);
 						break;
 					default:
-                        shouldSkipRead = camera.DefaultPropertyDeserializer(root, reader);
+                        camera.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

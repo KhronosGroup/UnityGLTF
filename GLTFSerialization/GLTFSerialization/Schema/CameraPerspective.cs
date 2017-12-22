@@ -58,9 +58,8 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Perspective camera must be an object.");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -79,7 +78,7 @@ namespace GLTF.Schema
 						cameraPerspective.ZNear = reader.ReadAsDouble().Value;
 						break;
 					default:
-                        shouldSkipRead = cameraPerspective.DefaultPropertyDeserializer(root, reader);
+                        cameraPerspective.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

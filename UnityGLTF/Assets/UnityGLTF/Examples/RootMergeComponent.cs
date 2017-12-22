@@ -1,6 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-
-using System.Collections;
+﻿using System.Collections;
 using System.IO;
 using GLTF;
 using GLTF.Schema;
@@ -10,16 +8,16 @@ using UnityGLTF.Loader;
 
 namespace Microsoft.Pisa.App
 {
-    public class RootMergeComponent : MonoBehaviour
-    {
-	    public string asset0Path;
-	    public string asset1Path;
-	    public bool Multithreaded = true;
+	public class RootMergeComponent : MonoBehaviour
+	{
+		public string asset0Path;
+		public string asset1Path;
+		public bool Multithreaded = true;
 
-	    public int MaximumLod = 300;
+		public int MaximumLod = 300;
 
-	    public Shader GLTFStandard = null;
-	    public Shader GLTFConstant = null;
+		public Shader GLTFStandard = null;
+		public Shader GLTFConstant = null;
 
 		// todo undo
 #if !WINDOWS_UWP
@@ -31,10 +29,12 @@ namespace Microsoft.Pisa.App
 			var fullPath1 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset1Path;
 			ILoader loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
 
-			var asset0Stream = loader0.LoadStream(Path.GetFileName(asset0Path));
+			yield return loader0.LoadStream(Path.GetFileName(asset0Path));
+			var asset0Stream = loader0.LoadedStream;
 			var asset0Root = GLTFParser.ParseJson(asset0Stream);
 
-			var asset1Stream = loader1.LoadStream(Path.GetFileName(asset1Path));
+			yield return loader1.LoadStream(Path.GetFileName(asset1Path));
+			var asset1Stream = loader1.LoadedStream;
 			var asset1Root = GLTFParser.ParseJson(asset1Stream);
 
 			string newPath = "../../" + URIHelper.GetDirectoryName(asset0Path);

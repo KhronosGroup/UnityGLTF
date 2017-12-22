@@ -35,25 +35,11 @@ namespace GLTF.Math
 			M44 = m44;
 		}
 
-	    public Matrix4x4(Matrix4x4 mat4x4)
-	    {
-	        M11 = mat4x4.M11;
-	        M12 = mat4x4.M12;
-	        M13 = mat4x4.M13;
-	        M14 = mat4x4.M14;
-	        M21 = mat4x4.M21;
-	        M22 = mat4x4.M22;
-	        M23 = mat4x4.M23;
-	        M24 = mat4x4.M24;
-	        M31 = mat4x4.M31;
-	        M32 = mat4x4.M32;
-	        M33 = mat4x4.M33;
-	        M34 = mat4x4.M34;
-	        M41 = mat4x4.M41;
-	        M42 = mat4x4.M42;
-	        M43 = mat4x4.M43;
-	        M44 = mat4x4.M44;
-        }
+		public Matrix4x4(Matrix4x4 other)
+		{
+			Array.Copy(other.mat, 0, mat, 0, 16);
+		}
+		
 
 		private float[] mat = new float[16];
 
@@ -75,7 +61,7 @@ namespace GLTF.Math
 		public float M44 { get { return mat[15]; } set { mat[15] = value; } }
 
 	    public bool Equals(Matrix4x4 other)
-	    {
+        {
 	        if (ReferenceEquals(null, other)) return false;
 	        if (ReferenceEquals(this, other)) return true;
 
@@ -83,7 +69,7 @@ namespace GLTF.Math
 	               M21 == other.M21 && M22 == other.M22 && M23 == other.M23 && M24 == other.M24 &&
 	               M31 == other.M31 && M32 == other.M32 && M33 == other.M33 && M34 == other.M34 &&
 	               M41 == other.M41 && M42 == other.M42 && M43 == other.M43 && M44 == other.M44;
-        }
+		}
 
 	    public override bool Equals(object obj)
 	    {
@@ -94,8 +80,8 @@ namespace GLTF.Math
 	    }
 
 	    public override int GetHashCode()
-	    {
+        {
 	        return (mat != null ? mat.GetHashCode() : 0);
-	    }
+        }
 	}
 }

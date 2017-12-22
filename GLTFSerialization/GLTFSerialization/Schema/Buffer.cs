@@ -24,7 +24,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Buffer(Buffer buffer) : base(buffer)
+	    public Buffer(Buffer buffer, GLTFRoot gltfRoot) : base(buffer, gltfRoot)
 	    {
 	        if (buffer == null) return;
 	        Uri = buffer.Uri;
@@ -34,9 +34,8 @@ namespace GLTF.Schema
 		public static Buffer Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var buffer = new Buffer();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -49,7 +48,7 @@ namespace GLTF.Schema
 						buffer.ByteLength = reader.ReadAsInt32().Value;
 						break;
 					default:
-                        shouldSkipRead = buffer.DefaultPropertyDeserializer(root, reader);
+                        buffer.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

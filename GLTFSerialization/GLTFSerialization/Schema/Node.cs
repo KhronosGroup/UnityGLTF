@@ -77,7 +77,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Node(Node node, GLTFRoot gltfRoot) : base(node)
+	    public Node(Node node, GLTFRoot gltfRoot) : base(node, gltfRoot)
 	    {
 	        if (node == null) return;
 
@@ -127,9 +127,8 @@ namespace GLTF.Schema
 		public static Node Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var node = new Node();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -173,7 +172,7 @@ namespace GLTF.Schema
 						node.Weights = reader.ReadDoubleList();
 						break;
 					default:
-                        shouldSkipRead = node.DefaultPropertyDeserializer(root, reader);
+                        node.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

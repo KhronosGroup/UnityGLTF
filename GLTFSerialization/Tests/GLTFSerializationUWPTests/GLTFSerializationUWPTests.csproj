@@ -91,6 +91,7 @@
   <ItemGroup>
     <!--A reference to the entire .Net Framework and Windows SDK are automatically included-->
     <Content Include="Assets\glTF\BoomBox.gltf" />
+    <Content Include="Assets\glTF\Lantern.gltf" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>

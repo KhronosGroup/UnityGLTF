@@ -5,7 +5,11 @@ namespace GLTF.Math
 	public struct Quaternion : IEquatable<Quaternion>
 	{
 		public static readonly Quaternion Identity = new Quaternion(0f, 0f, 0f, 1f);
-
+		public float X { get; set; }
+		public float Y { get; set; }
+		public float Z { get; set; }
+		public float W { get; set; }
+		
 		public Quaternion(float x, float y, float z, float w)
 		{
 			X = x;
@@ -14,10 +18,13 @@ namespace GLTF.Math
 			W = w;
 		}
 
-		public float X { get; set; }
-		public float Y { get; set; }
-		public float Z { get; set; }
-		public float W { get; set; }
+		public Quaternion(Quaternion other)
+		{
+			X = other.X;
+			Y = other.Y;
+			Z = other.Z;
+			W = other.W;
+		}
 
 	    public bool Equals(Quaternion other)
 	    {

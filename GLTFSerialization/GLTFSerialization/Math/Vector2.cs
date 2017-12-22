@@ -4,14 +4,20 @@ namespace GLTF.Math
 {
 	public struct Vector2 : IEquatable<Vector2>
 	{
+		public float X { get; set; }
+		public float Y { get; set; }
+	
 		public Vector2(float x, float y)
 		{
 			X = x;
 			Y = y;
 		}
 
-		public float X { get; set; }
-		public float Y { get; set; }
+		public Vector2(Vector2 other)
+		{
+			X = other.X;
+			Y = other.Y;
+		}
 
 	    public bool Equals(Vector2 other)
 	    {

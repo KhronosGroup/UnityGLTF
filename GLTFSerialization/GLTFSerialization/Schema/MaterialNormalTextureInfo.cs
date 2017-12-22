@@ -5,6 +5,8 @@ namespace GLTF.Schema
 {
 	public class NormalTextureInfo : TextureInfo
 	{
+		public const string SCALE = "scale";
+
 		/// <summary>
 		/// The scalar multiplier applied to each normal vector of the texture.
 		/// This value is ignored if normalTexture is not specified.
@@ -29,25 +31,24 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
 				switch (curProp)
 				{
-					case "index":
+					case INDEX:
 						textureInfo.Index = TextureId.Deserialize(root, reader);
 						break;
-					case "texCoord":
+					case TEXCOORD:
 						textureInfo.TexCoord = reader.ReadAsInt32().Value;
 						break;
-					case "scale":
+					case SCALE:
 						textureInfo.Scale = reader.ReadAsDouble().Value;
 						break;
 					default:
-                        shouldSkipRead = textureInfo.DefaultPropertyDeserializer(root, reader);
+                        textureInfo.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

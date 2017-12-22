@@ -21,6 +21,10 @@ namespace GLTF
 		
 		public static GLTFRoot ParseJson(Stream stream)
 		{
+			if (stream.Length == 0) {
+				throw new GLTFHeaderInvalidException("glTF file cannot be empty.");
+			}
+
             stream.Position = 0;
             // Check for binary format magic bytes
             if (IsGLB(stream))

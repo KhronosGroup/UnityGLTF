@@ -9,9 +9,12 @@ namespace GLTFSerializationTests
 	{
 		public float Glossiness { get; set; }
 
-	    public IExtension Clone()
+	    public IExtension Clone(GLTFRoot root)
 	    {
-	        throw new System.NotImplementedException();
+		    return new TestExtension()
+		    {
+			    Glossiness = Glossiness
+		    };
 	    }
 
 	    public JProperty Serialize()
@@ -270,11 +273,8 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsNotNull(gltfRoot.Extras);
 
-			JProperty extras = gltfRoot.Extras as JProperty;
-			Assert.AreEqual(JTokenType.Object, extras.Value.Type);
-
-			JObject jObject = extras.Value as JObject;
-			JToken testIntProperty = (extras.Value as JObject)["testint"];
+			JObject jObject = gltfRoot.Extras as JObject;
+			JToken testIntProperty = jObject["testint"];
 			Assert.AreEqual(JTokenType.Integer, testIntProperty.Type);
 			Assert.AreEqual(254, testIntProperty.Value<int>());
 

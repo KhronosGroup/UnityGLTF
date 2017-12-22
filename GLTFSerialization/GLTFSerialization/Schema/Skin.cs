@@ -32,7 +32,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin)
+	    public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin, gltfRoot)
 	    {
 	        if (skin == null) return;
 
@@ -59,9 +59,8 @@ namespace GLTF.Schema
 		public static Skin Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var skin = new Skin();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -77,7 +76,7 @@ namespace GLTF.Schema
 						skin.Joints = reader.ReadList(() => NodeId.Deserialize(root, reader));
 						break;
 					default:
-                        shouldSkipRead = skin.DefaultPropertyDeserializer(root, reader);
+                        skin.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

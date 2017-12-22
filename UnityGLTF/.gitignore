@@ -3,6 +3,7 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Pp]lugins/
 /Assets/AssetStoreTools*
 /Assets/ShaderForge*
 /Assets/VSCode*
@@ -26,6 +27,7 @@ ExportedObj/
 *.booproj
 *.svd
 *.pdb
+*.pfx*
 
 
 # Unity3D generated meta files
@@ -39,3 +41,6 @@ sysinfo.txt
 *.unitypackage
 
 /www/node_modules/
+
+/WSA/
+/UWP/

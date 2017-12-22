@@ -5,6 +5,8 @@ namespace GLTF.Schema
 {
 	public class OcclusionTextureInfo : TextureInfo
 	{
+		public const string STRENGTH = "strength";
+
 		/// <summary>
 		/// A scalar multiplier controlling the amount of occlusion applied.
 		/// A value of 0.0 means no occlusion.
@@ -33,25 +35,24 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
 				switch (curProp)
 				{
-					case "index":
+					case INDEX:
 						textureInfo.Index = TextureId.Deserialize(root, reader);
 						break;
-					case "texCoord":
+					case TEXCOORD:
 						textureInfo.TexCoord = reader.ReadAsInt32().Value;
 						break;
-					case "strength":
+					case STRENGTH:
 						textureInfo.Strength = reader.ReadAsDouble().Value;
 						break;
 					default:
-                        shouldSkipRead = textureInfo.DefaultPropertyDeserializer(root, reader);
+                        textureInfo.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

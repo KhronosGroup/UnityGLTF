@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.IO;
 using GLTF;
 using GLTF.Schema;
 #if WINDOWS_UWP
@@ -9,10 +10,8 @@ namespace UnityGLTF.Loader
 {
 	public interface ILoader
 	{
-#if WINDOWS_UWP
-		Task<Stream> LoadStream(string relativeFilePath);
-#else
-		Stream LoadStream(string relativeFilePath);
-#endif
+		IEnumerator LoadStream(string relativeFilePath);
+
+		Stream LoadedStream { get; }
 	}
 }

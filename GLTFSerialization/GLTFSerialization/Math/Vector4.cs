@@ -4,6 +4,11 @@ namespace GLTF.Math
 {
 	public struct Vector4 : IEquatable<Vector4>
 	{
+		public float X { get; set; }
+		public float Y { get; set; }
+		public float Z { get; set; }
+		public float W { get; set; }
+	
 		public Vector4(float x, float y, float z, float w)
 		{
 			X = x;
@@ -12,10 +17,14 @@ namespace GLTF.Math
 			W = w;
 		}
 
-		public float X { get; set; }
-		public float Y { get; set; }
-		public float Z { get; set; }
-		public float W { get; set; }
+		public Vector4(Vector4 other)
+		{
+			X = other.X;
+			Y = other.Y;
+			Z = other.Z;
+			W = other.W;
+		}
+
 
 	    public bool Equals(Vector4 other)
 	    {

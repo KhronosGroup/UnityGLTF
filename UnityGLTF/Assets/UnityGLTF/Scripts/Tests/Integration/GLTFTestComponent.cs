@@ -11,21 +11,19 @@ namespace UnityGLTF.Tests.Integration
 		public bool Multithreaded = true;
 
 		public Shader GLTFStandard;
-		private ILoader loader;
+
 
 		IEnumerator Start()
 		{
-			Uri uri = new Uri(Url);
-			string directoryPath = URIHelper.AbsoluteUriPath(uri);
-			loader = new WebRequestLoader(directoryPath);
-			var importer = new GLTFSceneImporter(
-				URIHelper.GetFileFromUri(uri),
+			ILoader loader = new WebRequestLoader(URIHelper.GetDirectoryName(Url));
+			var sceneImporter = new GLTFSceneImporter(
+				URIHelper.GetFileFromUri(new Uri(Url)),
 				loader
 				);
 
-			importer.SceneParent = gameObject.transform;
-			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
-			yield return importer.LoadScene(-1, Multithreaded);
+			sceneImporter.SceneParent = gameObject.transform;
+			sceneImporter.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
+			yield return sceneImporter.LoadScene(-1, Multithreaded);
 			IntegrationTest.Pass();
 		}
 	}

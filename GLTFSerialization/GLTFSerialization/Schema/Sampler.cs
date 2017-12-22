@@ -32,7 +32,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Sampler(Sampler sampler) : base(sampler)
+	    public Sampler(Sampler sampler, GLTFRoot gltfRoot) : base(sampler, gltfRoot)
 	    {
 	        if (sampler == null) return;
 
@@ -45,9 +45,8 @@ namespace GLTF.Schema
 		public static Sampler Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var sampler = new Sampler();
-
-            bool shouldSkipRead = false;
-			while ((shouldSkipRead || reader.Read()) && reader.TokenType == JsonToken.PropertyName)
+			
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -66,7 +65,7 @@ namespace GLTF.Schema
 						sampler.WrapT = (WrapMode)reader.ReadAsInt32();
 						break;
 					default:
-                        shouldSkipRead = sampler.DefaultPropertyDeserializer(root, reader);
+                        sampler.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
             }

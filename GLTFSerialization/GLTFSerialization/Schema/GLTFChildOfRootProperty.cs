@@ -15,27 +15,24 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty) : base(childOfRootProperty)
-	    {
-	        if (childOfRootProperty == null) return;
-
-	        Name = childOfRootProperty.Name;
-	    }
-
-        public new bool DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
+		public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty, GLTFRoot gltfRoot) : base(childOfRootProperty, gltfRoot)
 		{
-            bool shouldSkipRead = false;
+			if (childOfRootProperty == null) return;
+
+			Name = childOfRootProperty.Name;
+		}
+
+		public new void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
+		{
 			switch (reader.Value.ToString())
 			{
 				case "name":
 					Name = reader.ReadAsString();
 					break;
 				default:
-                    shouldSkipRead = base.DefaultPropertyDeserializer(root, reader);
+                    base.DefaultPropertyDeserializer(root, reader);
 					break;
 			}
-
-            return shouldSkipRead;
 		}
 
 		public override void Serialize(JsonWriter writer)
