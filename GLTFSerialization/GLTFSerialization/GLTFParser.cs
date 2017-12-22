@@ -26,7 +26,7 @@ namespace GLTF
 			}
 
             stream.Position = 0;
-            // Check for binary format magic bytes
+			// Check for binary format magic bytes
             if (IsGLB(stream))
 			{
 				ParseJsonChunk(stream);

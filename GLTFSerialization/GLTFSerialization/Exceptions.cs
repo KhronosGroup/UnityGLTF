@@ -26,6 +26,19 @@ namespace GLTF
 #endif
 	}
 
+	[Serializable()]
+	public class GLTFParseException : Exception
+	{
+		public GLTFParseException() : base() { }
+		public GLTFParseException(string message) : base(message) { }
+		public GLTFParseException(string message, Exception inner) : base(message, inner) { }
+#if !WINDOWS_UWP
+		protected GLTFParseException(System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+		{ }
+#endif
+	}
+
 	// todo blgross unity - move over when doing unity layer
 	public class ShaderNotFoundException : Exception
 	{

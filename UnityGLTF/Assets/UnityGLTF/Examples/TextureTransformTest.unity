@@ -219,7 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GLTFUri: http://localhost:8080/EXT_texture_transform/pyramid.gltf
+  Url: http://localhost:8080/EXT_texture_transform/pyramid.gltf
   Multithreaded: 1
   UseStream: 0
   MaximumLod: 300
@@ -307,7 +307,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GLTFUri: http://localhost:8080/EXT_texture_transform/quad.gltf
+  Url: http://localhost:8080/EXT_texture_transform/quad.gltf
   Multithreaded: 1
   UseStream: 0
   MaximumLod: 300

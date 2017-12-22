@@ -39,6 +39,11 @@ namespace GLTF.Math
 		{
 			Array.Copy(other.mat, 0, mat, 0, 16);
 		}
+
+		public Matrix4x4(Matrix4x4 other)
+		{
+			Array.Copy(other.mat, 0, mat, 0, 16);
+		}
 		
 
 		private float[] mat = new float[16];
@@ -61,7 +66,7 @@ namespace GLTF.Math
 		public float M44 { get { return mat[15]; } set { mat[15] = value; } }
 
 	    public bool Equals(Matrix4x4 other)
-        {
+		{
 	        if (ReferenceEquals(null, other)) return false;
 	        if (ReferenceEquals(this, other)) return true;
 
@@ -80,8 +85,8 @@ namespace GLTF.Math
 	    }
 
 	    public override int GetHashCode()
-        {
+		{
 	        return (mat != null ? mat.GetHashCode() : 0);
-        }
+		}
 	}
 }
