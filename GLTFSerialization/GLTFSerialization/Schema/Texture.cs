@@ -21,7 +21,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Texture(Texture texture, GLTFRoot gltfRoot) : base(texture)
+	    public Texture(Texture texture, GLTFRoot gltfRoot) : base(texture, gltfRoot)
 	    {
 	        if (texture == null) return;
 

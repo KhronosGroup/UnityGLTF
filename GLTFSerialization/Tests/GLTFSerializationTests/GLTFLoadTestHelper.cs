@@ -9,9 +9,12 @@ namespace GLTFSerializationTests
 	{
 		public float Glossiness { get; set; }
 
-	    public IExtension Clone()
+	    public IExtension Clone(GLTFRoot root)
 	    {
-	        throw new System.NotImplementedException();
+		    return new TestExtension()
+		    {
+			    Glossiness = Glossiness
+		    };
 	    }
 
 	    public JProperty Serialize()

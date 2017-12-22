@@ -15,14 +15,14 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty) : base(childOfRootProperty)
-	    {
-	        if (childOfRootProperty == null) return;
+		public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty, GLTFRoot gltfRoot) : base(childOfRootProperty, gltfRoot)
+		{
+			if (childOfRootProperty == null) return;
 
-	        Name = childOfRootProperty.Name;
-	    }
+			Name = childOfRootProperty.Name;
+		}
 
-        public new void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
+		public new void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
 			switch (reader.Value.ToString())
 			{

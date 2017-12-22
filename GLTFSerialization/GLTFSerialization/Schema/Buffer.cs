@@ -24,7 +24,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Buffer(Buffer buffer) : base(buffer)
+	    public Buffer(Buffer buffer, GLTFRoot gltfRoot) : base(buffer, gltfRoot)
 	    {
 	        if (buffer == null) return;
 	        Uri = buffer.Uri;

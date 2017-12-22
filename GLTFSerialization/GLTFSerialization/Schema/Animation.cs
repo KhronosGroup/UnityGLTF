@@ -51,7 +51,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation)
+	    public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
 	    {
 	        Channels = new List<AnimationChannel>(animation.Channels.Count);
 	        foreach (AnimationChannel channel in animation.Channels)

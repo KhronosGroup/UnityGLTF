@@ -83,7 +83,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Material(Material material, GLTFRoot gltfRoot) : base(material)
+	    public Material(Material material, GLTFRoot gltfRoot) : base(material, gltfRoot)
 	    {
 	        if (material == null) return;
 

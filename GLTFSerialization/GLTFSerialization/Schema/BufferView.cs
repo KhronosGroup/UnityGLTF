@@ -50,7 +50,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public BufferView(BufferView bufferView, GLTFRoot gltfRoot) : base(bufferView)
+	    public BufferView(BufferView bufferView, GLTFRoot gltfRoot) : base(bufferView, gltfRoot)
 	    {
 	        Buffer = new BufferId(bufferView.Buffer, gltfRoot);
 	        ByteOffset = bufferView.ByteOffset;

@@ -32,7 +32,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin)
+	    public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin, gltfRoot)
 	    {
 	        if (skin == null) return;
 

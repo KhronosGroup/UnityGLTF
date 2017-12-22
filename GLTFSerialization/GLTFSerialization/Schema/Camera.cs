@@ -31,7 +31,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Camera(Camera camera) : base(camera)
+	    public Camera(Camera camera, GLTFRoot gltfRoot) : base(camera, gltfRoot)
 	    {
 	        if (camera == null) return;
 

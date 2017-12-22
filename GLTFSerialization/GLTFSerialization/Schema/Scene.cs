@@ -17,7 +17,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Scene(Scene scene, GLTFRoot gltfRoot) : base(scene)
+	    public Scene(Scene scene, GLTFRoot gltfRoot) : base(scene, gltfRoot)
 	    {
 	        if (scene == null) return;
 

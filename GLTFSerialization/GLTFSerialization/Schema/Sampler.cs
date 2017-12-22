@@ -32,7 +32,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Sampler(Sampler sampler) : base(sampler)
+	    public Sampler(Sampler sampler, GLTFRoot gltfRoot) : base(sampler, gltfRoot)
 	    {
 	        if (sampler == null) return;
 

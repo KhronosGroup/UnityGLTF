@@ -31,7 +31,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Image(Image image, GLTFRoot gltfRoot) : base(image)
+	    public Image(Image image, GLTFRoot gltfRoot) : base(image, gltfRoot)
 	    {
             if (image == null) return;
 

@@ -25,7 +25,7 @@ namespace GLTF.Schema
 		{
 		}
 
-		public GLTFProperty(GLTFProperty property)
+		public GLTFProperty(GLTFProperty property, GLTFRoot gltfRoot = null)
 		{
 			if (property == null) return;
 
@@ -34,7 +34,7 @@ namespace GLTF.Schema
 				Extensions = new Dictionary<string, IExtension>(property.Extensions.Count);
 				foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in Extensions)
 				{
-					Extensions.Add(extensionKeyValuePair.Key, extensionKeyValuePair.Value.Clone());
+					Extensions.Add(extensionKeyValuePair.Key, extensionKeyValuePair.Value.Clone(gltfRoot));
 				}
 			}
 

@@ -33,7 +33,7 @@ namespace GLTF.Schema
 			TexCoord = texCoord;
 		}
 
-		public IExtension Clone()
+		public IExtension Clone(GLTFRoot root)
 		{
 			return new ExtTextureTransformExtension(Offset, Scale, TexCoord);
 		}

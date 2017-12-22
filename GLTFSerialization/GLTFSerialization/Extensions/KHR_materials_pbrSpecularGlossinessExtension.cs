@@ -64,15 +64,20 @@ namespace GLTF.Schema
 			SpecularGlossinessTexture = specularGlossinessTexture;
 		}
 
-		public IExtension Clone()
+		public IExtension Clone(GLTFRoot gltfRoot)
 		{
-			// todo: fix clone to deep copy diffusetexture and specularglossinesstexture
 			return new KHR_materials_pbrSpecularGlossinessExtension(
 				DiffuseFactor,
-				DiffuseTexture,
+				new TextureInfo(
+					DiffuseTexture,
+					gltfRoot
+					), 
 				SpecularFactor,
 				GlossinessFactor,
-				SpecularGlossinessTexture
+				new TextureInfo(
+					SpecularGlossinessTexture,
+					gltfRoot
+					)
 				);
 		}
 

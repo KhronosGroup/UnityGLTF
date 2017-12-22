@@ -142,7 +142,7 @@ namespace GLTF.Schema
 	            Buffers = new List<Buffer>(gltfRoot.Buffers.Count);
 	            foreach (Buffer buffer in gltfRoot.Buffers)
 	            {
-	                Buffers.Add(new Buffer(buffer));
+	                Buffers.Add(new Buffer(buffer, this));
 	            }
 	        }
 
@@ -160,7 +160,7 @@ namespace GLTF.Schema
 	            Cameras = new List<Camera>(gltfRoot.Cameras.Count);
 	            foreach (Camera camera in gltfRoot.Cameras)
 	            {
-	                Cameras.Add(new Camera(camera));
+	                Cameras.Add(new Camera(camera, this));
 	            }
 	        }
 
@@ -205,7 +205,7 @@ namespace GLTF.Schema
 	            Samplers = new List<Sampler>(gltfRoot.Samplers.Count);
 	            foreach (Sampler sampler in gltfRoot.Samplers)
 	            {
-	                Samplers.Add(new Sampler(sampler));
+	                Samplers.Add(new Sampler(sampler, this));
 	            }
 	        }
 

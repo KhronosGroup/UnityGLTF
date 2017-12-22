@@ -100,7 +100,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Accessor(Accessor accessor, GLTFRoot gltfRoot) : base(accessor)
+	    public Accessor(Accessor accessor, GLTFRoot gltfRoot) : base(accessor, gltfRoot)
 	    {
 	        if (accessor == null) return;
 

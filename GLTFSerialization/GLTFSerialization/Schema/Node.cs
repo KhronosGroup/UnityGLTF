@@ -77,7 +77,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Node(Node node, GLTFRoot gltfRoot) : base(node)
+	    public Node(Node node, GLTFRoot gltfRoot) : base(node, gltfRoot)
 	    {
 	        if (node == null) return;
 

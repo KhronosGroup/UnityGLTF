@@ -28,7 +28,7 @@ namespace GLTF.Schema
 	    {
 	    }
 
-	    public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh)
+	    public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
 	    {
 	        if (mesh == null) return;
 
