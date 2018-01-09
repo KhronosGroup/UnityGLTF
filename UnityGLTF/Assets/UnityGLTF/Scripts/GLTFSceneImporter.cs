@@ -112,7 +112,7 @@ namespace UnityGLTF
 			else if (_loadType == LoadType.Stream)
 			{
 				// todo optimization: add stream support to parsing layer
-				int streamLength = (int) _gltfStream.Length;
+				int streamLength = (int)(_gltfStream.Length - _gltfStream.Position);
 				_gltfData = new byte[streamLength];
 				_gltfStream.Read(_gltfData, 0, streamLength);
 			}
