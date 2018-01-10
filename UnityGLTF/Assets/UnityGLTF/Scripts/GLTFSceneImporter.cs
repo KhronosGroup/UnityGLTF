@@ -257,6 +257,38 @@ namespace UnityGLTF
 				}
 
 				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+
+				// Flip vectors and triangles to the Unity coordinate system.
+				if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.POSITION].AccessorContent;
+					GLTFUnityHelpers.FlipVectorArrayHandedness(resultArray.AsVertices);
+				}
+				if (attributeAccessors.ContainsKey(SemanticProperties.INDICES))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.INDICES].AccessorContent;
+					GLTFUnityHelpers.FlipFaces(resultArray.AsTriangles);
+				}
+				if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.NORMAL].AccessorContent;
+					GLTFUnityHelpers.FlipVectorArrayHandedness(resultArray.AsNormals);
+				}
+				// TexCoord goes from 0 to 3 to match GLTFHelpers.BuildMeshAttributes
+				for (int i = 0; i < 4; i++)
+				{
+					if (attributeAccessors.ContainsKey(SemanticProperties.TexCoord(i)))
+					{
+						NumericArray resultArray = attributeAccessors[SemanticProperties.TexCoord(i)].AccessorContent;
+						GLTFUnityHelpers.FlipTexCoordArrayY(resultArray.AsTexcoords);
+					}
+				}
+				if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.TANGENT].AccessorContent;
+					GLTFUnityHelpers.FlipVectorArrayHandedness(resultArray.AsTangents);
+				}
+
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
 		}
