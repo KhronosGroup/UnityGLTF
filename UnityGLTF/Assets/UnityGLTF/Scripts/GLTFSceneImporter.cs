@@ -100,7 +100,11 @@ namespace UnityGLTF
 			{
 				var www = UnityWebRequest.Get(_gltfUrl);
 
+#if UNITY_2017_2_OR_NEWER
+				yield return www.SendWebRequest();
+#else
 				yield return www.Send();
+#endif
 
 				if (www.responseCode >= 400 || www.responseCode == 0)
 				{
@@ -706,7 +710,11 @@ namespace UnityGLTF
 						var www = UnityWebRequest.Get(Path.Combine(rootPath, uri));
 						www.downloadHandler = new DownloadHandlerTexture();
 
+#if UNITY_2017_2_OR_NEWER
+						yield return www.SendWebRequest();
+#else
 						yield return www.Send();
+#endif
 
 						// HACK to enable mipmaps :(
 						var tempTexture = DownloadHandlerTexture.GetContent(www);
@@ -774,7 +782,11 @@ namespace UnityGLTF
 				{
 					var www = UnityWebRequest.Get(Path.Combine(sourceUri, uri));
 
+#if UNITY_2017_2_OR_NEWER
+					yield return www.SendWebRequest();
+#else
 					yield return www.Send();
+#endif
 
 					bufferData = www.downloadHandler.data;
 				}
