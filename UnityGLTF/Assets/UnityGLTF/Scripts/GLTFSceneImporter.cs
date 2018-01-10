@@ -189,13 +189,12 @@ namespace UnityGLTF
 						yield return LoadImage(_gltfDirectoryPath, image, i);
 					}
 				}
-#if !WINDOWS_UWP
+
 				// generate these in advance instead of as-needed
 				if (isMultithreaded)
 				{
 					yield return _asyncAction.RunOnWorkerThread(() => BuildAttributesForMeshes());
 				}
-#endif
 			}
 
 			var sceneObj = CreateScene(scene);
