@@ -28,7 +28,7 @@ namespace UnityGLTF
 			FileStream gltfStream = null;
 			if (UseStream)
 			{
-				var fullPath = Application.streamingAssetsPath + Url;
+				var fullPath = Path.Combine(Application.streamingAssetsPath, Url);
 				gltfStream = File.OpenRead(fullPath);
 				loader = new GLTFSceneImporter(
 					fullPath,
