@@ -312,10 +312,10 @@ namespace UnityGLTF
 				aTangent = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.tangents));
 
 			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayY(meshObj.uv));
+				aTexcoord0 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayV(meshObj.uv));
 
 			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayY(meshObj.uv2));
+				aTexcoord1 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayV(meshObj.uv2));
 
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);

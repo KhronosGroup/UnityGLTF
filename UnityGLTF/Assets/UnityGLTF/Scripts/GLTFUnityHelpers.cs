@@ -15,155 +15,165 @@ namespace UnityGLTF
     public static class GLTFUnityHelpers
     {
         /// <summary>
-        /// Flips the Y axis of a TexCoord to convert between glTF and Unity's TexCoord specification.
+        /// Flips the V component of a TexCoord to convert between glTF and Unity's TexCoord specification.
         /// </summary>
-        /// <param name="vector2">The TexCoord to be converted.</param>
+        /// <param name="vector">The TexCoord to be converted.</param>
         /// <returns>The converted TexCoord.</returns>
-        public static Vector2 FlipTexCoordY(Vector2 vector2)
+        public static Vector2 FlipTexCoordV(Vector2 vector)
         {
-            vector2.y = 1 - vector2.y;
-            return vector2;
+            return new Vector2(vector.x, 1.0f - vector.y);
         }
 
         /// <summary>
-        /// Flips the Y axis of a TexCoord to convert between glTF and Unity's TexCoord specification.
+        /// Flips the V component of a TexCoord to convert between glTF and Unity's TexCoord specification.
         /// </summary>
-        /// <param name="vector2">The TexCoord to be converted.</param>
+        /// <param name="vector">The TexCoord to be converted.</param>
         /// <returns>The converted TexCoord.</returns>
-        public static GLTF.Math.Vector2 FlipTexCoordY(GLTF.Math.Vector2 vector2)
+        public static GLTF.Math.Vector2 FlipTexCoordV(GLTF.Math.Vector2 vector)
         {
-            vector2.Y = 1 - vector2.Y;
-            return vector2;
+            return new GLTF.Math.Vector2(vector.X, 1.0f - vector.Y);
         }
 
         /// <summary>
-        /// Flips the Y axis of all TexCoords in an array to convert between glTF and Unity's TexCoord specification.
+        /// Flips the V component of all TexCoords in an array to convert between glTF and Unity's TexCoord specification.
         /// </summary>
-        /// <param name="arr">The array of TexCoords to be converted.</param>
+        /// <param name="array">The array of TexCoords to be converted.</param>
         /// <returns>The array of converted TexCoords.</returns>
-        public static Vector2[] FlipTexCoordArrayY(Vector2[] arr)
+        public static Vector2[] FlipTexCoordArrayV(Vector2[] array)
         {
-            for (var i = 0; i < arr.Length; i++)
+            var returnArray = new Vector2[array.Length];
+
+            for (var i = 0; i < array.Length; i++)
             {
-                arr[i] = FlipTexCoordY(arr[i]);
+                returnArray[i] = FlipTexCoordV(array[i]);
             }
-            return arr;
+
+            return returnArray;
         }
 
         /// <summary>
-        /// Flips the Y axis of all TexCoords in an array to convert between glTF and Unity's TexCoord specification.
+        /// Flips the V component of all TexCoords in an array to convert between glTF and Unity's TexCoord specification.
         /// </summary>
-        /// <param name="arr">The array of TexCoords to be converted.</param>
+        /// <param name="array">The array of TexCoords to be converted.</param>
         /// <returns>The array of converted TexCoords.</returns>
-        public static GLTF.Math.Vector2[] FlipTexCoordArrayY(GLTF.Math.Vector2[] arr)
+        public static GLTF.Math.Vector2[] FlipTexCoordArrayV(GLTF.Math.Vector2[] array)
         {
-            for (var i = 0; i < arr.Length; i++)
+            var returnArray = new GLTF.Math.Vector2[array.Length];
+
+            for (var i = 0; i < array.Length; i++)
             {
-                arr[i] = FlipTexCoordY(arr[i]);
+                returnArray[i] = FlipTexCoordV(array[i]);
             }
-            return arr;
+
+            return returnArray;
         }
 
         /// <summary>
         /// Inverts the Z value of a Vector3 to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="vector3">The Vector3 to be converted.</param>
+        /// <param name="vector">The Vector3 to be converted.</param>
         /// <returns>The converted Vector3.</returns>
-        public static Vector3 FlipVectorHandedness(Vector3 vector3)
+        public static Vector3 FlipVectorHandedness(Vector3 vector)
         {
-            vector3.z = -vector3.z;
-            return vector3;
+            return new Vector3(vector.x, vector.y, -vector.z);
         }
 
         /// <summary>
         /// Inverts the Z value of a Vector3 to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="vector3">The Vector3 to be converted.</param>
+        /// <param name="vector">The Vector3 to be converted.</param>
         /// <returns>The converted Vector3.</returns>
-        public static GLTF.Math.Vector3 FlipVectorHandedness(GLTF.Math.Vector3 vector3)
+        public static GLTF.Math.Vector3 FlipVectorHandedness(GLTF.Math.Vector3 vector)
         {
-            vector3.Z = -vector3.Z;
-            return vector3;
+            return new GLTF.Math.Vector3(vector.X, vector.Y, -vector.Z);
         }
 
         /// <summary>
         /// Inverts the Z value of all Vector3s in an array to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="arr">The array of Vector3s to be converted.</param>
+        /// <param name="array">The array of Vector3s to be converted.</param>
         /// <returns>The array of converted Vector3s.</returns>
-        public static Vector3[] FlipVectorArrayHandedness(Vector3[] arr)
+        public static Vector3[] FlipVectorArrayHandedness(Vector3[] array)
         {
-            for (var i = 0; i < arr.Length; i++)
+            var returnArray = new Vector3[array.Length];
+
+            for (var i = 0; i < array.Length; i++)
             {
-                arr[i] = FlipVectorHandedness(arr[i]);
+                returnArray[i] = FlipVectorHandedness(array[i]);
             }
-            return arr;
+
+            return returnArray;
         }
 
         /// <summary>
         /// Inverts the Z value of all Vector3s in an array to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="arr">The array of Vector3s to be converted.</param>
+        /// <param name="array">The array of Vector3s to be converted.</param>
         /// <returns>The array of converted Vector3s.</returns>
-        public static GLTF.Math.Vector3[] FlipVectorArrayHandedness(GLTF.Math.Vector3[] arr)
+        public static GLTF.Math.Vector3[] FlipVectorArrayHandedness(GLTF.Math.Vector3[] array)
         {
-            for (var i = 0; i < arr.Length; i++)
+            var returnArray = new GLTF.Math.Vector3[array.Length];
+
+            for (var i = 0; i < array.Length; i++)
             {
-                arr[i] = FlipVectorHandedness(arr[i]);
+                returnArray[i] = FlipVectorHandedness(array[i]);
             }
-            return arr;
+
+            return returnArray;
         }
 
         /// <summary>
         /// Inverts the Z and W values of a Vector4 to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="vector4">The Vector4 to be converted.</param>
+        /// <param name="vector">The Vector4 to be converted.</param>
         /// <returns>The converted Vector4.</returns>
-        public static Vector4 FlipVectorHandedness(Vector4 vector4)
+        public static Vector4 FlipVectorHandedness(Vector4 vector)
         {
-            vector4.z = -vector4.z;
-            vector4.w = -vector4.w;
-            return vector4;
+            return new Vector4(vector.x, vector.y, -vector.z, -vector.w);
         }
 
         /// <summary>
         /// Inverts the Z and W values of a Vector4 to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="vector4">The Vector4 to be converted.</param>
+        /// <param name="vector">The Vector4 to be converted.</param>
         /// <returns>The converted Vector4.</returns>
-        public static GLTF.Math.Vector4 FlipVectorHandedness(GLTF.Math.Vector4 vector4)
+        public static GLTF.Math.Vector4 FlipVectorHandedness(GLTF.Math.Vector4 vector)
         {
-            vector4.Z = -vector4.Z;
-            vector4.W = -vector4.W;
-            return vector4;
+            return new GLTF.Math.Vector4(vector.X, vector.Y, -vector.Z, -vector.W);
         }
 
         /// <summary>
         /// Inverts the Z and W values of all Vector4s in an array to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="arr">The array of Vector4s to be converted.</param>
+        /// <param name="array">The array of Vector4s to be converted.</param>
         /// <returns>The array of converted Vector4s.</returns>
-        public static Vector4[] FlipVectorArrayHandedness(Vector4[] arr)
+        public static Vector4[] FlipVectorArrayHandedness(Vector4[] array)
         {
-            for (var i = 0; i < arr.Length; i++)
+            var returnArray = new Vector4[array.Length];
+
+            for (var i = 0; i < array.Length; i++)
             {
-                arr[i] = FlipVectorHandedness(arr[i]);
+                returnArray[i] = FlipVectorHandedness(array[i]);
             }
-            return arr;
+
+            return returnArray;
         }
 
         /// <summary>
         /// Inverts the Z and W values of all Vector4s in an array to convert between glTF and Unity's coordinate systems.
         /// </summary>
-        /// <param name="arr">The array of Vector4s to be converted.</param>
+        /// <param name="array">The array of Vector4s to be converted.</param>
         /// <returns>The array of converted Vector4s.</returns>
-        public static GLTF.Math.Vector4[] FlipVectorArrayHandedness(GLTF.Math.Vector4[] arr)
+        public static GLTF.Math.Vector4[] FlipVectorArrayHandedness(GLTF.Math.Vector4[] array)
         {
-            for (var i = 0; i < arr.Length; i++)
+            var returnArray = new GLTF.Math.Vector4[array.Length];
+
+            for (var i = 0; i < array.Length; i++)
             {
-                arr[i] = FlipVectorHandedness(arr[i]);
+                returnArray[i] = FlipVectorHandedness(array[i]);
             }
-            return arr;
+
+            return returnArray;
         }
 
         /// <summary>
@@ -188,7 +198,7 @@ namespace UnityGLTF
         /// <summary>
         /// Flips the faces of a model by changing the order of the index array.
         /// </summary>
-        /// <param name="arr">An array of ints, representing the indices to be rotated.</param>
+        /// <param name="array">An array of ints, representing the indices to be rotated.</param>
         /// <returns>The flipped array of indices.</returns>
         public static int[] FlipFaces(int[] array)
         {
