@@ -39,7 +39,7 @@ namespace GLTF.Schema
 				switch (curProp)
 				{
 					case "channels":
-						animation.Channels = reader.ReadList(() => AnimationChannel.Deserialize(root, reader));
+						animation.Channels = reader.ReadList(() => AnimationChannel.Deserialize(root, reader, animation));
 						break;
 					case "samplers":
 						animation.Samplers = reader.ReadList(() => AnimationSampler.Deserialize(root, reader));

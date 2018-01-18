@@ -169,16 +169,10 @@ namespace GLTF.Schema
 					case "mode":
 						primitive.Mode = (DrawMode)reader.ReadAsInt32().Value;
 						break;
-/*					case "targets":
-						primitive.Targets = reader.ReadList(() =>
-						{
-							return reader.ReadAsDictionary(() => new AccessorId
-							{
-								Id = reader.ReadAsInt32().Value,
-								Root = root
-							});
-						});
-						break;*/
+					case "targets":
+						primitive.Targets = reader.ReadList(() => reader.ReadAsObject(() => AccessorId.Deserialize(root, reader)));
+
+						break;
 					default:
 						primitive.DefaultPropertyDeserializer(root, reader);
 						break;
@@ -247,8 +241,8 @@ namespace GLTF.Schema
 	{
 		public static readonly string POSITION = "POSITION";
 		public static readonly string NORMAL = "NORMAL";
-		public static readonly string JOINT = "JOINT";
-		public static readonly string WEIGHT = "WEIGHT";
+		public static readonly string JOINT = "JOINTS_0";
+		public static readonly string WEIGHT = "WEIGHTS_0";
 		public static readonly string TANGENT = "TANGENT";
 		public static readonly string INDICES = "INDICIES";
 

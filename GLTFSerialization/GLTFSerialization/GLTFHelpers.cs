@@ -75,5 +75,29 @@ namespace GLTF
 				attributeBuilder.AccessorContent = resultArray;
 			}
 		}
+
+		public static Math.Vector4[] ParseRotationKeyframes(Accessor accessor, byte[] bufferData)
+		{
+			NumericArray array = new NumericArray();
+			return accessor.AsVector4Array(ref array, bufferData, true);
+		}
+
+		public static Math.Vector3[] ParseVector3Keyframes(Accessor accessor, byte[] bufferData)
+		{
+			NumericArray array = new NumericArray();
+			return accessor.AsVector3Array(ref array, bufferData, false);
+		}
+
+		public static float[] ParseKeyframeTimes(Accessor accessor, byte[] bufferData)
+		{
+			NumericArray array = new NumericArray();
+			return accessor.AsFloatArray(ref array, bufferData);
+		}
+
+		public static float[] ParseMorphWeights(Accessor accessor, byte[] bufferData)
+		{
+			NumericArray array = new NumericArray();
+			return accessor.AsFloatArray(ref array, bufferData);
+		}
 	}
 }

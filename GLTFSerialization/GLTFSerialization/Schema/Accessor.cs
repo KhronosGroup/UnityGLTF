@@ -334,6 +334,32 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public float[] AsFloatArray(ref NumericArray contents, byte[] bufferData)
+		{
+			if (contents.AsFloats != null) return contents.AsFloats;
+
+			if (Type != GLTFAccessorAttributeType.SCALAR) return null;
+
+			var arr = new float[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = getContinuousElement(bufferData, totalByteOffset + idx * stride);
+			}
+
+			contents.AsFloats = arr;
+			return arr;
+		}
+
 		public Vector2[] AsVector2Array(ref NumericArray contents, byte[] bufferData, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec2s != null) return contents.AsVec2s;
@@ -463,32 +489,33 @@ namespace GLTF.Schema
 			Func<byte[], int, float> getContinuousElement;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
 
-			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 4;
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16;
 			for (var i = 0; i < Count; i++)
 			{
-				for (int idx = i; idx < 16 * (i + 1); ++idx)
+				int startElement = totalByteOffset + i * stride;
+				if (ComponentType == GLTFComponentType.Float)
 				{
-					Matrix4x4 mat = Matrix4x4.Identity;
-					if (ComponentType == GLTFComponentType.Float)
-					{
-						mat.M11 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 0);
-						mat.M12 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 1);
-						mat.M13 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 2);
-						mat.M14 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 3);
-						mat.M21 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 4);
-						mat.M22 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 5);
-						mat.M23 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 6);
-						mat.M24 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 7);
-						mat.M31 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 8);
-						mat.M32 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 9);
-						mat.M33 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 10);
-						mat.M34 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 11);
-						mat.M41 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 12);
-						mat.M42 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 13);
-						mat.M43 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 14);
-						mat.M44 = getContinuousElement(bufferData, totalByteOffset + (i * 16 + idx) * stride + componentSize * 15);
-					}
-					arr[i] = mat;
+					arr[i] = new Matrix4x4 (
+						getContinuousElement(bufferData, startElement + componentSize * 0),
+						getContinuousElement(bufferData, startElement + componentSize * 4),
+						getContinuousElement(bufferData, startElement + componentSize * 8),
+						getContinuousElement(bufferData, startElement + componentSize * 12),
+
+						getContinuousElement(bufferData, startElement + componentSize * 1),
+						getContinuousElement(bufferData, startElement + componentSize * 5),
+						getContinuousElement(bufferData, startElement + componentSize * 9),
+						getContinuousElement(bufferData, startElement + componentSize * 13),
+
+						getContinuousElement(bufferData, startElement + componentSize * 2),
+						getContinuousElement(bufferData, startElement + componentSize * 6),
+						getContinuousElement(bufferData, startElement + componentSize * 10),
+						getContinuousElement(bufferData, startElement + componentSize * 14),
+
+						getContinuousElement(bufferData, startElement + componentSize * 3),
+						getContinuousElement(bufferData, startElement + componentSize * 7),
+						getContinuousElement(bufferData, startElement + componentSize * 11),
+						getContinuousElement(bufferData, startElement + componentSize * 15)
+					);
 				}
 			}
 
@@ -650,6 +677,7 @@ namespace GLTF.Schema
 	public struct NumericArray
 	{
 		public int[] AsInts;
+		public float[] AsFloats;
 		public Vector2[] AsVec2s;
 		public Vector3[] AsVec3s;
 		public Vector4[] AsVec4s;
