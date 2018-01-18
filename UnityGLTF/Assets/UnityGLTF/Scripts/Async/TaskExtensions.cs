@@ -1,11 +1,9 @@
-﻿#if WINDOWS_UWP
+﻿#if NET_4_6
 using System.Collections;
 using System.Threading.Tasks;
-#endif
 
 namespace UnityGLTF
 {
-#if WINDOWS_UWP
 	public static class TaskExtensions
 	{
 		public static IEnumerator AsCoroutine(this Task task)
@@ -16,5 +14,5 @@ namespace UnityGLTF
 			}
 		}
 	}
-#endif
 }
+#endif

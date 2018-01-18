@@ -11,7 +11,7 @@ namespace UnityGLTF {
 	/// <summary>
 	/// Component to load a GLTF scene with
 	/// </summary>
-	class GLTFComponent : MonoBehaviour
+	public class GLTFComponent : MonoBehaviour
 	{
 		public string GLTFUri;
 		public bool Multithreaded = true;
