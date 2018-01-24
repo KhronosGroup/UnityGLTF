@@ -17,24 +17,24 @@ namespace GLTF.Schema
 		/// </summary>
 		public ImageId Source;
 
-	    public Texture()
-	    {
-	    }
+		public Texture()
+		{
+		}
 
-	    public Texture(Texture texture, GLTFRoot gltfRoot) : base(texture, gltfRoot)
-	    {
-	        if (texture == null) return;
+		public Texture(Texture texture, GLTFRoot gltfRoot) : base(texture, gltfRoot)
+		{
+			if (texture == null) return;
 
-	        if (texture.Sampler != null)
-	        {
-	            Sampler = new SamplerId(texture.Sampler, gltfRoot);
-	        }
+			if (texture.Sampler != null)
+			{
+				Sampler = new SamplerId(texture.Sampler, gltfRoot);
+			}
 
-	        if (texture.Source != null)
-	        {
-	            Source = new ImageId(texture.Source, gltfRoot);
-	        }
-	    }
+			if (texture.Source != null)
+			{
+				Source = new ImageId(texture.Source, gltfRoot);
+			}
+		}
 
 		public static Texture Deserialize(GLTFRoot root, JsonReader reader)
 		{

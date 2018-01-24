@@ -50,15 +50,15 @@ namespace GLTF.Schema
 		/// </summary>
 		public JProperty ExtensionData { get; internal set; }
 
-	    public IExtension Clone(GLTFRoot root)
-	    {
-	        return new DefaultExtension
-	        {
-                ExtensionData = new JProperty(ExtensionData)
-	        };
-	    }
+		public IExtension Clone(GLTFRoot root)
+		{
+			return new DefaultExtension
+			{
+				ExtensionData = new JProperty(ExtensionData)
+			};
+		}
 
-	    public JProperty Serialize()
+		public JProperty Serialize()
 		{
 			return ExtensionData;
 		}

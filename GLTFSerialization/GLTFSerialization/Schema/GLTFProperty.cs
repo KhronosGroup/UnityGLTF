@@ -21,28 +21,28 @@ namespace GLTF.Schema
 		public Dictionary<string, IExtension> Extensions;
 		public JToken Extras;
 
-	    public GLTFProperty()
-	    {
-	    }
+		public GLTFProperty()
+		{
+		}
 
 		public GLTFProperty(GLTFProperty property, GLTFRoot gltfRoot = null)
-	    {
-	        if (property == null) return;
+		{
+			if (property == null) return;
 
-	        if (property.Extensions != null)
-	        {
-                Extensions = new Dictionary<string, IExtension>(property.Extensions.Count);
-	            foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in Extensions)
-	            {
+			if (property.Extensions != null)
+			{
+				Extensions = new Dictionary<string, IExtension>(property.Extensions.Count);
+				foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in Extensions)
+				{
 					Extensions.Add(extensionKeyValuePair.Key, extensionKeyValuePair.Value.Clone(gltfRoot));
-	            }
-	        }
+				}
+			}
 
-	        if (property.Extras != null)
-	        {
-	            Extras = property.Extras.DeepClone();
-	        }
-	    }
+			if (property.Extras != null)
+			{
+				Extras = property.Extras.DeepClone();
+			}
+		}
 
 		public void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{

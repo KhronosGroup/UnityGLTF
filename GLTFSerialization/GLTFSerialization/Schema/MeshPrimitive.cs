@@ -47,49 +47,49 @@ namespace GLTF.Schema
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
-	    public MeshPrimitive()
-	    {
-	    }
+		public MeshPrimitive()
+		{
+		}
 
-	    public MeshPrimitive(MeshPrimitive meshPrimitive, GLTFRoot gltfRoot) : base(meshPrimitive)
-	    {
-	        if (meshPrimitive == null) return;
+		public MeshPrimitive(MeshPrimitive meshPrimitive, GLTFRoot gltfRoot) : base(meshPrimitive)
+		{
+			if (meshPrimitive == null) return;
 
-	        if (meshPrimitive.Attributes != null)
-	        {
-	            Attributes = new Dictionary<string, AccessorId>(meshPrimitive.Attributes.Count);
-	            foreach (KeyValuePair<string, AccessorId> attributeKeyValuePair in meshPrimitive.Attributes)
-	            {
-	                Attributes[attributeKeyValuePair.Key] = new AccessorId(attributeKeyValuePair.Value, gltfRoot);
-	            }
-            }
-            
-	        if (meshPrimitive.Indices != null)
-	        {
-	            Indices = new AccessorId(meshPrimitive.Indices, gltfRoot);
-	        }
+			if (meshPrimitive.Attributes != null)
+			{
+				Attributes = new Dictionary<string, AccessorId>(meshPrimitive.Attributes.Count);
+				foreach (KeyValuePair<string, AccessorId> attributeKeyValuePair in meshPrimitive.Attributes)
+				{
+					Attributes[attributeKeyValuePair.Key] = new AccessorId(attributeKeyValuePair.Value, gltfRoot);
+				}
+			}
+			
+			if (meshPrimitive.Indices != null)
+			{
+				Indices = new AccessorId(meshPrimitive.Indices, gltfRoot);
+			}
 
-	        if (meshPrimitive.Material != null)
-	        {
-	            Material = new MaterialId(meshPrimitive.Material, gltfRoot);
-	        }
+			if (meshPrimitive.Material != null)
+			{
+				Material = new MaterialId(meshPrimitive.Material, gltfRoot);
+			}
 
-	        Mode = meshPrimitive.Mode;
+			Mode = meshPrimitive.Mode;
 
-	        if (meshPrimitive.Targets != null)
-	        {
-                Targets = new List<Dictionary<string, AccessorId>>(meshPrimitive.Targets.Count);
-	            foreach (Dictionary<string, AccessorId> targetToCopy in meshPrimitive.Targets)
-	            {
-	                Dictionary<string, AccessorId> target = new Dictionary<string, AccessorId>(targetToCopy.Count);
-	                foreach (KeyValuePair<string, AccessorId> targetKeyValuePair in targetToCopy)
-	                {
-	                    target[targetKeyValuePair.Key] = new AccessorId(targetKeyValuePair.Value, gltfRoot);
-	                }
-                    Targets.Add(target);
-	            }
-	        }
-        }
+			if (meshPrimitive.Targets != null)
+			{
+				Targets = new List<Dictionary<string, AccessorId>>(meshPrimitive.Targets.Count);
+				foreach (Dictionary<string, AccessorId> targetToCopy in meshPrimitive.Targets)
+				{
+					Dictionary<string, AccessorId> target = new Dictionary<string, AccessorId>(targetToCopy.Count);
+					foreach (KeyValuePair<string, AccessorId> targetKeyValuePair in targetToCopy)
+					{
+						target[targetKeyValuePair.Key] = new AccessorId(targetKeyValuePair.Value, gltfRoot);
+					}
+					Targets.Add(target);
+				}
+			}
+		}
 
 		public static int[] GenerateTriangles(int vertCount)
 		{

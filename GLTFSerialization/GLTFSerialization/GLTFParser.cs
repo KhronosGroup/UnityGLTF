@@ -21,9 +21,9 @@ namespace GLTF
 		
 		public static GLTFRoot ParseJson(Stream stream, long startPosition = 0)
 		{
-            stream.Position = startPosition;
-            // Check for binary format magic bytes
-            if (IsGLB(stream))
+			stream.Position = startPosition;
+			// Check for binary format magic bytes
+			if (IsGLB(stream))
 			{
 				ParseJsonChunk(stream, startPosition);
 			}

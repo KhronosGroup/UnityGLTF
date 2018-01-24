@@ -59,28 +59,28 @@ namespace GLTF.Math
 		public float M34 { get { return mat[14]; } set { mat[14] = value; } }
 		public float M44 { get { return mat[15]; } set { mat[15] = value; } }
 
-	    public bool Equals(Matrix4x4 other)
-	    {
-	        if (ReferenceEquals(null, other)) return false;
-	        if (ReferenceEquals(this, other)) return true;
+		public bool Equals(Matrix4x4 other)
+		{
+			if (ReferenceEquals(null, other)) return false;
+			if (ReferenceEquals(this, other)) return true;
 
-	        return M11 == other.M11 && M12 == other.M12 && M13 == other.M13 && M14 == other.M14 &&
-	               M21 == other.M21 && M22 == other.M22 && M23 == other.M23 && M24 == other.M24 &&
-	               M31 == other.M31 && M32 == other.M32 && M33 == other.M33 && M34 == other.M34 &&
-	               M41 == other.M41 && M42 == other.M42 && M43 == other.M43 && M44 == other.M44;
-        }
+			return M11 == other.M11 && M12 == other.M12 && M13 == other.M13 && M14 == other.M14 &&
+				   M21 == other.M21 && M22 == other.M22 && M23 == other.M23 && M24 == other.M24 &&
+				   M31 == other.M31 && M32 == other.M32 && M33 == other.M33 && M34 == other.M34 &&
+				   M41 == other.M41 && M42 == other.M42 && M43 == other.M43 && M44 == other.M44;
+		}
 
-	    public override bool Equals(object obj)
-	    {
-	        if (ReferenceEquals(null, obj)) return false;
-	        if (ReferenceEquals(this, obj)) return true;
-	        if (obj.GetType() != this.GetType()) return false;
-	        return Equals((Matrix4x4) obj);
-	    }
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((Matrix4x4) obj);
+		}
 
-	    public override int GetHashCode()
-	    {
-	        return (mat != null ? mat.GetHashCode() : 0);
-	    }
+		public override int GetHashCode()
+		{
+			return (mat != null ? mat.GetHashCode() : 0);
+		}
 	}
 }

@@ -9,15 +9,15 @@ namespace GLTFSerializationTests
 	{
 		public float Glossiness { get; set; }
 
-	    public IExtension Clone(GLTFRoot root)
-	    {
-		    return new TestExtension()
-		    {
-			    Glossiness = Glossiness
-		    };
-	    }
+		public IExtension Clone(GLTFRoot root)
+		{
+			return new TestExtension()
+			{
+				Glossiness = Glossiness
+			};
+		}
 
-	    public JProperty Serialize()
+		public JProperty Serialize()
 		{
 			JProperty glossinessProperty = new JProperty("glossiness", Glossiness);
 			JObject testExtensionObject = new JObject(glossinessProperty);

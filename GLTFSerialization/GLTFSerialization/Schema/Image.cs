@@ -27,24 +27,24 @@ namespace GLTF.Schema
 		/// </summary>
 		public BufferViewId BufferView;
 
-	    public Image()
-	    {
-	    }
+		public Image()
+		{
+		}
 
-	    public Image(Image image, GLTFRoot gltfRoot) : base(image, gltfRoot)
-	    {
-            if (image == null) return;
+		public Image(Image image, GLTFRoot gltfRoot) : base(image, gltfRoot)
+		{
+			if (image == null) return;
 
-	        Uri = image.Uri;
-	        MimeType = image.MimeType;
+			Uri = image.Uri;
+			MimeType = image.MimeType;
 
-	        if (image.BufferView != null)
-	        {
-	            BufferView = new BufferViewId(image.BufferView, gltfRoot);
-	        }
-	    }
+			if (image.BufferView != null)
+			{
+				BufferView = new BufferViewId(image.BufferView, gltfRoot);
+			}
+		}
 
-        public static Image Deserialize(GLTFRoot root, JsonReader reader)
+		public static Image Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var image = new Image();
 

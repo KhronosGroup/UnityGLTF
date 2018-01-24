@@ -11,9 +11,9 @@ namespace GLTF.Schema
 		/// </summary>
 		public string Name;
 
-	    public GLTFChildOfRootProperty()
-	    {
-	    }
+		public GLTFChildOfRootProperty()
+		{
+		}
 
 		public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty, GLTFRoot gltfRoot) : base(childOfRootProperty, gltfRoot)
 		{

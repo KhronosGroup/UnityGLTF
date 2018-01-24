@@ -27,26 +27,26 @@ namespace GLTF.Schema
 		/// </summary>
 		public CameraType Type;
 
-	    public Camera()
-	    {
-	    }
+		public Camera()
+		{
+		}
 
-	    public Camera(Camera camera, GLTFRoot gltfRoot) : base(camera, gltfRoot)
-	    {
-	        if (camera == null) return;
+		public Camera(Camera camera, GLTFRoot gltfRoot) : base(camera, gltfRoot)
+		{
+			if (camera == null) return;
 
-	        if (camera.Orthographic != null)
-	        {
-	            Orthographic = new CameraOrthographic(camera.Orthographic);
-	        }
+			if (camera.Orthographic != null)
+			{
+				Orthographic = new CameraOrthographic(camera.Orthographic);
+			}
 
-	        if (camera.Perspective != null)
-	        {
-	            Perspective = new CameraPerspective(camera.Perspective);
-	        }
+			if (camera.Perspective != null)
+			{
+				Perspective = new CameraPerspective(camera.Perspective);
+			}
 
-	        Type = camera.Type;
-	    }
+			Type = camera.Type;
+		}
 
 		public static Camera Deserialize(GLTFRoot root, JsonReader reader)
 		{

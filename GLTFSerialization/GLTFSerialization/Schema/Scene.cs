@@ -13,23 +13,23 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<NodeId> Nodes;
 
-	    public Scene()
-	    {
-	    }
+		public Scene()
+		{
+		}
 
-	    public Scene(Scene scene, GLTFRoot gltfRoot) : base(scene, gltfRoot)
-	    {
-	        if (scene == null) return;
+		public Scene(Scene scene, GLTFRoot gltfRoot) : base(scene, gltfRoot)
+		{
+			if (scene == null) return;
 
-	        if (scene.Nodes != null)
-	        {
-	            Nodes = new List<NodeId>(scene.Nodes.Count);
-	            foreach (NodeId node in scene.Nodes)
-	            {
-	                Nodes.Add(new NodeId(node, gltfRoot));
-	            }
-	        }
-	    }
+			if (scene.Nodes != null)
+			{
+				Nodes = new List<NodeId>(scene.Nodes.Count);
+				foreach (NodeId node in scene.Nodes)
+				{
+					Nodes.Add(new NodeId(node, gltfRoot));
+				}
+			}
+		}
 
 		public static Scene Deserialize(GLTFRoot root, JsonReader reader)
 		{

@@ -47,26 +47,26 @@ namespace GLTF.Schema
 			return animation;
 		}
 
-	    public Animation()
-	    {
-	    }
+		public Animation()
+		{
+		}
 
-	    public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
-	    {
-	        Channels = new List<AnimationChannel>(animation.Channels.Count);
-	        foreach (AnimationChannel channel in animation.Channels)
-	        {
-	            Channels.Add(new AnimationChannel(channel, gltfRoot));
-	        }
+		public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
+		{
+			Channels = new List<AnimationChannel>(animation.Channels.Count);
+			foreach (AnimationChannel channel in animation.Channels)
+			{
+				Channels.Add(new AnimationChannel(channel, gltfRoot));
+			}
 
-            Samplers = new List<AnimationSampler>(animation.Samplers.Count);
-	        foreach (AnimationSampler sampler in animation.Samplers)
-	        {
-	            Samplers.Add(new AnimationSampler(sampler, gltfRoot));
-	        }
-	    }
+			Samplers = new List<AnimationSampler>(animation.Samplers.Count);
+			foreach (AnimationSampler sampler in animation.Samplers)
+			{
+				Samplers.Add(new AnimationSampler(sampler, gltfRoot));
+			}
+		}
 
-        public override void Serialize(JsonWriter writer)
+		public override void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();
 

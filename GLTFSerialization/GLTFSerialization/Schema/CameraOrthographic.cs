@@ -29,17 +29,17 @@ namespace GLTF.Schema
 		/// </summary>
 		public double ZNear;
 
-	    public CameraOrthographic()
-	    {
-	    }
+		public CameraOrthographic()
+		{
+		}
 
-        public CameraOrthographic(CameraOrthographic cameraOrthographic) : base(cameraOrthographic)
-	    {
-	        XMag = cameraOrthographic.XMag;
-	        YMag = cameraOrthographic.YMag;
-	        ZFar = cameraOrthographic.ZFar;
-	        ZNear = cameraOrthographic.ZNear;
-	    }
+		public CameraOrthographic(CameraOrthographic cameraOrthographic) : base(cameraOrthographic)
+		{
+			XMag = cameraOrthographic.XMag;
+			YMag = cameraOrthographic.YMag;
+			ZFar = cameraOrthographic.ZFar;
+			ZNear = cameraOrthographic.ZNear;
+		}
 
 		public static CameraOrthographic Deserialize(GLTFRoot root, JsonReader reader)
 		{

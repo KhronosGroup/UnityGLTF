@@ -22,18 +22,18 @@ namespace GLTF.Schema
 		/// </summary>
 		public Color LightmapFactor = Color.White;
 
-	    public MaterialCommonConstant()
-	    {
-	    }
+		public MaterialCommonConstant()
+		{
+		}
 
-	    public MaterialCommonConstant(MaterialCommonConstant materialCommonConstant, GLTFRoot gltfRoot) : base(materialCommonConstant)
-	    {
-	        if (materialCommonConstant == null) return;
+		public MaterialCommonConstant(MaterialCommonConstant materialCommonConstant, GLTFRoot gltfRoot) : base(materialCommonConstant)
+		{
+			if (materialCommonConstant == null) return;
 
-	        AmbientFactor = materialCommonConstant.AmbientFactor;
-            LightmapTexture = new TextureInfo(materialCommonConstant.LightmapTexture, gltfRoot);
-	        LightmapFactor = materialCommonConstant.LightmapFactor;
-	    }
+			AmbientFactor = materialCommonConstant.AmbientFactor;
+			LightmapTexture = new TextureInfo(materialCommonConstant.LightmapTexture, gltfRoot);
+			LightmapFactor = materialCommonConstant.LightmapFactor;
+		}
 
 		public static MaterialCommonConstant Deserialize(GLTFRoot root, JsonReader reader)
 		{
