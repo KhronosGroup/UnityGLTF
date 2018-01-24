@@ -19,26 +19,26 @@ namespace GLTF
 			public uint FileLength { get; set; }
 		}
 		
-		public static GLTFRoot ParseJson(Stream stream)
+		public static GLTFRoot ParseJson(Stream stream, long startPosition = 0)
 		{
-            stream.Position = 0;
+            stream.Position = startPosition;
             // Check for binary format magic bytes
             if (IsGLB(stream))
 			{
-				ParseJsonChunk(stream);
+				ParseJsonChunk(stream, startPosition);
 			}
 			else
 			{
-				stream.Position = 0;
+				stream.Position = startPosition;
 			}
 
 			return GLTFRoot.Deserialize(new StreamReader(stream));
 		}
 		
 		// Moves stream position to binary chunk location
-		public static void SeekToBinaryChunk(Stream stream, int binaryChunkIndex)
+		public static void SeekToBinaryChunk(Stream stream, int binaryChunkIndex, long startPosition = 0)
 		{
-			stream.Position = 4;	 // start after magic number chunk
+			stream.Position = startPosition + 4;	 // start after magic number chunk
 			GLBHeader header = ParseGLBHeader(stream);
 			uint chunkOffset = 12;   // sizeof(GLBHeader) + magic number
 			uint chunkLength = 0;
@@ -82,7 +82,7 @@ namespace GLTF
 			return GetUInt32(stream) == 0x46546c67;  // 0
 		}
 
-		private static void ParseJsonChunk(Stream stream)
+		private static void ParseJsonChunk(Stream stream, long startPosition)
 		{
 			GLBHeader header = ParseGLBHeader(stream);  // 4, 8
 			if (header.Version != 2)
@@ -90,7 +90,7 @@ namespace GLTF
 				throw new GLTFHeaderInvalidException("Unsupported glTF version");
 			};
 
-			if (header.FileLength != stream.Length)
+			if (header.FileLength != (stream.Length - startPosition))
 			{
 				throw new GLTFHeaderInvalidException("File length does not match header.");
 			}

@@ -31,6 +31,12 @@ namespace UnityGLTF
 			Stream
 		}
 
+		protected struct GLBStream
+		{
+			public Stream Stream;
+			public long StartPosition;
+		}
+
 		protected GameObject _lastLoadedScene;
 		protected readonly Transform _sceneParent;
 		protected readonly Dictionary<MaterialType, Shader> _shaderCache = new Dictionary<MaterialType, Shader>();
@@ -38,13 +44,12 @@ namespace UnityGLTF
 		protected readonly GLTF.Schema.Material DefaultMaterial = new GLTF.Schema.Material();
 		protected string _gltfUrl;
 		protected string _gltfDirectoryPath;
-		protected Stream _gltfStream;
+		protected GLBStream _gltfStream;
 		protected GLTFRoot _root;
 		protected AssetCache _assetCache;
 		protected AsyncAction _asyncAction;
 		protected bool _addColliders = false;
-		byte[] _gltfData;
-		LoadType _loadType;
+		private LoadType _loadType;
 
 		/// <summary>
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
@@ -66,7 +71,7 @@ namespace UnityGLTF
 		{
 			_gltfUrl = rootPath;
 			_gltfDirectoryPath = AbsoluteFilePath(rootPath);
-			_gltfStream = stream;
+			_gltfStream = new GLBStream {Stream = stream, StartPosition = stream.Position};
 			_sceneParent = parent;
 			_asyncAction = new AsyncAction();
 			_loadType = LoadType.Stream;
@@ -107,15 +112,15 @@ namespace UnityGLTF
 					throw new WebRequestException(www);
 				}
 
-				_gltfData = www.downloadHandler.data;
-				_gltfStream = new MemoryStream(_gltfData, 0, _gltfData.Length, false, true);
+				byte[] gltfData = www.downloadHandler.data;
+				_gltfStream.Stream = new MemoryStream(gltfData, 0, gltfData .Length, false, true);
 			}
 			else
 			{
 				throw new Exception("Invalid load type specified: " + _loadType);
 			}
 
-			_root = GLTFParser.ParseJson(_gltfStream);
+			_root = GLTFParser.ParseJson(_gltfStream.Stream, _gltfStream.StartPosition);
 			yield return ImportScene(sceneIndex, isMultithreaded);
 		}
 
@@ -164,11 +169,11 @@ namespace UnityGLTF
 						}
 						else //null buffer uri indicates GLB buffer loading
 						{
-							GLTFParser.SeekToBinaryChunk(_gltfStream, i);
+							GLTFParser.SeekToBinaryChunk(_gltfStream.Stream, i, _gltfStream.StartPosition);
 							_assetCache.BufferCache[i] = new BufferCacheData()
 							{
-								ChunkOffset = _gltfStream.Position,
-								Stream = _gltfStream
+								ChunkOffset = _gltfStream.Stream.Position,
+								Stream = _gltfStream.Stream
 							};
 						}
 					}

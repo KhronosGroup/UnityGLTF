@@ -504,7 +504,7 @@ namespace GLTF.Schema
 			var arr = AsVector2Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-				arr[i].Y *= -1;
+				arr[i].Y = 1 - arr[i].Y;
 			}
 
 			contents.AsTexcoords = arr;
