@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GLTF.Schema;
+﻿using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Material = UnityEngine.Material;
@@ -12,8 +8,9 @@ namespace UnityGLTF
 {
 	class StandardMap : IUniformMap
 	{
-		protected readonly Material _material;
-		public Material Material { get { return _material; } }
+		protected Material _material;
+		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
+		private double _alphaCutoff = 0.5;
 
 		protected StandardMap(Shader s, int MaxLOD = 300)
 		{
@@ -21,10 +18,21 @@ namespace UnityGLTF
 			_material = new Material(s);
 		}
 
+		protected StandardMap(Material mat)
+		{
+			_material = mat;
+		}
+
+		public Material Material { get { return _material; } }
+
 		public Texture NormalTexture
 		{
 			get { return _material.GetTexture("_BumpMap"); }
-			set { _material.SetTexture("_BumpMap", value); }
+			set
+			{
+				_material.SetTexture("_BumpMap", value);
+				_material.EnableKeyword("_NORMALMAP");
+			}
 		}
 
 		// not implemented by the Standard shader
@@ -62,7 +70,12 @@ namespace UnityGLTF
 		public Texture EmissiveTexture
 		{
 			get { return _material.GetTexture("_EmissionMap"); }
-			set { _material.SetTexture("_EmissionMap", value); }
+			set
+			{
+				_material.SetTexture("_EmissionMap", value);
+				_material.EnableKeyword("EMISSION_MAP_ON");
+				_material.EnableKeyword("_EMISSION");
+			}
 		}
 
 		// not implemented by the Standard shader
@@ -78,7 +91,6 @@ namespace UnityGLTF
 			set { _material.SetColor("_EmissionColor", value); }
 		}
 
-		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
 		public AlphaMode AlphaMode
 		{
 			get { return _alphaMode; }
@@ -123,7 +135,6 @@ namespace UnityGLTF
 			}
 		}
 
-		private double _alphaCutoff = 0.5;
 		public double AlphaCutoff
 		{
 			get { return _alphaCutoff; }
@@ -145,6 +156,34 @@ namespace UnityGLTF
 				else
 					_material.SetInt("_Cull", (int) CullMode.Back);
 			}
+		}
+
+		public bool VertexColorsEnabled
+		{
+			get { return _material.IsKeywordEnabled("VERTEX_COLOR_ON"); }
+			set
+			{
+				if (value)
+					_material.EnableKeyword("VERTEX_COLOR_ON");
+				else
+					_material.DisableKeyword("VERTEX_COLOR_ON");
+			}
+		}
+
+		public IUniformMap Clone()
+		{
+			var ret = new StandardMap(new Material(_material));
+			ret._alphaMode = _alphaMode;
+			ret._alphaCutoff = _alphaCutoff;
+			return ret;
+		}
+
+		protected void Copy(IUniformMap o)
+		{
+			var other = (StandardMap) o;
+			other._material = _material;
+			other._alphaCutoff = _alphaCutoff;
+			other._alphaMode = _alphaMode;
 		}
 	}
 }

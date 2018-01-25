@@ -8,6 +8,8 @@ namespace UnityGLTF
 {
 	interface IUniformMap
 	{
+		Material Material { get; }
+
 		Texture NormalTexture { get; set; }
 		int NormalTexCoord { get; set; }
 		double NormalTexScale { get; set; }
@@ -23,13 +25,17 @@ namespace UnityGLTF
 		GLTF.Schema.AlphaMode AlphaMode { get; set; }
 		double AlphaCutoff { get; set; }
 		bool DoubleSided { get; set; }
+
+		IUniformMap Clone();
 	}
 
 	interface IMetalRoughUniformMap : IUniformMap
 	{
 		Texture BaseColorTexture { get; set; }
+		int BaseColorTexCoord { get; set; }
 		Color BaseColorFactor { get; set; }
 		Texture MetallicRoughnessTexture { get; set; }
+		int MetallicRoughnessTexCoord { get; set; }
 		double MetallicFactor { get; set; }
 		double RoughnessFactor { get; set; }
 	}
@@ -37,15 +43,18 @@ namespace UnityGLTF
 	interface ISpecGlossUniformMap : IUniformMap
 	{
 		Texture DiffuseTexture { get; set; }
+		int DiffuseTexCoord { get; set; }
 		Color DiffuseFactor { get; set; }
 		Texture SpecularGlossinessTexture { get; set; }
-		Color SpecularFactor { get; set; }
+		int SpecularGlossinessTexCoord { get; set; }
+		Vector3 SpecularFactor { get; set; }
 		double GlossinessFactor { get; set; }
 	}
 
 	interface IUnlitUniformMap : IUniformMap
 	{
 		Texture BaseColorTexture { get; set; }
+		int BaseColorTexCoord { get; set; }
 		Color BaseColorFactor { get; set; }
 	}
 }

@@ -7,7 +7,6 @@ namespace UnityGLTF.Examples
 	{
 		public int SceneIndex = 0;
 		public string Url;
-		public Shader GLTFStandardShader;
 		private GLTFSceneImporter loader;
 
 		void Start()
@@ -17,7 +16,6 @@ namespace UnityGLTF.Examples
 				Url,
 				gameObject.transform
 			);
-			loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandardShader);
 			StartCoroutine(LoadScene(SceneIndex));
 		}
 
