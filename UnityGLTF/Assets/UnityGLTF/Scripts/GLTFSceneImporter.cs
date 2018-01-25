@@ -387,12 +387,12 @@ namespace UnityGLTF
 			if (materialIndex < 0 || _assetCache.MaterialCache[materialIndex] == null)
 			{
 				IUniformMap mapper;
-				var specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
+				const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
 				if (_root.ExtensionsUsed != null && _root.ExtensionsUsed.Contains(specGlossExtName)
 					&& def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
-					mapper = new SpecGloss2StandardMap(MaximumLod);
+					mapper = new SpecGlossMap(MaximumLod);
 				else
-					mapper = new MetalRough2StandardMap(MaximumLod);
+					mapper = new MetalRoughMap(MaximumLod);
 
 				mapper.AlphaMode = def.AlphaMode;
 				mapper.DoubleSided = def.DoubleSided;
@@ -485,7 +485,7 @@ namespace UnityGLTF
 
 				mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColor();
 
-				var vertColorMapper = (StandardMap) mapper.Clone();
+				var vertColorMapper = mapper.Clone();
 				vertColorMapper.VertexColorsEnabled = true;
 
 				materialWrapper = new MaterialCacheData

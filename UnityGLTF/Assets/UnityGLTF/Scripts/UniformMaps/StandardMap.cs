@@ -12,20 +12,21 @@ namespace UnityGLTF
 		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
 		private double _alphaCutoff = 0.5;
 
-		protected StandardMap(Shader s, int MaxLOD = 300)
+		protected StandardMap(Shader s, int MaxLOD = 1000)
 		{
 			s.maximumLOD = MaxLOD;
 			_material = new Material(s);
 		}
 
-		protected StandardMap(Material mat)
+		protected StandardMap(Material mat, int MaxLOD = 1000)
 		{
+			mat.shader.maximumLOD = MaxLOD;
 			_material = mat;
 		}
 
 		public Material Material { get { return _material; } }
 
-		public Texture NormalTexture
+		public virtual Texture NormalTexture
 		{
 			get { return _material.GetTexture("_BumpMap"); }
 			set
@@ -36,62 +37,61 @@ namespace UnityGLTF
 		}
 
 		// not implemented by the Standard shader
-		public int NormalTexCoord
+		public virtual int NormalTexCoord
 		{
 			get { return 0; }
 			set { return; }
 		}
 
-		public double NormalTexScale
+		public virtual double NormalTexScale
 		{
 			get { return _material.GetFloat("_BumpScale"); }
 			set { _material.SetFloat("_BumpScale", (float) value); }
 		}
 
-		public Texture OcclusionTexture
+		public virtual Texture OcclusionTexture
 		{
 			get { return _material.GetTexture("_OcclusionMap"); }
 			set { _material.SetTexture("_OcclusionMap", value); }
 		}
 
 		// not implemented by the Standard shader
-		public int OcclusionTexCoord
+		public virtual int OcclusionTexCoord
 		{
 			get { return 0; }
 			set { return; }
 		}
 
-		public double OcclusionTexStrength
+		public virtual double OcclusionTexStrength
 		{
 			get { return _material.GetFloat("_OcclusionStrength"); }
 			set { _material.SetFloat("_OcclusionStrength", (float) value); }
 		}
 
-		public Texture EmissiveTexture
+		public virtual Texture EmissiveTexture
 		{
 			get { return _material.GetTexture("_EmissionMap"); }
 			set
 			{
 				_material.SetTexture("_EmissionMap", value);
-				_material.EnableKeyword("EMISSION_MAP_ON");
 				_material.EnableKeyword("_EMISSION");
 			}
 		}
 
 		// not implemented by the Standard shader
-		public int EmissiveTexCoord
+		public virtual int EmissiveTexCoord
 		{
 			get { return 0; }
 			set { return; }
 		}
 
-		public Color EmissiveFactor
+		public virtual Color EmissiveFactor
 		{
 			get { return _material.GetColor("_EmissionColor"); }
 			set { _material.SetColor("_EmissionColor", value); }
 		}
 
-		public AlphaMode AlphaMode
+		public virtual AlphaMode AlphaMode
 		{
 			get { return _alphaMode; }
 			set
@@ -135,7 +135,7 @@ namespace UnityGLTF
 			}
 		}
 
-		public double AlphaCutoff
+		public virtual double AlphaCutoff
 		{
 			get { return _alphaCutoff; }
 			set
@@ -146,7 +146,7 @@ namespace UnityGLTF
 			}
 		}
 
-		public bool DoubleSided
+		public virtual bool DoubleSided
 		{
 			get { return _material.GetInt("_Cull") == (int) CullMode.Off; }
 			set
@@ -158,7 +158,7 @@ namespace UnityGLTF
 			}
 		}
 
-		public bool VertexColorsEnabled
+		public virtual bool VertexColorsEnabled
 		{
 			get { return _material.IsKeywordEnabled("VERTEX_COLOR_ON"); }
 			set
@@ -170,7 +170,7 @@ namespace UnityGLTF
 			}
 		}
 
-		public IUniformMap Clone()
+		public virtual IUniformMap Clone()
 		{
 			var ret = new StandardMap(new Material(_material));
 			ret._alphaMode = _alphaMode;
@@ -178,7 +178,7 @@ namespace UnityGLTF
 			return ret;
 		}
 
-		protected void Copy(IUniformMap o)
+		protected virtual void Copy(IUniformMap o)
 		{
 			var other = (StandardMap) o;
 			other._material = _material;

@@ -1,37 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace UnityGLTF
 {
 	class SpecGloss2StandardMap : StandardMap, ISpecGlossUniformMap
 	{
-		public SpecGloss2StandardMap(int MaxLOD = 300) : base(Shader.Find("Standard (Specular setup)"), MaxLOD) { }
-		public SpecGloss2StandardMap(Material m) : base(m) { }
+		public SpecGloss2StandardMap(int MaxLOD = 1000) : base(Shader.Find("Standard (Specular setup)"), MaxLOD) { }
+		public SpecGloss2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
-		public Texture DiffuseTexture
+		public virtual Texture DiffuseTexture
 		{
 			get { return _material.GetTexture("_MainTex"); }
 			set { _material.SetTexture("_MainTex", value); }
 		}
 
 		// not implemented by the Standard shader
-		public int DiffuseTexCoord
+		public virtual int DiffuseTexCoord
 		{
 			get { return 0; }
 			set { return; }
 		}
 
-		public Color DiffuseFactor
+		public virtual Color DiffuseFactor
 		{
 			get { return _material.GetColor("_Color"); }
 			set { _material.SetColor("_Color", value); }
 		}
 
-		public Texture SpecularGlossinessTexture
+		public virtual Texture SpecularGlossinessTexture
 		{
 			get { return _material.GetTexture("_SpecGlossMap"); }
 			set
@@ -43,19 +38,19 @@ namespace UnityGLTF
 		}
 
 		// not implemented by the Standard shader
-		public int SpecularGlossinessTexCoord
+		public virtual int SpecularGlossinessTexCoord
 		{
 			get { return 0; }
 			set { return; }
 		}
 
-		public Vector3 SpecularFactor
+		public virtual Vector3 SpecularFactor
 		{
 			get { return _material.GetVector("_SpecColor"); }
 			set { _material.SetVector("_SpecColor", value); }
 		}
 
-		public double GlossinessFactor
+		public virtual double GlossinessFactor
 		{
 			get { return _material.GetFloat("_GlossMapScale"); }
 			set
@@ -65,7 +60,7 @@ namespace UnityGLTF
 			}
 		}
 
-		public new IUniformMap Clone()
+		public override IUniformMap Clone()
 		{
 			var copy = new SpecGloss2StandardMap(new Material(_material));
 			base.Copy(copy);

@@ -25,6 +25,7 @@ namespace UnityGLTF
 		GLTF.Schema.AlphaMode AlphaMode { get; set; }
 		double AlphaCutoff { get; set; }
 		bool DoubleSided { get; set; }
+		bool VertexColorsEnabled { get; set; }
 
 		IUniformMap Clone();
 	}
