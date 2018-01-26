@@ -35,7 +35,7 @@ namespace GLTFSerializationCLI
 				goto exit;
 			}
 			
-			GLTFRoot root = GLTFParser.ParseJson(data);
+			GLTFRoot root = GLTFParser.ParseJson(new MemoryStream(data));
 			ExtTextureTransformExtension ext = (ExtTextureTransformExtension)
 				root.Materials[1].PbrMetallicRoughness.BaseColorTexture.Extensions["EXT_texture_transform"];
 			root.Serialize(Console.Out);

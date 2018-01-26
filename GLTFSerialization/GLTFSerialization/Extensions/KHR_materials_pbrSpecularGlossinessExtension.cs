@@ -12,7 +12,7 @@ namespace GLTF.Schema
 	/// Spec can be found here:
 	/// https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
 	/// </summary>
-	public class KHR_materials_pbrSpecularGlossinessExtension : Extension
+	public class KHR_materials_pbrSpecularGlossinessExtension : IExtension
 	{
 		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(0.2f, 0.2f, 0.2f);
 		public static readonly double GLOSS_FACTOR_DEFAULT = 0.5d; 
@@ -64,6 +64,22 @@ namespace GLTF.Schema
 			SpecularGlossinessTexture = specularGlossinessTexture;
 		}
 
+		public IExtension Clone(GLTFRoot gltfRoot)
+		{
+			return new KHR_materials_pbrSpecularGlossinessExtension(
+				DiffuseFactor,
+				new TextureInfo(
+					DiffuseTexture,
+					gltfRoot
+					), 
+				SpecularFactor,
+				GlossinessFactor,
+				new TextureInfo(
+					SpecularGlossinessTexture,
+					gltfRoot
+					)
+				);
+		}
 		public JProperty Serialize()
 		{
 			JProperty jProperty =

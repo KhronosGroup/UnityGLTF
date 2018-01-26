@@ -55,6 +55,30 @@ namespace GLTF.Schema
 		/// </summary>
 		public TextureInfo MetallicRoughnessTexture;
 
+		public PbrMetallicRoughness()
+		{
+		}
+
+		public PbrMetallicRoughness(PbrMetallicRoughness pbrMetallicRoughness, GLTFRoot gltfRoot) : base(pbrMetallicRoughness)
+		{
+			if(pbrMetallicRoughness == null) return;
+
+			BaseColorFactor = pbrMetallicRoughness.BaseColorFactor;
+
+			if (pbrMetallicRoughness.BaseColorTexture != null)
+			{
+				BaseColorTexture = new TextureInfo(pbrMetallicRoughness.BaseColorTexture, gltfRoot);
+			}
+
+			MetallicFactor = pbrMetallicRoughness.MetallicFactor;
+			RoughnessFactor = pbrMetallicRoughness.RoughnessFactor;
+
+			if (pbrMetallicRoughness.MetallicRoughnessTexture != null)
+			{
+				MetallicRoughnessTexture = new TextureInfo(pbrMetallicRoughness.MetallicRoughnessTexture, gltfRoot);
+			}
+		}
+
 		public static PbrMetallicRoughness Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var metallicRoughness = new PbrMetallicRoughness();

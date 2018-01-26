@@ -291,8 +291,10 @@ namespace UnityGLTF
 			{
 				for (var i = 0; i < primVariations.Length; i++)
 				{
-					prims[i] = primVariations[i].Clone();
-					prims[i].Material = ExportMaterial(materialsObj[i]);
+					prims[i] = new MeshPrimitive(primVariations[i], _root)
+					{
+						Material = ExportMaterial(materialsObj[i])
+					};
 				}
 
 				return prims;
@@ -475,7 +477,7 @@ namespace UnityGLTF
 			}
 
 			if (def.Extensions == null)
-				def.Extensions = new Dictionary<string, Extension>();
+				def.Extensions = new Dictionary<string, IExtension>();
 
 			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
 				new GLTF.Math.Vector2(offset.x, -offset.y),

@@ -28,6 +28,20 @@ namespace GLTF.Schema
 		/// </summary>
 		public string MinVersion;
 
+		public Asset()
+		{
+		}
+
+		public Asset(Asset asset) : base(asset)
+		{
+			if (asset == null) return;
+
+			Copyright = asset.Copyright;
+			Generator = asset.Generator;
+			Version = asset.Version;
+			MinVersion = asset.MinVersion;
+		}
+
 		public static Asset Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var asset = new Asset();

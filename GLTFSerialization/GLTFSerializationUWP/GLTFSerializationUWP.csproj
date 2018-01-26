@@ -129,9 +129,6 @@
     <Compile Include="..\GLTFSerialization\Schema\CameraPerspective.cs">
       <Link>Schema\CameraPerspective.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Extension.cs">
-      <Link>Schema\Extension.cs</Link>
-    </Compile>
     <Compile Include="..\GLTFSerialization\Schema\GLTFChildOfRootProperty.cs">
       <Link>Schema\GLTFChildOfRootProperty.cs</Link>
     </Compile>
@@ -143,6 +140,9 @@
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\GLTFRoot.cs">
       <Link>Schema\GLTFRoot.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Schema\IExtension.cs">
+      <Link>Schema\IExtension.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\Image.cs">
       <Link>Schema\Image.cs</Link>

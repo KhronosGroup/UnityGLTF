@@ -23,6 +23,18 @@ namespace GLTF.Schema
 		/// </summary>
 		public int TexCoord = 0;
 
+		public TextureInfo()
+		{
+		}
+
+		public TextureInfo(TextureInfo textureInfo, GLTFRoot gltfRoot) : base(textureInfo)
+		{
+			if (textureInfo == null) return;
+
+			Index = new TextureId(textureInfo.Index, gltfRoot);
+			TexCoord = textureInfo.TexCoord;
+		}
+
 		public static TextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var textureInfo = new TextureInfo();

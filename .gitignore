@@ -76,6 +76,7 @@ artifacts/
 *.scc
 *.dll*
 *.pdb*
+*.pri*
 
 # Chutzpah Test files
 _Chutzpah*

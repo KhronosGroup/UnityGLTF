@@ -18,8 +18,31 @@ namespace GLTF.Schema
 			_extensionRegistry.Add(extensionFactory.ExtensionName, extensionFactory);
 		}
 
-		public Dictionary<string, Extension> Extensions;
+		public Dictionary<string, IExtension> Extensions;
 		public JToken Extras;
+
+		public GLTFProperty()
+		{
+		}
+
+		public GLTFProperty(GLTFProperty property, GLTFRoot gltfRoot = null)
+		{
+			if (property == null) return;
+
+			if (property.Extensions != null)
+			{
+				Extensions = new Dictionary<string, IExtension>(property.Extensions.Count);
+				foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in Extensions)
+				{
+					Extensions.Add(extensionKeyValuePair.Key, extensionKeyValuePair.Value.Clone(gltfRoot));
+				}
+			}
+
+			if (property.Extras != null)
+			{
+				Extras = property.Extras.DeepClone();
+			}
+		}
 
 		public void DefaultPropertyDeserializer(GLTFRoot root, JsonReader reader)
 		{
@@ -86,7 +109,7 @@ namespace GLTF.Schema
 			}
 		}
 
-		private Dictionary<string, Extension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
+		private Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
@@ -94,7 +117,7 @@ namespace GLTF.Schema
 			}
 
 			JObject extensions = (JObject)JToken.ReadFrom(reader);
-			var extensionsCollection = new Dictionary<string, Extension>();
+			var extensionsCollection = new Dictionary<string, IExtension>();
 
 			bool isOnNextExtension = false;
 			foreach(JToken child in extensions.Children())
@@ -145,6 +168,7 @@ namespace GLTF.Schema
 
 			if(Extras != null)
 			{
+				writer.WritePropertyName("extras");
 				Extras.WriteTo(writer);
 			}
 		}
