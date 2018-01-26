@@ -15,7 +15,7 @@ namespace UnityGLTF {
 
 		public int MaximumLod = 300;
 
-		public bool addColliders = false;
+		public GLTFSceneImporter.ColliderType Colliders = GLTFSceneImporter.ColliderType.None;
 
 		IEnumerator Start()
 		{
@@ -29,7 +29,7 @@ namespace UnityGLTF {
 					fullPath,
 					gltfStream,
 					gameObject.transform,
-                    addColliders
+                    Colliders
 					);
 			}
 			else
@@ -37,7 +37,7 @@ namespace UnityGLTF {
 				loader = new GLTFSceneImporter(
 					Url,
 					gameObject.transform,
-                    addColliders
+                    Colliders
 					);
 			}
 

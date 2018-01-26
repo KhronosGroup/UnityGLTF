@@ -21,6 +21,13 @@ namespace UnityGLTF
 			Stream
 		}
 
+		public enum ColliderType
+		{
+			None,
+			Box,
+			Mesh
+		}
+
 		protected GameObject _lastLoadedScene;
 		protected readonly Transform _sceneParent;
 		public int MaximumLod = 300;
@@ -31,7 +38,7 @@ namespace UnityGLTF
 		protected GLTFRoot _root;
 		protected AssetCache _assetCache;
 		protected AsyncAction _asyncAction;
-		protected bool _addColliders = false;
+		protected ColliderType _defaultColliderType = ColliderType.None;
 		byte[] _gltfData;
 		LoadType _loadType;
 
@@ -41,17 +48,17 @@ namespace UnityGLTF
 		/// <param name="gltfUrl">URL to load</param>
 		/// <param name="parent"></param>
 		/// <param name="addColliders">Option to add mesh colliders to primitives</param>
-		public GLTFSceneImporter(string gltfUrl, Transform parent = null, bool addColliders = false)
+		public GLTFSceneImporter(string gltfUrl, Transform parent = null, ColliderType DefaultCollider = ColliderType.None)
 		{
 			_gltfUrl = gltfUrl;
 			_gltfDirectoryPath = AbsoluteUriPath(gltfUrl);
 			_sceneParent = parent;
 			_asyncAction = new AsyncAction();
 			_loadType = LoadType.Uri;
-			_addColliders = addColliders;
+			_defaultColliderType = DefaultCollider;
 		}
 
-		public GLTFSceneImporter(string rootPath, Stream stream, Transform parent = null, bool addColliders = false)
+		public GLTFSceneImporter(string rootPath, Stream stream, Transform parent = null, ColliderType DefaultCollider = ColliderType.None)
 		{
 			_gltfUrl = rootPath;
 			_gltfDirectoryPath = AbsoluteFilePath(rootPath);
@@ -59,7 +66,7 @@ namespace UnityGLTF
 			_sceneParent = parent;
 			_asyncAction = new AsyncAction();
 			_loadType = LoadType.Stream;
-			_addColliders = addColliders;
+			_defaultColliderType = DefaultCollider;
 		}
 
 		public GameObject LastLoadedScene
@@ -372,10 +379,17 @@ namespace UnityGLTF
 			var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 			meshRenderer.material = materialWrapper.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
-			if (_addColliders)
+			if (_defaultColliderType == ColliderType.Box)
+			{
+				var boxCollider = primitiveObj.AddComponent<BoxCollider>();
+				boxCollider.center = meshFilter.sharedMesh.bounds.center;
+				boxCollider.size = meshFilter.sharedMesh.bounds.size;
+			}
+			else if (_defaultColliderType == ColliderType.Mesh)
 			{
 				var meshCollider = primitiveObj.AddComponent<MeshCollider>();
-				meshCollider.sharedMesh = meshFilter.mesh;
+				meshCollider.sharedMesh = meshFilter.sharedMesh;
+				meshCollider.convex = true;
 			}
 
 			return primitiveObj;
