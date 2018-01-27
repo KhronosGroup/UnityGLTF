@@ -55,29 +55,29 @@ namespace GLTF.Schema
 		/// </summary>
 		public TextureInfo MetallicRoughnessTexture;
 
-	    public PbrMetallicRoughness()
-	    {
-	    }
+		public PbrMetallicRoughness()
+		{
+		}
 
-	    public PbrMetallicRoughness(PbrMetallicRoughness pbrMetallicRoughness, GLTFRoot gltfRoot) : base(pbrMetallicRoughness)
-	    {
-	        if(pbrMetallicRoughness == null) return;
+		public PbrMetallicRoughness(PbrMetallicRoughness pbrMetallicRoughness, GLTFRoot gltfRoot) : base(pbrMetallicRoughness)
+		{
+			if(pbrMetallicRoughness == null) return;
 
-	        BaseColorFactor = pbrMetallicRoughness.BaseColorFactor;
+			BaseColorFactor = pbrMetallicRoughness.BaseColorFactor;
 
-	        if (pbrMetallicRoughness.BaseColorTexture != null)
-	        {
-	            BaseColorTexture = new TextureInfo(pbrMetallicRoughness.BaseColorTexture, gltfRoot);
-	        }
+			if (pbrMetallicRoughness.BaseColorTexture != null)
+			{
+				BaseColorTexture = new TextureInfo(pbrMetallicRoughness.BaseColorTexture, gltfRoot);
+			}
 
-	        MetallicFactor = pbrMetallicRoughness.MetallicFactor;
-	        RoughnessFactor = pbrMetallicRoughness.RoughnessFactor;
+			MetallicFactor = pbrMetallicRoughness.MetallicFactor;
+			RoughnessFactor = pbrMetallicRoughness.RoughnessFactor;
 
-	        if (pbrMetallicRoughness.MetallicRoughnessTexture != null)
-	        {
-	            MetallicRoughnessTexture = new TextureInfo(pbrMetallicRoughness.MetallicRoughnessTexture, gltfRoot);
-	        }
-	    }
+			if (pbrMetallicRoughness.MetallicRoughnessTexture != null)
+			{
+				MetallicRoughnessTexture = new TextureInfo(pbrMetallicRoughness.MetallicRoughnessTexture, gltfRoot);
+			}
+		}
 
 		public static PbrMetallicRoughness Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -87,7 +87,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -110,10 +110,10 @@ namespace GLTF.Schema
 						metallicRoughness.MetallicRoughnessTexture = TextureInfo.Deserialize(root, reader);
 						break;
 					default:
-                        metallicRoughness.DefaultPropertyDeserializer(root, reader);
+						metallicRoughness.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return metallicRoughness;
 		}

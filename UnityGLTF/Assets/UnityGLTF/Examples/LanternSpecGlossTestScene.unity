@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.1829434, g: 0.2262376, b: 0.29291397, a: 1}
+  m_IndirectSpecularColor: {r: 0.18294318, g: 0.22623734, b: 0.2929139, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -476,6 +476,11 @@ Prefab:
     - target: {fileID: 1000013594771676, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
       propertyPath: m_Name
       value: GLTF
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
+        type: 2}
+      propertyPath: GLTFUri
+      value: http://localhost:8080/Lantern/glTF-pbrSpecularGlossiness/Lantern.gltf
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}

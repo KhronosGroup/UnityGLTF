@@ -28,19 +28,19 @@ namespace GLTF.Schema
 		/// </summary>
 		public WrapMode WrapT = WrapMode.Repeat;
 
-	    public Sampler()
-	    {
-	    }
+		public Sampler()
+		{
+		}
 
-	    public Sampler(Sampler sampler, GLTFRoot gltfRoot) : base(sampler, gltfRoot)
-	    {
-	        if (sampler == null) return;
+		public Sampler(Sampler sampler, GLTFRoot gltfRoot) : base(sampler, gltfRoot)
+		{
+			if (sampler == null) return;
 
-	        MagFilter = sampler.MagFilter;
-	        MinFilter = sampler.MinFilter;
-	        WrapS = sampler.WrapS;
-	        WrapT = sampler.WrapT;
-	    }
+			MagFilter = sampler.MagFilter;
+			MinFilter = sampler.MinFilter;
+			WrapS = sampler.WrapS;
+			WrapT = sampler.WrapT;
+		}
 
 		public static Sampler Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -65,10 +65,10 @@ namespace GLTF.Schema
 						sampler.WrapT = (WrapMode)reader.ReadAsInt32();
 						break;
 					default:
-                        sampler.DefaultPropertyDeserializer(root, reader);
+						sampler.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return sampler;
 		}

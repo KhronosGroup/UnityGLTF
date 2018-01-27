@@ -22,18 +22,18 @@ namespace GLTF.Schema
 		/// </summary>
 		public Color LightmapFactor = Color.White;
 
-	    public MaterialCommonConstant()
-	    {
-	    }
+		public MaterialCommonConstant()
+		{
+		}
 
-	    public MaterialCommonConstant(MaterialCommonConstant materialCommonConstant, GLTFRoot gltfRoot) : base(materialCommonConstant)
-	    {
-	        if (materialCommonConstant == null) return;
+		public MaterialCommonConstant(MaterialCommonConstant materialCommonConstant, GLTFRoot gltfRoot) : base(materialCommonConstant)
+		{
+			if (materialCommonConstant == null) return;
 
-	        AmbientFactor = materialCommonConstant.AmbientFactor;
-            LightmapTexture = new TextureInfo(materialCommonConstant.LightmapTexture, gltfRoot);
-	        LightmapFactor = materialCommonConstant.LightmapFactor;
-	    }
+			AmbientFactor = materialCommonConstant.AmbientFactor;
+			LightmapTexture = new TextureInfo(materialCommonConstant.LightmapTexture, gltfRoot);
+			LightmapFactor = materialCommonConstant.LightmapFactor;
+		}
 
 		public static MaterialCommonConstant Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -43,7 +43,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -60,10 +60,10 @@ namespace GLTF.Schema
 						commonConstant.LightmapFactor = reader.ReadAsRGBColor();
 						break;
 					default:
-                        commonConstant.DefaultPropertyDeserializer(root, reader);
+						commonConstant.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return commonConstant;
 		}

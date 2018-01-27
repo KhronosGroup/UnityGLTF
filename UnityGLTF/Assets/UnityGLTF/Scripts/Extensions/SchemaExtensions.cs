@@ -115,7 +115,7 @@ namespace UnityGLTF.Extensions
 		/// <returns>unity quaternion</returns>
 		public static Quaternion ToUnityQuaternionConvert(this GLTF.Math.Quaternion gltfQuat)
 		{
-            // get raw matrix conversion (gltf matrix stored in a unity matrix for easier math)
+			// get raw matrix conversion (gltf matrix stored in a unity matrix for easier math)
 			Vector3 origAxis = new Vector3(gltfQuat.X, gltfQuat.Y, gltfQuat.Z);
 			float axisFlipScale = GLTFSceneImporter.CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
 			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw());

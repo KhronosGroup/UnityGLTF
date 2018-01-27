@@ -29,17 +29,17 @@ namespace GLTF.Schema
 		/// </summary>
 		public double ZNear;
 
-	    public CameraOrthographic()
-	    {
-	    }
+		public CameraOrthographic()
+		{
+		}
 
-        public CameraOrthographic(CameraOrthographic cameraOrthographic) : base(cameraOrthographic)
-	    {
-	        XMag = cameraOrthographic.XMag;
-	        YMag = cameraOrthographic.YMag;
-	        ZFar = cameraOrthographic.ZFar;
-	        ZNear = cameraOrthographic.ZNear;
-	    }
+		public CameraOrthographic(CameraOrthographic cameraOrthographic) : base(cameraOrthographic)
+		{
+			XMag = cameraOrthographic.XMag;
+			YMag = cameraOrthographic.YMag;
+			ZFar = cameraOrthographic.ZFar;
+			ZNear = cameraOrthographic.ZNear;
+		}
 
 		public static CameraOrthographic Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -49,7 +49,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Orthographic camera must be an object.");
 			}
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -69,12 +69,12 @@ namespace GLTF.Schema
 						cameraOrthographic.ZNear = reader.ReadAsDouble().Value;
 						break;
 					default:
-                        cameraOrthographic.DefaultPropertyDeserializer(root, reader);
+						cameraOrthographic.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
-            return cameraOrthographic;
+			return cameraOrthographic;
 		}
 
 		public override void Serialize(JsonWriter writer)

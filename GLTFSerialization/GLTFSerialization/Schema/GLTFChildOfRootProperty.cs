@@ -11,9 +11,9 @@ namespace GLTF.Schema
 		/// </summary>
 		public string Name;
 
-	    public GLTFChildOfRootProperty()
-	    {
-	    }
+		public GLTFChildOfRootProperty()
+		{
+		}
 
 		public GLTFChildOfRootProperty(GLTFChildOfRootProperty childOfRootProperty, GLTFRoot gltfRoot) : base(childOfRootProperty, gltfRoot)
 		{
@@ -30,7 +30,7 @@ namespace GLTF.Schema
 					Name = reader.ReadAsString();
 					break;
 				default:
-                    base.DefaultPropertyDeserializer(root, reader);
+					base.DefaultPropertyDeserializer(root, reader);
 					break;
 			}
 		}

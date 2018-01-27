@@ -18,14 +18,14 @@ namespace GLTF.Schema
 		/// </summary>
 		public double Strength = 1.0f;
 
-	    public OcclusionTextureInfo()
-	    {
-	    }
+		public OcclusionTextureInfo()
+		{
+		}
 
-	    public OcclusionTextureInfo(OcclusionTextureInfo occulisionTextureInfo, GLTFRoot gltfRoot) : base(occulisionTextureInfo, gltfRoot)
-	    {
-	        Strength = occulisionTextureInfo.Strength;
-	    }
+		public OcclusionTextureInfo(OcclusionTextureInfo occulisionTextureInfo, GLTFRoot gltfRoot) : base(occulisionTextureInfo, gltfRoot)
+		{
+			Strength = occulisionTextureInfo.Strength;
+		}
 
 		public static new OcclusionTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -35,7 +35,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -52,10 +52,10 @@ namespace GLTF.Schema
 						textureInfo.Strength = reader.ReadAsDouble().Value;
 						break;
 					default:
-                        textureInfo.DefaultPropertyDeserializer(root, reader);
+						textureInfo.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return textureInfo;
 		}

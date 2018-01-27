@@ -312,10 +312,10 @@ namespace UnityGLTF
 				aTangent = ExportAccessor(InvertW(meshObj.tangents));
 
 			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor(InvertY(meshObj.uv));
+				aTexcoord0 = ExportAccessor(FlipY(meshObj.uv));
 
 			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor(InvertY(meshObj.uv2));
+				aTexcoord1 = ExportAccessor(FlipY(meshObj.uv2));
 
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
@@ -728,12 +728,12 @@ namespace UnityGLTF
 			return samplerId;
 		}
 
-		private Vector2[] InvertY(Vector2[] arr)
+		private Vector2[] FlipY(Vector2[] arr)
 		{
 			var len = arr.Length;
 			for(var i = 0; i < len; i++)
 			{
-				arr[i].y = -arr[i].y;
+				arr[i].y = 1 - arr[i].y;
 			}
 			return arr;
 		}

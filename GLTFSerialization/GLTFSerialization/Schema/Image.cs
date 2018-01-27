@@ -27,27 +27,27 @@ namespace GLTF.Schema
 		/// </summary>
 		public BufferViewId BufferView;
 
-	    public Image()
-	    {
-	    }
+		public Image()
+		{
+		}
 
-	    public Image(Image image, GLTFRoot gltfRoot) : base(image, gltfRoot)
-	    {
-            if (image == null) return;
+		public Image(Image image, GLTFRoot gltfRoot) : base(image, gltfRoot)
+		{
+			if (image == null) return;
 
-	        Uri = image.Uri;
-	        MimeType = image.MimeType;
+			Uri = image.Uri;
+			MimeType = image.MimeType;
 
-	        if (image.BufferView != null)
-	        {
-	            BufferView = new BufferViewId(image.BufferView, gltfRoot);
-	        }
-	    }
+			if (image.BufferView != null)
+			{
+				BufferView = new BufferViewId(image.BufferView, gltfRoot);
+			}
+		}
 
-        public static Image Deserialize(GLTFRoot root, JsonReader reader)
+		public static Image Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var image = new Image();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -64,11 +64,10 @@ namespace GLTF.Schema
 						image.BufferView = BufferViewId.Deserialize(root, reader);
 						break;
 					default:
-                        image.DefaultPropertyDeserializer(root, reader);
+						image.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-
-            }
+			}
 
 			return image;
 		}

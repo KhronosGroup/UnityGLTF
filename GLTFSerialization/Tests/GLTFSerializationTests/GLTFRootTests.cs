@@ -42,7 +42,7 @@ namespace GLTFSerializationTests
 		public void TestCopyMinGLTF()
 		{
 			GLTFRoot root = new GLTFRoot(_testRoot);
-            Assert.IsNotNull(root);
+			Assert.IsNotNull(root);
 		}
 	}
 }

@@ -18,22 +18,22 @@ namespace GLTF.Schema
 		/// </summary>
 		public AnimationChannelTarget Target;
 
-	    public AnimationChannel()
-	    {
-	    }
+		public AnimationChannel()
+		{
+		}
 
-	    public AnimationChannel(AnimationChannel animationChannel, GLTFRoot root) : base(animationChannel)
-	    {
-	        if (animationChannel == null) return;
+		public AnimationChannel(AnimationChannel animationChannel, GLTFRoot root) : base(animationChannel)
+		{
+			if (animationChannel == null) return;
 
-	        Sampler = new SamplerId(animationChannel.Sampler, root);
-	        Target = new AnimationChannelTarget(animationChannel.Target, root);
-	    }
+			Sampler = new SamplerId(animationChannel.Sampler, root);
+			Target = new AnimationChannelTarget(animationChannel.Target, root);
+		}
 
-        public static AnimationChannel Deserialize(GLTFRoot root, JsonReader reader)
+		public static AnimationChannel Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var animationChannel = new AnimationChannel();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -47,15 +47,15 @@ namespace GLTF.Schema
 						animationChannel.Target = AnimationChannelTarget.Deserialize(root, reader);
 						break;
 					default:
-                        animationChannel.DefaultPropertyDeserializer(root, reader);
+						animationChannel.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return animationChannel;
 		}
 
-        public override void Serialize(JsonWriter writer)
+		public override void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();
 

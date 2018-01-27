@@ -71,13 +71,19 @@ namespace UnityGLTF
 		/// </summary>
 		public bool AddColliders { get; set; }
 
+		protected struct GLBStream
+		{
+			public Stream Stream;
+			public long StartPosition;
+		}
+
 		protected GameObject _lastLoadedScene;
 		protected readonly Dictionary<string, Shader> _shaderCache = new Dictionary<string, Shader>();
 		protected readonly GLTF.Schema.Material DefaultMaterial = new GLTF.Schema.Material();
 		protected MaterialCacheData _defaultLoadedMaterial = null;
 
 		protected string _gltfFileName;
-		protected Stream _gltfStream;
+		protected GLBStream _gltfStream;
 		protected GLTFRoot _gltfRoot;
 		protected AssetCache _assetCache;
 		protected AsyncAction _asyncAction;
@@ -99,7 +105,7 @@ namespace UnityGLTF
 		{
 			_gltfRoot = rootNode;
 			_loader = externalDataLoader;
-			_gltfStream = glbStream;
+			if (glbStream != null) _gltfStream = new GLBStream {Stream = glbStream, StartPosition = glbStream.Position};
 		}
 
 		private GLTFSceneImporter(ILoader externalDataLoader)
@@ -284,8 +290,10 @@ namespace UnityGLTF
 		public IEnumerator LoadJson(string jsonFilePath)
 		{
 			yield return _loader.LoadStream(jsonFilePath);
-			_gltfStream = _loader.LoadedStream;
-			_gltfRoot = GLTFParser.ParseJson(_gltfStream);
+			
+			_gltfStream.Stream = _loader.LoadedStream;
+			_gltfStream.StartPosition = 0;
+			_gltfRoot = GLTFParser.ParseJson(_gltfStream.Stream, _gltfStream.StartPosition);
 		}
 		
 		private IEnumerator _LoadNode(int nodeIndex)
@@ -503,9 +511,9 @@ namespace UnityGLTF
 					var primitive = mesh.Primitives[j];
 					yield return BuildMeshAttributes(primitive, i, j);
 					if (primitive.Material != null)
-                    {
-                        yield return LoadMaterialImageBuffers(primitive.Material.Value);
-                    }
+					{
+						yield return LoadMaterialImageBuffers(primitive.Material.Value);
+					}
 				}
 			}
 		}
@@ -1132,11 +1140,11 @@ namespace UnityGLTF
 
 		protected virtual BufferCacheData LoadBufferFromGLB(int bufferIndex)
 		{
-			GLTFParser.SeekToBinaryChunk(_gltfStream, bufferIndex);  // sets stream to correct start position
+			GLTFParser.SeekToBinaryChunk(_gltfStream.Stream, bufferIndex, _gltfStream.StartPosition);  // sets stream to correct start position
 			return new BufferCacheData
 			{
-				Stream = _gltfStream,
-				ChunkOffset = _gltfStream.Position
+				Stream = _gltfStream.Stream,
+				ChunkOffset = _gltfStream.Stream.Position
 			};
 		}
 

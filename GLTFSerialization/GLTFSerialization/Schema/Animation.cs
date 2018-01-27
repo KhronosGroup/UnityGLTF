@@ -25,7 +25,7 @@ namespace GLTF.Schema
 		public static Animation Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var animation = new Animation();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -39,34 +39,34 @@ namespace GLTF.Schema
 						animation.Samplers = reader.ReadList(() => AnimationSampler.Deserialize(root, reader));
 						break;
 					default:
-                        animation.DefaultPropertyDeserializer(root, reader);
+						animation.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
-            return animation;
+			return animation;
 		}
 
-	    public Animation()
-	    {
-	    }
+		public Animation()
+		{
+		}
 
-	    public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
-	    {
-	        Channels = new List<AnimationChannel>(animation.Channels.Count);
-	        foreach (AnimationChannel channel in animation.Channels)
-	        {
-	            Channels.Add(new AnimationChannel(channel, gltfRoot));
-	        }
+		public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
+		{
+			Channels = new List<AnimationChannel>(animation.Channels.Count);
+			foreach (AnimationChannel channel in animation.Channels)
+			{
+				Channels.Add(new AnimationChannel(channel, gltfRoot));
+			}
 
-            Samplers = new List<AnimationSampler>(animation.Samplers.Count);
-	        foreach (AnimationSampler sampler in animation.Samplers)
-	        {
-	            Samplers.Add(new AnimationSampler(sampler, gltfRoot));
-	        }
-	    }
+			Samplers = new List<AnimationSampler>(animation.Samplers.Count);
+			foreach (AnimationSampler sampler in animation.Samplers)
+			{
+				Samplers.Add(new AnimationSampler(sampler, gltfRoot));
+			}
+		}
 
-        public override void Serialize(JsonWriter writer)
+		public override void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();
 

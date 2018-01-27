@@ -96,40 +96,40 @@ namespace GLTF.Schema
 		/// </summary>
 		public AccessorSparse Sparse;
 
-	    public Accessor()
-	    {
-	    }
+		public Accessor()
+		{
+		}
 
-	    public Accessor(Accessor accessor, GLTFRoot gltfRoot) : base(accessor, gltfRoot)
-	    {
-	        if (accessor == null) return;
+		public Accessor(Accessor accessor, GLTFRoot gltfRoot) : base(accessor, gltfRoot)
+		{
+			if (accessor == null) return;
 
-	        if (accessor.BufferView != null)
-	        {
-	            BufferView = new BufferViewId(accessor.BufferView, gltfRoot);
-	        }
+			if (accessor.BufferView != null)
+			{
+				BufferView = new BufferViewId(accessor.BufferView, gltfRoot);
+			}
 
-	        ByteOffset = accessor.ByteOffset;
-	        ComponentType = accessor.ComponentType;
-	        Normalized = accessor.Normalized;
-	        Count = accessor.Count;
-	        Type = accessor.Type;
+			ByteOffset = accessor.ByteOffset;
+			ComponentType = accessor.ComponentType;
+			Normalized = accessor.Normalized;
+			Count = accessor.Count;
+			Type = accessor.Type;
 
-	        if (accessor.Max != null)
-	        {
-	            Max = accessor.Max.ToList();
-	        }
+			if (accessor.Max != null)
+			{
+				Max = accessor.Max.ToList();
+			}
 
-	        if (accessor.Min != null)
-	        {
-	            Min = accessor.Min.ToList();
-	        }
+			if (accessor.Min != null)
+			{
+				Min = accessor.Min.ToList();
+			}
 
-	        if (accessor.Sparse != null)
-	        {
-	            Sparse = new AccessorSparse(accessor.Sparse, gltfRoot);
-	        }
-	    }
+			if (accessor.Sparse != null)
+			{
+				Sparse = new AccessorSparse(accessor.Sparse, gltfRoot);
+			}
+		}
 
 		public static Accessor Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -168,12 +168,12 @@ namespace GLTF.Schema
 						accessor.Sparse = AccessorSparse.Deserialize(root, reader);
 						break;
 					default:
-                        accessor.DefaultPropertyDeserializer(root, reader);
+						accessor.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
-            return accessor;
+			return accessor;
 		}
 
 		public override void Serialize(JsonWriter writer)
@@ -512,8 +512,8 @@ namespace GLTF.Schema
 			var arr = AsVector2Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-                arr[i].X *= spaceConversionScale.X;
-				arr[i].Y *= spaceConversionScale.Y;
+				arr[i].X *= /*1 - */spaceConversionScale.X;
+				arr[i].Y *= /*1 - */spaceConversionScale.Y;
 			}
 
 			contents.AsTexcoords = arr;
@@ -528,9 +528,9 @@ namespace GLTF.Schema
 			var arr = AsVector3Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-                arr[i].X *= spaceConversionScale.X;
-                arr[i].Y *= spaceConversionScale.Y;
-                arr[i].Z *= spaceConversionScale.Z;
+				arr[i].X *= spaceConversionScale.X;
+				arr[i].Y *= spaceConversionScale.Y;
+				arr[i].Z *= spaceConversionScale.Z;
 			}
 
 			contents.AsVertices = arr;
@@ -545,12 +545,12 @@ namespace GLTF.Schema
 			var arr = AsVector3Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-                arr[i].X *= spaceConversionScale.X;
-                arr[i].Y *= spaceConversionScale.Y;
-                arr[i].Z *= spaceConversionScale.Z;
-            }
+				arr[i].X *= spaceConversionScale.X;
+				arr[i].Y *= spaceConversionScale.Y;
+				arr[i].Z *= spaceConversionScale.Z;
+			}
 
-            contents.AsNormals = arr;
+			contents.AsNormals = arr;
 
 			return arr;
 		}
@@ -562,13 +562,13 @@ namespace GLTF.Schema
 			var arr = AsVector4Array(ref contents, bufferViewData, offset);
 			for (var i = 0; i < arr.Length; i++)
 			{
-                arr[i].X *= spaceConversionScale.X;
-                arr[i].Y *= spaceConversionScale.Y;
-                arr[i].Z *= spaceConversionScale.Z;
-                arr[i].W *= spaceConversionScale.W;
-            }
+				arr[i].X *= spaceConversionScale.X;
+				arr[i].Y *= spaceConversionScale.Y;
+				arr[i].Z *= spaceConversionScale.Z;
+				arr[i].W *= spaceConversionScale.W;
+			}
 
-            contents.AsTangents = arr;
+			contents.AsTangents = arr;
 
 			return arr;
 		}
@@ -579,17 +579,17 @@ namespace GLTF.Schema
 
 			var arr = AsUIntArray(ref contents, bufferViewData, offset);
 
-            if (!rightHandedWinding)
-            {
-                for (var i = 0; i < arr.Length; i += 3)
-                {
-                    var temp = arr[i];
-                    arr[i] = arr[i + 2];
-                    arr[i + 2] = temp;
-                }
-            }
+			if (!rightHandedWinding)
+			{
+				for (var i = 0; i < arr.Length; i += 3)
+				{
+					var temp = arr[i];
+					arr[i] = arr[i + 2];
+					arr[i + 2] = temp;
+				}
+			}
 
-            contents.AsTriangles = arr;
+			contents.AsTriangles = arr;
 
 			return arr;
 		}

@@ -28,37 +28,37 @@ namespace GLTF.Math
 			A = other.A;
 		}
 
-	    public bool Equals(Color other)
-	    {
-	        return R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);
-	    }
+		public bool Equals(Color other)
+		{
+			return R.Equals(other.R) && G.Equals(other.G) && B.Equals(other.B) && A.Equals(other.A);
+		}
 
-	    public override bool Equals(object obj)
-	    {
-	        if (ReferenceEquals(null, obj)) return false;
-	        return obj is Color && Equals((Color) obj);
-	    }
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			return obj is Color && Equals((Color) obj);
+		}
 
-	    public override int GetHashCode()
-	    {
-	        unchecked
-	        {
-	            var hashCode = R.GetHashCode();
-	            hashCode = (hashCode * 397) ^ G.GetHashCode();
-	            hashCode = (hashCode * 397) ^ B.GetHashCode();
-	            hashCode = (hashCode * 397) ^ A.GetHashCode();
-	            return hashCode;
-	        }
-	    }
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				var hashCode = R.GetHashCode();
+				hashCode = (hashCode * 397) ^ G.GetHashCode();
+				hashCode = (hashCode * 397) ^ B.GetHashCode();
+				hashCode = (hashCode * 397) ^ A.GetHashCode();
+				return hashCode;
+			}
+		}
 
-	    public static bool operator ==(Color left, Color right)
-	    {
-	        return left.Equals(right);
-	    }
+		public static bool operator ==(Color left, Color right)
+		{
+			return left.Equals(right);
+		}
 
-	    public static bool operator !=(Color left, Color right)
-	    {
-	        return !left.Equals(right);
-	    }
-    }
+		public static bool operator !=(Color left, Color right)
+		{
+			return !left.Equals(right);
+		}
+	}
 }

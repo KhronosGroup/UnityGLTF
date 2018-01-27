@@ -27,7 +27,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Animation channel target must be an object.");
 			}
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -41,27 +41,27 @@ namespace GLTF.Schema
 						animationChannelTarget.Path = reader.ReadStringEnum<GLTFAnimationChannelPath>();
 						break;
 					default:
-                        animationChannelTarget.DefaultPropertyDeserializer(root, reader);
+						animationChannelTarget.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return animationChannelTarget;
 		}
 
-	    public AnimationChannelTarget()
-	    {
-	    }
+		public AnimationChannelTarget()
+		{
+		}
 
-        public AnimationChannelTarget(AnimationChannelTarget channelTarget, GLTFRoot gltfRoot) : base(channelTarget)
-        {
-            if (channelTarget == null) return;
+		public AnimationChannelTarget(AnimationChannelTarget channelTarget, GLTFRoot gltfRoot) : base(channelTarget)
+		{
+			if (channelTarget == null) return;
 
-            Node = new NodeId(channelTarget.Node, gltfRoot);
-            Path = channelTarget.Path;
-        }
+			Node = new NodeId(channelTarget.Node, gltfRoot);
+			Path = channelTarget.Path;
+		}
 
-        public override void Serialize(JsonWriter writer)
+		public override void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();
 

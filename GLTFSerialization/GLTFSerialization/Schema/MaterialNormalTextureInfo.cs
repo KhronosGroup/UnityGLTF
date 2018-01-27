@@ -14,14 +14,14 @@ namespace GLTF.Schema
 		/// </summary>
 		public double Scale = 1.0f;
 
-	    public NormalTextureInfo()
-	    {
-	    }
+		public NormalTextureInfo()
+		{
+		}
 
-	    public NormalTextureInfo(NormalTextureInfo normalTextureInfo, GLTFRoot gltfRoot) : base(normalTextureInfo, gltfRoot)
-	    {
-	        Scale = normalTextureInfo.Scale;
-	    }
+		public NormalTextureInfo(NormalTextureInfo normalTextureInfo, GLTFRoot gltfRoot) : base(normalTextureInfo, gltfRoot)
+		{
+			Scale = normalTextureInfo.Scale;
+		}
 
 		public static new NormalTextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -31,7 +31,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -48,10 +48,10 @@ namespace GLTF.Schema
 						textureInfo.Scale = reader.ReadAsDouble().Value;
 						break;
 					default:
-                        textureInfo.DefaultPropertyDeserializer(root, reader);
+						textureInfo.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return textureInfo;
 		}
