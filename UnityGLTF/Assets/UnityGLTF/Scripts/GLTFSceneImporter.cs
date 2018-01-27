@@ -257,6 +257,43 @@ namespace UnityGLTF
 				}
 
 				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+
+				// Flip vectors and triangles to the Unity coordinate system.
+				if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.POSITION].AccessorContent;
+					resultArray.AsVertices = GLTFUnityHelpers.FlipVectorArrayHandedness(resultArray.AsVertices);
+					attributeAccessors[SemanticProperties.POSITION].AccessorContent = resultArray;
+				}
+				if (attributeAccessors.ContainsKey(SemanticProperties.INDICES))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.INDICES].AccessorContent;
+					resultArray.AsTriangles = GLTFUnityHelpers.FlipFaces(resultArray.AsTriangles);
+					attributeAccessors[SemanticProperties.INDICES].AccessorContent = resultArray;
+				}
+				if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.NORMAL].AccessorContent;
+					resultArray.AsNormals = GLTFUnityHelpers.FlipVectorArrayHandedness(resultArray.AsNormals);
+					attributeAccessors[SemanticProperties.NORMAL].AccessorContent = resultArray;
+				}
+				// TexCoord goes from 0 to 3 to match GLTFHelpers.BuildMeshAttributes
+				for (int i = 0; i < 4; i++)
+				{
+					if (attributeAccessors.ContainsKey(SemanticProperties.TexCoord(i)))
+					{
+						NumericArray resultArray = attributeAccessors[SemanticProperties.TexCoord(i)].AccessorContent;
+						resultArray.AsTexcoords = GLTFUnityHelpers.FlipTexCoordArrayV(resultArray.AsTexcoords);
+						attributeAccessors[SemanticProperties.TexCoord(i)].AccessorContent = resultArray;
+					}
+				}
+				if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
+				{
+					NumericArray resultArray = attributeAccessors[SemanticProperties.TANGENT].AccessorContent;
+					resultArray.AsTangents = GLTFUnityHelpers.FlipVectorArrayHandedness(resultArray.AsTangents);
+					attributeAccessors[SemanticProperties.TANGENT].AccessorContent = resultArray;
+				}
+
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
 		}
