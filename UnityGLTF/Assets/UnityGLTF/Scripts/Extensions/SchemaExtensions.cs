@@ -330,7 +330,11 @@ namespace UnityGLTF.Extensions
 		{
 			return new Quaternion(quaternion.X, quaternion.Y, quaternion.Z, quaternion.W);
 		}
-		
+
+		/// <summary>
+		/// Flips the V component of the UV (1-V) to put from glTF into Unity space
+		/// </summary>
+		/// <param name="attributeAccessor">The attribute accessor to modify</param>
 		public static void FlipTexCoordArrayV(ref AttributeAccessor attributeAccessor)
 		{
 			for (var i = 0; i < attributeAccessor.AccessorContent.AsVec2s.Length; i++)
@@ -338,7 +342,12 @@ namespace UnityGLTF.Extensions
 				attributeAccessor.AccessorContent.AsVec2s[i].Y = 1.0f - attributeAccessor.AccessorContent.AsVec2s[i].Y;
 			}
 		}
-		
+
+		/// <summary>
+		/// Flip the V component of the UV (1-V)
+		/// </summary>
+		/// <param name="array">The array to copy from and modify</param>
+		/// <returns>Copied Vector2 with coordinates in glTF space</returns>
 		public static UnityEngine.Vector2[] FlipTexCoordArrayVAndCopy(UnityEngine.Vector2[] array)
 		{
 			var returnArray = new UnityEngine.Vector2[array.Length];
@@ -352,11 +361,11 @@ namespace UnityGLTF.Extensions
 			return returnArray;
 		}
 
-		public static GLTF.Math.Vector3 FlipVectorHandedness(GLTF.Math.Vector3 vector)
-		{
-			return new GLTF.Math.Vector3(vector.X, vector.Y, -vector.Z);
-		}
-		
+		/// <summary>
+		/// Converts vector3 to specified coordinate space
+		/// </summary>
+		/// <param name="attributeAccessor">The attribute accessor to modify</param>
+		/// <param name="coordinateSpaceCoordinateScale">The coordinate space to move into</param>
 		public static void ConvertVector3CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector3 coordinateSpaceCoordinateScale)
 		{
 			for (int i = 0; i < attributeAccessor.AccessorContent.AsVertices.Length; i++)
@@ -366,7 +375,13 @@ namespace UnityGLTF.Extensions
 				attributeAccessor.AccessorContent.AsVertices[i].Z *= coordinateSpaceCoordinateScale.Z;
 			}
 		}
-		
+
+		/// <summary>
+		/// Coverts and copies based on the specified coordinate scale
+		/// </summary>
+		/// <param name="array">The array to convert and copy</param>
+		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
+		/// <returns>The copied and converted coordinate space</returns>
 		public static UnityEngine.Vector3[] ConvertVector3CoordinateSpaceAndCopy(Vector3[] array, GLTF.Math.Vector3 coordinateSpaceCoordinateScale)
 		{
 			var returnArray = new UnityEngine.Vector3[array.Length];
@@ -380,7 +395,29 @@ namespace UnityGLTF.Extensions
 
 			return returnArray;
 		}
-		
+
+		/// <summary>
+		/// Converts vector4 to specified coordinate space
+		/// </summary>
+		/// <param name="attributeAccessor">The attribute accessor to modify</param>
+		/// <param name="coordinateSpaceCoordinateScale">The coordinate space to move into</param>
+		public static void ConvertVector4CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
+		{
+			for (int i = 0; i < attributeAccessor.AccessorContent.AsVec4s.Length; i++)
+			{
+				attributeAccessor.AccessorContent.AsVec4s[i].X *= coordinateSpaceCoordinateScale.X;
+				attributeAccessor.AccessorContent.AsVec4s[i].Y *= coordinateSpaceCoordinateScale.Y;
+				attributeAccessor.AccessorContent.AsVec4s[i].Z *= coordinateSpaceCoordinateScale.Z;
+				attributeAccessor.AccessorContent.AsVec4s[i].W *= coordinateSpaceCoordinateScale.W;
+			}
+		}
+
+		/// <summary>
+		/// Coverts and copies based on the specified coordinate scale
+		/// </summary>
+		/// <param name="array">The array to convert and copy</param>
+		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
+		/// <returns>The copied and converted coordinate space</returns>
 		public static Vector4[] ConvertVector4CoordinateSpaceAndCopy(Vector4[] array, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
 		{
 			var returnArray = new Vector4[array.Length];
@@ -395,18 +432,11 @@ namespace UnityGLTF.Extensions
 
 			return returnArray;
 		}
-		
-		public static void ConvertVector4CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
-		{
-			for (int i = 0; i < attributeAccessor.AccessorContent.AsVec4s.Length; i++)
-			{
-				attributeAccessor.AccessorContent.AsVec4s[i].X *= coordinateSpaceCoordinateScale.X;
-				attributeAccessor.AccessorContent.AsVec4s[i].Y *= coordinateSpaceCoordinateScale.Y;
-				attributeAccessor.AccessorContent.AsVec4s[i].Z *= coordinateSpaceCoordinateScale.Z;
-				attributeAccessor.AccessorContent.AsVec4s[i].W *= coordinateSpaceCoordinateScale.W;
-			}
-		}
 
+		/// <summary>
+		/// Rewinds the indicies into Unity coordinate space from glTF space
+		/// </summary>
+		/// <param name="attributeAccessor">The attribute accessor to modify</param>
 		public static void FlipFaces(ref AttributeAccessor attributeAccessor)
 		{
 			for (int i = 0; i < attributeAccessor.AccessorContent.AsTriangles.Length; i += 3)
@@ -417,6 +447,11 @@ namespace UnityGLTF.Extensions
 			}
 		}
 
+		/// <summary>
+		/// Rewinds the indices from glTF space to Unity space
+		/// </summary>
+		/// <param name="triangles">The indices to copy and modify</param>
+		/// <returns>Indices in glTF space that are copied</returns>
 		public static int[] FlipFacesAndCopy(int[] triangles)
 		{
 			int[] returnArr = new int[triangles.Length];
