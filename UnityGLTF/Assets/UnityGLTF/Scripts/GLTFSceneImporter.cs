@@ -33,23 +33,6 @@ namespace UnityGLTF
 			public const string CommonBlinn = "CommonBlinn";
 			public const string CommonLambert = "CommonLambert";
 		}
-		
-		// glTF matrix: column vectors, column-major storage, +Y up, -Z forward, +X right, right-handed
-		// unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
-		// multiply by a negative Z scale to convert handedness and flip forward direction
-		public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(-1, 1, 1);
-
-		// An even number of mirrored axes is just a rotation, an odd number is a handedness change which requires also flipping the rotation axis
-		public static bool CoordinateSpaceConversionRequiresHandednessFlip
-		{
-			get
-			{
-				return CoordinateSpaceConversionScale.X * CoordinateSpaceConversionScale.Y * CoordinateSpaceConversionScale.Z < 0.0f;
-			}
-		}
-
-		public static readonly GLTF.Math.Vector2 TextureSpaceConversionScale = new GLTF.Math.Vector2(1, -1);
-		public static readonly GLTF.Math.Vector4 TangentSpaceConversionScale = new GLTF.Math.Vector4(1, 1, 1, -1);
 
 		/// <summary>
 		/// Maximum LOD
@@ -558,9 +541,43 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors, CoordinateSpaceConversionScale,
-					TextureSpaceConversionScale, TangentSpaceConversionScale);
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
+			}
+		}
+
+		protected void TransformAttributes(ref Dictionary<string, AttributeAccessor> attributeAccessors)
+		{
+			// Flip vectors and triangles to the Unity coordinate system.
+			if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+			if (attributeAccessors.ContainsKey(SemanticProperties.INDICES))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.INDICES];
+				SchemaExtensions.FlipFaces(ref attributeAccessor);
+			}
+			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+			// TexCoord goes from 0 to 3 to match GLTFHelpers.BuildMeshAttributes
+			for (int i = 0; i < 4; i++)
+			{
+				if (attributeAccessors.ContainsKey(SemanticProperties.TexCoord(i)))
+				{
+					AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TexCoord(i)];
+					SchemaExtensions.FlipTexCoordArrayV(ref attributeAccessor);
+				}
+			}
+			if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
+				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
 			}
 		}
 		

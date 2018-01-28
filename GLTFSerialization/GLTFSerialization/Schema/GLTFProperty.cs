@@ -118,8 +118,7 @@ namespace GLTF.Schema
 
 			JObject extensions = (JObject)JToken.ReadFrom(reader);
 			var extensionsCollection = new Dictionary<string, IExtension>();
-
-			bool isOnNextExtension = false;
+			
 			foreach(JToken child in extensions.Children())
 			{
 				if (child.Type != JTokenType.Property)

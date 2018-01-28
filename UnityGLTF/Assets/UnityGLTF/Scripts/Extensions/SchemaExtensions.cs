@@ -1,10 +1,25 @@
-﻿using GLTF.Schema;
+﻿using GLTF;
+using GLTF.Schema;
 using UnityEngine;
 
 namespace UnityGLTF.Extensions
 {
 	public static class SchemaExtensions
 	{
+		// glTF matrix: column vectors, column-major storage, +Y up, -Z forward, +X right, right-handed
+		// unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
+		// multiply by a negative Z scale to convert handedness and flip forward direction
+		public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(-1, 1, 1);
+		public static bool CoordinateSpaceConversionRequiresHandednessFlip
+		{
+			get
+			{
+				return CoordinateSpaceConversionScale.X * CoordinateSpaceConversionScale.Y * CoordinateSpaceConversionScale.Z < 0.0f;
+			}
+		}
+
+		public static readonly GLTF.Math.Vector4 TangentSpaceConversionScale = new GLTF.Math.Vector4(1, 1, 1, -1);
+
 		/// <summary>
 		/// Get the converted unity translation, rotation, and scale from a gltf node
 		/// </summary>
@@ -117,8 +132,8 @@ namespace UnityGLTF.Extensions
 		{
 			// get raw matrix conversion (gltf matrix stored in a unity matrix for easier math)
 			Vector3 origAxis = new Vector3(gltfQuat.X, gltfQuat.Y, gltfQuat.Z);
-			float axisFlipScale = GLTFSceneImporter.CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
-			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw());
+			float axisFlipScale = CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
+			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, CoordinateSpaceConversionScale.ToUnityVector3Raw());
 
 			// then put the quaternion back together and return it
 			return new Quaternion(newAxis.x, newAxis.y, newAxis.z, gltfQuat.W);
@@ -133,8 +148,8 @@ namespace UnityGLTF.Extensions
 		{
 			// get the original axis and apply conversion scale as well as potential rotation axis flip
 			Vector3 origAxis = new Vector3(unityQuat.x, unityQuat.y, unityQuat.z);
-			float axisFlipScale = GLTFSceneImporter.CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
-			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw());
+			float axisFlipScale = CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
+			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, CoordinateSpaceConversionScale.ToUnityVector3Raw());
 
 			// then put the quaternion back together and return it
 			return new GLTF.Math.Quaternion(newAxis.x, newAxis.y, newAxis.z, unityQuat.w);
@@ -148,7 +163,7 @@ namespace UnityGLTF.Extensions
 		public static Matrix4x4 ToUnityMatrix4x4Convert(this GLTF.Math.Matrix4x4 gltfMat)
 		{
 			Matrix4x4 rawUnityMat = gltfMat.ToUnityMatrix4x4Raw();
-			Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
+			Vector3 coordinateSpaceConversionScale = CoordinateSpaceConversionScale.ToUnityVector3Raw();
 			Matrix4x4 convert = Matrix4x4.Scale(coordinateSpaceConversionScale);
 			Matrix4x4 unityMat = convert * rawUnityMat * convert;
 			return unityMat;
@@ -161,7 +176,7 @@ namespace UnityGLTF.Extensions
 		/// <returns>gltf matrix</returns>
 		public static GLTF.Math.Matrix4x4 ToGltfMatrix4x4Convert(this Matrix4x4 unityMat)
 		{
-			Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
+			Vector3 coordinateSpaceConversionScale = CoordinateSpaceConversionScale.ToUnityVector3Raw();
 			Matrix4x4 convert = Matrix4x4.Scale(coordinateSpaceConversionScale);
 			GLTF.Math.Matrix4x4 gltfMat = (convert * unityMat * convert).ToGltfMatrix4x4Raw();
 			return gltfMat;
@@ -174,7 +189,7 @@ namespace UnityGLTF.Extensions
 		/// <returns>unity vector3</returns>
 		public static Vector3 ToUnityVector3Convert(this GLTF.Math.Vector3 gltfVec3)
 		{
-			Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
+			Vector3 coordinateSpaceConversionScale = CoordinateSpaceConversionScale.ToUnityVector3Raw();
 			Vector3 unityVec3 = Vector3.Scale(gltfVec3.ToUnityVector3Raw(), coordinateSpaceConversionScale);
 			return unityVec3;
 		}
@@ -186,7 +201,7 @@ namespace UnityGLTF.Extensions
 		/// <returns>gltf Vector3</returns>
 		public static GLTF.Math.Vector3 ToGltfVector3Convert(this Vector3 unityVec3)
 		{
-			Vector3 coordinateSpaceConversionScale = GLTFSceneImporter.CoordinateSpaceConversionScale.ToUnityVector3Raw();
+			Vector3 coordinateSpaceConversionScale = CoordinateSpaceConversionScale.ToUnityVector3Raw();
 			GLTF.Math.Vector3 gltfVec3 = Vector3.Scale(unityVec3, coordinateSpaceConversionScale).ToGltfVector3Raw();
 			return gltfVec3;
 		}
@@ -314,6 +329,106 @@ namespace UnityGLTF.Extensions
 		public static Quaternion ToUnityQuaternionRaw(this GLTF.Math.Quaternion quaternion)
 		{
 			return new Quaternion(quaternion.X, quaternion.Y, quaternion.Z, quaternion.W);
+		}
+		
+		public static void FlipTexCoordArrayV(ref AttributeAccessor attributeAccessor)
+		{
+			for (var i = 0; i < attributeAccessor.AccessorContent.AsVec2s.Length; i++)
+			{
+				attributeAccessor.AccessorContent.AsVec2s[i].Y = 1.0f - attributeAccessor.AccessorContent.AsVec2s[i].Y;
+			}
+		}
+		
+		public static UnityEngine.Vector2[] FlipTexCoordArrayVAndCopy(UnityEngine.Vector2[] array)
+		{
+			var returnArray = new UnityEngine.Vector2[array.Length];
+
+			for (var i = 0; i < array.Length; i++)
+			{
+				returnArray[i].x = array[i].x;
+				returnArray[i].y = 1.0f - array[i].y;
+			}
+
+			return returnArray;
+		}
+
+		public static GLTF.Math.Vector3 FlipVectorHandedness(GLTF.Math.Vector3 vector)
+		{
+			return new GLTF.Math.Vector3(vector.X, vector.Y, -vector.Z);
+		}
+		
+		public static void ConvertVector3CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector3 coordinateSpaceCoordinateScale)
+		{
+			for (int i = 0; i < attributeAccessor.AccessorContent.AsVertices.Length; i++)
+			{
+				attributeAccessor.AccessorContent.AsVertices[i].X *= coordinateSpaceCoordinateScale.X;
+				attributeAccessor.AccessorContent.AsVertices[i].Y *= coordinateSpaceCoordinateScale.Y;
+				attributeAccessor.AccessorContent.AsVertices[i].Z *= coordinateSpaceCoordinateScale.Z;
+			}
+		}
+		
+		public static UnityEngine.Vector3[] ConvertVector3CoordinateSpaceAndCopy(Vector3[] array, GLTF.Math.Vector3 coordinateSpaceCoordinateScale)
+		{
+			var returnArray = new UnityEngine.Vector3[array.Length];
+
+			for (int i = 0; i < array.Length; i++)
+			{
+				returnArray[i].x = array[i].x * coordinateSpaceCoordinateScale.X;
+				returnArray[i].y = array[i].z * coordinateSpaceCoordinateScale.Y;
+				returnArray[i].z = array[i].y * coordinateSpaceCoordinateScale.Z;
+			}
+
+			return returnArray;
+		}
+		
+		public static Vector4[] ConvertVector4CoordinateSpaceAndCopy(Vector4[] array, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
+		{
+			var returnArray = new Vector4[array.Length];
+
+			for (var i = 0; i < array.Length; i++)
+			{
+				returnArray[i].x *= coordinateSpaceCoordinateScale.X;
+				returnArray[i].y *= coordinateSpaceCoordinateScale.Y;
+				returnArray[i].z *= coordinateSpaceCoordinateScale.Z;
+				returnArray[i].w *= coordinateSpaceCoordinateScale.W;
+			}
+
+			return returnArray;
+		}
+		
+		public static void ConvertVector4CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
+		{
+			for (int i = 0; i < attributeAccessor.AccessorContent.AsVec4s.Length; i++)
+			{
+				attributeAccessor.AccessorContent.AsVec4s[i].X *= coordinateSpaceCoordinateScale.X;
+				attributeAccessor.AccessorContent.AsVec4s[i].Y *= coordinateSpaceCoordinateScale.Y;
+				attributeAccessor.AccessorContent.AsVec4s[i].Z *= coordinateSpaceCoordinateScale.Z;
+				attributeAccessor.AccessorContent.AsVec4s[i].W *= coordinateSpaceCoordinateScale.W;
+			}
+		}
+
+		public static void FlipFaces(ref AttributeAccessor attributeAccessor)
+		{
+			for (int i = 0; i < attributeAccessor.AccessorContent.AsTriangles.Length; i += 3)
+			{
+				uint temp = attributeAccessor.AccessorContent.AsUInts[i];
+				attributeAccessor.AccessorContent.AsUInts[i] = attributeAccessor.AccessorContent.AsUInts[i + 2];
+				attributeAccessor.AccessorContent.AsUInts[i + 2] = temp;
+			}
+		}
+
+		public static int[] FlipFacesAndCopy(int[] triangles)
+		{
+			int[] returnArr = new int[triangles.Length];
+			for (int i = 0; i < triangles.Length; i += 3)
+			{
+				int temp = triangles[i];
+				returnArr[i] = triangles[i + 2];
+				returnArr[i + 1] = triangles[i + 1];
+				returnArr[i + 2] = temp;
+			}
+
+			return returnArr;
 		}
 	}
 }
