@@ -24,17 +24,17 @@ namespace GLTF.Schema
 		/// </summary>
 		public int TexCoord = 0;
 
-	    public TextureInfo()
-	    {
-	    }
+		public TextureInfo()
+		{
+		}
 
-	    public TextureInfo(TextureInfo textureInfo, GLTFRoot gltfRoot) : base(textureInfo)
-	    {
-	        if (textureInfo == null) return;
+		public TextureInfo(TextureInfo textureInfo, GLTFRoot gltfRoot) : base(textureInfo)
+		{
+			if (textureInfo == null) return;
 
-            Index = new TextureId(textureInfo.Index, gltfRoot);
-	        TexCoord = textureInfo.TexCoord;
-	    }
+			Index = new TextureId(textureInfo.Index, gltfRoot);
+			TexCoord = textureInfo.TexCoord;
+		}
 
 		public static TextureInfo Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -58,41 +58,41 @@ namespace GLTF.Schema
 						textureInfo.TexCoord = reader.ReadAsInt32().Value;
 						break;
 					default:
-                        textureInfo.DefaultPropertyDeserializer(root, reader);
+						textureInfo.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return textureInfo;
 		}
 
-        public static TextureInfo Deserialize(GLTFRoot root, JProperty jProperty)
-        {
-            var textureInfo = new TextureInfo();
+		public static TextureInfo Deserialize(GLTFRoot root, JProperty jProperty)
+		{
+			var textureInfo = new TextureInfo();
 
-            foreach (JToken child in jProperty.Children())
-            {
-                if(child is JProperty)
-                {
-                    JProperty childAsJProperty = child as JProperty;
-                    switch(childAsJProperty.Name)
-                    {
-                        case "index":
-                            textureInfo.Index = TextureId.Deserialize(root, childAsJProperty);
-                            break;
-                        case "texCoord":
-                            textureInfo.TexCoord = (int)childAsJProperty.Value;
-                            break;
-                        default:
-                            // todo: implement
-                            //textureInfo.DefaultPropertyDeserializer(root, childAsJProperty);
-                            break;
-                    }
-                }
-            }
+			foreach (JToken child in jProperty.Children())
+			{
+				if(child is JProperty)
+				{
+					JProperty childAsJProperty = child as JProperty;
+					switch(childAsJProperty.Name)
+					{
+						case "index":
+							textureInfo.Index = TextureId.Deserialize(root, childAsJProperty);
+							break;
+						case "texCoord":
+							textureInfo.TexCoord = (int)childAsJProperty.Value;
+							break;
+						default:
+							// todo: implement
+							//textureInfo.DefaultPropertyDeserializer(root, childAsJProperty);
+							break;
+					}
+				}
+			}
 
-            return textureInfo;
-        }
+			return textureInfo;
+		}
 
 		public override void Serialize(JsonWriter writer)
 		{

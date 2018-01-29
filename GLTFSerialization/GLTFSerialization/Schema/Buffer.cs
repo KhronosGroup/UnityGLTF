@@ -20,21 +20,21 @@ namespace GLTF.Schema
 		/// </summary>
 		public int ByteLength;
 
-	    public Buffer()
-	    {
-	    }
+		public Buffer()
+		{
+		}
 
-	    public Buffer(Buffer buffer, GLTFRoot gltfRoot) : base(buffer, gltfRoot)
-	    {
-	        if (buffer == null) return;
-	        Uri = buffer.Uri;
-	        ByteLength = buffer.ByteLength;
-	    }
+		public Buffer(Buffer buffer, GLTFRoot gltfRoot) : base(buffer, gltfRoot)
+		{
+			if (buffer == null) return;
+			Uri = buffer.Uri;
+			ByteLength = buffer.ByteLength;
+		}
 
 		public static Buffer Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var buffer = new Buffer();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -48,12 +48,12 @@ namespace GLTF.Schema
 						buffer.ByteLength = reader.ReadAsInt32().Value;
 						break;
 					default:
-                        buffer.DefaultPropertyDeserializer(root, reader);
+						buffer.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
-            return buffer;
+			return buffer;
 		}
 
 		public override void Serialize(JsonWriter writer)

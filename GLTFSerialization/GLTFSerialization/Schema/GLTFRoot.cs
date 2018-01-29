@@ -98,155 +98,155 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<Texture> Textures;
 
-	    public GLTFRoot()
-	    {
-	    }
+		public GLTFRoot()
+		{
+		}
 
-	    public GLTFRoot(GLTFRoot gltfRoot) : base(gltfRoot)
-	    {
-	        if (gltfRoot.ExtensionsUsed != null)
-	        {
-	            ExtensionsUsed = gltfRoot.ExtensionsUsed.ToList();
-	        }
+		public GLTFRoot(GLTFRoot gltfRoot) : base(gltfRoot)
+		{
+			if (gltfRoot.ExtensionsUsed != null)
+			{
+				ExtensionsUsed = gltfRoot.ExtensionsUsed.ToList();
+			}
 
-	        if (gltfRoot.ExtensionsRequired != null)
-	        {
-	            ExtensionsRequired = gltfRoot.ExtensionsRequired.ToList();
-	        }
+			if (gltfRoot.ExtensionsRequired != null)
+			{
+				ExtensionsRequired = gltfRoot.ExtensionsRequired.ToList();
+			}
 
-	        if (gltfRoot.Accessors != null)
-	        {
-	            Accessors = new List<Accessor>(gltfRoot.Accessors.Count);
-	            foreach (Accessor accessor in gltfRoot.Accessors)
-	            {
-	                Accessors.Add(new Accessor(accessor, this));
-	            }
-	        }
+			if (gltfRoot.Accessors != null)
+			{
+				Accessors = new List<Accessor>(gltfRoot.Accessors.Count);
+				foreach (Accessor accessor in gltfRoot.Accessors)
+				{
+					Accessors.Add(new Accessor(accessor, this));
+				}
+			}
 
-	        if (gltfRoot.Animations != null)
-	        {
-	            Animations = new List<Animation>(gltfRoot.Animations.Count);
-	            foreach (Animation animation in gltfRoot.Animations)
-	            {
-	                Animations.Add(new Animation(animation, this));
-	            }
-	        }
+			if (gltfRoot.Animations != null)
+			{
+				Animations = new List<Animation>(gltfRoot.Animations.Count);
+				foreach (Animation animation in gltfRoot.Animations)
+				{
+					Animations.Add(new Animation(animation, this));
+				}
+			}
 
-            if (gltfRoot.Asset != null)
-	        {
-	            Asset = new Asset(gltfRoot.Asset);
-	        }
+			if (gltfRoot.Asset != null)
+			{
+				Asset = new Asset(gltfRoot.Asset);
+			}
 
-	        if (gltfRoot.Buffers != null)
-	        {
-	            Buffers = new List<Buffer>(gltfRoot.Buffers.Count);
-	            foreach (Buffer buffer in gltfRoot.Buffers)
-	            {
-	                Buffers.Add(new Buffer(buffer, this));
-	            }
-	        }
+			if (gltfRoot.Buffers != null)
+			{
+				Buffers = new List<Buffer>(gltfRoot.Buffers.Count);
+				foreach (Buffer buffer in gltfRoot.Buffers)
+				{
+					Buffers.Add(new Buffer(buffer, this));
+				}
+			}
 
-	        if (gltfRoot.BufferViews != null)
-	        {
-	            BufferViews = new List<BufferView>(gltfRoot.BufferViews.Count);
-	            foreach (BufferView bufferView in gltfRoot.BufferViews)
-	            {
-	                BufferViews.Add(new BufferView(bufferView, this));
-	            }
-	        }
-            
-            if (gltfRoot.Cameras != null)
-	        {
-	            Cameras = new List<Camera>(gltfRoot.Cameras.Count);
-	            foreach (Camera camera in gltfRoot.Cameras)
-	            {
-	                Cameras.Add(new Camera(camera, this));
-	            }
-	        }
+			if (gltfRoot.BufferViews != null)
+			{
+				BufferViews = new List<BufferView>(gltfRoot.BufferViews.Count);
+				foreach (BufferView bufferView in gltfRoot.BufferViews)
+				{
+					BufferViews.Add(new BufferView(bufferView, this));
+				}
+			}
+			
+			if (gltfRoot.Cameras != null)
+			{
+				Cameras = new List<Camera>(gltfRoot.Cameras.Count);
+				foreach (Camera camera in gltfRoot.Cameras)
+				{
+					Cameras.Add(new Camera(camera, this));
+				}
+			}
 
-	        if (gltfRoot.Images != null)
-	        {
-	            Images = new List<Image>(gltfRoot.Images.Count);
-	            foreach (Image image in gltfRoot.Images)
-	            {
-	                Images.Add(new Image(image, this));
-	            }
-	        }
+			if (gltfRoot.Images != null)
+			{
+				Images = new List<Image>(gltfRoot.Images.Count);
+				foreach (Image image in gltfRoot.Images)
+				{
+					Images.Add(new Image(image, this));
+				}
+			}
 
-	        if (gltfRoot.Materials != null)
-	        {
-	            Materials = new List<Material>(gltfRoot.Materials.Count);
-	            foreach (Material material in gltfRoot.Materials)
-	            {
-	                Materials.Add(new Material(material, this));
-	            }
-	        }
+			if (gltfRoot.Materials != null)
+			{
+				Materials = new List<Material>(gltfRoot.Materials.Count);
+				foreach (Material material in gltfRoot.Materials)
+				{
+					Materials.Add(new Material(material, this));
+				}
+			}
 
-	        if (gltfRoot.Meshes != null)
-	        {
-	            Meshes = new List<Mesh>(gltfRoot.Meshes.Count);
-	            foreach (Mesh mesh in gltfRoot.Meshes)
-	            {
-	                Meshes.Add(new Mesh(mesh, this));
-	            }
-	        }
+			if (gltfRoot.Meshes != null)
+			{
+				Meshes = new List<Mesh>(gltfRoot.Meshes.Count);
+				foreach (Mesh mesh in gltfRoot.Meshes)
+				{
+					Meshes.Add(new Mesh(mesh, this));
+				}
+			}
 
-	        if (gltfRoot.Nodes != null)
-	        {
-	            Nodes = new List<Node>(gltfRoot.Nodes.Count);
-	            foreach (Node node in gltfRoot.Nodes)
-	            {
-	                Nodes.Add(new Node(node, this));
-	            }
-	        }
+			if (gltfRoot.Nodes != null)
+			{
+				Nodes = new List<Node>(gltfRoot.Nodes.Count);
+				foreach (Node node in gltfRoot.Nodes)
+				{
+					Nodes.Add(new Node(node, this));
+				}
+			}
 
-	        if (gltfRoot.Samplers != null)
-	        {
-	            Samplers = new List<Sampler>(gltfRoot.Samplers.Count);
-	            foreach (Sampler sampler in gltfRoot.Samplers)
-	            {
-	                Samplers.Add(new Sampler(sampler, this));
-	            }
-	        }
+			if (gltfRoot.Samplers != null)
+			{
+				Samplers = new List<Sampler>(gltfRoot.Samplers.Count);
+				foreach (Sampler sampler in gltfRoot.Samplers)
+				{
+					Samplers.Add(new Sampler(sampler, this));
+				}
+			}
 
-	        if (gltfRoot.Scene != null)
-	        {
-	            Scene = new SceneId(gltfRoot.Scene, this);
-	        }
-            
-            if (gltfRoot.Scenes != null)
-	        {
-	            Scenes = new List<Scene>(gltfRoot.Scenes.Count);
-	            foreach (Scene scene in gltfRoot.Scenes)
-	            {
-	                Scenes.Add(new Scene(scene, this));
-	            }
-	        }
-            
-	        if (gltfRoot.Skins != null)
-	        {
-	            Skins = new List<Skin>(gltfRoot.Skins.Count);
-	            foreach (Skin skin in gltfRoot.Skins)
-	            {
-	                Skins.Add(new Skin(skin, this));
-	            }
-	        }
-            
-	        if (gltfRoot.Textures != null)
-	        {
-	            Textures = new List<Texture>(gltfRoot.Textures.Count);
-	            foreach (Texture texture in gltfRoot.Textures)
-	            {
-	                Textures.Add(new Texture(texture, this));
-	            }
-	        }
-        }
+			if (gltfRoot.Scene != null)
+			{
+				Scene = new SceneId(gltfRoot.Scene, this);
+			}
+			
+			if (gltfRoot.Scenes != null)
+			{
+				Scenes = new List<Scene>(gltfRoot.Scenes.Count);
+				foreach (Scene scene in gltfRoot.Scenes)
+				{
+					Scenes.Add(new Scene(scene, this));
+				}
+			}
+			
+			if (gltfRoot.Skins != null)
+			{
+				Skins = new List<Skin>(gltfRoot.Skins.Count);
+				foreach (Skin skin in gltfRoot.Skins)
+				{
+					Skins.Add(new Skin(skin, this));
+				}
+			}
+			
+			if (gltfRoot.Textures != null)
+			{
+				Textures = new List<Texture>(gltfRoot.Textures.Count);
+				foreach (Texture texture in gltfRoot.Textures)
+				{
+					Textures.Add(new Texture(texture, this));
+				}
+			}
+		}
 
-        /// <summary>
-        /// Return the default scene. When scene is null, scene of index 0 will be returned.
-        /// When scenes list is null or empty, returns null.
-        /// </summary>
-        public Scene GetDefaultScene()
+		/// <summary>
+		/// Return the default scene. When scene is null, scene of index 0 will be returned.
+		/// When scenes list is null or empty, returns null.
+		/// </summary>
+		public Scene GetDefaultScene()
 		{
 			if (Scene != null)
 			{
@@ -270,7 +270,7 @@ namespace GLTF.Schema
 			{
 				throw new Exception("gltf json must be an object");
 			}
-			
+
 			while (jsonReader.Read() && jsonReader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = jsonReader.Value.ToString();
@@ -329,7 +329,7 @@ namespace GLTF.Schema
 						root.Textures = jsonReader.ReadList(() => Texture.Deserialize(root, jsonReader));
 						break;
 					default:
-                        root.DefaultPropertyDeserializer(root, jsonReader);
+						root.DefaultPropertyDeserializer(root, jsonReader);
 						break;
 				}
 			}

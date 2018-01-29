@@ -14,9 +14,9 @@ namespace UnityGLTF {
 #endif
 	}
 
-    public class GLTFLoadException : Exception
-    {
-        public GLTFLoadException() : base() { }
-        public GLTFLoadException(string message) : base(message) { }
-    }
+	public class GLTFLoadException : Exception
+	{
+		public GLTFLoadException() : base() { }
+		public GLTFLoadException(string message) : base(message) { }
+	}
 }

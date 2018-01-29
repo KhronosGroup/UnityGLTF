@@ -24,35 +24,35 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<double> Weights;
 
-	    public Mesh()
-	    {
-	    }
+		public Mesh()
+		{
+		}
 
-	    public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
-	    {
-	        if (mesh == null) return;
+		public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
+		{
+			if (mesh == null) return;
 
-	        if (mesh.Primitives != null)
-	        {
-                Primitives = new List<MeshPrimitive>(mesh.Primitives.Count);
+			if (mesh.Primitives != null)
+			{
+				Primitives = new List<MeshPrimitive>(mesh.Primitives.Count);
 
-	            foreach (MeshPrimitive primitive in mesh.Primitives)
-	            {
-	                Primitives.Add(new MeshPrimitive(primitive, gltfRoot));
-	            }
-	        }
+				foreach (MeshPrimitive primitive in mesh.Primitives)
+				{
+					Primitives.Add(new MeshPrimitive(primitive, gltfRoot));
+				}
+			}
 
-	        if (mesh.Weights != null)
-	        {
-	            Weights = mesh.Weights.ToList();
-	        }
-	    }
+			if (mesh.Weights != null)
+			{
+				Weights = mesh.Weights.ToList();
+			}
+		}
 
 
 		public static Mesh Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var mesh = new Mesh();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -66,10 +66,10 @@ namespace GLTF.Schema
 						mesh.Weights = reader.ReadDoubleList();
 						break;
 					default:
-                        mesh.DefaultPropertyDeserializer(root, reader);
+						mesh.DefaultPropertyDeserializer(root, reader);
 						break;
-                }
-            }
+				}
+			}
 
 			return mesh;
 		}

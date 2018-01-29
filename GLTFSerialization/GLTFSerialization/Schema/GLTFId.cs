@@ -17,17 +17,17 @@ namespace GLTF.Schema
 		public GLTFRoot Root;
 		public abstract T Value { get; }
 
-	    protected GLTFId()
-	    {
-	    }
+		protected GLTFId()
+		{
+		}
 
-        public GLTFId(GLTFId<T> gltfId, GLTFRoot newRoot)
-        {
-            Id = gltfId.Id;
-            Root = newRoot;
-        }
+		public GLTFId(GLTFId<T> gltfId, GLTFRoot newRoot)
+		{
+			Id = gltfId.Id;
+			Root = newRoot;
+		}
 
-        public void Serialize(JsonWriter writer)
+		public void Serialize(JsonWriter writer)
 		{
 			writer.WriteValue(Id);
 		}
@@ -35,13 +35,13 @@ namespace GLTF.Schema
 
 	public class AccessorId : GLTFId<Accessor>
 	{
-	    public AccessorId()
-	    {
-	    }
+		public AccessorId()
+		{
+		}
 
-        public AccessorId(AccessorId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public AccessorId(AccessorId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
 		public override Accessor Value
 		{
@@ -60,15 +60,15 @@ namespace GLTF.Schema
 
 	public class BufferId : GLTFId<Buffer>
 	{
-	    public BufferId()
-	    {
-	    }
+		public BufferId()
+		{
+		}
 
-	    public BufferId(BufferId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public BufferId(BufferId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Buffer Value
+		public override Buffer Value
 		{
 			get { return Root.Buffers[Id]; }
 		}
@@ -85,15 +85,15 @@ namespace GLTF.Schema
 
 	public class BufferViewId : GLTFId<BufferView>
 	{
-	    public BufferViewId()
-	    {
-	    }
+		public BufferViewId()
+		{
+		}
 
-	    public BufferViewId(BufferViewId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public BufferViewId(BufferViewId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override BufferView Value
+		public override BufferView Value
 		{
 			get { return Root.BufferViews[Id]; }
 		}
@@ -110,15 +110,15 @@ namespace GLTF.Schema
 
 	public class CameraId : GLTFId<Camera>
 	{
-	    public CameraId()
-	    {
-	    }
+		public CameraId()
+		{
+		}
 
-	    public CameraId(CameraId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public CameraId(CameraId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Camera Value
+		public override Camera Value
 		{
 			get { return Root.Cameras[Id]; }
 		}
@@ -135,16 +135,16 @@ namespace GLTF.Schema
 
 	public class ImageId : GLTFId<Image>
 	{
-	    public ImageId()
-	    {
-	    }
+		public ImageId()
+		{
+		}
 
-	    public ImageId(ImageId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public ImageId(ImageId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
 
-        public override Image Value
+		public override Image Value
 		{
 			get { return Root.Images[Id]; }
 		}
@@ -161,15 +161,15 @@ namespace GLTF.Schema
 
 	public class MaterialId : GLTFId<Material>
 	{
-	    public MaterialId()
-	    {
-	    }
+		public MaterialId()
+		{
+		}
 
-	    public MaterialId(MaterialId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public MaterialId(MaterialId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Material Value
+		public override Material Value
 		{
 			get { return Root.Materials[Id]; }
 		}
@@ -186,15 +186,15 @@ namespace GLTF.Schema
 
 	public class MeshId : GLTFId<Mesh>
 	{
-	    public MeshId()
-	    {
-	    }
+		public MeshId()
+		{
+		}
 
-	    public MeshId(MeshId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public MeshId(MeshId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Mesh Value
+		public override Mesh Value
 		{
 			get { return Root.Meshes[Id]; }
 		}
@@ -211,15 +211,15 @@ namespace GLTF.Schema
 
 	public class NodeId : GLTFId<Node>
 	{
-	    public NodeId()
-	    {
-	    }
+		public NodeId()
+		{
+		}
 
-	    public NodeId(NodeId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public NodeId(NodeId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Node Value
+		public override Node Value
 		{
 			get { return Root.Nodes[Id]; }
 		}
@@ -241,7 +241,7 @@ namespace GLTF.Schema
 			}
 
 			var list = new List<NodeId>();
-            
+
 			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
 			{
 				var node = new NodeId
@@ -259,15 +259,15 @@ namespace GLTF.Schema
 
 	public class SamplerId : GLTFId<Sampler>
 	{
-	    public SamplerId()
-	    {
-	    }
+		public SamplerId()
+		{
+		}
 
-	    public SamplerId(SamplerId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public SamplerId(SamplerId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Sampler Value
+		public override Sampler Value
 		{
 			get { return Root.Samplers[Id]; }
 		}
@@ -284,16 +284,16 @@ namespace GLTF.Schema
 
 	public class SceneId : GLTFId<Scene>
 	{
-	    public SceneId()
-	    {
-	    }
+		public SceneId()
+		{
+		}
 
-	    public SceneId(SceneId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public SceneId(SceneId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
 
-        public override Scene Value
+		public override Scene Value
 		{
 			get { return Root.Scenes[Id]; }
 		}
@@ -310,15 +310,15 @@ namespace GLTF.Schema
 
 	public class SkinId : GLTFId<Skin>
 	{
-	    public SkinId()
-	    {
-	    }
+		public SkinId()
+		{
+		}
 
-	    public SkinId(SkinId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public SkinId(SkinId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Skin Value
+		public override Skin Value
 		{
 			get { return Root.Skins[Id]; }
 		}
@@ -335,15 +335,15 @@ namespace GLTF.Schema
 
 	public class TextureId : GLTFId<Texture>
 	{
-	    public TextureId()
-	    {
-	    }
+		public TextureId()
+		{
+		}
 
-	    public TextureId(TextureId id, GLTFRoot newRoot) : base(id, newRoot)
-	    {
-	    }
+		public TextureId(TextureId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
 
-        public override Texture Value
+		public override Texture Value
 		{
 			get { return Root.Textures[Id]; }
 		}
@@ -356,14 +356,13 @@ namespace GLTF.Schema
 				Root = root
 			};
 		}
-
-        public static TextureId Deserialize(GLTFRoot root, JProperty jProperty)
-        {
-            return new TextureId
-            {
-                Id = (int)jProperty.Value,
-                Root = root
-            };
-        }
-    }
+		public static TextureId Deserialize(GLTFRoot root, JProperty jProperty)
+		{
+			return new TextureId
+			{
+				Id = (int)jProperty.Value,
+				Root = root
+			};
+		}
+	}
 }

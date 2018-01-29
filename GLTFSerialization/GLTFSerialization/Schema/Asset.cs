@@ -28,19 +28,19 @@ namespace GLTF.Schema
 		/// </summary>
 		public string MinVersion;
 
-	    public Asset()
-	    {
-	    }
+		public Asset()
+		{
+		}
 
-	    public Asset(Asset asset) : base(asset)
-	    {
-	        if (asset == null) return;
+		public Asset(Asset asset) : base(asset)
+		{
+			if (asset == null) return;
 
-	        Copyright = asset.Copyright;
-	        Generator = asset.Generator;
-	        Version = asset.Version;
-	        MinVersion = asset.MinVersion;
-	    }
+			Copyright = asset.Copyright;
+			Generator = asset.Generator;
+			Version = asset.Version;
+			MinVersion = asset.MinVersion;
+		}
 
 		public static Asset Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -50,8 +50,8 @@ namespace GLTF.Schema
 			{
 				throw new Exception("Asset must be an object.");
 			}
-			
-            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+
+			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
 
@@ -70,12 +70,12 @@ namespace GLTF.Schema
 						asset.MinVersion = reader.ReadAsString();
 						break;
 					default:
-                        asset.DefaultPropertyDeserializer(root, reader);
+						asset.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
-            return asset;
+			return asset;
 		}
 
 		public override void Serialize(JsonWriter writer)

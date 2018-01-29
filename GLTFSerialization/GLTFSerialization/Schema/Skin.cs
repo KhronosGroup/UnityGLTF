@@ -28,38 +28,38 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<NodeId> Joints;
 
-	    public Skin()
-	    {
-	    }
+		public Skin()
+		{
+		}
 
-	    public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin, gltfRoot)
-	    {
-	        if (skin == null) return;
+		public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin, gltfRoot)
+		{
+			if (skin == null) return;
 
-	        if (skin.InverseBindMatrices != null)
-	        {
-	            InverseBindMatrices = new AccessorId(skin.InverseBindMatrices, gltfRoot);
-	        }
+			if (skin.InverseBindMatrices != null)
+			{
+				InverseBindMatrices = new AccessorId(skin.InverseBindMatrices, gltfRoot);
+			}
 
-	        if (skin.Skeleton != null)
-	        {
-	            Skeleton = new NodeId(skin.Skeleton, gltfRoot);
-	        }
+			if (skin.Skeleton != null)
+			{
+				Skeleton = new NodeId(skin.Skeleton, gltfRoot);
+			}
 
-	        if (skin.Joints != null)
-	        {
-	            Joints = new List<NodeId>(skin.Joints.Count);
-	            foreach (NodeId joint in skin.Joints)
-	            {
-	                Joints.Add(new NodeId(joint, gltfRoot));
-	            }
-	        }
-	    }
+			if (skin.Joints != null)
+			{
+				Joints = new List<NodeId>(skin.Joints.Count);
+				foreach (NodeId joint in skin.Joints)
+				{
+					Joints.Add(new NodeId(joint, gltfRoot));
+				}
+			}
+		}
 
 		public static Skin Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var skin = new Skin();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -76,10 +76,10 @@ namespace GLTF.Schema
 						skin.Joints = reader.ReadList(() => NodeId.Deserialize(root, reader));
 						break;
 					default:
-                        skin.DefaultPropertyDeserializer(root, reader);
+						skin.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return skin;
 		}

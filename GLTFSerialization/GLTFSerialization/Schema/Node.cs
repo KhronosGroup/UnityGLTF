@@ -73,61 +73,61 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<double> Weights;
 
-	    public Node()
-	    {
-	    }
+		public Node()
+		{
+		}
 
-	    public Node(Node node, GLTFRoot gltfRoot) : base(node, gltfRoot)
-	    {
-	        if (node == null) return;
+		public Node(Node node, GLTFRoot gltfRoot) : base(node, gltfRoot)
+		{
+			if (node == null) return;
 
-	        UseTRS = node.UseTRS;
+			UseTRS = node.UseTRS;
 
-	        if (node.Camera != null)
-	        {
-	            Camera = new CameraId(node.Camera, gltfRoot);
-	        }
+			if (node.Camera != null)
+			{
+				Camera = new CameraId(node.Camera, gltfRoot);
+			}
 
-	        if (node.Children != null)
-	        {
-	            Children = new List<NodeId>(node.Children.Count);
-	            foreach (NodeId child in node.Children)
-	            {
-	                Children.Add(new NodeId(child, gltfRoot));
-	            }
-	        }
+			if (node.Children != null)
+			{
+				Children = new List<NodeId>(node.Children.Count);
+				foreach (NodeId child in node.Children)
+				{
+					Children.Add(new NodeId(child, gltfRoot));
+				}
+			}
 
-	        if (node.Skin != null)
-	        {
-	            Skin = new SkinId(node.Skin, gltfRoot);
-	        }
+			if (node.Skin != null)
+			{
+				Skin = new SkinId(node.Skin, gltfRoot);
+			}
 
-	        if (node.Matrix != null)
-	        {
-	            Matrix = new Matrix4x4(node.Matrix);
-	        }
+			if (node.Matrix != null)
+			{
+				Matrix = new Matrix4x4(node.Matrix);
+			}
 
-	        if (node.Mesh != null)
-	        {
-	            Mesh = new MeshId(node.Mesh, gltfRoot);
-	        }
+			if (node.Mesh != null)
+			{
+				Mesh = new MeshId(node.Mesh, gltfRoot);
+			}
 
-	        Rotation = node.Rotation;
+			Rotation = node.Rotation;
 
-	        Scale = node.Scale;
+			Scale = node.Scale;
 
-	        Translation = node.Translation;
+			Translation = node.Translation;
 
-	        if (node.Weights != null)
-	        {
-	            Weights = node.Weights.ToList();
-	        }
-	    }
+			if (node.Weights != null)
+			{
+				Weights = node.Weights.ToList();
+			}
+		}
 
 		public static Node Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var node = new Node();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -172,10 +172,10 @@ namespace GLTF.Schema
 						node.Weights = reader.ReadDoubleList();
 						break;
 					default:
-                        node.DefaultPropertyDeserializer(root, reader);
+						node.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return node;
 		}

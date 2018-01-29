@@ -79,49 +79,49 @@ namespace GLTF.Schema
 		/// </summary>
 		public bool DoubleSided;
 
-	    public Material()
-	    {
-	    }
+		public Material()
+		{
+		}
 
-	    public Material(Material material, GLTFRoot gltfRoot) : base(material, gltfRoot)
-	    {
-	        if (material == null) return;
+		public Material(Material material, GLTFRoot gltfRoot) : base(material, gltfRoot)
+		{
+			if (material == null) return;
 
-	        if (material.PbrMetallicRoughness != null)
-	        {
-	            PbrMetallicRoughness = new PbrMetallicRoughness(material.PbrMetallicRoughness, gltfRoot);
-	        }
+			if (material.PbrMetallicRoughness != null)
+			{
+				PbrMetallicRoughness = new PbrMetallicRoughness(material.PbrMetallicRoughness, gltfRoot);
+			}
 
-	        if (material.CommonConstant != null)
-	        {
-	            CommonConstant = new MaterialCommonConstant(material.CommonConstant, gltfRoot);
-	        }
+			if (material.CommonConstant != null)
+			{
+				CommonConstant = new MaterialCommonConstant(material.CommonConstant, gltfRoot);
+			}
 
-	        if (material.NormalTexture != null)
-	        {
-	            NormalTexture = new NormalTextureInfo(material.NormalTexture, gltfRoot);
-	        }
+			if (material.NormalTexture != null)
+			{
+				NormalTexture = new NormalTextureInfo(material.NormalTexture, gltfRoot);
+			}
 
-	        if (material.OcclusionTexture != null)
-	        {
-	            OcclusionTexture = new OcclusionTextureInfo(material.OcclusionTexture, gltfRoot);
-            }
+			if (material.OcclusionTexture != null)
+			{
+				OcclusionTexture = new OcclusionTextureInfo(material.OcclusionTexture, gltfRoot);
+			}
 
-	        if (material.EmissiveTexture != null)
-	        {
-	            EmissiveTexture = new TextureInfo(material.EmissiveTexture, gltfRoot);
-	        }
+			if (material.EmissiveTexture != null)
+			{
+				EmissiveTexture = new TextureInfo(material.EmissiveTexture, gltfRoot);
+			}
 
-	        EmissiveFactor = material.EmissiveFactor;
-	        AlphaMode = material.AlphaMode;
-	        AlphaCutoff = material.AlphaCutoff;
-	        DoubleSided = material.DoubleSided;
-	    }
+			EmissiveFactor = material.EmissiveFactor;
+			AlphaMode = material.AlphaMode;
+			AlphaCutoff = material.AlphaCutoff;
+			DoubleSided = material.DoubleSided;
+		}
 
-        public static Material Deserialize(GLTFRoot root, JsonReader reader)
+		public static Material Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var material = new Material();
-			
+
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
@@ -156,10 +156,10 @@ namespace GLTF.Schema
 						material.DoubleSided = reader.ReadAsBoolean().Value;
 						break;
 					default:
-                        material.DefaultPropertyDeserializer(root, reader);
+						material.DefaultPropertyDeserializer(root, reader);
 						break;
 				}
-            }
+			}
 
 			return material;
 		}
