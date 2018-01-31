@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-
 	/// <summary>
 	/// Component to load a GLTF scene with
 	/// </summary>
@@ -23,6 +22,11 @@ namespace UnityGLTF
 			FileStream gltfStream = null;
 			if (UseStream)
 			{
+				// Path.Combine treats paths that start with the separator character
+				// as absolute paths, ignoring the first path passed in. This removes
+				// that character to properly handle a filename written with it.
+				Url = Url.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+
 				var fullPath = Path.Combine(Application.streamingAssetsPath, Url);
 				gltfStream = File.OpenRead(fullPath);
 				loader = new GLTFSceneImporter(
@@ -43,6 +47,7 @@ namespace UnityGLTF
 
             loader.MaximumLod = MaximumLod;
 			yield return loader.Load(-1, Multithreaded);
+
 			if (gltfStream != null)
 			{
 #if WINDOWS_UWP
