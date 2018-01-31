@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
 using GLTF;
@@ -298,14 +299,186 @@ namespace UnityGLTF
 			}
 		}
 
+		#region Animation
+		static string RelativePathFrom(Transform self, Transform root)
+		{
+			var path = new List<String>();
+			for (var current = self; current != null; current = current.parent)
+			{
+				if (current == root)
+				{
+					return String.Join("/", path.ToArray());
+				}
+
+				path.Insert(0, current.name);
+			}
+
+			throw new Exception("no RelativePath");
+		}
+
+		int AccessorLength(Accessor accessor)
+		{
+			var componentSize = 0;
+			switch (accessor.ComponentType)
+			{
+				case GLTFComponentType.Float: componentSize = 4; break;
+				default: throw new NotImplementedException();
+			}
+			var componentElementCount = 0;
+			switch (accessor.Type)
+			{
+				case GLTFAccessorAttributeType.SCALAR: componentElementCount = 1; break;
+				case GLTFAccessorAttributeType.VEC2: componentElementCount = 2; break;
+				case GLTFAccessorAttributeType.VEC3: componentElementCount = 3; break;
+				case GLTFAccessorAttributeType.VEC4: componentElementCount = 4; break;
+				default: throw new NotImplementedException();
+			}
+			return accessor.Count * componentSize * componentElementCount;
+		}
+
+		ArraySegment<Byte> GetBytesFromAccessor(int index)
+		{
+			var accessor = _root.Accessors[index];
+			var view = _root.BufferViews[accessor.BufferView.Id];
+			var buffer = _root.Buffers[view.Buffer.Id];
+
+			var cache = _assetCache.BufferCache[view.Buffer.Id];
+			var bytes = (cache.Stream as MemoryStream).GetBuffer();
+
+			var accessorLength = AccessorLength(accessor);
+
+			return new ArraySegment<byte>(bytes, (int)(cache.ChunkOffset + view.ByteOffset + accessor.ByteOffset), accessorLength);
+		}
+
+		T[] GetArrayFromAccessor<T>(int accessorIndex)where T: struct
+		{
+			var bytes = GetBytesFromAccessor(accessorIndex);
+
+			var array = new T[bytes.Count/ System.Runtime.InteropServices.Marshal.SizeOf(typeof(T))];
+
+			var handle = System.Runtime.InteropServices.GCHandle.Alloc(array, System.Runtime.InteropServices.GCHandleType.Pinned);
+			try
+			{
+				var ptr = handle.AddrOfPinnedObject();
+
+				System.Runtime.InteropServices.Marshal.Copy(bytes.Array, bytes.Offset, ptr, bytes.Count);
+			}
+			finally
+			{
+				handle.Free();
+			}
+
+			return array;
+		}
+
+		AnimationClip CreateClip(Transform root, Transform[] nodes, int animationID)
+		{
+			var clip = new AnimationClip();
+			clip.name = string.Format("anmation:{0}", animationID);
+
+			var animation = _root.Animations[animationID];
+			foreach(var y in animation.Channels)
+			{
+				var node = nodes[y.Target.Node.Id];
+				var relativePath = RelativePathFrom(node, root);
+				switch (y.Target.Path)
+				{
+					case GLTFAnimationChannelPath.translation:
+						{
+							var curveX = new AnimationCurve();
+							var curveY = new AnimationCurve();
+							var curveZ = new AnimationCurve();
+
+							var sampler = animation.Samplers[y.Sampler.Id];
+							var input = GetArrayFromAccessor<float>(sampler.Input.Id);
+							var output = GetArrayFromAccessor<Vector3>(sampler.Output.Id);
+							for (int i = 0; i < input.Length; ++i)
+							{
+								var time = input[i];
+								var position = output[i];
+								curveX.AddKey(time, position.x);
+								curveY.AddKey(time, position.y);
+								curveZ.AddKey(time, -position.z); // reverse-z
+							}
+
+							clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
+							clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
+							clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+						}
+						break;
+
+					case GLTFAnimationChannelPath.rotation:
+						{
+							var curveX = new AnimationCurve();
+							var curveY = new AnimationCurve();
+							var curveZ = new AnimationCurve();
+							var curveW = new AnimationCurve();
+
+							var sampler = animation.Samplers[y.Sampler.Id];
+							var input = GetArrayFromAccessor<float>(sampler.Input.Id);
+							var output = GetArrayFromAccessor<Quaternion>(sampler.Output.Id);
+							for (int i = 0; i < input.Length; ++i)
+							{
+								var time = input[i];
+								var rotation = output[i];
+
+								// reverse-z
+								float angle;
+								Vector3 axis;
+								rotation.ToAngleAxis(out angle, out axis);
+								rotation = Quaternion.AngleAxis(-angle, new Vector3(axis.x, axis.y, -axis.z));
+
+								curveX.AddKey(time, rotation.x);
+								curveY.AddKey(time, rotation.y);
+								curveZ.AddKey(time, rotation.z);
+								curveW.AddKey(time, rotation.w);
+							}
+
+							clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
+							clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
+							clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
+							clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+						}
+						break;
+
+				}
+
+			}
+
+			return clip;
+		}
+		#endregion
+
+
 		protected virtual GameObject CreateScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
 
-			foreach (var node in scene.Nodes)
+
+			var nodes = scene.Nodes.Select(node =>
 			{
 				var nodeObj = CreateNode(node.Value);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
+				return nodeObj.transform;
+			}).ToArray();
+
+
+			if (_root.Animations.Count > 0)
+			{
+				// create AnimationClip
+				var animation = sceneObj.AddComponent<UnityEngine.Animation>();
+				for (int i = 0; i < _root.Animations.Count; ++i)
+				{
+					var clip = CreateClip(sceneObj.transform, nodes, i);
+					clip.legacy = true;
+					clip.wrapMode = UnityEngine.WrapMode.Loop;
+					animation.AddClip(clip, clip.name);
+					if (i == 0)
+					{
+						animation.clip = clip;
+					}
+					animation.Play();
+				}
 			}
 
 			return sceneObj;
