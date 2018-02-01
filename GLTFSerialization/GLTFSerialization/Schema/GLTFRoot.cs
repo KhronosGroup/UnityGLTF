@@ -98,6 +98,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<Texture> Textures;
 
+		/// <summary>
+		/// Whether this object is a GLB
+		/// </summary>
+		public bool IsGLB;
+
 		public GLTFRoot()
 		{
 		}
@@ -337,10 +342,18 @@ namespace GLTF.Schema
 			return root;
 		}
 
-		public void Serialize(TextWriter textWriter)
+		public void Serialize(TextWriter textWriter, bool isGLB = false)
 		{
 			JsonWriter jsonWriter = new JsonTextWriter(textWriter);
-			jsonWriter.Formatting = Formatting.Indented;
+			if (isGLB)
+			{
+				jsonWriter.Formatting = Formatting.None;
+			}
+			else
+			{
+				jsonWriter.Formatting = Formatting.Indented;
+			}
+
 			jsonWriter.WriteStartObject();
 
 			if (ExtensionsUsed != null && ExtensionsUsed.Count > 0)

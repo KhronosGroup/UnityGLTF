@@ -66,6 +66,9 @@
     <Compile Include="..\GLTFSerialization\Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs">
       <Link>Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\GLBBuilder.cs">
+      <Link>GLBBuilder.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFHelpers.cs">
       <Link>GLTFHelpers.cs</Link>
     </Compile>
@@ -185,6 +188,9 @@
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\TextureInfo.cs">
       <Link>Schema\TextureInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Utilities\SubStream.cs">
+      <Link>Utilities\SubStream.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Extensions\GLTFJsonExtensions.cs">
       <Link>Extensions\GLTFJsonExtensions.cs</Link>
