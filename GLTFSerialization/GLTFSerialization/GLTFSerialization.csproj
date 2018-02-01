@@ -98,7 +98,7 @@
     <Compile Include="Schema\Camera.cs" />
     <Compile Include="Schema\CameraOrthographic.cs" />
     <Compile Include="Schema\CameraPerspective.cs" />
-    <Compile Include="Schema\Extension.cs" />
+    <Compile Include="Schema\IExtension.cs" />
     <Compile Include="Schema\GLTFChildOfRootProperty.cs" />
     <Compile Include="Schema\GLTFId.cs" />
     <Compile Include="Schema\GLTFProperty.cs" />

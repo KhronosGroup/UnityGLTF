@@ -49,6 +49,18 @@ namespace GLTF.Schema
 			return animationChannelTarget;
 		}
 
+		public AnimationChannelTarget()
+		{
+		}
+
+		public AnimationChannelTarget(AnimationChannelTarget channelTarget, GLTFRoot gltfRoot) : base(channelTarget)
+		{
+			if (channelTarget == null) return;
+
+			Node = new NodeId(channelTarget.Node, gltfRoot);
+			Path = channelTarget.Path;
+		}
+
 		public override void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();

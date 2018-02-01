@@ -24,6 +24,19 @@ namespace GLTF.Schema
 		/// </summary>
 		public GLTFComponentType ComponentType;
 
+		public AccessorSparseIndices()
+		{
+		}
+
+		public AccessorSparseIndices(AccessorSparseIndices accessorSparseIndices, GLTFRoot gltfRoot) : base(accessorSparseIndices)
+		{
+			if (accessorSparseIndices == null) return;
+			
+			BufferView = new BufferViewId(accessorSparseIndices.BufferView, gltfRoot);
+			ByteOffset = accessorSparseIndices.ByteOffset;
+			ComponentType = accessorSparseIndices.ComponentType;
+		}
+
 		public static AccessorSparseIndices Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var indices = new AccessorSparseIndices();

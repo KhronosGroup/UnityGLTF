@@ -291,8 +291,10 @@ namespace UnityGLTF
 			{
 				for (var i = 0; i < primVariations.Length; i++)
 				{
-					prims[i] = primVariations[i].Clone();
-					prims[i].Material = ExportMaterial(materialsObj[i]);
+					prims[i] = new MeshPrimitive(primVariations[i], _root)
+					{
+						Material = ExportMaterial(materialsObj[i])
+					};
 				}
 
 				return prims;
@@ -301,19 +303,19 @@ namespace UnityGLTF
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
 				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
-			aPosition = ExportAccessor(InvertZ(meshObj.vertices));
+			aPosition = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.vertices));
 
 			if (meshObj.normals.Length != 0)
-				aNormal = ExportAccessor(InvertZ(meshObj.normals));
+				aNormal = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.normals));
 
 			if (meshObj.tangents.Length != 0)
-				aTangent = ExportAccessor(InvertW(meshObj.tangents));
+				aTangent = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.tangents));
 
 			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor(FlipY(meshObj.uv));
+				aTexcoord0 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayV(meshObj.uv));
 
 			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor(FlipY(meshObj.uv2));
+				aTexcoord1 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayV(meshObj.uv2));
 
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
@@ -325,7 +327,7 @@ namespace UnityGLTF
 				var primitive = new MeshPrimitive();
 				
 				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(FlipFaces(triangles), true);
+				primitive.Indices = ExportAccessor(GLTFUnityHelpers.FlipFaces(triangles), true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -475,7 +477,7 @@ namespace UnityGLTF
 			}
 
 			if (def.Extensions == null)
-				def.Extensions = new Dictionary<string, Extension>();
+				def.Extensions = new Dictionary<string, IExtension>();
 
 			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
 				new GLTF.Math.Vector2(offset.x, -offset.y),
@@ -724,48 +726,6 @@ namespace UnityGLTF
 			_root.Samplers.Add(sampler);
 
 			return samplerId;
-		}
-
-		private Vector2[] FlipY(Vector2[] arr)
-		{
-			var len = arr.Length;
-			for(var i = 0; i < len; i++)
-			{
-				arr[i].y = 1 - arr[i].y;
-			}
-			return arr;
-		}
-
-		private Vector3[] InvertZ(Vector3[] arr)
-		{
-			var len = arr.Length;
-			for(var i = 0; i < len; i++)
-			{
-				arr[i].z = -arr[i].z;
-			}
-			return arr;
-		}
-
-		private Vector4[] InvertW(Vector4[] arr)
-		{
-			var len = arr.Length;
-			for(var i = 0; i < len; i++)
-			{
-				arr[i].w = -arr[i].w;
-			}
-			return arr;
-		}
-
-		private int[] FlipFaces(int[] arr)
-		{
-			var triangles = new int[arr.Length];
-			for (int i = 0; i < arr.Length; i += 3)
-			{
-				triangles[i + 2] = arr[i];
-				triangles[i + 1] = arr[i + 1];
-				triangles[i] = arr[i + 2];
-			}
-			return triangles;
 		}
 
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)

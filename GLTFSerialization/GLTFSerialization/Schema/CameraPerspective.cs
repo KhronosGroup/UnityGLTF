@@ -36,6 +36,20 @@ namespace GLTF.Schema
 		/// </summary>
 		public double ZNear;
 
+		public CameraPerspective()
+		{
+		}
+
+		public CameraPerspective(CameraPerspective cameraPerspective) : base(cameraPerspective)
+		{
+			if (cameraPerspective == null) return;
+
+			AspectRatio = cameraPerspective.AspectRatio;
+			YFov = cameraPerspective.YFov;
+			ZFar = cameraPerspective.ZFar;
+			ZNear = cameraPerspective.ZNear;
+		}
+
 		public static CameraPerspective Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var cameraPerspective = new CameraPerspective();
