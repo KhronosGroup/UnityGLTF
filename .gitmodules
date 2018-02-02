@@ -1,0 +1,3 @@
+[submodule "UnityGLTF/www/glTF-Sample-Models"]
+	path = UnityGLTF/www/glTF-Sample-Models
+	url = https://github.com/KhronosGroup/glTF-Sample-Models

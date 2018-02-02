@@ -15,12 +15,7 @@ namespace UnityGLTF
 		public bool UseStream = false;
 
 		public int MaximumLod = 300;
-
-		public Shader GLTFStandard;
-		public Shader GLTFStandardSpecular;
-		public Shader GLTFConstant;
-
-		public bool addColliders = false;
+		public GLTFSceneImporter.ColliderType Colliders = GLTFSceneImporter.ColliderType.None;
 
 		IEnumerator Start()
 		{
@@ -34,7 +29,7 @@ namespace UnityGLTF
 					fullPath,
 					gltfStream,
 					gameObject.transform,
-					addColliders
+                    Colliders
 					);
 			}
 			else
@@ -42,14 +37,11 @@ namespace UnityGLTF
 				loader = new GLTFSceneImporter(
 					Url,
 					gameObject.transform,
-					addColliders
+                    Colliders
 					);
 			}
 
-			loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
-			loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.KHR_materials_pbrSpecularGlossiness, GLTFStandardSpecular);
-			loader.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
-			loader.MaximumLod = MaximumLod;
+            loader.MaximumLod = MaximumLod;
 			yield return loader.Load(-1, Multithreaded);
 			if (gltfStream != null)
 			{

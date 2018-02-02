@@ -6,9 +6,9 @@ namespace UnityGLTF.Extensions
 {
 	public static class SchemaExtensions
 	{
-		// glTF matrix: column vectors, column-major storage, +Y up, -Z forward, +X right, right-handed
+		// glTF matrix: column vectors, column-major storage, +Y up, +Z forward, -X right, right-handed
 		// unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
-		// multiply by a negative Z scale to convert handedness and flip forward direction
+		// multiply by a negative X scale to convert handedness
 		public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(-1, 1, 1);
 		public static bool CoordinateSpaceConversionRequiresHandednessFlip
 		{
@@ -18,7 +18,7 @@ namespace UnityGLTF.Extensions
 			}
 		}
 
-		public static readonly GLTF.Math.Vector4 TangentSpaceConversionScale = new GLTF.Math.Vector4(1, 1, 1, -1);
+		public static readonly GLTF.Math.Vector4 TangentSpaceConversionScale = new GLTF.Math.Vector4(-1, 1, 1, -1);
 
 		/// <summary>
 		/// Get the converted unity translation, rotation, and scale from a gltf node
