@@ -9,14 +9,6 @@ namespace GLTFSerializationTests
 	[TestClass]
 	public class GLTFRootTest
 	{
-		private readonly string testStr = @"
-			{
-				""asset"": {
-					""version"": ""2.0""
-				}
-			}
-		";
-
 		private GLTFRoot _testRoot;
 
 		[TestInitialize]
@@ -24,7 +16,7 @@ namespace GLTFSerializationTests
 		{
 			MemoryStream stream = new MemoryStream();
 			StreamWriter writer = new StreamWriter(stream);
-			writer.Write(testStr);
+			writer.Write(TestAssetPaths.MIN_GLTF_STR);
 			writer.Flush();
 			stream.Position = 0;
 
