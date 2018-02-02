@@ -125,6 +125,7 @@
     <Compile Include="Schema\TextureInfo.cs" />
     <Compile Include="Extensions\GLTFJsonExtensions.cs" />
     <Compile Include="Math\Color.cs" />
+    <Compile Include="Utilities\JsonReaderExtensions.cs" />
     <Compile Include="Utilities\SubStream.cs" />
   </ItemGroup>
   <ItemGroup>

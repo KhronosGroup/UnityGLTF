@@ -49,7 +49,7 @@ namespace GLTFSerializationTests
 
 	class GLTFJsonLoadTestHelper
 	{
-		private static void TestAccessor(Accessor accessor, GLTFAccessorAttributeType type, int count, GLTFComponentType componentType, int bufferViewId, List<float> max, List<float> min)
+		private static void TestAccessor(Accessor accessor, GLTFAccessorAttributeType type, uint count, GLTFComponentType componentType, int bufferViewId, List<float> max, List<float> min)
 		{
 			Assert.AreEqual(type, accessor.Type);
 			Assert.AreEqual(count, accessor.Count);
@@ -97,7 +97,7 @@ namespace GLTFSerializationTests
 			Assert.AreEqual("glTF Tools for Unity", gltfRoot.Asset.Generator);
 		}
 
-		private static void TestBufferView(BufferView bufferView, int buffer, int byteOffset, int byteLenth)
+		private static void TestBufferView(BufferView bufferView, int buffer, uint byteOffset, uint byteLenth)
 		{
 			Assert.AreEqual(buffer, bufferView.Buffer.Id);
 			Assert.AreEqual(byteOffset, bufferView.ByteOffset);
@@ -135,14 +135,14 @@ namespace GLTFSerializationTests
 			List<Buffer> buffers = gltfRoot.Buffers;
 			Assert.AreEqual(1, buffers.Count);
 			Assert.AreEqual("BoomBox.bin", buffers[0].Uri);
-			Assert.AreEqual(207816, buffers[0].ByteLength);
+			Assert.AreEqual((uint)207816, buffers[0].ByteLength);
 		}
 
 		private static void TestGLBBuffers(GLTFRoot gltfRoot)
 		{
 			List<Buffer> buffers = gltfRoot.Buffers;
 			Assert.AreEqual(1, buffers.Count);
-			Assert.AreEqual(11247948, buffers[0].ByteLength);
+			Assert.AreEqual((uint)11247948, buffers[0].ByteLength);
 		}
 
 		private static void TestImages(GLTFRoot gltfRoot)

@@ -1,3 +1,4 @@
+using GLTF.Utilities;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -18,7 +19,7 @@ namespace GLTF.Schema
 		/// The length of the buffer in bytes.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public int ByteLength;
+		public uint ByteLength;
 
 		public Buffer()
 		{
@@ -45,7 +46,7 @@ namespace GLTF.Schema
 						buffer.Uri = reader.ReadAsString();
 						break;
 					case "byteLength":
-						buffer.ByteLength = reader.ReadAsInt32().Value;
+						buffer.ByteLength = reader.ReadDoubleAsUInt32();
 						break;
 					default:
 						buffer.DefaultPropertyDeserializer(root, reader);

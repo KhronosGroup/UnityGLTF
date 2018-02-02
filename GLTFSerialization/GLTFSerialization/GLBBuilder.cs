@@ -279,30 +279,30 @@ namespace UnityGLTF
 		}
 
 		/// <summary>
-		/// Adds a blob to the GLB
+		/// Adds binary data to the GLB
 		/// </summary>
 		/// <param name="glb">The glb to update</param>
-		/// <param name="blob">The binary data to append</param>
+		/// <param name="binaryData">The binary data to append</param>
 		/// <returns>The location of the added buffer view</returns>
-		public static Task<BufferViewId> AddBinaryData(GLBObject glb, Stream blob)
+		public static Task<BufferViewId> AddBinaryData(GLBObject glb, Stream binaryData)
 		{
 			if(glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
-			if(blob == null) throw new ArgumentNullException(nameof(blob));
-			if(blob.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(blob));
+			if(binaryData == null) throw new ArgumentNullException(nameof(binaryData));
+			if(binaryData.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(binaryData));
 
-			return Task.Run(() => _AddBlob(glb, blob));
+			return Task.Run(() => _AddBinaryData(glb, binaryData));
 		}
 
-		private static BufferViewId _AddBlob(GLBObject glb, Stream blob)
+		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData)
 		{
 			// Append new binary chunk to end
-			uint blobLengthAsUInt = (uint) blob.Length;
+			uint blobLengthAsUInt = (uint) binaryData.Length;
 			uint newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLengthAsUInt;
 			uint newGLBSize = glb.Header.FileLength + blobLengthAsUInt;
 			uint blobWritePosition = glb.Header.FileLength;
-			glb.Stream.SetLength(glb.Header.FileLength + blob.Length);
+			glb.Stream.SetLength(glb.Header.FileLength + binaryData.Length);
 			glb.Stream.Position = blobWritePosition;	// assuming the end of the file is the end of the binary chunk
-			blob.CopyTo(glb.Stream);							// make sure this doesn't supersize it
+			binaryData.CopyTo(glb.Stream);							// make sure this doesn't supersize it
 			glb.Header.FileLength = newGLBSize;
 			glb.BinaryChunkInfo.Length = newBinaryBufferSize;
 			if (glb.Root.Buffers == null)
@@ -315,7 +315,7 @@ namespace UnityGLTF
 				glb.Root.Buffers.Add(new Buffer());
 			}
 
-			glb.Root.Buffers[0].ByteLength = (int) newBinaryBufferSize;
+			glb.Root.Buffers[0].ByteLength = newBinaryBufferSize;
 
 			// write glb header past magic number
 			glb.Stream.Position = 0;
@@ -333,8 +333,8 @@ namespace UnityGLTF
 					Id = 0,
 					Root = glb.Root
 				},
-				ByteLength = (int)blobLengthAsUInt,	// figure out whether glb size is wrong or if documentation is unclear
-				ByteOffset = (int)(glb.BinaryChunkInfo.Length - blobLengthAsUInt)
+				ByteLength = blobLengthAsUInt,	// figure out whether glb size is wrong or if documentation is unclear
+				ByteOffset = glb.BinaryChunkInfo.Length - blobLengthAsUInt
 			};
 
 			if (glb.Root.BufferViews == null)
@@ -379,7 +379,7 @@ namespace UnityGLTF
 			BufferView bufferViewToRemove = bufferViewId.Value;
 			if (bufferViewToRemove.ByteOffset + bufferViewToRemove.ByteLength == glb.BinaryChunkInfo.Length)
 			{
-				uint bufferViewLengthAsUint = (uint)bufferViewToRemove.ByteLength;
+				uint bufferViewLengthAsUint = bufferViewToRemove.ByteLength;
 				glb.Header.FileLength -= bufferViewLengthAsUint;
 				glb.BinaryChunkInfo.Length -= bufferViewLengthAsUint;
 				if (glb.BinaryChunkInfo.Length == 0)
@@ -394,7 +394,7 @@ namespace UnityGLTF
 				}
 				else
 				{
-					glb.Root.Buffers[0].ByteLength = (int) glb.BinaryChunkInfo.Length;
+					glb.Root.Buffers[0].ByteLength = glb.BinaryChunkInfo.Length;
 
 					// write binary chunk header
 					glb.StreamStartPosition = glb.BinaryChunkInfo.StartPosition;

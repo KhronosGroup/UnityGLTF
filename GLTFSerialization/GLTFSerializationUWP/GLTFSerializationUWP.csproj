@@ -189,6 +189,9 @@
     <Compile Include="..\GLTFSerialization\Schema\TextureInfo.cs">
       <Link>Schema\TextureInfo.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Utilities\JsonReaderExtensions.cs">
+      <Link>Utilities\JsonReaderExtensions.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\Utilities\SubStream.cs">
       <Link>Utilities\SubStream.cs</Link>
     </Compile>
