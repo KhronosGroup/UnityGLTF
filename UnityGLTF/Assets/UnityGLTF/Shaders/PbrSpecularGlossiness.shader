@@ -333,4 +333,5 @@ Shader "GLTF/PbrSpecularGlossiness"
 	}
 
 	FallBack "VertexLit"
+	CustomEditor "PbrShaderGUI"
 }
