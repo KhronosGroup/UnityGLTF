@@ -146,40 +146,6 @@ namespace UnityEditor
                 m_WorkflowMode = WorkflowMode.Unlit;
         }
 
-        public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
-        {
-            // _Emission property is lost after assigning Standard shader to the material
-            // thus transfer it before assigning the new shader
-            if (material.HasProperty("_Emission"))
-            {
-                material.SetColor("_EmissionColor", material.GetColor("_Emission"));
-            }
-
-            base.AssignNewShaderToMaterial(material, oldShader, newShader);
-
-            if (oldShader == null || !oldShader.name.Contains("Legacy Shaders/"))
-            {
-                SetupMaterialWithBlendMode(material, (BlendMode)material.GetFloat("_Mode"));
-                return;
-            }
-
-            BlendMode blendMode = BlendMode.Opaque;
-            if (oldShader.name.Contains("/Transparent/Cutout/"))
-            {
-                blendMode = BlendMode.Mask;
-            }
-            else if (oldShader.name.Contains("/Transparent/"))
-            {
-                // NOTE: legacy shaders did not provide physically based transparency
-                // therefore Fade mode
-                blendMode = BlendMode.Blend;
-            }
-            material.SetFloat("_Mode", (float)blendMode);
-
-            DetermineWorkflow(MaterialEditor.GetMaterialProperties(new Material[] { material }));
-            MaterialChanged(material, m_WorkflowMode);
-        }
-
         void BlendModePopup()
         {
             EditorGUI.showMixedValue = blendMode.hasMixedValue;
@@ -236,41 +202,44 @@ namespace UnityEditor
 			}
         }
 
-        public static void SetupMaterialWithBlendMode(Material material, BlendMode blendMode)
+        public static void SetupMaterialWithBlendMode(Material material, BlendMode blendMode, float alphaCutoff)
         {
-            switch (blendMode)
+			switch (blendMode)
             {
                 case BlendMode.Opaque:
-                    material.SetOverrideTag("RenderType", "Opaque");
-                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-                    material.SetInt("_ZWrite", 1);
-                    material.DisableKeyword("_ALPHATEST_ON");
-                    material.DisableKeyword("_ALPHABLEND_ON");
-                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                    material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
-                    break;
+					material.SetOverrideTag("RenderType", "Opaque");
+	                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+	                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+	                material.SetInt("_ZWrite", 1);
+	                material.DisableKeyword("_ALPHATEST_ON");
+	                material.DisableKeyword("_ALPHABLEND_ON");
+	                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+	                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
+					break;
                 case BlendMode.Mask:
-                    material.SetOverrideTag("RenderType", "TransparentCutout");
-                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-                    material.SetInt("_ZWrite", 1);
-                    material.EnableKeyword("_ALPHATEST_ON");
-                    material.DisableKeyword("_ALPHABLEND_ON");
-                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                    material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-                    break;
+					material.SetOverrideTag("RenderType", "TransparentCutout");
+	                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+	                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+	                material.SetInt("_ZWrite", 1);
+	                material.EnableKeyword("_ALPHATEST_ON");
+	                material.DisableKeyword("_ALPHABLEND_ON");
+	                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+	                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+	                material.SetFloat("_Cutoff", alphaCutoff);
+					break;
                 case BlendMode.Blend:
                     material.SetOverrideTag("RenderType", "Transparent");
-                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                     material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     material.SetInt("_ZWrite", 0);
                     material.DisableKeyword("_ALPHATEST_ON");
-                    material.DisableKeyword("_ALPHABLEND_ON");
-                    material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.EnableKeyword("_ALPHABLEND_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
                     material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
                     break;
             }
+
+			material.SetFloat("_Mode", (float)blendMode);
         }
 
         static void SetMaterialKeywords(Material material, WorkflowMode workflowMode)
@@ -289,7 +258,7 @@ namespace UnityEditor
 
         static void MaterialChanged(Material material, WorkflowMode workflowMode)
         {
-            SetupMaterialWithBlendMode(material, (BlendMode)material.GetFloat("_Mode"));
+            SetupMaterialWithBlendMode(material, (BlendMode)material.GetFloat("_Mode"), material.GetFloat("_Cutoff"));
 
             SetMaterialKeywords(material, workflowMode);
         }
