@@ -24,14 +24,11 @@ namespace UnityGLTF
 
 	public class GLTFSceneImporter
 	{
-		public static class MaterialType
+		public enum ColliderType
 		{
-			public const string PbrMetallicRoughness = "PbrMetallicRoughness";
-			public const string KHR_materials_pbrSpecularGlossiness = "KHR_materials_pbrSpecularGlossiness";
-			public const string CommonConstant = "CommonConstant";
-			public const string CommonPhong = "CommonPhong";
-			public const string CommonBlinn = "CommonBlinn";
-			public const string CommonLambert = "CommonLambert";
+			None,
+			Box,
+			Mesh
 		}
 
 		/// <summary>
@@ -52,7 +49,7 @@ namespace UnityGLTF
 		/// <summary>
 		/// Adds colliders to primitive objects when created
 		/// </summary>
-		public bool AddColliders { get; set; }
+		public ColliderType Collider { get; set; }
 
 		protected struct GLBStream
 		{
@@ -61,7 +58,6 @@ namespace UnityGLTF
 		}
 
 		protected GameObject _lastLoadedScene;
-		protected readonly Dictionary<string, Shader> _shaderCache = new Dictionary<string, Shader>();
 		protected readonly GLTF.Schema.Material DefaultMaterial = new GLTF.Schema.Material();
 		protected MaterialCacheData _defaultLoadedMaterial = null;
 
@@ -70,7 +66,6 @@ namespace UnityGLTF
 		protected GLTFRoot _gltfRoot;
 		protected AssetCache _assetCache;
 		protected AsyncAction _asyncAction;
-		protected byte[] _gltfData;
 		protected ILoader _loader;
 		private bool _isRunning = false;
 
@@ -102,16 +97,6 @@ namespace UnityGLTF
 			get { return _lastLoadedScene; }
 		}
 
-		/// <summary>
-		/// Configures shaders in the shader cache for a given material type
-		/// </summary>
-		/// <param name="type">Material type to setup shader for</param>
-		/// <param name="shader">Shader object to apply</param>
-		public virtual void SetShaderForMaterialType(string type, Shader shader)
-		{
-			_shaderCache.Add(type, shader);
-		}
-		
 		public IEnumerator LoadScene(int sceneIndex = -1, bool isMultithreaded = false, Action<GameObject> onLoadComplete = null)
 		{
 			try
@@ -664,11 +649,20 @@ namespace UnityGLTF
 				UnityEngine.Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
 				meshRenderer.material = material;
-				
-				if (AddColliders)
+
+				switch (Collider)
 				{
-					var meshCollider = primitiveObj.AddComponent<MeshCollider>();
-					meshCollider.sharedMesh = meshFilter.mesh;
+					case ColliderType.Box:
+						var boxCollider = primitiveObj.AddComponent<BoxCollider>();
+						boxCollider.center = meshFilter.sharedMesh.bounds.center;
+						boxCollider.size = meshFilter.sharedMesh.bounds.size;
+						break;
+
+					case ColliderType.Mesh:
+						var meshCollider = primitiveObj.AddComponent<MeshCollider>();
+						meshCollider.sharedMesh = meshFilter.sharedMesh;
+						meshCollider.convex = true;
+						break;
 				}
 
 				primitiveObj.transform.SetParent(parent, false);
@@ -821,198 +815,121 @@ namespace UnityGLTF
 
 			yield return null;
 		}
-		
+
 		protected virtual void CreateMaterial(GLTF.Schema.Material def, int materialIndex)
 		{
-			Shader shader;
-
-			// get the shader to use for this material
-			try
+			IUniformMap mapper;
+			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName)
+			    && def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
 			{
-				if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains("KHR_materials_pbrSpecularGlossiness"))
-					shader = _shaderCache[MaterialType.KHR_materials_pbrSpecularGlossiness];
-				else if (def.PbrMetallicRoughness != null)
-					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-				else if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains("KHR_materials_common")
-							 && def.CommonConstant != null)
-					shader = _shaderCache[MaterialType.CommonConstant];
-				else
-					shader = _shaderCache[MaterialType.PbrMetallicRoughness];
-			}
-			catch (KeyNotFoundException)
-			{
-				Debug.LogWarningFormat("No shader supplied for type of glTF material {0}, using Standard fallback", def.Name);
-				shader = Shader.Find("Standard");
-			}
-
-			shader.maximumLOD = MaximumLod;
-
-			var material = new UnityEngine.Material(shader);
-
-			if (def.AlphaMode == AlphaMode.MASK)
-			{
-				material.SetOverrideTag("RenderType", "TransparentCutout");
-					material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-					material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-				material.SetInt("_ZWrite", 1);
-				material.EnableKeyword("_ALPHATEST_ON");
-				material.DisableKeyword("_ALPHABLEND_ON");
-				material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-					material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-					material.SetFloat("_Cutoff", (float)def.AlphaCutoff);
-			}
-			else if (def.AlphaMode == AlphaMode.BLEND)
-			{
-				material.SetOverrideTag("RenderType", "Transparent");
-					material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-					material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-				material.SetInt("_ZWrite", 0);
-				material.DisableKeyword("_ALPHATEST_ON");
-				material.EnableKeyword("_ALPHABLEND_ON");
-				material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-					material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+				mapper = new SpecGlossMap(MaximumLod);
 			}
 			else
 			{
-				material.SetOverrideTag("RenderType", "Opaque");
-					material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-					material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-				material.SetInt("_ZWrite", 1);
-				material.DisableKeyword("_ALPHATEST_ON");
-				material.DisableKeyword("_ALPHABLEND_ON");
-				material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-				material.renderQueue = -1;
+				mapper = new MetalRoughMap(MaximumLod);
 			}
 
-			if (def.DoubleSided)
-			{
-				material.SetInt("_Cull", (int)CullMode.Off);
-			}
-			else
-			{
-				material.SetInt("_Cull", (int)CullMode.Back);
-			}
+			mapper.AlphaMode = def.AlphaMode;
+			mapper.DoubleSided = def.DoubleSided;
 
-			if (def.PbrMetallicRoughness != null)
+			var mrMapper = mapper as IMetalRoughUniformMap;
+			if (def.PbrMetallicRoughness != null && mrMapper != null)
 			{
 				var pbr = def.PbrMetallicRoughness;
 
-				material.SetColor("_Color", pbr.BaseColorFactor.ToUnityColorRaw());
+				mrMapper.BaseColorFactor = pbr.BaseColorFactor.ToUnityColorRaw();
 
 				if (pbr.BaseColorTexture != null)
 				{
-					var textureId = pbr.BaseColorTexture.Index.Id;
-					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId].Texture);
-					ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					int textureId = pbr.BaseColorTexture.Index.Id;
+					mrMapper.BaseColorTexture = _assetCache.TextureCache[textureId].Texture;
+					mrMapper.BaseColorTexCoord = pbr.BaseColorTexture.TexCoord;
+
+					//ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 
-				material.SetFloat("_Metallic", (float) pbr.MetallicFactor);
+				mrMapper.MetallicFactor = pbr.MetallicFactor;
 
 				if (pbr.MetallicRoughnessTexture != null)
 				{
-					var textureId = pbr.MetallicRoughnessTexture.Index.Id;
-					material.SetTexture("_MetallicRoughnessMap", _assetCache.TextureCache[textureId].Texture);
-					ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					int textureId = pbr.MetallicRoughnessTexture.Index.Id;
+					mrMapper.MetallicRoughnessTexture = _assetCache.TextureCache[textureId].Texture;
+					mrMapper.MetallicRoughnessTexCoord = pbr.MetallicRoughnessTexture.TexCoord;
+
+					//ApplyTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicRoughnessMap");
 				}
 
-				material.SetFloat("_Roughness", (float) pbr.RoughnessFactor);
+				mrMapper.RoughnessFactor = pbr.RoughnessFactor;
 			}
-			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
+
+			var sgMapper = mapper as ISpecGlossUniformMap;
+			if (sgMapper != null)
 			{
-				KHR_materials_pbrSpecularGlossinessExtension specGloss = (KHR_materials_pbrSpecularGlossinessExtension)def.Extensions[KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME];
-				
+				var specGloss = def.Extensions[specGlossExtName] as KHR_materials_pbrSpecularGlossinessExtension;
+
+				sgMapper.DiffuseFactor = specGloss.DiffuseFactor.ToUnityColorRaw();
+
 				if (specGloss.DiffuseTexture != null)
 				{
-					var textureId = specGloss.DiffuseTexture.Index.Id;
-					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId].Texture);
+					int textureId = specGloss.DiffuseTexture.Index.Id;
+					sgMapper.DiffuseTexture = _assetCache.TextureCache[textureId].Texture;
+					sgMapper.DiffuseTexCoord = specGloss.DiffuseTexture.TexCoord;
 
-					ApplyTextureTransform(specGloss.DiffuseTexture, material, "_MainTex");
+					//ApplyTextureTransform(specGloss.DiffuseTexture, material, "_MainTex");
 				}
-				else
-				{
-					material.SetColor("_Color", specGloss.DiffuseFactor.ToUnityColorRaw());
-				}
+
+				sgMapper.SpecularFactor = specGloss.SpecularFactor.ToUnityVector3Raw();
+				sgMapper.GlossinessFactor = specGloss.GlossinessFactor;
 
 				if (specGloss.SpecularGlossinessTexture != null)
 				{
-					var textureId = specGloss.SpecularGlossinessTexture.Index.Id;
-					material.SetTexture("_SpecGlossMap", _assetCache.TextureCache[textureId].Texture);
-					material.EnableKeyword("_SPECGLOSSMAP");
+					int textureId = specGloss.SpecularGlossinessTexture.Index.Id;
+					sgMapper.SpecularGlossinessTexture = _assetCache.TextureCache[textureId].Texture;
 
-					ApplyTextureTransform(specGloss.SpecularGlossinessTexture, material, "_SpecGlossMap");
+					//ApplyTextureTransform(specGloss.SpecularGlossinessTexture, material, "_SpecGlossMap");
 				}
-				else
-				{
-					material.SetVector("_SpecColor", specGloss.SpecularFactor.ToUnityVector3Raw());
-					material.SetFloat("_Glossiness", (float)specGloss.GlossinessFactor);
-				}
-			}
-
-			if (def.CommonConstant != null)
-			{
-				material.SetColor("_AmbientFactor", def.CommonConstant.AmbientFactor.ToUnityColorRaw());
-
-				if (def.CommonConstant.LightmapTexture != null)
-				{
-					material.EnableKeyword("LIGHTMAP_ON");
-
-					var textureId = def.CommonConstant.LightmapTexture.Index.Id;
-					material.SetTexture("_LightMap", _assetCache.TextureCache[textureId].Texture);
-					material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
-					ApplyTextureTransform(def.CommonConstant.LightmapTexture, material, "_LightMap");
-				}
-
-				material.SetColor("_LightFactor", def.CommonConstant.LightmapFactor.ToUnityColorRaw());
 			}
 
 			if (def.NormalTexture != null)
 			{
-				var textureId = def.NormalTexture.Index.Id;
-				material.SetTexture("_BumpMap", _assetCache.TextureCache[textureId].Texture);
-				material.SetFloat("_BumpScale", (float)def.NormalTexture.Scale);
-				material.EnableKeyword("_NORMALMAP");
-				ApplyTextureTransform(def.NormalTexture, material, "_BumpMap");
+				int textureId = def.NormalTexture.Index.Id;
+				mapper.NormalTexture = _assetCache.TextureCache[textureId].Texture;
+				mapper.NormalTexCoord = def.NormalTexture.TexCoord;
+				mapper.NormalTexScale = def.NormalTexture.Scale;
+
+				//ApplyTextureTransform(def.NormalTexture, material, "_BumpMap");
 			}
 
 			if (def.OcclusionTexture != null)
 			{
-				var textureId = def.OcclusionTexture.Index.Id;
+				mapper.OcclusionTexStrength = def.OcclusionTexture.Strength;
+				int textureId = def.OcclusionTexture.Index.Id;
+				mapper.OcclusionTexture = _assetCache.TextureCache[textureId].Texture;
 
-				material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
-
-				if (def.PbrMetallicRoughness != null
-						&& def.PbrMetallicRoughness.MetallicRoughnessTexture != null
-						&& def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == textureId)
-				{
-					material.EnableKeyword("OCC_METAL_ROUGH_ON");
-				}
-				else
-				{
-					material.SetTexture("_OcclusionMap", _assetCache.TextureCache[textureId].Texture);
-					ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
-				}
+				//ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
 			}
 
 			if (def.EmissiveTexture != null)
 			{
-				var textureId = def.EmissiveTexture.Index.Id;
-				material.EnableKeyword("EMISSION_MAP_ON");
-				material.EnableKeyword("_EMISSION");
-				material.SetTexture("_EmissionMap", _assetCache.TextureCache[textureId].Texture);
-				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
-				ApplyTextureTransform(def.EmissiveTexture, material, "_EmissionMap");
+				int textureId = def.EmissiveTexture.Index.Id;
+				mapper.EmissiveTexture = _assetCache.TextureCache[textureId].Texture;
+				mapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
+
+				//ApplyTextureTransform(def.EmissiveTexture, material, "_EmissionMap");
 			}
 
-			material.SetColor("_EmissionColor", def.EmissiveFactor.ToUnityColorRaw());
-			
+			mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColorRaw();
+
+			var vertColorMapper = mapper.Clone();
+			vertColorMapper.VertexColorsEnabled = true;
+
 			MaterialCacheData materialWrapper = new MaterialCacheData
 			{
-				UnityMaterial = material,
-				UnityMaterialWithVertexColor = new UnityEngine.Material(material),
+				UnityMaterial = mapper.Material,
+				UnityMaterialWithVertexColor = vertColorMapper.Material,
 				GLTFMaterial = def
 			};
-			
-			materialWrapper.UnityMaterialWithVertexColor.EnableKeyword("VERTEX_COLOR_ON");
 
 			if (materialIndex >= 0)
 			{
@@ -1132,7 +1049,7 @@ namespace UnityGLTF
 					var unityTexture = UnityEngine.Object.Instantiate(source);
 					unityTexture.filterMode = desiredFilterMode;
 					unityTexture.wrapMode = desiredWrapMode;
-					
+
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
 				}
 

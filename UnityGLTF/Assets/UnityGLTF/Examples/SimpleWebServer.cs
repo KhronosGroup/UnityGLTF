@@ -196,8 +196,6 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 
 					//Adding permanent http response headers
 					string mime;
-					context.Response.StatusCode = (int)HttpStatusCode.OK;
-
 					context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out mime)
 						? mime
 						: "application/octet-stream";
@@ -211,6 +209,7 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 						context.Response.OutputStream.Write(buffer, 0, nbytes);
 					input.Close();
 
+					context.Response.StatusCode = (int) HttpStatusCode.OK;
 					context.Response.OutputStream.Flush();
 				}
 				catch (Exception ex)

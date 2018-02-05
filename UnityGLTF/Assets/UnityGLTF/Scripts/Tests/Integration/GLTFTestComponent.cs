@@ -10,8 +10,6 @@ namespace UnityGLTF.Tests.Integration
 		public string Url;
 		public bool Multithreaded = true;
 
-		public Shader GLTFStandard;
-
 
 		IEnumerator Start()
 		{
@@ -22,7 +20,6 @@ namespace UnityGLTF.Tests.Integration
 				);
 
 			sceneImporter.SceneParent = gameObject.transform;
-			sceneImporter.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
 			yield return sceneImporter.LoadScene(-1, Multithreaded);
 			IntegrationTest.Pass();
 		}

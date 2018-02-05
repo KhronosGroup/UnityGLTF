@@ -72,8 +72,6 @@ namespace Microsoft.Pisa.App
 				loader1
 				);
 
-			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.PbrMetallicRoughness, GLTFStandard);
-			importer.SetShaderForMaterialType(GLTFSceneImporter.MaterialType.CommonConstant, GLTFConstant);
 			importer.MaximumLod = MaximumLod;
 
 			yield return importer.LoadScene(-1, Multithreaded);
