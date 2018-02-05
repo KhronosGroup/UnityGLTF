@@ -84,7 +84,11 @@ struct VertexInput
     #if defined(UNITY_STANDARD_USE_SHADOW_UVS) && defined(_PARALLAXMAP)
         half4 tangent   : TANGENT;
     #endif
-    UNITY_VERTEX_INPUT_INSTANCE_ID
+	#if defined(UNITY_VERTEX_INPUT_INSTANCE_ID)
+		UNITY_VERTEX_INPUT_INSTANCE_ID
+	#else
+		UNITY_INSTANCE_ID
+	#endif
 };
 
 #ifdef UNITY_STANDARD_USE_SHADOW_OUTPUT_STRUCT

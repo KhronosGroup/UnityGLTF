@@ -65,7 +65,11 @@ struct VertexInput
 #ifdef _TANGENT_TO_WORLD
     half4 tangent   : TANGENT;
 #endif
+#if defined(UNITY_VERTEX_INPUT_INSTANCE_ID)
     UNITY_VERTEX_INPUT_INSTANCE_ID
+#else
+	UNITY_INSTANCE_ID
+#endif
 };
 
 float4 TexCoords(VertexInput v)
