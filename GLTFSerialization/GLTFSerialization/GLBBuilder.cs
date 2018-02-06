@@ -206,7 +206,9 @@ namespace UnityGLTF
 				if (glb.JsonChunkInfo.Length < gltfJsonStream.Length)
 				{
 					uint proposedJsonChunkLength = (uint)Math.Min((long)gltfJsonStream.Length * 2, uint.MaxValue); // allocate double what is required
-					proposedJsonChunkLength = (proposedJsonChunkLength + 3) / 4 * 4; // chunks must be 4 byte aligned
+					proposedJsonChunkLength = CalculateAlignment(proposedJsonChunkLength, 4);
+
+					// chunks must be 4 byte aligned
 					uint amountToAddToFile = proposedJsonChunkLength - glb.JsonChunkInfo.Length;
 
 					// new proposed length = propsoedJsonBufferSize - currentJsonBufferSize + totalFileLength
@@ -296,11 +298,11 @@ namespace UnityGLTF
 		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData)
 		{
 			// Append new binary chunk to end
-			uint blobLengthAsUInt = (uint) binaryData.Length;
+			uint blobLengthAsUInt = CalculateAlignment((uint) binaryData.Length, 4);
 			uint newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLengthAsUInt;
 			uint newGLBSize = glb.Header.FileLength + blobLengthAsUInt;
 			uint blobWritePosition = glb.Header.FileLength;
-			glb.Stream.SetLength(glb.Header.FileLength + binaryData.Length);
+			glb.Stream.SetLength(glb.Header.FileLength + blobLengthAsUInt);
 			glb.Stream.Position = blobWritePosition;	// assuming the end of the file is the end of the binary chunk
 			binaryData.CopyTo(glb.Stream);							// make sure this doesn't supersize it
 			glb.Header.FileLength = newGLBSize;
@@ -475,6 +477,11 @@ namespace UnityGLTF
 
 			stream.Write(lengthBytes, 0, lengthBytes.Length);
 			stream.Write(typeBytes, 0, lengthBytes.Length);
+		}
+
+		public static uint CalculateAlignment(uint currentSize, uint byteAlignment)
+		{
+			return (currentSize + byteAlignment - 1) / byteAlignment * byteAlignment;
 		}
 	}
 }

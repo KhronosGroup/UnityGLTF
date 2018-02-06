@@ -76,7 +76,7 @@ namespace GLTFSerializationTests
 			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
 			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 
-			const int bufferSize = 100;
+			const int bufferSize = 101;
 			byte[] buffer = new byte[bufferSize];
 			await AddBlobToStreamTestHelper(glbObject, new MemoryStream(buffer));
 		}
@@ -191,7 +191,7 @@ namespace GLTFSerializationTests
 			uint previousGLBLength = glbObject.Header.FileLength;
 			uint previousChunkLength = glbObject.BinaryChunkInfo.Length;
 
-			int bufferSize = (int)blobToAdd.Length;
+			uint bufferSize = GLBBuilder.CalculateAlignment((uint)blobToAdd.Length, 4);
 			BufferViewId bufferViewId = await GLBBuilder.AddBinaryData(glbObject, blobToAdd);
 			
 			Assert.AreEqual(previousCount + 1, glbObject.Root.BufferViews.Count);
