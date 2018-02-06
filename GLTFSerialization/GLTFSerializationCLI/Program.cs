@@ -19,23 +19,23 @@ namespace GLTFSerializationCLI
 				goto exit;
 			}
 
-			byte[] data;
+			Stream stream;
 			try
 			{
-				data = System.IO.File.ReadAllBytes(args[0]);
+				stream = System.IO.File.OpenRead(args[0]);
 			}
-			catch (DirectoryNotFoundException e)
+			catch (DirectoryNotFoundException)
 			{
 				Console.WriteLine("Directory not found");
 				goto exit;
 			}
-			catch (FileNotFoundException e)
+			catch (FileNotFoundException)
 			{
 				Console.WriteLine("File not found");
 				goto exit;
 			}
 			
-			GLTFRoot root = GLTFParser.ParseJson(new MemoryStream(data));
+			GLTFRoot root = GLTFParser.ParseJson(stream);
 			ExtTextureTransformExtension ext = (ExtTextureTransformExtension)
 				root.Materials[1].PbrMetallicRoughness.BaseColorTexture.Extensions["EXT_texture_transform"];
 			root.Serialize(Console.Out);

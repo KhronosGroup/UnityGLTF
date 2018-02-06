@@ -211,10 +211,10 @@ namespace GLTF.Schema
 			{
 				writer.WritePropertyName("matrix");
 				writer.WriteStartArray();
-				writer.WriteValue(Matrix.M11); writer.WriteValue(Matrix.M12); writer.WriteValue(Matrix.M13); writer.WriteValue(Matrix.M14);
-				writer.WriteValue(Matrix.M21); writer.WriteValue(Matrix.M22); writer.WriteValue(Matrix.M23); writer.WriteValue(Matrix.M24);
-				writer.WriteValue(Matrix.M31); writer.WriteValue(Matrix.M32); writer.WriteValue(Matrix.M33); writer.WriteValue(Matrix.M34);
-				writer.WriteValue(Matrix.M41); writer.WriteValue(Matrix.M42); writer.WriteValue(Matrix.M43); writer.WriteValue(Matrix.M44);
+				writer.WriteValue(Matrix.M11); writer.WriteValue(Matrix.M21); writer.WriteValue(Matrix.M31); writer.WriteValue(Matrix.M41);
+				writer.WriteValue(Matrix.M12); writer.WriteValue(Matrix.M22); writer.WriteValue(Matrix.M32); writer.WriteValue(Matrix.M42);
+				writer.WriteValue(Matrix.M13); writer.WriteValue(Matrix.M23); writer.WriteValue(Matrix.M33); writer.WriteValue(Matrix.M43);
+				writer.WriteValue(Matrix.M14); writer.WriteValue(Matrix.M24); writer.WriteValue(Matrix.M34); writer.WriteValue(Matrix.M44);
 				writer.WriteEndArray();
 			}
 

@@ -114,8 +114,16 @@ namespace GLTF.Schema
 			Normalized = accessor.Normalized;
 			Count = accessor.Count;
 			Type = accessor.Type;
-			Max = accessor.Max.ToList();
-			Min = accessor.Min.ToList();
+
+			if (accessor.Max != null)
+			{
+				Max = accessor.Max.ToList();
+			}
+
+			if (accessor.Min != null)
+			{
+				Min = accessor.Min.ToList();
+			}
 
 			if (accessor.Sparse != null)
 			{
@@ -213,7 +221,7 @@ namespace GLTF.Schema
 				writer.WriteEndArray();
 			}
 
-			if (!isMinNull)
+			if(!isMinNull)
 			{
 				writer.WritePropertyName("min");
 				writer.WriteStartArray();
@@ -226,7 +234,7 @@ namespace GLTF.Schema
 
 			if (Sparse != null)
 			{
-				if (isMinNull || isMaxNull)
+				if(isMinNull || isMaxNull)
 				{
 					throw new JsonSerializationException("Min and max attribute cannot be null when attribute is sparse");
 				}
@@ -417,7 +425,7 @@ namespace GLTF.Schema
 			if (Type != GLTFAccessorAttributeType.VEC4) return null;
 
 			if (ComponentType == GLTFComponentType.UnsignedInt) return null;
-
+			
 			var arr = new Vector4[Count];
 			var totalByteOffset = ByteOffset + offset;
 
@@ -458,7 +466,7 @@ namespace GLTF.Schema
 				return null;
 
 			if (ComponentType == GLTFComponentType.UnsignedInt) return null;
-
+			
 			var arr = new Color[Count];
 			var totalByteOffset = ByteOffset + offset;
 
@@ -544,55 +552,61 @@ namespace GLTF.Schema
 
 		private static int GetDiscreteElement(byte[] bufferViewData, int offset, GLTFComponentType type)
 		{
-			switch (type)
+			switch(type)
 			{
 				case GLTFComponentType.Byte:
-					{
-						return GetByteElement(bufferViewData, offset);
-					}
-				case GLTFComponentType.Short:
-					{
-						return GetShortElement(bufferViewData, offset);
-					}
+				{
+					return GetByteElement(bufferViewData, offset);
+				}
 				case GLTFComponentType.UnsignedByte:
-					{
-						return GetUByteElement(bufferViewData, offset);
-					}
+				{
+					return GetUByteElement(bufferViewData, offset);
+				}
+				case GLTFComponentType.Short:
+				{
+					return GetShortElement(bufferViewData, offset);
+				}
 				case GLTFComponentType.UnsignedShort:
-					{
-						return GetUShortElement(bufferViewData, offset);
-					}
+				{
+					return GetUShortElement(bufferViewData, offset);
+				}
 				default:
-					{
-						throw new Exception("Unsupported type passed in: " + type);
-					}
+				{
+					throw new Exception("Unsupported type passed in: " + type);
+				}
 			}
 		}
 
+
+		// technically byte and short are not spec compliant for unsigned types, but various files have it
 		private static uint GetUnsignedDiscreteElement(byte[] bufferViewData, int offset, GLTFComponentType type)
 		{
-			switch (type)
+			switch(type)
 			{
-				case GLTFComponentType.UnsignedByte:
-					{
-						return GetUByteElement(bufferViewData, offset);
-					}
-				case GLTFComponentType.UnsignedShort:
-					{
-						return GetUShortElement(bufferViewData, offset);
-					}
 				case GLTFComponentType.Byte:
-					{
-						return (uint)GetByteElement(bufferViewData, offset);
-					}
+				{
+					return (uint)GetByteElement(bufferViewData, offset);
+				}
+				case GLTFComponentType.UnsignedByte:
+				{
+					return GetUByteElement(bufferViewData, offset);
+				}
 				case GLTFComponentType.Short:
-					{
-						return (uint)GetShortElement(bufferViewData, offset);
-					}
+				{
+					return (uint)GetShortElement(bufferViewData, offset);
+				}
+				case GLTFComponentType.UnsignedShort:
+				{
+					return GetUShortElement(bufferViewData, offset);
+				}
+				case GLTFComponentType.UnsignedInt:
+				{
+					return GetUIntElement(bufferViewData, offset);
+				}
 				default:
-					{
-						throw new Exception("Unsupported type passed in: " + type);
-					}
+				{
+					throw new Exception("Unsupported type passed in: " + type);
+				}
 			}
 		}
 	}

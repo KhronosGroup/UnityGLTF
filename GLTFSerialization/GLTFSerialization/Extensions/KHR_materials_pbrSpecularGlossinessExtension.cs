@@ -80,6 +80,7 @@ namespace GLTF.Schema
 					)
 				);
 		}
+
 		public JProperty Serialize()
 		{
 			JProperty jProperty =

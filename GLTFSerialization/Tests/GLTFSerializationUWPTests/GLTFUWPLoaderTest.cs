@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using GLTF;
 using GLTFSerializationTests;
@@ -8,6 +7,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using GLTF.Schema;
 using GLTF.Math;
+using System.IO;
 
 namespace GLTFSerializerUWPTests
 {
@@ -23,11 +23,8 @@ namespace GLTFSerializerUWPTests
 			StorageFolder localFolder = ApplicationData.Current.LocalFolder;
 			StorageFile sampleFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(GLTF_PATH));
 
-
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
-			var reader = new DataReader(gltfStream.GetInputStreamAt(0));
-			await reader.LoadAsync((uint)gltfStream.Size);
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream.AsStreamForRead());
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream.AsStream());
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
@@ -39,8 +36,6 @@ namespace GLTFSerializerUWPTests
 
 
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
-			var reader = new DataReader(gltfStream.GetInputStreamAt(0));
-			await reader.LoadAsync((uint)gltfStream.Size);
 			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream.AsStreamForRead());
 
 			Assert.IsNotNull(gltfRoot.ExtensionsUsed);

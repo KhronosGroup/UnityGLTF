@@ -108,7 +108,7 @@ namespace GLTF.Schema
 				}
 			}
 		}
-
+		
 		private Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
@@ -118,8 +118,7 @@ namespace GLTF.Schema
 
 			JObject extensions = (JObject)JToken.ReadFrom(reader);
 			var extensionsCollection = new Dictionary<string, IExtension>();
-
-			bool isOnNextExtension = false;
+			
 			foreach(JToken child in extensions.Children())
 			{
 				if (child.Type != JTokenType.Property)
