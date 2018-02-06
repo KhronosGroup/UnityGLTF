@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
-using UnityGLTF.Loader;
 
 namespace UnityGLTF.Tests.Integration
 {
@@ -10,17 +8,14 @@ namespace UnityGLTF.Tests.Integration
 		public string Url;
 		public bool Multithreaded = true;
 
-
 		IEnumerator Start()
 		{
-			ILoader loader = new WebRequestLoader(URIHelper.GetDirectoryName(Url));
-			var sceneImporter = new GLTFSceneImporter(
-				URIHelper.GetFileFromUri(new Uri(Url)),
-				loader
-				);
+			var loader = new GLTFSceneImporter(
+				Url,
+				gameObject.transform
+			);
 
-			sceneImporter.SceneParent = gameObject.transform;
-			yield return sceneImporter.LoadScene(-1, Multithreaded);
+			yield return loader.Load(-1, Multithreaded);
 			IntegrationTest.Pass();
 		}
 	}

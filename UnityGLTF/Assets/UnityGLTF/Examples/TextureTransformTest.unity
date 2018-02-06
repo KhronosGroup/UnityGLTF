@@ -77,17 +77,15 @@ LightmapSettings:
     m_PVRDirectSampleCount: 32
     m_PVRSampleCount: 500
     m_PVRBounces: 2
-    m_PVRFilterTypeDirect: 0
-    m_PVRFilterTypeIndirect: 0
-    m_PVRFilterTypeAO: 0
+    m_PVRFiltering: 0
     m_PVRFilteringMode: 1
     m_PVRCulling: 1
     m_PVRFilteringGaussRadiusDirect: 1
     m_PVRFilteringGaussRadiusIndirect: 5
     m_PVRFilteringGaussRadiusAO: 2
-    m_PVRFilteringAtrousPositionSigmaDirect: 0.5
-    m_PVRFilteringAtrousPositionSigmaIndirect: 2
-    m_PVRFilteringAtrousPositionSigmaAO: 1
+    m_PVRFilteringAtrousColorSigma: 1
+    m_PVRFilteringAtrousNormalSigma: 1
+    m_PVRFilteringAtrousPositionSigma: 1
   m_LightingDataAsset: {fileID: 0}
   m_ShadowMaskMode: 2
 --- !u!196 &4
@@ -221,11 +219,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GLTFUri: http://localhost:8080/EXT_texture_transform/pyramid.gltf
+  Url: http://localhost:8080/EXT_texture_transform/pyramid.gltf
   Multithreaded: 1
   UseStream: 0
   MaximumLod: 300
-  Colliders: 0
+  GLTFStandard: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
+  GLTFStandardSpecular: {fileID: 0}
+  GLTFConstant: {fileID: 4800000, guid: ede6e66a96bc7164abd2a9217b5a8b4c, type: 3}
+  addColliders: 0
 --- !u!4 &816130870
 Transform:
   m_ObjectHideFlags: 0
@@ -306,11 +307,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GLTFUri: http://localhost:8080/EXT_texture_transform/quad.gltf
+  Url: http://localhost:8080/EXT_texture_transform/quad.gltf
   Multithreaded: 1
   UseStream: 0
   MaximumLod: 300
-  Colliders: 0
+  GLTFStandard: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
+  GLTFStandardSpecular: {fileID: 0}
+  GLTFConstant: {fileID: 4800000, guid: ede6e66a96bc7164abd2a9217b5a8b4c, type: 3}
+  addColliders: 0
 --- !u!4 &1347932297
 Transform:
   m_ObjectHideFlags: 0

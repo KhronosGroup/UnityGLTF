@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.1829417, g: 0.2262355, b: 0.29291272, a: 1}
+  m_IndirectSpecularColor: {r: 0.18294223, g: 0.22623602, b: 0.29291394, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -245,11 +245,6 @@ Prefab:
         type: 2}
       propertyPath: Multithreaded
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: GLTFUri
-      value: http://localhost:8080/glTF-Sample-Models/2.0/Buggy/glTF-Binary/Buggy.glb
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}

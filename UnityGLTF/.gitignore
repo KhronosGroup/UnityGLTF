@@ -27,7 +27,6 @@ ExportedObj/
 *.booproj
 *.svd
 *.pdb
-*.pfx*
 
 
 # Unity3D generated meta files
@@ -41,6 +40,3 @@ sysinfo.txt
 *.unitypackage
 
 /www/node_modules/
-
-/WSA/
-/UWP/

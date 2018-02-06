@@ -491,11 +491,6 @@ Prefab:
       propertyPath: m_LocalScale.z
       value: 0.1
       objectReference: {fileID: 0}
-    - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-        type: 2}
-      propertyPath: GLTFUri
-      value: http://localhost:8080/glTF-Sample-Models/2.0/Lantern/glTF-pbrSpecularGlossiness/Lantern.gltf
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
   m_IsPrefabParent: 0

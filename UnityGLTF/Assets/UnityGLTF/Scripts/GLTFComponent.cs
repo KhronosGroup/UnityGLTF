@@ -1,19 +1,16 @@
-using System;
 using System.Collections;
 using System.IO;
-using GLTF;
-using GLTF.Schema;
 using UnityEngine;
-using UnityGLTF.Loader;
 
-namespace UnityGLTF {
+namespace UnityGLTF
+{
 
 	/// <summary>
 	/// Component to load a GLTF scene with
 	/// </summary>
 	class GLTFComponent : MonoBehaviour
 	{
-		public string GLTFUri;
+		public string Url;
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 
@@ -22,34 +19,38 @@ namespace UnityGLTF {
 
 		IEnumerator Start()
 		{
-			GLTFSceneImporter sceneImporter = null;
-			ILoader loader = null;
-
+			GLTFSceneImporter loader = null;
+			FileStream gltfStream = null;
 			if (UseStream)
 			{
-				string fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri);
-				string directoryPath = URIHelper.GetDirectoryName(fullPath);
-				loader = new FileLoader(directoryPath);
-				sceneImporter = new GLTFSceneImporter(
-					Path.GetFileName(GLTFUri),
-					loader
+				var fullPath = Path.Combine(Application.streamingAssetsPath, Url);
+				gltfStream = File.OpenRead(fullPath);
+				loader = new GLTFSceneImporter(
+					fullPath,
+					gltfStream,
+					gameObject.transform,
+                    Colliders
 					);
 			}
 			else
 			{
-				string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-				loader = new WebRequestLoader(directoryPath);
-				sceneImporter = new GLTFSceneImporter(
-					URIHelper.GetFileFromUri(new Uri(GLTFUri)),
-					loader
+				loader = new GLTFSceneImporter(
+					Url,
+					gameObject.transform,
+                    Colliders
 					);
-
 			}
 
-			sceneImporter.SceneParent = gameObject.transform;
-			sceneImporter.Collider = Colliders;
-			sceneImporter.MaximumLod = MaximumLod;
-			yield return sceneImporter.LoadScene(-1, Multithreaded);
+            loader.MaximumLod = MaximumLod;
+			yield return loader.Load(-1, Multithreaded);
+			if (gltfStream != null)
+			{
+#if WINDOWS_UWP
+				gltfStream.Dispose();
+#else
+				gltfStream.Close();
+#endif
+			}
 		}
 	}
 }
