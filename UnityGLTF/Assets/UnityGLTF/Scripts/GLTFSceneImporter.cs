@@ -570,7 +570,7 @@ namespace UnityGLTF
 					{
 						AccessorId = attributePair.Value,
 						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
 					};
 
 					attributeAccessors[attributePair.Key] = attributeAccessor;
@@ -583,7 +583,7 @@ namespace UnityGLTF
 					{
 						AccessorId = primitive.Indices,
 						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
 					};
 
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
@@ -822,9 +822,10 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
 					: null,
 
+				// WARNING: Currently risking lost vertices due to the (int) cast
 				triangles = primitive.Indices != null
 					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-					: MeshPrimitive.GenerateTriangles(vertexCount),
+					: MeshPrimitive.GenerateTriangles((int)vertexCount),
 
 				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()

@@ -84,7 +84,7 @@ namespace UnityGLTF
 			_root.Scene = ExportScene(fileName, _rootTransforms);
 
 			_buffer.Uri = fileName + ".bin";
-			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
+			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
 
 			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
 			_root.Serialize(gltfFile);
@@ -780,7 +780,7 @@ namespace UnityGLTF
 			}
 
 			var accessor = new Accessor();
-			accessor.Count = count;
+			accessor.Count = (uint)count;
 			accessor.Type = GLTFAccessorAttributeType.SCALAR;
 
 			int min = arr[0];
@@ -856,7 +856,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -878,7 +878,7 @@ namespace UnityGLTF
 
 			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
-			accessor.Count = count;
+			accessor.Count = (uint)count;
 			accessor.Type = GLTFAccessorAttributeType.VEC2;
 
 			float minX = arr[0].x;
@@ -920,7 +920,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -942,7 +942,7 @@ namespace UnityGLTF
 
 			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
-			accessor.Count = count;
+			accessor.Count = (uint)count;
 			accessor.Type = GLTFAccessorAttributeType.VEC3;
 
 			float minX = arr[0].x;
@@ -995,7 +995,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1017,7 +1017,7 @@ namespace UnityGLTF
 
 			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
-			accessor.Count = count;
+			accessor.Count = (uint)count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
 			float minX = arr[0].x;
@@ -1081,7 +1081,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1103,7 +1103,7 @@ namespace UnityGLTF
 
 			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
-			accessor.Count = count;
+			accessor.Count = (uint)count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
 			float minR = arr[0].r;
@@ -1167,7 +1167,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1178,7 +1178,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private BufferViewId ExportBufferView(int byteOffset, int byteLength)
+		private BufferViewId ExportBufferView(uint byteOffset, uint byteLength)
 		{
 			var bufferView = new BufferView {
 				Buffer = _bufferId,

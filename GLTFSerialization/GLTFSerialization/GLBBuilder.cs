@@ -440,7 +440,7 @@ namespace UnityGLTF
 			{
 				foreach (Image image in glb.Root.Images)
 				{
-					if (image.BufferView.Id >= bufferViewId.Id)
+					if (image.BufferView != null && image.BufferView.Id >= bufferViewId.Id)
 					{
 						--image.BufferView.Id;
 					}
