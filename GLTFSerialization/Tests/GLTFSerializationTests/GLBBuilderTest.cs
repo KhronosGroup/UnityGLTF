@@ -1,4 +1,6 @@
-﻿using System;
+﻿using System.Linq;
+using System;
+using System.Collections.Generic;
 using GLTF;
 using GLTF.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,12 +16,12 @@ namespace GLTFSerializationTests
 	public class GLBBuilderTest
 	{
 		[TestMethod]
-		public async Task CreateGLBFromStream()
+		public void CreateGLBFromStream()
 		{
 			Assert.IsTrue(File.Exists(TestAssetPaths.GLB_BOOMBOX_PATH));
 			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOOMBOX_PATH);
 			FileStream glbOutStream = File.Create(TestAssetPaths.GLB_BOOMBOX_OUT_PATH);
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 
 			Assert.IsNotNull(glbObject.Root);
 			Assert.IsNotNull(glbObject.Stream);
@@ -33,15 +35,14 @@ namespace GLTFSerializationTests
 		}
 
 		[TestMethod]
-		public async Task UpdateStream()
+		public void UpdateStream()
 		{
-			Assert.IsTrue(File.Exists(TestAssetPaths.GLB_BOX_PATH));
-			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOX_PATH);
+			Assert.IsTrue(File.Exists(TestAssetPaths.GLB_BOOMBOX_PATH));
+			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOOMBOX_PATH);
 			string outPath =
 				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 0, TestAssetPaths.GLB_EXTENSION);
 			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-			FileStream glbOutStream2 = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 
 			for (int i = 0; i < 10; ++i)
 			{
@@ -55,17 +56,19 @@ namespace GLTFSerializationTests
 				});
 			}
 
-			await GLBBuilder.UpdateStream(glbObject, glbOutStream2);
+			GLBBuilder.UpdateStream(glbObject);
 			glbOutStream.Position = 0;
 			GLTFParser.ParseJson(glbOutStream);
 			FileStream glbFileStream = glbObject.Stream as FileStream;
-			Assert.AreEqual(glbOutStream2, glbFileStream);
+			Assert.AreEqual(glbFileStream, glbFileStream);
 			glbOutStream.Position = 0;
-			Assert.AreEqual(2, GLTFParser.FindChunks(glbOutStream).Count);
+			List<ChunkInfo> chunkInfo = GLTFParser.FindChunks(glbOutStream);
+			Assert.AreEqual(2, chunkInfo.Count);
+			CompareBinaryData(glbObject, glbStream);
 		}
 
 		[TestMethod]
-		public async Task AddBlobToStream()
+		public void AddBinaryDataToStream()
 		{
 			string outPath =
 				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 1, TestAssetPaths.GLB_EXTENSION);
@@ -74,15 +77,15 @@ namespace GLTFSerializationTests
 			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOX_PATH);
 
 			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 
 			const int bufferSize = 101;
 			byte[] buffer = new byte[bufferSize];
-			await AddBlobToStreamTestHelper(glbObject, new MemoryStream(buffer));
+			AddBinaryDataToStreamHelper(glbObject, new MemoryStream(buffer));
 		}
 
 		[TestMethod]
-		public async Task AddFirstBlobToStream()
+		public void AddFirstBinaryDataToStream()
 		{
 			MemoryStream stream = new MemoryStream();
 			StreamWriter writer = new StreamWriter(stream);
@@ -91,16 +94,16 @@ namespace GLTFSerializationTests
 			stream.Position = 0;
 
 			MemoryStream writeStream = new MemoryStream();
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(stream, writeStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(stream, writeStream);
 			Assert.IsNull(glbObject.Root.Buffers);
 
 			const uint bufferSize = 100;
 			byte[] buffer = new byte[bufferSize];
-			await AddBlobToStreamTestHelper(glbObject, new MemoryStream(buffer));
+			AddBinaryDataToStreamHelper(glbObject, new MemoryStream(buffer));
 		}
 
 		[TestMethod]
-		public async Task RemoveBlobFromStream()
+		public void RemoveBinaryDataFromStream()
 		{
 			string outPath =
 				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 2, TestAssetPaths.GLB_EXTENSION);
@@ -108,16 +111,16 @@ namespace GLTFSerializationTests
 			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOX_PATH);
 
 			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 
 			const uint bufferSize = 100;
 			byte[] buffer = new byte[bufferSize];
-			BufferViewId bufferViewId = await AddBlobToStreamTestHelper(glbObject, new MemoryStream(buffer));
+			BufferViewId bufferViewId = AddBinaryDataToStreamHelper(glbObject, new MemoryStream(buffer));
 			uint length = (uint)bufferViewId.Value.ByteLength;
 			uint previousFileLength = glbObject.Header.FileLength;
 			uint previousBufferLength = glbObject.BinaryChunkInfo.Length;
 			int previousBufferViewCount = glbObject.Root.BufferViews.Count;
-			await GLBBuilder.RemoveBlob(glbObject, bufferViewId);
+			GLBBuilder.RemoveBinaryData(glbObject, bufferViewId);
 			Assert.AreEqual(previousFileLength - length, glbObject.Header.FileLength);
 			Assert.AreEqual(previousBufferLength - length, glbObject.BinaryChunkInfo.Length);
 			Assert.AreEqual(previousBufferLength - length, (uint)glbObject.Root.Buffers[0].ByteLength);
@@ -125,7 +128,7 @@ namespace GLTFSerializationTests
 		}
 
 		[TestMethod]
-		public async Task RemoveMiddleBlobFromStream()
+		public void RemoveMiddleDataFromStream()
 		{
 			string outPath =
 				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 3, TestAssetPaths.GLB_EXTENSION);
@@ -133,7 +136,7 @@ namespace GLTFSerializationTests
 			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOX_PATH);
 
 			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 
 			const uint numBuffersToAdd = 5;
 			const uint bufferSize = 100;
@@ -141,20 +144,20 @@ namespace GLTFSerializationTests
 			for (int i = 0; i < numBuffersToAdd; ++i)
 			{
 				byte[] buffer = new byte[bufferSize];
-				bufferViews[i] = await AddBlobToStreamTestHelper(glbObject, new MemoryStream(buffer));
+				bufferViews[i] = AddBinaryDataToStreamHelper(glbObject, new MemoryStream(buffer));
 			}
 
 			uint previousFileLength = glbObject.Header.FileLength;
 			uint previousBufferLength = glbObject.BinaryChunkInfo.Length;
 			int previousBufferViewCount = glbObject.Root.BufferViews.Count;
-			await GLBBuilder.RemoveBlob(glbObject, bufferViews[2]);	// remove from the middle
+			GLBBuilder.RemoveBinaryData(glbObject, bufferViews[2]);	// remove from the middle
 			Assert.AreEqual(previousFileLength, glbObject.Header.FileLength);
 			Assert.AreEqual(previousBufferLength, glbObject.BinaryChunkInfo.Length);
 			Assert.AreEqual(previousBufferViewCount - 1, glbObject.Root.BufferViews.Count);
 		}
 
 		[TestMethod]
-		public async Task RemoveAllBlobsFromStream()
+		public void RemoveAllDataFromStream()
 		{
 			string outPath =
 				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 3, TestAssetPaths.GLB_EXTENSION);
@@ -162,7 +165,7 @@ namespace GLTFSerializationTests
 			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOX_PATH);
 
 			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-			GLBObject glbObject = await GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
 			BufferViewId id0 = new BufferViewId
 			{
 				Id = 0,
@@ -172,16 +175,33 @@ namespace GLTFSerializationTests
 			int numBufferViews = glbObject.Root.BufferViews.Count;
 			for (int i = 0; i < numBufferViews; ++i)
 			{
-				await GLBBuilder.RemoveBlob(glbObject, id0);
+				GLBBuilder.RemoveBinaryData(glbObject, id0);
 			}
 
 			Assert.AreEqual(0, glbObject.Root.Buffers.Count);
 			Assert.AreEqual(0, glbObject.Root.BufferViews.Count);
 		}
-		
-		private async Task<BufferViewId> AddBlobToStreamTestHelper(GLBObject glbObject, Stream blobToAdd)
+
+		[TestMethod]
+		public void MergeGLBs()
 		{
-			
+			Assert.IsTrue(File.Exists(TestAssetPaths.GLB_BOX_PATH));
+			FileStream glbStream = File.OpenRead(TestAssetPaths.GLB_BOX_PATH);
+			FileStream glbStream1 = File.OpenRead(TestAssetPaths.GLB_BOOMBOX_PATH);
+			string outPath =
+				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 4, TestAssetPaths.GLB_EXTENSION);
+			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream, glbOutStream);
+			GLBObject glbObject1 = GLBBuilder.ConstructFromStream(glbStream1);
+			uint initialGLBLength = glbObject.BinaryChunkInfo.Length;
+			GLBBuilder.MergeGLBs(glbObject, glbObject1);
+
+			Assert.AreEqual(initialGLBLength + glbObject1.BinaryChunkInfo.Length, glbObject.BinaryChunkInfo.Length);
+		}
+		
+		private BufferViewId AddBinaryDataToStreamHelper(GLBObject glbObject, Stream blobToAdd)
+		{
 			int previousCount = 0;
 			if (glbObject.Root.BufferViews != null)
 			{
@@ -192,7 +212,7 @@ namespace GLTFSerializationTests
 			uint previousChunkLength = glbObject.BinaryChunkInfo.Length;
 
 			uint bufferSize = GLBBuilder.CalculateAlignment((uint)blobToAdd.Length, 4);
-			BufferViewId bufferViewId = await GLBBuilder.AddBinaryData(glbObject, blobToAdd);
+			BufferViewId bufferViewId = GLBBuilder.AddBinaryData(glbObject, blobToAdd);
 			
 			Assert.AreEqual(previousCount + 1, glbObject.Root.BufferViews.Count);
 			Assert.AreEqual(previousCount, bufferViewId.Id);
@@ -202,6 +222,21 @@ namespace GLTFSerializationTests
 			Assert.AreEqual(glbObject.Header.FileLength, glbObject.Stream.Length);
 
 			return bufferViewId;
+		}
+
+		private void CompareBinaryData(GLBObject resultObject, FileStream sourceStream)
+		{
+			MemoryStream outStream = new MemoryStream();
+			GLBObject sourceGLB = GLBBuilder.ConstructFromStream(sourceStream, outStream);
+			byte[] resultObjectBinary = new byte[resultObject.BinaryChunkInfo.Length];
+			resultObject.Stream.Position = resultObject.BinaryChunkInfo.StartPosition;
+			resultObject.Stream.Read(resultObjectBinary, 0, resultObjectBinary.Length);
+
+			byte[] sourceObjectBinary = new byte[sourceGLB.BinaryChunkInfo.Length];
+			sourceGLB.Stream.Position = sourceGLB.BinaryChunkInfo.StartPosition;
+			sourceGLB.Stream.Read(sourceObjectBinary, 0, sourceObjectBinary.Length);
+
+			Assert.IsTrue(resultObjectBinary.SequenceEqual(sourceObjectBinary));
 		}
 	}
 }

@@ -9,7 +9,7 @@ namespace GLTFSerializationTests
 		public static readonly string GLB_BOOMBOX_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
 		public static readonly string GLB_BOOMBOX_OUT_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox_out.glb";
 		public static readonly string GLB_BOX_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/Box.glb";
-		public static readonly string GLB_BOX_OUT_PATH_TEMPLATE = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/Box";
+		public static readonly string GLB_BOX_OUT_PATH_TEMPLATE = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoxOut";
 		public static readonly string GLB_EXTENSION = ".glb";
 		public static readonly string MIN_GLTF_STR = @"
 			{

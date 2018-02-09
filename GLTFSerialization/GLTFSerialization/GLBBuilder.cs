@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using Buffer = GLTF.Schema.Buffer;
 
 namespace UnityGLTF
@@ -32,16 +31,11 @@ namespace UnityGLTF
 		/// <param name="glbOutStream">Output stream to write the GLB to</param>
 		/// <param name="loader">Loader for loading external components from GLTFRoot. The loader will receive uris and return the stream to the resource</param>
 		/// <returns>A constructed GLBObject</returns>
-		public static Task<GLBObject> ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader)
+		private static GLBObject ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader)
 		{
 			if (root == null) throw new ArgumentNullException(nameof(root));
 			if (glbOutStream == null) throw new ArgumentNullException(nameof(glbOutStream));
-
-			return Task.Run(() => _ConstructFromGLTF(root, glbOutStream, loader));
-		}
-
-		private static GLBObject _ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader)
-		{
+			
 			MemoryStream gltfJsonStream = new MemoryStream();
 			using (StreamWriter sw = new StreamWriter(gltfJsonStream))
 			{
@@ -94,13 +88,17 @@ namespace UnityGLTF
 		/// <param name="outStream">If outstream is specified, the glb gets copied to it</param>
 		/// <param name="inputGLBStreamStartPosition">Offset into the buffer that the GLB starts</param>
 		/// <returns>A constructed GLBObject</returns>
-		public static async Task<GLBObject> ConstructFromGLB(GLTFRoot root, Stream inputGLBStream, Stream outStream = null,
+		public static GLBObject ConstructFromGLB(GLTFRoot root, Stream inputGLBStream, Stream outStream = null,
 			long inputGLBStreamStartPosition = 0)
 		{
 			if (outStream != null)
 			{
 				inputGLBStream.Position = 0;
-				await inputGLBStream.CopyToAsync(outStream);
+				inputGLBStream.CopyTo(outStream);
+			}
+			else
+			{
+				outStream = inputGLBStream;
 			}
 
 			// header information is 4 bytes in, past the magic number
@@ -155,41 +153,32 @@ namespace UnityGLTF
 		/// <param name="glbOutStream">If specified, output stream to write the GLB to</param>
 		/// <param name="loader">Loader for loading external components from GLTFRoot. Loader is required if loading from glTF</param>
 		/// <returns>A constructed GLBObject</returns>
-		public static async Task<GLBObject> ConstructFromStream(Stream inStream, Stream glbOutStream = null, Func<string, Stream> loader = null,
+		public static GLBObject ConstructFromStream(Stream inStream, Stream glbOutStream = null, Func<string, Stream> loader = null,
 			long streamStartPosition = 0)
 		{
 			if (inStream == null) throw new ArgumentNullException(nameof(inStream));
-
 			inStream.Position = streamStartPosition;
 			
 			GLTFRoot root = GLTFParser.ParseJson(inStream, streamStartPosition);
 			if (!root.IsGLB)
 			{
-				return await ConstructFromGLTF(root, glbOutStream, loader);
+				return ConstructFromGLTF(root, glbOutStream, loader);
 			}
 
-			return await ConstructFromGLB(root, inStream, glbOutStream, streamStartPosition);
+			return ConstructFromGLB(root, inStream, glbOutStream, streamStartPosition);
 		}
 
 		/// <summary>
-		/// Saves out the GLBObject to the output stream (which can be pointed to the same resource as the input stream in the GLBObject)
+		/// Saves out the GLBObject to its own stream
 		/// The GLBObject stream will be updated to be the output stream. Callers are reponsible for handling Stream lifetime
 		/// </summary>
 		/// <param name="glb">The GLB to flush to the output stream and update</param>
-		/// <param name="outStream">Output stream. Can be pointing to the same resource, but must be different Stream wrapper</param>
 		/// <returns>A GLBObject that is based upon outStream</returns>
-		public static Task UpdateStream(GLBObject glb, Stream outStream)
+		public static void UpdateStream(GLBObject glb)
 		{
-			if(glb.Root == null) throw new ArgumentException("glb Root property cannot be null", nameof(glb.Root));
-			if(glb.Stream == null) throw new ArgumentException("glb GLBStream property cannot be null", nameof(glb.Stream));
-			if (glb.Stream == outStream)
-				throw new ArgumentException("outStream cannot be same exact stream as glb stream", nameof(glb.Stream));
+			if (glb.Root == null) throw new ArgumentException("glb Root property cannot be null", nameof(glb.Root));
+			if (glb.Stream == null) throw new ArgumentException("glb GLBStream property cannot be null", nameof(glb.Stream));
 
-			return Task.Run(() => _UpdateStream(glb, outStream));
-		}
-
-		private static void _UpdateStream(GLBObject glb, Stream outStream)
-		{
 			MemoryStream gltfJsonStream = new MemoryStream();
 			using (StreamWriter sw = new StreamWriter(gltfJsonStream))
 			{
@@ -222,7 +211,7 @@ namespace UnityGLTF
 
 					try
 					{
-						outStream.SetLength(proposedLength);
+						glb.Stream.SetLength(proposedLength);
 					}
 					catch (IOException e)
 					{
@@ -240,44 +229,37 @@ namespace UnityGLTF
 					// Copy the binary chunk to new position
 					glb.Stream.Position = glb.BinaryChunkInfo.StartPosition;
 					glb.BinaryChunkInfo.StartPosition = newBinaryChunkStartPosition;
-					outStream.Position = newBinaryChunkStartPosition;
 					uint lengthToCopy = glb.BinaryChunkInfo.Length + GLTFParser.CHUNK_HEADER_SIZE;
-					SubStream glbSubStream = new SubStream(glb.Stream, 0, lengthToCopy);
-					glbSubStream.CopyTo(outStream, (int)lengthToCopy);  // todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
-
-					// just in case to make sure chunk header is up to date
-					WriteChunkHeader(outStream, glb.BinaryChunkInfo);
+					glb.Stream.CopyToSelf((int)newBinaryChunkStartPosition, lengthToCopy);  // todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
 
 					// write out new GLB length
 					glb.Header.FileLength = proposedLengthAsUint;
-					outStream.Position = 0; // length start position
-					WriteHeader(outStream, glb.Header);
+					glb.Stream.Position = 0; // length start position
+					WriteHeader(glb.Stream, glb.Header);
 
 					// write out new JSON header
 					glb.JsonChunkInfo.Length = proposedJsonChunkLength;
-					WriteChunkHeader(outStream, glb.JsonChunkInfo);
+					WriteChunkHeader(glb.Stream, glb.JsonChunkInfo);
 				}
 
 				// clear the buffer
-				outStream.Position = glb.JsonChunkInfo.StartPosition + GLTFParser.CHUNK_HEADER_SIZE;
+				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + GLTFParser.CHUNK_HEADER_SIZE;
 				uint amountToCopy = glb.JsonChunkInfo.Length;
 				while (amountToCopy != 0)
 				{
 					int currAmountToCopy = (int)Math.Min(amountToCopy, int.MaxValue);
 					byte[] filler =
 						Encoding.ASCII.GetBytes(new string(' ', currAmountToCopy));
-					outStream.Write(filler, 0, filler.Length);
+					glb.Stream.Write(filler, 0, filler.Length);
 					amountToCopy -= (uint)currAmountToCopy;
 				}
 
 				// write new JSON data
 				gltfJsonStream.Position = 0;
-				outStream.Position = glb.JsonChunkInfo.StartPosition + GLTFParser.CHUNK_HEADER_SIZE;
-				gltfJsonStream.CopyTo(outStream);
-				outStream.Flush();
+				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + GLTFParser.CHUNK_HEADER_SIZE;
+				gltfJsonStream.CopyTo(glb.Stream);
+				glb.Stream.Flush();
 			}
-
-			glb.Stream = outStream;
 		}
 
 		/// <summary>
@@ -285,20 +267,23 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="glb">The glb to update</param>
 		/// <param name="binaryData">The binary data to append</param>
+		/// <param name="streamStartPosition">Start position of stream</param>
 		/// <returns>The location of the added buffer view</returns>
-		public static Task<BufferViewId> AddBinaryData(GLBObject glb, Stream binaryData)
+		public static BufferViewId AddBinaryData(GLBObject glb, Stream binaryData, uint streamStartPosition = 0)
 		{
 			if(glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
 			if(binaryData == null) throw new ArgumentNullException(nameof(binaryData));
 			if(binaryData.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(binaryData));
 
-			return Task.Run(() => _AddBinaryData(glb, binaryData));
+			return _AddBinaryData(glb, binaryData, true, streamStartPosition);
 		}
 
-		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData)
+		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView, long streamStartPosition)
 		{
+			binaryData.Position = streamStartPosition;
+
 			// Append new binary chunk to end
-			uint blobLengthAsUInt = CalculateAlignment((uint) binaryData.Length, 4);
+			uint blobLengthAsUInt = (uint)(CalculateAlignment((uint) binaryData.Length, 4) - streamStartPosition);
 			uint newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLengthAsUInt;
 			uint newGLBSize = glb.Header.FileLength + blobLengthAsUInt;
 			uint blobWritePosition = glb.Header.FileLength;
@@ -327,41 +312,65 @@ namespace UnityGLTF
 			glb.Stream.Position = glb.BinaryChunkInfo.StartPosition;
 			WriteChunkHeader(glb.Stream, glb.BinaryChunkInfo);
 
-			// Add a new BufferView to the GLTFRoot
-			BufferView bufferView = new BufferView
+			if (createBufferView)
 			{
-				Buffer = new BufferId
+				// Add a new BufferView to the GLTFRoot
+				BufferView bufferView = new BufferView
 				{
-					Id = 0,
-					Root = glb.Root
-				},
-				ByteLength = blobLengthAsUInt,	// figure out whether glb size is wrong or if documentation is unclear
-				ByteOffset = glb.BinaryChunkInfo.Length - blobLengthAsUInt
-			};
+					Buffer = new BufferId
+					{
+						Id = 0,
+						Root = glb.Root
+					},
+					ByteLength = blobLengthAsUInt, // figure out whether glb size is wrong or if documentation is unclear
+					ByteOffset = glb.BinaryChunkInfo.Length - blobLengthAsUInt
+				};
 
-			if (glb.Root.BufferViews == null)
-			{
-				glb.Root.BufferViews = new List<BufferView>();
+				if (glb.Root.BufferViews == null)
+				{
+					glb.Root.BufferViews = new List<BufferView>();
+				}
+
+				glb.Root.BufferViews.Add(bufferView);
+
+				return new BufferViewId
+				{
+					Id = glb.Root.BufferViews.Count - 1,
+					Root = glb.Root
+				};
 			}
 
-			glb.Root.BufferViews.Add(bufferView);
-			
-			return new BufferViewId
-			{
-				Id = glb.Root.BufferViews.Count - 1,
-				Root = glb.Root
-			};
+			return null;
 		}
 
 		/// <summary>
-		/// Adds a blob to the GLB
+		/// Merges two glb files together
 		/// </summary>
 		/// <param name="mergeTo">The glb to update</param>
 		/// <param name="mergeFrom">The glb to merge from</param>
-		/// <returns>The location of the added buffer view</returns>
-		public static Task<BufferViewId> MergeGLBs(GLBObject mergeTo, GLBObject mergeFrom)
+		public static void MergeGLBs(GLBObject mergeTo, GLBObject mergeFrom)
 		{
-			throw new NotImplementedException();
+			if (mergeTo == null) throw new ArgumentNullException(nameof(mergeTo));
+			if (mergeFrom == null) throw new ArgumentNullException(nameof(mergeFrom));
+			
+			// 1) merge json
+			// 2) copy mergefrom binary data to mergeto binary data
+			// 3) Fix up bufferviews to be the new offset
+			int previousBufferViewsCount = mergeTo.Root.BufferViews?.Count ?? 0;
+			uint previousBufferSize = mergeTo.BinaryChunkInfo.Length;
+			GLTFHelpers.MergeGLTF(mergeTo.Root, mergeFrom.Root);
+			_AddBinaryData(mergeTo, mergeFrom.Stream, false, mergeFrom.BinaryChunkInfo.StartPosition + GLTFParser.CHUNK_HEADER_SIZE);
+			uint bufferSizeDiff =
+				mergeTo.BinaryChunkInfo.Length -
+				previousBufferSize; // calculate buffer size change to update the byte offsets of the appended buffer views
+
+			if (mergeTo.Root.BufferViews != null)
+			{
+				for (int i = previousBufferViewsCount; i < mergeTo.Root.BufferViews.Count; ++i)
+				{
+					mergeTo.Root.BufferViews[i].ByteOffset += bufferSizeDiff;
+				}
+			}
 		}
 
 		/// <summary>
@@ -371,14 +380,13 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="glb">The glb to remove from</param>
 		/// <param name="bufferViewId">The buffer to remove</param>
-		public static Task RemoveBlob(GLBObject glb, BufferViewId bufferViewId)
+		public static void RemoveBinaryData(GLBObject glb, BufferViewId bufferViewId)
 		{
-			return Task.Run(() => _RemoveBlob(glb, bufferViewId));
-		}
+			if (glb == null) throw new ArgumentNullException(nameof(glb));
+			if (bufferViewId == null) throw new ArgumentNullException(nameof(bufferViewId));
 
-		public static void _RemoveBlob(GLBObject glb, BufferViewId bufferViewId)
-		{
 			BufferView bufferViewToRemove = bufferViewId.Value;
+			int id = bufferViewId.Id;
 			if (bufferViewToRemove.ByteOffset + bufferViewToRemove.ByteLength == glb.BinaryChunkInfo.Length)
 			{
 				uint bufferViewLengthAsUint = bufferViewToRemove.ByteLength;
@@ -411,24 +419,24 @@ namespace UnityGLTF
 				WriteHeader(glb.Stream, glb.Header);
 			}
 
-			glb.Root.BufferViews.RemoveAt(bufferViewId.Id);
+			glb.Root.BufferViews.RemoveAt(id);
 			if (glb.Root.Accessors != null)
 			{
 				foreach (Accessor accessor in glb.Root.Accessors) // shift over all accessors
 				{
-					if (accessor.BufferView.Id >= bufferViewId.Id)
+					if (accessor.BufferView != null && accessor.BufferView.Id >= id)
 					{
 						--accessor.BufferView.Id;
 					}
 
 					if (accessor.Sparse != null)
 					{
-						if (accessor.Sparse.Indices?.BufferView.Id >= bufferViewId.Id)
+						if (accessor.Sparse.Indices?.BufferView.Id >= id)
 						{
 							--accessor.Sparse.Indices.BufferView.Id;
 						}
 
-						if (accessor.Sparse.Values?.BufferView.Id >= bufferViewId.Id)
+						if (accessor.Sparse.Values?.BufferView.Id >= id)
 						{
 							--accessor.Sparse.Values.BufferView.Id;
 						}
@@ -440,22 +448,12 @@ namespace UnityGLTF
 			{
 				foreach (Image image in glb.Root.Images)
 				{
-					if (image.BufferView != null && image.BufferView.Id >= bufferViewId.Id)
+					if (image.BufferView != null && image.BufferView.Id >= id)
 					{
 						--image.BufferView.Id;
 					}
 				}
 			}
-		}
-
-		/// <summary>
-		/// Removes a node and corresponding binary data from the GLB at the given BufferView
-		/// </summary>
-		/// <param name="glb">The glb to remove from</param>
-		/// <param name="nodeId">The node to remove. Traverses the node hierachy, and removes all buffers as well as the modifies the node structure and touched properties</param>
-		public static Task RemoveBlob(GLBObject glb, NodeId nodeId)
-		{
-			throw new NotImplementedException();
 		}
 		
 		private static void WriteHeader(Stream stream, GLBHeader header)
