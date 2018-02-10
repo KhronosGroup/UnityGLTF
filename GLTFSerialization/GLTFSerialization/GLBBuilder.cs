@@ -67,8 +67,7 @@ namespace UnityGLTF
 				};
 
 				// write header
-				glbOutStream.Position = 0;
-				WriteHeader(glbOutStream, glbObject.Header);
+				WriteHeader(glbOutStream, glbObject.Header, glbObject.StreamStartPosition);
 
 				// write chunk header
 				WriteChunkHeader(glbOutStream, glbObject.JsonChunkInfo);
@@ -93,7 +92,7 @@ namespace UnityGLTF
 		{
 			if (outStream != null)
 			{
-				inputGLBStream.Position = 0;
+				inputGLBStream.Position = inputGLBStreamStartPosition;
 				inputGLBStream.CopyTo(outStream);
 			}
 			else
@@ -234,8 +233,7 @@ namespace UnityGLTF
 
 					// write out new GLB length
 					glb.Header.FileLength = proposedLengthAsUint;
-					glb.Stream.Position = 0; // length start position
-					WriteHeader(glb.Stream, glb.Header);
+					WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
 
 					// write out new JSON header
 					glb.JsonChunkInfo.Length = proposedJsonChunkLength;
@@ -305,11 +303,8 @@ namespace UnityGLTF
 			glb.Root.Buffers[0].ByteLength = newBinaryBufferSize;
 
 			// write glb header past magic number
-			glb.Stream.Position = 0;
-			WriteHeader(glb.Stream, glb.Header);
-
-			// write binary chunk header
-			glb.Stream.Position = glb.BinaryChunkInfo.StartPosition;
+			WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
+			
 			WriteChunkHeader(glb.Stream, glb.BinaryChunkInfo);
 
 			if (createBufferView)
@@ -407,7 +402,6 @@ namespace UnityGLTF
 					glb.Root.Buffers[0].ByteLength = glb.BinaryChunkInfo.Length;
 
 					// write binary chunk header
-					glb.StreamStartPosition = glb.BinaryChunkInfo.StartPosition;
 					WriteChunkHeader(glb.Stream, glb.BinaryChunkInfo);
 				}
 
@@ -415,8 +409,7 @@ namespace UnityGLTF
 				glb.Stream.SetLength(glb.Header.FileLength);
 
 				// write glb header
-				glb.StreamStartPosition = 0;
-				WriteHeader(glb.Stream, glb.Header);
+				WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
 			}
 
 			glb.Root.BufferViews.RemoveAt(id);
@@ -456,8 +449,9 @@ namespace UnityGLTF
 			}
 		}
 		
-		private static void WriteHeader(Stream stream, GLBHeader header)
+		private static void WriteHeader(Stream stream, GLBHeader header, long streamStartPosition)
 		{
+			stream.Position = streamStartPosition;
 			byte[] magicNumber = BitConverter.GetBytes(GLTFParser.MAGIC_NUMBER);
 			byte[] version = BitConverter.GetBytes(header.Version);
 			byte[] length = BitConverter.GetBytes(header.FileLength);
