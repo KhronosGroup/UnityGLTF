@@ -442,7 +442,15 @@ namespace UnityGLTF
 			}
 		}
 
-		protected IEnumerator LoadImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true)
+		/// <summary>
+		/// Loads a texture from disk into the asset cache
+		/// </summary>
+		/// <param name="image"></param>
+		/// <param name="imageCacheIndex"></param>
+		/// <param name="markGpuOnly"></param>
+		/// <param name="linear"></param>
+		/// <returns></returns>
+		protected IEnumerator LoadImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true, bool linear = true)
 		{
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
@@ -473,7 +481,7 @@ namespace UnityGLTF
 						stream = _assetCache.ImageStreamCache[imageCacheIndex];
 					}
 				}
-				yield return LoadUnityTexture(stream, markGpuOnly, image, imageCacheIndex);
+				yield return LoadUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex);
 			}
 		}
 
@@ -482,10 +490,13 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="stream"></param>
 		/// <param name="markGpuOnly">Non-readable textures are saved only on the GPU and take up half as much memory.</param>
+		/// <param name="linear">Whether the texture is in linear or srgb space</param>
+		/// <param name="image"></param>
+		/// <param name="imageCacheIndex"></param>
 		/// <returns></returns>
-		protected virtual IEnumerator LoadUnityTexture(Stream stream, bool markGpuOnly, GLTF.Schema.Image image, int imageCacheIndex)
+		protected virtual IEnumerator LoadUnityTexture(Stream stream, bool markGpuOnly, bool linear, GLTF.Schema.Image image, int imageCacheIndex)
 		{
-			Texture2D texture = new Texture2D(0, 0);
+			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, linear);
 
 			if (stream is MemoryStream)
 			{
@@ -715,11 +726,15 @@ namespace UnityGLTF
 			if ((shouldUseDefaultMaterial && _defaultLoadedMaterial == null) ||
 				(!shouldUseDefaultMaterial && _assetCache.MaterialCache[materialIndex] == null))
 			{
-				yield return LoadMaterialTextures(materialToLoad);
-				CreateMaterial(materialToLoad, materialIndex);
+				yield return CreateMaterial(materialToLoad, materialIndex);
 			}
 		}
 	 
+		/// <summary>
+		/// Loads the memory buffer for the images the materials point to. Future version should start up a thread to load each part of a material to allow streaming
+		/// </summary>
+		/// <param name="def"></param>
+		/// <returns></returns>
 		protected virtual IEnumerator LoadMaterialImageBuffers(GLTF.Schema.Material def)
 		{
 			if (def.PbrMetallicRoughness != null)
@@ -774,18 +789,6 @@ namespace UnityGLTF
 			}
 		}
 		
-		protected virtual IEnumerator LoadMaterialTextures(GLTF.Schema.Material def)
-		{
-			for (int i = 0; i < _assetCache.TextureCache.Length; ++i)
-			{
-				TextureCacheData textureCacheData = _assetCache.TextureCache[i];
-				if (textureCacheData != null && textureCacheData.Texture == null)
-				{
-					yield return _CreateTexture(textureCacheData.TextureDefinition, i, true);
-				}
-			}
-		}
-		
 		protected IEnumerator CreateUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
 		{
 			MeshPrimitive primitive = meshConstructionData.Primitive;
@@ -837,7 +840,7 @@ namespace UnityGLTF
 			yield return null;
 		}
 		
-		protected virtual void CreateMaterial(GLTF.Schema.Material def, int materialIndex)
+		protected virtual IEnumerator CreateMaterial(GLTF.Schema.Material def, int materialIndex)
 		{
 			Shader shader;
 
@@ -916,8 +919,9 @@ namespace UnityGLTF
 
 				if (pbr.BaseColorTexture != null)
 				{
-					var textureId = pbr.BaseColorTexture.Index.Id;
-					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId].Texture);
+					var textureId = pbr.BaseColorTexture.Index;
+					yield return _CreateTexture(textureId.Value, textureId.Id, true, false);    // base color is sRGB color space
+					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId.Id].Texture);
 					ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 
@@ -925,8 +929,9 @@ namespace UnityGLTF
 
 				if (pbr.MetallicRoughnessTexture != null)
 				{
-					var textureId = pbr.MetallicRoughnessTexture.Index.Id;
-					material.SetTexture("_MetallicRoughnessMap", _assetCache.TextureCache[textureId].Texture);
+					var textureId = pbr.MetallicRoughnessTexture.Index;
+					yield return _CreateTexture(textureId.Value, textureId.Id);
+					material.SetTexture("_MetallicRoughnessMap", _assetCache.TextureCache[textureId.Id].Texture);
 					ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 
@@ -938,8 +943,9 @@ namespace UnityGLTF
 				
 				if (specGloss.DiffuseTexture != null)
 				{
-					var textureId = specGloss.DiffuseTexture.Index.Id;
-					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId].Texture);
+					var textureId = specGloss.DiffuseTexture.Index;
+					yield return _CreateTexture(textureId.Value, textureId.Id);
+					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId.Id].Texture);
 
 					ApplyTextureTransform(specGloss.DiffuseTexture, material, "_MainTex");
 				}
@@ -950,8 +956,9 @@ namespace UnityGLTF
 
 				if (specGloss.SpecularGlossinessTexture != null)
 				{
-					var textureId = specGloss.SpecularGlossinessTexture.Index.Id;
-					material.SetTexture("_SpecGlossMap", _assetCache.TextureCache[textureId].Texture);
+					var textureId = specGloss.SpecularGlossinessTexture.Index;
+					yield return _CreateTexture(textureId.Value, textureId.Id);
+					material.SetTexture("_SpecGlossMap", _assetCache.TextureCache[textureId.Id].Texture);
 					material.EnableKeyword("_SPECGLOSSMAP");
 
 					ApplyTextureTransform(specGloss.SpecularGlossinessTexture, material, "_SpecGlossMap");
@@ -971,8 +978,9 @@ namespace UnityGLTF
 				{
 					material.EnableKeyword("LIGHTMAP_ON");
 
-					var textureId = def.CommonConstant.LightmapTexture.Index.Id;
-					material.SetTexture("_LightMap", _assetCache.TextureCache[textureId].Texture);
+					var textureId = def.CommonConstant.LightmapTexture.Index;
+					yield return _CreateTexture(textureId.Value, textureId.Id);
+					material.SetTexture("_LightMap", _assetCache.TextureCache[textureId.Id].Texture);
 					material.SetInt("_LightUV", def.CommonConstant.LightmapTexture.TexCoord);
 					ApplyTextureTransform(def.CommonConstant.LightmapTexture, material, "_LightMap");
 				}
@@ -982,8 +990,9 @@ namespace UnityGLTF
 
 			if (def.NormalTexture != null)
 			{
-				var textureId = def.NormalTexture.Index.Id;
-				material.SetTexture("_BumpMap", _assetCache.TextureCache[textureId].Texture);
+				var textureId = def.NormalTexture.Index;
+				yield return _CreateTexture(textureId.Value, textureId.Id);
+				material.SetTexture("_BumpMap", _assetCache.TextureCache[textureId.Id].Texture);
 				material.SetFloat("_BumpScale", (float)def.NormalTexture.Scale);
 				material.EnableKeyword("_NORMALMAP");
 				ApplyTextureTransform(def.NormalTexture, material, "_BumpMap");
@@ -991,29 +1000,31 @@ namespace UnityGLTF
 
 			if (def.OcclusionTexture != null)
 			{
-				var textureId = def.OcclusionTexture.Index.Id;
+				var textureId = def.OcclusionTexture.Index;
 
 				material.SetFloat("_OcclusionStrength", (float)def.OcclusionTexture.Strength);
 
 				if (def.PbrMetallicRoughness != null
 						&& def.PbrMetallicRoughness.MetallicRoughnessTexture != null
-						&& def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == textureId)
+						&& def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == textureId.Id)
 				{
 					material.EnableKeyword("OCC_METAL_ROUGH_ON");
 				}
 				else
 				{
-					material.SetTexture("_OcclusionMap", _assetCache.TextureCache[textureId].Texture);
+					yield return _CreateTexture(textureId.Value, textureId.Id);
+                    material.SetTexture("_OcclusionMap", _assetCache.TextureCache[textureId.Id].Texture);
 					ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
 				}
 			}
 
 			if (def.EmissiveTexture != null)
 			{
-				var textureId = def.EmissiveTexture.Index.Id;
+				var textureId = def.EmissiveTexture.Index;
 				material.EnableKeyword("EMISSION_MAP_ON");
 				material.EnableKeyword("_EMISSION");
-				material.SetTexture("_EmissionMap", _assetCache.TextureCache[textureId].Texture);
+				yield return _CreateTexture(textureId.Value, textureId.Id, true, false);	// emmissive is sRGB color space
+                material.SetTexture("_EmissionMap", _assetCache.TextureCache[textureId.Id].Texture);
 				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 				ApplyTextureTransform(def.EmissiveTexture, material, "_EmissionMap");
 			}
@@ -1099,14 +1110,22 @@ namespace UnityGLTF
 			return _assetCache.TextureCache[textureIndex].Texture;
 		}
 
+		/// <summary>
+		/// Loads a texture from an image
+		/// </summary>
+		/// <param name="texture"></param>
+		/// <param name="textureIndex"></param>
+		/// <param name="markGpuOnly"></param>
+		/// <param name="linear">Whether the texture is linear</param>
+		/// <returns></returns>
 		protected virtual IEnumerator _CreateTexture(GLTF.Schema.Texture texture, int textureIndex,
-			bool markGpuOnly = true)
+			bool markGpuOnly = true, bool linear = true)
 		{
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTF.Schema.Image image = _gltfRoot.Images[sourceId];
-				yield return LoadImage(image, sourceId, markGpuOnly);
+				yield return LoadImage(image, sourceId, markGpuOnly, linear);
 
 				var source = _assetCache.ImageCache[sourceId];
 				var desiredFilterMode = FilterMode.Bilinear;
