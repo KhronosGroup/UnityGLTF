@@ -4,8 +4,9 @@ namespace UnityGLTF
 {
 	class SpecGloss2StandardMap : StandardMap, ISpecGlossUniformMap
 	{
-		public SpecGloss2StandardMap(int MaxLOD = 1000) : base(Shader.Find("Standard (Specular setup)"), MaxLOD) { }
-		public SpecGloss2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
+		public SpecGloss2StandardMap(int MaxLOD = 1000) : base("Standard (Specular setup)", MaxLOD) { }
+		protected SpecGloss2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		protected SpecGloss2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public virtual Texture DiffuseTexture
 		{

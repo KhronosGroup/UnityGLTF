@@ -1,4 +1,5 @@
-﻿using GLTF.Schema;
+﻿using System;
+using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Material = UnityEngine.Material;
@@ -12,8 +13,14 @@ namespace UnityGLTF
 		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
 		private double _alphaCutoff = 0.5;
 
-		protected StandardMap(Shader s, int MaxLOD = 1000)
+		protected StandardMap(string shaderName, int MaxLOD = 1000)
 		{
+			var s = Shader.Find(shaderName);
+			if (s == null)
+			{
+				throw new ShaderNotFoundException(shaderName+" not found. Did you forget to add it to the build?");
+			}
+
 			s.maximumLOD = MaxLOD;
 			_material = new Material(s);
 		}
@@ -22,6 +29,21 @@ namespace UnityGLTF
 		{
 			mat.shader.maximumLOD = MaxLOD;
 			_material = mat;
+
+			_alphaCutoff = mat.GetFloat("_Cutoff");
+			switch (mat.renderQueue)
+			{
+				case (int)RenderQueue.AlphaTest:
+					_alphaMode = AlphaMode.MASK;
+					break;
+				case (int)RenderQueue.Transparent:
+					_alphaMode = AlphaMode.BLEND;
+					break;
+				case (int)RenderQueue.Geometry:
+				default:
+					_alphaMode = AlphaMode.OPAQUE;
+					break;
+			}
 		}
 
 		public Material Material { get { return _material; } }
