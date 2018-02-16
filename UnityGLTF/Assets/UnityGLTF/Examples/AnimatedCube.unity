@@ -150,7 +150,7 @@ Prefab:
     - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
         type: 2}
       propertyPath: Url
-      value: http://localhost:8080/AnimatedCube/glTF/AnimatedCube.gltf
+      value: http://localhost:8080/glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf
       objectReference: {fileID: 0}
     - target: {fileID: 114000010638385648, guid: 5255039e40b37b14fbcc0b72a30fc62e,
         type: 2}
