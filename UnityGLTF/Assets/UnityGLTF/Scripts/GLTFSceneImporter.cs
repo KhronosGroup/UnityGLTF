@@ -394,7 +394,7 @@ namespace UnityGLTF
 
 			// init clip
 			var clip = new AnimationClip(){
-				name = string.Format("animation:{0}", animationId)
+				name = animation.Name ?? String.Format("animation:{0}", animationId)
 			};
 			_assetCache.AnimationCache[animationId].LoadedAnimationClip = clip;
 
@@ -466,6 +466,7 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
+			clip.EnsureQuaternionContinuity();
 			return clip;
 		}
 		#endregion
@@ -492,13 +493,13 @@ namespace UnityGLTF
 				{
 					var clip = CreateClip(sceneObj.transform, nodes, i);
 					clip.legacy = true;
-					clip.wrapMode = UnityEngine.WrapMode.Loop;
+					//clip.wrapMode = UnityEngine.WrapMode.Loop;
 					animation.AddClip(clip, clip.name);
 					if (i == 0)
 					{
 						animation.clip = clip;
 					}
-					animation.Play();
+					//animation.Play();
 				}
 			}
 
