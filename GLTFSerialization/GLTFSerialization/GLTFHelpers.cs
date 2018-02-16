@@ -105,6 +105,38 @@ namespace GLTF
 		}
 
 		/// <summary>
+		/// Uses the accessor to parse the buffer into arrays needed to construct the animation
+		/// </summary>
+		/// <param name="samplers">A dictionary mapping AttributeAccessor lists to their target types
+		public static void BuildAnimationSamplers(ref Dictionary<string, List<AttributeAccessor>> samplers)
+		{
+			foreach (var samplerSet in samplers)
+			{
+				foreach (var attributeAccessor in samplerSet.Value)
+				{
+					NumericArray resultArray = attributeAccessor.AccessorContent;
+					int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+
+					switch (samplerSet.Key)
+					{
+						case "time":
+							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache, offset);
+							break;
+						case "translation":
+						case "scale":
+							attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+							break;
+						case "rotation":
+							attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+							break;
+					}
+
+					attributeAccessor.AccessorContent = resultArray;
+				}
+			}
+		}
+
+		/// <summary>
 		/// Merges the right root into the left root
 		/// This function combines all of the lists of objects on each glTF root together and updates the relative indicies
 		/// All properties all merged except Asset and Default, which will stay "mergeToRoot"'s value
@@ -583,9 +615,7 @@ namespace GLTF
 
 					foreach (AnimationChannel channel in animation.Channels)
 					{
-						SamplerId samplerId = channel.Sampler;
-						samplerId.Id += previousGLTFSizes.PreviousSamplerCount;
-						samplerId.Root = mergeToRoot;
+						// NOTE: don't need to repoint sampler references
 
 						NodeId nodeId = channel.Target.Node;
 						nodeId.Id += previousGLTFSizes.PreviousNodeCount;

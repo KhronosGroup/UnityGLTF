@@ -35,6 +35,11 @@ namespace UnityGLTF.Cache
 		public List<MeshCacheData[]> MeshCache { get; private set; }
 
 		/// <summary>
+		/// Cache of loaded animations
+		/// </summary>
+		public AnimationCacheData[] AnimationCache { get; private set; }
+
+		/// <summary>
 		/// Creates an asset cache which caches objects used in scene
 		/// </summary>
 		/// <param name="imageCacheSize"></param>
@@ -42,8 +47,9 @@ namespace UnityGLTF.Cache
 		/// <param name="materialCacheSize"></param>
 		/// <param name="bufferCacheSize"></param>
 		/// <param name="meshCacheSize"></param>
+		/// <param name="animationCacheSize"></param>
 		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
-			int meshCacheSize)
+			int meshCacheSize, int animationCacheSize)
 		{
 			// todo: add optimization to set size to be the JSON size
 			ImageCache = new Texture2D[imageCacheSize];
@@ -55,6 +61,7 @@ namespace UnityGLTF.Cache
 			{
 				MeshCache.Add(null);
 			}
+			AnimationCache = new AnimationCacheData[animationCacheSize];
 		}
 
 		public void Dispose()
@@ -64,6 +71,7 @@ namespace UnityGLTF.Cache
 			MaterialCache = null;
 			BufferCache.Clear();
 			MeshCache = null;
+			AnimationCache = null;
 		}
 	}
 }

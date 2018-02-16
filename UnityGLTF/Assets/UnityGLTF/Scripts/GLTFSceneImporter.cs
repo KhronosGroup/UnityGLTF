@@ -153,7 +153,8 @@ namespace UnityGLTF
 				_root.Textures != null ? _root.Textures.Count : 0,
 				_root.Materials != null ? _root.Materials.Count : 0,
 				_root.Buffers != null ? _root.Buffers.Count : 0,
-				_root.Meshes != null ? _root.Meshes.Count : 0
+				_root.Meshes != null ? _root.Meshes.Count : 0,
+				_root.Animations != null ? _root.Animations.Count : 0
 			);
 
 			if (_lastLoadedScene == null)
@@ -316,134 +317,154 @@ namespace UnityGLTF
 			throw new Exception("no RelativePath");
 		}
 
-		int AccessorLength(Accessor accessor)
+		protected virtual void BuildAnimationSamplers(GLTF.Schema.Animation animation, int animationId)
 		{
-			var componentSize = 0;
-			switch (accessor.ComponentType)
-			{
-				case GLTFComponentType.Float: componentSize = 4; break;
-				default: throw new NotImplementedException();
+			// look up expected data types
+			var typeMap = new Dictionary<int, string>();
+			foreach (var channel in animation.Channels) {
+				typeMap[channel.Sampler] = channel.Target.Path.ToString();
 			}
-			var componentElementCount = 0;
-			switch (accessor.Type)
+
+			var samplers = _assetCache.AnimationCache[animationId].Samplers;
+			var samplersByType = new Dictionary<string, List<AttributeAccessor>>
 			{
-				case GLTFAccessorAttributeType.SCALAR: componentElementCount = 1; break;
-				case GLTFAccessorAttributeType.VEC2: componentElementCount = 2; break;
-				case GLTFAccessorAttributeType.VEC3: componentElementCount = 3; break;
-				case GLTFAccessorAttributeType.VEC4: componentElementCount = 4; break;
-				default: throw new NotImplementedException();
+				{"time", new List<AttributeAccessor>(animation.Samplers.Count)}
+			};
+
+			for(var i=0; i<animation.Samplers.Count; i++)
+			{
+				// no sense generating unused samplers
+				if (!typeMap.ContainsKey(i))
+				{
+					continue;
+				}
+
+				var samplerDef = animation.Samplers[i];
+
+				// set up input accessors
+				BufferCacheData bufferCacheData = _assetCache.BufferCache[samplerDef.Input.Value.BufferView.Value.Buffer.Id];
+				AttributeAccessor attributeAccessor = new AttributeAccessor()
+				{
+					AccessorId = samplerDef.Input,
+					Stream = bufferCacheData.Stream,
+					Offset = bufferCacheData.ChunkOffset
+				};
+
+				samplers[i].Input = attributeAccessor;
+				samplersByType["time"].Add(attributeAccessor);
+
+				// set up output accessors
+				bufferCacheData = _assetCache.BufferCache[samplerDef.Output.Value.BufferView.Value.Buffer.Id];
+				attributeAccessor = new AttributeAccessor()
+				{
+					AccessorId = samplerDef.Output,
+					Stream = bufferCacheData.Stream,
+					Offset = bufferCacheData.ChunkOffset
+				};
+
+				samplers[i].Output = attributeAccessor;
+
+				if (!samplersByType.ContainsKey(typeMap[i]))
+				{
+					samplersByType[typeMap[i]] = new List<AttributeAccessor>();
+				}
+
+				samplersByType[typeMap[i]].Add(attributeAccessor);
 			}
-			return accessor.Count * componentSize * componentElementCount;
+
+			// populate attributeAccessors with buffer data
+			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
-		ArraySegment<Byte> GetBytesFromAccessor(int index)
+		AnimationClip CreateClip(Transform root, Transform[] nodes, int animationId)
 		{
-			var accessor = _root.Accessors[index];
-			var view = _root.BufferViews[accessor.BufferView.Id];
-			var buffer = _root.Buffers[view.Buffer.Id];
+			var animation = _root.Animations[animationId];
 
-			var cache = _assetCache.BufferCache[view.Buffer.Id];
-			var bytes = (cache.Stream as MemoryStream).GetBuffer();
-
-			var accessorLength = AccessorLength(accessor);
-
-			return new ArraySegment<byte>(bytes, (int)(cache.ChunkOffset + view.ByteOffset + accessor.ByteOffset), accessorLength);
-		}
-
-		T[] GetArrayFromAccessor<T>(int accessorIndex)where T: struct
-		{
-			var bytes = GetBytesFromAccessor(accessorIndex);
-
-			var array = new T[bytes.Count/ System.Runtime.InteropServices.Marshal.SizeOf(typeof(T))];
-
-			var handle = System.Runtime.InteropServices.GCHandle.Alloc(array, System.Runtime.InteropServices.GCHandleType.Pinned);
-			try
+			var animationCache = _assetCache.AnimationCache[animationId];
+			if (animationCache == null)
 			{
-				var ptr = handle.AddrOfPinnedObject();
-
-				System.Runtime.InteropServices.Marshal.Copy(bytes.Array, bytes.Offset, ptr, bytes.Count);
+				animationCache = new AnimationCacheData(animation.Samplers.Count);
+				_assetCache.AnimationCache[animationId] = animationCache;
 			}
-			finally
+			else if (animationCache.LoadedAnimationClip != null)
+				return animationCache.LoadedAnimationClip;
+
+			// unpack accessors
+			BuildAnimationSamplers(animation, animationId);
+
+			// init clip
+			var clip = new AnimationClip(){
+				name = string.Format("animation:{0}", animationId)
+			};
+			_assetCache.AnimationCache[animationId].LoadedAnimationClip = clip;
+
+			foreach (var channel in animation.Channels)
 			{
-				handle.Free();
-			}
-
-			return array;
-		}
-
-		AnimationClip CreateClip(Transform root, Transform[] nodes, int animationID)
-		{
-			var clip = new AnimationClip();
-			clip.name = string.Format("anmation:{0}", animationID);
-
-			var animation = _root.Animations[animationID];
-			foreach(var y in animation.Channels)
-			{
-				var node = nodes[y.Target.Node.Id];
+				var samplerCache = animationCache.Samplers[channel.Sampler];
+				var node = nodes[channel.Target.Node.Id];
 				var relativePath = RelativePathFrom(node, root);
-				switch (y.Target.Path)
+				AnimationCurve curveX = new AnimationCurve(),
+					curveY = new AnimationCurve(),
+					curveZ = new AnimationCurve(),
+					curveW = new AnimationCurve();
+				NumericArray input = samplerCache.Input.AccessorContent,
+					output = samplerCache.Output.AccessorContent;
+
+				switch (channel.Target.Path)
 				{
 					case GLTFAnimationChannelPath.translation:
+
+						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
-							var curveX = new AnimationCurve();
-							var curveY = new AnimationCurve();
-							var curveZ = new AnimationCurve();
-
-							var sampler = animation.Samplers[y.Sampler.Id];
-							var input = GetArrayFromAccessor<float>(sampler.Input.Id);
-							var output = GetArrayFromAccessor<Vector3>(sampler.Output.Id);
-							for (int i = 0; i < input.Length; ++i)
-							{
-								var time = input[i];
-								var position = output[i];
-								curveX.AddKey(time, position.x);
-								curveY.AddKey(time, position.y);
-								curveZ.AddKey(time, -position.z); // reverse-z
-							}
-
-							clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
-							clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
-							clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+							var time = input.AsFloats[i];
+							var position = output.AsVec3s[i];
+							curveX.AddKey(time, position.X);
+							curveY.AddKey(time, position.Y);
+							curveZ.AddKey(time, -position.Z); // reverse-z
 						}
+
+						clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
+						clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
+						clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
 						break;
 
 					case GLTFAnimationChannelPath.rotation:
+						
+						for (int i = 0; i < input.AsFloats.Length; ++i)
 						{
-							var curveX = new AnimationCurve();
-							var curveY = new AnimationCurve();
-							var curveZ = new AnimationCurve();
-							var curveW = new AnimationCurve();
+							var time = input.AsFloats[i];
+							var rotation = output.AsVec4s[i];
 
-							var sampler = animation.Samplers[y.Sampler.Id];
-							var input = GetArrayFromAccessor<float>(sampler.Input.Id);
-							var output = GetArrayFromAccessor<Quaternion>(sampler.Output.Id);
-							for (int i = 0; i < input.Length; ++i)
-							{
-								var time = input[i];
-								var rotation = output[i];
-
-								// reverse-z
-								float angle;
-								Vector3 axis;
-								rotation.ToAngleAxis(out angle, out axis);
-								rotation = Quaternion.AngleAxis(-angle, new Vector3(axis.x, axis.y, -axis.z));
-
-								curveX.AddKey(time, rotation.x);
-								curveY.AddKey(time, rotation.y);
-								curveZ.AddKey(time, rotation.z);
-								curveW.AddKey(time, rotation.w);
-							}
-
-							clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
-							clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
-							clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
-							clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+							curveX.AddKey(time, -rotation.X);
+							curveY.AddKey(time, -rotation.Y);
+							curveZ.AddKey(time, rotation.Z);
+							curveW.AddKey(time, rotation.W);
 						}
+
+						clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
+						clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
+						clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
+						clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
 						break;
 
-				}
+					case GLTFAnimationChannelPath.scale:
 
-			}
+						for (var i = 0; i < input.AsFloats.Length; ++i)
+						{
+							var time = input.AsFloats[i];
+							var position = output.AsVec3s[i];
+							curveX.AddKey(time, position.X);
+							curveY.AddKey(time, position.Y);
+							curveZ.AddKey(time, position.Z);
+						}
+
+						clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
+						clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
+						clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
+						break;
+
+				} // switch target type
+			} // foreach channel
 
 			return clip;
 		}
