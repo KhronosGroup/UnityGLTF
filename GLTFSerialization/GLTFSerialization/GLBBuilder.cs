@@ -8,7 +8,7 @@ using System.IO;
 using System.Text;
 using Buffer = GLTF.Schema.Buffer;
 
-namespace UnityGLTF
+namespace GLTF
 {
 	// Object representing our representation of a GLB
 	public class GLBObject
@@ -193,7 +193,7 @@ namespace UnityGLTF
 				// realloc of out of space
 				if (glb.JsonChunkInfo.Length < gltfJsonStream.Length)
 				{
-					uint proposedJsonChunkLength = (uint)Math.Min((long)gltfJsonStream.Length * 2, uint.MaxValue); // allocate double what is required
+					uint proposedJsonChunkLength = (uint)System.Math.Min((long)gltfJsonStream.Length * 2, uint.MaxValue); // allocate double what is required
 					proposedJsonChunkLength = CalculateAlignment(proposedJsonChunkLength, 4);
 
 					// chunks must be 4 byte aligned
@@ -245,7 +245,7 @@ namespace UnityGLTF
 				uint amountToCopy = glb.JsonChunkInfo.Length;
 				while (amountToCopy != 0)
 				{
-					int currAmountToCopy = (int)Math.Min(amountToCopy, int.MaxValue);
+					int currAmountToCopy = (int)System.Math.Min(amountToCopy, int.MaxValue);
 					byte[] filler =
 						Encoding.ASCII.GetBytes(new string(' ', currAmountToCopy));
 					glb.Stream.Write(filler, 0, filler.Length);
