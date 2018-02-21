@@ -80,8 +80,11 @@
     <Compile Include="Extensions\ExtTextureTransformExtension.cs" />
     <Compile Include="Extensions\ExtTextureTransformExtensionFactory.cs" />
     <Compile Include="GLBBuilder.cs" />
+    <Compile Include="GLBObject.cs" />
     <Compile Include="GLTFHelpers.cs" />
+    <Compile Include="GLTFObject.cs" />
     <Compile Include="GLTFParser.cs" />
+    <Compile Include="IGLTFObject.cs" />
     <Compile Include="Math\Matrix4x4.cs" />
     <Compile Include="Math\Quaternion.cs" />
     <Compile Include="Math\Vector2.cs" />

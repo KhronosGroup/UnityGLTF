@@ -69,11 +69,20 @@
     <Compile Include="..\GLTFSerialization\GLBBuilder.cs">
       <Link>GLBBuilder.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\GLBObject.cs">
+      <Link>GLBObject.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFHelpers.cs">
       <Link>GLTFHelpers.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\GLTFObject.cs">
+      <Link>GLTFObject.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFParser.cs">
       <Link>GLTFParser.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\IGLTFObject.cs">
+      <Link>IGLTFObject.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Math\Matrix4x4.cs">
       <Link>Math\Matrix4x4.cs</Link>

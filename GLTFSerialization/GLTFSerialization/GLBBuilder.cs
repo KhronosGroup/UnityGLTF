@@ -10,17 +10,6 @@ using Buffer = GLTF.Schema.Buffer;
 
 namespace GLTF
 {
-	// Object representing our representation of a GLB
-	public class GLBObject
-	{
-		public GLTFRoot Root;					// Parsed JSON of the GLB
-		public Stream Stream;					// Read/Write Stream that GLB exists in
-		public GLBHeader Header;				// Header of GLB
-		public long StreamStartPosition;		// Start position of stream
-		public ChunkInfo JsonChunkInfo;			// Information on JSON chunk
-		public ChunkInfo BinaryChunkInfo;		// Information on Binary chunk
-	}
-	
 	// Static class for construction GLB objects. These API's only work with the .NET 4.6 runtime and above.
 	public static class GLBBuilder
 	{
@@ -227,16 +216,16 @@ namespace GLTF
 
 					// Copy the binary chunk to new position
 					glb.Stream.Position = glb.BinaryChunkInfo.StartPosition;
-					glb.BinaryChunkInfo.StartPosition = newBinaryChunkStartPosition;
+					glb.SetBinaryChunkStartPosition(newBinaryChunkStartPosition);
 					uint lengthToCopy = glb.BinaryChunkInfo.Length + GLTFParser.CHUNK_HEADER_SIZE;
 					glb.Stream.CopyToSelf((int)newBinaryChunkStartPosition, lengthToCopy);  // todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
 
 					// write out new GLB length
-					glb.Header.FileLength = proposedLengthAsUint;
+					glb.SetFileLength(proposedLengthAsUint);
 					WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
 
 					// write out new JSON header
-					glb.JsonChunkInfo.Length = proposedJsonChunkLength;
+					glb.SetJsonChunkLength(proposedJsonChunkLength);
 					WriteChunkHeader(glb.Stream, glb.JsonChunkInfo);
 				}
 
@@ -281,15 +270,17 @@ namespace GLTF
 			binaryData.Position = streamStartPosition;
 
 			// Append new binary chunk to end
-			uint blobLengthAsUInt = (uint)(CalculateAlignment((uint) binaryData.Length, 4) - streamStartPosition);
+			uint blobLengthAsUInt = (uint)(CalculateAlignment((uint)binaryData.Length, 4) - streamStartPosition);
 			uint newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLengthAsUInt;
 			uint newGLBSize = glb.Header.FileLength + blobLengthAsUInt;
 			uint blobWritePosition = glb.Header.FileLength;
 			glb.Stream.SetLength(glb.Header.FileLength + blobLengthAsUInt);
-			glb.Stream.Position = blobWritePosition;	// assuming the end of the file is the end of the binary chunk
-			binaryData.CopyTo(glb.Stream);							// make sure this doesn't supersize it
-			glb.Header.FileLength = newGLBSize;
-			glb.BinaryChunkInfo.Length = newBinaryBufferSize;
+			glb.Stream.Position = blobWritePosition;    // assuming the end of the file is the end of the binary chunk
+			binaryData.CopyTo(glb.Stream);                          // make sure this doesn't supersize it
+
+			glb.SetFileLength(newGLBSize);
+			glb.SetBinaryChunkLength(newBinaryBufferSize);
+
 			if (glb.Root.Buffers == null)
 			{
 				glb.Root.Buffers = new List<Buffer>();
@@ -385,8 +376,8 @@ namespace GLTF
 			if (bufferViewToRemove.ByteOffset + bufferViewToRemove.ByteLength == glb.BinaryChunkInfo.Length)
 			{
 				uint bufferViewLengthAsUint = bufferViewToRemove.ByteLength;
-				glb.Header.FileLength -= bufferViewLengthAsUint;
-				glb.BinaryChunkInfo.Length -= bufferViewLengthAsUint;
+				glb.SetFileLength(glb.Header.FileLength - bufferViewLengthAsUint);
+				glb.SetBinaryChunkLength(glb.BinaryChunkInfo.Length - bufferViewLengthAsUint);
 				if (glb.BinaryChunkInfo.Length == 0)
 				{
 					glb.Root.Buffers.RemoveAt(0);
@@ -395,7 +386,7 @@ namespace GLTF
 						--bufferView.Buffer.Id;
 					}
 
-					glb.Header.FileLength -= GLTFParser.CHUNK_HEADER_SIZE;
+					glb.SetFileLength(glb.Header.FileLength - GLTFParser.CHUNK_HEADER_SIZE);
 				}
 				else
 				{

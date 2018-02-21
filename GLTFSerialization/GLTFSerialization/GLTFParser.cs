@@ -10,13 +10,19 @@ namespace GLTF
 		JSON = 0x4e4f534a,
 		BIN = 0x004e4942
 	}
-	
+
+	/// <summary>
+	/// Information containing parsed GLB Header
+	/// </summary>
 	public struct GLBHeader
 	{
 		public uint Version { get; set; }
 		public uint FileLength { get; set; }
 	}
 
+	/// <summary>
+	/// Infomration that contains parsed chunk
+	/// </summary>
 	public struct ChunkInfo
 	{
 		public long StartPosition;
