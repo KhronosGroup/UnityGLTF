@@ -60,6 +60,8 @@ namespace GLTF
 
 				// write chunk header
 				WriteChunkHeader(glbOutStream, glbObject.JsonChunkInfo);
+
+				gltfJsonStream.Position = 0;
 				gltfJsonStream.CopyTo(glbOutStream);
 
 				// todo: implement getting binary data for loader
