@@ -7,6 +7,11 @@ namespace GLTF
 	/// </summary>
 	public class GLTFObject : IGLTFObject
 	{
+		public GLTFObject(GLTFRoot root)
+        {
+            Root = root;
+        }
+
 		/// <summary>
 		/// Parse glTF root into
 		/// </summary>
