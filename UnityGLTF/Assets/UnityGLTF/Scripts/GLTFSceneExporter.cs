@@ -96,18 +96,21 @@ namespace UnityGLTF
 			gltfFile.Close();
 			binFile.Close();
 #endif
-
+			GL.sRGBWrite = true;
 			foreach (var image in _images)
 			{
 				Debug.Log(image.name);
 				var renderTexture = RenderTexture.GetTemporary(image.width, image.height);
+
 				Graphics.Blit(image, renderTexture);
 				RenderTexture.active = renderTexture;
 				var exportTexture = new Texture2D(image.width, image.height);
 				exportTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
 				exportTexture.Apply();
+
 				File.WriteAllBytes(Path.Combine(path, image.name + ".png"), exportTexture.EncodeToPNG());
 			}
+			GL.sRGBWrite = false;
 		}
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)

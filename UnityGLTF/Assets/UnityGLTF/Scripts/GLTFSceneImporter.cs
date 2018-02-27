@@ -616,9 +616,11 @@ namespace UnityGLTF
 						&& def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == texture.Id)
 					{
 						material.EnableKeyword("OCC_METAL_ROUGH_ON");
+					
 					}
 					else
 					{
+						Debug.Log("In occlusion creation...");
 						material.SetTexture("_OcclusionMap", CreateTexture(texture.Value));
 
 						ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
