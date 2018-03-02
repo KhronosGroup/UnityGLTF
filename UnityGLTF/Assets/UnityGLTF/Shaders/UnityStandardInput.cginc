@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'UNITY_INSTANCE_ID' with 'UNITY_VERTEX_INPUT_INSTANCE_ID'
+
 // Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
 
 #ifndef UNITY_STANDARD_INPUT_INCLUDED
@@ -68,7 +70,7 @@ struct VertexInput
 #if defined(UNITY_VERTEX_INPUT_INSTANCE_ID)
     UNITY_VERTEX_INPUT_INSTANCE_ID
 #else
-	UNITY_INSTANCE_ID
+	UNITY_VERTEX_INPUT_INSTANCE_ID
 #endif
 };
 
@@ -217,10 +219,10 @@ half3 Emission(float2 uv)
 // https://github.com/KhronosGroup/glTF/blob/2.0/specification/2.0/schema/material.normalTextureInfo.schema.json#L13
 half3 UnpackScaleNormalGLTF(half4 packednormal, half bumpScale)
 {
-	float3 normal = normalize(packednormal.xyz);
+	float3 normal = packednormal.xyz;//don't normalize here
 	normal = (normal*2.0 - 1.0);
 	normal.xy *= bumpScale;
-	return normalize(normal);
+	return normal;//don't normalize here
 }
 
 #ifdef _NORMALMAP

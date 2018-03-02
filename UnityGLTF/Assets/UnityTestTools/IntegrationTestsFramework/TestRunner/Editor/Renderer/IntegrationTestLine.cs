@@ -17,7 +17,7 @@ namespace UnityTest
 
 		protected internal override void DrawLine(Rect rect, GUIContent label, bool isSelected, RenderingOptions options)
 		{
-			if(Event.current.type != EventType.repaint)
+			if(Event.current.type != EventType.Repaint)
 				return;
 
 			Styles.testName.Draw (rect, label, false, false, false, isSelected);

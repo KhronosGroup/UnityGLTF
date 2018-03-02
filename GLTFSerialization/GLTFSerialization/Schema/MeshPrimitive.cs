@@ -279,8 +279,8 @@ namespace GLTF.Schema
 	{
 		public static readonly string POSITION = "POSITION";
 		public static readonly string NORMAL = "NORMAL";
-		public static readonly string JOINT = "JOINT";
-		public static readonly string WEIGHT = "WEIGHT";
+		public static readonly string JOINT = "JOINTS_0";
+		public static readonly string WEIGHT = "WEIGHTS_0";
 		public static readonly string TANGENT = "TANGENT";
 		public static readonly string INDICES = "INDICIES";
 
