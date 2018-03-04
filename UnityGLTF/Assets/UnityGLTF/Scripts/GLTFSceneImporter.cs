@@ -525,8 +525,8 @@ namespace UnityGLTF
 					mapper.OcclusionTexStrength = def.OcclusionTexture.Strength;
 					var texture = def.OcclusionTexture.Index;
 					mapper.OcclusionTexture = CreateTexture(texture.Value);
-
 					//ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
+
 				}
 
 				if (def.EmissiveTexture != null)
