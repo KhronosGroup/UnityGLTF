@@ -184,7 +184,7 @@ namespace GLTF
 			{
 				using (var memoryStream = attributeAccessor.Stream as System.IO.MemoryStream)
 				{
-					bufferViewCache = memoryStream.GetBuffer();
+					bufferViewCache = memoryStream.ToArray();
 					return totalOffset;
 				}
 			}
