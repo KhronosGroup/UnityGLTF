@@ -5,8 +5,20 @@ using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
 
+
+public  class ImageWrapper {
+	public Texture2D texture;
+	public ColorSpace space;
+
+	public ImageWrapper(Texture2D texture, ColorSpace space) {
+		this.texture = texture;
+		this.space = space;
+	}
+}
+
 namespace UnityGLTF
 {
+
 	public class GLTFSceneExporter
 	{
 		private Transform[] _rootTransforms;
@@ -14,7 +26,7 @@ namespace UnityGLTF
 		private BufferId _bufferId;
 		private GLTF.Schema.Buffer _buffer;
 		private BinaryWriter _bufferWriter;
-		private List<Texture2D> _images;
+		private List<ImageWrapper> _images;
 		private List<UnityEngine.Texture> _textures;
 		private List<UnityEngine.Material> _materials;
 
@@ -51,7 +63,7 @@ namespace UnityGLTF
 				Textures = new List<GLTF.Schema.Texture>(),
 			};
 
-			_images = new List<Texture2D>();
+			_images = new List<ImageWrapper>();
 			_materials = new List<UnityEngine.Material>();
 			_textures = new List<UnityEngine.Texture>();
 
@@ -89,28 +101,39 @@ namespace UnityGLTF
 			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
 			_root.Serialize(gltfFile);
 
-#if WINDOWS_UWP
+			#if WINDOWS_UWP
 			gltfFile.Dispose();
 			binFile.Dispose();
-#else
+			#else
 			gltfFile.Close();
 			binFile.Close();
-#endif
-			GL.sRGBWrite = true;
+			#endif
+
 			foreach (var image in _images)
 			{
-				Debug.Log(image.name);
-				var renderTexture = RenderTexture.GetTemporary(image.width, image.height);
-
-				Graphics.Blit(image, renderTexture);
-				RenderTexture.active = renderTexture;
-				var exportTexture = new Texture2D(image.width, image.height);
-				exportTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-				exportTexture.Apply();
-
-				File.WriteAllBytes(Path.Combine(path, image.name + ".png"), exportTexture.EncodeToPNG());
+				Debug.Log(image.texture.name);
+				var renderTexture = RenderTexture.GetTemporary(image.texture.width, image.texture.height);
+				BlitImage (image, renderTexture, path);
 			}
-			GL.sRGBWrite = false;
+		}
+
+		//Takes texture data in Unity format and reads the pixels accordingly through the GPU
+		private void BlitImage(ImageWrapper image, RenderTexture renderTexture, string path) {
+			Texture2D tex = image.texture;
+			if (image.space == ColorSpace.Gamma) {
+				//enable this for textures in sRGB space
+				GL.sRGBWrite = true;
+			}
+			Graphics.Blit(tex, renderTexture);
+			RenderTexture.active = renderTexture;
+			var exportTexture = new Texture2D(tex.width, tex.height);
+			exportTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+			exportTexture.Apply();
+
+			File.WriteAllBytes(Path.Combine(path, tex.name + ".png"), exportTexture.EncodeToPNG());
+			if (image.space == ColorSpace.Gamma) {
+				GL.sRGBWrite = false;
+			}
 		}
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
@@ -135,6 +158,7 @@ namespace UnityGLTF
 				Root = _root
 			};
 		}
+
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
@@ -304,7 +328,7 @@ namespace UnityGLTF
 			}
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
-				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
+			aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
 			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
@@ -328,7 +352,7 @@ namespace UnityGLTF
 			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
 			{
 				var primitive = new MeshPrimitive();
-				
+
 				var triangles = meshObj.GetTriangles(submesh);
 				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(triangles), true);
 
@@ -386,15 +410,15 @@ namespace UnityGLTF
 
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
-				case "TransparentCutout":
-					material.AlphaMode = AlphaMode.MASK;
-					break;
-				case "Transparent":
-					material.AlphaMode = AlphaMode.BLEND;
-					break;
-				default:
-					material.AlphaMode = AlphaMode.OPAQUE;
-					break;
+			case "TransparentCutout":
+				material.AlphaMode = AlphaMode.MASK;
+				break;
+			case "Transparent":
+				material.AlphaMode = AlphaMode.BLEND;
+				break;
+			default:
+				material.AlphaMode = AlphaMode.OPAQUE;
+				break;
 			}
 
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
@@ -411,7 +435,7 @@ namespace UnityGLTF
 
 				if (emissionTex != null)
 				{
-					material.EmissiveTexture = ExportTextureInfo(emissionTex);
+					material.EmissiveTexture = ExportTextureInfo(emissionTex, ColorSpace.Gamma);
 
 					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
 
@@ -441,13 +465,13 @@ namespace UnityGLTF
 
 			switch (materialObj.shader.name)
 			{
-				case "Standard":
-				case "GLTF/GLTFStandard":
-					material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
-					break;
-				case "GLTF/GLTFConstant":
-					material.CommonConstant = ExportCommonConstant(materialObj);
-					break;
+			case "Standard":
+			case "GLTF/PbrMetallicRoughness":
+				material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
+				break;
+			case "GLTF/GLTFConstant":
+				material.CommonConstant = ExportCommonConstant(materialObj);
+				break;
 			}
 
 			_materials.Add(materialObj);
@@ -507,7 +531,7 @@ namespace UnityGLTF
 		{
 			var info = new OcclusionTextureInfo();
 
-			info.Index = ExportTexture(texture);
+			info.Index = ExportTexture(texture, ColorSpace.Gamma);
 
 			if (material.HasProperty("_OcclusionStrength"))
 			{
@@ -532,7 +556,7 @@ namespace UnityGLTF
 
 				if (mainTex != null)
 				{
-					pbr.BaseColorTexture = ExportTextureInfo(mainTex);
+					pbr.BaseColorTexture = ExportTextureInfo (mainTex, ColorSpace.Gamma);
 					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
@@ -600,7 +624,7 @@ namespace UnityGLTF
 					constant.LightmapTexture = ExportTextureInfo(lmTex);
 					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
 				}
-					
+
 			}
 
 			if (materialObj.HasProperty("_LightFactor"))
@@ -611,16 +635,16 @@ namespace UnityGLTF
 			return constant;
 		}
 
-		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture)
+		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture, ColorSpace space = ColorSpace.Linear)
 		{
 			var info = new TextureInfo();
 
-			info.Index = ExportTexture(texture);
+			info.Index = ExportTexture(texture, space);
 
 			return info;
 		}
 
-		private TextureId ExportTexture(UnityEngine.Texture textureObj)
+		private TextureId ExportTexture(UnityEngine.Texture textureObj, ColorSpace space = ColorSpace.Linear) 
 		{
 			TextureId id = GetTextureId(_root, textureObj);
 			if (id != null)
@@ -641,7 +665,7 @@ namespace UnityGLTF
 				texture.Name = textureObj.name;
 			}
 
-			texture.Source = ExportImage(textureObj);
+			texture.Source = ExportImage(textureObj, space);
 			texture.Sampler = ExportSampler(textureObj);
 
 			_textures.Add(textureObj);
@@ -656,7 +680,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private ImageId ExportImage(UnityEngine.Texture texture)
+		private ImageId ExportImage(UnityEngine.Texture texture, ColorSpace space)
 		{
 			ImageId id = GetImageId(_root, texture);
 			if(id != null)
@@ -671,7 +695,7 @@ namespace UnityGLTF
 				image.Name = texture.name;
 			}
 
-			_images.Add(texture as Texture2D);
+			_images.Add(new ImageWrapper(texture as Texture2D, space));
 
 			image.Uri = Uri.EscapeUriString(texture.name + ".png");
 
@@ -1195,7 +1219,7 @@ namespace UnityGLTF
 		{
 			for (var i = 0; i < _images.Count; i++)
 			{
-				if (_images[i] == imageObj)
+				if (_images[i].texture == imageObj)
 				{
 					return new ImageId
 					{
