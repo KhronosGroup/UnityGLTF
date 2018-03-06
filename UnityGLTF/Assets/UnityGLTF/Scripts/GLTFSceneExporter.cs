@@ -19,10 +19,9 @@ namespace UnityGLTF
 
 			//Linear
             Bump,
-            SpecGloss,
-            MetallicGloss,
-            Light,
-            
+			SpecGloss,
+			MetallicGloss,
+            Light         
         };
 
         struct ImageInfo
