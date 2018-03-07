@@ -82,7 +82,6 @@ namespace UnityGLTF
 		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, Stream glbStream = null) : this(externalDataLoader)
 		{
 			_gltfRoot = rootNode;
-			_loader = externalDataLoader;
 			if (glbStream != null) _gltfStream = new GLBStream {Stream = glbStream, StartPosition = glbStream.Position};
 		}
 
@@ -97,6 +96,13 @@ namespace UnityGLTF
 			get { return _lastLoadedScene; }
 		}
 
+		/// <summary>
+		/// Loads a glTF Scene into the LastLoadedScene field
+		/// </summary>
+		/// <param name="sceneIndex">The scene to load, if none is specified first scene is loaded</param>
+		/// <param name="isMultithreaded">Whether all components should be loaded on a background thread</param>
+		/// <param name="onLoadComplete">Callback function for when load is completed</param>
+		/// <returns></returns>
 		public IEnumerator LoadScene(int sceneIndex = -1, bool isMultithreaded = false, Action<GameObject> onLoadComplete = null)
 		{
 			try
@@ -115,7 +121,7 @@ namespace UnityGLTF
 				{
 					yield return LoadJson(_gltfFileName);
 				}
-				yield return ImportScene(sceneIndex, isMultithreaded);
+				yield return _LoadScene(sceneIndex, isMultithreaded);
 
 				Cleanup();
 			}
@@ -132,7 +138,12 @@ namespace UnityGLTF
 				onLoadComplete(LastLoadedScene);
 			}
 		}
-		
+
+		/// <summary>
+		/// Loads a node tree from a glTF file into the LastLoadedScene field
+		/// </summary>
+		/// <param name="nodeIndex">The node index to load from the glTF</param>
+		/// <returns></returns>
 		public IEnumerator LoadNode(int nodeIndex)
 		{
 			if (_gltfRoot == null)
@@ -185,7 +196,7 @@ namespace UnityGLTF
 			instantiatedGltfObject.CachedData.MeshCache = _assetCache.MeshCache;
 			instantiatedGltfObject.CachedData.TextureCache = _assetCache.TextureCache;
 		}
-		private IEnumerator LoadBufferData(Node node)
+		private IEnumerator ConstructBufferData(Node node)
 		{
 			GLTF.Schema.MeshId mesh = node.Mesh;
 			if (mesh != null)
@@ -200,7 +211,7 @@ namespace UnityGLTF
 			{
 				foreach (NodeId child in node.Children)
 				{
-					yield return LoadBufferData(child.Value);
+					yield return ConstructBufferData(child.Value);
 				}
 			}
 		}
@@ -225,16 +236,16 @@ namespace UnityGLTF
 
 				if (_assetCache.MeshCache[meshIdIndex][i].MeshAttributes.Count == 0)
 				{
-					yield return BuildMeshAttributes(primitive, meshIdIndex, i);
+					yield return ConstructMeshAttributes(primitive, meshIdIndex, i);
 					if (primitive.Material != null)
 					{
-						yield return LoadMaterialImageBuffers(primitive.Material.Value);
+						yield return ConstructMaterialImageBuffers(primitive.Material.Value);
 					}
 				}
 			}
 		}
 		
-		protected IEnumerator LoadImageBuffer(GLTF.Schema.Texture texture, int textureIndex)
+		protected IEnumerator ConstructImageBuffer(GLTF.Schema.Texture texture, int textureIndex)
 		{
 			int sourceId = GetTextureSourceId(texture);
 			if (_assetCache.ImageStreamCache[sourceId] == null)
@@ -255,7 +266,7 @@ namespace UnityGLTF
 			};
 		}
 		
-		public IEnumerator LoadJson(string jsonFilePath)
+		private IEnumerator LoadJson(string jsonFilePath)
 		{
 			yield return _loader.LoadStream(jsonFilePath);
 			
@@ -272,8 +283,8 @@ namespace UnityGLTF
 			}
 
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
-			yield return LoadBufferData(nodeToLoad);
-			yield return CreateNode(nodeToLoad, nodeIndex);
+			yield return ConstructBufferData(nodeToLoad);
+			yield return ConstructNode(nodeToLoad, nodeIndex);
 		}
 
 		protected void InitializeAssetCache()
@@ -294,7 +305,7 @@ namespace UnityGLTF
 		/// <param name="sceneIndex">The bufferIndex of scene in gltf file to load</param>
 		/// <param name="isMultithreaded">Whether to use a thread to do loading</param>
 		/// <returns></returns>
-		protected IEnumerator ImportScene(int sceneIndex = -1, bool isMultithreaded = false)
+		protected IEnumerator _LoadScene(int sceneIndex = -1, bool isMultithreaded = false)
 		{
 			Scene scene;
 			InitializeAssetCache(); // asset cache currently needs initialized every time due to cleanup logic
@@ -323,7 +334,7 @@ namespace UnityGLTF
 						GLTF.Schema.Buffer buffer = _gltfRoot.Buffers[i];
 						if (_assetCache.BufferCache[i] == null)
 						{
-							yield return LoadBuffer(buffer, i);
+							yield return ConstructBuffer(buffer, i);
 						}
 					}
 				}
@@ -335,15 +346,15 @@ namespace UnityGLTF
 						if (_assetCache.TextureCache[i] == null)
 						{
 							GLTF.Schema.Texture texture = _gltfRoot.Textures[i];
-							yield return LoadImageBuffer(texture, i);
-							yield return LoadImage(texture.Source.Value, texture.Source.Id);
+							yield return ConstructImageBuffer(texture, i);
+							yield return ConstructImage(texture.Source.Value, texture.Source.Id);
 						}
 					}
 				}
-				yield return BuildAttributesForMeshes();
+				yield return ConstructAttributesForMeshes();
 			}
 			
-			yield return CreateScene(scene);
+			yield return ConstructScene(scene);
 
 			if (SceneParent != null)
 			{
@@ -353,11 +364,11 @@ namespace UnityGLTF
 			_lastLoadedScene = CreatedObject;
 		}
 		
-		protected IEnumerator LoadBuffer(GLTF.Schema.Buffer buffer, int bufferIndex)
+		protected IEnumerator ConstructBuffer(GLTF.Schema.Buffer buffer, int bufferIndex)
 		{
 			if (buffer.Uri == null)
 			{
-				_assetCache.BufferCache[bufferIndex] = LoadBufferFromGLB(bufferIndex);
+				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 			}
 			else
 			{
@@ -383,13 +394,13 @@ namespace UnityGLTF
 			}
 		}
 
-		protected IEnumerator LoadImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true)
+		protected IEnumerator ConstructImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true)
 		{
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
-				if (image.Uri == null)
+				if (image.BufferView != null)
 				{
-					yield return LoadImageFromGLB(image, imageCacheIndex);
+					yield return ConstructImageFromGLB(image, imageCacheIndex);
 				}
 				else
 				{
@@ -408,7 +419,7 @@ namespace UnityGLTF
 					else
 					{
 						Stream stream = _assetCache.ImageStreamCache[imageCacheIndex];
-						yield return LoadUnityTexture(stream, markGpuOnly, image, imageCacheIndex);
+						yield return ConstructUnityTexture(stream, markGpuOnly, image, imageCacheIndex);
 					}
 				}
 			}
@@ -420,7 +431,7 @@ namespace UnityGLTF
 		/// <param name="stream"></param>
 		/// <param name="markGpuOnly">Non-readable textures are saved only on the GPU and take up half as much memory.</param>
 		/// <returns></returns>
-		protected virtual IEnumerator LoadUnityTexture(Stream stream, bool markGpuOnly, GLTF.Schema.Image image, int imageCacheIndex)
+		protected virtual IEnumerator ConstructUnityTexture(Stream stream, bool markGpuOnly, GLTF.Schema.Image image, int imageCacheIndex)
 		{
 			Texture2D texture = new Texture2D(0, 0);
 
@@ -463,7 +474,7 @@ namespace UnityGLTF
 			yield return null;
 		}
 		
-		protected virtual IEnumerator BuildAttributesForMeshes()
+		protected virtual IEnumerator ConstructAttributesForMeshes()
 		{
 			for (int i = 0; i < _gltfRoot.Meshes.Count; ++i)
 			{
@@ -477,16 +488,16 @@ namespace UnityGLTF
 				{
 					_assetCache.MeshCache[i][j] = new MeshCacheData();
 					var primitive = mesh.Primitives[j];
-					yield return BuildMeshAttributes(primitive, i, j);
+					yield return ConstructMeshAttributes(primitive, i, j);
 					if (primitive.Material != null)
 					{
-						yield return LoadMaterialImageBuffers(primitive.Material.Value);
+						yield return ConstructMaterialImageBuffers(primitive.Material.Value);
 					}
 				}
 			}
 		}
 
-		protected virtual IEnumerator BuildMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
+		protected virtual IEnumerator ConstructMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
 		{
 			if (_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes.Count == 0)
 			{
@@ -500,7 +511,7 @@ namespace UnityGLTF
 					// on cache miss, load the buffer
 					if (_assetCache.BufferCache[bufferId] == null)
 					{
-						yield return LoadBuffer(buffer, bufferId);
+						yield return ConstructBuffer(buffer, bufferId);
 					}
 
 					AttributeAccessor attributeAccessor = new AttributeAccessor
@@ -566,13 +577,13 @@ namespace UnityGLTF
 			}
 		}
 		
-		protected virtual IEnumerator CreateScene(Scene scene)
+		protected virtual IEnumerator ConstructScene(Scene scene)
 		{
 			var sceneObj = new GameObject(scene.Name ?? "GLTFScene");
 
 			foreach (var node in scene.Nodes)
 			{
-				yield return CreateNode(node.Value, node.Id);
+				yield return ConstructNode(node.Value, node.Id);
 				GameObject nodeObj = _assetCache.NodeCache[node.Id];
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 			}
@@ -581,7 +592,7 @@ namespace UnityGLTF
 			InitializeGltfTopLevelObject();
 		}
 
-		protected virtual IEnumerator CreateNode(Node node, int nodeIndex)
+		protected virtual IEnumerator ConstructNode(Node node, int nodeIndex)
 		{
 			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
 			// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
@@ -598,7 +609,7 @@ namespace UnityGLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				yield return CreateMeshObject(node.Mesh.Value, nodeObj.transform, node.Mesh.Id);
+				yield return ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -614,7 +625,7 @@ namespace UnityGLTF
 				foreach (var child in node.Children)
 				{
 					// todo blgross: replace with an iterartive solution
-					yield return CreateNode(child.Value, child.Id);
+					yield return ConstructNode(child.Value, child.Id);
 					GameObject childObj = _assetCache.NodeCache[child.Id];
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
@@ -624,7 +635,7 @@ namespace UnityGLTF
 			_assetCache.NodeCache[nodeIndex] = nodeObj;
 		}
 		
-		protected virtual IEnumerator CreateMeshObject(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
+		protected virtual IEnumerator ConstructMesh(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
 		{
 			if (_assetCache.MeshCache[meshId] == null)
 			{
@@ -636,7 +647,7 @@ namespace UnityGLTF
 				var primitive = mesh.Primitives[i];
 				int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
 
-				yield return CreateMeshPrimitive(primitive, meshId, i, materialIndex);
+				yield return ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
 				
 				var primitiveObj = new GameObject("Primitive");
 				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
@@ -670,7 +681,7 @@ namespace UnityGLTF
 			}
 		}
 		
-		protected virtual IEnumerator CreateMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex, int materialIndex)
+		protected virtual IEnumerator ConstructMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex, int materialIndex)
 		{
 			if (_assetCache.MeshCache[meshID][primitiveIndex] == null)
 			{
@@ -686,7 +697,7 @@ namespace UnityGLTF
 				};
 
 				yield return null;
-				yield return CreateUnityMesh(meshConstructionData, meshID, primitiveIndex);
+				yield return ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex);
 			}
 
 			bool shouldUseDefaultMaterial = primitive.Material == null;
@@ -695,12 +706,12 @@ namespace UnityGLTF
 			if ((shouldUseDefaultMaterial && _defaultLoadedMaterial == null) ||
 				(!shouldUseDefaultMaterial && _assetCache.MaterialCache[materialIndex] == null))
 			{
-				yield return LoadMaterialTextures(materialToLoad);
-				CreateMaterial(materialToLoad, materialIndex);
+				yield return ConstructMaterialTextures(materialToLoad);
+				ConstructMaterial(materialToLoad, materialIndex);
 			}
 		}
 	 
-		protected virtual IEnumerator LoadMaterialImageBuffers(GLTF.Schema.Material def)
+		protected virtual IEnumerator ConstructMaterialImageBuffers(GLTF.Schema.Material def)
 		{
 			if (def.PbrMetallicRoughness != null)
 			{
@@ -709,13 +720,13 @@ namespace UnityGLTF
 				if (pbr.BaseColorTexture != null)
 				{
 					var textureId = pbr.BaseColorTexture.Index;
-					yield return LoadImageBuffer(textureId.Value, textureId.Id);
+					yield return ConstructImageBuffer(textureId.Value, textureId.Id);
 				}
 				if (pbr.MetallicRoughnessTexture != null)
 				{
 					var textureId = pbr.MetallicRoughnessTexture.Index;
 					
-					yield return LoadImageBuffer(textureId.Value, textureId.Id);
+					yield return ConstructImageBuffer(textureId.Value, textureId.Id);
 				}
 			}
 
@@ -725,14 +736,14 @@ namespace UnityGLTF
 				{
 					var textureId = def.CommonConstant.LightmapTexture.Index;
 
-					yield return LoadImageBuffer(textureId.Value, textureId.Id);
+					yield return ConstructImageBuffer(textureId.Value, textureId.Id);
 				}
 			}
 
 			if (def.NormalTexture != null)
 			{
 				var textureId = def.NormalTexture.Index;
-				yield return LoadImageBuffer(textureId.Value, textureId.Id);
+				yield return ConstructImageBuffer(textureId.Value, textureId.Id);
 			}
 
 			if (def.OcclusionTexture != null)
@@ -743,30 +754,30 @@ namespace UnityGLTF
 						&& def.PbrMetallicRoughness.MetallicRoughnessTexture != null
 						&& def.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id == textureId.Id))
 				{
-					yield return LoadImageBuffer(textureId.Value, textureId.Id);
+					yield return ConstructImageBuffer(textureId.Value, textureId.Id);
 				}
 			}
 
 			if (def.EmissiveTexture != null)
 			{
 				var textureId = def.EmissiveTexture.Index;
-				yield return LoadImageBuffer(textureId.Value, textureId.Id);
+				yield return ConstructImageBuffer(textureId.Value, textureId.Id);
 			}
 		}
 		
-		protected virtual IEnumerator LoadMaterialTextures(GLTF.Schema.Material def)
+		protected virtual IEnumerator ConstructMaterialTextures(GLTF.Schema.Material def)
 		{
 			for (int i = 0; i < _assetCache.TextureCache.Length; ++i)
 			{
 				TextureCacheData textureCacheData = _assetCache.TextureCache[i];
 				if (textureCacheData != null && textureCacheData.Texture == null)
 				{
-					yield return _CreateTexture(textureCacheData.TextureDefinition, i, true);
+					yield return ConstructTexture(textureCacheData.TextureDefinition, i, true);
 				}
 			}
 		}
 		
-		protected IEnumerator CreateUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
+		protected IEnumerator ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
 		{
 			MeshPrimitive primitive = meshConstructionData.Primitive;
 			var meshAttributes = meshConstructionData.MeshAttributes;
@@ -816,7 +827,7 @@ namespace UnityGLTF
 			yield return null;
 		}
 
-		protected virtual void CreateMaterial(GLTF.Schema.Material def, int materialIndex)
+		protected virtual void ConstructMaterial(GLTF.Schema.Material def, int materialIndex)
 		{
 			IUniformMap mapper;
 			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
@@ -951,7 +962,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="texture">The texture to load</param>
 		/// <returns>The loaded unity texture</returns>
-		public virtual IEnumerator CreateTexture(GLTF.Schema.Texture texture, int textureIndex, bool markGpuOnly = true)
+		public virtual IEnumerator LoadTexture(GLTF.Schema.Texture texture, int textureIndex, bool markGpuOnly = true)
 		{
 			try
 			{
@@ -969,8 +980,8 @@ namespace UnityGLTF
 				{
 					InitializeAssetCache();
 				}
-				yield return LoadImageBuffer(texture, GetTextureSourceId(texture));
-				yield return _CreateTexture(texture, textureIndex, markGpuOnly);
+				yield return ConstructImageBuffer(texture, GetTextureSourceId(texture));
+				yield return ConstructTexture(texture, textureIndex, markGpuOnly);
 			}
 			finally
 			{
@@ -1001,14 +1012,14 @@ namespace UnityGLTF
 			return _assetCache.TextureCache[textureIndex].Texture;
 		}
 
-		protected virtual IEnumerator _CreateTexture(GLTF.Schema.Texture texture, int textureIndex,
+		protected virtual IEnumerator ConstructTexture(GLTF.Schema.Texture texture, int textureIndex,
 			bool markGpuOnly = true)
 		{
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTF.Schema.Image image = _gltfRoot.Images[sourceId];
-				yield return LoadImage(image, sourceId, markGpuOnly);
+				yield return ConstructImage(image, sourceId, markGpuOnly);
 
 				var source = _assetCache.ImageCache[sourceId];
 				var desiredFilterMode = FilterMode.Bilinear;
@@ -1057,7 +1068,7 @@ namespace UnityGLTF
 			}
 		}
 
-		protected virtual IEnumerator LoadImageFromGLB(Image image, int imageCacheIndex)
+		protected virtual IEnumerator ConstructImageFromGLB(Image image, int imageCacheIndex)
 		{
 			var texture = new Texture2D(0, 0);
 			var bufferView = image.BufferView.Value;
@@ -1072,7 +1083,7 @@ namespace UnityGLTF
 			yield return null;
 		}
 
-		protected virtual BufferCacheData LoadBufferFromGLB(int bufferIndex)
+		protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
 		{
 			GLTFParser.SeekToBinaryChunk(_gltfStream.Stream, bufferIndex, _gltfStream.StartPosition);  // sets stream to correct start position
 			return new BufferCacheData

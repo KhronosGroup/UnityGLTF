@@ -27,6 +27,9 @@ namespace UnityGLTF {
 #endif
 	}
 
+	/// <summary>
+	/// GLTFLoad exceptions occur during runtime errors through use of the GLTFSceneImporter
+	/// </summary>
 	public class GLTFLoadException : Exception
 	{
 		public GLTFLoadException() : base() { }

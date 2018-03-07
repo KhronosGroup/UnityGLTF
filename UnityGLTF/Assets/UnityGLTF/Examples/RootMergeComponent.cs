@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityGLTF;
 using UnityGLTF.Loader;
 
-namespace Microsoft.Pisa.App
+namespace UnityGLTF
 {
 	public class RootMergeComponent : MonoBehaviour
 	{
@@ -15,9 +15,6 @@ namespace Microsoft.Pisa.App
 		public bool Multithreaded = true;
 
 		public int MaximumLod = 300;
-
-		public Shader GLTFStandard = null;
-		public Shader GLTFConstant = null;
 
 		// todo undo
 #if !WINDOWS_UWP
