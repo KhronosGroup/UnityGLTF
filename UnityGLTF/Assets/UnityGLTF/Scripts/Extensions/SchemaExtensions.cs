@@ -377,7 +377,7 @@ namespace UnityGLTF.Extensions
 		}
 
 		/// <summary>
-		/// Coverts and copies based on the specified coordinate scale
+		/// Converts and copies based on the specified coordinate scale
 		/// </summary>
 		/// <param name="array">The array to convert and copy</param>
 		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
@@ -389,8 +389,8 @@ namespace UnityGLTF.Extensions
 			for (int i = 0; i < array.Length; i++)
 			{
 				returnArray[i].x = array[i].x * coordinateSpaceCoordinateScale.X;
-				returnArray[i].y = array[i].z * coordinateSpaceCoordinateScale.Y;
-				returnArray[i].z = array[i].y * coordinateSpaceCoordinateScale.Z;
+				returnArray[i].y = array[i].y * coordinateSpaceCoordinateScale.Y;
+				returnArray[i].z = array[i].z * coordinateSpaceCoordinateScale.Z;
 			}
 
 			return returnArray;
@@ -413,7 +413,7 @@ namespace UnityGLTF.Extensions
 		}
 
 		/// <summary>
-		/// Coverts and copies based on the specified coordinate scale
+		/// Converts and copies based on the specified coordinate scale
 		/// </summary>
 		/// <param name="array">The array to convert and copy</param>
 		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
@@ -424,10 +424,10 @@ namespace UnityGLTF.Extensions
 
 			for (var i = 0; i < array.Length; i++)
 			{
-				returnArray[i].x *= coordinateSpaceCoordinateScale.X;
-				returnArray[i].y *= coordinateSpaceCoordinateScale.Y;
-				returnArray[i].z *= coordinateSpaceCoordinateScale.Z;
-				returnArray[i].w *= coordinateSpaceCoordinateScale.W;
+				returnArray[i].x = array[i].x * coordinateSpaceCoordinateScale.X;
+				returnArray[i].y = array[i].y * coordinateSpaceCoordinateScale.Y;
+				returnArray[i].z = array[i].z * coordinateSpaceCoordinateScale.Z;
+				returnArray[i].w = array[i].w * coordinateSpaceCoordinateScale.W;
 			}
 
 			return returnArray;

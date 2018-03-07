@@ -4,8 +4,9 @@ namespace UnityGLTF
 {
 	class MetalRough2StandardMap : StandardMap, IMetalRoughUniformMap
 	{
-		public MetalRough2StandardMap(int MaxLOD = 1000) : base(Shader.Find("Standard"), MaxLOD) { }
-		public MetalRough2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
+		public MetalRough2StandardMap(int MaxLOD = 1000) : base("Standard", MaxLOD) { }
+		protected MetalRough2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		protected MetalRough2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public virtual Texture BaseColorTexture
 		{

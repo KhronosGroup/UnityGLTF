@@ -9,35 +9,19 @@ Shader "GLTF/PbrMetallicRoughness"
 		
 		_Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
-		_Glossiness("Glossiness Factor", Range(0.0, 1.0)) = 1.0
-		[HideInInspector] _SmoothnessTextureChannel ("Smoothness texture channel", Float) = 0
+		_Glossiness("Roughness Factor", Range(0.0, 1.0)) = 1.0
 
 		_Metallic("Metallic Factor", Range(0.0, 1.0)) = 0.0
 		_MetallicGlossMap("Metal Rough Texture", 2D) = "white" {}
 
-		[HideInInspector] _SpecularHighlights("Specular Highlights", Float) = 1.0
-		[HideInInspector] _GlossyReflections("Glossy Reflections", Float) = 1.0
-
 		_BumpScale("Normal Scale", Float) = 1.0
 		_BumpMap("Normal Map", 2D) = "bump" {}
-
-		[HideInInspector] _Parallax ("Height Scale", Range (0.005, 0.08)) = 0.02
-		[HideInInspector] _ParallaxMap ("Height Map", 2D) = "black" {}
 
 		_OcclusionStrength("Occlusion Strength", Range(0.0, 1.0)) = 1.0
 		_OcclusionMap("Occlusion Texture", 2D) = "white" {}
 
 		_EmissionColor("Emissive Factor", Color) = (0,0,0)
 		_EmissionMap("Emissive Texture", 2D) = "white" {}
-		
-		[HideInInspector] _DetailMask("Detail Mask", 2D) = "white" {}
-
-		[HideInInspector] _DetailAlbedoMap("Detail Albedo x2", 2D) = "grey" {}
-		[HideInInspector] _DetailNormalMapScale("Scale", Float) = 1.0
-		[HideInInspector] _DetailNormalMap("Normal Map", 2D) = "bump" {}
-
-		[HideInInspector]  _UVSec ("UV Set for secondary textures", Float) = 0
-
 
 		// Blending state
 		[HideInInspector] _Mode ("__mode", Float) = 0.0
@@ -337,5 +321,5 @@ Shader "GLTF/PbrMetallicRoughness"
 
 
 	FallBack "VertexLit"
-	//CustomEditor "StandardShaderGUI"
+	CustomEditor "PbrShaderGUI"
 }

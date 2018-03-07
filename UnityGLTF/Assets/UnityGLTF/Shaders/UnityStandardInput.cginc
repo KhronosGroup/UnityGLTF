@@ -65,7 +65,11 @@ struct VertexInput
 #ifdef _TANGENT_TO_WORLD
     half4 tangent   : TANGENT;
 #endif
+#if defined(UNITY_VERTEX_INPUT_INSTANCE_ID)
     UNITY_VERTEX_INPUT_INSTANCE_ID
+#else
+	UNITY_INSTANCE_ID
+#endif
 };
 
 float4 TexCoords(VertexInput v)
@@ -177,6 +181,27 @@ half2 MetallicGloss(float2 uv)
 	// it's roughness, not glossiness. invert it
 	mg.g = 1.0f - mg.g;
     return mg;
+}
+
+half2 MetallicRough(float2 uv)
+{
+	half2 mg;
+
+#if UNITY_SETUP_BRDF_INPUT == MetallicSetup
+	#ifdef _METALLICGLOSSMAP
+		mg = half2(_Metallic, _Glossiness) * tex2D(_MetallicGlossMap, uv).bg;
+	#else
+		mg = half2(_Metallic, _Glossiness);
+	#endif
+#else
+	#ifdef _SPECGLOSSMAP
+		mg.r = _Metallic;
+		mg.g = 1.0f - _Glossiness * tex2D(_SpecGlossMap, uv).a;
+	#else
+		mg = half2(Metallic, 1.0f - _Glossiness);
+	#endif
+#endif
+	return mg;
 }
 
 half3 Emission(float2 uv)

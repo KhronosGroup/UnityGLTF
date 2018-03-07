@@ -1,20 +1,13 @@
 ﻿using System;
 using UnityEngine;
-using AlphaMode = GLTF.Schema.AlphaMode;
-using CullMode = UnityEngine.Rendering.CullMode;
 
 namespace UnityGLTF
 {
 	class SpecGlossMap : SpecGloss2StandardMap
 	{
-		public SpecGlossMap(int MaxLOD = 1000)
-		{
-			var s = Shader.Find("GLTF/PbrSpecularGlossiness");
-			s.maximumLOD = MaxLOD;
-			_material = new Material(s);
-		}
-
-		public SpecGlossMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
+		public SpecGlossMap(int MaxLOD = 1000) : base("GLTF/PbrSpecularGlossiness", MaxLOD) { }
+		protected SpecGlossMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		protected SpecGlossMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public override int NormalTexCoord
 		{
