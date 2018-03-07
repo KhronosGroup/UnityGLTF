@@ -12,22 +12,20 @@ namespace UnityGLTF
 	{
         enum TextureMapType
         {
-			//sRGB
-            Main,
+			Main,
 			Emission,
 			Occlusion,
-
-			//Linear
-            Bump,
+			Bump,
 			SpecGloss,
 			MetallicGloss,
-            Light         
+			Light    
         };
 
         struct ImageInfo
         {
             public Texture2D texture;
             public TextureMapType textureMapType;
+			public bool gamma;
         };
 
 		private Transform[] _rootTransforms;
@@ -117,37 +115,19 @@ namespace UnityGLTF
 			gltfFile.Close();
 			binFile.Close();
 #endif
-            exportImages(path);
+            CreateImages(path);
 			
 		}
 
-        private void exportImages(string outputPath)
+		private void CreateImages(string outputPath)
         {
             for (int t = 0; t < _imageInfos.Count; ++t)
 			{
-				bool gammaTex = isGammaTexture (_imageInfos[t].textureMapType);
-				exportTexture(_imageInfos[t].texture, outputPath, gammaTex);
+				Texture2D tex = _imageInfos [t].texture;
+				Debug.Log(tex.name);
+				var renderTexture = RenderTexture.GetTemporary(tex.width, tex.height);
+				BlitImage (tex, renderTexture, (string) outputPath.Clone(), _imageInfos[t].gamma);
             }
-        }
-
-		bool isGammaTexture(TextureMapType type) {
-			switch (type) {
-			case TextureMapType.Main:
-				return true;
-			case TextureMapType.Emission:
-				return true;
-			case TextureMapType.Occlusion:
-				return true;
-			default:
-				return false;
-			}
-		}
-
-		private void exportTexture(Texture2D texture, string outputPath, bool gammaTex = false)
-		{
-			Debug.Log(texture.name);
-			var renderTexture = RenderTexture.GetTemporary(texture.width, texture.height);
-			BlitImage (texture, renderTexture, (string) outputPath.Clone(), gammaTex);
         }
 
 		private void BlitImage(Texture2D texture, RenderTexture renderTexture, string path, bool gammaTex) 
@@ -467,7 +447,7 @@ namespace UnityGLTF
 
 				if (emissionTex != null)
 				{
-					material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
+					material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission, true);
 
 					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
 
@@ -490,7 +470,7 @@ namespace UnityGLTF
 				var occTex = materialObj.GetTexture("_OcclusionMap");
 				if (occTex != null)
 				{
-					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
+					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj, true);
 					ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
 				}
 			}
@@ -575,11 +555,12 @@ namespace UnityGLTF
 		private OcclusionTextureInfo ExportOcclusionTextureInfo(
             UnityEngine.Texture texture, 
             TextureMapType textureMapType,
-            UnityEngine.Material material)
+            UnityEngine.Material material,
+			bool gamma = false)
 		{
 			var info = new OcclusionTextureInfo();
 
-			info.Index = ExportTexture(texture, textureMapType);
+			info.Index = ExportTexture(texture, textureMapType, gamma);
 
 			if (material.HasProperty("_OcclusionStrength"))
 			{
@@ -604,7 +585,7 @@ namespace UnityGLTF
 
 				if (mainTex != null)
 				{
-					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main, true);
 					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
@@ -681,16 +662,16 @@ namespace UnityGLTF
 			return constant;
 		}
 
-		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture, TextureMapType textureMapType)
+		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture, TextureMapType textureMapType, bool gamma = false)
 		{
 			var info = new TextureInfo();
 
-			info.Index = ExportTexture(texture, textureMapType);
+			info.Index = ExportTexture(texture, textureMapType, gamma);
 
 			return info;
 		}
 
-		private TextureId ExportTexture(UnityEngine.Texture textureObj, TextureMapType textureMapType)
+		private TextureId ExportTexture(UnityEngine.Texture textureObj, TextureMapType textureMapType, bool gamma = false)
 		{
 			TextureId id = GetTextureId(_root, textureObj);
 			if (id != null)
@@ -711,7 +692,7 @@ namespace UnityGLTF
 				texture.Name = textureObj.name;
 			}
 
-			texture.Source = ExportImage(textureObj, textureMapType);
+			texture.Source = ExportImage(textureObj, textureMapType, gamma);
 			texture.Sampler = ExportSampler(textureObj);
 
 			_textures.Add(textureObj);
@@ -726,7 +707,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private ImageId ExportImage(UnityEngine.Texture texture, TextureMapType texturMapType)
+		private ImageId ExportImage(UnityEngine.Texture texture, TextureMapType texturMapType, bool gamma = false)
 		{
 			ImageId id = GetImageId(_root, texture);
 			if(id != null)
@@ -743,7 +724,8 @@ namespace UnityGLTF
            
 			_imageInfos.Add(new ImageInfo {
                 texture = texture as Texture2D,
-                textureMapType = texturMapType });
+                textureMapType = texturMapType,
+				gamma = gamma});
 
 			image.Uri = Uri.EscapeUriString(texture.name + ".png");
 
