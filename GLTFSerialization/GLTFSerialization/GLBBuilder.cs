@@ -147,15 +147,49 @@ namespace GLTF
 			long streamStartPosition = 0)
 		{
 			if (inStream == null) throw new ArgumentNullException(nameof(inStream));
-			inStream.Position = streamStartPosition;
-			
-			GLTFRoot root = GLTFParser.ParseJson(inStream, streamStartPosition);
-			if (!root.IsGLB)
+
+			if (inStream.Length > 0)
 			{
-				return ConstructFromGLTF(root, glbOutStream, loader);
+				inStream.Position = streamStartPosition;
+
+				GLTFRoot root = GLTFParser.ParseJson(inStream, streamStartPosition);
+				if (!root.IsGLB)
+				{
+					return ConstructFromGLTF(root, glbOutStream, loader);
+				}
+
+				return ConstructFromGLB(root, inStream, glbOutStream, streamStartPosition);
 			}
 
-			return ConstructFromGLB(root, inStream, glbOutStream, streamStartPosition);
+			return _ConstructFromEmptyStream(inStream, streamStartPosition);
+		}
+
+		private static GLBObject _ConstructFromEmptyStream(Stream inStream, long streamStartPosition)
+		{
+			GLBObject glbObject = new GLBObject
+			{
+				Stream = inStream,
+				JsonChunkInfo = new ChunkInfo
+				{
+					Length = 0,
+					StartPosition = GLTFParser.HEADER_SIZE,
+					Type = ChunkFormat.JSON
+				},
+				BinaryChunkInfo = new ChunkInfo
+				{
+					Length = 0,
+					StartPosition = GLTFParser.HEADER_SIZE + GLTFParser.CHUNK_HEADER_SIZE,
+					Type = ChunkFormat.BIN
+				},
+				Header = new GLBHeader
+				{
+					FileLength = GLTFParser.HEADER_SIZE + GLTFParser.CHUNK_HEADER_SIZE * 2,
+					Version = 2
+				},
+				StreamStartPosition = streamStartPosition
+			};
+
+			return glbObject;
 		}
 
 		/// <summary>
@@ -163,11 +197,17 @@ namespace GLTF
 		/// The GLBObject stream will be updated to be the output stream. Callers are reponsible for handling Stream lifetime
 		/// </summary>
 		/// <param name="glb">The GLB to flush to the output stream and update</param>
+		/// <param name="newRoot">Optional root to replace the one in the glb</param>
 		/// <returns>A GLBObject that is based upon outStream</returns>
-		public static void UpdateStream(GLBObject glb)
+		public static void UpdateStream(GLBObject glb, GLTFRoot newRoot = null)
 		{
-			if (glb.Root == null) throw new ArgumentException("glb Root property cannot be null", nameof(glb.Root));
+			if (glb.Root == null && newRoot == null) throw new ArgumentException("glb Root and newRoot cannot be null", nameof(glb.Root));
 			if (glb.Stream == null) throw new ArgumentException("glb GLBStream property cannot be null", nameof(glb.Stream));
+
+			if (newRoot != null)
+			{
+				glb.Root = newRoot;
+			}
 
 			MemoryStream gltfJsonStream = new MemoryStream();
 			using (StreamWriter sw = new StreamWriter(gltfJsonStream))
@@ -189,7 +229,6 @@ namespace GLTF
 
 					// chunks must be 4 byte aligned
 					uint amountToAddToFile = proposedJsonChunkLength - glb.JsonChunkInfo.Length;
-
 					// new proposed length = propsoedJsonBufferSize - currentJsonBufferSize + totalFileLength
 					long proposedLength = amountToAddToFile + glb.Header.FileLength;
 					if (proposedLength > uint.MaxValue)
@@ -215,13 +254,14 @@ namespace GLTF
 
 					long newBinaryChunkStartPosition =
 						GLTFParser.HEADER_SIZE + GLTFParser.CHUNK_HEADER_SIZE + proposedJsonChunkLength;
-
-					// Copy the binary chunk to new position
+				
 					glb.Stream.Position = glb.BinaryChunkInfo.StartPosition;
 					glb.SetBinaryChunkStartPosition(newBinaryChunkStartPosition);
 					uint lengthToCopy = glb.BinaryChunkInfo.Length + GLTFParser.CHUNK_HEADER_SIZE;
-					glb.Stream.CopyToSelf((int)newBinaryChunkStartPosition, lengthToCopy);  // todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
 
+					// todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
+					glb.Stream.CopyToSelf((int) newBinaryChunkStartPosition,
+						lengthToCopy);
 					// write out new GLB length
 					glb.SetFileLength(proposedLengthAsUint);
 					WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
@@ -256,15 +296,18 @@ namespace GLTF
 		/// </summary>
 		/// <param name="glb">The glb to update</param>
 		/// <param name="binaryData">The binary data to append</param>
+		/// <param name="createBufferView">Whether a buffer view should be created, added to the GLTFRoot, and id returned</param>
 		/// <param name="streamStartPosition">Start position of stream</param>
 		/// <returns>The location of the added buffer view</returns>
-		public static BufferViewId AddBinaryData(GLBObject glb, Stream binaryData, uint streamStartPosition = 0)
+		public static BufferViewId AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView = true, long streamStartPosition = 0)
 		{
+			if (glb == null) throw new ArgumentNullException(nameof(glb));
+			if(glb.Root == null) throw new ArgumentException("glb Root cannot be null", nameof(glb));
 			if(glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
 			if(binaryData == null) throw new ArgumentNullException(nameof(binaryData));
 			if(binaryData.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(binaryData));
 
-			return _AddBinaryData(glb, binaryData, true, streamStartPosition);
+			return _AddBinaryData(glb, binaryData, createBufferView, streamStartPosition);
 		}
 
 		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView, long streamStartPosition)
@@ -272,9 +315,10 @@ namespace GLTF
 			binaryData.Position = streamStartPosition;
 
 			// Append new binary chunk to end
-			uint blobLengthAsUInt = (uint)(CalculateAlignment((uint)binaryData.Length, 4) - streamStartPosition);
+			uint blobLengthAsUInt = CalculateAlignment((uint)(binaryData.Length - streamStartPosition), 4);
 			uint newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLengthAsUInt;
 			uint newGLBSize = glb.Header.FileLength + blobLengthAsUInt;
+
 			uint blobWritePosition = glb.Header.FileLength;
 			glb.Stream.SetLength(glb.Header.FileLength + blobLengthAsUInt);
 			glb.Stream.Position = blobWritePosition;    // assuming the end of the file is the end of the binary chunk
@@ -282,18 +326,6 @@ namespace GLTF
 
 			glb.SetFileLength(newGLBSize);
 			glb.SetBinaryChunkLength(newBinaryBufferSize);
-
-			if (glb.Root.Buffers == null)
-			{
-				glb.Root.Buffers = new List<Buffer>();
-			}
-
-			if (glb.Root.Buffers.Count == 0)
-			{
-				glb.Root.Buffers.Add(new Buffer());
-			}
-
-			glb.Root.Buffers[0].ByteLength = newBinaryBufferSize;
 
 			// write glb header past magic number
 			WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);

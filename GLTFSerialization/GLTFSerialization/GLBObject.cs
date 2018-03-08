@@ -1,10 +1,11 @@
-﻿using GLTF.Schema;
+﻿using System.Collections.Generic;
+using GLTF.Schema;
 using System.IO;
 
 namespace GLTF
 {
 	/// <summary>
-	/// Objects containg GLB data and associated parsing information
+	/// Objects containing GLB data and associated parsing information
 	/// </summary>
 	public class GLBObject : IGLTFObject
 	{
@@ -15,8 +16,9 @@ namespace GLTF
 
 		/// <summary>
 		/// Read/Write Stream that GLB exists in
+		/// todo: Stream should probably be passed in or updated via a call
 		/// </summary>
-		public Stream Stream { get; internal set; }
+		public Stream Stream { get; set; }
 
 		/// <summary>
 		/// Header of GLB
@@ -42,6 +44,10 @@ namespace GLTF
 		private ChunkInfo _jsonChunkInfo;
 		private ChunkInfo _binaryChunkInfo;
 
+		internal GLBObject()
+		{
+		}
+
 		internal void SetFileLength(uint newHeaderLength)
 		{
 			_glbHeader.FileLength = newHeaderLength;
@@ -65,6 +71,22 @@ namespace GLTF
 		internal void SetBinaryChunkLength(uint binaryChunkLength)
 		{
 			_binaryChunkInfo.Length = binaryChunkLength;
+			if (Root.Buffers == null)
+			{
+				Root.Buffers = new List<Buffer>();
+			}
+
+			if (Root.Buffers.Count == 0)
+			{
+				Root.Buffers.Add(new Buffer
+				{
+					ByteLength = binaryChunkLength
+				});
+			}
+			else
+			{
+				Root.Buffers[0].ByteLength = binaryChunkLength;
+			}
 		}
 	}
 

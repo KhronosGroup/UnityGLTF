@@ -32,7 +32,7 @@ namespace GLTF.Schema
 			if (property.Extensions != null)
 			{
 				Extensions = new Dictionary<string, IExtension>(property.Extensions.Count);
-				foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in Extensions)
+				foreach (KeyValuePair<string, IExtension> extensionKeyValuePair in property.Extensions)
 				{
 					Extensions.Add(extensionKeyValuePair.Key, extensionKeyValuePair.Value.Clone(gltfRoot));
 				}

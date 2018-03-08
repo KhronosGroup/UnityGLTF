@@ -242,6 +242,8 @@ namespace GLTF
 
 		private static void MergeAccessorsBufferViewsAndBuffers(GLTFRoot mergeToRoot, GLTFRoot mergeFromRoot, PreviousGLTFSizes previousGLTFSizes)
 		{
+			bool isGLB = false;
+
 			if (mergeFromRoot.Buffers != null)
 			{
 				if (mergeToRoot.Buffers == null)
@@ -249,7 +251,17 @@ namespace GLTF
 					mergeToRoot.Buffers = new List<Buffer>(mergeFromRoot.Buffers.Count);
 				}
 
-				mergeToRoot.Buffers.AddRange(mergeFromRoot.Buffers);
+				foreach (Buffer buffer in mergeFromRoot.Buffers)
+				{
+					if (buffer.Uri != null)
+					{
+						mergeToRoot.Buffers.Add(buffer);
+					}
+					else
+					{
+						isGLB = true;	// assume glb is a uri is null
+					}
+				}
 			}
 
 			if (mergeFromRoot.BufferViews != null)
@@ -263,8 +275,12 @@ namespace GLTF
 				for (int i = previousGLTFSizes.PreviousBufferViewCount; i < mergeToRoot.BufferViews.Count; ++i)
 				{
 					GLTFId<Buffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
-					bufferId.Id += previousGLTFSizes.PreviousBufferCount;
-					bufferId.Root = mergeToRoot;
+					if (!(isGLB || bufferId.Id == 0))	// if it is pointing a the special glb buffer (index 0 of a glb) then we dont want to adjust the buffer view, otherwise we do
+					{
+						// adjusting bufferview id based on merge amount
+						bufferId.Id += previousGLTFSizes.PreviousBufferCount;
+						bufferId.Root = mergeToRoot;
+					}
 				}
 			}
 

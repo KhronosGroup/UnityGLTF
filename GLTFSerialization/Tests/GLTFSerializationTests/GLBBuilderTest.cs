@@ -15,6 +15,65 @@ namespace GLTFSerializationTests
 	public class GLBBuilderTest
 	{
 		[TestMethod]
+		public void CreateAndSaveFromEmptyStream()
+		{
+			string outPath =
+				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 10, TestAssetPaths.GLB_EXTENSION);
+
+			FileStream glbStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream);
+			Assert.IsNull(glbObject.Root);
+
+			MemoryStream stream = new MemoryStream();
+			StreamWriter writer = new StreamWriter(stream);
+			writer.Write(TestAssetPaths.MIN_GLTF_STR);
+			writer.Flush();
+			stream.Position = 0;
+
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(stream);
+			GLBBuilder.UpdateStream(glbObject, gltfRoot);
+
+			glbStream.Close();
+			glbStream = new FileStream(outPath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+			glbObject = GLBBuilder.ConstructFromStream(glbStream);
+			Assert.IsNotNull(glbObject.Root);
+			glbStream.Close();
+		}
+
+		[TestMethod]
+		public void CreateEmptyStreamAndAppendGLB()
+		{
+			string outPath =
+				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 11, TestAssetPaths.GLB_EXTENSION);
+
+			FileStream glbStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbStream);
+			Assert.IsNull(glbObject.Root);
+
+			MemoryStream stream = new MemoryStream();
+			StreamWriter writer = new StreamWriter(stream);
+			writer.Write(TestAssetPaths.MIN_GLTF_STR);
+			writer.Flush();
+			stream.Position = 0;
+
+			GLTFRoot gltfRoot = GLTFParser.ParseJson(stream);
+			GLBBuilder.UpdateStream(glbObject, gltfRoot);
+
+			FileStream glbAppendStream = File.OpenRead(TestAssetPaths.GLB_BOOMBOX_PATH);
+			GLBObject glbAppendObject = GLBBuilder.ConstructFromStream(glbAppendStream);
+			GLBBuilder.AddBinaryData(glbObject, glbAppendStream, false, glbAppendObject.BinaryChunkInfo.StartPosition + GLTFParser.CHUNK_HEADER_SIZE);
+
+			glbStream.Close();
+			glbStream = new FileStream(outPath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+			glbObject = GLBBuilder.ConstructFromStream(glbStream);
+			Assert.IsNotNull(glbObject.Root);
+			Assert.AreEqual(glbAppendObject.BinaryChunkInfo.Length, glbObject.BinaryChunkInfo.Length);
+			glbStream.Close();
+		}
+
+		[TestMethod]
 		public void CreateGLBFromStream()
 		{
 			Assert.IsTrue(File.Exists(TestAssetPaths.GLB_BOOMBOX_PATH));
