@@ -573,11 +573,17 @@ namespace UnityGLTF
 					switch (sampler.MinFilter)
 					{
 						case MinFilterMode.Nearest:
+						case MinFilterMode.NearestMipmapNearest:
+						case MinFilterMode.NearestMipmapLinear:
 							desiredFilterMode = FilterMode.Point;
 							break;
 						case MinFilterMode.Linear:
-						default:
+						case MinFilterMode.LinearMipmapNearest:
+						case MinFilterMode.LinearMipmapLinear:
 							desiredFilterMode = FilterMode.Bilinear;
+							break;
+						default:
+							Debug.LogWarning($"Unsupported Sampler.MinFilter: {sampler.MinFilter}");
 							break;
 					}
 
