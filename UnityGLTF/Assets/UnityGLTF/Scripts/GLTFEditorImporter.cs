@@ -795,7 +795,7 @@ namespace UnityGLTF
 				AnimationClip clip = new AnimationClip();
 				clip.wrapMode = UnityEngine.WrapMode.Loop;
 				LoadAnimation(_root.Animations[i], i, clip);
-                setProgress(IMPORT_STEP.ANIMATION, (i + 1), _root.Animations.Count);
+				setProgress(IMPORT_STEP.ANIMATION, (i + 1), _root.Animations.Count);
 				_assetManager.saveAnimationClip(clip);
 				yield return null;
 			}
