@@ -10,10 +10,9 @@ script:
   - ./scripts/export-unity-package.sh
  deploy:
      provider: releases
-     api_key:
-         secure: 9c0b69757f3db78ef03901d19cdb31cd506cf144
-     file: 
-         - "/current-package/UnityGLTF.unitypackage"
+     api_key: 
+     	secure: 7bbb82ca2e6937340aef88d5e99a86a5a91f362c
+     file:  ./current-package/UnityGLTF.unitypackage
      skip_cleanup: true
      on:
          tags: true
