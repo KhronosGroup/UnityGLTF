@@ -1,6 +1,6 @@
 #! /bin/sh
 
-project_path=$(pwd)/UnityGLTF/UnityGLTF
+project_path=$(pwd)/UnityGLTF
 log_file=$(pwd)/build/unity-mac.log
 export_path=$(pwd)/current-package/UnityGLTF.unitypackage
 

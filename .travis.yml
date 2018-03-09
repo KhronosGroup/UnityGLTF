@@ -5,5 +5,5 @@ install:
 before_script:
   - sudo chmod -R a+rwx /Applications/Unity
 script:
-  - xbuild ./GLTFSerialization/GLTFSerialization.sln
+  - msbuild ./GLTFSerialization/GLTFSerialization.sln
   - ./scripts/export-unity-package.sh
