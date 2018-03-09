@@ -91,7 +91,11 @@ namespace UnityGLTF
 			{
 				var www = UnityWebRequest.Get(_gltfUrl);
 
+#if UNITY_2017_2_OR_NEWER
+				yield return www.SendWebRequest();
+#else
 				yield return www.Send();
+#endif
 
 				if (www.responseCode >= 400 || www.responseCode == 0)
 				{
@@ -177,13 +181,12 @@ namespace UnityGLTF
 						yield return LoadImage(_gltfDirectoryPath, image, i);
 					}
 				}
-#if !WINDOWS_UWP
+
 				// generate these in advance instead of as-needed
 				if (isMultithreaded)
 				{
 					yield return _asyncAction.RunOnWorkerThread(() => BuildAttributesForMeshes());
 				}
-#endif
 			}
 
 			var sceneObj = CreateScene(scene);
@@ -656,7 +659,11 @@ namespace UnityGLTF
 						var www = UnityWebRequest.Get(Path.Combine(rootPath, uri));
 						www.downloadHandler = new DownloadHandlerTexture();
 
+#if UNITY_2017_2_OR_NEWER
+						yield return www.SendWebRequest();
+#else
 						yield return www.Send();
+#endif
 
 						// HACK to enable mipmaps :(
 						var tempTexture = DownloadHandlerTexture.GetContent(www);
@@ -725,7 +732,11 @@ namespace UnityGLTF
 				{
 					var www = UnityWebRequest.Get(Path.Combine(sourceUri, uri));
 
+#if UNITY_2017_2_OR_NEWER
+					yield return www.SendWebRequest();
+#else
 					yield return www.Send();
+#endif
 
 					bufferStream = new MemoryStream(www.downloadHandler.data, 0, www.downloadHandler.data.Length, false, true);
 				}
