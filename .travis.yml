@@ -8,3 +8,12 @@ before_script:
 script:
   - msbuild ./GLTFSerialization/GLTFSerialization.sln
   - ./scripts/export-unity-package.sh
+ deploy:
+     provider: releases
+     api_key:
+         secure: 9c0b69757f3db78ef03901d19cdb31cd506cf144
+     file: 
+         - "/current-package/UnityGLTF.unitypackage"
+     skip_cleanup: true
+     on:
+         tags: true
