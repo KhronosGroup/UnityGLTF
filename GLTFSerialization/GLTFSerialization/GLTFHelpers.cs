@@ -103,6 +103,22 @@ namespace GLTF
 				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
+			if (attributes.ContainsKey(SemanticProperties.WEIGHT))
+			{
+				var attributeAccessor = attributes[SemanticProperties.WEIGHT];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.JOINT))
+			{
+				var attributeAccessor = attributes[SemanticProperties.JOINT];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
 		}
 
 		/// <summary>
@@ -175,7 +191,7 @@ namespace GLTF
 			return regex.Match(uri).Success;
 		}
 
-		private static long LoadBufferView(AttributeAccessor attributeAccessor, out byte[] bufferViewCache)
+		public static long LoadBufferView(AttributeAccessor attributeAccessor, out byte[] bufferViewCache)
 		{
 			BufferView bufferView = attributeAccessor.AccessorId.Value.BufferView.Value;
 			long totalOffset = bufferView.ByteOffset + attributeAccessor.Offset;
@@ -584,10 +600,6 @@ namespace GLTF
 
 					foreach (AnimationChannel channel in animation.Channels)
 					{
-						SamplerId samplerId = channel.Sampler;
-						samplerId.Id += previousGLTFSizes.PreviousSamplerCount;
-						samplerId.Root = mergeToRoot;
-
 						NodeId nodeId = channel.Target.Node;
 						nodeId.Id += previousGLTFSizes.PreviousNodeCount;
 						nodeId.Root = mergeToRoot;

@@ -11,7 +11,7 @@ namespace GLTF.Schema
 		/// The index of a sampler in this animation used to compute the value for the
 		/// target, e.g., a node's translation, rotation, or scale (TRS).
 		/// </summary>
-		public SamplerId Sampler;
+		public int SamplerId;
 
 		/// <summary>
 		/// The index of the node and TRS property to target.
@@ -26,7 +26,7 @@ namespace GLTF.Schema
 		{
 			if (animationChannel == null) return;
 
-			Sampler = new SamplerId(animationChannel.Sampler, root);
+			SamplerId = animationChannel.SamplerId;
 			Target = new AnimationChannelTarget(animationChannel.Target, root);
 		}
 
@@ -41,7 +41,7 @@ namespace GLTF.Schema
 				switch (curProp)
 				{
 					case "sampler":
-						animationChannel.Sampler = SamplerId.Deserialize(root, reader);
+						animationChannel.SamplerId = reader.ReadAsInt32().Value;
 						break;
 					case "target":
 						animationChannel.Target = AnimationChannelTarget.Deserialize(root, reader);
@@ -60,7 +60,7 @@ namespace GLTF.Schema
 			writer.WriteStartObject();
 
 			writer.WritePropertyName("sampler");
-			writer.WriteValue(Sampler.Id);
+			writer.WriteValue(SamplerId);
 
 			writer.WritePropertyName("target");
 			Target.Serialize(writer);

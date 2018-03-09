@@ -1,5 +1,8 @@
 ﻿using GLTF;
 using GLTF.Schema;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace UnityGLTF.Extensions
@@ -90,6 +93,22 @@ namespace UnityGLTF.Extensions
 			out Vector3 scale)
 		{
 			gltfMat.ToUnityMatrix4x4Convert().GetTRSProperties(out position, out rotation, out scale);
+		}
+
+		/// <summary>
+		/// Return transform full name as a path in hierarchy relative to parent node
+		/// </summary>
+		/// <param name="current">this transform</param>
+		/// <param name="parent">parent transform</param>
+		/// <returns></returns>
+		public static string GetFullPath(this Transform current, Transform parent)
+		{
+			if ((current.parent == parent) || (current.parent == null))
+			{
+				return current.name;
+			}
+
+			return current.parent.GetFullPath(parent) + "/" + current.name;
 		}
 
 		/// <summary>
@@ -464,6 +483,89 @@ namespace UnityGLTF.Extensions
 			}
 
 			return returnArr;
+		}
+
+		public static Matrix4x4 ToUnityMatrix4x4(this GLTF.Math.Matrix4x4 matrix)
+		{
+			return new Matrix4x4()
+			{
+				m00 = matrix.M11,
+				m01 = matrix.M12,
+				m02 = matrix.M13,
+				m03 = matrix.M14,
+				m10 = matrix.M21,
+				m11 = matrix.M22,
+				m12 = matrix.M23,
+				m13 = matrix.M24,
+				m20 = matrix.M31,
+				m21 = matrix.M32,
+				m22 = matrix.M33,
+				m23 = matrix.M34,
+				m30 = matrix.M41,
+				m31 = matrix.M42,
+				m32 = matrix.M43,
+				m33 = matrix.M44
+			};
+		}
+
+		public static Matrix4x4[] ToUnityMatrix4x4(this GLTF.Math.Matrix4x4[] inMatrixArr)
+		{
+			Matrix4x4[] outMatrixArr = new Matrix4x4[inMatrixArr.Length];
+			for (int i = 0; i < inMatrixArr.Length; ++i)
+			{
+				outMatrixArr[i] = inMatrixArr[i].ToUnityMatrix4x4();
+			}
+			return outMatrixArr;
+		}
+
+		public static AnimationCurve fixTangents(this AnimationCurve curve, List<float> allTimes)
+		{
+			Keyframe[] keys = curve.keys;
+			curve = new AnimationCurve();
+
+			float currentValue = keys[0].value;
+			List<Keyframe> flat = new List<Keyframe>();
+
+			if (keys[0].time != allTimes[0])
+			{
+				curve.AddKey(allTimes[0], currentValue);
+			}
+
+			for (int i = 0; i < allTimes.Count; i++)
+			{
+				float currentTime = allTimes[i];
+				Keyframe foundKey = Array.Find(keys, (k) => k.time == currentTime);
+
+				if (foundKey.time == allTimes[i])
+				{
+					//if no key for more than 3 frames then add flat section to the curve
+					if (flat.Count > 3)
+					{
+						for (int j = 0; j < flat.Count; j++)
+						{
+							curve.AddKey(flat[j].time, flat[j].value);
+						}
+					}
+					flat.Clear();
+
+					currentValue = foundKey.value;
+					curve.AddKey(currentTime, currentValue);
+				}
+				else
+				{
+					flat.Add(new Keyframe(currentTime, currentValue));
+				}
+			}
+
+			if (flat.Count > 3)
+			{
+				for (int j = 0; j < flat.Count; j++)
+				{
+					curve.AddKey(flat[j].time, flat[j].value);
+				}
+			}
+
+			return curve;
 		}
 	}
 }

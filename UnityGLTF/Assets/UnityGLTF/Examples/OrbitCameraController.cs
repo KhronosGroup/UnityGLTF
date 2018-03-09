@@ -17,7 +17,7 @@ namespace UnityGLTF.Examples
 		public float distanceMin = .5f;
 		public float distanceMax = 15f;
 
-		private Rigidbody rigidbody;
+		new private Rigidbody rigidbody;
 
 		float x = 0.0f;
 		float y = 0.0f;

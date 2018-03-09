@@ -344,6 +344,33 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public float[] AsFloatArray(ref NumericArray contents, byte[] bufferData, int offset, bool normalizeIntValues = true)
+		{
+			if (contents.AsFloats != null) return contents.AsFloats;
+
+			if (Type != GLTFAccessorAttributeType.SCALAR) return null;
+
+			if (ComponentType != GLTFComponentType.Float) return null;
+
+			var arr = new float[Count];
+			var totalByteOffset = ByteOffset + offset;
+
+			int componentSize;
+			float maxValue;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+			if (normalizeIntValues) maxValue = 1;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = GetFloatElement(bufferData, totalByteOffset + idx * stride);
+			}
+
+			contents.AsFloats = arr;
+			return arr;
+		}
+
 		public Vector2[] AsVector2Array(ref NumericArray contents, byte[] bufferViewData, int offset, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec2s != null) return contents.AsVec2s;
@@ -458,6 +485,49 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public Matrix4x4[] AsMatrix4x4Array(ref NumericArray contents, byte[] bufferData, int offset)
+		{
+			if (contents.AsMatrices != null) return contents.AsMatrices;
+
+			if (Type != GLTFAccessorAttributeType.MAT4) return null;
+
+			if (ComponentType != GLTFComponentType.Float) return null;
+
+			var arr = new Matrix4x4[Count];
+			var totalByteOffset = ByteOffset + offset;
+
+			int componentSize;
+			float maxValue;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = new Matrix4x4(
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 0),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 1),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 2),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 3),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 4),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 5),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 6),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 7),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 8),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 9),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 10),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 11),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 12),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 13),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 14),
+					GetFloatElement(bufferData, totalByteOffset + idx * stride + componentSize * 15));
+			}
+
+			contents.AsMatrices = arr;
+			return arr;
+		}
+
+
 		public Color[] AsColorArray(ref NumericArray contents, byte[] bufferViewData, int offset)
 		{
 			if (contents.AsColors != null) return contents.AsColors;
@@ -550,6 +620,8 @@ namespace GLTF.Schema
 			return contents.AsTriangles;
 		}
 
+
+
 		private static int GetDiscreteElement(byte[] bufferViewData, int offset, GLTFComponentType type)
 		{
 			switch(type)
@@ -638,6 +710,8 @@ namespace GLTF.Schema
 		[FieldOffset(0)]
 		public uint[] AsUInts;
 		[FieldOffset(0)]
+		public float[] AsFloats;
+		[FieldOffset(0)]
 		public Vector2[] AsVec2s;
 		[FieldOffset(0)]
 		public Vector3[] AsVec3s;
@@ -653,6 +727,8 @@ namespace GLTF.Schema
 		public Vector3[] AsNormals;
 		[FieldOffset(0)]
 		public Vector4[] AsTangents;
+		[FieldOffset(0)]
+		public Matrix4x4[] AsMatrices;
 		[FieldOffset(0)]
 		public uint[] AsTriangles;
 	}

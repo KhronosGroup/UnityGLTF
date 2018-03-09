@@ -31,7 +31,7 @@ public class GLTFBenchmark : MonoBehaviour
 		foreach (var gltfUrl in GLTFUrls)
 		{
 			var www = UnityWebRequest.Get(gltfUrl);
-			yield return www.Send();
+			yield return www.SendWebRequest();
 
 			Debug.LogFormat("Benchmarking: {0}", gltfUrl);
 			long totalTime = 0;
