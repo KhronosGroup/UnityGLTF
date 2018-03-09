@@ -1,6 +1,5 @@
 os: osx
 language: csharp
-solution: "./GLTFSerialization/GLTFSerialization.sln"
 install:
   - sudo python2 .scripts/install-unity.py --package Unity 2017.1.1f1
 before_script:
