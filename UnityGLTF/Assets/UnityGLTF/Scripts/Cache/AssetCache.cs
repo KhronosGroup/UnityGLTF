@@ -51,7 +51,7 @@ namespace UnityGLTF.Cache
 			MaterialCache = new MaterialCacheData[materialCacheSize];
 			BufferCache = new Dictionary<int, BufferCacheData>(bufferCacheSize);
 			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
-			for(int i = 0; i < meshCacheSize; ++i)
+			for (int i = 0; i < meshCacheSize; ++i)
 			{
 				MeshCache.Add(null);
 			}
@@ -62,7 +62,18 @@ namespace UnityGLTF.Cache
 			ImageCache = null;
 			TextureCache = null;
 			MaterialCache = null;
-			BufferCache.Clear();
+			if (BufferCache != null)
+			{
+				foreach (var buffer in BufferCache.Values)
+				{
+					if (buffer != null)
+					{
+						buffer.Dispose();
+					}
+				}
+				BufferCache.Clear();
+				BufferCache = null;
+			}
 			MeshCache = null;
 		}
 	}

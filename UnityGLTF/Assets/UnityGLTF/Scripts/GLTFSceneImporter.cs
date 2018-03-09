@@ -13,7 +13,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF
 {
-	public class GLTFSceneImporter
+	public class GLTFSceneImporter : IDisposable
 	{
 		private enum LoadType
 		{
@@ -89,29 +89,33 @@ namespace UnityGLTF
 		{
 			if (_loadType == LoadType.Uri)
 			{
-				var www = UnityWebRequest.Get(_gltfUrl);
-
-				yield return www.Send();
-
-				if (www.responseCode >= 400 || www.responseCode == 0)
+				using (var www = UnityWebRequest.Get(_gltfUrl))
 				{
-					throw new WebRequestException(www);
-				}
+					yield return www.Send();
 
-				byte[] gltfData = www.downloadHandler.data;
-				_gltfStream.Stream = new MemoryStream(gltfData, 0, gltfData .Length, false, true);
+					if (www.responseCode >= 400 || www.responseCode == 0)
+					{
+						throw new WebRequestException(www);
+					}
+					// Property new accessor creates buffer every time
+					var gltfData = www.downloadHandler.data;
+					using (var byteStream = new MemoryStream(gltfData, 0, gltfData.Length, false, true))
+					{
+						_gltfStream.Stream = byteStream;
+						_root = GLTFParser.ParseJson(_gltfStream.Stream, _gltfStream.StartPosition);
+						yield return ImportScene(sceneIndex, isMultithreaded);
+					}
+				}
 			}
 			else if (_loadType == LoadType.Stream)
 			{
-				// Do nothing, since the stream was passed in via the constructor.
+				_root = GLTFParser.ParseJson(_gltfStream.Stream, _gltfStream.StartPosition);
+				yield return ImportScene(sceneIndex, isMultithreaded);
 			}
 			else
 			{
 				throw new Exception("Invalid load type specified: " + _loadType);
 			}
-
-			_root = GLTFParser.ParseJson(_gltfStream.Stream, _gltfStream.StartPosition);
-			yield return ImportScene(sceneIndex, isMultithreaded);
 		}
 
 		/// <summary>
@@ -358,7 +362,7 @@ namespace UnityGLTF
 			var primitiveObj = new GameObject("Primitive");
 
 			var meshFilter = primitiveObj.AddComponent<MeshFilter>();
-			
+
 			if (_assetCache.MeshCache[meshID][primitiveIndex] == null)
 			{
 				_assetCache.MeshCache[meshID][primitiveIndex] = new MeshCacheData();
@@ -490,7 +494,7 @@ namespace UnityGLTF
 				if (sgMapper != null)
 				{
 					var specGloss = def.Extensions[specGlossExtName] as KHR_materials_pbrSpecularGlossinessExtension;
-					
+
 					sgMapper.DiffuseFactor = specGloss.DiffuseFactor.ToUnityColorRaw();
 
 					if (specGloss.DiffuseTexture != null)
@@ -659,23 +663,25 @@ namespace UnityGLTF
 					}
 					else if (_loadType == LoadType.Uri)
 					{
-						var www = UnityWebRequest.Get(Path.Combine(rootPath, uri));
-						www.downloadHandler = new DownloadHandlerTexture();
-
-						yield return www.Send();
-
-						// HACK to enable mipmaps :(
-						var tempTexture = DownloadHandlerTexture.GetContent(www);
-						if (tempTexture != null)
+						using (var www = UnityWebRequest.Get(Path.Combine(rootPath, uri)))
 						{
-							texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
-							texture.SetPixels(tempTexture.GetPixels());
-							texture.Apply(true);
-						}
-						else
-						{
-							Debug.LogFormat("{0} {1}", www.responseCode, www.url);
-							texture = new Texture2D(16, 16);
+							www.downloadHandler = new DownloadHandlerTexture();
+
+							yield return www.Send();
+
+							// HACK to enable mipmaps :(
+							var tempTexture = DownloadHandlerTexture.GetContent(www);
+							if (tempTexture != null)
+							{
+								texture = new Texture2D(tempTexture.width, tempTexture.height, tempTexture.format, true);
+								texture.SetPixels(tempTexture.GetPixels());
+								texture.Apply(true);
+							}
+							else
+							{
+								Debug.LogFormat("{0} {1}", www.responseCode, www.url);
+								texture = new Texture2D(16, 16);
+							}
 						}
 					}
 					else if (_loadType == LoadType.Stream)
@@ -683,11 +689,11 @@ namespace UnityGLTF
 						var pathToLoad = Path.Combine(rootPath, uri);
 						var file = File.OpenRead(pathToLoad);
 						byte[] bufferData = new byte[file.Length];
-						file.Read(bufferData, 0, (int) file.Length);
+						file.Read(bufferData, 0, (int)file.Length);
 #if !WINDOWS_UWP
 						file.Close();
 #else
-						file.Dispose();
+                        file.Dispose();
 #endif
 						texture = new Texture2D(0, 0);
 						texture.LoadImage(bufferData);
@@ -729,11 +735,12 @@ namespace UnityGLTF
 				}
 				else if (_loadType == LoadType.Uri)
 				{
-					var www = UnityWebRequest.Get(Path.Combine(sourceUri, uri));
+					using (var www = UnityWebRequest.Get(Path.Combine(sourceUri, uri)))
+					{
+						yield return www.Send();
 
-					yield return www.Send();
-
-					bufferStream = new MemoryStream(www.downloadHandler.data, 0, www.downloadHandler.data.Length, false, true);
+						bufferStream = new MemoryStream(www.downloadHandler.data, 0, www.downloadHandler.data.Length, false, true);
+					}
 				}
 				else if (_loadType == LoadType.Stream)
 				{
@@ -771,6 +778,16 @@ namespace UnityGLTF
 			var lastIndex = gltfPath.IndexOf(fileName);
 			var partialPath = gltfPath.Substring(0, lastIndex);
 			return partialPath;
+		}
+
+		public void Dispose()
+		{
+			if (_assetCache != null)
+			{
+				_assetCache.Dispose();
+				_assetCache = null;
+			}
+
 		}
 	}
 }
