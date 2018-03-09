@@ -447,6 +447,9 @@ namespace Sketchfab
 
 		void handleThumbnail(UnityWebRequest request)
 		{
+			bool sRGBBackup = GL.sRGBWrite;
+			GL.sRGBWrite = true;
+
 			string uid = extractUidFromUrl(request.url);
 			if (!_sketchfabModels.ContainsKey(uid))
 			{
@@ -455,16 +458,24 @@ namespace Sketchfab
 
 			// Load thumbnail image
 			byte[] data = request.downloadHandler.data;
-			GL.sRGBWrite = true;
 			Texture2D thumb = new Texture2D(2, 2);
 			thumb.LoadImage(data);
-
 			if (thumb.width >= _previewWidth)
 			{
 				var renderTexture = RenderTexture.GetTemporary(_previewWidth, (int) (_previewWidth * _previewRatio), 24);
 				var exportTexture = new Texture2D(thumb.height, thumb.height, TextureFormat.ARGB32, false);
 
-				Graphics.Blit(thumb, renderTexture);
+				if(PlayerSettings.colorSpace == ColorSpace.Linear)
+				{
+					Material linear2SRGB = new Material(Shader.Find("GLTF/Linear2sRGB"));
+					linear2SRGB.SetTexture("_InputTex", thumb);
+					Graphics.Blit(thumb, renderTexture, linear2SRGB);
+				}
+				else
+				{
+					Graphics.Blit(thumb, renderTexture);
+				}
+
 				exportTexture.ReadPixels(new Rect((thumb.width - thumb.height) / 2, 0, renderTexture.height, renderTexture.height), 0, 0);
 				exportTexture.Apply();
 
@@ -477,12 +488,24 @@ namespace Sketchfab
 				var renderTexture = RenderTexture.GetTemporary(thumb.width, thumb.height, 24);
 				var exportTexture = new Texture2D(thumb.height, thumb.height, TextureFormat.ARGB32, false);
 
-				Graphics.Blit(thumb, renderTexture);
+				if (PlayerSettings.colorSpace == ColorSpace.Linear)
+				{
+					Material linear2SRGB = new Material(Shader.Find("GLTF/Linear2sRGB"));
+					linear2SRGB.SetTexture("_InputTex", thumb);
+					Graphics.Blit(thumb, renderTexture, linear2SRGB);
+				}
+				else
+				{
+					Graphics.Blit(thumb, renderTexture);
+				}
+
 				exportTexture.ReadPixels(new Rect((thumb.width - thumb.height) / 2, 0, renderTexture.height, renderTexture.height), 0, 0);
 				exportTexture.Apply();
 				TextureScale.Bilinear(exportTexture, _thumbnailSize, _thumbnailSize);
 				_sketchfabModels[uid]._thumbnail = exportTexture;
 			}
+
+			GL.sRGBWrite = sRGBBackup;
 		}
 
 		string extractUidFromUrl(string url)

@@ -82,7 +82,17 @@ namespace Sketchfab
 
 				GUILayout.BeginHorizontal(blackGround);
 				GUILayout.FlexibleSpace();
-				GUILayout.Label(model._preview);
+				if(PlayerSettings.colorSpace == ColorSpace.Linear)
+				{
+					bool backup = GL.sRGBWrite;
+					GL.sRGBWrite = true;
+					GUILayout.Label(model._preview);
+					GL.sRGBWrite = backup;
+				}
+				else
+				{
+					GUILayout.Label(model._preview);
+				}
 				GUILayout.FlexibleSpace();
 				GUILayout.EndHorizontal();
 

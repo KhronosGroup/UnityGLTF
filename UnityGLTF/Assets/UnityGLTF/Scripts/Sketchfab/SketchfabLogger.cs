@@ -242,11 +242,24 @@ namespace Sketchfab
 				Debug.Log("Invalid call avatar");
 				return;
 			}
+			bool sRGBBackup = GL.sRGBWrite;
+			GL.sRGBWrite = true;
 
 			Texture2D tex = new Texture2D(4, 4);
 			tex.LoadImage(responseData);
+			if(PlayerSettings.colorSpace == ColorSpace.Linear)
+			{
+				var renderTexture = RenderTexture.GetTemporary(tex.width, tex.height, 24);
+				Material linear2SRGB = new Material(Shader.Find("GLTF/Linear2sRGB"));
+				linear2SRGB.SetTexture("_InputTex", tex);
+				Graphics.Blit(tex, renderTexture, linear2SRGB);
+				tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+			}
+
 			TextureScale.Bilinear(tex, (int)AVATAR_SIZE.x, (int)AVATAR_SIZE.y);
 			_current.setAvatar(tex);
+
+			GL.sRGBWrite = sRGBBackup;
 			if (_refresh != null)
 				_refresh();
 		}
