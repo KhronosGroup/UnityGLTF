@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 #if WINDOWS_UWP
 using System.Threading.Tasks;
 #endif
@@ -779,7 +780,7 @@ namespace UnityGLTF
 					{
 						animation.clip = clip;
 					}
-					animation.Play();
+					//animation.Play();
 				}
 			}
 
