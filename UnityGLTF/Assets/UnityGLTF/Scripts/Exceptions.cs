@@ -13,4 +13,26 @@ namespace UnityGLTF {
 			System.Runtime.Serialization.StreamingContext context) { }
 #endif
 	}
+
+	[Serializable()]
+	public class ShaderNotFoundException : Exception
+	{
+		public ShaderNotFoundException() : base() { }
+		public ShaderNotFoundException(string message) : base(message) { }
+		public ShaderNotFoundException(string message, Exception inner) : base(message, inner) { }
+#if !WINDOWS_UWP
+		protected ShaderNotFoundException(System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+		{ }
+#endif
+	}
+
+	/// <summary>
+	/// GLTFLoad exceptions occur during runtime errors through use of the GLTFSceneImporter
+	/// </summary>
+	public class GLTFLoadException : Exception
+	{
+		public GLTFLoadException() : base() { }
+		public GLTFLoadException(string message) : base(message) { }
+	}
 }

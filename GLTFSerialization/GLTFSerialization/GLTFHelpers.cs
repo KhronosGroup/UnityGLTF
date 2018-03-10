@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
+using GLTF.Math;
 
 namespace GLTF
 {

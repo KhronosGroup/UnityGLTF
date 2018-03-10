@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 namespace UnityGLTF.Cache
 {
@@ -10,15 +11,20 @@ namespace UnityGLTF.Cache
 	public class AssetCache : IDisposable
 	{
 		/// <summary>
-		/// Raw loaded images
+		/// Streams to the images to be loaded
+		/// </summary>
+		public Stream[] ImageStreamCache { get; private set; }
+
+		/// <summary>
+		/// Loaded raw texture data
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
-
+		
 		/// <summary>
 		/// Textures to be used for assets. Textures from image cache with samplers applied
 		/// </summary>
-		public Texture[] TextureCache { get; private set; }
-
+		public TextureCacheData[] TextureCache { get; private set; }
+		
 		/// <summary>
 		/// Cache for materials to be applied to the meshes
 		/// </summary>
@@ -27,7 +33,7 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Byte buffers that represent the binary contents that get parsed
 		/// </summary>
-		public Dictionary<int, BufferCacheData> BufferCache { get; private set; }
+		public BufferCacheData[] BufferCache { get; private set; }
 
 		/// <summary>
 		/// Cache of loaded meshes
@@ -40,6 +46,11 @@ namespace UnityGLTF.Cache
 		public AnimationCacheData[] AnimationCache { get; private set; }
 
 		/// <summary>
+		/// Cache of loaded node objects
+		/// </summary>
+		public GameObject[] NodeCache { get; private set; }
+
+		/// <summary>
 		/// Creates an asset cache which caches objects used in scene
 		/// </summary>
 		/// <param name="imageCacheSize"></param>
@@ -47,29 +58,42 @@ namespace UnityGLTF.Cache
 		/// <param name="materialCacheSize"></param>
 		/// <param name="bufferCacheSize"></param>
 		/// <param name="meshCacheSize"></param>
-		/// <param name="animationCacheSize"></param>
+		/// <param name="nodeCacheSize"></param>
 		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
-			int meshCacheSize, int animationCacheSize)
+			int meshCacheSize, int nodeCacheSize, int animationCacheSize)
 		{
-			// todo: add optimization to set size to be the JSON size
 			ImageCache = new Texture2D[imageCacheSize];
-			TextureCache = new Texture[textureCacheSize];
+			ImageStreamCache = new Stream[imageCacheSize];
+			TextureCache = new TextureCacheData[textureCacheSize];
 			MaterialCache = new MaterialCacheData[materialCacheSize];
-			BufferCache = new Dictionary<int, BufferCacheData>(bufferCacheSize);
+			BufferCache = new BufferCacheData[bufferCacheSize];
 			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
 			for(int i = 0; i < meshCacheSize; ++i)
 			{
 				MeshCache.Add(null);
 			}
+
+			NodeCache = new GameObject[nodeCacheSize];
 			AnimationCache = new AnimationCacheData[animationCacheSize];
 		}
 
 		public void Dispose()
 		{
 			ImageCache = null;
+			ImageStreamCache = null;
 			TextureCache = null;
 			MaterialCache = null;
-			BufferCache.Clear();
+			foreach(BufferCacheData bufferCacheData in BufferCache)
+			{
+				if(bufferCacheData != null && bufferCacheData.Stream != null)
+				{
+#if !WINDOWS_UWP
+					bufferCacheData.Stream.Close();
+#else
+					bufferCacheData.Stream.Dispose();
+#endif
+				}
+			}
 			MeshCache = null;
 			AnimationCache = null;
 		}

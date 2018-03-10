@@ -303,19 +303,19 @@ namespace UnityGLTF
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
 				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
-			aPosition = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.vertices));
+			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
 			if (meshObj.normals.Length != 0)
-				aNormal = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.normals));
+				aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
 
 			if (meshObj.tangents.Length != 0)
-				aTangent = ExportAccessor(GLTFUnityHelpers.FlipVectorArrayHandedness(meshObj.tangents));
+				aTangent = ExportAccessor(SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
 
 			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayV(meshObj.uv));
+				aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
 
 			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor(GLTFUnityHelpers.FlipTexCoordArrayV(meshObj.uv2));
+				aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
 
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
@@ -327,7 +327,7 @@ namespace UnityGLTF
 				var primitive = new MeshPrimitive();
 				
 				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(GLTFUnityHelpers.FlipFaces(triangles), true);
+				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(triangles), true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -399,7 +399,7 @@ namespace UnityGLTF
 
 			if (materialObj.HasProperty("_EmissionColor"))
 			{
-				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColor();
+				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
 			}
 
 			if (materialObj.HasProperty("_EmissionMap"))
@@ -520,7 +520,7 @@ namespace UnityGLTF
 
 			if (material.HasProperty("_Color"))
 			{
-				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColor();
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorRaw();
 			}
 
 			if (material.HasProperty("_MainTex"))
@@ -585,7 +585,7 @@ namespace UnityGLTF
 
 			if (materialObj.HasProperty("_AmbientFactor"))
 			{
-				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor").ToNumericsColor();
+				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor").ToNumericsColorRaw();
 			}
 
 			if (materialObj.HasProperty("_LightMap"))
@@ -602,7 +602,7 @@ namespace UnityGLTF
 
 			if (materialObj.HasProperty("_LightFactor"))
 			{
-				constant.LightmapFactor = materialObj.GetColor("_LightFactor").ToNumericsColor();
+				constant.LightmapFactor = materialObj.GetColor("_LightFactor").ToNumericsColorRaw();
 			}
 
 			return constant;

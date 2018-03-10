@@ -45,7 +45,7 @@ namespace GLTF.Schema
 		public static Sampler Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var sampler = new Sampler();
-
+			
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
