@@ -38,7 +38,11 @@ namespace UnityGLTF.Loader
 		{
 			UnityWebRequest www = new UnityWebRequest(Path.Combine(rootUri, httpRequestPath), "GET", new DownloadHandlerBuffer(), null);
 			www.timeout = 5000;
+#if UNITY_2017_1_OR_NEWER
+			yield return www.SendWebRequest();
+#else
 			yield return www.Send();
+#endif
 			if ((int)www.responseCode >= 400)
 			{
 				Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);

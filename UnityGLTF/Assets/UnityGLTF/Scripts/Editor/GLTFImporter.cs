@@ -8,6 +8,9 @@ using System.Linq;
 using System;
 using Object = UnityEngine.Object;
 using System.Collections;
+using UnityGLTF.Loader;
+using GLTF.Schema;
+using GLTF;
 
 namespace UnityGLTF
 {
@@ -330,15 +333,17 @@ namespace UnityGLTF
 
         private GameObject CreateGLTFScene(string projectFilePath)
         {
-			using (var stream = File.OpenRead(projectFilePath))
+			ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
+;			using (var stream = File.OpenRead(projectFilePath))
 			{
-				var loader = new GLTFSceneImporter(projectFilePath, stream);
+				GLTFRoot gLTFRoot = GLTFParser.ParseJson(stream);
+				var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
 
 				loader.MaximumLod = _maximumLod;
 
 				// HACK: Force the coroutine to run synchronously in the editor
 				var stack = new Stack<IEnumerator>();
-				stack.Push(loader.Load(isMultithreaded: true));
+				stack.Push(loader.LoadScene(isMultithreaded: true));
 
 				while (stack.Count > 0)
 				{

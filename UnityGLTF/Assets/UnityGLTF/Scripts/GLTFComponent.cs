@@ -30,7 +30,7 @@ namespace UnityGLTF {
                 // Path.Combine treats paths that start with the separator character
                 // as absolute paths, ignoring the first path passed in. This removes
                 // that character to properly handle a filename written with it.
-                Url = Url.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+                GLTFUri = GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
                 string fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri);
 				string directoryPath = URIHelper.GetDirectoryName(fullPath);
 				loader = new FileLoader(directoryPath);

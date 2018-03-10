@@ -197,9 +197,15 @@ namespace UnityTest
 
 
 			EditorGUILayout.BeginVertical(GUILayout.MaxWidth(250));
+#if UNITY_2017_3_OR_NEWER
+			EditorGUILayout.EnumFlagsField(assertionComponent.checkMethods,
+										   EditorStyles.popup,
+										   GUILayout.MaxWidth(150));
+#else
 			EditorGUILayout.EnumMaskField(assertionComponent.checkMethods,
 										  EditorStyles.popup,
 										  GUILayout.MaxWidth(150));
+#endif
 			EditorGUILayout.EndVertical();
 
 

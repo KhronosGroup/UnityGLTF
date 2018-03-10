@@ -39,9 +39,15 @@ namespace UnityTest
 			var script = (AssertionComponent)target;
 			EditorGUILayout.BeginHorizontal();
 			var obj = DrawComparerSelection(script);
+#if UNITY_2017_3_OR_NEWER
+			script.checkMethods = (CheckMethod)EditorGUILayout.EnumFlagsField(script.checkMethods,
+																			  EditorStyles.popup,
+																			  GUILayout.ExpandWidth(false));
+#else
 			script.checkMethods = (CheckMethod)EditorGUILayout.EnumMaskField(script.checkMethods,
 																			 EditorStyles.popup,
 																			 GUILayout.ExpandWidth(false));
+#endif
 			EditorGUILayout.EndHorizontal();
 
 			if (script.IsCheckMethodSelected(CheckMethod.AfterPeriodOfTime))
