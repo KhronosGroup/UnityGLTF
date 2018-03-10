@@ -616,7 +616,9 @@ namespace GLTF
 
 					foreach (AnimationChannel channel in animation.Channels)
 					{
-						// NOTE: don't need to repoint sampler references
+						SamplerId samplerId = channel.Sampler;
+						samplerId.Id += previousGLTFSizes.PreviousSamplerCount;
+						samplerId.Root = mergeToRoot;
 
 						NodeId nodeId = channel.Target.Node;
 						nodeId.Id += previousGLTFSizes.PreviousNodeCount;

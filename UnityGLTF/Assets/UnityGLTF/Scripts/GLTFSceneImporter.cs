@@ -602,7 +602,7 @@ namespace UnityGLTF
 			var typeMap = new Dictionary<int, string>();
 			foreach (var channel in animation.Channels)
 			{
-				typeMap[channel.Sampler] = channel.Target.Path.ToString();
+				typeMap[channel.Sampler.Id] = channel.Target.Path.ToString();
 			}
 
 			var samplers = _assetCache.AnimationCache[animationId].Samplers;
@@ -656,7 +656,7 @@ namespace UnityGLTF
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
-		AnimationClip CreateClip(Transform root, Transform[] nodes, int animationId)
+		AnimationClip ConstructClip(Transform root, Transform[] nodes, int animationId)
 		{
 			var animation = _gltfRoot.Animations[animationId];
 
@@ -681,7 +681,7 @@ namespace UnityGLTF
 
 			foreach (var channel in animation.Channels)
 			{
-				var samplerCache = animationCache.Samplers[channel.Sampler];
+				var samplerCache = animationCache.Samplers[channel.Sampler.Id];
 				var node = nodes[channel.Target.Node.Id];
 				var relativePath = RelativePathFrom(node, root);
 				AnimationCurve curveX = new AnimationCurve(),
@@ -772,7 +772,7 @@ namespace UnityGLTF
 				var animation = sceneObj.AddComponent<UnityEngine.Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					var clip = CreateClip(sceneObj.transform, nodeTransforms, i);
+					var clip = ConstructClip(sceneObj.transform, nodeTransforms, i);
 					clip.legacy = true;
 					//clip.wrapMode = UnityEngine.WrapMode.Loop;
 					animation.AddClip(clip, clip.name);
