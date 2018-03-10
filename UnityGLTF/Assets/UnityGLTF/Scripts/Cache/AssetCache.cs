@@ -41,6 +41,11 @@ namespace UnityGLTF.Cache
 		public List<MeshCacheData[]> MeshCache { get; private set; }
 
 		/// <summary>
+		/// Cache of loaded animations
+		/// </summary>
+		public AnimationCacheData[] AnimationCache { get; private set; }
+
+		/// <summary>
 		/// Cache of loaded node objects
 		/// </summary>
 		public GameObject[] NodeCache { get; private set; }
@@ -55,7 +60,7 @@ namespace UnityGLTF.Cache
 		/// <param name="meshCacheSize"></param>
 		/// <param name="nodeCacheSize"></param>
 		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
-			int meshCacheSize, int nodeCacheSize)
+			int meshCacheSize, int nodeCacheSize, int animationCacheSize)
 		{
 			ImageCache = new Texture2D[imageCacheSize];
 			ImageStreamCache = new Stream[imageCacheSize];
@@ -69,6 +74,7 @@ namespace UnityGLTF.Cache
 			}
 
 			NodeCache = new GameObject[nodeCacheSize];
+			AnimationCache = new AnimationCacheData[animationCacheSize];
 		}
 
 		public void Dispose()
@@ -89,6 +95,7 @@ namespace UnityGLTF.Cache
 				}
 			}
 			MeshCache = null;
+			AnimationCache = null;
 		}
 	}
 }

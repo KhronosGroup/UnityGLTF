@@ -344,6 +344,33 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public float[] AsFloatArray(ref NumericArray contents, byte[] bufferViewData, int offset)
+		{
+			if (contents.AsUInts != null) return contents.AsFloats;
+
+			if (Type != GLTFAccessorAttributeType.SCALAR) return null;
+
+			var arr = new float[Count];
+			var totalByteOffset = ByteOffset + offset;
+
+			int componentSize;
+			float maxValue;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				if (ComponentType == GLTFComponentType.Float)
+					arr[idx] = GetFloatElement(bufferViewData, totalByteOffset + idx * stride);
+				else
+					arr[idx] = GetUnsignedDiscreteElement(bufferViewData, totalByteOffset + idx * stride, ComponentType);
+			}
+
+			contents.AsFloats = arr;
+			return arr;
+		}
+
 		public Vector2[] AsVector2Array(ref NumericArray contents, byte[] bufferViewData, int offset, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec2s != null) return contents.AsVec2s;
@@ -637,6 +664,8 @@ namespace GLTF.Schema
 	{
 		[FieldOffset(0)]
 		public uint[] AsUInts;
+		[FieldOffset(0)]
+		public float[] AsFloats;
 		[FieldOffset(0)]
 		public Vector2[] AsVec2s;
 		[FieldOffset(0)]
