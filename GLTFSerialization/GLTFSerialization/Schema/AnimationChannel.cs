@@ -26,7 +26,7 @@ namespace GLTF.Schema
 		{
 			if (animationChannel == null) return;
 
-			Sampler = animationChannel.Sampler;
+			Sampler = new SamplerId(animationChannel.Sampler, root);
 			Target = new AnimationChannelTarget(animationChannel.Target, root);
 		}
 
