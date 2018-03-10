@@ -99,7 +99,7 @@ namespace UnityGLTF
 		/// <summary>
 		/// Loads a glTF Scene into the LastLoadedScene field
 		/// </summary>
-		/// <param name="sceneIndex">The scene to load, if none is specified first scene is loaded</param>
+		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
 		/// <param name="isMultithreaded">Whether all components should be loaded on a background thread</param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
