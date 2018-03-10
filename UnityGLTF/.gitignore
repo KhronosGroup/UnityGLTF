@@ -27,6 +27,7 @@ ExportedObj/
 *.booproj
 *.svd
 *.pdb
+*.pfx*
 
 
 # Unity3D generated meta files
@@ -35,8 +36,13 @@ ExportedObj/
 # Unity3D Generated File On Crash Reports
 sysinfo.txt
 
+*.unitypackage
+
 # Builds
 *.apk
 *.unitypackage
 
 /www/node_modules/
+
+/WSA/
+/UWP/
