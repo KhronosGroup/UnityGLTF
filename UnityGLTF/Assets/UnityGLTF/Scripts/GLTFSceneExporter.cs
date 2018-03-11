@@ -10,7 +10,7 @@ namespace UnityGLTF
 {
 	public class GLTFSceneExporter
 	{
-		public enum IMAGETYPE
+		private enum IMAGETYPE
 		{
 			RGB,
 			RGBA,
@@ -21,7 +21,7 @@ namespace UnityGLTF
 			G_INVERT
 		}
 
-		public enum TextureMapType
+		private enum TextureMapType
 		{
 			Main,
 			Bump,
@@ -33,7 +33,7 @@ namespace UnityGLTF
 
 		;
 
-		struct ImageInfo
+		private struct ImageInfo
 		{
 			public Texture2D texture;
 			public TextureMapType textureMapType;
