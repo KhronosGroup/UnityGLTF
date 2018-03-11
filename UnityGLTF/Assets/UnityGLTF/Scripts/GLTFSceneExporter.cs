@@ -21,7 +21,7 @@ namespace UnityGLTF
             G_INVERT
         }
 
-        enum TextureMapType
+        public enum TextureMapType
         {
             Main,
             Bump,
@@ -125,173 +125,85 @@ namespace UnityGLTF
 			gltfFile.Close();
 			binFile.Close();
 #endif
-            exportImages(path);
+            ExportImages(path);
 			
 		}
 
-        private void exportImages(string outputPath)
-        {
-            for (int t = 0; t < _imageInfos.Count; ++t)
-            {
-                var image = _imageInfos[t].texture;
-                int height = image.height;
-                int width = image.width;
+		private void ExportImages (string outputPath)
+		{
+			for (int t = 0; t < _imageInfos.Count; ++t) {
+				var image = _imageInfos [t].texture;
+				int height = image.height;
+				int width = image.width;
 
-                switch (_imageInfos[t].textureMapType)
-                {
-                    case TextureMapType.MetallicGloss:
-                        exportMetallicGlossTexture(image, outputPath);
-                        break;
-                    default:
-                        exportTexture(image, outputPath);
-                        break;
-                }
-            }
-        }
+				switch (_imageInfos [t].textureMapType) {
+				case TextureMapType.MetallicGloss:
+					ExportMetallicGlossTexture (image, outputPath);
+					break;
+				case TextureMapType.Bump:
+					ExportNormalTexture (image, outputPath);
+					break;
+				default:
+					ExportTexture (image, outputPath);
+					break;
+				}
+			}
+		}
 
-        private void exportMetallicGlossTexture(Texture2D texture, string outputPath)
-        {
-            var textureWidth = texture.width;
-            var textureHeight = texture.height;
-            Color[] outputColors = new Color[textureWidth * textureHeight];
-            for (int i = 0; i < outputColors.Length; ++i)
-            {
-                outputColors[i] = new Color(1.0f, 1.0f, 1.0f);
-            }
-            addTexturePixels(ref texture, ref outputColors, IMAGETYPE.R, IMAGETYPE.B);
-            addTexturePixels(ref texture, ref outputColors, IMAGETYPE.A, IMAGETYPE.G_INVERT);
-            Texture2D newtex = new Texture2D(textureWidth, textureHeight);
-            newtex.SetPixels(outputColors);
-            newtex.Apply();
-            File.WriteAllBytes(Path.Combine(outputPath, texture.name + ".png"), newtex.EncodeToPNG());
-        }
+		private void ExportMetallicGlossTexture (Texture2D texture, string outputPath)
+		{
+			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+			var shader = Resources.Load ("MetalGlossChannelSwap", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
+			var metalGlossMaterial = new UnityEngine.Material (shader);
 
-        private void exportTexture(Texture2D texture, string outputPath)
-        {
-            var textureWidth = texture.width;
-            var textureHeight = texture.height;
-            Color[] textureColors = new Color[textureWidth * textureHeight];
-            if (!getPixelsFromTexture(ref texture, out textureColors))
-            {
-                Debug.Log("Failed to convert texture " + texture.name + " (unsupported type or format)");
-                return;
-            }
-            Texture2D newtex = new Texture2D(textureWidth, textureHeight);
-            newtex.SetPixels(textureColors);
-            newtex.Apply();
-            File.WriteAllBytes(Path.Combine(outputPath, texture.name + ".png"), newtex.EncodeToPNG());
-        }
+			Graphics.Blit (texture, destRenderTexture, metalGlossMaterial);
 
-        private void addTexturePixels(ref Texture2D texture, ref Color[] outputColors, IMAGETYPE inputChannel, IMAGETYPE outputChannel)
-        {
-            int textureHeight = texture.height;
-            int textureWidth = texture.width;
+			var exportTexture = new Texture2D (texture.width, texture.height);	
+			exportTexture.ReadPixels (new Rect (0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);	
+			exportTexture.Apply ();
 
-            Color[] inputColors = new Color[textureWidth * textureHeight];
-            if (!texture || !getPixelsFromTexture(ref texture, out inputColors))
-            {
-                return;
-            }
+			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
+			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+		}
 
-            if (textureHeight * textureWidth != outputColors.Length)
-            {
-                Debug.Log("Issue with texture dimensions");
-                return;
-            }
+		private void ExportNormalTexture (Texture2D texture, string outputPath)
+		{
+			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+			var shader = Resources.Load ("NormalChannel", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
+			var material = new UnityEngine.Material (shader);
 
-            for (int i = 0; i < textureHeight; ++i)
-            {
-                for (int j = 0; j < textureWidth; ++j)
-                {
-                    int index = i * textureWidth + j;
-                    Color outputColor = outputColors[index];
-                    Color inputColor = inputColors[index];
-                    
-                    switch (inputChannel)
-                    {
-                        case IMAGETYPE.R:
-                            inputColor = new Color(inputColor.r, inputColor.r, inputColor.r, inputColor.r);
-                            break;
-                        case IMAGETYPE.G:
-                            inputColor = new Color(inputColor.g, inputColor.g, inputColor.g, inputColor.g);
-                            break;
-                        case IMAGETYPE.B:
-                            inputColor = new Color(inputColor.r, inputColor.r, inputColor.r, inputColor.r);
-                            break;
-                        case IMAGETYPE.A:
-                            inputColor = new Color(inputColor.a, inputColor.a, inputColor.a, inputColor.a);
-                            break;
-                        case IMAGETYPE.G_INVERT:
-                            inputColor = new Color(1.0f - inputColor.g, 1.0f - inputColor.g, 1.0f - inputColor.g, 1.0f - inputColor.g);
-                            break;
-                        case IMAGETYPE.RGB:
-                        case IMAGETYPE.RGBA:
-                            // inputColor = inputColor;
-                            break;
-                        default:
-                            break;
-                    }
+			Graphics.Blit (texture, destRenderTexture, material);
 
-                    switch (outputChannel)
-                    {
-                        case IMAGETYPE.R:
-                            outputColor.r = inputColor.r;
-                            break;
-                        case IMAGETYPE.G:
-                            outputColor.g = inputColor.r;
-                            break;
-                        case IMAGETYPE.B:
-                            outputColor.b = inputColor.r;
-                            break;
-                        case IMAGETYPE.A:
-                            outputColor.a = inputColor.r;
-                            break;
-                        case IMAGETYPE.G_INVERT:
-                            outputColor.g = 1.0f - inputColor.r;
-                            break;
-                        case IMAGETYPE.RGB:
-                            outputColor.r = inputColor.r;
-                            outputColor.g = inputColor.g;
-                            outputColor.b = inputColor.b;
-                            break;
-                        case IMAGETYPE.RGBA:
-                            outputColor = inputColor;
-                            break;
-                        default:
-                            break;
-                    }
+			var exportTexture = new Texture2D (texture.width, texture.height);	
+			exportTexture.ReadPixels (new Rect (0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);	
+			exportTexture.Apply ();
 
-                    outputColors[index] = outputColor;
-                }
-            }
-        }
+			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
+			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+		}
 
-        private bool getPixelsFromTexture(ref Texture2D texture, out Color[] pixels)
-        {
-            TextureImporter im = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(texture)) as TextureImporter;
-            if (!im)
-            {
-                pixels = new Color[1];
-                return false;
-            }
-            bool readable = im.isReadable;
-            TextureImporterCompression format = im.textureCompression;
-            TextureImporterType type = im.textureType;
+		private void ExportTexture (Texture2D texture, string outputPath)
+		{
+			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 
-            im.isReadable = true;
-            im.textureType = TextureImporterType.Default;
-            im.textureCompression = TextureImporterCompression.Uncompressed;
-            im.SaveAndReimport();
+			Graphics.Blit (texture, destRenderTexture);
 
-            pixels = texture.GetPixels();
+			var exportTexture = new Texture2D (texture.width, texture.height);	
+			exportTexture.ReadPixels (new Rect (0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);	
+			exportTexture.Apply ();
 
-            im.isReadable = readable;
-            im.textureType = type;
-            im.textureCompression = format;
-            im.SaveAndReimport();
+			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
+			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+		}
 
-            return true;
-        }
+		private string ConstructImageFilenamePath (Texture2D texture, string outputPath)
+		{
+			var imagePath = UnityEditor.AssetDatabase.GetAssetPath (texture);
+			var fullFilenamePath = Path.Combine (outputPath, imagePath);
+			var file = new System.IO.FileInfo (fullFilenamePath);
+			file.Directory.Create ();
+			return  Path.ChangeExtension (fullFilenamePath, ".png");
+		}
 
         private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
@@ -869,7 +781,9 @@ namespace UnityGLTF
                 texture = texture as Texture2D,
                 textureMapType = texturMapType });
 
-			image.Uri = Uri.EscapeUriString(texture.name + ".png");
+			var path = UnityEditor.AssetDatabase.GetAssetPath (texture);
+			var newPath = Path.ChangeExtension (path, ".png");
+			image.Uri = Uri.EscapeUriString(newPath);
 
 			id = new ImageId {
 				Id = _root.Images.Count,

@@ -17,8 +17,11 @@ public class GLTFExportMenu
 			throw new Exception("No objects selected, cannot export.");
 
 		var exporter = new GLTFSceneExporter(Selection.transforms);
+
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		exporter.SaveGLTFandBin(path, name);
+		if (path != "") {
+			exporter.SaveGLTFandBin (path, name);
+		}
 	}
 
 	[MenuItem("GLTF/Export Scene")]
@@ -30,6 +33,8 @@ public class GLTFExportMenu
 
 		var exporter = new GLTFSceneExporter(transforms);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		exporter.SaveGLTFandBin(path, scene.name);
+		if (path != "") {
+			exporter.SaveGLTFandBin (path, scene.name);
+		}
 	}
 }
