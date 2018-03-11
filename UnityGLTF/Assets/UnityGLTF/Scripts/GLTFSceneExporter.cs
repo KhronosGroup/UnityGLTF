@@ -53,9 +53,8 @@ namespace UnityGLTF
 			public UnityEngine.Mesh Mesh;
 			public UnityEngine.Material Material;
 		}
-
-		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId> ();
-		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]> ();
+		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
+		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
 
 		public bool ExportNames = true;
 
@@ -63,23 +62,23 @@ namespace UnityGLTF
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
 		/// <param name="rootTransforms">Root transform of object to export</param>
-		public GLTFSceneExporter (Transform[] rootTransforms)
+		public GLTFSceneExporter(Transform[] rootTransforms)
 		{
 			_rootTransforms = rootTransforms;
-			_root = new GLTFRoot {
-				Accessors = new List<Accessor> (),
+			_root = new GLTFRoot{
+				Accessors = new List<Accessor>(),
 				Asset = new Asset {
 					Version = "2.0"
 				},
-				Buffers = new List<GLTF.Schema.Buffer> (),
-				BufferViews = new List<BufferView> (),
-				Images = new List<Image> (),
-				Materials = new List<GLTF.Schema.Material> (),
-				Meshes = new List<GLTF.Schema.Mesh> (),
-				Nodes = new List<Node> (),
-				Samplers = new List<Sampler> (),
-				Scenes = new List<Scene> (),
-				Textures = new List<GLTF.Schema.Texture> (),
+				Buffers = new List<GLTF.Schema.Buffer>(),
+				BufferViews = new List<BufferView>(),
+				Images = new List<Image>(),
+				Materials = new List<GLTF.Schema.Material>(),
+				Meshes = new List<GLTF.Schema.Mesh>(),
+				Nodes = new List<Node>(),
+				Samplers = new List<Sampler>(),
+				Scenes = new List<Scene>(),
+				Textures = new List<GLTF.Schema.Texture>(),
 			};
 
 			_imageInfos = new List<ImageInfo> ();
@@ -98,8 +97,7 @@ namespace UnityGLTF
 		/// Gets the root object of the exported GLTF
 		/// </summary>
 		/// <returns>Root parsed GLTF Json</returns>
-		public GLTFRoot GetRoot ()
-		{
+		public GLTFRoot GetRoot() {
 			return _root;
 		}
 
@@ -108,18 +106,18 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the GLTF and binary files</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLTFandBin (string path, string fileName)
+		public void SaveGLTFandBin(string path, string fileName)
 		{
-			var binFile = File.Create (Path.Combine (path, fileName + ".bin"));
-			_bufferWriter = new BinaryWriter (binFile);
+			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
+			_bufferWriter = new BinaryWriter(binFile);
 
-			_root.Scene = ExportScene (fileName, _rootTransforms);
+			_root.Scene = ExportScene(fileName, _rootTransforms);
 
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
 
-			var gltfFile = File.CreateText (Path.Combine (path, fileName + ".gltf"));
-			_root.Serialize (gltfFile);
+			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
+			_root.Serialize(gltfFile);
 
 #if WINDOWS_UWP
 			gltfFile.Dispose();
@@ -212,12 +210,14 @@ namespace UnityGLTF
 		{
 			var scene = new Scene ();
 
-			if (ExportNames) {
+			if (ExportNames) 
+			{
 				scene.Name = name;
 			}
 
 			scene.Nodes = new List<NodeId> (rootObjTransforms.Length);
-			foreach (var transform in rootObjTransforms) {
+			foreach (var transform in rootObjTransforms) 
+			{
 				scene.Nodes.Add (ExportNode (transform));
 			}
 
@@ -229,72 +229,79 @@ namespace UnityGLTF
 			};
 		}
 
-		private NodeId ExportNode (Transform nodeTransform)
+		private NodeId ExportNode(Transform nodeTransform)
 		{
-			var node = new Node ();
+			var node = new Node();
 
-			if (ExportNames) {
+			if (ExportNames)
+			{
 				node.Name = nodeTransform.name;
 			}
 
-			node.SetUnityTransform (nodeTransform);
+			node.SetUnityTransform(nodeTransform);
 
 			var id = new NodeId {
 				Id = _root.Nodes.Count,
 				Root = _root
 			};
-			_root.Nodes.Add (node);
+			_root.Nodes.Add(node);
 
 			// children that are primitives get put in a mesh
 			GameObject[] primitives, nonPrimitives;
-			FilterPrimitives (nodeTransform, out primitives, out nonPrimitives);
-			if (primitives.Length > 0) {
-				node.Mesh = ExportMesh (nodeTransform.name, primitives);
+			FilterPrimitives(nodeTransform, out primitives, out nonPrimitives);
+			if (primitives.Length > 0)
+			{
+				node.Mesh = ExportMesh(nodeTransform.name, primitives);
 
 				// associate unity meshes with gltf mesh id
-				foreach (var prim in primitives) {
-					var filter = prim.GetComponent<MeshFilter> ();
-					var renderer = prim.GetComponent<MeshRenderer> ();
-					_primOwner [new PrimKey { Mesh = filter.sharedMesh, Material = renderer.sharedMaterial }] = node.Mesh;
+				foreach (var prim in primitives)
+				{
+					var filter = prim.GetComponent<MeshFilter>();
+					var renderer = prim.GetComponent<MeshRenderer>();
+					_primOwner[new PrimKey {Mesh = filter.sharedMesh, Material = renderer.sharedMaterial}] = node.Mesh;
 				}
 			}
 
 			// children that are not primitives get added as child nodes
-			if (nonPrimitives.Length > 0) {
-				node.Children = new List<NodeId> (nonPrimitives.Length);
-				foreach (var child in nonPrimitives) {
-					node.Children.Add (ExportNode (child.transform));
+			if (nonPrimitives.Length > 0)
+			{
+				node.Children = new List<NodeId>(nonPrimitives.Length);
+				foreach(var child in nonPrimitives)
+				{
+					node.Children.Add(ExportNode(child.transform));
 				}
 			}
 
 			return id;
 		}
 
-		private void FilterPrimitives (Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
+		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
 		{
 			var childCount = transform.childCount;
-			var prims = new List<GameObject> (childCount + 1);
-			var nonPrims = new List<GameObject> (childCount);
+			var prims = new List<GameObject>(childCount+1);
+			var nonPrims = new List<GameObject>(childCount);
 
 			// add another primitive if the root object also has a mesh
-			if (transform.gameObject.GetComponent<MeshFilter> () != null
-			    && transform.gameObject.GetComponent<MeshRenderer> () != null) {
-				prims.Add (transform.gameObject);
+			if (transform.gameObject.GetComponent<MeshFilter>() != null
+				&& transform.gameObject.GetComponent<MeshRenderer>() != null)
+			{
+				prims.Add(transform.gameObject);
 			}
 
-			for (var i = 0; i < childCount; i++) {
-				var go = transform.GetChild (i).gameObject;
-				if (IsPrimitive (go))
-					prims.Add (go);
+			for (var i = 0; i < childCount; i++)
+			{
+				var go = transform.GetChild(i).gameObject;
+				if (IsPrimitive(go))
+					prims.Add(go);
 				else
-					nonPrims.Add (go);
+					nonPrims.Add(go);
 			}
 
-			primitives = prims.ToArray ();
-			nonPrimitives = nonPrims.ToArray ();
+			primitives = prims.ToArray();
+			nonPrimitives = nonPrims.ToArray();
 		}
 
-		private static bool IsPrimitive (GameObject gameObject)
+		private static bool IsPrimitive(GameObject gameObject)
 		{
 			/*
 			 * Primitives have the following properties:
@@ -303,76 +310,86 @@ namespace UnityGLTF
 			 * - have MeshFilter and MeshRenderer components
 			 */
 			return gameObject.transform.childCount == 0
-			&& gameObject.transform.localPosition == Vector3.zero
-			&& gameObject.transform.localRotation == Quaternion.identity
-			&& gameObject.transform.localScale == Vector3.one
-			&& gameObject.GetComponent<MeshFilter> () != null
-			&& gameObject.GetComponent<MeshRenderer> () != null;
+				&& gameObject.transform.localPosition == Vector3.zero
+				&& gameObject.transform.localRotation == Quaternion.identity
+				&& gameObject.transform.localScale == Vector3.one
+				&& gameObject.GetComponent<MeshFilter>() != null
+				&& gameObject.GetComponent<MeshRenderer>() != null;
 		}
 
-		private MeshId ExportMesh (string name, GameObject[] primitives)
+		private MeshId ExportMesh(string name, GameObject[] primitives)
 		{
 			// check if this set of primitives is already a mesh
 			MeshId existingMeshId = null;
-			var key = new PrimKey ();
-			foreach (var prim in primitives) {
-				var filter = prim.GetComponent<MeshFilter> ();
-				var renderer = prim.GetComponent<MeshRenderer> ();
+			var key = new PrimKey();
+			foreach (var prim in primitives)
+			{
+				var filter = prim.GetComponent<MeshFilter>();
+				var renderer = prim.GetComponent<MeshRenderer>();
 				key.Mesh = filter.sharedMesh;
 				key.Material = renderer.sharedMaterial;
 
 				MeshId tempMeshId;
-				if (_primOwner.TryGetValue (key, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId)) {
+				if (_primOwner.TryGetValue(key, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
+				{
 					existingMeshId = tempMeshId;
-				} else {
+				}
+				else
+				{
 					existingMeshId = null;
 					break;
 				}
 			}
 
 			// if so, return that mesh id
-			if (existingMeshId != null)
+			if(existingMeshId != null)
 				return existingMeshId;
 
 			// if not, create new mesh and return its id
-			var mesh = new GLTF.Schema.Mesh ();
+			var mesh = new GLTF.Schema.Mesh();
 
-			if (ExportNames) {
+			if (ExportNames)
+			{
 				mesh.Name = name;
 			}
 
-			mesh.Primitives = new List<MeshPrimitive> (primitives.Length);
-			foreach (var prim in primitives) {
-				mesh.Primitives.AddRange (ExportPrimitive (prim));
+			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
+			foreach (var prim in primitives)
+			{
+				mesh.Primitives.AddRange(ExportPrimitive(prim));
 			}
 
-			var id = new MeshId {
+			var id = new MeshId
+			{
 				Id = _root.Meshes.Count,
 				Root = _root
 			};
-			_root.Meshes.Add (mesh);
+			_root.Meshes.Add(mesh);
 
 			return id;
 		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
-		private MeshPrimitive[] ExportPrimitive (GameObject gameObject)
+		private MeshPrimitive[] ExportPrimitive(GameObject gameObject)
 		{
-			var filter = gameObject.GetComponent<MeshFilter> ();
+			var filter = gameObject.GetComponent<MeshFilter>();
 			var meshObj = filter.sharedMesh;
 
-			var renderer = gameObject.GetComponent<MeshRenderer> ();
+			var renderer = gameObject.GetComponent<MeshRenderer>();
 			var materialsObj = renderer.sharedMaterials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
 
 			// don't export any more accessors if this mesh is already exported
 			MeshPrimitive[] primVariations;
-			if (_meshToPrims.TryGetValue (meshObj, out primVariations)
-			    && meshObj.subMeshCount == primVariations.Length) {
-				for (var i = 0; i < primVariations.Length; i++) {
-					prims [i] = new MeshPrimitive (primVariations [i], _root) {
-						Material = ExportMaterial (materialsObj [i])
+			if (_meshToPrims.TryGetValue(meshObj, out primVariations)
+				&& meshObj.subMeshCount == primVariations.Length)
+			{
+				for (var i = 0; i < primVariations.Length; i++)
+				{
+					prims[i] = new MeshPrimitive(primVariations[i], _root)
+					{
+						Material = ExportMaterial(materialsObj[i])
 					};
 				}
 
@@ -380,139 +397,157 @@ namespace UnityGLTF
 			}
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
-			aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
+				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
-			aPosition = ExportAccessor (SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy (meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
+			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
 			if (meshObj.normals.Length != 0)
-				aNormal = ExportAccessor (SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy (meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
+				aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
 
 			if (meshObj.tangents.Length != 0)
-				aTangent = ExportAccessor (SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy (meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
+				aTangent = ExportAccessor(SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
 
 			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor (SchemaExtensions.FlipTexCoordArrayVAndCopy (meshObj.uv));
+				aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
 
 			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor (SchemaExtensions.FlipTexCoordArrayVAndCopy (meshObj.uv2));
+				aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
 
 			if (meshObj.colors.Length != 0)
-				aColor0 = ExportAccessor (meshObj.colors);
+				aColor0 = ExportAccessor(meshObj.colors);
 
 			MaterialId lastMaterialId = null;
 
-			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++) {
-				var primitive = new MeshPrimitive ();
+			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
+			{
+				var primitive = new MeshPrimitive();
 				
-				var triangles = meshObj.GetTriangles (submesh);
-				primitive.Indices = ExportAccessor (SchemaExtensions.FlipFacesAndCopy (triangles), true);
+				var triangles = meshObj.GetTriangles(submesh);
+				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(triangles), true);
 
-				primitive.Attributes = new Dictionary<string, AccessorId> ();
-				primitive.Attributes.Add (SemanticProperties.POSITION, aPosition);
+				primitive.Attributes = new Dictionary<string, AccessorId>();
+				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
 
 				if (aNormal != null)
-					primitive.Attributes.Add (SemanticProperties.NORMAL, aNormal);
+					primitive.Attributes.Add(SemanticProperties.NORMAL, aNormal);
 				if (aTangent != null)
-					primitive.Attributes.Add (SemanticProperties.TANGENT, aTangent);
+					primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
 				if (aTexcoord0 != null)
-					primitive.Attributes.Add (SemanticProperties.TexCoord (0), aTexcoord0);
+					primitive.Attributes.Add(SemanticProperties.TexCoord(0), aTexcoord0);
 				if (aTexcoord1 != null)
-					primitive.Attributes.Add (SemanticProperties.TexCoord (1), aTexcoord1);
+					primitive.Attributes.Add(SemanticProperties.TexCoord(1), aTexcoord1);
 				if (aColor0 != null)
-					primitive.Attributes.Add (SemanticProperties.Color (0), aColor0);
+					primitive.Attributes.Add(SemanticProperties.Color(0), aColor0);
 
-				if (submesh < materialsObj.Length) {
-					primitive.Material = ExportMaterial (materialsObj [submesh]);
+				if (submesh < materialsObj.Length)
+				{
+					primitive.Material = ExportMaterial(materialsObj[submesh]);
 					lastMaterialId = primitive.Material;
-				} else {
+				}
+				else
+				{
 					primitive.Material = lastMaterialId;
 				}
 
-				prims [submesh] = primitive;
+				prims[submesh] = primitive;
 			}
 
-			_meshToPrims [meshObj] = prims;
+			_meshToPrims[meshObj] = prims;
 
 			return prims;
 		}
 
-		private MaterialId ExportMaterial (UnityEngine.Material materialObj)
+		private MaterialId ExportMaterial(UnityEngine.Material materialObj)
 		{
-			MaterialId id = GetMaterialId (_root, materialObj);
-			if (id != null) {
+			MaterialId id = GetMaterialId(_root, materialObj);
+			if (id != null)
+			{
 				return id;
 			}
 
-			var material = new GLTF.Schema.Material ();
+			var material = new GLTF.Schema.Material();
 
-			if (ExportNames) {
+			if (ExportNames)
+			{
 				material.Name = materialObj.name;
 			}
 
-			if (materialObj.HasProperty ("_Cutoff")) {
-				material.AlphaCutoff = materialObj.GetFloat ("_Cutoff");
+			if (materialObj.HasProperty("_Cutoff"))
+			{
+				material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
 			}
 
-			switch (materialObj.GetTag ("RenderType", false, "")) {
-			case "TransparentCutout":
-				material.AlphaMode = AlphaMode.MASK;
-				break;
-			case "Transparent":
-				material.AlphaMode = AlphaMode.BLEND;
-				break;
-			default:
-				material.AlphaMode = AlphaMode.OPAQUE;
-				break;
+			switch (materialObj.GetTag("RenderType", false, ""))
+			{
+				case "TransparentCutout":
+					material.AlphaMode = AlphaMode.MASK;
+					break;
+				case "Transparent":
+					material.AlphaMode = AlphaMode.BLEND;
+					break;
+				default:
+					material.AlphaMode = AlphaMode.OPAQUE;
+					break;
 			}
 
-			material.DoubleSided = materialObj.HasProperty ("_Cull") &&
-			materialObj.GetInt ("_Cull") == (float)UnityEngine.Rendering.CullMode.Off;
+			material.DoubleSided = materialObj.HasProperty("_Cull") &&
+				materialObj.GetInt("_Cull") == (float)UnityEngine.Rendering.CullMode.Off;
 
-			if (materialObj.HasProperty ("_EmissionColor")) {
-				material.EmissiveFactor = materialObj.GetColor ("_EmissionColor").ToNumericsColorRaw ();
+			if (materialObj.HasProperty("_EmissionColor"))
+			{
+				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
 			}
 
-			if (materialObj.HasProperty ("_EmissionMap")) {
-				var emissionTex = materialObj.GetTexture ("_EmissionMap");
+			if (materialObj.HasProperty("_EmissionMap"))
+			{
+				var emissionTex = materialObj.GetTexture("_EmissionMap");
 
-				if (emissionTex != null) {
-					material.EmissiveTexture = ExportTextureInfo (emissionTex, TextureMapType.Emission);
+				if (emissionTex != null)
+				{
+					material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
 
-					ExportTextureTransform (material.EmissiveTexture, materialObj, "_EmissionMap");
+					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
 
 				}
 			}
 
-			if (materialObj.HasProperty ("_BumpMap")) {
-				var normalTex = materialObj.GetTexture ("_BumpMap");
+			if (materialObj.HasProperty("_BumpMap"))
+			{
+				var normalTex = materialObj.GetTexture("_BumpMap");
 
-				if (normalTex != null) {
-					material.NormalTexture = ExportNormalTextureInfo (normalTex, TextureMapType.Bump, materialObj);
-					ExportTextureTransform (material.NormalTexture, materialObj, "_BumpMap");
+				if (normalTex != null)
+				{
+					material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
+					ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
 				}
 			}
 
-			if (materialObj.HasProperty ("_OcclusionMap")) {
-				var occTex = materialObj.GetTexture ("_OcclusionMap");
-				if (occTex != null) {
-					material.OcclusionTexture = ExportOcclusionTextureInfo (occTex, TextureMapType.Occlusion, materialObj);
-					ExportTextureTransform (material.OcclusionTexture, materialObj, "_OcclusionMap");
+			if (materialObj.HasProperty("_OcclusionMap"))
+			{
+				var occTex = materialObj.GetTexture("_OcclusionMap");
+				if (occTex != null)
+				{
+					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
+					ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
 				}
 			}
 
-			if (IsPBRMetallicRoughness (materialObj)) {
+			if (IsPBRMetallicRoughness (materialObj)) 
+			{
 				material.PbrMetallicRoughness = ExportPBRMetallicRoughness (materialObj);
-			} else if (IsCommonConstant (materialObj)) {
+			} 
+			else if (IsCommonConstant (materialObj)) 
+			{
 				material.CommonConstant = ExportCommonConstant (materialObj);
 			}
 
-			_materials.Add (materialObj);
+			_materials.Add(materialObj);
 
 			id = new MaterialId {
 				Id = _root.Materials.Count,
 				Root = _root
 			};
-			_root.Materials.Add (material);
+			_root.Materials.Add(material);
 
 			return id;
 		}
@@ -529,28 +564,30 @@ namespace UnityGLTF
 			material.HasProperty ("_LightFactor");
 		}
 
-		private void ExportTextureTransform (TextureInfo def, UnityEngine.Material mat, string texName)
+		private void ExportTextureTransform(TextureInfo def, UnityEngine.Material mat, string texName)
 		{
-			Vector2 offset = mat.GetTextureOffset (texName);
-			Vector2 scale = mat.GetTextureScale (texName);
+			Vector2 offset = mat.GetTextureOffset(texName);
+			Vector2 scale = mat.GetTextureScale(texName);
 
-			if (offset == Vector2.zero && scale == Vector2.one)
-				return;
+			if (offset == Vector2.zero && scale == Vector2.one) return;
 
-			if (_root.ExtensionsUsed == null) {
-				_root.ExtensionsUsed = new List<string> (
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(
 					new string[] { ExtTextureTransformExtensionFactory.EXTENSION_NAME }
 				);
-			} else if (!_root.ExtensionsUsed.Contains (ExtTextureTransformExtensionFactory.EXTENSION_NAME)) {
-				_root.ExtensionsUsed.Add (ExtTextureTransformExtensionFactory.EXTENSION_NAME);
+			}
+			else if (!_root.ExtensionsUsed.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+			{
+				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
 			}
 
 			if (def.Extensions == null)
-				def.Extensions = new Dictionary<string, IExtension> ();
+				def.Extensions = new Dictionary<string, IExtension>();
 
-			def.Extensions [ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension (
-				new GLTF.Math.Vector2 (offset.x, -offset.y),
-				new GLTF.Math.Vector2 (scale.x, scale.y),
+			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
+				new GLTF.Math.Vector2(offset.x, -offset.y),
+				new GLTF.Math.Vector2(scale.x, scale.y),
 				0 // TODO: support UV channels
 			);
 		}
@@ -587,137 +624,158 @@ namespace UnityGLTF
 			return info;
 		}
 
-		private PbrMetallicRoughness ExportPBRMetallicRoughness (UnityEngine.Material material)
+		private PbrMetallicRoughness ExportPBRMetallicRoughness(UnityEngine.Material material)
 		{
-			var pbr = new PbrMetallicRoughness ();
+			var pbr = new PbrMetallicRoughness();
 
-			if (material.HasProperty ("_Color")) {
-				pbr.BaseColorFactor = material.GetColor ("_Color").ToNumericsColorRaw ();
+			if (material.HasProperty("_Color"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorRaw();
 			}
 
-			if (material.HasProperty ("_MainTex")) {
-				var mainTex = material.GetTexture ("_MainTex");
+			if (material.HasProperty("_MainTex"))
+			{
+				var mainTex = material.GetTexture("_MainTex");
 
-				if (mainTex != null) {
-					pbr.BaseColorTexture = ExportTextureInfo (mainTex, TextureMapType.Main);
-					ExportTextureTransform (pbr.BaseColorTexture, material, "_MainTex");
+				if (mainTex != null)
+				{
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
 
-			if (material.HasProperty ("_Metallic")) {
+			if (material.HasProperty ("_Metallic")) 
+			{
 				var metallicGlossMap = material.GetTexture ("_MetallicGlossMap");
 				pbr.MetallicFactor = (metallicGlossMap != null) ? 1.0 : material.GetFloat ("_Metallic");
 			}
 
-			if (material.HasProperty ("_Glossiness")) {
+			if (material.HasProperty ("_Glossiness")) 
+			{
 				var metallicGlossMap = material.GetTexture ("_MetallicGlossMap");
 				pbr.RoughnessFactor = (metallicGlossMap != null) ? 1.0 : material.GetFloat ("_Glossiness");
 			}
 
-			if (material.HasProperty ("_MetallicGlossMap")) {
-				var mrTex = material.GetTexture ("_MetallicGlossMap");
+			if (material.HasProperty("_MetallicGlossMap"))
+			{
+				var mrTex = material.GetTexture("_MetallicGlossMap");
 
-				if (mrTex != null) {
-					pbr.MetallicRoughnessTexture = ExportTextureInfo (mrTex, TextureMapType.MetallicGloss);
-					ExportTextureTransform (pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+				if (mrTex != null)
+				{
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 				}
-			} else if (material.HasProperty ("_SpecGlossMap")) {
-				var mgTex = material.GetTexture ("_SpecGlossMap");
+			}
+			else if (material.HasProperty("_SpecGlossMap"))
+			{
+				var mgTex = material.GetTexture("_SpecGlossMap");
 
-				if (mgTex != null) {
-					pbr.MetallicRoughnessTexture = ExportTextureInfo (mgTex, TextureMapType.SpecGloss);
-					ExportTextureTransform (pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+				if (mgTex != null)
+				{
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
 				}
 			}
 
 			return pbr;
 		}
 
-		private MaterialCommonConstant ExportCommonConstant (UnityEngine.Material materialObj)
+		private MaterialCommonConstant ExportCommonConstant(UnityEngine.Material materialObj)
 		{
-			if (_root.ExtensionsUsed == null) {
-				_root.ExtensionsUsed = new List<string> (new string[] { "KHR_materials_common" });
-			} else if (!_root.ExtensionsUsed.Contains ("KHR_materials_common"))
-				_root.ExtensionsUsed.Add ("KHR_materials_common");
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(new string[] { "KHR_materials_common" });
+			}
+			else if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+				_root.ExtensionsUsed.Add("KHR_materials_common");
 
-			var constant = new MaterialCommonConstant ();
+			var constant = new MaterialCommonConstant();
 
-			if (materialObj.HasProperty ("_AmbientFactor")) {
-				constant.AmbientFactor = materialObj.GetColor ("_AmbientFactor").ToNumericsColorRaw ();
+			if (materialObj.HasProperty("_AmbientFactor"))
+			{
+				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor").ToNumericsColorRaw();
 			}
 
-			if (materialObj.HasProperty ("_LightMap")) {
-				var lmTex = materialObj.GetTexture ("_LightMap");
+			if (materialObj.HasProperty("_LightMap"))
+			{
+				var lmTex = materialObj.GetTexture("_LightMap");
 
-				if (lmTex != null) {
-					constant.LightmapTexture = ExportTextureInfo (lmTex, TextureMapType.Light);
-					ExportTextureTransform (constant.LightmapTexture, materialObj, "_LightMap");
+				if (lmTex != null)
+				{
+					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
+					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
 				}
 					
 			}
 
-			if (materialObj.HasProperty ("_LightFactor")) {
-				constant.LightmapFactor = materialObj.GetColor ("_LightFactor").ToNumericsColorRaw ();
+			if (materialObj.HasProperty("_LightFactor"))
+			{
+				constant.LightmapFactor = materialObj.GetColor("_LightFactor").ToNumericsColorRaw();
 			}
 
 			return constant;
 		}
 
-		private TextureInfo ExportTextureInfo (UnityEngine.Texture texture, TextureMapType textureMapType)
+		private TextureInfo ExportTextureInfo(UnityEngine.Texture texture, TextureMapType textureMapType)
 		{
-			var info = new TextureInfo ();
+			var info = new TextureInfo();
 
-			info.Index = ExportTexture (texture, textureMapType);
+			info.Index = ExportTexture(texture, textureMapType);
 
 			return info;
 		}
 
-		private TextureId ExportTexture (UnityEngine.Texture textureObj, TextureMapType textureMapType)
+		private TextureId ExportTexture(UnityEngine.Texture textureObj, TextureMapType textureMapType)
 		{
-			TextureId id = GetTextureId (_root, textureObj);
-			if (id != null) {
+			TextureId id = GetTextureId(_root, textureObj);
+			if (id != null)
+			{
 				return id;
 			}
 
-			var texture = new GLTF.Schema.Texture ();
+			var texture = new GLTF.Schema.Texture();
 
 			//If texture name not set give it a unique name using count
-			if (textureObj.name == "") {
-				textureObj.name = (_root.Textures.Count + 1).ToString ();
+			if (textureObj.name == "")
+			{
+				textureObj.name = (_root.Textures.Count + 1).ToString();
 			}
 
-			if (ExportNames) {
+			if (ExportNames)
+			{
 				texture.Name = textureObj.name;
 			}
 
-			texture.Source = ExportImage (textureObj, textureMapType);
-			texture.Sampler = ExportSampler (textureObj);
+			texture.Source = ExportImage(textureObj, textureMapType);
+			texture.Sampler = ExportSampler(textureObj);
 
-			_textures.Add (textureObj);
+			_textures.Add(textureObj);
 
 			id = new TextureId {
 				Id = _root.Textures.Count,
 				Root = _root
 			};
 
-			_root.Textures.Add (texture);
+			_root.Textures.Add(texture);
 
 			return id;
 		}
 
-		private ImageId ExportImage (UnityEngine.Texture texture, TextureMapType texturMapType)
+		private ImageId ExportImage(UnityEngine.Texture texture, TextureMapType texturMapType)
 		{
-			ImageId id = GetImageId (_root, texture);
-			if (id != null) {
+			ImageId id = GetImageId(_root, texture);
+			if(id != null)
+			{
 				return id;
 			}
 
-			var image = new Image ();
+			var image = new Image();
 
-			if (ExportNames) {
+			if (ExportNames)
+			{
 				image.Name = texture.name;
 			}
-           
+
 			_imageInfos.Add (new ImageInfo {
 				texture = texture as Texture2D,
 				textureMapType = texturMapType
@@ -725,118 +783,142 @@ namespace UnityGLTF
 
 			var path = UnityEditor.AssetDatabase.GetAssetPath (texture);
 			var newPath = Path.ChangeExtension (path, ".png");
-			image.Uri = Uri.EscapeUriString (newPath);
+			image.Uri = Uri.EscapeUriString(newPath);
 
 			id = new ImageId {
 				Id = _root.Images.Count,
 				Root = _root
 			};
 
-			_root.Images.Add (image);
+			_root.Images.Add(image);
 
 			return id;
 		}
 
-		private SamplerId ExportSampler (UnityEngine.Texture texture)
+		private SamplerId ExportSampler(UnityEngine.Texture texture)
 		{
-			var samplerId = GetSamplerId (_root, texture);
+			var samplerId = GetSamplerId(_root, texture);
 			if (samplerId != null)
 				return samplerId;
 
-			var sampler = new Sampler ();
+			var sampler = new Sampler();
 
-			if (texture.wrapMode == TextureWrapMode.Clamp) {
+			if (texture.wrapMode == TextureWrapMode.Clamp)
+			{
 				sampler.WrapS = GLTF.Schema.WrapMode.ClampToEdge;
 				sampler.WrapT = GLTF.Schema.WrapMode.ClampToEdge;
-			} else {
+			}
+			else
+			{
 				sampler.WrapS = GLTF.Schema.WrapMode.Repeat;
 				sampler.WrapT = GLTF.Schema.WrapMode.Repeat;
 			}
 
-			if (texture.filterMode == FilterMode.Point) {
+			if(texture.filterMode == FilterMode.Point)
+			{
 				sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
 				sampler.MagFilter = MagFilterMode.Nearest;
-			} else if (texture.filterMode == FilterMode.Bilinear) {
+			}
+			else if(texture.filterMode == FilterMode.Bilinear)
+			{
 				sampler.MinFilter = MinFilterMode.NearestMipmapLinear;
 				sampler.MagFilter = MagFilterMode.Linear;
-			} else {
+			}
+			else
+			{
 				sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
 				sampler.MagFilter = MagFilterMode.Linear;
 			}
 
-			samplerId = new SamplerId {
+			samplerId = new SamplerId
+			{
 				Id = _root.Samplers.Count,
 				Root = _root
 			};
 
-			_root.Samplers.Add (sampler);
+			_root.Samplers.Add(sampler);
 
 			return samplerId;
 		}
 
-		private AccessorId ExportAccessor (int[] arr, bool isIndices = false)
+		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
 			var count = arr.Length;
 
-			if (count == 0) {
-				throw new Exception ("Accessors can not have a count of 0.");
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new Accessor ();
+			var accessor = new Accessor();
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.SCALAR;
 
-			int min = arr [0];
-			int max = arr [0];
+			int min = arr[0];
+			int max = arr[0];
 
-			for (var i = 1; i < count; i++) {
-				var cur = arr [i];
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
 
-				if (cur < min) {
+				if (cur < min)
+				{
 					min = cur;
 				}
-				if (cur > max) {
+				if (cur > max)
+				{
 					max = cur;
 				}
 			}
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			if (max <= byte.MaxValue && min >= byte.MinValue) {
+			if (max <= byte.MaxValue && min >= byte.MinValue)
+			{
 				accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
 				foreach (var v in arr) {
-					_bufferWriter.Write ((byte)v);
+					_bufferWriter.Write((byte)v);
 				}
-			} else if (max <= sbyte.MaxValue && min >= sbyte.MinValue && !isIndices) {
+			}
+			else if (max <= sbyte.MaxValue && min >= sbyte.MinValue && !isIndices)
+			{
 				accessor.ComponentType = GLTFComponentType.Byte;
 
 				foreach (var v in arr) {
-					_bufferWriter.Write ((sbyte)v);
+					_bufferWriter.Write((sbyte)v);
 				}
-			} else if (max <= short.MaxValue && min >= short.MinValue && !isIndices) {
+			}
+			else if (max <= short.MaxValue && min >= short.MinValue && !isIndices)
+			{
 				accessor.ComponentType = GLTFComponentType.Short;
 
 				foreach (var v in arr) {
-					_bufferWriter.Write ((short)v);
+					_bufferWriter.Write((short)v);
 				}
-			} else if (max <= ushort.MaxValue && min >= ushort.MinValue) {
+			}
+			else if (max <= ushort.MaxValue && min >= ushort.MinValue)
+			{
 				accessor.ComponentType = GLTFComponentType.UnsignedShort;
 
 				foreach (var v in arr) {
-					_bufferWriter.Write ((ushort)v);
+					_bufferWriter.Write((ushort)v);
 				}
-			} else if (min >= uint.MinValue) {
+			}
+			else if (min >= uint.MinValue)
+			{
 				accessor.ComponentType = GLTFComponentType.UnsignedInt;
 
 				foreach (var v in arr) {
-					_bufferWriter.Write ((uint)v);
+					_bufferWriter.Write((uint)v);
 				}
-			} else {
+			}
+			else
+			{
 				accessor.ComponentType = GLTFComponentType.Float;
 
 				foreach (var v in arr) {
-					_bufferWriter.Write ((float)v);
+					_bufferWriter.Write((float)v);
 				}
 			}
 
@@ -845,48 +927,54 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView ((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
-			_root.Accessors.Add (accessor);
+			_root.Accessors.Add(accessor);
 
 			return id;
 		}
 
-		private AccessorId ExportAccessor (Vector2[] arr)
+		private AccessorId ExportAccessor(Vector2[] arr)
 		{
 			var count = arr.Length;
 
-			if (count == 0) {
-				throw new Exception ("Accessors can not have a count of 0.");
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new Accessor ();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC2;
 
-			float minX = arr [0].x;
-			float minY = arr [0].y;
-			float maxX = arr [0].x;
-			float maxY = arr [0].y;
+			float minX = arr[0].x;
+			float minY = arr[0].y;
+			float maxX = arr[0].x;
+			float maxY = arr[0].y;
 
-			for (var i = 1; i < count; i++) {
-				var cur = arr [i];
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
 
-				if (cur.x < minX) {
+				if (cur.x < minX)
+				{
 					minX = cur.x;
 				}
-				if (cur.y < minY) {
+				if (cur.y < minY)
+				{
 					minY = cur.y;
 				}
-				if (cur.x > maxX) {
+				if (cur.x > maxX)
+				{
 					maxX = cur.x;
 				}
-				if (cur.y > maxY) {
+				if (cur.y > maxY)
+				{
 					maxY = cur.y;
 				}
 			}
@@ -897,62 +985,70 @@ namespace UnityGLTF
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
 			foreach (var vec in arr) {
-				_bufferWriter.Write (vec.x);
-				_bufferWriter.Write (vec.y);
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView ((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
-			_root.Accessors.Add (accessor);
+			_root.Accessors.Add(accessor);
 
 			return id;
 		}
 
-		private AccessorId ExportAccessor (Vector3[] arr)
+		private AccessorId ExportAccessor(Vector3[] arr)
 		{
 			var count = arr.Length;
 
-			if (count == 0) {
-				throw new Exception ("Accessors can not have a count of 0.");
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new Accessor ();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC3;
 
-			float minX = arr [0].x;
-			float minY = arr [0].y;
-			float minZ = arr [0].z;
-			float maxX = arr [0].x;
-			float maxY = arr [0].y;
-			float maxZ = arr [0].z;
+			float minX = arr[0].x;
+			float minY = arr[0].y;
+			float minZ = arr[0].z;
+			float maxX = arr[0].x;
+			float maxY = arr[0].y;
+			float maxZ = arr[0].z;
 
-			for (var i = 1; i < count; i++) {
-				var cur = arr [i];
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
 
-				if (cur.x < minX) {
+				if (cur.x < minX)
+				{
 					minX = cur.x;
 				}
-				if (cur.y < minY) {
+				if (cur.y < minY)
+				{
 					minY = cur.y;
 				}
-				if (cur.z < minZ) {
+				if (cur.z < minZ)
+				{
 					minZ = cur.z;
 				}
-				if (cur.x > maxX) {
+				if (cur.x > maxX)
+				{
 					maxX = cur.x;
 				}
-				if (cur.y > maxY) {
+				if (cur.y > maxY)
+				{
 					maxY = cur.y;
 				}
-				if (cur.z > maxZ) {
+				if (cur.z > maxZ)
+				{
 					maxZ = cur.z;
 				}
 			}
@@ -963,71 +1059,81 @@ namespace UnityGLTF
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
 			foreach (var vec in arr) {
-				_bufferWriter.Write (vec.x);
-				_bufferWriter.Write (vec.y);
-				_bufferWriter.Write (vec.z);
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView ((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
-			_root.Accessors.Add (accessor);
+			_root.Accessors.Add(accessor);
 
 			return id;
 		}
 
-		private AccessorId ExportAccessor (Vector4[] arr)
+		private AccessorId ExportAccessor(Vector4[] arr)
 		{
 			var count = arr.Length;
 
-			if (count == 0) {
-				throw new Exception ("Accessors can not have a count of 0.");
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new Accessor ();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
-			float minX = arr [0].x;
-			float minY = arr [0].y;
-			float minZ = arr [0].z;
-			float minW = arr [0].w;
-			float maxX = arr [0].x;
-			float maxY = arr [0].y;
-			float maxZ = arr [0].z;
-			float maxW = arr [0].w;
+			float minX = arr[0].x;
+			float minY = arr[0].y;
+			float minZ = arr[0].z;
+			float minW = arr[0].w;
+			float maxX = arr[0].x;
+			float maxY = arr[0].y;
+			float maxZ = arr[0].z;
+			float maxW = arr[0].w;
 
-			for (var i = 1; i < count; i++) {
-				var cur = arr [i];
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
 
-				if (cur.x < minX) {
+				if (cur.x < minX)
+				{
 					minX = cur.x;
 				}
-				if (cur.y < minY) {
+				if (cur.y < minY)
+				{
 					minY = cur.y;
 				}
-				if (cur.z < minZ) {
+				if (cur.z < minZ)
+				{
 					minZ = cur.z;
 				}
-				if (cur.w < minW) {
+				if (cur.w < minW)
+				{
 					minW = cur.w;
 				}
-				if (cur.x > maxX) {
+				if (cur.x > maxX)
+				{
 					maxX = cur.x;
 				}
-				if (cur.y > maxY) {
+				if (cur.y > maxY)
+				{
 					maxY = cur.y;
 				}
-				if (cur.z > maxZ) {
+				if (cur.z > maxZ)
+				{
 					maxZ = cur.z;
 				}
-				if (cur.w > maxW) {
+				if (cur.w > maxW)
+				{
 					maxW = cur.w;
 				}
 			}
@@ -1038,72 +1144,82 @@ namespace UnityGLTF
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
 			foreach (var vec in arr) {
-				_bufferWriter.Write (vec.x);
-				_bufferWriter.Write (vec.y);
-				_bufferWriter.Write (vec.z);
-				_bufferWriter.Write (vec.w);
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
+				_bufferWriter.Write(vec.w);
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView ((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
-			_root.Accessors.Add (accessor);
+			_root.Accessors.Add(accessor);
 
 			return id;
 		}
 
-		private AccessorId ExportAccessor (UnityEngine.Color[] arr)
+		private AccessorId ExportAccessor(UnityEngine.Color[] arr)
 		{
 			var count = arr.Length;
 
-			if (count == 0) {
-				throw new Exception ("Accessors can not have a count of 0.");
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
 			}
 
-			var accessor = new Accessor ();
+			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
-			float minR = arr [0].r;
-			float minG = arr [0].g;
-			float minB = arr [0].b;
-			float minA = arr [0].a;
-			float maxR = arr [0].r;
-			float maxG = arr [0].g;
-			float maxB = arr [0].b;
-			float maxA = arr [0].a;
+			float minR = arr[0].r;
+			float minG = arr[0].g;
+			float minB = arr[0].b;
+			float minA = arr[0].a;
+			float maxR = arr[0].r;
+			float maxG = arr[0].g;
+			float maxB = arr[0].b;
+			float maxA = arr[0].a;
 
-			for (var i = 1; i < count; i++) {
-				var cur = arr [i];
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
 
-				if (cur.r < minR) {
+				if (cur.r < minR)
+				{
 					minR = cur.r;
 				}
-				if (cur.g < minG) {
+				if (cur.g < minG)
+				{
 					minG = cur.g;
 				}
-				if (cur.b < minB) {
+				if (cur.b < minB)
+				{
 					minB = cur.b;
 				}
-				if (cur.a < minA) {
+				if (cur.a < minA)
+				{
 					minA = cur.a;
 				}
-				if (cur.r > maxR) {
+				if (cur.r > maxR)
+				{
 					maxR = cur.r;
 				}
-				if (cur.g > maxG) {
+				if (cur.g > maxG)
+				{
 					maxG = cur.g;
 				}
-				if (cur.b > maxB) {
+				if (cur.b > maxB)
+				{
 					maxB = cur.b;
 				}
-				if (cur.a > maxA) {
+				if (cur.a > maxA)
+				{
 					maxA = cur.a;
 				}
 			}
@@ -1114,26 +1230,26 @@ namespace UnityGLTF
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
 			foreach (var color in arr) {
-				_bufferWriter.Write (color.r);
-				_bufferWriter.Write (color.g);
-				_bufferWriter.Write (color.b);
-				_bufferWriter.Write (color.a);
+				_bufferWriter.Write(color.r);
+				_bufferWriter.Write(color.g);
+				_bufferWriter.Write(color.b);
+				_bufferWriter.Write(color.a);
 			}
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView ((int)byteOffset, (int)byteLength);
+			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
-			_root.Accessors.Add (accessor);
+			_root.Accessors.Add(accessor);
 
 			return id;
 		}
 
-		private BufferViewId ExportBufferView (int byteOffset, int byteLength)
+		private BufferViewId ExportBufferView(int byteOffset, int byteLength)
 		{
 			var bufferView = new BufferView {
 				Buffer = _bufferId,
@@ -1146,16 +1262,19 @@ namespace UnityGLTF
 				Root = _root
 			};
 
-			_root.BufferViews.Add (bufferView);
+			_root.BufferViews.Add(bufferView);
 
 			return id;
 		}
 
-		public MaterialId GetMaterialId (GLTFRoot root, UnityEngine.Material materialObj)
+		public MaterialId GetMaterialId(GLTFRoot root, UnityEngine.Material materialObj)
 		{
-			for (var i = 0; i < _materials.Count; i++) {
-				if (_materials [i] == materialObj) {
-					return new MaterialId {
+			for (var i = 0; i < _materials.Count; i++)
+			{
+				if (_materials[i] == materialObj)
+				{
+					return new MaterialId
+					{
 						Id = i,
 						Root = root
 					};
@@ -1165,11 +1284,14 @@ namespace UnityGLTF
 			return null;
 		}
 
-		public TextureId GetTextureId (GLTFRoot root, UnityEngine.Texture textureObj)
+		public TextureId GetTextureId(GLTFRoot root, UnityEngine.Texture textureObj)
 		{
-			for (var i = 0; i < _textures.Count; i++) {
-				if (_textures [i] == textureObj) {
-					return new TextureId {
+			for (var i = 0; i < _textures.Count; i++)
+			{
+				if (_textures[i] == textureObj)
+				{
+					return new TextureId
+					{
 						Id = i,
 						Root = root
 					};
@@ -1179,11 +1301,14 @@ namespace UnityGLTF
 			return null;
 		}
 
-		public ImageId GetImageId (GLTFRoot root, UnityEngine.Texture imageObj)
+		public ImageId GetImageId(GLTFRoot root, UnityEngine.Texture imageObj)
 		{
-			for (var i = 0; i < _imageInfos.Count; i++) {
-				if (_imageInfos [i].texture == imageObj) {
-					return new ImageId {
+			for (var i = 0; i < _imageInfos.Count; i++)
+			{
+				if (_imageInfos[i].texture == imageObj)
+				{
+					return new ImageId
+					{
 						Id = i,
 						Root = root
 					};
@@ -1193,25 +1318,28 @@ namespace UnityGLTF
 			return null;
 		}
 
-		public SamplerId GetSamplerId (GLTFRoot root, UnityEngine.Texture textureObj)
+		public SamplerId GetSamplerId(GLTFRoot root, UnityEngine.Texture textureObj)
 		{
-			for (var i = 0; i < root.Samplers.Count; i++) {
-				bool filterIsNearest = root.Samplers [i].MinFilter == MinFilterMode.Nearest
-				                       || root.Samplers [i].MinFilter == MinFilterMode.NearestMipmapNearest
-				                       || root.Samplers [i].MinFilter == MinFilterMode.LinearMipmapNearest;
+			for (var i = 0; i < root.Samplers.Count; i++)
+			{
+				bool filterIsNearest = root.Samplers[i].MinFilter == MinFilterMode.Nearest
+					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapNearest
+					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
 
-				bool filterIsLinear = root.Samplers [i].MinFilter == MinFilterMode.Linear
-				                      || root.Samplers [i].MinFilter == MinFilterMode.NearestMipmapLinear;
+				bool filterIsLinear = root.Samplers[i].MinFilter == MinFilterMode.Linear
+					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
 
 				bool filterMatched = textureObj.filterMode == FilterMode.Point && filterIsNearest
-				                     || textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
-				                     || textureObj.filterMode == FilterMode.Trilinear && root.Samplers [i].MinFilter == MinFilterMode.LinearMipmapLinear;
+					|| textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
+					|| textureObj.filterMode == FilterMode.Trilinear && root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
 
-				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers [i].WrapS == GLTF.Schema.WrapMode.ClampToEdge
-				                   || textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers [i].WrapS != GLTF.Schema.WrapMode.ClampToEdge;
+				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == GLTF.Schema.WrapMode.ClampToEdge
+					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != GLTF.Schema.WrapMode.ClampToEdge;
 
-				if (filterMatched && wrapMatched) {
-					return new SamplerId {
+				if (filterMatched && wrapMatched)
+				{
+					return new SamplerId
+					{
 						Id = i,
 						Root = root
 					};
