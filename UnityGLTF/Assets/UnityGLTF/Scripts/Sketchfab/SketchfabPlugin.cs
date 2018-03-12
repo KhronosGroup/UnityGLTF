@@ -12,7 +12,7 @@ namespace Sketchfab
 {
 	public class SketchfabPlugin : MonoBehaviour
 	{
-		public static string VERSION = "0.0.85a";
+		public static string VERSION = "1.0.0";
 
 		public struct Urls
 		{
