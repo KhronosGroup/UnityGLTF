@@ -32,6 +32,7 @@ namespace Sketchfab
 		Vector2 _scrollView = new Vector2();
 		int _categoryIndex;
 		int _sortByIndex;
+		int _polyCountIndex;
 
 		// Upload params and options
 		string[] _categoriesNames;
@@ -41,11 +42,14 @@ namespace Sketchfab
 
 		// Search parameters
 		string[] _sortBy;
+		string[] _polyCount;
 		string _query = "";
 		bool _animated = false;
 		bool _staffpicked = true;
 		string _categoryName = "";
-		string _maxFaceCount = "";
+
+		float framesSinceLastSearch = 0.0f;
+		float nbFrameSearchCooldown = 30.0f;
 
 		void OnEnable()
 		{
@@ -64,6 +68,7 @@ namespace Sketchfab
 
 				// Setup sortBy
 				_sortBy = new string[] { "Relevance", "Likes", "Views", "Recent" };
+				_polyCount = new string[] { "Any", "Up to 10k", "10k to 50k", "50k to 100k", "100k to 250k", "250k +" };
 				_sortByIndex = 3;
 				this.Repaint();
 				GL.sRGBWrite = true;
@@ -92,16 +97,21 @@ namespace Sketchfab
 					_categoriesNames = _browserManager.getCategories().ToArray();
 					this.Repaint();
 				}
-				if (_browserManager.getResults().Count > 0 && _browserManager.canDisplayModels() && _browserManager.getResults()[0]._preview == null)
+				if (_browserManager.getResults().Count > 0 && _browserManager.getResults()[0]._preview == null)
 				{
 					_browserManager.fetchModelPreview();
 					this.Repaint();
 				}
+
+				framesSinceLastSearch++;
 			}
 		}
 
 		private void triggerSearch()
 		{
+			if (framesSinceLastSearch < nbFrameSearchCooldown)
+				return;
+
 			if (_skfbWin != null)
 				_skfbWin.Close();
 
@@ -124,8 +134,34 @@ namespace Sketchfab
 					sort = SORT_BY.RELEVANCE;
 					break;
 			}
+			string _minFaceCount = "";
+			string _maxFaceCount = "";
+			switch(_polyCountIndex)
+			{
+				case 0:
+					break;
+				case 1:
+					_maxFaceCount = "10000";
+					break;
+				case 2:
+					_minFaceCount = "10000";
+					_maxFaceCount = "50000";
+					break;
+				case 3:
+					_minFaceCount = "50000";
+					_maxFaceCount = "100000";
+					break;
+				case 4:
+					_minFaceCount = "100000";
+					_maxFaceCount = "250000";
+					break;
+				case 5:
+					_minFaceCount = "250000";
+					break;
+			}
 
-			_browserManager.search(_query, _staffpicked, _animated, _categoryName, sort, _maxFaceCount);
+			_browserManager.search(_query, _staffpicked, _animated, _categoryName, sort, _maxFaceCount, _minFaceCount);
+			framesSinceLastSearch = 0.0f;
 		}
 
 		// UI
@@ -167,7 +203,14 @@ namespace Sketchfab
 		{
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Search:", GUILayout.Width(80));
+			GUI.SetNextControlName("SearchTextField");
 			_query = GUILayout.TextField(_query);
+
+			if(Event.current.keyCode == KeyCode.Return && GUI.GetNameOfFocusedControl() == "SearchTextField")
+			{
+				triggerSearch();
+			}
+
 			if (GUILayout.Button("Search", GUILayout.Width(120)))
 			{
 				triggerSearch();
@@ -210,7 +253,10 @@ namespace Sketchfab
 		void displayMaxFacesCount()
 		{
 			GUILayout.Label("Max faces count: ");
-			_maxFaceCount = GUILayout.TextField(_maxFaceCount, GUILayout.Width(60));
+			int old = _polyCountIndex;
+			_polyCountIndex = EditorGUILayout.Popup(_polyCountIndex, _polyCount);
+			if (_polyCountIndex != old)
+				triggerSearch();
 		}
 
 		void displaySortBy()

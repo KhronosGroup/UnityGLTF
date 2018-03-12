@@ -87,12 +87,12 @@ namespace Sketchfab
 		public static string ALL_CATEGORIES = "All";
 		SketchfabImporter _importer;
 		public SketchfabAPI _api;
+		private Texture2D _defaultThumbnail;
 
 		// _categories
 		Dictionary<string, string> _categories;
 
 		// Search
-		public Texture2D _defaultThumbnail;
 		private const string INITIAL_SEARCH = "?type=models&downloadable=true&staffpicked=true&sort_by=-publishedAt";
 		private const string START_QUERY = "?type=models&downloadable=true&";
 		string _lastQuery;
@@ -118,6 +118,7 @@ namespace Sketchfab
 
 		public SketchfabBrowserManager(UpdateCallback refresh = null, bool initialSearch = false)
 		{
+			_defaultThumbnail = Resources.Load<Texture2D>("defaultModel");
 			checkValidity();
 			_refreshCallback = refresh;
 
@@ -248,7 +249,7 @@ namespace Sketchfab
 			startSearch();
 		}
 
-		public void search(string query, bool staffpicked, bool animated, string categoryName, SORT_BY sortby, string maxFaceCount = "")
+		public void search(string query, bool staffpicked, bool animated, string categoryName, SORT_BY sortby, string maxFaceCount = "", string minFaceCount = "")
 		{
 			reset();
 			string searchQuery = START_QUERY;
@@ -257,13 +258,14 @@ namespace Sketchfab
 				searchQuery = searchQuery + "q=" + query;
 			}
 
+			if (minFaceCount != "")
+			{
+				searchQuery = searchQuery + "&min_face_count=" + minFaceCount;
+			}
+
 			if (maxFaceCount != "")
 			{
-				int fc = -1;
-				if (int.TryParse(maxFaceCount, out fc))
-				{
-					searchQuery = searchQuery + "&face_count=" + maxFaceCount;
-				}
+				searchQuery = searchQuery + "&max_face_count=" + maxFaceCount;
 			}
 
 			if (staffpicked)
@@ -343,7 +345,7 @@ namespace Sketchfab
 				}
 			}
 			_isFetching = false;
-			_refreshCallback();
+			Refresh();
 		}
 
 		public bool hasNextResults()
@@ -395,19 +397,6 @@ namespace Sketchfab
 			}
 
 			return _models;
-		}
-
-		public bool canDisplayModels()
-		{
-			foreach (SketchfabModel model in _sketchfabModels.Values)
-			{
-				if (model._thumbnail == null)
-				{
-					return false;
-				}
-			}
-
-			return true;
 		}
 
 		// Model data
@@ -506,6 +495,7 @@ namespace Sketchfab
 			}
 
 			GL.sRGBWrite = sRGBBackup;
+			Refresh();
 		}
 
 		string extractUidFromUrl(string url)

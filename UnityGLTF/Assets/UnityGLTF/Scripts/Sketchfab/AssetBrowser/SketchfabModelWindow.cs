@@ -29,6 +29,8 @@ namespace Sketchfab
 		byte[] _lastArchive;
 		bool _isFeching = false;
 
+		Vector2 _scrollView = new Vector2();
+
 		static void Init()
 		{
 			SketchfabModelWindow window = (SketchfabModelWindow)EditorWindow.GetWindow(typeof(SketchfabModelWindow));
@@ -59,6 +61,7 @@ namespace Sketchfab
 		{
 			if (_currentModel != null && show)
 			{
+				_scrollView = GUILayout.BeginScrollView(_scrollView);
 				SketchfabModel model = _currentModel;
 
 				GUILayout.BeginHorizontal();
@@ -124,6 +127,7 @@ namespace Sketchfab
 				GUILayout.EndVertical();
 
 				GUILayout.EndHorizontal();
+				GUILayout.EndScrollView();
 			}
 		}
 
@@ -136,7 +140,7 @@ namespace Sketchfab
 			GUILayout.FlexibleSpace();
 			if (GUILayout.Button("Change", GUILayout.Width(80), GUILayout.Height(18)))
 			{
-				string newImportDir = EditorUtility.OpenFolderPanel("Choose import directory", GLTFUtils.getPathAbsoluteFromProject(_importDirectory), GLTFUtils.getPathAbsoluteFromProject(_importDirectory));
+				string newImportDir = EditorUtility.OpenFolderPanel("Choose import directory", Application.dataPath, "");
 				if (GLTFUtils.isFolderInProjectDirectory(newImportDir))
 				{
 					_importDirectory = newImportDir;
