@@ -1,33 +1,59 @@
-# UnityGLTF
+# Sketchfab Plugin for Unity
 
-[![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+Unity plugin to browse, import and export asset between Unity and Sketchfab.
+*Based on khronos' [UnityGLTF plugin](https://github.com/KhronosGroup/UnityGLTF)*
 
-Unity3D library for importing and exporting [GLTF 2.0](https://github.com/KhronosGroup/glTF/) assets. 
+A Sketchfab account is required for most of this plugin features (you can [create one here](https://sketchfab.com/signup))
 
-The goal of this library is to support the full glTF 2.0 specification and enable the following scenarios:  
-- Run-time import of glTF 2.0 files
-- Run-time export of glTF 2.0 files
-- Design-time import of glTF 2.0 files
-- Design-time export of glTF 2.0 files
+*Supported versions: Unity 5.6.4 or later*
 
-The library will be modularized such that it can be extended to support additional capabilities in Unity or support additional extensions to the glTF specification.  The library is designed to work with Unity 5.6 and above.
+## Sketchfab Asset Browser
+*Available in menu: Sketchfab/Browse Sketchfab*
 
-## Current Status
+Browse more than [nb] free downloadable models from Sketchfab and import them into your Unity project.
+*You need a Sketchfab account to download and import assets from Sketchfab*
+(browser image)
 
-Work Items and Issues targeting a 1.0 release of the library can be found in
-[Road to 1.0](https://github.com/KhronosGroup/UnityGLTF/projects/1)
+Click on a thubnail to show the corresponding model page with a button to download and import the asset
+(model page)
 
-## Building
-1. Open `GLTFSerialization\GLTFSerialization.sln` and compile for release. This will put the binaries in `UnityGLTF\Assets\UnityGLTF\Plugins`
-2. Open the Unity project located in `UnityGLTF\`
-	* If the meta file gets overridden, the binaries in `UnityGLTF\Assets\UnityGLTF\Plugins` should be configured for everything but UWP. The binaries in `UnityGLTF\Assets\UnityGLTF\Plugins\UWP` should be configured for UWP
+You can specify a directory in your project to import the asset into, and also choose to add the model to your current scene.
+Click the "Download model" button to download to proceed.
 
-## Examples
 
-1. Clone or download the repository.
-2. Open up the Unity project and run any of the example scenes in `Assets/GLTF/Examples`
+## Sketchfab Exporter
+*Available in menu: Sketchfab/Publish to Sketchfab*
 
-You should see something like this:
+Export and share your current Unity scene on Sketchfab.
+*You need a Sketchfab account to download and import assets from Sketchfab*
 
-![GLTF Lantern](/Screenshots/Lantern.png)
+Important note: glTF file format is used as transport between Unity and Sketchfab.
+Because of this, a few features will not be supported and will be missing on the Sketchfab result.
 
+The plugin will not export:
+* animations or object handled by custom scripts
+* custom materials/shaders
+
+Only Standard materials (including Specular setup) are supported.
+For animation, only Generic or Legacy animation type are exported.
+
+This support will be improved in the future.
+
+(exporter image)
+
+
+## glTF Importer (editor)
+
+Import glTF asset into Unity
+*Available in menu: Sketchfab/Import glTF*
+
+(import image)
+
+
+## Installation
+
+Download the Unity package of the [latest release](https://github.com/sketchfab/UnityGLTF/releases) and double click on it to import the plugin into your current Unity project.
+
+
+## Report an issue
+If you have any issue, please use the [Report an issue](https://help.sketchfab.com/hc/en-us/requests/new?type=exporters&subject=Unity+Exporter) link to be redirected to the support form.
