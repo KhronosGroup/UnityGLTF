@@ -867,7 +867,7 @@ namespace UnityGLTF
 		{
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
-			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
+			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4s.ToUnityMatrix4x4sRaw();
 
 			Matrix4x4 rightToLeftHanded = new Matrix4x4();
 			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
@@ -884,6 +884,37 @@ namespace UnityGLTF
 			renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
 			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
+		}
+		
+		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
+		{
+			MakeSureWeightsAddToOne(weights);
+
+			var boneWeights = new BoneWeight[vertCount];
+			for (int i = 0; i < vertCount; i++)
+			{
+				boneWeights[i].boneIndex0 = (int)joints[i].x;
+				boneWeights[i].boneIndex1 = (int)joints[i].y;
+				boneWeights[i].boneIndex2 = (int)joints[i].z;
+				boneWeights[i].boneIndex3 = (int)joints[i].w;
+
+				boneWeights[i].weight0 = weights[i].x;
+				boneWeights[i].weight1 = weights[i].y;
+				boneWeights[i].weight2 = weights[i].z;
+				boneWeights[i].weight3 = weights[i].w;
+			}
+
+			return boneWeights;
+		}
+
+		void MakeSureWeightsAddToOne(Vector4[] weights)
+		{
+			for (int i = 0; i < weights.Length; i++)
+			{
+				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
+				if (weightSum < 0.98f)
+					weights[i] /= weightSum;
+			}
 		}
 
 		protected virtual IEnumerator ConstructMesh(GLTF.Schema.Mesh mesh, Transform parent, int meshId, Skin skin)
@@ -1089,6 +1120,11 @@ namespace UnityGLTF
 
 				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
+					: null,
+
+				boneWeights = meshAttributes.ContainsKey(SemanticProperties.WEIGHT) && meshAttributes.ContainsKey(SemanticProperties.JOINT)
+					? CreateBoneWeightArray(meshAttributes[SemanticProperties.JOINT].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+						meshAttributes[SemanticProperties.WEIGHT].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
 					: null
 			};
 
