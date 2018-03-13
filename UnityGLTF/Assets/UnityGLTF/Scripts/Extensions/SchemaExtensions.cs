@@ -182,6 +182,47 @@ namespace UnityGLTF.Extensions
 			return gltfMat;
 		}
 
+		public static Matrix4x4[] AsMatrix4x4Array(Accessor Contents, bool normalizeIntValues = true)
+		{
+			if (Contents.AsMatrix4x4s != null) return Contents.AsMatrix4x4s;
+
+			if (Type != GLTFAccessorAttributeType.MAT4) return null;
+
+			var arr = new Matrix4x4[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+			var bufferData = BufferView.Value.Buffer.Value.Contents;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16;
+			if (normalizeIntValues) maxValue = 1;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				if (ComponentType == GLTFComponentType.Float)
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						arr[idx][i] = getContinuousElement(bufferData, totalByteOffset + idx * stride + componentSize * i);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						arr[idx][i] = getDiscreteElement(bufferData, totalByteOffset + idx * stride + componentSize * i) / maxValue;
+					}
+				}
+			}
+
+			Contents.AsMatrix4x4s = arr;
+			return arr;
+		}
+
 		/// <summary>
 		/// Convert gltf Vector3 to unity Vector3
 		/// </summary>

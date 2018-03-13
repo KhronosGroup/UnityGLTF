@@ -656,7 +656,7 @@ namespace UnityGLTF
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
-		AnimationClip ConstructClip(Transform root, Transform[] nodes, int animationId)
+		AnimationClip ConstructClip(Transform root, Transform[] nodes, int animationId) // AKA, AddAnimationToScene
 		{
 			var animation = _gltfRoot.Animations[animationId];
 
@@ -694,7 +694,6 @@ namespace UnityGLTF
 				switch (channel.Target.Path)
 				{
 					case GLTFAnimationChannelPath.translation:
-
 						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
@@ -710,7 +709,6 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.rotation:
-
 						for (int i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
@@ -729,7 +727,6 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.scale:
-
 						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
@@ -744,6 +741,22 @@ namespace UnityGLTF
 						clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
 						break;
 
+					case GLTFAnimationChannelPath.weights:
+						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+						var targetCount = primitives[0].Targets.Count;
+						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+						{
+							string primitiveObjPath = relativePath + "/Primitive" + primitiveIndex;
+							for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+							{
+								//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
+							}
+						}
+						break;
+
+					default:
+						Debug.LogWarning("Cannot read GLTF animation path");
+						break;
 				} // switch target type
 			} // foreach channel
 
@@ -768,13 +781,17 @@ namespace UnityGLTF
 
 			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 			{
-				// create AnimationClip
-				var animation = sceneObj.AddComponent<UnityEngine.Animation>();
+				// create the AnimationClip that will contain animation data
+				UnityEngine.Animation animation = sceneObj.AddComponent<UnityEngine.Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					var clip = ConstructClip(sceneObj.transform, nodeTransforms, i);
+					AnimationClip clip = ConstructClip(sceneObj.transform, nodeTransforms, i);
+
+					// needed because Animator component is unavailable at runtime
 					clip.legacy = true;
+
 					//clip.wrapMode = UnityEngine.WrapMode.Loop;
+
 					animation.AddClip(clip, clip.name);
 					if (i == 0)
 					{
@@ -805,7 +822,7 @@ namespace UnityGLTF
 			// TODO: Add support for skin/morph targets
 			if (node.Mesh != null)
 			{
-				yield return ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id);
+				yield return ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -831,7 +848,45 @@ namespace UnityGLTF
 			_assetCache.NodeCache[nodeIndex] = nodeObj;
 		}
 
-		protected virtual IEnumerator ConstructMesh(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
+		bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		{
+			return HasBones(skin) || HasBlendShapes(primitive);
+		}
+
+		bool HasBones(Skin skin)
+		{
+			return skin != null;
+		}
+
+		bool HasBlendShapes(MeshPrimitive primitive)
+		{
+			return primitive.Targets != null;
+		}
+
+		void SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, UnityEngine.Mesh curMesh)
+		{
+			var boneCount = skin.Joints.Count;
+			Transform[] bones = new Transform[boneCount];
+			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4Array();
+
+			Matrix4x4 rightToLeftHanded = new Matrix4x4();
+			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
+			rightToLeftHanded.SetRow(1, new Vector4(0, 1, 0, 0));
+			rightToLeftHanded.SetRow(2, new Vector4(0, 0, -1, 0));
+			rightToLeftHanded.SetRow(3, new Vector4(0, 0, 0, 1));
+
+			for (int i = 0; i < boneCount; i++)
+			{
+				bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
+			}
+
+			renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
+			curMesh.bindposes = bindPoses;
+			renderer.bones = bones;
+		}
+
+		protected virtual IEnumerator ConstructMesh(GLTF.Schema.Mesh mesh, Transform parent, int meshId, Skin skin)
 		{
 			if (_assetCache.MeshCache[meshId] == null)
 			{
@@ -846,28 +901,47 @@ namespace UnityGLTF
 				yield return ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
 
 				var primitiveObj = new GameObject("Primitive");
-				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
-				meshFilter.sharedMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
-				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
 				MaterialCacheData materialCacheData =
 					materialIndex >= 0 ? _assetCache.MaterialCache[materialIndex] : _defaultLoadedMaterial;
 
 				UnityEngine.Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
-				meshRenderer.material = material;
+				UnityEngine.Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
+				if (NeedsSkinnedMeshRenderer(primitive, skin))
+				{
+					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+					skinnedMeshRenderer.material = material;
+					skinnedMeshRenderer.quality = SkinQuality.Bone4;
+					/*
+					if (HasBlendShapes(primitive))
+						SetupBlendShapes(primitive);
+					*/
+					//var meshAttributes = _assetCache.MeshCache[meshId][i].MeshAttributes;
+					if (HasBones(skin))
+						SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+
+					skinnedMeshRenderer.sharedMesh = curMesh;
+				}
+				else
+				{
+					var meshFilter = primitiveObj.AddComponent<MeshFilter>();
+					var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+					meshFilter.sharedMesh = curMesh;
+					meshRenderer.material = material;
+				}
 
 				switch (Collider)
 				{
 					case ColliderType.Box:
 						var boxCollider = primitiveObj.AddComponent<BoxCollider>();
-						boxCollider.center = meshFilter.sharedMesh.bounds.center;
-						boxCollider.size = meshFilter.sharedMesh.bounds.size;
+						boxCollider.center = curMesh.bounds.center;
+						boxCollider.size = curMesh.bounds.size;
 						break;
 
 					case ColliderType.Mesh:
 						var meshCollider = primitiveObj.AddComponent<MeshCollider>();
-						meshCollider.sharedMesh = meshFilter.sharedMesh;
+						meshCollider.sharedMesh = curMesh;
 						meshCollider.convex = true;
 						break;
 				}
