@@ -790,7 +790,7 @@ namespace UnityGLTF
 				UnityEngine.Animation animation = sceneObj.AddComponent<UnityEngine.Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					AnimationClip clip = ConstructClip(sceneObj.transform, nodeTransforms, i);
+					AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache.Select(x => x.transform).ToArray(), i);
 
 					// needed because Animator component is unavailable at runtime
 					clip.legacy = true;
@@ -891,9 +891,9 @@ namespace UnityGLTF
 
 			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
 
-			GLTF.Math.Matrix4x4[] bindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;//.ToUnityMatrix4x4sConvert();
+			Matrix4x4[] bindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s.ToUnityMatrix4x4sConvert();
 
-			Matrix4x4 rightToLeftHanded = new Matrix4x4();
+			Matrix4x4 rightToLeftHanded = new Matrix4x4();	/// TODO: probably don't need this because we have <see cref="SchemaExtensions.CoordinateSpaceConversionScale"/> applied as part of <see cref="SchemaExtensions.ToUnityMatrix4x4sConvert(GLTF.Math.Matrix4x4[])"/>
 			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
 			rightToLeftHanded.SetRow(1, new Vector4(0, 1, 0, 0));
 			rightToLeftHanded.SetRow(2, new Vector4(0, 0, -1, 0));
@@ -901,12 +901,12 @@ namespace UnityGLTF
 
 			for (int i = 0; i < boneCount; i++)
 			{
-				//bones[i] = _nodeMap[skin.Joints[i].Id].transform;
-				//bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
+				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
+				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
 			}
 
-			//renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
-			//curMesh.bindposes = bindPoses;
+			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
+			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
 		}
 		
