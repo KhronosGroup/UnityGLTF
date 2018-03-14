@@ -654,6 +654,8 @@ namespace GLTF.Schema
 
 			for (var idx = 0; idx < Count; idx++)
 			{
+				arr[idx] = new Matrix4x4(Matrix4x4.Identity);
+
 				if (ComponentType == GLTFComponentType.Float)
 				{
 					for (int i = 0; i < 16; i++)

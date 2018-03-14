@@ -596,6 +596,11 @@ namespace UnityGLTF
 			throw new Exception("no RelativePath");
 		}
 
+		protected virtual void BuildBindPoseSamplers(GLTF.Schema.Skin skin)
+		{
+
+		}
+
 		protected virtual void BuildAnimationSamplers(GLTF.Schema.Animation animation, int animationId)
 		{
 			// look up expected data types
@@ -867,7 +872,26 @@ namespace UnityGLTF
 		{
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
-			Matrix4x4[] bindPoses = skin.InverseBindMatrices.Value.AsMatrix4x4s.ToUnityMatrix4x4sRaw();
+
+			int bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer.Id;
+			BufferCacheData bufferCacheData = _assetCache.BufferCache[bufferId];
+			AttributeAccessor attributeAccessor = new AttributeAccessor
+			{
+				AccessorId = skin.InverseBindMatrices,
+				Stream = _assetCache.BufferCache[bufferId].Stream,
+				Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+			};
+
+			AttributeAccessor attributeAccessor2 = new AttributeAccessor
+			{
+				AccessorId = skin.InverseBindMatrices,
+				Stream = bufferCacheData.Stream,
+				Offset = bufferCacheData.ChunkOffset
+			};
+
+			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
+
+			GLTF.Math.Matrix4x4[] bindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;//.ToUnityMatrix4x4sConvert();
 
 			Matrix4x4 rightToLeftHanded = new Matrix4x4();
 			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
@@ -877,12 +901,12 @@ namespace UnityGLTF
 
 			for (int i = 0; i < boneCount; i++)
 			{
-				bones[i] = _nodeMap[skin.Joints[i].Id].transform;
-				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
+				//bones[i] = _nodeMap[skin.Joints[i].Id].transform;
+				//bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
 			}
 
-			renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
-			curMesh.bindposes = bindPoses;
+			//renderer.rootBone = _nodeMap[skin.Skeleton.Id].transform;
+			//curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
 		}
 		

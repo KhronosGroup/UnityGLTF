@@ -105,11 +105,12 @@ namespace GLTF
 			}
 		}
 
-		public static void BuildBindPoseSamplers(AttributeAccessor attributeAccessor)
+		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)
 		{
 			NumericArray resultArray = attributeAccessor.AccessorContent;
 			int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache, offset);
+			attributeAccessor.AccessorContent = resultArray;
 		}
 
 		/// <summary>
