@@ -185,7 +185,7 @@ namespace UnityGLTF.Extensions
 
 		public static Matrix4x4[] ToUnityMatrix4x4sConvert(this GLTF.Math.Matrix4x4[] gltfMats)
 		{
-			return gltfMats.Select(gltfMat => gltfMat.ToUnityMatrix4x4Convert()).ToArray();
+			return gltfMats.Select(gltfMat => gltfMat.ToUnityMatrix4x4Raw()).ToArray();
 		}
 
 		/// <summary>

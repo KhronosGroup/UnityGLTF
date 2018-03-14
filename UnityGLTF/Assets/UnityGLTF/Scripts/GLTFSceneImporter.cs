@@ -539,7 +539,7 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);	// TODO: should weights and joints be added to this helper method?
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
@@ -577,6 +577,7 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
 				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
 			}
+			// TODO: do weights and joints need to be transformed too?
 		}
 
 		#region Animation
@@ -882,27 +883,13 @@ namespace UnityGLTF
 				Offset = _assetCache.BufferCache[bufferId].ChunkOffset
 			};
 
-			AttributeAccessor attributeAccessor2 = new AttributeAccessor
-			{
-				AccessorId = skin.InverseBindMatrices,
-				Stream = bufferCacheData.Stream,
-				Offset = bufferCacheData.ChunkOffset
-			};
-
 			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
 
 			Matrix4x4[] bindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s.ToUnityMatrix4x4sConvert();
-
-			Matrix4x4 rightToLeftHanded = new Matrix4x4();	/// TODO: probably don't need this because we have <see cref="SchemaExtensions.CoordinateSpaceConversionScale"/> applied as part of <see cref="SchemaExtensions.ToUnityMatrix4x4sConvert(GLTF.Math.Matrix4x4[])"/>
-			rightToLeftHanded.SetRow(0, new Vector4(1, 0, 0, 0));
-			rightToLeftHanded.SetRow(1, new Vector4(0, 1, 0, 0));
-			rightToLeftHanded.SetRow(2, new Vector4(0, 0, -1, 0));
-			rightToLeftHanded.SetRow(3, new Vector4(0, 0, 0, 1));
-
+			
 			for (int i = 0; i < boneCount; i++)
 			{
 				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
-				bindPoses[i] = rightToLeftHanded.inverse * bindPoses[i] * rightToLeftHanded;
 			}
 
 			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
@@ -972,7 +959,6 @@ namespace UnityGLTF
 					if (HasBlendShapes(primitive))
 						SetupBlendShapes(primitive);
 					*/
-					//var meshAttributes = _assetCache.MeshCache[meshId][i].MeshAttributes;
 					if (HasBones(skin))
 						SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
 
@@ -1150,6 +1136,13 @@ namespace UnityGLTF
 					? CreateBoneWeightArray(meshAttributes[SemanticProperties.JOINT].AccessorContent.AsVec4s.ToUnityVector4Raw(),
 						meshAttributes[SemanticProperties.WEIGHT].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
 					: null
+
+				/*
+				 boneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
+					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+						meshAttributes[SemanticPropertiesWeight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
+					: null
+				 */
 			};
 
 			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;

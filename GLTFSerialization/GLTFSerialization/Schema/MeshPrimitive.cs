@@ -305,6 +305,21 @@ namespace GLTF.Schema
 		}
 
 		/// <summary>
+		/// Return the semantic property for the bone weights buffer.
+		/// </summary>
+		/// <param name="index">The index of the bone weights buffer</param>
+		/// <returns>The semantic property for the bone weights buffer</returns>
+		public static string Weight(int index)
+		{
+			return "WEIGHTS_" + index;
+		}
+
+		public static string Joint(int index)
+		{
+			return "JOINTS_" + index;
+		}
+
+		/// <summary>
 		/// Parse out the index of a given semantic property.
 		/// </summary>
 		/// <param name="property">Semantic property to parse</param>
