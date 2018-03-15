@@ -791,7 +791,7 @@ namespace UnityGLTF
 					// needed because Animator component is unavailable at runtime
 					clip.legacy = true;
 
-					//clip.wrapMode = UnityEngine.WrapMode.Loop;
+					clip.wrapMode = UnityEngine.WrapMode.Loop;
 
 					animation.AddClip(clip, clip.name);
 					if (i == 0)
