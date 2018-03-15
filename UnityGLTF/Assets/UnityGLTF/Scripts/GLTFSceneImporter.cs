@@ -716,10 +716,10 @@ namespace UnityGLTF
 						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
-							var position = output.AsVec3s[i];
-							curveX.AddKey(time, position.X);
-							curveY.AddKey(time, position.Y);
-							curveZ.AddKey(time, -position.Z); // reverse-z
+							Vector3 position = output.AsVec3s[i].ToUnityVector3Convert();
+							curveX.AddKey(time, position.x);
+							curveY.AddKey(time, position.y);
+							curveZ.AddKey(time, position.z);
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
@@ -733,10 +733,11 @@ namespace UnityGLTF
 							var time = input.AsFloats[i];
 							var rotation = output.AsVec4s[i];
 
-							curveX.AddKey(time, -rotation.X);
-							curveY.AddKey(time, -rotation.Y);
-							curveZ.AddKey(time, rotation.Z);
-							curveW.AddKey(time, rotation.W);
+							Quaternion rot = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
+							curveX.AddKey(time, rot.x);
+							curveY.AddKey(time, rot.y);
+							curveZ.AddKey(time, rot.z);
+							curveW.AddKey(time, rot.w);
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
@@ -749,10 +750,10 @@ namespace UnityGLTF
 						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
-							var position = output.AsVec3s[i];
-							curveX.AddKey(time, position.X);
-							curveY.AddKey(time, position.Y);
-							curveZ.AddKey(time, position.Z);
+							Vector3 scale = output.AsVec3s[i].ToUnityVector3Raw();
+							curveX.AddKey(time, scale.x);
+							curveY.AddKey(time, scale.y);
+							curveZ.AddKey(time, scale.z);
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
