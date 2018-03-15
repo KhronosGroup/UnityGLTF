@@ -610,11 +610,6 @@ namespace UnityGLTF
 			throw new Exception("no RelativePath");
 		}
 
-		protected virtual void BuildBindPoseSamplers(GLTF.Schema.Skin skin)
-		{
-
-		}
-
 		protected virtual void BuildAnimationSamplers(GLTF.Schema.Animation animation, int animationId)
 		{
 			// look up expected data types

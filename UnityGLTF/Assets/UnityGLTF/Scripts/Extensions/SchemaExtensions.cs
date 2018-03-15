@@ -1,7 +1,6 @@
 ﻿using GLTF;
 using GLTF.Schema;
 using UnityEngine;
-using System.Linq;
 
 namespace UnityGLTF.Extensions
 {
@@ -94,22 +93,6 @@ namespace UnityGLTF.Extensions
 		}
 
 		/// <summary>
-		/// Return transform full name as a path in hierarchy relative to parent node
-		/// </summary>
-		/// <param name="current">this transform</param>
-		/// <param name="parent">parent transform</param>
-		/// <returns></returns>
-		public static string GetFullPath(this Transform current, Transform parent)
-		{
-			if ((current.parent == parent) || (current.parent == null))
-			{
-				return current.name;
-			}
-
-			return current.parent.GetFullPath(parent) + "/" + current.name;
-		}
-
-		/// <summary>
 		/// Get a gltf column vector from a gltf matrix
 		/// </summary>
 		/// <param name="mat">gltf matrix</param>
@@ -198,12 +181,7 @@ namespace UnityGLTF.Extensions
 			GLTF.Math.Matrix4x4 gltfMat = (convert * unityMat * convert).ToGltfMatrix4x4Raw();
 			return gltfMat;
 		}
-		/*
-		public static Matrix4x4[] ToUnityMatrix4x4sConvert(this GLTF.Math.Matrix4x4[] gltfMats)
-		{
-			return gltfMats.Select(gltfMat => gltfMat.ToUnityMatrix4x4Raw()).ToArray();
-		}
-		*/
+
 		/// <summary>
 		/// Convert gltf Vector3 to unity Vector3
 		/// </summary>

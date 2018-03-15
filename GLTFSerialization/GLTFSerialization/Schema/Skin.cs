@@ -73,8 +73,6 @@ namespace GLTF.Schema
 						skin.Skeleton = NodeId.Deserialize(root, reader);
 						break;
 					case "joints":
-						//skin.Joints = reader.ReadList(() => NodeId.Deserialize(root, reader));
-
 						skin.Joints = new List<NodeId>();
 						List<int> ids = reader.ReadInt32List();
 						for (int i = 0; i < ids.Count; i++)
