@@ -798,7 +798,8 @@ namespace UnityGLTF
 					{
 						animation.clip = clip;
 					}
-					//animation.Play();
+
+					animation.Play();
 				}
 			}
 			
