@@ -539,7 +539,7 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);	// TODO: should weights and joints be added to this helper method?
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);    /// TODO johnmce: should weights and joints be added to this helper method? they are null later in <see cref="ConstructUnityMesh"/>
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
@@ -578,6 +578,19 @@ namespace UnityGLTF
 				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
 			}
 			// TODO: do weights and joints need to be transformed too?
+			/*
+			if (attributeAccessors.ContainsKey(SemanticProperties.Joint(0)))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.Joint(0)];
+				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
+			}
+
+			if (attributeAccessors.ContainsKey(SemanticProperties.Weight(0)))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.Weight(0)];
+				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
+			}
+			*/
 		}
 
 		#region Animation
@@ -784,7 +797,7 @@ namespace UnityGLTF
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
 			}
-
+			/*
 			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 			{
 				// create the AnimationClip that will contain animation data
@@ -806,7 +819,7 @@ namespace UnityGLTF
 					//animation.Play();
 				}
 			}
-
+			*/
 			CreatedObject = sceneObj;
 			InitializeGltfTopLevelObject();
 		}
@@ -885,18 +898,20 @@ namespace UnityGLTF
 
 			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
 
-			Matrix4x4[] bindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s.ToUnityMatrix4x4sConvert();
-			
+			GLTF.Math.Matrix4x4[] gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;//.ToUnityMatrix4x4sConvert();
+			Matrix4x4[] bindPoses = new Matrix4x4[skin.Joints.Count];
+
 			for (int i = 0; i < boneCount; i++)
 			{
 				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
+				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
 			}
 
 			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
 			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
 		}
-		
+
 		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
 		{
 			MakeSureWeightsAddToOne(weights);

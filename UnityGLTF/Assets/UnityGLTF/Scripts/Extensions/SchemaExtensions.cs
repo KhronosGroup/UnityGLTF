@@ -94,6 +94,22 @@ namespace UnityGLTF.Extensions
 		}
 
 		/// <summary>
+		/// Return transform full name as a path in hierarchy relative to parent node
+		/// </summary>
+		/// <param name="current">this transform</param>
+		/// <param name="parent">parent transform</param>
+		/// <returns></returns>
+		public static string GetFullPath(this Transform current, Transform parent)
+		{
+			if ((current.parent == parent) || (current.parent == null))
+			{
+				return current.name;
+			}
+
+			return current.parent.GetFullPath(parent) + "/" + current.name;
+		}
+
+		/// <summary>
 		/// Get a gltf column vector from a gltf matrix
 		/// </summary>
 		/// <param name="mat">gltf matrix</param>
@@ -182,12 +198,12 @@ namespace UnityGLTF.Extensions
 			GLTF.Math.Matrix4x4 gltfMat = (convert * unityMat * convert).ToGltfMatrix4x4Raw();
 			return gltfMat;
 		}
-
+		/*
 		public static Matrix4x4[] ToUnityMatrix4x4sConvert(this GLTF.Math.Matrix4x4[] gltfMats)
 		{
 			return gltfMats.Select(gltfMat => gltfMat.ToUnityMatrix4x4Raw()).ToArray();
 		}
-
+		*/
 		/// <summary>
 		/// Convert gltf Vector3 to unity Vector3
 		/// </summary>
@@ -470,6 +486,39 @@ namespace UnityGLTF.Extensions
 			}
 
 			return returnArr;
+		}
+
+		public static Matrix4x4 ToUnityMatrix4x4(this GLTF.Math.Matrix4x4 matrix)
+		{
+			return new Matrix4x4()
+			{
+				m00 = matrix.M11,
+				m01 = matrix.M12,
+				m02 = matrix.M13,
+				m03 = matrix.M14,
+				m10 = matrix.M21,
+				m11 = matrix.M22,
+				m12 = matrix.M23,
+				m13 = matrix.M24,
+				m20 = matrix.M31,
+				m21 = matrix.M32,
+				m22 = matrix.M33,
+				m23 = matrix.M34,
+				m30 = matrix.M41,
+				m31 = matrix.M42,
+				m32 = matrix.M43,
+				m33 = matrix.M44
+			};
+		}
+
+		public static Matrix4x4[] ToUnityMatrix4x4(this GLTF.Math.Matrix4x4[] inMatrixArr)
+		{
+			Matrix4x4[] outMatrixArr = new Matrix4x4[inMatrixArr.Length];
+			for (int i = 0; i < inMatrixArr.Length; ++i)
+			{
+				outMatrixArr[i] = inMatrixArr[i].ToUnityMatrix4x4();
+			}
+			return outMatrixArr;
 		}
 	}
 }

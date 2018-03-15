@@ -103,6 +103,22 @@ namespace GLTF
 				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
+			if (attributes.ContainsKey(SemanticProperties.Weight(0)))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Weight(0)];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Joint(0)))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Joint(0)];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
 		}
 
 		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)
