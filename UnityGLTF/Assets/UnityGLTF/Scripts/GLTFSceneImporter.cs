@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading.Tasks;
 #endif
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -956,27 +955,25 @@ namespace UnityGLTF
 				var primitive = mesh.Primitives[i];
 				int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
 
-				yield return ConstructMeshPrimitive(primitive, meshId, i, materialIndex, skin);
+				yield return ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
 
 				var primitiveObj = new GameObject("Primitive");
-
-				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 
 				MaterialCacheData materialCacheData =
 					materialIndex >= 0 ? _assetCache.MaterialCache[materialIndex] : _defaultLoadedMaterial;
 
 				UnityEngine.Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
-				/*
+
 				UnityEngine.Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
 				if (NeedsSkinnedMeshRenderer(primitive, skin))
 				{
 					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 					skinnedMeshRenderer.material = material;
 					skinnedMeshRenderer.quality = SkinQuality.Bone4;
-					
-					//if (HasBlendShapes(primitive))
-					//	SetupBlendShapes(primitive);
-					
+					/*
+					if (HasBlendShapes(primitive))
+						SetupBlendShapes(primitive);
+					*/
 					if (HasBones(skin))
 						SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
 
@@ -988,40 +985,8 @@ namespace UnityGLTF
 					var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 					meshFilter.sharedMesh = curMesh;
 					meshRenderer.material = material;
-				}*/
-
-				Renderer meshRenderer = null;
-				if (skin != null)
-				{
-					SkinnedMeshRenderer skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
-					Transform[] bones = new Transform[skin.Joints.Count];
-					GLTF.Math.Matrix4x4[] gltfBindPoses = GetAsMatrix4x4(skin);
-					Matrix4x4[] bindPoses = new Matrix4x4[skin.Joints.Count];
-
-					for (int j = 0; j < skin.Joints.Count; j++)
-					{
-						bones[j] = _assetCache.NodeCache[skin.Joints[j].Id].transform;
-						bindPoses[j] = gltfBindPoses[j].ToUnityMatrix4x4Convert();
-					}
-
-					UnityEngine.Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
-					curMesh.bindposes = bindPoses;
-					skinnedMeshRenderer.bones = bones;
-					skinnedMeshRenderer.sharedMesh = curMesh;
-					Bounds localBounds = skinnedMeshRenderer.localBounds;
-					localBounds.size *= 2f;
-					skinnedMeshRenderer.localBounds = localBounds;
-					meshRenderer = skinnedMeshRenderer;
-					meshFilter.sharedMesh = curMesh;
-				}
-				else
-				{
-					meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 				}
 
-				meshRenderer.material = material;// materialWrapper.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
-
-				/*
 				switch (Collider)
 				{
 					case ColliderType.Box:
@@ -1036,49 +1001,13 @@ namespace UnityGLTF
 						meshCollider.convex = true;
 						break;
 				}
-				*/
+
 				primitiveObj.transform.SetParent(parent, false);
 				primitiveObj.SetActive(true);
 			}
 		}
 
-
-		GLTF.Math.Matrix4x4[] GetAsMatrix4x4(Skin skin)
-		{
-			/*
-			BufferCacheData bufferCacheData = _assetCache.BufferCache[accessorId.Value.BufferView.Value.Buffer.Id];
-			AttributeAccessor attributeAccessor = new AttributeAccessor()
-			{
-				AccessorId = accessorId,
-				Stream = bufferCacheData.Stream,
-				Offset = bufferCacheData.ChunkOffset
-			};
-
-			NumericArray resultArray = attributeAccessor.AccessorContent;
-			byte[] bufferViewCache;
-			int offset = (int)GLTFHelpers.LoadBufferView(attributeAccessor, out bufferViewCache);
-			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache, offset);
-			attributeAccessor.AccessorContent = resultArray;
-
-			return resultArray.AsMatrices;  //.ToUnityMatrix4x4()
-			*/
-
-			int bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer.Id;
-			BufferCacheData bufferCacheData = _assetCache.BufferCache[bufferId];
-			AttributeAccessor attributeAccessor = new AttributeAccessor
-			{
-				AccessorId = skin.InverseBindMatrices,
-				Stream = _assetCache.BufferCache[bufferId].Stream,
-				Offset = _assetCache.BufferCache[bufferId].ChunkOffset
-			};
-
-			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
-
-			GLTF.Math.Matrix4x4[] gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;//.ToUnityMatrix4x4sConvert();
-			return gltfBindPoses;
-		}
-
-		protected virtual IEnumerator ConstructMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex, int materialIndex, Skin skin)
+		protected virtual IEnumerator ConstructMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex, int materialIndex)
 		{
 			if (_assetCache.MeshCache[meshID][primitiveIndex] == null)
 			{
@@ -1094,7 +1023,7 @@ namespace UnityGLTF
 				};
 
 				yield return null;
-				yield return ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex, skin);
+				yield return ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex);
 			}
 
 			bool shouldUseDefaultMaterial = primitive.Material == null;
@@ -1174,7 +1103,7 @@ namespace UnityGLTF
 			}
 		}
 
-		protected IEnumerator ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex, Skin skin)
+		protected IEnumerator ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
 		{
 			MeshPrimitive primitive = meshConstructionData.Primitive;
 			var meshAttributes = meshConstructionData.MeshAttributes;
@@ -1186,7 +1115,6 @@ namespace UnityGLTF
 				vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
 					? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
 					: null,
-
 				normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
 					? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
 					: null,
@@ -1217,47 +1145,20 @@ namespace UnityGLTF
 
 				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
+					: null,
+
+				boneWeights = meshAttributes.ContainsKey(SemanticProperties.WEIGHT) && meshAttributes.ContainsKey(SemanticProperties.JOINT)
+					? CreateBoneWeightArray(meshAttributes[SemanticProperties.JOINT].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+						meshAttributes[SemanticProperties.WEIGHT].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
 					: null
 
-				 /*boneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
+				/*
+				 boneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
 					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-						meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
-					: null*/
+						meshAttributes[SemanticPropertiesWeight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
+					: null
+				 */
 			};
-
-
-
-			if (skin != null)
-			{
-				Assert.IsTrue(primitive.Attributes.ContainsKey(SemanticProperties.Weight(0)));
-				Assert.IsTrue(primitive.Attributes.ContainsKey(SemanticProperties.Joint(0)));
-				GLTF.Math.Vector4[] weights = meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s;
-				GLTF.Math.Vector4[] bones = meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s;
-				int len = mesh.vertices.Length;
-				Assert.IsTrue(weights != null);
-				Assert.IsTrue(bones != null);
-				Assert.IsTrue(weights.Length == len);
-				Assert.IsTrue(bones.Length == len);
-
-				BoneWeight[] boneWeights = new BoneWeight[len];
-
-				for (int i = 0; i < len; i++)
-				{
-					BoneWeight boneWeight = new BoneWeight();
-					boneWeight.boneIndex0 = (int)bones[i].X;
-					boneWeight.boneIndex1 = (int)bones[i].Y;
-					boneWeight.boneIndex2 = (int)bones[i].Z;
-					boneWeight.boneIndex3 = (int)bones[i].W;
-
-					boneWeight.weight0 = weights[i].X;
-					boneWeight.weight1 = weights[i].Y;
-					boneWeight.weight2 = weights[i].Z;
-					boneWeight.weight3 = weights[i].W;
-					boneWeights[i] = boneWeight;
-				}
-
-				mesh.boneWeights = boneWeights;
-			}
 
 			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 
