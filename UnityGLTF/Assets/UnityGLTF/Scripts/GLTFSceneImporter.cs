@@ -539,7 +539,7 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);    /// TODO johnmce: should weights and joints be added to this helper method? they are null later in <see cref="ConstructUnityMesh"/>
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
@@ -577,20 +577,6 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
 				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
 			}
-			// TODO: do weights and joints need to be transformed too?
-			/*
-			if (attributeAccessors.ContainsKey(SemanticProperties.Joint(0)))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.Joint(0)];
-				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
-			}
-
-			if (attributeAccessors.ContainsKey(SemanticProperties.Weight(0)))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.Weight(0)];
-				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
-			}
-			*/
 		}
 
 		#region Animation
@@ -670,7 +656,7 @@ namespace UnityGLTF
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
-		AnimationClip ConstructClip(Transform root, Transform[] nodes, int animationId) // AKA, AddAnimationToScene
+		AnimationClip ConstructClip(Transform root, Transform[] nodes, int animationId)
 		{
 			var animation = _gltfRoot.Animations[animationId];
 
@@ -833,8 +819,7 @@ namespace UnityGLTF
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
-
-			// TODO: Add support for skin/morph targets
+			
 			if (node.Mesh != null)
 			{
 				yield return ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null);
