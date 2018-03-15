@@ -827,7 +827,7 @@ namespace UnityGLTF
 
 		protected virtual IEnumerator ConstructNode(Node node, int nodeIndex)
 		{
-			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
+			var nodeObj = new GameObject(node.Name ?? ("GLTFNode" + nodeIndex));
 			// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
 			nodeObj.SetActive(false);
 
