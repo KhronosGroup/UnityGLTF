@@ -797,7 +797,7 @@ namespace UnityGLTF
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
 			}
-			/*
+			
 			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 			{
 				// create the AnimationClip that will contain animation data
@@ -819,7 +819,7 @@ namespace UnityGLTF
 					//animation.Play();
 				}
 			}
-			*/
+			
 			CreatedObject = sceneObj;
 			InitializeGltfTopLevelObject();
 		}
@@ -1147,17 +1147,10 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
 					: null,
 
-				boneWeights = meshAttributes.ContainsKey(SemanticProperties.WEIGHT) && meshAttributes.ContainsKey(SemanticProperties.JOINT)
-					? CreateBoneWeightArray(meshAttributes[SemanticProperties.JOINT].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-						meshAttributes[SemanticProperties.WEIGHT].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
-					: null
-
-				/*
 				 boneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
 					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-						meshAttributes[SemanticPropertiesWeight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
+						meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
 					: null
-				 */
 			};
 
 			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
