@@ -314,6 +314,11 @@ namespace GLTF.Schema
 			return "WEIGHTS_" + index;
 		}
 
+		/// <summary>
+		/// Return the semantic property for the joints buffer.
+		/// </summary>
+		/// <param name="index">The index of the joints buffer</param>
+		/// <returns>The semantic property for the joints buffer</returns>
 		public static string Joint(int index)
 		{
 			return "JOINTS_" + index;

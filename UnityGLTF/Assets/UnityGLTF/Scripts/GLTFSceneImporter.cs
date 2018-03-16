@@ -750,6 +750,7 @@ namespace UnityGLTF
 							string primitiveObjPath = relativePath + "/Primitive" + primitiveIndex;
 							for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
 							{
+								// TODO: add support for blend shapes/morph targets
 								//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
 							}
 						}
@@ -798,8 +799,6 @@ namespace UnityGLTF
 					{
 						animation.clip = clip;
 					}
-
-					animation.Play();
 				}
 			}
 			
@@ -849,22 +848,22 @@ namespace UnityGLTF
 			_assetCache.NodeCache[nodeIndex] = nodeObj;
 		}
 
-		bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
 		{
 			return HasBones(skin) || HasBlendShapes(primitive);
 		}
 
-		bool HasBones(Skin skin)
+		private bool HasBones(Skin skin)
 		{
 			return skin != null;
 		}
 
-		bool HasBlendShapes(MeshPrimitive primitive)
+		private bool HasBlendShapes(MeshPrimitive primitive)
 		{
 			return primitive.Targets != null;
 		}
 
-		void SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, UnityEngine.Mesh curMesh)
+		protected virtual IEnumerator SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, UnityEngine.Mesh curMesh)
 		{
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
@@ -880,7 +879,7 @@ namespace UnityGLTF
 
 			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
 
-			GLTF.Math.Matrix4x4[] gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;//.ToUnityMatrix4x4sConvert();
+			GLTF.Math.Matrix4x4[] gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;
 			Matrix4x4[] bindPoses = new Matrix4x4[skin.Joints.Count];
 
 			for (int i = 0; i < boneCount; i++)
@@ -892,13 +891,15 @@ namespace UnityGLTF
 			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
 			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
+
+			yield return null;
 		}
 
-		public BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
+		private BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
 		{
-			MakeSureWeightsAddToOne(weights);
+			NormalizeBoneWeightArray(weights);
 
-			var boneWeights = new BoneWeight[vertCount];
+			BoneWeight[] boneWeights = new BoneWeight[vertCount];
 			for (int i = 0; i < vertCount; i++)
 			{
 				boneWeights[i].boneIndex0 = (int)joints[i].x;
@@ -915,7 +916,11 @@ namespace UnityGLTF
 			return boneWeights;
 		}
 
-		void MakeSureWeightsAddToOne(Vector4[] weights)
+		/// <summary>
+		/// Ensures each bone weight influences applied to the vertices add up to 1
+		/// </summary>
+		/// <param name="weights">Bone weight array</param>
+		private void NormalizeBoneWeightArray(Vector4[] weights)
 		{
 			for (int i = 0; i < weights.Length; i++)
 			{
@@ -952,22 +957,24 @@ namespace UnityGLTF
 					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 					skinnedMeshRenderer.material = material;
 					skinnedMeshRenderer.quality = SkinQuality.Bone4;
-					/*
-					if (HasBlendShapes(primitive))
-						SetupBlendShapes(primitive);
-					*/
+					// TODO: add support for blend shapes/morph targets
+					//if (HasBlendShapes(primitive))
+					//	SetupBlendShapes(primitive);
 					if (HasBones(skin))
-						SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+					{
+						yield return SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+					}
 
 					skinnedMeshRenderer.sharedMesh = curMesh;
 				}
 				else
 				{
-					var meshFilter = primitiveObj.AddComponent<MeshFilter>();
 					var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
-					meshFilter.sharedMesh = curMesh;
 					meshRenderer.material = material;
 				}
+
+				MeshFilter meshFilter = primitiveObj.AddComponent<MeshFilter>();
+				meshFilter.sharedMesh = curMesh;
 
 				switch (Collider)
 				{
