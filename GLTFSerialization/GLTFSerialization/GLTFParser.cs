@@ -127,7 +127,7 @@ namespace GLTF
 			stream.Position = startPosition + 4;     // start after magic number chunk
 			ParseGLBHeader(stream);
 			List<ChunkInfo> allChunks = new List<ChunkInfo>();
-			while (stream.Position != stream.Length)
+			for(int i = 0; i < 2; ++i)	// we only need to search for top two chunks
 			{
 				ChunkInfo chunkInfo = ParseChunkInfo(stream);
 				allChunks.Add(chunkInfo);
