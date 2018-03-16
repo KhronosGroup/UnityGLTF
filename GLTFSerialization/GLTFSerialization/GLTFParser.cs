@@ -124,11 +124,19 @@ namespace GLTF
 
 		public static List<ChunkInfo> FindChunks(Stream stream, long startPosition = 0)
 		{
-			stream.Position = startPosition + 4;     // start after magic number chunk
+			stream.Position = startPosition + 4;     // start after magic number bytes (4 bytes past)
 			ParseGLBHeader(stream);
 			List<ChunkInfo> allChunks = new List<ChunkInfo>();
-			for(int i = 0; i < 2; ++i)	// we only need to search for top two chunks
+
+			// we only need to search for top two chunks (the JSON and binary chunks are guarenteed to be the top two chunks)
+			// other chunks can be in the file but we do not care about them
+			for (int i = 0; i < 2; ++i)
 			{
+				if (stream.Position == stream.Length)
+				{
+					break;
+				}
+
 				ChunkInfo chunkInfo = ParseChunkInfo(stream);
 				allChunks.Add(chunkInfo);
 				stream.Position += chunkInfo.Length;
