@@ -19,7 +19,7 @@ public class GLTFExportMenu
 		var exporter = new GLTFSceneExporter(Selection.transforms);
 
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		if (path != "") {
+		if (!string.IsNullOrEmpty(path)) {
 			exporter.SaveGLTFandBin (path, name);
 		}
 	}

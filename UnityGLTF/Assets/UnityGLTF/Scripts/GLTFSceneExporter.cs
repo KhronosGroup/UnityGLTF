@@ -48,6 +48,9 @@ namespace UnityGLTF
 		private List<UnityEngine.Texture> _textures;
 		private List<UnityEngine.Material> _materials;
 
+		private UnityEngine.Material _metalGlossChannelSwapMaterial;
+		private UnityEngine.Material _normalChannelMaterial;
+
 		protected struct PrimKey
 		{
 			public UnityEngine.Mesh Mesh;
@@ -64,6 +67,12 @@ namespace UnityGLTF
 		/// <param name="rootTransforms">Root transform of object to export</param>
 		public GLTFSceneExporter(Transform[] rootTransforms)
 		{
+			var metalGlossChannelSwapShader = Resources.Load ("MetalGlossChannelSwap", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
+			_metalGlossChannelSwapMaterial = new UnityEngine.Material (metalGlossChannelSwapShader);
+
+			var normalChannelShader = Resources.Load ("NormalChannel", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
+			_normalChannelMaterial = new UnityEngine.Material (normalChannelShader);
+
 			_rootTransforms = rootTransforms;
 			_root = new GLTFRoot{
 				Accessors = new List<Accessor>(),
@@ -151,13 +160,18 @@ namespace UnityGLTF
 			}
 		}
 
+		/// <summary>
+		/// This converts Unity's metallic-gloss texture representation into GLTF's metallic-roughness specifications. 
+		/// Unity's metallic-gloss A channel (glossiness) is inverted and goes into GLTF's metallic-roughness G channel (roughness).
+		/// Unity's metallic-gloss R channel (metallic) goes into GLTF's metallic-roughess B channel.
+		/// </summary>
+		/// <param name="texture">Unity's metallic-gloss texture to be exported</param>
+		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportMetallicGlossTexture (Texture2D texture, string outputPath)
 		{
-			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
-			var shader = Resources.Load ("MetalGlossChannelSwap", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
-			var metalGlossMaterial = new UnityEngine.Material (shader);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
-			Graphics.Blit (texture, destRenderTexture, metalGlossMaterial);
+			Graphics.Blit (texture, destRenderTexture, _metalGlossChannelSwapMaterial);
 
 			var exportTexture = new Texture2D (texture.width, texture.height);	
 			exportTexture.ReadPixels (new Rect (0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);	
@@ -165,15 +179,21 @@ namespace UnityGLTF
 
 			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+
+			destRenderTexture.Release();
 		}
 
+		/// <summary>
+		/// This export's the normal texture. If a texture is marked as a normal map, the values are stored in the A and G channel.
+		/// To output the correct normal texture, the A channel is put into the R channel.
+		/// </summary>
+		/// <param name="texture">Unity's normal texture to be exported</param>
+		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportNormalTexture (Texture2D texture, string outputPath)
 		{
-			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
-			var shader = Resources.Load ("NormalChannel", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
-			var material = new UnityEngine.Material (shader);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
-			Graphics.Blit (texture, destRenderTexture, material);
+			Graphics.Blit (texture, destRenderTexture, _normalChannelMaterial);
 
 			var exportTexture = new Texture2D (texture.width, texture.height);	
 			exportTexture.ReadPixels (new Rect (0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);	
@@ -181,6 +201,8 @@ namespace UnityGLTF
 
 			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+
+			destRenderTexture.Release();
 		}
 
 		private void ExportTexture (Texture2D texture, string outputPath)
