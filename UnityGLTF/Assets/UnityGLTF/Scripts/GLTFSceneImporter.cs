@@ -694,14 +694,13 @@ namespace UnityGLTF
 				switch (channel.Target.Path)
 				{
 					case GLTFAnimationChannelPath.translation:
-
 						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
-							var position = output.AsVec3s[i];
-							curveX.AddKey(time, position.X);
-							curveY.AddKey(time, position.Y);
-							curveZ.AddKey(time, -position.Z); // reverse-z
+							Vector3 position = output.AsVec3s[i].ToUnityVector3Convert();
+							curveX.AddKey(time, position.x);
+							curveY.AddKey(time, position.y);
+							curveZ.AddKey(time, position.z);
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
@@ -710,16 +709,16 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.rotation:
-
 						for (int i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
 							var rotation = output.AsVec4s[i];
 
-							curveX.AddKey(time, -rotation.X);
-							curveY.AddKey(time, -rotation.Y);
-							curveZ.AddKey(time, rotation.Z);
-							curveW.AddKey(time, rotation.W);
+							Quaternion rot = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
+							curveX.AddKey(time, rot.x);
+							curveY.AddKey(time, rot.y);
+							curveZ.AddKey(time, rot.z);
+							curveW.AddKey(time, rot.w);
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
@@ -729,14 +728,13 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.scale:
-
 						for (var i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
-							var position = output.AsVec3s[i];
-							curveX.AddKey(time, position.X);
-							curveY.AddKey(time, position.Y);
-							curveZ.AddKey(time, position.Z);
+							Vector3 scale = output.AsVec3s[i].ToUnityVector3Raw();
+							curveX.AddKey(time, scale.x);
+							curveY.AddKey(time, scale.y);
+							curveZ.AddKey(time, scale.z);
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
@@ -744,6 +742,23 @@ namespace UnityGLTF
 						clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
 						break;
 
+					case GLTFAnimationChannelPath.weights:
+						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+						var targetCount = primitives[0].Targets.Count;
+						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+						{
+							string primitiveObjPath = relativePath + "/Primitive" + primitiveIndex;
+							for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+							{
+								// TODO: add support for blend shapes/morph targets
+								//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
+							}
+						}
+						break;
+
+					default:
+						Debug.LogWarning("Cannot read GLTF animation path");
+						break;
 				} // switch target type
 			} // foreach channel
 
@@ -765,32 +780,35 @@ namespace UnityGLTF
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
 			}
-
+			
 			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 			{
-				// create AnimationClip
-				var animation = sceneObj.AddComponent<UnityEngine.Animation>();
+				// create the AnimationClip that will contain animation data
+				UnityEngine.Animation animation = sceneObj.AddComponent<UnityEngine.Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					var clip = ConstructClip(sceneObj.transform, nodeTransforms, i);
+					AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache.Select(x => x.transform).ToArray(), i);
+
+					// needed because Animator component is unavailable at runtime
 					clip.legacy = true;
-					//clip.wrapMode = UnityEngine.WrapMode.Loop;
+
+					clip.wrapMode = UnityEngine.WrapMode.Loop;
+
 					animation.AddClip(clip, clip.name);
 					if (i == 0)
 					{
 						animation.clip = clip;
 					}
-					//animation.Play();
 				}
 			}
-
+			
 			CreatedObject = sceneObj;
 			InitializeGltfTopLevelObject();
 		}
 
 		protected virtual IEnumerator ConstructNode(Node node, int nodeIndex)
 		{
-			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
+			var nodeObj = new GameObject(node.Name ?? ("GLTFNode" + nodeIndex));
 			// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
 			nodeObj.SetActive(false);
 
@@ -801,11 +819,10 @@ namespace UnityGLTF
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
-
-			// TODO: Add support for skin/morph targets
+			
 			if (node.Mesh != null)
 			{
-				yield return ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id);
+				yield return ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null);
 			}
 
 			/* TODO: implement camera (probably a flag to disable for VR as well)
@@ -831,7 +848,89 @@ namespace UnityGLTF
 			_assetCache.NodeCache[nodeIndex] = nodeObj;
 		}
 
-		protected virtual IEnumerator ConstructMesh(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
+		private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		{
+			return HasBones(skin) || HasBlendShapes(primitive);
+		}
+
+		private bool HasBones(Skin skin)
+		{
+			return skin != null;
+		}
+
+		private bool HasBlendShapes(MeshPrimitive primitive)
+		{
+			return primitive.Targets != null;
+		}
+
+		protected virtual IEnumerator SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, UnityEngine.Mesh curMesh)
+		{
+			var boneCount = skin.Joints.Count;
+			Transform[] bones = new Transform[boneCount];
+
+			int bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer.Id;
+			BufferCacheData bufferCacheData = _assetCache.BufferCache[bufferId];
+			AttributeAccessor attributeAccessor = new AttributeAccessor
+			{
+				AccessorId = skin.InverseBindMatrices,
+				Stream = _assetCache.BufferCache[bufferId].Stream,
+				Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+			};
+
+			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
+
+			GLTF.Math.Matrix4x4[] gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;
+			Matrix4x4[] bindPoses = new Matrix4x4[skin.Joints.Count];
+
+			for (int i = 0; i < boneCount; i++)
+			{
+				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
+				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
+			}
+
+			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
+			curMesh.bindposes = bindPoses;
+			renderer.bones = bones;
+
+			yield return null;
+		}
+
+		private BoneWeight[] CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, int vertCount)
+		{
+			NormalizeBoneWeightArray(weights);
+
+			BoneWeight[] boneWeights = new BoneWeight[vertCount];
+			for (int i = 0; i < vertCount; i++)
+			{
+				boneWeights[i].boneIndex0 = (int)joints[i].x;
+				boneWeights[i].boneIndex1 = (int)joints[i].y;
+				boneWeights[i].boneIndex2 = (int)joints[i].z;
+				boneWeights[i].boneIndex3 = (int)joints[i].w;
+
+				boneWeights[i].weight0 = weights[i].x;
+				boneWeights[i].weight1 = weights[i].y;
+				boneWeights[i].weight2 = weights[i].z;
+				boneWeights[i].weight3 = weights[i].w;
+			}
+
+			return boneWeights;
+		}
+
+		/// <summary>
+		/// Ensures each bone weight influences applied to the vertices add up to 1
+		/// </summary>
+		/// <param name="weights">Bone weight array</param>
+		private void NormalizeBoneWeightArray(Vector4[] weights)
+		{
+			for (int i = 0; i < weights.Length; i++)
+			{
+				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
+				if (weightSum < 0.98f)
+					weights[i] /= weightSum;
+			}
+		}
+
+		protected virtual IEnumerator ConstructMesh(GLTF.Schema.Mesh mesh, Transform parent, int meshId, Skin skin)
 		{
 			if (_assetCache.MeshCache[meshId] == null)
 			{
@@ -846,28 +945,48 @@ namespace UnityGLTF
 				yield return ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
 
 				var primitiveObj = new GameObject("Primitive");
-				var meshFilter = primitiveObj.AddComponent<MeshFilter>();
-				meshFilter.sharedMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
-				var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
 
 				MaterialCacheData materialCacheData =
 					materialIndex >= 0 ? _assetCache.MaterialCache[materialIndex] : _defaultLoadedMaterial;
 
 				UnityEngine.Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
-				meshRenderer.material = material;
+				UnityEngine.Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
+				if (NeedsSkinnedMeshRenderer(primitive, skin))
+				{
+					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+					skinnedMeshRenderer.material = material;
+					skinnedMeshRenderer.quality = SkinQuality.Bone4;
+					// TODO: add support for blend shapes/morph targets
+					//if (HasBlendShapes(primitive))
+					//	SetupBlendShapes(primitive);
+					if (HasBones(skin))
+					{
+						yield return SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+					}
+
+					skinnedMeshRenderer.sharedMesh = curMesh;
+				}
+				else
+				{
+					var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+					meshRenderer.material = material;
+				}
+
+				MeshFilter meshFilter = primitiveObj.AddComponent<MeshFilter>();
+				meshFilter.sharedMesh = curMesh;
 
 				switch (Collider)
 				{
 					case ColliderType.Box:
 						var boxCollider = primitiveObj.AddComponent<BoxCollider>();
-						boxCollider.center = meshFilter.sharedMesh.bounds.center;
-						boxCollider.size = meshFilter.sharedMesh.bounds.size;
+						boxCollider.center = curMesh.bounds.center;
+						boxCollider.size = curMesh.bounds.size;
 						break;
 
 					case ColliderType.Mesh:
 						var meshCollider = primitiveObj.AddComponent<MeshCollider>();
-						meshCollider.sharedMesh = meshFilter.sharedMesh;
+						meshCollider.sharedMesh = curMesh;
 						meshCollider.convex = true;
 						break;
 				}
@@ -1015,6 +1134,11 @@ namespace UnityGLTF
 
 				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
+					: null,
+
+				 boneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
+					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+						meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
 					: null
 			};
 

@@ -604,7 +604,6 @@ namespace GLTF.Schema
 			}
 		}
 
-
 		// technically byte and short are not spec compliant for unsigned types, but various files have it
 		private static uint GetUnsignedDiscreteElement(byte[] bufferViewData, int offset, GLTFComponentType type)
 		{
@@ -635,6 +634,48 @@ namespace GLTF.Schema
 					throw new Exception("Unsupported type passed in: " + type);
 				}
 			}
+		}
+
+		public Matrix4x4[] AsMatrix4x4Array(ref NumericArray contents, byte[] bufferViewData, int offset, bool normalizeIntValues = true)
+		{
+			if (contents.AsMatrix4x4s != null) return contents.AsMatrix4x4s;
+
+			if (Type != GLTFAccessorAttributeType.MAT4) return null;
+
+			Matrix4x4[] arr = new Matrix4x4[Count];
+			var totalByteOffset = ByteOffset + offset;
+
+			int componentSize;
+			float maxValue;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16;
+			if (normalizeIntValues) maxValue = 1;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = new Matrix4x4(Matrix4x4.Identity);
+
+				if (ComponentType == GLTFComponentType.Float)
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						float value = GetFloatElement(bufferViewData, totalByteOffset + idx * stride + componentSize * i);
+						arr[idx].SetValue(i, value);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						float value = GetDiscreteElement(bufferViewData, totalByteOffset + idx * stride + componentSize * i, ComponentType) / maxValue;
+						arr[idx].SetValue(i, value);
+					}
+				}
+			}
+
+			contents.AsMatrix4x4s = arr;
+			return arr;
 		}
 	}
 
@@ -672,6 +713,8 @@ namespace GLTF.Schema
 		public Vector3[] AsVec3s;
 		[FieldOffset(0)]
 		public Vector4[] AsVec4s;
+		[FieldOffset(0)]
+		public Matrix4x4[] AsMatrix4x4s;
 		[FieldOffset(0)]
 		public Color[] AsColors;
 		[FieldOffset(0)]

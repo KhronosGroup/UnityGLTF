@@ -82,5 +82,151 @@ namespace GLTF.Math
 		{
 			return (mat != null ? mat.GetHashCode() : 0);
 		}
+
+		public void SetValue(int index, float value)
+		{
+			switch (index)
+			{
+				case 0:
+					M11 = value;
+					break;
+				case 1:
+					M21 = value;
+					break;
+				case 2:
+					M31 = value;
+					break;
+				case 3:
+					M41 = value;
+					break;
+				case 4:
+					M12 = value;
+					break;
+				case 5:
+					M22 = value;
+					break;
+				case 6:
+					M32 = value;
+					break;
+				case 7:
+					M42 = value;
+					break;
+				case 8:
+					M13 = value;
+					break;
+				case 9:
+					M23 = value;
+					break;
+				case 10:
+					M33 = value;
+					break;
+				case 11:
+					M43 = value;
+					break;
+				case 12:
+					M14 = value;
+					break;
+				case 13:
+					M24 = value;
+					break;
+				case 14:
+					M34 = value;
+					break;
+				case 15:
+					M44 = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException("Index " + index + " is out of range for a 4x4 matrix.");
+			}
+		}
+
+		public void SetValue(int row, int column, float value)
+		{
+			switch(row)
+			{
+				case 0:
+					switch (column)
+					{
+						case 0:
+							M11 = value;
+							break;
+						case 1:
+							M12 = value;
+							break;
+						case 2:
+							M13 = value;
+							break;
+						case 3:
+							M14 = value;
+							break;
+						default:
+							throw new IndexOutOfRangeException("Column " + column + " is out of range for a 4x4 matrix.");
+					}
+
+					break;
+				case 1:
+					switch (column)
+					{
+						case 0:
+							M21 = value;
+							break;
+						case 1:
+							M22 = value;
+							break;
+						case 2:
+							M23 = value;
+							break;
+						case 3:
+							M24 = value;
+							break;
+						default:
+							throw new IndexOutOfRangeException("Column " + column + " is out of range for a 4x4 matrix.");
+					}
+
+					break;
+				case 2:
+					switch (column)
+					{
+						case 0:
+							M31 = value;
+							break;
+						case 1:
+							M32 = value;
+							break;
+						case 2:
+							M33 = value;
+							break;
+						case 3:
+							M34 = value;
+							break;
+						default:
+							throw new IndexOutOfRangeException("Column " + column + " is out of range for a 4x4 matrix.");
+					}
+
+					break;
+				case 3:
+					switch (column)
+					{
+						case 0:
+							M41 = value;
+							break;
+						case 1:
+							M42 = value;
+							break;
+						case 2:
+							M43 = value;
+							break;
+						case 3:
+							M44 = value;
+							break;
+						default:
+							throw new IndexOutOfRangeException("Column " + column + " is out of range for a 4x4 matrix.");
+					}
+
+					break;
+				default:
+					throw new IndexOutOfRangeException("Row " + row + " is out of range for a 4x4 matrix.");
+			}
+		}
 	}
 }
