@@ -22,6 +22,12 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<AnimationSampler> Samplers;
 
+		public Animation()
+		{
+			Channels = new List<AnimationChannel>();
+			Samplers = new List<AnimationSampler>();
+		}
+
 		public static Animation Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var animation = new Animation();
@@ -33,7 +39,7 @@ namespace GLTF.Schema
 				switch (curProp)
 				{
 					case "channels":
-						animation.Channels = reader.ReadList(() => AnimationChannel.Deserialize(root, reader));
+						animation.Channels = reader.ReadList(() => AnimationChannel.Deserialize(root, reader, animation));
 						break;
 					case "samplers":
 						animation.Samplers = reader.ReadList(() => AnimationSampler.Deserialize(root, reader));

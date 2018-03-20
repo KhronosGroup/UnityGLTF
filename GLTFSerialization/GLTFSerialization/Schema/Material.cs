@@ -79,6 +79,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public bool DoubleSided;
 
+		public Material()
+		{
+			Extensions = new System.Collections.Generic.Dictionary<string, Extension>();
+		}
+
 		public static Material Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var material = new Material();

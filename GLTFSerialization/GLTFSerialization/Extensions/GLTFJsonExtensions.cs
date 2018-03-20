@@ -43,6 +43,59 @@ namespace GLTF.Extensions
 			return list;
 		}
 
+		public static List<T> ReadObjectList<T>(this JsonReader reader, Func<T> deserializerFunc)
+		{
+			if (reader.Read() && reader.TokenType != JsonToken.StartArray)
+			{
+				throw new Exception(string.Format("Invalid array at: {0}", reader.Path));
+			}
+
+			var list = new List<T>();
+			
+			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+			{
+				list.Add(deserializerFunc());
+
+				// deserializerFunc can advance to EndArray. We need to check for this case as well. 
+				if (reader.TokenType == JsonToken.EndArray)
+				{
+					break;
+				}
+			}
+
+			return list;
+		}
+
+		public static List<T> ReadDictList<T>(this JsonReader reader, Func<T> deserializerFunc)
+		{
+			if (reader.Read() && reader.TokenType != JsonToken.StartArray)
+			{
+				throw new Exception(string.Format("Invalid array at: {0}", reader.Path));
+			}
+
+			var list = new List<T>();
+			JsonReader re = reader;
+			bool dodo = true;
+			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+			{
+				list.Add(deserializerFunc());
+				if(dodo)
+				{
+					reader = re;
+					dodo = false;
+				}
+				
+				// deserializerFunc can advance to EndArray. We need to check for this case as well. 
+				if (reader.TokenType == JsonToken.EndArray)
+				{
+					break;
+				}
+			}
+
+
+			return list;
+		}
+
 		public static List<T> ReadList<T>(this JsonReader reader, Func<T> deserializerFunc)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartArray)
@@ -297,6 +350,23 @@ namespace GLTF.Extensions
 			return quat;
 		}
 
+		public static Dictionary<string, T> ReadAsObject<T>(this JsonReader reader, Func<T> deserializerFunc)
+		{
+			if (reader.TokenType != JsonToken.StartObject)
+			{
+				throw new Exception(string.Format("Dictionary must be an object at: {0}", reader.Path));
+			}
+
+			var dict = new Dictionary<string, T>();
+
+			while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+			{
+				dict.Add(reader.Value.ToString(), deserializerFunc());
+			}
+
+			return dict;
+		}
+
 		public static Dictionary<string, T> ReadAsDictionary<T>(this JsonReader reader, Func<T> deserializerFunc)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
@@ -365,6 +435,47 @@ namespace GLTF.Extensions
 		public static T ReadStringEnum<T>(this JsonReader reader)
 		{
 			return (T) Enum.Parse(typeof(T), reader.ReadAsString());
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Vector2 color)
+		{
+			JArray array = new JArray();
+			array.Add(color.X);
+			array.Add(color.Y);
+
+			return array;
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Vector3 vector)
+		{
+			JArray array = new JArray();
+			array.Add(vector.X);
+			array.Add(vector.Y);
+			array.Add(vector.Z);
+
+			return array;
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Vector4 vector)
+		{
+			JArray array = new JArray();
+			array.Add(vector.X);
+			array.Add(vector.Y);
+			array.Add(vector.Z);
+			array.Add(vector.W);
+
+			return array;
+		}
+
+		public static JArray asJSONArray(this GLTF.Math.Color color)
+		{
+			JArray array = new JArray();
+			array.Add(color.R);
+			array.Add(color.G);
+			array.Add(color.B);
+			array.Add(color.A);
+
+			return array;
 		}
 	}
 }

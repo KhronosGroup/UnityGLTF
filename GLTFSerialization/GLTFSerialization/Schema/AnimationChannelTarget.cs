@@ -69,6 +69,7 @@ namespace GLTF.Schema
 	{
 		translation,
 		rotation,
-		scale
+		scale,
+		weights
 	}
 }

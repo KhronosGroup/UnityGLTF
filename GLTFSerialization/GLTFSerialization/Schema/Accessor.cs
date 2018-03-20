@@ -334,6 +334,32 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public float[] AsFloatArray(ref NumericArray contents, byte[] bufferData)
+		{
+			if (contents.AsFloats != null) return contents.AsFloats;
+
+			if (Type != GLTFAccessorAttributeType.SCALAR) return null;
+
+			var arr = new float[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+
+			for (var idx = 0; idx < Count; idx++)
+			{
+				arr[idx] = getContinuousElement(bufferData, totalByteOffset + idx * stride);
+			}
+
+			contents.AsFloats = arr;
+			return arr;
+		}
+
 		public Vector2[] AsVector2Array(ref NumericArray contents, byte[] bufferData, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec2s != null) return contents.AsVec2s;
@@ -448,6 +474,55 @@ namespace GLTF.Schema
 			return arr;
 		}
 
+		public Matrix4x4[] AsMatrixArray(ref NumericArray contents, byte[] bufferData)
+		{
+			if (contents.AsMatrix4x4s != null) return contents.AsMatrix4x4s;
+
+			if (Type != GLTFAccessorAttributeType.MAT4) return null;
+
+			var arr = new Matrix4x4[Count];
+			var totalByteOffset = BufferView.Value.ByteOffset + ByteOffset;
+
+			int componentSize;
+			float maxValue;
+			Func<byte[], int, int> getDiscreteElement;
+			Func<byte[], int, float> getContinuousElement;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue, out getDiscreteElement, out getContinuousElement);
+
+			var stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16;
+			for (var i = 0; i < Count; i++)
+			{
+				int startElement = totalByteOffset + i * stride;
+				if (ComponentType == GLTFComponentType.Float)
+				{
+					arr[i] = new Matrix4x4 (
+						getContinuousElement(bufferData, startElement + componentSize * 0),
+						getContinuousElement(bufferData, startElement + componentSize * 4),
+						getContinuousElement(bufferData, startElement + componentSize * 8),
+						getContinuousElement(bufferData, startElement + componentSize * 12),
+
+						getContinuousElement(bufferData, startElement + componentSize * 1),
+						getContinuousElement(bufferData, startElement + componentSize * 5),
+						getContinuousElement(bufferData, startElement + componentSize * 9),
+						getContinuousElement(bufferData, startElement + componentSize * 13),
+
+						getContinuousElement(bufferData, startElement + componentSize * 2),
+						getContinuousElement(bufferData, startElement + componentSize * 6),
+						getContinuousElement(bufferData, startElement + componentSize * 10),
+						getContinuousElement(bufferData, startElement + componentSize * 14),
+
+						getContinuousElement(bufferData, startElement + componentSize * 3),
+						getContinuousElement(bufferData, startElement + componentSize * 7),
+						getContinuousElement(bufferData, startElement + componentSize * 11),
+						getContinuousElement(bufferData, startElement + componentSize * 15)
+					);
+				}
+			}
+
+			contents.AsMatrix4x4s = arr;
+			return arr;
+		}
+
 		public Color[] AsColorArray(ref NumericArray contents, byte[] bufferData)
 		{
 			if (contents.AsColors != null) return contents.AsColors;
@@ -499,11 +574,11 @@ namespace GLTF.Schema
 			if (contents.AsTexcoords != null) return contents.AsTexcoords;
 
 			var arr = AsVector2Array(ref contents, bufferData);
-			for (var i = 0; i < arr.Length; i++)
+/*			for (var i = 0; i < arr.Length; i++)
 			{
 				arr[i].Y = 1 - arr[i].Y;
 			}
-
+*/
 			contents.AsTexcoords = arr;
 			contents.AsVec2s = null;
 
@@ -602,10 +677,12 @@ namespace GLTF.Schema
 	public struct NumericArray
 	{
 		public int[] AsInts;
+		public float[] AsFloats;
 		public Vector2[] AsVec2s;
 		public Vector3[] AsVec3s;
 		public Vector4[] AsVec4s;
 		public Color[] AsColors;
+		public Matrix4x4[] AsMatrix4x4s;
 		public Vector2[] AsTexcoords;
 		public Vector3[] AsVertices;
 		public Vector3[] AsNormals;
