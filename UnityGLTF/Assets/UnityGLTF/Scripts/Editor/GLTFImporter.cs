@@ -25,16 +25,16 @@ namespace UnityGLTF
         [SerializeField] private bool _swapUvs = false;
         [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] private bool _importMaterials = true;
-		[SerializeField] private bool _useJpgTextures = false;
+        [SerializeField] private bool _useJpgTextures = false;
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-			string sceneName = null;
+            string sceneName = null;
             GameObject gltfScene = null;
             UnityEngine.Mesh[] meshes = null;
             try
             {
-				sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
+                sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
                 gltfScene = CreateGLTFScene(ctx.assetPath);
 
                 // Remove empty roots
@@ -130,12 +130,12 @@ namespace UnityGLTF
                                     matName = matName.Substring(Mathf.Min(matName.LastIndexOf("/") + 1, matName.Length - 1));
                                 }
 
-								// Ensure name is unique
-								matName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(matName));
-								matName = ObjectNames.GetUniqueName(materialNames.ToArray(), matName);
+                                // Ensure name is unique
+                                matName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(matName));
+                                matName = ObjectNames.GetUniqueName(materialNames.ToArray(), matName);
 
-								mat.name = matName;
-								materialNames.Add(matName);
+                                mat.name = matName;
+                                materialNames.Add(matName);
                             }
 
                             return mat;
@@ -168,11 +168,11 @@ namespace UnityGLTF
                                             if (propertyName.StartsWith("_")) texName = propertyName.Substring(Mathf.Min(1, propertyName.Length - 1));
                                         }
 
-										// Ensure name is unique
-										texName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(texName));
+                                        // Ensure name is unique
+                                        texName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(texName));
                                         texName = ObjectNames.GetUniqueName(textureNames.ToArray(), texName);
 
-										tex.name = texName;
+                                        tex.name = texName;
                                         textureNames.Add(texName);
                                         matTextures.Add(tex);
                                     }
@@ -202,7 +202,7 @@ namespace UnityGLTF
 
                         foreach (var tex in textures)
                         {
-							var ext = _useJpgTextures ? ".jpg" : ".png";
+                            var ext = _useJpgTextures ? ".jpg" : ".png";
                             var texPath = string.Concat(texturesRoot, tex.name, ext);
                             File.WriteAllBytes(texPath, _useJpgTextures ? tex.EncodeToJPG() : tex.EncodeToPNG());
 
@@ -237,8 +237,8 @@ namespace UnityGLTF
                                 }
                             });
                             // Fix textures
-							// HACK: This needs to be a delayed call.
-							// Unity needs a frame to kick off the texture import so we can rewrite the ref
+                            // HACK: This needs to be a delayed call.
+                            // Unity needs a frame to kick off the texture import so we can rewrite the ref
                             if (textures.Length > 0)
                             {
                                 EditorApplication.delayCall += () =>
@@ -247,7 +247,7 @@ namespace UnityGLTF
                                     {
                                         var tex = textures[i];
                                         var texturesRoot = string.Concat(folderName, "/", "Textures/");
-										var ext = _useJpgTextures ? ".jpg" : ".png";
+                                        var ext = _useJpgTextures ? ".jpg" : ".png";
                                         var texPath = string.Concat(texturesRoot, tex.name, ext);
 
                                         // Grab new imported texture
@@ -279,10 +279,10 @@ namespace UnityGLTF
 
                                             importer.SaveAndReimport();
                                         }
-										else
-										{
-											Debug.LogWarning(string.Format("GLTFImporter: Unable to import texture at path: {0}", texPath));
-										}
+                                        else
+                                        {
+                                            Debug.LogWarning(string.Format("GLTFImporter: Unable to import texture at path: {0}", texPath));
+                                        }
                                     }
                                 };
                             }
@@ -333,33 +333,33 @@ namespace UnityGLTF
 
         private GameObject CreateGLTFScene(string projectFilePath)
         {
-			ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
-;			using (var stream = File.OpenRead(projectFilePath))
-			{
-				GLTFRoot gLTFRoot = GLTFParser.ParseJson(stream);
-				var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
+            ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
+            using (var stream = File.OpenRead(projectFilePath))
+            {
+                GLTFRoot gLTFRoot = GLTFParser.ParseJson(stream);
+                var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
 
-				loader.MaximumLod = _maximumLod;
+                loader.MaximumLod = _maximumLod;
 
-				// HACK: Force the coroutine to run synchronously in the editor
-				var stack = new Stack<IEnumerator>();
-				stack.Push(loader.LoadScene(isMultithreaded: true));
+                // HACK: Force the coroutine to run synchronously in the editor
+                var stack = new Stack<IEnumerator>();
+                stack.Push(loader.LoadScene(isMultithreaded: true));
 
-				while (stack.Count > 0)
-				{
-					var enumerator = stack.Pop();
-					if (enumerator.MoveNext())
-					{
-						stack.Push(enumerator);
-						var subEnumerator = enumerator.Current as IEnumerator;
-						if (subEnumerator != null)
-						{
-							stack.Push(subEnumerator);
-						}
-					}
-				}
-				return loader.LastLoadedScene;
-			}
+                while (stack.Count > 0)
+                {
+                    var enumerator = stack.Pop();
+                    if (enumerator.MoveNext())
+                    {
+                        stack.Push(enumerator);
+                        var subEnumerator = enumerator.Current as IEnumerator;
+                        if (subEnumerator != null)
+                        {
+                            stack.Push(subEnumerator);
+                        }
+                    }
+                }
+                return loader.LastLoadedScene;
+            }
         }
 
         private void CopyOrNew<T>(T asset, string assetPath, Action<T> replaceReferences) where T : Object

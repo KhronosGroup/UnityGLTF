@@ -130,7 +130,7 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 			//get an empty port
 			TcpListener l = new TcpListener(IPAddress.Loopback, 0);
 			l.Start();
-			int port = ((IPEndPoint) l.LocalEndpoint).Port;
+			int port = ((IPEndPoint)l.LocalEndpoint).Port;
 			l.Stop();
 			this.Initialize(path, port);
 #endif
@@ -214,12 +214,12 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 				}
 				catch (Exception ex)
 				{
-					context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
+					context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 				}
 			}
 			else
 			{
-				context.Response.StatusCode = (int) HttpStatusCode.NotFound;
+				context.Response.StatusCode = (int)HttpStatusCode.NotFound;
 			}
 
 			context.Response.OutputStream.Close();
