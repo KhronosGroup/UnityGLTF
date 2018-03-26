@@ -1078,7 +1078,7 @@ namespace UnityGLTF
 				{
 					InitializeAssetCache();
 				}
-				yield return LoadImageBuffer(texture, GetTextureSourceId(texture));
+				yield return LoadImageBuffer(texture, textureIndex);
 				yield return _CreateTexture(texture, textureIndex, markGpuOnly);
 			}
 			finally
