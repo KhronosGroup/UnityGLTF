@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace UnityGLTF.Loader
 {
-    public interface ILoader
-    {
-        IEnumerator LoadStream(string relativeFilePath);
+	public interface ILoader
+	{
+		IEnumerator LoadStream(string relativeFilePath);
 
-        Stream LoadedStream { get; }
-    }
+		Stream LoadedStream { get; }
+	}
 }
