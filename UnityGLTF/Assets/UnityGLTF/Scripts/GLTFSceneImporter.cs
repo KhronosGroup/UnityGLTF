@@ -795,13 +795,15 @@ namespace UnityGLTF
 			var meshAttributes = meshConstructionData.MeshAttributes;
 			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
+			bool hasNormals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL);
+			bool hasTangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT);
 			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
 			UnityEngine.Mesh mesh = new UnityEngine.Mesh
 			{
 				vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
 					? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
 					: null,
-				normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
+				normals = hasNormals
 					? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
 					: null,
 
@@ -830,14 +832,26 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
 					: MeshPrimitive.GenerateTriangles((int)vertexCount),
 
-				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
+				tangents = hasTangents
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
 					: null
 			};
-			
-			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 
 			yield return null;
+
+			if (!hasNormals)
+			{
+				mesh.RecalculateNormals();
+				yield return null;
+			}
+
+			if (!hasTangents)
+			{
+				mesh.RecalculateTangents();
+				yield return null;
+			}
+
+			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 		}
 		
 		protected virtual IEnumerator CreateMaterial(GLTF.Schema.Material def, int materialIndex)
@@ -920,7 +934,7 @@ namespace UnityGLTF
 				if (pbr.BaseColorTexture != null)
 				{
 					var textureId = pbr.BaseColorTexture.Index;
-					yield return _CreateTexture(textureId.Value, textureId.Id, true, false);    // base color is sRGB color space
+					yield return _CreateTexture(textureId.Value, textureId.Id, true, false);	// base color is sRGB color space
 					material.SetTexture("_MainTex", _assetCache.TextureCache[textureId.Id].Texture);
 					ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
@@ -1013,7 +1027,7 @@ namespace UnityGLTF
 				else
 				{
 					yield return _CreateTexture(textureId.Value, textureId.Id);
-                    material.SetTexture("_OcclusionMap", _assetCache.TextureCache[textureId.Id].Texture);
+					material.SetTexture("_OcclusionMap", _assetCache.TextureCache[textureId.Id].Texture);
 					ApplyTextureTransform(def.OcclusionTexture, material, "_OcclusionMap");
 				}
 			}
@@ -1024,7 +1038,7 @@ namespace UnityGLTF
 				material.EnableKeyword("EMISSION_MAP_ON");
 				material.EnableKeyword("_EMISSION");
 				yield return _CreateTexture(textureId.Value, textureId.Id, true, false);	// emmissive is sRGB color space
-                material.SetTexture("_EmissionMap", _assetCache.TextureCache[textureId.Id].Texture);
+				material.SetTexture("_EmissionMap", _assetCache.TextureCache[textureId.Id].Texture);
 				material.SetInt("_EmissionUV", def.EmissiveTexture.TexCoord);
 				ApplyTextureTransform(def.EmissiveTexture, material, "_EmissionMap");
 			}

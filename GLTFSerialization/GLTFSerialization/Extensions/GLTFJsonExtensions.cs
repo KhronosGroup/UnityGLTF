@@ -37,7 +37,7 @@ namespace GLTF.Extensions
 
 			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
 			{
-				list.Add(double.Parse(reader.Value.ToString()));
+				list.Add(double.Parse(reader.Value.ToString(), System.Globalization.CultureInfo.InvariantCulture));
 			}
 
 			return list;
