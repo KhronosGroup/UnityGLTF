@@ -97,7 +97,8 @@ namespace UnityGLTF
 			binFile.Close();
 #endif
 
-			foreach (var image in _images)
+            GL.sRGBWrite = true;
+            foreach (var image in _images)
 			{
 				Debug.Log(image.name);
 				var renderTexture = RenderTexture.GetTemporary(image.width, image.height);
@@ -108,7 +109,8 @@ namespace UnityGLTF
 				exportTexture.Apply();
 				File.WriteAllBytes(Path.Combine(path, image.name + ".png"), exportTexture.EncodeToPNG());
 			}
-		}
+            GL.sRGBWrite = true;
+        }
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
@@ -439,10 +441,10 @@ namespace UnityGLTF
 			switch (materialObj.shader.name)
 			{
 				case "Standard":
-				case "GLTF/GLTFStandard":
-					material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
-					break;
-				case "GLTF/GLTFConstant":
+                case "GLTF/PbrMetallicRoughness":
+                    material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
+                    break;
+                case "GLTF/GLTFConstant":
 					material.CommonConstant = ExportCommonConstant(materialObj);
 					break;
 			}
