@@ -56,8 +56,6 @@ namespace UnityEditor
 		MaterialProperty bumpMap = null;
 		MaterialProperty occlusionStrength = null;
 		MaterialProperty occlusionMap = null;
-		//MaterialProperty heightMapScale = null;
-		//MaterialProperty heightMap = null;
 		MaterialProperty emissionColor = null;
 		MaterialProperty emissionMap = null;
 

@@ -30,7 +30,11 @@ namespace UnityGLTF
 			mat.shader.maximumLOD = MaxLOD;
 			_material = mat;
 
-			_alphaCutoff = mat.GetFloat("_Cutoff");
+			if (mat.HasProperty("_Cutoff"))
+			{
+				_alphaCutoff = mat.GetFloat("_Cutoff");
+			}
+
 			switch (mat.renderQueue)
 			{
 				case (int)RenderQueue.AlphaTest:
@@ -50,11 +54,18 @@ namespace UnityGLTF
 
 		public virtual Texture NormalTexture
 		{
-			get { return _material.GetTexture("_BumpMap"); }
+			get { return _material.HasProperty("_BumpMap") ? _material.GetTexture("_BumpMap") : null; }
 			set
 			{
-				_material.SetTexture("_BumpMap", value);
-				_material.EnableKeyword("_NORMALMAP");
+				if (_material.HasProperty("_BumpMap"))
+				{
+					_material.SetTexture("_BumpMap", value);
+					_material.EnableKeyword("_NORMALMAP");
+				}
+				else
+				{
+					Debug.LogWarning("Tried to set a normal map texture to a material that does not support it.");
+				}
 			}
 		}
 
@@ -67,14 +78,34 @@ namespace UnityGLTF
 
 		public virtual double NormalTexScale
 		{
-			get { return _material.GetFloat("_BumpScale"); }
-			set { _material.SetFloat("_BumpScale", (float)value); }
+			get { return _material.HasProperty("_BumpScale") ? _material.GetFloat("_BumpScale") : 1; }
+			set
+			{
+				if (_material.HasProperty("_BumpScale"))
+				{
+					_material.SetFloat("_BumpScale", (float)value);
+				}
+				else
+				{
+					Debug.LogWarning("Tried to set a normal map scale to a material that does not support it.");
+				}
+			}
 		}
 
 		public virtual Texture OcclusionTexture
 		{
-			get { return _material.GetTexture("_OcclusionMap"); }
-			set { _material.SetTexture("_OcclusionMap", value); }
+			get { return _material.HasProperty("_OcclusionMap") ? _material.GetTexture("_OcclusionMap") : null; }
+			set
+			{
+				if (_material.HasProperty("_OcclusionMap"))
+				{
+					_material.SetTexture("_OcclusionMap", value);
+				}
+				else
+				{
+					Debug.LogWarning("Tried to set an occlusion map to a material that does not support it.");
+				}
+			}
 		}
 
 		// not implemented by the Standard shader
@@ -86,17 +117,34 @@ namespace UnityGLTF
 
 		public virtual double OcclusionTexStrength
 		{
-			get { return _material.GetFloat("_OcclusionStrength"); }
-			set { _material.SetFloat("_OcclusionStrength", (float)value); }
+			get { return _material.HasProperty("_OcclusionStrength") ? _material.GetFloat("_OcclusionStrength") : 1; }
+			set
+			{
+				if (_material.HasProperty("_OcclusionStrength"))
+				{
+					_material.SetFloat("_OcclusionStrength", (float)value);
+				}
+				else
+				{
+					Debug.LogWarning("Tried to set occlusion strength to a material that does not support it.");
+				}
+			}
 		}
 
 		public virtual Texture EmissiveTexture
 		{
-			get { return _material.GetTexture("_EmissionMap"); }
+			get { return _material.HasProperty("_EmissionMap") ? _material.GetTexture("_EmissionMap") : null; }
 			set
 			{
-				_material.SetTexture("_EmissionMap", value);
-				_material.EnableKeyword("_EMISSION");
+				if (_material.HasProperty("_EmissionMap"))
+				{
+					_material.SetTexture("_EmissionMap", value);
+					_material.EnableKeyword("_EMISSION");
+				}
+				else
+				{
+					Debug.LogWarning("Tried to set an emission map to a material that does not support it.");
+				}
 			}
 		}
 
@@ -109,8 +157,18 @@ namespace UnityGLTF
 
 		public virtual Color EmissiveFactor
 		{
-			get { return _material.GetColor("_EmissionColor"); }
-			set { _material.SetColor("_EmissionColor", value); }
+			get { return _material.HasProperty("_EmissionColor") ? _material.GetColor("_EmissionColor") : Color.white; }
+			set
+			{
+				if (_material.HasProperty("_EmissionColor"))
+				{
+					_material.SetColor("_EmissionColor", value);
+				}
+				else
+				{
+					Debug.LogWarning("Tried to set an emission factor to a material that does not support it.");
+				}
+			}
 		}
 
 		public virtual AlphaMode AlphaMode
@@ -128,7 +186,10 @@ namespace UnityGLTF
 					_material.DisableKeyword("_ALPHABLEND_ON");
 					_material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
 					_material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-					_material.SetFloat("_Cutoff", (float)_alphaCutoff);
+					if (_material.HasProperty("_Cutoff"))
+					{
+						_material.SetFloat("_Cutoff", (float)_alphaCutoff);
+					}
 				}
 				else if (value == AlphaMode.BLEND)
 				{
@@ -162,8 +223,10 @@ namespace UnityGLTF
 			get { return _alphaCutoff; }
 			set
 			{
-				if (_alphaMode == AlphaMode.MASK)
+				if ((_alphaMode == AlphaMode.MASK) && _material.HasProperty("_Cutoff"))
+				{
 					_material.SetFloat("_Cutoff", (float)value);
+				}
 				_alphaCutoff = value;
 			}
 		}
