@@ -35,6 +35,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter(Transform[] rootTransforms)
 		{
 			_rootTransforms = rootTransforms;
+		
 			_root = new GLTFRoot{
 				Accessors = new List<Accessor>(),
 				Asset = new Asset {
@@ -49,6 +50,7 @@ namespace UnityGLTF
 				Samplers = new List<Sampler>(),
 				Scenes = new List<Scene>(),
 				Textures = new List<GLTF.Schema.Texture>(),
+				Cameras = new List<GLTF.Schema.Camera>(),
 			};
 
 			_images = new List<Texture2D>();
@@ -144,6 +146,14 @@ namespace UnityGLTF
 				node.Name = nodeTransform.name;
 			}
 
+			//export camera
+			UnityEngine.Camera unityCamera = nodeTransform.GetComponent<UnityEngine.Camera>();
+			if (unityCamera != null)
+			{
+				//should we only export enabled cameras?
+				node.Camera = exportCamera(unityCamera);
+			}
+
 			node.SetUnityTransform(nodeTransform);
 
 			var id = new NodeId {
@@ -177,6 +187,49 @@ namespace UnityGLTF
 					node.Children.Add(ExportNode(child.transform));
 				}
 			}
+
+			return id;
+		}
+
+		private CameraId exportCamera(UnityEngine.Camera unityCamera)
+		{
+			GLTF.Schema.Camera camera = new GLTF.Schema.Camera();
+			//name
+			camera.Name = unityCamera.name;
+			
+			//type
+			bool isOrthographic = unityCamera.orthographic;
+			camera.Type = isOrthographic ? GLTF.Schema.CameraType.orthographic : GLTF.Schema.CameraType.perspective;
+
+			//matrix
+			if (isOrthographic)
+			{
+				GLTF.Schema.CameraOrthographic ortho = new GLTF.Schema.CameraOrthographic();
+				ortho.ZFar = unityCamera.farClipPlane;
+				ortho.ZNear = unityCamera.nearClipPlane;
+				//x and y magnifications: Unity uses a combination of viewport size and origin, as well as "orthographic size"
+				//unsure how to combine these to get the xMag and yMag
+				ortho.XMag = unityCamera.orthographicSize;
+				ortho.YMag = unityCamera.orthographicSize;
+
+				camera.Orthographic = ortho;
+			} else
+			{
+				GLTF.Schema.CameraPerspective perspective = new GLTF.Schema.CameraPerspective();
+				perspective.ZFar = unityCamera.farClipPlane;
+				perspective.ZNear = unityCamera.nearClipPlane;
+				perspective.YFov = Mathf.Deg2Rad * unityCamera.fieldOfView;
+				perspective.AspectRatio = unityCamera.aspect;
+				camera.Perspective = perspective;
+			}
+
+			var id = new CameraId
+			{
+				Id = _root.Cameras.Count,
+				Root = _root
+			};
+
+			_root.Cameras.Add(camera);
 
 			return id;
 		}
