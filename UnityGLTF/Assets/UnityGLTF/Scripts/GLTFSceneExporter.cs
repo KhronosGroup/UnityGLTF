@@ -1265,5 +1265,6 @@ namespace UnityGLTF
 
             return null;
         }
+
     }
 }

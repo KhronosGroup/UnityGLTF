@@ -24,7 +24,6 @@ namespace UnityGLTF
         public int MaximumLod = 300;
         public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 
-
         [SerializeField]
         private Shader shaderOverride = null;
 
