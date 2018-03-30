@@ -845,11 +845,8 @@ namespace UnityGLTF
 				yield return null;
 			}
 
-			if (!hasTangents)
-			{
-				mesh.RecalculateTangents();
-				yield return null;
-			}
+			mesh.RecalculateTangents();
+			yield return null;
 
 			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 		}
