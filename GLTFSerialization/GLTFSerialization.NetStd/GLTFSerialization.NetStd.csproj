@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.3</TargetFramework>
+    <Authors>Khronos Group</Authors>
+    <Copyright></Copyright>
+    <Description>C# glTF Serializer</Description>
+    <Company></Company>
+    <Product>GLTFSerialization</Product>
+    <PackageId>GLTFSerialization</PackageId>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/README.md</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/KhronosGroup/UnityGLTF</RepositoryUrl>
+    <PackageIconUrl>https://github.com/KhronosGroup/glTF/blob/master/specification/figures/gltf.png</PackageIconUrl>
+    <PackageTags>glTF 3D C#</PackageTags>
+    <RootNamespace>GLTF</RootNamespace>
+    <Version>1.0.0-alpha</Version>
+  </PropertyGroup>
+
+  <ItemGroup>		
+    <Compile Include="..\GLTFSerialization\**\*.cs" Exclude="..\GLTFSerialization\Properties\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+  </ItemGroup>
+
+</Project>

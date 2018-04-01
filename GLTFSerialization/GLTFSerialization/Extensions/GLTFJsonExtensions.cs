@@ -43,6 +43,23 @@ namespace GLTF.Extensions
 			return list;
 		}
 
+		public static List<int> ReadInt32List(this JsonReader reader)
+		{
+			if (reader.Read() && reader.TokenType != JsonToken.StartArray)
+			{
+				throw new Exception(string.Format("Invalid array at: {0}", reader.Path));
+			}
+
+			var list = new List<int>();
+
+			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+			{
+				list.Add(int.Parse(reader.Value.ToString()));
+			}
+
+			return list;
+		}
+
 		public static List<T> ReadList<T>(this JsonReader reader, Func<T> deserializerFunc)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartArray)

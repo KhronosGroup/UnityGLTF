@@ -103,6 +103,62 @@ namespace GLTF
 				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
+			if (attributes.ContainsKey(SemanticProperties.Weight(0)))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Weight(0)];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Joint(0)))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Joint(0)];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+		}
+
+		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)
+		{
+			NumericArray resultArray = attributeAccessor.AccessorContent;
+			int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache, offset);
+			attributeAccessor.AccessorContent = resultArray;
+		}
+
+		/// <summary>
+		/// Uses the accessor to parse the buffer into arrays needed to construct the animation
+		/// </summary>
+		/// <param name="samplers">A dictionary mapping AttributeAccessor lists to their target types
+		public static void BuildAnimationSamplers(ref Dictionary<string, List<AttributeAccessor>> samplers)
+		{
+			foreach (var samplerSet in samplers)
+			{
+				foreach (var attributeAccessor in samplerSet.Value)
+				{
+					NumericArray resultArray = attributeAccessor.AccessorContent;
+					int offset = (int)LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+
+					switch (samplerSet.Key)
+					{
+						case "time":
+							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache, offset);
+							break;
+						case "translation":
+						case "scale":
+							attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+							break;
+						case "rotation":
+							attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+							break;
+					}
+
+					attributeAccessor.AccessorContent = resultArray;
+				}
+			}
 		}
 
 		/// <summary>
@@ -179,16 +235,24 @@ namespace GLTF
 		{
 			BufferView bufferView = attributeAccessor.AccessorId.Value.BufferView.Value;
 			long totalOffset = bufferView.ByteOffset + attributeAccessor.Offset;
-#if !NETFX_CORE
+
 			if (attributeAccessor.Stream is System.IO.MemoryStream)
 			{
 				using (var memoryStream = attributeAccessor.Stream as System.IO.MemoryStream)
 				{
+#if NETFX_CORE || NETSTANDARD1_3
+					if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
+					{
+						bufferViewCache = arraySegment.Array;
+						return totalOffset;
+					}
+#else
 					bufferViewCache = memoryStream.GetBuffer();
 					return totalOffset;
+#endif
+
 				}
 			}
-#endif
 			attributeAccessor.Stream.Position = totalOffset;
 			bufferViewCache = new byte[bufferView.ByteLength];
 			attributeAccessor.Stream.Read(bufferViewCache, 0, bufferView.ByteLength);

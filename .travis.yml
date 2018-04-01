@@ -1,0 +1,19 @@
+os: osx
+language: csharp
+install:
+    - nuget restore ./GLTFSerialization/GLTFSerialization.sln
+    - sudo python2 ./scripts/install-unity.py --package Unity 2017.1.1f1
+before_script:
+    - sudo chmod -R a+rwx /Applications/Unity
+script:
+    - msbuild ./GLTFSerialization/GLTFSerialization.sln
+    - ./scripts/export-unity-package.sh
+deploy:
+    provider: releases
+    api_key:  
+        secure: "O/satj8iTLfZmT+ITphhDjBlD4/xywTud4qHHmZ+ZpVlD47/grNS1G00DOA1y8+9SdmoJyZmdjjejZ747v26cud1hoa5oajHNf2jTs4QHRj/cDeZr0h8Xa0I0bmDGuacNpBAoVxLPq0z8pil1wuMMSCXc1unYvJFCqTAc0GUQCDBYinybMeFsWdzEPrTSKk5pExxYdqggQlx73Pmu3GL2uotyEGA+11Z1UTNLstF6SXEU7kuefTKhS/8ZgLp8tPqw9ppeoHLghaWhtD4nMdxXOyjVqgGHrTe9/zib+TygLMllaqHlhASEvuVUiPHETmLl9+5Up1QuYJCVwiXSmcvBpjpSrX9tZ8Ddl7Q+FlhVFSZnkM1UO5jvVxRsmOqPYZ10/j9cUt4eVbjlCjuSb1lf34IIvAVOdhnkvlCH4y7QCmsRHRabvKTrzVO/T3z07zN35d8pV2PhO/aF2kDwHvGgtWdvUwMXK3fgNorEKrJtZ3COOR1MDoiW/kf7aREnYKXtnYuj965ousCMVSqJgSal7ntUYZEJDdvRqbmNtH9OgjQEPSRauAYqfojrWMQxIdeFuEoSm1+7+0Dn5Ej9FcREdeeKsT0VzKvBPBIF1SR98EEhyHhH+LYuQp31/a0w5y/cKfoIFlK8/9rB7z48TySXnTgyxNNahAobH91Sxy9sEU="
+    file: ./current-package/UnityGLTF.unitypackage
+    skip_cleanup: true
+    on:
+        repo: Vytek/UnityGLTF
+        tags: true
