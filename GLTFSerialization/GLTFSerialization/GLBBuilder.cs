@@ -199,15 +199,10 @@ namespace GLTF
 		/// <param name="glb">The GLB to flush to the output stream and update</param>
 		/// <param name="newRoot">Optional root to replace the one in the glb</param>
 		/// <returns>A GLBObject that is based upon outStream</returns>
-		public static void UpdateStream(GLBObject glb, GLTFRoot newRoot = null)
+		public static void UpdateStream(GLBObject glb)
 		{
-			if (glb.Root == null && newRoot == null) throw new ArgumentException("glb Root and newRoot cannot be null", nameof(glb.Root));
+			if (glb.Root == null) throw new ArgumentException("glb Root and newRoot cannot be null", nameof(glb.Root));
 			if (glb.Stream == null) throw new ArgumentException("glb GLBStream property cannot be null", nameof(glb.Stream));
-
-			if (newRoot != null)
-			{
-				glb.Root = newRoot;
-			}
 
 			MemoryStream gltfJsonStream = new MemoryStream();
 			using (StreamWriter sw = new StreamWriter(gltfJsonStream))
@@ -298,19 +293,20 @@ namespace GLTF
 		/// <param name="binaryData">The binary data to append</param>
 		/// <param name="createBufferView">Whether a buffer view should be created, added to the GLTFRoot, and id returned</param>
 		/// <param name="streamStartPosition">Start position of stream</param>
+		/// <param name="bufferViewName">Root to replace the current one with</param>
 		/// <returns>The location of the added buffer view</returns>
-		public static BufferViewId AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView = true, long streamStartPosition = 0)
+		public static BufferViewId AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView = true, long streamStartPosition = 0, string bufferViewName = null)
 		{
 			if (glb == null) throw new ArgumentNullException(nameof(glb));
-			if(glb.Root == null) throw new ArgumentException("glb Root cannot be null", nameof(glb));
+			if(glb.Root == null && bufferViewName == null) throw new ArgumentException("glb Root and new root cannot be null", nameof(glb));
 			if(glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
 			if(binaryData == null) throw new ArgumentNullException(nameof(binaryData));
 			if(binaryData.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(binaryData));
 
-			return _AddBinaryData(glb, binaryData, createBufferView, streamStartPosition);
+			return _AddBinaryData(glb, binaryData, createBufferView, streamStartPosition, bufferViewName);
 		}
 
-		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView, long streamStartPosition)
+		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView, long streamStartPosition, string bufferViewName = null)
 		{
 			binaryData.Position = streamStartPosition;
 
@@ -343,7 +339,8 @@ namespace GLTF
 						Root = glb.Root
 					},
 					ByteLength = blobLengthAsUInt, // figure out whether glb size is wrong or if documentation is unclear
-					ByteOffset = glb.BinaryChunkInfo.Length - blobLengthAsUInt
+					ByteOffset = glb.BinaryChunkInfo.Length - blobLengthAsUInt,
+					Name = bufferViewName
 				};
 
 				if (glb.Root.BufferViews == null)
@@ -473,7 +470,20 @@ namespace GLTF
 				}
 			}
 		}
-		
+
+		/// <summary>
+		/// Added function to set the root
+		/// </summary>
+		/// <param name="glb">GLB to add</param>
+		/// <param name="newRoot">The new root to update it with</param>
+		public static void SetRoot(GLBObject glb, GLTFRoot newRoot)
+		{
+			if (newRoot != null)
+			{
+				glb.Root = newRoot;
+			}
+		}
+
 		private static void WriteHeader(Stream stream, GLBHeader header, long streamStartPosition)
 		{
 			stream.Position = streamStartPosition;
