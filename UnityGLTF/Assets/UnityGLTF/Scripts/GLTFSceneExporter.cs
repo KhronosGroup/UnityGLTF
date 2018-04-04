@@ -212,8 +212,9 @@ namespace UnityGLTF
 		/// </param>
 		private static void AlignToBoundary(Stream stream, byte pad = (byte)' ', uint boundary = 4)
 		{
-			uint offset = CalculateAlignment((uint)stream.Length, boundary);
-			for (int i = 0; i < boundary - offset; i++)
+			uint currentLength = (uint) stream.Length;
+			uint newLength = CalculateAlignment(currentLength, boundary);
+			for (int i = 0; i < newLength - currentLength; i++)
 			{
 				stream.WriteByte(pad);
 			}
