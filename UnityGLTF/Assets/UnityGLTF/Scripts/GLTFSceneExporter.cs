@@ -122,6 +122,11 @@ namespace UnityGLTF
 			return _root;
 		}
 
+		/// <summary>
+		/// Writes a binary GLB file with filename at path.
+		/// </summary>
+		/// <param name="path">File path for saving the binary file</param>
+		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
 			Stream binStream = new MemoryStream();
