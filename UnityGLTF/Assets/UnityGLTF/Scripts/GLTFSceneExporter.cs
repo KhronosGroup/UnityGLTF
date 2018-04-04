@@ -184,6 +184,14 @@ namespace UnityGLTF
 			ExportImages(path);
 		}
 
+		/// <summary>
+		/// Convenience function to copy from a stream to a binary writer, for
+		/// compatibility with pre-.NET 4.0.
+		/// Note: Does not set position/seek in either stream. After executing,
+		/// the input buffer's position should be the end of the stream.
+		/// </summary>
+		/// <param name="input">Stream to copy from</param>
+		/// <param name="output">Stream to copy to.</param>
 		private static void CopyStream(Stream input, BinaryWriter output)
 		{
 			byte[] buffer = new byte[8 * 1024];
@@ -194,13 +202,33 @@ namespace UnityGLTF
 			}
 		}
 
-		private void AlignToBoundary(Stream stream, byte pad = (byte)' ', int boundary = 4)
+		/// <summary>
+		/// Pads a stream with additional bytes.
+		/// </summary>
+		/// <param name="stream">The stream to be modified.</param>
+		/// <param name="pad">The padding byte to append. Defaults to ASCII
+		/// space (' ').</param>
+		/// <param name="boundary">The boundary to align with, in bytes.
+		/// </param>
+		private static void AlignToBoundary(Stream stream, byte pad = (byte)' ', uint boundary = 4)
 		{
-			int offset = (int)(stream.Length % boundary);
+			uint offset = CalculateAlignment((uint)stream.Length, boundary);
 			for (int i = 0; i < boundary - offset; i++)
 			{
 				stream.WriteByte(pad);
 			}
+		}
+
+		/// <summary>
+		/// Calculates the number of bytes of padding required to align the
+		/// size of a buffer with some multiple of byteAllignment.
+		/// </summary>
+		/// <param name="currentSize">The current size of the buffer.</param>
+		/// <param name="byteAlignment">The number of bytes to align with.</param>
+		/// <returns></returns>
+		public static uint CalculateAlignment(uint currentSize, uint byteAlignment)
+		{
+			return (currentSize + byteAlignment - 1) / byteAlignment * byteAlignment;
 		}
 
 
