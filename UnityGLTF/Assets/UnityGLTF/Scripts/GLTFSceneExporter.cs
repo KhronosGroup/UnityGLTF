@@ -4,12 +4,13 @@ using System.IO;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
-using UnityEditor;
 
 namespace UnityGLTF
 {
 	public class GLTFSceneExporter
 	{
+		public delegate string RetrieveTexturePathDelegate(UnityEngine.Texture texture);
+
 		private enum IMAGETYPE
 		{
 			RGB,
@@ -48,6 +49,8 @@ namespace UnityGLTF
 		private List<UnityEngine.Texture> _textures;
 		private List<UnityEngine.Material> _materials;
 
+		private RetrieveTexturePathDelegate _retrieveTexturePathDelegate;
+
 		private UnityEngine.Material _metalGlossChannelSwapMaterial;
 		private UnityEngine.Material _normalChannelMaterial;
 
@@ -65,8 +68,10 @@ namespace UnityGLTF
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
 		/// <param name="rootTransforms">Root transform of object to export</param>
-		public GLTFSceneExporter(Transform[] rootTransforms)
+		public GLTFSceneExporter(Transform[] rootTransforms, RetrieveTexturePathDelegate retrieveTexturePathDelegate)
 		{
+			_retrieveTexturePathDelegate = retrieveTexturePathDelegate;
+
 			var metalGlossChannelSwapShader = Resources.Load ("MetalGlossChannelSwap", typeof(UnityEngine.Shader)) as UnityEngine.Shader;
 			_metalGlossChannelSwapMaterial = new UnityEngine.Material (metalGlossChannelSwapShader);
 
@@ -221,7 +226,7 @@ namespace UnityGLTF
 
 		private string ConstructImageFilenamePath (Texture2D texture, string outputPath)
 		{
-			var imagePath = UnityEditor.AssetDatabase.GetAssetPath (texture);
+			var imagePath = _retrieveTexturePathDelegate(texture);
 			var fullFilenamePath = Path.Combine (outputPath, imagePath);
 			var file = new System.IO.FileInfo (fullFilenamePath);
 			file.Directory.Create ();
@@ -803,7 +808,7 @@ namespace UnityGLTF
 				textureMapType = texturMapType
 			});
 
-			var path = UnityEditor.AssetDatabase.GetAssetPath (texture);
+			var path = _retrieveTexturePathDelegate(texture);
 			var newPath = Path.ChangeExtension (path, ".png");
 			image.Uri = Uri.EscapeUriString(newPath);
 
