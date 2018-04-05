@@ -186,6 +186,14 @@ namespace UnityGLTF
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
 
 			destRenderTexture.Release();
+			if (Application.isEditor)
+			{
+				GameObject.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+				GameObject.Destroy(exportTexture);
+			}
 		}
 
 		/// <summary>
@@ -208,11 +216,20 @@ namespace UnityGLTF
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
 
 			destRenderTexture.Release();
+
+			if (Application.isEditor)
+			{
+				GameObject.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+				GameObject.Destroy(exportTexture);
+			}
 		}
 
 		private void ExportTexture (Texture2D texture, string outputPath)
 		{
-			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 
 			Graphics.Blit (texture, destRenderTexture);
 
@@ -222,6 +239,16 @@ namespace UnityGLTF
 
 			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+
+			destRenderTexture.Release();
+			if (Application.isEditor)
+			{
+				GameObject.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+				GameObject.Destroy(exportTexture);
+			}
 		}
 
 		private string ConstructImageFilenamePath (Texture2D texture, string outputPath)
