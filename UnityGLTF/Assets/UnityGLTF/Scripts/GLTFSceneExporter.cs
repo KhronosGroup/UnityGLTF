@@ -79,13 +79,14 @@ namespace UnityGLTF
 			_normalChannelMaterial = new UnityEngine.Material (normalChannelShader);
 
 			_rootTransforms = rootTransforms;
-			_root = new GLTFRoot{
+			_root = new GLTFRoot {
 				Accessors = new List<Accessor>(),
 				Asset = new Asset {
 					Version = "2.0"
 				},
 				Buffers = new List<GLTF.Schema.Buffer>(),
 				BufferViews = new List<BufferView>(),
+				Cameras = new List<GLTF.Schema.Camera>(),
 				Images = new List<Image>(),
 				Materials = new List<GLTF.Schema.Material>(),
 				Meshes = new List<GLTF.Schema.Mesh>(),
@@ -265,6 +266,13 @@ namespace UnityGLTF
 				node.Name = nodeTransform.name;
 			}
 
+			//export camera attached to node
+			UnityEngine.Camera unityCamera = nodeTransform.GetComponent<UnityEngine.Camera>();
+			if (unityCamera != null)
+			{
+				node.Camera = ExportCamera(unityCamera);
+			}
+
 			node.SetUnityTransform(nodeTransform);
 
 			var id = new NodeId {
@@ -298,6 +306,67 @@ namespace UnityGLTF
 					node.Children.Add(ExportNode(child.transform));
 				}
 			}
+
+			return id;
+		}
+
+		private CameraId ExportCamera(UnityEngine.Camera unityCamera)
+		{
+			GLTF.Schema.Camera camera = new GLTF.Schema.Camera();
+			//name
+			camera.Name = unityCamera.name;
+
+			//type
+			bool isOrthographic = unityCamera.orthographic;
+			camera.Type = isOrthographic ? GLTF.Schema.CameraType.orthographic : GLTF.Schema.CameraType.perspective;
+			Matrix4x4 matrix = unityCamera.projectionMatrix;
+
+			//matrix properties: compute the fields from the projection matrix
+			if (isOrthographic)
+			{
+				GLTF.Schema.CameraOrthographic ortho = new GLTF.Schema.CameraOrthographic();
+
+				ortho.XMag = 1 / matrix[0, 0];
+				ortho.YMag = 1 / matrix[1, 1];
+
+				float farClip = (matrix[2, 3] / matrix[2, 2]) - (1 / matrix[2, 2]);
+				float nearClip = farClip + (2 / matrix[2, 2]);
+				ortho.ZFar = farClip;
+				ortho.ZNear = nearClip;
+
+				camera.Orthographic = ortho;
+			}
+			else
+			{
+				GLTF.Schema.CameraPerspective perspective = new GLTF.Schema.CameraPerspective();
+				float fov = 2 * Mathf.Atan(1 / matrix[1, 1]);
+				float aspectRatio = matrix[1, 1] / matrix[0, 0];
+				perspective.YFov = fov;
+				perspective.AspectRatio = aspectRatio;
+
+				if (matrix[2,2] == -1)
+				{
+					//infinite projection matrix
+					float nearClip = matrix[2, 3] * -0.5f;
+					perspective.ZNear = nearClip;
+				} else
+				{
+					//finite projection matrix
+					float farClip = matrix[2, 3] / (matrix[2, 2] + 1);
+					float nearClip = farClip * (matrix[2, 2] + 1) / (matrix[2, 2] - 1);
+					perspective.ZFar = farClip;
+					perspective.ZNear = nearClip;
+				}
+				camera.Perspective = perspective;
+			}
+
+			var id = new CameraId
+			{
+				Id = _root.Cameras.Count,
+				Root = _root
+			};
+
+			_root.Cameras.Add(camera);
 
 			return id;
 		}
