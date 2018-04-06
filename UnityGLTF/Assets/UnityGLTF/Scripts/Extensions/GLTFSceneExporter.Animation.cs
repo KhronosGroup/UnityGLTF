@@ -64,7 +64,7 @@ namespace UnityGLTF
 			int index;
 			if (_animationCache.TryGetValue(unityAnimationClip, out index))
 			{
-				//already exported this clup, skip
+				//already exported this clip, skip
 				return;
 			}
 
