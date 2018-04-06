@@ -7,7 +7,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF
 {
-	public class GLTFSceneExporter
+	public partial class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(UnityEngine.Texture texture);
 
@@ -19,7 +19,8 @@ namespace UnityGLTF
 			G,
 			B,
 			A,
-			G_INVERT
+			G_INVERT,
+			
 		}
 
 		private enum TextureMapType
@@ -30,9 +31,8 @@ namespace UnityGLTF
 			Emission,
 			MetallicGloss,
 			Light,
-			Occlusion}
-
-		;
+			Occlusion
+		}
 
 		private struct ImageInfo
 		{
@@ -61,6 +61,7 @@ namespace UnityGLTF
 		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
+		private readonly Dictionary<Transform, NodeId> _nodeCache = new Dictionary<Transform, NodeId>();
 
 		public bool ExportNames = true;
 
@@ -79,11 +80,12 @@ namespace UnityGLTF
 			_normalChannelMaterial = new UnityEngine.Material (normalChannelShader);
 
 			_rootTransforms = rootTransforms;
-			_root = new GLTFRoot{
+			_root = new GLTFRoot {
 				Accessors = new List<Accessor>(),
 				Asset = new Asset {
 					Version = "2.0"
 				},
+				Animations = new List<GLTF.Schema.Animation>(),
 				Buffers = new List<GLTF.Schema.Buffer>(),
 				BufferViews = new List<BufferView>(),
 				Images = new List<Image>(),
@@ -248,6 +250,9 @@ namespace UnityGLTF
 				scene.Nodes.Add (ExportNode (transform));
 			}
 
+			//export animations
+			this.ExportAnimations(rootObjTransforms);
+
 			_root.Scenes.Add (scene);
 
 			return new SceneId {
@@ -298,7 +303,7 @@ namespace UnityGLTF
 					node.Children.Add(ExportNode(child.transform));
 				}
 			}
-
+			_nodeCache.Add(nodeTransform, id);
 			return id;
 		}
 
