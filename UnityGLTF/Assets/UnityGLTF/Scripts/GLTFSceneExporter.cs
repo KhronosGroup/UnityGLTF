@@ -250,7 +250,7 @@ namespace UnityGLTF
 				scene.Nodes.Add (ExportNode (transform));
 			}
 
-			//export animations
+			//export animations after all nodes are exported
 			this.ExportAnimations(rootObjTransforms);
 
 			_root.Scenes.Add (scene);

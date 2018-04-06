@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace UnityGLTF
 {
-	public sealed partial class GLTFSceneExporter
+	public partial class GLTFSceneExporter
 	{
 		private enum Property
 		{
@@ -18,18 +18,21 @@ namespace UnityGLTF
 			blendShape = GLTFAnimationChannelPath.weights,
 		}
 
+		//holds already exported animation clips
 		private readonly Dictionary<object, int> _animationCache = new Dictionary<object, int>();
 
 		private void ExportAnimations(IEnumerable<Transform> transforms)
 		{
 			foreach (var transform in transforms)
 			{
+				//use Animator instead of Animation for support of newest features
 				var gameObject = transform.gameObject;
 				foreach (var animator in gameObject.GetComponentsInChildren<Animator>())
 				{
 					var animatorController = (AnimatorController)animator.runtimeAnimatorController;
 					if (animatorController == null)
 					{
+						//no animations attached
 						continue;
 					}
 
@@ -47,6 +50,7 @@ namespace UnityGLTF
 							var animationClip = (AnimationClip)state.motion;
 							if (animationClip != null)
 							{
+								//export animation clip from each state of the state machine
 								this.ExportAnimation(gameObject, animationClip);
 							}
 						}
@@ -60,22 +64,24 @@ namespace UnityGLTF
 			int index;
 			if (_animationCache.TryGetValue(unityAnimationClip, out index))
 			{
-				//already exported
+				//already exported this clup, skip
 				return;
 			}
 
 			var channels = new List<AnimationChannel>();
 			var samplers = new List<AnimationSampler>();
 
-			foreach (var kvpPath in this.GroupAnimationCurveBindings(AnimationUtility.GetCurveBindings(unityAnimationClip)))
+			//for each: path -> (property -> member)
+			foreach (var pairPath in this.GroupAnimationCurveBindings(AnimationUtility.GetCurveBindings(unityAnimationClip)))
 			{
-				var path = kvpPath.Key;
-				var propertyCurves = kvpPath.Value;
+				var path = pairPath.Key;
+				var propertyCurves = pairPath.Value;
 
-				foreach (var kvpProperty in propertyCurves)
+				//for each: property -> member
+				foreach (var pairProperty in propertyCurves)
 				{
-					var property = (Property)Enum.Parse(typeof(Property), kvpProperty.Key);
-					var memberCurves = kvpProperty.Value;
+					var property = (Property)Enum.Parse(typeof(Property), pairProperty.Key);
+					var memberCurves = pairProperty.Value;
 					var targetGameObject = gameObject.transform.Find(path).gameObject;
 
 					SamplerId samplerId = new SamplerId()
@@ -134,6 +140,7 @@ namespace UnityGLTF
 							throw new NotSupportedException();
 					}
 
+					//new channel: holds created sampler, and a new target
 					channels.Add(new AnimationChannel
 					{
 						Sampler = samplerId,
@@ -146,16 +153,21 @@ namespace UnityGLTF
 				}
 			}
 
+			//exported channels and samplers for this animation clip, cache it and attach to GLTF root
 			index = _root.Animations.Count;
 			_animationCache.Add(unityAnimationClip, index);
 
-			var animation = new GLTF.Schema.Animation();
-			animation.Name = unityAnimationClip.name;
-			animation.Channels = channels;
-			animation.Samplers = samplers;
+			var animation = new GLTF.Schema.Animation()
+			{
+				Name = unityAnimationClip.name,
+				Channels = channels,
+				Samplers = samplers
+			};
+			
 			_root.Animations.Add(animation);
 		}
 
+		//for all editor curve bindings of an animation clip, return a map: path -> (property -> member)
 		private Dictionary<string, Dictionary<string, Dictionary<string, EditorCurveBinding>>> GroupAnimationCurveBindings(IEnumerable<EditorCurveBinding> editorCurveBindings)
 		{
 			var bindings = new Dictionary<string, Dictionary<string, Dictionary<string, EditorCurveBinding>>>();
@@ -256,9 +268,9 @@ namespace UnityGLTF
 
 				return new AnimationSampler
 				{
-					//Input = this.ExportData(input, minMax: true),
+					Input = this.ExportData(input, minMax: true),
 					Interpolation = GLTF.Schema.InterpolationType.CUBICSPLINE,
-					//Output = exportData(output),
+					Output = exportData(output),
 				};
 			}
 			else
@@ -274,9 +286,9 @@ namespace UnityGLTF
 
 				return new AnimationSampler
 				{
-					//Input = this.ExportData(input, minMax: true),
+					Input = this.ExportData(input, minMax: true),
 					Interpolation = GLTF.Schema.InterpolationType.LINEAR,
-					//Output = exportData(output),
+					Output = exportData(output),
 				};
 			}
 		}
