@@ -257,7 +257,40 @@ namespace GLTFSerializationTests
 
 			Assert.AreEqual(initialGLBLength + glbObject1.BinaryChunkInfo.Length, glbObject.BinaryChunkInfo.Length);
 		}
-		
+
+		[TestMethod]
+		public void GLBSaveWithoutBinary()
+		{
+			string outPath =
+				TestAssetPaths.GetOutPath(TestAssetPaths.GLB_BOX_OUT_PATH_TEMPLATE, 15, TestAssetPaths.GLB_EXTENSION);
+			FileStream glbOutStream = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+
+			// first create from empty stream
+			GLBObject glbObject = GLBBuilder.ConstructFromStream(glbOutStream);
+			uint initialGLBLength = glbObject.BinaryChunkInfo.Length;
+
+			MemoryStream stream = new MemoryStream();
+			StreamWriter writer = new StreamWriter(stream);
+			writer.Write(TestAssetPaths.MIN_GLTF_STR);
+			writer.Flush();
+			stream.Position = 0;
+			
+			GLTFRoot newRoot = GLTFParser.ParseJson(stream);
+
+			GLBBuilder.UpdateStream(glbObject, newRoot);
+			Assert.AreEqual(glbObject.Header.FileLength, glbObject.JsonChunkInfo.StartPosition + glbObject.JsonChunkInfo.Length + GLTFParser.CHUNK_HEADER_SIZE);
+			glbOutStream.Close();
+			glbOutStream = new FileStream(outPath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+			List<ChunkInfo> chunks = GLTFParser.FindChunks(glbOutStream);
+			Assert.AreEqual(1, chunks.Count);
+
+			glbOutStream.Position = 0;
+			GLBObject testObject = GLBBuilder.ConstructFromStream(glbOutStream);
+
+			Assert.AreEqual(glbObject.JsonChunkInfo.Length, testObject.JsonChunkInfo.Length);
+			Assert.AreEqual(glbObject.BinaryChunkInfo.Length, testObject.BinaryChunkInfo.Length);
+		}
+
 		private BufferViewId AddBinaryDataToStreamHelper(GLBObject glbObject, Stream blobToAdd)
 		{
 			int previousCount = 0;
