@@ -316,19 +316,6 @@ namespace UnityGLTF
 			return true;
 		}
 
-		private static bool CanExportTangentModeAsSpline(AnimationUtility.TangentMode tangentMode)
-		{
-			switch (tangentMode)
-			{
-				case AnimationUtility.TangentMode.Auto:
-				case AnimationUtility.TangentMode.ClampedAuto:
-				case AnimationUtility.TangentMode.Free:
-					return true;
-			}
-
-			return false;
-		}
-
 		private static Vector3 GetRightHandedVector(Vector3 value)
 		{
 			return new Vector3(value.x, value.y, -value.z);
