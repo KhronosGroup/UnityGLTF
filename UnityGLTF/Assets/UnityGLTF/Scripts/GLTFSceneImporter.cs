@@ -807,8 +807,6 @@ namespace UnityGLTF
                         animation.clip = clip;
                     }
                 }
-
-                animation.Play();
             }
 
             CreatedObject = sceneObj;
