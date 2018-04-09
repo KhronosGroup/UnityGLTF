@@ -11,7 +11,7 @@ namespace UnityEditor
         {
             SpecularGlossiness,
             MetallicRoughness,
-			Unlit
+            Unlit
         }
 
         public enum BlendMode
@@ -27,10 +27,11 @@ namespace UnityEditor
             public static GUIContent alphaCutoffText = new GUIContent("Alpha Cutoff", "Threshold for alpha cutoff");
             public static GUIContent specularMapText = new GUIContent("Spec Gloss", "Specular (RGB) and Glossiness (A)");
             public static GUIContent metallicMapText = new GUIContent("Metal Rough", "Metallic (B) and Roughness (G)");
-	        public static GUIContent metallicText = new GUIContent("Metallic", "Metallic value");
-	        public static GUIContent metallicScaleText = new GUIContent("Metallic", "Metallic scale factor");
-			public static GUIContent roughnessText = new GUIContent("Roughness", "Roughness value");
-	        public static GUIContent roughnessScaleText = new GUIContent("Roughness", "Roughness scale factor");
+            public static GUIContent metallicText = new GUIContent("Metallic", "Metallic value");
+            public static GUIContent metallicScaleText = new GUIContent("Metallic", "Metallic scale factor");
+            public static GUIContent roughnessText = new GUIContent("Roughness", "Roughness value");
+
+            public static GUIContent roughnessScaleText = new GUIContent("Roughness", "Roughness scale factor");
             public static GUIContent glossinessText = new GUIContent("Glossiness", "Glossiness value");
             public static GUIContent glossinessScaleText = new GUIContent("Glossiness", "Glossiness scale factor");
             public static GUIContent normalMapText = new GUIContent("Normal Map", "Normal Map");
@@ -189,42 +190,42 @@ namespace UnityEditor
             {
                 hasGlossMap = specularMap.textureValue != null;
                 m_MaterialEditor.TexturePropertySingleLine(Styles.specularMapText, specularMap, hasGlossMap ? null : specularColor);
-	            m_MaterialEditor.ShaderProperty(smoothness, hasGlossMap ? Styles.glossinessScaleText : Styles.glossinessText, 2);
-			}
+                m_MaterialEditor.ShaderProperty(smoothness, hasGlossMap ? Styles.glossinessScaleText : Styles.glossinessText, 2);
+            }
             else if (m_WorkflowMode == WorkflowMode.MetallicRoughness)
             {
                 hasGlossMap = metallicMap.textureValue != null;
                 m_MaterialEditor.TexturePropertySingleLine(Styles.metallicMapText, metallicMap);
-	            m_MaterialEditor.ShaderProperty(metallic, hasGlossMap ? Styles.metallicScaleText : Styles.metallicText, 2);
-	            m_MaterialEditor.ShaderProperty(smoothness, hasGlossMap ? Styles.roughnessScaleText : Styles.roughnessText, 2);
-			}
+                m_MaterialEditor.ShaderProperty(metallic, hasGlossMap ? Styles.metallicScaleText : Styles.metallicText, 2);
+                m_MaterialEditor.ShaderProperty(smoothness, hasGlossMap ? Styles.roughnessScaleText : Styles.roughnessText, 2);
+            }
         }
 
         public static void SetupMaterialWithBlendMode(Material material, BlendMode blendMode, float alphaCutoff)
         {
-			switch (blendMode)
+            switch (blendMode)
             {
                 case BlendMode.Opaque:
-					material.SetOverrideTag("RenderType", "Opaque");
-	                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-	                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-	                material.SetInt("_ZWrite", 1);
-	                material.DisableKeyword("_ALPHATEST_ON");
-	                material.DisableKeyword("_ALPHABLEND_ON");
-	                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-	                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
-					break;
+                    material.SetOverrideTag("RenderType", "Opaque");
+                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                    material.SetInt("_ZWrite", 1);
+                    material.DisableKeyword("_ALPHATEST_ON");
+                    material.DisableKeyword("_ALPHABLEND_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
+                    break;
                 case BlendMode.Mask:
-					material.SetOverrideTag("RenderType", "TransparentCutout");
-	                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-	                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-	                material.SetInt("_ZWrite", 1);
-	                material.EnableKeyword("_ALPHATEST_ON");
-	                material.DisableKeyword("_ALPHABLEND_ON");
-	                material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-	                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
-	                material.SetFloat("_Cutoff", alphaCutoff);
-					break;
+                    material.SetOverrideTag("RenderType", "TransparentCutout");
+                    material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                    material.SetInt("_ZWrite", 1);
+                    material.EnableKeyword("_ALPHATEST_ON");
+                    material.DisableKeyword("_ALPHABLEND_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+                    material.SetFloat("_Cutoff", alphaCutoff);
+                    break;
                 case BlendMode.Blend:
                     material.SetOverrideTag("RenderType", "Transparent");
                     material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -237,7 +238,7 @@ namespace UnityEditor
                     break;
             }
 
-			material.SetFloat("_Mode", (float)blendMode);
+            material.SetFloat("_Mode", (float)blendMode);
         }
 
         static void SetMaterialKeywords(Material material, WorkflowMode workflowMode)

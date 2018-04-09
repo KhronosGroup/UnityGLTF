@@ -8,7 +8,7 @@ using UnityEngine;
 public static class URIHelper
 {
 	private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
-	
+
 	/// <summary>
 	///  Get the absolute path to a gltf uri reference.
 	/// </summary>
@@ -24,7 +24,7 @@ public static class URIHelper
 	{
 		return uri.Segments[uri.Segments.Length - 1];
 	}
-	
+
 	/// <summary>
 	/// Gets a directory name from a file path
 	/// </summary>
@@ -35,7 +35,7 @@ public static class URIHelper
 		var fileName = Path.GetFileName(fullPath);
 		return fullPath.Substring(0, fullPath.Length - fileName.Length);
 	}
-	
+
 	/// <summary>
 	/// Tries to parse the uri as a base 64 encoded string
 	/// </summary>

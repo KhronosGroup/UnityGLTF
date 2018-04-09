@@ -164,7 +164,8 @@ namespace GLTF.Schema
 			return material;
 		}
 
-		public override void Serialize(JsonWriter writer) {
+		public override void Serialize(JsonWriter writer)
+		{
 			writer.WriteStartObject();
 
 			if (PbrMetallicRoughness != null)
@@ -219,7 +220,8 @@ namespace GLTF.Schema
 				writer.WriteValue(AlphaCutoff);
 			}
 
-			if (DoubleSided) {
+			if (DoubleSided)
+			{
 				writer.WritePropertyName("doubleSided");
 				writer.WriteValue(true);
 			}

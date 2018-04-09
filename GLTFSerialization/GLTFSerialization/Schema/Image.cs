@@ -72,20 +72,24 @@ namespace GLTF.Schema
 			return image;
 		}
 
-		public override void Serialize(JsonWriter writer) {
+		public override void Serialize(JsonWriter writer)
+		{
 			writer.WriteStartObject();
 
-			if (Uri != null) {
+			if (Uri != null)
+			{
 				writer.WritePropertyName("uri");
 				writer.WriteValue(Uri);
 			}
 
-			if (MimeType != null) {
+			if (MimeType != null)
+			{
 				writer.WritePropertyName("mimeType");
 				writer.WriteValue(Newtonsoft.Json.Linq.JValue.CreateString(MimeType).ToString());
 			}
 
-			if (BufferView != null) {
+			if (BufferView != null)
+			{
 				writer.WritePropertyName("bufferView");
 				writer.WriteValue(BufferView);
 			}
