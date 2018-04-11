@@ -62,7 +62,10 @@ namespace UnityGLTF
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
 
-		public bool ExportNames = true;
+		// Settings
+		public static bool ExportNames = true;
+		public static bool ExportFullPath = true;
+		public static bool RequireExtensions = false;
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -231,10 +234,14 @@ namespace UnityGLTF
 		private string ConstructImageFilenamePath (Texture2D texture, string outputPath)
 		{
 			var imagePath = _retrieveTexturePathDelegate(texture);
-			var fullFilenamePath = Path.Combine (outputPath, imagePath);
-			var file = new System.IO.FileInfo (fullFilenamePath);
+			var filenamePath = Path.Combine (outputPath, imagePath);
+			if (!ExportFullPath)
+			{
+				filenamePath = outputPath + "/" + texture.name;
+			}
+			var file = new System.IO.FileInfo (filenamePath);
 			file.Directory.Create ();
-			return  Path.ChangeExtension (fullFilenamePath, ".png");
+			return  Path.ChangeExtension (filenamePath, ".png");
 		}
 
 		private SceneId ExportScene (string name, Transform[] rootObjTransforms)
@@ -618,6 +625,20 @@ namespace UnityGLTF
 				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
 			}
 
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
+				{
+					_root.ExtensionsRequired = new List<string>(
+						new string[] { ExtTextureTransformExtensionFactory.EXTENSION_NAME }
+					);
+				}
+				else if (!_root.ExtensionsRequired.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+				{
+					_root.ExtensionsRequired.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
+				}
+			}
+
 			if (def.Extensions == null)
 				def.Extensions = new Dictionary<string, IExtension>();
 
@@ -727,6 +748,18 @@ namespace UnityGLTF
 				_root.ExtensionsUsed.Add("KHR_materials_common");
 			}
 
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
+				{
+					_root.ExtensionsRequired = new List<string>(new string[] { "KHR_materials_common" });
+				}
+				else if (!_root.ExtensionsRequired.Contains("KHR_materials_common"))
+				{
+					_root.ExtensionsRequired.Add("KHR_materials_common");
+				}
+			}
+
 			var constant = new MaterialCommonConstant();
 
 			if (materialObj.HasProperty("_AmbientFactor"))
@@ -820,9 +853,13 @@ namespace UnityGLTF
 				textureMapType = texturMapType
 			});
 
-			var path = _retrieveTexturePathDelegate(texture);
-			var newPath = Path.ChangeExtension (path, ".png");
-			image.Uri = Uri.EscapeUriString(newPath);
+			var imagePath = _retrieveTexturePathDelegate(texture);
+			var filenamePath = Path.ChangeExtension(imagePath, ".png");
+			if (!ExportFullPath)
+			{
+				filenamePath = Path.ChangeExtension(texture.name, ".png");
+			}
+			image.Uri = Uri.EscapeUriString(filenamePath);
 
 			id = new ImageId
 			{
