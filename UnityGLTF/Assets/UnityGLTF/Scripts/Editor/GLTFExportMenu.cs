@@ -5,6 +5,11 @@ using UnityEngine.SceneManagement;
 
 public class GLTFExportMenu
 {
+	public static string RetrieveTexturePath(UnityEngine.Texture texture)
+	{
+		return AssetDatabase.GetAssetPath (texture);
+	}
+
 	[MenuItem("GLTF/Export Selected")]
 	static void ExportSelected()
 	{
@@ -16,9 +21,12 @@ public class GLTFExportMenu
 		else
 			throw new Exception("No objects selected, cannot export.");
 
-		var exporter = new GLTFSceneExporter(Selection.transforms);
+		var exporter = new GLTFSceneExporter(Selection.transforms, RetrieveTexturePath);
+
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		exporter.SaveGLTFandBin(path, name);
+		if (!string.IsNullOrEmpty(path)) {
+			exporter.SaveGLTFandBin (path, name);
+		}
 	}
 
 	[MenuItem("GLTF/Export Scene")]
@@ -28,8 +36,10 @@ public class GLTFExportMenu
 		var gameObjects = scene.GetRootGameObjects();
 		var transforms = Array.ConvertAll(gameObjects, gameObject => gameObject.transform);
 
-		var exporter = new GLTFSceneExporter(transforms);
+		var exporter = new GLTFSceneExporter(transforms, RetrieveTexturePath);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		exporter.SaveGLTFandBin(path, scene.name);
+		if (path != "") {
+			exporter.SaveGLTFandBin (path, scene.name);
+		}
 	}
 }

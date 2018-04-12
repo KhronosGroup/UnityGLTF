@@ -56,8 +56,8 @@ namespace UnityGLTF
 			get { return _material.GetFloat("_GlossMapScale"); }
 			set
 			{
-				_material.SetFloat("_GlossMapScale", (float) value);
-				_material.SetFloat("_Glossiness", (float) value);
+				_material.SetFloat("_GlossMapScale", (float)value);
+				_material.SetFloat("_Glossiness", (float)value);
 			}
 		}
 
