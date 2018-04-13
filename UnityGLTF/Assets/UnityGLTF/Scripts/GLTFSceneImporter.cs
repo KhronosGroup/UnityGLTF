@@ -1115,15 +1115,18 @@ namespace UnityGLTF
             var meshAttributes = meshConstructionData.MeshAttributes;
             var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
-            // todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
-            UnityEngine.Mesh mesh = new UnityEngine.Mesh
-            {
-                vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
-                    ? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
-                    : null,
-                normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
-                    ? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
-                    : null,
+			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
+			UnityEngine.Mesh mesh = new UnityEngine.Mesh
+			{
+#if UNITY_2017_3_OR_NEWER
+				indexFormat = vertexCount > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16,
+#endif
+				vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
+					? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
+					: null,
+				normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
+					? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
+					: null,
 
                 uv = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0))
                     ? meshAttributes[SemanticProperties.TexCoord(0)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
