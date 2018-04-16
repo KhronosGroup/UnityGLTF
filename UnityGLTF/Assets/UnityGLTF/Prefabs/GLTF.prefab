@@ -54,7 +54,7 @@ MonoBehaviour:
   GLTFUri: 
   Multithreaded: 1
   UseStream: 0
-  loadOnStart: 0
+  loadOnStart: 1
   MaximumLod: 300
-  Colliders: 0
-
+  Collider: 0
+  shaderOverride: {fileID: 0}
