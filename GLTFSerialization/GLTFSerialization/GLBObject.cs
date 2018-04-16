@@ -9,6 +9,15 @@ namespace GLTF
 	/// </summary>
 	public class GLBObject : IGLTFObject
 	{
+		public GLBObject(GLBObject other)
+		{
+			Root = other.Root;
+			Header = other.Header;
+			StreamStartPosition = other.StreamStartPosition;
+			JsonChunkInfo = other.JsonChunkInfo;
+			BinaryChunkInfo = other.BinaryChunkInfo;
+		}
+
 		/// <summary>
 		/// Parsed JSON of the GLB
 		/// </summary>
