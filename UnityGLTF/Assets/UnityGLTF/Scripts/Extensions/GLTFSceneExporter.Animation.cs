@@ -12,9 +12,9 @@ namespace UnityGLTF
 	{
 		private enum Property
 		{
-			localPosition = GLTFAnimationChannelPath.translation,
-			localRotation = GLTFAnimationChannelPath.rotation,
-			localScale = GLTFAnimationChannelPath.scale,
+			m_LocalPosition = GLTFAnimationChannelPath.translation,
+			m_LocalRotation = GLTFAnimationChannelPath.rotation,
+			m_LocalScale = GLTFAnimationChannelPath.scale,
 			blendShape = GLTFAnimationChannelPath.weights,
 		}
 
@@ -92,21 +92,21 @@ namespace UnityGLTF
 
 					switch (property)
 					{
-						case Property.localPosition:
+						case Property.m_LocalPosition:
 							samplers.Add(this.ExportAnimationSamplerPosition(
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["x"]),
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["y"]),
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["z"])));
 							break;
 
-						case Property.localScale:
+						case Property.m_LocalScale:
 							samplers.Add(this.ExportAnimationSamplerScale(
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["x"]),
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["y"]),
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["z"])));
 							break;
 
-						case Property.localRotation:
+						case Property.m_LocalRotation:
 							samplers.Add(this.ExportAnimationSamplerRotation(
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["x"]),
 								AnimationUtility.GetEditorCurve(unityAnimationClip, memberCurves["y"]),
