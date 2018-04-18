@@ -54,6 +54,13 @@ namespace UnityGLTF
 		private UnityEngine.Material _metalGlossChannelSwapMaterial;
 		private UnityEngine.Material _normalChannelMaterial;
 
+		private const uint MagicGLTF	= 0x46546C67;
+		private const uint Version		= 2;
+		private const uint MagicJson	= 0x4E4F534A;
+		private const uint MagicBin		= 0x004E4942;
+		private const int GLTFHeaderSize = 12;
+		private const int SectionHeaderSize = 8;
+		
 		protected struct PrimKey
 		{
 			public UnityEngine.Mesh Mesh;
@@ -118,6 +125,117 @@ namespace UnityGLTF
 		{
 			return _root;
 		}
+
+		/// <summary>
+		/// Writes a binary GLB file with filename at path.
+		/// </summary>
+		/// <param name="path">File path for saving the binary file</param>
+		/// <param name="fileName">The name of the GLTF file</param>
+		public void SaveGLB(string path, string fileName)
+		{
+			Stream binStream = new MemoryStream();
+			Stream jsonStream = new MemoryStream();
+
+			_bufferWriter = new BinaryWriter(binStream);
+
+			TextWriter jsonWriter = new StreamWriter(jsonStream, System.Text.Encoding.ASCII);
+
+			_root.Scene = ExportScene(fileName, _rootTransforms);
+
+			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
+
+			_root.Serialize(jsonWriter);
+
+			_bufferWriter.Flush();
+			jsonWriter.Flush();
+
+			// align to 4-byte boundary to comply with spec.
+			AlignToBoundary(jsonStream);
+			AlignToBoundary(binStream, 0x00);
+
+			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
+				jsonStream.Length + SectionHeaderSize + binStream.Length);
+
+			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
+
+
+			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
+			{
+
+				BinaryWriter writer = new BinaryWriter(glbFile);
+
+				// write header
+				writer.Write(MagicGLTF);
+				writer.Write(Version);
+				writer.Write(glbLength);
+
+				// write JSON chunk header.
+				writer.Write((int)jsonStream.Length);
+				writer.Write(MagicJson);
+
+				jsonStream.Position = 0;
+				CopyStream(jsonStream, writer);
+
+				writer.Write((int)binStream.Length);
+				writer.Write(MagicBin);
+
+				binStream.Position = 0;
+				CopyStream(binStream, writer);
+
+				writer.Flush();
+			}
+
+			ExportImages(path);
+		}
+
+		/// <summary>
+		/// Convenience function to copy from a stream to a binary writer, for
+		/// compatibility with pre-.NET 4.0.
+		/// Note: Does not set position/seek in either stream. After executing,
+		/// the input buffer's position should be the end of the stream.
+		/// </summary>
+		/// <param name="input">Stream to copy from</param>
+		/// <param name="output">Stream to copy to.</param>
+		private static void CopyStream(Stream input, BinaryWriter output)
+		{
+			byte[] buffer = new byte[8 * 1024];
+			int length;
+			while ((length = input.Read(buffer, 0, buffer.Length)) > 0)
+			{
+				output.Write(buffer, 0, length);
+			}
+		}
+
+		/// <summary>
+		/// Pads a stream with additional bytes.
+		/// </summary>
+		/// <param name="stream">The stream to be modified.</param>
+		/// <param name="pad">The padding byte to append. Defaults to ASCII
+		/// space (' ').</param>
+		/// <param name="boundary">The boundary to align with, in bytes.
+		/// </param>
+		private static void AlignToBoundary(Stream stream, byte pad = (byte)' ', uint boundary = 4)
+		{
+			uint currentLength = (uint) stream.Length;
+			uint newLength = CalculateAlignment(currentLength, boundary);
+			for (int i = 0; i < newLength - currentLength; i++)
+			{
+				stream.WriteByte(pad);
+			}
+		}
+
+		/// <summary>
+		/// Calculates the number of bytes of padding required to align the
+		/// size of a buffer with some multiple of byteAllignment.
+		/// </summary>
+		/// <param name="currentSize">The current size of the buffer.</param>
+		/// <param name="byteAlignment">The number of bytes to align with.</param>
+		/// <returns></returns>
+		public static uint CalculateAlignment(uint currentSize, uint byteAlignment)
+		{
+			return (currentSize + byteAlignment - 1) / byteAlignment * byteAlignment;
+		}
+
 
 		/// <summary>
 		/// Specifies the path and filename for the GLTF Json and binary
