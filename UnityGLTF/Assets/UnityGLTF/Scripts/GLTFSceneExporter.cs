@@ -54,6 +54,13 @@ namespace UnityGLTF
 		private UnityEngine.Material _metalGlossChannelSwapMaterial;
 		private UnityEngine.Material _normalChannelMaterial;
 
+		private const uint MagicGLTF	= 0x46546C67;
+		private const uint Version		= 2;
+		private const uint MagicJson	= 0x4E4F534A;
+		private const uint MagicBin		= 0x004E4942;
+		private const int GLTFHeaderSize = 12;
+		private const int SectionHeaderSize = 8;
+		
 		protected struct PrimKey
 		{
 			public UnityEngine.Mesh Mesh;
@@ -62,7 +69,10 @@ namespace UnityGLTF
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
 
-		public bool ExportNames = true;
+		// Settings
+		public static bool ExportNames = true;
+		public static bool ExportFullPath = true;
+		public static bool RequireExtensions = false;
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -79,9 +89,11 @@ namespace UnityGLTF
 			_normalChannelMaterial = new UnityEngine.Material (normalChannelShader);
 
 			_rootTransforms = rootTransforms;
-			_root = new GLTFRoot {
+			_root = new GLTFRoot
+			{
 				Accessors = new List<Accessor>(),
-				Asset = new Asset {
+				Asset = new Asset
+				{
 					Version = "2.0"
 				},
 				Buffers = new List<GLTF.Schema.Buffer>(),
@@ -100,8 +112,9 @@ namespace UnityGLTF
 			_materials = new List<UnityEngine.Material> ();
 			_textures = new List<UnityEngine.Texture> ();
 
-			_buffer = new GLTF.Schema.Buffer ();
-			_bufferId = new BufferId {
+			_buffer = new GLTF.Schema.Buffer();
+			_bufferId = new BufferId
+			{
 				Id = _root.Buffers.Count,
 				Root = _root
 			};
@@ -112,9 +125,121 @@ namespace UnityGLTF
 		/// Gets the root object of the exported GLTF
 		/// </summary>
 		/// <returns>Root parsed GLTF Json</returns>
-		public GLTFRoot GetRoot() {
+		public GLTFRoot GetRoot()
+		{
 			return _root;
 		}
+
+		/// <summary>
+		/// Writes a binary GLB file with filename at path.
+		/// </summary>
+		/// <param name="path">File path for saving the binary file</param>
+		/// <param name="fileName">The name of the GLTF file</param>
+		public void SaveGLB(string path, string fileName)
+		{
+			Stream binStream = new MemoryStream();
+			Stream jsonStream = new MemoryStream();
+
+			_bufferWriter = new BinaryWriter(binStream);
+
+			TextWriter jsonWriter = new StreamWriter(jsonStream, System.Text.Encoding.ASCII);
+
+			_root.Scene = ExportScene(fileName, _rootTransforms);
+
+			_buffer.ByteLength = (int)_bufferWriter.BaseStream.Length;
+
+			_root.Serialize(jsonWriter);
+
+			_bufferWriter.Flush();
+			jsonWriter.Flush();
+
+			// align to 4-byte boundary to comply with spec.
+			AlignToBoundary(jsonStream);
+			AlignToBoundary(binStream, 0x00);
+
+			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
+				jsonStream.Length + SectionHeaderSize + binStream.Length);
+
+			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
+
+
+			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
+			{
+
+				BinaryWriter writer = new BinaryWriter(glbFile);
+
+				// write header
+				writer.Write(MagicGLTF);
+				writer.Write(Version);
+				writer.Write(glbLength);
+
+				// write JSON chunk header.
+				writer.Write((int)jsonStream.Length);
+				writer.Write(MagicJson);
+
+				jsonStream.Position = 0;
+				CopyStream(jsonStream, writer);
+
+				writer.Write((int)binStream.Length);
+				writer.Write(MagicBin);
+
+				binStream.Position = 0;
+				CopyStream(binStream, writer);
+
+				writer.Flush();
+			}
+
+			ExportImages(path);
+		}
+
+		/// <summary>
+		/// Convenience function to copy from a stream to a binary writer, for
+		/// compatibility with pre-.NET 4.0.
+		/// Note: Does not set position/seek in either stream. After executing,
+		/// the input buffer's position should be the end of the stream.
+		/// </summary>
+		/// <param name="input">Stream to copy from</param>
+		/// <param name="output">Stream to copy to.</param>
+		private static void CopyStream(Stream input, BinaryWriter output)
+		{
+			byte[] buffer = new byte[8 * 1024];
+			int length;
+			while ((length = input.Read(buffer, 0, buffer.Length)) > 0)
+			{
+				output.Write(buffer, 0, length);
+			}
+		}
+
+		/// <summary>
+		/// Pads a stream with additional bytes.
+		/// </summary>
+		/// <param name="stream">The stream to be modified.</param>
+		/// <param name="pad">The padding byte to append. Defaults to ASCII
+		/// space (' ').</param>
+		/// <param name="boundary">The boundary to align with, in bytes.
+		/// </param>
+		private static void AlignToBoundary(Stream stream, byte pad = (byte)' ', uint boundary = 4)
+		{
+			uint currentLength = (uint) stream.Length;
+			uint newLength = CalculateAlignment(currentLength, boundary);
+			for (int i = 0; i < newLength - currentLength; i++)
+			{
+				stream.WriteByte(pad);
+			}
+		}
+
+		/// <summary>
+		/// Calculates the number of bytes of padding required to align the
+		/// size of a buffer with some multiple of byteAllignment.
+		/// </summary>
+		/// <param name="currentSize">The current size of the buffer.</param>
+		/// <param name="byteAlignment">The number of bytes to align with.</param>
+		/// <returns></returns>
+		public static uint CalculateAlignment(uint currentSize, uint byteAlignment)
+		{
+			return (currentSize + byteAlignment - 1) / byteAlignment * byteAlignment;
+		}
+
 
 		/// <summary>
 		/// Specifies the path and filename for the GLTF Json and binary
@@ -187,6 +312,14 @@ namespace UnityGLTF
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
 
 			destRenderTexture.Release();
+			if (Application.isEditor)
+			{
+				GameObject.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+				GameObject.Destroy(exportTexture);
+			}
 		}
 
 		/// <summary>
@@ -209,11 +342,20 @@ namespace UnityGLTF
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
 
 			destRenderTexture.Release();
+
+			if (Application.isEditor)
+			{
+				GameObject.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+				GameObject.Destroy(exportTexture);
+			}
 		}
 
 		private void ExportTexture (Texture2D texture, string outputPath)
 		{
-			var destRenderTexture = new RenderTexture (texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 
 			Graphics.Blit (texture, destRenderTexture);
 
@@ -223,15 +365,29 @@ namespace UnityGLTF
 
 			var finalFilenamePath = ConstructImageFilenamePath (texture, outputPath);
 			File.WriteAllBytes (finalFilenamePath, exportTexture.EncodeToPNG ());
+
+			destRenderTexture.Release();
+			if (Application.isEditor)
+			{
+				GameObject.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+				GameObject.Destroy(exportTexture);
+			}
 		}
 
 		private string ConstructImageFilenamePath (Texture2D texture, string outputPath)
 		{
 			var imagePath = _retrieveTexturePathDelegate(texture);
-			var fullFilenamePath = Path.Combine (outputPath, imagePath);
-			var file = new System.IO.FileInfo (fullFilenamePath);
+			var filenamePath = Path.Combine (outputPath, imagePath);
+			if (!ExportFullPath)
+			{
+				filenamePath = outputPath + "/" + texture.name;
+			}
+			var file = new System.IO.FileInfo (filenamePath);
 			file.Directory.Create ();
-			return  Path.ChangeExtension (fullFilenamePath, ".png");
+			return  Path.ChangeExtension (filenamePath, ".png");
 		}
 
 		private SceneId ExportScene (string name, Transform[] rootObjTransforms)
@@ -251,7 +407,8 @@ namespace UnityGLTF
 
 			_root.Scenes.Add (scene);
 
-			return new SceneId {
+			return new SceneId
+			{
 				Id = _root.Scenes.Count - 1,
 				Root = _root
 			};
@@ -275,7 +432,8 @@ namespace UnityGLTF
 
 			node.SetUnityTransform(nodeTransform);
 
-			var id = new NodeId {
+			var id = new NodeId
+			{
 				Id = _root.Nodes.Count,
 				Root = _root
 			};
@@ -293,7 +451,7 @@ namespace UnityGLTF
 				{
 					var filter = prim.GetComponent<MeshFilter>();
 					var renderer = prim.GetComponent<MeshRenderer>();
-					_primOwner[new PrimKey {Mesh = filter.sharedMesh, Material = renderer.sharedMaterial}] = node.Mesh;
+					_primOwner[new PrimKey { Mesh = filter.sharedMesh, Material = renderer.sharedMaterial }] = node.Mesh;
 				}
 			}
 
@@ -301,7 +459,7 @@ namespace UnityGLTF
 			if (nonPrimitives.Length > 0)
 			{
 				node.Children = new List<NodeId>(nonPrimitives.Length);
-				foreach(var child in nonPrimitives)
+				foreach (var child in nonPrimitives)
 				{
 					node.Children.Add(ExportNode(child.transform));
 				}
@@ -374,7 +532,7 @@ namespace UnityGLTF
 		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
 		{
 			var childCount = transform.childCount;
-			var prims = new List<GameObject>(childCount+1);
+			var prims = new List<GameObject>(childCount + 1);
 			var nonPrims = new List<GameObject>(childCount);
 
 			// add another primitive if the root object also has a mesh
@@ -438,8 +596,10 @@ namespace UnityGLTF
 			}
 
 			// if so, return that mesh id
-			if(existingMeshId != null)
+			if (existingMeshId != null)
+			{
 				return existingMeshId;
+			}
 
 			// if not, create new mesh and return its id
 			var mesh = new GLTF.Schema.Mesh();
@@ -517,7 +677,7 @@ namespace UnityGLTF
 			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
 			{
 				var primitive = new MeshPrimitive();
-				
+
 				var triangles = meshObj.GetTriangles(submesh);
 				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(triangles), true);
 
@@ -639,7 +799,8 @@ namespace UnityGLTF
 
 			_materials.Add(materialObj);
 
-			id = new MaterialId {
+			id = new MaterialId
+			{
 				Id = _root.Materials.Count,
 				Root = _root
 			};
@@ -676,6 +837,20 @@ namespace UnityGLTF
 			else if (!_root.ExtensionsUsed.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
 			{
 				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
+			}
+
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
+				{
+					_root.ExtensionsRequired = new List<string>(
+						new string[] { ExtTextureTransformExtensionFactory.EXTENSION_NAME }
+					);
+				}
+				else if (!_root.ExtensionsRequired.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+				{
+					_root.ExtensionsRequired.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
+				}
 			}
 
 			if (def.Extensions == null)
@@ -782,8 +957,22 @@ namespace UnityGLTF
 			{
 				_root.ExtensionsUsed = new List<string>(new string[] { "KHR_materials_common" });
 			}
-			else if(!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+			else if (!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+			{
 				_root.ExtensionsUsed.Add("KHR_materials_common");
+			}
+
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
+				{
+					_root.ExtensionsRequired = new List<string>(new string[] { "KHR_materials_common" });
+				}
+				else if (!_root.ExtensionsRequired.Contains("KHR_materials_common"))
+				{
+					_root.ExtensionsRequired.Add("KHR_materials_common");
+				}
+			}
 
 			var constant = new MaterialCommonConstant();
 
@@ -801,7 +990,7 @@ namespace UnityGLTF
 					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
 					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
 				}
-					
+
 			}
 
 			if (materialObj.HasProperty("_LightFactor"))
@@ -847,7 +1036,8 @@ namespace UnityGLTF
 
 			_textures.Add(textureObj);
 
-			id = new TextureId {
+			id = new TextureId
+			{
 				Id = _root.Textures.Count,
 				Root = _root
 			};
@@ -860,7 +1050,7 @@ namespace UnityGLTF
 		private ImageId ExportImage(UnityEngine.Texture texture, TextureMapType texturMapType)
 		{
 			ImageId id = GetImageId(_root, texture);
-			if(id != null)
+			if (id != null)
 			{
 				return id;
 			}
@@ -877,11 +1067,16 @@ namespace UnityGLTF
 				textureMapType = texturMapType
 			});
 
-			var path = _retrieveTexturePathDelegate(texture);
-			var newPath = Path.ChangeExtension (path, ".png");
-			image.Uri = Uri.EscapeUriString(newPath);
+			var imagePath = _retrieveTexturePathDelegate(texture);
+			var filenamePath = Path.ChangeExtension(imagePath, ".png");
+			if (!ExportFullPath)
+			{
+				filenamePath = Path.ChangeExtension(texture.name, ".png");
+			}
+			image.Uri = Uri.EscapeUriString(filenamePath);
 
-			id = new ImageId {
+			id = new ImageId
+			{
 				Id = _root.Images.Count,
 				Root = _root
 			};
@@ -910,12 +1105,12 @@ namespace UnityGLTF
 				sampler.WrapT = GLTF.Schema.WrapMode.Repeat;
 			}
 
-			if(texture.filterMode == FilterMode.Point)
+			if (texture.filterMode == FilterMode.Point)
 			{
 				sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
 				sampler.MagFilter = MagFilterMode.Nearest;
 			}
-			else if(texture.filterMode == FilterMode.Bilinear)
+			else if (texture.filterMode == FilterMode.Bilinear)
 			{
 				sampler.MinFilter = MinFilterMode.NearestMipmapLinear;
 				sampler.MagFilter = MagFilterMode.Linear;
@@ -973,7 +1168,8 @@ namespace UnityGLTF
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
-				foreach (var v in arr) {
+				foreach (var v in arr)
+				{
 					_bufferWriter.Write((byte)v);
 				}
 			}
@@ -981,7 +1177,8 @@ namespace UnityGLTF
 			{
 				accessor.ComponentType = GLTFComponentType.Byte;
 
-				foreach (var v in arr) {
+				foreach (var v in arr)
+				{
 					_bufferWriter.Write((sbyte)v);
 				}
 			}
@@ -989,7 +1186,8 @@ namespace UnityGLTF
 			{
 				accessor.ComponentType = GLTFComponentType.Short;
 
-				foreach (var v in arr) {
+				foreach (var v in arr)
+				{
 					_bufferWriter.Write((short)v);
 				}
 			}
@@ -997,7 +1195,8 @@ namespace UnityGLTF
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedShort;
 
-				foreach (var v in arr) {
+				foreach (var v in arr)
+				{
 					_bufferWriter.Write((ushort)v);
 				}
 			}
@@ -1005,7 +1204,8 @@ namespace UnityGLTF
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedInt;
 
-				foreach (var v in arr) {
+				foreach (var v in arr)
+				{
 					_bufferWriter.Write((uint)v);
 				}
 			}
@@ -1013,7 +1213,8 @@ namespace UnityGLTF
 			{
 				accessor.ComponentType = GLTFComponentType.Float;
 
-				foreach (var v in arr) {
+				foreach (var v in arr)
+				{
 					_bufferWriter.Write((float)v);
 				}
 			}
@@ -1025,7 +1226,8 @@ namespace UnityGLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new AccessorId {
+			var id = new AccessorId
+			{
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -1080,7 +1282,8 @@ namespace UnityGLTF
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			foreach (var vec in arr) {
+			foreach (var vec in arr)
+			{
 				_bufferWriter.Write(vec.x);
 				_bufferWriter.Write(vec.y);
 			}
@@ -1089,7 +1292,8 @@ namespace UnityGLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new AccessorId {
+			var id = new AccessorId
+			{
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -1154,7 +1358,8 @@ namespace UnityGLTF
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			foreach (var vec in arr) {
+			foreach (var vec in arr)
+			{
 				_bufferWriter.Write(vec.x);
 				_bufferWriter.Write(vec.y);
 				_bufferWriter.Write(vec.z);
@@ -1164,7 +1369,8 @@ namespace UnityGLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new AccessorId {
+			var id = new AccessorId
+			{
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -1239,7 +1445,8 @@ namespace UnityGLTF
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			foreach (var vec in arr) {
+			foreach (var vec in arr)
+			{
 				_bufferWriter.Write(vec.x);
 				_bufferWriter.Write(vec.y);
 				_bufferWriter.Write(vec.z);
@@ -1250,7 +1457,8 @@ namespace UnityGLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new AccessorId {
+			var id = new AccessorId
+			{
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -1325,7 +1533,8 @@ namespace UnityGLTF
 
 			var byteOffset = _bufferWriter.BaseStream.Position;
 
-			foreach (var color in arr) {
+			foreach (var color in arr)
+			{
 				_bufferWriter.Write(color.r);
 				_bufferWriter.Write(color.g);
 				_bufferWriter.Write(color.b);
@@ -1336,7 +1545,8 @@ namespace UnityGLTF
 
 			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
 
-			var id = new AccessorId {
+			var id = new AccessorId
+			{
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
@@ -1347,13 +1557,15 @@ namespace UnityGLTF
 
 		private BufferViewId ExportBufferView(int byteOffset, int byteLength)
 		{
-			var bufferView = new BufferView {
+			var bufferView = new BufferView
+			{
 				Buffer = _bufferId,
 				ByteOffset = byteOffset,
 				ByteLength = byteLength,
 			};
 
-			var id = new BufferViewId {
+			var id = new BufferViewId
+			{
 				Id = _root.BufferViews.Count,
 				Root = _root
 			};
@@ -1444,5 +1656,6 @@ namespace UnityGLTF
 
 			return null;
 		}
+
 	}
 }

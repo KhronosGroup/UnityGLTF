@@ -56,7 +56,8 @@ namespace GLTF.Schema
 			return textureInfo;
 		}
 
-		public override void Serialize(JsonWriter writer) {
+		public override void Serialize(JsonWriter writer)
+		{
 			writer.WriteStartObject();
 
 			if (Scale != 1.0f)

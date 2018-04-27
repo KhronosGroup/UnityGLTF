@@ -83,7 +83,8 @@ namespace GLTF.Schema
 
 		private void SkipObject(JsonReader reader)
 		{
-			while (reader.Read() && reader.TokenType != JsonToken.EndObject) {
+			while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+			{
 				if (reader.TokenType == JsonToken.StartArray)
 				{
 					SkipArray(reader);
@@ -97,7 +98,8 @@ namespace GLTF.Schema
 
 		private void SkipArray(JsonReader reader)
 		{
-			while (reader.Read() && reader.TokenType != JsonToken.EndArray) {
+			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+			{
 				if (reader.TokenType == JsonToken.StartArray)
 				{
 					SkipArray(reader);

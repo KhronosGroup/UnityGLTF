@@ -23,17 +23,17 @@ namespace UnityGLTF.Loader
 		{
 			_rootURI = rootURI;
 		}
-		
+
 		public IEnumerator LoadStream(string gltfFilePath)
 		{
 			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
-			
+
 			yield return CreateHTTPRequest(_rootURI, gltfFilePath);
 		}
-		
+
 		private IEnumerator CreateHTTPRequest(string rootUri, string httpRequestPath)
 		{
 			UnityWebRequest www = new UnityWebRequest(Path.Combine(rootUri, httpRequestPath), "GET", new DownloadHandlerBuffer(), null);
@@ -47,8 +47,8 @@ namespace UnityGLTF.Loader
 			{
 				Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
 				throw new Exception("Response code invalid");
-			} 
-			
+			}
+
 			if (www.downloadedBytes > int.MaxValue)
 			{
 				throw new Exception("Stream is larger than can be copied into byte array");
