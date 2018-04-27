@@ -796,7 +796,7 @@ namespace UnityGLTF
 			var vertexCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
 			bool hasNormals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL);
-			bool hasTangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT);
+
 			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
 			UnityEngine.Mesh mesh = new UnityEngine.Mesh
 			{
@@ -832,9 +832,7 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
 					: MeshPrimitive.GenerateTriangles((int)vertexCount),
 
-				tangents = hasTangents
-					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
-					: null
+				tangents = null
 			};
 
 			yield return null;
