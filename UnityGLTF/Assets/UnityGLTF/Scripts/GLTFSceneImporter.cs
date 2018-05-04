@@ -1,5 +1,7 @@
 using GLTF;
 using GLTF.Schema;
+using GLTF.Utilities;
+using Microsoft.Pisa.DataServices.Profiling;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,6 +22,12 @@ namespace UnityGLTF
 	{
 		public MeshPrimitive Primitive { get; set; }
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
+	}
+
+	public struct NodeCreationData
+	{
+		public NodeId Node { get; set; }
+		public int Parent { get; set; }
 	}
 
 	public class GLTFSceneImporter
@@ -319,8 +327,19 @@ namespace UnityGLTF
 			}
 
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
+
+			Profiler.BeginPeriod(nameof(LoadBufferData));
 			yield return LoadBufferData(nodeToLoad);
-			yield return CreateNode(nodeToLoad, nodeIndex);
+			Profiler.EndPeriod(nameof(LoadBufferData));
+
+			Profiler.BeginPeriod(nameof(CreateNode));
+			yield return CreateNode(new NodeId
+			{
+				Id = nodeIndex,
+				Root = _gltfRoot
+			});
+
+			Profiler.EndPeriod(nameof(CreateNode));
 		}
 
 		protected void InitializeAssetCache()
@@ -452,6 +471,8 @@ namespace UnityGLTF
 		/// <returns></returns>
 		protected IEnumerator LoadImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true, bool linear = true)
 		{
+			Profiler.BeginPeriod(nameof(LoadImage));
+
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
 				Stream stream = null;
@@ -460,11 +481,9 @@ namespace UnityGLTF
 					var bufferView = image.BufferView.Value;
 					var data = new byte[bufferView.ByteLength];
 
-					var bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
+					BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
 					bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
-					bufferContents.Stream.Read(data, 0, data.Length);
-
-					stream = new MemoryStream(data, 0, data.Length, false, true);
+					stream = new SubStream(bufferContents.Stream, 0, data.Length);
 				}
 				else
 				{
@@ -483,6 +502,8 @@ namespace UnityGLTF
 				}
 				yield return LoadUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex);
 			}
+
+			Profiler.EndPeriod(nameof(LoadImage));
 		}
 
 		/// <summary>
@@ -612,7 +633,7 @@ namespace UnityGLTF
 
 			foreach (var node in scene.Nodes)
 			{
-				yield return CreateNode(node.Value, node.Id);
+				yield return CreateNode(node);
 				GameObject nodeObj = _assetCache.NodeCache[node.Id];
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 			}
@@ -621,51 +642,69 @@ namespace UnityGLTF
 			InitializeGltfTopLevelObject();
 		}
 
-		protected virtual IEnumerator CreateNode(Node node, int nodeIndex)
+		protected virtual IEnumerator CreateNode(NodeId nodeId)
 		{
-			var nodeObj = new GameObject(node.Name ?? "GLTFNode");
-			// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
-			nodeObj.SetActive(false);
-
-			Vector3 position;
-			Quaternion rotation;
-			Vector3 scale;
-			node.GetUnityTRSProperties(out position, out rotation, out scale);
-			nodeObj.transform.localPosition = position;
-			nodeObj.transform.localRotation = rotation;
-			nodeObj.transform.localScale = scale;
-
-			// TODO: Add support for skin/morph targets
-			if (node.Mesh != null)
+			List<NodeCreationData> nodesToAdd = new List<NodeCreationData>();
+			nodesToAdd.Add(new NodeCreationData
 			{
-				yield return CreateMeshObject(node.Mesh.Value, nodeObj.transform, node.Mesh.Id);
-			}
+				Node = nodeId,
+				Parent = -1
+			});
 
-			/* TODO: implement camera (probably a flag to disable for VR as well)
-			if (camera != null)
+			for(int i = 0; i < nodesToAdd.Count; ++i)
 			{
-				GameObject cameraObj = camera.Value.Create();
-				cameraObj.transform.parent = nodeObj.transform;
-			}
-			*/
+				NodeCreationData nodeToAdd = nodesToAdd[i];
+				Node node = nodeToAdd.Node.Value;
+				GameObject nodeObj = new GameObject(node.Name ?? "GLTFNode");
+				Vector3 position;
+				Quaternion rotation;
+				Vector3 scale;
+				node.GetUnityTRSProperties(out position, out rotation, out scale);
+				nodeObj.transform.localPosition = position;
+				nodeObj.transform.localRotation = rotation;
+				nodeObj.transform.localScale = scale;
 
-			if (node.Children != null)
-			{
-				foreach (var child in node.Children)
+				// TODO: Add support for skin/morph targets
+				if (node.Mesh != null)
 				{
-					// todo blgross: replace with an iterartive solution
-					yield return CreateNode(child.Value, child.Id);
-					GameObject childObj = _assetCache.NodeCache[child.Id];
-					childObj.transform.SetParent(nodeObj.transform, false);
+					yield return CreateMeshObject(node.Mesh.Value, nodeObj.transform, node.Mesh.Id);
 				}
-			}
 
-			nodeObj.SetActive(true);
-			_assetCache.NodeCache[nodeIndex] = nodeObj;
+				/* TODO: implement camera (probably a flag to disable for VR as well)
+				if (camera != null)
+				{
+					GameObject cameraObj = camera.Value.Create();
+					cameraObj.transform.parent = nodeObj.transform;
+				}
+				*/
+
+				if (node.Children != null)
+				{
+					foreach (NodeId child in node.Children)
+					{
+						nodesToAdd.Add(new NodeCreationData
+						{
+							Node = child,
+							Parent = nodeToAdd.Node.Id
+						});
+					}
+
+				}
+
+				if (nodeToAdd.Parent > 0)
+				{
+					nodeObj.transform.SetParent(_assetCache.NodeCache[nodeToAdd.Parent].transform, false);
+				}
+
+				nodeObj.SetActive(true);
+				_assetCache.NodeCache[nodeToAdd.Node.Id] = nodeObj;
+			}
 		}
 		
 		protected virtual IEnumerator CreateMeshObject(GLTF.Schema.Mesh mesh, Transform parent, int meshId)
 		{
+			Profiler.BeginPeriod(nameof(CreateMeshObject));
+
 			if (_assetCache.MeshCache[meshId] == null)
 			{
 				_assetCache.MeshCache[meshId] = new MeshCacheData[mesh.Primitives.Count];
@@ -699,10 +738,14 @@ namespace UnityGLTF
 				primitiveObj.transform.SetParent(parent, false);
 				primitiveObj.SetActive(true);
 			}
+
+			Profiler.EndPeriod(nameof(CreateMeshObject));
 		}
-		
+
 		protected virtual IEnumerator CreateMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex, int materialIndex)
 		{
+			Profiler.BeginPeriod(nameof(CreateMeshPrimitive));
+
 			if (_assetCache.MeshCache[meshID][primitiveIndex] == null)
 			{
 				_assetCache.MeshCache[meshID][primitiveIndex] = new MeshCacheData();
@@ -728,8 +771,9 @@ namespace UnityGLTF
 			{
 				yield return CreateMaterial(materialToLoad, materialIndex);
 			}
+			Profiler.EndPeriod(nameof(CreateMeshPrimitive));
 		}
-	 
+
 		/// <summary>
 		/// Loads the memory buffer for the images the materials point to. Future version should start up a thread to load each part of a material to allow streaming
 		/// </summary>
@@ -789,7 +833,7 @@ namespace UnityGLTF
 			}
 		}
 		
-		protected IEnumerator CreateUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
+		protected virtual IEnumerator CreateUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
 		{
 			MeshPrimitive primitive = meshConstructionData.Primitive;
 			var meshAttributes = meshConstructionData.MeshAttributes;
@@ -1130,6 +1174,7 @@ namespace UnityGLTF
 		protected virtual IEnumerator _CreateTexture(GLTF.Schema.Texture texture, int textureIndex,
 			bool markGpuOnly = true, bool linear = true)
 		{
+			Profiler.BeginPeriod(nameof(_CreateTexture));
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
@@ -1181,6 +1226,7 @@ namespace UnityGLTF
 
 				yield return null;
 			}
+			Profiler.EndPeriod(nameof(_CreateTexture));
 		}
 
 		protected virtual void ApplyTextureTransform(TextureInfo def, UnityEngine.Material mat, string texName)
