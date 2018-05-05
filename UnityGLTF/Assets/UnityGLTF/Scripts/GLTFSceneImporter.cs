@@ -691,7 +691,7 @@ namespace UnityGLTF
 
 				}
 
-				if (nodeToAdd.Parent > 0)
+				if (nodeToAdd.Parent >= 0)
 				{
 					nodeObj.transform.SetParent(_assetCache.NodeCache[nodeToAdd.Parent].transform, false);
 				}
