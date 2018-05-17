@@ -46,7 +46,7 @@ namespace UnityGLTF
 			SkinId skinId;
 			if (_skinCache.TryGetValue(skin, out skinId))
 			{
-				//already exported this clip, skip
+				//already exported this skin, return it
 				return skinId;
 			}
 
@@ -59,8 +59,8 @@ namespace UnityGLTF
 			_root.Skins.Add(new GLTF.Schema.Skin
 			{
 				//references ExportData in Animation PR
+				//WARNING: Unity ignores the scale associated with the parent node in bind poses. Need to incorporate this at some point
 				InverseBindMatrices = this.ExportData(skin.BindPoses.Select(bindpose => GetRightHandedMatrix(bindpose))),
-				Skeleton = this._nodeCache[skinnedMeshRenderer.transform],
 				Joints = skin.Bones.Select(bone => this._nodeCache[bone.transform]).ToList(),
 			});
 
