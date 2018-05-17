@@ -29,7 +29,8 @@ namespace UnityGLTF
         {
             None,
             Box,
-            Mesh
+            Mesh,
+            MeshConvex
         }
 
         /// <summary>
@@ -1000,11 +1001,14 @@ namespace UnityGLTF
                         boxCollider.center = curMesh.bounds.center;
                         boxCollider.size = curMesh.bounds.size;
                         break;
-
                     case ColliderType.Mesh:
                         var meshCollider = primitiveObj.AddComponent<MeshCollider>();
                         meshCollider.sharedMesh = curMesh;
-                        meshCollider.convex = true;
+                        break;
+                    case ColliderType.MeshConvex:
+                        var meshConvexCollider = primitiveObj.AddComponent<MeshCollider>();
+                        meshConvexCollider.sharedMesh = curMesh;
+                        meshConvexCollider.convex = true;
                         break;
                 }
 
