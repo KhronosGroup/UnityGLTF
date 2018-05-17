@@ -19,12 +19,12 @@ namespace UnityGLTF.Cache
 		/// Loaded raw texture data
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
-		
+
 		/// <summary>
 		/// Textures to be used for assets. Textures from image cache with samplers applied
 		/// </summary>
 		public TextureCacheData[] TextureCache { get; private set; }
-		
+
 		/// <summary>
 		/// Cache for materials to be applied to the meshes
 		/// </summary>
@@ -68,7 +68,7 @@ namespace UnityGLTF.Cache
 			MaterialCache = new MaterialCacheData[materialCacheSize];
 			BufferCache = new BufferCacheData[bufferCacheSize];
 			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
-			for(int i = 0; i < meshCacheSize; ++i)
+			for (int i = 0; i < meshCacheSize; ++i)
 			{
 				MeshCache.Add(null);
 			}
@@ -83,9 +83,9 @@ namespace UnityGLTF.Cache
 			ImageStreamCache = null;
 			TextureCache = null;
 			MaterialCache = null;
-			foreach(BufferCacheData bufferCacheData in BufferCache)
+			foreach (BufferCacheData bufferCacheData in BufferCache)
 			{
-				if(bufferCacheData != null && bufferCacheData.Stream != null)
+				if (bufferCacheData != null && bufferCacheData.Stream != null)
 				{
 #if !WINDOWS_UWP
 					bufferCacheData.Stream.Close();

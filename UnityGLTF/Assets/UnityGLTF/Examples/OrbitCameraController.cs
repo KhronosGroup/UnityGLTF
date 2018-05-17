@@ -17,7 +17,7 @@ namespace UnityGLTF.Examples
 		public float distanceMin = .5f;
 		public float distanceMax = 15f;
 
-		private Rigidbody rigidbody;
+		private Rigidbody cameraRigidBody;
 
 		float x = 0.0f;
 		float y = 0.0f;
@@ -29,12 +29,12 @@ namespace UnityGLTF.Examples
 			x = angles.y;
 			y = angles.x;
 
-			rigidbody = GetComponent<Rigidbody>();
+			cameraRigidBody = GetComponent<Rigidbody>();
 
 			// Make the rigid body not change rotation
-			if (rigidbody != null)
+			if (cameraRigidBody != null)
 			{
-				rigidbody.freezeRotation = true;
+				cameraRigidBody.freezeRotation = true;
 			}
 		}
 
@@ -74,3 +74,4 @@ namespace UnityGLTF.Examples
 		}
 	}
 }
+

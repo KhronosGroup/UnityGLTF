@@ -8,7 +8,7 @@ namespace UnityGLTF
 	class MetalRoughMap : MetalRough2StandardMap
 	{
 		public MetalRoughMap(int MaxLOD = 1000) : base("GLTF/PbrMetallicRoughness", MaxLOD) { }
-		protected MetalRoughMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		public MetalRoughMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
 		protected MetalRoughMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public override int NormalTexCoord

@@ -259,7 +259,8 @@ namespace GLTF.Schema
 				{
 					writer.WriteStartObject();
 
-					foreach (var attribute in target) {
+					foreach (var attribute in target)
+					{
 						writer.WritePropertyName(attribute.Key);
 						writer.WriteValue(attribute.Value.Id);
 					}

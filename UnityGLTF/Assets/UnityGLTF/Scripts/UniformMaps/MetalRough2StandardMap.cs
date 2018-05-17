@@ -47,7 +47,7 @@ namespace UnityGLTF
 		public virtual double MetallicFactor
 		{
 			get { return _material.GetFloat("_Metallic"); }
-			set { _material.SetFloat("_Metallic", (float) value); }
+			set { _material.SetFloat("_Metallic", (float)value); }
 		}
 
 		// not supported by the Standard shader

@@ -85,59 +85,12 @@ namespace GLTF.Math
 
 		public void SetValue(int index, float value)
 		{
-			switch (index)
+			if(index > mat.Length)
 			{
-				case 0:
-					M11 = value;
-					break;
-				case 1:
-					M21 = value;
-					break;
-				case 2:
-					M31 = value;
-					break;
-				case 3:
-					M41 = value;
-					break;
-				case 4:
-					M12 = value;
-					break;
-				case 5:
-					M22 = value;
-					break;
-				case 6:
-					M32 = value;
-					break;
-				case 7:
-					M42 = value;
-					break;
-				case 8:
-					M13 = value;
-					break;
-				case 9:
-					M23 = value;
-					break;
-				case 10:
-					M33 = value;
-					break;
-				case 11:
-					M43 = value;
-					break;
-				case 12:
-					M14 = value;
-					break;
-				case 13:
-					M24 = value;
-					break;
-				case 14:
-					M34 = value;
-					break;
-				case 15:
-					M44 = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException("Index " + index + " is out of range for a 4x4 matrix.");
+				throw new IndexOutOfRangeException("Index " + index + " is out of range for a 4x4 matrix.");				
 			}
+
+			mat[index] = value;
 		}
 
 		public void SetValue(int row, int column, float value)

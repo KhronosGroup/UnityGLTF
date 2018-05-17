@@ -61,7 +61,10 @@ namespace GLTF.Schema
 
 		public PbrMetallicRoughness(PbrMetallicRoughness pbrMetallicRoughness, GLTFRoot gltfRoot) : base(pbrMetallicRoughness)
 		{
-			if(pbrMetallicRoughness == null) return;
+			if(pbrMetallicRoughness == null) 
+			{
+				return;
+			}
 
 			BaseColorFactor = pbrMetallicRoughness.BaseColorFactor;
 
