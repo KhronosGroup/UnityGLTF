@@ -7,7 +7,7 @@ using UnityEngine;
 
 public static class URIHelper
 {
-	private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-]+;base64,";
+	private const string Base64StringInitializer = "^data:[a-z-]+/[a-z-\\.]+;base64,";
 
 	/// <summary>
 	///  Get the absolute path to a gltf uri reference.
