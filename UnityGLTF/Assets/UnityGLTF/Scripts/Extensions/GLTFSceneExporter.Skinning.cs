@@ -56,10 +56,15 @@ namespace UnityGLTF
 				Root = this._root
 			};
 
+			Transform parentTransform = skinnedMeshRenderer.GetComponentInParent<Transform>();
+			if (parentTransform != null && parentTransform.localScale != Vector3.one)
+			{
+				Debug.LogWarning("Skinning - not supported: parent node has a local scale!");
+			}
+
 			_root.Skins.Add(new GLTF.Schema.Skin
 			{
 				//references ExportData in Animation PR
-				//WARNING: Unity ignores the scale associated with the parent node in bind poses. Need to incorporate this at some point
 				InverseBindMatrices = this.ExportData(skin.BindPoses.Select(bindpose => GetRightHandedMatrix(bindpose))),
 				Joints = skin.Bones.Select(bone => this._nodeCache[bone.transform]).ToList(),
 			});
