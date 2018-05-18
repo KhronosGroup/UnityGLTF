@@ -6,7 +6,7 @@ namespace UnityGLTF
 	class SpecGlossMap : SpecGloss2StandardMap
 	{
 		public SpecGlossMap(int MaxLOD = 1000) : base("GLTF/PbrSpecularGlossiness", MaxLOD) { }
-		protected SpecGlossMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		public SpecGlossMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
 		protected SpecGlossMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public override int NormalTexCoord
@@ -34,7 +34,7 @@ namespace UnityGLTF
 		}
 
 		public override int SpecularGlossinessTexCoord
-{
+		{
 			get { return 0; }
 			set { return; }
 		}

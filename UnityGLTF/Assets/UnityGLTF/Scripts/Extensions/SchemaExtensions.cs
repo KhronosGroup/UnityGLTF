@@ -100,24 +100,24 @@ namespace UnityGLTF.Extensions
 		/// <returns></returns>
 		public static GLTF.Math.Vector4 GetColumn(this GLTF.Math.Matrix4x4 mat, uint columnNum)
 		{
-			switch(columnNum)
+			switch (columnNum)
 			{
 				case 0:
-				{
-					return new GLTF.Math.Vector4(mat.M11, mat.M21, mat.M31, mat.M41);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M11, mat.M21, mat.M31, mat.M41);
+					}
 				case 1:
-				{
-					return new GLTF.Math.Vector4(mat.M12, mat.M22, mat.M32, mat.M42);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M12, mat.M22, mat.M32, mat.M42);
+					}
 				case 2:
-				{
-					return new GLTF.Math.Vector4(mat.M13, mat.M23, mat.M33, mat.M43);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M13, mat.M23, mat.M33, mat.M43);
+					}
 				case 3:
-				{
-					return new GLTF.Math.Vector4(mat.M14, mat.M24, mat.M34, mat.M44);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M14, mat.M24, mat.M34, mat.M44);
+					}
 				default:
 					throw new System.Exception("column num is out of bounds");
 			}
