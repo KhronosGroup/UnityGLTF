@@ -130,7 +130,7 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 			//get an empty port
 			TcpListener l = new TcpListener(IPAddress.Loopback, 0);
 			l.Start();
-			int port = ((IPEndPoint) l.LocalEndpoint).Port;
+			int port = ((IPEndPoint)l.LocalEndpoint).Port;
 			l.Stop();
 			this.Initialize(path, port);
 #endif
@@ -160,7 +160,7 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 					HttpListenerContext context = _listener.GetContext();
 					Process(context);
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
 				}
 			}
@@ -212,14 +212,14 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 					context.Response.StatusCode = (int) HttpStatusCode.OK;
 					context.Response.OutputStream.Flush();
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
-					context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
+					context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 				}
 			}
 			else
 			{
-				context.Response.StatusCode = (int) HttpStatusCode.NotFound;
+				context.Response.StatusCode = (int)HttpStatusCode.NotFound;
 			}
 
 			context.Response.OutputStream.Close();
