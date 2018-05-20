@@ -958,8 +958,8 @@ namespace UnityGLTF
 			accessor.Max = new List<double> { max };
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+		
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1023,7 +1023,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1098,7 +1098,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1184,7 +1184,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
@@ -1270,31 +1270,13 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId {
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
 			_root.Accessors.Add(accessor);
-
-			return id;
-		}
-
-		private BufferViewId ExportBufferView(int byteOffset, int byteLength)
-		{
-			var bufferView = new BufferView {
-				Buffer = _bufferId,
-				ByteOffset = byteOffset,
-				ByteLength = byteLength,
-			};
-
-			var id = new BufferViewId {
-				Id = _root.BufferViews.Count,
-				Root = _root
-			};
-
-			_root.BufferViews.Add(bufferView);
 
 			return id;
 		}
