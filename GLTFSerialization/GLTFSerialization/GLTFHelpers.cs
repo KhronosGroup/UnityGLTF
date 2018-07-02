@@ -26,6 +26,201 @@ namespace GLTF
 		}
 
 		/// <summary>
+		/// Removes references to indexes that do not exist.
+		/// </summary>
+		/// <param name="root">The node to clean</param>
+		public static void RemoveUndefinedReferences(GLTFRoot root)
+		{
+			int accessorCount = root.Accessors?.Count ?? 0;
+			int bufferCount = root.Buffers?.Count ?? 0;
+			int bufferViewCount = root.BufferViews?.Count ?? 0;
+			int cameraCount = root.Cameras?.Count ?? 0;
+			int meshCount = root.Meshes?.Count ?? 0;
+			int nodeCount = root.Nodes?.Count ?? 0;
+			int samplersCount = root.Samplers?.Count ?? 0;
+			int skinCount = root.Skins?.Count ?? 0;
+			int textureCount = root.Textures?.Count ?? 0;
+
+			if (root.Accessors != null)
+			{
+				foreach (Accessor accessor in root.Accessors)
+				{
+					if (accessor.BufferView != null && accessor.BufferView.Id >= bufferViewCount)
+					{
+						accessor.BufferView = null;
+					}
+				}
+			}
+			if (root.Animations != null)
+			{
+				foreach (Animation animation in root.Animations)
+				{
+					if (animation.Samplers != null)
+					{
+						foreach (AnimationSampler animationSampler in animation.Samplers)
+						{
+							if (animationSampler.Input != null && animationSampler.Input.Id >= accessorCount)
+							{
+								animationSampler.Input = null;
+							}
+							if (animationSampler.Output != null && animationSampler.Output.Id >= accessorCount)
+							{
+								animationSampler.Output = null;
+							}
+						}
+					}
+				}
+			}
+			if (root.BufferViews != null)
+			{
+				foreach (BufferView bufferView in root.BufferViews)
+				{
+					if (bufferView.Buffer != null && bufferView.Buffer.Id >= bufferCount)
+					{
+						bufferView.Buffer = null;
+					}
+				}
+			}
+			if (root.Images != null)
+			{
+				foreach (Image image in root.Images)
+				{
+					if (image.BufferView != null && image.BufferView.Id >= bufferViewCount)
+					{
+						image.BufferView = null;
+					}
+				}
+			}
+			if (root.Materials != null)
+			{
+				foreach (Material material in root.Materials)
+				{
+					if (material.EmissiveTexture?.Index != null && material.EmissiveTexture.Index.Id >= textureCount)
+					{
+						material.EmissiveTexture.Index = null;
+					}
+					if (material.NormalTexture?.Index != null && material.NormalTexture.Index.Id >= textureCount)
+					{
+						material.NormalTexture.Index = null;
+					}
+					if (material.OcclusionTexture?.Index != null && material.OcclusionTexture.Index.Id >= textureCount)
+					{
+						material.OcclusionTexture.Index = null;
+					}
+					if (material.OcclusionTexture?.Index != null && material.OcclusionTexture.Index.Id >= textureCount)
+					{
+						material.OcclusionTexture.Index = null;
+					}
+					if (material.PbrMetallicRoughness != null)
+					{
+						if (material.PbrMetallicRoughness.BaseColorTexture?.Index != null && material.PbrMetallicRoughness.BaseColorTexture.Index.Id >= textureCount)
+						{
+							material.PbrMetallicRoughness.BaseColorTexture.Index = null;
+						}
+						if (material.PbrMetallicRoughness.MetallicRoughnessTexture?.Index != null && material.PbrMetallicRoughness.MetallicRoughnessTexture.Index.Id >= textureCount)
+						{
+							material.PbrMetallicRoughness.MetallicRoughnessTexture.Index = null;
+						}
+					}
+				}
+			}
+			if (root.Meshes != null)
+			{
+				foreach (Mesh mesh in root.Meshes)
+				{
+					if (mesh.Primitives != null)
+					{
+						foreach (MeshPrimitive primitive in mesh.Primitives)
+						{
+							if (primitive.Indices != null && primitive.Indices.Id >= accessorCount)
+							{
+								primitive.Indices = null;
+							}
+							if (primitive.Material != null && primitive.Material.Id >= accessorCount)
+							{
+								primitive.Material = null;
+							}
+						}
+					}
+				}
+			}
+			if (root.Nodes != null)
+			{
+				foreach (Node node in root.Nodes)
+				{
+					if (node.Camera != null && node.Camera.Id >= cameraCount)
+					{
+						node.Camera = null;
+					}
+					if (node.Children != null)
+					{
+						for (int i = node.Children.Count - 1; i > 0; i--)
+						{
+							if (node.Children[i].Id >= nodeCount)
+							{
+								node.Children.RemoveAt(i);
+							}
+						}
+					}
+					if (node.Mesh != null && node.Mesh.Id >= meshCount)
+					{
+						node.Mesh = null;
+					}
+					if (node.Skin != null && node.Skin.Id >= skinCount)
+					{
+						node.Skin = null;
+					}
+				}
+			}
+			if (root.Scenes != null)
+			{
+				foreach (Scene scene in root.Scenes)
+				{
+					if (scene.Nodes != null)
+					{
+						for (int i = scene.Nodes.Count - 1; i > 0; i--)
+						{
+							if (scene.Nodes[i].Id >= nodeCount)
+							{
+								scene.Nodes.RemoveAt(i);
+							}
+						}
+					}
+				}
+			}
+			if (root.Skins != null)
+			{
+				foreach (Skin skin in root.Skins)
+				{
+					if (skin.Joints != null)
+					{
+						for (int i = skin.Joints.Count - 1; i > 0; i--)
+						{
+							if (skin.Joints[i].Id >= nodeCount)
+							{
+								skin.Joints.RemoveAt(i);
+							}
+						}
+					}
+					if (skin.Skeleton != null && skin.Skeleton.Id >= nodeCount)
+					{
+						skin.Skeleton = null;
+					}
+				}
+			}
+			if (root.Textures != null)
+			{
+				foreach (Texture texture in root.Textures)
+				{
+					if (texture.Sampler != null && texture.Sampler.Id >= samplersCount)
+					{
+						texture.Sampler = null;
+					}
+				}
+			}
+		}
+
+		/// <summary>
 		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
 		/// </summary>
 		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>

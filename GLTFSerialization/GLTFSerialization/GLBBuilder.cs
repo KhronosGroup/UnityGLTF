@@ -144,7 +144,7 @@ namespace GLTF
 		/// <param name="loader">Loader for loading external components from GLTFRoot. Loader is required if loading from glTF</param>
 		/// <returns>A constructed GLBObject</returns>
 		public static GLBObject ConstructFromStream(Stream inStream, Stream glbOutStream = null, Func<string, Stream> loader = null,
-			long streamStartPosition = 0)
+			long streamStartPosition = 0, bool removeUndefinedReferences = true)
 		{
 			if (inStream == null) throw new ArgumentNullException(nameof(inStream));
 
@@ -153,6 +153,10 @@ namespace GLTF
 				inStream.Position = streamStartPosition;
 
 				GLTFRoot root = GLTFParser.ParseJson(inStream, streamStartPosition);
+				if (removeUndefinedReferences)
+				{
+					GLTFHelpers.RemoveUndefinedReferences(root);
+				}
 				if (!root.IsGLB)
 				{
 					return ConstructFromGLTF(root, glbOutStream, loader);
