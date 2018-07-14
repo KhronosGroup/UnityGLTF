@@ -358,7 +358,7 @@ namespace UnityGLTF
                         {
                             GLTF.Schema.Texture texture = _gltfRoot.Textures[i];
                             yield return ConstructImageBuffer(texture, i);
-                            yield return ConstructImage(texture.Source.Value, texture.Source.Id);
+                            yield return ConstructTexture(texture, i);
                         }
                     }
                 }
@@ -405,86 +405,90 @@ namespace UnityGLTF
             }
         }
 
-        protected IEnumerator ConstructImage(GLTF.Schema.Image image, int imageCacheIndex, bool markGpuOnly = true)
+        protected byte[] GetImageDataBuffer(GLTF.Schema.Image image, int imageCacheIndex)
         {
-            if (_assetCache.ImageCache[imageCacheIndex] == null)
+            if (image.BufferView != null)
             {
-                if (image.BufferView != null)
-                {
-                    yield return ConstructImageFromGLB(image, imageCacheIndex);
-                }
-                else
-                {
-                    string uri = image.Uri;
-
-                    byte[] bufferData;
-                    URIHelper.TryParseBase64(uri, out bufferData);
-                    if (bufferData != null)
-                    {
-                        Texture2D loadedTexture = new Texture2D(0, 0);
-                        loadedTexture.LoadImage(bufferData, true);
-
-                        _assetCache.ImageCache[imageCacheIndex] = loadedTexture;
-                        yield return null;
-                    }
-                    else
-                    {
-                        Stream stream = _assetCache.ImageStreamCache[imageCacheIndex];
-                        yield return ConstructUnityTexture(stream, markGpuOnly, image, imageCacheIndex);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Loads texture from a stream. Is responsible for stream clean up
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <param name="markGpuOnly">Non-readable textures are saved only on the GPU and take up half as much memory.</param>
-        /// <returns></returns>
-        protected virtual IEnumerator ConstructUnityTexture(Stream stream, bool markGpuOnly, GLTF.Schema.Image image, int imageCacheIndex)
-        {
-            Texture2D texture = new Texture2D(0, 0);
-
-            if (stream is MemoryStream)
-            {
-                using (MemoryStream memoryStream = stream as MemoryStream)
-                {
-                    //	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-                    texture.LoadImage(memoryStream.ToArray(), false);
-                }
-
-                yield return null;
+                // Read from GLB
+                var bufferView = image.BufferView.Value;
+                var data = new byte[bufferView.ByteLength];
+                var bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
+                bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+                bufferContents.Stream.Read(data, 0, data.Length);
+                return data;
             }
             else
             {
-                byte[] buffer = new byte[stream.Length];
-
-                // todo: potential optimization is to split stream read into multiple frames (or put it on a thread?)
-                using (stream)
+                string uri = image.Uri;
+                byte[] bufferData;
+                URIHelper.TryParseBase64(uri, out bufferData);
+                if (bufferData != null)
                 {
-                    if (stream.Length > int.MaxValue)
-                    {
-                        throw new Exception("Stream is larger than can be copied into byte array");
-                    }
-
-                    stream.Read(buffer, 0, (int)stream.Length);
+                    return bufferData;
                 }
+                else
+                {
+                    Stream stream = _assetCache.ImageStreamCache[imageCacheIndex];
+                    if (stream is MemoryStream)
+                    {
+                        using (MemoryStream memoryStream = stream as MemoryStream)
+                        {
 
-                yield return null;
-
-                //	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-                texture.LoadImage(buffer, false);
-                yield return null;
+                            return memoryStream.ToArray();
+                        }
+                    }
+                    else
+                    {
+                        byte[] buffer = new byte[stream.Length];
+                        // todo: potential optimization is to split stream read into multiple frames (or put it on a thread?)
+                        using (stream)
+                        {
+                            if (stream.Length > int.MaxValue)
+                            {
+                                throw new Exception("Stream is larger than can be copied into byte array");
+                            }
+                            stream.Read(buffer, 0, (int)stream.Length);
+                        }
+                        return buffer;
+                    }
+                }
             }
-
-            // After we conduct the Apply(), then we can make the texture non-readable and never create a CPU copy
-            texture.Apply(true, markGpuOnly);
-
-            _assetCache.ImageCache[imageCacheIndex] = texture;
-            yield return null;
         }
 
+        protected IEnumerator ConstructImage(GLTF.Schema.Image image, int imageCacheIndex, FilterMode filterMode, TextureWrapMode wrapMode, bool markGpuOnly = true)
+        {
+            if (_assetCache.ImageCache[imageCacheIndex] == null)
+            {
+                byte[] data = GetImageDataBuffer(image, imageCacheIndex);
+                yield return null;
+
+                Texture2D texture;
+                var info = DDSHeader.Read(data);
+                if (info == null)
+                {
+                    info = CRNHeader.Read(data);
+                }
+                if(info != null)
+                {
+                    texture = new Texture2D(info.Width, info.Height, info.Format, info.HasMips);
+                    texture.LoadRawTextureData(info.RawData);
+                } 
+                else
+                {
+                    texture = new Texture2D(0, 0);
+                    //	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
+                    texture.LoadImage(data, false);
+                }
+                texture.filterMode = filterMode;
+                texture.wrapMode = wrapMode;
+                yield return null;              
+                // After we conduct the Apply(), then we can make the texture non-readable and never create a CPU copy
+                texture.Apply(true, markGpuOnly);
+                _assetCache.ImageCache[imageCacheIndex] = texture;
+                yield return null;
+            }
+        }
+        
         protected virtual IEnumerator ConstructAttributesForMeshes()
         {
             for (int i = 0; i < _gltfRoot.Meshes.Count; ++i)
@@ -1367,11 +1371,6 @@ namespace UnityGLTF
         {
             if (_assetCache.TextureCache[textureIndex].Texture == null)
             {
-                int sourceId = GetTextureSourceId(texture);
-                GLTF.Schema.Image image = _gltfRoot.Images[sourceId];
-                yield return ConstructImage(image, sourceId, markGpuOnly);
-
-                var source = _assetCache.ImageCache[sourceId];
                 var desiredFilterMode = FilterMode.Bilinear;
                 var desiredWrapMode = TextureWrapMode.Repeat;
 
@@ -1401,36 +1400,24 @@ namespace UnityGLTF
                     }
                 }
 
-                if (source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode)
+                int sourceId = GetTextureSourceId(texture);
+                GLTF.Schema.Image image = _gltfRoot.Images[sourceId];
+                if(_assetCache.ImageCache[sourceId] != null)
                 {
-                    _assetCache.TextureCache[textureIndex].Texture = source;
+                    if(_assetCache.ImageCache[sourceId].filterMode != desiredFilterMode ||
+                       _assetCache.ImageCache[sourceId].wrapMode != desiredWrapMode)
+                    {
+                        // Note it is possible for a gltf file to have multiple textures with different sampling modes referencing the same image
+                        // Consider modifing ConstructImage to return a texture and either reusing the current texture from the TextureCache or 
+                        // creating a new one based on if the sampling mode matches
+                        Debug.LogWarning("Multiple textures with same image but different samplers, last loaded will win");
+                    }
                 }
-                else
-                {
-                    var unityTexture = UnityEngine.Object.Instantiate(source);
-                    unityTexture.filterMode = desiredFilterMode;
-                    unityTexture.wrapMode = desiredWrapMode;
-
-                    _assetCache.TextureCache[textureIndex].Texture = unityTexture;
-                }
-
+                yield return ConstructImage(image, sourceId, desiredFilterMode, desiredWrapMode, markGpuOnly);
+                var source = _assetCache.ImageCache[sourceId];
+                _assetCache.TextureCache[textureIndex].Texture = source;
                 yield return null;
             }
-        }
-
-        protected virtual IEnumerator ConstructImageFromGLB(Image image, int imageCacheIndex)
-        {
-            var texture = new Texture2D(0, 0);
-            var bufferView = image.BufferView.Value;
-            var data = new byte[bufferView.ByteLength];
-
-            var bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-            bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
-            bufferContents.Stream.Read(data, 0, data.Length);
-            texture.LoadImage(data);
-
-            _assetCache.ImageCache[imageCacheIndex] = texture;
-            yield return null;
         }
 
         protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
