@@ -40,8 +40,6 @@ Work Items and Issues targeting a 1.0 release of the library can be found in
 	The Unity project offers two main functionalities: importing and exporting GLTF assets. These functionalities are primarily implemented in [GLTFSceneImporter] and [GLTFSceneExporter]. 
 
 ## Examples
-(Revamp this section to give demo instructions on how to import/export some assets)
-
 1. Clone or download the repository.
 2. Open up the Unity project and run any of the example scenes in `Assets/GLTF/Examples`
 
