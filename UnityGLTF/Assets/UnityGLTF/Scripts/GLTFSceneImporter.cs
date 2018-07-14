@@ -105,12 +105,11 @@ namespace UnityGLTF
 		{
 			if (_assetCache != null)
 			{
-				_assetCache.Dispose();
-				_assetCache = null;
+				Cleanup();
 			}
 		}
 
-public GameObject LastLoadedScene
+		public GameObject LastLoadedScene
 		{
 			get { return _lastLoadedScene; }
 		}
