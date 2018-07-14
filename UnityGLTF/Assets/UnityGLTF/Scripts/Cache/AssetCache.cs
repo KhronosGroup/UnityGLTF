@@ -83,16 +83,25 @@ namespace UnityGLTF.Cache
 			ImageStreamCache = null;
 			TextureCache = null;
 			MaterialCache = null;
-			foreach (BufferCacheData bufferCacheData in BufferCache)
+			if (BufferCache != null)
 			{
-				if (bufferCacheData != null && bufferCacheData.Stream != null)
+				foreach (BufferCacheData bufferCacheData in BufferCache)
 				{
+					if (bufferCacheData != null)
+					{
+						if (bufferCacheData.Stream != null)
+						{
 #if !WINDOWS_UWP
-					bufferCacheData.Stream.Close();
+							bufferCacheData.Stream.Close();
 #else
-					bufferCacheData.Stream.Dispose();
+							buffer.Stream.Dispose();
 #endif
+						}
+
+						bufferCacheData.Dispose();
+					}
 				}
+				BufferCache = null;
 			}
 			MeshCache = null;
 			AnimationCache = null;
