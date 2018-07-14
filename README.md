@@ -39,12 +39,6 @@ Work Items and Issues targeting a 1.0 release of the library can be found in
 - ##### Project Components
 	The Unity project offers two main functionalities: importing and exporting GLTF assets. These functionalities are primarily implemented in [GLTFSceneImporter] and [GLTFSceneExporter]. 
 
-	- #### GLTF Exporter
-	(explain this)
-
-	- #### GLTF Importer
-	(explain this)
-
 ## Examples
 (Revamp this section to give demo instructions on how to import/export some assets)
 
