@@ -1,25 +1,44 @@
+using System;
 using System.Collections;
 using System.IO;
+using GLTF;
+using GLTF.Schema;
 using UnityEngine;
+using UnityGLTF.Loader;
 
 namespace UnityGLTF
 {
+
 	/// <summary>
 	/// Component to load a GLTF scene with
 	/// </summary>
-	class GLTFComponent : MonoBehaviour
+	public class GLTFComponent : MonoBehaviour
 	{
-		public string Url;
+		public string GLTFUri = null;
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 
+		[SerializeField]
+		private bool loadOnStart = true;
+
 		public int MaximumLod = 300;
-		public GLTFSceneImporter.ColliderType Colliders = GLTFSceneImporter.ColliderType.None;
+		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
+
+		[SerializeField]
+		private Shader shaderOverride = null;
 
 		IEnumerator Start()
 		{
-			GLTFSceneImporter loader = null;
-			FileStream gltfStream = null;
+			if (loadOnStart)
+			{
+				yield return Load();
+			}
+		}
+
+		public IEnumerator Load()
+		{
+			GLTFSceneImporter sceneImporter = null;
+			ILoader loader = null;
 			try
 			{
 				if (UseStream)
@@ -27,44 +46,49 @@ namespace UnityGLTF
 					// Path.Combine treats paths that start with the separator character
 					// as absolute paths, ignoring the first path passed in. This removes
 					// that character to properly handle a filename written with it.
-					Url = Url.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
-
-
-					var fullPath = Path.Combine(Application.streamingAssetsPath, Url);
-					gltfStream = File.OpenRead(fullPath);
-					loader = new GLTFSceneImporter(
-						fullPath,
-						gltfStream,
-						gameObject.transform,
-						Colliders
+					GLTFUri = GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+					string fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri);
+					string directoryPath = URIHelper.GetDirectoryName(fullPath);
+					loader = new FileLoader(directoryPath);
+					sceneImporter = new GLTFSceneImporter(
+						Path.GetFileName(GLTFUri),
+						loader
 						);
 				}
 				else
 				{
-					loader = new GLTFSceneImporter(
-						Url,
-						gameObject.transform,
-						Colliders
+					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
+					loader = new WebRequestLoader(directoryPath);
+					sceneImporter = new GLTFSceneImporter(
+						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
+						loader
 						);
+
 				}
 
-				loader.MaximumLod = MaximumLod;
-				yield return loader.Load(-1, Multithreaded);
+				sceneImporter.SceneParent = gameObject.transform;
+				sceneImporter.Collider = Collider;
+				sceneImporter.MaximumLod = MaximumLod;
+				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
+				yield return sceneImporter.LoadScene(-1, Multithreaded);
+
+				// Override the shaders on all materials if a shader is provided
+				if (shaderOverride != null)
+				{
+					Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
+					foreach (Renderer renderer in renderers)
+					{
+						renderer.sharedMaterial.shader = shaderOverride;
+					}
+				}
 			}
 			finally
 			{
-				if (loader != null)
+				if(loader != null)
 				{
-					loader.Dispose();
+					sceneImporter.Dispose();
+					sceneImporter = null;
 					loader = null;
-				}
-				if (gltfStream != null)
-				{
-#if WINDOWS_UWP
-					gltfStream.Dispose();
-#else
-					gltfStream.Close();
-#endif
 				}
 			}
 		}

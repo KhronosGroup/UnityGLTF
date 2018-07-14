@@ -105,7 +105,7 @@ namespace GLTF.Schema
 				writer.WriteValue(ZFar);
 			}
 
-			writer.WritePropertyName("ZNear");
+			writer.WritePropertyName("znear");
 			writer.WriteValue(ZNear);
 
 			base.Serialize(writer);

@@ -51,11 +51,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Url: 
+  GLTFUri: 
   Multithreaded: 1
   UseStream: 0
+  loadOnStart: 1
   MaximumLod: 300
-  GLTFStandard: {fileID: 4800000, guid: a5732b1b5b2e36d47a3da75e187eba06, type: 3}
-  GLTFStandardSpecular: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
-  GLTFConstant: {fileID: 4800000, guid: ede6e66a96bc7164abd2a9217b5a8b4c, type: 3}
-  addColliders: 0
+  Collider: 0
+  shaderOverride: {fileID: 0}

@@ -100,24 +100,24 @@ namespace UnityGLTF.Extensions
 		/// <returns></returns>
 		public static GLTF.Math.Vector4 GetColumn(this GLTF.Math.Matrix4x4 mat, uint columnNum)
 		{
-			switch(columnNum)
+			switch (columnNum)
 			{
 				case 0:
-				{
-					return new GLTF.Math.Vector4(mat.M11, mat.M21, mat.M31, mat.M41);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M11, mat.M21, mat.M31, mat.M41);
+					}
 				case 1:
-				{
-					return new GLTF.Math.Vector4(mat.M12, mat.M22, mat.M32, mat.M42);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M12, mat.M22, mat.M32, mat.M42);
+					}
 				case 2:
-				{
-					return new GLTF.Math.Vector4(mat.M13, mat.M23, mat.M33, mat.M43);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M13, mat.M23, mat.M33, mat.M43);
+					}
 				case 3:
-				{
-					return new GLTF.Math.Vector4(mat.M14, mat.M24, mat.M34, mat.M44);
-				}
+					{
+						return new GLTF.Math.Vector4(mat.M14, mat.M24, mat.M34, mat.M44);
+					}
 				default:
 					throw new System.Exception("column num is out of bounds");
 			}
@@ -464,6 +464,39 @@ namespace UnityGLTF.Extensions
 			}
 
 			return returnArr;
+		}
+
+		public static Matrix4x4 ToUnityMatrix4x4(this GLTF.Math.Matrix4x4 matrix)
+		{
+			return new Matrix4x4()
+			{
+				m00 = matrix.M11,
+				m01 = matrix.M12,
+				m02 = matrix.M13,
+				m03 = matrix.M14,
+				m10 = matrix.M21,
+				m11 = matrix.M22,
+				m12 = matrix.M23,
+				m13 = matrix.M24,
+				m20 = matrix.M31,
+				m21 = matrix.M32,
+				m22 = matrix.M33,
+				m23 = matrix.M34,
+				m30 = matrix.M41,
+				m31 = matrix.M42,
+				m32 = matrix.M43,
+				m33 = matrix.M44
+			};
+		}
+
+		public static Matrix4x4[] ToUnityMatrix4x4(this GLTF.Math.Matrix4x4[] inMatrixArr)
+		{
+			Matrix4x4[] outMatrixArr = new Matrix4x4[inMatrixArr.Length];
+			for (int i = 0; i < inMatrixArr.Length; ++i)
+			{
+				outMatrixArr[i] = inMatrixArr[i].ToUnityMatrix4x4();
+			}
+			return outMatrixArr;
 		}
 	}
 }

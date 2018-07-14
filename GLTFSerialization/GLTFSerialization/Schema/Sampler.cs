@@ -53,7 +53,7 @@ namespace GLTF.Schema
 				switch (curProp)
 				{
 					case "magFilter":
-						sampler.MagFilter = (MagFilterMode) reader.ReadAsInt32();
+						sampler.MagFilter = (MagFilterMode)reader.ReadAsInt32();
 						break;
 					case "minFilter":
 						sampler.MinFilter = (MinFilterMode)reader.ReadAsInt32();

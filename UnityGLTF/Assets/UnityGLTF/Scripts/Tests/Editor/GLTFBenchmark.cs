@@ -31,14 +31,19 @@ public class GLTFBenchmark : MonoBehaviour
 		foreach (var gltfUrl in GLTFUrls)
 		{
 			var www = UnityWebRequest.Get(gltfUrl);
+
+#if UNITY_2017_2_OR_NEWER
+			yield return www.SendWebRequest();
+#else
 			yield return www.Send();
+#endif
 
 			Debug.LogFormat("Benchmarking: {0}", gltfUrl);
 			long totalTime = 0;
 			for (var i = 0; i < NumberOfIterations; i++)
 			{
 				timer.Start();
-				GLTFParser.ParseJson(new MemoryStream(Encoding.ASCII.GetBytes(www.downloadHandler.text)));
+				GLTFParser.ParseJson(new MemoryStream(www.downloadHandler.data));
 				timer.Stop();
 
 				Debug.LogFormat("Iteration {0} took: {1}ms", i, timer.ElapsedMilliseconds);

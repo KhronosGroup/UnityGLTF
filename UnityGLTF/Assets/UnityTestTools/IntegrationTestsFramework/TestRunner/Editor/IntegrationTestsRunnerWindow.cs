@@ -61,13 +61,26 @@ namespace UnityTest
 			EditorApplication.hierarchyWindowChanged += OnHierarchyChangeUpdate;
 			EditorApplication.update -= BackgroundSceneChangeWatch;
 			EditorApplication.update += BackgroundSceneChangeWatch;
+#if UNITY_2017_2_OR_NEWER
+			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#else
 			EditorApplication.playmodeStateChanged -= OnPlaymodeStateChanged;
 			EditorApplication.playmodeStateChanged += OnPlaymodeStateChanged;
+#endif
 		}
 
+#if UNITY_2017_2_OR_NEWER
+		private static void OnPlayModeStateChanged(PlayModeStateChange stateChange)
+#else
 		private static void OnPlaymodeStateChanged()
+#endif
 		{
-			if (s_Instance && EditorApplication.isPlaying  == EditorApplication.isPlayingOrWillChangePlaymode)
+#if UNITY_2017_2_OR_NEWER
+			if (s_Instance && stateChange == PlayModeStateChange.EnteredPlayMode || stateChange == PlayModeStateChange.EnteredEditMode)
+#else
+			if (s_Instance && EditorApplication.isPlaying == EditorApplication.isPlayingOrWillChangePlaymode)
+#endif
 				s_Instance.RebuildTestList();
 		}
 
@@ -76,7 +89,11 @@ namespace UnityTest
 			EditorApplication.hierarchyWindowItemOnGUI -= OnHierarchyWindowItemDraw;
 			EditorApplication.update -= BackgroundSceneChangeWatch;
 			EditorApplication.hierarchyWindowChanged -= OnHierarchyChangeUpdate;
+#if UNITY_2017_2_OR_NEWER
+			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+#else
 			EditorApplication.playmodeStateChanged -= OnPlaymodeStateChanged;
+#endif
 
 			TestComponent.DestroyAllDynamicTests();
 		}

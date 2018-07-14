@@ -1,11 +1,37 @@
 using System;
 using UnityEditor;
 using UnityGLTF;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GLTFExportMenu
+public class GLTFExportMenu : EditorWindow
 {
-	[MenuItem("GLTF/Export Selected")]
+    public static string RetrieveTexturePath(UnityEngine.Texture texture)
+    {
+        return AssetDatabase.GetAssetPath(texture);
+    }
+
+    [MenuItem("GLTF/Settings")]
+    static void Init()
+    {
+        GLTFExportMenu window = (GLTFExportMenu)EditorWindow.GetWindow(typeof(GLTFExportMenu), false, "GLTF Settings");
+        window.Show();
+    }
+
+    void OnGUI()
+    {
+        EditorGUILayout.LabelField("Exporter", EditorStyles.boldLabel);
+        GLTFSceneExporter.ExportFullPath = EditorGUILayout.Toggle("Export using original path", GLTFSceneExporter.ExportFullPath);
+        GLTFSceneExporter.ExportNames = EditorGUILayout.Toggle("Export names of nodes", GLTFSceneExporter.ExportNames);
+        GLTFSceneExporter.RequireExtensions= EditorGUILayout.Toggle("Require extensions", GLTFSceneExporter.RequireExtensions);
+        EditorGUILayout.Separator();
+        EditorGUILayout.LabelField("Importer", EditorStyles.boldLabel);
+        EditorGUILayout.Separator();
+        EditorGUILayout.HelpBox("UnityGLTF version 0.1", MessageType.Info);
+        EditorGUILayout.HelpBox("Supported extensions: KHR_material_pbrSpecularGlossiness, ExtTextureTransform", MessageType.Info);
+    }
+
+    [MenuItem("GLTF/Export Selected")]
 	static void ExportSelected()
 	{
 		string name;
@@ -16,9 +42,12 @@ public class GLTFExportMenu
 		else
 			throw new Exception("No objects selected, cannot export.");
 
-		var exporter = new GLTFSceneExporter(Selection.transforms);
+		var exporter = new GLTFSceneExporter(Selection.transforms, RetrieveTexturePath);
+
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		exporter.SaveGLTFandBin(path, name);
+		if (!string.IsNullOrEmpty(path)) {
+			exporter.SaveGLTFandBin (path, name);
+		}
 	}
 
 	[MenuItem("GLTF/Export Scene")]
@@ -28,8 +57,10 @@ public class GLTFExportMenu
 		var gameObjects = scene.GetRootGameObjects();
 		var transforms = Array.ConvertAll(gameObjects, gameObject => gameObject.transform);
 
-		var exporter = new GLTFSceneExporter(transforms);
+		var exporter = new GLTFSceneExporter(transforms, RetrieveTexturePath);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		exporter.SaveGLTFandBin(path, scene.name);
+		if (path != "") {
+			exporter.SaveGLTFandBin (path, scene.name);
+		}
 	}
 }

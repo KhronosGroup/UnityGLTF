@@ -91,7 +91,11 @@ namespace UnityTest
 
 		protected void OnLeftMouseButtonClick(Rect rect)
 		{
+#if UNITY_2017_3_OR_NEWER
+			if (rect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0)
+#else
 			if (rect.Contains(Event.current.mousePosition) && Event.current.type == EventType.mouseDown && Event.current.button == 0)
+#endif
 			{
 				rect.width = 20;
 				if (rect.Contains(Event.current.mousePosition)) return;
