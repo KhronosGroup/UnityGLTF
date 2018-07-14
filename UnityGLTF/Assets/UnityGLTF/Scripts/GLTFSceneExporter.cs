@@ -7,7 +7,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF
 {
-	public class GLTFSceneExporter
+	public partial class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(UnityEngine.Texture texture);
 
@@ -19,7 +19,8 @@ namespace UnityGLTF
 			G,
 			B,
 			A,
-			G_INVERT
+			G_INVERT,
+			
 		}
 
 		private enum TextureMapType
@@ -30,9 +31,8 @@ namespace UnityGLTF
 			Emission,
 			MetallicGloss,
 			Light,
-			Occlusion}
-
-		;
+			Occlusion
+		}
 
 		private struct ImageInfo
 		{
@@ -68,6 +68,7 @@ namespace UnityGLTF
 		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
+		private readonly Dictionary<Transform, NodeId> _nodeCache = new Dictionary<Transform, NodeId>();
 
 		// Settings
 		public static bool ExportNames = true;
@@ -89,13 +90,14 @@ namespace UnityGLTF
 			_normalChannelMaterial = new UnityEngine.Material (normalChannelShader);
 
 			_rootTransforms = rootTransforms;
+
 			_root = new GLTFRoot
-			{
 				Accessors = new List<Accessor>(),
 				Asset = new Asset
 				{
 					Version = "2.0"
 				},
+				Animations = new List<GLTF.Schema.Animation>(),
 				Buffers = new List<GLTF.Schema.Buffer>(),
 				BufferViews = new List<BufferView>(),
 				Cameras = new List<GLTF.Schema.Camera>(),
@@ -405,6 +407,9 @@ namespace UnityGLTF
 				scene.Nodes.Add (ExportNode (transform));
 			}
 
+			//export animations after all nodes are exported
+			this.ExportAnimations(rootObjTransforms);
+
 			_root.Scenes.Add (scene);
 
 			return new SceneId
@@ -464,7 +469,7 @@ namespace UnityGLTF
 					node.Children.Add(ExportNode(child.transform));
 				}
 			}
-
+			_nodeCache.Add(nodeTransform, id);
 			return id;
 		}
 
@@ -1223,8 +1228,8 @@ namespace UnityGLTF
 			accessor.Max = new List<double> { max };
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+		
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId
 			{
@@ -1290,7 +1295,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId
 			{
@@ -1367,7 +1372,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId
 			{
@@ -1455,7 +1460,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId
 			{
@@ -1543,7 +1548,7 @@ namespace UnityGLTF
 
 			var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
 
-			accessor.BufferView = ExportBufferView((int)byteOffset, (int)byteLength);
+			accessor.BufferView = GLTF.DataExporter.ExportBufferView(_bufferId, (int)byteOffset, (int)byteLength, _root);
 
 			var id = new AccessorId
 			{
@@ -1551,26 +1556,6 @@ namespace UnityGLTF
 				Root = _root
 			};
 			_root.Accessors.Add(accessor);
-
-			return id;
-		}
-
-		private BufferViewId ExportBufferView(int byteOffset, int byteLength)
-		{
-			var bufferView = new BufferView
-			{
-				Buffer = _bufferId,
-				ByteOffset = byteOffset,
-				ByteLength = byteLength,
-			};
-
-			var id = new BufferViewId
-			{
-				Id = _root.BufferViews.Count,
-				Root = _root
-			};
-
-			_root.BufferViews.Add(bufferView);
 
 			return id;
 		}
