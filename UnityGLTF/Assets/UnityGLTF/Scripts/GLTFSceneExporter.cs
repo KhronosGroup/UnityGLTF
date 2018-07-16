@@ -7,7 +7,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF
 {
-	public class GLTFSceneExporter
+	public partial class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(UnityEngine.Texture texture);
 
@@ -68,6 +68,7 @@ namespace UnityGLTF
 		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<UnityEngine.Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<UnityEngine.Mesh, MeshPrimitive[]>();
+		private readonly Dictionary<Transform, NodeId> _nodeCache = new Dictionary<Transform, NodeId>();
 
 		// Settings
 		public static bool ExportNames = true;
@@ -105,6 +106,7 @@ namespace UnityGLTF
 				Nodes = new List<Node>(),
 				Samplers = new List<Sampler>(),
 				Scenes = new List<Scene>(),
+				Skins = new List<GLTF.Schema.Skin>(),
 				Textures = new List<GLTF.Schema.Texture>(),
 			};
 
@@ -407,6 +409,9 @@ namespace UnityGLTF
 
 			_root.Scenes.Add (scene);
 
+
+			this.ExportSkins(rootObjTransforms);
+
 			return new SceneId
 			{
 				Id = _root.Scenes.Count - 1,
@@ -465,6 +470,7 @@ namespace UnityGLTF
 				}
 			}
 
+			_nodeCache.Add(nodeTransform, id);
 			return id;
 		}
 
