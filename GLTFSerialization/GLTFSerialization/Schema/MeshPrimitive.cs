@@ -208,7 +208,8 @@ namespace GLTF.Schema
 							{
 								Id = reader.ReadAsInt32().Value,
 								Root = root
-							});
+							},
+							skipStartObjectRead: true);
 						});
 						break;
 					default:
