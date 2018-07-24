@@ -41,7 +41,7 @@ namespace GLTFSerializationTests
 
 			Assert.IsNotNull(gltfRoot.Materials);
 			Assert.AreEqual(1, gltfRoot.Materials.Count);
-			Material materialDef = gltfRoot.Materials[0];
+			GLTFMaterial materialDef = gltfRoot.Materials[0];
 			KHR_materials_pbrSpecularGlossinessExtension specGloss = materialDef.Extensions[KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME] as KHR_materials_pbrSpecularGlossinessExtension;
 			Assert.IsTrue(specGloss != null);
 

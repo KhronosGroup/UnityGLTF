@@ -56,17 +56,17 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of images. An image defines data used to create a texture.
 		/// </summary>
-		public List<Image> Images;
+		public List<GLTFImage> Images;
 
 		/// <summary>
 		/// An array of materials. A material defines the appearance of a primitive.
 		/// </summary>
-		public List<Material> Materials;
+		public List<GLTFMaterial> Materials;
 
 		/// <summary>
 		/// An array of meshes. A mesh is a set of primitives to be rendered.
 		/// </summary>
-		public List<Mesh> Meshes;
+		public List<GLTFMesh> Meshes;
 
 		/// <summary>
 		/// An array of nodes.
@@ -96,7 +96,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of textures.
 		/// </summary>
-		public List<Texture> Textures;
+		public List<GLTFTexture> Textures;
 
 		public GLTFRoot()
 		{
@@ -166,28 +166,28 @@ namespace GLTF.Schema
 
 			if (gltfRoot.Images != null)
 			{
-				Images = new List<Image>(gltfRoot.Images.Count);
-				foreach (Image image in gltfRoot.Images)
+				Images = new List<GLTFImage>(gltfRoot.Images.Count);
+				foreach (GLTFImage image in gltfRoot.Images)
 				{
-					Images.Add(new Image(image, this));
+					Images.Add(new GLTFImage(image, this));
 				}
 			}
 
 			if (gltfRoot.Materials != null)
 			{
-				Materials = new List<Material>(gltfRoot.Materials.Count);
-				foreach (Material material in gltfRoot.Materials)
+				Materials = new List<GLTFMaterial>(gltfRoot.Materials.Count);
+				foreach (GLTFMaterial material in gltfRoot.Materials)
 				{
-					Materials.Add(new Material(material, this));
+					Materials.Add(new GLTFMaterial(material, this));
 				}
 			}
 
 			if (gltfRoot.Meshes != null)
 			{
-				Meshes = new List<Mesh>(gltfRoot.Meshes.Count);
-				foreach (Mesh mesh in gltfRoot.Meshes)
+				Meshes = new List<GLTFMesh>(gltfRoot.Meshes.Count);
+				foreach (GLTFMesh mesh in gltfRoot.Meshes)
 				{
-					Meshes.Add(new Mesh(mesh, this));
+					Meshes.Add(new GLTFMesh(mesh, this));
 				}
 			}
 
@@ -234,10 +234,10 @@ namespace GLTF.Schema
 			
 			if (gltfRoot.Textures != null)
 			{
-				Textures = new List<Texture>(gltfRoot.Textures.Count);
-				foreach (Texture texture in gltfRoot.Textures)
+				Textures = new List<GLTFTexture>(gltfRoot.Textures.Count);
+				foreach (GLTFTexture texture in gltfRoot.Textures)
 				{
-					Textures.Add(new Texture(texture, this));
+					Textures.Add(new GLTFTexture(texture, this));
 				}
 			}
 		}
@@ -302,13 +302,13 @@ namespace GLTF.Schema
 						root.Cameras = jsonReader.ReadList(() => Camera.Deserialize(root, jsonReader));
 						break;
 					case "images":
-						root.Images = jsonReader.ReadList(() => Image.Deserialize(root, jsonReader));
+						root.Images = jsonReader.ReadList(() => GLTFImage.Deserialize(root, jsonReader));
 						break;
 					case "materials":
-						root.Materials = jsonReader.ReadList(() => Material.Deserialize(root, jsonReader));
+						root.Materials = jsonReader.ReadList(() => GLTFMaterial.Deserialize(root, jsonReader));
 						break;
 					case "meshes":
-						root.Meshes = jsonReader.ReadList(() => Mesh.Deserialize(root, jsonReader));
+						root.Meshes = jsonReader.ReadList(() => GLTFMesh.Deserialize(root, jsonReader));
 						break;
 					case "nodes":
 						root.Nodes = jsonReader.ReadList(() => Node.Deserialize(root, jsonReader));
@@ -326,7 +326,7 @@ namespace GLTF.Schema
 						root.Skins = jsonReader.ReadList(() => Skin.Deserialize(root, jsonReader));
 						break;
 					case "textures":
-						root.Textures = jsonReader.ReadList(() => Texture.Deserialize(root, jsonReader));
+						root.Textures = jsonReader.ReadList(() => GLTFTexture.Deserialize(root, jsonReader));
 						break;
 					default:
 						root.DefaultPropertyDeserializer(root, jsonReader);

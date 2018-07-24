@@ -6,7 +6,7 @@ namespace GLTF.Schema
 	/// Image data used to create a texture. Image can be referenced by URI or
 	/// `bufferView` index. `mimeType` is required in the latter case.
 	/// </summary>
-	public class Image : GLTFChildOfRootProperty
+	public class GLTFImage : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The uri of the image.  Relative paths are relative to the .gltf file.
@@ -27,11 +27,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public BufferViewId BufferView;
 
-		public Image()
+		public GLTFImage()
 		{
 		}
 
-		public Image(Image image, GLTFRoot gltfRoot) : base(image, gltfRoot)
+		public GLTFImage(GLTFImage image, GLTFRoot gltfRoot) : base(image, gltfRoot)
 		{
 			if (image == null) return;
 
@@ -44,9 +44,9 @@ namespace GLTF.Schema
 			}
 		}
 
-		public static Image Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFImage Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var image = new Image();
+			var image = new GLTFImage();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{

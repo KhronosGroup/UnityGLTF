@@ -133,7 +133,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class ImageId : GLTFId<Image>
+	public class ImageId : GLTFId<GLTFImage>
 	{
 		public ImageId()
 		{
@@ -144,7 +144,7 @@ namespace GLTF.Schema
 		}
 
 
-		public override Image Value
+		public override GLTFImage Value
 		{
 			get { return Root.Images[Id]; }
 		}
@@ -159,7 +159,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class MaterialId : GLTFId<Material>
+	public class MaterialId : GLTFId<GLTFMaterial>
 	{
 		public MaterialId()
 		{
@@ -169,7 +169,7 @@ namespace GLTF.Schema
 		{
 		}
 
-		public override Material Value
+		public override GLTFMaterial Value
 		{
 			get { return Root.Materials[Id]; }
 		}
@@ -184,7 +184,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class MeshId : GLTFId<Mesh>
+	public class MeshId : GLTFId<GLTFMesh>
 	{
 		public MeshId()
 		{
@@ -194,7 +194,7 @@ namespace GLTF.Schema
 		{
 		}
 
-		public override Mesh Value
+		public override GLTFMesh Value
 		{
 			get { return Root.Meshes[Id]; }
 		}
@@ -333,7 +333,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class TextureId : GLTFId<Texture>
+	public class TextureId : GLTFId<GLTFTexture>
 	{
 		public TextureId()
 		{
@@ -343,7 +343,7 @@ namespace GLTF.Schema
 		{
 		}
 
-		public override Texture Value
+		public override GLTFTexture Value
 		{
 			get { return Root.Textures[Id]; }
 		}

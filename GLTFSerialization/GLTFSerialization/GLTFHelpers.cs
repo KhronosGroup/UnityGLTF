@@ -373,13 +373,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Images == null)
 				{
-					mergeToRoot.Images = new List<Image>(mergeFromRoot.Images.Count);
+					mergeToRoot.Images = new List<GLTFImage>(mergeFromRoot.Images.Count);
 				}
 
 				mergeToRoot.Images.AddRange(mergeFromRoot.Images);
 				for (int i = previousGLTFSizes.PreviousImageCount; i < mergeToRoot.Images.Count; ++i)
 				{
-					Image image = mergeToRoot.Images[i];
+					GLTFImage image = mergeToRoot.Images[i];
 					if (image.BufferView != null)
 					{
 						BufferViewId bufferViewId = image.BufferView;
@@ -393,13 +393,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Textures == null)
 				{
-					mergeToRoot.Textures = new List<Texture>(mergeFromRoot.Textures.Count);
+					mergeToRoot.Textures = new List<GLTFTexture>(mergeFromRoot.Textures.Count);
 				}
 
 				mergeToRoot.Textures.AddRange(mergeFromRoot.Textures);
 				for (int i = previousGLTFSizes.PreviousTextureCount; i < mergeToRoot.Textures.Count; ++i)
 				{
-					Texture texture = mergeToRoot.Textures[i];
+					GLTFTexture texture = mergeToRoot.Textures[i];
 
 					if (texture.Sampler != null)
 					{
@@ -421,13 +421,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Materials == null)
 				{
-					mergeToRoot.Materials = new List<Material>(mergeFromRoot.Materials.Count);
+					mergeToRoot.Materials = new List<GLTFMaterial>(mergeFromRoot.Materials.Count);
 				}
 				
 				mergeToRoot.Materials.AddRange(mergeFromRoot.Materials);
 				for (int i = previousGLTFSizes.PreviousMaterialCount; i < mergeToRoot.Materials.Count; ++i)
 				{
-					Material material = mergeToRoot.Materials[i];
+					GLTFMaterial material = mergeToRoot.Materials[i];
 
 					PbrMetallicRoughness pbrMetallicRoughness = material.PbrMetallicRoughness;
 					if (pbrMetallicRoughness != null)
@@ -484,13 +484,13 @@ namespace GLTF
 			
 			if (mergeToRoot.Meshes == null)
 			{
-				mergeToRoot.Meshes = new List<Mesh>(mergeFromRoot.Meshes.Count);
+				mergeToRoot.Meshes = new List<GLTFMesh>(mergeFromRoot.Meshes.Count);
 			}
 
 			mergeToRoot.Meshes.AddRange(mergeFromRoot.Meshes);
 			for (int i = previousGLTFSizes.PreviousMeshCount; i < mergeToRoot.Meshes.Count; ++i)
 			{
-				Mesh mesh = mergeToRoot.Meshes[i];
+				GLTFMesh mesh = mergeToRoot.Meshes[i];
 				if (mesh.Primitives != null)
 				{
 					foreach (MeshPrimitive primitive in mesh.Primitives)
