@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using GLTF.Schema;
+using UnityEngine;
 
 namespace UnityGLTF.Cache
 {
@@ -6,7 +7,7 @@ namespace UnityGLTF.Cache
 	{
 		public Material UnityMaterial { get; set; }
 		public Material UnityMaterialWithVertexColor { get; set; }
-		public GLTF.Schema.Material GLTFMaterial { get; set; }
+		public GLTFMaterial GLTFMaterial { get; set; }
 
 		public Material GetContents(bool useVertexColors)
 		{

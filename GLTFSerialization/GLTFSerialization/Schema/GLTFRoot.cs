@@ -40,7 +40,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of buffers. A buffer points to binary geometry, animation, or skins.
 		/// </summary>
-		public List<Buffer> Buffers;
+		public List<GLTFBuffer> Buffers;
 
 		/// <summary>
 		/// An array of bufferViews.
@@ -139,10 +139,10 @@ namespace GLTF.Schema
 
 			if (gltfRoot.Buffers != null)
 			{
-				Buffers = new List<Buffer>(gltfRoot.Buffers.Count);
-				foreach (Buffer buffer in gltfRoot.Buffers)
+				Buffers = new List<GLTFBuffer>(gltfRoot.Buffers.Count);
+				foreach (GLTFBuffer buffer in gltfRoot.Buffers)
 				{
-					Buffers.Add(new Buffer(buffer, this));
+					Buffers.Add(new GLTFBuffer(buffer, this));
 				}
 			}
 
@@ -293,7 +293,7 @@ namespace GLTF.Schema
 						root.Asset = Asset.Deserialize(root, jsonReader);
 						break;
 					case "buffers":
-						root.Buffers = jsonReader.ReadList(() => Buffer.Deserialize(root, jsonReader));
+						root.Buffers = jsonReader.ReadList(() => GLTFBuffer.Deserialize(root, jsonReader));
 						break;
 					case "bufferViews":
 						root.BufferViews = jsonReader.ReadList(() => BufferView.Deserialize(root, jsonReader));

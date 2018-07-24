@@ -43,7 +43,7 @@ namespace UnityGLTF
 
 			for (int i = previousBufferCount; i < asset1Root.Buffers.Count; ++i)
 			{
-				GLTF.Schema.Buffer buffer = asset1Root.Buffers[i];
+				GLTF.Schema.GLTFBuffer buffer = asset1Root.Buffers[i];
 				if (!URIHelper.IsBase64Uri(buffer.Uri))
 				{
 					buffer.Uri = newPath + buffer.Uri;
@@ -52,7 +52,7 @@ namespace UnityGLTF
 
 			for (int i = previousImageCount; i < asset1Root.Images.Count; ++i)
 			{
-				Image image = asset1Root.Images[i];
+				GLTFImage image = asset1Root.Images[i];
 				if (!URIHelper.IsBase64Uri(image.Uri))
 				{
 					image.Uri = newPath + image.Uri;

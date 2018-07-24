@@ -301,7 +301,7 @@ namespace GLTF
 			{
 				if (mergeToRoot.Buffers == null)
 				{
-					mergeToRoot.Buffers = new List<Buffer>(mergeFromRoot.Buffers.Count);
+					mergeToRoot.Buffers = new List<GLTFBuffer>(mergeFromRoot.Buffers.Count);
 				}
 
 				mergeToRoot.Buffers.AddRange(mergeFromRoot.Buffers);
@@ -317,7 +317,7 @@ namespace GLTF
 				mergeToRoot.BufferViews.AddRange(mergeFromRoot.BufferViews);
 				for (int i = previousGLTFSizes.PreviousBufferViewCount; i < mergeToRoot.BufferViews.Count; ++i)
 				{
-					GLTFId<Buffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
+					GLTFId<GLTFBuffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
 					bufferId.Id += previousGLTFSizes.PreviousBufferCount;
 					bufferId.Root = mergeToRoot;
 				}

@@ -58,7 +58,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class BufferId : GLTFId<Buffer>
+	public class BufferId : GLTFId<GLTFBuffer>
 	{
 		public BufferId()
 		{
@@ -68,7 +68,7 @@ namespace GLTF.Schema
 		{
 		}
 
-		public override Buffer Value
+		public override GLTFBuffer Value
 		{
 			get { return Root.Buffers[Id]; }
 		}

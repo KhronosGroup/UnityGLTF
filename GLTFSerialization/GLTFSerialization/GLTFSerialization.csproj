@@ -96,7 +96,7 @@
     <Compile Include="Schema\AnimationChannelTarget.cs" />
     <Compile Include="Schema\AnimationSampler.cs" />
     <Compile Include="Schema\Asset.cs" />
-    <Compile Include="Schema\Buffer.cs" />
+    <Compile Include="Schema\GLTFBuffer.cs" />
     <Compile Include="Schema\BufferView.cs" />
     <Compile Include="Schema\GLTFCamera.cs" />
     <Compile Include="Schema\CameraOrthographic.cs" />

@@ -114,8 +114,8 @@
     <Compile Include="..\GLTFSerialization\Schema\Asset.cs">
       <Link>Schema\Asset.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Buffer.cs">
-      <Link>Schema\Buffer.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFBuffer.cs">
+      <Link>Schema\GLTFBuffer.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\BufferView.cs">
       <Link>Schema\BufferView.cs</Link>

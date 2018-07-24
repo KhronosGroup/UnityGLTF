@@ -132,7 +132,7 @@ namespace GLTFSerializationTests
 
 		private static void TestBuffers(GLTFRoot gltfRoot)
 		{
-			List<Buffer> buffers = gltfRoot.Buffers;
+			List<GLTFBuffer> buffers = gltfRoot.Buffers;
 			Assert.AreEqual(1, buffers.Count);
 			Assert.AreEqual("BoomBox.bin", buffers[0].Uri);
 			Assert.AreEqual(207816, buffers[0].ByteLength);
@@ -140,7 +140,7 @@ namespace GLTFSerializationTests
 
 		private static void TestGLBBuffers(GLTFRoot gltfRoot)
 		{
-			List<Buffer> buffers = gltfRoot.Buffers;
+			List<GLTFBuffer> buffers = gltfRoot.Buffers;
 			Assert.AreEqual(1, buffers.Count);
 			Assert.AreEqual(11247948, buffers[0].ByteLength);
 		}

@@ -5,7 +5,7 @@ namespace GLTF.Schema
 	/// <summary>
 	/// A buffer points to binary geometry, animation, or skins.
 	/// </summary>
-	public class Buffer : GLTFChildOfRootProperty
+	public class GLTFBuffer : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The uri of the buffer.
@@ -20,20 +20,20 @@ namespace GLTF.Schema
 		/// </summary>
 		public int ByteLength;
 
-		public Buffer()
+		public GLTFBuffer()
 		{
 		}
 
-		public Buffer(Buffer buffer, GLTFRoot gltfRoot) : base(buffer, gltfRoot)
+		public GLTFBuffer(GLTFBuffer buffer, GLTFRoot gltfRoot) : base(buffer, gltfRoot)
 		{
 			if (buffer == null) return;
 			Uri = buffer.Uri;
 			ByteLength = buffer.ByteLength;
 		}
 
-		public static Buffer Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFBuffer Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var buffer = new Buffer();
+			var buffer = new GLTFBuffer();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
