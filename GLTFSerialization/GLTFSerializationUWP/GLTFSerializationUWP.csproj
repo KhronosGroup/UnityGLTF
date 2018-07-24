@@ -99,8 +99,8 @@
     <Compile Include="..\GLTFSerialization\Schema\AccessorSparseValues.cs">
       <Link>Schema\AccessorSparseValues.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Animation.cs">
-      <Link>Schema\Animation.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFAnimation.cs">
+      <Link>Schema\GLTFAnimation.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\AnimationChannel.cs">
       <Link>Schema\AnimationChannel.cs</Link>
@@ -120,8 +120,8 @@
     <Compile Include="..\GLTFSerialization\Schema\BufferView.cs">
       <Link>Schema\BufferView.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Camera.cs">
-      <Link>Schema\Camera.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFCamera.cs">
+      <Link>Schema\GLTFCamera.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\CameraOrthographic.cs">
       <Link>Schema\CameraOrthographic.cs</Link>
@@ -174,8 +174,8 @@
     <Compile Include="..\GLTFSerialization\Schema\Sampler.cs">
       <Link>Schema\Sampler.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Scene.cs">
-      <Link>Schema\Scene.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFScene.cs">
+      <Link>Schema\GLTFScene.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\Skin.cs">
       <Link>Schema\Skin.cs</Link>

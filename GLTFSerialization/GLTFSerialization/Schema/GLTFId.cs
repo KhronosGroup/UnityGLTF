@@ -108,7 +108,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class CameraId : GLTFId<Camera>
+	public class CameraId : GLTFId<GLTFCamera>
 	{
 		public CameraId()
 		{
@@ -118,7 +118,7 @@ namespace GLTF.Schema
 		{
 		}
 
-		public override Camera Value
+		public override GLTFCamera Value
 		{
 			get { return Root.Cameras[Id]; }
 		}
@@ -282,7 +282,7 @@ namespace GLTF.Schema
 		}
 	}
 
-	public class SceneId : GLTFId<Scene>
+	public class SceneId : GLTFId<GLTFScene>
 	{
 		public SceneId()
 		{
@@ -293,7 +293,7 @@ namespace GLTF.Schema
 		}
 
 
-		public override Scene Value
+		public override GLTFScene Value
 		{
 			get { return Root.Scenes[Id]; }
 		}

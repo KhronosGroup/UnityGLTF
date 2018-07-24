@@ -7,7 +7,7 @@ namespace GLTF.Schema
 	/// <summary>
 	/// A keyframe animation.
 	/// </summary>
-	public class Animation : GLTFChildOfRootProperty
+	public class GLTFAnimation : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// An array of channels, each of which targets an animation's sampler at a
@@ -22,9 +22,9 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<AnimationSampler> Samplers;
 
-		public static Animation Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFAnimation Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var animation = new Animation();
+			var animation = new GLTFAnimation();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
@@ -47,11 +47,11 @@ namespace GLTF.Schema
 			return animation;
 		}
 
-		public Animation()
+		public GLTFAnimation()
 		{
 		}
 
-		public Animation(Animation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
+		public GLTFAnimation(GLTFAnimation animation, GLTFRoot gltfRoot) : base(animation, gltfRoot)
 		{
 			Channels = new List<AnimationChannel>(animation.Channels.Count);
 			foreach (AnimationChannel channel in animation.Channels)

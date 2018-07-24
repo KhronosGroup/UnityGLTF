@@ -6,18 +6,18 @@ namespace GLTF.Schema
 	/// <summary>
 	/// The root nodes of a scene.
 	/// </summary>
-	public class Scene : GLTFChildOfRootProperty
+	public class GLTFScene : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The indices of each root node.
 		/// </summary>
 		public List<NodeId> Nodes;
 
-		public Scene()
+		public GLTFScene()
 		{
 		}
 
-		public Scene(Scene scene, GLTFRoot gltfRoot) : base(scene, gltfRoot)
+		public GLTFScene(GLTFScene scene, GLTFRoot gltfRoot) : base(scene, gltfRoot)
 		{
 			if (scene == null) return;
 
@@ -31,9 +31,9 @@ namespace GLTF.Schema
 			}
 		}
 
-		public static Scene Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFScene Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var scene = new Scene();
+			var scene = new GLTFScene();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{

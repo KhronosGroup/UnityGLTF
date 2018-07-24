@@ -251,7 +251,7 @@ namespace GLTFSerializationTests
 		private static void TestScenes(GLTFRoot gltfRoot)
 		{
 			Assert.AreEqual(0, gltfRoot.Scene.Id);
-			List<Scene> scenes = gltfRoot.Scenes;
+			List<GLTFScene> scenes = gltfRoot.Scenes;
 			Assert.AreEqual(1, scenes.Count);
 
 			Assert.AreEqual(1, scenes[0].Nodes.Count);

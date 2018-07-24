@@ -30,7 +30,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of keyframe animations.
 		/// </summary>
-		public List<Animation> Animations;
+		public List<GLTFAnimation> Animations;
 
 		/// <summary>
 		/// Metadata about the glTF asset.
@@ -51,7 +51,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of cameras. A camera defines a projection matrix.
 		/// </summary>
-		public List<Camera> Cameras;
+		public List<GLTFCamera> Cameras;
 
 		/// <summary>
 		/// An array of images. An image defines data used to create a texture.
@@ -86,7 +86,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of scenes.
 		/// </summary>
-		public List<Scene> Scenes;
+		public List<GLTFScene> Scenes;
 
 		/// <summary>
 		/// An array of skins. A skin is defined by joints and matrices.
@@ -125,10 +125,10 @@ namespace GLTF.Schema
 
 			if (gltfRoot.Animations != null)
 			{
-				Animations = new List<Animation>(gltfRoot.Animations.Count);
-				foreach (Animation animation in gltfRoot.Animations)
+				Animations = new List<GLTFAnimation>(gltfRoot.Animations.Count);
+				foreach (GLTFAnimation animation in gltfRoot.Animations)
 				{
-					Animations.Add(new Animation(animation, this));
+					Animations.Add(new GLTFAnimation(animation, this));
 				}
 			}
 
@@ -157,10 +157,10 @@ namespace GLTF.Schema
 			
 			if (gltfRoot.Cameras != null)
 			{
-				Cameras = new List<Camera>(gltfRoot.Cameras.Count);
-				foreach (Camera camera in gltfRoot.Cameras)
+				Cameras = new List<GLTFCamera>(gltfRoot.Cameras.Count);
+				foreach (GLTFCamera camera in gltfRoot.Cameras)
 				{
-					Cameras.Add(new Camera(camera, this));
+					Cameras.Add(new GLTFCamera(camera, this));
 				}
 			}
 
@@ -216,10 +216,10 @@ namespace GLTF.Schema
 			
 			if (gltfRoot.Scenes != null)
 			{
-				Scenes = new List<Scene>(gltfRoot.Scenes.Count);
-				foreach (Scene scene in gltfRoot.Scenes)
+				Scenes = new List<GLTFScene>(gltfRoot.Scenes.Count);
+				foreach (GLTFScene scene in gltfRoot.Scenes)
 				{
-					Scenes.Add(new Scene(scene, this));
+					Scenes.Add(new GLTFScene(scene, this));
 				}
 			}
 			
@@ -246,7 +246,7 @@ namespace GLTF.Schema
 		/// Return the default scene. When scene is null, scene of index 0 will be returned.
 		/// When scenes list is null or empty, returns null.
 		/// </summary>
-		public Scene GetDefaultScene()
+		public GLTFScene GetDefaultScene()
 		{
 			if (Scene != null)
 			{
@@ -287,7 +287,7 @@ namespace GLTF.Schema
 						root.Accessors = jsonReader.ReadList(() => Accessor.Deserialize(root, jsonReader));
 						break;
 					case "animations":
-						root.Animations = jsonReader.ReadList(() => Animation.Deserialize(root, jsonReader));
+						root.Animations = jsonReader.ReadList(() => GLTFAnimation.Deserialize(root, jsonReader));
 						break;
 					case "asset":
 						root.Asset = Asset.Deserialize(root, jsonReader);
@@ -299,7 +299,7 @@ namespace GLTF.Schema
 						root.BufferViews = jsonReader.ReadList(() => BufferView.Deserialize(root, jsonReader));
 						break;
 					case "cameras":
-						root.Cameras = jsonReader.ReadList(() => Camera.Deserialize(root, jsonReader));
+						root.Cameras = jsonReader.ReadList(() => GLTFCamera.Deserialize(root, jsonReader));
 						break;
 					case "images":
 						root.Images = jsonReader.ReadList(() => GLTFImage.Deserialize(root, jsonReader));
@@ -320,7 +320,7 @@ namespace GLTF.Schema
 						root.Scene = SceneId.Deserialize(root, jsonReader);
 						break;
 					case "scenes":
-						root.Scenes = jsonReader.ReadList(() => GLTF.Schema.Scene.Deserialize(root, jsonReader));
+						root.Scenes = jsonReader.ReadList(() => GLTF.Schema.GLTFScene.Deserialize(root, jsonReader));
 						break;
 					case "skins":
 						root.Skins = jsonReader.ReadList(() => Skin.Deserialize(root, jsonReader));

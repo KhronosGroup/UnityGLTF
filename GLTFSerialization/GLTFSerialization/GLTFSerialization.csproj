@@ -91,14 +91,14 @@
     <Compile Include="Schema\AccessorSparse.cs" />
     <Compile Include="Schema\AccessorSparseIndices.cs" />
     <Compile Include="Schema\AccessorSparseValues.cs" />
-    <Compile Include="Schema\Animation.cs" />
+    <Compile Include="Schema\GLTFAnimation.cs" />
     <Compile Include="Schema\AnimationChannel.cs" />
     <Compile Include="Schema\AnimationChannelTarget.cs" />
     <Compile Include="Schema\AnimationSampler.cs" />
     <Compile Include="Schema\Asset.cs" />
     <Compile Include="Schema\Buffer.cs" />
     <Compile Include="Schema\BufferView.cs" />
-    <Compile Include="Schema\Camera.cs" />
+    <Compile Include="Schema\GLTFCamera.cs" />
     <Compile Include="Schema\CameraOrthographic.cs" />
     <Compile Include="Schema\CameraPerspective.cs" />
     <Compile Include="Schema\IExtension.cs" />
@@ -118,7 +118,7 @@
     <Compile Include="Schema\MeshPrimitive.cs" />
     <Compile Include="Schema\Node.cs" />
     <Compile Include="Schema\Sampler.cs" />
-    <Compile Include="Schema\Scene.cs" />
+    <Compile Include="Schema\GLTFScene.cs" />
     <Compile Include="Schema\Skin.cs" />
     <Compile Include="Schema\GLTFTexture.cs" />
     <Compile Include="Schema\TextureInfo.cs" />

@@ -538,7 +538,7 @@ namespace GLTF
 			if (mergeFromRoot.Cameras == null) return;
 			if (mergeToRoot.Cameras == null)
 			{
-				mergeToRoot.Cameras = new List<Camera>(mergeFromRoot.Cameras.Count);
+				mergeToRoot.Cameras = new List<GLTFCamera>(mergeFromRoot.Cameras.Count);
 			}
 
 			mergeToRoot.Cameras.AddRange(mergeFromRoot.Cameras);
@@ -627,14 +627,14 @@ namespace GLTF
 			{
 				if (mergeToRoot.Animations == null)
 				{
-					mergeToRoot.Animations = new List<Animation>(mergeFromRoot.Animations.Count);
+					mergeToRoot.Animations = new List<GLTFAnimation>(mergeFromRoot.Animations.Count);
 				}
 
 				mergeToRoot.Animations.AddRange(mergeFromRoot.Animations);
 
 				for (int i = previousGLTFSizes.PreviousAnimationCount; i < mergeToRoot.Animations.Count; ++i)
 				{
-					Animation animation = mergeToRoot.Animations[i];
+					GLTFAnimation animation = mergeToRoot.Animations[i];
 					foreach (AnimationSampler sampler in animation.Samplers)
 					{
 						AccessorId inputId = sampler.Input;
@@ -666,13 +666,13 @@ namespace GLTF
 
 			if (mergeToRoot.Scenes == null)
 			{
-				mergeToRoot.Scenes = new List<Scene>(mergeFromRoot.Scenes.Count);
+				mergeToRoot.Scenes = new List<GLTFScene>(mergeFromRoot.Scenes.Count);
 			}
 
 			mergeToRoot.Scenes.AddRange(mergeFromRoot.Scenes);
 			for (int i = previousGLTFSizes.PreviousSceneCount; i < mergeToRoot.Scenes.Count; ++i)
 			{
-				Scene scene = mergeToRoot.Scenes[i];
+				GLTFScene scene = mergeToRoot.Scenes[i];
 				foreach (NodeId nodeId in scene.Nodes)
 				{
 					nodeId.Id += previousGLTFSizes.PreviousNodeCount;
