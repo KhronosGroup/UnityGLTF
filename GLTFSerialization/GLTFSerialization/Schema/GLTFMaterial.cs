@@ -7,7 +7,7 @@ namespace GLTF.Schema
 	/// <summary>
 	/// The material appearance of a primitive.
 	/// </summary>
-	public class Material : GLTFChildOfRootProperty
+	public class GLTFMaterial : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// A set of parameter values that are used to define the metallic-roughness
@@ -79,11 +79,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public bool DoubleSided;
 
-		public Material()
+		public GLTFMaterial()
 		{
 		}
 
-		public Material(Material material, GLTFRoot gltfRoot) : base(material, gltfRoot)
+		public GLTFMaterial(GLTFMaterial material, GLTFRoot gltfRoot) : base(material, gltfRoot)
 		{
 			if (material == null) return;
 
@@ -118,9 +118,9 @@ namespace GLTF.Schema
 			DoubleSided = material.DoubleSided;
 		}
 
-		public static Material Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFMaterial Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var material = new Material();
+			var material = new GLTFMaterial();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{

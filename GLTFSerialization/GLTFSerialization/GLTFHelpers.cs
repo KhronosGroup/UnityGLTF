@@ -301,7 +301,7 @@ namespace GLTF
 			{
 				if (mergeToRoot.Buffers == null)
 				{
-					mergeToRoot.Buffers = new List<Buffer>(mergeFromRoot.Buffers.Count);
+					mergeToRoot.Buffers = new List<GLTFBuffer>(mergeFromRoot.Buffers.Count);
 				}
 
 				mergeToRoot.Buffers.AddRange(mergeFromRoot.Buffers);
@@ -317,7 +317,7 @@ namespace GLTF
 				mergeToRoot.BufferViews.AddRange(mergeFromRoot.BufferViews);
 				for (int i = previousGLTFSizes.PreviousBufferViewCount; i < mergeToRoot.BufferViews.Count; ++i)
 				{
-					GLTFId<Buffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
+					GLTFId<GLTFBuffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
 					bufferId.Id += previousGLTFSizes.PreviousBufferCount;
 					bufferId.Root = mergeToRoot;
 				}
@@ -373,13 +373,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Images == null)
 				{
-					mergeToRoot.Images = new List<Image>(mergeFromRoot.Images.Count);
+					mergeToRoot.Images = new List<GLTFImage>(mergeFromRoot.Images.Count);
 				}
 
 				mergeToRoot.Images.AddRange(mergeFromRoot.Images);
 				for (int i = previousGLTFSizes.PreviousImageCount; i < mergeToRoot.Images.Count; ++i)
 				{
-					Image image = mergeToRoot.Images[i];
+					GLTFImage image = mergeToRoot.Images[i];
 					if (image.BufferView != null)
 					{
 						BufferViewId bufferViewId = image.BufferView;
@@ -393,13 +393,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Textures == null)
 				{
-					mergeToRoot.Textures = new List<Texture>(mergeFromRoot.Textures.Count);
+					mergeToRoot.Textures = new List<GLTFTexture>(mergeFromRoot.Textures.Count);
 				}
 
 				mergeToRoot.Textures.AddRange(mergeFromRoot.Textures);
 				for (int i = previousGLTFSizes.PreviousTextureCount; i < mergeToRoot.Textures.Count; ++i)
 				{
-					Texture texture = mergeToRoot.Textures[i];
+					GLTFTexture texture = mergeToRoot.Textures[i];
 
 					if (texture.Sampler != null)
 					{
@@ -421,13 +421,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Materials == null)
 				{
-					mergeToRoot.Materials = new List<Material>(mergeFromRoot.Materials.Count);
+					mergeToRoot.Materials = new List<GLTFMaterial>(mergeFromRoot.Materials.Count);
 				}
 				
 				mergeToRoot.Materials.AddRange(mergeFromRoot.Materials);
 				for (int i = previousGLTFSizes.PreviousMaterialCount; i < mergeToRoot.Materials.Count; ++i)
 				{
-					Material material = mergeToRoot.Materials[i];
+					GLTFMaterial material = mergeToRoot.Materials[i];
 
 					PbrMetallicRoughness pbrMetallicRoughness = material.PbrMetallicRoughness;
 					if (pbrMetallicRoughness != null)
@@ -484,13 +484,13 @@ namespace GLTF
 			
 			if (mergeToRoot.Meshes == null)
 			{
-				mergeToRoot.Meshes = new List<Mesh>(mergeFromRoot.Meshes.Count);
+				mergeToRoot.Meshes = new List<GLTFMesh>(mergeFromRoot.Meshes.Count);
 			}
 
 			mergeToRoot.Meshes.AddRange(mergeFromRoot.Meshes);
 			for (int i = previousGLTFSizes.PreviousMeshCount; i < mergeToRoot.Meshes.Count; ++i)
 			{
-				Mesh mesh = mergeToRoot.Meshes[i];
+				GLTFMesh mesh = mergeToRoot.Meshes[i];
 				if (mesh.Primitives != null)
 				{
 					foreach (MeshPrimitive primitive in mesh.Primitives)
@@ -538,7 +538,7 @@ namespace GLTF
 			if (mergeFromRoot.Cameras == null) return;
 			if (mergeToRoot.Cameras == null)
 			{
-				mergeToRoot.Cameras = new List<Camera>(mergeFromRoot.Cameras.Count);
+				mergeToRoot.Cameras = new List<GLTFCamera>(mergeFromRoot.Cameras.Count);
 			}
 
 			mergeToRoot.Cameras.AddRange(mergeFromRoot.Cameras);
@@ -627,14 +627,14 @@ namespace GLTF
 			{
 				if (mergeToRoot.Animations == null)
 				{
-					mergeToRoot.Animations = new List<Animation>(mergeFromRoot.Animations.Count);
+					mergeToRoot.Animations = new List<GLTFAnimation>(mergeFromRoot.Animations.Count);
 				}
 
 				mergeToRoot.Animations.AddRange(mergeFromRoot.Animations);
 
 				for (int i = previousGLTFSizes.PreviousAnimationCount; i < mergeToRoot.Animations.Count; ++i)
 				{
-					Animation animation = mergeToRoot.Animations[i];
+					GLTFAnimation animation = mergeToRoot.Animations[i];
 					foreach (AnimationSampler sampler in animation.Samplers)
 					{
 						AccessorId inputId = sampler.Input;
@@ -666,13 +666,13 @@ namespace GLTF
 
 			if (mergeToRoot.Scenes == null)
 			{
-				mergeToRoot.Scenes = new List<Scene>(mergeFromRoot.Scenes.Count);
+				mergeToRoot.Scenes = new List<GLTFScene>(mergeFromRoot.Scenes.Count);
 			}
 
 			mergeToRoot.Scenes.AddRange(mergeFromRoot.Scenes);
 			for (int i = previousGLTFSizes.PreviousSceneCount; i < mergeToRoot.Scenes.Count; ++i)
 			{
-				Scene scene = mergeToRoot.Scenes[i];
+				GLTFScene scene = mergeToRoot.Scenes[i];
 				foreach (NodeId nodeId in scene.Nodes)
 				{
 					nodeId.Id += previousGLTFSizes.PreviousNodeCount;

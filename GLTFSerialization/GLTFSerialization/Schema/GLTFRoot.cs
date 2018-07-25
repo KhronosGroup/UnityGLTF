@@ -30,7 +30,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of keyframe animations.
 		/// </summary>
-		public List<Animation> Animations;
+		public List<GLTFAnimation> Animations;
 
 		/// <summary>
 		/// Metadata about the glTF asset.
@@ -40,7 +40,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of buffers. A buffer points to binary geometry, animation, or skins.
 		/// </summary>
-		public List<Buffer> Buffers;
+		public List<GLTFBuffer> Buffers;
 
 		/// <summary>
 		/// An array of bufferViews.
@@ -51,22 +51,22 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of cameras. A camera defines a projection matrix.
 		/// </summary>
-		public List<Camera> Cameras;
+		public List<GLTFCamera> Cameras;
 
 		/// <summary>
 		/// An array of images. An image defines data used to create a texture.
 		/// </summary>
-		public List<Image> Images;
+		public List<GLTFImage> Images;
 
 		/// <summary>
 		/// An array of materials. A material defines the appearance of a primitive.
 		/// </summary>
-		public List<Material> Materials;
+		public List<GLTFMaterial> Materials;
 
 		/// <summary>
 		/// An array of meshes. A mesh is a set of primitives to be rendered.
 		/// </summary>
-		public List<Mesh> Meshes;
+		public List<GLTFMesh> Meshes;
 
 		/// <summary>
 		/// An array of nodes.
@@ -86,7 +86,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of scenes.
 		/// </summary>
-		public List<Scene> Scenes;
+		public List<GLTFScene> Scenes;
 
 		/// <summary>
 		/// An array of skins. A skin is defined by joints and matrices.
@@ -96,7 +96,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of textures.
 		/// </summary>
-		public List<Texture> Textures;
+		public List<GLTFTexture> Textures;
 
 		public GLTFRoot()
 		{
@@ -125,10 +125,10 @@ namespace GLTF.Schema
 
 			if (gltfRoot.Animations != null)
 			{
-				Animations = new List<Animation>(gltfRoot.Animations.Count);
-				foreach (Animation animation in gltfRoot.Animations)
+				Animations = new List<GLTFAnimation>(gltfRoot.Animations.Count);
+				foreach (GLTFAnimation animation in gltfRoot.Animations)
 				{
-					Animations.Add(new Animation(animation, this));
+					Animations.Add(new GLTFAnimation(animation, this));
 				}
 			}
 
@@ -139,10 +139,10 @@ namespace GLTF.Schema
 
 			if (gltfRoot.Buffers != null)
 			{
-				Buffers = new List<Buffer>(gltfRoot.Buffers.Count);
-				foreach (Buffer buffer in gltfRoot.Buffers)
+				Buffers = new List<GLTFBuffer>(gltfRoot.Buffers.Count);
+				foreach (GLTFBuffer buffer in gltfRoot.Buffers)
 				{
-					Buffers.Add(new Buffer(buffer, this));
+					Buffers.Add(new GLTFBuffer(buffer, this));
 				}
 			}
 
@@ -157,37 +157,37 @@ namespace GLTF.Schema
 			
 			if (gltfRoot.Cameras != null)
 			{
-				Cameras = new List<Camera>(gltfRoot.Cameras.Count);
-				foreach (Camera camera in gltfRoot.Cameras)
+				Cameras = new List<GLTFCamera>(gltfRoot.Cameras.Count);
+				foreach (GLTFCamera camera in gltfRoot.Cameras)
 				{
-					Cameras.Add(new Camera(camera, this));
+					Cameras.Add(new GLTFCamera(camera, this));
 				}
 			}
 
 			if (gltfRoot.Images != null)
 			{
-				Images = new List<Image>(gltfRoot.Images.Count);
-				foreach (Image image in gltfRoot.Images)
+				Images = new List<GLTFImage>(gltfRoot.Images.Count);
+				foreach (GLTFImage image in gltfRoot.Images)
 				{
-					Images.Add(new Image(image, this));
+					Images.Add(new GLTFImage(image, this));
 				}
 			}
 
 			if (gltfRoot.Materials != null)
 			{
-				Materials = new List<Material>(gltfRoot.Materials.Count);
-				foreach (Material material in gltfRoot.Materials)
+				Materials = new List<GLTFMaterial>(gltfRoot.Materials.Count);
+				foreach (GLTFMaterial material in gltfRoot.Materials)
 				{
-					Materials.Add(new Material(material, this));
+					Materials.Add(new GLTFMaterial(material, this));
 				}
 			}
 
 			if (gltfRoot.Meshes != null)
 			{
-				Meshes = new List<Mesh>(gltfRoot.Meshes.Count);
-				foreach (Mesh mesh in gltfRoot.Meshes)
+				Meshes = new List<GLTFMesh>(gltfRoot.Meshes.Count);
+				foreach (GLTFMesh mesh in gltfRoot.Meshes)
 				{
-					Meshes.Add(new Mesh(mesh, this));
+					Meshes.Add(new GLTFMesh(mesh, this));
 				}
 			}
 
@@ -216,10 +216,10 @@ namespace GLTF.Schema
 			
 			if (gltfRoot.Scenes != null)
 			{
-				Scenes = new List<Scene>(gltfRoot.Scenes.Count);
-				foreach (Scene scene in gltfRoot.Scenes)
+				Scenes = new List<GLTFScene>(gltfRoot.Scenes.Count);
+				foreach (GLTFScene scene in gltfRoot.Scenes)
 				{
-					Scenes.Add(new Scene(scene, this));
+					Scenes.Add(new GLTFScene(scene, this));
 				}
 			}
 			
@@ -234,10 +234,10 @@ namespace GLTF.Schema
 			
 			if (gltfRoot.Textures != null)
 			{
-				Textures = new List<Texture>(gltfRoot.Textures.Count);
-				foreach (Texture texture in gltfRoot.Textures)
+				Textures = new List<GLTFTexture>(gltfRoot.Textures.Count);
+				foreach (GLTFTexture texture in gltfRoot.Textures)
 				{
-					Textures.Add(new Texture(texture, this));
+					Textures.Add(new GLTFTexture(texture, this));
 				}
 			}
 		}
@@ -246,7 +246,7 @@ namespace GLTF.Schema
 		/// Return the default scene. When scene is null, scene of index 0 will be returned.
 		/// When scenes list is null or empty, returns null.
 		/// </summary>
-		public Scene GetDefaultScene()
+		public GLTFScene GetDefaultScene()
 		{
 			if (Scene != null)
 			{
@@ -287,28 +287,28 @@ namespace GLTF.Schema
 						root.Accessors = jsonReader.ReadList(() => Accessor.Deserialize(root, jsonReader));
 						break;
 					case "animations":
-						root.Animations = jsonReader.ReadList(() => Animation.Deserialize(root, jsonReader));
+						root.Animations = jsonReader.ReadList(() => GLTFAnimation.Deserialize(root, jsonReader));
 						break;
 					case "asset":
 						root.Asset = Asset.Deserialize(root, jsonReader);
 						break;
 					case "buffers":
-						root.Buffers = jsonReader.ReadList(() => Buffer.Deserialize(root, jsonReader));
+						root.Buffers = jsonReader.ReadList(() => GLTFBuffer.Deserialize(root, jsonReader));
 						break;
 					case "bufferViews":
 						root.BufferViews = jsonReader.ReadList(() => BufferView.Deserialize(root, jsonReader));
 						break;
 					case "cameras":
-						root.Cameras = jsonReader.ReadList(() => Camera.Deserialize(root, jsonReader));
+						root.Cameras = jsonReader.ReadList(() => GLTFCamera.Deserialize(root, jsonReader));
 						break;
 					case "images":
-						root.Images = jsonReader.ReadList(() => Image.Deserialize(root, jsonReader));
+						root.Images = jsonReader.ReadList(() => GLTFImage.Deserialize(root, jsonReader));
 						break;
 					case "materials":
-						root.Materials = jsonReader.ReadList(() => Material.Deserialize(root, jsonReader));
+						root.Materials = jsonReader.ReadList(() => GLTFMaterial.Deserialize(root, jsonReader));
 						break;
 					case "meshes":
-						root.Meshes = jsonReader.ReadList(() => Mesh.Deserialize(root, jsonReader));
+						root.Meshes = jsonReader.ReadList(() => GLTFMesh.Deserialize(root, jsonReader));
 						break;
 					case "nodes":
 						root.Nodes = jsonReader.ReadList(() => Node.Deserialize(root, jsonReader));
@@ -320,13 +320,13 @@ namespace GLTF.Schema
 						root.Scene = SceneId.Deserialize(root, jsonReader);
 						break;
 					case "scenes":
-						root.Scenes = jsonReader.ReadList(() => GLTF.Schema.Scene.Deserialize(root, jsonReader));
+						root.Scenes = jsonReader.ReadList(() => GLTF.Schema.GLTFScene.Deserialize(root, jsonReader));
 						break;
 					case "skins":
 						root.Skins = jsonReader.ReadList(() => Skin.Deserialize(root, jsonReader));
 						break;
 					case "textures":
-						root.Textures = jsonReader.ReadList(() => Texture.Deserialize(root, jsonReader));
+						root.Textures = jsonReader.ReadList(() => GLTFTexture.Deserialize(root, jsonReader));
 						break;
 					default:
 						root.DefaultPropertyDeserializer(root, jsonReader);

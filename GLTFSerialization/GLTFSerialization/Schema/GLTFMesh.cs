@@ -9,7 +9,7 @@ namespace GLTF.Schema
 	/// A set of primitives to be rendered. A node can contain one or more meshes.
 	/// A node's transform places the mesh in the scene.
 	/// </summary>
-	public class Mesh : GLTFChildOfRootProperty
+	public class GLTFMesh : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// An array of primitives, each defining geometry to be rendered with
@@ -24,11 +24,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<double> Weights;
 
-		public Mesh()
+		public GLTFMesh()
 		{
 		}
 
-		public Mesh(Mesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
+		public GLTFMesh(GLTFMesh mesh, GLTFRoot gltfRoot) : base(mesh, gltfRoot)
 		{
 			if (mesh == null) return;
 
@@ -49,9 +49,9 @@ namespace GLTF.Schema
 		}
 
 
-		public static Mesh Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFMesh Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var mesh = new Mesh();
+			var mesh = new GLTFMesh();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{

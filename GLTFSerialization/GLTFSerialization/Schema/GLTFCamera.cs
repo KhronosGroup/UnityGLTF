@@ -6,7 +6,7 @@ namespace GLTF.Schema
 	/// A camera's projection.  A node can reference a camera to apply a transform
 	/// to place the camera in the scene
 	/// </summary>
-	public class Camera : GLTFChildOfRootProperty
+	public class GLTFCamera : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// An orthographic camera containing properties to create an orthographic
@@ -27,11 +27,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public CameraType Type;
 
-		public Camera()
+		public GLTFCamera()
 		{
 		}
 
-		public Camera(Camera camera, GLTFRoot gltfRoot) : base(camera, gltfRoot)
+		public GLTFCamera(GLTFCamera camera, GLTFRoot gltfRoot) : base(camera, gltfRoot)
 		{
 			if (camera == null) return;
 
@@ -48,9 +48,9 @@ namespace GLTF.Schema
 			Type = camera.Type;
 		}
 
-		public static Camera Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFCamera Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var camera = new Camera();
+			var camera = new GLTFCamera();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{

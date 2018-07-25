@@ -99,8 +99,8 @@
     <Compile Include="..\GLTFSerialization\Schema\AccessorSparseValues.cs">
       <Link>Schema\AccessorSparseValues.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Animation.cs">
-      <Link>Schema\Animation.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFAnimation.cs">
+      <Link>Schema\GLTFAnimation.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\AnimationChannel.cs">
       <Link>Schema\AnimationChannel.cs</Link>
@@ -114,14 +114,14 @@
     <Compile Include="..\GLTFSerialization\Schema\Asset.cs">
       <Link>Schema\Asset.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Buffer.cs">
-      <Link>Schema\Buffer.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFBuffer.cs">
+      <Link>Schema\GLTFBuffer.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\BufferView.cs">
       <Link>Schema\BufferView.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Camera.cs">
-      <Link>Schema\Camera.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFCamera.cs">
+      <Link>Schema\GLTFCamera.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\CameraOrthographic.cs">
       <Link>Schema\CameraOrthographic.cs</Link>
@@ -144,11 +144,11 @@
     <Compile Include="..\GLTFSerialization\Schema\IExtension.cs">
       <Link>Schema\IExtension.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Image.cs">
-      <Link>Schema\Image.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFImage.cs">
+      <Link>Schema\GLTFImage.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Material.cs">
-      <Link>Schema\Material.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFMaterial.cs">
+      <Link>Schema\GLTFMaterial.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\MaterialCommonConstant.cs">
       <Link>Schema\MaterialCommonConstant.cs</Link>
@@ -162,8 +162,8 @@
     <Compile Include="..\GLTFSerialization\Schema\MaterialPBRMetallicRoughness.cs">
       <Link>Schema\MaterialPBRMetallicRoughness.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Mesh.cs">
-      <Link>Schema\Mesh.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFMesh.cs">
+      <Link>Schema\GLTFMesh.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\MeshPrimitive.cs">
       <Link>Schema\MeshPrimitive.cs</Link>
@@ -174,14 +174,14 @@
     <Compile Include="..\GLTFSerialization\Schema\Sampler.cs">
       <Link>Schema\Sampler.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Scene.cs">
-      <Link>Schema\Scene.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFScene.cs">
+      <Link>Schema\GLTFScene.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\Skin.cs">
       <Link>Schema\Skin.cs</Link>
     </Compile>
-    <Compile Include="..\GLTFSerialization\Schema\Texture.cs">
-      <Link>Schema\Texture.cs</Link>
+    <Compile Include="..\GLTFSerialization\Schema\GLTFTexture.cs">
+      <Link>Schema\GLTFTexture.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\TextureInfo.cs">
       <Link>Schema\TextureInfo.cs</Link>

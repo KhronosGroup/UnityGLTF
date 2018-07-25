@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using GLTF.Schema;
+using UnityEngine;
 
 namespace UnityGLTF.Cache
 {
 	public class TextureCacheData
 	{
-		public GLTF.Schema.Texture TextureDefinition;
+		public GLTFTexture TextureDefinition;
 		public Texture Texture;
 
 		/// <summary>

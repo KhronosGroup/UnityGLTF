@@ -21,7 +21,7 @@ namespace GLTF.Schema
 		/// The RGBA components of the reflected diffuse color of the material. 
 		/// Metals have a diffuse value of [0.0, 0.0, 0.0]. 
 		/// The fourth component (A) is the alpha coverage of the material. 
-		/// The <see cref="Material.AlphaMode"/> property specifies how alpha is interpreted. 
+		/// The <see cref="GLTFMaterial.AlphaMode"/> property specifies how alpha is interpreted. 
 		/// The values are linear.
 		/// </summary>
 		public Color DiffuseFactor = Color.White;
@@ -31,7 +31,7 @@ namespace GLTF.Schema
 		/// This texture contains RGB(A) components of the reflected diffuse color of the material in sRGB color space. 
 		/// If the fourth component (A) is present, it represents the alpha coverage of the 
 		/// material. Otherwise, an alpha of 1.0 is assumed. 
-		/// The <see cref="Material.AlphaMode"/> property specifies how alpha is interpreted. 
+		/// The <see cref="GLTFMaterial.AlphaMode"/> property specifies how alpha is interpreted. 
 		/// The stored texels must not be premultiplied.
 		/// </summary>
 		public TextureInfo DiffuseTexture;

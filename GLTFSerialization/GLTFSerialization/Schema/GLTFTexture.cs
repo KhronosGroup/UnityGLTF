@@ -5,7 +5,7 @@ namespace GLTF.Schema
 	/// <summary>
 	/// A texture and its sampler.
 	/// </summary>
-	public class Texture : GLTFChildOfRootProperty
+	public class GLTFTexture : GLTFChildOfRootProperty
 	{
 		/// <summary>
 		/// The index of the sampler used by this texture.
@@ -17,11 +17,11 @@ namespace GLTF.Schema
 		/// </summary>
 		public ImageId Source;
 
-		public Texture()
+		public GLTFTexture()
 		{
 		}
 
-		public Texture(Texture texture, GLTFRoot gltfRoot) : base(texture, gltfRoot)
+		public GLTFTexture(GLTFTexture texture, GLTFRoot gltfRoot) : base(texture, gltfRoot)
 		{
 			if (texture == null) return;
 
@@ -36,9 +36,9 @@ namespace GLTF.Schema
 			}
 		}
 
-		public static Texture Deserialize(GLTFRoot root, JsonReader reader)
+		public static GLTFTexture Deserialize(GLTFRoot root, JsonReader reader)
 		{
-			var texture = new Texture();
+			var texture = new GLTFTexture();
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
