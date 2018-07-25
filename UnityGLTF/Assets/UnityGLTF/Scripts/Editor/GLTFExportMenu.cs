@@ -6,32 +6,32 @@ using UnityEngine.SceneManagement;
 
 public class GLTFExportMenu : EditorWindow
 {
-    public static string RetrieveTexturePath(UnityEngine.Texture texture)
-    {
-        return AssetDatabase.GetAssetPath(texture);
-    }
+	public static string RetrieveTexturePath(UnityEngine.Texture texture)
+	{
+		return AssetDatabase.GetAssetPath(texture);
+	}
 
-    [MenuItem("GLTF/Settings")]
-    static void Init()
-    {
-        GLTFExportMenu window = (GLTFExportMenu)EditorWindow.GetWindow(typeof(GLTFExportMenu), false, "GLTF Settings");
-        window.Show();
-    }
+	[MenuItem("GLTF/Settings")]
+	static void Init()
+	{
+		GLTFExportMenu window = (GLTFExportMenu)EditorWindow.GetWindow(typeof(GLTFExportMenu), false, "GLTF Settings");
+		window.Show();
+	}
 
-    void OnGUI()
-    {
-        EditorGUILayout.LabelField("Exporter", EditorStyles.boldLabel);
-        GLTFSceneExporter.ExportFullPath = EditorGUILayout.Toggle("Export using original path", GLTFSceneExporter.ExportFullPath);
-        GLTFSceneExporter.ExportNames = EditorGUILayout.Toggle("Export names of nodes", GLTFSceneExporter.ExportNames);
-        GLTFSceneExporter.RequireExtensions= EditorGUILayout.Toggle("Require extensions", GLTFSceneExporter.RequireExtensions);
-        EditorGUILayout.Separator();
-        EditorGUILayout.LabelField("Importer", EditorStyles.boldLabel);
-        EditorGUILayout.Separator();
-        EditorGUILayout.HelpBox("UnityGLTF version 0.1", MessageType.Info);
-        EditorGUILayout.HelpBox("Supported extensions: KHR_material_pbrSpecularGlossiness, ExtTextureTransform", MessageType.Info);
-    }
+	void OnGUI()
+	{
+		EditorGUILayout.LabelField("Exporter", EditorStyles.boldLabel);
+		GLTFSceneExporter.ExportFullPath = EditorGUILayout.Toggle("Export using original path", GLTFSceneExporter.ExportFullPath);
+		GLTFSceneExporter.ExportNames = EditorGUILayout.Toggle("Export names of nodes", GLTFSceneExporter.ExportNames);
+		GLTFSceneExporter.RequireExtensions= EditorGUILayout.Toggle("Require extensions", GLTFSceneExporter.RequireExtensions);
+		EditorGUILayout.Separator();
+		EditorGUILayout.LabelField("Importer", EditorStyles.boldLabel);
+		EditorGUILayout.Separator();
+		EditorGUILayout.HelpBox("UnityGLTF version 0.1", MessageType.Info);
+		EditorGUILayout.HelpBox("Supported extensions: KHR_material_pbrSpecularGlossiness, ExtTextureTransform", MessageType.Info);
+	}
 
-    [MenuItem("GLTF/Export Selected")]
+	[MenuItem("GLTF/Export Selected")]
 	static void ExportSelected()
 	{
 		string name;
