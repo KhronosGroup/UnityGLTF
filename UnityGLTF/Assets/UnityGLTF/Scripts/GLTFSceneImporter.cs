@@ -23,13 +23,14 @@ namespace UnityGLTF
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
 	}
 
-	public class GLTFSceneImporter
+	public class GLTFSceneImporter : IDisposable
 	{
 		public enum ColliderType
 		{
 			None,
 			Box,
-			Mesh
+			Mesh,
+			MeshConvex
 		}
 
 		/// <summary>
@@ -98,6 +99,14 @@ namespace UnityGLTF
 		{
 			_loader = externalDataLoader;
 			_asyncAction = new AsyncAction();
+		}
+
+		public void Dispose()
+		{
+			if (_assetCache != null)
+			{
+				Cleanup();
+			}
 		}
 
 		public GameObject LastLoadedScene
@@ -1000,11 +1009,14 @@ namespace UnityGLTF
 						boxCollider.center = curMesh.bounds.center;
 						boxCollider.size = curMesh.bounds.size;
 						break;
-
 					case ColliderType.Mesh:
 						var meshCollider = primitiveObj.AddComponent<MeshCollider>();
 						meshCollider.sharedMesh = curMesh;
-						meshCollider.convex = true;
+						break;
+					case ColliderType.MeshConvex:
+						var meshConvexCollider = primitiveObj.AddComponent<MeshCollider>();
+						meshConvexCollider.sharedMesh = curMesh;
+						meshConvexCollider.convex = true;
 						break;
 				}
 
@@ -1377,11 +1389,17 @@ namespace UnityGLTF
 					switch (sampler.MinFilter)
 					{
 						case MinFilterMode.Nearest:
+						case MinFilterMode.NearestMipmapNearest:
+						case MinFilterMode.NearestMipmapLinear:
 							desiredFilterMode = FilterMode.Point;
 							break;
 						case MinFilterMode.Linear:
-						default:
+						case MinFilterMode.LinearMipmapNearest:
+						case MinFilterMode.LinearMipmapLinear:
 							desiredFilterMode = FilterMode.Bilinear;
+							break;
+						default:
+							Debug.LogWarning("Unsupported Sampler.MinFilter: " + sampler.MinFilter);
 							break;
 					}
 
