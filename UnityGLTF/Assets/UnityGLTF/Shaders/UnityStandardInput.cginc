@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'UNITY_INSTANCE_ID' with 'UNITY_VERTEX_INPUT_INSTANCE_ID'
+
 // Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
 
 #ifndef UNITY_STANDARD_INPUT_INCLUDED
@@ -68,7 +70,7 @@ struct VertexInput
 #if defined(UNITY_VERTEX_INPUT_INSTANCE_ID)
     UNITY_VERTEX_INPUT_INSTANCE_ID
 #else
-	UNITY_INSTANCE_ID
+	UNITY_VERTEX_INPUT_INSTANCE_ID
 #endif
 };
 
