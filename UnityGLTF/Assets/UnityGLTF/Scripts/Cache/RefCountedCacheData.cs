@@ -16,10 +16,10 @@ namespace UnityGLTF.Cache
 		/// Ref count for this cache data.
 		/// </summary>
 		/// <remarks>
-		/// Initialized to 1, as we assume that when creating a new ref-counted cache data, a reference to it will be stored
-		/// by an instantiated GLTF object.
+		/// Initialized to 0. When assigning the cache data to an instantiated GLTF
+		/// object the count will increase.
 		/// </remarks>
-		private int _refCount = 1;
+		private int _refCount = 0;
 		private readonly object _refCountLock = new object();
 
 		/// <summary>
