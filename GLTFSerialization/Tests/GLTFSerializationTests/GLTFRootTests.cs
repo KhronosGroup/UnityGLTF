@@ -28,7 +28,8 @@ namespace GLTFSerializationTests
 			writer.Flush();
 			stream.Position = 0;
 
-			_testRoot = GLTFParser.ParseJson(stream);
+			_testRoot = null;
+			GLTFParser.ParseJson(stream, ref _testRoot);
 
 		}
 

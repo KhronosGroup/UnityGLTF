@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using GLTF;
 using GLTF.Schema;
 using UnityEngine;
@@ -13,6 +14,7 @@ using UnityGLTF.Loader;
 using Matrix4x4 = GLTF.Math.Matrix4x4;
 using Object = UnityEngine.Object;
 using WrapMode = UnityEngine.WrapMode;
+using ThreadPriority = System.Threading.ThreadPriority;
 
 #if WINDOWS_UWP
 using System.Threading.Tasks;
@@ -40,6 +42,16 @@ namespace UnityGLTF
 		/// Maximum LOD
 		/// </summary>
 		public int MaximumLod = 300;
+
+		/// <summary>
+		/// Timeout for certain threading operations
+		/// </summary>
+		public int Timeout = 8;
+
+		/// <summary>
+		/// Use Multithreading or not
+		/// </summary>
+		public bool isMultithreaded = false;
 
 		/// <summary>
 		/// The parent transform for the created GameObject
@@ -78,6 +90,7 @@ namespace UnityGLTF
 		protected AsyncAction _asyncAction;
 		protected ILoader _loader;
 		private bool _isRunning = false;
+
 
 		/// <summary>
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
@@ -121,10 +134,9 @@ namespace UnityGLTF
 		/// Loads a glTF Scene into the LastLoadedScene field
 		/// </summary>
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
-		/// <param name="isMultithreaded">Whether all components should be loaded on a background thread</param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
-		public IEnumerator LoadScene(int sceneIndex = -1, bool isMultithreaded = false, Action<GameObject> onLoadComplete = null)
+		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
 		{
 			try
 			{
@@ -142,7 +154,7 @@ namespace UnityGLTF
 				{
 					yield return LoadJson(_gltfFileName);
 				}
-				yield return _LoadScene(sceneIndex, isMultithreaded);
+				yield return _LoadScene(sceneIndex);
 
 				Cleanup();
 			}
@@ -291,11 +303,33 @@ namespace UnityGLTF
 
 		private IEnumerator LoadJson(string jsonFilePath)
 		{
-			yield return _loader.LoadStream(jsonFilePath);
+			if (isMultithreaded && _loader.HasSyncLoadMethod)
+             {
+                 Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
+                 loadThread.Priority = ThreadPriority.Highest;
+                 loadThread.Start();
+                 yield return new WaitUntil(() => !loadThread.IsAlive);
+             }
+             else
+             {
+                 yield return _loader.LoadStream(jsonFilePath);
+             }
 
 			_gltfStream.Stream = _loader.LoadedStream;
 			_gltfStream.StartPosition = 0;
-			_gltfRoot = GLTFParser.ParseJson(_gltfStream.Stream, _gltfStream.StartPosition);
+
+			if (isMultithreaded)
+			{
+				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, ref _gltfRoot, _gltfStream.StartPosition));
+				parseJsonThread.Priority = ThreadPriority.Highest;
+				parseJsonThread.Start();
+				yield return new WaitUntil(() => !parseJsonThread.IsAlive);
+			}
+			else
+			{
+				GLTFParser.ParseJson(_gltfStream.Stream, ref _gltfRoot, _gltfStream.StartPosition);
+				yield return null;
+			}
 		}
 
 		private IEnumerator _LoadNode(int nodeIndex)
@@ -327,9 +361,8 @@ namespace UnityGLTF
 		/// Creates a scene based off loaded JSON. Includes loading in binary and image data to construct the meshes required.
 		/// </summary>
 		/// <param name="sceneIndex">The bufferIndex of scene in gltf file to load</param>
-		/// <param name="isMultithreaded">Whether to use a thread to do loading</param>
 		/// <returns></returns>
-		protected IEnumerator _LoadScene(int sceneIndex = -1, bool isMultithreaded = false)
+		protected IEnumerator _LoadScene(int sceneIndex = -1)
 		{
 			GLTFScene scene;
 			InitializeAssetCache(); // asset cache currently needs initialized every time due to cleanup logic
@@ -482,10 +515,19 @@ namespace UnityGLTF
 						throw new Exception("Stream is larger than can be copied into byte array");
 					}
 
-					stream.Read(buffer, 0, (int)stream.Length);
-				}
-
-				yield return null;
+					if (isMultithreaded)
+					{
+						Thread readThread = new Thread(() => stream.Read(buffer, 0, (int)stream.Length));
+						readThread.Priority = ThreadPriority.Highest;
+						readThread.Start();
+						yield return new WaitUntil(() => !readThread.IsAlive);
+					}
+					else
+					{
+						stream.Read(buffer, 0, (int)stream.Length);
+						yield return null;
+					}					
+				}				
 
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, false);
@@ -562,7 +604,21 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+				if (isMultithreaded)
+				{
+					Thread buildMeshAttributesThread = new Thread(() => GLTFHelpers.BuildMeshAttributes(ref attributeAccessors));
+					buildMeshAttributesThread.Priority = ThreadPriority.Highest;
+					buildMeshAttributesThread.Start();
+					while (!buildMeshAttributesThread.Join(Timeout))
+					{
+						yield return null;
+					}
+				}
+				else
+				{
+					GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+				}
+				
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
