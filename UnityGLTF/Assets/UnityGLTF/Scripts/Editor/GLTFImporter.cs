@@ -336,15 +336,15 @@ namespace UnityGLTF
             ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
             using (var stream = File.OpenRead(projectFilePath))
             {
-	            GLTFRoot gLTFRoot = null;
-	            GLTFParser.ParseJson(stream, ref gLTFRoot);
+                GLTFRoot gLTFRoot = null;
+                GLTFParser.ParseJson(stream, ref gLTFRoot);
                 var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
 
                 loader.MaximumLod = _maximumLod;
-	            loader.isMultithreaded = true;
+                loader.isMultithreaded = true;
 
-				// HACK: Force the coroutine to run synchronously in the editor
-				var stack = new Stack<IEnumerator>();
+                // HACK: Force the coroutine to run synchronously in the editor
+                var stack = new Stack<IEnumerator>();
                 stack.Push(loader.LoadScene());
 
                 while (stack.Count > 0)
