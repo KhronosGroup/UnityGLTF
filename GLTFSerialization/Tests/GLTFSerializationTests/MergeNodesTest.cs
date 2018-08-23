@@ -19,10 +19,12 @@ namespace GLTFSerializationTests
 			Assert.IsTrue(File.Exists(GLTF_LANTERN_PATH));
 			
 			FileStream gltfBoomBoxStream = File.OpenRead(GLTF_BOOMBOX_PATH);
-			GLTFRoot boomBoxRoot = GLTFParser.ParseJson(gltfBoomBoxStream);
+			GLTFRoot boomBoxRoot = null;
+			GLTFParser.ParseJson(gltfBoomBoxStream, ref boomBoxRoot);
 
 			FileStream gltfLanternStream = File.OpenRead(GLTF_LANTERN_PATH);
-			GLTFRoot lanternRoot = GLTFParser.ParseJson(gltfLanternStream);
+			GLTFRoot lanternRoot = null;
+			GLTFParser.ParseJson(gltfLanternStream, ref lanternRoot);
 
 			GLTFRoot boomBoxCopy = new GLTFRoot(boomBoxRoot);
 
