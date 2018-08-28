@@ -724,9 +724,9 @@ namespace UnityGLTF
 						{
 							var time = input.AsFloats[i];
 							Vector3 position = output.AsVec3s[i].ToUnityVector3Convert();
-							curveX.AddKey(time, position.x);
-							curveY.AddKey(time, position.y);
-							curveZ.AddKey(time, position.z);
+							curveX.AddKey(new Keyframe(time, position.x, 0, 0));
+                            				curveY.AddKey(new Keyframe(time, position.y, 0, 0));
+                            				curveZ.AddKey(new Keyframe(time, position.z, 0, 0));
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
@@ -735,16 +735,29 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.rotation:
+						var last = Quaternion.identity;
 						for (int i = 0; i < input.AsFloats.Length; ++i)
 						{
 							var time = input.AsFloats[i];
 							var rotation = output.AsVec4s[i];
 
 							Quaternion rot = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
-							curveX.AddKey(time, rot.x);
-							curveY.AddKey(time, rot.y);
-							curveZ.AddKey(time, rot.z);
-							curveW.AddKey(time, rot.w);
+							    if (i > 0)
+							    {
+								if (Quaternion.Dot(last, rot) < 0f)
+								{
+								    rot.x = -rot.x;
+								    rot.y = -rot.y;
+								    rot.z = -rot.z;
+								    rot.w = -rot.w;
+								}
+							    }
+							    last = rot;
+
+							    curveX.AddKey(new Keyframe(time, rot.x, 0f, 0f));
+							    curveY.AddKey(new Keyframe(time, rot.y, 0f, 0f));
+							    curveZ.AddKey(new Keyframe(time, rot.z, 0f, 0f));
+							    curveW.AddKey(new Keyframe(time, rot.w, 0f, 0f));
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
@@ -758,9 +771,9 @@ namespace UnityGLTF
 						{
 							var time = input.AsFloats[i];
 							Vector3 scale = output.AsVec3s[i].ToUnityVector3Raw();
-							curveX.AddKey(time, scale.x);
-							curveY.AddKey(time, scale.y);
-							curveZ.AddKey(time, scale.z);
+							    curveX.AddKey(new Keyframe(time, scale.x, 0, 0));
+							    curveY.AddKey(new Keyframe(time, scale.y, 0, 0));
+							    curveZ.AddKey(new Keyframe(time, scale.z, 0, 0));
 						}
 
 						clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
@@ -787,7 +800,7 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
-			clip.EnsureQuaternionContinuity();
+			//clip.EnsureQuaternionContinuity();
 			return clip;
 		}
 		#endregion
