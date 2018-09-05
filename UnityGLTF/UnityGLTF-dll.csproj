@@ -5,7 +5,7 @@
     <ProjectGuid>{F7C86AC9-627D-4D15-BC95-9E4571B83878}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
-    <AssemblyName>ClassLibrary</AssemblyName>
+    <AssemblyName>UnityGLTF</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -27,12 +27,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <RootNamespace>UnityGLTF_dll</RootNamespace>
+    <RootNamespace>UnityGLTF</RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
     <Reference Include="GLTFSerialization">
       <HintPath>..\GLTFSerialization\GLTFSerialization\obj\Release\GLTFSerialization.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <Reference Include="GLTFSerialization">
+      <HintPath>..\GLTFSerialization\GLTFSerialization\obj\Debug\GLTFSerialization.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -41,6 +48,8 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="UnityEngine">
+      <HintPath>C:\Program Files\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>C:\Program Files\Unity\Hub\Editor\Data\Managed\UnityEngine.dll</HintPath>
       <HintPath>C:\Program Files\Unity_2018.1.2f1\Editor\Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
