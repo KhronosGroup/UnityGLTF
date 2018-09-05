@@ -636,6 +636,7 @@ namespace UnityGLTF
 				yield return CreateNode(node);
 				GameObject nodeObj = _assetCache.NodeCache[node.Id];
 				nodeObj.transform.SetParent(sceneObj.transform, false);
+				nodeObj.SetActive(true);
 			}
 
 			CreatedObject = sceneObj;
@@ -656,7 +657,9 @@ namespace UnityGLTF
 				NodeCreationData nodeToAdd = nodesToAdd[i];
 				Node node = nodeToAdd.Node.Value;
 				GameObject nodeObj = new GameObject(node.Name ?? "GLTFNode");
-				Vector3 position;
+				nodeObj.SetActive(false);
+
+                Vector3 position;
 				Quaternion rotation;
 				Vector3 scale;
 				node.GetUnityTRSProperties(out position, out rotation, out scale);
@@ -694,10 +697,10 @@ namespace UnityGLTF
 				if (nodeToAdd.Parent >= 0)
 				{
 					nodeObj.transform.SetParent(_assetCache.NodeCache[nodeToAdd.Parent].transform, false);
-				}
+					nodeObj.SetActive(true);
+                }
 
-				nodeObj.SetActive(true);
-				_assetCache.NodeCache[nodeToAdd.Node.Id] = nodeObj;
+                _assetCache.NodeCache[nodeToAdd.Node.Id] = nodeObj;
 			}
 		}
 		
