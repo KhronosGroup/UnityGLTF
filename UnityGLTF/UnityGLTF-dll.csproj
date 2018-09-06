@@ -29,17 +29,16 @@
   <PropertyGroup>
     <RootNamespace>UnityGLTF</RootNamespace>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
-    <Reference Include="GLTFSerialization">
-      <HintPath>..\GLTFSerialization\GLTFSerialization\obj\Release\GLTFSerialization.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Reference Include="GLTFSerialization">
       <HintPath>..\GLTFSerialization\GLTFSerialization\obj\Debug\GLTFSerialization.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="GLTFSerialization, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Assets\UnityGLTF\Plugins\GLTFSerialization.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
