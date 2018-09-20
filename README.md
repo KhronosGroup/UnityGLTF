@@ -47,3 +47,5 @@ You should see something like this:
 
 ![GLTF Lantern](/Screenshots/Lantern.png)
 
+[Travis build] (https://api.travis-ci.org/KhronosGroup/UnityGLTF.svg?branch=master)
+

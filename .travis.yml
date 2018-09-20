@@ -1,19 +1,22 @@
 os: osx
 language: csharp
+before_install:
+      - command curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+      - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rvm get stable; fi
 install:
-    - nuget restore ./GLTFSerialization/GLTFSerialization.sln
-    - sudo python2 ./scripts/install-unity.py --package Unity 2017.1.1f1
+- nuget restore ./GLTFSerialization/GLTFSerialization.sln
+- sudo python2 ./scripts/install-unity.py --package Unity 2017.1.1f1
 before_script:
-    - sudo chmod -R a+rwx /Applications/Unity
+- sudo chmod -R a+rwx /Applications/Unity
 script:
-    - msbuild ./GLTFSerialization/GLTFSerialization.sln
-    - ./scripts/export-unity-package.sh
+- msbuild ./GLTFSerialization/GLTFSerialization/GLTFSerialization.csproj
+- "./scripts/export-unity-package.sh"
 deploy:
-    provider: releases
-    api_key:  
-        secure: "O/satj8iTLfZmT+ITphhDjBlD4/xywTud4qHHmZ+ZpVlD47/grNS1G00DOA1y8+9SdmoJyZmdjjejZ747v26cud1hoa5oajHNf2jTs4QHRj/cDeZr0h8Xa0I0bmDGuacNpBAoVxLPq0z8pil1wuMMSCXc1unYvJFCqTAc0GUQCDBYinybMeFsWdzEPrTSKk5pExxYdqggQlx73Pmu3GL2uotyEGA+11Z1UTNLstF6SXEU7kuefTKhS/8ZgLp8tPqw9ppeoHLghaWhtD4nMdxXOyjVqgGHrTe9/zib+TygLMllaqHlhASEvuVUiPHETmLl9+5Up1QuYJCVwiXSmcvBpjpSrX9tZ8Ddl7Q+FlhVFSZnkM1UO5jvVxRsmOqPYZ10/j9cUt4eVbjlCjuSb1lf34IIvAVOdhnkvlCH4y7QCmsRHRabvKTrzVO/T3z07zN35d8pV2PhO/aF2kDwHvGgtWdvUwMXK3fgNorEKrJtZ3COOR1MDoiW/kf7aREnYKXtnYuj965ousCMVSqJgSal7ntUYZEJDdvRqbmNtH9OgjQEPSRauAYqfojrWMQxIdeFuEoSm1+7+0Dn5Ej9FcREdeeKsT0VzKvBPBIF1SR98EEhyHhH+LYuQp31/a0w5y/cKfoIFlK8/9rB7z48TySXnTgyxNNahAobH91Sxy9sEU="
-    file: ./current-package/UnityGLTF.unitypackage
-    skip_cleanup: true
-    on:
-        repo: Vytek/UnityGLTF
-        tags: true
+  provider: releases
+  api_key:
+    secure: VtkGC+8OGR99sxDg6Gth2l23u/XWi62a8nBCSZ/++hvRaELX3ntKs/g4SyMLEdYyBdxkZpzDwG2rWJo6x1UWRYHQjoStZ9I1+6x+02oPLZajvOKGc777arFPI+2bRe/ISc7ZN3MY2iw0rbOUYnsnFMMh22mmYxBH8E9sg9SxmhxtsJlbrBcaIr7BP7OSb38G4V/+9h+ZPrYGjob4sa+iELcJYvjdNCYMwpr0R0U1RHBb5HYDnCm17bdPDoOxBXKGIA6czV6YQ9gPGGIBSMSxvCb+eprxYPOJnGg1xGQiMmZwbTpLaK04pNAWwKxg3qQwm4AjoepNCd/tq9C74hQefxEzueQwL4Su5IQ4hl/10Yu1F6OQiYtDRWwPv8FNdHmHg7C9bomTAnUrFE/Pz+rLLIFFcx8EVzg+nu0mBH1wutlXpAd+WJ37oCUe27HOpyej6ltQcE8iOE8dkvrtDaO+k7uDUGsZhQzH2lbjfVmPqATPp9JXmE6nKTP9x/MvyDJT1L2O/32HqVdN2H9mH8B3/O0vfPjJAzznp/GzYRNmj78YUuWEg93TIWEWvX4T5mqVJQeZVlliwUoJBV8NvdCV9UEdtuXE8V1hwnScXBPoh3ELpmoXDdGxYXXgz/C/uj5LGSkBHKG6IEH6BMLdjJUgkWoaDuB11UVWCQM54643ma8=
+  file: ./current-package/UnityGLTF.unitypackage
+  skip_cleanup: true
+  on:
+    repo: KhronosGroup/UnityGLTF
+    tags: true
