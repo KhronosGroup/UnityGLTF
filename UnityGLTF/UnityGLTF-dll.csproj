@@ -1,0 +1,88 @@
+﻿<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F7C86AC9-627D-4D15-BC95-9E4571B83878}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>UnityGLTF</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>UnityGLTF</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <Reference Include="GLTFSerialization">
+      <HintPath>..\GLTFSerialization\GLTFSerialization\obj\Debug\GLTFSerialization.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="GLTFSerialization, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Assets\UnityGLTF\Plugins\GLTFSerialization.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="UnityEngine">
+      <HintPath Condition="Exists('C:\Program Files\Unity\Editor\Data\Managed')">C:\Program Files\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath Condition="Exists('C:\Program Files\Unity\Hub\Editor\Data\Managed')">C:\Program Files\Unity\Hub\Editor\Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath Condition="Exists('C:\Program Files\Unity_2018.1.2f1\Editor\Data\Managed')">C:\Program Files\Unity_2018.1.2f1\Editor\Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assets\UnityGLTF\Scripts\Async\AsyncAction.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Async\TaskExtensions.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\AnimationCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\AssetCache.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\BufferCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\MaterialCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\MeshCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\RefCountedCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Cache\TextureCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Exceptions.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Extensions\SchemaExtensions.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\GLTFComponent.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\GLTFSceneExporter.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\GLTFSceneImporter.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\InstantiatedGLTFObject.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Loader\FileLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Loader\ILoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Loader\StorageFolderLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Loader\WebRequestLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\MetalRough2StandardMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\MetalRoughMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\SpecGloss2StandardMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\SpecGlossMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\StandardMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\UniformMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\URIHelper.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>
