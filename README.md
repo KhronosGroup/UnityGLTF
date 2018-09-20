@@ -1,6 +1,6 @@
 # UnityGLTF
 
-[![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+ [![Build Status](https://travis-ci.org/KhronosGroup/UnityGLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/UnityGLTF) [![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Unity3D library for importing and exporting [GLTF 2.0](https://github.com/KhronosGroup/glTF/) assets. 
 
@@ -46,6 +46,3 @@ Work Items and Issues targeting a 1.0 release of the library can be found in
 You should see something like this:
 
 ![GLTF Lantern](/Screenshots/Lantern.png)
-
-[Travis build](https://api.travis-ci.org/KhronosGroup/UnityGLTF.svg?branch=master)
-
