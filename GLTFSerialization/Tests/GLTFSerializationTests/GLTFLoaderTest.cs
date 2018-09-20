@@ -25,7 +25,7 @@ namespace GLTFSerializationTests
 
 			GLTFRoot.RegisterExtension(new TestExtensionFactory());
 			GLTFRoot gltfRoot = null;
-			GLTFParser.ParseJson(gltfStream,ref gltfRoot);
+			GLTFParser.ParseJson(gltfStream, out gltfRoot);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
@@ -35,8 +35,8 @@ namespace GLTFSerializationTests
 			Assert.IsTrue(File.Exists(GLTF_PBR_SPECGLOSS_PATH));
 			FileStream gltfStream = File.OpenRead(GLTF_PBR_SPECGLOSS_PATH);
 
-			GLTFRoot gltfRoot = null;
-			GLTFParser.ParseJson(gltfStream, ref gltfRoot);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(gltfStream, out gltfRoot);
 
 			Assert.IsNotNull(gltfRoot.ExtensionsUsed);
 			Assert.IsTrue(gltfRoot.ExtensionsUsed.Contains(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME));
@@ -59,8 +59,8 @@ namespace GLTFSerializationTests
 		{
 			Assert.IsTrue(File.Exists(GLB_PATH));
 			FileStream gltfStream = File.OpenRead(GLB_PATH);
-			GLTFRoot gltfRoot =null;
-			GLTFParser.ParseJson(gltfStream, ref gltfRoot);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(gltfStream, out gltfRoot);
 			GLTFJsonLoadTestHelper.TestGLB(gltfRoot);
 		}
 	}

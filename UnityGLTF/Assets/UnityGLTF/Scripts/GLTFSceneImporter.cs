@@ -320,14 +320,14 @@ namespace UnityGLTF
 
 			if (isMultithreaded)
 			{
-				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, ref _gltfRoot, _gltfStream.StartPosition));
+				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				parseJsonThread.Priority = ThreadPriority.Highest;
 				parseJsonThread.Start();
 				yield return new WaitUntil(() => !parseJsonThread.IsAlive);
 			}
 			else
 			{
-				GLTFParser.ParseJson(_gltfStream.Stream, ref _gltfRoot, _gltfStream.StartPosition);
+				GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
 				yield return null;
 			}
 		}

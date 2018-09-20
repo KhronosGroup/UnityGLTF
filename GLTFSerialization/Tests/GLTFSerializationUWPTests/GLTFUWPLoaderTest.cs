@@ -24,8 +24,8 @@ namespace GLTFSerializerUWPTests
 			StorageFile sampleFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(GLTF_PATH));
 
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
-			GLTFRoot gltfRoot = null;
-			GLTFParser.ParseJson(gltfStream.AsStream(), ref gltfRoot);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(gltfStream.AsStream(), out gltfRoot);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
@@ -37,8 +37,8 @@ namespace GLTFSerializerUWPTests
 
 
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
-			GLTFRoot gltfRoot = null;
-			GLTFParser.ParseJson(gltfStream.AsStreamForRead(), ref gltfRoot);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(gltfStream.AsStreamForRead(), out gltfRoot);
 
 			Assert.IsNotNull(gltfRoot.ExtensionsUsed);
 			Assert.IsTrue(gltfRoot.ExtensionsUsed.Contains(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME));

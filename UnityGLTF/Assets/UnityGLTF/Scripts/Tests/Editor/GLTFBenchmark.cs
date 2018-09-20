@@ -45,7 +45,7 @@ public class GLTFBenchmark : MonoBehaviour
 			{
 				timer.Start();
 				GLTFRoot gltfRoot = null;
-				GLTFParser.ParseJson(new MemoryStream(www.downloadHandler.data), ref gltfRoot);
+				GLTFParser.ParseJson(new MemoryStream(www.downloadHandler.data), out gltfRoot);
 				timer.Stop();
 
 				Debug.LogFormat("Iteration {0} took: {1}ms", i, timer.ElapsedMilliseconds);

@@ -19,7 +19,7 @@ namespace GLTF
 			public uint FileLength { get; set; }
 		}
 		
-		public static void ParseJson(Stream stream, ref GLTFRoot gltfRoot, long startPosition = 0)
+		public static void ParseJson(Stream stream, out GLTFRoot gltfRoot, long startPosition = 0)
 		{
 			stream.Position = startPosition;
 			// Check for binary format magic bytes
