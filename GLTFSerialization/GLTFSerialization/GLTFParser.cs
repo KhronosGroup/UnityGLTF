@@ -19,7 +19,7 @@ namespace GLTF
 			public uint FileLength { get; set; }
 		}
 		
-		public static GLTFRoot ParseJson(Stream stream, long startPosition = 0)
+		public static void ParseJson(Stream stream, out GLTFRoot gltfRoot, long startPosition = 0)
 		{
 			stream.Position = startPosition;
 			// Check for binary format magic bytes
@@ -32,7 +32,7 @@ namespace GLTF
 				stream.Position = startPosition;
 			}
 
-			return GLTFRoot.Deserialize(new StreamReader(stream));
+			gltfRoot = GLTFRoot.Deserialize(new StreamReader(stream));
 		}
 		
 		// Moves stream position to binary chunk location

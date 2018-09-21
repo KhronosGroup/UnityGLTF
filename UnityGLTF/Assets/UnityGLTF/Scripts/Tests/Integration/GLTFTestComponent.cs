@@ -20,7 +20,8 @@ namespace UnityGLTF.Tests.Integration
 				);
 
 			sceneImporter.SceneParent = gameObject.transform;
-			yield return sceneImporter.LoadScene(-1, Multithreaded);
+			sceneImporter.isMultithreaded = Multithreaded;
+			yield return sceneImporter.LoadScene(-1);
 			IntegrationTest.Pass();
 		}
 	}

@@ -22,6 +22,7 @@ namespace UnityGLTF
 		private bool loadOnStart = true;
 
 		public int MaximumLod = 300;
+		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 
 		[SerializeField]
@@ -69,8 +70,10 @@ namespace UnityGLTF
 				sceneImporter.SceneParent = gameObject.transform;
 				sceneImporter.Collider = Collider;
 				sceneImporter.MaximumLod = MaximumLod;
+				sceneImporter.Timeout = Timeout;
+				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-				yield return sceneImporter.LoadScene(-1, Multithreaded);
+				yield return sceneImporter.LoadScene(-1);
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)

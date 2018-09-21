@@ -28,11 +28,13 @@ namespace UnityGLTF
 
 			yield return loader0.LoadStream(Path.GetFileName(asset0Path));
 			var asset0Stream = loader0.LoadedStream;
-			var asset0Root = GLTFParser.ParseJson(asset0Stream);
+			GLTFRoot asset0Root;
+			GLTFParser.ParseJson(asset0Stream, out asset0Root);
 
 			yield return loader1.LoadStream(Path.GetFileName(asset1Path));
 			var asset1Stream = loader1.LoadedStream;
-			var asset1Root = GLTFParser.ParseJson(asset1Stream);
+			GLTFRoot asset1Root;
+			GLTFParser.ParseJson(asset0Stream, out asset1Root);
 
 			string newPath = "../../" + URIHelper.GetDirectoryName(asset0Path);
 
@@ -70,8 +72,8 @@ namespace UnityGLTF
 				);
 
 			importer.MaximumLod = MaximumLod;
-
-			yield return importer.LoadScene(-1, Multithreaded);
+			importer.isMultithreaded = Multithreaded;
+			yield return importer.LoadScene(-1);
 		}
 #endif
 	}

@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 using System.Text;
 using System.IO;
 using GLTF;
+using GLTF.Schema;
 
 public class GLTFBenchmark : MonoBehaviour
 {
@@ -43,7 +44,8 @@ public class GLTFBenchmark : MonoBehaviour
 			for (var i = 0; i < NumberOfIterations; i++)
 			{
 				timer.Start();
-				GLTFParser.ParseJson(new MemoryStream(www.downloadHandler.data));
+				GLTFRoot gltfRoot = null;
+				GLTFParser.ParseJson(new MemoryStream(www.downloadHandler.data), out gltfRoot);
 				timer.Stop();
 
 				Debug.LogFormat("Iteration {0} took: {1}ms", i, timer.ElapsedMilliseconds);
