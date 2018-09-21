@@ -336,8 +336,8 @@ namespace UnityGLTF
             ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
             using (var stream = File.OpenRead(projectFilePath))
             {
-                GLTFRoot gLTFRoot = null;
-                GLTFParser.ParseJson(stream, ref gLTFRoot);
+                GLTFRoot gLTFRoot;
+                GLTFParser.ParseJson(stream, out gLTFRoot);
                 var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
 
                 loader.MaximumLod = _maximumLod;
