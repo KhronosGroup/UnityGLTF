@@ -29,6 +29,11 @@ public static class UnityGLTFLoader
         IDataWriter dataWriter,
         bool writeAsGLB,
         GLTFWriteOptions writeOptions = new GLTFWriteOptions()
+        );  
+
+    public bool AddExtension(
+        IUnityGLTFExtension extension,
+        int priority
         );
 
     /// <summary>Scheduler of tasks. Can be replaced with custom app implementation so app can handle background threads </summary>
@@ -52,4 +57,16 @@ public class UnityGLTFObject()
     /// </summary>
     /// <param name="fileName">Name of file to load</param>
     public UnityGLTFObject(string fileName);
+}
+
+/// <summary>
+/// Unity glTF extension wrapper
+/// </summary>
+public interface IUnityGLTFExtension
+{
+    IGLTFExtension GLTFExtension { get; };
+    Func<Task<UnityGLTFObject, int, GameObject>> CreateSceneAsyncFunc { get; }
+    Func<Task<UnityGLTFObject, int, GameObject>> CreateNodeAsyncFunc  { get; }
+    Func<Task<UnityGLTFObject, int, MeshPrimitive>> CreateMeshPrimitiveAsyncFunc { get; }
+    /// etc. 
 }
