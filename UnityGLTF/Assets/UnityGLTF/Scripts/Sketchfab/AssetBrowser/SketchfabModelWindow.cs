@@ -24,10 +24,7 @@ namespace Sketchfab
 		SketchfabRequest _modelRequest;
 
 		bool show = false;
-		int _size = -1;
-		string _archiveUrl = "";
 		byte[] _lastArchive;
-		bool _isFeching = false;
 
 		Vector2 _scrollView = new Vector2();
 
@@ -44,7 +41,6 @@ namespace Sketchfab
 			if(_currentModel == null || model.uid != _currentModel.uid)
 			{
 				_currentModel = model;
-				fetchGLTFModel(_currentModel.uid, OnArchiveUpdate, _window._logger.getHeader());
 				_prefabName = GLTFUtils.cleanName(_currentModel.name);
 				_importDirectory = Application.dataPath + "/Import/" + _prefabName.Replace(" ", "_");
 			}
@@ -174,28 +170,25 @@ namespace Sketchfab
 				buttonCaption = "You need to be logged in to download and import assets";
 				GUI.enabled = false;
 			}
-			else if( _isFeching)
-			{
-				buttonCaption = "Looking for model download url";
-				GUI.enabled = false;
-			}
-			else if (_archiveUrl != "")
-			{
-				buttonCaption = "Download model (" + Utils.humanifyFileSize(_size) + ")";
-			}
 			else
 			{
-				buttonCaption = "Model is not available in glTF";
-				GUI.enabled = false;
+				buttonCaption = "Download model (" + Utils.humanifyFileSize(_currentModel.archiveSize) + ")";
 			}
 			if (GUILayout.Button(buttonCaption))
 			{
 
 				if (!assetAlreadyExists() || EditorUtility.DisplayDialog("Override asset", "The asset " + _prefabName + " already exists in project. Do you want to override it ?", "Override", "Cancel"))
 				{
-						requestArchive();
+					// Reuse if still valid
+					if(_currentModel.tempDownloadUrl.Length > 0 && EditorApplication.timeSinceStartup - _currentModel.downloadRequestTime < _currentModel.urlValidityDuration)
+					{
+						requestArchive(_currentModel.tempDownloadUrl);
+					}
+					else
+					{
+						fetchGLTFModel(_currentModel.uid, OnArchiveUpdate, _window._logger.getHeader());
+					}
 				}
-
 			}
 			GUI.color = old;
 			GUI.enabled = true;
@@ -216,11 +209,6 @@ namespace Sketchfab
 			_window._browserManager.setImportProgressCallback(UpdateProgress);
 			_window._browserManager.setImportFinishCallback(OnFinishImport);
 			_window._browserManager.importArchive(_lastArchive, _unzipDirectory, _importDirectory, _prefabName, _addToCurrentScene);
-		}
-
-		public void setTotalSize(int size)
-		{
-			_size = size;
 		}
 
 		private void handleDownloadCallback(float current)
@@ -249,11 +237,9 @@ namespace Sketchfab
 
 		public void fetchGLTFModel(string uid, RefreshCallback fetchedCallback, Dictionary<string, string> headers)
 		{
-			_isFeching = true;
 			string url = SketchfabPlugin.Urls.modelEndPoint + "/" + uid + "/download";
 			_modelRequest = new SketchfabRequest(url, headers);
 			_modelRequest.setCallback(handleDownloadAPIResponse);
-			_modelRequest.setFailedCallback(handleFailFetchDownloadURl);
 			_window._browserManager._api.registerRequest(_modelRequest);
 		}
 
@@ -263,26 +249,27 @@ namespace Sketchfab
 			OnArchiveUpdate();
 		}
 
-		void handleFailFetchDownloadURl()
-		{
-			_isFeching = false;
-		}
 
 		void handleDownloadAPIResponse(string response)
 		{
 			JSONNode responseJson = Utils.JSONParse(response);
 			if(responseJson["gltf"] != null)
 			{
-				_archiveUrl = responseJson["gltf"]["url"];
-				_size = responseJson["gltf"]["size"].AsInt;
+				_currentModel.tempDownloadUrl = responseJson["gltf"]["url"];
+				_currentModel.urlValidityDuration = responseJson["gltf"]["expires"].AsInt;
+				_currentModel.downloadRequestTime = EditorApplication.timeSinceStartup;
+				requestArchive(_currentModel.tempDownloadUrl);
 			}
-			_isFeching = false;
+			else
+			{
+				Debug.Log("Unexpected Error: Model archive is not available");
+			}
 			this.Repaint();
 		}
 
-		void requestArchive()
+		void requestArchive(string modelUrl)
 		{
-			SketchfabRequest request = new SketchfabRequest(_archiveUrl);
+			SketchfabRequest request = new SketchfabRequest(_currentModel.tempDownloadUrl);
 			request.setCallback(handleArchive);
 			request.setProgressCallback(handleDownloadCallback);
 			SketchfabPlugin.getAPI().registerRequest(request);

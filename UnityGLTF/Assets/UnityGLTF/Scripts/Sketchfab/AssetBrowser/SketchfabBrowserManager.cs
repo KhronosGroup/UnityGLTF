@@ -32,7 +32,12 @@ namespace Sketchfab
 		public string hasAnimation = "";
 		public string hasSkin = null;
 		public JSONNode licenseJson;
-		public float archiveSize;
+		public int archiveSize;
+
+		// Reuse download url while it's still valid
+		public string tempDownloadUrl = "";
+		public int urlValidityDuration;
+		public double downloadRequestTime = 0.0f;
 
 		// Assets
 		public Texture2D _thumbnail;
@@ -61,6 +66,7 @@ namespace Sketchfab
 			uid = node["uid"];
 			vertexCount = node["vertexCount"].AsInt;
 			faceCount = node["faceCount"].AsInt;
+			archiveSize = node["archives"]["gltf"]["size"].AsInt;
 		}
 
 		private string richifyText(string text)
