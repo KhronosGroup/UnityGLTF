@@ -459,7 +459,7 @@ namespace Sketchfab
 			{
 				var renderTexture = RenderTexture.GetTemporary(_previewWidth, (int) (_previewWidth * _previewRatio), 24);
 				var exportTexture = new Texture2D(thumb.height, thumb.height, TextureFormat.ARGB32, false);
-
+#if UNITY_5_6 || UNITY_2017
 				if(PlayerSettings.colorSpace == ColorSpace.Linear)
 				{
 					Material linear2SRGB = new Material(Shader.Find("GLTF/Linear2sRGB"));
@@ -470,7 +470,9 @@ namespace Sketchfab
 				{
 					Graphics.Blit(thumb, renderTexture);
 				}
-
+#else
+				Graphics.Blit(thumb, renderTexture);
+#endif
 				exportTexture.ReadPixels(new Rect((thumb.width - thumb.height) / 2, 0, renderTexture.height, renderTexture.height), 0, 0);
 				exportTexture.Apply();
 
@@ -483,7 +485,8 @@ namespace Sketchfab
 				var renderTexture = RenderTexture.GetTemporary(thumb.width, thumb.height, 24);
 				var exportTexture = new Texture2D(thumb.height, thumb.height, TextureFormat.ARGB32, false);
 
-				if (PlayerSettings.colorSpace == ColorSpace.Linear)
+#if UNITY_5_6 || UNITY_2017
+				if(PlayerSettings.colorSpace == ColorSpace.Linear)
 				{
 					Material linear2SRGB = new Material(Shader.Find("GLTF/Linear2sRGB"));
 					linear2SRGB.SetTexture("_InputTex", thumb);
@@ -493,6 +496,9 @@ namespace Sketchfab
 				{
 					Graphics.Blit(thumb, renderTexture);
 				}
+#else
+				Graphics.Blit(thumb, renderTexture);
+#endif
 
 				exportTexture.ReadPixels(new Rect((thumb.width - thumb.height) / 2, 0, renderTexture.height, renderTexture.height), 0, 0);
 				exportTexture.Apply();

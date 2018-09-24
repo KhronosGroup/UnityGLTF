@@ -247,7 +247,8 @@ namespace Sketchfab
 
 			Texture2D tex = new Texture2D(4, 4);
 			tex.LoadImage(responseData);
-			if(PlayerSettings.colorSpace == ColorSpace.Linear)
+#if UNITY_5_6 || UNITY_2017
+			if (PlayerSettings.colorSpace == ColorSpace.Linear)
 			{
 				var renderTexture = RenderTexture.GetTemporary(tex.width, tex.height, 24);
 				Material linear2SRGB = new Material(Shader.Find("GLTF/Linear2sRGB"));
@@ -255,7 +256,7 @@ namespace Sketchfab
 				Graphics.Blit(tex, renderTexture, linear2SRGB);
 				tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
 			}
-
+#endif
 			TextureScale.Bilinear(tex, (int)AVATAR_SIZE.x, (int)AVATAR_SIZE.y);
 			_current.setAvatar(tex);
 
