@@ -618,9 +618,64 @@ namespace UnityGLTF
 				{
 					GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
 				}
-				
+
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
+
+				yield return ConstructMeshTargetAttributes(primitive, meshID, primitiveIndex);
+			}
+		}
+
+		protected virtual IEnumerator ConstructMeshTargetAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
+		{
+			if (primitive.Targets != null)
+			{
+				int targetCount = primitive.Targets.Count;
+				for (int targetIndex = 0; targetIndex < targetCount; ++targetIndex)
+				{
+					var target = primitive.Targets[targetIndex];
+
+					var attributeAccessors = new Dictionary<string, AttributeAccessor>(target.Count + 1);
+					foreach (var attributePair in target)
+					{
+						BufferId bufferIdPair = attributePair.Value.Value.BufferView.Value.Buffer;
+						GLTFBuffer buffer = bufferIdPair.Value;
+						int bufferId = bufferIdPair.Id;
+
+						// on cache miss, load the buffer
+						if (_assetCache.BufferCache[bufferId] == null)
+						{
+							yield return ConstructBuffer(buffer, bufferId);
+						}
+
+						AttributeAccessor attributeAccessor = new AttributeAccessor
+						{
+							AccessorId = attributePair.Value,
+							Stream = _assetCache.BufferCache[bufferId].Stream,
+							Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+						};
+
+						attributeAccessors[attributePair.Key] = attributeAccessor;
+					}
+
+					if (isMultithreaded)
+					{
+						Thread buildMeshAttributesThread = new Thread(() => GLTFHelpers.BuildMeshAttributes(ref attributeAccessors));
+						buildMeshAttributesThread.Priority = ThreadPriority.Highest;
+						buildMeshAttributesThread.Start();
+						while (!buildMeshAttributesThread.Join(Timeout))
+						{
+							yield return null;
+						}
+					}
+					else
+					{
+						GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+					}
+
+					TransformAttributes(ref attributeAccessors);
+					_assetCache.MeshCache[meshID][primitiveIndex].MeshTargets.Add(attributeAccessors);
+				}
 			}
 		}
 
@@ -945,6 +1000,26 @@ namespace UnityGLTF
 			return primitive.Targets != null;
 		}
 
+		protected virtual IEnumerator SetupBlendShapes(int meshID, int primitiveIndex, MeshPrimitive primitive, List<double> weights, Mesh mesh)
+		{
+			var targets = _assetCache.MeshCache[meshID][primitiveIndex].MeshTargets;
+			int targetCount = targets.Count;
+			bool hasWeights = weights != null && weights.Count != 0;
+			for (int index = 0; index < targetCount; ++index)
+			{
+				Vector3[] vertices = primitive.Targets[index].ContainsKey(SemanticProperties.POSITION)
+					? targets[index][SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
+					: null;
+				Vector3[] normals = primitive.Targets[index].ContainsKey(SemanticProperties.NORMAL)
+					? targets[index][SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
+					: null;
+
+				float weight = hasWeights ? (float)weights[index] : 0.0f;
+				mesh.AddBlendShapeFrame(index.ToString(), weight, vertices, normals, null);
+				yield return null;
+			}
+		}
+
 		protected virtual IEnumerator SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, Mesh curMesh)
 		{
 			var boneCount = skin.Joints.Count;
@@ -1045,9 +1120,10 @@ namespace UnityGLTF
 					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 					skinnedMeshRenderer.material = material;
 					skinnedMeshRenderer.quality = SkinQuality.Auto;
-					// TODO: add support for blend shapes/morph targets
-					//if (HasBlendShapes(primitive))
-					//	SetupBlendShapes(primitive);
+					if (HasBlendShapes(primitive))
+					{
+						yield return SetupBlendShapes(meshId, i, primitive, mesh.Weights, curMesh);
+					}
 					if (HasBones(skin))
 					{
 						yield return SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
