@@ -204,11 +204,11 @@ namespace GLTF.Schema
 					case "targets":
 						primitive.Targets = reader.ReadList(() =>
 						{
-							return reader.ReadAsDictionary(() => new AccessorId
-							{
-								Id = reader.ReadAsInt32().Value,
-								Root = root
-							});
+							var dict = new Dictionary<string, AccessorId>();
+							while (reader.Read() && reader.TokenType == JsonToken.PropertyName) {
+								dict.Add(reader.Value.ToString(), AccessorId.Deserialize(root, reader));
+							}
+							return dict;
 						});
 						break;
 					default:
