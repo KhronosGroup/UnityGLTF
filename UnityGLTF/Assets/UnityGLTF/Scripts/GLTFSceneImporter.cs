@@ -1048,6 +1048,11 @@ namespace UnityGLTF
 				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
 			}
 
+			if (_assetCache.NodeCache[skin.Skeleton.Id] == null)
+			{
+				yield return ConstructNode(_gltfRoot.Nodes[skin.Skeleton.Id], skin.Skeleton.Id);
+			}
+
 			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
 			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
