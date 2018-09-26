@@ -206,9 +206,9 @@ namespace GLTF.Schema
 						{
 							return reader.ReadAsDictionary(() => new AccessorId
 							{
-								Id = reader.ReadAsInt32().Value,
-								Root = root
-							});
+									Id = reader.ReadAsInt32().Value,
+									Root = root
+							}, true);
 						});
 						break;
 					default:

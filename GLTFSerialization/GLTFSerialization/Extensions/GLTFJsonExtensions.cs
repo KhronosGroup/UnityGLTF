@@ -193,7 +193,7 @@ namespace GLTF.Extensions
 			return color;
 		}
 
-		public static Color ReadAsRGBColor(this JsonReader reader)
+		public static Color ReadAsRGBColor(this JsonReader reader, bool skipIfAlpha = false)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartArray)
 			{
@@ -208,7 +208,13 @@ namespace GLTF.Extensions
 				A = 1.0f
 			};
 
-			if (reader.Read() && reader.TokenType != JsonToken.EndArray)
+			if (reader.Read() && skipIfAlpha &&
+				(reader.TokenType == JsonToken.Integer || reader.TokenType == JsonToken.Float))
+			{
+				reader.Read();
+			}
+
+			while (reader.TokenType != JsonToken.EndArray)
 			{
 				throw new Exception(string.Format("Invalid color value at: {0}", reader.Path));
 			}
@@ -314,9 +320,9 @@ namespace GLTF.Extensions
 			return quat;
 		}
 
-		public static Dictionary<string, T> ReadAsDictionary<T>(this JsonReader reader, Func<T> deserializerFunc)
+		public static Dictionary<string, T> ReadAsDictionary<T>(this JsonReader reader, Func<T> deserializerFunc, bool skipStartObjectRead = false)
 		{
-			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+			if (!skipStartObjectRead && reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
 				throw new Exception(string.Format("Dictionary must be an object at: {0}", reader.Path));
 			}
