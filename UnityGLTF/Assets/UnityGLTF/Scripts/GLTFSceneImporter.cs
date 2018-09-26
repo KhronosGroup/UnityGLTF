@@ -1067,10 +1067,10 @@ namespace UnityGLTF
 			BoneWeight[] boneWeights = new BoneWeight[vertCount];
 			for (int i = 0; i < vertCount; i++)
 			{
-				boneWeights[i].boneIndex0 = (int)joints[i].x;
-				boneWeights[i].boneIndex1 = (int)joints[i].y;
-				boneWeights[i].boneIndex2 = (int)joints[i].z;
-				boneWeights[i].boneIndex3 = (int)joints[i].w;
+				if (weights[i].x != 0.0f) boneWeights[i].boneIndex0 = (int)joints[i].x;
+				if (weights[i].y != 0.0f) boneWeights[i].boneIndex1 = (int)joints[i].y;
+				if (weights[i].z != 0.0f) boneWeights[i].boneIndex2 = (int)joints[i].z;
+				if (weights[i].w != 0.0f) boneWeights[i].boneIndex3 = (int)joints[i].w;
 
 				boneWeights[i].weight0 = weights[i].x;
 				boneWeights[i].weight1 = weights[i].y;
