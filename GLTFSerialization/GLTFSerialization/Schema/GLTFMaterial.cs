@@ -144,7 +144,7 @@ namespace GLTF.Schema
 						material.EmissiveTexture = TextureInfo.Deserialize(root, reader);
 						break;
 					case "emissiveFactor":
-						material.EmissiveFactor = reader.ReadAsRGBColor();
+						material.EmissiveFactor = reader.ReadAsRGBColor(true);
 						break;
 					case "alphaMode":
 						material.AlphaMode = reader.ReadStringEnum<AlphaMode>();
