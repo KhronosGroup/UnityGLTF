@@ -79,9 +79,9 @@ namespace GLTF.Schema
 
 	public enum GLTFAnimationChannelPath
 	{
-        translation,
-        rotation,
-        scale,
-        weights
+		translation,
+		rotation,
+		scale,
+		weights
 	}
 }

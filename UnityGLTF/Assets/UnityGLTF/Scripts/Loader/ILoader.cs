@@ -12,6 +12,10 @@ namespace UnityGLTF.Loader
 	{
 		IEnumerator LoadStream(string relativeFilePath);
 
+		void LoadStreamSync(string jsonFilePath);
+
 		Stream LoadedStream { get; }
+
+		bool HasSyncLoadMethod { get; }
 	}
 }

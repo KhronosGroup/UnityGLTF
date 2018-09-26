@@ -7,6 +7,7 @@
 /Assets/AssetStoreTools*
 /Assets/ShaderForge*
 /Assets/VSCode*
+/UnityPackageManager/
 
 # Visual Studio 2015 cache directory
 /.vs/
@@ -29,6 +30,8 @@ ExportedObj/
 *.pdb
 *.pfx*
 
+!*-dll.csproj
+!*-dll.sln
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -42,5 +45,8 @@ sysinfo.txt
 
 /www/node_modules/
 
-/WSA/
+# UWP-specific folders and files
+/[Aa]pp/
 /UWP/
+/WSA/
+WSATestCertificate.pfx*

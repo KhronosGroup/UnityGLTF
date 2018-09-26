@@ -41,6 +41,11 @@ namespace UnityGLTF.Cache
 		public List<MeshCacheData[]> MeshCache { get; private set; }
 
 		/// <summary>
+		/// Cache of loaded animations
+		/// </summary>
+		public AnimationCacheData[] AnimationCache { get; private set; }
+
+		/// <summary>
 		/// Cache of loaded node objects
 		/// </summary>
 		public GameObject[] NodeCache { get; private set; }
@@ -55,7 +60,7 @@ namespace UnityGLTF.Cache
 		/// <param name="meshCacheSize"></param>
 		/// <param name="nodeCacheSize"></param>
 		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
-			int meshCacheSize, int nodeCacheSize)
+			int meshCacheSize, int nodeCacheSize, int animationCacheSize)
 		{
 			ImageCache = new Texture2D[imageCacheSize];
 			ImageStreamCache = new Stream[imageCacheSize];
@@ -63,12 +68,13 @@ namespace UnityGLTF.Cache
 			MaterialCache = new MaterialCacheData[materialCacheSize];
 			BufferCache = new BufferCacheData[bufferCacheSize];
 			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
-			for(int i = 0; i < meshCacheSize; ++i)
+			for (int i = 0; i < meshCacheSize; ++i)
 			{
 				MeshCache.Add(null);
 			}
 
 			NodeCache = new GameObject[nodeCacheSize];
+			AnimationCache = new AnimationCacheData[animationCacheSize];
 		}
 
 		public void Dispose()
@@ -77,18 +83,28 @@ namespace UnityGLTF.Cache
 			ImageStreamCache = null;
 			TextureCache = null;
 			MaterialCache = null;
-			foreach(BufferCacheData bufferCacheData in BufferCache)
+			if (BufferCache != null)
 			{
-				if(bufferCacheData != null && bufferCacheData.Stream != null)
+				foreach (BufferCacheData bufferCacheData in BufferCache)
 				{
+					if (bufferCacheData != null)
+					{
+						if (bufferCacheData.Stream != null)
+						{
 #if !WINDOWS_UWP
-					bufferCacheData.Stream.Close();
+							bufferCacheData.Stream.Close();
 #else
-					bufferCacheData.Stream.Dispose();
+							buffer.Stream.Dispose();
 #endif
+						}
+
+						bufferCacheData.Dispose();
+					}
 				}
+				BufferCache = null;
 			}
 			MeshCache = null;
+			AnimationCache = null;
 		}
 	}
 }

@@ -53,7 +53,7 @@ namespace GLTF
 			}
 			if (root.Animations != null)
 			{
-				foreach (Animation animation in root.Animations)
+				foreach (GLTFAnimation animation in root.Animations)
 				{
 					if (animation.Samplers != null)
 					{
@@ -83,7 +83,7 @@ namespace GLTF
 			}
 			if (root.Images != null)
 			{
-				foreach (Image image in root.Images)
+				foreach (GLTFImage image in root.Images)
 				{
 					if (image.BufferView != null && image.BufferView.Id >= bufferViewCount)
 					{
@@ -93,7 +93,7 @@ namespace GLTF
 			}
 			if (root.Materials != null)
 			{
-				foreach (Material material in root.Materials)
+				foreach (GLTFMaterial material in root.Materials)
 				{
 					if (material.EmissiveTexture?.Index != null && material.EmissiveTexture.Index.Id >= textureCount)
 					{
@@ -126,7 +126,7 @@ namespace GLTF
 			}
 			if (root.Meshes != null)
 			{
-				foreach (Mesh mesh in root.Meshes)
+				foreach (GLTFMesh mesh in root.Meshes)
 				{
 					if (mesh.Primitives != null)
 					{
@@ -174,7 +174,7 @@ namespace GLTF
 			}
 			if (root.Scenes != null)
 			{
-				foreach (Scene scene in root.Scenes)
+				foreach (GLTFScene scene in root.Scenes)
 				{
 					if (scene.Nodes != null)
 					{
@@ -210,7 +210,7 @@ namespace GLTF
 			}
 			if (root.Textures != null)
 			{
-				foreach (Texture texture in root.Textures)
+				foreach (GLTFTexture texture in root.Textures)
 				{
 					if (texture.Sampler != null && texture.Sampler.Id >= samplersCount)
 					{
@@ -224,14 +224,18 @@ namespace GLTF
 		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
 		/// </summary>
 		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
-		public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes, Vector3 coordinateSpaceScale, Vector2 textureSpaceScale, Vector4 tangentSpaceScale)
+		/// <summary>
+		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
+		/// </summary>
+		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
+		public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes)
 		{
 			if (attributes.ContainsKey(SemanticProperties.POSITION))
 			{
 				var attributeAccessor = attributes[SemanticProperties.POSITION];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset, coordinateSpaceScale);
+				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.INDICES))
@@ -239,8 +243,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.INDICES];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				bool sameHandedness = coordinateSpaceScale.X * coordinateSpaceScale.Y * coordinateSpaceScale.Z > 0.0f;
-				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset, sameHandedness);
+				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.NORMAL))
@@ -248,7 +251,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.NORMAL];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset, coordinateSpaceScale);
+				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(0)))
@@ -256,7 +259,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(0)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(1)))
@@ -264,7 +267,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(1)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(2)))
@@ -272,7 +275,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(2)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.TexCoord(3)))
@@ -280,7 +283,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TexCoord(3)];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset, textureSpaceScale);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.Color(0)))
@@ -296,8 +299,64 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.TANGENT];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset, tangentSpaceScale);
+				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Weight(0)))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Weight(0)];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Joint(0)))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Joint(0)];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+		}
+
+		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)
+		{
+			NumericArray resultArray = attributeAccessor.AccessorContent;
+			uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache, offset);
+			attributeAccessor.AccessorContent = resultArray;
+		}
+
+		/// <summary>
+		/// Uses the accessor to parse the buffer into arrays needed to construct the animation
+		/// </summary>
+		/// <param name="samplers">A dictionary mapping AttributeAccessor lists to their target types
+		public static void BuildAnimationSamplers(ref Dictionary<string, List<AttributeAccessor>> samplers)
+		{
+			foreach (var samplerSet in samplers)
+			{
+				foreach (var attributeAccessor in samplerSet.Value)
+				{
+					NumericArray resultArray = attributeAccessor.AccessorContent;
+					uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+
+					switch (samplerSet.Key)
+					{
+						case "time":
+							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache, offset);
+							break;
+						case "translation":
+						case "scale":
+							attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+							break;
+						case "rotation":
+							attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+							break;
+					}
+
+					attributeAccessor.AccessorContent = resultArray;
+				}
 			}
 		}
 
@@ -380,8 +439,17 @@ namespace GLTF
 			{
 				using (var memoryStream = attributeAccessor.Stream as System.IO.MemoryStream)
 				{
+#if NETFX_CORE || NETSTANDARD1_3
+					if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
+					{
+						bufferViewCache = arraySegment.Array;
+						return totalOffset;
+					}
+#else
 					bufferViewCache = memoryStream.GetBuffer();
 					return totalOffset;
+#endif
+
 				}
 			}
 #endif
@@ -443,10 +511,10 @@ namespace GLTF
 			{
 				if (mergeToRoot.Buffers == null)
 				{
-					mergeToRoot.Buffers = new List<Buffer>(mergeFromRoot.Buffers.Count);
+					mergeToRoot.Buffers = new List<GLTFBuffer>(mergeFromRoot.Buffers.Count);
 				}
 
-				foreach (Buffer buffer in mergeFromRoot.Buffers)
+				foreach (GLTFBuffer buffer in mergeFromRoot.Buffers)
 				{
 					if (buffer.Uri != null)
 					{
@@ -469,7 +537,7 @@ namespace GLTF
 				mergeToRoot.BufferViews.AddRange(mergeFromRoot.BufferViews);
 				for (int i = previousGLTFSizes.PreviousBufferViewCount; i < mergeToRoot.BufferViews.Count; ++i)
 				{
-					GLTFId<Buffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
+					GLTFId<GLTFBuffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
 					if (!(isGLB || bufferId.Id == 0))	// if it is pointing a the special glb buffer (index 0 of a glb) then we dont want to adjust the buffer view, otherwise we do
 					{
 						// adjusting bufferview id based on merge amount
@@ -529,13 +597,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Images == null)
 				{
-					mergeToRoot.Images = new List<Image>(mergeFromRoot.Images.Count);
+					mergeToRoot.Images = new List<GLTFImage>(mergeFromRoot.Images.Count);
 				}
 
 				mergeToRoot.Images.AddRange(mergeFromRoot.Images);
 				for (int i = previousGLTFSizes.PreviousImageCount; i < mergeToRoot.Images.Count; ++i)
 				{
-					Image image = mergeToRoot.Images[i];
+					GLTFImage image = mergeToRoot.Images[i];
 					if (image.BufferView != null)
 					{
 						BufferViewId bufferViewId = image.BufferView;
@@ -549,13 +617,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Textures == null)
 				{
-					mergeToRoot.Textures = new List<Texture>(mergeFromRoot.Textures.Count);
+					mergeToRoot.Textures = new List<GLTFTexture>(mergeFromRoot.Textures.Count);
 				}
 
 				mergeToRoot.Textures.AddRange(mergeFromRoot.Textures);
 				for (int i = previousGLTFSizes.PreviousTextureCount; i < mergeToRoot.Textures.Count; ++i)
 				{
-					Texture texture = mergeToRoot.Textures[i];
+					GLTFTexture texture = mergeToRoot.Textures[i];
 
 					if (texture.Sampler != null)
 					{
@@ -577,13 +645,13 @@ namespace GLTF
 			{
 				if (mergeToRoot.Materials == null)
 				{
-					mergeToRoot.Materials = new List<Material>(mergeFromRoot.Materials.Count);
+					mergeToRoot.Materials = new List<GLTFMaterial>(mergeFromRoot.Materials.Count);
 				}
 				
 				mergeToRoot.Materials.AddRange(mergeFromRoot.Materials);
 				for (int i = previousGLTFSizes.PreviousMaterialCount; i < mergeToRoot.Materials.Count; ++i)
 				{
-					Material material = mergeToRoot.Materials[i];
+					GLTFMaterial material = mergeToRoot.Materials[i];
 
 					PbrMetallicRoughness pbrMetallicRoughness = material.PbrMetallicRoughness;
 					if (pbrMetallicRoughness != null)
@@ -640,13 +708,13 @@ namespace GLTF
 			
 			if (mergeToRoot.Meshes == null)
 			{
-				mergeToRoot.Meshes = new List<Mesh>(mergeFromRoot.Meshes.Count);
+				mergeToRoot.Meshes = new List<GLTFMesh>(mergeFromRoot.Meshes.Count);
 			}
 
 			mergeToRoot.Meshes.AddRange(mergeFromRoot.Meshes);
 			for (int i = previousGLTFSizes.PreviousMeshCount; i < mergeToRoot.Meshes.Count; ++i)
 			{
-				Mesh mesh = mergeToRoot.Meshes[i];
+				GLTFMesh mesh = mergeToRoot.Meshes[i];
 				if (mesh.Primitives != null)
 				{
 					foreach (MeshPrimitive primitive in mesh.Primitives)
@@ -694,7 +762,7 @@ namespace GLTF
 			if (mergeFromRoot.Cameras == null) return;
 			if (mergeToRoot.Cameras == null)
 			{
-				mergeToRoot.Cameras = new List<Camera>(mergeFromRoot.Cameras.Count);
+				mergeToRoot.Cameras = new List<GLTFCamera>(mergeFromRoot.Cameras.Count);
 			}
 
 			mergeToRoot.Cameras.AddRange(mergeFromRoot.Cameras);
@@ -783,14 +851,14 @@ namespace GLTF
 			{
 				if (mergeToRoot.Animations == null)
 				{
-					mergeToRoot.Animations = new List<Animation>(mergeFromRoot.Animations.Count);
+					mergeToRoot.Animations = new List<GLTFAnimation>(mergeFromRoot.Animations.Count);
 				}
 
 				mergeToRoot.Animations.AddRange(mergeFromRoot.Animations);
 
 				for (int i = previousGLTFSizes.PreviousAnimationCount; i < mergeToRoot.Animations.Count; ++i)
 				{
-					Animation animation = mergeToRoot.Animations[i];
+					GLTFAnimation animation = mergeToRoot.Animations[i];
 					foreach (AnimationSampler sampler in animation.Samplers)
 					{
 						AccessorId inputId = sampler.Input;
@@ -822,13 +890,13 @@ namespace GLTF
 
 			if (mergeToRoot.Scenes == null)
 			{
-				mergeToRoot.Scenes = new List<Scene>(mergeFromRoot.Scenes.Count);
+				mergeToRoot.Scenes = new List<GLTFScene>(mergeFromRoot.Scenes.Count);
 			}
 
 			mergeToRoot.Scenes.AddRange(mergeFromRoot.Scenes);
 			for (int i = previousGLTFSizes.PreviousSceneCount; i < mergeToRoot.Scenes.Count; ++i)
 			{
-				Scene scene = mergeToRoot.Scenes[i];
+				GLTFScene scene = mergeToRoot.Scenes[i];
 				foreach (NodeId nodeId in scene.Nodes)
 				{
 					nodeId.Id += previousGLTFSizes.PreviousNodeCount;

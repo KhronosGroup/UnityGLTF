@@ -9,6 +9,10 @@ namespace GLTFSerializationTests
 	[TestClass]
 	public class GLTFJsonLoaderTest
 	{
+		private readonly string GLTF_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF/BoomBox.gltf";
+		private readonly string GLTF_PBR_SPECGLOSS_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-pbrSpecularGlossiness/Lantern.gltf";
+		private readonly string GLB_PATH = Directory.GetCurrentDirectory() + "/../../../../External/glTF-Binary/BoomBox.glb";
+
 		public TestContext TestContext { get; set; }
 
 		[TestMethod]
@@ -18,24 +22,26 @@ namespace GLTFSerializationTests
 			FileStream gltfStream = File.OpenRead(TestAssetPaths.GLTF_PATH);
 
 			GLTFRoot.RegisterExtension(new TestExtensionFactory());
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
+			GLTFRoot gltfRoot = null;
+			GLTFParser.ParseJson(gltfStream, out gltfRoot);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);
 		}
 
 		[TestMethod]
 		public void LoadKHRSpecGlossGLTFFromStream()
 		{
-			Assert.IsTrue(File.Exists(TestAssetPaths.GLTF_PBR_SPECGLOSS_PATH));
-			FileStream gltfStream = File.OpenRead(TestAssetPaths.GLTF_PBR_SPECGLOSS_PATH);
-			
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
+			Assert.IsTrue(File.Exists(GLTF_PBR_SPECGLOSS_PATH));
+			FileStream gltfStream = File.OpenRead(GLTF_PBR_SPECGLOSS_PATH);
+
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(gltfStream, out gltfRoot);
 
 			Assert.IsNotNull(gltfRoot.ExtensionsUsed);
 			Assert.IsTrue(gltfRoot.ExtensionsUsed.Contains(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME));
 
 			Assert.IsNotNull(gltfRoot.Materials);
 			Assert.AreEqual(1, gltfRoot.Materials.Count);
-			Material materialDef = gltfRoot.Materials[0];
+			GLTFMaterial materialDef = gltfRoot.Materials[0];
 			KHR_materials_pbrSpecularGlossinessExtension specGloss = materialDef.Extensions[KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME] as KHR_materials_pbrSpecularGlossinessExtension;
 			Assert.IsTrue(specGloss != null);
 
@@ -49,9 +55,10 @@ namespace GLTFSerializationTests
 		[TestMethod]
 		public void LoadGLBFromStream()
 		{
-			Assert.IsTrue(File.Exists(TestAssetPaths.GLB_BOOMBOX_PATH));
-			FileStream gltfStream = File.OpenRead(TestAssetPaths.GLB_BOOMBOX_PATH);
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(gltfStream);
+			Assert.IsTrue(File.Exists(GLB_PATH));
+			FileStream gltfStream = File.OpenRead(GLB_PATH);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(gltfStream, out gltfRoot);
 			GLTFJsonLoadTestHelper.TestGLB(gltfRoot);
 		}
 	}

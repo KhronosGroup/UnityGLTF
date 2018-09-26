@@ -82,12 +82,12 @@ namespace GLTF
 			_binaryChunkInfo.Length = binaryChunkLength;
 			if (Root.Buffers == null)
 			{
-				Root.Buffers = new List<Buffer>();
+				Root.Buffers = new List<GLTFBuffer>();
 			}
 
 			if (Root.Buffers.Count == 0)
 			{
-				Root.Buffers.Add(new Buffer
+				Root.Buffers.Add(new GLTFBuffer
 				{
 					ByteLength = binaryChunkLength
 				});

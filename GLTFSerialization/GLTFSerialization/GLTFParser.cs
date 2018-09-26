@@ -36,7 +36,7 @@ namespace GLTF
 		public static readonly uint CHUNK_HEADER_SIZE = 8;
 		public static readonly uint MAGIC_NUMBER = 0x46546c67;
 
-		public static GLTFRoot ParseJson(Stream stream, long startPosition = 0)
+		public static void ParseJson(Stream stream, out GLTFRoot gltfRoot, long startPosition = 0)
 		{
 			stream.Position = startPosition;
 			bool isGLB = IsGLB(stream);
@@ -51,10 +51,8 @@ namespace GLTF
 				stream.Position = startPosition;
 			}
 
-			GLTFRoot root = GLTFRoot.Deserialize(new StreamReader(stream));
-			root.IsGLB = isGLB;
-
-			return root;
+			gltfRoot = GLTFRoot.Deserialize(new StreamReader(stream));
+			gltfRoot.IsGLB = isGLB;
 		}
 
 		// todo: this needs reimplemented. There is no such thing as a binary chunk index, and the chunk may not be in 0, 1, 2 order

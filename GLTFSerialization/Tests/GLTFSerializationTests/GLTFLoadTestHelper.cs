@@ -132,7 +132,7 @@ namespace GLTFSerializationTests
 
 		private static void TestBuffers(GLTFRoot gltfRoot)
 		{
-			List<Buffer> buffers = gltfRoot.Buffers;
+			List<GLTFBuffer> buffers = gltfRoot.Buffers;
 			Assert.AreEqual(1, buffers.Count);
 			Assert.AreEqual("BoomBox.bin", buffers[0].Uri);
 			Assert.AreEqual((uint)207816, buffers[0].ByteLength);
@@ -140,14 +140,14 @@ namespace GLTFSerializationTests
 
 		private static void TestGLBBuffers(GLTFRoot gltfRoot)
 		{
-			List<Buffer> buffers = gltfRoot.Buffers;
+			List<GLTFBuffer> buffers = gltfRoot.Buffers;
 			Assert.AreEqual(1, buffers.Count);
 			Assert.AreEqual((uint)11247948, buffers[0].ByteLength);
 		}
 
 		private static void TestImages(GLTFRoot gltfRoot)
 		{
-			List<Image> images = gltfRoot.Images;
+			List<GLTFImage> images = gltfRoot.Images;
 			Assert.AreEqual(4, images.Count);
 			Assert.AreEqual("BoomBox_baseColor.png", images[0].Uri);
 			Assert.AreEqual("BoomBox_occlusionRoughnessMetallic.png", images[1].Uri);
@@ -157,14 +157,14 @@ namespace GLTFSerializationTests
 
 		private static void TestGLBImages(GLTFRoot gltfRoot)
 		{
-			List<Image> images = gltfRoot.Images;
+			List<GLTFImage> images = gltfRoot.Images;
 			Assert.AreEqual(4, images.Count);
 			Assert.AreEqual(0, images[0].BufferView.Id);
 			Assert.AreEqual(1, images[1].BufferView.Id);
 			Assert.AreEqual(2, images[2].BufferView.Id);
 			Assert.AreEqual(3, images[3].BufferView.Id);
 
-			foreach (Image image in images)
+			foreach (GLTFImage image in images)
 			{
 				Assert.AreEqual("image/png", image.MimeType);
 			}
@@ -172,7 +172,7 @@ namespace GLTFSerializationTests
 
 		private static void TestMeshes(GLTFRoot gltfRoot)
 		{
-			List<Mesh> meshes = gltfRoot.Meshes;
+			List<GLTFMesh> meshes = gltfRoot.Meshes;
 			Assert.AreEqual(1, meshes.Count);
 
 			Assert.AreEqual("BoomBox", meshes[0].Name);
@@ -198,7 +198,7 @@ namespace GLTFSerializationTests
 
 		private static void TestMaterials(GLTFRoot gltfRoot)
 		{
-			List<Material> materials = gltfRoot.Materials;
+			List<GLTFMaterial> materials = gltfRoot.Materials;
 			Assert.AreEqual(1, materials.Count);
 
 			Assert.AreEqual(0, materials[0].PbrMetallicRoughness.BaseColorTexture.Index.Id);
@@ -251,7 +251,7 @@ namespace GLTFSerializationTests
 		private static void TestScenes(GLTFRoot gltfRoot)
 		{
 			Assert.AreEqual(0, gltfRoot.Scene.Id);
-			List<Scene> scenes = gltfRoot.Scenes;
+			List<GLTFScene> scenes = gltfRoot.Scenes;
 			Assert.AreEqual(1, scenes.Count);
 
 			Assert.AreEqual(1, scenes[0].Nodes.Count);
@@ -260,7 +260,7 @@ namespace GLTFSerializationTests
 
 		private static void TestTextures(GLTFRoot gltfRoot)
 		{
-			List<Texture> textures = gltfRoot.Textures;
+			List<GLTFTexture> textures = gltfRoot.Textures;
 			Assert.AreEqual(4, textures.Count);
 
 			Assert.AreEqual(0, textures[0].Source.Id);

@@ -84,13 +84,13 @@ namespace GLTF.Schema
 			writer.WritePropertyName("xmag");
 			writer.WriteValue(XMag);
 
-			writer.WritePropertyName("Ymag");
+			writer.WritePropertyName("ymag");
 			writer.WriteValue(YMag);
 
-			writer.WritePropertyName("ZFar");
+			writer.WritePropertyName("zfar");
 			writer.WriteValue(ZFar);
 
-			writer.WritePropertyName("ZNear");
+			writer.WritePropertyName("znear");
 			writer.WriteValue(ZNear);
 
 			base.Serialize(writer);

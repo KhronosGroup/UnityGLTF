@@ -30,8 +30,11 @@ namespace GLTFSerializationTests
 			writer.Flush();
 			stream.Position = 0;
 
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(stream);
-			GLBBuilder.UpdateStream(glbObject, gltfRoot);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(stream, out gltfRoot);
+			GLBBuilder.SetRoot(glbObject, gltfRoot);
+
+			GLBBuilder.UpdateStream(glbObject);
 
 			glbStream.Close();
 			glbStream = new FileStream(outPath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -57,8 +60,10 @@ namespace GLTFSerializationTests
 			writer.Flush();
 			stream.Position = 0;
 
-			GLTFRoot gltfRoot = GLTFParser.ParseJson(stream);
-			GLBBuilder.UpdateStream(glbObject, gltfRoot);
+			GLTFRoot gltfRoot;
+			GLTFParser.ParseJson(stream, out gltfRoot);
+			GLBBuilder.SetRoot(glbObject, gltfRoot);
+			GLBBuilder.UpdateStream(glbObject);
 
 			FileStream glbAppendStream = File.OpenRead(TestAssetPaths.GLB_BOOMBOX_PATH);
 			GLBObject glbAppendObject = GLBBuilder.ConstructFromStream(glbAppendStream);
@@ -88,7 +93,8 @@ namespace GLTFSerializationTests
 			Assert.AreEqual(glbStream.Length, glbObject.Header.FileLength);
 
 			glbOutStream.Position = 0;
-			GLTFRoot glbOutRoot = GLTFParser.ParseJson(glbOutStream);
+			GLTFRoot glbOutRoot;
+			GLTFParser.ParseJson(glbOutStream, out glbOutRoot);
 			GLTFJsonLoadTestHelper.TestGLB(glbOutRoot);
 		}
 
@@ -116,7 +122,9 @@ namespace GLTFSerializationTests
 
 			GLBBuilder.UpdateStream(glbObject);
 			glbOutStream.Position = 0;
-			GLTFParser.ParseJson(glbOutStream);
+
+			GLTFRoot glbOutRoot;
+			GLTFParser.ParseJson(glbOutStream, out glbOutRoot);
 			FileStream glbFileStream = glbObject.Stream as FileStream;
 			Assert.AreEqual(glbFileStream, glbFileStream);
 			glbOutStream.Position = 0;
@@ -274,10 +282,11 @@ namespace GLTFSerializationTests
 			writer.Write(TestAssetPaths.MIN_GLTF_STR);
 			writer.Flush();
 			stream.Position = 0;
-			
-			GLTFRoot newRoot = GLTFParser.ParseJson(stream);
 
-			GLBBuilder.UpdateStream(glbObject, newRoot);
+			GLTFRoot newRoot;
+			GLTFParser.ParseJson(stream, out newRoot);
+			GLBBuilder.SetRoot(glbObject, newRoot);
+			GLBBuilder.UpdateStream(glbObject);
 			Assert.AreEqual(glbObject.Header.FileLength, glbObject.JsonChunkInfo.StartPosition + glbObject.JsonChunkInfo.Length + GLTFParser.CHUNK_HEADER_SIZE);
 			glbOutStream.Close();
 			glbOutStream = new FileStream(outPath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -304,10 +313,11 @@ namespace GLTFSerializationTests
 
 			uint bufferSize = GLBBuilder.CalculateAlignment((uint)blobToAdd.Length, 4);
 			BufferViewId bufferViewId = GLBBuilder.AddBinaryData(glbObject, blobToAdd);
-			
+
+			uint headerModifier = previousChunkLength == 0 ? GLTFParser.CHUNK_HEADER_SIZE : 0;
 			Assert.AreEqual(previousCount + 1, glbObject.Root.BufferViews.Count);
 			Assert.AreEqual(previousCount, bufferViewId.Id);
-			Assert.AreEqual(previousGLBLength + bufferSize, glbObject.Header.FileLength);
+			Assert.AreEqual(previousGLBLength + bufferSize + headerModifier, glbObject.Header.FileLength);
 			Assert.AreEqual(previousChunkLength + bufferSize, glbObject.BinaryChunkInfo.Length);
 			Assert.AreEqual(previousChunkLength + bufferSize, glbObject.Root.Buffers[0].ByteLength);
 			Assert.AreEqual(glbObject.Header.FileLength, glbObject.Stream.Length);

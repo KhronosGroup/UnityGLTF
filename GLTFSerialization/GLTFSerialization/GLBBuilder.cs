@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Buffer = GLTF.Schema.Buffer;
 
 namespace GLTF
 {
@@ -152,7 +151,8 @@ namespace GLTF
 			{
 				inStream.Position = streamStartPosition;
 
-				GLTFRoot root = GLTFParser.ParseJson(inStream, streamStartPosition);
+				GLTFRoot root;
+				GLTFParser.ParseJson(inStream, out root, streamStartPosition);
 				if (removeUndefinedReferences)
 				{
 					GLTFHelpers.RemoveUndefinedReferences(root);
@@ -485,7 +485,7 @@ namespace GLTF
 
 			if (glb.Root.Images != null)
 			{
-				foreach (Image image in glb.Root.Images)
+				foreach (GLTFImage image in glb.Root.Images)
 				{
 					if (image.BufferView != null && image.BufferView.Id >= id)
 					{
