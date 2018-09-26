@@ -957,6 +957,7 @@ namespace UnityGLTF
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
+			_assetCache.NodeCache[nodeIndex] = nodeObj;
 
 			if (node.Mesh != null)
 			{
@@ -982,7 +983,6 @@ namespace UnityGLTF
 			}
 
 			nodeObj.SetActive(true);
-			_assetCache.NodeCache[nodeIndex] = nodeObj;
 		}
 
 		private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
