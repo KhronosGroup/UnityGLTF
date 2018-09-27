@@ -57,5 +57,15 @@ namespace UnityGLTF
 			base.Copy(copy);
 			return copy;
 		}
+		
+		public override double RoughnessFactor
+		{
+			get { 
+				return _material.GetFloat("_Glossiness");
+			}
+			set { 
+				_material.SetFloat("_Glossiness", (float)value);
+			}
+		}
 	}
 }
