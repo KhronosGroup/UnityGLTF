@@ -538,8 +538,8 @@ namespace GLTF
 				for (int i = previousGLTFSizes.PreviousBufferViewCount; i < mergeToRoot.BufferViews.Count; ++i)
 				{
 					GLTFId<GLTFBuffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
-					if (!(isGLB || bufferId.Id == 0))	// if it is pointing a the special glb buffer (index 0 of a glb) then we dont want to adjust the buffer view, otherwise we do
-					{
+                    if (!(isGLB && bufferId.Id == 0))   // if it is pointing a the special glb buffer (index 0 of a glb) then we dont want to adjust the buffer view, otherwise we do
+                    {
 						// adjusting bufferview id based on merge amount
 						bufferId.Id += previousGLTFSizes.PreviousBufferCount;
 						bufferId.Root = mergeToRoot;

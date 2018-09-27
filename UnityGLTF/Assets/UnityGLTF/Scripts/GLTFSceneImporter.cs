@@ -1010,7 +1010,7 @@ namespace UnityGLTF
 			}
 		}
 
-				protected virtual IEnumerator ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin)
+		protected virtual IEnumerator ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin)
 		{
 			if (_assetCache.MeshCache[meshId] == null)
 			{
