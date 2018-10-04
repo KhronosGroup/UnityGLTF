@@ -79,8 +79,12 @@
     <Compile Include="Exceptions.cs" />
     <Compile Include="Extensions\ExtTextureTransformExtension.cs" />
     <Compile Include="Extensions\ExtTextureTransformExtensionFactory.cs" />
+    <Compile Include="GLBBuilder.cs" />
+    <Compile Include="GLBObject.cs" />
     <Compile Include="GLTFHelpers.cs" />
+    <Compile Include="GLTFObject.cs" />
     <Compile Include="GLTFParser.cs" />
+    <Compile Include="IGLTFObject.cs" />
     <Compile Include="Math\Matrix4x4.cs" />
     <Compile Include="Math\Quaternion.cs" />
     <Compile Include="Math\Vector2.cs" />
@@ -124,15 +128,12 @@
     <Compile Include="Schema\TextureInfo.cs" />
     <Compile Include="Extensions\GLTFJsonExtensions.cs" />
     <Compile Include="Math\Color.cs" />
+    <Compile Include="Utilities\JsonReaderExtensions.cs" />
+    <Compile Include="Utilities\StreamExtensions.cs" />
+    <Compile Include="Utilities\SubStream.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.2.0\build\Microsoft.Net.Compilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.2.0\build\Microsoft.Net.Compilers.props'))" />
-  </Target>
 </Project>

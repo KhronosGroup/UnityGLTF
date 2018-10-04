@@ -66,11 +66,23 @@
     <Compile Include="..\GLTFSerialization\Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs">
       <Link>Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\GLBBuilder.cs">
+      <Link>GLBBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\GLBObject.cs">
+      <Link>GLBObject.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFHelpers.cs">
       <Link>GLTFHelpers.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\GLTFObject.cs">
+      <Link>GLTFObject.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\GLTFParser.cs">
       <Link>GLTFParser.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\IGLTFObject.cs">
+      <Link>IGLTFObject.cs</Link>
     </Compile>
     <Compile Include="..\GLTFSerialization\Math\Matrix4x4.cs">
       <Link>Math\Matrix4x4.cs</Link>
@@ -128,7 +140,7 @@
     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\CameraPerspective.cs">
       <Link>Schema\CameraPerspective.cs</Link>
-    </Compile>
+     </Compile>
     <Compile Include="..\GLTFSerialization\Schema\GLTFChildOfRootProperty.cs">
       <Link>Schema\GLTFChildOfRootProperty.cs</Link>
     </Compile>
@@ -186,6 +198,15 @@
     <Compile Include="..\GLTFSerialization\Schema\TextureInfo.cs">
       <Link>Schema\TextureInfo.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Utilities\JsonReaderExtensions.cs">
+      <Link>Utilities\JsonReaderExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Utilities\StreamExtensions.cs">
+      <Link>Utilities\StreamExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Utilities\SubStream.cs">
+      <Link>Utilities\SubStream.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\Extensions\GLTFJsonExtensions.cs">
       <Link>Extensions\GLTFJsonExtensions.cs</Link>
     </Compile>
@@ -199,30 +220,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoStdLib>true</NoStdLib>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <NoStdLib>true</NoStdLib>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

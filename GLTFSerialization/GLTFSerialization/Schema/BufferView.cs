@@ -1,3 +1,4 @@
+using GLTF.Utilities;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -23,13 +24,13 @@ namespace GLTF.Schema
 		/// The offset into the buffer in bytes.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public int ByteOffset;
+		public uint ByteOffset;
 
 		/// <summary>
 		/// The length of the bufferView in bytes.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public int ByteLength;
+		public uint ByteLength;
 
 		/// <summary>
 		/// The stride, in bytes, between vertex attributes or other interleavable data.
@@ -37,7 +38,7 @@ namespace GLTF.Schema
 		/// <minimum>0</minimum>
 		/// <maximum>255</maximum>
 		/// </summary>
-		public int ByteStride;
+		public uint ByteStride;
 
 		/// <summary>
 		/// The target that the WebGL buffer should be bound to.
@@ -73,13 +74,13 @@ namespace GLTF.Schema
 						bufferView.Buffer = BufferId.Deserialize(root, reader);
 						break;
 					case "byteOffset":
-						bufferView.ByteOffset = reader.ReadAsInt32().Value;
+						bufferView.ByteOffset = reader.ReadDoubleAsUInt32();
 						break;
 					case "byteLength":
-						bufferView.ByteLength = reader.ReadAsInt32().Value;
+						bufferView.ByteLength = reader.ReadDoubleAsUInt32();
 						break;
 					case "byteStride":
-						bufferView.ByteStride = reader.ReadAsInt32().Value;
+						bufferView.ByteStride = reader.ReadDoubleAsUInt32();
 						break;
 					case "target":
 						bufferView.Target = (BufferViewTarget)reader.ReadAsInt32().Value;

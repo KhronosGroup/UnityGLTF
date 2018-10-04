@@ -19,12 +19,12 @@ namespace UnityGLTF.Cache
 		/// Loaded raw texture data
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
-
+		
 		/// <summary>
 		/// Textures to be used for assets. Textures from image cache with samplers applied
 		/// </summary>
 		public TextureCacheData[] TextureCache { get; private set; }
-
+		
 		/// <summary>
 		/// Cache for materials to be applied to the meshes
 		/// </summary>

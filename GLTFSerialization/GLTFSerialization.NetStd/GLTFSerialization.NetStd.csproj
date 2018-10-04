@@ -18,6 +18,10 @@
     <Version>1.0.0-alpha</Version>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>		
     <Compile Include="..\GLTFSerialization\**\*.cs" Exclude="..\GLTFSerialization\Properties\**\*.cs" />
   </ItemGroup>

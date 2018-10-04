@@ -78,11 +78,14 @@ namespace UnityGLTF.Cache
 			// Destroy the cached meshes
 			for (int i = 0; i < MeshCache.Count; i++)
 			{
-				for (int j = 0; j < MeshCache[i].Length; j++)
+				if (MeshCache[i] != null)
 				{
-					if (MeshCache[i][j] != null)
+					for (int j = 0; j < MeshCache[i].Length; j++)
 					{
-						MeshCache[i][j].Unload();
+						if (MeshCache[i][j] != null)
+						{
+							MeshCache[i][j].Unload();
+						}
 					}
 				}
 			}

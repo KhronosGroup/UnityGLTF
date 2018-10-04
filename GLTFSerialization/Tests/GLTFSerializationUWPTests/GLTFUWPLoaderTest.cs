@@ -24,6 +24,8 @@ namespace GLTFSerializerUWPTests
 			StorageFile sampleFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(GLTF_PATH));
 
 			IRandomAccessStream gltfStream = await sampleFile.OpenAsync(FileAccessMode.Read);
+			var reader = new DataReader(gltfStream.GetInputStreamAt(0));
+
 			GLTFRoot gltfRoot;
 			GLTFParser.ParseJson(gltfStream.AsStream(), out gltfRoot);
 			GLTFJsonLoadTestHelper.TestGLTF(gltfRoot);

@@ -86,13 +86,13 @@ namespace GLTF.Schema
 			JProperty jProperty =
 				new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME,
 					new JObject(
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_FACTOR, DiffuseFactor),
+						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_FACTOR, new JArray(DiffuseFactor.R, DiffuseFactor.G, DiffuseFactor.B, DiffuseFactor.A)),
 						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_TEXTURE,
 							new JObject(
 								new JProperty(TextureInfo.INDEX, DiffuseTexture.Index.Id)
 								)
 							),
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_FACTOR, SpecularFactor),
+						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_FACTOR, new JArray(SpecularFactor.X, SpecularFactor.Y, SpecularFactor.Z)),
 						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.GLOSSINESS_FACTOR, GlossinessFactor),
 						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_GLOSSINESS_TEXTURE,
 							new JObject(

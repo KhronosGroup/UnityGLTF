@@ -314,11 +314,11 @@ namespace GLTF.Extensions
 			return quat;
 		}
 
-		public static Dictionary<string, T> ReadAsDictionary<T>(this JsonReader reader, Func<T> deserializerFunc)
+		public static Dictionary<string, T> ReadAsDictionary<T>(this JsonReader reader, Func<T> deserializerFunc, bool skipStartObjectRead = false)
 		{
-			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+			if (!skipStartObjectRead && reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
-				throw new Exception(string.Format("Dictionary must be an object at: {0}", reader.Path));
+				throw new Exception(string.Format("Dictionary must be an object at: {0}.", reader.Path));
 			}
 
 			var dict = new Dictionary<string, T>();

@@ -34,7 +34,7 @@ namespace UnityGLTF
 			yield return loader1.LoadStream(Path.GetFileName(asset1Path));
 			var asset1Stream = loader1.LoadedStream;
 			GLTFRoot asset1Root;
-			GLTFParser.ParseJson(asset0Stream, out asset1Root);
+			GLTFParser.ParseJson(asset1Stream, out asset1Root);
 
 			string newPath = "../../" + URIHelper.GetDirectoryName(asset0Path);
 

@@ -4,7 +4,7 @@ namespace UnityGLTF.Cache
 {
 	public class BufferCacheData : IDisposable
 	{
-		public long ChunkOffset { get; set; }
+		public uint ChunkOffset { get; set; }
 		public System.IO.Stream Stream { get; set; }
 
 		public void Dispose()

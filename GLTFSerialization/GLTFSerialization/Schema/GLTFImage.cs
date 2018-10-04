@@ -91,7 +91,7 @@ namespace GLTF.Schema
 			if (BufferView != null)
 			{
 				writer.WritePropertyName("bufferView");
-				writer.WriteValue(BufferView);
+				writer.WriteValue(BufferView.Id);
 			}
 
 			base.Serialize(writer);

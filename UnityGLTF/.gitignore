@@ -28,6 +28,7 @@ ExportedObj/
 *.booproj
 *.svd
 *.pdb
+*.pfx*
 
 !*-dll.csproj
 !*-dll.sln
@@ -47,4 +48,5 @@ sysinfo.txt
 # UWP-specific folders and files
 /[Aa]pp/
 /UWP/
+/WSA/
 WSATestCertificate.pfx*

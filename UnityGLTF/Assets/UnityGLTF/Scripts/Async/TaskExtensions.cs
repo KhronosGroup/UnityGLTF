@@ -1,4 +1,4 @@
-﻿#if WINDOWS_UWP
+﻿#if UNITY_2017_1_OR_NEWER
 using System.Collections;
 using System.Threading.Tasks;
 

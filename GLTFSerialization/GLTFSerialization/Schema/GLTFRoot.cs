@@ -243,6 +243,11 @@ namespace GLTF.Schema
 		}
 
 		/// <summary>
+		/// Whether this object is a GLB
+		/// </summary>
+		public bool IsGLB;
+
+		/// <summary>
 		/// Return the default scene. When scene is null, scene of index 0 will be returned.
 		/// When scenes list is null or empty, returns null.
 		/// </summary>
@@ -337,10 +342,18 @@ namespace GLTF.Schema
 			return root;
 		}
 
-		public void Serialize(TextWriter textWriter)
+		public void Serialize(TextWriter textWriter, bool isGLB = false)
 		{
 			JsonWriter jsonWriter = new JsonTextWriter(textWriter);
-			jsonWriter.Formatting = Formatting.Indented;
+			if (isGLB)
+			{
+				jsonWriter.Formatting = Formatting.None;
+			}
+			else
+			{
+				jsonWriter.Formatting = Formatting.Indented;
+			}
+
 			jsonWriter.WriteStartObject();
 
 			if (ExtensionsUsed != null && ExtensionsUsed.Count > 0)

@@ -1,10 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
-using System.IO;
-using GLTF;
-using GLTF.Schema;
+﻿using GLTF;
 using GLTF.Math;
-using System.Collections.Generic;
+using GLTF.Schema;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace GLTFSerializationTests
 {
@@ -20,8 +18,8 @@ namespace GLTFSerializationTests
 		[TestMethod]
 		public void LoadGLTFFromStream()
 		{
-			Assert.IsTrue(File.Exists(GLTF_PATH));
-			FileStream gltfStream = File.OpenRead(GLTF_PATH);
+			Assert.IsTrue(File.Exists(TestAssetPaths.GLTF_PATH));
+			FileStream gltfStream = File.OpenRead(TestAssetPaths.GLTF_PATH);
 
 			GLTFRoot.RegisterExtension(new TestExtensionFactory());
 			GLTFRoot gltfRoot = null;
