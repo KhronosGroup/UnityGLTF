@@ -1,13 +1,9 @@
-﻿using System.Linq;
-using System;
-using System.Collections.Generic;
-using GLTF;
+﻿using GLTF;
 using GLTF.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
 
 namespace GLTFSerializationTests
 {
@@ -41,6 +37,7 @@ namespace GLTFSerializationTests
 
 			glbObject = GLBBuilder.ConstructFromStream(glbStream);
 			Assert.IsNotNull(glbObject.Root);
+			Assert.AreEqual(glbObject.Root.Asset.Version, gltfRoot.Asset.Version);
 			glbStream.Close();
 		}
 
