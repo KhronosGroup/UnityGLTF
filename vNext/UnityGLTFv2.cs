@@ -199,7 +199,6 @@ public struct ExtensionReturnObject<T>
 public enum ExtensionContinuationBehavior
 {
     NotHandled,
-    ContinueDefaultExecution,
     Handled
 }
 
