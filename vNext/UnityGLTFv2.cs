@@ -1,63 +1,70 @@
+namespace UnityGLTF {
+
 /// <summary>
 /// Handles importing object from schema into Unity and handles exporting of objects from Unity into schema
 /// </summary>
-public partial class UnityGLTFImporter
+public virtual class Importer
 {
-    public UnityGLTFImporter(
+    public Importer(
         IDataLoader dataLoader,
-        UnityGLTFImporterConfig config = new UnityGLTFImporterConfig()
+        ImporterConfig config = new ImporterConfig()
         );
 
     /// <summary>
     /// Creates a Unity GameObject from a glTF scene
     /// </summary>
-    /// <param name="unityGLTFFObject">Object which contains information to parse</param>
+    /// <param name="unityGLTFObject">Object which contains information to parse</param>
     /// <param name="sceneId">Scene of the glTF to load</param>
+    /// <param name="progress">Progress of load completion</param>
     /// <returns>The created Unity object</returns>
-    public Task<GameObject> ImportSceneAsync(
-        UnityGLTFObject unityGLTFFObject,
-        int sceneId = -1
+    public virtual Task<GameObject> ImportSceneAsync(
+        UnityGLTFObject unityGLTFObject,
+        int sceneId = -1,
+        IProgress<int> progress = null,
+        CancellationToken cancellationToken = CancellationToken.None
         );
 
     /// <summary>
     /// Creates a Unity GameObject from a glTF node
     /// </summary>
-    /// <param name="unityGLTFFObject">Object which contains information to parse</param>
+    /// <param name="unityGLTFObject">Object which contains information to parse</param>
     /// <param name="nodeId">Node of the glTF object to load.</param>        
     /// <returns>The created Unity object</returns>
-    public Task<GameObject> ImportNodeAsync(
-        UnityGLTFObject unityGLTFFObject,
-        int nodeId
+    public virtual Task<GameObject> ImportNodeAsync(
+        UnityGLTFObject unityGLTFObject,
+        int nodeId,
+        CancellationToken cancellationToken = CancellationToken.None
         );
 
     /// <summary>
     /// Creates a Unity Texture2D from a glTF texture
     /// </summary>
-    /// <param name="unityGLTFFObject">Object which contains information to parse</param>
+    /// <param name="unityGLTFObject">Object which contains information to parse</param>
     /// <param name="textureId">Texture to load from glTF object.</param>        
     /// <returns>The created Unity object</returns>
-    public Task<Texture2D> ImportTextureAsync(
-        UnityGLTFObject unityGLTFFObject,
-        int textureId
+    public virtual Task<Texture2D> ImportTextureAsync(
+        UnityGLTFObject unityGLTFObject,
+        int textureId,
+        CancellationToken cancellationToken = CancellationToken.None,
         );
 }
 
 // UnityNode.cs
-public partial class UnityGLTFImporter
+public virtual partial class Importer
 {
-    private Task<GameObject> ConstructNode();
+    private virtual Task<GameObject> ConstructNode();
 }
 
 // UnityTexture.cs
-public partial class UnityGLTFImporter
+public virtual partial class Importer
 {
-    private Task<Texture2D> ConstructTexture();
+    private virtual Task<Texture2D> ConstructTexture();
 }
 
-public class UnityGLTFImporterConfig
+public class ImporterConfig
 {
-    public UnityGLTFImporterConfig();
-    public UnityGLTFImporterConfig(GLTFExtensionRegistry registry, GLTFImportOptions importOptions);
+    public ImporterConfig();
+    public ImporterConfig(List<IUnityGLTFExtension> registry, GLTFImportOptions importOptions);
 }
 
 /// <summary>
@@ -66,7 +73,7 @@ public class UnityGLTFImporterConfig
 /// </summary>
 public class IDataLoader
 {
-    Task<Stream> LoadStream(string uri);
+    Task<Stream> LoadStreamAsync(string uri, CancellationToken ct = CancellationToken.None);
 }
 
 public class GLTFImportOptions
@@ -81,22 +88,25 @@ public class GLTFImportOptions
     ColliderType Collider { get; set; }
 }
 
-public partial class UnityGLTFExporter
+public partial class Exporter
 {
     /// <param name="dataWriter">Interface for handling the streams of data to write out</param>
-    /// <param name="exportConfig">Configuration of extension settings and export otpions</param>
-    public UnityGLTFImporter(
+    /// <param name="progress">Progress of export</param>
+    public Exporter(
         IDataWriter dataWriter,
-        UnityGLTFExporterConfig exportConfig = new UnityGLTFExporterConfig()
+        ExporterConfig exportConfig = new ExporterConfig()
         );
 
     /// <summary>
     /// Exports a Unity object to a glTF file
     /// </summary>
     /// <param name="unityObject">The object to export</param>
-    /// <returns></returns>
-    public Task<GLTFFObject> Export(
-        GameObject unityObject
+    /// <param name="exportConfig">Configuration of extension settings and export options</param>
+    /// <returns>Strongly typed wrapper of exported object</returns>
+    public Task<GLTFObject> ExportAsync(
+        GameObject unityObject,
+        IProgress<int> progress = null,
+        CancellationToken ct = CancellationToken.None
         );
 }
 
@@ -105,13 +115,13 @@ public partial class UnityGLTFExporter
 /// </summary>
 public class IDataWriter
 {
-    Task<bool> WriteStream(string uri, Stream stream);
+    Task<bool> WriteStreamAsync(string uri, Stream stream, CancellationToken ct = CancellationToken.None);
 }
 
-public class UnityGLTFExporterConfig
+public class ExporterConfig
 {
-    public UnityGLTFExporterConfig();
-    public UnityGLTFExporterConfig(GLTFExtensionRegistry registry, GLTFExportOptions exportOptions);
+    public ExporterConfig();
+    public ExporterConfig(List<IUnityGLTFExtension> registry, GLTFExportOptions exportOptions);
 }
 
 public class GLTFExportOptions
@@ -149,9 +159,34 @@ public interface IUnityGLTFExtension
 {
     IGLTFExtension GLTFExtension { get; };
 
-    Task<ExtensionReturnObject<GameObject>> CreateSceneAsync(GLTF.Schema.GLTFScene gltfScene, int indexToLoad);
-    Task<ExtensionReturnObject<GameObject>> CreateNodeAsync(Node gltfNode, int indexToLoad);
-    Task<ExtensionReturnObject<MeshPrimitive>> CreateMeshPrimitiveAsync(GLTFMesh mesh, ILoaderContext loaderContext, int indexToLoad);
+    /// <summary>
+    /// Creates a Unity object out of the glTF schema object
+    /// </summary>
+    /// <param name="importer">The importer that is used to load the object</param>
+    /// <param name="unityGLTFObject">Object that is being loaded</param>
+    /// <param name="sceneId">Index object which resolves to object in GLTFRoot</param>
+    /// <returns>The loaded glTF scene as a GameObject hierarchy</returns>
+    Task<ExtensionReturnObject<GameObject>> CreateSceneAsync(Importer importer, UnityGLTFObject unityGLTFObject, GLTF.Schema.SceneId sceneId);
+
+
+    /// <summary>
+    /// Creates a Unity object out of the node object
+    /// </summary>
+    /// <param name="importer">The importer that is used to load the object</param>
+    /// <param name="unityGLTFObject">Object that is being loaded</param>
+    /// <param name="nodeId">Node object from GLTFRoot</param>
+    /// <returns>The loaded glTF node as a GameObject</returns>
+    Task<ExtensionReturnObject<GameObject>> CreateNodeAsync(Importer importer,  UnityGLTFObject unityGLTFObject, GLTF.Schmea.NodeId nodeId);
+
+    /// <summary>
+    /// Creates a Mesh primitive out of a mesh primitive schema object
+    /// </summary>
+    /// <param name="importer">The importer that is used to load the object</param>
+    /// <param name="unityGLTFObject">Object that is being loaded</param>
+    /// <param name="meshId">Mesh object to load from</param>
+    /// <param name="primitiveIndex">Primitive to load from the mesh</param>
+    /// <returns>Returns the mesh primitive</returns>
+    Task<ExtensionReturnObject<MeshPrimitive>> CreateMeshPrimitiveAsync(Importer importer, UnityGLTFObject unityGLTFObject, MeshId meshId, int primitiveIndex);
     /// etc. 
 }
 
@@ -175,7 +210,8 @@ public async void LoadGLBs()
     UnityGLTFObject boxObject = new UnityGLTFObject("http://samplemodels/box.glb");
     IDataLoader dataLoader = new WebRequestLoader();
 
-    UnityGLTFImporter gltfImporter = new UnityGLTFImporter(dataLoader);
+    Importer gltfImporter = new Importer(dataLoader);
     await gltfImporter.ImportSceneAsync(sampleObject);
     await gltfImporter.ImportSceneAsync(boxObject);
+}
 }
