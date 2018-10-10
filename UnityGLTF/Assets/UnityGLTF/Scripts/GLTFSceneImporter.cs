@@ -1188,7 +1188,7 @@ namespace UnityGLTF
 			Mesh mesh = new Mesh
 			{
 #if UNITY_2017_3_OR_NEWER
-				indexFormat = vertexCount > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16,
+				indexFormat = vertexCount > 65535 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16,
 #endif
 				vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
 					? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()

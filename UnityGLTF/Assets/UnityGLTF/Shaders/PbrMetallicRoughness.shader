@@ -71,7 +71,7 @@ Shader "GLTF/PbrMetallicRoughness"
 
 			#pragma vertex vertBase
 			#pragma fragment fragBase
-			#include "UnityStandardInput.cginc"
+			#include "UnityGLTFStandardInput.cginc"
 			#include "UnityStandardCoreForward.cginc"
 
 			ENDCG
@@ -106,7 +106,7 @@ Shader "GLTF/PbrMetallicRoughness"
 
 			#pragma vertex vertAdd
 			#pragma fragment fragAdd
-			#include "UnityStandardInput.cginc"
+			#include "UnityGLTFStandardInput.cginc"
 			#include "UnityStandardCoreForward.cginc"
 
 			ENDCG
@@ -134,7 +134,7 @@ Shader "GLTF/PbrMetallicRoughness"
 			#pragma vertex vertShadowCaster
 			#pragma fragment fragShadowCaster
 
-			#include "UnityStandardShadow.cginc"
+			#include "UnityGLTFStandardShadow.cginc"
 
 			ENDCG
 		}
@@ -232,7 +232,7 @@ Shader "GLTF/PbrMetallicRoughness"
 
 			#pragma vertex vertBase
 			#pragma fragment fragBase
-			#include "UnityStandardInput.cginc"
+			#include "UnityGLTFStandardInput.cginc"
 			#include "UnityStandardCoreForward.cginc"
 
 			ENDCG
@@ -265,7 +265,7 @@ Shader "GLTF/PbrMetallicRoughness"
 			
 			#pragma vertex vertAdd
 			#pragma fragment fragAdd
-			#include "UnityStandardInput.cginc"
+			#include "UnityGLTFStandardInput.cginc"
 			#include "UnityStandardCoreForward.cginc"
 
 			ENDCG
@@ -289,7 +289,7 @@ Shader "GLTF/PbrMetallicRoughness"
 			#pragma vertex vertShadowCaster
 			#pragma fragment fragShadowCaster
 
-			#include "UnityStandardShadow.cginc"
+			#include "UnityGLTFStandardShadow.cginc"
 
 			ENDCG
 		}
