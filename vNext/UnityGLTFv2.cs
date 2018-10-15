@@ -3,7 +3,7 @@ namespace UnityGLTF {
 /// <summary>
 /// Handles importing object from schema into Unity and handles exporting of objects from Unity into schema
 /// </summary>
-public virtual class Importer
+public class Importer
 {
     public Importer(
         IDataLoader dataLoader,
@@ -13,25 +13,25 @@ public virtual class Importer
     /// <summary>
     /// Creates a Unity GameObject from a glTF scene
     /// </summary>
-    /// <param name="unityGLTFObject">Object which contains information to parse</param>
+    /// <param name="gltfObject">Object which contains information to parse</param>
     /// <param name="sceneId">Scene of the glTF to load</param>
     /// <param name="progress">Progress of load completion</param>
     /// <returns>The created Unity object</returns>
     public virtual Task<GameObject> ImportSceneAsync(
-        UnityGLTFObject unityGLTFObject,
+        IGLTFObject gltfObject,
         int sceneId = -1,
-        IProgress<int> progress = null,
-        CancellationToken cancellationToken = CancellationToken.None
+        CancellationToken cancellationToken = CancellationToken.None,
+        IProgress<int> progress = null
         );
 
     /// <summary>
     /// Creates a Unity GameObject from a glTF node
     /// </summary>
-    /// <param name="unityGLTFObject">Object which contains information to parse</param>
+    /// <param name="gltfObject">Object which contains information to parse</param>
     /// <param name="nodeId">Node of the glTF object to load.</param>        
     /// <returns>The created Unity object</returns>
     public virtual Task<GameObject> ImportNodeAsync(
-        UnityGLTFObject unityGLTFObject,
+        IGLTFObject gltfObject,
         int nodeId,
         CancellationToken cancellationToken = CancellationToken.None
         );
@@ -39,13 +39,13 @@ public virtual class Importer
     /// <summary>
     /// Creates a Unity Texture2D from a glTF texture
     /// </summary>
-    /// <param name="unityGLTFObject">Object which contains information to parse</param>
+    /// <param name="gltfObject">Object which contains information to parse</param>
     /// <param name="textureId">Texture to load from glTF object.</param>        
     /// <returns>The created Unity object</returns>
     public virtual Task<Texture2D> ImportTextureAsync(
-        UnityGLTFObject unityGLTFObject,
+        IGLTFObject gltfObject,
         int textureId,
-        CancellationToken cancellationToken = CancellationToken.None,
+        CancellationToken cancellationToken = CancellationToken.None
         );
 }
 
@@ -64,7 +64,7 @@ public virtual partial class Importer
 public class ImporterConfig
 {
     public ImporterConfig();
-    public ImporterConfig(List<IUnityGLTFExtension> registry, GLTFImportOptions importOptions);
+    public ImporterConfig(List<IUnityExtensionFactory> registry, GLTFImportOptions importOptions);
 }
 
 /// <summary>
@@ -102,8 +102,8 @@ public partial class Exporter
     /// </summary>
     /// <param name="unityObject">The object to export</param>
     /// <param name="exportConfig">Configuration of extension settings and export options</param>
-    /// <returns>Strongly typed wrapper of exported object</returns>
-    public Task<GLTFObject> ExportAsync(
+    /// <returns>Strongly typed version of exported object</returns>
+    public Task<IGLTFObject> ExportAsync(
         GameObject unityObject,
         IProgress<int> progress = null,
         CancellationToken ct = CancellationToken.None
@@ -121,7 +121,7 @@ public class IDataWriter
 public class ExporterConfig
 {
     public ExporterConfig();
-    public ExporterConfig(List<IUnityGLTFExtension> registry, GLTFExportOptions exportOptions);
+    public ExporterConfig(List<IUnityExtensionFactory> registry, GLTFExportOptions exportOptions);
 }
 
 public class GLTFExportOptions
@@ -131,33 +131,12 @@ public class GLTFExportOptions
 }
 
 /// <summary>
-/// Unity wrapper for glTF object schema class from GLTFSerialization
-/// Properly cleans up data
-/// </summary>
-public class UnityGLTFObject : IDisposable
-{
-    /// <summary>
-    /// Constructor for already parsed glTF or GLB
-    /// </summary>
-    /// <param name="gltfObject">Already parsed glTF or GLB</param>
-    public UnityGLTFObject(IGLTFObject gltfObject);
-
-    /// <summary>
-    /// Constructor for not yet parsed glTF or GLB
-    /// The IDataReader will handle loading the data to load the file
-    /// </summary>
-    /// <param name="fileName">Name of file to load</param>
-    public UnityGLTFObject(string fileName);
-
-    internal AssetCache AssetCache { get; }
-}
-
-/// <summary>
 /// Unity glTF extension wrapper
+/// Base class does returns continuation behavior of not handled
 /// </summary>
-public interface IUnityGLTFExtension
+public abstract class UnityExtensionFactoryBase
 {
-    IGLTFExtension GLTFExtension { get; };
+    public IExtensionFactoryFactory ExtensionFactoryFactory { get; }
 
     /// <summary>
     /// Creates a Unity object out of the glTF schema object
@@ -166,7 +145,7 @@ public interface IUnityGLTFExtension
     /// <param name="unityGLTFObject">Object that is being loaded</param>
     /// <param name="sceneId">Index object which resolves to object in GLTFRoot</param>
     /// <returns>The loaded glTF scene as a GameObject hierarchy</returns>
-    Task<ExtensionReturnObject<GameObject>> CreateSceneAsync(Importer importer, UnityGLTFObject unityGLTFObject, GLTF.Schema.SceneId sceneId);
+    public virtual Task<ExtensionReturnObject<GameObject>> ConstructSceneAsync(Importer importer, AssetCache assetCache, GLTF.Schema.SceneId sceneId);
 
 
     /// <summary>
@@ -175,8 +154,8 @@ public interface IUnityGLTFExtension
     /// <param name="importer">The importer that is used to load the object</param>
     /// <param name="unityGLTFObject">Object that is being loaded</param>
     /// <param name="nodeId">Node object from GLTFRoot</param>
-    /// <returns>The loaded glTF node as a GameObject</returns>
-    Task<ExtensionReturnObject<GameObject>> CreateNodeAsync(Importer importer,  UnityGLTFObject unityGLTFObject, GLTF.Schmea.NodeId nodeId);
+    /// <returns>The constructed mesh filter from the node</returns>
+    public virtual Task<ExtensionReturnObject<MeshFilter>> ConstructNodeAsync(Importer importer,  AssetCache assetCache, GLTF.Schmea.NodeId nodeId);
 
     /// <summary>
     /// Creates a Mesh primitive out of a mesh primitive schema object
@@ -186,7 +165,9 @@ public interface IUnityGLTFExtension
     /// <param name="meshId">Mesh object to load from</param>
     /// <param name="primitiveIndex">Primitive to load from the mesh</param>
     /// <returns>Returns the mesh primitive</returns>
-    Task<ExtensionReturnObject<MeshPrimitive>> CreateMeshPrimitiveAsync(Importer importer, UnityGLTFObject unityGLTFObject, MeshId meshId, int primitiveIndex);
+    public virtual Task<ExtensionReturnObject<MeshPrimitive>> ConstructMeshPrimitiveAsync(Importer importer, AssetCache assetCache, MeshId meshId, int primitiveIndex);
+    
+    public virtual Task<ExtensionReturnObject<Material>> ConstructMaterialAsync(Importer importer, AssetCache assetCache, MaterialId materialId);
     /// etc. 
 }
 
@@ -213,4 +194,45 @@ public async void LoadGLBs()
     await gltfImporter.ImportSceneAsync(sampleObject);
     await gltfImporter.ImportSceneAsync(boxObject);
 }
+}
+
+// Examples:
+// Example msft_lod implementation
+
+public class MSFTLODUnityExtensionHandler : UnityExtensionFactoryBase
+{
+    private MSFTLODExtensionFactory _msftLODExtension;
+    private const int LOD_TO_LOAD = 2;
+    public MSFTLODExtension(MSFTLODExtensionFactory msftLodExtension)
+    {
+        ExtensionFactory = _msftLODExtension = msftLodExtension;
+    }
+
+    public override Task<ExtensionReturnObject<MeshFilter>> ConstructNodeAsync(Importer importer, AssetCache assetCache, GLTF.Schmea.NodeId nodeId)
+    {
+        if (nodeId.Value.Extensions.Contains(ExtensionFactory.ExtensionName))
+        {
+            NodeId nodeId = nodeId.Value.Extensions[ExtensionFactory.ExtensionName].GetNodeId[LOD_TO_LOAD];
+            MeshFilter meshFilter = await importer.ConstructNode(nodeId);
+            return new ExtensionReturnObject<MeshFilter>
+            {
+                ContinuationBehavior = ExtensionContinuationBehavior.Handled,
+                ReturnObject = meshFilter
+            };
+        }
+
+        return base.ConstructNodeAsync(importer, assetCache, nodeId);
+    }
+
+    public override Task<ExtensionReturnObject<Material>> ConstructMaterialAsync(Importer importer, AssetCache assetCache, MaterialId materialId)
+    {
+        if (materialId.Value.Extensions.Contains(ExtensionFactory.ExtensionName))
+        {
+            MaterialId materialLod = materialId.Value.Extensions[ExtensionFactory.ExtensionName].ids[LOD_TO_LOAD];
+            Material material = await importer.ConstructMaterial(materialLod);
+            return material;
+        }
+
+        return base.ConstructMaterialAsync(importer, assetCache, materialId);
+    }
 }

@@ -20,4 +20,6 @@ See [UnityGLTFv2.cs](UnityGLTFv2.cs) for proposed interface
 
 ## How
 
-A branch will be created, `_v_next_`, which will be where we work on the refactor. 
+A branch will be created, `_v_next_`, which will be where we work on the refactor
+
+## Data Lifecycle
