@@ -23,3 +23,4 @@ See [UnityGLTFv2.cs](UnityGLTFv2.cs) for proposed interface
 A branch will be created, `_v_next_`, which will be where we work on the refactor
 
 ## Data Lifecycle
+Each Unity type will get be refcounted via a script on it. This is to ensure that meshes, textures, and materials are properly cleaned up
