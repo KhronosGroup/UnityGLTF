@@ -284,7 +284,6 @@ namespace UnityGLTF
 			if (_assetCache.ImageStreamCache[sourceId] == null)
 			{
 				GLTFImage image = _gltfRoot.Images[sourceId];
-				int bufferIndex = image.BufferView.Value.Buffer.Id;
 
 				// we only load the streams if not a base64 uri, meaning the data is in the uri
 				if (image.Uri != null && !URIHelper.IsBase64Uri(image.Uri))
@@ -292,8 +291,9 @@ namespace UnityGLTF
 					yield return _loader.LoadStream(image.Uri);
 					_assetCache.ImageStreamCache[sourceId] = _loader.LoadedStream;
 				}
-				if (image.Uri == null && _assetCache.BufferCache[bufferIndex] == null)
+				else if (image.Uri == null && image.BufferView != null && _assetCache.BufferCache[image.BufferView.Value.Buffer.Id] == null)
 				{
+					int bufferIndex = image.BufferView.Value.Buffer.Id;
 					yield return ConstructBuffer(_gltfRoot.Buffers[bufferIndex], bufferIndex);
 				}
 			}
