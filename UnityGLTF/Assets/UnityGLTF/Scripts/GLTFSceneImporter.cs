@@ -14,7 +14,9 @@ using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using Matrix4x4 = GLTF.Math.Matrix4x4;
 using Object = UnityEngine.Object;
+#if !WINDOWS_UWP
 using ThreadPriority = System.Threading.ThreadPriority;
+#endif
 using WrapMode = UnityEngine.WrapMode;
 
 #if WINDOWS_UWP
@@ -306,7 +308,8 @@ namespace UnityGLTF
 
 		private IEnumerator LoadJson(string jsonFilePath)
 		{
-			if (isMultithreaded && _loader.HasSyncLoadMethod)
+#if !WINDOWS_UWP
+			 if (isMultithreaded && _loader.HasSyncLoadMethod)
 			 {
 				 Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
 				 loadThread.Priority = ThreadPriority.Highest;
@@ -314,6 +317,7 @@ namespace UnityGLTF
 				 yield return new WaitUntil(() => !loadThread.IsAlive);
 			 }
 			 else
+#endif
 			 {
 				 yield return _loader.LoadStream(jsonFilePath);
 			 }
@@ -321,7 +325,8 @@ namespace UnityGLTF
 			_gltfStream.Stream = _loader.LoadedStream;
 			_gltfStream.StartPosition = 0;
 
-			if (isMultithreaded)
+#if !WINDOWS_UWP
+            if (isMultithreaded)
 			{
 				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				parseJsonThread.Priority = ThreadPriority.Highest;
@@ -329,7 +334,8 @@ namespace UnityGLTF
 				yield return new WaitUntil(() => !parseJsonThread.IsAlive);
 			}
 			else
-			{
+#endif
+            {
 				GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
 				yield return null;
 			}
@@ -514,8 +520,8 @@ namespace UnityGLTF
 					{
 						throw new Exception("Stream is larger than can be copied into byte array");
 					}
-
-					if (isMultithreaded)
+#if !WINDOWS_UWP
+                    if (isMultithreaded)
 					{
 						Thread readThread = new Thread(() => stream.Read(buffer, 0, (int)stream.Length));
 						readThread.Priority = ThreadPriority.Highest;
@@ -523,7 +529,8 @@ namespace UnityGLTF
 						yield return new WaitUntil(() => !readThread.IsAlive);
 					}
 					else
-					{
+#endif
+                    {
 						stream.Read(buffer, 0, (int)stream.Length);
 						yield return null;
 					}
@@ -604,7 +611,8 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-				if (isMultithreaded)
+#if !WINDOWS_UWP
+                if (isMultithreaded)
 				{
 					Thread buildMeshAttributesThread = new Thread(() => GLTFHelpers.BuildMeshAttributes(ref attributeAccessors));
 					buildMeshAttributesThread.Priority = ThreadPriority.Highest;
@@ -615,7 +623,8 @@ namespace UnityGLTF
 					}
 				}
 				else
-				{
+#endif
+                {
 					GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
 				}
 				
@@ -659,7 +668,7 @@ namespace UnityGLTF
 			}
 		}
 
-		#region Animation
+#region Animation
 		static string RelativePathFrom(Transform self, Transform root)
 		{
 			var path = new List<String>();
@@ -847,7 +856,7 @@ namespace UnityGLTF
 			clip.EnsureQuaternionContinuity();
 			return clip;
 		}
-		#endregion
+#endregion
 
 		protected virtual IEnumerator ConstructScene(GLTFScene scene)
 		{
