@@ -2,7 +2,8 @@
 
 namespace UnityGLTF.Tests.Integration
 {
-	public class GLTFExporterIntegrationTest : MonoBehaviour
+#if UNITY_5
+    public class GLTFExporterIntegrationTest : MonoBehaviour
 	{
 		public string RetrieveTexturePath(UnityEngine.Texture texture)
 		{
@@ -25,4 +26,5 @@ namespace UnityGLTF.Tests.Integration
 			IntegrationTest.Pass();
 		}
 	}
+#endif
 }

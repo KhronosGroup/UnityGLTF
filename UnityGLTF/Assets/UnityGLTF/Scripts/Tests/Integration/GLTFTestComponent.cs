@@ -5,7 +5,8 @@ using UnityGLTF.Loader;
 
 namespace UnityGLTF.Tests.Integration
 {
-	public class GLTFTestComponent : MonoBehaviour
+#if UNITY_5
+    public class GLTFTestComponent : MonoBehaviour
 	{
 		public string Url;
 		public bool Multithreaded = true;
@@ -25,4 +26,5 @@ namespace UnityGLTF.Tests.Integration
 			IntegrationTest.Pass();
 		}
 	}
+#endif
 }
