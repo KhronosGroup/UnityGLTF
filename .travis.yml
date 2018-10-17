@@ -9,7 +9,7 @@ install:
 before_script:
 - sudo chmod -R a+rwx /Applications/Unity
 script:
-- msbuild ./GLTFSerialization/GLTFSerialization/GLTFSerialization.csproj
+- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization
 - "./scripts/export-unity-package.sh"
 deploy:
   provider: releases
