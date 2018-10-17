@@ -1124,7 +1124,7 @@ namespace UnityGLTF
 			if ((shouldUseDefaultMaterial && _defaultLoadedMaterial == null) ||
 				(!shouldUseDefaultMaterial && _assetCache.MaterialCache[materialIndex] == null))
 			{
-				yield return ConstructMaterial(materialToLoad, materialIndex);
+				yield return ConstructMaterial(materialToLoad, shouldUseDefaultMaterial ? -1 : materialIndex);
 			}
 		}
 
@@ -1419,7 +1419,7 @@ namespace UnityGLTF
 				{
 					InitializeAssetCache();
 				}
-				yield return ConstructImageBuffer(texture, GetTextureSourceId(texture));
+				yield return ConstructImageBuffer(texture, textureIndex);
 				yield return ConstructTexture(texture, textureIndex, markGpuOnly);
 			}
 			finally
