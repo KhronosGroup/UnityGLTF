@@ -198,7 +198,7 @@ namespace Sketchfab
 			GUILayout.FlexibleSpace();
 			if (GUILayout.Button("Change destination", GUILayout.Height(UI_SIZE.y), GUILayout.Width(minWidthButton)))
 			{
-				string newImportDir = EditorUtility.OpenFolderPanel("Choose import directory", GLTFUtils.getPathAbsoluteFromProject(_importDirectory), GLTFUtils.getPathAbsoluteFromProject(_importDirectory));
+				string newImportDir = EditorUtility.OpenFolderPanel("Choose import directory", _importDirectory, "");
 				if (GLTFUtils.isFolderInProjectDirectory(newImportDir))
 				{
 					_importDirectory = newImportDir;
