@@ -4,7 +4,7 @@
  */
 #if UNITY_EDITOR
 using UnityEngine;
-using UnityEditor;
+using UnityEngine.Networking;
 using SimpleJSON;
 
 // Static data and assets related to the plugin
@@ -27,6 +27,8 @@ namespace Sketchfab
 			public static string draftInfo = "https://help.sketchfab.com/hc/en-us/articles/115000472906-Draft-Mode";
 			public static string latestReleaseCheck = "https://api.github.com/repos/sketchfab/UnityGLTF/releases";
 			public static string plans = "https://sketchfab.com/plans";
+			public static string bannerUrl = "https://static.sketchfab.com/plugins/unity/banner.jpg";
+			public static string storeUrl = "https://sketchfab.com/store?utm_source=plugin&utm_medium=banner&utm_campaign=unity-plugin";
 			public static string categories = server + "/v3/categories";
 			private static string dummyClientId = "IUO8d5VVOIUCzWQArQ3VuXfbwx5QekZfLeDlpOmW";
 			public static string oauth = server + "/oauth2/token/?grant_type=password&client_id=" + dummyClientId;
@@ -52,6 +54,7 @@ namespace Sketchfab
 
 		// UI ELEMENTS
 		public static Texture2D DEFAULT_AVATAR;
+		public static Texture2D bannerTexture;
 
 		// Plugin elements
 		static SketchfabUI _ui;
@@ -68,7 +71,25 @@ namespace Sketchfab
 			_api = new SketchfabAPI();
 			_logger = new SketchfabLogger();
 			checkUpdates();
+			retrieveBannerImage();
 			DEFAULT_AVATAR = Resources.Load("defaultAvatar") as Texture2D;
+		}
+
+		public static void retrieveBannerImage()
+		{
+			SketchfabRequest request = new SketchfabRequest(Urls.bannerUrl);
+			request.setCallback(onBannerRetrieved);
+			getAPI().registerRequest(request);
+		}
+
+		public static void onBannerRetrieved(UnityWebRequest request)
+		{
+			bool sRGBBackup = GL.sRGBWrite;
+			GL.sRGBWrite = true;
+			byte[] data = request.downloadHandler.data;
+
+			bannerTexture = new Texture2D(2, 2);
+			bannerTexture.LoadImage(data);
 		}
 
 		public static void checkValidity()
@@ -138,6 +159,21 @@ namespace Sketchfab
 
 			GUILayout.BeginHorizontal(whiteGround, GUILayout.Height(75));
 			_logger.showLoginUi();
+			GUILayout.FlexibleSpace();
+
+			// If banner available, display it
+			if (bannerTexture != null)
+			{
+				GUILayout.BeginVertical();
+				GUILayout.FlexibleSpace();
+				if(GUILayout.Button(bannerTexture, _ui.SketchfabLabel))
+				{
+					Application.OpenURL(Urls.storeUrl);
+				}
+				GUILayout.FlexibleSpace();
+				GUILayout.EndVertical();
+			}
+
 			GUILayout.FlexibleSpace();
 			GUILayout.BeginVertical();
 			GUILayout.FlexibleSpace();
