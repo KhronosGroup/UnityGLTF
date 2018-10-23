@@ -437,7 +437,7 @@ namespace GLTF
 #if !NETFX_CORE
 			if (attributeAccessor.Stream is System.IO.MemoryStream)
 			{
-                MemoryStream memoryStream = (MemoryStream)attributeAccessor.Stream;
+				MemoryStream memoryStream = (MemoryStream)attributeAccessor.Stream;
 #if NETFX_CORE || NETSTANDARD1_3
 				if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
 					{
@@ -535,8 +535,8 @@ namespace GLTF
 				for (int i = previousGLTFSizes.PreviousBufferViewCount; i < mergeToRoot.BufferViews.Count; ++i)
 				{
 					GLTFId<GLTFBuffer> bufferId = mergeToRoot.BufferViews[i].Buffer;
-                    if (!(isGLB && bufferId.Id == 0))   // if it is pointing a the special glb buffer (index 0 of a glb) then we dont want to adjust the buffer view, otherwise we do
-                    {
+					if (!(isGLB && bufferId.Id == 0))   // if it is pointing a the special glb buffer (index 0 of a glb) then we dont want to adjust the buffer view, otherwise we do
+					{
 						// adjusting bufferview id based on merge amount
 						bufferId.Id += previousGLTFSizes.PreviousBufferCount;
 						bufferId.Root = mergeToRoot;
