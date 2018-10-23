@@ -435,22 +435,19 @@ namespace GLTF
 			BufferView bufferView = attributeAccessor.AccessorId.Value.BufferView.Value;
 			uint totalOffset = bufferView.ByteOffset + attributeAccessor.Offset;
 #if !NETFX_CORE
-			if (attributeAccessor.Stream is System.IO.MemoryStream)
+			if (attributeAccessor.Stream is MemoryStream)
 			{
-				using (var memoryStream = attributeAccessor.Stream as System.IO.MemoryStream)
-				{
+				MemoryStream memoryStream = (MemoryStream)attributeAccessor.Stream;
 #if NETFX_CORE || NETSTANDARD1_3
-					if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
-					{
-						bufferViewCache = arraySegment.Array;
-						return totalOffset;
-					}
-#else
-					bufferViewCache = memoryStream.GetBuffer();
+				if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
+				{
+					bufferViewCache = arraySegment.Array;
 					return totalOffset;
-#endif
-
 				}
+#else
+				bufferViewCache = memoryStream.GetBuffer();
+				return totalOffset;
+#endif
 			}
 #endif
 			attributeAccessor.Stream.Position = totalOffset;
