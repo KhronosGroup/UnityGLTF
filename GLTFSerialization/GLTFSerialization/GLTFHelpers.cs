@@ -440,7 +440,7 @@ namespace GLTF
 				MemoryStream memoryStream = (MemoryStream)attributeAccessor.Stream;
 #if NETFX_CORE || NETSTANDARD1_3
 				if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
-					{
+				{
 					bufferViewCache = arraySegment.Array;
 					return totalOffset;
 				}
