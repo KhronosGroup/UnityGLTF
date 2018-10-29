@@ -655,6 +655,7 @@ namespace UnityGLTF
 			switch (materialObj.shader.name)
 			{
 				case "Standard":
+				case "Standard (Roughness setup)":
 				case "GLTF/GLTFStandard":
 					material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
 					if (materialObj.HasProperty("_OcclusionMap"))
