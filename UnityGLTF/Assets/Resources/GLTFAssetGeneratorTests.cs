@@ -1,27 +1,28 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
+﻿using AssetGenerator;
+using Newtonsoft.Json;
 using NUnit.Framework;
+using System;
 using System.Collections;
-using UnityGLTF;
-using UnityGLTF.Examples;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEngine.Rendering;
-using System.Collections.Generic;
-using System;
-using Object = System.Object;
-using Newtonsoft.Json;
-using AssetGenerator;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
+using UnityEngine.TestTools;
+using UnityGLTF;
+using UnityGLTF.Examples;
 using static AssetGenerator.Manifest;
 using Camera = UnityEngine.Camera;
+using Object = System.Object;
 
 public class GLTFAssetGeneratorTests
 {
-    static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/";
-    static string GLTF_CAMERA_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
-    static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
-    static string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
+	private static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/";
+	private static string GLTF_CAMERA_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
+	private static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
+	private static string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
+	//set to true to generate the master images
     private static bool GENERATE_REFERENCEDATA = false;
     public GameObject ActiveGLTFObject { get; set; }
 	
@@ -119,7 +120,6 @@ public class GLTFAssetGeneratorTests
         string filename = Path.GetFileNameWithoutExtension(modelPath);
         string expectedFilePath = outputfullpath + "/" + filename + "_EXPECTED.png";
         string actualFilePath = outputfullpath + "/" + filename + "_ACTUAL.png";
-        //uncomment to reggenerate master images
         if (GENERATE_REFERENCEDATA)
         {
             File.WriteAllBytes(expectedFilePath, pngActualfile);

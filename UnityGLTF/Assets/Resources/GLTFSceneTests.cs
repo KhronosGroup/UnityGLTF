@@ -1,23 +1,23 @@
-﻿using UnityEngine;
-using UnityEngine.TestTools;
+﻿using AssetGenerator;
+using Newtonsoft.Json;
+using NUnit.Compatibility;
 using NUnit.Framework;
+using System;
 using System.Collections;
-using UnityGLTF;
-using UnityGLTF.Examples;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEngine.Rendering;
-using System.Collections.Generic;
-using System;
-using Object = System.Object;
-using Newtonsoft.Json;
-using AssetGenerator;
-using NUnit.Compatibility;
+using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+using UnityGLTF;
+using UnityGLTF.Examples;
 using static AssetGenerator.Manifest;
 using Camera = UnityEngine.Camera;
-using UnityEditor.SceneManagement;
-using UnityEngine.SceneManagement;
+using Object = System.Object;
 
 public class GLTFSceneTests
 {
@@ -54,11 +54,6 @@ public class GLTFSceneTests
        
 	    //wait one frame for loading to complete
         yield return null;
-        ////GLTFComponent gltfcomponent = ActiveGLTFObject.AddComponent<GLTFComponent>();
-        ////gltfcomponent.GLTFUri = GLTF_SCENES_PATH + scenePath;
-
-        ////yield return gltfcomponent.Load();
-
        
 	    var objects = GameObject.FindObjectsOfType(typeof(GameObject));
 	    foreach (GameObject o in objects)
