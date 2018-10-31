@@ -91,7 +91,7 @@ namespace UnityGLTF
 		protected GLTFRoot _gltfRoot;
 		protected AssetCache _assetCache;
 		protected ILoader _loader;
-		private bool _isRunning = false;
+		protected bool _isRunning = false;
 
 
 		/// <summary>
@@ -1095,7 +1095,8 @@ namespace UnityGLTF
 
 				primitiveObj.transform.SetParent(parent, false);
 				primitiveObj.SetActive(true);
-			}
+                _assetCache.MeshCache[meshId][i].PrimitiveGO = primitiveObj;
+            }
 		}
 
 
