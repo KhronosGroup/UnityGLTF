@@ -391,36 +391,6 @@ namespace UnityGLTF
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
 
-			if (_lastLoadedScene == null)
-			{
-				if (_gltfRoot.Buffers != null)
-				{
-					// todo add fuzzing to verify that buffers are before uri
-					for (int i = 0; i < _gltfRoot.Buffers.Count; ++i)
-					{
-						GLTFBuffer buffer = _gltfRoot.Buffers[i];
-						if (_assetCache.BufferCache[i] == null)
-						{
-							yield return ConstructBuffer(buffer, i);
-						}
-					}
-				}
-
-				if (_gltfRoot.Textures != null)
-				{
-					for (int i = 0; i < _gltfRoot.Textures.Count; ++i)
-					{
-						if (_assetCache.TextureCache[i] == null)
-						{
-							GLTFTexture texture = _gltfRoot.Textures[i];
-							yield return ConstructImageBuffer(texture, i);
-							yield return ConstructImage(texture.Source.Value, texture.Source.Id);
-						}
-					}
-				}
-				yield return ConstructAttributesForMeshes();
-			}
-
 			yield return ConstructScene(scene);
 
 			if (SceneParent != null)
@@ -866,7 +836,7 @@ namespace UnityGLTF
 			for (int i = 0; i < scene.Nodes.Count; ++i)
 			{
 				NodeId node = scene.Nodes[i];
-				yield return ConstructNode(node.Value, node.Id);
+				yield return _LoadNode(node.Id);
 				GameObject nodeObj = _assetCache.NodeCache[node.Id];
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;

@@ -12,7 +12,6 @@ using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using UnityGLTF;
 using UnityGLTF.Examples;
-using static AssetGenerator.Manifest;
 using Camera = UnityEngine.Camera;
 using Object = System.Object;
 
@@ -38,7 +37,7 @@ public class GLTFAssetGeneratorTests
         List<Manifest> manifests = JsonConvert.DeserializeObject<List<Manifest>>(File.ReadAllText(GLTF_CAMERA_MANIFEST_PATH));
         foreach (Manifest manifest in manifests)
         {
-            foreach (Model model in manifest.Models)
+            foreach (AssetGenerator.Manifest.Model model in manifest.Models)
             {
                 cameras[Path.GetFileNameWithoutExtension(model.FileName)] = model.Camera;
             }
