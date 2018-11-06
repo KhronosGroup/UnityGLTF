@@ -73,8 +73,12 @@ namespace UnityGLTF
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-				yield return sceneImporter.LoadScene(-1);
 
+				float prevtime = Time.fixedTime;
+				yield return sceneImporter.LoadScene(-1);
+				float dt = Time.fixedTime - prevtime;
+
+				print("took: " + dt + " seconds");
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
 				{
