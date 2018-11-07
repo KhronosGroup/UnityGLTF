@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Text.RegularExpressions;
 using System.Net;
 using UnityEngine.Networking;
+using System.Threading.Tasks;
 
 #if WINDOWS_UWP
 using System.Threading.Tasks;
@@ -27,14 +28,14 @@ namespace UnityGLTF.Loader
 			HasSyncLoadMethod = false;
 		}
 
-		public IEnumerator LoadStream(string gltfFilePath)
+		public Task LoadStream(string gltfFilePath)
 		{
 			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
 
-			yield return CreateHTTPRequest(_rootURI, gltfFilePath);
+			return CreateHTTPRequest(_rootURI, gltfFilePath);
 		}
 
 		public void LoadStreamSync(string jsonFilePath)
@@ -42,27 +43,25 @@ namespace UnityGLTF.Loader
 			throw new NotImplementedException();
 		}
 
-		private IEnumerator CreateHTTPRequest(string rootUri, string httpRequestPath)
+		private async Task CreateHTTPRequest(string rootUri, string httpRequestPath)
 		{
-			UnityWebRequest www = new UnityWebRequest(Path.Combine(rootUri, httpRequestPath), "GET", new DownloadHandlerBuffer(), null);
-			www.timeout = 5000;
-#if UNITY_2017_2_OR_NEWER
-			yield return www.SendWebRequest();
-#else
-			yield return www.Send();
-#endif
-			if ((int)www.responseCode >= 400)
+			HttpWebRequest webRequest = WebRequest.CreateHttp(Path.Combine(rootUri, httpRequestPath));
+			webRequest.Method = "GET";
+			webRequest.Timeout = 5000;
+			HttpWebResponse response = (HttpWebResponse)await webRequest.GetResponseAsync();
+			if ((int)response.StatusCode >= 400)
 			{
-				Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
+				Debug.LogErrorFormat("{0} - {1}", response.StatusCode, response.ResponseUri);
 				throw new Exception("Response code invalid");
 			}
 
-			if (www.downloadedBytes > int.MaxValue)
+			Stream stream = response.GetResponseStream();
+			if (stream.Length > int.MaxValue)
 			{
 				throw new Exception("Stream is larger than can be copied into byte array");
 			}
-
-			LoadedStream = new MemoryStream(www.downloadHandler.data, 0, www.downloadHandler.data.Length, true, true);
+			
+			LoadedStream = stream;
 		}
 	}
 }

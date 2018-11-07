@@ -333,35 +333,21 @@ namespace UnityGLTF
 
         private GameObject CreateGLTFScene(string projectFilePath)
         {
-            ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
-            using (var stream = File.OpenRead(projectFilePath))
-            {
-                GLTFRoot gLTFRoot;
-                GLTFParser.ParseJson(stream, out gLTFRoot);
-                var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
+            //ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
+            //using (var stream = File.OpenRead(projectFilePath))
+            //{
+            //    GLTFRoot gLTFRoot;
+            //    GLTFParser.ParseJson(stream, out gLTFRoot);
+            //    var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
 
-                loader.MaximumLod = _maximumLod;
-                loader.isMultithreaded = true;
+            //    loader.MaximumLod = _maximumLod;
+            //    loader.isMultithreaded = true;
+				
+            //    loader.LoadScene();
+            //    return loader.LastLoadedScene;
+            //}
 
-                // HACK: Force the coroutine to run synchronously in the editor
-                var stack = new Stack<IEnumerator>();
-                stack.Push(loader.LoadScene());
-
-                while (stack.Count > 0)
-                {
-                    var enumerator = stack.Pop();
-                    if (enumerator.MoveNext())
-                    {
-                        stack.Push(enumerator);
-                        var subEnumerator = enumerator.Current as IEnumerator;
-                        if (subEnumerator != null)
-                        {
-                            stack.Push(subEnumerator);
-                        }
-                    }
-                }
-                return loader.LastLoadedScene;
-            }
+			return null;
         }
 
         private void CopyOrNew<T>(T asset, string assetPath, Action<T> replaceReferences) where T : Object

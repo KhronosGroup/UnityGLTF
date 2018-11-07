@@ -60,7 +60,7 @@ public class GLTFSceneTests
 		    if (o.name.Contains("GLTF"))
 		    {
 			    GLTFComponent gltfcomponent = o.GetComponent<GLTFComponent>();
-			    yield return gltfcomponent.Load();
+			    gltfcomponent.Load();
 		    }
 	    }
 

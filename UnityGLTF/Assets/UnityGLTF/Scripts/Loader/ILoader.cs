@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.IO;
+using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
 #if WINDOWS_UWP
@@ -10,7 +11,7 @@ namespace UnityGLTF.Loader
 {
 	public interface ILoader
 	{
-		IEnumerator LoadStream(string relativeFilePath);
+		Task LoadStream(string relativeFilePath);
 
 		void LoadStreamSync(string jsonFilePath);
 

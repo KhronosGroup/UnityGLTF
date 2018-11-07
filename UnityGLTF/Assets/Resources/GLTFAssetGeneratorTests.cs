@@ -100,7 +100,7 @@ public class GLTFAssetGeneratorTests
 
         AssetGenerator.Manifest.Camera cam = cameras[Path.GetFileNameWithoutExtension(modelPath)];
         Camera.main.transform.position = new Vector3(cam.Translation[0], cam.Translation[1], cam.Translation[2]);
-        yield return gltfcomponent.Load();
+        gltfcomponent.Load();
 
         //wait one frame for rendering to complete
         yield return null;

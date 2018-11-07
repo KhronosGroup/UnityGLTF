@@ -28,15 +28,15 @@ namespace UnityGLTF
 		[SerializeField]
 		private Shader shaderOverride = null;
 
-		IEnumerator Start()
+		void Start()
 		{
 			if (loadOnStart)
 			{
-				yield return Load();
+				Load();
 			}
 		}
 
-		public IEnumerator Load()
+		public void Load()
 		{
 			GLTFSceneImporter sceneImporter = null;
 			ILoader loader = null;
@@ -58,10 +58,15 @@ namespace UnityGLTF
 				}
 				else
 				{
-					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					loader = new WebRequestLoader(directoryPath);
+					//string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
+					//loader = new WebRequestLoader(directoryPath);
+					GLTFUri = GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+					string fullPath = Path.Combine("E:/git/UnityGLTF/UnityGLTF/www/glTF-Sample-Models/2.0/", GLTFUri);
+					string directoryPath = URIHelper.GetDirectoryName(fullPath);
+					loader = new FileLoader(directoryPath);
+
 					sceneImporter = new GLTFSceneImporter(
-						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
+						Path.GetFileName(GLTFUri),
 						loader
 						);
 
@@ -75,10 +80,13 @@ namespace UnityGLTF
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
 				float prevtime = Time.fixedTime;
-				yield return sceneImporter.LoadScene(-1);
+				var prevutc = DateTime.UtcNow;
+				sceneImporter.LoadScene(-1);
+				var ddtutc = DateTime.UtcNow - prevutc;
 				float dt = Time.fixedTime - prevtime;
 
 				print("took: " + dt + " seconds");
+				print("took utc: " + ddtutc.TotalSeconds + " seconds");
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
 				{
@@ -93,7 +101,7 @@ namespace UnityGLTF
 			{
 				if(loader != null)
 				{
-					sceneImporter.Dispose();
+					sceneImporter?.Dispose();
 					sceneImporter = null;
 					loader = null;
 				}

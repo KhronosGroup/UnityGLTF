@@ -23,7 +23,7 @@ namespace UnityGLTF.Examples
 			_loader = new WebRequestLoader(directoryPath);
 			_fileName = URIHelper.GetFileFromUri(uri);
 
-			StartCoroutine(LoadScene(SceneIndex));
+			LoadScene(SceneIndex);
 		}
 
 		void Update()
@@ -32,11 +32,11 @@ namespace UnityGLTF.Examples
 			{
 				SceneIndex = SceneIndex == 0 ? 1 : 0;
 				Debug.LogFormat("Loading scene {0}", SceneIndex);
-				StartCoroutine(LoadScene(SceneIndex));
+				LoadScene(SceneIndex);
 			}
 		}
 
-		IEnumerator LoadScene(int SceneIndex)
+		void LoadScene(int SceneIndex)
 		{
 			foreach (Transform child in transform)
 			{
@@ -49,7 +49,7 @@ namespace UnityGLTF.Examples
 				);
 
 			_importer.SceneParent = gameObject.transform;
-			yield return _importer.LoadScene(SceneIndex);
+			_importer.LoadScene(SceneIndex);
 		}
 	}
 }
