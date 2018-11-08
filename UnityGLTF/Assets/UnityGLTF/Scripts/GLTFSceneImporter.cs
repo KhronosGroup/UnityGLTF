@@ -79,6 +79,10 @@ namespace UnityGLTF
 
 		public AsyncCoroutineHelper AsyncCoroutineHelper { get; set; }
 
+		public float BudgetPerFrameInMilliseconds = 10f;
+
+		private float _timeAtLastYield = 0f;
+
 		protected struct GLBStream
 		{
 			public Stream Stream;
@@ -152,6 +156,7 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				_timeAtLastYield = Time.realtimeSinceStartup;
 				if (_gltfRoot == null)
 				{
 					LoadJson(_gltfFileName);
@@ -203,6 +208,7 @@ namespace UnityGLTF
 					InitializeAssetCache();
 				}
 
+				_timeAtLastYield = Time.realtimeSinceStartup;
 				await _LoadNode(nodeIndex);
 				CreatedObject = _assetCache.NodeCache[nodeIndex];
 				InitializeGltfTopLevelObject();
@@ -487,8 +493,9 @@ namespace UnityGLTF
 					}
 				}
 
-				if (Time.unscaledDeltaTime > .016666f)
+				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds)
 				{
+					_timeAtLastYield = Time.realtimeSinceStartup;
 					await AsyncCoroutineHelper.RunAsTask(ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex), nameof(ConstructUnityTexture));
 				}
 				else
@@ -1092,8 +1099,9 @@ namespace UnityGLTF
 					MeshAttributes = meshAttributes
 				};
 
-				if (Time.unscaledDeltaTime > .016666f)
+				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds)
 				{
+					_timeAtLastYield = Time.realtimeSinceStartup;
 					await AsyncCoroutineHelper.RunAsTask(ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex), nameof(ConstructUnityMesh));
 				}
 				else
@@ -1402,6 +1410,8 @@ namespace UnityGLTF
 				{
 					InitializeAssetCache();
 				}
+
+				_timeAtLastYield = Time.realtimeSinceStartup;
 				ConstructImageBuffer(texture, textureIndex);
 				await ConstructTexture(texture, textureIndex, markGpuOnly);
 			}
