@@ -73,8 +73,7 @@ namespace UnityGLTF
 					//string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
 					//loader = new WebRequestLoader(directoryPath);
 					GLTFUri = GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
-					string fullPath = Path.Combine("E:/git/UnityGLTF/UnityGLTF/www/glTF-Sample-Models/2.0/", GLTFUri);
-					string directoryPath = URIHelper.GetDirectoryName(fullPath);
+					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
 					loader = new FileLoader(directoryPath);
 
 					sceneImporter = new GLTFSceneImporter(
