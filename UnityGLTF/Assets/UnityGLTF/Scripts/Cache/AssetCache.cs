@@ -103,6 +103,18 @@ namespace UnityGLTF.Cache
 				}
 				BufferCache = null;
 			}
+			foreach (MeshCacheData[] mesh in MeshCache)
+			{
+				if (mesh != null)
+				{
+					foreach (MeshCacheData cacheData in mesh)
+					{
+						//GameObject.Destroy(cacheData.LoadedMesh);
+						cacheData.MeshAttributes.Clear();
+					}
+				}
+			}
+
 			MeshCache = null;
 			AnimationCache = null;
 		}

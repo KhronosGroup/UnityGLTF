@@ -25,18 +25,30 @@ namespace UnityGLTF
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 
+		public AsyncCoroutineHelper asyncCoroutineHelper;
+
 		[SerializeField]
 		private Shader shaderOverride = null;
 
 		void Start()
 		{
-			if (loadOnStart)
+			//if (loadOnStart)
+			//{
+			//	Load();
+			//}
+		}
+
+		bool wasPressed = false;
+		public void Update()
+		{
+			if (!wasPressed && Input.GetKey(KeyCode.Space))
 			{
+				wasPressed = true;
 				Load();
 			}
 		}
 
-		public void Load()
+		public async void Load()
 		{
 			GLTFSceneImporter sceneImporter = null;
 			ILoader loader = null;
@@ -77,11 +89,12 @@ namespace UnityGLTF
 				sceneImporter.MaximumLod = MaximumLod;
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
+				sceneImporter.AsyncCoroutineHelper = asyncCoroutineHelper;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
 				float prevtime = Time.fixedTime;
 				var prevutc = DateTime.UtcNow;
-				sceneImporter.LoadScene(-1);
+				await sceneImporter.LoadScene(-1);
 				var ddtutc = DateTime.UtcNow - prevutc;
 				float dt = Time.fixedTime - prevtime;
 

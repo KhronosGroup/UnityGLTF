@@ -36,7 +36,7 @@ namespace UnityGLTF.Examples
 			}
 		}
 
-		void LoadScene(int SceneIndex)
+		async void LoadScene(int SceneIndex)
 		{
 			foreach (Transform child in transform)
 			{
@@ -49,7 +49,7 @@ namespace UnityGLTF.Examples
 				);
 
 			_importer.SceneParent = gameObject.transform;
-			_importer.LoadScene(SceneIndex);
+			await _importer.LoadScene(SceneIndex);
 		}
 	}
 }
