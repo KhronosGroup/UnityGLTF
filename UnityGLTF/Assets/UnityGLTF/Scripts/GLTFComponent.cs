@@ -16,7 +16,7 @@ namespace UnityGLTF
 	public class GLTFComponent : MonoBehaviour
 	{
 		public string GLTFUri = null;
-		public bool Multithreaded = false;
+		public bool Multithreaded = true;
 		public bool UseStream = false;
 
 		[SerializeField]

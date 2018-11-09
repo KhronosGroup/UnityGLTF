@@ -316,15 +316,20 @@ namespace UnityGLTF
 			};
 		}
 
+		private IEnumerator WaitUntilEnum(WaitUntil waitUntil)
+		{
+			yield return waitUntil;
+		}
+
 		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP
 			 if (isMultithreaded && _loader.HasSyncLoadMethod)
 			 {
-				 Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
-				 loadThread.Priority = ThreadPriority.Highest;
-				 loadThread.Start();
-				 new WaitUntil(() => !loadThread.IsAlive);
+				Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
+				loadThread.Priority = ThreadPriority.Highest;
+				loadThread.Start();
+				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !loadThread.IsAlive)));
 			 }
 			 else
 #endif
@@ -342,7 +347,7 @@ namespace UnityGLTF
 				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				parseJsonThread.Priority = ThreadPriority.Highest;
 				parseJsonThread.Start();
-				new WaitUntil(() => !parseJsonThread.IsAlive);
+				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !parseJsonThread.IsAlive)));
 			}
 			else
 #endif
@@ -378,7 +383,6 @@ namespace UnityGLTF
 				throw new ArgumentException("nodeIndex is out of range");
 			}
 
-			float prevtime = Time.fixedTime;
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
 			await Task.Run(() => ConstructBufferData(nodeToLoad));
 			
