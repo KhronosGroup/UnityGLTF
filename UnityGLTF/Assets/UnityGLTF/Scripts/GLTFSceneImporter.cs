@@ -24,7 +24,7 @@ using WrapMode = UnityEngine.WrapMode;
 
 namespace UnityGLTF
 {
-    public struct MeshConstructionData
+	public struct MeshConstructionData
 	{
 		public MeshPrimitive Primitive { get; set; }
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
@@ -79,7 +79,7 @@ namespace UnityGLTF
 
 		public float BudgetPerFrameInMilliseconds = 10f;
 
-        public bool KeepCPUCopyOfMesh = true;
+		public bool KeepCPUCopyOfMesh = true;
 
 		private float _timeAtLastYield = 0f;
 
@@ -159,7 +159,7 @@ namespace UnityGLTF
 				_timeAtLastYield = Time.realtimeSinceStartup;
 				if (_gltfRoot == null)
 				{
-					LoadJson(_gltfFileName);
+					await LoadJson(_gltfFileName);
 				}
 				await _LoadScene(sceneIndex);
 
@@ -316,7 +316,7 @@ namespace UnityGLTF
 			};
 		}
 
-		private void LoadJson(string jsonFilePath)
+		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP
 			 if (isMultithreaded && _loader.HasSyncLoadMethod)
@@ -330,14 +330,14 @@ namespace UnityGLTF
 #endif
 			 {
 				// HACK: Force the coroutine to run synchronously in the editor
-				_loader.LoadStream(jsonFilePath).Wait();
+				await _loader.LoadStream(jsonFilePath);
 			 }
 
 			_gltfStream.Stream = _loader.LoadedStream;
 			_gltfStream.StartPosition = 0;
 
 #if !WINDOWS_UWP
-            if (isMultithreaded)
+			if (isMultithreaded)
 			{
 				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				parseJsonThread.Priority = ThreadPriority.Highest;
@@ -346,7 +346,7 @@ namespace UnityGLTF
 			}
 			else
 #endif
-            {
+			{
 				GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
 				
 			}
@@ -584,7 +584,7 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-                GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
 				
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
@@ -1051,8 +1051,8 @@ namespace UnityGLTF
 
 				primitiveObj.transform.SetParent(parent, false);
 				primitiveObj.SetActive(true);
-                _assetCache.MeshCache[meshId][i].PrimitiveGO = primitiveObj;
-            }
+				_assetCache.MeshCache[meshId][i].PrimitiveGO = primitiveObj;
+			}
 		}
 
 
@@ -1209,10 +1209,10 @@ namespace UnityGLTF
 
 			mesh.RecalculateTangents(); 
 
-            if (!KeepCPUCopyOfMesh)
-            {
-                mesh.UploadMeshData(true);
-            }
+			if (!KeepCPUCopyOfMesh)
+			{
+				mesh.UploadMeshData(true);
+			}
 			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 
 			yield break;
@@ -1468,10 +1468,10 @@ namespace UnityGLTF
 				{
 					_assetCache.TextureCache[textureIndex].Texture = source;
 
-                    if (markGpuOnly)
-                    {
-                        Debug.LogWarning("Ignoring sampler");
-                    }
+					if (markGpuOnly)
+					{
+						Debug.LogWarning("Ignoring sampler");
+					}
 				}
 				else
 				{

@@ -287,7 +287,7 @@ MonoBehaviour:
   GLTFUri: http://localhost:8080/glTF-Asset-Generator/Output/Node_NegativeScale/Node_NegativeScale_06.gltf
   Multithreaded: 0
   UseStream: 0
-  loadOnStart: 1
+  loadOnStart: 0
   MaximumLod: 300
   Timeout: 8
   Collider: 0

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace UnityGLTF
 	public class GLTFComponent : MonoBehaviour
 	{
 		public string GLTFUri = null;
-		public bool Multithreaded = true;
+		public bool Multithreaded = false;
 		public bool UseStream = false;
 
 		[SerializeField]
@@ -25,22 +26,22 @@ namespace UnityGLTF
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 
-		public AsyncCoroutineHelper asyncCoroutineHelper;
+		private AsyncCoroutineHelper asyncCoroutineHelper;
 
 		[SerializeField]
 		private Shader shaderOverride = null;
 
-		void Start()
+		private async void Start()
 		{
-			asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
 			if (loadOnStart)
 			{
-				Load();
+				await Load();
 			}
 		}
 
-		public async void Load()
+		public async Task Load()
 		{
+			asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
 			GLTFSceneImporter sceneImporter = null;
 			ILoader loader = null;
 			try

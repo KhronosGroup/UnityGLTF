@@ -22,7 +22,7 @@ public class GLTFAssetGeneratorTests
 	private static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
 	private static string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
 	//set to true to generate the master images
-    private static bool GENERATE_REFERENCEDATA = false;
+    private static bool GENERATE_REFERENCEDATA = true;
     public GameObject ActiveGLTFObject { get; set; }
 	
     private Dictionary<string, AssetGenerator.Manifest.Camera> cameras =
@@ -91,19 +91,19 @@ public class GLTFAssetGeneratorTests
     }
 
     [UnityTest]
-    public IEnumerator GLTFScenarios([ValueSource("ModelFilePaths")] string modelPath)
+    public IEnumerator GLTFScenarios1([ValueSource("ModelFilePaths")] string modelPath)
     {
         ActiveGLTFObject = new GameObject();
-
+		
         GLTFComponent gltfcomponent = ActiveGLTFObject.AddComponent<GLTFComponent>();
         gltfcomponent.GLTFUri = GLTF_ASSETS_PATH + modelPath;
 
         AssetGenerator.Manifest.Camera cam = cameras[Path.GetFileNameWithoutExtension(modelPath)];
         Camera.main.transform.position = new Vector3(cam.Translation[0], cam.Translation[1], cam.Translation[2]);
-        gltfcomponent.Load();
+        yield return gltfcomponent.Load().AsCoroutine();
 
-        //wait one frame for rendering to complete
-        yield return null;
+		//wait one frame for rendering to complete
+		yield return null;
 
         Camera mainCamera = Camera.main;
         RenderTexture rt = new RenderTexture(512, 512, 24);
