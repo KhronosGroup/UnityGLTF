@@ -8,10 +8,6 @@ using System.Net;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 
-#if WINDOWS_UWP
-using System.Threading.Tasks;
-#endif
-
 namespace UnityGLTF.Loader
 {
 	public class WebRequestLoader : ILoader
