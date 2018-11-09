@@ -19,7 +19,7 @@ namespace UnityGLTF
     {
         [SerializeField] private bool _removeEmptyRootObjects = true;
         [SerializeField] private float _scaleFactor = 1.0f;
-        [SerializeField] private int _maximumLod = 300;
+        //[SerializeField] private int _maximumLod = 300;
         [SerializeField] private bool _readWriteEnabled = true;
         [SerializeField] private bool _generateColliders = false;
         [SerializeField] private bool _swapUvs = false;

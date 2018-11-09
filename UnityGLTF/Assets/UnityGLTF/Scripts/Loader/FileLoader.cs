@@ -5,10 +5,6 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 
-#if WINDOWS_UWP
-using System.Threading.Tasks;
-#endif
-
 namespace UnityGLTF.Loader
 {
 	public class FileLoader : ILoader

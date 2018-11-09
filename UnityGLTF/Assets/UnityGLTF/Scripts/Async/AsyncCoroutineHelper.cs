@@ -1,11 +1,17 @@
-﻿using System.Collections;
+﻿//using Microsoft.Pisa.App.AppSetup;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 namespace UnityGLTF
 {
-	public class AsyncCoroutineHelper : MonoBehaviour
-	{
+    public interface IAsyncCoroutineHelper
+    {
+        Task RunAsTask(IEnumerator coroutine, string name);
+    }
+
+	public class AsyncCoroutineHelper : MonoBehaviour, IAsyncCoroutineHelper
+    {
 		private Queue<CoroutineInfo> _actions = new Queue<CoroutineInfo>();
 
 		public Task RunAsTask(IEnumerator coroutine, string name)
@@ -32,7 +38,12 @@ namespace UnityGLTF
 			coroutineInfo.Tcs.SetResult(true);
 		}
 
-		private void Update()
+        private void Awake()
+        {
+            //DependencyResolver.RegisterInstance<IAsyncCoroutineHelper>(this);
+        }
+
+        private void Update()
 		{
 			CoroutineInfo? coroutineInfo = null;
 

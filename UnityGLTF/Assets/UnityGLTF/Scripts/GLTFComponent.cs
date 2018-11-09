@@ -18,8 +18,8 @@ namespace UnityGLTF
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 
-		[SerializeField]
-		private bool loadOnStart = true;
+		//[SerializeField]
+		//private bool loadOnStart = true;
 
 		public int MaximumLod = 300;
 		public int Timeout = 8;

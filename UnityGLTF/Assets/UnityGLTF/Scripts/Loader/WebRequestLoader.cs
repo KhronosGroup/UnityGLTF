@@ -8,9 +8,6 @@ using System.Net;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 
-#if WINDOWS_UWP
-using System.Threading.Tasks;
-#endif
 
 namespace UnityGLTF.Loader
 {
@@ -47,7 +44,7 @@ namespace UnityGLTF.Loader
 		{
 			HttpWebRequest webRequest = WebRequest.CreateHttp(Path.Combine(rootUri, httpRequestPath));
 			webRequest.Method = "GET";
-			webRequest.Timeout = 5000;
+			//webRequest.Timeout = 5000;
 			HttpWebResponse response = (HttpWebResponse)await webRequest.GetResponseAsync();
 			if ((int)response.StatusCode >= 400)
 			{

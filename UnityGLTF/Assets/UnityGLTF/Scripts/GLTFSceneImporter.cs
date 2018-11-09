@@ -6,7 +6,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+#if !WINDOWS_UWP
 using System.Threading;
+#endif
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -20,13 +22,9 @@ using ThreadPriority = System.Threading.ThreadPriority;
 #endif
 using WrapMode = UnityEngine.WrapMode;
 
-#if WINDOWS_UWP
-using System.Threading.Tasks;
-#endif
-
 namespace UnityGLTF
 {
-	public struct MeshConstructionData
+    public struct MeshConstructionData
 	{
 		public MeshPrimitive Primitive { get; set; }
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
@@ -80,6 +78,8 @@ namespace UnityGLTF
 		public AsyncCoroutineHelper AsyncCoroutineHelper { get; set; }
 
 		public float BudgetPerFrameInMilliseconds = 10f;
+
+        public bool KeepCPUCopyOfMesh = true;
 
 		private float _timeAtLastYield = 0f;
 
@@ -493,7 +493,7 @@ namespace UnityGLTF
 					}
 				}
 
-				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds)
+				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds * 1000f)
 				{
 					_timeAtLastYield = Time.realtimeSinceStartup;
 					await AsyncCoroutineHelper.RunAsTask(ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex), nameof(ConstructUnityTexture));
@@ -529,20 +529,7 @@ namespace UnityGLTF
 					{
 						throw new Exception("Stream is larger than can be copied into byte array");
 					}
-#if !WINDOWS_UWP
-                    if (isMultithreaded)
-					{
-						Thread readThread = new Thread(() => stream.Read(buffer, 0, (int)stream.Length));
-						readThread.Priority = ThreadPriority.Highest;
-						readThread.Start();
-						new WaitUntil(() => !readThread.IsAlive);
-					}
-					else
-#endif
-                    {
-						stream.Read(buffer, 0, (int)stream.Length);
-						
-					}
+					stream.Read(buffer, 0, (int)stream.Length);
 				}
 
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
@@ -597,22 +584,7 @@ namespace UnityGLTF
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
 				}
 
-//#if !WINDOWS_UWP
-//                if (isMultithreaded)
-//				{
-//					Thread buildMeshAttributesThread = new Thread(() => GLTFHelpers.BuildMeshAttributes(ref attributeAccessors));
-//					buildMeshAttributesThread.Priority = ThreadPriority.Highest;
-//					buildMeshAttributesThread.Start();
-//					while (!buildMeshAttributesThread.Join(Timeout))
-//					{
-//						
-//					}
-//				}
-//				else
-//#endif
-                {
-					GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
-				}
+                GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
 				
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
@@ -1099,7 +1071,7 @@ namespace UnityGLTF
 					MeshAttributes = meshAttributes
 				};
 
-				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds)
+				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds * 1000f)
 				{
 					_timeAtLastYield = Time.realtimeSinceStartup;
 					await AsyncCoroutineHelper.RunAsTask(ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex), nameof(ConstructUnityMesh));
@@ -1235,9 +1207,12 @@ namespace UnityGLTF
 				mesh.RecalculateNormals();
 			}
 
-			mesh.RecalculateTangents();
+			mesh.RecalculateTangents(); 
 
-			mesh.UploadMeshData(true);
+            if (!KeepCPUCopyOfMesh)
+            {
+                mesh.UploadMeshData(true);
+            }
 			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 
 			yield break;
