@@ -18,8 +18,8 @@ namespace UnityGLTF
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 
-		//[SerializeField]
-		//private bool loadOnStart = true;
+		[SerializeField]
+		private bool loadOnStart = true;
 
 		public int MaximumLod = 300;
 		public int Timeout = 8;
@@ -32,18 +32,9 @@ namespace UnityGLTF
 
 		void Start()
 		{
-			//if (loadOnStart)
-			//{
-			//	Load();
-			//}
-		}
-
-		bool wasPressed = false;
-		public void Update()
-		{
-			if (!wasPressed && Input.GetKey(KeyCode.Space))
+			asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
+			if (loadOnStart)
 			{
-				wasPressed = true;
 				Load();
 			}
 		}
@@ -70,14 +61,11 @@ namespace UnityGLTF
 				}
 				else
 				{
-					//string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					//loader = new WebRequestLoader(directoryPath);
-					GLTFUri = GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					loader = new FileLoader(directoryPath);
+					loader = new WebRequestLoader(directoryPath, asyncCoroutineHelper);
 
 					sceneImporter = new GLTFSceneImporter(
-						Path.GetFileName(GLTFUri),
+						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
 						loader
 						);
 
@@ -91,14 +79,8 @@ namespace UnityGLTF
 				sceneImporter.AsyncCoroutineHelper = asyncCoroutineHelper;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
-				float prevtime = Time.fixedTime;
-				var prevutc = DateTime.UtcNow;
 				await sceneImporter.LoadScene(-1);
-				var ddtutc = DateTime.UtcNow - prevutc;
-				float dt = Time.fixedTime - prevtime;
 
-				print("took: " + dt + " seconds");
-				print("took utc: " + ddtutc.TotalSeconds + " seconds");
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
 				{

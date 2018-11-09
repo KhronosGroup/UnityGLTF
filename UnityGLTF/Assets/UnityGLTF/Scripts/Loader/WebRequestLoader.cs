@@ -8,6 +8,9 @@ using System.Net;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 
+#if WINDOWS_UWP
+using System.Threading.Tasks;
+#endif
 
 namespace UnityGLTF.Loader
 {
@@ -18,10 +21,12 @@ namespace UnityGLTF.Loader
 		public bool HasSyncLoadMethod { get; private set; }
 
 		private string _rootURI;
+		private AsyncCoroutineHelper _asyncCoroutineHelper;
 
-		public WebRequestLoader(string rootURI)
+		public WebRequestLoader(string rootURI, AsyncCoroutineHelper asyncCoroutineHelper)
 		{
 			_rootURI = rootURI;
+			_asyncCoroutineHelper = asyncCoroutineHelper;
 			HasSyncLoadMethod = false;
 		}
 
@@ -32,7 +37,7 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException("gltfFilePath");
 			}
 
-			return CreateHTTPRequest(_rootURI, gltfFilePath);
+			return _asyncCoroutineHelper.RunAsTask(CreateHTTPRequest(_rootURI, gltfFilePath), nameof(CreateHTTPRequest));
 		}
 
 		public void LoadStreamSync(string jsonFilePath)
@@ -40,25 +45,27 @@ namespace UnityGLTF.Loader
 			throw new NotImplementedException();
 		}
 
-		private async Task CreateHTTPRequest(string rootUri, string httpRequestPath)
+		private IEnumerator CreateHTTPRequest(string rootUri, string httpRequestPath)
 		{
-			HttpWebRequest webRequest = WebRequest.CreateHttp(Path.Combine(rootUri, httpRequestPath));
-			webRequest.Method = "GET";
-			//webRequest.Timeout = 5000;
-			HttpWebResponse response = (HttpWebResponse)await webRequest.GetResponseAsync();
-			if ((int)response.StatusCode >= 400)
+			UnityWebRequest www = new UnityWebRequest(Path.Combine(rootUri, httpRequestPath), "GET", new DownloadHandlerBuffer(), null);
+			www.timeout = 5000;
+#if UNITY_2017_2_OR_NEWER
+			yield return www.SendWebRequest();
+#else
+			yield return www.Send();
+#endif
+			if ((int)www.responseCode >= 400)
 			{
-				Debug.LogErrorFormat("{0} - {1}", response.StatusCode, response.ResponseUri);
+				Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
 				throw new Exception("Response code invalid");
 			}
 
-			Stream stream = response.GetResponseStream();
-			if (stream.Length > int.MaxValue)
+			if (www.downloadedBytes > int.MaxValue)
 			{
 				throw new Exception("Stream is larger than can be copied into byte array");
 			}
-			
-			LoadedStream = stream;
+
+			LoadedStream = new MemoryStream(www.downloadHandler.data, 0, www.downloadHandler.data.Length, true, true);
 		}
 	}
 }

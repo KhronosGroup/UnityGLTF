@@ -11,6 +11,7 @@ using System.Collections;
 using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
+using System.Threading.Tasks;
 
 namespace UnityGLTF
 {
@@ -19,7 +20,7 @@ namespace UnityGLTF
     {
         [SerializeField] private bool _removeEmptyRootObjects = true;
         [SerializeField] private float _scaleFactor = 1.0f;
-        //[SerializeField] private int _maximumLod = 300;
+        [SerializeField] private int _maximumLod = 300;
         [SerializeField] private bool _readWriteEnabled = true;
         [SerializeField] private bool _generateColliders = false;
         [SerializeField] private bool _swapUvs = false;
@@ -333,21 +334,19 @@ namespace UnityGLTF
 
         private GameObject CreateGLTFScene(string projectFilePath)
         {
-            //ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
-            //using (var stream = File.OpenRead(projectFilePath))
-            //{
-            //    GLTFRoot gLTFRoot;
-            //    GLTFParser.ParseJson(stream, out gLTFRoot);
-            //    var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
+			ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
+			using (var stream = File.OpenRead(projectFilePath))
+			{
+				GLTFRoot gLTFRoot;
+				GLTFParser.ParseJson(stream, out gLTFRoot);
+				var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, stream);
 
-            //    loader.MaximumLod = _maximumLod;
-            //    loader.isMultithreaded = true;
-				
-            //    loader.LoadScene();
-            //    return loader.LastLoadedScene;
-            //}
+				loader.MaximumLod = _maximumLod;
+				loader.isMultithreaded = true;
 
-			return null;
+				loader.LoadScene().Wait();
+				return loader.LastLoadedScene;
+			}
         }
 
         private void CopyOrNew<T>(T asset, string assetPath, Action<T> replaceReferences) where T : Object
