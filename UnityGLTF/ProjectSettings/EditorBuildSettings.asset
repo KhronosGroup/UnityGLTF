@@ -4,4 +4,7 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/AnimatedCube.unity
+    guid: fb84f951a6d047a42954ae48b885521d

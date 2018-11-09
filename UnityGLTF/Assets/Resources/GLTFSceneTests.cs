@@ -15,7 +15,6 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityGLTF;
 using UnityGLTF.Examples;
-using static AssetGenerator.Manifest;
 using Camera = UnityEngine.Camera;
 using Object = System.Object;
 
@@ -61,7 +60,7 @@ public class GLTFSceneTests
 		    if (o.name.Contains("GLTF"))
 		    {
 			    GLTFComponent gltfcomponent = o.GetComponent<GLTFComponent>();
-			    yield return gltfcomponent.Load();
+			    gltfcomponent.Load();
 		    }
 	    }
 

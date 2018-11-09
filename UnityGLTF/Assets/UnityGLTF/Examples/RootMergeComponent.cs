@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.IO;
+using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace UnityGLTF
 
 		// todo undo
 #if !WINDOWS_UWP
-		IEnumerator Start()
+		private async Task Start()
 		{
 			var fullPath0 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset0Path;
 			ILoader loader0 = new FileLoader(URIHelper.GetDirectoryName(fullPath0));
@@ -26,12 +27,12 @@ namespace UnityGLTF
 			var fullPath1 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset1Path;
 			ILoader loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
 
-			yield return loader0.LoadStream(Path.GetFileName(asset0Path));
+			await loader0.LoadStream(Path.GetFileName(asset0Path));
 			var asset0Stream = loader0.LoadedStream;
 			GLTFRoot asset0Root;
 			GLTFParser.ParseJson(asset0Stream, out asset0Root);
 
-			yield return loader1.LoadStream(Path.GetFileName(asset1Path));
+			await loader1.LoadStream(Path.GetFileName(asset1Path));
 			var asset1Stream = loader1.LoadedStream;
 			GLTFRoot asset1Root;
 			GLTFParser.ParseJson(asset1Stream, out asset1Root);
@@ -73,7 +74,8 @@ namespace UnityGLTF
 
 			importer.MaximumLod = MaximumLod;
 			importer.isMultithreaded = Multithreaded;
-			yield return importer.LoadScene(-1);
+			importer.AsyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
+			await importer.LoadScene(-1);
 		}
 #endif
 	}

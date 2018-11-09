@@ -103,6 +103,7 @@ namespace UnityGLTF.Cache
 				}
 				BufferCache = null;
 			}
+
 			MeshCache = null;
 			AnimationCache = null;
 		}

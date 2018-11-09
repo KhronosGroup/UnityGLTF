@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
 using UnityEngine;
@@ -25,19 +26,22 @@ namespace UnityGLTF
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 
+		private AsyncCoroutineHelper asyncCoroutineHelper;
+
 		[SerializeField]
 		private Shader shaderOverride = null;
 
-		IEnumerator Start()
+		private async void Start()
 		{
 			if (loadOnStart)
 			{
-				yield return Load();
+				await Load();
 			}
 		}
 
-		public IEnumerator Load()
+		public async Task Load()
 		{
+			asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
 			GLTFSceneImporter sceneImporter = null;
 			ILoader loader = null;
 			try
@@ -59,7 +63,8 @@ namespace UnityGLTF
 				else
 				{
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					loader = new WebRequestLoader(directoryPath);
+					loader = new WebRequestLoader(directoryPath, asyncCoroutineHelper);
+
 					sceneImporter = new GLTFSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
 						loader
@@ -72,8 +77,10 @@ namespace UnityGLTF
 				sceneImporter.MaximumLod = MaximumLod;
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
+				sceneImporter.AsyncCoroutineHelper = asyncCoroutineHelper;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-				yield return sceneImporter.LoadScene(-1);
+
+				await sceneImporter.LoadScene(-1);
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
@@ -89,7 +96,7 @@ namespace UnityGLTF
 			{
 				if(loader != null)
 				{
-					sceneImporter.Dispose();
+					sceneImporter?.Dispose();
 					sceneImporter = null;
 					loader = null;
 				}
