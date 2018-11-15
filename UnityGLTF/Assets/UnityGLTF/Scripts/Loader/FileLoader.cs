@@ -3,10 +3,7 @@ using GLTF;
 using UnityEngine;
 using System;
 using System.Collections;
-
-#if WINDOWS_UWP
 using System.Threading.Tasks;
-#endif
 
 namespace UnityGLTF.Loader
 {
@@ -23,17 +20,17 @@ namespace UnityGLTF.Loader
 			HasSyncLoadMethod = true;
 		}
 
-		public IEnumerator LoadStream(string gltfFilePath)
+		public Task LoadStream(string gltfFilePath)
 		{
 			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
 
-			yield return LoadFileStream(_rootDirectoryPath, gltfFilePath);
+			return LoadFileStream(_rootDirectoryPath, gltfFilePath);
 		}
 
-		private IEnumerator LoadFileStream(string rootPath, string fileToLoad)
+		private Task LoadFileStream(string rootPath, string fileToLoad)
 		{
 			string pathToLoad = Path.Combine(rootPath, fileToLoad);
 			if (!File.Exists(pathToLoad))
@@ -41,8 +38,7 @@ namespace UnityGLTF.Loader
 				throw new FileNotFoundException("Buffer file not found", fileToLoad);
 			}
 
-			yield return null;
-			LoadedStream = File.OpenRead(pathToLoad);
+			return Task.Run(() => { LoadedStream = File.OpenRead(pathToLoad); });
 		}
 
 		public void LoadStreamSync(string gltfFilePath)

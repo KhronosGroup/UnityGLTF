@@ -19,14 +19,14 @@ namespace UnityGLTF.Loader
             _rootFolder = rootFolder;
         }
 
-        public IEnumerator LoadStream(string gltfFilePath)
+        public Task LoadStream(string gltfFilePath)
         {
             if (gltfFilePath == null)
             {
                 throw new ArgumentNullException("gltfFilePath");
             }
             
-            yield return LoadStorageFile(gltfFilePath).AsCoroutine();
+            return LoadStorageFile(gltfFilePath);
         }
 
         public void LoadStreamSync(string gltfFilePath)
