@@ -6,10 +6,22 @@ namespace UnityGLTF.Extensions
 {
 	public static class SchemaExtensions
 	{
-		// glTF matrix: column vectors, column-major storage, +Y up, +Z forward, -X right, right-handed
-		// unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
-		// multiply by a negative X scale to convert handedness
+		/// <summary>
+		/// Define the transformation between Unity coordinate space and glTF.
+		/// glTF is a right-handed coordinate system, where the 'right' direction is -X relative to
+		/// Unity's coordinate system.
+		/// glTF matrix: column vectors, column-major storage, +Y up, +Z forward, -X right, right-handed
+		/// unity matrix: column vectors, column-major storage, +Y up, +Z forward, +X right, left-handed
+		/// multiply by a negative X scale to convert handedness
+		/// </summary>
 		public static readonly GLTF.Math.Vector3 CoordinateSpaceConversionScale = new GLTF.Math.Vector3(-1, 1, 1);
+
+		/// <summary>
+		/// Define whether the coordinate space scale conversion above means we have a change in handedness.
+		/// This is used when determining the conventional direction of rotation - the right-hand rule states
+		/// that rotations are clockwise in left-handed systems and counter-clockwise in right-handed systems.
+		/// Reversing the direction of one or three axes of reverses the handedness.
+		/// </summary>
 		public static bool CoordinateSpaceConversionRequiresHandednessFlip
 		{
 			get
@@ -130,13 +142,11 @@ namespace UnityGLTF.Extensions
 		/// <returns>unity quaternion</returns>
 		public static Quaternion ToUnityQuaternionConvert(this GLTF.Math.Quaternion gltfQuat)
 		{
-			// get raw matrix conversion (gltf matrix stored in a unity matrix for easier math)
-			Vector3 origAxis = new Vector3(gltfQuat.X, gltfQuat.Y, gltfQuat.Z);
+			Vector3 fromAxisOfRotation = new Vector3(gltfQuat.X, gltfQuat.Y, gltfQuat.Z);
 			float axisFlipScale = CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
-			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, CoordinateSpaceConversionScale.ToUnityVector3Raw());
+			Vector3 toAxisOfRotation = axisFlipScale * Vector3.Scale(fromAxisOfRotation, CoordinateSpaceConversionScale.ToUnityVector3Raw());
 
-			// then put the quaternion back together and return it
-			return new Quaternion(newAxis.x, newAxis.y, newAxis.z, gltfQuat.W);
+			return new Quaternion(toAxisOfRotation.x, toAxisOfRotation.y, toAxisOfRotation.z, gltfQuat.W);
 		}
 
 		/// <summary>
@@ -146,13 +156,11 @@ namespace UnityGLTF.Extensions
 		/// <returns>gltf quaternion</returns>
 		public static GLTF.Math.Quaternion ToGltfQuaternionConvert(this Quaternion unityQuat)
 		{
-			// get the original axis and apply conversion scale as well as potential rotation axis flip
-			Vector3 origAxis = new Vector3(unityQuat.x, unityQuat.y, unityQuat.z);
+			Vector3 fromAxisOfRotation = new Vector3(unityQuat.x, unityQuat.y, unityQuat.z);
 			float axisFlipScale = CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
-			Vector3 newAxis = axisFlipScale * Vector3.Scale(origAxis, CoordinateSpaceConversionScale.ToUnityVector3Raw());
+			Vector3 toAxisOfRotation = axisFlipScale * Vector3.Scale(fromAxisOfRotation, CoordinateSpaceConversionScale.ToUnityVector3Raw());
 
-			// then put the quaternion back together and return it
-			return new GLTF.Math.Quaternion(newAxis.x, newAxis.y, newAxis.z, unityQuat.w);
+			return new GLTF.Math.Quaternion(toAxisOfRotation.x, toAxisOfRotation.y, toAxisOfRotation.z, unityQuat.w);
 		}
 
 		/// <summary>
