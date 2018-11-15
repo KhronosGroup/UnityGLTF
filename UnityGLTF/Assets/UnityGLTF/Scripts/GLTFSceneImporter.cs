@@ -1281,6 +1281,7 @@ namespace UnityGLTF
 				}
 			}
 
+			mapper.Material.name = def.Name;
 			mapper.AlphaMode = def.AlphaMode;
 			mapper.DoubleSided = def.DoubleSided;
 
