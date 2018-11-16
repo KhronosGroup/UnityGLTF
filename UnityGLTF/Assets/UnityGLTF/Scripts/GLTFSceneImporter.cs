@@ -1,5 +1,7 @@
 using GLTF;
+using GLTF.Extensions;
 using GLTF.Schema;
+using Newtonsoft.Json.Linq;
 using GLTF.Utilities;
 using System;
 using System.Collections;
@@ -11,6 +13,7 @@ using System.Threading;
 #endif
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -239,7 +242,7 @@ namespace UnityGLTF
 				TextureCache = _assetCache.TextureCache
 			};
 		}
-		
+
 		private void ConstructBufferData(Node node)
 		{
 			MeshId mesh = node.Mesh;
@@ -256,9 +259,27 @@ namespace UnityGLTF
 				foreach (NodeId child in node.Children)
 				{
 					ConstructBufferData(child.Value);
+				}	
+			}
+
+			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
+			MSFT_LODExtension lodsextension = null;
+			if (_gltfRoot.ExtensionsUsed != null
+			    && _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+			    && node.Extensions != null
+			    && node.Extensions.ContainsKey(msft_LODExtName))
+			{
+				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
+				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
+				{
+					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
+					{
+						int lodNodeId = lodsextension.MeshIds[i];
+						ConstructBufferData(_gltfRoot.Nodes[lodNodeId]);
+					}
 				}
 			}
-		}
+        }
 
 		private void ConstructMeshAttributes(GLTFMesh mesh, MeshId meshId)
 		{
@@ -901,9 +922,59 @@ namespace UnityGLTF
 
 			nodeObj.SetActive(true);
 			_assetCache.NodeCache[nodeIndex] = nodeObj;
+
+			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
+			MSFT_LODExtension lodsextension = null;
+			if (_gltfRoot.ExtensionsUsed != null
+				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+				&& node.Extensions != null
+				&& node.Extensions.ContainsKey(msft_LODExtName))
+			{
+				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
+				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
+				{
+					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 1];
+					JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
+					List<double> lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
+					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
+					lodGroupNodeObj.SetActive(false);
+					nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
+					MeshRenderer[] childRenders = nodeObj.GetComponentsInChildren<MeshRenderer>();
+					lods[0] = new LOD(GetLodCoverage(lodCoverage, 0), childRenders);
+
+					LODGroup lodGroup = lodGroupNodeObj.AddComponent<LODGroup>();
+					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
+					{
+						int lodNodeId = lodsextension.MeshIds[i];
+						await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId);
+						int lodIndex = i + 1;
+						GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
+						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
+						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
+						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
+					}
+					lodGroup.SetLODs(lods);
+					lodGroup.RecalculateBounds();
+					lodGroupNodeObj.SetActive(true);
+					_assetCache.NodeCache[nodeIndex] = lodGroupNodeObj;
+				}
+			}
+
 		}
 
-		private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
+        {
+            if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
+            {
+                return (float)lodcoverageExtras[lodIndex];
+            }
+            else
+            {
+                return 1.0f / (lodIndex + 2);
+            }
+        }
+
+        private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
 		{
 			return HasBones(skin) || HasBlendShapes(primitive);
 		}
