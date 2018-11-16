@@ -60,6 +60,12 @@
     <Compile Include="..\GLTFSerialization\Extensions\ExtTextureTransformExtensionFactory.cs">
       <Link>Extensions\ExtTextureTransformExtensionFactory.cs</Link>
     </Compile>
+    <Compile Include="..\GLTFSerialization\Extensions\MSFT_LODExtension.cs">
+      <Link>Extensions\MSFT_LODExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\GLTFSerialization\Extensions\MSFT_LODExtensionFactory.cs">
+      <Link>Extensions\MSFT_LODExtensionFactory.cs</Link>
+    </Compile>
     <Compile Include="..\GLTFSerialization\Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs">
       <Link>Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs</Link>
     </Compile>
