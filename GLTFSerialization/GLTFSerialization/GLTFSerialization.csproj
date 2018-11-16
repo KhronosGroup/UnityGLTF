@@ -79,6 +79,8 @@
     <Compile Include="Exceptions.cs" />
     <Compile Include="Extensions\ExtTextureTransformExtension.cs" />
     <Compile Include="Extensions\ExtTextureTransformExtensionFactory.cs" />
+    <Compile Include="Extensions\MSFT_LODExtension.cs" />
+    <Compile Include="Extensions\MSFT_LODExtensionFactory.cs" />
     <Compile Include="GLBBuilder.cs" />
     <Compile Include="GLBObject.cs" />
     <Compile Include="GLTFHelpers.cs" />
