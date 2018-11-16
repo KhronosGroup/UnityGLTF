@@ -924,47 +924,45 @@ namespace UnityGLTF
 			_assetCache.NodeCache[nodeIndex] = nodeObj;
 
 			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
-            MSFT_LODExtension lodsextension = null;
-            if (_gltfRoot.ExtensionsUsed != null
-                && _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
-                && node.Extensions != null
-                && node.Extensions.ContainsKey(msft_LODExtName))
-            {
-                lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
-                if (lodsextension != null && lodsextension.MeshIds.Count > 0)
-                {
-                    LOD[] lods = new LOD[lodsextension.MeshIds.Count + 1];
-                    JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
-                    List<double> lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
-                    var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
-                    lodGroupNodeObj.SetActive(false);
-                    nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
-                    MeshRenderer[] childrenders = nodeObj.GetComponentsInChildren<MeshRenderer>();
-                    lods[0] = new LOD(GetLodCoverage(lodCoverage, 0), childrenders);
+			MSFT_LODExtension lodsextension = null;
+			if (_gltfRoot.ExtensionsUsed != null
+				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+				&& node.Extensions != null
+				&& node.Extensions.ContainsKey(msft_LODExtName))
+			{
+				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
+				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
+				{
+					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 1];
+					JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
+					List<double> lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
+					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
+					lodGroupNodeObj.SetActive(false);
+					nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
+					MeshRenderer[] childRenders = nodeObj.GetComponentsInChildren<MeshRenderer>();
+					lods[0] = new LOD(GetLodCoverage(lodCoverage, 0), childRenders);
 
-                    LODGroup lodGroup = lodGroupNodeObj.AddComponent<LODGroup>();
-                    for (int i = 0; i < lodsextension.MeshIds.Count; i++)
-                    {
-                        int lodNodeId = lodsextension.MeshIds[i];
-	                     await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId);
-	                    // //await _LoadNode(lodNodeId);
-                        //await ConstructNode()
-                        int lodIndex = i + 1;
-                        GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
-                        lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
-                        childrenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
-                        lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childrenders);
-                    }
-                    lodGroup.SetLODs(lods);
-                    lodGroup.RecalculateBounds();
-                    lodGroupNodeObj.SetActive(true);
-                    _assetCache.NodeCache[nodeIndex] = lodGroupNodeObj;
-                }
-            }
+					LODGroup lodGroup = lodGroupNodeObj.AddComponent<LODGroup>();
+					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
+					{
+						int lodNodeId = lodsextension.MeshIds[i];
+						await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId);
+						int lodIndex = i + 1;
+						GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
+						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
+						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
+						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
+					}
+					lodGroup.SetLODs(lods);
+					lodGroup.RecalculateBounds();
+					lodGroupNodeObj.SetActive(true);
+					_assetCache.NodeCache[nodeIndex] = lodGroupNodeObj;
+				}
+			}
 
-        }
+		}
 
-        float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
+		float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
         {
             if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
             {
