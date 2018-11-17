@@ -405,8 +405,16 @@ namespace UnityGLTF
 			}
 
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
-			await Task.Run(() => ConstructBufferData(nodeToLoad));
-			
+
+			if (Application.isEditor)
+			{
+				ConstructBufferData(nodeToLoad);
+			}
+			else
+			{
+				await Task.Run(() => ConstructBufferData(nodeToLoad));
+			}
+
 			await ConstructNode(nodeToLoad, nodeIndex);
 		}
 
