@@ -20,12 +20,16 @@ namespace GLTF.Schema
 		}
 		public IExtension Clone(GLTFRoot gltfRoot)
 		{
-			throw new NullReferenceException();
+			return new MSFT_LODExtension(MeshIds);
 		}
 		public JProperty Serialize()
 		{
-			throw new NullReferenceException();
-			//return new JProperty(ExtTextureTransformExtensionFactory.EXTENSION_NAME, ext);
+			JProperty jProperty = new JProperty(MSFT_LODExtensionFactory.EXTENSION_NAME,
+				new JObject(
+					new JProperty(MSFT_LODExtensionFactory.IDS, new JArray(MeshIds))
+					)
+				);
+			return jProperty;
 		}
 	}
 }
