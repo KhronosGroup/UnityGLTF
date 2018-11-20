@@ -1,4 +1,5 @@
-﻿using GLTF.Math;
+﻿using GLTF.Extensions;
+using GLTF.Math;
 using GLTF.Schema;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -31,5 +32,19 @@ namespace GLTF.Schema
 				);
 			return jProperty;
 		}
-	}
+
+		public List<double> GetLODCoverage(Node node)
+		{
+			List<double> lodCoverage = null;
+			if (node.Extras != null)
+			{
+				JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
+				if (screenCoverageExtras != null)
+				{
+					lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
+				}
+			}
+			return lodCoverage;
+        }
+    }
 }
