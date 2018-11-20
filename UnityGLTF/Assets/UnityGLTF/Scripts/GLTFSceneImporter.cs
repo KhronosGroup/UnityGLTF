@@ -941,8 +941,16 @@ namespace UnityGLTF
 				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
 				{
 					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 1];
-					JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
-					List<double> lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
+					List<double> lodCoverage = null;
+					if (node.Extras != null)
+					{
+						JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
+						if (screenCoverageExtras != null)
+						{
+							lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
+						}
+					}
+
 					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
 					lodGroupNodeObj.SetActive(false);
 					nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
