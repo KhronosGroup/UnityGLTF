@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <RootNamespace>GLTF</RootNamespace>
     <AssemblyName>GLTFSerialization</AssemblyName>
     <StartupObject />
     
-    <TargetFrameworks>netstandard1.3;net35;uap10.0.10586</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3;net35</TargetFrameworks>
+    <TargetFrameworks Condition="'$(MSBuildRuntimeType)' != 'Mono'">$(TargetFrameworks);uap10.0.10586</TargetFrameworks>
+    
     <OutputType>Library</OutputType>
     
     <Authors>Khronos Group</Authors>
