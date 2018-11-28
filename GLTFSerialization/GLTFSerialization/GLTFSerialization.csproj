@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>GLTF</RootNamespace>
     <AssemblyName>GLTFSerialization</AssemblyName>
     <StartupObject />
-    
-    <TargetFrameworks>netstandard1.3;net35</TargetFrameworks>
+
+    <TargetFrameworks>net35;netstandard1.3</TargetFrameworks>
     <TargetFrameworks Condition="'$(MSBuildRuntimeType)' != 'Mono'">$(TargetFrameworks);uap10.0.10586</TargetFrameworks>
-    
+
     <OutputType>Library</OutputType>
-    
+
     <Authors>Khronos Group</Authors>
     <Copyright></Copyright>
     <Description>C# glTF Serializer</Description>
@@ -23,17 +23,17 @@
     <PackageTags>glTF 3D C#</PackageTags>
     <RootNamespace>GLTF</RootNamespace>
     <Version>1.0.0-alpha</Version>
-    
+
     <IsUAPTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('uap10.0'))">true</IsUAPTargetFramework>
     <IsNETStandardTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('netstandard'))">true</IsNETStandardTargetFramework>
     <IsNETTargetFramework Condition="'$(IsNETStandardTargetFramework)' != 'true' and $(TargetFramework.ToLower().StartsWith('net'))">true</IsNETTargetFramework>
-    
+
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-    
+
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -46,7 +46,7 @@
     <Optimize>true</Optimize>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-  
+
   <Choose>
     <When Condition="'$(IsUAPTargetFramework)' == 'true'">
       <PropertyGroup>
@@ -78,13 +78,13 @@
       </ItemGroup>
     </When>
   </Choose>
-  
+
   <PropertyGroup Condition="'$(Platform)' == 'AnyCPU'">
     <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)' == 'x86'">
-    <OutputPath>bin\x86\Debug\</OutputPath>
+    <OutputPath>bin\x86\$(Configuration)\</OutputPath>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
