@@ -31,6 +31,20 @@ namespace UnityGLTF
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
 	}
 
+	public class UnityMeshData
+	{
+		public Vector3[] Vertices;
+		public Vector3[] Normals;
+		public Vector2[] Uv1;
+		public Vector2[] Uv2;
+		public Vector2[] Uv3;
+		public Vector2[] Uv4;
+		public Color[] Colors;
+		public int[] Triangles;
+		public Vector4[] Tangents;
+		public BoneWeight[] BoneWeights;
+	}
+
 	public class GLTFSceneImporter : IDisposable
 	{
 		public enum ColliderType
@@ -54,7 +68,7 @@ namespace UnityGLTF
 		/// <summary>
 		/// Use Multithreading or not
 		/// </summary>
-		public bool isMultithreaded = false;
+		public bool isMultithreaded = true;
 
 		/// <summary>
 		/// The parent transform for the created GameObject
@@ -263,9 +277,9 @@ namespace UnityGLTF
 			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
 			MSFT_LODExtension lodsextension = null;
 			if (_gltfRoot.ExtensionsUsed != null
-			    && _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
-			    && node.Extensions != null
-			    && node.Extensions.ContainsKey(msft_LODExtName))
+				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+				&& node.Extensions != null
+				&& node.Extensions.ContainsKey(msft_LODExtName))
 			{
 				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
 				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
@@ -277,7 +291,7 @@ namespace UnityGLTF
 					}
 				}
 			}
-        }
+		}
 
 		private void ConstructMeshAttributes(GLTFMesh mesh, MeshId meshId)
 		{
@@ -335,9 +349,14 @@ namespace UnityGLTF
 			};
 		}
 
-		private IEnumerator WaitUntilEnum(WaitUntil waitUntil)
+		protected IEnumerator WaitUntilEnum(WaitUntil waitUntil)
 		{
 			yield return waitUntil;
+		}
+
+		protected IEnumerator EmptyYieldEnum()
+		{
+			yield break;
 		}
 
 		private async Task LoadJson(string jsonFilePath)
@@ -404,7 +423,7 @@ namespace UnityGLTF
 
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
 
-			if (Application.isEditor)
+			if (!isMultithreaded)
 			{
 				ConstructBufferData(nodeToLoad);
 			}
@@ -524,20 +543,12 @@ namespace UnityGLTF
 					}
 				}
 
-				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds * 1000f)
-				{
-					_timeAtLastYield = Time.realtimeSinceStartup;
-					await AsyncCoroutineHelper.RunAsTask(ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex), nameof(ConstructUnityTexture));
-				}
-				else
-				{
-					IEnumerator enumerator = ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex);
-					while (enumerator.MoveNext()) { }
-				}
+				await TryYieldOnTimeout();
+				await ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex);
 			}
 		}
 		
-		protected virtual IEnumerator ConstructUnityTexture(Stream stream, bool markGpuOnly, bool linear, GLTFImage image, int imageCacheIndex)
+		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool linear, GLTFImage image, int imageCacheIndex)
 		{
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, linear);
 
@@ -563,16 +574,17 @@ namespace UnityGLTF
 					stream.Read(buffer, 0, (int)stream.Length);
 				}
 
+				await TryYieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, false);
 				
 			}
 
+			await TryYieldOnTimeout();
 			// After we conduct the Apply(), then we can make the texture non-readable and never create a CPU copy
 			texture.Apply(true, markGpuOnly);
 
 			_assetCache.ImageCache[imageCacheIndex] = texture;
-			yield break;
 		}
 
 		protected virtual void ConstructMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
@@ -969,18 +981,18 @@ namespace UnityGLTF
 		}
 
 		float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
-        {
-            if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
-            {
-                return (float)lodcoverageExtras[lodIndex];
-            }
-            else
-            {
-                return 1.0f / (lodIndex + 2);
-            }
-        }
+		{
+			if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
+			{
+				return (float)lodcoverageExtras[lodIndex];
+			}
+			else
+			{
+				return 1.0f / (lodIndex + 2);
+			}
+		}
 
-        private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
+		private bool NeedsSkinnedMeshRenderer(MeshPrimitive primitive, Skin skin)
 		{
 			return HasBones(skin) || HasBlendShapes(primitive);
 		}
@@ -1152,16 +1164,17 @@ namespace UnityGLTF
 					MeshAttributes = meshAttributes
 				};
 
-				if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds * 1000f)
+				UnityMeshData unityMeshData = null;
+				if (isMultithreaded)
 				{
-					_timeAtLastYield = Time.realtimeSinceStartup;
-					await AsyncCoroutineHelper.RunAsTask(ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex), nameof(ConstructUnityMesh));
+					await Task.Run(() => unityMeshData = ConvertAccessorsToUnityTypes(meshConstructionData));
 				}
 				else
 				{
-					IEnumerator enumerator = ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex);
-					while (enumerator.MoveNext()) { }
+					unityMeshData = ConvertAccessorsToUnityTypes(meshConstructionData);
 				}
+				
+				await ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex, unityMeshData);
 			}
 
 			bool shouldUseDefaultMaterial = primitive.Material == null;
@@ -1172,6 +1185,70 @@ namespace UnityGLTF
 			{
 				await ConstructMaterial(materialToLoad, shouldUseDefaultMaterial ? -1 : materialIndex);
 			}
+		}
+
+		protected async Task TryYieldOnTimeout()
+		{
+			if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds * 1000f)
+			{
+				_timeAtLastYield = Time.realtimeSinceStartup;
+
+				// empty yield
+				await AsyncCoroutineHelper.RunAsTask(EmptyYieldEnum(), nameof(EmptyYieldEnum));
+			}
+		}
+
+		protected UnityMeshData ConvertAccessorsToUnityTypes(MeshConstructionData meshConstructionData)
+		{
+			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
+			MeshPrimitive primitive = meshConstructionData.Primitive;
+			Dictionary<string, AttributeAccessor> meshAttributes = meshConstructionData.MeshAttributes;
+
+			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
+
+			return new UnityMeshData
+			{
+				Vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
+					? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
+					: null,
+
+				Normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
+					? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
+					: null,
+
+				Uv1 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0))
+					? meshAttributes[SemanticProperties.TexCoord(0)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+					: null,
+
+				Uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(1))
+					? meshAttributes[SemanticProperties.TexCoord(1)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+					: null,
+
+				Uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(2))
+					? meshAttributes[SemanticProperties.TexCoord(2)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+					: null,
+
+				Uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(3))
+					? meshAttributes[SemanticProperties.TexCoord(3)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+					: null,
+
+				Colors = primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
+					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
+					: null,
+
+				Triangles = primitive.Indices != null
+					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
+					: MeshPrimitive.GenerateTriangles(vertexCount),
+
+				Tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
+					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
+					: null,
+
+				BoneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
+					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+					meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
+					: null
+			};
 		}
 
 		protected virtual void ConstructMaterialImageBuffers(GLTFMaterial def)
@@ -1228,75 +1305,53 @@ namespace UnityGLTF
 			}
 		}
 
-		protected IEnumerator ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex)
+		protected async Task ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex, UnityMeshData unityMeshData)
 		{
 			MeshPrimitive primitive = meshConstructionData.Primitive;
-			var meshAttributes = meshConstructionData.MeshAttributes;
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
+			bool hasNormals = unityMeshData.Normals != null;
 
-			bool hasNormals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL);
-			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
+			await TryYieldOnTimeout();
 			Mesh mesh = new Mesh
 			{
-				
+
 #if UNITY_2017_3_OR_NEWER
 				indexFormat = vertexCount > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16,
 #endif
-				vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
-					? meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw()
-					: null,
-				normals = primitive.Attributes.ContainsKey(SemanticProperties.NORMAL)
-					? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
-					: null,
-
-				uv = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0))
-					? meshAttributes[SemanticProperties.TexCoord(0)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
-					: null,
-
-				uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(1))
-					? meshAttributes[SemanticProperties.TexCoord(1)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
-					: null,
-
-				uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(2))
-					? meshAttributes[SemanticProperties.TexCoord(2)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
-					: null,
-
-				uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(3))
-					? meshAttributes[SemanticProperties.TexCoord(3)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
-					: null,
-
-				colors = primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
-					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
-					: null,
-
-				triangles = primitive.Indices != null
-					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-					: MeshPrimitive.GenerateTriangles(vertexCount),
-
-				tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
-					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
-					: null,
-
-				boneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
-					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-						meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
-					: null
 			};
+
+			mesh.vertices = unityMeshData.Vertices;
+			await TryYieldOnTimeout();
+			mesh.normals = unityMeshData.Normals;
+			await TryYieldOnTimeout();
+			mesh.uv = unityMeshData.Uv1;
+			await TryYieldOnTimeout();
+			mesh.uv2 = unityMeshData.Uv2;
+			await TryYieldOnTimeout();
+			mesh.uv3 = unityMeshData.Uv3;
+			await TryYieldOnTimeout();
+			mesh.uv4 = unityMeshData.Uv4;
+			await TryYieldOnTimeout();
+			mesh.colors = unityMeshData.Colors;
+			await TryYieldOnTimeout();
+			mesh.triangles = unityMeshData.Triangles;
+			await TryYieldOnTimeout();
+			mesh.tangents = unityMeshData.Tangents;
+			await TryYieldOnTimeout();
+			mesh.boneWeights = unityMeshData.BoneWeights;
+			await TryYieldOnTimeout();
 
 			if (!hasNormals)
 			{
 				mesh.RecalculateNormals();
 			}
 
-			mesh.RecalculateTangents(); 
-
 			if (!KeepCPUCopyOfMesh)
 			{
 				mesh.UploadMeshData(true);
 			}
-			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 
-			yield break;
+			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
 		}
 
 		protected virtual async Task ConstructMaterial(GLTFMaterial def, int materialIndex)
