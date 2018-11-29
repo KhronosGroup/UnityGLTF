@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using GLTF.Schema;
+﻿using GLTF.Schema;
+using System.Collections.Generic;
 using System.IO;
 
 namespace GLTF
@@ -25,7 +25,6 @@ namespace GLTF
 
 		/// <summary>
 		/// Read/Write Stream that GLB exists in
-		/// todo: Stream should probably be passed in or updated via a call
 		/// </summary>
 		public Stream Stream { get; set; }
 
