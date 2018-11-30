@@ -11,19 +11,20 @@ namespace UnityGLTF.Examples
 		public string Url;
 
 		private GLTFSceneImporter _importer;
+		private AsyncCoroutineHelper _asyncCoroutineHelper;
 		private ILoader _loader;
 		private string _fileName;
 
 		void Start()
 		{
 			Debug.Log("Hit spacebar to change the scene.");
-
+			_asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
 			Uri uri = new Uri(Url);
 			var directoryPath = URIHelper.AbsoluteUriPath(uri);
-			_loader = new WebRequestLoader(directoryPath);
+			_loader = new WebRequestLoader(directoryPath, _asyncCoroutineHelper);
 			_fileName = URIHelper.GetFileFromUri(uri);
 
-			StartCoroutine(LoadScene(SceneIndex));
+			LoadScene(SceneIndex);
 		}
 
 		void Update()
@@ -32,11 +33,11 @@ namespace UnityGLTF.Examples
 			{
 				SceneIndex = SceneIndex == 0 ? 1 : 0;
 				Debug.LogFormat("Loading scene {0}", SceneIndex);
-				StartCoroutine(LoadScene(SceneIndex));
+				LoadScene(SceneIndex);
 			}
 		}
 
-		IEnumerator LoadScene(int SceneIndex)
+		async void LoadScene(int SceneIndex)
 		{
 			foreach (Transform child in transform)
 			{
@@ -45,11 +46,12 @@ namespace UnityGLTF.Examples
 
 			_importer = new GLTFSceneImporter(
 				_fileName,
-				_loader
+				_loader,
+				_asyncCoroutineHelper
 				);
-
+			
 			_importer.SceneParent = gameObject.transform;
-			yield return _importer.LoadScene(SceneIndex);
+			await _importer.LoadSceneAsync(SceneIndex);
 		}
 	}
 }
