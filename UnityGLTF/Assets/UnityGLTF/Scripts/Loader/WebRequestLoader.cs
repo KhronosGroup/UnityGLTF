@@ -6,10 +6,7 @@ using UnityEngine;
 using System.Text.RegularExpressions;
 using System.Net;
 using UnityEngine.Networking;
-
-#if WINDOWS_UWP
 using System.Threading.Tasks;
-#endif
 
 namespace UnityGLTF.Loader
 {
@@ -20,21 +17,23 @@ namespace UnityGLTF.Loader
 		public bool HasSyncLoadMethod { get; private set; }
 
 		private string _rootURI;
+		private AsyncCoroutineHelper _asyncCoroutineHelper;
 
-		public WebRequestLoader(string rootURI)
+		public WebRequestLoader(string rootURI, AsyncCoroutineHelper asyncCoroutineHelper)
 		{
 			_rootURI = rootURI;
+			_asyncCoroutineHelper = asyncCoroutineHelper;
 			HasSyncLoadMethod = false;
 		}
 
-		public IEnumerator LoadStream(string gltfFilePath)
+		public Task LoadStream(string gltfFilePath)
 		{
 			if (gltfFilePath == null)
 			{
 				throw new ArgumentNullException("gltfFilePath");
 			}
 
-			yield return CreateHTTPRequest(_rootURI, gltfFilePath);
+			return _asyncCoroutineHelper.RunAsTask(CreateHTTPRequest(_rootURI, gltfFilePath), nameof(CreateHTTPRequest));
 		}
 
 		public void LoadStreamSync(string jsonFilePath)

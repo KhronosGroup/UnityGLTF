@@ -255,9 +255,9 @@ namespace UnityGLTF
 			_bufferWriter = new BinaryWriter(binFile);
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
-
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			_buffer.Uri = fileName + ".bin";
-			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
+			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
 			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
 			_root.Serialize(gltfFile);
@@ -385,6 +385,11 @@ namespace UnityGLTF
 		private string ConstructImageFilenamePath(Texture2D texture, string outputPath)
 		{
 			var imagePath = _retrieveTexturePathDelegate(texture);
+			if (string.IsNullOrEmpty(imagePath))
+			{
+				imagePath = Path.Combine(outputPath, texture.name);
+			}
+
 			var filenamePath = Path.Combine(outputPath, imagePath);
 			if (!ExportFullPath)
 			{
@@ -618,7 +623,11 @@ namespace UnityGLTF
 			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
 			foreach (var prim in primitives)
 			{
-				mesh.Primitives.AddRange(ExportPrimitive(prim));
+				MeshPrimitive[] meshPrimitives = ExportPrimitive(prim);
+				if (meshPrimitives != null)
+				{
+					mesh.Primitives.AddRange(meshPrimitives);
+				}
 			}
 
 			var id = new MeshId
@@ -636,6 +645,11 @@ namespace UnityGLTF
 		{
 			var filter = gameObject.GetComponent<MeshFilter>();
 			var meshObj = filter.sharedMesh;
+			if (meshObj == null)
+			{
+				Debug.LogError(string.Format("MeshFilter.sharedMesh on gameobject:{0} is missing , skipping", gameObject.name));
+				return null;
+			}
 
 			var renderer = gameObject.GetComponent<MeshRenderer>();
 			var materialsObj = renderer.sharedMaterials;
@@ -1077,6 +1091,11 @@ namespace UnityGLTF
 			});
 
 			var imagePath = _retrieveTexturePathDelegate(texture);
+			if (string.IsNullOrEmpty(imagePath))
+			{
+				imagePath = texture.name;
+			}
+
 			var filenamePath = Path.ChangeExtension(imagePath, ".png");
 			if (!ExportFullPath)
 			{
@@ -1171,7 +1190,8 @@ namespace UnityGLTF
 				}
 			}
 
-			uint byteOffset = (uint)_bufferWriter.BaseStream.Position;
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			if (max <= byte.MaxValue && min >= byte.MinValue)
 			{
@@ -1231,7 +1251,7 @@ namespace UnityGLTF
 			accessor.Min = new List<double> { min };
 			accessor.Max = new List<double> { max };
 
-			uint byteLength = (uint)_bufferWriter.BaseStream.Position - byteOffset;
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -1289,7 +1309,8 @@ namespace UnityGLTF
 			accessor.Min = new List<double> { minX, minY };
 			accessor.Max = new List<double> { maxX, maxY };
 
-			uint byteOffset = (uint)_bufferWriter.BaseStream.Position;
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			foreach (var vec in arr)
 			{
@@ -1297,7 +1318,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(vec.y);
 			}
 
-			uint byteLength = (uint)_bufferWriter.BaseStream.Position - byteOffset;
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -1365,7 +1386,8 @@ namespace UnityGLTF
 			accessor.Min = new List<double> { minX, minY, minZ };
 			accessor.Max = new List<double> { maxX, maxY, maxZ };
 
-			uint byteOffset = (uint)_bufferWriter.BaseStream.Position;
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			foreach (var vec in arr)
 			{
@@ -1374,7 +1396,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(vec.z);
 			}
 
-			uint byteLength = (uint)_bufferWriter.BaseStream.Position - byteOffset;
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -1452,7 +1474,8 @@ namespace UnityGLTF
 			accessor.Min = new List<double> { minX, minY, minZ, minW };
 			accessor.Max = new List<double> { maxX, maxY, maxZ, maxW };
 
-			uint byteOffset = (uint)_bufferWriter.BaseStream.Position;
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			foreach (var vec in arr)
 			{
@@ -1462,7 +1485,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(vec.w);
 			}
 
-			uint byteLength = (uint)_bufferWriter.BaseStream.Position - byteOffset;
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -1540,7 +1563,8 @@ namespace UnityGLTF
 			accessor.Min = new List<double> { minR, minG, minB, minA };
 			accessor.Max = new List<double> { maxR, maxG, maxB, maxA };
 
-			uint byteOffset = (uint)_bufferWriter.BaseStream.Position;
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			foreach (var color in arr)
 			{
@@ -1550,7 +1574,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(color.a);
 			}
 
-			uint byteLength = (uint)_bufferWriter.BaseStream.Position - byteOffset;
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
