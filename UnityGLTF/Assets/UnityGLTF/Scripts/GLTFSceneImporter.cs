@@ -90,19 +90,19 @@ namespace UnityGLTF
 		/// </summary>
 		public string CustomShaderName { get; set; }
 
-		public AsyncCoroutineHelper AsyncCoroutineHelper { get; set; }
 
 		public float BudgetPerFrameInMilliseconds = 10f;
 
 		public bool KeepCPUCopyOfMesh = true;
-
-		private float _timeAtLastYield = 0f;
 
 		protected struct GLBStream
 		{
 			public Stream Stream;
 			public long StartPosition;
 		}
+
+		protected float _timeAtLastYield = 0f;
+		protected AsyncCoroutineHelper _asyncCoroutineHelper;
 
 		protected GameObject _lastLoadedScene;
 		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();
@@ -120,22 +120,24 @@ namespace UnityGLTF
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
 		/// </summary>
 		/// <param name="gltfFileName">glTF file relative to data loader path</param>
-		/// <param name="externalDataLoader"></param>
-		public GLTFSceneImporter(string gltfFileName, ILoader externalDataLoader) : this(externalDataLoader)
+		/// <param name="externalDataLoader">Loader to load external data references</param>
+		/// <param name="asyncCoroutineHelper">Helper to load coroutines on a seperate thread</param>
+		public GLTFSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper) : this(externalDataLoader, asyncCoroutineHelper)
 		{
 			_gltfFileName = gltfFileName;
 		}
 
-		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, Stream gltfStream = null) : this(externalDataLoader)
+		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper, Stream gltfStream = null) : this(externalDataLoader, asyncCoroutineHelper)
 		{
 			_gltfRoot = rootNode;
 			_loader = externalDataLoader;
 			if (gltfStream != null) _gltfStream = new GLBStream {Stream = gltfStream, StartPosition = gltfStream.Position};
 		}
 
-		private GLTFSceneImporter(ILoader externalDataLoader)
+		private GLTFSceneImporter(ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
 		{
 			_loader = externalDataLoader;
+			_asyncCoroutineHelper = asyncCoroutineHelper;
 		}
 
 		public void Dispose()
@@ -157,7 +159,7 @@ namespace UnityGLTF
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
-		public async Task LoadScene(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
+		public async Task LoadSceneAsync(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
 		{
 			try
 			{
@@ -194,12 +196,17 @@ namespace UnityGLTF
 			}
 		}
 
+		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
+		{
+			return LoadSceneAsync(sceneIndex, onLoadComplete).AsCoroutine();
+		}
+
 		/// <summary>
 		/// Loads a node tree from a glTF file into the LastLoadedScene field
 		/// </summary>
 		/// <param name="nodeIndex">The node index to load from the glTF</param>
 		/// <returns></returns>
-		public async Task LoadNode(int nodeIndex)
+		public async Task LoadNodeAsync(int nodeIndex)
 		{
 			if (_gltfRoot == null)
 			{
@@ -1194,7 +1201,7 @@ namespace UnityGLTF
 				_timeAtLastYield = Time.realtimeSinceStartup;
 
 				// empty yield
-				await AsyncCoroutineHelper.RunAsTask(EmptyYieldEnum(), nameof(EmptyYieldEnum));
+				await _asyncCoroutineHelper.RunAsTask(EmptyYieldEnum(), nameof(EmptyYieldEnum));
 			}
 		}
 
@@ -1382,6 +1389,7 @@ namespace UnityGLTF
 				}
 			}
 
+			mapper.Material.name = def.Name;
 			mapper.AlphaMode = def.AlphaMode;
 			mapper.DoubleSided = def.DoubleSided;
 
@@ -1503,7 +1511,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="texture">The texture to load</param>
 		/// <returns>The loaded unity texture</returns>
-		public virtual async Task LoadTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly = true)
+		public virtual async Task LoadTextureAsync(GLTFTexture texture, int textureIndex, bool markGpuOnly = true)
 		{
 			try
 			{

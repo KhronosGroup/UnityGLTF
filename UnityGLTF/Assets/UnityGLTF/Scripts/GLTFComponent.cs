@@ -57,7 +57,8 @@ namespace UnityGLTF
 					loader = new FileLoader(directoryPath);
 					sceneImporter = new GLTFSceneImporter(
 						Path.GetFileName(GLTFUri),
-						loader
+						loader,
+						asyncCoroutineHelper
 						);
 				}
 				else
@@ -67,7 +68,8 @@ namespace UnityGLTF
 
 					sceneImporter = new GLTFSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
-						loader
+						loader,
+						asyncCoroutineHelper
 						);
 
 				}
@@ -77,10 +79,9 @@ namespace UnityGLTF
 				sceneImporter.MaximumLod = MaximumLod;
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
-				sceneImporter.AsyncCoroutineHelper = asyncCoroutineHelper;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
-				await sceneImporter.LoadScene(-1);
+				await sceneImporter.LoadSceneAsync(-1);
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
