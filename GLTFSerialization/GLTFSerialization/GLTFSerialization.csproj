@@ -15,7 +15,7 @@
     <Company></Company>
     <Product>GLTFSerialization</Product>
     <PackageId>GLTFSerialization</PackageId>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/README.md</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/KhronosGroup/UnityGLTF</RepositoryUrl>
@@ -27,7 +27,6 @@
     <IsUAPTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('uap10.0'))">true</IsUAPTargetFramework>
     <IsNETStandardTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('netstandard'))">true</IsNETStandardTargetFramework>
     <IsNETTargetFramework Condition="'$(IsNETStandardTargetFramework)' != 'true' and $(TargetFramework.ToLower().StartsWith('net'))">true</IsNETTargetFramework>
-
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
