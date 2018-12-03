@@ -69,13 +69,13 @@ namespace UnityGLTF
 			}
 			GLTFSceneImporter importer = new GLTFSceneImporter(
 				asset1Root,
-				loader1
+				loader1,
+				gameObject.AddComponent<AsyncCoroutineHelper>()
 				);
 
 			importer.MaximumLod = MaximumLod;
 			importer.isMultithreaded = Multithreaded;
-			importer.AsyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
-			await importer.LoadScene(-1);
+			await importer.LoadSceneAsync(-1);
 		}
 #endif
 	}

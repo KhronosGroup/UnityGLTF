@@ -46,12 +46,12 @@ namespace UnityGLTF.Examples
 
 			_importer = new GLTFSceneImporter(
 				_fileName,
-				_loader
+				_loader,
+				_asyncCoroutineHelper
 				);
-
-			_importer.AsyncCoroutineHelper = _asyncCoroutineHelper;
+			
 			_importer.SceneParent = gameObject.transform;
-			await _importer.LoadScene(SceneIndex);
+			await _importer.LoadSceneAsync(SceneIndex);
 		}
 	}
 }

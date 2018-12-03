@@ -1,139 +1,91 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(SolutionDir)\packages\\Microsoft.Net.Compilers.2.2.0\build\Microsoft.Net.Compilers.props" Condition="Exists('$(SolutionDir)\packages\\Microsoft.Net.Compilers.2.2.0\build\Microsoft.Net.Compilers.props')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{72AC331F-9810-4DE2-8EA3-84559A787218}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GLTF</RootNamespace>
     <AssemblyName>GLTFSerialization</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
     <StartupObject />
+
+    <TargetFrameworks>net35;netstandard1.3</TargetFrameworks>
+    <TargetFrameworks Condition="'$(MSBuildRuntimeType)' != 'Mono'">$(TargetFrameworks);uap10.0.10586</TargetFrameworks>
+
+    <OutputType>Library</OutputType>
+
+    <Authors>Khronos Group</Authors>
+    <Copyright></Copyright>
+    <Description>C# glTF Serializer</Description>
+    <Company></Company>
+    <Product>GLTFSerialization</Product>
+    <PackageId>GLTFSerialization</PackageId>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/README.md</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/KhronosGroup/UnityGLTF</RepositoryUrl>
+    <PackageIconUrl>https://github.com/KhronosGroup/glTF/blob/master/specification/figures/gltf.png</PackageIconUrl>
+    <PackageTags>glTF 3D C#</PackageTags>
+    <RootNamespace>GLTF</RootNamespace>
+    <Version>1.0.0-alpha</Version>
+
+    <IsUAPTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('uap10.0'))">true</IsUAPTargetFramework>
+    <IsNETStandardTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('netstandard'))">true</IsNETStandardTargetFramework>
+    <IsNETTargetFramework Condition="'$(IsNETStandardTargetFramework)' != 'true' and $(TargetFramework.ToLower().StartsWith('net'))">true</IsNETTargetFramework>
+
+    <ErrorReport>prompt</ErrorReport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\\Newtonsoft.Json.9.0.1\lib\net35\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AttributeAccessor.cs" />
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="Extensions\ExtTextureTransformExtension.cs" />
-    <Compile Include="Extensions\ExtTextureTransformExtensionFactory.cs" />
-    <Compile Include="GLBBuilder.cs" />
-    <Compile Include="GLBObject.cs" />
-    <Compile Include="GLTFHelpers.cs" />
-    <Compile Include="GLTFObject.cs" />
-    <Compile Include="GLTFParser.cs" />
-    <Compile Include="IGLTFObject.cs" />
-    <Compile Include="Math\Matrix4x4.cs" />
-    <Compile Include="Math\Quaternion.cs" />
-    <Compile Include="Math\Vector2.cs" />
-    <Compile Include="Math\Vector3.cs" />
-    <Compile Include="Math\Vector4.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Schema\Accessor.cs" />
-    <Compile Include="Schema\AccessorSparse.cs" />
-    <Compile Include="Schema\AccessorSparseIndices.cs" />
-    <Compile Include="Schema\AccessorSparseValues.cs" />
-    <Compile Include="Schema\GLTFAnimation.cs" />
-    <Compile Include="Schema\AnimationChannel.cs" />
-    <Compile Include="Schema\AnimationChannelTarget.cs" />
-    <Compile Include="Schema\AnimationSampler.cs" />
-    <Compile Include="Schema\Asset.cs" />
-    <Compile Include="Schema\GLTFBuffer.cs" />
-    <Compile Include="Schema\BufferView.cs" />
-    <Compile Include="Schema\GLTFCamera.cs" />
-    <Compile Include="Schema\CameraOrthographic.cs" />
-    <Compile Include="Schema\CameraPerspective.cs" />
-    <Compile Include="Schema\IExtension.cs" />
-    <Compile Include="Schema\GLTFChildOfRootProperty.cs" />
-    <Compile Include="Schema\GLTFId.cs" />
-    <Compile Include="Schema\GLTFProperty.cs" />
-    <Compile Include="Schema\GLTFRoot.cs" />
-    <Compile Include="Schema\GLTFImage.cs" />
-    <Compile Include="Extensions\KHR_materials_pbrSpecularGlossinessExtension.cs" />
-    <Compile Include="Extensions\KHR_materials_pbrSpecularGlossinessExtensionFactory.cs" />
-    <Compile Include="Schema\GLTFMaterial.cs" />
-    <Compile Include="Schema\MaterialCommonConstant.cs" />
-    <Compile Include="Schema\MaterialNormalTextureInfo.cs" />
-    <Compile Include="Schema\MaterialOcclusionTextureInfo.cs" />
-    <Compile Include="Schema\MaterialPBRMetallicRoughness.cs" />
-    <Compile Include="Schema\GLTFMesh.cs" />
-    <Compile Include="Schema\MeshPrimitive.cs" />
-    <Compile Include="Schema\Node.cs" />
-    <Compile Include="Schema\Sampler.cs" />
-    <Compile Include="Schema\GLTFScene.cs" />
-    <Compile Include="Schema\Skin.cs" />
-    <Compile Include="Schema\GLTFTexture.cs" />
-    <Compile Include="Schema\TextureInfo.cs" />
-    <Compile Include="Extensions\GLTFJsonExtensions.cs" />
-    <Compile Include="Math\Color.cs" />
-    <Compile Include="Utilities\JsonReaderExtensions.cs" />
-    <Compile Include="Utilities\StreamExtensions.cs" />
-    <Compile Include="Utilities\SubStream.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(IsUAPTargetFramework)' == 'true'">
+      <PropertyGroup>
+        <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.14393.0</TargetPlatformVersion>
+        <TargetPlatformMinVersion>10.0.10586.0</TargetPlatformMinVersion>
+        <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+        <TargetFrameworkIdentifier>.NETCore</TargetFrameworkIdentifier>
+        <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
+        <DefineConstants>$(DefineConstants);NETFX_CORE;WINDOWS_UWP</DefineConstants>
+      </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+        <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="5.2.3" />
+      </ItemGroup>
+    </When>
+    <When Condition="'$(IsNETTargetFramework)' == 'true'">
+      <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Net.Compilers" Version="2.2.0">
+          <IncludeAssets>all</IncludeAssets>
+          <ExcludeAssets>contentFiles</ExcludeAssets>
+          <PrivateAssets>contentFiles;analyzers</PrivateAssets>
+        </PackageReference>
+      </ItemGroup>
+    </When>
+    <When Condition="'$(IsNETStandardTargetFramework)' == 'true'">
+      <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+      </ItemGroup>
+    </When>
+  </Choose>
+
+  <PropertyGroup Condition="'$(Platform)' == 'AnyCPU'">
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'x86'">
+    <OutputPath>bin\x86\$(Configuration)\</OutputPath>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
 </Project>
