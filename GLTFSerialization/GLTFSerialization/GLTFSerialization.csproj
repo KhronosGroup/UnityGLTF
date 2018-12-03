@@ -64,7 +64,7 @@
     <When Condition="'$(IsNETTargetFramework)' == 'true'">
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
-        <PackageReference Include="Microsoft.Net.Compilers" Version="2.2.0">
+        <PackageReference Include="Microsoft.Net.Compilers" Version="2.7.0">
           <IncludeAssets>all</IncludeAssets>
           <ExcludeAssets>contentFiles</ExcludeAssets>
           <PrivateAssets>contentFiles;analyzers</PrivateAssets>
