@@ -59,7 +59,7 @@
       </PropertyGroup>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
-        <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="5.2.3" />
+        <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.1.9" />
       </ItemGroup>
     </When>
     <When Condition="'$(IsNETTargetFramework)' == 'true'">
