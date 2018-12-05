@@ -24,8 +24,8 @@ namespace GLTF.Schema
 			List<int> meshIds = new List<int>();
 			if (extensionToken != null)
 			{
-				System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
-				System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
+				//System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
+				//System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
 
 				JToken meshIdsToken = extensionToken.Value[IDS];
 				meshIds = meshIdsToken.CreateReader().ReadInt32List();

@@ -30,8 +30,8 @@ namespace GLTF.Schema
 
 			if (extensionToken != null)
 			{
-				System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
-				System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
+				//System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
+				//System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
 
 				JToken diffuseFactorToken = extensionToken.Value[DIFFUSE_FACTOR];
 				diffuseFactor = diffuseFactorToken != null ? diffuseFactorToken.DeserializeAsColor() : diffuseFactor;

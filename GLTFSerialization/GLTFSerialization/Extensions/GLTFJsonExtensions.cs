@@ -94,7 +94,7 @@ namespace GLTF.Extensions
 				{
 					throw new Exception("JToken used for Texture deserialization was not a JObject. It was a " + token.Type.ToString());
 				}
-				System.Diagnostics.Debug.WriteLine("textureObject is " + textureObject.Type + " with a value of: " + textureObject[TextureInfo.INDEX].Type + " " + textureObject.ToString());
+				//System.Diagnostics.Debug.WriteLine("textureObject is " + textureObject.Type + " with a value of: " + textureObject[TextureInfo.INDEX].Type + " " + textureObject.ToString());
 
 				int indexVal = textureObject[TextureInfo.INDEX].DeserializeAsInt();
 				textureInfo = new TextureInfo()
