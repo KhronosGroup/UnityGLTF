@@ -88,6 +88,6 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /S /Y ..\External\meta ..\..\UnityGLTF\Assets\UnityGLTF\Plugins" />
+    <Exec Command="xcopy /S /Y ..\External\meta ..\..\UnityGLTF\Assets\UnityGLTF\Plugins\" />
   </Target>
 </Project>
