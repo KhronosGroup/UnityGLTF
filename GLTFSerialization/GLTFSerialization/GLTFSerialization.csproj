@@ -87,7 +87,12 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+
+  <!-- Leverages copy task to move the meta files to output directory. https://docs.microsoft.com/en-us/visualstudio/msbuild/copy-task?view=vs-2017#example-1 -->
+  <ItemGroup>
+    <MetaFiles Include="..\External\meta\**\*.meta" />
+  </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /S /Y ..\External\meta ..\..\UnityGLTF\Assets\UnityGLTF\Plugins" />
+    <Copy SourceFiles="@(MetaFiles)" DestinationFiles="@(MetaFiles->'..\..\UnityGLTF\Assets\UnityGLTF\Plugins\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 </Project>
