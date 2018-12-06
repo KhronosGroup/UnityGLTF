@@ -94,7 +94,11 @@ namespace GLTF.Extensions
 				{
 					throw new Exception("JToken used for Texture deserialization was not a JObject. It was a " + token.Type.ToString());
 				}
+
+#if DEBUG
+				// Broken on il2cpp. Don't ship debug DLLs there.
 				System.Diagnostics.Debug.WriteLine("textureObject is " + textureObject.Type + " with a value of: " + textureObject[TextureInfo.INDEX].Type + " " + textureObject.ToString());
+#endif
 
 				int indexVal = textureObject[TextureInfo.INDEX].DeserializeAsInt();
 				textureInfo = new TextureInfo()
