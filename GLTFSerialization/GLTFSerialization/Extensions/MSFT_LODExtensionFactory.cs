@@ -24,6 +24,7 @@ namespace GLTF.Schema
 			List<int> meshIds = new List<int>();
 			if (extensionToken != null)
 			{
+				// Broken on il2cpp. Uncomment for Windows targets
 				//System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
 				//System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
 
