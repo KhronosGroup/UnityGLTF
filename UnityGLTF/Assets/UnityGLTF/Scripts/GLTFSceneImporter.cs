@@ -159,7 +159,7 @@ namespace UnityGLTF
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
-		public async Task LoadSceneAsync(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
+		public async Task LoadSceneAsync(int sceneIndex = -1, Action<GameObject, Exception> onLoadComplete = null)
 		{
 			try
 			{
@@ -178,9 +178,15 @@ namespace UnityGLTF
 				{
 					await LoadJson(_gltfFileName);
 				}
+
 				await _LoadScene(sceneIndex);
 
 				Cleanup();
+			}
+			catch (Exception ex)
+			{
+				onLoadComplete?.Invoke(null, ex);
+				throw;
 			}
 			finally
 			{
@@ -190,13 +196,10 @@ namespace UnityGLTF
 				}
 			}
 
-			if (onLoadComplete != null)
-			{
-				onLoadComplete(LastLoadedScene);
-			}
+			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
-		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
+		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject, Exception> onLoadComplete = null)
 		{
 			return LoadSceneAsync(sceneIndex, onLoadComplete).AsCoroutine();
 		}
@@ -393,6 +396,10 @@ namespace UnityGLTF
 				parseJsonThread.Priority = ThreadPriority.Highest;
 				parseJsonThread.Start();
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !parseJsonThread.IsAlive)));
+				if (_gltfRoot == null)
+				{
+					throw new GLTFLoadException("Failed to parse glTF");
+				}
 			}
 			else
 #endif

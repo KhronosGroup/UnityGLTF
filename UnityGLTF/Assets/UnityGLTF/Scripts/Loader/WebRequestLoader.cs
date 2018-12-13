@@ -4,7 +4,7 @@ using System.IO;
 using GLTF;
 using UnityEngine;
 using System.Text.RegularExpressions;
-using System.Net;
+using System.Net.Http;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 
@@ -14,54 +14,37 @@ namespace UnityGLTF.Loader
 	{
 		public Stream LoadedStream { get; private set; }
 
-		public bool HasSyncLoadMethod { get; private set; }
+		public bool HasSyncLoadMethod => false;
 
 		private string _rootURI;
-		private AsyncCoroutineHelper _asyncCoroutineHelper;
+		private HttpClient httpClient;
 
-		public WebRequestLoader(string rootURI, AsyncCoroutineHelper asyncCoroutineHelper)
+		public WebRequestLoader(string rootURI)
 		{
-			_rootURI = rootURI;
-			_asyncCoroutineHelper = asyncCoroutineHelper;
-			HasSyncLoadMethod = false;
+			httpClient = new HttpClient
+			{
+				BaseAddress = new Uri(rootURI)
+			};
 		}
 
-		public Task LoadStream(string gltfFilePath)
+		public async Task LoadStream(string gltfFilePath)
 		{
 			if (gltfFilePath == null)
 			{
-				throw new ArgumentNullException("gltfFilePath");
+				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			return _asyncCoroutineHelper.RunAsTask(CreateHTTPRequest(_rootURI, gltfFilePath), nameof(CreateHTTPRequest));
+			var response = await httpClient.GetStreamAsync(gltfFilePath);
+
+			// HACK: Download the whole file before returning the stream
+			// Ideally the parsers would wait for data to be available, but they don't.
+			LoadedStream = new MemoryStream();
+			await response.CopyToAsync(LoadedStream);
 		}
 
 		public void LoadStreamSync(string jsonFilePath)
 		{
 			throw new NotImplementedException();
-		}
-
-		private IEnumerator CreateHTTPRequest(string rootUri, string httpRequestPath)
-		{
-			UnityWebRequest www = new UnityWebRequest(Path.Combine(rootUri, httpRequestPath), "GET", new DownloadHandlerBuffer(), null);
-			www.timeout = 5000;
-#if UNITY_2017_2_OR_NEWER
-			yield return www.SendWebRequest();
-#else
-			yield return www.Send();
-#endif
-			if ((int)www.responseCode >= 400)
-			{
-				Debug.LogErrorFormat("{0} - {1}", www.responseCode, www.url);
-				throw new Exception("Response code invalid");
-			}
-
-			if (www.downloadedBytes > int.MaxValue)
-			{
-				throw new Exception("Stream is larger than can be copied into byte array");
-			}
-
-			LoadedStream = new MemoryStream(www.downloadHandler.data, 0, www.downloadHandler.data.Length, true, true);
 		}
 	}
 }

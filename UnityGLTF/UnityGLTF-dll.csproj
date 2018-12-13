@@ -14,7 +14,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;UNITY_2017_1_OR_NEWER</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;UNITY_2017_1_OR_NEWER,UNITY_2017_2_OR_NEWER,UNITY_2017_3_OR_NEWER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -22,7 +22,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;UNITY_2017_1_OR_NEWER</DefineConstants>
+    <DefineConstants>TRACE;UNITY_2017_1_OR_NEWER,UNITY_2017_2_OR_NEWER,UNITY_2017_3_OR_NEWER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -39,6 +39,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="UnityEngine">
