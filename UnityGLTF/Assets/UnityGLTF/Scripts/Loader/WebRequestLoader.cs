@@ -16,14 +16,13 @@ namespace UnityGLTF.Loader
 
 		public bool HasSyncLoadMethod => false;
 
-		private string _rootURI;
-		private HttpClient httpClient;
+		private readonly HttpClient httpClient;
 
-		public WebRequestLoader(string rootURI)
+		public WebRequestLoader(string rootUri)
 		{
 			httpClient = new HttpClient
 			{
-				BaseAddress = new Uri(rootURI)
+				BaseAddress = new Uri(rootUri)
 			};
 		}
 
@@ -34,12 +33,14 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			var response = await httpClient.GetStreamAsync(gltfFilePath);
+			var response = await httpClient.GetAsync(gltfFilePath);
 
 			// HACK: Download the whole file before returning the stream
 			// Ideally the parsers would wait for data to be available, but they don't.
-			LoadedStream = new MemoryStream();
-			await response.CopyToAsync(LoadedStream);
+			LoadedStream = new MemoryStream((int?)response.Content.Headers.ContentLength ?? 5000);
+			await response.Content.CopyToAsync(LoadedStream);
+
+			response.Dispose();
 		}
 
 		public void LoadStreamSync(string jsonFilePath)
