@@ -81,7 +81,7 @@ namespace UnityGLTF
 				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
-				await sceneImporter.LoadSceneAsync(-1);
+				await sceneImporter.LoadSceneAsync();
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
