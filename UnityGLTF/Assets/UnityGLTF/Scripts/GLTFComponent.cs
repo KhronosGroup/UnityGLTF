@@ -64,7 +64,7 @@ namespace UnityGLTF
 				else
 				{
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					loader = new WebRequestLoader(directoryPath, asyncCoroutineHelper);
+					loader = new WebRequestLoader(directoryPath);
 
 					sceneImporter = new GLTFSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
@@ -80,8 +80,16 @@ namespace UnityGLTF
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-
-				await sceneImporter.LoadSceneAsync();
+				
+				try
+				{
+					await sceneImporter.LoadSceneAsync();
+				}
+				catch (Exception e)
+				{
+					Debug.LogError("Exception while loading:");
+					Debug.LogException(e);
+				}
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)

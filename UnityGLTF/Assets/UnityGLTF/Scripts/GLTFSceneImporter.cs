@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 #if !WINDOWS_UWP
 using System.Threading;
 #endif
@@ -157,9 +158,10 @@ namespace UnityGLTF
 		/// Loads a glTF Scene into the LastLoadedScene field
 		/// </summary>
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
+		/// <param name="showSceneObj"></param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
-		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject> onLoadComplete = null)
+		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
 		{
 			try
 			{
@@ -182,6 +184,11 @@ namespace UnityGLTF
 
 				Cleanup();
 			}
+			catch (Exception ex)
+			{
+				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
+				throw;
+			}
 			finally
 			{
 				lock (this)
@@ -190,13 +197,10 @@ namespace UnityGLTF
 				}
 			}
 
-			if (onLoadComplete != null)
-			{
-				onLoadComplete(LastLoadedScene);
-			}
+			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
-
-		public IEnumerator LoadScene(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject> onLoadComplete = null)
+		
+		public IEnumerator LoadScene(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
 		{
 			return LoadSceneAsync(sceneIndex, showSceneObj, onLoadComplete).AsCoroutine();
 		}
@@ -393,6 +397,10 @@ namespace UnityGLTF
 				parseJsonThread.Priority = ThreadPriority.Highest;
 				parseJsonThread.Start();
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !parseJsonThread.IsAlive)));
+				if (_gltfRoot == null)
+				{
+					throw new GLTFLoadException("Failed to parse glTF");
+				}
 			}
 			else
 #endif
