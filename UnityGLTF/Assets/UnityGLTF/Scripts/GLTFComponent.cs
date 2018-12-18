@@ -80,10 +80,10 @@ namespace UnityGLTF
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-
+				
 				try
 				{
-					await sceneImporter.LoadSceneAsync(-1);
+					await sceneImporter.LoadSceneAsync();
 				}
 				catch (Exception e)
 				{
