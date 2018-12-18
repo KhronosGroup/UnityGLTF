@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 #if !WINDOWS_UWP
 using System.Threading;
 #endif
@@ -159,7 +160,7 @@ namespace UnityGLTF
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
-		public async Task LoadSceneAsync(int sceneIndex = -1, Action<GameObject, Exception> onLoadComplete = null)
+		public async Task LoadSceneAsync(int sceneIndex = -1, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
 		{
 			try
 			{
@@ -185,7 +186,7 @@ namespace UnityGLTF
 			}
 			catch (Exception ex)
 			{
-				onLoadComplete?.Invoke(null, ex);
+				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
 				throw;
 			}
 			finally
@@ -199,7 +200,7 @@ namespace UnityGLTF
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
-		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject, Exception> onLoadComplete = null)
+		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
 		{
 			return LoadSceneAsync(sceneIndex, onLoadComplete).AsCoroutine();
 		}
