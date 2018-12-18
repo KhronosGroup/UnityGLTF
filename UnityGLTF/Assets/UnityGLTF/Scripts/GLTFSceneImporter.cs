@@ -159,7 +159,7 @@ namespace UnityGLTF
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <returns></returns>
-		public async Task LoadSceneAsync(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
+		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject> onLoadComplete = null)
 		{
 			try
 			{
@@ -178,7 +178,7 @@ namespace UnityGLTF
 				{
 					await LoadJson(_gltfFileName);
 				}
-				await _LoadScene(sceneIndex);
+				await _LoadScene(sceneIndex, showSceneObj);
 
 				Cleanup();
 			}
@@ -196,9 +196,9 @@ namespace UnityGLTF
 			}
 		}
 
-		public IEnumerator LoadScene(int sceneIndex = -1, Action<GameObject> onLoadComplete = null)
+		public IEnumerator LoadScene(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject> onLoadComplete = null)
 		{
-			return LoadSceneAsync(sceneIndex, onLoadComplete).AsCoroutine();
+			return LoadSceneAsync(sceneIndex, showSceneObj, onLoadComplete).AsCoroutine();
 		}
 
 		/// <summary>
@@ -398,7 +398,6 @@ namespace UnityGLTF
 #endif
 			{
 				GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
-				
 			}
 		}
 
@@ -461,7 +460,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="sceneIndex">The bufferIndex of scene in gltf file to load</param>
 		/// <returns></returns>
-		protected async Task _LoadScene(int sceneIndex = -1)
+		protected async Task _LoadScene(int sceneIndex = -1, bool showSceneObj = true)
 		{
 			GLTFScene scene;
 			InitializeAssetCache(); // asset cache currently needs initialized every time due to cleanup logic
@@ -480,7 +479,7 @@ namespace UnityGLTF
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
 
-			await ConstructScene(scene);
+			await ConstructScene(scene, showSceneObj);
 
 			if (SceneParent != null)
 			{
@@ -584,7 +583,6 @@ namespace UnityGLTF
 				await TryYieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, false);
-				
 			}
 
 			await TryYieldOnTimeout();
@@ -866,9 +864,10 @@ namespace UnityGLTF
 		}
 #endregion
 
-		protected virtual async Task ConstructScene(GLTFScene scene)
+		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj)
 		{
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
+			sceneObj.SetActive(showSceneObj);
 
 			Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
 			for (int i = 0; i < scene.Nodes.Count; ++i)
