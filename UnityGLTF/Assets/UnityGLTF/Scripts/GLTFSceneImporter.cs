@@ -1317,6 +1317,24 @@ namespace UnityGLTF
 				var textureId = def.EmissiveTexture.Index;
 				ConstructImageBuffer(textureId.Value, textureId.Id);
 			}
+
+			// pbr_spec_gloss extension
+			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
+			if (def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
+			{
+				var specGlossDef = (KHR_materials_pbrSpecularGlossinessExtension)def.Extensions[specGlossExtName];
+				if (specGlossDef.DiffuseTexture != null)
+				{
+					var textureId = specGlossDef.DiffuseTexture.Index;
+					ConstructImageBuffer(textureId.Value, textureId.Id);
+				}
+
+				if (specGlossDef.SpecularGlossinessTexture != null)
+				{
+					var textureId = specGlossDef.SpecularGlossinessTexture.Index;
+					ConstructImageBuffer(textureId.Value, textureId.Id);
+				}
+			}
 		}
 
 		protected async Task ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex, UnityMeshData unityMeshData)
