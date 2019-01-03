@@ -151,7 +151,7 @@ namespace UnityGLTF
 
 			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
 
-			_root.Serialize(jsonWriter);
+			_root.Serialize(jsonWriter, true);
 
 			_bufferWriter.Flush();
 			jsonWriter.Flush();
