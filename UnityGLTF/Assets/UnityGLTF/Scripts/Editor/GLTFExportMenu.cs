@@ -49,6 +49,26 @@ public class GLTFExportMenu : EditorWindow
 			exporter.SaveGLTFandBin (path, name);
 		}
 	}
+	
+	[MenuItem("GLTF/ExportGLB Selected")]
+	static void ExportGLBSelected()
+	{
+		string name;
+		if (Selection.transforms.Length > 1)
+			name = SceneManager.GetActiveScene().name;
+		else if (Selection.transforms.Length == 1)
+			name = Selection.activeGameObject.name;
+		else
+			throw new Exception("No objects selected, cannot export.");
+
+		var exporter = new GLTFSceneExporter(Selection.transforms, RetrieveTexturePath);
+
+		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
+		if (!string.IsNullOrEmpty(path))
+		{
+			exporter.SaveGLB(path, name);
+		}
+	}
 
 	[MenuItem("GLTF/Export Scene")]
 	static void ExportScene()
