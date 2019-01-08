@@ -51,7 +51,7 @@ namespace UnityGLTF
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
 		private List<Material> _materials;
-		private bool _imagesInInternalBuffer;
+		private bool _shouldUseInternalBufferForImages;
 
 		private RetrieveTexturePathDelegate _retrieveTexturePathDelegate;
 
@@ -141,7 +141,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			_imagesInInternalBuffer = true;
+			_shouldUseInternalBufferForImages = true;
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
 
@@ -256,7 +256,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLTFandBin(string path, string fileName)
 		{
-			 _imagesInInternalBuffer = false;
+			_shouldUseInternalBufferForImages = false;
 			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -1059,7 +1059,7 @@ namespace UnityGLTF
 				texture.Name = textureObj.name;
 			}
 
-			if (_imagesInInternalBuffer)
+			if (_shouldUseInternalBufferForImages)
 		    	{
 				texture.Source = ExportImageInternalBuffer(textureObj, textureMapType);
 		    	}
@@ -1155,9 +1155,7 @@ namespace UnityGLTF
 				Graphics.Blit(texture, destRenderTexture);
 				break;
 			}
-
-			//Graphics.Blit(texture, destRenderTexture);
-
+			
 			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 			exportTexture.Apply();
