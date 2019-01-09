@@ -51,6 +51,7 @@ namespace UnityGLTF
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
 		private List<Material> _materials;
+		private bool _shouldUseInternalBufferForImages;
 
 		private RetrieveTexturePathDelegate _retrieveTexturePathDelegate;
 
@@ -140,6 +141,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
+			_shouldUseInternalBufferForImages = true;
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
 
@@ -192,7 +194,10 @@ namespace UnityGLTF
 				writer.Flush();
 			}
 
-			ExportImages(path);
+			if (!_imagesInInternalBuffer)
+			{
+			        ExportImages(path);
+			}
 		}
 
 		/// <summary>
@@ -251,6 +256,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLTFandBin(string path, string fileName)
 		{
+			_shouldUseInternalBufferForImages = false;
 			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -1053,7 +1059,14 @@ namespace UnityGLTF
 				texture.Name = textureObj.name;
 			}
 
-			texture.Source = ExportImage(textureObj, textureMapType);
+			if (_shouldUseInternalBufferForImages)
+		    	{
+				texture.Source = ExportImageInternalBuffer(textureObj, textureMapType);
+		    	}
+		    	else
+		    	{
+				texture.Source = ExportImage(textureObj, textureMapType);
+		    	}
 			texture.Sampler = ExportSampler(textureObj);
 
 			_textures.Add(textureObj);
@@ -1113,7 +1126,71 @@ namespace UnityGLTF
 
 			return id;
 		}
+		
+		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType texturMapType)
+		{
 
+		    if (texture == null)
+		    {
+			throw new Exception("texture can not be NULL.");
+		    }
+
+		    var image = new GLTFImage();
+		    image.MimeType = "image/png";
+
+		    var byteOffset = _bufferWriter.BaseStream.Position;
+
+		    {//
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			GL.sRGBWrite = true;
+			switch (texturMapType)
+			{
+			    case TextureMapType.MetallicGloss:
+				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+				break;
+			    case TextureMapType.Bump:
+				Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
+				break;
+			    default:
+				Graphics.Blit(texture, destRenderTexture);
+				break;
+			}
+			
+			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
+			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
+			exportTexture.Apply();
+
+			var pngImageData = exportTexture.EncodeToPNG();
+			_bufferWriter.Write(pngImageData);
+
+			destRenderTexture.Release();
+			GL.sRGBWrite = false;
+			if (Application.isEditor)
+			{
+			    UnityEngine.Object.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+			    UnityEngine.Object.Destroy(exportTexture);
+			}
+		    }
+
+		    var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+
+		    byteLength = AppendToBufferMultiplyOf4(byteOffset, byteLength);
+
+		    image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+
+
+		    var id = new ImageId
+		    {
+			Id = _root.Images.Count,
+			Root = _root
+		    };
+		    _root.Images.Add(image);
+
+		    return id;
+		}
 		private SamplerId ExportSampler(Texture texture)
 		{
 			var samplerId = GetSamplerId(_root, texture);
@@ -1264,7 +1341,22 @@ namespace UnityGLTF
 
 			return id;
 		}
+		
+		private long AppendToBufferMultiplyOf4(long byteOffset, long byteLength)
+		{
+		    var moduloOffset = byteLength % 4;
+		    if (moduloOffset > 0)
+		    {
+			for (int i = 0; i < (4 - moduloOffset); i++)
+			{
+			    _bufferWriter.Write((byte)0x00);
+			}
+			byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+		    }
 
+		    return byteLength;
+		}
+		
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
 			uint count = (uint)arr.Length;
