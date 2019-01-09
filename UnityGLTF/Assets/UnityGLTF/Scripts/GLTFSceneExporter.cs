@@ -786,9 +786,16 @@ namespace UnityGLTF
 
 				if (emissionTex != null)
 				{
-					material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
+					if(emissionTex is Texture2D)
+					{
+						material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
 
-					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+						ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} emissive texture in material {1}", emissionTex.GetType(), materialObj.name);
+					}
 
 				}
 			}
@@ -799,8 +806,15 @@ namespace UnityGLTF
 
 				if (normalTex != null)
 				{
-					material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
-					ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+					if(normalTex is Texture2D)
+					{
+						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
+						ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+					}
 				}
 			}
 
@@ -809,8 +823,15 @@ namespace UnityGLTF
 				var occTex = materialObj.GetTexture("_OcclusionMap");
 				if (occTex != null)
 				{
-					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
-					ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
+					if(occTex is Texture2D)
+					{
+						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
+						ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} occlusion texture in material {1}", occTex.GetType(), materialObj.name);
+					}
 				}
 			}
 
@@ -938,8 +959,15 @@ namespace UnityGLTF
 
 				if (mainTex != null)
 				{
-					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					if(mainTex is Texture2D)
+					{
+						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} base texture in material {1}", mainTex.GetType(), material.name);
+					}
 				}
 			}
 
@@ -961,8 +989,15 @@ namespace UnityGLTF
 
 				if (mrTex != null)
 				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
-					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+					if(mrTex is Texture2D)
+					{
+						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
+						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} metallic smoothness texture in material {1}", mrTex.GetType(), material.name);
+					}
 				}
 			}
 			else if (material.HasProperty("_SpecGlossMap"))
@@ -971,8 +1006,15 @@ namespace UnityGLTF
 
 				if (mgTex != null)
 				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
-					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+					if(mgTex is Texture2D)
+					{
+						pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
+						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} metallic roughness texture in material {1}", mgTex.GetType(), material.name);
+					}
 				}
 			}
 
