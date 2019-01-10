@@ -194,7 +194,7 @@ namespace UnityGLTF
 				writer.Flush();
 			}
 
-			if (!_imagesInInternalBuffer)
+			if (!_shouldUseInternalBufferForImages)
 			{
 			        ExportImages(path);
 			}
