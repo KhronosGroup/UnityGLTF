@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnityGLTF.Loader
@@ -29,7 +30,18 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			var response = await httpClient.GetAsync(new Uri(httpClient.BaseAddress, gltfFilePath));
+			var tokenSource = new CancellationTokenSource(30000);
+			var uri = new Uri(httpClient.BaseAddress, gltfFilePath);
+			HttpResponseMessage response;
+			try
+			{
+				response = await httpClient.GetAsync(uri, tokenSource.Token);
+			}
+			catch (TaskCanceledException e)
+			{
+				throw new HttpRequestException($"Connection timeout: {uri}");
+			}
+
 			response.EnsureSuccessStatusCode();
 
 			// HACK: Download the whole file before returning the stream

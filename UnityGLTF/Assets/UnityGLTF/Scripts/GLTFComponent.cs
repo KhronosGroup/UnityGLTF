@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
@@ -22,6 +23,10 @@ namespace UnityGLTF
 		[SerializeField]
 		private bool loadOnStart = true;
 
+		[SerializeField] private int RetryCount = 10;
+		[SerializeField] private float RetryTimeout = 2.0f;
+		private int numRetries = 0;
+
 		public int MaximumLod = 300;
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
@@ -33,9 +38,20 @@ namespace UnityGLTF
 
 		private async void Start()
 		{
-			if (loadOnStart)
+			if (!loadOnStart) return;
+			
+			try
 			{
 				await Load();
+			}
+			catch (HttpRequestException)
+			{
+				if (numRetries++ >= RetryCount)
+					throw;
+
+				Debug.LogWarning("Load failed, retrying");
+				await Task.Delay((int)(RetryTimeout * 1000));
+				Start();
 			}
 		}
 
@@ -81,15 +97,7 @@ namespace UnityGLTF
 				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 				
-				try
-				{
-					await sceneImporter.LoadSceneAsync();
-				}
-				catch (Exception e)
-				{
-					Debug.LogError("Exception while loading:");
-					Debug.LogException(e);
-				}
+				await sceneImporter.LoadSceneAsync();
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)

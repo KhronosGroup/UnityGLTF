@@ -180,9 +180,13 @@ namespace UnityGLTF
 				{
 					await LoadJson(_gltfFileName);
 				}
-				await _LoadScene(sceneIndex, showSceneObj);
 
-				Cleanup();
+				if (_assetCache == null)
+				{
+					_assetCache = new AssetCache(_gltfRoot);
+				}
+
+				await _LoadScene(sceneIndex, showSceneObj);
 			}
 			catch (Exception ex)
 			{
@@ -212,11 +216,6 @@ namespace UnityGLTF
 		/// <returns></returns>
 		public async Task LoadNodeAsync(int nodeIndex)
 		{
-			if (_gltfRoot == null)
-			{
-				throw new InvalidOperationException("GLTF root must first be loaded and parsed");
-			}
-
 			try
 			{
 				lock (this)
@@ -229,18 +228,71 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				if (_gltfRoot == null)
+				{
+					await LoadJson(_gltfFileName);
+				}
+
 				if (_assetCache == null)
 				{
-					InitializeAssetCache();
+					_assetCache = new AssetCache(_gltfRoot);
 				}
 
 				_timeAtLastYield = Time.realtimeSinceStartup;
 				await _LoadNode(nodeIndex);
 				CreatedObject = _assetCache.NodeCache[nodeIndex];
 				InitializeGltfTopLevelObject();
+			}
+			finally
+			{
+				lock (this)
+				{
+					_isRunning = false;
+				}
+			}
+		}
 
-				// todo: optimially the asset cache can be reused between nodes
-				Cleanup();
+		/// <summary>
+		/// Load a Material from the glTF by index
+		/// </summary>
+		/// <param name="materialIndex"></param>
+		/// <returns></returns>
+		public virtual async Task<Material> LoadMaterialAsync(int materialIndex)
+		{
+			if (materialIndex < 0 || materialIndex >= _gltfRoot.Materials.Count)
+			{
+				throw new ArgumentException($"There is no material for index {materialIndex}");
+			}
+
+			try
+			{
+				lock (this)
+				{
+					if (_isRunning)
+					{
+						throw new GLTFLoadException("Cannot CreateTexture while GLTFSceneImporter is already running");
+					}
+
+					_isRunning = true;
+				}
+
+				if (_gltfRoot == null)
+				{
+					await LoadJson(_gltfFileName);
+				}
+
+				if (_assetCache == null)
+				{
+					_assetCache = new AssetCache(_gltfRoot);
+				}
+
+				_timeAtLastYield = Time.realtimeSinceStartup;
+				if (_assetCache.MaterialCache[materialIndex] == null)
+				{
+					await ConstructMaterial(_gltfRoot.Materials[materialIndex], materialIndex);
+				}
+
+				return _assetCache.MaterialCache[materialIndex].UnityMaterialWithVertexColor;
 			}
 			finally
 			{
@@ -449,20 +501,6 @@ namespace UnityGLTF
 			await ConstructNode(nodeToLoad, nodeIndex);
 		}
 
-
-		protected void InitializeAssetCache()
-		{
-			_assetCache = new AssetCache(
-				_gltfRoot.Images != null ? _gltfRoot.Images.Count : 0,
-				_gltfRoot.Textures != null ? _gltfRoot.Textures.Count : 0,
-				_gltfRoot.Materials != null ? _gltfRoot.Materials.Count : 0,
-				_gltfRoot.Buffers != null ? _gltfRoot.Buffers.Count : 0,
-				_gltfRoot.Meshes != null ? _gltfRoot.Meshes.Count : 0,
-				_gltfRoot.Nodes != null ? _gltfRoot.Nodes.Count : 0,
-				_gltfRoot.Animations != null ? _gltfRoot.Animations.Count : 0
-				);
-		}
-
 		/// <summary>
 		/// Creates a scene based off loaded JSON. Includes loading in binary and image data to construct the meshes required.
 		/// </summary>
@@ -471,7 +509,6 @@ namespace UnityGLTF
 		protected async Task _LoadScene(int sceneIndex = -1, bool showSceneObj = true)
 		{
 			GLTFScene scene;
-			InitializeAssetCache(); // asset cache currently needs initialized every time due to cleanup logic
 
 			if (sceneIndex >= 0 && sceneIndex < _gltfRoot.Scenes.Count)
 			{
@@ -1550,9 +1587,14 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				if (_gltfRoot == null)
+				{
+					await LoadJson(_gltfFileName);
+				}
+
 				if (_assetCache == null)
 				{
-					InitializeAssetCache();
+					_assetCache = new AssetCache(_gltfRoot);
 				}
 
 				_timeAtLastYield = Time.realtimeSinceStartup;
