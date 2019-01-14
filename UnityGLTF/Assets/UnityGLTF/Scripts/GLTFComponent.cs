@@ -23,9 +23,12 @@ namespace UnityGLTF
 		[SerializeField]
 		private bool loadOnStart = true;
 
+		[SerializeField] private bool MaterialsOnly = false;
+
 		[SerializeField] private int RetryCount = 10;
 		[SerializeField] private float RetryTimeout = 2.0f;
 		private int numRetries = 0;
+
 
 		public int MaximumLod = 300;
 		public int Timeout = 8;
@@ -57,7 +60,7 @@ namespace UnityGLTF
 
 		public async Task Load()
 		{
-			asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
+			asyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>();
 			GLTFSceneImporter sceneImporter = null;
 			ILoader loader = null;
 			try
@@ -96,8 +99,19 @@ namespace UnityGLTF
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.isMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-				
-				await sceneImporter.LoadSceneAsync();
+
+				if (MaterialsOnly)
+				{
+					var mat = await sceneImporter.LoadMaterialAsync(0);
+					var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+					cube.transform.SetParent(gameObject.transform);
+					var renderer = cube.GetComponent<Renderer>();
+					renderer.sharedMaterial = mat;
+				}
+				else
+				{
+					await sceneImporter.LoadSceneAsync();
+				}
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
