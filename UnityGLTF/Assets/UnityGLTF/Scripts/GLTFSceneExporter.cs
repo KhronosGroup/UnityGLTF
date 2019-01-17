@@ -51,6 +51,7 @@ namespace UnityGLTF
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
 		private List<Material> _materials;
+		private bool _shouldUseInternalBufferForImages;
 
 		private RetrieveTexturePathDelegate _retrieveTexturePathDelegate;
 
@@ -140,6 +141,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
+			_shouldUseInternalBufferForImages = true;
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
 
@@ -151,7 +153,7 @@ namespace UnityGLTF
 
 			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
 
-			_root.Serialize(jsonWriter);
+			_root.Serialize(jsonWriter, true);
 
 			_bufferWriter.Flush();
 			jsonWriter.Flush();
@@ -192,7 +194,10 @@ namespace UnityGLTF
 				writer.Flush();
 			}
 
-			ExportImages(path);
+			if (!_shouldUseInternalBufferForImages)
+			{
+			        ExportImages(path);
+			}
 		}
 
 		/// <summary>
@@ -251,6 +256,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLTFandBin(string path, string fileName)
 		{
+			_shouldUseInternalBufferForImages = false;
 			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -780,9 +786,16 @@ namespace UnityGLTF
 
 				if (emissionTex != null)
 				{
-					material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
+					if(emissionTex is Texture2D)
+					{
+						material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
 
-					ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+						ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} emissive texture in material {1}", emissionTex.GetType(), materialObj.name);
+					}
 
 				}
 			}
@@ -793,8 +806,15 @@ namespace UnityGLTF
 
 				if (normalTex != null)
 				{
-					material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
-					ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+					if(normalTex is Texture2D)
+					{
+						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
+						ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+					}
 				}
 			}
 
@@ -803,8 +823,15 @@ namespace UnityGLTF
 				var occTex = materialObj.GetTexture("_OcclusionMap");
 				if (occTex != null)
 				{
-					material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
-					ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
+					if(occTex is Texture2D)
+					{
+						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
+						ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} occlusion texture in material {1}", occTex.GetType(), materialObj.name);
+					}
 				}
 			}
 
@@ -932,8 +959,15 @@ namespace UnityGLTF
 
 				if (mainTex != null)
 				{
-					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					if(mainTex is Texture2D)
+					{
+						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} base texture in material {1}", mainTex.GetType(), material.name);
+					}
 				}
 			}
 
@@ -955,8 +989,15 @@ namespace UnityGLTF
 
 				if (mrTex != null)
 				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
-					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+					if(mrTex is Texture2D)
+					{
+						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
+						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} metallic smoothness texture in material {1}", mrTex.GetType(), material.name);
+					}
 				}
 			}
 			else if (material.HasProperty("_SpecGlossMap"))
@@ -965,8 +1006,15 @@ namespace UnityGLTF
 
 				if (mgTex != null)
 				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
-					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+					if(mgTex is Texture2D)
+					{
+						pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
+						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} metallic roughness texture in material {1}", mgTex.GetType(), material.name);
+					}
 				}
 			}
 
@@ -1053,7 +1101,14 @@ namespace UnityGLTF
 				texture.Name = textureObj.name;
 			}
 
-			texture.Source = ExportImage(textureObj, textureMapType);
+			if (_shouldUseInternalBufferForImages)
+		    	{
+				texture.Source = ExportImageInternalBuffer(textureObj, textureMapType);
+		    	}
+		    	else
+		    	{
+				texture.Source = ExportImage(textureObj, textureMapType);
+		    	}
 			texture.Sampler = ExportSampler(textureObj);
 
 			_textures.Add(textureObj);
@@ -1113,7 +1168,71 @@ namespace UnityGLTF
 
 			return id;
 		}
+		
+		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType texturMapType)
+		{
 
+		    if (texture == null)
+		    {
+			throw new Exception("texture can not be NULL.");
+		    }
+
+		    var image = new GLTFImage();
+		    image.MimeType = "image/png";
+
+		    var byteOffset = _bufferWriter.BaseStream.Position;
+
+		    {//
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			GL.sRGBWrite = true;
+			switch (texturMapType)
+			{
+			    case TextureMapType.MetallicGloss:
+				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+				break;
+			    case TextureMapType.Bump:
+				Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
+				break;
+			    default:
+				Graphics.Blit(texture, destRenderTexture);
+				break;
+			}
+			
+			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
+			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
+			exportTexture.Apply();
+
+			var pngImageData = exportTexture.EncodeToPNG();
+			_bufferWriter.Write(pngImageData);
+
+			destRenderTexture.Release();
+			GL.sRGBWrite = false;
+			if (Application.isEditor)
+			{
+			    UnityEngine.Object.DestroyImmediate(exportTexture);
+			}
+			else
+			{
+			    UnityEngine.Object.Destroy(exportTexture);
+			}
+		    }
+
+		    var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+
+		    byteLength = AppendToBufferMultiplyOf4(byteOffset, byteLength);
+
+		    image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+
+
+		    var id = new ImageId
+		    {
+			Id = _root.Images.Count,
+			Root = _root
+		    };
+		    _root.Images.Add(image);
+
+		    return id;
+		}
 		private SamplerId ExportSampler(Texture texture)
 		{
 			var samplerId = GetSamplerId(_root, texture);
@@ -1264,7 +1383,22 @@ namespace UnityGLTF
 
 			return id;
 		}
+		
+		private long AppendToBufferMultiplyOf4(long byteOffset, long byteLength)
+		{
+		    var moduloOffset = byteLength % 4;
+		    if (moduloOffset > 0)
+		    {
+			for (int i = 0; i < (4 - moduloOffset); i++)
+			{
+			    _bufferWriter.Write((byte)0x00);
+			}
+			byteLength = _bufferWriter.BaseStream.Position - byteOffset;
+		    }
 
+		    return byteLength;
+		}
+		
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
 			uint count = (uint)arr.Length;
