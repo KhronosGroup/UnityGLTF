@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using GLTF;
+﻿using GLTF;
+using GLTF.Schema;
 
 namespace UnityGLTF.Cache
 {
@@ -10,6 +7,7 @@ namespace UnityGLTF.Cache
 	{
 		public AttributeAccessor Input;
 		public AttributeAccessor Output;
+		public InterpolationType Interpolation;
 	}
 
 	public class AnimationCacheData
