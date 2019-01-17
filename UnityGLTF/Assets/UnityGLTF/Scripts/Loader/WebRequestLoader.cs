@@ -1,9 +1,15 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+#if WINDOWS_UWP
+using Windows.Web.Http;
+using Windows.Security;
+using Windows.Storage.Streams;
+#else
 using System.Net.Http;
-using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
+#endif
 using System.Threading.Tasks;
 
 namespace UnityGLTF.Loader
@@ -14,12 +20,15 @@ namespace UnityGLTF.Loader
 
 		public bool HasSyncLoadMethod => false;
 
-		private readonly HttpClient httpClient = new HttpClient();
+		private readonly HttpClient _httpClient = new HttpClient();
+		private Uri _baseAddress;
 
 		public WebRequestLoader(string rootUri)
 		{
+#if !WINDOWS_UWP
 			ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
-			httpClient.BaseAddress = new Uri(rootUri);
+#endif
+			_baseAddress = new Uri(rootUri);
 		}
 
 		public async Task LoadStream(string gltfFilePath)
@@ -29,14 +38,17 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			var response = await httpClient.GetAsync(new Uri(httpClient.BaseAddress, gltfFilePath));
+			var response = await _httpClient.GetAsync(new Uri(_baseAddress, gltfFilePath));
 			response.EnsureSuccessStatusCode();
 
 			// HACK: Download the whole file before returning the stream
 			// Ideally the parsers would wait for data to be available, but they don't.
 			LoadedStream = new MemoryStream((int?)response.Content.Headers.ContentLength ?? 5000);
+#if WINDOWS_UWP
+			await response.Content.WriteToStreamAsync((IOutputStream)LoadedStream);
+#else
 			await response.Content.CopyToAsync(LoadedStream);
-
+#endif
 			response.Dispose();
 		}
 
@@ -45,6 +57,7 @@ namespace UnityGLTF.Loader
 			throw new NotImplementedException();
 		}
 
+#if !WINDOWS_UWP
 		// enables HTTPS support
 		// https://answers.unity.com/questions/50013/httpwebrequestgetrequeststream-https-certificate-e.html
 		private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
@@ -53,7 +66,7 @@ namespace UnityGLTF.Loader
 			// If there are errors in the certificate chain, look at each error to determine the cause.
 			if (errors != SslPolicyErrors.None)
 			{
-				for (int i = 0; i<chain.ChainStatus.Length; i++)
+				for (int i = 0; i < chain.ChainStatus.Length; i++)
 				{
 					if (chain.ChainStatus[i].Status != X509ChainStatusFlags.RevocationStatusUnknown)
 					{
@@ -72,5 +85,6 @@ namespace UnityGLTF.Loader
 
 			return isOk;
 		}
+#endif
 	}
 }
