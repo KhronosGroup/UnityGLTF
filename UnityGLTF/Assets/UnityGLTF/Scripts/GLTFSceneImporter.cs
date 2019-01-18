@@ -316,7 +316,6 @@ namespace UnityGLTF
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
 				MeshPrimitive primitive = mesh.Primitives[i];
-
 				if (_assetCache.MeshCache[meshIdIndex][i] == null)
 				{
 					_assetCache.MeshCache[meshIdIndex][i] = new MeshCacheData();
@@ -630,6 +629,12 @@ namespace UnityGLTF
 				if (primitive.Indices != null)
 				{
 					int bufferId = primitive.Indices.Value.BufferView.Value.Buffer.Id;
+
+					if (_assetCache.BufferCache[bufferId] == null)
+					{
+						ConstructBuffer(primitive.Indices.Value.BufferView.Value.Buffer.Value, bufferId);
+					}
+
 					AttributeAccessor indexBuilder = new AttributeAccessor
 					{
 						AccessorId = primitive.Indices,
