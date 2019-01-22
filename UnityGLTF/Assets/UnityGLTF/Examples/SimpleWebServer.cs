@@ -193,7 +193,7 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 
 				try
 				{
-					Stream input = File.OpenRead(filename); //new FileStream(filename, FileMode.Open);
+					Stream input = File.OpenRead(filename);
 					
 					//Adding permanent http response headers
 					string mime;
