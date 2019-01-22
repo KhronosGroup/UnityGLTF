@@ -14,12 +14,24 @@ namespace UnityGLTF.Loader
 
 		public bool HasSyncLoadMethod => false;
 
-		private readonly HttpClient httpClient = new HttpClient();
+		private readonly HttpClient httpClient;
 
 		public WebRequestLoader(string rootUri)
 		{
-			ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
-			httpClient.BaseAddress = new Uri(rootUri);
+			if (!ServerValidationRegistered)
+			{
+				ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
+				ServerValidationRegistered = true;
+			}
+
+			var handler = new HttpClientHandler()
+			{
+				AllowAutoRedirect = false
+			};
+			httpClient = new HttpClient(handler)
+			{
+				BaseAddress = new Uri(rootUri)
+			};
 		}
 
 		public async Task LoadStream(string gltfFilePath)
@@ -29,7 +41,18 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			var response = await httpClient.GetAsync(new Uri(httpClient.BaseAddress, gltfFilePath));
+			HttpResponseMessage response;
+			var fileUrl = new Uri(httpClient.BaseAddress, gltfFilePath);
+			do
+			{
+				UnityEngine.Debug.Log($"GET {fileUrl}");
+				response = await httpClient.GetAsync(fileUrl);
+				UnityEngine.Debug.Log(response.StatusCode.ToString());
+				if ((int) response.StatusCode >= 300 && (int) response.StatusCode < 400)
+				{
+					fileUrl = response.Headers.Location;
+				}
+			} while ((int)response.StatusCode >= 300 && (int)response.StatusCode < 400);
 			response.EnsureSuccessStatusCode();
 
 			// HACK: Download the whole file before returning the stream
@@ -45,10 +68,13 @@ namespace UnityGLTF.Loader
 			throw new NotImplementedException();
 		}
 
+		private static bool ServerValidationRegistered = false;
+
 		// enables HTTPS support
 		// https://answers.unity.com/questions/50013/httpwebrequestgetrequeststream-https-certificate-e.html
 		private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
 		{
+			UnityEngine.Debug.Log($"Validating {sender as string}");
 			bool isOk = true;
 			// If there are errors in the certificate chain, look at each error to determine the cause.
 			if (errors != SslPolicyErrors.None)
