@@ -25,7 +25,7 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Meshes used by this GLTF node.
 		/// </summary>
-		public List<MeshCacheData[]> MeshCache { get; set; }
+		public MeshCacheData[][] MeshCache { get; set; }
 
 		/// <summary>
 		/// Materials used by this GLTF node.
@@ -76,16 +76,13 @@ namespace UnityGLTF.Cache
 		private void DestroyCachedData()
 		{
 			// Destroy the cached meshes
-			for (int i = 0; i < MeshCache.Count; i++)
+			for (int i = 0; i < MeshCache.Length; i++)
 			{
-				if (MeshCache[i] != null)
+				for (int j = 0; j < MeshCache[i].Length; j++)
 				{
-					for (int j = 0; j < MeshCache[i].Length; j++)
+					if (MeshCache[i][j] != null)
 					{
-						if (MeshCache[i][j] != null)
-						{
-							MeshCache[i][j].Unload();
-						}
+						MeshCache[i][j].Unload();
 					}
 				}
 			}

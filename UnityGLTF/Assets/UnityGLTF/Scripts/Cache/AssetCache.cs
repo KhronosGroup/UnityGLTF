@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using GLTF.Schema;
 
 namespace UnityGLTF.Cache
 {
@@ -38,7 +39,7 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Cache of loaded meshes
 		/// </summary>
-		public List<MeshCacheData[]> MeshCache { get; private set; }
+		public MeshCacheData[][] MeshCache { get; private set; }
 
 		/// <summary>
 		/// Cache of loaded animations
@@ -53,28 +54,22 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Creates an asset cache which caches objects used in scene
 		/// </summary>
-		/// <param name="imageCacheSize"></param>
-		/// <param name="textureCacheSize"></param>
-		/// <param name="materialCacheSize"></param>
-		/// <param name="bufferCacheSize"></param>
-		/// <param name="meshCacheSize"></param>
-		/// <param name="nodeCacheSize"></param>
-		public AssetCache(int imageCacheSize, int textureCacheSize, int materialCacheSize, int bufferCacheSize,
-			int meshCacheSize, int nodeCacheSize, int animationCacheSize)
+		/// <param name="root">A glTF root whose assets will eventually be cached here</param>
+		public AssetCache(GLTFRoot root)
 		{
-			ImageCache = new Texture2D[imageCacheSize];
-			ImageStreamCache = new Stream[imageCacheSize];
-			TextureCache = new TextureCacheData[textureCacheSize];
-			MaterialCache = new MaterialCacheData[materialCacheSize];
-			BufferCache = new BufferCacheData[bufferCacheSize];
-			MeshCache = new List<MeshCacheData[]>(meshCacheSize);
-			for (int i = 0; i < meshCacheSize; ++i)
+			ImageCache = new Texture2D[root.Images?.Count ?? 0];
+			ImageStreamCache = new Stream[ImageCache.Length];
+			TextureCache = new TextureCacheData[root.Textures?.Count ?? 0];
+			MaterialCache = new MaterialCacheData[root.Materials?.Count ?? 0];
+			BufferCache = new BufferCacheData[root.Buffers?.Count ?? 0];
+			MeshCache = new MeshCacheData[root.Meshes?.Count ?? 0][];
+			for (int i = 0; i < MeshCache.Length; ++i)
 			{
-				MeshCache.Add(null);
+				MeshCache[i] = new MeshCacheData[root.Meshes?[i].Primitives.Count ?? 0];
 			}
 
-			NodeCache = new GameObject[nodeCacheSize];
-			AnimationCache = new AnimationCacheData[animationCacheSize];
+			NodeCache = new GameObject[root.Nodes?.Count ?? 0];
+			AnimationCache = new AnimationCacheData[root.Animations?.Count ?? 0];
 		}
 
 		public void Dispose()

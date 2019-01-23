@@ -1,5 +1,5 @@
 ﻿// MIT License - Copyright (c) 2016 Can Güney Aksakalli
-
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -187,13 +187,14 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 			}
 
 			filename = Path.Combine(_rootDirectory, filename);
-
 			if (File.Exists(filename))
 			{
+				context.Response.StatusCode = (int)HttpStatusCode.OK;
+
 				try
 				{
-					Stream input = new FileStream(filename, FileMode.Open);
-
+					Stream input = File.OpenRead(filename);
+					
 					//Adding permanent http response headers
 					string mime;
 					context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out mime)
@@ -203,17 +204,12 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 					context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
 					context.Response.AddHeader("Last-Modified", System.IO.File.GetLastWriteTime(filename).ToString("r"));
 
-					byte[] buffer = new byte[1024 * 16];
-					int nbytes;
-					while ((nbytes = input.Read(buffer, 0, buffer.Length)) > 0)
-						context.Response.OutputStream.Write(buffer, 0, nbytes);
+					input.CopyTo(context.Response.OutputStream);
 					input.Close();
-
-					context.Response.StatusCode = (int) HttpStatusCode.OK;
-					context.Response.OutputStream.Flush();
 				}
-				catch (Exception)
+				catch (Exception e)
 				{
+					Debug.LogException(e);
 					context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 				}
 			}
@@ -221,8 +217,8 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 			{
 				context.Response.StatusCode = (int)HttpStatusCode.NotFound;
 			}
-
-			context.Response.OutputStream.Close();
+			
+			context.Response.Close();
 		}
 #endif
 
