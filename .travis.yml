@@ -1,5 +1,8 @@
 os: osx
 language: csharp
+pre-install:
+- git lfs install
+- git lfs fetch
 install:
 - nuget restore ./GLTFSerialization/GLTFSerialization.sln
 - sudo ./scripts/install-unity install Unity 2017.4 --packages Unity
