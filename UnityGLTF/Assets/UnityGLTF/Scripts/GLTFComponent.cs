@@ -49,7 +49,11 @@ namespace UnityGLTF
 			{
 				await Load();
 			}
+#if WINDOWS_UWP
+			catch (Exception)
+#else
 			catch (HttpRequestException)
+#endif
 			{
 				if (numRetries++ >= RetryCount)
 					throw;
