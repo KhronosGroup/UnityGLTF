@@ -23,14 +23,14 @@ namespace UnityGLTF.Loader
 		public bool HasSyncLoadMethod => false;
 
 		private readonly HttpClient httpClient = new HttpClient();
-		private Uri _baseAddress;
+		private Uri baseAddress;
 
 		public WebRequestLoader(string rootUri)
 		{
 #if !WINDOWS_UWP
 			ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
 #endif
-			_baseAddress = new Uri(rootUri);
+			baseAddress = new Uri(rootUri);
 		}
 
 		public async Task LoadStream(string gltfFilePath)
@@ -41,15 +41,14 @@ namespace UnityGLTF.Loader
 			}
 
 			var tokenSource = new CancellationTokenSource(30000);
-			var response = await _httpClient.GetAsync(new Uri(_baseAddress, gltfFilePath));
 			HttpResponseMessage response;
 			try
 			{
-				response = await httpClient.GetAsync(uri, tokenSource.Token);
+				response = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath));
 			}
 			catch (TaskCanceledException e)
 			{
-				throw new HttpRequestException($"Connection timeout: {uri}");
+				throw new HttpRequestException($"Connection timeout: {baseAddress}");
 			}
 
 			response.EnsureSuccessStatusCode();
