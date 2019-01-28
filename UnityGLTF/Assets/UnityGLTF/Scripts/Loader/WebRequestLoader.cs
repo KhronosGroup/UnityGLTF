@@ -9,9 +9,9 @@ using Windows.Storage.Streams;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Net.Security;
 #endif
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnityGLTF.Loader
@@ -40,15 +40,23 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			var tokenSource = new CancellationTokenSource(30000);
 			HttpResponseMessage response;
 			try
 			{
+#if WINDOWS_UWP
 				response = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath));
+#else
+				var tokenSource = new CancellationTokenSource(30000);
+				response = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath), tokenSource.Token);
+#endif
 			}
 			catch (TaskCanceledException e)
 			{
+#if WINDOWS_UWP
+				throw new Exception($"Connection timeout: {baseAddress}");
+#else
 				throw new HttpRequestException($"Connection timeout: {baseAddress}");
+#endif
 			}
 
 			response.EnsureSuccessStatusCode();
@@ -58,7 +66,7 @@ namespace UnityGLTF.Loader
 			LoadedStream = new MemoryStream((int?)response.Content.Headers.ContentLength ?? 5000);
 #if WINDOWS_UWP
 			await response.Content.WriteToStreamAsync((IOutputStream)LoadedStream);
-#else		
+#else
 			await response.Content.CopyToAsync(LoadedStream);
 #endif
 			response.Dispose();
@@ -69,6 +77,7 @@ namespace UnityGLTF.Loader
 			throw new NotImplementedException();
 		}
 
+#if !WINDOWS_UWP
 		// enables HTTPS support
 		// https://answers.unity.com/questions/50013/httpwebrequestgetrequeststream-https-certificate-e.html
 		private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
@@ -96,5 +105,6 @@ namespace UnityGLTF.Loader
 
 			return isOk;
 		}
+#endif
 	}
 }

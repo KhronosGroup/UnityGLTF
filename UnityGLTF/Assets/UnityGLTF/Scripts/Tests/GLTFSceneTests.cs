@@ -1,4 +1,5 @@
-﻿using AssetGenerator;
+﻿#if UNITY_EDITOR
+using AssetGenerator;
 using Newtonsoft.Json;
 using NUnit.Compatibility;
 using NUnit.Framework;
@@ -110,3 +111,4 @@ public class GLTFSceneTests
         }
     }
 }
+#endif

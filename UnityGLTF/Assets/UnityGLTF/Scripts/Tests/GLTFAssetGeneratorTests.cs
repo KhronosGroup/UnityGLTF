@@ -1,4 +1,5 @@
-﻿using AssetGenerator;
+﻿#if UNITY_EDITOR
+using AssetGenerator;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
@@ -148,3 +149,4 @@ public class GLTFAssetGeneratorTests
 	   }
     }
 }
+#endif
