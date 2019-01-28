@@ -28,7 +28,9 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 		_EmissionColor("Emissive Factor", Color) = (0,0,0)
 		_EmissionMap("Emissive Texture", 2D) = "white" {}
-		
+
+		_Cull("Cull", Int) = 0
+
 		[HideInInspector] _DetailMask("Detail Mask", 2D) = "white" {}
 
 		[HideInInspector] _DetailAlbedoMap("Detail Albedo x2", 2D) = "grey" {}
@@ -65,6 +67,8 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Blend [_SrcBlend] [_DstBlend]
 			ZWrite [_ZWrite]
 
+			Cull [_Cull]
+
 			CGPROGRAM
 			#pragma target 3.0
 
@@ -101,6 +105,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Fog { Color (0,0,0,0) } // in additive pass fog should be black
 			ZWrite Off
 			ZTest LEqual
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma target 3.0
@@ -132,6 +137,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Tags { "LightMode" = "ShadowCaster" }
 
 			ZWrite On ZTest LEqual
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma target 3.0
@@ -158,6 +164,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 		{
 			Name "DEFERRED"
 			Tags { "LightMode" = "Deferred" }
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma target 3.0
@@ -194,7 +201,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Name "META" 
 			Tags { "LightMode"="Meta" }
 
-			Cull Off
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma vertex vert_meta
@@ -225,6 +232,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			Blend [_SrcBlend] [_DstBlend]
 			ZWrite [_ZWrite]
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma target 2.0
@@ -261,7 +269,8 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Fog { Color (0,0,0,0) } // in additive pass fog should be black
 			ZWrite Off
 			ZTest LEqual
-			
+			Cull[_Cull]
+
 			CGPROGRAM
 			#pragma target 2.0
 
@@ -291,6 +300,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Tags { "LightMode" = "ShadowCaster" }
 			
 			ZWrite On ZTest LEqual
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma target 2.0
@@ -315,7 +325,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 			Name "META" 
 			Tags { "LightMode"="Meta" }
 
-			Cull Off
+			Cull[_Cull]
 
 			CGPROGRAM
 			#pragma vertex vert_meta
