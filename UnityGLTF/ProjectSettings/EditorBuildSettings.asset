@@ -8,3 +8,84 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UnityGLTF/Examples/AnimatedCube.unity
     guid: fb84f951a6d047a42954ae48b885521d
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/BinaryBuggyTestScene.unity
+    guid: 1ad808956b95f394da8643e3a2b516a0
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/StreamTestScene.unity
+    guid: 5f234a304e97dc74390efd8821b1ca5c
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/LanternSpecGlossTestScene.unity
+    guid: 3d986f306d83ee14d96b5fb1c7e86169
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/IntegrationTestScene.unity
+    guid: 6b0e55902b47f1d4586c7ae3e7e8a415
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/LanternTestScene.unity
+    guid: 5a247e41f19cb4f40b0fe8392fd4901f
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/TextureTransformTest.unity
+    guid: 02a966d1c55ae1042b47fa54f4a7716a
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/Benchmark.unity
+    guid: e67b7ff194f3d0c4bbd1c24f3fcf7d09
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/BinaryCorsetTestScene.unity
+    guid: ba9f47b2af06bd44c8fb7877bae29e16
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/StreamBinaryTestScene.unity
+    guid: 784bcaf2fa75ed34bb4e98852b512da2
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/BuggyTestScene.unity
+    guid: 9765b46364f55db4da07dbf1c868e131
+  - enabled: 1
+    path: Assets/UnityGLTF/Tests/TestScene.unity
+    guid: 0c315d6353f330540bb7f667982b0931
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/SkinnedAnimationTestScene.unity
+    guid: 99b419859af06014699108078f89d05e
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/TriangleWithoutIndicesTestScene.unity
+    guid: 2f9c33a560f6fbc4e84417bce6daa904
+  - enabled: 1
+    path: Assets/UnityGLTF/Shaders/ShaderRetention/ShaderRetention.unity
+    guid: da9cfbe5162455445a223e080858cb2c
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/BinaryLanternTestScene.unity
+    guid: 6061c6963fb64694891664b8fc1674f9
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/TestSceneScene.unity
+    guid: a098a7e6ffdf4eb4696cb0674a36abf4
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/ConstantTestScene.unity
+    guid: a5d0e8576c725bc42928c6b760ab9401
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/CorsetTestScene.unity
+    guid: b6ecc977ff0c9bc4d9c08e000d5ad2bc
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/ExportTestScene.unity
+    guid: 1492280843c14944f8919eda7fa0fb58
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/UWPTestScene.unity
+    guid: 9754353895356ff4ea70dce4d6df4d75
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/SciFiHelmetTestScene.unity
+    guid: d57d27a96f86ef04a925a0d66ff55d5e
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/BoomBoxTestScene.unity
+    guid: f14687e9e9c77e541a4594944cace7b3
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/AssetMergeTestScene.unity
+    guid: bd1231aa6ce5b384c81e0045766c6db2
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/TransformTest.unity
+    guid: a6ef8add669c8c9459978f2bc1eba0e5
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/BinaryBoomBoxTestScene.unity
+    guid: 7bdca45e8c776c540bb1483ed5848eec
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/MultiSceneTest.unity
+    guid: ab0db09fd0021d64fb65b2f685d534ae
+  - enabled: 1
+    path: Assets/UnityGLTF/Examples/FarmlandDioramaTestScene.unity
+    guid: df36c2dfaf0bc35488e81c2faf022bd5
