@@ -43,9 +43,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="UnityEngine">
+      <HintPath Condition="Exists('C:\Program Files\Unity\Hub\Editor\2017.4.18f1\Editor\Data\Managed')">C:\Program Files\Unity\Hub\Editor\2017.4.18f1\Editor\Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath Condition="Exists('C:\Program Files\Unity\Hub\Editor\2018.1.9f2\Editor\Data\Managed')">C:\Program Files\Unity\Hub\Editor\2018.1.9f2\Editor\Data\Managed\UnityEngine.dll</HintPath>
       <HintPath Condition="Exists('C:\Program Files\Unity\Editor\Data\Managed')">C:\Program Files\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
-      <HintPath Condition="Exists('C:\Program Files\Unity\Hub\Editor\Data\Managed')">C:\Program Files\Unity\Hub\Editor\Data\Managed\UnityEngine.dll</HintPath>
-      <HintPath Condition="Exists('C:\Program Files\Unity_2018.1.2f1\Editor\Data\Managed')">C:\Program Files\Unity_2018.1.2f1\Editor\Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
