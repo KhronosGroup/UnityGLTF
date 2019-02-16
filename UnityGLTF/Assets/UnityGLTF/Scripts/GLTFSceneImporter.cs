@@ -45,6 +45,11 @@ namespace UnityGLTF
 		public Vector4[] Tangents;
 		public BoneWeight[] BoneWeights;
 	}
+	
+	/// <summary>
+	/// Converts gltf animation data to unity
+	/// </summary>	
+	public delegate float[] ValuesConvertion(NumericArray data, int frame);
 
 	public class GLTFSceneImporter : IDisposable
 	{
@@ -802,38 +807,36 @@ namespace UnityGLTF
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
-		public delegate float[] ValuesConvertion(NumericArray data, int frame);
-        protected void SetAnimationCurve(
-            AnimationClip clip,
-            string relativePath,
-            string[] propertyNames,
-            NumericArray input,
-            NumericArray output,
-            InterpolationType mode,
-            Type curveType,
+		protected void SetAnimationCurve(
+			AnimationClip clip,
+			string relativePath,
+			string[] propertyNames,
+			NumericArray input,
+			NumericArray output,
+			InterpolationType mode,
+			Type curveType,
 			ValuesConvertion getConvertedValues)
-        {
+		{
 
 			var channelCount = propertyNames.Length;
 			var frameCount = input.AsFloats.Length;
-			
+
 			// copy all the key frame data to cache
-			List<Keyframe>[] keyframes = new List<Keyframe>[channelCount];						
+			Keyframe[][] keyframes = new Keyframe[channelCount][];						
 			for( var ci = 0; ci < channelCount; ++ci)
 			{						
-				keyframes[ci] = new List<Keyframe>(frameCount);
+				keyframes[ci] = new Keyframe[frameCount];
 			}
 
 			for (var i = 0; i < frameCount; ++i)
 			{
 				var time = input.AsFloats[i];
-			
-				//Vector3 position = output.AsVec3s[i].ToUnityVector3Convert();
+
 				var values = getConvertedValues(output, i);
 
 				for( var ci = 0; ci < channelCount; ++ci)
 				{
-					keyframes[ci].Add(new Keyframe(time, values[ci]));								
+					keyframes[ci][i] = new Keyframe(time, values[ci]);								
 				}
 			}
 
@@ -843,10 +846,10 @@ namespace UnityGLTF
 				SetCurveMode(keyframes[ci], mode);
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve();
-				curve.keys = keyframes[ci].ToArray();
+				curve.keys = keyframes[ci];
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
-        }		
+		}		
 
 		protected AnimationClip ConstructClip(Transform root, GameObject[] nodes, int animationId)
 		{
@@ -949,9 +952,9 @@ namespace UnityGLTF
 			return clip;
 		}
 
-		public static void SetCurveMode(List<Keyframe> keyframes, InterpolationType mode)
+		public static void SetCurveMode(Keyframe[] keyframes, InterpolationType mode)
 		{
-			for (int i = 0; i < keyframes.Count; ++i)
+			for (int i = 0; i < keyframes.Length; ++i)
 			{
 				float intangent = 0;
 				float outtangent = 0;
@@ -967,7 +970,7 @@ namespace UnityGLTF
 					intangent = 0; intangent_set = true;
 				}
 
-				if (i == keyframes.Count - 1)
+				if (i == keyframes.Length - 1)
 				{
 					outtangent = 0; outtangent_set = true;
 				}
@@ -1019,7 +1022,7 @@ namespace UnityGLTF
 				key.outTangent = outtangent;
 			}
 		}
-		#endregion
+#endregion
 
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj)
 		{
