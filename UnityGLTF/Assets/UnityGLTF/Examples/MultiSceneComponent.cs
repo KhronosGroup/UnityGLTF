@@ -21,7 +21,7 @@ namespace UnityGLTF.Examples
 			_asyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>();
 			Uri uri = new Uri(Url);
 			var directoryPath = URIHelper.AbsoluteUriPath(uri);
-			_loader = new WebRequestLoader(directoryPath);
+			_loader = new WebRequestLoader(directoryPath, _asyncCoroutineHelper);
 			_fileName = URIHelper.GetFileFromUri(uri);
 
 			LoadScene(SceneIndex);

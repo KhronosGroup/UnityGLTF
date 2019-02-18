@@ -41,10 +41,35 @@ namespace UnityGLTF
 		[SerializeField]
 		private Shader shaderOverride = null;
 
-		private async void Start()
+		public void SetUri(string uri)
 		{
-			if (!loadOnStart) return;
-			
+			GLTFUri = uri;
+		}
+
+		private void Start()
+		{
+			if (loadOnStart)
+			{
+				LoadModel();
+			}
+		}
+
+		public void LoadNewModel()
+		{
+			RemoveAll();
+			LoadModel();
+		}
+
+		public void RemoveAll()
+		{
+			foreach (Transform t in transform)
+			{
+				Destroy(t.gameObject);
+			}
+		}
+
+		async void LoadModel()
+		{
 			try
 			{
 				await Load();
@@ -97,7 +122,7 @@ namespace UnityGLTF
 				else
 				{
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					loader = new WebRequestLoader(directoryPath);
+					loader = new WebRequestLoader(directoryPath, asyncCoroutineHelper);
 
 					sceneImporter = new GLTFSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
