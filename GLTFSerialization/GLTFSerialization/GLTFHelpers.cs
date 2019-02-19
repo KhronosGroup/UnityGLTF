@@ -320,6 +320,40 @@ namespace GLTF
 			}
 		}
 
+		public static void BuildTargetAttributes (ref Dictionary<string, AttributeAccessor> attributes)
+		{
+			if (attributes.ContainsKey(SemanticProperties.POSITION))
+			{
+				var attributeAccessor = attributes[SemanticProperties.POSITION];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				byte[] bufferViewCache;
+				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+
+			if (attributes.ContainsKey(SemanticProperties.NORMAL))
+			{
+				var attributeAccessor = attributes[SemanticProperties.NORMAL];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				byte[] bufferViewCache;
+				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+
+			if (attributes.ContainsKey(SemanticProperties.TANGENT))
+			{
+				var attributeAccessor = attributes[SemanticProperties.TANGENT];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				byte[] bufferViewCache;
+				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+
+		}
+
 		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)
 		{
 			NumericArray resultArray = attributeAccessor.AccessorContent;
