@@ -101,7 +101,7 @@ namespace UnityGLTF
 		/// </summary>
 		public bool CullFarLOD = false;
 
-        protected struct GLBStream
+		protected struct GLBStream
 		{
 			public Stream Stream;
 			public long StartPosition;
