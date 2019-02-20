@@ -96,6 +96,11 @@ namespace UnityGLTF
 
 		public bool KeepCPUCopyOfMesh = true;
 
+		/// <summary>
+		/// When screen coverage is above threashold and no LOD mesh cull the object
+		/// </summary>
+		public bool CullFarLOD = false;
+
 		protected struct GLBStream
 		{
 			public Stream Stream;
@@ -1090,7 +1095,13 @@ namespace UnityGLTF
 				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
 				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
 				{
-					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 1];
+					int lodCount = lodsextension.MeshIds.Count + 1;
+					if (!CullFarLOD)
+					{
+						//create a final lod with the mesh as the last LOD in file
+						lodCount += 1;
+					}
+					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 2];
 					List<double> lodCoverage = lodsextension.GetLODCoverage(node);
 
 					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
@@ -1110,6 +1121,13 @@ namespace UnityGLTF
 						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
 						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
 					}
+
+					if (!CullFarLOD)
+					{
+						//use the last mesh as the LOD
+						lods[lodsextension.MeshIds.Count + 1] = new LOD(0, childRenders);
+					}
+
 					lodGroup.SetLODs(lods);
 					lodGroup.RecalculateBounds();
 					lodGroupNodeObj.SetActive(true);
