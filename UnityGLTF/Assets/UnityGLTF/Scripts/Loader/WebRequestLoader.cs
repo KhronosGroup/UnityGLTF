@@ -9,7 +9,6 @@ using Windows.Storage.Streams;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Net.Security;
 #endif
 using System.Threading;
 using System.Threading.Tasks;
