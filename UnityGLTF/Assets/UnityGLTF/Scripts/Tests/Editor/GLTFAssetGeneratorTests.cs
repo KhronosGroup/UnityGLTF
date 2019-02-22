@@ -12,7 +12,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using UnityGLTF;
-using UnityGLTF.Examples;
 using Camera = UnityEngine.Camera;
 using Object = System.Object;
 

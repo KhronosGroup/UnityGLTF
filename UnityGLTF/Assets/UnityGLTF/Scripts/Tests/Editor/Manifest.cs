@@ -4,7 +4,7 @@ namespace AssetGenerator
 {
     internal class Manifest
     {
-        public string Folder;
+        public string Folder = string.Empty;
         public List<Model> Models = new List<Model>();
 
         // Model group, to be listed in the manifest as the folder name
@@ -16,10 +16,10 @@ namespace AssetGenerator
         // Model properties to be listed in the manifest
         public class Model
         {
-            public string FileName;
+            public string FileName = string.Empty;
             [Newtonsoft.Json.JsonProperty( NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore )]
-            public string SampleImageName;
-            public Camera Camera;
+            public string SampleImageName = string.Empty;
+            public Camera Camera = null;
 
             public Model()
             {
