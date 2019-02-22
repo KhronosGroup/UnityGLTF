@@ -50,7 +50,7 @@ namespace UnityGLTF.Loader
 				response = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath), tokenSource.Token);
 #endif
 			}
-			catch (TaskCanceledException e)
+			catch (TaskCanceledException)
 			{
 #if WINDOWS_UWP
 				throw new Exception($"Connection timeout: {baseAddress}");
