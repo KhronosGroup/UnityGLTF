@@ -75,7 +75,7 @@ namespace UnityGLTF
 
 		/// <summary>
 		/// Use Multithreading or not.
-		/// In editor, always
+		/// In editor, this is always false. This is to prevent a freeze in editor (noticed in Unity versions 2017.x and 2018.x)
 		/// </summary>
 		public bool IsMultithreaded
 		{
