@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/UnityGLTF/Examples/WebGlExample.unity
+    guid: fa5d3fa005c56784fb9880336f458e9a
+  - enabled: 1
     path: Assets/UnityGLTF/Examples/AnimatedCube.unity
     guid: fb84f951a6d047a42954ae48b885521d
   - enabled: 1
@@ -17,9 +20,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UnityGLTF/Examples/LanternSpecGlossTestScene.unity
     guid: 3d986f306d83ee14d96b5fb1c7e86169
-  - enabled: 1
-    path: Assets/UnityGLTF/Examples/IntegrationTestScene.unity
-    guid: 6b0e55902b47f1d4586c7ae3e7e8a415
   - enabled: 1
     path: Assets/UnityGLTF/Examples/LanternTestScene.unity
     guid: 5a247e41f19cb4f40b0fe8392fd4901f
@@ -89,3 +89,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UnityGLTF/Examples/FarmlandDioramaTestScene.unity
     guid: df36c2dfaf0bc35488e81c2faf022bd5
+  m_configObjects: {}
