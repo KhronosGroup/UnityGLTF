@@ -45,6 +45,11 @@ namespace UnityGLTF
 		public Vector4[] Tangents;
 		public BoneWeight[] BoneWeights;
 	}
+	
+	/// <summary>
+	/// Converts gltf animation data to unity
+	/// </summary>	
+	public delegate float[] ValuesConvertion(NumericArray data, int frame);
 
 	public class GLTFSceneImporter : IDisposable
 	{
@@ -95,6 +100,11 @@ namespace UnityGLTF
 		public float BudgetPerFrameInMilliseconds = 10f;
 
 		public bool KeepCPUCopyOfMesh = true;
+
+		/// <summary>
+		/// When screen coverage is above threashold and no LOD mesh cull the object
+		/// </summary>
+		public bool CullFarLOD = false;
 
 		protected struct GLBStream
 		{
@@ -802,6 +812,50 @@ namespace UnityGLTF
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
+		protected void SetAnimationCurve(
+			AnimationClip clip,
+			string relativePath,
+			string[] propertyNames,
+			NumericArray input,
+			NumericArray output,
+			InterpolationType mode,
+			Type curveType,
+			ValuesConvertion getConvertedValues)
+		{
+
+			var channelCount = propertyNames.Length;
+			var frameCount = input.AsFloats.Length;
+
+			// copy all the key frame data to cache
+			Keyframe[][] keyframes = new Keyframe[channelCount][];						
+			for( var ci = 0; ci < channelCount; ++ci)
+			{						
+				keyframes[ci] = new Keyframe[frameCount];
+			}
+
+			for (var i = 0; i < frameCount; ++i)
+			{
+				var time = input.AsFloats[i];
+
+				var values = getConvertedValues(output, i);
+
+				for( var ci = 0; ci < channelCount; ++ci)
+				{
+					keyframes[ci][i] = new Keyframe(time, values[ci]);								
+				}
+			}
+
+			for( var ci = 0; ci < channelCount; ++ci)
+			{
+				// set interpolcation for each keyframe
+				SetCurveMode(keyframes[ci], mode);
+				// copy all key frames data to animation curve and add it to the clip
+				AnimationCurve curve = new AnimationCurve();
+				curve.keys = keyframes[ci];
+				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
+			}
+		}		
+
 		protected AnimationClip ConstructClip(Transform root, GameObject[] nodes, int animationId)
 		{
 			GLTFAnimation animation = _gltfRoot.Animations[animationId];
@@ -835,83 +889,62 @@ namespace UnityGLTF
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
 				Transform node = nodes[channel.Target.Node.Id].transform;
 				string relativePath = RelativePathFrom(node, root);
-				AnimationCurve curveX = new AnimationCurve(),
-					curveY = new AnimationCurve(),
-					curveZ = new AnimationCurve(),
-					curveW = new AnimationCurve();
+
 				NumericArray input = samplerCache.Input.AccessorContent,
 					output = samplerCache.Output.AccessorContent;
+
+				string[] propertyNames;
 
 				switch (channel.Target.Path)
 				{
 					case GLTFAnimationChannelPath.translation:
-						for (var i = 0; i < input.AsFloats.Length; ++i)
-						{
-							var time = input.AsFloats[i];
-							Vector3 position = output.AsVec3s[i].ToUnityVector3Convert();
-							curveX.AddKey(time, position.x);
-							curveY.AddKey(time, position.y);
-							curveZ.AddKey(time, position.z);
-						}
-						SetCurveMode(curveX, samplerCache.Interpolation);
-						SetCurveMode(curveY, samplerCache.Interpolation);
-						SetCurveMode(curveZ, samplerCache.Interpolation);
-						clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
-						clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
-						clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
+
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output, 
+										  samplerCache.Interpolation, typeof(Transform), 
+										  (data, frame) => {
+											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
+											  return new float[] { position.x, position.y, position.z};
+										  });
 						break;
 
 					case GLTFAnimationChannelPath.rotation:
-						for (int i = 0; i < input.AsFloats.Length; ++i)
-						{
-							var time = input.AsFloats[i];
-							var rotation = output.AsVec4s[i];
+						propertyNames = new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
 
-							Quaternion rot = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
-							curveX.AddKey(time, rot.x);
-							curveY.AddKey(time, rot.y);
-							curveZ.AddKey(time, rot.z);
-							curveW.AddKey(time, rot.w);
-						}
-						SetCurveMode(curveX, samplerCache.Interpolation);
-						SetCurveMode(curveY, samplerCache.Interpolation);
-						SetCurveMode(curveZ, samplerCache.Interpolation);
-						SetCurveMode(curveW, samplerCache.Interpolation);
-						clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
-						clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
-						clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
-						clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output, 
+										  samplerCache.Interpolation, typeof(Transform), 
+										  (data, frame) => {
+											  var rotation = data.AsVec4s[frame];
+											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
+											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w};
+										  });
+
 						break;
 
-					case GLTFAnimationChannelPath.scale:
-						for (var i = 0; i < input.AsFloats.Length; ++i)
-						{
-							var time = input.AsFloats[i];
-							Vector3 scale = output.AsVec3s[i].ToUnityVector3Raw();
-							curveX.AddKey(time, scale.x);
-							curveY.AddKey(time, scale.y);
-							curveZ.AddKey(time, scale.z);
-						}
+					case GLTFAnimationChannelPath.scale:					
+						propertyNames = new string[] { "localScale.x", "localScale.y", "localScale.z" };
 
-						SetCurveMode(curveX, samplerCache.Interpolation);
-						SetCurveMode(curveY, samplerCache.Interpolation);
-						SetCurveMode(curveZ, samplerCache.Interpolation);
-						clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
-						clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
-						clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output, 
+										  samplerCache.Interpolation, typeof(Transform), 
+										  (data, frame) => {
+											  var scale = data.AsVec3s[frame].ToUnityVector3Raw();
+											  return new float[] { scale.x, scale.y, scale.z};
+										  });						
 						break;
 
 					case GLTFAnimationChannelPath.weights:
-						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
-						var targetCount = primitives[0].Targets.Count;
-						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
-						{
-							for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
-							{
-								// TODO: add support for blend shapes/morph targets
-								//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
-							}
-						}
+						// TODO: add support for blend shapes/morph targets
+
+						// var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+						// var targetCount = primitives[0].Targets.Count;
+						// for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+						// {
+						// 	for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
+						// 	{
+						// 		
+						// 		//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
+						// 	}
+						// }
 						break;
 
 					default:
@@ -924,9 +957,9 @@ namespace UnityGLTF
 			return clip;
 		}
 
-		public static void SetCurveMode(AnimationCurve curve, InterpolationType mode)
+		public static void SetCurveMode(Keyframe[] keyframes, InterpolationType mode)
 		{
-			for (int i = 0; i < curve.keys.Length; ++i)
+			for (int i = 0; i < keyframes.Length; ++i)
 			{
 				float intangent = 0;
 				float outtangent = 0;
@@ -935,14 +968,14 @@ namespace UnityGLTF
 				Vector2 point1;
 				Vector2 point2;
 				Vector2 deltapoint;
-				Keyframe key = curve[i];
+				var key = keyframes[i];
 
 				if (i == 0)
 				{
 					intangent = 0; intangent_set = true;
 				}
 
-				if (i == curve.keys.Length - 1)
+				if (i == keyframes.Length - 1)
 				{
 					outtangent = 0; outtangent_set = true;
 				}
@@ -958,10 +991,10 @@ namespace UnityGLTF
 						{
 							if (!intangent_set)
 							{
-								point1.x = curve.keys[i - 1].time;
-								point1.y = curve.keys[i - 1].value;
-								point2.x = curve.keys[i].time;
-								point2.y = curve.keys[i].value;
+								point1.x = keyframes[i - 1].time;
+								point1.y = keyframes[i - 1].value;
+								point2.x = keyframes[i].time;
+								point2.y = keyframes[i].value;
 
 								deltapoint = point2 - point1;
 
@@ -969,10 +1002,10 @@ namespace UnityGLTF
 							}
 							if (!outtangent_set)
 							{
-								point1.x = curve.keys[i].time;
-								point1.y = curve.keys[i].value;
-								point2.x = curve.keys[i + 1].time;
-								point2.y = curve.keys[i + 1].value;
+								point1.x = keyframes[i].time;
+								point1.y = keyframes[i].value;
+								point2.x = keyframes[i + 1].time;
+								point2.y = keyframes[i + 1].value;
 
 								deltapoint = point2 - point1;
 
@@ -992,10 +1025,9 @@ namespace UnityGLTF
 
 				key.inTangent = intangent;
 				key.outTangent = outtangent;
-				curve.MoveKey(i, key);
 			}
 		}
-		#endregion
+#endregion
 
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj)
 		{
@@ -1090,7 +1122,13 @@ namespace UnityGLTF
 				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
 				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
 				{
-					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 1];
+					int lodCount = lodsextension.MeshIds.Count + 1;
+					if (!CullFarLOD)
+					{
+						//create a final lod with the mesh as the last LOD in file
+						lodCount += 1;
+					}
+					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 2];
 					List<double> lodCoverage = lodsextension.GetLODCoverage(node);
 
 					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
@@ -1110,6 +1148,13 @@ namespace UnityGLTF
 						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
 						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
 					}
+
+					if (!CullFarLOD)
+					{
+						//use the last mesh as the LOD
+						lods[lodsextension.MeshIds.Count + 1] = new LOD(0, childRenders);
+					}
+
 					lodGroup.SetLODs(lods);
 					lodGroup.RecalculateBounds();
 					lodGroupNodeObj.SetActive(true);
