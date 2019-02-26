@@ -151,5 +151,8 @@ _pkginfo.txt
 
 *.orig
 
-# Unity specific
-ProjectSettings/
+# Android Build
+UnityGLTF/.gradle/
+
+# Some Unity project settings
+UnityGLTF/ProjectSettings/
