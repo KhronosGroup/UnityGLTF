@@ -74,7 +74,7 @@ namespace UnityGLTF
 				);
 
 			importer.MaximumLod = MaximumLod;
-			importer.isMultithreaded = Multithreaded;
+			importer.IsMultithreaded = Multithreaded;
 			await importer.LoadSceneAsync(-1);
 		}
 #endif

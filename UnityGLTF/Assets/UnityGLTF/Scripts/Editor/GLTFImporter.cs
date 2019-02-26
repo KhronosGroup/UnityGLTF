@@ -342,7 +342,7 @@ namespace UnityGLTF
 				var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, null, stream);
 				loader.BudgetPerFrameInMilliseconds = float.MaxValue;
 				loader.MaximumLod = _maximumLod;
-				loader.isMultithreaded = true;
+				loader.IsMultithreaded = true;
 
 				loader.LoadSceneAsync().Wait();
 				return loader.LastLoadedScene;

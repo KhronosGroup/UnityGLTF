@@ -111,7 +111,7 @@ namespace UnityGLTF
 				sceneImporter.Collider = Collider;
 				sceneImporter.MaximumLod = MaximumLod;
 				sceneImporter.Timeout = Timeout;
-				sceneImporter.isMultithreaded = Multithreaded;
+				sceneImporter.IsMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
 				if (MaterialsOnly)
