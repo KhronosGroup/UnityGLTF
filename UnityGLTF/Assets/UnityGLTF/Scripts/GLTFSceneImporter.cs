@@ -680,7 +680,7 @@ namespace UnityGLTF
 
 					if (_assetCache.BufferCache[bufferId] == null)
 					{
-						ConstructBuffer(primitive.Indices.Value.BufferView.Value.Buffer.Value, bufferId);
+						await ConstructBuffer(primitive.Indices.Value.BufferView.Value.Buffer.Value, bufferId);
 					}
 
 					AttributeAccessor indexBuilder = new AttributeAccessor
