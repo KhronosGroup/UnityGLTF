@@ -4,6 +4,8 @@ namespace UnityGLTF
 {
 	class MetalRough2StandardMap : StandardMap, IMetalRoughUniformMap
 	{
+		private Vector2 baseColorOffset = new Vector2(0, 0);
+
 		public MetalRough2StandardMap(int MaxLOD = 1000) : base("Standard", MaxLOD) { }
 		protected MetalRough2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
 		protected MetalRough2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
@@ -23,8 +25,12 @@ namespace UnityGLTF
 
 		public virtual Vector2 BaseColorXOffset
 		{
-			get { return _material.GetTextureOffset("_MainTex"); }
-			set { _material.SetTextureOffset("_MainTex", new Vector2(value.x, -value.y)); }
+			get { return baseColorOffset; }
+			set {
+				baseColorOffset = value;
+				var unitySpaceVec = new Vector2(baseColorOffset.x, 1 - BaseColorXScale.y - baseColorOffset.y);
+				_material.SetTextureOffset("_MainTex", unitySpaceVec);
+			}
 		}
 
 		public virtual double BaseColorXRotation
@@ -36,7 +42,10 @@ namespace UnityGLTF
 		public virtual Vector2 BaseColorXScale
 		{
 			get { return _material.GetTextureScale("_MainTex"); }
-			set { _material.SetTextureScale("_MainTex", value); }
+			set {
+				_material.SetTextureScale("_MainTex", value);
+				BaseColorXOffset = baseColorOffset;
+			}
 		}
 
 		public virtual int BaseColorXTexCoord

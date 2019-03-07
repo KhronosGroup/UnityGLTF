@@ -7,6 +7,8 @@ namespace UnityGLTF
 {
 	class MetalRoughMap : MetalRough2StandardMap
 	{
+		private Vector2 metalRoughOffset = new Vector2(0, 0);
+
 		public MetalRoughMap(int MaxLOD = 1000) : base("GLTF/PbrMetallicRoughness", MaxLOD) { }
 		public MetalRoughMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
 		protected MetalRoughMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
@@ -53,8 +55,13 @@ namespace UnityGLTF
 
 		public override Vector2 MetallicRoughnessXOffset
 		{
-			get { return _material.GetTextureOffset("_MetallicGlossMap"); }
-			set { _material.SetTextureOffset("_MetallicGlossMap", new Vector2(value.x, -value.y)); }
+			get { return metalRoughOffset; }
+			set
+			{
+				metalRoughOffset = value;
+				var unitySpaceVec = new Vector2(metalRoughOffset.x, 1 - MetallicRoughnessXScale.y - metalRoughOffset.y);
+				_material.SetTextureOffset("_MetallicGlossMap", unitySpaceVec);
+			}
 		}
 
 		public override double MetallicRoughnessXRotation
@@ -66,7 +73,11 @@ namespace UnityGLTF
 		public override Vector2 MetallicRoughnessXScale
 		{
 			get { return _material.GetTextureScale("_MetallicGlossMap"); }
-			set { _material.SetTextureScale("_MetallicGlossMap", value); }
+			set
+			{
+				_material.SetTextureScale("_MetallicGlossMap", value);
+				MetallicRoughnessXOffset = metalRoughOffset;
+			}
 		}
 
 		public override int MetallicRoughnessXTexCoord

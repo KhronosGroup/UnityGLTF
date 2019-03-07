@@ -4,6 +4,9 @@ namespace UnityGLTF
 {
 	class SpecGloss2StandardMap : StandardMap, ISpecGlossUniformMap
 	{
+		private Vector2 diffuseOffset = new Vector2(0, 0);
+		private Vector2 specGlossOffset = new Vector2(0, 0);
+
 		public SpecGloss2StandardMap(int MaxLOD = 1000) : base("Standard (Specular setup)", MaxLOD) { }
 		protected SpecGloss2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
 		protected SpecGloss2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
@@ -23,8 +26,13 @@ namespace UnityGLTF
 
 		public virtual Vector2 DiffuseXOffset
 		{
-			get { return _material.GetTextureOffset("_MainTex"); }
-			set { _material.SetTextureOffset("_MainTex", new Vector2(value.x, -value.y)); }
+			get { return diffuseOffset; }
+			set
+			{
+				diffuseOffset = value;
+				var unitySpaceVec = new Vector2(diffuseOffset.x, 1 - DiffuseXScale.y - diffuseOffset.y);
+				_material.SetTextureOffset("_MainTex", unitySpaceVec);
+			}
 		}
 
 		public virtual double DiffuseXRotation
@@ -36,7 +44,11 @@ namespace UnityGLTF
 		public virtual Vector2 DiffuseXScale
 		{
 			get { return _material.GetTextureScale("_MainTex"); }
-			set { _material.SetTextureScale("_MainTex", value); }
+			set
+			{
+				_material.SetTextureScale("_MainTex", value);
+				DiffuseXOffset = diffuseOffset;
+			}
 		}
 
 		public virtual int DiffuseXTexCoord
@@ -71,8 +83,13 @@ namespace UnityGLTF
 
 		public virtual Vector2 SpecularGlossinessXOffset
 		{
-			get { return _material.GetTextureOffset("_SpecGlossMap"); }
-			set { _material.SetTextureOffset("_SpecGlossMap", new Vector2(value.x, -value.y)); }
+			get { return specGlossOffset; }
+			set
+			{
+				specGlossOffset = value;
+				var unitySpaceVec = new Vector2(specGlossOffset.x, 1 - SpecularGlossinessXScale.y - specGlossOffset.y);
+				_material.SetTextureOffset("_SpecGlossMap", unitySpaceVec);
+			}
 		}
 
 		public virtual double SpecularGlossinessXRotation
@@ -84,7 +101,10 @@ namespace UnityGLTF
 		public virtual Vector2 SpecularGlossinessXScale
 		{
 			get { return _material.GetTextureScale("_SpecGlossMap"); }
-			set { _material.SetTextureScale("_SpecGlossMap", value); }
+			set {
+				_material.SetTextureScale("_SpecGlossMap", value);
+				SpecularGlossinessXOffset = specGlossOffset;
+			}
 		}
 
 		public virtual int SpecularGlossinessXTexCoord

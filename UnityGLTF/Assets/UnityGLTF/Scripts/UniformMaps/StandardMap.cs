@@ -13,6 +13,10 @@ namespace UnityGLTF
 		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
 		private double _alphaCutoff = 0.5;
 
+		private Vector2 normalOffset = new Vector2(0, 0);
+		private Vector2 occlusionOffset = new Vector2(0, 0);
+		private Vector2 emissiveOffset = new Vector2(0, 0);
+
 		protected StandardMap(string shaderName, int MaxLOD = 1000)
 		{
 			var s = Shader.Find(shaderName);
@@ -78,8 +82,13 @@ namespace UnityGLTF
 
 		public virtual Vector2 NormalXOffset
 		{
-			get { return _material.GetTextureOffset("_BumpMap"); }
-			set { _material.SetTextureOffset("_BumpMap", new Vector2(value.x, -value.y)); }
+			get { return normalOffset; }
+			set
+			{
+				normalOffset = value;
+				var unitySpaceVec = new Vector2(normalOffset.x, 1 - NormalXScale.y - normalOffset.y);
+				_material.SetTextureOffset("_BumpMap", unitySpaceVec);
+			}
 		}
 
 		public virtual double NormalXRotation
@@ -91,7 +100,10 @@ namespace UnityGLTF
 		public virtual Vector2 NormalXScale
 		{
 			get { return _material.GetTextureScale("_BumpMap"); }
-			set { _material.SetTextureScale("_BumpMap", value); }
+			set {
+				_material.SetTextureScale("_BumpMap", value);
+				NormalXOffset = normalOffset;
+			}
 		}
 
 		public virtual int NormalXTexCoord
@@ -141,8 +153,13 @@ namespace UnityGLTF
 
 		public virtual Vector2 OcclusionXOffset
 		{
-			get { return _material.GetTextureOffset("_OcclusionMap"); }
-			set { _material.SetTextureOffset("_OcclusionMap", new Vector2(value.x, -value.y)); }
+			get { return occlusionOffset; }
+			set
+			{
+				occlusionOffset = value;
+				var unitySpaceVec = new Vector2(occlusionOffset.x, 1 - OcclusionXScale.y - occlusionOffset.y);
+				_material.SetTextureOffset("_OcclusionMap", unitySpaceVec);
+			}
 		}
 
 		public virtual double OcclusionXRotation
@@ -154,7 +171,10 @@ namespace UnityGLTF
 		public virtual Vector2 OcclusionXScale
 		{
 			get { return _material.GetTextureScale("_OcclusionMap"); }
-			set { _material.SetTextureScale("_OcclusionMap", value); }
+			set {
+				_material.SetTextureScale("_OcclusionMap", value);
+				OcclusionXOffset = occlusionOffset;
+			}
 		}
 
 		public virtual int OcclusionXTexCoord
@@ -205,8 +225,13 @@ namespace UnityGLTF
 
 		public virtual Vector2 EmissiveXOffset
 		{
-			get { return _material.GetTextureOffset("_EmissionMap"); }
-			set { _material.SetTextureOffset("_EmissionMap", new Vector2(value.x, -value.y)); }
+			get { return emissiveOffset; }
+			set
+			{
+				emissiveOffset = value;
+				var unitySpaceVec = new Vector2(emissiveOffset.x, 1 - EmissiveXScale.y - emissiveOffset.y);
+				_material.SetTextureOffset("_EmissionMap", unitySpaceVec);
+			}
 		}
 
 		public virtual double EmissiveXRotation
@@ -218,7 +243,10 @@ namespace UnityGLTF
 		public virtual Vector2 EmissiveXScale
 		{
 			get { return _material.GetTextureScale("_EmissionMap"); }
-			set { _material.SetTextureScale("_EmissionMap", value); }
+			set {
+				_material.SetTextureScale("_EmissionMap", value);
+				EmissiveXOffset = emissiveOffset;
+			}
 		}
 
 		public virtual int EmissiveXTexCoord
