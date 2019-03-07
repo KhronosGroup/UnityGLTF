@@ -21,6 +21,30 @@ namespace UnityGLTF
 			set { return; }
 		}
 
+		public virtual Vector2 BaseColorXOffset
+		{
+			get { return _material.GetTextureOffset("_MainTex"); }
+			set { _material.SetTextureOffset("_MainTex", value); }
+		}
+
+		public virtual double BaseColorXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 BaseColorXScale
+		{
+			get { return _material.GetTextureScale("_MainTex"); }
+			set { _material.SetTextureScale("_MainTex", value); }
+		}
+
+		public virtual int BaseColorXTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
 		public virtual Color BaseColorFactor
 		{
 			get { return _material.GetColor("_Color"); }
@@ -39,6 +63,30 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int MetallicRoughnessTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 MetallicRoughnessXOffset
+		{
+			get { return new Vector2(0, 0); }
+			set { return; }
+		}
+
+		public virtual double MetallicRoughnessXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 MetallicRoughnessXScale
+		{
+			get { return new Vector2(1, 1); }
+			set { return; }
+		}
+
+		public virtual int MetallicRoughnessXTexCoord
 		{
 			get { return 0; }
 			set { return; }

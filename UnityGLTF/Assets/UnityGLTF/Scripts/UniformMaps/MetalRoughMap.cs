@@ -51,6 +51,30 @@ namespace UnityGLTF
 			set { return; }
 		}
 
+		public override Vector2 MetallicRoughnessXOffset
+		{
+			get { return _material.GetTextureOffset("_MetallicGlossMap"); }
+			set { _material.SetTextureOffset("_MetallicGlossMap", value); }
+		}
+
+		public override double MetallicRoughnessXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public override Vector2 MetallicRoughnessXScale
+		{
+			get { return _material.GetTextureScale("_MetallicGlossMap"); }
+			set { _material.SetTextureScale("_MetallicGlossMap", value); }
+		}
+
+		public override int MetallicRoughnessXTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
 		public override IUniformMap Clone()
 		{
 			var copy = new MetalRoughMap(new Material(_material));

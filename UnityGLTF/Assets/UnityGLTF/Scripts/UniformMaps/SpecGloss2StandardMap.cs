@@ -21,6 +21,30 @@ namespace UnityGLTF
 			set { return; }
 		}
 
+		public virtual Vector2 DiffuseXOffset
+		{
+			get { return _material.GetTextureOffset("_MainTex"); }
+			set { _material.SetTextureOffset("_MainTex", value); }
+		}
+
+		public virtual double DiffuseXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 DiffuseXScale
+		{
+			get { return _material.GetTextureScale("_MainTex"); }
+			set { _material.SetTextureScale("_MainTex", value); }
+		}
+
+		public virtual int DiffuseXTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
 		public virtual Color DiffuseFactor
 		{
 			get { return _material.GetColor("_Color"); }
@@ -40,6 +64,30 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int SpecularGlossinessTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 SpecularGlossinessXOffset
+		{
+			get { return _material.GetTextureOffset("_SpecGlossMap"); }
+			set { _material.SetTextureOffset("_SpecGlossMap", value); }
+		}
+
+		public virtual double SpecularGlossinessXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 SpecularGlossinessXScale
+		{
+			get { return _material.GetTextureScale("_SpecGlossMap"); }
+			set { _material.SetTextureScale("_SpecGlossMap", value); }
+		}
+
+		public virtual int SpecularGlossinessXTexCoord
 		{
 			get { return 0; }
 			set { return; }

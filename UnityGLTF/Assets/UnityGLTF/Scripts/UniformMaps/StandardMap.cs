@@ -76,6 +76,30 @@ namespace UnityGLTF
 			set { return; }
 		}
 
+		public virtual Vector2 NormalXOffset
+		{
+			get { return _material.GetTextureOffset("_BumpMap"); }
+			set { _material.SetTextureOffset("_BumpMap", value); }
+		}
+
+		public virtual double NormalXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 NormalXScale
+		{
+			get { return _material.GetTextureScale("_BumpMap"); }
+			set { _material.SetTextureScale("_BumpMap", value); }
+		}
+
+		public virtual int NormalXTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
 		public virtual double NormalTexScale
 		{
 			get { return _material.HasProperty("_BumpScale") ? _material.GetFloat("_BumpScale") : 1; }
@@ -110,6 +134,30 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int OcclusionTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 OcclusionXOffset
+		{
+			get { return _material.GetTextureOffset("_OcclusionMap"); }
+			set { _material.SetTextureOffset("_OcclusionMap", value); }
+		}
+
+		public virtual double OcclusionXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 OcclusionXScale
+		{
+			get { return _material.GetTextureScale("_OcclusionMap"); }
+			set { _material.SetTextureScale("_OcclusionMap", value); }
+		}
+
+		public virtual int OcclusionXTexCoord
 		{
 			get { return 0; }
 			set { return; }
@@ -150,6 +198,30 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int EmissiveTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 EmissiveXOffset
+		{
+			get { return _material.GetTextureOffset("_EmissionMap"); }
+			set { _material.SetTextureOffset("_EmissionMap", value); }
+		}
+
+		public virtual double EmissiveXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 EmissiveXScale
+		{
+			get { return _material.GetTextureScale("_EmissionMap"); }
+			set { _material.SetTextureScale("_EmissionMap", value); }
+		}
+
+		public virtual int EmissiveXTexCoord
 		{
 			get { return 0; }
 			set { return; }
