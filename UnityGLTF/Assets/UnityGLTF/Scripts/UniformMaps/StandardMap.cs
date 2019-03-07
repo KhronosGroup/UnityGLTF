@@ -79,7 +79,7 @@ namespace UnityGLTF
 		public virtual Vector2 NormalXOffset
 		{
 			get { return _material.GetTextureOffset("_BumpMap"); }
-			set { _material.SetTextureOffset("_BumpMap", value); }
+			set { _material.SetTextureOffset("_BumpMap", new Vector2(value.x, -value.y)); }
 		}
 
 		public virtual double NormalXRotation
@@ -142,7 +142,7 @@ namespace UnityGLTF
 		public virtual Vector2 OcclusionXOffset
 		{
 			get { return _material.GetTextureOffset("_OcclusionMap"); }
-			set { _material.SetTextureOffset("_OcclusionMap", value); }
+			set { _material.SetTextureOffset("_OcclusionMap", new Vector2(value.x, -value.y)); }
 		}
 
 		public virtual double OcclusionXRotation
@@ -206,7 +206,7 @@ namespace UnityGLTF
 		public virtual Vector2 EmissiveXOffset
 		{
 			get { return _material.GetTextureOffset("_EmissionMap"); }
-			set { _material.SetTextureOffset("_EmissionMap", value); }
+			set { _material.SetTextureOffset("_EmissionMap", new Vector2(value.x, -value.y)); }
 		}
 
 		public virtual double EmissiveXRotation

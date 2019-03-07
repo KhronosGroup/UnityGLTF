@@ -54,7 +54,7 @@ namespace UnityGLTF
 		public override Vector2 MetallicRoughnessXOffset
 		{
 			get { return _material.GetTextureOffset("_MetallicGlossMap"); }
-			set { _material.SetTextureOffset("_MetallicGlossMap", value); }
+			set { _material.SetTextureOffset("_MetallicGlossMap", new Vector2(value.x, -value.y)); }
 		}
 
 		public override double MetallicRoughnessXRotation

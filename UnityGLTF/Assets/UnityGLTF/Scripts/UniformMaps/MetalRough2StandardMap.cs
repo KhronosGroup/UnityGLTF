@@ -24,7 +24,7 @@ namespace UnityGLTF
 		public virtual Vector2 BaseColorXOffset
 		{
 			get { return _material.GetTextureOffset("_MainTex"); }
-			set { _material.SetTextureOffset("_MainTex", value); }
+			set { _material.SetTextureOffset("_MainTex", new Vector2(value.x, -value.y)); }
 		}
 
 		public virtual double BaseColorXRotation
