@@ -1,4 +1,4 @@
-using GLTF;
+﻿using GLTF;
 using GLTF.Extensions;
 using GLTF.Schema;
 using GLTF.Utilities;
@@ -45,10 +45,10 @@ namespace UnityGLTF
 		public Vector4[] Tangents;
 		public BoneWeight[] BoneWeights;
 	}
-	
+
 	/// <summary>
 	/// Converts gltf animation data to unity
-	/// </summary>	
+	/// </summary>
 	public delegate float[] ValuesConvertion(NumericArray data, int frame);
 
 	public class GLTFSceneImporter : IDisposable
@@ -213,7 +213,7 @@ namespace UnityGLTF
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
-		
+
 		public IEnumerator LoadScene(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
 		{
 			return LoadSceneAsync(sceneIndex, showSceneObj, onLoadComplete).AsCoroutine();
@@ -316,7 +316,7 @@ namespace UnityGLTF
 		}
 
 		/// <summary>
-		/// Initializes the top-level created node by adding an instantiated GLTF object component to it, 
+		/// Initializes the top-level created node by adding an instantiated GLTF object component to it,
 		/// so that it can cleanup after itself properly when destroyed
 		/// </summary>
 		private void InitializeGltfTopLevelObject()
@@ -346,7 +346,7 @@ namespace UnityGLTF
 				foreach (NodeId child in node.Children)
 				{
 					await ConstructBufferData(child.Value);
-				}	
+				}
 			}
 
 			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
@@ -608,11 +608,11 @@ namespace UnityGLTF
 				await ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex);
 			}
 		}
-		
+
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool linear, GLTFImage image, int imageCacheIndex)
 		{
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, linear);
-			
+
 			if (stream is MemoryStream)
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
@@ -694,7 +694,7 @@ namespace UnityGLTF
 				}
 
 				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
-				
+
 				TransformAttributes(ref attributeAccessors);
 				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
 			}
@@ -827,9 +827,9 @@ namespace UnityGLTF
 			var frameCount = input.AsFloats.Length;
 
 			// copy all the key frame data to cache
-			Keyframe[][] keyframes = new Keyframe[channelCount][];						
+			Keyframe[][] keyframes = new Keyframe[channelCount][];
 			for( var ci = 0; ci < channelCount; ++ci)
-			{						
+			{
 				keyframes[ci] = new Keyframe[frameCount];
 			}
 
@@ -841,7 +841,7 @@ namespace UnityGLTF
 
 				for( var ci = 0; ci < channelCount; ++ci)
 				{
-					keyframes[ci][i] = new Keyframe(time, values[ci]);								
+					keyframes[ci][i] = new Keyframe(time, values[ci]);
 				}
 			}
 
@@ -854,7 +854,7 @@ namespace UnityGLTF
 				curve.keys = keyframes[ci];
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
-		}		
+		}
 
 		protected AnimationClip ConstructClip(Transform root, GameObject[] nodes, int animationId)
 		{
@@ -900,8 +900,8 @@ namespace UnityGLTF
 					case GLTFAnimationChannelPath.translation:
 						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
 
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output, 
-										  samplerCache.Interpolation, typeof(Transform), 
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) => {
 											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
 											  return new float[] { position.x, position.y, position.z};
@@ -911,8 +911,8 @@ namespace UnityGLTF
 					case GLTFAnimationChannelPath.rotation:
 						propertyNames = new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
 
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output, 
-										  samplerCache.Interpolation, typeof(Transform), 
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) => {
 											  var rotation = data.AsVec4s[frame];
 											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
@@ -921,15 +921,15 @@ namespace UnityGLTF
 
 						break;
 
-					case GLTFAnimationChannelPath.scale:					
+					case GLTFAnimationChannelPath.scale:
 						propertyNames = new string[] { "localScale.x", "localScale.y", "localScale.z" };
 
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output, 
-										  samplerCache.Interpolation, typeof(Transform), 
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) => {
 											  var scale = data.AsVec3s[frame].ToUnityVector3Raw();
 											  return new float[] { scale.x, scale.y, scale.z};
-										  });						
+										  });
 						break;
 
 					case GLTFAnimationChannelPath.weights:
@@ -941,7 +941,7 @@ namespace UnityGLTF
 						// {
 						// 	for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
 						// 	{
-						// 		
+						//
 						// 		//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
 						// 	}
 						// }
@@ -1244,7 +1244,7 @@ namespace UnityGLTF
 
 			return boneWeights;
 		}
-		
+
 		/// <summary>
 		/// Ensures each bone weight influences applied to the vertices add up to 1
 		/// </summary>
@@ -1357,7 +1357,7 @@ namespace UnityGLTF
 				{
 					unityMeshData = ConvertAccessorsToUnityTypes(meshConstructionData);
 				}
-				
+
 				await ConstructUnityMesh(meshConstructionData, meshID, primitiveIndex, unityMeshData);
 			}
 
@@ -1762,7 +1762,7 @@ namespace UnityGLTF
 			{
 				return null;
 			}
-			
+
 			return _assetCache.TextureCache[textureIndex].Texture;
 		}
 
@@ -1776,8 +1776,8 @@ namespace UnityGLTF
 				await ConstructImage(image, sourceId, markGpuOnly, isLinear);
 
 				var source = _assetCache.ImageCache[sourceId];
-				var desiredFilterMode = FilterMode.Bilinear;
-				var desiredWrapMode = TextureWrapMode.Repeat;
+				FilterMode desiredFilterMode;
+				TextureWrapMode desiredWrapMode;
 
 				if (texture.Sampler != null)
 				{
@@ -1791,11 +1791,14 @@ namespace UnityGLTF
 							break;
 						case MinFilterMode.Linear:
 						case MinFilterMode.LinearMipmapNearest:
-						case MinFilterMode.LinearMipmapLinear:
 							desiredFilterMode = FilterMode.Bilinear;
+							break;
+						case MinFilterMode.LinearMipmapLinear:
+							desiredFilterMode = FilterMode.Trilinear;
 							break;
 						default:
 							Debug.LogWarning("Unsupported Sampler.MinFilter: " + sampler.MinFilter);
+							desiredFilterMode = FilterMode.Bilinear;
 							break;
 					}
 
@@ -1805,10 +1808,21 @@ namespace UnityGLTF
 							desiredWrapMode = TextureWrapMode.Clamp;
 							break;
 						case GLTF.Schema.WrapMode.Repeat:
+							desiredWrapMode = TextureWrapMode.Repeat;
+							break;
+						case GLTF.Schema.WrapMode.MirroredRepeat:
+							desiredWrapMode = TextureWrapMode.Mirror;
+							break;
 						default:
+							Debug.LogWarning("Unsupported Sampler.WrapS: " + sampler.WrapS);
 							desiredWrapMode = TextureWrapMode.Repeat;
 							break;
 					}
+				}
+				else
+				{
+					desiredFilterMode = FilterMode.Bilinear;
+					desiredWrapMode = TextureWrapMode.Repeat;
 				}
 
 				if (markGpuOnly || (source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode))
@@ -1843,7 +1857,7 @@ namespace UnityGLTF
 			texture.LoadImage(data);
 
 			_assetCache.ImageCache[imageCacheIndex] = texture;
-			
+
 		}
 
 		protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
