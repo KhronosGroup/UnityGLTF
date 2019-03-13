@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -303,7 +303,7 @@ namespace UnityGLTF
 		}
 
 		/// <summary>
-		/// This converts Unity's metallic-gloss texture representation into GLTF's metallic-roughness specifications. 
+		/// This converts Unity's metallic-gloss texture representation into GLTF's metallic-roughness specifications.
 		/// Unity's metallic-gloss A channel (glossiness) is inverted and goes into GLTF's metallic-roughness G channel (roughness).
 		/// Unity's metallic-gloss R channel (metallic) goes into GLTF's metallic-roughess B channel.
 		/// </summary>
@@ -1168,7 +1168,7 @@ namespace UnityGLTF
 
 			return id;
 		}
-		
+
 		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType texturMapType)
 		{
 
@@ -1197,7 +1197,7 @@ namespace UnityGLTF
 				Graphics.Blit(texture, destRenderTexture);
 				break;
 			}
-			
+
 			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 			exportTexture.Apply();
@@ -1241,31 +1241,46 @@ namespace UnityGLTF
 
 			var sampler = new Sampler();
 
-			if (texture.wrapMode == TextureWrapMode.Clamp)
+			switch (texture.wrapMode)
 			{
-				sampler.WrapS = WrapMode.ClampToEdge;
-				sampler.WrapT = WrapMode.ClampToEdge;
-			}
-			else
-			{
-				sampler.WrapS = WrapMode.Repeat;
-				sampler.WrapT = WrapMode.Repeat;
+				case TextureWrapMode.Clamp:
+					sampler.WrapS = WrapMode.ClampToEdge;
+					sampler.WrapT = WrapMode.ClampToEdge;
+					break;
+				case TextureWrapMode.Repeat:
+					sampler.WrapS = WrapMode.Repeat;
+					sampler.WrapT = WrapMode.Repeat;
+					break;
+				case TextureWrapMode.Mirror:
+					sampler.WrapS = WrapMode.MirroredRepeat;
+					sampler.WrapT = WrapMode.MirroredRepeat;
+					break;
+				default:
+					Debug.LogWarning("Unsupported Texture.wrapMode: " + texture.wrapMode);
+					sampler.WrapS = WrapMode.ClampToEdge;
+					sampler.WrapT = WrapMode.ClampToEdge;
+					break;
 			}
 
-			if (texture.filterMode == FilterMode.Point)
+			switch (texture.filterMode)
 			{
-				sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
-				sampler.MagFilter = MagFilterMode.Nearest;
-			}
-			else if (texture.filterMode == FilterMode.Bilinear)
-			{
-				sampler.MinFilter = MinFilterMode.NearestMipmapLinear;
-				sampler.MagFilter = MagFilterMode.Linear;
-			}
-			else
-			{
-				sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
-				sampler.MagFilter = MagFilterMode.Linear;
+				case FilterMode.Point:
+					sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
+					sampler.MagFilter = MagFilterMode.Nearest;
+					break;
+				case FilterMode.Bilinear:
+					sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
+					sampler.MagFilter = MagFilterMode.Linear;
+					break;
+				case FilterMode.Trilinear:
+					sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
+					sampler.MagFilter = MagFilterMode.Linear;
+					break;
+				default:
+					Debug.LogWarning("Unsupported Texture.filterMode: " + texture.filterMode);
+					sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
+					sampler.MagFilter = MagFilterMode.Linear;
+					break;
 			}
 
 			samplerId = new SamplerId
@@ -1383,7 +1398,7 @@ namespace UnityGLTF
 
 			return id;
 		}
-		
+
 		private long AppendToBufferMultiplyOf4(long byteOffset, long byteLength)
 		{
 		    var moduloOffset = byteLength % 4;
@@ -1398,7 +1413,7 @@ namespace UnityGLTF
 
 		    return byteLength;
 		}
-		
+
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
 			uint count = (uint)arr.Length;
@@ -1799,17 +1814,18 @@ namespace UnityGLTF
 			{
 				bool filterIsNearest = root.Samplers[i].MinFilter == MinFilterMode.Nearest
 					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapNearest
-					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
+					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
 
 				bool filterIsLinear = root.Samplers[i].MinFilter == MinFilterMode.Linear
-					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
+					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
 
 				bool filterMatched = textureObj.filterMode == FilterMode.Point && filterIsNearest
 					|| textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
 					|| textureObj.filterMode == FilterMode.Trilinear && root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
 
 				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == WrapMode.ClampToEdge
-					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != WrapMode.ClampToEdge;
+					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != WrapMode.Repeat
+					|| textureObj.wrapMode == TextureWrapMode.Mirror && root.Samplers[i].WrapS != WrapMode.MirroredRepeat;
 
 				if (filterMatched && wrapMatched)
 				{
