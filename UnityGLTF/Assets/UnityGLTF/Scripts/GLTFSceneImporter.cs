@@ -71,10 +71,23 @@ namespace UnityGLTF
 		/// </summary>
 		public int Timeout = 8;
 
+		private bool _isMultithreaded;
+
 		/// <summary>
-		/// Use Multithreading or not
+		/// Use Multithreading or not.
+		/// In editor, this is always false. This is to prevent a freeze in editor (noticed in Unity versions 2017.x and 2018.x)
 		/// </summary>
-		public bool isMultithreaded = true;
+		public bool IsMultithreaded
+		{
+			get
+			{
+				return Application.isEditor ? false : _isMultithreaded;
+			}
+			set
+			{
+				_isMultithreaded = value;
+			}
+		}
 
 		/// <summary>
 		/// The parent transform for the created GameObject
@@ -435,7 +448,7 @@ namespace UnityGLTF
 		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP
-			 if (isMultithreaded && _loader.HasSyncLoadMethod)
+			 if (IsMultithreaded && _loader.HasSyncLoadMethod)
 			 {
 				Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
 				loadThread.Priority = ThreadPriority.Highest;
@@ -453,7 +466,7 @@ namespace UnityGLTF
 			_gltfStream.StartPosition = 0;
 
 #if !WINDOWS_UWP
-			if (isMultithreaded)
+			if (IsMultithreaded)
 			{
 				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				parseJsonThread.Priority = ThreadPriority.Highest;
@@ -499,7 +512,7 @@ namespace UnityGLTF
 
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
 
-			if (!isMultithreaded)
+			if (!IsMultithreaded)
 			{
 				await ConstructBufferData(nodeToLoad);
 			}
@@ -1349,7 +1362,7 @@ namespace UnityGLTF
 				};
 
 				UnityMeshData unityMeshData = null;
-				if (isMultithreaded)
+				if (IsMultithreaded)
 				{
 					await Task.Run(() => unityMeshData = ConvertAccessorsToUnityTypes(meshConstructionData));
 				}
