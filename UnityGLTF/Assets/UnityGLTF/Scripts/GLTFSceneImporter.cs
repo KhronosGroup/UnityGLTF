@@ -1289,15 +1289,22 @@ namespace UnityGLTF
 			Vector3[] zeroes = new Vector3[unityMesh.vertexCount];
 			
 			var targets = _assetCache.MeshCache[meshId][primitiveIndex].Targets;
+			bool hasNames = primitive.TargetNames != null;
+			string bsname;
+
 			for (int i = 0; i < targets.Count; ++i)
 			{
-				string bsname = primitive.TargetNames[i];
+				if (hasNames)
+					bsname = primitive.TargetNames[i];
+				else
+					bsname = "Blendshape" + i;
+
 				//GLTF only supports 1 frame per blendshape, set that to 100%
 				unityMesh.AddBlendShapeFrame(bsname, 0, zeroes, zeroes, zeroes);
-				unityMesh.AddBlendShapeFrame(bsname, 100, 
-											targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw(),
-											targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw(),
-											targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw());
+				unityMesh.AddBlendShapeFrame(bsname, 100,
+											targets[i].ContainsKey(SemanticProperties.POSITION) ? targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
+											targets[i].ContainsKey(SemanticProperties.NORMAL) ? targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
+											targets[i].ContainsKey(SemanticProperties.TANGENT) ? targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes);
 
 			}
 		}
