@@ -112,7 +112,21 @@ namespace UnityGLTF
 
 		public float BudgetPerFrameInMilliseconds = 10f;
 
+		/// <summary>
+		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
+		/// </summary>
 		public bool KeepCPUCopyOfMesh = true;
+
+		/// <summary>
+		/// Whether to keep a CPU-side copy of the texture after upload to GPU
+		/// </summary>
+		/// <remaks>
+		/// This is is necessary when a texture is used with different sampler states, as Unity doesn't allow setting
+		/// of filter and wrap modes separately form the texture object. Setting this to false will omit making a copy
+		/// of a texture in that case and use the original texture's sampler state wherever it's referenced; this is
+		/// appropriate in cases such as the filter and wrap modes being specified in the shader instead
+		/// </remaks>
+		public bool KeepCPUCopyOfTexture = true;
 
 		/// <summary>
 		/// When screen coverage is above threashold and no LOD mesh cull the object
@@ -587,7 +601,7 @@ namespace UnityGLTF
 			}
 		}
 
-		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly = false, bool linear = true)
+		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear)
 		{
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
@@ -618,20 +632,19 @@ namespace UnityGLTF
 				}
 
 				await TryYieldOnTimeout();
-				await ConstructUnityTexture(stream, markGpuOnly, linear, image, imageCacheIndex);
+				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
 			}
 		}
 
-		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool linear, GLTFImage image, int imageCacheIndex)
+		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
 		{
-			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, linear);
+			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, isLinear);
 
 			if (stream is MemoryStream)
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
-					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-					texture.LoadImage(memoryStream.ToArray(), false);
+					texture.LoadImage(memoryStream.ToArray(), markGpuOnly);
 				}
 			}
 			else
@@ -650,12 +663,8 @@ namespace UnityGLTF
 
 				await TryYieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-				texture.LoadImage(buffer, false);
+				texture.LoadImage(buffer, markGpuOnly);
 			}
-
-			await TryYieldOnTimeout();
-			// After we conduct the Apply(), then we can make the texture non-readable and never create a CPU copy
-			texture.Apply(true, markGpuOnly);
 
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 		}
@@ -1614,7 +1623,7 @@ namespace UnityGLTF
 				if (pbr.BaseColorTexture != null)
 				{
 					TextureId textureId = pbr.BaseColorTexture.Index;
-					await ConstructTexture(textureId.Value, textureId.Id, false, false);
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 					mrMapper.BaseColorTexture = _assetCache.TextureCache[textureId.Id].Texture;
 					mrMapper.BaseColorTexCoord = pbr.BaseColorTexture.TexCoord;
 
@@ -1626,7 +1635,7 @@ namespace UnityGLTF
 				if (pbr.MetallicRoughnessTexture != null)
 				{
 					TextureId textureId = pbr.MetallicRoughnessTexture.Index;
-					await ConstructTexture(textureId.Value, textureId.Id);
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
 					mrMapper.MetallicRoughnessTexture = _assetCache.TextureCache[textureId.Id].Texture;
 					mrMapper.MetallicRoughnessTexCoord = pbr.MetallicRoughnessTexture.TexCoord;
 
@@ -1646,7 +1655,7 @@ namespace UnityGLTF
 				if (specGloss.DiffuseTexture != null)
 				{
 					TextureId textureId = specGloss.DiffuseTexture.Index;
-					await ConstructTexture(textureId.Value, textureId.Id);
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 					sgMapper.DiffuseTexture = _assetCache.TextureCache[textureId.Id].Texture;
 					sgMapper.DiffuseTexCoord = specGloss.DiffuseTexture.TexCoord;
 
@@ -1659,7 +1668,7 @@ namespace UnityGLTF
 				if (specGloss.SpecularGlossinessTexture != null)
 				{
 					TextureId textureId = specGloss.SpecularGlossinessTexture.Index;
-					await ConstructTexture(textureId.Value, textureId.Id);
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 					sgMapper.SpecularGlossinessTexture = _assetCache.TextureCache[textureId.Id].Texture;
 				}
 			}
@@ -1667,7 +1676,7 @@ namespace UnityGLTF
 			if (def.NormalTexture != null)
 			{
 				TextureId textureId = def.NormalTexture.Index;
-				await ConstructTexture(textureId.Value, textureId.Id);
+				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
 				mapper.NormalTexture = _assetCache.TextureCache[textureId.Id].Texture;
 				mapper.NormalTexCoord = def.NormalTexture.TexCoord;
 				mapper.NormalTexScale = def.NormalTexture.Scale;
@@ -1677,14 +1686,14 @@ namespace UnityGLTF
 			{
 				mapper.OcclusionTexStrength = def.OcclusionTexture.Strength;
 				TextureId textureId = def.OcclusionTexture.Index;
-				await ConstructTexture(textureId.Value, textureId.Id);
+				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
 				mapper.OcclusionTexture = _assetCache.TextureCache[textureId.Id].Texture;
 			}
 
 			if (def.EmissiveTexture != null)
 			{
 				TextureId textureId = def.EmissiveTexture.Index;
-				await ConstructTexture(textureId.Value, textureId.Id, false, false);
+				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 				mapper.EmissiveTexture = _assetCache.TextureCache[textureId.Id].Texture;
 				mapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
 			}
@@ -1717,12 +1726,15 @@ namespace UnityGLTF
 			return texture.Source.Id;
 		}
 
-		/// <summary>
-		/// Creates a texture from a glTF texture
-		/// </summary>
-		/// <param name="texture">The texture to load</param>
-		/// <returns>The loaded unity texture</returns>
-		public virtual async Task LoadTextureAsync(GLTFTexture texture, int textureIndex, bool markGpuOnly = true)
+        /// <summary>
+        /// Creates a texture from a glTF texture
+        /// </summary>
+        /// <param name="texture">The texture to load</param>
+        /// <param name="textureIndex">The index in the texture cache</param>
+        /// <param name="markGpuOnly">Whether the texture is GPU only, instead of keeping a CPU copy</param>
+        /// <param name="isLinear">Whether the texture is linear rather than sRGB</param>
+        /// <returns>The loading task</returns>
+        public virtual async Task LoadTextureAsync(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear)
 		{
 			try
 			{
@@ -1748,7 +1760,7 @@ namespace UnityGLTF
 
 				_timeAtLastYield = Time.realtimeSinceStartup;
 				await ConstructImageBuffer(texture, textureIndex);
-				await ConstructTexture(texture, textureIndex, markGpuOnly);
+				await ConstructTexture(texture, textureIndex, markGpuOnly, isLinear);
 			}
 			finally
 			{
@@ -1757,6 +1769,11 @@ namespace UnityGLTF
 					_isRunning = false;
 				}
 			}
+		}
+
+		public virtual Task LoadTextureAsync(GLTFTexture texture, int textureIndex, bool isLinear)
+		{
+			return LoadTextureAsync(texture, textureIndex, !KeepCPUCopyOfTexture, isLinear);
 		}
 
 		/// <summary>
@@ -1780,7 +1797,7 @@ namespace UnityGLTF
 		}
 
 		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex,
-			bool markGpuOnly = false, bool isLinear = true)
+			bool markGpuOnly, bool isLinear)
 		{
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
@@ -1811,7 +1828,7 @@ namespace UnityGLTF
 							break;
 						default:
 							Debug.LogWarning("Unsupported Sampler.MinFilter: " + sampler.MinFilter);
-							desiredFilterMode = FilterMode.Bilinear;
+							desiredFilterMode = FilterMode.Trilinear;
 							break;
 					}
 
@@ -1834,17 +1851,18 @@ namespace UnityGLTF
 				}
 				else
 				{
-					desiredFilterMode = FilterMode.Bilinear;
+					desiredFilterMode = FilterMode.Trilinear;
 					desiredWrapMode = TextureWrapMode.Repeat;
 				}
 
-				if (markGpuOnly || (source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode))
+				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode;
+				if (matchSamplerState || markGpuOnly)
 				{
 					_assetCache.TextureCache[textureIndex].Texture = source;
 
-					if (markGpuOnly)
+					if (!matchSamplerState)
 					{
-						Debug.LogWarning("Ignoring sampler");
+						Debug.LogWarning($"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapMode}, desired {desiredWrapMode}");
 					}
 				}
 				else

@@ -1257,8 +1257,8 @@ namespace UnityGLTF
 					break;
 				default:
 					Debug.LogWarning("Unsupported Texture.wrapMode: " + texture.wrapMode);
-					sampler.WrapS = WrapMode.ClampToEdge;
-					sampler.WrapT = WrapMode.ClampToEdge;
+					sampler.WrapS = WrapMode.Repeat;
+					sampler.WrapT = WrapMode.Repeat;
 					break;
 			}
 
@@ -1278,7 +1278,7 @@ namespace UnityGLTF
 					break;
 				default:
 					Debug.LogWarning("Unsupported Texture.filterMode: " + texture.filterMode);
-					sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
+					sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
 					sampler.MagFilter = MagFilterMode.Linear;
 					break;
 			}
