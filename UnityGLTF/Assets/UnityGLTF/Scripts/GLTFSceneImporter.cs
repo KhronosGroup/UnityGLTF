@@ -1627,7 +1627,14 @@ namespace UnityGLTF
 					mrMapper.BaseColorTexture = _assetCache.TextureCache[textureId.Id].Texture;
 					mrMapper.BaseColorTexCoord = pbr.BaseColorTexture.TexCoord;
 
-					//ApplyTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					var ext = GetTextureTransform(pbr.BaseColorTexture);
+					if(ext != null)
+					{
+						mrMapper.BaseColorXOffset = ext.Offset.ToUnityVector2Raw();
+						mrMapper.BaseColorXRotation = ext.Rotation;
+						mrMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+						mrMapper.BaseColorXTexCoord = ext.TexCoord;
+					}
 				}
 
 				mrMapper.MetallicFactor = pbr.MetallicFactor;
@@ -1639,7 +1646,14 @@ namespace UnityGLTF
 					mrMapper.MetallicRoughnessTexture = _assetCache.TextureCache[textureId.Id].Texture;
 					mrMapper.MetallicRoughnessTexCoord = pbr.MetallicRoughnessTexture.TexCoord;
 
-					//ApplyTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicRoughnessMap");
+					var ext = GetTextureTransform(pbr.MetallicRoughnessTexture);
+					if (ext != null)
+					{
+						mrMapper.MetallicRoughnessXOffset = ext.Offset.ToUnityVector2Raw();
+						mrMapper.MetallicRoughnessXRotation = ext.Rotation;
+						mrMapper.MetallicRoughnessXScale = ext.Scale.ToUnityVector2Raw();
+						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
+					}
 				}
 
 				mrMapper.RoughnessFactor = pbr.RoughnessFactor;
@@ -1659,7 +1673,14 @@ namespace UnityGLTF
 					sgMapper.DiffuseTexture = _assetCache.TextureCache[textureId.Id].Texture;
 					sgMapper.DiffuseTexCoord = specGloss.DiffuseTexture.TexCoord;
 
-					//ApplyTextureTransform(specGloss.DiffuseTexture, material, "_MainTex");
+					var ext = GetTextureTransform(specGloss.DiffuseTexture);
+					if (ext != null)
+					{
+						sgMapper.DiffuseXOffset = ext.Offset.ToUnityVector2Raw();
+						sgMapper.DiffuseXRotation = ext.Rotation;
+						sgMapper.DiffuseXScale = ext.Scale.ToUnityVector2Raw();
+						sgMapper.DiffuseXTexCoord = ext.TexCoord;
+					}
 				}
 
 				sgMapper.SpecularFactor = specGloss.SpecularFactor.ToUnityVector3Raw();
@@ -1670,6 +1691,15 @@ namespace UnityGLTF
 					TextureId textureId = specGloss.SpecularGlossinessTexture.Index;
 					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 					sgMapper.SpecularGlossinessTexture = _assetCache.TextureCache[textureId.Id].Texture;
+
+					var ext = GetTextureTransform(specGloss.SpecularGlossinessTexture);
+					if (ext != null)
+					{
+						sgMapper.SpecularGlossinessXOffset = ext.Offset.ToUnityVector2Raw();
+						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
+						sgMapper.SpecularGlossinessXScale = ext.Scale.ToUnityVector2Raw();
+						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
+					}
 				}
 			}
 
@@ -1680,6 +1710,15 @@ namespace UnityGLTF
 				mapper.NormalTexture = _assetCache.TextureCache[textureId.Id].Texture;
 				mapper.NormalTexCoord = def.NormalTexture.TexCoord;
 				mapper.NormalTexScale = def.NormalTexture.Scale;
+
+				var ext = GetTextureTransform(def.NormalTexture);
+				if (ext != null)
+				{
+					mapper.NormalXOffset = ext.Offset.ToUnityVector2Raw();
+					mapper.NormalXRotation = ext.Rotation;
+					mapper.NormalXScale = ext.Scale.ToUnityVector2Raw();
+					mapper.NormalXTexCoord = ext.TexCoord;
+				}
 			}
 
 			if (def.OcclusionTexture != null)
@@ -1688,6 +1727,15 @@ namespace UnityGLTF
 				TextureId textureId = def.OcclusionTexture.Index;
 				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
 				mapper.OcclusionTexture = _assetCache.TextureCache[textureId.Id].Texture;
+
+				var ext = GetTextureTransform(def.OcclusionTexture);
+				if (ext != null)
+				{
+					mapper.OcclusionXOffset = ext.Offset.ToUnityVector2Raw();
+					mapper.OcclusionXRotation = ext.Rotation;
+					mapper.OcclusionXScale = ext.Scale.ToUnityVector2Raw();
+					mapper.OcclusionXTexCoord = ext.TexCoord;
+				}
 			}
 
 			if (def.EmissiveTexture != null)
@@ -1696,6 +1744,15 @@ namespace UnityGLTF
 				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 				mapper.EmissiveTexture = _assetCache.TextureCache[textureId.Id].Texture;
 				mapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
+
+				var ext = GetTextureTransform(def.EmissiveTexture);
+				if (ext != null)
+				{
+					mapper.EmissiveXOffset = ext.Offset.ToUnityVector2Raw();
+					mapper.EmissiveXRotation = ext.Rotation;
+					mapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
+					mapper.EmissiveXTexCoord = ext.TexCoord;
+				}
 			}
 
 			mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColorRaw();
@@ -1901,7 +1958,7 @@ namespace UnityGLTF
 			};
 		}
 
-		protected virtual void ApplyTextureTransform(TextureInfo def, Material mat, string texName)
+		protected virtual ExtTextureTransformExtension GetTextureTransform(TextureInfo def)
 		{
 			IExtension extension;
 			if (_gltfRoot.ExtensionsUsed != null &&
@@ -1909,14 +1966,9 @@ namespace UnityGLTF
 				def.Extensions != null &&
 				def.Extensions.TryGetValue(ExtTextureTransformExtensionFactory.EXTENSION_NAME, out extension))
 			{
-				ExtTextureTransformExtension ext = (ExtTextureTransformExtension)extension;
-
-				Vector2 temp = ext.Offset.ToUnityVector2Raw();
-				temp = new Vector2(temp.x, -temp.y);
-				mat.SetTextureOffset(texName, temp);
-
-				mat.SetTextureScale(texName, ext.Scale.ToUnityVector2Raw());
+				return (ExtTextureTransformExtension)extension;
 			}
+			else return null;
 		}
 
 

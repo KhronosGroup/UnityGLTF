@@ -15,6 +15,13 @@ namespace GLTF.Schema
 		public static readonly Vector2 OFFSET_DEFAULT = new Vector2(0, 0);
 
 		/// <summary>
+		/// Rotate the UVs by this many radians counter-clockwise around the origin. This is equivalent
+		/// to a similar rotation of the image clockwise.
+		/// </summary>
+		public double Rotation = 0.0f;
+		public static readonly double ROTATION_DEFAULT = 0.0f;
+
+		/// <summary>
 		/// The scale factor applied to the components of the UV coordinates.
 		/// </summary>
 		public Vector2 Scale = new Vector2(1, 1);
@@ -26,16 +33,17 @@ namespace GLTF.Schema
 		public int TexCoord = 0;
 		public static readonly int TEXCOORD_DEFAULT = 0;
 
-		public ExtTextureTransformExtension(Vector2 offset, Vector2 scale, int texCoord)
+		public ExtTextureTransformExtension(Vector2 offset, double rotation, Vector2 scale, int texCoord)
 		{
 			Offset = offset;
+			Rotation = rotation;
 			Scale = scale;
 			TexCoord = texCoord;
 		}
 
 		public IExtension Clone(GLTFRoot root)
 		{
-			return new ExtTextureTransformExtension(Offset, Scale, TexCoord);
+			return new ExtTextureTransformExtension(Offset, Rotation, Scale, TexCoord);
 		}
 
 		public JProperty Serialize()
@@ -49,7 +57,15 @@ namespace GLTF.Schema
 					new JArray(Offset.X, Offset.Y)
 				));
 			}
-				
+
+			if (Rotation != ROTATION_DEFAULT)
+			{
+				ext.Add(new JProperty(
+					ExtTextureTransformExtensionFactory.ROTATION,
+					Rotation
+				));
+			}
+
 			if (Scale != SCALE_DEFAULT)
 			{
 				ext.Add(new JProperty(

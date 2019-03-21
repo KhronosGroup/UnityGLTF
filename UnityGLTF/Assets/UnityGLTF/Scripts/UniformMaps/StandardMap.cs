@@ -13,6 +13,10 @@ namespace UnityGLTF
 		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
 		private double _alphaCutoff = 0.5;
 
+		private Vector2 normalOffset = new Vector2(0, 0);
+		private Vector2 occlusionOffset = new Vector2(0, 0);
+		private Vector2 emissiveOffset = new Vector2(0, 0);
+
 		protected StandardMap(string shaderName, int MaxLOD = 1000)
 		{
 			var s = Shader.Find(shaderName);
@@ -76,6 +80,38 @@ namespace UnityGLTF
 			set { return; }
 		}
 
+		public virtual Vector2 NormalXOffset
+		{
+			get { return normalOffset; }
+			set
+			{
+				normalOffset = value;
+				var unitySpaceVec = new Vector2(normalOffset.x, 1 - NormalXScale.y - normalOffset.y);
+				_material.SetTextureOffset("_BumpMap", unitySpaceVec);
+			}
+		}
+
+		public virtual double NormalXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 NormalXScale
+		{
+			get { return _material.GetTextureScale("_BumpMap"); }
+			set {
+				_material.SetTextureScale("_BumpMap", value);
+				NormalXOffset = normalOffset;
+			}
+		}
+
+		public virtual int NormalXTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
 		public virtual double NormalTexScale
 		{
 			get { return _material.HasProperty("_BumpScale") ? _material.GetFloat("_BumpScale") : 1; }
@@ -110,6 +146,38 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int OcclusionTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 OcclusionXOffset
+		{
+			get { return occlusionOffset; }
+			set
+			{
+				occlusionOffset = value;
+				var unitySpaceVec = new Vector2(occlusionOffset.x, 1 - OcclusionXScale.y - occlusionOffset.y);
+				_material.SetTextureOffset("_OcclusionMap", unitySpaceVec);
+			}
+		}
+
+		public virtual double OcclusionXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 OcclusionXScale
+		{
+			get { return _material.GetTextureScale("_OcclusionMap"); }
+			set {
+				_material.SetTextureScale("_OcclusionMap", value);
+				OcclusionXOffset = occlusionOffset;
+			}
+		}
+
+		public virtual int OcclusionXTexCoord
 		{
 			get { return 0; }
 			set { return; }
@@ -150,6 +218,38 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int EmissiveTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 EmissiveXOffset
+		{
+			get { return emissiveOffset; }
+			set
+			{
+				emissiveOffset = value;
+				var unitySpaceVec = new Vector2(emissiveOffset.x, 1 - EmissiveXScale.y - emissiveOffset.y);
+				_material.SetTextureOffset("_EmissionMap", unitySpaceVec);
+			}
+		}
+
+		public virtual double EmissiveXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 EmissiveXScale
+		{
+			get { return _material.GetTextureScale("_EmissionMap"); }
+			set {
+				_material.SetTextureScale("_EmissionMap", value);
+				EmissiveXOffset = emissiveOffset;
+			}
+		}
+
+		public virtual int EmissiveXTexCoord
 		{
 			get { return 0; }
 			set { return; }

@@ -4,6 +4,8 @@ namespace UnityGLTF
 {
 	class MetalRough2StandardMap : StandardMap, IMetalRoughUniformMap
 	{
+		private Vector2 baseColorOffset = new Vector2(0, 0);
+
 		public MetalRough2StandardMap(int MaxLOD = 1000) : base("Standard", MaxLOD) { }
 		protected MetalRough2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
 		protected MetalRough2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
@@ -16,6 +18,37 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int BaseColorTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 BaseColorXOffset
+		{
+			get { return baseColorOffset; }
+			set {
+				baseColorOffset = value;
+				var unitySpaceVec = new Vector2(baseColorOffset.x, 1 - BaseColorXScale.y - baseColorOffset.y);
+				_material.SetTextureOffset("_MainTex", unitySpaceVec);
+			}
+		}
+
+		public virtual double BaseColorXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 BaseColorXScale
+		{
+			get { return _material.GetTextureScale("_MainTex"); }
+			set {
+				_material.SetTextureScale("_MainTex", value);
+				BaseColorXOffset = baseColorOffset;
+			}
+		}
+
+		public virtual int BaseColorXTexCoord
 		{
 			get { return 0; }
 			set { return; }
@@ -39,6 +72,30 @@ namespace UnityGLTF
 
 		// not implemented by the Standard shader
 		public virtual int MetallicRoughnessTexCoord
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 MetallicRoughnessXOffset
+		{
+			get { return new Vector2(0, 0); }
+			set { return; }
+		}
+
+		public virtual double MetallicRoughnessXRotation
+		{
+			get { return 0; }
+			set { return; }
+		}
+
+		public virtual Vector2 MetallicRoughnessXScale
+		{
+			get { return new Vector2(1, 1); }
+			set { return; }
+		}
+
+		public virtual int MetallicRoughnessXTexCoord
 		{
 			get { return 0; }
 			set { return; }
