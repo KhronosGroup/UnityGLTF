@@ -136,7 +136,7 @@ namespace UnityGLTF
 			public long StartPosition;
 		}
 
-		protected AsyncCoroutineHelper _asyncCoroutineHelper;
+		protected IAsyncCoroutineHelper _asyncCoroutineHelper;
 
 		protected GameObject _lastLoadedScene;
 		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();

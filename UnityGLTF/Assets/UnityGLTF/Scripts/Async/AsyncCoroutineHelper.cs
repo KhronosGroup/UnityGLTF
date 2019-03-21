@@ -7,6 +7,7 @@ namespace UnityGLTF
 	public interface IAsyncCoroutineHelper
 	{
 		Task RunAsTask(IEnumerator coroutine, string name);
+		Task YieldOnTimeout();
 	}
 
 	public class AsyncCoroutineHelper : MonoBehaviour, IAsyncCoroutineHelper
@@ -19,7 +20,7 @@ namespace UnityGLTF
 
 		public Task RunAsTask(IEnumerator coroutine, string name)
 		{
-			var tcs = new TaskCompletionSource<bool>();
+			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
 			lock (_actions)
 			{
 				_actions.Enqueue(
