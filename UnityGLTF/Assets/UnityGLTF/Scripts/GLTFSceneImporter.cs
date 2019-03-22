@@ -622,7 +622,7 @@ namespace UnityGLTF
 					}
 				}
 
-				await _asyncCoroutineHelper.YieldOnTimeout();
+				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
 			}
 		}
@@ -652,7 +652,7 @@ namespace UnityGLTF
 					stream.Read(buffer, 0, (int)stream.Length);
 				}
 
-				await _asyncCoroutineHelper.YieldOnTimeout();
+				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, markGpuOnly);
 			}
@@ -1518,7 +1518,7 @@ namespace UnityGLTF
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 			bool hasNormals = unityMeshData.Normals != null;
 
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			Mesh mesh = new Mesh
 			{
 
@@ -1528,25 +1528,25 @@ namespace UnityGLTF
 			};
 
 			mesh.vertices = unityMeshData.Vertices;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.normals = unityMeshData.Normals;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv = unityMeshData.Uv1;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv2 = unityMeshData.Uv2;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv3 = unityMeshData.Uv3;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv4 = unityMeshData.Uv4;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.colors = unityMeshData.Colors;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.triangles = unityMeshData.Triangles;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.tangents = unityMeshData.Tangents;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.boneWeights = unityMeshData.BoneWeights;
-			await _asyncCoroutineHelper.YieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 
 			if (!hasNormals)
 			{
