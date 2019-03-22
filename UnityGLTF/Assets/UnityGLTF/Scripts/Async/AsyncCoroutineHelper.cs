@@ -4,14 +4,19 @@ using System.Threading.Tasks;
 using UnityEngine;
 namespace UnityGLTF
 {
-    public interface IAsyncCoroutineHelper
-    {
-	   Task RunAsTask(IEnumerator coroutine, string name);
-    }
+	public interface IAsyncCoroutineHelper
+	{
+		Task RunAsTask(IEnumerator coroutine, string name);
+		Task YieldOnTimeout();
+	}
 
 	public class AsyncCoroutineHelper : MonoBehaviour, IAsyncCoroutineHelper
-    {
+	{
+		public float BudgetPerFrameInSeconds = 0.01f;
+
 		private Queue<CoroutineInfo> _actions = new Queue<CoroutineInfo>();
+		private WaitForEndOfFrame _waitForEndOfFrame = new WaitForEndOfFrame();
+		private float _timeout;
 
 		public Task RunAsTask(IEnumerator coroutine, string name)
 		{
@@ -31,15 +36,24 @@ namespace UnityGLTF
 			return tcs.Task;
 		}
 
-		private IEnumerator CallMethodOnMainThread(CoroutineInfo coroutineInfo)
+		public async Task YieldOnTimeout()
 		{
-			yield return coroutineInfo.Coroutine;
-			coroutineInfo.Tcs.SetResult(true);
+			if (Time.realtimeSinceStartup > _timeout)
+			{
+				await RunAsTask(EmptyYieldEnum(), nameof(EmptyYieldEnum));
+			}
 		}
 
-	   private void Update()
+		private void Start()
 		{
-			CoroutineInfo? coroutineInfo = null;
+			_timeout = Time.realtimeSinceStartup + BudgetPerFrameInSeconds;
+		}
+
+		private void Update()
+		{
+			StartCoroutine(ResetFrameTimeout());
+
+			CoroutineInfo ? coroutineInfo = null;
 
 			lock (_actions)
 			{
@@ -53,6 +67,23 @@ namespace UnityGLTF
 			{
 				StartCoroutine(CallMethodOnMainThread(coroutineInfo.Value));
 			}
+		}
+
+		private IEnumerator CallMethodOnMainThread(CoroutineInfo coroutineInfo)
+		{
+			yield return coroutineInfo.Coroutine;
+			coroutineInfo.Tcs.SetResult(true);
+		}
+
+		private IEnumerator EmptyYieldEnum()
+		{
+			yield break;
+		}
+
+		private IEnumerator ResetFrameTimeout()
+		{
+			yield return _waitForEndOfFrame;
+			_timeout = Time.realtimeSinceStartup + BudgetPerFrameInSeconds;
 		}
 
 		private struct CoroutineInfo

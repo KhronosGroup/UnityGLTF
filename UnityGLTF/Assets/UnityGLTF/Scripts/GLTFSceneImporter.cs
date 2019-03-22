@@ -109,9 +109,6 @@ namespace UnityGLTF
 		/// </summary>
 		public string CustomShaderName { get; set; }
 
-
-		public float BudgetPerFrameInMilliseconds = 10f;
-
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
 		/// </summary>
@@ -139,8 +136,7 @@ namespace UnityGLTF
 			public long StartPosition;
 		}
 
-		protected float _timeAtLastYield = 0f;
-		protected AsyncCoroutineHelper _asyncCoroutineHelper;
+		protected IAsyncCoroutineHelper _asyncCoroutineHelper;
 
 		protected GameObject _lastLoadedScene;
 		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();
@@ -169,7 +165,10 @@ namespace UnityGLTF
 		{
 			_gltfRoot = rootNode;
 			_loader = externalDataLoader;
-			if (gltfStream != null) _gltfStream = new GLBStream {Stream = gltfStream, StartPosition = gltfStream.Position};
+			if (gltfStream != null)
+			{
+				_gltfStream = new GLBStream {Stream = gltfStream, StartPosition = gltfStream.Position};
+			}
 		}
 
 		private GLTFSceneImporter(ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
@@ -212,7 +211,6 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
-				_timeAtLastYield = Time.realtimeSinceStartup;
 				if (_gltfRoot == null)
 				{
 					await LoadJson(_gltfFileName);
@@ -275,7 +273,6 @@ namespace UnityGLTF
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
-				_timeAtLastYield = Time.realtimeSinceStartup;
 				await _LoadNode(nodeIndex);
 				CreatedObject = _assetCache.NodeCache[nodeIndex];
 				InitializeGltfTopLevelObject();
@@ -323,7 +320,6 @@ namespace UnityGLTF
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
-				_timeAtLastYield = Time.realtimeSinceStartup;
 				if (_assetCache.MaterialCache[materialIndex] == null)
 				{
 					var def = _gltfRoot.Materials[materialIndex];
@@ -452,11 +448,6 @@ namespace UnityGLTF
 		protected IEnumerator WaitUntilEnum(WaitUntil waitUntil)
 		{
 			yield return waitUntil;
-		}
-
-		protected IEnumerator EmptyYieldEnum()
-		{
-			yield break;
 		}
 
 		private async Task LoadJson(string jsonFilePath)
@@ -631,7 +622,7 @@ namespace UnityGLTF
 					}
 				}
 
-				await TryYieldOnTimeout();
+				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
 			}
 		}
@@ -661,7 +652,7 @@ namespace UnityGLTF
 					stream.Read(buffer, 0, (int)stream.Length);
 				}
 
-				await TryYieldOnTimeout();
+				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, markGpuOnly);
 			}
@@ -1393,17 +1384,6 @@ namespace UnityGLTF
 			}
 		}
 
-		protected async Task TryYieldOnTimeout()
-		{
-			if ((Time.realtimeSinceStartup - _timeAtLastYield) > BudgetPerFrameInMilliseconds * 1000f)
-			{
-				_timeAtLastYield = Time.realtimeSinceStartup;
-
-				// empty yield
-				await _asyncCoroutineHelper.RunAsTask(EmptyYieldEnum(), nameof(EmptyYieldEnum));
-			}
-		}
-
 		protected UnityMeshData ConvertAccessorsToUnityTypes(MeshConstructionData meshConstructionData)
 		{
 			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
@@ -1538,7 +1518,7 @@ namespace UnityGLTF
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 			bool hasNormals = unityMeshData.Normals != null;
 
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			Mesh mesh = new Mesh
 			{
 
@@ -1548,25 +1528,25 @@ namespace UnityGLTF
 			};
 
 			mesh.vertices = unityMeshData.Vertices;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.normals = unityMeshData.Normals;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv = unityMeshData.Uv1;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv2 = unityMeshData.Uv2;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv3 = unityMeshData.Uv3;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.uv4 = unityMeshData.Uv4;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.colors = unityMeshData.Colors;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.triangles = unityMeshData.Triangles;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.tangents = unityMeshData.Tangents;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.boneWeights = unityMeshData.BoneWeights;
-			await TryYieldOnTimeout();
+			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 
 			if (!hasNormals)
 			{
@@ -1783,15 +1763,15 @@ namespace UnityGLTF
 			return texture.Source.Id;
 		}
 
-        /// <summary>
-        /// Creates a texture from a glTF texture
-        /// </summary>
-        /// <param name="texture">The texture to load</param>
-        /// <param name="textureIndex">The index in the texture cache</param>
-        /// <param name="markGpuOnly">Whether the texture is GPU only, instead of keeping a CPU copy</param>
-        /// <param name="isLinear">Whether the texture is linear rather than sRGB</param>
-        /// <returns>The loading task</returns>
-        public virtual async Task LoadTextureAsync(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear)
+		/// <summary>
+		/// Creates a texture from a glTF texture
+		/// </summary>
+		/// <param name="texture">The texture to load</param>
+		/// <param name="textureIndex">The index in the texture cache</param>
+		/// <param name="markGpuOnly">Whether the texture is GPU only, instead of keeping a CPU copy</param>
+		/// <param name="isLinear">Whether the texture is linear rather than sRGB</param>
+		/// <returns>The loading task</returns>
+		public virtual async Task LoadTextureAsync(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear)
 		{
 			try
 			{
@@ -1815,7 +1795,6 @@ namespace UnityGLTF
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
-				_timeAtLastYield = Time.realtimeSinceStartup;
 				await ConstructImageBuffer(texture, textureIndex);
 				await ConstructTexture(texture, textureIndex, markGpuOnly, isLinear);
 			}
