@@ -9,33 +9,41 @@ namespace Sketchfab
 {
 	class SketchfabProfile
 	{
+		public string username;
 		public string displayName;
 		public string accountLabel;
 		public int maxUploadSize;
 		public Texture2D avatar = SketchfabPlugin.DEFAULT_AVATAR;
 		public bool hasAvatar = false;
 		public int _userCanPrivate = -1; // Can protect model = 1  // Cannot = 0
+		public Texture2D planIcon;
 
-		public SketchfabProfile(string usr, string planLb)
+		public SketchfabProfile(string usrName, string usr, string planLb)
 		{
+			username = usrName;
 			displayName = usr;
+
 			switch (planLb)
 			{
 				case "pro":
 					maxUploadSize = 200 * 1024 * 1024;
 					accountLabel = "PRO";
+					planIcon = SketchfabUI.getPlanIcon(planLb);
 					break;
 				case "prem":
 					maxUploadSize = 500 * 1024 * 1024;
 					accountLabel = "PREMIUM";
+					planIcon = SketchfabUI.getPlanIcon(planLb);
 					break;
 				case "biz":
 					maxUploadSize = 500 * 1024 * 1024;
 					accountLabel = "BUSINESS";
+					planIcon = SketchfabUI.getPlanIcon(planLb);
 					break;
 				case "ent":
 					maxUploadSize = 500 * 1024 * 1024;
 					accountLabel = "ENTERPRISE";
+					planIcon = SketchfabUI.getPlanIcon(planLb);
 					break;
 				default:
 					maxUploadSize = 50 * 1024 * 1024;
@@ -125,8 +133,13 @@ namespace Sketchfab
 				GUILayout.BeginHorizontal();
 				GUILayout.Label(_current.avatar);
 				GUILayout.BeginVertical();
-				GUILayout.Label("User: " + _current.displayName);
-				GUILayout.Label("Plan: " + _current.accountLabel);
+
+				GUILayout.BeginHorizontal();
+				GUILayout.Label("" + _current.displayName);
+				if (_current.planIcon)
+					GUILayout.Label(_current.planIcon, GUILayout.Height(18));
+				GUILayout.EndHorizontal();
+
 				if (GUILayout.Button("Logout"))
 				{
 					logout();
@@ -296,7 +309,7 @@ namespace Sketchfab
 		private void handleUserData(string response)
 		{
 			JSONNode userData = Utils.JSONParse(response);
-			_current = new SketchfabProfile(userData["displayName"], userData["account"]);
+			_current = new SketchfabProfile(userData["username"], userData["displayName"], userData["account"]);
 			requestAvatar(getAvatarUrl(userData));
 			_isUserLogged = true;
 			_hasCheckedSession = true;

@@ -166,7 +166,7 @@ namespace Sketchfab
 			{
 				GUILayout.BeginVertical();
 				GUILayout.FlexibleSpace();
-				if(GUILayout.Button(bannerTexture, _ui.SketchfabLabel))
+				if(GUILayout.Button(bannerTexture, _ui.getSketchfabLabel()))
 				{
 					Application.OpenURL(Urls.storeUrl);
 				}
@@ -186,16 +186,16 @@ namespace Sketchfab
 		public static void displayFooter()
 		{
 			GUILayout.BeginHorizontal();
-			if (GUILayout.Button("Sketchfab plugin for Unity " + VERSION + " " + versionCaption, _ui.SketchfabLabel, GUILayout.Height(20)))
+			if (GUILayout.Button("Sketchfab plugin for Unity " + VERSION + " " + versionCaption, _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.latestRelease);
 			}
 			GUILayout.FlexibleSpace();
-			if(GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Help </color>", _ui.SketchfabLabel, GUILayout.Height(20)))
+			if(GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Help </color>", _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.latestRelease);
 			}
-			if (GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Report an issue </color>", _ui.SketchfabLabel, GUILayout.Height(20)))
+			if (GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Report an issue </color>", _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.reportAnIssue);
 			}

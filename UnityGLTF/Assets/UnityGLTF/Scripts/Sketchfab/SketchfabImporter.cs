@@ -8,6 +8,7 @@ using System.IO;
 using UnityEngine;
 using UnityGLTF;
 using Ionic.Zip;
+using UnityEditor;
 
 /// <summary>
 /// Class to handle imports from Sketchfab

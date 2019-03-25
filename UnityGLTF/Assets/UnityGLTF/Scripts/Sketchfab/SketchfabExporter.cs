@@ -21,6 +21,8 @@ namespace Sketchfab
 		static void Init()
 		{
 			SketchfabExporter window = (SketchfabExporter)EditorWindow.GetWindow(typeof(SketchfabExporter));
+			window.titleContent.image = Resources.Load<Texture>("icon");
+			window.titleContent.image.filterMode = FilterMode.Bilinear;
 			window.titleContent.text = "Exporter";
 			window.Show();
 		}
@@ -219,18 +221,27 @@ namespace Sketchfab
 
 		private void showPrivate()
 		{
+
 			if (!_logger.canPrivate())
 			{
 				if (_logger.isUserBasic())
 				{
-					if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("Upgrade to a paid account to set your model to private") + ")", _ui.SkfbClickableLabel, GUILayout.Height(20)))
+					GUILayout.BeginHorizontal();
+					GUIContent content = new GUIContent("features", SketchfabUI.getPlanIcon("pro"));
+					GUILayout.Label(content, EditorStyles.boldLabel, GUILayout.Height(18));
+					Color old = GUI.color;
+					GUI.color = SketchfabUI.SKFB_BLUE;
+					if (GUILayout.Button("<color=" + Color.white + ">UPGRADE</color>", _ui.getSketchfabButton(), GUILayout.Height(18)))
 					{
 						Application.OpenURL(SketchfabPlugin.Urls.plans);
 					}
+					GUI.color = old;
+					GUILayout.FlexibleSpace();
+					GUILayout.EndHorizontal();
 				}
 				else
 				{
-					if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("You cannot set any other model to private (limit reached)") + ")", _ui.SkfbClickableLabel, GUILayout.Height(20)))
+					if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("You cannot set any other model to private (limit reached)") + ")", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
 					{
 						Application.OpenURL(SketchfabPlugin.Urls.plans);
 					}
@@ -246,7 +257,7 @@ namespace Sketchfab
 			GUILayout.BeginHorizontal();
 			param_private = EditorGUILayout.Toggle("Private model", param_private);
 
-			if (GUILayout.Button("( " + SketchfabUI.ClickableTextColor("more info") + ")", _ui.SkfbClickableLabel, GUILayout.Height(20)))
+			if (GUILayout.Button("( " + SketchfabUI.ClickableTextColor("more info") + ")", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(SketchfabPlugin.Urls.privateInfo);
 			}
@@ -275,7 +286,7 @@ namespace Sketchfab
 
 			GUILayout.BeginHorizontal();
 			param_autopublish = EditorGUILayout.Toggle("Publish immediately ", param_autopublish);
-			if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("more info") + ")", _ui.SkfbClickableLabel, GUILayout.Height(20)))
+			if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("more info") + ")", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(SketchfabPlugin.Urls.latestRelease);
 			}

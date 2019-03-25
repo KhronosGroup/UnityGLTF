@@ -18,7 +18,9 @@ namespace Sketchfab
 		static void Init()
 		{
 			SketchfabBrowser window = (SketchfabBrowser)EditorWindow.GetWindow(typeof(SketchfabBrowser));
-			window.titleContent.text = "AssetBrowser";
+			window.titleContent.image = Resources.Load<Texture>("icon");
+			window.titleContent.image.filterMode = FilterMode.Bilinear;
+			window.titleContent.text = "Browse";
 			window.Show();
 		}
 
@@ -204,7 +206,7 @@ namespace Sketchfab
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Search:", GUILayout.Width(80));
 			GUI.SetNextControlName("SearchTextField");
-			_query = GUILayout.TextField(_query);
+			_query = EditorGUILayout.TextField(_query, GUILayout.Width(350));
 
 			if(Event.current.keyCode == KeyCode.Return && GUI.GetNameOfFocusedControl() == "SearchTextField")
 			{
@@ -316,7 +318,7 @@ namespace Sketchfab
 					if (count % buttonLineLength == buttonLineLength - 1)
 					{
 						GUILayout.EndHorizontal();
-						GUILayout.FlexibleSpace();
+						//GUILayout.FlexibleSpace();
 						needClose = false;
 					}
 
@@ -356,7 +358,7 @@ namespace Sketchfab
 		void displayResult(SketchfabModel model)
 		{
 			GUILayout.BeginVertical();
-			if (GUILayout.Button(new GUIContent(model._thumbnail as Texture2D), GUILayout.MaxHeight(_thumbnailSize), GUILayout.MaxWidth(_thumbnailSize)))
+			if (GUILayout.Button(new GUIContent(model._thumbnail as Texture2D), GUI.skin.label, GUILayout.MaxHeight(_thumbnailSize), GUILayout.MaxWidth(_thumbnailSize)))
 			{
 				_currentUid = model.uid;
 				_browserManager.fetchModelInfo(_currentUid);
@@ -364,8 +366,8 @@ namespace Sketchfab
 					_skfbWin.Focus();
 			}
 			GUILayout.BeginVertical(GUILayout.Width(_thumbnailSize), GUILayout.Height(50));
-			GUILayout.Label(model.name, _ui.sketchfabMiniModelname);
-			GUILayout.Label("by " + model.author, _ui.sketchfabMiniAuthorname);
+			GUILayout.Label(model.name, _ui.getSketchfabMiniModelName());
+			GUILayout.Label("by " + model.author, _ui.getSketchfabMiniAuthorName());
 			GUILayout.EndVertical();
 			GUILayout.EndVertical();
 		}

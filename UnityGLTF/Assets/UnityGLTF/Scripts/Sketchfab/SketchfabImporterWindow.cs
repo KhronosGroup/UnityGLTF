@@ -18,6 +18,8 @@ namespace Sketchfab
 		{
 			SketchfabImporterWindow window = (SketchfabImporterWindow)EditorWindow.GetWindow(typeof(SketchfabImporterWindow));
 			window.titleContent.text = "Importer";
+			window.titleContent.image = Resources.Load<Texture>("icon");
+			window.titleContent.image.filterMode = FilterMode.Bilinear;
 			window.Show(true);
 		}
 
@@ -163,7 +165,7 @@ namespace Sketchfab
 
 		private void displayInputInfos()
 		{
-			GUILayout.Label("Import a glTF (*.gltf, *.glb, *.zip)", _ui.sketchfabModelName);
+			GUILayout.Label("Import a glTF (*.gltf, *.glb, *.zip)", _ui.getSketchfabModelName());
 
 			_ui.displaySubContent("Source file:");
 			GUILayout.BeginHorizontal();
@@ -238,7 +240,7 @@ namespace Sketchfab
 			GUI.color = SketchfabUI.SKFB_BLUE;
 			GUI.contentColor = Color.white;
 			GUI.enabled = GLTFUtils.isFolderInProjectDirectory(_importDirectory) && File.Exists(_importFilePath);
-			if (GUILayout.Button("IMPORT", _ui.SketchfabButton))
+			if (GUILayout.Button("IMPORT", _ui.getSketchfabButton()))
 			{
 				processImportButton();
 			}

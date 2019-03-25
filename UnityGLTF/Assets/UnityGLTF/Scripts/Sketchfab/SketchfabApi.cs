@@ -114,7 +114,7 @@ namespace Sketchfab
 						}
 						else
 						{
-							_requests[i].getError();
+							Debug.Log(_requests[i].getError());
 						}
 
 						_requests[i].dispose();
