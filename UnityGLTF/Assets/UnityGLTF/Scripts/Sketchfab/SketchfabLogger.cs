@@ -7,7 +7,7 @@ using SimpleJSON;
 
 namespace Sketchfab
 {
-	class SketchfabProfile
+	public class SketchfabProfile
 	{
 		public string username;
 		public string displayName;
@@ -97,6 +97,16 @@ namespace Sketchfab
 		public bool isUserLogged()
 		{
 			return _isUserLogged;
+		}
+
+		public bool canAccessOwnModels()
+		{
+			return !isUserBasic();
+		}
+
+		public SketchfabProfile getCurrentSession()
+		{
+			return _current;
 		}
 
 		public void showLoginUi()

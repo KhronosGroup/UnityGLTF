@@ -100,7 +100,7 @@ namespace Sketchfab
 		Dictionary<string, string> _categories;
 
 		// Search
-		private const string INITIAL_SEARCH = "?type=models&downloadable=true&staffpicked=true&sort_by=-publishedAt";
+		private const string INITIAL_SEARCH = "&staffpicked=true&sort_by=-publishedAt";
 		private const string START_QUERY = "?type=models&downloadable=true&";
 		string _lastQuery;
 		string _prevCursor = "";
@@ -122,7 +122,7 @@ namespace Sketchfab
 		UnityGLTF.GLTFEditorImporter.ProgressCallback _importProgress;
 		UnityGLTF.GLTFEditorImporter.RefreshWindow _importFinish;
 
-		public SketchfabBrowserManager(UpdateCallback refresh = null, bool initialSearch = false)
+		public SketchfabBrowserManager(UpdateCallback refresh = null, bool initialSearch = true)
 		{
 			_defaultThumbnail = Resources.Load<Texture2D>("defaultModel");
 			checkValidity();
@@ -239,7 +239,7 @@ namespace Sketchfab
 		//Search
 		public void startInitialSearch()
 		{
-			_lastQuery = INITIAL_SEARCH;
+			_lastQuery = SketchfabPlugin.Urls.searchEndpoint + INITIAL_SEARCH;
 			startSearch();
 		}
 
@@ -249,13 +249,13 @@ namespace Sketchfab
 			startSearch();
 		}
 
-		public void search(string query, bool staffpicked, bool animated, string categoryName, SORT_BY sortby, string maxFaceCount = "", string minFaceCount = "")
+		public void search(string query, bool staffpicked, bool animated, string categoryName, SORT_BY sortby, string maxFaceCount = "", string minFaceCount = "", bool myModels=false)
 		{
 			reset();
-			string searchQuery = START_QUERY;
+			string searchQuery = (myModels ? SketchfabPlugin.Urls.ownModelsSearchEndpoint : SketchfabPlugin.Urls.searchEndpoint);
 			if (query.Length > 0)
 			{
-				searchQuery = searchQuery + "q=" + query;
+				searchQuery = searchQuery + "&q=" + query;
 			}
 
 			if (minFaceCount != "")
@@ -294,6 +294,7 @@ namespace Sketchfab
 				searchQuery = searchQuery + "&categories=" + _categories[categoryName];
 
 			_lastQuery = searchQuery;
+
 			startSearch();
 			_isFetching = true;
 		}
@@ -301,7 +302,7 @@ namespace Sketchfab
 		void startSearch(string cursor = "")
 		{
 			_hasFetchedPreviews = false;
-			SketchfabRequest request = new SketchfabRequest(SketchfabPlugin.Urls.searchEndpoint + _lastQuery + cursor);
+			SketchfabRequest request = new SketchfabRequest(_lastQuery + cursor, SketchfabPlugin.getLogger().getHeader());
 			request.setCallback(handleSearch);
 			_api.registerRequest(request);
 		}

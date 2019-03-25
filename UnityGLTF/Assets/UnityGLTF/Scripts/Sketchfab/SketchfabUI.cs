@@ -267,7 +267,7 @@ namespace Sketchfab
 			{
 				_sketchfabBigLabel = new GUIStyle(EditorStyles.miniLabel);
 				_sketchfabBigLabel.richText = true;
-				_sketchfabBigLabel.fontSize = 20;
+				_sketchfabBigLabel.fontSize = 14;
 				_sketchfabBigLabel.alignment = TextAnchor.MiddleCenter;
 			}
 
