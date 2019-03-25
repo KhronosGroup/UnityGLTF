@@ -6,7 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using SimpleJSON;
+using System.Collections.Specialized;
 
 namespace Sketchfab
 {
@@ -298,8 +298,8 @@ namespace Sketchfab
 			int count = 0;
 			int buttonLineLength = Mathf.Max(1, Mathf.Min((int)this.position.width / _thumbnailSize, 6));
 			bool needClose = false;
-			List<SketchfabModel> models = _browserManager.getResults();
-			if (models.Count > 0) // Replace by "is ready"
+			OrderedDictionary models = _browserManager.getResults();
+
 			{
 				foreach (SketchfabModel model in models)
 				{
