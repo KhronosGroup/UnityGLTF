@@ -66,7 +66,7 @@ namespace Sketchfab
 			foreach (FileInfo fileInfo in info.GetFiles())
 			{
 				_unzippedFiles.Add(fileInfo.FullName);
-				if (Path.GetExtension(fileInfo.FullName) == ".gltf")
+				if (isSupportedFile(fileInfo.FullName))
 				{
 					gltfFile = fileInfo.FullName;
 				}
@@ -147,18 +147,29 @@ namespace Sketchfab
 			_importer.Load();
 		}
 
+		private bool isSupportedFile(string filepath)
+		{
+			string ext = Path.GetExtension(filepath);
+			return (ext == ".gltf" || ext == ".glb");			
+		}
+
 		public void loadFromFile(string filepath)
 		{
 			_gltfInput = filepath;
+			if (Path.GetExtension(filepath) == ".zip")
+			{
+				_gltfInput = unzipGltfArchive(filepath);
+			}
+
+			if(!isSupportedFile(_gltfInput))
+			{
+				EditorUtility.DisplayDialog("Import Failed", "No glTF data found", "OK");
+				return;
+			}
 
 			if (!Directory.Exists(_importDirectory))
 			{
 				Directory.CreateDirectory(_importDirectory);
-			}
-
-			if (Path.GetExtension(filepath) == ".zip")
-			{
-				_gltfInput = unzipGltfArchive(filepath);
 			}
 
 			_importer.setupForPath(_gltfInput, _importDirectory, _currentSampleName, _addToCurrentScene);
