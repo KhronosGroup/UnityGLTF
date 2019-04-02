@@ -16,7 +16,6 @@ deploy:
   - "./current-package/UnityGLTF.unitypackage"
   - "./current-package/org.khronos.UnityGLTF.zip"
   skip_cleanup: true
-  draft: true
   on:
     repo: KhronosGroup/UnityGLTF
     tags: true
