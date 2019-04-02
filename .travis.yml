@@ -5,13 +5,19 @@ install:
 - sudo python2 ./scripts/install-unity.py --package Unity 2017.1.1f1
 before_script:
 - sudo chmod -R a+rwx /Applications/Unity
+- sudo apt-get install -y zip
+- sudo chmod +x ./scripts/export-upm-package.sh
 script:
 - msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
+- "./scripts/export-upm-package.sh"
 - "./scripts/export-unity-package.sh"
 deploy:
   provider: releases
-  file: "./current-package/UnityGLTF.unitypackage"
+  file: 
+  - "./current-package/UnityGLTF.unitypackage"
+  - "./current-package/org.khronos.UnityGLTF.zip"
   skip_cleanup: true
+  draft: true
   on:
     repo: KhronosGroup/UnityGLTF
     tags: true
