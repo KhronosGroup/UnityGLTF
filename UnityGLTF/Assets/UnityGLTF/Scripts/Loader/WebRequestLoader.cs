@@ -52,9 +52,9 @@ namespace UnityGLTF.Loader
 			catch (TaskCanceledException)
 			{
 #if WINDOWS_UWP
-				throw new Exception($"Connection timeout: {baseAddress}");
+				throw new Exception("Connection timeout");
 #else
-				throw new HttpRequestException($"Connection timeout: {baseAddress}");
+				throw new HttpRequestException("Connection timeout");
 #endif
 			}
 

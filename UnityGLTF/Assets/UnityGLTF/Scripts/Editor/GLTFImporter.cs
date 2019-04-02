@@ -282,7 +282,7 @@ namespace UnityGLTF
                                         }
                                         else
                                         {
-                                            Debug.LogWarning(string.Format("GLTFImporter: Unable to import texture at path: {0}", texPath));
+                                            Debug.LogWarning("GLTFImporter: Unable to import texture from path reference");
                                         }
                                     }
                                 };
