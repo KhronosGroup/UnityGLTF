@@ -150,3 +150,6 @@ _pkginfo.txt
 !*.[Cc]ache/
 
 *.orig
+
+# Current_Package folder
+current-package/
