@@ -64,7 +64,7 @@ namespace UnityGLTF.Loader
 			// Ideally the parsers would wait for data to be available, but they don't.
 			LoadedStream = new MemoryStream((int?)response.Content.Headers.ContentLength ?? 5000);
 #if WINDOWS_UWP
-			await response.Content.WriteToStreamAsync((IOutputStream)LoadedStream);
+			await response.Content.WriteToStreamAsync(LoadedStream.AsOutputStream());
 #else
 			await response.Content.CopyToAsync(LoadedStream);
 #endif
