@@ -643,14 +643,11 @@ namespace UnityGLTF
 				byte[] buffer = new byte[stream.Length];
 
 				// todo: potential optimization is to split stream read into multiple frames (or put it on a thread?)
-				using (stream)
+				if (stream.Length > int.MaxValue)
 				{
-					if (stream.Length > int.MaxValue)
-					{
-						throw new Exception("Stream is larger than can be copied into byte array");
-					}
-					stream.Read(buffer, 0, (int)stream.Length);
+					throw new Exception("Stream is larger than can be copied into byte array");
 				}
+				stream.Read(buffer, 0, (int)stream.Length);
 
 				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
