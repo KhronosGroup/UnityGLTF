@@ -207,7 +207,7 @@ namespace GLTF.Schema
 				writer.WriteValue(Skin.Id);
 			}
 
-			if (Matrix != Matrix4x4.Identity)
+			if (!Matrix.Equals(Matrix4x4.Identity))
 			{
 				writer.WritePropertyName("matrix");
 				writer.WriteStartArray();
