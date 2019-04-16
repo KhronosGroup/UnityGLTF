@@ -1,13 +1,12 @@
 {
-    "name": "UnityGLTFTests",
+    "name": "UnityGLTFEditor",
     "references": [
-        "UnityGLTFScripts",
-        "UnityGLTFEditor"
+        "UnityGLTFScripts"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
     ],
-    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
