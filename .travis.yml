@@ -8,8 +8,9 @@ before_script:
 - sudo chmod +x ./scripts/export-upm-package.sh
 script:
 - msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
-- "./scripts/export-upm-package.sh"
 - "./scripts/export-unity-package.sh"
+- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization
+- "./scripts/export-upm-package.sh"
 deploy:
   provider: releases
   file: 
