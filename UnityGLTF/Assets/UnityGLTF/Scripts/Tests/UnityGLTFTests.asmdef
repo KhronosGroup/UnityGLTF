@@ -1,7 +1,8 @@
 {
     "name": "UnityGLTFTests",
     "references": [
-        "UnityGLTFScripts"
+        "UnityGLTFScripts",
+        "UnityGLTFEditor"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
