@@ -1,9 +1,10 @@
 ﻿using GLTF.Schema;
+using System;
 using UnityEngine;
 
 namespace UnityGLTF.Cache
 {
-	public class MaterialCacheData
+	public class MaterialCacheData : IDisposable
 	{
 		public Material UnityMaterial { get; set; }
 		public Material UnityMaterialWithVertexColor { get; set; }
@@ -17,16 +18,18 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Unloads the materials in this cache.
 		/// </summary>
-		public void Unload()
+		public void Dispose()
 		{
 			if (UnityMaterial != null)
 			{
-				Object.Destroy(UnityMaterial);
+				UnityEngine.Object.Destroy(UnityMaterial);
+				UnityMaterial = null;
 			}
 
 			if (UnityMaterialWithVertexColor != null)
 			{
-				Object.Destroy(UnityMaterialWithVertexColor);
+				UnityEngine.Object.Destroy(UnityMaterialWithVertexColor);
+				UnityMaterialWithVertexColor = null;
 			}
 		}
 	}
