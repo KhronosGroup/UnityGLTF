@@ -8,7 +8,7 @@ upm_name=org.khronos.UnityGLTF
 upm_src_folder_path=$(pwd)/UnityGLTF/Assets/UnityGLTF
 upm_manifest_path=$(pwd)/scripts/package.json
 upm_staging_path=$(pwd)/current-package/$upm_name
-upm_staging_UWP_plugins_path=$upm_staging_path/Plugins/uap10.0.10586
+upm_staging_UWP_plugins_path=$upm_staging_path/UnityGLTF/Plugins/uap10.0.10586
 upm_zip_export_path=$(pwd)/current-package/$upm_name.zip
 upm_targz_export_path=$(pwd)/current-package/$upm_name.tar.gz
 
@@ -44,7 +44,7 @@ cd $upm_staging_path
 echo "Cleaning out UWP plugin DLLs that are not needed for Unity2018.3+"
 echo "Only keeping the following files:"
 printf '%s\n' "${upm_UWP_Plugins[@]}"
-find $upm_staging_UWP_plugins_path -maxdepth 1 -type f | grep -vE "$(IFS=\| && echo "${upm_UWP_Plugins[*]}")" | xargs -r rm
+find $upm_staging_UWP_plugins_path -maxdepth 1 -type f | grep -vE "$(IFS=\| && echo "${upm_UWP_Plugins[*]}")" | xargs rm
 
 echo "Creating .zip of UPM package"
 sudo zip -q -r $upm_zip_export_path ./
