@@ -1283,6 +1283,8 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			if (_assetCache.MeshCache[meshId] == null)
 			{
 				_assetCache.MeshCache[meshId] = new MeshCacheData[mesh.Primitives.Count];
@@ -1290,12 +1292,11 @@ namespace UnityGLTF
 
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
-				cancellationToken.ThrowIfCancellationRequested();
-
 				var primitive = mesh.Primitives[i];
 				int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
 
 				await ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
+				cancellationToken.ThrowIfCancellationRequested();
 
 				var primitiveObj = new GameObject("Primitive");
 
@@ -1316,6 +1317,7 @@ namespace UnityGLTF
 					if (HasBones(skin))
 					{
 						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+						cancellationToken.ThrowIfCancellationRequested();
 					}
 
 					skinnedMeshRenderer.sharedMesh = curMesh;
