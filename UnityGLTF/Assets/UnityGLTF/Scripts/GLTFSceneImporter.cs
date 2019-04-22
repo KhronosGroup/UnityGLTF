@@ -630,7 +630,7 @@ namespace UnityGLTF
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
 		{
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, isLinear);
-			texture.name = nameof(GLTFSceneImporter);
+			texture.name = nameof(GLTFSceneImporter) + (image.Name != null ? ("." + image.Name) : "");
 
 			if (stream is MemoryStream)
 			{
@@ -1913,7 +1913,7 @@ namespace UnityGLTF
 		protected virtual void ConstructImageFromGLB(GLTFImage image, int imageCacheIndex)
 		{
 			var texture = new Texture2D(0, 0);
-			texture.name = nameof(GLTFSceneImporter);
+			texture.name = nameof(GLTFSceneImporter) + (image.Name != null ? ("." + image.Name) : "");
 			var bufferView = image.BufferView.Value;
 			var data = new byte[bufferView.ByteLength];
 
