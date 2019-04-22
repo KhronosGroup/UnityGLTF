@@ -112,7 +112,7 @@ namespace UnityGLTF.Cache
 				MaterialCache[i] = null;
 			}
 
-			// Destroy the cached textures
+			// Destroy the cached images
 			for (int i = 0; i < ImageCache.Length; i++)
 			{
 				if (ImageCache[i] != null)
