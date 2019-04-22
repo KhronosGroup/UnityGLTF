@@ -25,17 +25,30 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Meshes used by this GLTF node.
 		/// </summary>
-		public MeshCacheData[][] MeshCache { get; set; }
+		public MeshCacheData[][] MeshCache { get; private set; }
 
 		/// <summary>
 		/// Materials used by this GLTF node.
 		/// </summary>
-		public MaterialCacheData[] MaterialCache { get; set; }
+		public MaterialCacheData[] MaterialCache { get; private set; }
 
 		/// <summary>
 		/// Textures used by this GLTF node.
 		/// </summary>
-		public TextureCacheData[] TextureCache { get; set; }
+		public TextureCacheData[] TextureCache { get; private set; }
+
+		/// <summary>
+		/// Textures from the AssetCache that might need to be cleaned up
+		/// </summary>
+		public Texture2D[] ImageCache { get; private set; }
+
+		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[][] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache)
+		{
+			MaterialCache = materialCache;
+			MeshCache = meshCache;
+			TextureCache = textureCache;
+			ImageCache = imageCache;
+		}
 
 		public void IncreaseRefCount()
 		{
@@ -80,28 +93,32 @@ namespace UnityGLTF.Cache
 			{
 				for (int j = 0; j < MeshCache[i].Length; j++)
 				{
-					if (MeshCache[i][j] != null)
-					{
-						MeshCache[i][j].Unload();
-					}
+					MeshCache[i][j]?.Dispose();
+					MeshCache[i][j] = null;
 				}
 			}
 
 			// Destroy the cached textures
 			for (int i = 0; i < TextureCache.Length; i++)
 			{
-				if (TextureCache[i] != null)
-				{
-					TextureCache[i].Unload();
-				}
+				TextureCache[i]?.Dispose();
+				TextureCache[i] = null;
 			}
 
 			// Destroy the cached materials
 			for (int i = 0; i < MaterialCache.Length; i++)
 			{
-				if (MaterialCache[i] != null)
+				MaterialCache[i]?.Dispose();
+				MaterialCache[i] = null;
+			}
+
+			// Destroy the cached images
+			for (int i = 0; i < ImageCache.Length; i++)
+			{
+				if (ImageCache[i] != null)
 				{
-					MaterialCache[i].Unload();
+					UnityEngine.Object.Destroy(ImageCache[i]);
+					ImageCache[i] = null;
 				}
 			}
 

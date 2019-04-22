@@ -1,14 +1,15 @@
 ﻿using GLTF;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityGLTF.Cache
 {
-	public class MeshCacheData
+	public class MeshCacheData : IDisposable
 	{
 		public Mesh LoadedMesh { get; set; }
 		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
-        public GameObject PrimitiveGO { get; set; }
+		public GameObject PrimitiveGO { get; set; }
 
 		public MeshCacheData()
 		{
@@ -18,9 +19,13 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Unloads the meshes in this cache.
 		/// </summary>
-		public void Unload()
+		public void Dispose()
 		{
-			Object.Destroy(LoadedMesh);
+			if (LoadedMesh != null)
+			{
+				UnityEngine.Object.Destroy(LoadedMesh);
+				LoadedMesh = null;
+			}
 		}
 	}
 }

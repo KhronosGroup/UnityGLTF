@@ -167,7 +167,7 @@ namespace UnityGLTF
 			_loader = externalDataLoader;
 			if (gltfStream != null)
 			{
-				_gltfStream = new GLBStream {Stream = gltfStream, StartPosition = gltfStream.Position};
+				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
 			}
 		}
 
@@ -346,11 +346,12 @@ namespace UnityGLTF
 		{
 			InstantiatedGLTFObject instantiatedGltfObject = CreatedObject.AddComponent<InstantiatedGLTFObject>();
 			instantiatedGltfObject.CachedData = new RefCountedCacheData
-			{
-				MaterialCache = _assetCache.MaterialCache,
-				MeshCache = _assetCache.MeshCache,
-				TextureCache = _assetCache.TextureCache
-			};
+			(
+				_assetCache.MaterialCache,
+				_assetCache.MeshCache,
+				_assetCache.TextureCache,
+				_assetCache.ImageCache
+			);
 		}
 
 		private async Task ConstructBufferData(Node node)
@@ -439,10 +440,13 @@ namespace UnityGLTF
 				}
 			}
 
-			_assetCache.TextureCache[textureIndex] = new TextureCacheData
+			if (_assetCache.TextureCache[textureIndex] == null)
 			{
-				TextureDefinition = texture
-			};
+				_assetCache.TextureCache[textureIndex] = new TextureCacheData
+				{
+					TextureDefinition = texture
+				};
+			}
 		}
 
 		protected IEnumerator WaitUntilEnum(WaitUntil waitUntil)
@@ -453,19 +457,19 @@ namespace UnityGLTF
 		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP
-			 if (IsMultithreaded && _loader.HasSyncLoadMethod)
-			 {
+			if (IsMultithreaded && _loader.HasSyncLoadMethod)
+			{
 				Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
 				loadThread.Priority = ThreadPriority.Highest;
 				loadThread.Start();
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !loadThread.IsAlive)));
-			 }
-			 else
+			}
+			else
 #endif
-			 {
+			{
 				// HACK: Force the coroutine to run synchronously in the editor
 				await _loader.LoadStream(jsonFilePath);
-			 }
+			}
 
 			_gltfStream.Stream = _loader.LoadedStream;
 			_gltfStream.StartPosition = 0;
@@ -745,11 +749,11 @@ namespace UnityGLTF
 			}
 		}
 
-#region Animation
+		#region Animation
 		static string RelativePathFrom(Transform self, Transform root)
 		{
 			var path = new List<String>();
-			for (var current = self; current !=  null; current = current.parent)
+			for (var current = self; current != null; current = current.parent)
 			{
 				if (current == root)
 				{
@@ -838,7 +842,7 @@ namespace UnityGLTF
 
 			// copy all the key frame data to cache
 			Keyframe[][] keyframes = new Keyframe[channelCount][];
-			for( var ci = 0; ci < channelCount; ++ci)
+			for (var ci = 0; ci < channelCount; ++ci)
 			{
 				keyframes[ci] = new Keyframe[frameCount];
 			}
@@ -849,13 +853,13 @@ namespace UnityGLTF
 
 				var values = getConvertedValues(output, i);
 
-				for( var ci = 0; ci < channelCount; ++ci)
+				for (var ci = 0; ci < channelCount; ++ci)
 				{
 					keyframes[ci][i] = new Keyframe(time, values[ci]);
 				}
 			}
 
-			for( var ci = 0; ci < channelCount; ++ci)
+			for (var ci = 0; ci < channelCount; ++ci)
 			{
 				// set interpolcation for each keyframe
 				SetCurveMode(keyframes[ci], mode);
@@ -912,9 +916,10 @@ namespace UnityGLTF
 
 						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) => {
+										  (data, frame) =>
+										  {
 											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
-											  return new float[] { position.x, position.y, position.z};
+											  return new float[] { position.x, position.y, position.z };
 										  });
 						break;
 
@@ -923,10 +928,11 @@ namespace UnityGLTF
 
 						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) => {
+										  (data, frame) =>
+										  {
 											  var rotation = data.AsVec4s[frame];
 											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
-											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w};
+											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 										  });
 
 						break;
@@ -936,9 +942,10 @@ namespace UnityGLTF
 
 						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) => {
+										  (data, frame) =>
+										  {
 											  var scale = data.AsVec3s[frame].ToUnityVector3Raw();
-											  return new float[] { scale.x, scale.y, scale.z};
+											  return new float[] { scale.x, scale.y, scale.z };
 										  });
 						break;
 
@@ -1037,7 +1044,7 @@ namespace UnityGLTF
 				key.outTangent = outtangent;
 			}
 		}
-#endregion
+		#endregion
 
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj)
 		{
@@ -1605,7 +1612,7 @@ namespace UnityGLTF
 					mrMapper.BaseColorTexCoord = pbr.BaseColorTexture.TexCoord;
 
 					var ext = GetTextureTransform(pbr.BaseColorTexture);
-					if(ext != null)
+					if (ext != null)
 					{
 						mrMapper.BaseColorXOffset = ext.Offset.ToUnityVector2Raw();
 						mrMapper.BaseColorXRotation = ext.Rotation;
@@ -1891,6 +1898,7 @@ namespace UnityGLTF
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapMode == desiredWrapMode;
 				if (matchSamplerState || markGpuOnly)
 				{
+					Debug.Assert(_assetCache.TextureCache[textureIndex].Texture == null, "Texture should not be reset to prevent memory leaks");
 					_assetCache.TextureCache[textureIndex].Texture = source;
 
 					if (!matchSamplerState)
@@ -1904,6 +1912,7 @@ namespace UnityGLTF
 					unityTexture.filterMode = desiredFilterMode;
 					unityTexture.wrapMode = desiredWrapMode;
 
+					Debug.Assert(_assetCache.TextureCache[textureIndex].Texture == null, "Texture should not be reset to prevent memory leaks");
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
 				}
 			}
