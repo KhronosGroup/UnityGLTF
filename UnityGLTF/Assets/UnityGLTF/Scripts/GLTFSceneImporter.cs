@@ -196,8 +196,9 @@ namespace UnityGLTF
 		/// <param name="sceneIndex">The scene to load, If the index isn't specified, we use the default index in the file. Failing that we load index 0.</param>
 		/// <param name="showSceneObj"></param>
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
+		/// <param name="cancellationToken">Cancellation token for loading</param>
 		/// <returns></returns>
-		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
+		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			try
 			{
@@ -216,12 +217,14 @@ namespace UnityGLTF
 					await LoadJson(_gltfFileName);
 				}
 
+				cancellationToken.ThrowIfCancellationRequested();
+
 				if (_assetCache == null)
 				{
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
-				await _LoadScene(sceneIndex, showSceneObj);
+				await _LoadScene(sceneIndex, showSceneObj, cancellationToken);
 			}
 			catch (Exception ex)
 			{
@@ -273,7 +276,7 @@ namespace UnityGLTF
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
-				await _LoadNode(nodeIndex);
+				await _LoadNode(nodeIndex, CancellationToken.None);
 				CreatedObject = _assetCache.NodeCache[nodeIndex];
 				InitializeGltfTopLevelObject();
 			}
@@ -354,8 +357,10 @@ namespace UnityGLTF
 			);
 		}
 
-		private async Task ConstructBufferData(Node node)
+		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			MeshId mesh = node.Mesh;
 			if (mesh != null)
 			{
@@ -369,7 +374,7 @@ namespace UnityGLTF
 			{
 				foreach (NodeId child in node.Children)
 				{
-					await ConstructBufferData(child.Value);
+					await ConstructBufferData(child.Value, cancellationToken);
 				}
 			}
 
@@ -386,7 +391,7 @@ namespace UnityGLTF
 					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
 					{
 						int lodNodeId = lodsextension.MeshIds[i];
-						await ConstructBufferData(_gltfRoot.Nodes[lodNodeId]);
+						await ConstructBufferData(_gltfRoot.Nodes[lodNodeId], cancellationToken);
 					}
 				}
 			}
@@ -512,7 +517,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private async Task _LoadNode(int nodeIndex)
+		private async Task _LoadNode(int nodeIndex, CancellationToken cancellationToken)
 		{
 			if (nodeIndex >= _gltfRoot.Nodes.Count)
 			{
@@ -521,16 +526,18 @@ namespace UnityGLTF
 
 			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
 
+			cancellationToken.ThrowIfCancellationRequested();
 			if (!IsMultithreaded)
 			{
-				await ConstructBufferData(nodeToLoad);
+				await ConstructBufferData(nodeToLoad, cancellationToken);
 			}
 			else
 			{
-				await Task.Run(() => ConstructBufferData(nodeToLoad));
+				await Task.Run(() => ConstructBufferData(nodeToLoad, cancellationToken));
 			}
 
-			await ConstructNode(nodeToLoad, nodeIndex);
+			cancellationToken.ThrowIfCancellationRequested();
+			await ConstructNode(nodeToLoad, nodeIndex, cancellationToken);
 		}
 
 		/// <summary>
@@ -538,7 +545,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="sceneIndex">The bufferIndex of scene in gltf file to load</param>
 		/// <returns></returns>
-		protected async Task _LoadScene(int sceneIndex = -1, bool showSceneObj = true)
+		protected async Task _LoadScene(int sceneIndex = -1, bool showSceneObj = true, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			GLTFScene scene;
 
@@ -556,7 +563,7 @@ namespace UnityGLTF
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
 
-			await ConstructScene(scene, showSceneObj);
+			await ConstructScene(scene, showSceneObj, cancellationToken);
 
 			if (SceneParent != null)
 			{
@@ -1047,7 +1054,7 @@ namespace UnityGLTF
 		}
 		#endregion
 
-		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj)
+		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
 		{
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
 			sceneObj.SetActive(showSceneObj);
@@ -1056,7 +1063,7 @@ namespace UnityGLTF
 			for (int i = 0; i < scene.Nodes.Count; ++i)
 			{
 				NodeId node = scene.Nodes[i];
-				await _LoadNode(node.Id);
+				await _LoadNode(node.Id, cancellationToken);
 				GameObject nodeObj = _assetCache.NodeCache[node.Id];
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
@@ -1085,8 +1092,10 @@ namespace UnityGLTF
 		}
 
 
-		protected virtual async Task ConstructNode(Node node, int nodeIndex)
+		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			if (_assetCache.NodeCache[nodeIndex] != null)
 			{
 				return;
@@ -1106,7 +1115,7 @@ namespace UnityGLTF
 
 			if (node.Mesh != null)
 			{
-				await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null);
+				await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null, cancellationToken);
 			}
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
@@ -1121,7 +1130,7 @@ namespace UnityGLTF
 				foreach (var child in node.Children)
 				{
 					// todo blgross: replace with an iterartive solution
-					await ConstructNode(child.Value, child.Id);
+					await ConstructNode(child.Value, child.Id, cancellationToken);
 					GameObject childObj = _assetCache.NodeCache[child.Id];
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
@@ -1159,7 +1168,7 @@ namespace UnityGLTF
 					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
 					{
 						int lodNodeId = lodsextension.MeshIds[i];
-						await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId);
+						await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId, cancellationToken);
 						int lodIndex = i + 1;
 						GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
 						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
@@ -1231,7 +1240,7 @@ namespace UnityGLTF
 			{
 				if (_assetCache.NodeCache[skin.Joints[i].Id] == null)
 				{
-					await ConstructNode(_gltfRoot.Nodes[skin.Joints[i].Id], skin.Joints[i].Id);
+					await ConstructNode(_gltfRoot.Nodes[skin.Joints[i].Id], skin.Joints[i].Id, CancellationToken.None);
 				}
 				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
 				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
@@ -1280,8 +1289,10 @@ namespace UnityGLTF
 			}
 		}
 
-		protected virtual async Task ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin)
+		protected virtual async Task ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			if (_assetCache.MeshCache[meshId] == null)
 			{
 				_assetCache.MeshCache[meshId] = new MeshCacheData[mesh.Primitives.Count];
@@ -1293,6 +1304,7 @@ namespace UnityGLTF
 				int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
 
 				await ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
+				cancellationToken.ThrowIfCancellationRequested();
 
 				var primitiveObj = new GameObject("Primitive");
 
@@ -1313,6 +1325,7 @@ namespace UnityGLTF
 					if (HasBones(skin))
 					{
 						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+						cancellationToken.ThrowIfCancellationRequested();
 					}
 
 					skinnedMeshRenderer.sharedMesh = curMesh;
