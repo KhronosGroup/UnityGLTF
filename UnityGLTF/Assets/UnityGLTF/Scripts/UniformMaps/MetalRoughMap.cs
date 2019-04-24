@@ -86,6 +86,12 @@ namespace UnityGLTF
 			set { return; }
 		}
 
+		public override double RoughnessFactor
+		{
+			get { return _material.GetFloat("_Glossiness"); }
+			set { _material.SetFloat("_Glossiness", (float)value); }
+		}
+
 		public override IUniformMap Clone()
 		{
 			var copy = new MetalRoughMap(new Material(_material));

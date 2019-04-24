@@ -1,9 +1,10 @@
 ﻿using GLTF.Schema;
+using System;
 using UnityEngine;
 
 namespace UnityGLTF.Cache
 {
-	public class TextureCacheData
+	public class TextureCacheData : IDisposable
 	{
 		public GLTFTexture TextureDefinition;
 		public Texture Texture;
@@ -11,9 +12,13 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Unloads the textures in this cache.
 		/// </summary>
-		public void Unload()
+		public void Dispose()
 		{
-			Object.Destroy(Texture);
+			if (Texture != null)
+			{
+				UnityEngine.Object.Destroy(Texture);
+				Texture = null;
+			}
 		}
 	}
 }
