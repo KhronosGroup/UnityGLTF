@@ -306,10 +306,11 @@ MonoBehaviour:
   distance: 5
   xSpeed: 120
   ySpeed: 120
-  yMinLimit: -20
-  yMaxLimit: 80
+  zoomSpeed: 0.8
+  yMinLimit: -85
+  yMaxLimit: 85
   distanceMin: 0.5
-  distanceMax: 15
+  distanceMax: 150
 --- !u!81 &1650054228
 AudioListener:
   m_ObjectHideFlags: 0

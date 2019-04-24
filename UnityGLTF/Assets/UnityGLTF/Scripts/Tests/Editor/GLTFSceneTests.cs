@@ -1,32 +1,20 @@
 ﻿#if UNITY_EDITOR
-using AssetGenerator;
-using Newtonsoft.Json;
-using NUnit.Compatibility;
 using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityGLTF;
 using Camera = UnityEngine.Camera;
-using Object = System.Object;
 
 public class GLTFSceneTests
 {
     static string GLTF_SCENES_PATH = Application.dataPath + "./UnityGLTF/Examples/";
     static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioScenesTests/Output/";
     private static bool GENERATE_REFERENCEDATA = false;
- 
-    private Dictionary<string, AssetGenerator.Manifest.Camera> cameras =
-        new Dictionary<string, AssetGenerator.Manifest.Camera>();
-
  
     public static IEnumerable<string> SceneFilePaths
     {
@@ -37,10 +25,8 @@ public class GLTFSceneTests
             string[] files = Directory.GetFiles(GLTF_SCENES_PATH, "*.unity", SearchOption.AllDirectories);
             for (int i = 0; i < files.Length; i++)
             {
-                string filename = Path.GetFileNameWithoutExtension(files[i]);
                 var fileUri = new Uri(files[i]);
                 files[i] = gltfPathUri.MakeRelativeUri(fileUri).ToString();
-
             }
             return files;
         }
