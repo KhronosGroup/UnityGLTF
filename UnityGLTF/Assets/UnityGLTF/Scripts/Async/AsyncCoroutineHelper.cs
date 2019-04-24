@@ -7,7 +7,7 @@ namespace UnityGLTF
 {
     public class AsyncCoroutineHelper : MonoBehaviour
     {
-        public float BudgetPerFrameInSeconds = 0.03f;
+        public float BudgetPerFrameInSeconds = 0.01f;
 
         private WaitForEndOfFrame _waitForEndOfFrame = new WaitForEndOfFrame();
         private float _timeout;
