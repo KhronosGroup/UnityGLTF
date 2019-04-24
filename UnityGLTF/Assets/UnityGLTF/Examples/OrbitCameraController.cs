@@ -10,17 +10,23 @@ namespace UnityGLTF.Examples
 		public float distance = 5.0f;
 		public float xSpeed = 120.0f;
 		public float ySpeed = 120.0f;
+		public float zoomSpeed = 0.8f;
 
-		public float yMinLimit = -20f;
-		public float yMaxLimit = 80f;
+		public float yMinLimit = -85f;
+		public float yMaxLimit = 85f;
 
 		public float distanceMin = .5f;
-		public float distanceMax = 15f;
+		public float distanceMax = 150f;
 
 		private Rigidbody cameraRigidBody;
 
 		float x = 0.0f;
 		float y = 0.0f;
+
+		float prevMouseX;
+		float prevMouseY;
+
+		Quaternion rotation;
 
 		// Use this for initialization
 		void Start()
@@ -28,6 +34,7 @@ namespace UnityGLTF.Examples
 			Vector3 angles = transform.eulerAngles;
 			x = angles.y;
 			y = angles.x;
+			rotation = Quaternion.Euler(y, x, 0);
 
 			cameraRigidBody = GetComponent<Rigidbody>();
 
@@ -42,20 +49,18 @@ namespace UnityGLTF.Examples
 		{
 			if (target)
 			{
-				x += Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
-				y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
-
-				y = ClampAngle(y, yMinLimit, yMaxLimit);
-
-				Quaternion rotation = Quaternion.Euler(y, x, 0);
-
-				distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel") * 5, distanceMin, distanceMax);
-
-				RaycastHit hit;
-				if (Physics.Linecast(target.position, transform.position, out hit))
+				if (Input.GetMouseButton(0))
 				{
-					distance -= hit.distance;
+					x += Input.GetAxis("Mouse X") * xSpeed * 0.06f;
+					y -= Input.GetAxis("Mouse Y") * ySpeed * 0.06f;
+
+					y = ClampAngle(y, yMinLimit, yMaxLimit);
+
+					rotation = Quaternion.Euler(y, x, 0);
 				}
+
+				distance = Mathf.Clamp(distance * Mathf.Exp(-Input.GetAxis("Mouse ScrollWheel") * zoomSpeed), distanceMin, distanceMax);
+
 				Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
 				Vector3 position = rotation * negDistance + target.position;
 
