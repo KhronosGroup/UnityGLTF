@@ -2,13 +2,13 @@
 using System;
 using System.Collections.Generic;
 
-public struct SampleModelVariant
+public class SampleModelVariant
 {
 	public string Type;
 	public string FileName;
 }
 
-public struct SampleModel
+public class SampleModel
 {
 	public string Name;
 	public string ScreenshotPath;

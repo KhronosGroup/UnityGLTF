@@ -11,16 +11,7 @@ public class SampleModelListInspector : Editor
 	private List<SampleModel> models = null;
 	private bool requestedModelList = false;
 	private Vector2 scroll = Vector2.zero;
-
-	//private void OnEnable()
-	//{
-	//	Debug.Log("enable");
-	//}
-
-	//private void OnDisable()
-	//{
-	//	Debug.Log("disable");
-	//}
+	private SampleModel currentModel = null;
 
 	public override void OnInspectorGUI()
 	{
@@ -29,6 +20,8 @@ public class SampleModelListInspector : Editor
 		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName));
 		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName));
 		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName));
+
+		serializedObject.ApplyModifiedProperties();
 
 		if (!Application.isPlaying)
 		{
@@ -45,7 +38,6 @@ public class SampleModelListInspector : Editor
 				DownloadSampleModelList();
 			}
 
-
 			EditorGUILayout.LabelField("Models:");
 
 			if (models != null)
@@ -55,8 +47,12 @@ public class SampleModelListInspector : Editor
 				foreach (var model in models)
 				{
 					EditorGUILayout.BeginHorizontal();
-
-					EditorGUILayout.LabelField(model.Name);
+					GUIStyle style = new GUIStyle(GUI.skin.label);
+					if (model == currentModel)
+					{
+						style.fontStyle = FontStyle.Bold;
+					}
+					GUILayout.Label(model.Name, style);
 
 					foreach (var variant in model.Variants)
 					{
@@ -64,6 +60,7 @@ public class SampleModelListInspector : Editor
 
 						if (buttonPressed)
 						{
+							currentModel = model;
 							LoadModel(model.Name, variant.Type, variant.FileName);
 						}
 					}
@@ -82,6 +79,7 @@ public class SampleModelListInspector : Editor
 
 		serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName).stringValue = relativePath;
 		serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName).boolValue = true;
+		serializedObject.ApplyModifiedProperties();
 	}
 
 	private async void DownloadSampleModelList()

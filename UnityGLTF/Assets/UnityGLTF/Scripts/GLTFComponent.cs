@@ -35,6 +35,7 @@ namespace UnityGLTF
 		public int MaximumLod = 300;
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
+		public GameObject LastLoadedScene { get; private set; } = null;
 
 		private AsyncCoroutineHelper asyncCoroutineHelper;
 
@@ -136,6 +137,8 @@ namespace UnityGLTF
 						renderer.sharedMaterial.shader = shaderOverride;
 					}
 				}
+
+				LastLoadedScene = sceneImporter.LastLoadedScene;
 
 				if (PlayAnimationOnLoad)
 				{
