@@ -23,9 +23,6 @@ namespace UnityGLTF.Examples
 		float x = 0.0f;
 		float y = 0.0f;
 
-		float prevMouseX;
-		float prevMouseY;
-
 		Quaternion rotation;
 
 		// Use this for initialization
@@ -59,7 +56,19 @@ namespace UnityGLTF.Examples
 					rotation = Quaternion.Euler(y, x, 0);
 				}
 
-				distance = Mathf.Clamp(distance * Mathf.Exp(-Input.GetAxis("Mouse ScrollWheel") * zoomSpeed), distanceMin, distanceMax);
+				var height = Display.main.renderingHeight;
+				var width = Display.main.renderingWidth;
+
+				var mouseOverRenderArea =
+					Input.mousePosition.x >= 0 &&
+					Input.mousePosition.x <= width &&
+					Input.mousePosition.y >= 0 &&
+					Input.mousePosition.y <= height;
+
+				if (Input.GetMouseButton(0) || mouseOverRenderArea)
+				{
+					distance = Mathf.Clamp(distance * Mathf.Exp(-Input.GetAxis("Mouse ScrollWheel") * zoomSpeed), distanceMin, distanceMax);
+				}
 
 				Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
 				Vector3 position = rotation * negDistance + target.position;

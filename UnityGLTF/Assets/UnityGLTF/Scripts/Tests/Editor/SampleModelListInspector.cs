@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Loader;
@@ -88,13 +89,19 @@ public class SampleModelListInspector : Editor
 		var manifestRelativePath = serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName).stringValue;
 
 		var loader = new WebRequestLoader(pathRoot);
-		await loader.LoadStream(manifestRelativePath);
+		try
+		{
+			await loader.LoadStream(manifestRelativePath);
+		}
+		catch (HttpRequestException)
+		{
+			Debug.LogError($"Failed to download sample model list manifest from: {pathRoot}{manifestRelativePath}", serializedObject.targetObject);
+			throw;
+		}
 
 		loader.LoadedStream.Seek(0, SeekOrigin.Begin);
 
 		var streamReader = new StreamReader(loader.LoadedStream);
-
-		//var s = streamReader.ReadToEnd();
 
 		var reader = new JsonTextReader(streamReader);
 		
