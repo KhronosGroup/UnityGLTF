@@ -16,10 +16,10 @@ public class SampleModelList : MonoBehaviour
 	private string pathRoot = "http://localhost:8080/glTF-Sample-Models/2.0/";
 
 // Disable "unused private field" because it is accessed by SampleModelListInspector using serialization.
-#pragma warning disable CS0414
+#pragma warning disable 414
 	[SerializeField]
 	private string manifestRelativePath = "model-index.json";
-#pragma warning restore CS0414
+#pragma warning restore 414
 
 	[SerializeField]
 	private string modelRelativePath = null;
