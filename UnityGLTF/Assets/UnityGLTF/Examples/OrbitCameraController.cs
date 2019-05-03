@@ -25,6 +25,7 @@ namespace UnityGLTF.Examples
 
 		private float x = 0.0f;
 		private float y = 0.0f;
+		private Vector3 prevMousePosition;
 
 		Quaternion rotation;
 
@@ -37,6 +38,8 @@ namespace UnityGLTF.Examples
 			x = angles.y;
 			y = angles.x;
 			rotation = Quaternion.Euler(y, x, 0);
+
+			prevMousePosition = Input.mousePosition;
 
 			cameraRigidBody = GetComponent<Rigidbody>();
 
@@ -63,15 +66,10 @@ namespace UnityGLTF.Examples
 			}
 			else if (Input.GetMouseButton(1))
 			{
-				var distancePerPixel = 4.0f * distance * Mathf.Tan(camera.fieldOfView / 2.0f) / height;
+				var prevMouseWorldPosition = ProjectScreenPointToTargetPlane(prevMousePosition);
+				var mouseWorldPosition = ProjectScreenPointToTargetPlane(Input.mousePosition);
 
-				float deltaX = Input.GetAxis("Mouse X") * distancePerPixel;
-				float deltaY = Input.GetAxis("Mouse Y") * distancePerPixel;
-
-				Vector3 deltaRight = transform.right * deltaX;
-				Vector3 deltaUp = transform.up * deltaY;
-
-				targetPosition += deltaRight + deltaUp;
+				targetPosition += prevMouseWorldPosition - mouseWorldPosition;
 			}
 
 			var mouseOverRenderArea =
@@ -90,6 +88,16 @@ namespace UnityGLTF.Examples
 
 			transform.rotation = rotation;
 			transform.position = position;
+
+			prevMousePosition = Input.mousePosition;
+		}
+
+		private Vector3 ProjectScreenPointToTargetPlane(Vector3 screenPosition)
+		{
+			var ray = camera.ScreenPointToRay(screenPosition);
+			var planeDistance = distance / Mathf.Cos(Mathf.Deg2Rad * Vector3.Angle(camera.transform.forward, ray.direction));
+
+			return camera.transform.position + (ray.direction * planeDistance);
 		}
 
 		public static float ClampAngle(float angle, float min, float max)
