@@ -5,20 +5,18 @@ install:
 - sudo python2 ./scripts/install-unity.py --package Unity 2017.1.1f1
 before_script:
 - sudo chmod -R a+rwx /Applications/Unity
-- sudo chmod +x ./scripts/export-upm-package.sh
 script:
 - msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
 - "./scripts/export-unity-package.sh"
-- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization
-- "./scripts/export-upm-package.sh"
 deploy:
   provider: releases
   file: 
   - "./current-package/UnityGLTF.unitypackage"
-  - "./current-package/org.khronos.UnityGLTF.zip"
   skip_cleanup: true
   on:
     repo: KhronosGroup/UnityGLTF
+    branch: releases
     tags: true
   api-key:
     secure: "KBs5cOzqEoTDzsBv6AurzlFMtgfctKbJWsGorUW9BE/+B8pnriGQxc1Lt83kzkvHkcF+MgqD5M1KK6SebB/lgpE2Xo/Zu/al1Sr0M6MNijRgHCx0aqea+/mjXfHS7qhbOqgEqQHYoR4kOqIKFhJZOohtLBylnDgFojG42Z2UFnbSelZaAT8qISxndX5qjIqV9+CgkRlpwyY4tnQ2fzVwuyFMvEqSBUzAegzPa+nQu1HgJzx64OP0ONmoTPJnUr0C741GtsD1fA6SMjSpwhjiYezQXapN2a/YoZufEkrd5wYq8Q1UVNMDmkmtg1zA0LkmK1u6dEhE7VCjxL7CW13FWGWEMKR9h2afTl+QkRIZxNRxjVHcWG122oTSCOXaAwBtNHMnWEgBy+DYFWAYD/bMmZ+g70EZ2/bFEfPprhyOvK59No5V65FOyoIMSBZvgU1z2Kl3PPTUl/0vEljX3RiON6BvIbOxU7OdR+OI35naSfos76YWK58+b99fRC0rJq6egwhNTACPItrtdmZq13k/5PWfGSJ0IAegdoXCB1eFP6SqcoXDsxLJph8/nHrEHqyjtl9PYBturvzVfQThTzL4FQuB7Fypwql/PXB7mdG7HkOvcM5jJWiupIsQxw5VkArZhnBk188ds+UC42tUhF701ZrPJz6GF0Kqem7/Fr/6l7A="
+
