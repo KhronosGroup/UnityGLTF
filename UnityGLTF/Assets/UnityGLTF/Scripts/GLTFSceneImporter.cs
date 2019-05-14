@@ -46,15 +46,35 @@ namespace UnityGLTF
 		public BoneWeight[] BoneWeights;
 	}
 
-	public class ImportProgress
+	public struct ImportProgress
 	{
-		public bool IsDownloaded = false;
+		public bool IsDownloaded;
 
-		public int NodeTotal = 0;
-		public int NodeLoaded = 0;
+		public int NodeTotal;
+		public int NodeLoaded;
 
-		public int TextureTotal = 0;
-		public int TextureLoaded = 0;
+		public int TextureTotal;
+		public int TextureLoaded;
+
+		public int BuffersTotal;
+		public int BuffersLoaded;
+
+		public float Progress
+		{
+			get
+			{
+				int total = NodeTotal + TextureTotal + BuffersTotal;
+				int loaded = NodeLoaded + TextureLoaded + BuffersLoaded;
+				if (total > 0)
+				{
+					return (float)loaded / total;
+				}
+				else
+				{
+					return 0.0f;
+				}
+			}
+		}
 	}
 
 	/// <summary>
@@ -160,8 +180,9 @@ namespace UnityGLTF
 		protected ILoader _loader;
 		protected bool _isRunning = false;
 
-		public ImportProgress Progress { get; } = new ImportProgress();
-		
+		protected ImportProgress progressStatus = default(ImportProgress);
+		protected IProgress<ImportProgress> progress = null;
+
 		/// <summary>
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
 		/// </summary>
@@ -210,7 +231,7 @@ namespace UnityGLTF
 		/// <param name="onLoadComplete">Callback function for when load is completed</param>
 		/// <param name="cancellationToken">Cancellation token for loading</param>
 		/// <returns></returns>
-		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null, CancellationToken cancellationToken = default(CancellationToken))
+		public async Task LoadSceneAsync(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null, CancellationToken cancellationToken = default(CancellationToken), IProgress<ImportProgress> progress = null)
 		{
 			try
 			{
@@ -224,10 +245,13 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				this.progress = progress;
+				progress?.Report(progressStatus);
+
 				if (_gltfRoot == null)
 				{
 					await LoadJson(_gltfFileName);
-					Progress.IsDownloaded = true;
+					progressStatus.IsDownloaded = true;
 				}
 
 				cancellationToken.ThrowIfCancellationRequested();
@@ -251,6 +275,9 @@ namespace UnityGLTF
 					_isRunning = false;
 				}
 			}
+
+			Debug.Assert(progressStatus.NodeLoaded == progressStatus.NodeTotal);
+			Debug.Assert(progressStatus.TextureLoaded <= progressStatus.TextureTotal);
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
@@ -575,7 +602,7 @@ namespace UnityGLTF
 			{
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
-			
+
 			GetGtlfContentTotals(scene);
 
 			await ConstructScene(scene, showSceneObj, cancellationToken);
@@ -594,16 +621,19 @@ namespace UnityGLTF
 			Queue<Node> nodeQueue = new Queue<Node>();
 
 			// Add scene nodes
-			for (int i = 0; i < scene.Nodes.Count; ++i)
+			if (scene.Nodes != null)
 			{
-				nodeQueue.Enqueue(scene.Nodes[i].Value);
+				for (int i = 0; i < scene.Nodes.Count; ++i)
+				{
+					nodeQueue.Enqueue(scene.Nodes[i].Value);
+				}
 			}
 
 			// BFS of nodes
 			while (nodeQueue.Count > 0)
 			{
 				var cur = nodeQueue.Dequeue();
-				Progress.NodeTotal++;
+				progressStatus.NodeTotal++;
 
 				if (cur.Children != null)
 				{
@@ -615,14 +645,24 @@ namespace UnityGLTF
 			}
 
 			// Total textures
-			Progress.TextureTotal += _gltfRoot.Textures?.Count ?? 0;
+			progressStatus.TextureTotal += _gltfRoot.Textures?.Count ?? 0;
+
+			// Total buffers
+			progressStatus.BuffersTotal += _gltfRoot.Buffers?.Count ?? 0;
+
+			// Send report
+			progress?.Report(progressStatus);
 		}
 
 		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
 		{
 			if (buffer.Uri == null)
 			{
+				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
 				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
+
+				progressStatus.BuffersLoaded++;
+				progress?.Report(progressStatus);
 			}
 			else
 			{
@@ -641,10 +681,14 @@ namespace UnityGLTF
 					bufferDataStream = _loader.LoadedStream;
 				}
 
+				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
 				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
 				{
 					Stream = bufferDataStream
 				};
+
+				progressStatus.BuffersLoaded++;
+				progress?.Report(progressStatus);
 			}
 		}
 
@@ -693,7 +737,6 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					texture.LoadImage(memoryStream.ToArray(), markGpuOnly);
-					Progress.TextureLoaded++;
 				}
 			}
 			else
@@ -710,9 +753,11 @@ namespace UnityGLTF
 				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, markGpuOnly);
-				Progress.TextureLoaded++;
 			}
 
+			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");
+			progressStatus.TextureLoaded++;
+			progress?.Report(progressStatus);
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 		}
 
@@ -1141,7 +1186,6 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
-			Progress.NodeLoaded++;
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (_assetCache.NodeCache[nodeIndex] != null)
@@ -1172,6 +1216,9 @@ namespace UnityGLTF
 				cameraObj.transform.parent = nodeObj.transform;
 			}
 			*/
+
+			progressStatus.NodeLoaded++;
+			progress?.Report(progressStatus);
 
 			if (node.Children != null)
 			{
@@ -1991,8 +2038,10 @@ namespace UnityGLTF
 			bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
 			bufferContents.Stream.Read(data, 0, data.Length);
 			texture.LoadImage(data);
-			Progress.TextureLoaded++;
 
+			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");
+			progressStatus.TextureLoaded++;
+			progress?.Report(progressStatus);
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 
 		}
