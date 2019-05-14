@@ -46,6 +46,17 @@ namespace UnityGLTF
 		public BoneWeight[] BoneWeights;
 	}
 
+	public class ImportProgress
+	{
+		public bool IsDownloaded = false;
+
+		public int NodeTotal = 0;
+		public int NodeLoaded = 0;
+
+		public int TextureTotal = 0;
+		public int TextureLoaded = 0;
+	}
+
 	/// <summary>
 	/// Converts gltf animation data to unity
 	/// </summary>
@@ -149,7 +160,8 @@ namespace UnityGLTF
 		protected ILoader _loader;
 		protected bool _isRunning = false;
 
-
+		public ImportProgress Progress { get; } = new ImportProgress();
+		
 		/// <summary>
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
 		/// </summary>
@@ -215,6 +227,7 @@ namespace UnityGLTF
 				if (_gltfRoot == null)
 				{
 					await LoadJson(_gltfFileName);
+					Progress.IsDownloaded = true;
 				}
 
 				cancellationToken.ThrowIfCancellationRequested();
@@ -562,6 +575,8 @@ namespace UnityGLTF
 			{
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
+			
+			GetGtlfContentTotals(scene);
 
 			await ConstructScene(scene, showSceneObj, cancellationToken);
 
@@ -571,6 +586,36 @@ namespace UnityGLTF
 			}
 
 			_lastLoadedScene = CreatedObject;
+		}
+
+		private void GetGtlfContentTotals(GLTFScene scene)
+		{
+			// Count Nodes
+			Queue<Node> nodeQueue = new Queue<Node>();
+
+			// Add scene nodes
+			for (int i = 0; i < scene.Nodes.Count; ++i)
+			{
+				nodeQueue.Enqueue(scene.Nodes[i].Value);
+			}
+
+			// BFS of nodes
+			while (nodeQueue.Count > 0)
+			{
+				var cur = nodeQueue.Dequeue();
+				Progress.NodeTotal++;
+
+				if (cur.Children != null)
+				{
+					for (int i = 0; i < cur.Children.Count; ++i)
+					{
+						nodeQueue.Enqueue(cur.Children[i].Value);
+					}
+				}
+			}
+
+			// Total textures
+			Progress.TextureTotal += _gltfRoot.Textures?.Count ?? 0;
 		}
 
 		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
@@ -648,6 +693,7 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					texture.LoadImage(memoryStream.ToArray(), markGpuOnly);
+					Progress.TextureLoaded++;
 				}
 			}
 			else
@@ -664,6 +710,7 @@ namespace UnityGLTF
 				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, markGpuOnly);
+				Progress.TextureLoaded++;
 			}
 
 			_assetCache.ImageCache[imageCacheIndex] = texture;
@@ -1094,6 +1141,7 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
+			Progress.NodeLoaded++;
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (_assetCache.NodeCache[nodeIndex] != null)
@@ -1943,6 +1991,7 @@ namespace UnityGLTF
 			bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
 			bufferContents.Stream.Read(data, 0, data.Length);
 			texture.LoadImage(data);
+			Progress.TextureLoaded++;
 
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 
