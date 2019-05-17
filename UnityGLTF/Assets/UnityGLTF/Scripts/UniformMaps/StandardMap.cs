@@ -7,7 +7,7 @@ using Texture = UnityEngine.Texture;
 
 namespace UnityGLTF
 {
-	class StandardMap : IUniformMap
+	public class StandardMap : IUniformMap
 	{
 		protected Material _material;
 		private AlphaMode _alphaMode = AlphaMode.OPAQUE;

@@ -2,7 +2,7 @@
 
 namespace UnityGLTF
 {
-	class MetalRough2StandardMap : StandardMap, IMetalRoughUniformMap
+	public class MetalRough2StandardMap : StandardMap, IMetalRoughUniformMap
 	{
 		private Vector2 baseColorOffset = new Vector2(0, 0);
 

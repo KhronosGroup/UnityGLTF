@@ -2,7 +2,7 @@
 
 namespace UnityGLTF
 {
-	class SpecGloss2StandardMap : StandardMap, ISpecGlossUniformMap
+	public class SpecGloss2StandardMap : StandardMap, ISpecGlossUniformMap
 	{
 		private Vector2 diffuseOffset = new Vector2(0, 0);
 		private Vector2 specGlossOffset = new Vector2(0, 0);

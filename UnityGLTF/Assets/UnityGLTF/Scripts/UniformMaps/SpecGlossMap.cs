@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-	class SpecGlossMap : SpecGloss2StandardMap
+	public class SpecGlossMap : SpecGloss2StandardMap
 	{
 		public SpecGlossMap(int MaxLOD = 1000) : base("GLTF/PbrSpecularGlossiness", MaxLOD) { }
 		public SpecGlossMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
