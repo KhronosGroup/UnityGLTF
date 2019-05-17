@@ -183,6 +183,8 @@ namespace UnityGLTF
 		protected ImportProgress progressStatus = default(ImportProgress);
 		protected IProgress<ImportProgress> progress = null;
 
+		private List<ITextureLoader> _textureLoaders = new List<ITextureLoader> { new DefaultTextureLoader() };
+
 		/// <summary>
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
 		/// </summary>
@@ -216,6 +218,11 @@ namespace UnityGLTF
 			{
 				Cleanup();
 			}
+		}
+
+		public void RegisterTextureLoader(ITextureLoader loader)
+		{
+			_textureLoaders.Insert(0, loader);
 		}
 
 		public GameObject LastLoadedScene
@@ -727,38 +734,28 @@ namespace UnityGLTF
 			}
 		}
 
-		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
+		private async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
 		{
-			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, isLinear);
-			texture.name = nameof(GLTFSceneImporter) + (image.Name != null ? ("." + image.Name) : "");
-
-			if (stream is MemoryStream)
-			{
-				using (MemoryStream memoryStream = stream as MemoryStream)
-				{
-					texture.LoadImage(memoryStream.ToArray(), markGpuOnly);
-				}
-			}
-			else
-			{
-				byte[] buffer = new byte[stream.Length];
-
-				// todo: potential optimization is to split stream read into multiple frames (or put it on a thread?)
-				if (stream.Length > int.MaxValue)
-				{
-					throw new Exception("Stream is larger than can be copied into byte array");
-				}
-				stream.Read(buffer, 0, (int)stream.Length);
-
-				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
-				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-				texture.LoadImage(buffer, markGpuOnly);
-			}
+			var texture = await LoadTexture(stream, markGpuOnly, isLinear, image);
 
 			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");
 			progressStatus.TextureLoaded++;
 			progress?.Report(progressStatus);
 			_assetCache.ImageCache[imageCacheIndex] = texture;
+		}
+
+		private async Task<Texture2D> LoadTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image)
+		{
+			foreach (var textureLoader in _textureLoaders)
+			{
+				if (textureLoader.CanLoadTexture(image))
+				{
+					return await textureLoader.LoadTextureAsync(stream, markGpuOnly, isLinear, image, _asyncCoroutineHelper);
+				}
+			}
+
+			// We should never get here as long as the default texture loader is in the list.
+			throw new FormatException($"Don't know how to load this texture: {image.Uri}");
 		}
 
 		protected virtual async Task ConstructMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
