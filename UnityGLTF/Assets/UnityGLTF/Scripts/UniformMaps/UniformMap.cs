@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-	interface IUniformMap
+	public interface IUniformMap
 	{
 		Material Material { get; }
 
@@ -42,7 +42,7 @@ namespace UnityGLTF
 		IUniformMap Clone();
 	}
 
-	interface IMetalRoughUniformMap : IUniformMap
+	public interface IMetalRoughUniformMap : IUniformMap
 	{
 		Texture BaseColorTexture { get; set; }
 		int BaseColorTexCoord { get; set; }
@@ -64,7 +64,7 @@ namespace UnityGLTF
 		double RoughnessFactor { get; set; }
 	}
 
-	interface ISpecGlossUniformMap : IUniformMap
+	public interface ISpecGlossUniformMap : IUniformMap
 	{
 		Texture DiffuseTexture { get; set; }
 		int DiffuseTexCoord { get; set; }
@@ -86,7 +86,7 @@ namespace UnityGLTF
 		double GlossinessFactor { get; set; }
 	}
 
-	interface IUnlitUniformMap : IUniformMap
+	public interface IUnlitUniformMap : IUniformMap
 	{
 		Texture BaseColorTexture { get; set; }
 		int BaseColorTexCoord { get; set; }

@@ -5,7 +5,7 @@ using CullMode = UnityEngine.Rendering.CullMode;
 
 namespace UnityGLTF
 {
-	class MetalRoughMap : MetalRough2StandardMap
+	public class MetalRoughMap : MetalRough2StandardMap
 	{
 		private Vector2 metalRoughOffset = new Vector2(0, 0);
 
