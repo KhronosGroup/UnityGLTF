@@ -8,9 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
-#if !WINDOWS_UWP
 using System.Threading;
-#endif
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
