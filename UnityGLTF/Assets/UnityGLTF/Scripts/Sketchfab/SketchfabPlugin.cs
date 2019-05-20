@@ -12,7 +12,7 @@ namespace Sketchfab
 {
 	public class SketchfabPlugin : MonoBehaviour
 	{
-		public static string VERSION = "1.0.3";
+		public static string VERSION = "1.1.0";
 
 		public struct Urls
 		{
@@ -26,9 +26,9 @@ namespace Sketchfab
 			public static string privateInfo = "https://help.sketchfab.com/hc/en-us/articles/115000422206-Private-Models";
 			public static string draftInfo = "https://help.sketchfab.com/hc/en-us/articles/115000472906-Draft-Mode";
 			public static string latestReleaseCheck = "https://api.github.com/repos/sketchfab/UnityGLTF/releases";
-			public static string plans = "https://sketchfab.com/plans";
+			public static string plans = "https://sketchfab.com/plans?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=download-api-pro-cta";
 			public static string bannerUrl = "https://static.sketchfab.com/plugins/unity/banner.jpg";
-			public static string storeUrl = "https://sketchfab.com/store?utm_source=plugin&utm_medium=banner&utm_campaign=unity-plugin";
+			public static string storeUrl = "https://sketchfab.com/store?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=store-banner";
 			public static string categories = server + "/v3/categories";
 			private static string dummyClientId = "IUO8d5VVOIUCzWQArQ3VuXfbwx5QekZfLeDlpOmW";
 			public static string oauth = server + "/oauth2/token/?grant_type=password&client_id=" + dummyClientId;
@@ -38,7 +38,8 @@ namespace Sketchfab
 			public static string modelUrl = server + "/models";
 
 			// AssetBrowser
-			public static string searchEndpoint = baseApi + "/v3/search";
+			public static string searchEndpoint = baseApi + "/v3/search?type=models&downloadable=true&";
+			public static string ownModelsSearchEndpoint = baseApi + "/v3/me/search?type=models&downloadable=true";
 			public static string categoryEndpoint = baseApi + "/v3/categories";
 			public static string modelEndPoint = baseApi + "/v3/models";
 		};
@@ -166,7 +167,7 @@ namespace Sketchfab
 			{
 				GUILayout.BeginVertical();
 				GUILayout.FlexibleSpace();
-				if(GUILayout.Button(bannerTexture, _ui.SketchfabLabel))
+				if(GUILayout.Button(bannerTexture, _ui.getSketchfabLabel()))
 				{
 					Application.OpenURL(Urls.storeUrl);
 				}
@@ -183,19 +184,20 @@ namespace Sketchfab
 			GUILayout.EndHorizontal();
 		}
 
+
 		public static void displayFooter()
 		{
 			GUILayout.BeginHorizontal();
-			if (GUILayout.Button("Sketchfab plugin for Unity " + VERSION + " " + versionCaption, _ui.SketchfabLabel, GUILayout.Height(20)))
+			if (GUILayout.Button("Sketchfab plugin for Unity " + VERSION + " " + versionCaption, _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.latestRelease);
 			}
 			GUILayout.FlexibleSpace();
-			if(GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Help </color>", _ui.SketchfabLabel, GUILayout.Height(20)))
+			if(GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Help </color>", _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.latestRelease);
 			}
-			if (GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Report an issue </color>", _ui.SketchfabLabel, GUILayout.Height(20)))
+			if (GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Report an issue </color>", _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.reportAnIssue);
 			}

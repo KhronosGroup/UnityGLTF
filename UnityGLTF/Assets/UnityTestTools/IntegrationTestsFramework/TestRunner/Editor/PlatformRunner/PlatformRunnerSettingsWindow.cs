@@ -182,7 +182,7 @@ namespace UnityTest.IntegrationTests
 				var rect = GUILayoutUtility.GetRect(guiContent, EditorStyles.label);
 				if (rect.Contains(Event.current.mousePosition))
 				{
-					if (Event.current.type == EventType.mouseDown && Event.current.button == 0)
+					if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
 					{
 						selectString = scenePath;
 						Event.current.Use();

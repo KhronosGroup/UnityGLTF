@@ -114,7 +114,7 @@ namespace Sketchfab
 						}
 						else
 						{
-							_requests[i].getError();
+							Debug.Log(_requests[i].getError());
 						}
 
 						_requests[i].dispose();
@@ -166,9 +166,16 @@ namespace Sketchfab
 		WebRequestCallback _webRequestCallback;
 		ProgressCallback _progressCallback;
 
-		public SketchfabRequest(string url)
+		public SketchfabRequest(string url, Dictionary<string, string> headers=null)
 		{
 			_request = new UnityWebRequest(url);
+			if(headers != null)
+			{
+				foreach (string key in headers.Keys)
+				{
+					_request.SetRequestHeader(key, headers[key]);
+				}
+			}
 			_request.downloadHandler = new DownloadHandlerBuffer();
 		}
 

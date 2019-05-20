@@ -6,7 +6,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using SimpleJSON;
+using System.Collections.Specialized;
 
 namespace Sketchfab
 {
@@ -18,7 +18,9 @@ namespace Sketchfab
 		static void Init()
 		{
 			SketchfabBrowser window = (SketchfabBrowser)EditorWindow.GetWindow(typeof(SketchfabBrowser));
-			window.titleContent.text = "AssetBrowser";
+			window.titleContent.image = Resources.Load<Texture>("icon");
+			window.titleContent.image.filterMode = FilterMode.Bilinear;
+			window.titleContent.text = "Browse";
 			window.Show();
 		}
 
@@ -47,6 +49,7 @@ namespace Sketchfab
 		bool _animated = false;
 		bool _staffpicked = true;
 		string _categoryName = "";
+		bool _myModels = false;
 
 		float framesSinceLastSearch = 0.0f;
 		float nbFrameSearchCooldown = 30.0f;
@@ -61,7 +64,7 @@ namespace Sketchfab
 			if (_browserManager == null)
 			{
 				_browserManager = new SketchfabBrowserManager(OnRefreshUpdate, true);
-				_staffpicked = true;
+				resetFilters();
 				_currentUid = "";
 				_categoryName = "";
 				_categoriesNames = new string[0];
@@ -69,7 +72,6 @@ namespace Sketchfab
 				// Setup sortBy
 				_sortBy = new string[] { "Relevance", "Likes", "Views", "Recent" };
 				_polyCount = new string[] { "Any", "Up to 10k", "10k to 50k", "50k to 100k", "100k to 250k", "250k +" };
-				_sortByIndex = 3;
 				this.Repaint();
 				GL.sRGBWrite = true;
 			}
@@ -97,7 +99,7 @@ namespace Sketchfab
 					_categoriesNames = _browserManager.getCategories().ToArray();
 					this.Repaint();
 				}
-				if (_browserManager.getResults().Count > 0 && _browserManager.getResults()[0]._preview == null)
+				if (_browserManager.hasResults()/* && _browserManager.getResults()[0]._preview == null*/)
 				{
 					_browserManager.fetchModelPreview();
 					this.Repaint();
@@ -160,7 +162,7 @@ namespace Sketchfab
 					break;
 			}
 
-			_browserManager.search(_query, _staffpicked, _animated, _categoryName, sort, _maxFaceCount, _minFaceCount);
+			_browserManager.search(_query, _staffpicked, _animated, _categoryName, sort, _maxFaceCount, _minFaceCount, _myModels);
 			framesSinceLastSearch = 0.0f;
 		}
 
@@ -180,8 +182,37 @@ namespace Sketchfab
 			_scrollView = GUILayout.BeginScrollView(_scrollView);
 			displayResults();
 			GUILayout.EndScrollView();
+			if (_myModels && _logger.isUserLogged() && !_logger.canAccessOwnModels())
+			{
+				displayUpgradeToPro();
+			}
+
 
 			SketchfabPlugin.displayFooter();
+		}
+
+		void resetFilters()
+		{
+			_categoryIndex = 0;
+			_sortByIndex = 3;
+			_polyCountIndex = 0;
+
+			_query = "";
+			_animated = false;
+			_staffpicked = true;
+			_categoryName = "All";
+		}
+
+		void resetFilersOwnModels()
+		{
+			_categoryIndex = 0;
+			_sortByIndex = 3;
+			_polyCountIndex = 0;
+
+			_query = "";
+			_animated = false;
+			_staffpicked = false;
+			_categoryName = "All";
 		}
 
 		void displaySearchOptions()
@@ -204,7 +235,7 @@ namespace Sketchfab
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Search:", GUILayout.Width(80));
 			GUI.SetNextControlName("SearchTextField");
-			_query = GUILayout.TextField(_query);
+			_query = EditorGUILayout.TextField(_query, GUILayout.Width(350));
 
 			if(Event.current.keyCode == KeyCode.Return && GUI.GetNameOfFocusedControl() == "SearchTextField")
 			{
@@ -215,6 +246,25 @@ namespace Sketchfab
 			{
 				triggerSearch();
 			}
+
+			GUILayout.FlexibleSpace();
+			bool previous = _myModels;
+			GUIContent content = _logger.isUserBasic() ? new GUIContent("My Models", SketchfabUI.getPlanIcon("pro")) : new GUIContent("My Models");
+			_myModels = GUILayout.Toggle(_myModels, content, GUILayout.Height(18));
+			if (_myModels != previous)
+			{
+				if(_myModels)
+				{
+					resetFilersOwnModels();
+				}
+				else
+				{
+					resetFilters();
+				}
+				
+				triggerSearch();
+			}
+				
 			GUILayout.EndHorizontal();
 		}
 
@@ -293,15 +343,61 @@ namespace Sketchfab
 			GUILayout.EndHorizontal();
 		}
 
+		void displayUpgradeToPro()
+		{
+			GUIStyle whiteBackground = new GUIStyle(GUI.skin.box);
+			whiteBackground.normal.background = SketchfabUI.MakeTex(2, 2, Color.white);
+
+			GUILayout.BeginVertical(whiteBackground, GUILayout.Height(75));
+			GUILayout.FlexibleSpace();
+
+			GUILayout.BeginHorizontal();
+			GUILayout.FlexibleSpace();
+			GUILayout.Label("<b>Gain full API access</b> to your personal library of 3D models", SketchfabPlugin.getUI().getSketchfabBigLabel(), GUILayout.Height(48));
+			GUILayout.FlexibleSpace();
+
+			Color old = GUI.color;
+			GUI.color = Color.white;
+			GUIStyle whitebackground = new GUIStyle(GUI.skin.button);
+			whitebackground.richText = true;
+			whitebackground.normal.background = SketchfabUI.MakeTex(2, 2, SketchfabUI.SKFB_BLUE);
+			string buttonCaption = "<color=" + Color.white + "><b>Upgrade to PRO</b></color>";
+			if (GUILayout.Button(buttonCaption, whitebackground, GUILayout.Height(48), GUILayout.Width(225)))
+			{
+				Application.OpenURL(SketchfabPlugin.Urls.plans);
+			}
+			GUI.color = old;
+
+			GUILayout.FlexibleSpace();
+			GUILayout.EndHorizontal();
+
+			GUILayout.FlexibleSpace();
+			GUILayout.EndVertical();
+		}
+
+		void displayCenteredMessage(string message)
+		{
+			GUILayout.BeginVertical();
+			GUILayout.FlexibleSpace();
+			GUILayout.BeginHorizontal();
+			GUILayout.FlexibleSpace();
+			GUILayout.Label(message);
+			GUILayout.FlexibleSpace();
+			GUILayout.EndHorizontal();
+			GUILayout.FlexibleSpace();
+			GUILayout.EndHorizontal();
+		}
+
 		void displayResults()
 		{
 			int count = 0;
 			int buttonLineLength = Mathf.Max(1, Mathf.Min((int)this.position.width / _thumbnailSize, 6));
 			bool needClose = false;
-			List<SketchfabModel> models = _browserManager.getResults();
-			if (models.Count > 0) // Replace by "is ready"
+			OrderedDictionary models = _browserManager.getResults();
+
+			if (models != null && models.Count > 0) // Replace by "is ready"
 			{
-				foreach (SketchfabModel model in models)
+				foreach (SketchfabModel model in models.Values)
 				{
 					if (count % buttonLineLength == 0)
 					{
@@ -316,7 +412,6 @@ namespace Sketchfab
 					if (count % buttonLineLength == buttonLineLength - 1)
 					{
 						GUILayout.EndHorizontal();
-						GUILayout.FlexibleSpace();
 						needClose = false;
 					}
 
@@ -325,28 +420,9 @@ namespace Sketchfab
 			}
 			else if (_browserManager._isFetching)
 			{
-				GUILayout.BeginVertical();
-				GUILayout.FlexibleSpace();
-				GUILayout.BeginHorizontal();
-				GUILayout.FlexibleSpace();
-				GUILayout.Label("Fetching models ....");
-				GUILayout.FlexibleSpace();
-				GUILayout.EndHorizontal();
-				GUILayout.FlexibleSpace();
-				GUILayout.EndHorizontal();
+				displayCenteredMessage("Fetching models ....");
 			}
-			else
-			{
-				GUILayout.BeginVertical();
-				GUILayout.FlexibleSpace();
-				GUILayout.BeginHorizontal();
-				GUILayout.FlexibleSpace();
-				GUILayout.Label("No results found.");
-				GUILayout.FlexibleSpace();
-				GUILayout.EndHorizontal();
-				GUILayout.FlexibleSpace();
-				GUILayout.EndHorizontal();
-			}
+
 			if (needClose)
 			{
 				GUILayout.EndHorizontal();
@@ -356,7 +432,7 @@ namespace Sketchfab
 		void displayResult(SketchfabModel model)
 		{
 			GUILayout.BeginVertical();
-			if (GUILayout.Button(new GUIContent(model._thumbnail as Texture2D), GUILayout.MaxHeight(_thumbnailSize), GUILayout.MaxWidth(_thumbnailSize)))
+			if (GUILayout.Button(new GUIContent(model._thumbnail as Texture2D), GUI.skin.label, GUILayout.MaxHeight(_thumbnailSize), GUILayout.MaxWidth(_thumbnailSize)))
 			{
 				_currentUid = model.uid;
 				_browserManager.fetchModelInfo(_currentUid);
@@ -364,8 +440,8 @@ namespace Sketchfab
 					_skfbWin.Focus();
 			}
 			GUILayout.BeginVertical(GUILayout.Width(_thumbnailSize), GUILayout.Height(50));
-			GUILayout.Label(model.name, _ui.sketchfabMiniModelname);
-			GUILayout.Label("by " + model.author, _ui.sketchfabMiniAuthorname);
+			GUILayout.Label(model.name, _ui.getSketchfabMiniModelName());
+			GUILayout.Label("by " + model.author, _ui.getSketchfabMiniAuthorName());
 			GUILayout.EndVertical();
 			GUILayout.EndVertical();
 		}
