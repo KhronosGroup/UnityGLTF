@@ -766,21 +766,15 @@ namespace UnityGLTF
 				Dictionary<string, AttributeAccessor> attributeAccessors = new Dictionary<string, AttributeAccessor>(primitive.Attributes.Count + 1);
 				foreach (var attributePair in primitive.Attributes)
 				{
-					BufferId bufferIdPair = attributePair.Value.Value.BufferView.Value.Buffer;
-					GLTFBuffer buffer = bufferIdPair.Value;
-					int bufferId = bufferIdPair.Id;
+					var bufferId = attributePair.Value.Value.BufferView.Value.Buffer;
 
-					// on cache miss, load the buffer
-					if (_assetCache.BufferCache[bufferId] == null)
-					{
-						await ConstructBuffer(buffer, bufferId);
-					}
+					var bufferData = await GetBufferData(bufferId);
 
 					AttributeAccessor attributeAccessor = new AttributeAccessor
 					{
 						AccessorId = attributePair.Value,
-						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
 					};
 
 					attributeAccessors[attributePair.Key] = attributeAccessor;
@@ -788,18 +782,14 @@ namespace UnityGLTF
 
 				if (primitive.Indices != null)
 				{
-					int bufferId = primitive.Indices.Value.BufferView.Value.Buffer.Id;
-
-					if (_assetCache.BufferCache[bufferId] == null)
-					{
-						await ConstructBuffer(primitive.Indices.Value.BufferView.Value.Buffer.Value, bufferId);
-					}
+					var bufferId = primitive.Indices.Value.BufferView.Value.Buffer;
+					var bufferData = await GetBufferData(bufferId);
 
 					AttributeAccessor indexBuilder = new AttributeAccessor
 					{
 						AccessorId = primitive.Indices,
-						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
 					};
 
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
@@ -864,7 +854,7 @@ namespace UnityGLTF
 			throw new Exception("no RelativePath");
 		}
 
-		protected virtual void BuildAnimationSamplers(GLTFAnimation animation, int animationId)
+		protected virtual async Task BuildAnimationSamplers(GLTFAnimation animation, int animationId)
 		{
 			// look up expected data types
 			var typeMap = new Dictionary<int, string>();
@@ -890,7 +880,11 @@ namespace UnityGLTF
 				var samplerDef = animation.Samplers[i];
 
 				// set up input accessors
-				BufferCacheData bufferCacheData = _assetCache.BufferCache[samplerDef.Input.Value.BufferView.Value.Buffer.Id];
+
+				var inputBuffer = samplerDef.Input.Value.BufferView.Value.Buffer;
+
+				BufferCacheData bufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
+
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
@@ -902,7 +896,7 @@ namespace UnityGLTF
 				samplersByType["time"].Add(attributeAccessor);
 
 				// set up output accessors
-				bufferCacheData = _assetCache.BufferCache[samplerDef.Output.Value.BufferView.Value.Buffer.Id];
+				bufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView.Value.Buffer);
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
@@ -922,6 +916,19 @@ namespace UnityGLTF
 
 			// populate attributeAccessors with buffer data
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
+		}
+
+		private async Task<BufferCacheData> GetBufferData(BufferId bufferId)
+		{
+			var data = _assetCache.BufferCache[bufferId.Id];
+
+			if (data == null)
+			{
+				await ConstructBuffer(bufferId.Value, bufferId.Id);
+				data = _assetCache.BufferCache[bufferId.Id];
+			}
+
+			return data;
 		}
 
 		protected void SetAnimationCurve(
@@ -968,7 +975,7 @@ namespace UnityGLTF
 			}
 		}
 
-		protected AnimationClip ConstructClip(Transform root, GameObject[] nodes, int animationId)
+		protected async Task<AnimationClip> ConstructClip(Transform root, GameObject[] nodes, int animationId)
 		{
 			GLTFAnimation animation = _gltfRoot.Animations[animationId];
 
@@ -984,7 +991,7 @@ namespace UnityGLTF
 			}
 
 			// unpack accessors
-			BuildAnimationSamplers(animation, animationId);
+			await BuildAnimationSamplers(animation, animationId);
 
 			// init clip
 			AnimationClip clip = new AnimationClip
@@ -1165,7 +1172,7 @@ namespace UnityGLTF
 				Animation animation = sceneObj.AddComponent<Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache, i);
+					AnimationClip clip = await ConstructClip(sceneObj.transform, _assetCache.NodeCache, i);
 
 					clip.wrapMode = WrapMode.Loop;
 
