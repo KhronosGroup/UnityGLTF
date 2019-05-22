@@ -47,6 +47,8 @@ namespace GLTF.Schema
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
+		public List<string> TargetNames;
+
 		public MeshPrimitive()
 		{
 		}
@@ -88,6 +90,11 @@ namespace GLTF.Schema
 					}
 					Targets.Add(target);
 				}
+			}
+
+			if (meshPrimitive.TargetNames != null)
+			{
+				TargetNames = new List<string>(meshPrimitive.TargetNames);
 			}
 		}
 
@@ -212,6 +219,28 @@ namespace GLTF.Schema
 							skipStartObjectRead: true);
 						});
 						break;
+					case "extras":
+						// GLTF does not support morph target names, serialize in extras for now
+						// https://github.com/KhronosGroup/glTF/issues/1036
+						if (reader.Read() && reader.TokenType == JsonToken.StartObject)
+						{
+							while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+							{
+								var extraProperty = reader.Value.ToString();
+								switch (extraProperty)
+								{
+									case "targetNames":
+										primitive.TargetNames = reader.ReadStringList();
+										break;
+
+								}
+				
+							}
+
+						}
+
+
+						break;
 					default:
 						primitive.DefaultPropertyDeserializer(root, reader);
 						break;
@@ -269,6 +298,22 @@ namespace GLTF.Schema
 					writer.WriteEndObject();
 				}
 				writer.WriteEndArray();
+			}
+
+			// GLTF does not support morph target names, serialize in extras for now
+			// https://github.com/KhronosGroup/glTF/issues/1036
+			if (TargetNames != null && TargetNames.Count > 0)
+			{
+				writer.WritePropertyName("extras");
+				writer.WriteStartObject();
+				writer.WritePropertyName("targetNames");
+				writer.WriteStartArray();
+				foreach (var targetName in TargetNames)
+				{
+					writer.WriteValue(targetName);
+				}
+				writer.WriteEndArray();
+				writer.WriteEndObject();
 			}
 
 			base.Serialize(writer);

@@ -459,6 +459,12 @@ namespace UnityGLTF
 					{
 						await ConstructMaterialImageBuffers(primitive.Material.Value);
 					}
+
+					if (primitive.Targets != null)
+					{
+						// read mesh primitive targets into assetcache
+						await ConstructMeshTargets(primitive, meshIdIndex, i);
+					}
 				}
 			}
 		}
@@ -757,6 +763,67 @@ namespace UnityGLTF
 			progressStatus.TextureLoaded++;
 			progress?.Report(progressStatus);
 			_assetCache.ImageCache[imageCacheIndex] = texture;
+		}
+
+		protected virtual async Task ConstructMeshTargets(MeshPrimitive primitive, int meshID, int primitiveIndex)
+		{
+			if (_assetCache.MeshCache[meshID][primitiveIndex].Targets == null || _assetCache.MeshCache[meshID][primitiveIndex].Targets.Count == 0)
+			{
+				List<Dictionary<string, AttributeAccessor>> newTargets = new List<Dictionary<string, AttributeAccessor>>(primitive.Targets.Count);
+				foreach (Dictionary<string, AccessorId> target in primitive.Targets)
+				{
+					int currentIndex = newTargets.Count;
+					newTargets.Add(new Dictionary<string, AttributeAccessor>());
+					//NORMALS, POSITIONS, TANGENTS
+					foreach (var targetAttribute in target)
+					{
+
+						BufferId bufferIdPair = targetAttribute.Value.Value.BufferView.Value.Buffer;
+						GLTFBuffer buffer = bufferIdPair.Value;
+						int bufferID = bufferIdPair.Id;
+
+						if (_assetCache.BufferCache[bufferID] == null)
+						{
+							await ConstructBuffer(buffer, bufferID);
+						}
+
+
+						newTargets[currentIndex][targetAttribute.Key] = new AttributeAccessor
+						{
+							AccessorId = targetAttribute.Value,
+							Stream = _assetCache.BufferCache[bufferID].Stream,
+							Offset = (uint)_assetCache.BufferCache[bufferID].ChunkOffset
+						};
+
+					}
+					Dictionary<string, AttributeAccessor> att = newTargets[currentIndex];
+					GLTFHelpers.BuildTargetAttributes(ref att);
+					TransformTargets(ref att);
+					_assetCache.MeshCache[meshID][primitiveIndex].Targets = newTargets;
+				}
+			}
+		}
+
+		// Flip vectors to Unity coordinate system
+		private void TransformTargets(ref Dictionary<string, AttributeAccessor> attributeAccessors)
+		{
+			if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+
+			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+
+			if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
 		}
 
 		protected virtual async Task ConstructMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
@@ -1382,6 +1449,49 @@ namespace UnityGLTF
 			}
 		}
 
+		protected virtual void SetupBlendShapes(GLTFMesh mesh, MeshPrimitive primitive, int meshId, int primitiveIndex, Mesh unityMesh)
+		{
+			Vector3[] zeroes = new Vector3[unityMesh.vertexCount];
+			
+			var targets = _assetCache.MeshCache[meshId][primitiveIndex].Targets;
+			bool hasNames = primitive.TargetNames != null;
+			string bsname;
+
+			for (int i = 0; i < targets.Count; ++i)
+			{
+				if (hasNames)
+					bsname = primitive.TargetNames[i];
+				else
+					bsname = "Blendshape" + i;
+
+				//GLTF only supports 1 frame per blendshape, set that to 100%
+				unityMesh.AddBlendShapeFrame(bsname, 0, zeroes, zeroes, zeroes);
+				unityMesh.AddBlendShapeFrame(bsname, 100,
+											targets[i].ContainsKey(SemanticProperties.POSITION) ? targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
+											targets[i].ContainsKey(SemanticProperties.NORMAL) ? targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
+											targets[i].ContainsKey(SemanticProperties.TANGENT) ? targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes);
+
+			}
+		}
+
+		protected virtual void SetBlendShapeWeights(SkinnedMeshRenderer smr, GLTFMesh mesh)
+		{
+			if (mesh.Weights == null || mesh.Weights.Count == 0)
+			{
+				return;
+			}
+			int blendshapeCount = smr.sharedMesh.blendShapeCount;
+			if (blendshapeCount != mesh.Weights.Count)
+			{
+				Debug.LogError("GLTFMesh weights count does not match Unity mesh blendshape count! GLTFMesh weights: " + mesh.Weights.Count  + ", Unity blendshapes: " + blendshapeCount);
+			}
+			blendshapeCount = Mathf.Min(blendshapeCount, mesh.Weights.Count);
+			for (int i = 0; i < blendshapeCount; ++i)
+			{
+				smr.SetBlendShapeWeight(i, (float)(mesh.Weights[i]*100));
+			}
+		}
+
 		protected virtual async Task ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -1412,9 +1522,12 @@ namespace UnityGLTF
 					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
 					skinnedMeshRenderer.material = material;
 					skinnedMeshRenderer.quality = SkinQuality.Auto;
-					// TODO: add support for blend shapes/morph targets
-					//if (HasBlendShapes(primitive))
-					//	SetupBlendShapes(primitive);
+
+					if (HasBlendShapes(primitive))
+					{
+						SetupBlendShapes(mesh, primitive, meshId, i, curMesh);
+					}
+
 					if (HasBones(skin))
 					{
 						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
@@ -1422,6 +1535,8 @@ namespace UnityGLTF
 					}
 
 					skinnedMeshRenderer.sharedMesh = curMesh;
+					SetBlendShapeWeights(skinnedMeshRenderer, mesh);
+
 				}
 				else
 				{

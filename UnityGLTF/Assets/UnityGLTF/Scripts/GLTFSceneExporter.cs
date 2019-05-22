@@ -465,9 +465,19 @@ namespace UnityGLTF
 				// associate unity meshes with gltf mesh id
 				foreach (var prim in primitives)
 				{
-					var filter = prim.GetComponent<MeshFilter>();
-					var renderer = prim.GetComponent<MeshRenderer>();
-					_primOwner[new PrimKey { Mesh = filter.sharedMesh, Material = renderer.sharedMaterial }] = node.Mesh;
+					var smr = prim.GetComponent<SkinnedMeshRenderer>();
+					if ( smr != null)
+					{
+						_primOwner[new PrimKey { Mesh = smr.sharedMesh, Material = smr.sharedMaterial }] = node.Mesh;
+
+					}
+					else
+					{
+						var filter = prim.GetComponent<MeshFilter>();
+						var renderer = prim.GetComponent<MeshRenderer>();
+						_primOwner[new PrimKey { Mesh = filter.sharedMesh, Material = renderer.sharedMaterial }] = node.Mesh;
+
+					}
 				}
 			}
 
@@ -553,12 +563,14 @@ namespace UnityGLTF
 			var nonPrims = new List<GameObject>(childCount);
 
 			// add another primitive if the root object also has a mesh
-			if (transform.gameObject.GetComponent<MeshFilter>() != null
-				&& transform.gameObject.GetComponent<MeshRenderer>() != null)
+			if (transform.gameObject.activeSelf)
 			{
-				prims.Add(transform.gameObject);
+				if ((transform.gameObject.GetComponent<MeshFilter>() != null && transform.gameObject.GetComponent<MeshRenderer>() != null)
+					|| transform.gameObject.GetComponent<SkinnedMeshRenderer>() != null)
+				{
+					prims.Add(transform.gameObject);
+				}
 			}
-
 			for (var i = 0; i < childCount; i++)
 			{
 				var go = transform.GetChild(i).gameObject;
@@ -584,8 +596,9 @@ namespace UnityGLTF
 				&& gameObject.transform.localPosition == Vector3.zero
 				&& gameObject.transform.localRotation == Quaternion.identity
 				&& gameObject.transform.localScale == Vector3.one
-				&& gameObject.GetComponent<MeshFilter>() != null
-				&& gameObject.GetComponent<MeshRenderer>() != null;
+				&& 
+				((gameObject.GetComponent<MeshFilter>() != null && gameObject.GetComponent<MeshRenderer>() != null) || gameObject.GetComponent<SkinnedMeshRenderer>() != null);
+
 		}
 
 		private MeshId ExportMesh(string name, GameObject[] primitives)
@@ -595,10 +608,19 @@ namespace UnityGLTF
 			var key = new PrimKey();
 			foreach (var prim in primitives)
 			{
-				var filter = prim.GetComponent<MeshFilter>();
-				var renderer = prim.GetComponent<MeshRenderer>();
-				key.Mesh = filter.sharedMesh;
-				key.Material = renderer.sharedMaterial;
+				var smr = prim.GetComponent<SkinnedMeshRenderer>();
+				if (smr != null)
+				{
+					key.Mesh = smr.sharedMesh;
+					key.Material = smr.sharedMaterial;
+				}
+				else
+				{
+					var filter = prim.GetComponent<MeshFilter>();
+					var renderer = prim.GetComponent<MeshRenderer>();
+					key.Mesh = filter.sharedMesh;
+					key.Material = renderer.sharedMaterial;
+				}
 
 				MeshId tempMeshId;
 				if (_primOwner.TryGetValue(key, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
@@ -629,13 +651,13 @@ namespace UnityGLTF
 			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
 			foreach (var prim in primitives)
 			{
-				MeshPrimitive[] meshPrimitives = ExportPrimitive(prim);
+				MeshPrimitive[] meshPrimitives = ExportPrimitive(prim, mesh);
 				if (meshPrimitives != null)
 				{
 					mesh.Primitives.AddRange(meshPrimitives);
 				}
 			}
-
+			
 			var id = new MeshId
 			{
 				Id = _root.Meshes.Count,
@@ -647,10 +669,20 @@ namespace UnityGLTF
 		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
-		private MeshPrimitive[] ExportPrimitive(GameObject gameObject)
+		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh)
 		{
+			Mesh meshObj = null;
+			SkinnedMeshRenderer smr = null;
 			var filter = gameObject.GetComponent<MeshFilter>();
-			var meshObj = filter.sharedMesh;
+			if (filter != null)
+			{
+				meshObj = filter.sharedMesh;
+			}
+			else
+			{
+				smr = gameObject.GetComponent<SkinnedMeshRenderer>();
+				meshObj = smr.sharedMesh;
+			}
 			if (meshObj == null)
 			{
 				Debug.LogError(string.Format("MeshFilter.sharedMesh on gameobject:{0} is missing , skipping", gameObject.name));
@@ -658,7 +690,7 @@ namespace UnityGLTF
 			}
 
 			var renderer = gameObject.GetComponent<MeshRenderer>();
-			var materialsObj = renderer.sharedMaterials;
+			var materialsObj = renderer != null ? renderer.sharedMaterials : smr.sharedMaterials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
 
@@ -680,7 +712,7 @@ namespace UnityGLTF
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
 				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
-
+				
 			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
 			if (meshObj.normals.Length != 0)
@@ -731,6 +763,8 @@ namespace UnityGLTF
 					primitive.Material = lastMaterialId;
 				}
 
+				ExportBlendShapes(smr, meshObj, primitive, mesh);
+
 				prims[submesh] = primitive;
 			}
 
@@ -774,7 +808,7 @@ namespace UnityGLTF
 
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
 				materialObj.GetInt("_Cull") == (float)CullMode.Off;
-
+				
 			if (materialObj.HasProperty("_EmissionColor"))
 			{
 				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
@@ -854,6 +888,56 @@ namespace UnityGLTF
 			_root.Materials.Add(material);
 
 			return id;
+		}
+
+		// Blend Shapes / Morph Targets
+		// Adopted from Gary Hsu (bghgary)
+		// https://github.com/bghgary/glTF-Tools-for-Unity/blob/master/UnityProject/Assets/Gltf/Editor/Exporter.cs
+		private void ExportBlendShapes(SkinnedMeshRenderer smr, Mesh meshObj, MeshPrimitive primitive, GLTFMesh mesh)
+		{
+			if (smr != null && meshObj.blendShapeCount > 0)
+			{
+				List<Dictionary<string, AccessorId>> targets = new List<Dictionary<string, AccessorId>>(meshObj.blendShapeCount);
+				List<Double> weights = new List<double>(meshObj.blendShapeCount);
+				List<string> targetNames = new List<string>(meshObj.blendShapeCount);
+
+				for (int blendShapeIndex = 0; blendShapeIndex < meshObj.blendShapeCount; blendShapeIndex++)
+				{
+
+					targetNames.Add(meshObj.GetBlendShapeName(blendShapeIndex));
+					// As described above, a blend shape can have multiple frames.  Given that glTF only supports a single frame
+					// per blend shape, we'll always use the final frame (the one that would be for when 100% weight is applied).
+					int frameIndex = meshObj.GetBlendShapeFrameCount(blendShapeIndex) - 1;
+
+					var deltaVertices = new Vector3[meshObj.vertexCount];
+					var deltaNormals = new Vector3[meshObj.vertexCount];
+					var deltaTangents = new Vector3[meshObj.vertexCount];
+					meshObj.GetBlendShapeFrameVertices(blendShapeIndex, frameIndex, deltaVertices, deltaNormals, deltaTangents);
+
+					targets.Add(new Dictionary<string, AccessorId>
+						{
+							{ SemanticProperties.POSITION, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy( deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)) },
+							{ SemanticProperties.NORMAL, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals,SchemaExtensions.CoordinateSpaceConversionScale))},
+							{ SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)) },
+						});
+
+					// We need to get the weight from the SkinnedMeshRenderer because this represents the currently
+					// defined weight by the user to apply to this blend shape.  If we instead got the value from
+					// the unityMesh, it would be a _per frame_ weight, and for a single-frame blend shape, that would
+					// always be 100.  A blend shape might have more than one frame if a user wanted to more tightly
+					// control how a blend shape will be animated during weight changes (e.g. maybe they want changes
+					// between 0-50% to be really minor, but between 50-100 to be extreme, hence they'd have two frames
+					// where the first frame would have a weight of 50 (meaning any weight between 0-50 should be relative
+					// to the values in this frame) and then any weight between 50-100 would be relevant to the weights in
+					// the second frame.  See Post 20 for more info:
+					// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
+					weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / 100);
+				}
+
+				mesh.Weights = weights;
+				primitive.Targets = targets;
+				primitive.TargetNames = targetNames;
+			}
 		}
 
 		private bool IsPBRMetallicRoughness(Material material)
@@ -1146,7 +1230,7 @@ namespace UnityGLTF
 				textureMapType = texturMapType
 			});
 
-			var imagePath = _retrieveTexturePathDelegate(texture);
+			var imagePath =_retrieveTexturePathDelegate(texture);
 			if (string.IsNullOrEmpty(imagePath))
 			{
 				imagePath = texture.name;
