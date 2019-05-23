@@ -652,6 +652,16 @@ namespace UnityGLTF
 			progress?.Report(progressStatus);
 		}
 
+		private async Task<BufferCacheData> GetBufferData(BufferId bufferId)
+		{
+			if (_assetCache.BufferCache[bufferId.Id] == null)
+			{
+				await ConstructBuffer(bufferId.Value, bufferId.Id);
+			}
+
+			return _assetCache.BufferCache[bufferId.Id];
+		}
+
 		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
 		{
 			if (buffer.Uri == null)
@@ -766,21 +776,15 @@ namespace UnityGLTF
 				Dictionary<string, AttributeAccessor> attributeAccessors = new Dictionary<string, AttributeAccessor>(primitive.Attributes.Count + 1);
 				foreach (var attributePair in primitive.Attributes)
 				{
-					BufferId bufferIdPair = attributePair.Value.Value.BufferView.Value.Buffer;
-					GLTFBuffer buffer = bufferIdPair.Value;
-					int bufferId = bufferIdPair.Id;
+					var bufferId = attributePair.Value.Value.BufferView.Value.Buffer;
 
-					// on cache miss, load the buffer
-					if (_assetCache.BufferCache[bufferId] == null)
-					{
-						await ConstructBuffer(buffer, bufferId);
-					}
+					var bufferData = await GetBufferData(bufferId);
 
 					AttributeAccessor attributeAccessor = new AttributeAccessor
 					{
 						AccessorId = attributePair.Value,
-						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
 					};
 
 					attributeAccessors[attributePair.Key] = attributeAccessor;
@@ -788,18 +792,14 @@ namespace UnityGLTF
 
 				if (primitive.Indices != null)
 				{
-					int bufferId = primitive.Indices.Value.BufferView.Value.Buffer.Id;
-
-					if (_assetCache.BufferCache[bufferId] == null)
-					{
-						await ConstructBuffer(primitive.Indices.Value.BufferView.Value.Buffer.Value, bufferId);
-					}
+					var bufferId = primitive.Indices.Value.BufferView.Value.Buffer;
+					var bufferData = await GetBufferData(bufferId);
 
 					AttributeAccessor indexBuilder = new AttributeAccessor
 					{
 						AccessorId = primitive.Indices,
-						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
 					};
 
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
@@ -864,7 +864,7 @@ namespace UnityGLTF
 			throw new Exception("no RelativePath");
 		}
 
-		protected virtual void BuildAnimationSamplers(GLTFAnimation animation, int animationId)
+		protected virtual async Task BuildAnimationSamplers(GLTFAnimation animation, int animationId)
 		{
 			// look up expected data types
 			var typeMap = new Dictionary<int, string>();
@@ -890,24 +890,24 @@ namespace UnityGLTF
 				var samplerDef = animation.Samplers[i];
 
 				// set up input accessors
-				BufferCacheData bufferCacheData = _assetCache.BufferCache[samplerDef.Input.Value.BufferView.Value.Buffer.Id];
+				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
-					Stream = bufferCacheData.Stream,
-					Offset = bufferCacheData.ChunkOffset
+					Stream = inputBufferCacheData.Stream,
+					Offset = inputBufferCacheData.ChunkOffset
 				};
 
 				samplers[i].Input = attributeAccessor;
 				samplersByType["time"].Add(attributeAccessor);
 
 				// set up output accessors
-				bufferCacheData = _assetCache.BufferCache[samplerDef.Output.Value.BufferView.Value.Buffer.Id];
+				BufferCacheData outputBufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView.Value.Buffer);
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
-					Stream = bufferCacheData.Stream,
-					Offset = bufferCacheData.ChunkOffset
+					Stream = outputBufferCacheData.Stream,
+					Offset = outputBufferCacheData.ChunkOffset
 				};
 
 				samplers[i].Output = attributeAccessor;
@@ -968,7 +968,7 @@ namespace UnityGLTF
 			}
 		}
 
-		protected AnimationClip ConstructClip(Transform root, GameObject[] nodes, int animationId)
+		protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
 		{
 			GLTFAnimation animation = _gltfRoot.Animations[animationId];
 
@@ -984,7 +984,7 @@ namespace UnityGLTF
 			}
 
 			// unpack accessors
-			BuildAnimationSamplers(animation, animationId);
+			await BuildAnimationSamplers(animation, animationId);
 
 			// init clip
 			AnimationClip clip = new AnimationClip
@@ -999,8 +999,8 @@ namespace UnityGLTF
 			foreach (AnimationChannel channel in animation.Channels)
 			{
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
-				Transform node = nodes[channel.Target.Node.Id].transform;
-				string relativePath = RelativePathFrom(node, root);
+				var node = await GetNode(channel.Target.Node, cancellationToken);
+				string relativePath = RelativePathFrom(node.transform, root);
 
 				NumericArray input = samplerCache.Input.AccessorContent,
 					output = samplerCache.Output.AccessorContent;
@@ -1154,7 +1154,7 @@ namespace UnityGLTF
 			{
 				NodeId node = scene.Nodes[i];
 				await _LoadNode(node.Id, cancellationToken);
-				GameObject nodeObj = _assetCache.NodeCache[node.Id];
+				GameObject nodeObj = await GetNode(node, cancellationToken);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
 			}
@@ -1165,7 +1165,7 @@ namespace UnityGLTF
 				Animation animation = sceneObj.AddComponent<Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache, i);
+					AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
 
 					clip.wrapMode = WrapMode.Loop;
 
@@ -1181,6 +1181,15 @@ namespace UnityGLTF
 			InitializeGltfTopLevelObject();
 		}
 
+		private async Task<GameObject> GetNode(NodeId nodeId, CancellationToken cancellationToken)
+		{
+			if (_assetCache.NodeCache[nodeId.Id] == null)
+			{
+				await ConstructNode(nodeId.Value, nodeId.Id, cancellationToken);
+			}
+
+			return _assetCache.NodeCache[nodeId.Id];
+		}
 
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
@@ -1222,9 +1231,7 @@ namespace UnityGLTF
 			{
 				foreach (var child in node.Children)
 				{
-					// todo blgross: replace with an iterartive solution
-					await ConstructNode(child.Value, child.Id, cancellationToken);
-					GameObject childObj = _assetCache.NodeCache[child.Id];
+					GameObject childObj = await GetNode(child, cancellationToken);
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
@@ -1311,7 +1318,7 @@ namespace UnityGLTF
 			return primitive.Targets != null;
 		}
 
-		protected virtual async Task SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, Mesh curMesh)
+		protected virtual async Task SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, Mesh curMesh, CancellationToken cancellationToken)
 		{
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
@@ -1331,15 +1338,17 @@ namespace UnityGLTF
 
 			for (int i = 0; i < boneCount; i++)
 			{
-				if (_assetCache.NodeCache[skin.Joints[i].Id] == null)
-				{
-					await ConstructNode(_gltfRoot.Nodes[skin.Joints[i].Id], skin.Joints[i].Id, CancellationToken.None);
-				}
-				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
+				var node = await GetNode(skin.Joints[i], cancellationToken);
+
+				bones[i] = node.transform;
 				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
 			}
 
-			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
+			if (skin.Skeleton != null)
+			{
+				var rootBoneNode = await GetNode(skin.Skeleton, cancellationToken);
+				renderer.rootBone = rootBoneNode.transform;
+			}
 			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
 		}
@@ -1417,7 +1426,7 @@ namespace UnityGLTF
 					//	SetupBlendShapes(primitive);
 					if (HasBones(skin))
 					{
-						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh, cancellationToken);
 						cancellationToken.ThrowIfCancellationRequested();
 					}
 
