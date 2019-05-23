@@ -33,27 +33,35 @@ namespace UnityGLTF
 
 		private void DrawAnimation(Animation animation)
 		{
-			using (var horizontal = new EditorGUILayout.HorizontalScope())
+			GUILayout.Label(animation.name);
+
+			foreach (AnimationState animationState in animation)
 			{
-				GUILayout.Label(animation.name);
-
-				GUILayout.Label(animation.GetClipCount().ToString());
-
-				string playPause = animation.isPlaying ? "pause" : "play";
-
-				var buttonPressed = GUILayout.Button(playPause);
-
-				if (buttonPressed)
+				using (var horizontal = new EditorGUILayout.HorizontalScope())
 				{
-					if (animation.isPlaying)
+					var clip = animationState.clip;
+					var clipName = clip.name;
+					GUILayout.Label(clipName);
+
+					var isPlaying = animation.IsPlaying(clipName);
+					string playPause = isPlaying ? "pause" : "play";
+
+					var buttonPressed = GUILayout.Button(playPause);
+
+					if (buttonPressed)
 					{
-						//animation.Stop();
-						SetClipsPlaying(animation, false);
-					}
-					else
-					{
-						//animation.Play();
-						SetClipsPlaying(animation, true);
+						if (isPlaying)
+						{
+							//animation.Stop();
+							//SetClipsPlaying(animation, false);
+							animation.Stop(clipName);
+						}
+						else
+						{
+							//animation.Play();
+							//SetClipsPlaying(animation, true);
+							animation.Play(clipName);
+						}
 					}
 				}
 			}
