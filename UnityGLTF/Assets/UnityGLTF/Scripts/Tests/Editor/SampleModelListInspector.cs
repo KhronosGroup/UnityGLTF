@@ -16,11 +16,7 @@ public class SampleModelListInspector : Editor
 
 	public override void OnInspectorGUI()
 	{
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.LoaderFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.PathRootFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName));
+		DrawDefaultInspector();
 
 		serializedObject.ApplyModifiedProperties();
 
