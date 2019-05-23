@@ -890,28 +890,24 @@ namespace UnityGLTF
 				var samplerDef = animation.Samplers[i];
 
 				// set up input accessors
-
-				var inputBuffer = samplerDef.Input.Value.BufferView.Value.Buffer;
-
-				BufferCacheData bufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
-
+				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
-					Stream = bufferCacheData.Stream,
-					Offset = bufferCacheData.ChunkOffset
+					Stream = inputBufferCacheData.Stream,
+					Offset = inputBufferCacheData.ChunkOffset
 				};
 
 				samplers[i].Input = attributeAccessor;
 				samplersByType["time"].Add(attributeAccessor);
 
 				// set up output accessors
-				bufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView.Value.Buffer);
+				BufferCacheData outputBufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView.Value.Buffer);
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
-					Stream = bufferCacheData.Stream,
-					Offset = bufferCacheData.ChunkOffset
+					Stream = outputBufferCacheData.Stream,
+					Offset = outputBufferCacheData.ChunkOffset
 				};
 
 				samplers[i].Output = attributeAccessor;
