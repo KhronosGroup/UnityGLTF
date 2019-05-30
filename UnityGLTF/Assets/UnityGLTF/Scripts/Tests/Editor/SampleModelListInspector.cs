@@ -57,23 +57,56 @@ namespace UnityGLTF
 		{
 			using (var horizontal = new EditorGUILayout.HorizontalScope())
 			{
-				GUIStyle style = new GUIStyle(GUI.skin.label);
-				if (model == currentModel)
+				if (model.Expanded)
 				{
-					style.fontStyle = FontStyle.Bold;
-				}
-				GUILayout.Label(model.Name, style);
-
-				foreach (var variant in model.Variants)
-				{
-					var buttonPressed = GUILayout.Button(variant.Name);
-
-					if (buttonPressed)
+					GUIStyle style = new GUIStyle(GUI.skin.label);
+					if (model == currentModel)
 					{
-						currentModel = model;
-						LoadModel(variant.ModelFilePath);
+						style.fontStyle = FontStyle.Bold;
+					}
+					GUILayout.Label(model.Name, style);
+
+					foreach (var variant in model.Variants)
+					{
+						DrawModelLoadButton(variant.Name, variant.ModelFilePath);
 					}
 				}
+				else
+				{
+					DrawModelLoadButton(model.Name, model.DefaultFilePath);
+				}
+
+				if (model.Variants.Count > 1)
+				{
+					model.Expanded = DrawExpandCollapseButton(model.Expanded, model.Variants.Count);
+				}
+			}
+		}
+
+		private bool DrawExpandCollapseButton(bool expanded, int count)
+		{
+			string expandCollapseText = expanded ? "-" : "+";
+			string buttonText = $"{expandCollapseText} ({count})";
+			var buttonPressed = GUILayout.Button(buttonText, GUILayout.Width(40));
+
+			if (buttonPressed)
+			{
+				return !expanded;
+			}
+			else
+			{
+				return expanded;
+			}
+		}
+
+		private void DrawModelLoadButton(string title, string modelRelativePath)
+		{
+			var buttonPressed = GUILayout.Button(title);
+
+			if (buttonPressed)
+			{
+				//currentModel = model;
+				LoadModel(modelRelativePath);
 			}
 		}
 

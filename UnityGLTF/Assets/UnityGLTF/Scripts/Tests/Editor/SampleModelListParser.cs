@@ -27,6 +27,7 @@ public class SampleModel
 	public string ScreenshotPath;
 	public List<ISampleModelVariant> Variants;
 	public string DefaultFilePath => Variants[0].ModelFilePath;
+	public bool Expanded = false;
 }
 
 public static class SampleModelListParser
