@@ -1,18 +1,32 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class SampleModelVariant
+public interface ISampleModelVariant
 {
-	public string Type;
-	public string FileName;
+	string Name { get; }
+	string ModelFilePath { get; }
+}
+
+public class SampleModelVariant : ISampleModelVariant
+{
+	public SampleModelVariant(string modelName, string variantType, string variantName)
+	{
+		Name = variantType;
+		ModelFilePath = $"{modelName}/{variantType}/{variantName}";
+	}
+
+	public string Name { get; }
+	public string ModelFilePath { get; }
 }
 
 public class SampleModel
 {
 	public string Name;
 	public string ScreenshotPath;
-	public List<SampleModelVariant> Variants;
+	public List<ISampleModelVariant> Variants;
+	public string DefaultFilePath => Variants[0].ModelFilePath;
 }
 
 public static class SampleModelListParser
@@ -57,7 +71,8 @@ public static class SampleModelListParser
 					result.ScreenshotPath = ParsePropertyValueAsString(reader, propertyName);
 					break;
 				case "variants":
-					result.Variants = ParseVariants(reader);
+					Debug.Assert(!string.IsNullOrEmpty(result.Name), "Model index should have a name before a list of variants.");
+					result.Variants = ParseVariants(reader, result.Name);
 					break;
 			}
 		}
@@ -80,15 +95,15 @@ public static class SampleModelListParser
 		return result;
 	}
 
-	private static List<SampleModelVariant> ParseVariants(JsonReader reader)
+	private static List<ISampleModelVariant> ParseVariants(JsonReader reader, string modelName)
 	{
-		var variants = new List<SampleModelVariant>();
+		var variants = new List<ISampleModelVariant>();
 
 		ParseStartObject(reader, "variants");
 
 		while (reader.TokenType != JsonToken.EndObject)
 		{
-			variants.Add(ParseVariant(reader));
+			variants.Add(ParseVariant(reader, modelName));
 		}
 
 		ParseEndObject(reader, "variants");
@@ -96,25 +111,23 @@ public static class SampleModelListParser
 		return variants;
 	}
 
-	private static SampleModelVariant ParseVariant(JsonReader reader)
+	private static SampleModelVariant ParseVariant(JsonReader reader, string modelName)
 	{
-		var result = new SampleModelVariant();
-
 		if (reader.TokenType != JsonToken.PropertyName)
 		{
 			throw new Exception("Failed to parse model variant name");
 		}
-		result.Type = reader.Value.ToString();
+		string variantType = reader.Value.ToString();
 		reader.Read();
 
 		if (reader.TokenType != JsonToken.String)
 		{
 			throw new Exception("Failed to parse model variant filename");
 		}
-		result.FileName = reader.Value.ToString();
+		string variantName = reader.Value.ToString();
 		reader.Read();
 
-		return result;
+		return new SampleModelVariant(modelName, variantType, variantName);
 	}
 
 	private static void ParseStartObject(JsonReader reader, string objectName)

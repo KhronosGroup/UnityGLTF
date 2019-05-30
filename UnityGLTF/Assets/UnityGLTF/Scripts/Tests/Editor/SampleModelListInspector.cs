@@ -66,21 +66,19 @@ namespace UnityGLTF
 
 				foreach (var variant in model.Variants)
 				{
-					var buttonPressed = GUILayout.Button(variant.Type);
+					var buttonPressed = GUILayout.Button(variant.Name);
 
 					if (buttonPressed)
 					{
 						currentModel = model;
-						LoadModel(model.Name, variant.Type, variant.FileName);
+						LoadModel(variant.ModelFilePath);
 					}
 				}
 			}
 		}
 
-		private void LoadModel(string modelName, string variantType, string variantName)
+		private void LoadModel(string relativePath)
 		{
-			string relativePath = $"{modelName}/{variantType}/{variantName}";
-
 			serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName).stringValue = relativePath;
 			serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName).boolValue = true;
 			serializedObject.ApplyModifiedProperties();
