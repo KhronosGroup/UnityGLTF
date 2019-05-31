@@ -5,13 +5,7 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-	public interface ISampleModelVariant
-	{
-		string Name { get; }
-		string ModelFilePath { get; }
-	}
-
-	public class SampleModelVariant : ISampleModelVariant
+	public class SampleModelVariant
 	{
 		public SampleModelVariant(string name, string modelFilePath)
 		{
@@ -27,7 +21,7 @@ namespace UnityGLTF
 	{
 		public string Name;
 		public string ScreenshotPath;
-		public List<ISampleModelVariant> Variants;
+		public List<SampleModelVariant> Variants;
 		public string DefaultFilePath => Variants[0].ModelFilePath;
 		public bool Expanded = false;
 	}
@@ -117,9 +111,6 @@ namespace UnityGLTF
 			}
 
 			ParseEndObject(reader, "folder");
-
-			//ParseToken(reader, JsonToken.PropertyName, "folder");
-			//ParseToken(reader, JsonToken)
 		}
 
 		private static void ParseAssetGeneratorModels(JsonReader reader, IList<SampleModel> models, string folderName)
@@ -137,7 +128,7 @@ namespace UnityGLTF
 		private static SampleModel ParseAssetGeneratorModel(JsonReader reader, string folderName)
 		{
 			var result = new SampleModel();
-			result.Variants = new List<ISampleModelVariant>();
+			result.Variants = new List<SampleModelVariant>();
 
 			ParseStartObject(reader, "model");
 
@@ -269,9 +260,9 @@ namespace UnityGLTF
 			return result;
 		}
 
-		private static List<ISampleModelVariant> ParseVariants(JsonReader reader, string modelName)
+		private static List<SampleModelVariant> ParseVariants(JsonReader reader, string modelName)
 		{
-			var variants = new List<ISampleModelVariant>();
+			var variants = new List<SampleModelVariant>();
 
 			ParseStartObject(reader, "variants");
 
