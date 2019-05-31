@@ -133,14 +133,31 @@ namespace UnityGLTF
 				throw;
 			}
 
-			loader.LoadedStream.Seek(0, SeekOrigin.Begin);
+			var jsonReader = CreateJsonReaderFromStream(loader.LoadedStream);
+			jsonReader.Read();
+			var listType = SampleModelListParser.DetermineListSource(jsonReader);
 
-			var streamReader = new StreamReader(loader.LoadedStream);
+			jsonReader = CreateJsonReaderFromStream(loader.LoadedStream);
+			jsonReader.Read();
 
-			var reader = new JsonTextReader(streamReader);
 
-			reader.Read();
-			models = SampleModelListParser.ParseSampleModels(reader);
+			if (listType == SampleModelListParser.ListType.SampleModels)
+			{
+				models = SampleModelListParser.ParseSampleModels(jsonReader);
+			}
+			else
+			{
+				models = SampleModelListParser.ParseAssetGeneratorModels(jsonReader);
+			}
+		}
+
+		private JsonReader CreateJsonReaderFromStream(Stream stream)
+		{
+			stream.Seek(0, SeekOrigin.Begin);
+
+			var streamReader = new StreamReader(stream);
+
+			return new JsonTextReader(streamReader);
 		}
 	}
 }
