@@ -46,7 +46,7 @@ public class GLTFSceneTests
 		    if (o.name.Contains("GLTF"))
 		    {
 			    GLTFComponent gltfcomponent = o.GetComponent<GLTFComponent>();
-			    gltfcomponent.Load();
+			    yield return gltfcomponent.Load().AsCoroutine();
 		    }
 	    }
 
