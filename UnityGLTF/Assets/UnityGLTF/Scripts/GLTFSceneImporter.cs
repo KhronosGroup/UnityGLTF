@@ -952,11 +952,35 @@ namespace UnityGLTF
 			{
 				var time = input.AsFloats[i];
 
-				var values = getConvertedValues(output, i);
+				float[] values = null;
+				float[] inTangents = null;
+				float[] outTangents = null;
+				if (mode == InterpolationType.CUBICSPLINE)
+				{
+					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
+					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
+
+					var cubicIndex = i * 3;
+					inTangents = getConvertedValues(output, cubicIndex);
+					values = getConvertedValues(output, cubicIndex + 1);
+					outTangents = getConvertedValues(output, cubicIndex + 2);
+				}
+				else
+				{
+					// For other interpolation types, the output will only contain one value per keyframe
+					values = getConvertedValues(output, i);
+				}
 
 				for (var ci = 0; ci < channelCount; ++ci)
 				{
-					keyframes[ci][i] = new Keyframe(time, values[ci]);
+					if (mode == InterpolationType.CUBICSPLINE)
+					{
+						keyframes[ci][i] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
+					}
+					else
+					{
+						keyframes[ci][i] = new Keyframe(time, values[ci]);
+					}
 				}
 			}
 
@@ -965,12 +989,18 @@ namespace UnityGLTF
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve();
 				curve.keys = keyframes[ci];
-				for (var i = 0; i < keyframes.Length; i++)
-				{
-					var utilityMode = GetAnimationUtilityMode(mode);
 
-					AnimationUtility.SetKeyLeftTangentMode(curve, i, utilityMode);
-					AnimationUtility.SetKeyRightTangentMode(curve, i, utilityMode);
+				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
+				// For the rest, set them appropriately.
+				if (mode != InterpolationType.CUBICSPLINE)
+				{
+					for (var i = 0; i < keyframes.Length; i++)
+					{
+						var utilityMode = GetAnimationUtilityMode(mode);
+
+						AnimationUtility.SetKeyLeftTangentMode(curve, i, utilityMode);
+						AnimationUtility.SetKeyRightTangentMode(curve, i, utilityMode);
+					}
 				}
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
