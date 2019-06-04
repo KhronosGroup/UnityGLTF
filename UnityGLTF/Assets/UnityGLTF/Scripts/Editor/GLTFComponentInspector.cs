@@ -22,7 +22,6 @@ namespace UnityGLTF
 				using (var scrollView = new EditorGUILayout.ScrollViewScope(scrollPosition))
 				{
 					scrollPosition = scrollView.scrollPosition;
-					//GUILayout.
 					foreach (var animation in gltfComponent.Animations)
 					{
 						DrawAnimation(animation);
@@ -52,14 +51,10 @@ namespace UnityGLTF
 					{
 						if (isPlaying)
 						{
-							//animation.Stop();
-							//SetClipsPlaying(animation, false);
 							animation.Stop(clipName);
 						}
 						else
 						{
-							//animation.Play();
-							//SetClipsPlaying(animation, true);
 							animation.Play(clipName);
 						}
 					}
