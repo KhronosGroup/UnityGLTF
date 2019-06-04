@@ -14,7 +14,6 @@ namespace UnityGLTF
 		private List<SampleModel> models = null;
 		private bool requestedModelList = false;
 		private Vector2 scrollPosition = Vector2.zero;
-		private SampleModel currentModel = null;
 
 		public override void OnInspectorGUI()
 		{
@@ -65,16 +64,19 @@ namespace UnityGLTF
 
 		private void DrawModel(SampleModel model)
 		{
+			//bool isFocused = model == currentModel;
+
 			using (var horizontal = new EditorGUILayout.HorizontalScope())
 			{
 				if (model.Expanded)
 				{
-					GUIStyle style = new GUIStyle(GUI.skin.label);
-					if (model == currentModel)
-					{
-						style.fontStyle = FontStyle.Bold;
-					}
-					GUILayout.Label(model.Name, style);
+					//GUIStyle style = new GUIStyle(GUI.skin.label);
+					//if (isFocused)
+					//{
+					//	style.fontStyle = FontStyle.Bold;
+					//}
+					//GUILayout.Label(model.Name, style);
+					GUILayout.Label(model.Name);
 
 					foreach (var variant in model.Variants)
 					{
@@ -111,11 +113,19 @@ namespace UnityGLTF
 
 		private void DrawModelLoadButton(string title, string modelRelativePath)
 		{
-			var buttonPressed = GUILayout.Button(title);
+			var currentModelPath = serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName).stringValue;
+			bool focused = currentModelPath == modelRelativePath;
+
+			GUIStyle style = new GUIStyle(GUI.skin.button);
+			if (focused)
+			{
+				style.fontStyle = FontStyle.Bold;
+			}
+
+			var buttonPressed = GUILayout.Button(title, style);
 
 			if (buttonPressed)
 			{
-				//currentModel = model;
 				LoadModel(modelRelativePath);
 			}
 		}
