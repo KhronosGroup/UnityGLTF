@@ -994,7 +994,7 @@ namespace UnityGLTF
 				// For the rest, set them appropriately.
 				if (mode != InterpolationType.CUBICSPLINE)
 				{
-					for (var i = 0; i < keyframes.Length; i++)
+					for (var i = 0; i < keyframes[ci].Length; i++)
 					{
 						var utilityMode = GetAnimationUtilityMode(mode);
 
@@ -1054,6 +1054,14 @@ namespace UnityGLTF
 			foreach (AnimationChannel channel in animation.Channels)
 			{
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
+				if (channel.Target.Node == null)
+				{
+					// If a channel doesn't have a target node, then just skip it.
+					// This is legal and is present in one of the asset generator models, but means that animation doesn't actually do anything.
+					// https://github.com/KhronosGroup/glTF-Asset-Generator/tree/master/Output/Positive/Animation_NodeMisc
+					// Model 08
+					continue;
+				}
 				var node = await GetNode(channel.Target.Node, cancellationToken);
 				string relativePath = RelativePathFrom(node.transform, root);
 
