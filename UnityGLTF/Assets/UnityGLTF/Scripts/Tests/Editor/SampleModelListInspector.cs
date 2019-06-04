@@ -21,7 +21,17 @@ namespace UnityGLTF
 			DrawDefaultInspector();
 			serializedObject.ApplyModifiedProperties();
 
-			if (!Application.isPlaying)
+			bool enabled = true;
+			var targetObject = serializedObject.targetObject as SampleModelList;
+
+			if (targetObject != null)
+			{
+				enabled = targetObject.enabled;
+			}
+
+			bool shouldShowList = Application.isPlaying && enabled;
+
+			if (!shouldShowList)
 			{
 				models = null;
 				requestedModelList = false;
