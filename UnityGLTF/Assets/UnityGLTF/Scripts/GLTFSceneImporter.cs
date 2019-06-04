@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
@@ -889,6 +890,8 @@ namespace UnityGLTF
 
 				var samplerDef = animation.Samplers[i];
 
+				samplers[i].Interpolation = samplerDef.Interpolation;
+
 				// set up input accessors
 				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
@@ -959,12 +962,34 @@ namespace UnityGLTF
 
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
-				// set interpolcation for each keyframe
-				SetCurveMode(keyframes[ci], mode);
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve();
 				curve.keys = keyframes[ci];
+				for (var i = 0; i < keyframes.Length; i++)
+				{
+					var utilityMode = GetAnimationUtilityMode(mode);
+
+					AnimationUtility.SetKeyLeftTangentMode(curve, i, utilityMode);
+					AnimationUtility.SetKeyRightTangentMode(curve, i, utilityMode);
+				}
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
+			}
+		}
+
+		private static AnimationUtility.TangentMode GetAnimationUtilityMode(InterpolationType interpolation)
+		{
+			switch (interpolation)
+			{
+				case InterpolationType.CATMULLROMSPLINE:
+				case InterpolationType.CUBICSPLINE:
+					return AnimationUtility.TangentMode.Auto;
+				case InterpolationType.LINEAR:
+					return AnimationUtility.TangentMode.Linear;
+				case InterpolationType.STEP:
+					return AnimationUtility.TangentMode.Constant;
+
+				default:
+					throw new NotImplementedException();
 			}
 		}
 
@@ -1070,77 +1095,6 @@ namespace UnityGLTF
 
 			clip.EnsureQuaternionContinuity();
 			return clip;
-		}
-
-		public static void SetCurveMode(Keyframe[] keyframes, InterpolationType mode)
-		{
-			for (int i = 0; i < keyframes.Length; ++i)
-			{
-				float intangent = 0;
-				float outtangent = 0;
-				bool intangent_set = false;
-				bool outtangent_set = false;
-				Vector2 point1;
-				Vector2 point2;
-				Vector2 deltapoint;
-				var key = keyframes[i];
-
-				if (i == 0)
-				{
-					intangent = 0; intangent_set = true;
-				}
-
-				if (i == keyframes.Length - 1)
-				{
-					outtangent = 0; outtangent_set = true;
-				}
-				switch (mode)
-				{
-					case InterpolationType.STEP:
-						{
-							intangent = 0;
-							outtangent = float.PositiveInfinity;
-						}
-						break;
-					case InterpolationType.LINEAR:
-						{
-							if (!intangent_set)
-							{
-								point1.x = keyframes[i - 1].time;
-								point1.y = keyframes[i - 1].value;
-								point2.x = keyframes[i].time;
-								point2.y = keyframes[i].value;
-
-								deltapoint = point2 - point1;
-
-								intangent = deltapoint.y / deltapoint.x;
-							}
-							if (!outtangent_set)
-							{
-								point1.x = keyframes[i].time;
-								point1.y = keyframes[i].value;
-								point2.x = keyframes[i + 1].time;
-								point2.y = keyframes[i + 1].value;
-
-								deltapoint = point2 - point1;
-
-								outtangent = deltapoint.y / deltapoint.x;
-							}
-						}
-						break;
-					//use default unity curve
-					case InterpolationType.CUBICSPLINE:
-						break;
-					case InterpolationType.CATMULLROMSPLINE:
-						break;
-					default:
-						break;
-				}
-
-
-				key.inTangent = intangent;
-				key.outTangent = outtangent;
-			}
 		}
 		#endregion
 
