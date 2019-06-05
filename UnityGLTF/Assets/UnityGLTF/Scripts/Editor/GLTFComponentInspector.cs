@@ -15,8 +15,10 @@ namespace UnityGLTF
 			DrawDefaultInspector();
 			serializedObject.ApplyModifiedProperties();
 
-			if (serializedObject.targetObject is GLTFComponent gltfComponent
-				&& gltfComponent.Animations != null)
+			var gltfComponent = serializedObject.targetObject as GLTFComponent;
+
+			if (gltfComponent != null &&
+				gltfComponent.Animations != null)
 			{
 				EditorGUILayout.LabelField("Animations:");
 				using (var scrollView = new EditorGUILayout.ScrollViewScope(scrollPosition))
