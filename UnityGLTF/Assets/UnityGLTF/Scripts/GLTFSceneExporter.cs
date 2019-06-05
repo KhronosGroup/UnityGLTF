@@ -146,7 +146,7 @@ namespace UnityGLTF
 			
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
 			{
-				GLBToStream(glbFile, fileName);
+				SaveGLBToStream(glbFile, fileName);
 			}
 
 			if (!_shouldUseInternalBufferForImages)
@@ -162,13 +162,11 @@ namespace UnityGLTF
 		/// <returns></returns>
 		public byte[] SaveGLBToByteArray(string sceneName)
 		{
-
 			using (var stream = new MemoryStream())
 			{
-				GLBToStream(stream, sceneName);
+				SaveGLBToStream(stream, sceneName);
 				return stream.ToArray();
 			}
-
 		}
 
 		/// <summary>
