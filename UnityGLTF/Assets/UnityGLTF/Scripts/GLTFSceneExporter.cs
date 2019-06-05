@@ -178,7 +178,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void GLBToStream(Stream stream, string sceneName)
+		public void SaveGLBToStream(Stream stream, string sceneName)
 		{
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
