@@ -64,18 +64,10 @@ namespace UnityGLTF
 
 		private void DrawModel(SampleModel model)
 		{
-			//bool isFocused = model == currentModel;
-
 			using (var horizontal = new EditorGUILayout.HorizontalScope())
 			{
 				if (model.Expanded)
 				{
-					//GUIStyle style = new GUIStyle(GUI.skin.label);
-					//if (isFocused)
-					//{
-					//	style.fontStyle = FontStyle.Bold;
-					//}
-					//GUILayout.Label(model.Name, style);
 					GUILayout.Label(model.Name);
 
 					foreach (var variant in model.Variants)

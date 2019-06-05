@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using GLTF;
-using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Loader;
 
@@ -141,14 +139,11 @@ namespace UnityGLTF
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
 
-				if (PlayAnimationOnLoad)
-				{
-					Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
+				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
 
-					foreach (Animation animation in Animations)
-					{
-						animation.Play();
-					}
+				if (PlayAnimationOnLoad && Animations.Any())
+				{
+					Animations.FirstOrDefault().Play();
 				}
 			}
 			finally

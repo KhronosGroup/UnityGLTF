@@ -191,11 +191,6 @@ namespace UnityGLTF
 			reader.Read();
 		}
 
-		//private static string ParseStringValue(JsonReader reader)
-		//{
-
-		//}
-
 		public static List<SampleModel> ParseSampleModels(JsonReader reader)
 		{
 			var models = new List<SampleModel>();
