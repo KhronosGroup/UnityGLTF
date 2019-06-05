@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
@@ -889,6 +890,8 @@ namespace UnityGLTF
 
 				var samplerDef = animation.Samplers[i];
 
+				samplers[i].Interpolation = samplerDef.Interpolation;
+
 				// set up input accessors
 				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
@@ -949,22 +952,74 @@ namespace UnityGLTF
 			{
 				var time = input.AsFloats[i];
 
-				var values = getConvertedValues(output, i);
+				float[] values = null;
+				float[] inTangents = null;
+				float[] outTangents = null;
+				if (mode == InterpolationType.CUBICSPLINE)
+				{
+					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
+					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
+
+					var cubicIndex = i * 3;
+					inTangents = getConvertedValues(output, cubicIndex);
+					values = getConvertedValues(output, cubicIndex + 1);
+					outTangents = getConvertedValues(output, cubicIndex + 2);
+				}
+				else
+				{
+					// For other interpolation types, the output will only contain one value per keyframe
+					values = getConvertedValues(output, i);
+				}
 
 				for (var ci = 0; ci < channelCount; ++ci)
 				{
-					keyframes[ci][i] = new Keyframe(time, values[ci]);
+					if (mode == InterpolationType.CUBICSPLINE)
+					{
+						keyframes[ci][i] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
+					}
+					else
+					{
+						keyframes[ci][i] = new Keyframe(time, values[ci]);
+					}
 				}
 			}
 
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
-				// set interpolcation for each keyframe
-				SetCurveMode(keyframes[ci], mode);
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve();
 				curve.keys = keyframes[ci];
+
+				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
+				// For the rest, set them appropriately.
+				if (mode != InterpolationType.CUBICSPLINE)
+				{
+					for (var i = 0; i < keyframes[ci].Length; i++)
+					{
+						var utilityMode = GetAnimationUtilityMode(mode);
+
+						AnimationUtility.SetKeyLeftTangentMode(curve, i, utilityMode);
+						AnimationUtility.SetKeyRightTangentMode(curve, i, utilityMode);
+					}
+				}
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
+			}
+		}
+
+		private static AnimationUtility.TangentMode GetAnimationUtilityMode(InterpolationType interpolation)
+		{
+			switch (interpolation)
+			{
+				case InterpolationType.CATMULLROMSPLINE:
+				case InterpolationType.CUBICSPLINE:
+					return AnimationUtility.TangentMode.Auto;
+				case InterpolationType.LINEAR:
+					return AnimationUtility.TangentMode.Linear;
+				case InterpolationType.STEP:
+					return AnimationUtility.TangentMode.Constant;
+
+				default:
+					throw new NotImplementedException();
 			}
 		}
 
@@ -999,6 +1054,14 @@ namespace UnityGLTF
 			foreach (AnimationChannel channel in animation.Channels)
 			{
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
+				if (channel.Target.Node == null)
+				{
+					// If a channel doesn't have a target node, then just skip it.
+					// This is legal and is present in one of the asset generator models, but means that animation doesn't actually do anything.
+					// https://github.com/KhronosGroup/glTF-Asset-Generator/tree/master/Output/Positive/Animation_NodeMisc
+					// Model 08
+					continue;
+				}
 				var node = await GetNode(channel.Target.Node, cancellationToken);
 				string relativePath = RelativePathFrom(node.transform, root);
 
@@ -1068,79 +1131,7 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
-			clip.EnsureQuaternionContinuity();
 			return clip;
-		}
-
-		public static void SetCurveMode(Keyframe[] keyframes, InterpolationType mode)
-		{
-			for (int i = 0; i < keyframes.Length; ++i)
-			{
-				float intangent = 0;
-				float outtangent = 0;
-				bool intangent_set = false;
-				bool outtangent_set = false;
-				Vector2 point1;
-				Vector2 point2;
-				Vector2 deltapoint;
-				var key = keyframes[i];
-
-				if (i == 0)
-				{
-					intangent = 0; intangent_set = true;
-				}
-
-				if (i == keyframes.Length - 1)
-				{
-					outtangent = 0; outtangent_set = true;
-				}
-				switch (mode)
-				{
-					case InterpolationType.STEP:
-						{
-							intangent = 0;
-							outtangent = float.PositiveInfinity;
-						}
-						break;
-					case InterpolationType.LINEAR:
-						{
-							if (!intangent_set)
-							{
-								point1.x = keyframes[i - 1].time;
-								point1.y = keyframes[i - 1].value;
-								point2.x = keyframes[i].time;
-								point2.y = keyframes[i].value;
-
-								deltapoint = point2 - point1;
-
-								intangent = deltapoint.y / deltapoint.x;
-							}
-							if (!outtangent_set)
-							{
-								point1.x = keyframes[i].time;
-								point1.y = keyframes[i].value;
-								point2.x = keyframes[i + 1].time;
-								point2.y = keyframes[i + 1].value;
-
-								deltapoint = point2 - point1;
-
-								outtangent = deltapoint.y / deltapoint.x;
-							}
-						}
-						break;
-					//use default unity curve
-					case InterpolationType.CUBICSPLINE:
-						break;
-					case InterpolationType.CATMULLROMSPLINE:
-						break;
-					default:
-						break;
-				}
-
-
-				key.inTangent = intangent;
-				key.outTangent = outtangent;
-			}
 		}
 		#endregion
 

@@ -1,16 +1,14 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using GLTF;
-using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Loader;
 
 namespace UnityGLTF
 {
-
 	/// <summary>
 	/// Component to load a GLTF scene with
 	/// </summary>
@@ -21,6 +19,8 @@ namespace UnityGLTF
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
+
+		public IEnumerable<Animation> Animations { get; private set; }
 
 		[SerializeField]
 		private bool loadOnStart = true;
@@ -139,13 +139,11 @@ namespace UnityGLTF
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
 
-				if (PlayAnimationOnLoad)
+				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
+
+				if (PlayAnimationOnLoad && Animations.Any())
 				{
-					Animation[] animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
-					foreach (Animation anim in animations)
-					{
-						anim.Play();
-					}
+					Animations.FirstOrDefault().Play();
 				}
 			}
 			finally
