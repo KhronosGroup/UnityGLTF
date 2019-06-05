@@ -160,17 +160,15 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="sceneName"></param>
 		/// <returns></returns>
-		public byte[] GetGLBData(string sceneName)
+		public byte[] SaveGLBToByteArray(string sceneName)
 		{
-			byte[] buf = null;
 
 			using (var stream = new MemoryStream())
 			{
 				GLBToStream(stream, sceneName);
-				buf = stream.ToArray();
+				return stream.ToArray();
 			}
 
-			return buf;
 		}
 
 		/// <summary>
