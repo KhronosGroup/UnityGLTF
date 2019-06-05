@@ -142,6 +142,42 @@ namespace UnityGLTF
 		public void SaveGLB(string path, string fileName)
 		{
 			_shouldUseInternalBufferForImages = true;
+			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
+			
+			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
+			{
+				GLBToStream(glbFile, fileName);
+			}
+
+			if (!_shouldUseInternalBufferForImages)
+			{
+				ExportImages(path);
+			}
+		}
+
+		/// <summary>
+		/// In-memory GLB creation helper. Useful for platforms where no filesystem is available (e.g. WebGL).
+		/// </summary>
+		/// <param name="sceneName"></param>
+		/// <returns></returns>
+		public byte[] SaveGLBToByteArray(string sceneName)
+		{
+
+			using (var stream = new MemoryStream())
+			{
+				GLBToStream(stream, sceneName);
+				return stream.ToArray();
+			}
+
+		}
+
+		/// <summary>
+		/// Writes a binary GLB file into a stream (memory stream, filestream, ...)
+		/// </summary>
+		/// <param name="path">File path for saving the binary file</param>
+		/// <param name="fileName">The name of the GLTF file</param>
+		public void SaveGLBToStream(Stream stream, string sceneName)
+		{
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
 
@@ -149,7 +185,7 @@ namespace UnityGLTF
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
-			_root.Scene = ExportScene(fileName, _rootTransforms);
+			_root.Scene = ExportScene(sceneName, _rootTransforms);
 
 			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
 
@@ -165,39 +201,27 @@ namespace UnityGLTF
 			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
 				jsonStream.Length + SectionHeaderSize + binStream.Length);
 
-			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
+			BinaryWriter writer = new BinaryWriter(stream);
 
+			// write header
+			writer.Write(MagicGLTF);
+			writer.Write(Version);
+			writer.Write(glbLength);
 
-			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
-			{
+			// write JSON chunk header.
+			writer.Write((int)jsonStream.Length);
+			writer.Write(MagicJson);
 
-				BinaryWriter writer = new BinaryWriter(glbFile);
+			jsonStream.Position = 0;
+			CopyStream(jsonStream, writer);
 
-				// write header
-				writer.Write(MagicGLTF);
-				writer.Write(Version);
-				writer.Write(glbLength);
+			writer.Write((int)binStream.Length);
+			writer.Write(MagicBin);
 
-				// write JSON chunk header.
-				writer.Write((int)jsonStream.Length);
-				writer.Write(MagicJson);
+			binStream.Position = 0;
+			CopyStream(binStream, writer);
 
-				jsonStream.Position = 0;
-				CopyStream(jsonStream, writer);
-
-				writer.Write((int)binStream.Length);
-				writer.Write(MagicBin);
-
-				binStream.Position = 0;
-				CopyStream(binStream, writer);
-
-				writer.Flush();
-			}
-
-			if (!_shouldUseInternalBufferForImages)
-			{
-			        ExportImages(path);
-			}
+			writer.Flush();
 		}
 
 		/// <summary>
