@@ -1043,7 +1043,7 @@ namespace UnityGLTF
 			return valueDelta / timeDelta;
 		}
 
-        protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
+		protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
 		{
 			GLTFAnimation animation = _gltfRoot.Animations[animationId];
 
