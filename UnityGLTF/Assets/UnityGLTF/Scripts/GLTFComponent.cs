@@ -73,7 +73,7 @@ namespace UnityGLTF
 			ILoader loader = null;
 			try
 			{
-                Factory = Factory ?? new DefaultImporterFactory();
+                Factory = Factory ?? ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
 				if (UseStream)
 				{
