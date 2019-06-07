@@ -9,19 +9,6 @@ using UnityGLTF.Loader;
 
 namespace UnityGLTF
 {
-    public abstract class IImporterFactory : ScriptableObject
-    {
-        public abstract GLTFSceneImporter CreateSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper);
-    }
-
-    public class DefaultImporterFactory : IImporterFactory
-    {
-        public override GLTFSceneImporter CreateSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
-        {
-            return new GLTFSceneImporter(gltfFileName, externalDataLoader, asyncCoroutineHelper);
-        }
-    }
-
     /// <summary>
     /// Component to load a GLTF scene with
     /// </summary>
@@ -32,7 +19,7 @@ namespace UnityGLTF
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
-        public IImporterFactory Factory = null;
+        public ImporterFactory Factory = null;
 
         public IEnumerable<Animation> Animations { get; private set; }
 
