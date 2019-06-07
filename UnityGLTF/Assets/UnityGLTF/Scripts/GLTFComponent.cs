@@ -9,18 +9,32 @@ using UnityGLTF.Loader;
 
 namespace UnityGLTF
 {
-	/// <summary>
-	/// Component to load a GLTF scene with
-	/// </summary>
-	public class GLTFComponent : MonoBehaviour
+    public abstract class IImporterFactory : ScriptableObject
+    {
+        public abstract GLTFSceneImporter CreateSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper);
+    }
+
+    public class DefaultImporterFactory : IImporterFactory
+    {
+        public override GLTFSceneImporter CreateSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
+        {
+            return new GLTFSceneImporter(gltfFileName, externalDataLoader, asyncCoroutineHelper);
+        }
+    }
+
+    /// <summary>
+    /// Component to load a GLTF scene with
+    /// </summary>
+    public class GLTFComponent : MonoBehaviour
 	{
 		public string GLTFUri = null;
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
+        public IImporterFactory Factory = null;
 
-		public IEnumerable<Animation> Animations { get; private set; }
+        public IEnumerable<Animation> Animations { get; private set; }
 
 		[SerializeField]
 		private bool loadOnStart = true;
@@ -72,6 +86,8 @@ namespace UnityGLTF
 			ILoader loader = null;
 			try
 			{
+                Factory = Factory ?? new DefaultImporterFactory();
+
 				if (UseStream)
 				{
 					string fullPath;
@@ -88,7 +104,7 @@ namespace UnityGLTF
 					}
 					string directoryPath = URIHelper.GetDirectoryName(fullPath);
 					loader = new FileLoader(directoryPath);
-					sceneImporter = new GLTFSceneImporter(
+					sceneImporter = Factory.CreateSceneImporter(
 						Path.GetFileName(GLTFUri),
 						loader,
 						asyncCoroutineHelper
@@ -99,7 +115,7 @@ namespace UnityGLTF
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
 					loader = new WebRequestLoader(directoryPath);
 
-					sceneImporter = new GLTFSceneImporter(
+					sceneImporter = Factory.CreateSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
 						loader,
 						asyncCoroutineHelper
