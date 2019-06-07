@@ -10,7 +10,6 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
@@ -937,41 +936,40 @@ namespace UnityGLTF
 			Type curveType,
 			ValuesConvertion getConvertedValues)
 		{
-
 			var channelCount = propertyNames.Length;
 			var frameCount = input.AsFloats.Length;
 
-			// copy all the key frame data to cache
-			Keyframe[][] keyframes = new Keyframe[channelCount][];
+            // copy all the key frame data to cache
+            Keyframe[][] keyframes = new Keyframe[channelCount][];
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
 				keyframes[ci] = new Keyframe[frameCount];
 			}
 
-			for (var i = 0; i < frameCount; ++i)
-			{
-				var time = input.AsFloats[i];
+            for (var i = 0; i < frameCount; ++i)
+            {
+                var time = input.AsFloats[i];
 
-				float[] values = null;
-				float[] inTangents = null;
-				float[] outTangents = null;
-				if (mode == InterpolationType.CUBICSPLINE)
-				{
-					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
-					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
+                float[] values = null;
+                float[] inTangents = null;
+                float[] outTangents = null;
+                if (mode == InterpolationType.CUBICSPLINE)
+                {
+                    // For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
+                    // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
 
-					var cubicIndex = i * 3;
-					inTangents = getConvertedValues(output, cubicIndex);
-					values = getConvertedValues(output, cubicIndex + 1);
-					outTangents = getConvertedValues(output, cubicIndex + 2);
-				}
-				else
-				{
-					// For other interpolation types, the output will only contain one value per keyframe
-					values = getConvertedValues(output, i);
-				}
+                    var cubicIndex = i * 3;
+                    inTangents = getConvertedValues(output, cubicIndex);
+                    values = getConvertedValues(output, cubicIndex + 1);
+                    outTangents = getConvertedValues(output, cubicIndex + 2);
+                }
+                else
+                {
+                    // For other interpolation types, the output will only contain one value per keyframe
+                    values = getConvertedValues(output, i);
+                }
 
-				for (var ci = 0; ci < channelCount; ++ci)
+                for (var ci = 0; ci < channelCount; ++ci)
 				{
 					if (mode == InterpolationType.CUBICSPLINE)
 					{
@@ -990,38 +988,59 @@ namespace UnityGLTF
 				AnimationCurve curve = new AnimationCurve();
 				curve.keys = keyframes[ci];
 
-				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
-				// For the rest, set them appropriately.
-				if (mode != InterpolationType.CUBICSPLINE)
-				{
-					for (var i = 0; i < keyframes[ci].Length; i++)
-					{
-						var utilityMode = GetAnimationUtilityMode(mode);
-
-						AnimationUtility.SetKeyLeftTangentMode(curve, i, utilityMode);
-						AnimationUtility.SetKeyRightTangentMode(curve, i, utilityMode);
-					}
-				}
-				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
+                // For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
+                // For the rest, set them appropriately.
+                if (mode != InterpolationType.CUBICSPLINE)
+                {
+                    for (var i = 0; i < keyframes[ci].Length; i++)
+                    {
+                        SetTangentMode(curve, i, mode);
+                    }
+                }
+                clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
 
-		private static AnimationUtility.TangentMode GetAnimationUtilityMode(InterpolationType interpolation)
-		{
-			switch (interpolation)
-			{
-				case InterpolationType.CATMULLROMSPLINE:
-				case InterpolationType.CUBICSPLINE:
-					return AnimationUtility.TangentMode.Auto;
-				case InterpolationType.LINEAR:
-					return AnimationUtility.TangentMode.Linear;
-				case InterpolationType.STEP:
-					return AnimationUtility.TangentMode.Constant;
+        private static void SetTangentMode(AnimationCurve curve, int keyframeIndex, InterpolationType interpolation)
+        {
+            var key = curve.keys[keyframeIndex];
 
-				default:
-					throw new NotImplementedException();
-			}
-		}
+            switch (interpolation)
+            {
+                case InterpolationType.CATMULLROMSPLINE:
+                    key.inTangent = 0;
+                    key.outTangent = 0;
+                    break;
+                case InterpolationType.LINEAR:
+                    key.inTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex);
+                    key.outTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex + 1);
+                    break;
+                case InterpolationType.STEP:
+                    key.inTangent = float.PositiveInfinity;
+                    key.outTangent = float.PositiveInfinity;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            curve.MoveKey(keyframeIndex, key);
+        }
+
+        private static float GetCurveKeyframeLeftLinearSlope(AnimationCurve curve, int keyframeIndex)
+        {
+            if (keyframeIndex <= 0 || keyframeIndex >= curve.keys.Length)
+            {
+                return 0;
+            }
+
+            var valueDelta = curve.keys[keyframeIndex].value - curve.keys[keyframeIndex - 1].value;
+            var timeDelta = curve.keys[keyframeIndex].time - curve.keys[keyframeIndex - 1].time;
+
+            Debug.Assert(timeDelta > 0, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
+
+            return valueDelta / timeDelta;
+        }
 
 		protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
 		{
