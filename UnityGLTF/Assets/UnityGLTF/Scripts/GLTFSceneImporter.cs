@@ -10,7 +10,6 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
@@ -996,31 +995,52 @@ namespace UnityGLTF
 				{
 					for (var i = 0; i < keyframes[ci].Length; i++)
 					{
-						var utilityMode = GetAnimationUtilityMode(mode);
-
-						AnimationUtility.SetKeyLeftTangentMode(curve, i, utilityMode);
-						AnimationUtility.SetKeyRightTangentMode(curve, i, utilityMode);
+						SetTangentMode(curve, i, mode);
 					}
 				}
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
 
-		private static AnimationUtility.TangentMode GetAnimationUtilityMode(InterpolationType interpolation)
+		private static void SetTangentMode(AnimationCurve curve, int keyframeIndex, InterpolationType interpolation)
 		{
+			var key = curve.keys[keyframeIndex];
+
 			switch (interpolation)
 			{
 				case InterpolationType.CATMULLROMSPLINE:
-				case InterpolationType.CUBICSPLINE:
-					return AnimationUtility.TangentMode.Auto;
+					key.inTangent = 0;
+					key.outTangent = 0;
+					break;
 				case InterpolationType.LINEAR:
-					return AnimationUtility.TangentMode.Linear;
+					key.inTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex);
+					key.outTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex + 1);
+					break;
 				case InterpolationType.STEP:
-					return AnimationUtility.TangentMode.Constant;
+					key.inTangent = float.PositiveInfinity;
+					key.outTangent = float.PositiveInfinity;
+					break;
 
 				default:
 					throw new NotImplementedException();
 			}
+
+			curve.MoveKey(keyframeIndex, key);
+		}
+
+		private static float GetCurveKeyframeLeftLinearSlope(AnimationCurve curve, int keyframeIndex)
+		{
+			if (keyframeIndex <= 0 || keyframeIndex >= curve.keys.Length)
+			{
+				return 0;
+			}
+
+			var valueDelta = curve.keys[keyframeIndex].value - curve.keys[keyframeIndex - 1].value;
+			var timeDelta = curve.keys[keyframeIndex].time - curve.keys[keyframeIndex - 1].time;
+
+			Debug.Assert(timeDelta > 0, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
+
+			return valueDelta / timeDelta;
 		}
 
 		protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
