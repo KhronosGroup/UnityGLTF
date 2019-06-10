@@ -466,7 +466,7 @@ namespace UnityGLTF
 				foreach (var prim in primitives)
 				{
 					var smr = prim.GetComponent<SkinnedMeshRenderer>();
-					if ( smr != null)
+					if (smr != null)
 					{
 						_primOwner[new PrimKey { Mesh = smr.sharedMesh, Material = smr.sharedMaterial }] = node.Mesh;
 
