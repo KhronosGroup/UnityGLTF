@@ -6,106 +6,170 @@ using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Loader;
 
-[CustomEditor(typeof(SampleModelList))]
-public class SampleModelListInspector : Editor
+namespace UnityGLTF
 {
-	private List<SampleModel> models = null;
-	private bool requestedModelList = false;
-	private Vector2 scroll = Vector2.zero;
-	private SampleModel currentModel = null;
-
-	public override void OnInspectorGUI()
+	[CustomEditor(typeof(SampleModelList))]
+	public class SampleModelListInspector : Editor
 	{
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.LoaderFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.PathRootFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName));
-		EditorGUILayout.PropertyField(serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName));
+		private List<SampleModel> models = null;
+		private bool requestedModelList = false;
+		private Vector2 scrollPosition = Vector2.zero;
 
-		serializedObject.ApplyModifiedProperties();
+		public override void OnInspectorGUI()
+		{
+			DrawDefaultInspector();
+			serializedObject.ApplyModifiedProperties();
 
-		if (!Application.isPlaying)
-		{
-			models = null;
-			requestedModelList = false;
-			scroll = Vector2.zero;
-		}
-		else
-		{
-			if (!requestedModelList)
+			bool enabled = true;
+			var targetObject = serializedObject.targetObject as SampleModelList;
+
+			if (targetObject != null)
 			{
-				requestedModelList = true;
-
-				DownloadSampleModelList();
+				enabled = targetObject.enabled;
 			}
 
-			EditorGUILayout.LabelField("Models:");
+			bool shouldShowList = Application.isPlaying && enabled;
 
-			if (models != null)
+			if (!shouldShowList)
 			{
-				scroll = EditorGUILayout.BeginScrollView(scroll);
-
-				foreach (var model in models)
+				models = null;
+				requestedModelList = false;
+				scrollPosition = Vector2.zero;
+			}
+			else
+			{
+				if (!requestedModelList)
 				{
-					EditorGUILayout.BeginHorizontal();
-					GUIStyle style = new GUIStyle(GUI.skin.label);
-					if (model == currentModel)
+					requestedModelList = true;
+
+					DownloadSampleModelList();
+				}
+
+				EditorGUILayout.LabelField("Models:");
+
+				if (models != null)
+				{
+					using (var scrollView = new EditorGUILayout.ScrollViewScope(scrollPosition))
 					{
-						style.fontStyle = FontStyle.Bold;
+						scrollPosition = scrollView.scrollPosition;
+
+						foreach (var model in models)
+						{
+							DrawModel(model);
+						}
 					}
-					GUILayout.Label(model.Name, style);
+				}
+			}
+		}
+
+		private void DrawModel(SampleModel model)
+		{
+			using (var horizontal = new EditorGUILayout.HorizontalScope())
+			{
+				if (model.Expanded)
+				{
+					GUILayout.Label(model.Name);
 
 					foreach (var variant in model.Variants)
 					{
-						var buttonPressed = GUILayout.Button(variant.Type);
-
-						if (buttonPressed)
-						{
-							currentModel = model;
-							LoadModel(model.Name, variant.Type, variant.FileName);
-						}
+						DrawModelLoadButton(variant.Name, variant.ModelFilePath);
 					}
-
-					EditorGUILayout.EndHorizontal();
+				}
+				else
+				{
+					DrawModelLoadButton(model.Name, model.DefaultFilePath);
 				}
 
-				EditorGUILayout.EndScrollView();
+				if (model.Variants.Count > 1)
+				{
+					model.Expanded = DrawExpandCollapseButton(model.Expanded, model.Variants.Count);
+				}
 			}
 		}
-	}
 
-	private void LoadModel(string modelName, string variantType, string variantName)
-	{
-		string relativePath = $"{modelName}/{variantType}/{variantName}";
-
-		serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName).stringValue = relativePath;
-		serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName).boolValue = true;
-		serializedObject.ApplyModifiedProperties();
-	}
-
-	private async void DownloadSampleModelList()
-	{
-		var pathRoot = serializedObject.FindProperty(SampleModelList.PathRootFieldName).stringValue;
-		var manifestRelativePath = serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName).stringValue;
-
-		var loader = new WebRequestLoader(pathRoot);
-		try
+		private bool DrawExpandCollapseButton(bool expanded, int count)
 		{
-			await loader.LoadStream(manifestRelativePath);
-		}
-		catch (HttpRequestException)
-		{
-			Debug.LogError($"Failed to download sample model list manifest from: {pathRoot}{manifestRelativePath}", serializedObject.targetObject);
-			throw;
+			string expandCollapseText = expanded ? "-" : "+";
+			string buttonText = $"{expandCollapseText} ({count})";
+			var buttonPressed = GUILayout.Button(buttonText, GUILayout.Width(40));
+
+			if (buttonPressed)
+			{
+				return !expanded;
+			}
+			else
+			{
+				return expanded;
+			}
 		}
 
-		loader.LoadedStream.Seek(0, SeekOrigin.Begin);
+		private void DrawModelLoadButton(string title, string modelRelativePath)
+		{
+			var currentModelPath = serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName).stringValue;
+			bool focused = currentModelPath == modelRelativePath;
 
-		var streamReader = new StreamReader(loader.LoadedStream);
+			GUIStyle style = new GUIStyle(GUI.skin.button);
+			if (focused)
+			{
+				style.fontStyle = FontStyle.Bold;
+			}
 
-		var reader = new JsonTextReader(streamReader);
-		
-		reader.Read();
-		models = SampleModelListParser.ParseSampleModels(reader);
+			var buttonPressed = GUILayout.Button(title, style);
+
+			if (buttonPressed)
+			{
+				LoadModel(modelRelativePath);
+			}
+		}
+
+		private void LoadModel(string relativePath)
+		{
+			serializedObject.FindProperty(SampleModelList.ModelRelativePathFieldName).stringValue = relativePath;
+			serializedObject.FindProperty(SampleModelList.LoadThisFrameFieldName).boolValue = true;
+			serializedObject.ApplyModifiedProperties();
+		}
+
+		private async void DownloadSampleModelList()
+		{
+			var pathRoot = serializedObject.FindProperty(SampleModelList.PathRootFieldName).stringValue;
+			var manifestRelativePath = serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName).stringValue;
+
+			var loader = new WebRequestLoader(pathRoot);
+			try
+			{
+				await loader.LoadStream(manifestRelativePath);
+			}
+			catch (HttpRequestException)
+			{
+				Debug.LogError($"Failed to download sample model list manifest from: {pathRoot}{manifestRelativePath}", serializedObject.targetObject);
+				throw;
+			}
+
+			var jsonReader = CreateJsonReaderFromStream(loader.LoadedStream);
+			jsonReader.Read();
+			var listType = SampleModelListParser.DetermineListSource(jsonReader);
+
+			jsonReader = CreateJsonReaderFromStream(loader.LoadedStream);
+			jsonReader.Read();
+
+
+			if (listType == SampleModelListParser.ListType.SampleModels)
+			{
+				models = SampleModelListParser.ParseSampleModels(jsonReader);
+			}
+			else
+			{
+				models = SampleModelListParser.ParseAssetGeneratorModels(jsonReader);
+			}
+		}
+
+		private JsonReader CreateJsonReaderFromStream(Stream stream)
+		{
+			stream.Seek(0, SeekOrigin.Begin);
+
+			var streamReader = new StreamReader(stream);
+
+			return new JsonTextReader(streamReader);
+		}
 	}
 }

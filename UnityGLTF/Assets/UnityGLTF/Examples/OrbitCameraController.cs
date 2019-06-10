@@ -19,7 +19,7 @@ namespace UnityGLTF.Examples
 		public float distanceMin = .5f;
 		public float distanceMax = 150f;
 
-		private Camera camera;
+		private new Camera camera;
 
 		private Rigidbody cameraRigidBody;
 

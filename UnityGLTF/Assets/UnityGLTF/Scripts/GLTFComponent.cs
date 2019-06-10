@@ -1,26 +1,27 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using GLTF;
-using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Loader;
 
 namespace UnityGLTF
 {
-
-	/// <summary>
-	/// Component to load a GLTF scene with
-	/// </summary>
-	public class GLTFComponent : MonoBehaviour
+    /// <summary>
+    /// Component to load a GLTF scene with
+    /// </summary>
+    public class GLTFComponent : MonoBehaviour
 	{
 		public string GLTFUri = null;
 		public bool Multithreaded = true;
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
+        public ImporterFactory Factory = null;
+
+        public IEnumerable<Animation> Animations { get; private set; }
 
 		[SerializeField]
 		private bool loadOnStart = true;
@@ -72,16 +73,17 @@ namespace UnityGLTF
 			ILoader loader = null;
 			try
 			{
+                Factory = Factory ?? ScriptableObject.CreateInstance<DefaultImporterFactory>();
+
 				if (UseStream)
 				{
-					// Path.Combine treats paths that start with the separator character
-					// as absolute paths, ignoring the first path passed in. This removes
-					// that character to properly handle a filename written with it.
-					GLTFUri = GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
 					string fullPath;
 					if (AppendStreamingAssets)
 					{
-						fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri);
+						// Path.Combine treats paths that start with the separator character
+						// as absolute paths, ignoring the first path passed in. This removes
+						// that character to properly handle a filename written with it.
+						fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
 					}
 					else
 					{
@@ -89,7 +91,7 @@ namespace UnityGLTF
 					}
 					string directoryPath = URIHelper.GetDirectoryName(fullPath);
 					loader = new FileLoader(directoryPath);
-					sceneImporter = new GLTFSceneImporter(
+					sceneImporter = Factory.CreateSceneImporter(
 						Path.GetFileName(GLTFUri),
 						loader,
 						asyncCoroutineHelper
@@ -100,7 +102,7 @@ namespace UnityGLTF
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
 					loader = new WebRequestLoader(directoryPath);
 
-					sceneImporter = new GLTFSceneImporter(
+					sceneImporter = Factory.CreateSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
 						loader,
 						asyncCoroutineHelper
@@ -140,13 +142,11 @@ namespace UnityGLTF
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
 
-				if (PlayAnimationOnLoad)
+				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
+
+				if (PlayAnimationOnLoad && Animations.Any())
 				{
-					Animation[] animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
-					foreach (Animation anim in animations)
-					{
-						anim.Play();
-					}
+					Animations.FirstOrDefault().Play();
 				}
 			}
 			finally

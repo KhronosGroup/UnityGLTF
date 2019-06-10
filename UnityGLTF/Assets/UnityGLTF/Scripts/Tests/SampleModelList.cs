@@ -34,6 +34,9 @@ public class SampleModelList : MonoBehaviour
 			loadThisFrame = false;
 
 			var path = pathRoot + modelRelativePath;
+
+			Debug.Log(path, this);
+
 			if (loader.LastLoadedScene != null)
 			{
 				Destroy(loader.LastLoadedScene);

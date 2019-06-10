@@ -659,6 +659,16 @@ namespace UnityGLTF
 			progress?.Report(progressStatus);
 		}
 
+		private async Task<BufferCacheData> GetBufferData(BufferId bufferId)
+		{
+			if (_assetCache.BufferCache[bufferId.Id] == null)
+			{
+				await ConstructBuffer(bufferId.Value, bufferId.Id);
+			}
+
+			return _assetCache.BufferCache[bufferId.Id];
+		}
+
 		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
 		{
 			if (buffer.Uri == null)
@@ -763,21 +773,15 @@ namespace UnityGLTF
 				Dictionary<string, AttributeAccessor> attributeAccessors = new Dictionary<string, AttributeAccessor>(primitive.Attributes.Count + 1);
 				foreach (var attributePair in primitive.Attributes)
 				{
-					BufferId bufferIdPair = attributePair.Value.Value.BufferView.Value.Buffer;
-					GLTFBuffer buffer = bufferIdPair.Value;
-					int bufferId = bufferIdPair.Id;
+					var bufferId = attributePair.Value.Value.BufferView.Value.Buffer;
 
-					// on cache miss, load the buffer
-					if (_assetCache.BufferCache[bufferId] == null)
-					{
-						await ConstructBuffer(buffer, bufferId);
-					}
+					var bufferData = await GetBufferData(bufferId);
 
 					AttributeAccessor attributeAccessor = new AttributeAccessor
 					{
 						AccessorId = attributePair.Value,
-						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
 					};
 
 					attributeAccessors[attributePair.Key] = attributeAccessor;
@@ -785,18 +789,14 @@ namespace UnityGLTF
 
 				if (primitive.Indices != null)
 				{
-					int bufferId = primitive.Indices.Value.BufferView.Value.Buffer.Id;
-
-					if (_assetCache.BufferCache[bufferId] == null)
-					{
-						await ConstructBuffer(primitive.Indices.Value.BufferView.Value.Buffer.Value, bufferId);
-					}
+					var bufferId = primitive.Indices.Value.BufferView.Value.Buffer;
+					var bufferData = await GetBufferData(bufferId);
 
 					AttributeAccessor indexBuilder = new AttributeAccessor
 					{
 						AccessorId = primitive.Indices,
-						Stream = _assetCache.BufferCache[bufferId].Stream,
-						Offset = (uint)_assetCache.BufferCache[bufferId].ChunkOffset
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
 					};
 
 					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
@@ -861,7 +861,7 @@ namespace UnityGLTF
 			throw new Exception("no RelativePath");
 		}
 
-		protected virtual void BuildAnimationSamplers(GLTFAnimation animation, int animationId)
+		protected virtual async Task BuildAnimationSamplers(GLTFAnimation animation, int animationId)
 		{
 			// look up expected data types
 			var typeMap = new Dictionary<int, string>();
@@ -886,25 +886,27 @@ namespace UnityGLTF
 
 				var samplerDef = animation.Samplers[i];
 
+				samplers[i].Interpolation = samplerDef.Interpolation;
+
 				// set up input accessors
-				BufferCacheData bufferCacheData = _assetCache.BufferCache[samplerDef.Input.Value.BufferView.Value.Buffer.Id];
+				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
-					Stream = bufferCacheData.Stream,
-					Offset = bufferCacheData.ChunkOffset
+					Stream = inputBufferCacheData.Stream,
+					Offset = inputBufferCacheData.ChunkOffset
 				};
 
 				samplers[i].Input = attributeAccessor;
 				samplersByType["time"].Add(attributeAccessor);
 
 				// set up output accessors
-				bufferCacheData = _assetCache.BufferCache[samplerDef.Output.Value.BufferView.Value.Buffer.Id];
+				BufferCacheData outputBufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView.Value.Buffer);
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
-					Stream = bufferCacheData.Stream,
-					Offset = bufferCacheData.ChunkOffset
+					Stream = outputBufferCacheData.Stream,
+					Offset = outputBufferCacheData.ChunkOffset
 				};
 
 				samplers[i].Output = attributeAccessor;
@@ -946,26 +948,99 @@ namespace UnityGLTF
 			{
 				var time = input.AsFloats[i];
 
-				var values = getConvertedValues(output, i);
+				float[] values = null;
+				float[] inTangents = null;
+				float[] outTangents = null;
+				if (mode == InterpolationType.CUBICSPLINE)
+				{
+					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
+					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
+
+					var cubicIndex = i * 3;
+					inTangents = getConvertedValues(output, cubicIndex);
+					values = getConvertedValues(output, cubicIndex + 1);
+					outTangents = getConvertedValues(output, cubicIndex + 2);
+				}
+				else
+				{
+					// For other interpolation types, the output will only contain one value per keyframe
+					values = getConvertedValues(output, i);
+				}
 
 				for (var ci = 0; ci < channelCount; ++ci)
 				{
-					keyframes[ci][i] = new Keyframe(time, values[ci]);
+					if (mode == InterpolationType.CUBICSPLINE)
+					{
+						keyframes[ci][i] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
+					}
+					else
+					{
+						keyframes[ci][i] = new Keyframe(time, values[ci]);
+					}
 				}
 			}
 
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
-				// set interpolcation for each keyframe
-				SetCurveMode(keyframes[ci], mode);
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve();
 				curve.keys = keyframes[ci];
+
+				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
+				// For the rest, set them appropriately.
+				if (mode != InterpolationType.CUBICSPLINE)
+				{
+					for (var i = 0; i < keyframes[ci].Length; i++)
+					{
+						SetTangentMode(curve, i, mode);
+					}
+				}
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
 
-		protected AnimationClip ConstructClip(Transform root, GameObject[] nodes, int animationId)
+		private static void SetTangentMode(AnimationCurve curve, int keyframeIndex, InterpolationType interpolation)
+		{
+			var key = curve.keys[keyframeIndex];
+
+			switch (interpolation)
+			{
+				case InterpolationType.CATMULLROMSPLINE:
+					key.inTangent = 0;
+					key.outTangent = 0;
+					break;
+				case InterpolationType.LINEAR:
+					key.inTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex);
+					key.outTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex + 1);
+					break;
+				case InterpolationType.STEP:
+					key.inTangent = float.PositiveInfinity;
+					key.outTangent = float.PositiveInfinity;
+					break;
+
+				default:
+					throw new NotImplementedException();
+			}
+
+			curve.MoveKey(keyframeIndex, key);
+		}
+
+		private static float GetCurveKeyframeLeftLinearSlope(AnimationCurve curve, int keyframeIndex)
+		{
+			if (keyframeIndex <= 0 || keyframeIndex >= curve.keys.Length)
+			{
+				return 0;
+			}
+
+			var valueDelta = curve.keys[keyframeIndex].value - curve.keys[keyframeIndex - 1].value;
+			var timeDelta = curve.keys[keyframeIndex].time - curve.keys[keyframeIndex - 1].time;
+
+			Debug.Assert(timeDelta > 0, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
+
+			return valueDelta / timeDelta;
+		}
+
+		protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
 		{
 			GLTFAnimation animation = _gltfRoot.Animations[animationId];
 
@@ -981,7 +1056,7 @@ namespace UnityGLTF
 			}
 
 			// unpack accessors
-			BuildAnimationSamplers(animation, animationId);
+			await BuildAnimationSamplers(animation, animationId);
 
 			// init clip
 			AnimationClip clip = new AnimationClip
@@ -996,8 +1071,16 @@ namespace UnityGLTF
 			foreach (AnimationChannel channel in animation.Channels)
 			{
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
-				Transform node = nodes[channel.Target.Node.Id].transform;
-				string relativePath = RelativePathFrom(node, root);
+				if (channel.Target.Node == null)
+				{
+					// If a channel doesn't have a target node, then just skip it.
+					// This is legal and is present in one of the asset generator models, but means that animation doesn't actually do anything.
+					// https://github.com/KhronosGroup/glTF-Asset-Generator/tree/master/Output/Positive/Animation_NodeMisc
+					// Model 08
+					continue;
+				}
+				var node = await GetNode(channel.Target.Node, cancellationToken);
+				string relativePath = RelativePathFrom(node.transform, root);
 
 				NumericArray input = samplerCache.Input.AccessorContent,
 					output = samplerCache.Output.AccessorContent;
@@ -1065,79 +1148,7 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
-			clip.EnsureQuaternionContinuity();
 			return clip;
-		}
-
-		public static void SetCurveMode(Keyframe[] keyframes, InterpolationType mode)
-		{
-			for (int i = 0; i < keyframes.Length; ++i)
-			{
-				float intangent = 0;
-				float outtangent = 0;
-				bool intangent_set = false;
-				bool outtangent_set = false;
-				Vector2 point1;
-				Vector2 point2;
-				Vector2 deltapoint;
-				var key = keyframes[i];
-
-				if (i == 0)
-				{
-					intangent = 0; intangent_set = true;
-				}
-
-				if (i == keyframes.Length - 1)
-				{
-					outtangent = 0; outtangent_set = true;
-				}
-				switch (mode)
-				{
-					case InterpolationType.STEP:
-						{
-							intangent = 0;
-							outtangent = float.PositiveInfinity;
-						}
-						break;
-					case InterpolationType.LINEAR:
-						{
-							if (!intangent_set)
-							{
-								point1.x = keyframes[i - 1].time;
-								point1.y = keyframes[i - 1].value;
-								point2.x = keyframes[i].time;
-								point2.y = keyframes[i].value;
-
-								deltapoint = point2 - point1;
-
-								intangent = deltapoint.y / deltapoint.x;
-							}
-							if (!outtangent_set)
-							{
-								point1.x = keyframes[i].time;
-								point1.y = keyframes[i].value;
-								point2.x = keyframes[i + 1].time;
-								point2.y = keyframes[i + 1].value;
-
-								deltapoint = point2 - point1;
-
-								outtangent = deltapoint.y / deltapoint.x;
-							}
-						}
-						break;
-					//use default unity curve
-					case InterpolationType.CUBICSPLINE:
-						break;
-					case InterpolationType.CATMULLROMSPLINE:
-						break;
-					default:
-						break;
-				}
-
-
-				key.inTangent = intangent;
-				key.outTangent = outtangent;
-			}
 		}
 		#endregion
 
@@ -1151,7 +1162,7 @@ namespace UnityGLTF
 			{
 				NodeId node = scene.Nodes[i];
 				await _LoadNode(node.Id, cancellationToken);
-				GameObject nodeObj = _assetCache.NodeCache[node.Id];
+				GameObject nodeObj = await GetNode(node, cancellationToken);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
 			}
@@ -1162,7 +1173,7 @@ namespace UnityGLTF
 				Animation animation = sceneObj.AddComponent<Animation>();
 				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 				{
-					AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache, i);
+					AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
 
 					clip.wrapMode = WrapMode.Loop;
 
@@ -1178,6 +1189,15 @@ namespace UnityGLTF
 			InitializeGltfTopLevelObject();
 		}
 
+		private async Task<GameObject> GetNode(NodeId nodeId, CancellationToken cancellationToken)
+		{
+			if (_assetCache.NodeCache[nodeId.Id] == null)
+			{
+				await ConstructNode(nodeId.Value, nodeId.Id, cancellationToken);
+			}
+
+			return _assetCache.NodeCache[nodeId.Id];
+		}
 
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
@@ -1219,9 +1239,7 @@ namespace UnityGLTF
 			{
 				foreach (var child in node.Children)
 				{
-					// todo blgross: replace with an iterartive solution
-					await ConstructNode(child.Value, child.Id, cancellationToken);
-					GameObject childObj = _assetCache.NodeCache[child.Id];
+					GameObject childObj = await GetNode(child, cancellationToken);
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
@@ -1308,7 +1326,7 @@ namespace UnityGLTF
 			return primitive.Targets != null;
 		}
 
-		protected virtual async Task SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, Mesh curMesh)
+		protected virtual async Task SetupBones(Skin skin, MeshPrimitive primitive, SkinnedMeshRenderer renderer, GameObject primitiveObj, Mesh curMesh, CancellationToken cancellationToken)
 		{
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
@@ -1328,15 +1346,17 @@ namespace UnityGLTF
 
 			for (int i = 0; i < boneCount; i++)
 			{
-				if (_assetCache.NodeCache[skin.Joints[i].Id] == null)
-				{
-					await ConstructNode(_gltfRoot.Nodes[skin.Joints[i].Id], skin.Joints[i].Id, CancellationToken.None);
-				}
-				bones[i] = _assetCache.NodeCache[skin.Joints[i].Id].transform;
+				var node = await GetNode(skin.Joints[i], cancellationToken);
+
+				bones[i] = node.transform;
 				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
 			}
 
-			renderer.rootBone = _assetCache.NodeCache[skin.Skeleton.Id].transform;
+			if (skin.Skeleton != null)
+			{
+				var rootBoneNode = await GetNode(skin.Skeleton, cancellationToken);
+				renderer.rootBone = rootBoneNode.transform;
+			}
 			curMesh.bindposes = bindPoses;
 			renderer.bones = bones;
 		}
@@ -1414,7 +1434,7 @@ namespace UnityGLTF
 					//	SetupBlendShapes(primitive);
 					if (HasBones(skin))
 					{
-						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh, cancellationToken);
 						cancellationToken.ThrowIfCancellationRequested();
 					}
 
