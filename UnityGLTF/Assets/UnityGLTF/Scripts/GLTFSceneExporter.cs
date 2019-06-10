@@ -555,6 +555,12 @@ namespace UnityGLTF
 			return id;
 		}
 
+		private static bool ContainsValidRenderer (GameObject gameObject)
+		{
+			return (gameObject.GetComponent<MeshFilter>() != null && gameObject.GetComponent<MeshRenderer>() != null) 
+					|| (gameObject.GetComponent<SkinnedMeshRenderer>() != null);
+		}
+
 		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
 		{
 			var childCount = transform.childCount;
@@ -564,8 +570,7 @@ namespace UnityGLTF
 			// add another primitive if the root object also has a mesh
 			if (transform.gameObject.activeSelf)
 			{
-				if ((transform.gameObject.GetComponent<MeshFilter>() != null && transform.gameObject.GetComponent<MeshRenderer>() != null)
-					|| transform.gameObject.GetComponent<SkinnedMeshRenderer>() != null)
+				if (ContainsValidRenderer(transform.gameObject))
 				{
 					prims.Add(transform.gameObject);
 				}
@@ -589,14 +594,13 @@ namespace UnityGLTF
 			 * Primitives have the following properties:
 			 * - have no children
 			 * - have no non-default local transform properties
-			 * - have MeshFilter and MeshRenderer components
+			 * - have MeshFilter and MeshRenderer components OR has SkinnedMeshRenderer component
 			 */
 			return gameObject.transform.childCount == 0
 				&& gameObject.transform.localPosition == Vector3.zero
 				&& gameObject.transform.localRotation == Quaternion.identity
 				&& gameObject.transform.localScale == Vector3.one
-				&& 
-				((gameObject.GetComponent<MeshFilter>() != null && gameObject.GetComponent<MeshRenderer>() != null) || gameObject.GetComponent<SkinnedMeshRenderer>() != null);
+				&& ContainsValidRenderer(gameObject);
 
 		}
 
