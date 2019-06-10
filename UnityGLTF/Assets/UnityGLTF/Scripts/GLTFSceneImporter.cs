@@ -1458,9 +1458,13 @@ namespace UnityGLTF
 			for (int i = 0; i < targets.Count; ++i)
 			{
 				if (hasNames)
+				{
 					blendShapeName = primitive.TargetNames[i];
-				else
+				}
+				else 
+				{
 					blendShapeName = "Blendshape" + i;
+				}
 					
 				unityMesh.AddBlendShapeFrame(blendShapeName, 0, zeroes, zeroes, zeroes);
 				unityMesh.AddBlendShapeFrame(blendShapeName, 100,
