@@ -239,7 +239,6 @@ namespace GLTF.Schema
 
 						}
 
-
 						break;
 					default:
 						primitive.DefaultPropertyDeserializer(root, reader);
