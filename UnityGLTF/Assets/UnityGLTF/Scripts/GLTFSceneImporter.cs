@@ -787,7 +787,6 @@ namespace UnityGLTF
 							await ConstructBuffer(buffer, bufferID);
 						}
 
-
 						newTargets[currentIndex][targetAttribute.Key] = new AttributeAccessor
 						{
 							AccessorId = targetAttribute.Value,
