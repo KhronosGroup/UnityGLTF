@@ -777,7 +777,6 @@ namespace UnityGLTF
 					//NORMALS, POSITIONS, TANGENTS
 					foreach (var targetAttribute in target)
 					{
-
 						BufferId bufferIdPair = targetAttribute.Value.Value.BufferView.Value.Buffer;
 						GLTFBuffer buffer = bufferIdPair.Value;
 						int bufferID = bufferIdPair.Id;
