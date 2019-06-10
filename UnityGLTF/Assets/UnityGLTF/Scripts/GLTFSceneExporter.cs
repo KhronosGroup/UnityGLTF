@@ -469,7 +469,6 @@ namespace UnityGLTF
 					if (smr != null)
 					{
 						_primOwner[new PrimKey { Mesh = smr.sharedMesh, Material = smr.sharedMaterial }] = node.Mesh;
-
 					}
 					else
 					{
