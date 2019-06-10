@@ -1453,18 +1453,17 @@ namespace UnityGLTF
 			
 			var targets = _assetCache.MeshCache[meshId][primitiveIndex].Targets;
 			bool hasNames = primitive.TargetNames != null;
-			string bsname;
+			string blendShapeName;
 
 			for (int i = 0; i < targets.Count; ++i)
 			{
 				if (hasNames)
-					bsname = primitive.TargetNames[i];
+					blendShapeName = primitive.TargetNames[i];
 				else
-					bsname = "Blendshape" + i;
-
-				//GLTF only supports 1 frame per blendshape, set that to 100%
-				unityMesh.AddBlendShapeFrame(bsname, 0, zeroes, zeroes, zeroes);
-				unityMesh.AddBlendShapeFrame(bsname, 100,
+					blendShapeName = "Blendshape" + i;
+					
+				unityMesh.AddBlendShapeFrame(blendShapeName, 0, zeroes, zeroes, zeroes);
+				unityMesh.AddBlendShapeFrame(blendShapeName, 100,
 											targets[i].ContainsKey(SemanticProperties.POSITION) ? targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
 											targets[i].ContainsKey(SemanticProperties.NORMAL) ? targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
 											targets[i].ContainsKey(SemanticProperties.TANGENT) ? targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes);
