@@ -1485,7 +1485,8 @@ namespace UnityGLTF
 			}
 			for (int i = 0; i < blendshapeCount; ++i)
 			{
-				smr.SetBlendShapeWeight(i, (float)(mesh.Weights[i]*100));
+				// GLTF weights are [0, 1] range but Unity weights are [0, 100] range
+				smr.SetBlendShapeWeight(i, (float)(mesh.Weights[i] * 100));
 			}
 		}
 
