@@ -475,7 +475,6 @@ namespace UnityGLTF
 						var filter = prim.GetComponent<MeshFilter>();
 						var renderer = prim.GetComponent<MeshRenderer>();
 						_primOwner[new PrimKey { Mesh = filter.sharedMesh, Material = renderer.sharedMaterial }] = node.Mesh;
-
 					}
 				}
 			}
