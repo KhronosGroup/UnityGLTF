@@ -1480,9 +1480,9 @@ namespace UnityGLTF
 			int blendshapeCount = smr.sharedMesh.blendShapeCount;
 			if (blendshapeCount != mesh.Weights.Count)
 			{
-				Debug.LogError("GLTFMesh weights count does not match Unity mesh blendshape count! GLTFMesh weights: " + mesh.Weights.Count  + ", Unity blendshapes: " + blendshapeCount);
+				Debug.LogWarning("GLTFMesh weights count does not match Unity mesh blendshape count! Using minimum between GLTFMesh weights: " + mesh.Weights.Count  + ", Unity blendshapes: " + blendshapeCount);
+				blendshapeCount = Mathf.Min(blendshapeCount, mesh.Weights.Count);
 			}
-			blendshapeCount = Mathf.Min(blendshapeCount, mesh.Weights.Count);
 			for (int i = 0; i < blendshapeCount; ++i)
 			{
 				smr.SetBlendShapeWeight(i, (float)(mesh.Weights[i]*100));
