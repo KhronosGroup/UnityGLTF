@@ -290,7 +290,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="nodeIndex">The node index to load from the glTF</param>
 		/// <returns></returns>
-		public async Task LoadNodeAsync(int nodeIndex)
+		public async Task LoadNodeAsync(int nodeIndex, CancellationToken cancellationToken)
 		{
 			try
 			{
@@ -314,8 +314,7 @@ namespace UnityGLTF
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
-				await _LoadNode(nodeIndex, CancellationToken.None);
-				CreatedObject = _assetCache.NodeCache[nodeIndex];
+				CreatedObject = await GetNode(nodeIndex, cancellationToken);
 				InitializeGltfTopLevelObject();
 			}
 			finally
@@ -561,28 +560,6 @@ namespace UnityGLTF
 			}
 		}
 
-		private async Task _LoadNode(int nodeIndex, CancellationToken cancellationToken)
-		{
-			if (nodeIndex >= _gltfRoot.Nodes.Count)
-			{
-				throw new ArgumentException("nodeIndex is out of range");
-			}
-
-			Node nodeToLoad = _gltfRoot.Nodes[nodeIndex];
-
-			cancellationToken.ThrowIfCancellationRequested();
-			if (!IsMultithreaded)
-			{
-				await ConstructBufferData(nodeToLoad, cancellationToken);
-			}
-			else
-			{
-				await Task.Run(() => ConstructBufferData(nodeToLoad, cancellationToken));
-			}
-
-			cancellationToken.ThrowIfCancellationRequested();
-			await ConstructNode(nodeToLoad, nodeIndex, cancellationToken);
-		}
 
 		/// <summary>
 		/// Creates a scene based off loaded JSON. Includes loading in binary and image data to construct the meshes required.
@@ -619,17 +596,19 @@ namespace UnityGLTF
 			_lastLoadedScene = CreatedObject;
 		}
 
+		private HashSet<int> sceneNodes = new HashSet<int>();
+
 		private void GetGtlfContentTotals(GLTFScene scene)
 		{
 			// Count Nodes
-			Queue<Node> nodeQueue = new Queue<Node>();
+			Queue<NodeId> nodeQueue = new Queue<NodeId>();
 
 			// Add scene nodes
 			if (scene.Nodes != null)
 			{
 				for (int i = 0; i < scene.Nodes.Count; ++i)
 				{
-					nodeQueue.Enqueue(scene.Nodes[i].Value);
+					nodeQueue.Enqueue(scene.Nodes[i]);
 				}
 			}
 
@@ -638,12 +617,13 @@ namespace UnityGLTF
 			{
 				var cur = nodeQueue.Dequeue();
 				progressStatus.NodeTotal++;
+				sceneNodes.Add(cur.Id);
 
-				if (cur.Children != null)
+				if (cur.Value.Children != null)
 				{
-					for (int i = 0; i < cur.Children.Count; ++i)
+					for (int i = 0; i < cur.Value.Children.Count; ++i)
 					{
-						nodeQueue.Enqueue(cur.Children[i].Value);
+						nodeQueue.Enqueue(cur.Value.Children[i]);
 					}
 				}
 			}
@@ -1147,7 +1127,7 @@ namespace UnityGLTF
 					// Model 08
 					continue;
 				}
-				var node = await GetNode(channel.Target.Node, cancellationToken);
+				var node = await GetNode(channel.Target.Node.Id, cancellationToken);
 				string relativePath = RelativePathFrom(node.transform, root);
 
 				NumericArray input = samplerCache.Input.AccessorContent,
@@ -1229,8 +1209,7 @@ namespace UnityGLTF
 			for (int i = 0; i < scene.Nodes.Count; ++i)
 			{
 				NodeId node = scene.Nodes[i];
-				await _LoadNode(node.Id, cancellationToken);
-				GameObject nodeObj = await GetNode(node, cancellationToken);
+				GameObject nodeObj = await GetNode(node.Id, cancellationToken);
 				nodeObj.transform.SetParent(sceneObj.transform, false);
 				nodeTransforms[i] = nodeObj.transform;
 			}
@@ -1257,15 +1236,33 @@ namespace UnityGLTF
 			InitializeGltfTopLevelObject();
 		}
 
-		private async Task<GameObject> GetNode(NodeId nodeId, CancellationToken cancellationToken)
+		private async Task<GameObject> GetNode(int nodeId, CancellationToken cancellationToken)
 		{
-			if (_assetCache.NodeCache[nodeId.Id] == null)
+			if (_assetCache.NodeCache[nodeId] == null)
 			{
-				await ConstructNode(nodeId.Value, nodeId.Id, cancellationToken);
+				if (nodeId >= _gltfRoot.Nodes.Count)
+				{
+					throw new ArgumentException("nodeIndex is out of range");
+				}
+
+				var node = _gltfRoot.Nodes[nodeId];
+
+				cancellationToken.ThrowIfCancellationRequested();
+				if (!IsMultithreaded)
+				{
+					await ConstructBufferData(node, cancellationToken);
+				}
+				else
+				{
+					await Task.Run(() => ConstructBufferData(node, cancellationToken));
+				}
+
+				await ConstructNode(node, nodeId, cancellationToken);
 			}
 
-			return _assetCache.NodeCache[nodeId.Id];
+			return _assetCache.NodeCache[nodeId];
 		}
+
 
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
@@ -1274,6 +1271,11 @@ namespace UnityGLTF
 			if (_assetCache.NodeCache[nodeIndex] != null)
 			{
 				return;
+			}
+
+			if (!sceneNodes.Contains(nodeIndex))
+			{
+				Debug.LogError("Node not in the scene");
 			}
 
 			var nodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode" + nodeIndex) : node.Name);
@@ -1287,18 +1289,16 @@ namespace UnityGLTF
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
+			_assetCache.NodeCache[nodeIndex] = nodeObj;
 
 			if (node.Children != null)
 			{
 				foreach (var child in node.Children)
 				{
-					GameObject childObj = await GetNode(child, cancellationToken);
+					GameObject childObj = await GetNode(child.Id, cancellationToken);
 					childObj.transform.SetParent(nodeObj.transform, false);
 				}
 			}
-
-			nodeObj.SetActive(true);
-			_assetCache.NodeCache[nodeIndex] = nodeObj;
 
 			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
 			MSFT_LODExtension lodsextension = null;
@@ -1329,11 +1329,11 @@ namespace UnityGLTF
 					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
 					{
 						int lodNodeId = lodsextension.MeshIds[i];
-						await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId, cancellationToken);
-						int lodIndex = i + 1;
-						GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
+						Debug.Log("Loading lod extension");
+						var lodNodeObj = await GetNode(lodNodeId, cancellationToken);
 						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
 						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
+						int lodIndex = i + 1;
 						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
 					}
 
@@ -1361,6 +1361,8 @@ namespace UnityGLTF
 				cameraObj.transform.parent = nodeObj.transform;
 			}
 			*/
+
+			nodeObj.SetActive(true);
 
 			progressStatus.NodeLoaded++;
 			progress?.Report(progressStatus);
@@ -1413,7 +1415,7 @@ namespace UnityGLTF
 
 			for (int i = 0; i < boneCount; i++)
 			{
-				var node = await GetNode(skin.Joints[i], cancellationToken);
+				var node = await GetNode(skin.Joints[i].Id, cancellationToken);
 
 				bones[i] = node.transform;
 				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
@@ -1421,7 +1423,7 @@ namespace UnityGLTF
 
 			if (skin.Skeleton != null)
 			{
-				var rootBoneNode = await GetNode(skin.Skeleton, cancellationToken);
+				var rootBoneNode = await GetNode(skin.Skeleton.Id, cancellationToken);
 				renderer.rootBone = rootBoneNode.transform;
 			}
 			curMesh.bindposes = bindPoses;
