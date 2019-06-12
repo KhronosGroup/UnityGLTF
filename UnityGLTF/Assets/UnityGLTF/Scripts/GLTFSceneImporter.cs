@@ -274,7 +274,7 @@ namespace UnityGLTF
 				}
 			}
 
-			Debug.Assert(progressStatus.NodeLoaded == progressStatus.NodeTotal);
+			Debug.Assert(progressStatus.NodeLoaded == progressStatus.NodeTotal, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total ({progressStatus.NodeTotal})");
 			Debug.Assert(progressStatus.TextureLoaded <= progressStatus.TextureTotal);
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
@@ -1288,21 +1288,6 @@ namespace UnityGLTF
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
 
-			if (node.Mesh != null)
-			{
-				await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null, cancellationToken);
-			}
-			/* TODO: implement camera (probably a flag to disable for VR as well)
-			if (camera != null)
-			{
-				GameObject cameraObj = camera.Value.Create();
-				cameraObj.transform.parent = nodeObj.transform;
-			}
-			*/
-
-			progressStatus.NodeLoaded++;
-			progress?.Report(progressStatus);
-
 			if (node.Children != null)
 			{
 				foreach (var child in node.Children)
@@ -1365,6 +1350,20 @@ namespace UnityGLTF
 				}
 			}
 
+			if (node.Mesh != null)
+			{
+				await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null, cancellationToken);
+			}
+			/* TODO: implement camera (probably a flag to disable for VR as well)
+			if (camera != null)
+			{
+				GameObject cameraObj = camera.Value.Create();
+				cameraObj.transform.parent = nodeObj.transform;
+			}
+			*/
+
+			progressStatus.NodeLoaded++;
+			progress?.Report(progressStatus);
 		}
 
 		float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
