@@ -274,8 +274,8 @@ namespace UnityGLTF
 				}
 			}
 
-			Debug.Assert(progressStatus.NodeLoaded == progressStatus.NodeTotal, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total ({progressStatus.NodeTotal})");
-			Debug.Assert(progressStatus.TextureLoaded <= progressStatus.TextureTotal);
+			Debug.Assert(progressStatus.NodeLoaded == progressStatus.NodeTotal, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
+			Debug.Assert(progressStatus.TextureLoaded <= progressStatus.TextureTotal, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
@@ -596,8 +596,6 @@ namespace UnityGLTF
 			_lastLoadedScene = CreatedObject;
 		}
 
-		private HashSet<int> sceneNodes = new HashSet<int>();
-
 		private void GetGtlfContentTotals(GLTFScene scene)
 		{
 			// Count Nodes
@@ -617,7 +615,6 @@ namespace UnityGLTF
 			{
 				var cur = nodeQueue.Dequeue();
 				progressStatus.NodeTotal++;
-				sceneNodes.Add(cur.Id);
 
 				if (cur.Value.Children != null)
 				{
@@ -1271,11 +1268,6 @@ namespace UnityGLTF
 			if (_assetCache.NodeCache[nodeIndex] != null)
 			{
 				return;
-			}
-
-			if (!sceneNodes.Contains(nodeIndex))
-			{
-				Debug.LogError("Node not in the scene");
 			}
 
 			var nodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode" + nodeIndex) : node.Name);
