@@ -1321,7 +1321,6 @@ namespace UnityGLTF
 					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
 					{
 						int lodNodeId = lodsextension.MeshIds[i];
-						Debug.Log("Loading lod extension");
 						var lodNodeObj = await GetNode(lodNodeId, cancellationToken);
 						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
 						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
