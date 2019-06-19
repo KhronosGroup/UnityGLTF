@@ -1240,64 +1240,88 @@ namespace UnityGLTF
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
 		{
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
-			sceneObj.SetActive(showSceneObj);
 
-			Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
-			for (int i = 0; i < scene.Nodes.Count; ++i)
+			try
 			{
-				NodeId node = scene.Nodes[i];
-				GameObject nodeObj = await GetNode(node.Id, cancellationToken);
-				nodeObj.transform.SetParent(sceneObj.transform, false);
-				nodeTransforms[i] = nodeObj.transform;
-			}
+				sceneObj.SetActive(showSceneObj);
 
-			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
-			{
-				// create the AnimationClip that will contain animation data
-				Animation animation = sceneObj.AddComponent<Animation>();
-				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
+				Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
+				for (int i = 0; i < scene.Nodes.Count; ++i)
 				{
-					AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
+					NodeId node = scene.Nodes[i];
+					GameObject nodeObj = await GetNode(node.Id, cancellationToken);
+					nodeObj.transform.SetParent(sceneObj.transform, false);
+					nodeTransforms[i] = nodeObj.transform;
+				}
 
-					clip.wrapMode = WrapMode.Loop;
-
-					animation.AddClip(clip, clip.name);
-					if (i == 0)
+				if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
+				{
+					// create the AnimationClip that will contain animation data
+					Animation animation = sceneObj.AddComponent<Animation>();
+					for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 					{
-						animation.clip = clip;
+						AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
+
+						clip.wrapMode = WrapMode.Loop;
+
+						animation.AddClip(clip, clip.name);
+						if (i == 0)
+						{
+							animation.clip = clip;
+						}
 					}
 				}
-			}
 
-			CreatedObject = sceneObj;
-			InitializeGltfTopLevelObject();
+				CreatedObject = sceneObj;
+				InitializeGltfTopLevelObject();
+			}
+			catch (Exception)
+			{
+				GameObject.Destroy(sceneObj);
+				CreatedObject = null;
+
+				throw;
+			}
 		}
 
 		private async Task<GameObject> GetNode(int nodeId, CancellationToken cancellationToken)
 		{
-			if (_assetCache.NodeCache[nodeId] == null)
+			try
 			{
-				if (nodeId >= _gltfRoot.Nodes.Count)
+				if (_assetCache.NodeCache[nodeId] == null)
 				{
-					throw new ArgumentException("nodeIndex is out of range");
+					if (nodeId >= _gltfRoot.Nodes.Count)
+					{
+						throw new ArgumentException("nodeIndex is out of range");
+					}
+
+					var node = _gltfRoot.Nodes[nodeId];
+
+					cancellationToken.ThrowIfCancellationRequested();
+					if (!IsMultithreaded)
+					{
+						await ConstructBufferData(node, cancellationToken);
+					}
+					else
+					{
+						await Task.Run(() => ConstructBufferData(node, cancellationToken));
+					}
+
+					await ConstructNode(node, nodeId, cancellationToken);
 				}
 
-				var node = _gltfRoot.Nodes[nodeId];
-
-				cancellationToken.ThrowIfCancellationRequested();
-				if (!IsMultithreaded)
-				{
-					await ConstructBufferData(node, cancellationToken);
-				}
-				else
-				{
-					await Task.Run(() => ConstructBufferData(node, cancellationToken));
-				}
-
-				await ConstructNode(node, nodeId, cancellationToken);
+				return _assetCache.NodeCache[nodeId];
 			}
+			catch (Exception)
+			{
+				if (_assetCache.NodeCache[nodeId] != null)
+				{
+					GameObject.Destroy(_assetCache.NodeCache[nodeId]);
+					_assetCache.NodeCache[nodeId] = null;
+				}
 
-			return _assetCache.NodeCache[nodeId];
+				throw;
+			}
 		}
 
 
