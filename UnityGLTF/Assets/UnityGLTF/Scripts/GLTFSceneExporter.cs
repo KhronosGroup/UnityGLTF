@@ -11,15 +11,15 @@ using WrapMode = GLTF.Schema.WrapMode;
 
 namespace UnityGLTF
 {
+	public class ExportOptions
+	{
+		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
+		public bool ExportInactivePrimitives = true;
+	}
+
 	public class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
-
-		public class ExportOptions
-		{
-			public RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
-			public bool ExportInactivePrimitives = true;
-		}
 
 		private enum IMAGETYPE
 		{
