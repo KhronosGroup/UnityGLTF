@@ -302,6 +302,8 @@ namespace UnityGLTF
 			}
 			catch (Exception ex)
 			{
+				Cleanup();
+
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
 				throw;
 			}
@@ -1275,10 +1277,16 @@ namespace UnityGLTF
 				CreatedObject = sceneObj;
 				InitializeGltfTopLevelObject();
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				GameObject.Destroy(sceneObj);
+				// If some failure occured during loading, clean up the scene
+				GameObject.DestroyImmediate(sceneObj);
 				CreatedObject = null;
+
+				if (ex is OutOfMemoryException)
+				{
+					Resources.UnloadUnusedAssets();
+				}
 
 				throw;
 			}
@@ -1312,12 +1320,19 @@ namespace UnityGLTF
 
 				return _assetCache.NodeCache[nodeId];
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
+				// If some failure occured during loading, remove the node
+
 				if (_assetCache.NodeCache[nodeId] != null)
 				{
-					GameObject.Destroy(_assetCache.NodeCache[nodeId]);
+					GameObject.DestroyImmediate(_assetCache.NodeCache[nodeId]);
 					_assetCache.NodeCache[nodeId] = null;
+				}
+
+				if (ex is OutOfMemoryException)
+				{
+					Resources.UnloadUnusedAssets();
 				}
 
 				throw;
