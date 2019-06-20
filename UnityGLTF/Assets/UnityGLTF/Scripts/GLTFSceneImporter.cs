@@ -243,10 +243,7 @@ namespace UnityGLTF
 
 		public void Dispose()
 		{
-			if (_assetCache != null)
-			{
-				Cleanup();
-			}
+			Cleanup();
 		}
 
 		public GameObject LastLoadedScene
@@ -2319,8 +2316,11 @@ namespace UnityGLTF
 		/// </summary>
 		private void Cleanup()
 		{
-			_assetCache.Dispose();
-			_assetCache = null;
+			if (_assetCache != null)
+			{
+				_assetCache.Dispose();
+				_assetCache = null;
+			}
 		}
 	}
 }
