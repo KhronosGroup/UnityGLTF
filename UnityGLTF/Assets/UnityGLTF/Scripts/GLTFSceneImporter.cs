@@ -39,7 +39,7 @@ namespace UnityGLTF
 		public Vector2[] Uv3;
 		public Vector2[] Uv4;
 		public Color[] Colors;
-		public int[] Triangles;
+		public int[] Indices;
 		public Vector4[] Tangents;
 		public BoneWeight[] BoneWeights;
 	}
@@ -1662,9 +1662,9 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
 					: null,
 
-				Triangles = primitive.Indices != null
+				Indices = primitive.Indices != null
 					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-					: MeshPrimitive.GenerateTriangles(vertexCount),
+					: MeshPrimitive.GenerateIndices(vertexCount),
 
 				Tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
@@ -1781,7 +1781,7 @@ namespace UnityGLTF
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.colors = unityMeshData.Colors;
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
-			mesh.triangles = unityMeshData.Triangles;
+			mesh.SetIndices(unityMeshData.Indices, MeshTopology.Triangles, 0);
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.tangents = unityMeshData.Tangents;
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();

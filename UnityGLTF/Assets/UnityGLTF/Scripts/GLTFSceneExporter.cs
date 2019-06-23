@@ -760,8 +760,8 @@ namespace UnityGLTF
 			{
 				var primitive = new MeshPrimitive();
 
-				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(triangles), true);
+				var indices = meshObj.GetIndices(submesh);
+				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(indices), true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -1948,6 +1948,5 @@ namespace UnityGLTF
 
 			return null;
 		}
-
 	}
 }

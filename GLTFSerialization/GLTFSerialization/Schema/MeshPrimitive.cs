@@ -98,7 +98,7 @@ namespace GLTF.Schema
 			}
 		}
 
-		public static int[] GenerateTriangles(int vertCount)
+		public static int[] GenerateIndices(int vertCount)
 		{
 			var arr = new int[vertCount];
 			for (var i = 0; i < vertCount; i+=3)
