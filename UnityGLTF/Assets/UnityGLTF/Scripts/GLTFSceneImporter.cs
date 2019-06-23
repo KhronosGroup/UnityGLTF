@@ -1790,7 +1790,7 @@ namespace UnityGLTF
 			mesh.boneWeights = unityMeshData.BoneWeights;
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 
-			if (!hasNormals)
+			if (!hasNormals && unityMeshData.Topology == MeshTopology.Triangles)
 			{
 				mesh.RecalculateNormals();
 			}
