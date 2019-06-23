@@ -445,33 +445,14 @@ namespace UnityGLTF.Extensions
 		/// Rewinds the indicies into Unity coordinate space from glTF space
 		/// </summary>
 		/// <param name="attributeAccessor">The attribute accessor to modify</param>
-		public static void FlipFaces(ref AttributeAccessor attributeAccessor)
+		public static void FlipTriangleFaces(int[] indices)
 		{
-			for (int i = 0; i < attributeAccessor.AccessorContent.AsTriangles.Length; i += 3)
+			for (int i = 0; i < indices.Length; i += 3)
 			{
-				uint temp = attributeAccessor.AccessorContent.AsUInts[i];
-				attributeAccessor.AccessorContent.AsUInts[i] = attributeAccessor.AccessorContent.AsUInts[i + 2];
-				attributeAccessor.AccessorContent.AsUInts[i + 2] = temp;
+				int temp = indices[i];
+				indices[i] = indices[i + 2];
+				indices[i + 2] = temp;
 			}
-		}
-
-		/// <summary>
-		/// Rewinds the indices from glTF space to Unity space
-		/// </summary>
-		/// <param name="triangles">The indices to copy and modify</param>
-		/// <returns>Indices in glTF space that are copied</returns>
-		public static int[] FlipFacesAndCopy(int[] triangles)
-		{
-			int[] returnArr = new int[triangles.Length];
-			for (int i = 0; i < triangles.Length; i += 3)
-			{
-				int temp = triangles[i];
-				returnArr[i] = triangles[i + 2];
-				returnArr[i + 1] = triangles[i + 1];
-				returnArr[i + 2] = temp;
-			}
-
-			return returnArr;
 		}
 
 		public static Matrix4x4 ToUnityMatrix4x4(this GLTF.Math.Matrix4x4 matrix)

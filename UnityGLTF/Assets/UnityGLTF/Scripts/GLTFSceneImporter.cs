@@ -863,11 +863,6 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
 				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
 			}
-			if (attributeAccessors.ContainsKey(SemanticProperties.INDICES))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.INDICES];
-				SchemaExtensions.FlipFaces(ref attributeAccessor);
-			}
 			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
 			{
 				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
@@ -1632,6 +1627,12 @@ namespace UnityGLTF
 
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
+			var indices = primitive.Indices != null
+					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
+					: MeshPrimitive.GenerateIndices(vertexCount);
+
+			SchemaExtensions.FlipTriangleFaces(indices);
+
 			return new UnityMeshData
 			{
 				Vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
@@ -1662,9 +1663,7 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
 					: null,
 
-				Indices = primitive.Indices != null
-					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-					: MeshPrimitive.GenerateIndices(vertexCount),
+				Indices = indices,
 
 				Tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()

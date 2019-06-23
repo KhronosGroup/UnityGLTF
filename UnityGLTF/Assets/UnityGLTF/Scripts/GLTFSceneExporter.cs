@@ -761,7 +761,8 @@ namespace UnityGLTF
 				var primitive = new MeshPrimitive();
 
 				var indices = meshObj.GetIndices(submesh);
-				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(indices), true);
+				SchemaExtensions.FlipTriangleFaces(indices);
+				primitive.Indices = ExportAccessor(indices, true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
