@@ -39,6 +39,7 @@ namespace UnityGLTF
 		public Vector2[] Uv3;
 		public Vector2[] Uv4;
 		public Color[] Colors;
+		public MeshTopology Topology;
 		public int[] Indices;
 		public Vector4[] Tangents;
 		public BoneWeight[] BoneWeights;
@@ -1631,7 +1632,8 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
 					: MeshPrimitive.GenerateIndices(vertexCount);
 
-			SchemaExtensions.FlipTriangleFaces(indices);
+			var topology = GetTopology(meshConstructionData.Primitive.Mode);
+			if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
 
 			return new UnityMeshData
 			{
@@ -1663,6 +1665,7 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
 					: null,
 
+				Topology = topology,
 				Indices = indices,
 
 				Tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
@@ -1780,7 +1783,7 @@ namespace UnityGLTF
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.colors = unityMeshData.Colors;
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
-			mesh.SetIndices(unityMeshData.Indices, MeshTopology.Triangles, 0);
+			mesh.SetIndices(unityMeshData.Indices, unityMeshData.Topology, 0);
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
 			mesh.tangents = unityMeshData.Tangents;
 			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
@@ -2219,6 +2222,18 @@ namespace UnityGLTF
 			var lastIndex = gltfPath.IndexOf(fileName);
 			var partialPath = gltfPath.Substring(0, lastIndex);
 			return partialPath;
+		}
+
+		protected static MeshTopology GetTopology(DrawMode mode)
+		{
+			switch (mode) {
+				case DrawMode.Points: return MeshTopology.Points;
+				case DrawMode.Lines: return MeshTopology.Lines;
+				case DrawMode.LineStrip: return MeshTopology.LineStrip;
+				case DrawMode.Triangles: return MeshTopology.Triangles;
+			}
+
+			throw new Exception("Unity does not support glTF draw mode: " + mode);
 		}
 
 		/// <summary>
