@@ -5,14 +5,14 @@ namespace UnityGLTF
 {
 	public abstract class ImporterFactory : ScriptableObject
 	{
-		public abstract GLTFSceneImporter CreateSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper);
+		public abstract GLTFSceneImporter CreateSceneImporter(string gltfFileName, ImportOptions options);
 	}
 
 	public class DefaultImporterFactory : ImporterFactory
 	{
-		public override GLTFSceneImporter CreateSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
+		public override GLTFSceneImporter CreateSceneImporter(string gltfFileName, ImportOptions options)
 		{
-			return new GLTFSceneImporter(gltfFileName, externalDataLoader, asyncCoroutineHelper);
+			return new GLTFSceneImporter(gltfFileName, options);
 		}
 	}
 }

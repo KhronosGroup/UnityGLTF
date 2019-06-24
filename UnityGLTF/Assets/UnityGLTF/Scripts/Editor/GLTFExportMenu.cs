@@ -42,7 +42,8 @@ public class GLTFExportMenu : EditorWindow
 		else
 			throw new Exception("No objects selected, cannot export.");
 
-		var exporter = new GLTFSceneExporter(Selection.transforms, RetrieveTexturePath);
+		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
 		if (!string.IsNullOrEmpty(path)) {
@@ -61,7 +62,8 @@ public class GLTFExportMenu : EditorWindow
 		else
 			throw new Exception("No objects selected, cannot export.");
 
-		var exporter = new GLTFSceneExporter(Selection.transforms, RetrieveTexturePath);
+		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
 		if (!string.IsNullOrEmpty(path))
@@ -77,7 +79,8 @@ public class GLTFExportMenu : EditorWindow
 		var gameObjects = scene.GetRootGameObjects();
 		var transforms = Array.ConvertAll(gameObjects, gameObject => gameObject.transform);
 
-		var exporter = new GLTFSceneExporter(transforms, RetrieveTexturePath);
+		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+		var exporter = new GLTFSceneExporter(transforms, exportOptions);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
 		if (path != "") {
 			exporter.SaveGLTFandBin (path, scene.name);
