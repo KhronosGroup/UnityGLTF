@@ -98,17 +98,15 @@ namespace GLTF.Schema
 			}
 		}
 
-		public static int[] GenerateTriangles(int vertCount)
+		public static int[] GenerateIndices(int vertCount)
 		{
-			var arr = new int[vertCount];
-			for (var i = 0; i < vertCount; i+=3)
+			var indices = new int[vertCount];
+			for (var i = 0; i < vertCount; i++)
 			{
-				arr[i] = i + 2;
-				arr[i + 1] = i + 1;
-				arr[i + 2] = i;
+				indices[i] = i;
 			}
 
-			return arr;
+			return indices;
 		}
 
 		// Taken from: http://answers.unity3d.com/comments/190515/view.html

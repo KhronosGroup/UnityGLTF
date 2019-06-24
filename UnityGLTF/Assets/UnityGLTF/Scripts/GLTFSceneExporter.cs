@@ -776,8 +776,12 @@ namespace UnityGLTF
 			{
 				var primitive = new MeshPrimitive();
 
-				var triangles = meshObj.GetTriangles(submesh);
-				primitive.Indices = ExportAccessor(SchemaExtensions.FlipFacesAndCopy(triangles), true);
+				var topology = meshObj.GetTopology(submesh);
+				var indices = meshObj.GetIndices(submesh);
+				if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
+
+				primitive.Mode = GetDrawMode(topology);
+				primitive.Indices = ExportAccessor(indices, true);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -1965,5 +1969,17 @@ namespace UnityGLTF
 			return null;
 		}
 
+		protected static DrawMode GetDrawMode(MeshTopology topology)
+		{
+			switch (topology)
+			{
+				case MeshTopology.Points: return DrawMode.Points;
+				case MeshTopology.Lines: return DrawMode.Lines;
+				case MeshTopology.LineStrip: return DrawMode.LineStrip;
+				case MeshTopology.Triangles: return DrawMode.Triangles;
+			}
+
+			throw new Exception("glTF does not support Unity mesh topology: " + topology);
+		}
 	}
 }

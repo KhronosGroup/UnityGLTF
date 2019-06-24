@@ -90,7 +90,7 @@ namespace UnityGLTF
                     {
                         mesh.normals = new Vector3[0];
                     }
-                    if (_importNormals == GLTFImporterNormals.Calculate)
+                    if (_importNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
                     {
                         mesh.RecalculateNormals();
                     }

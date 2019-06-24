@@ -46,7 +46,8 @@ namespace UnityGLTF
 		public Vector2[] Uv3;
 		public Vector2[] Uv4;
 		public Color[] Colors;
-		public int[] Triangles;
+		public MeshTopology Topology;
+		public int[] Indices;
 		public Vector4[] Tangents;
 		public BoneWeight[] BoneWeights;
 	}
@@ -902,11 +903,6 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
 				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
 			}
-			if (attributeAccessors.ContainsKey(SemanticProperties.INDICES))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.INDICES];
-				SchemaExtensions.FlipFaces(ref attributeAccessor);
-			}
 			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
 			{
 				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
@@ -1708,6 +1704,13 @@ namespace UnityGLTF
 
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 
+			var indices = primitive.Indices != null
+					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
+					: MeshPrimitive.GenerateIndices(vertexCount);
+
+			var topology = GetTopology(meshConstructionData.Primitive.Mode);
+			if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
+
 			return new UnityMeshData
 			{
 				Vertices = primitive.Attributes.ContainsKey(SemanticProperties.POSITION)
@@ -1738,9 +1741,8 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
 					: null,
 
-				Triangles = primitive.Indices != null
-					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-					: MeshPrimitive.GenerateTriangles(vertexCount),
+				Topology = topology,
+				Indices = indices,
 
 				Tangents = primitive.Attributes.ContainsKey(SemanticProperties.TANGENT)
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
@@ -1857,14 +1859,14 @@ namespace UnityGLTF
 			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.colors = unityMeshData.Colors;
 			await YieldOnTimeoutAndThrowOnLowMemory();
-			mesh.triangles = unityMeshData.Triangles;
+			mesh.SetIndices(unityMeshData.Indices, unityMeshData.Topology, 0);
 			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.tangents = unityMeshData.Tangents;
 			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.boneWeights = unityMeshData.BoneWeights;
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
-			if (!hasNormals)
+			if (!hasNormals && unityMeshData.Topology == MeshTopology.Triangles)
 			{
 				mesh.RecalculateNormals();
 			}
@@ -2309,6 +2311,18 @@ namespace UnityGLTF
 			var lastIndex = gltfPath.IndexOf(fileName);
 			var partialPath = gltfPath.Substring(0, lastIndex);
 			return partialPath;
+		}
+
+		protected static MeshTopology GetTopology(DrawMode mode)
+		{
+			switch (mode) {
+				case DrawMode.Points: return MeshTopology.Points;
+				case DrawMode.Lines: return MeshTopology.Lines;
+				case DrawMode.LineStrip: return MeshTopology.LineStrip;
+				case DrawMode.Triangles: return MeshTopology.Triangles;
+			}
+
+			throw new Exception("Unity does not support glTF draw mode: " + mode);
 		}
 
 		/// <summary>
