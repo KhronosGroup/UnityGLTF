@@ -24,6 +24,13 @@ using WrapMode = UnityEngine.WrapMode;
 
 namespace UnityGLTF
 {
+	public class ImportOptions
+	{
+		public ILoader ExternalDataLoader = null;
+		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
+		public bool ThrowOnLowMemory = true;
+	}
+
 	public struct MeshConstructionData
 	{
 		public MeshPrimitive Primitive { get; set; }
@@ -165,7 +172,8 @@ namespace UnityGLTF
 			public long StartPosition;
 		}
 
-		protected AsyncCoroutineHelper _asyncCoroutineHelper;
+		protected ImportOptions _options;
+		protected MemoryChecker _memoryChecker;
 
 		protected GameObject _lastLoadedScene;
 		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();
@@ -175,11 +183,28 @@ namespace UnityGLTF
 		protected GLBStream _gltfStream;
 		protected GLTFRoot _gltfRoot;
 		protected AssetCache _assetCache;
-		protected ILoader _loader;
 		protected bool _isRunning = false;
 
 		protected ImportProgress progressStatus = default(ImportProgress);
 		protected IProgress<ImportProgress> progress = null;
+
+		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
+		{
+			_gltfFileName = gltfFileName;
+			_options = options;
+		}
+
+		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
+		{
+			_gltfRoot = rootNode;
+
+			if (gltfStream != null)
+			{
+				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
+			}
+
+			_options = options;
+		}
 
 		/// <summary>
 		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
@@ -187,33 +212,38 @@ namespace UnityGLTF
 		/// <param name="gltfFileName">glTF file relative to data loader path</param>
 		/// <param name="externalDataLoader">Loader to load external data references</param>
 		/// <param name="asyncCoroutineHelper">Helper to load coroutines on a seperate thread</param>
-		public GLTFSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper) : this(externalDataLoader, asyncCoroutineHelper)
+		[Obsolete("Please switch to GLTFSceneImporter(string gltfFileName, ImportOptions options).  This constructor is deprecated and will be removed in a future release.")]
+		public GLTFSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
+			: this(externalDataLoader, asyncCoroutineHelper)
 		{
 			_gltfFileName = gltfFileName;
 		}
 
-		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper, Stream gltfStream = null) : this(externalDataLoader, asyncCoroutineHelper)
+		[Obsolete("Please switch to GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options).  This constructor is deprecated and will be removed in a future release.")]
+		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper, Stream gltfStream = null)
+			: this(externalDataLoader, asyncCoroutineHelper)
 		{
 			_gltfRoot = rootNode;
-			_loader = externalDataLoader;
+
 			if (gltfStream != null)
 			{
 				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
 			}
 		}
 
+		[Obsolete("Only called by obsolete public constructors.  This will be removed when those obsolete constructors are removed.")]
 		private GLTFSceneImporter(ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
 		{
-			_loader = externalDataLoader;
-			_asyncCoroutineHelper = asyncCoroutineHelper;
+			_options = new ImportOptions
+			{
+				ExternalDataLoader = externalDataLoader,
+				AsyncCoroutineHelper = asyncCoroutineHelper
+			};
 		}
 
 		public void Dispose()
 		{
-			if (_assetCache != null)
-			{
-				Cleanup();
-			}
+			Cleanup();
 		}
 
 		public GameObject LastLoadedScene
@@ -243,6 +273,12 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				if (_options.ThrowOnLowMemory)
+				{
+					_memoryChecker = new MemoryChecker();
+				}
+
+				this.progressStatus = new ImportProgress();
 				this.progress = progress;
 				progress?.Report(progressStatus);
 
@@ -263,6 +299,8 @@ namespace UnityGLTF
 			}
 			catch (Exception ex)
 			{
+				Cleanup();
+
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
 				throw;
 			}
@@ -478,8 +516,8 @@ namespace UnityGLTF
 				// we only load the streams if not a base64 uri, meaning the data is in the uri
 				if (image.Uri != null && !URIHelper.IsBase64Uri(image.Uri))
 				{
-					await _loader.LoadStream(image.Uri);
-					_assetCache.ImageStreamCache[sourceId] = _loader.LoadedStream;
+					await _options.ExternalDataLoader.LoadStream(image.Uri);
+					_assetCache.ImageStreamCache[sourceId] = _options.ExternalDataLoader.LoadedStream;
 				}
 				else if (image.Uri == null && image.BufferView != null && _assetCache.BufferCache[image.BufferView.Value.Buffer.Id] == null)
 				{
@@ -505,9 +543,9 @@ namespace UnityGLTF
 		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP
-			if (IsMultithreaded && _loader.HasSyncLoadMethod)
+			if (IsMultithreaded && _options.ExternalDataLoader.HasSyncLoadMethod)
 			{
-				Thread loadThread = new Thread(() => _loader.LoadStreamSync(jsonFilePath));
+				Thread loadThread = new Thread(() => _options.ExternalDataLoader.LoadStreamSync(jsonFilePath));
 				loadThread.Priority = ThreadPriority.Highest;
 				loadThread.Start();
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !loadThread.IsAlive)));
@@ -516,10 +554,10 @@ namespace UnityGLTF
 #endif
 			{
 				// HACK: Force the coroutine to run synchronously in the editor
-				await _loader.LoadStream(jsonFilePath);
+				await _options.ExternalDataLoader.LoadStream(jsonFilePath);
 			}
 
-			_gltfStream.Stream = _loader.LoadedStream;
+			_gltfStream.Stream = _options.ExternalDataLoader.LoadedStream;
 			_gltfStream.StartPosition = 0;
 
 #if !WINDOWS_UWP
@@ -668,8 +706,8 @@ namespace UnityGLTF
 				}
 				else
 				{
-					await _loader.LoadStream(buffer.Uri);
-					bufferDataStream = _loader.LoadedStream;
+					await _options.ExternalDataLoader.LoadStream(buffer.Uri);
+					bufferDataStream = _options.ExternalDataLoader.LoadedStream;
 				}
 
 				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
@@ -713,7 +751,7 @@ namespace UnityGLTF
 					}
 				}
 
-				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+				await YieldOnTimeoutAndThrowOnLowMemory();
 				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
 			}
 		}
@@ -727,6 +765,7 @@ namespace UnityGLTF
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
+					await YieldOnTimeoutAndThrowOnLowMemory();
 					texture.LoadImage(memoryStream.ToArray(), markGpuOnly);
 				}
 			}
@@ -741,7 +780,7 @@ namespace UnityGLTF
 				}
 				stream.Read(buffer, 0, (int)stream.Length);
 
-				if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+				await YieldOnTimeoutAndThrowOnLowMemory();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, markGpuOnly);
 			}
@@ -1200,64 +1239,101 @@ namespace UnityGLTF
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
 		{
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
-			sceneObj.SetActive(showSceneObj);
 
-			Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
-			for (int i = 0; i < scene.Nodes.Count; ++i)
+			try
 			{
-				NodeId node = scene.Nodes[i];
-				GameObject nodeObj = await GetNode(node.Id, cancellationToken);
-				nodeObj.transform.SetParent(sceneObj.transform, false);
-				nodeTransforms[i] = nodeObj.transform;
-			}
+				sceneObj.SetActive(showSceneObj);
 
-			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
-			{
-				// create the AnimationClip that will contain animation data
-				Animation animation = sceneObj.AddComponent<Animation>();
-				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
+				Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
+				for (int i = 0; i < scene.Nodes.Count; ++i)
 				{
-					AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
+					NodeId node = scene.Nodes[i];
+					GameObject nodeObj = await GetNode(node.Id, cancellationToken);
+					nodeObj.transform.SetParent(sceneObj.transform, false);
+					nodeTransforms[i] = nodeObj.transform;
+				}
 
-					clip.wrapMode = WrapMode.Loop;
-
-					animation.AddClip(clip, clip.name);
-					if (i == 0)
+				if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
+				{
+					// create the AnimationClip that will contain animation data
+					Animation animation = sceneObj.AddComponent<Animation>();
+					for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 					{
-						animation.clip = clip;
+						AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
+
+						clip.wrapMode = WrapMode.Loop;
+
+						animation.AddClip(clip, clip.name);
+						if (i == 0)
+						{
+							animation.clip = clip;
+						}
 					}
 				}
-			}
 
-			CreatedObject = sceneObj;
-			InitializeGltfTopLevelObject();
+				CreatedObject = sceneObj;
+				InitializeGltfTopLevelObject();
+			}
+			catch (Exception ex)
+			{
+				// If some failure occured during loading, clean up the scene
+				GameObject.DestroyImmediate(sceneObj);
+				CreatedObject = null;
+
+				if (ex is OutOfMemoryException)
+				{
+					Resources.UnloadUnusedAssets();
+				}
+
+				throw;
+			}
 		}
 
 		private async Task<GameObject> GetNode(int nodeId, CancellationToken cancellationToken)
 		{
-			if (_assetCache.NodeCache[nodeId] == null)
+			try
 			{
-				if (nodeId >= _gltfRoot.Nodes.Count)
+				if (_assetCache.NodeCache[nodeId] == null)
 				{
-					throw new ArgumentException("nodeIndex is out of range");
+					if (nodeId >= _gltfRoot.Nodes.Count)
+					{
+						throw new ArgumentException("nodeIndex is out of range");
+					}
+
+					var node = _gltfRoot.Nodes[nodeId];
+
+					cancellationToken.ThrowIfCancellationRequested();
+					if (!IsMultithreaded)
+					{
+						await ConstructBufferData(node, cancellationToken);
+					}
+					else
+					{
+						await Task.Run(() => ConstructBufferData(node, cancellationToken));
+					}
+
+					await ConstructNode(node, nodeId, cancellationToken);
 				}
 
-				var node = _gltfRoot.Nodes[nodeId];
-
-				cancellationToken.ThrowIfCancellationRequested();
-				if (!IsMultithreaded)
-				{
-					await ConstructBufferData(node, cancellationToken);
-				}
-				else
-				{
-					await Task.Run(() => ConstructBufferData(node, cancellationToken));
-				}
-
-				await ConstructNode(node, nodeId, cancellationToken);
+				return _assetCache.NodeCache[nodeId];
 			}
+			catch (Exception ex)
+			{
+				// If some failure occured during loading, remove the node
 
-			return _assetCache.NodeCache[nodeId];
+				if (_assetCache.NodeCache[nodeId] != null)
+				{
+					GameObject.DestroyImmediate(_assetCache.NodeCache[nodeId]);
+					_assetCache.NodeCache[nodeId] = null;
+				}
+
+				if (ex is OutOfMemoryException)
+				{
+					Resources.UnloadUnusedAssets();
+				}
+
+				throw;
+			}
 		}
 
 
@@ -1758,7 +1834,7 @@ namespace UnityGLTF
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 			bool hasNormals = unityMeshData.Normals != null;
 
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			Mesh mesh = new Mesh
 			{
 
@@ -1768,25 +1844,25 @@ namespace UnityGLTF
 			};
 
 			mesh.vertices = unityMeshData.Vertices;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.normals = unityMeshData.Normals;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv = unityMeshData.Uv1;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv2 = unityMeshData.Uv2;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv3 = unityMeshData.Uv3;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv4 = unityMeshData.Uv4;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.colors = unityMeshData.Colors;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.triangles = unityMeshData.Triangles;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.tangents = unityMeshData.Tangents;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.boneWeights = unityMeshData.BoneWeights;
-			if (_asyncCoroutineHelper != null) await _asyncCoroutineHelper.YieldOnTimeout();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 
 			if (!hasNormals)
 			{
@@ -2196,6 +2272,19 @@ namespace UnityGLTF
 			else return null;
 		}
 
+		protected async Task YieldOnTimeoutAndThrowOnLowMemory()
+		{
+			if (_options.ThrowOnLowMemory)
+			{
+				_memoryChecker.ThrowIfOutOfMemory();
+			}
+
+			if (_options.AsyncCoroutineHelper != null)
+			{
+				await _options.AsyncCoroutineHelper.YieldOnTimeout();
+			}
+		}
+
 
 		/// <summary>
 		///	 Get the absolute path to a gltf uri reference.
@@ -2227,8 +2316,11 @@ namespace UnityGLTF
 		/// </summary>
 		private void Cleanup()
 		{
-			_assetCache.Dispose();
-			_assetCache = null;
+			if (_assetCache != null)
+			{
+				_assetCache.Dispose();
+				_assetCache = null;
+			}
 		}
 	}
 }

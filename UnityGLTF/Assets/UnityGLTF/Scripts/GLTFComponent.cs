@@ -38,8 +38,6 @@ namespace UnityGLTF
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 		public GameObject LastLoadedScene { get; private set; } = null;
 
-		private AsyncCoroutineHelper asyncCoroutineHelper;
-
 		[SerializeField]
 		private Shader shaderOverride = null;
 
@@ -68,9 +66,13 @@ namespace UnityGLTF
 
 		public async Task Load()
 		{
-			asyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>();
+			var importOptions = new ImportOptions
+			{
+				AsyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>(),
+				ExternalDataLoader = null,
+			};
+
 			GLTFSceneImporter sceneImporter = null;
-			ILoader loader = null;
 			try
 			{
                 Factory = Factory ?? ScriptableObject.CreateInstance<DefaultImporterFactory>();
@@ -90,22 +92,20 @@ namespace UnityGLTF
 						fullPath = GLTFUri;
 					}
 					string directoryPath = URIHelper.GetDirectoryName(fullPath);
-					loader = new FileLoader(directoryPath);
+					importOptions.ExternalDataLoader = new FileLoader(directoryPath);
 					sceneImporter = Factory.CreateSceneImporter(
 						Path.GetFileName(GLTFUri),
-						loader,
-						asyncCoroutineHelper
+						importOptions
 						);
 				}
 				else
 				{
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					loader = new WebRequestLoader(directoryPath);
+					importOptions.ExternalDataLoader = new WebRequestLoader(directoryPath);
 
 					sceneImporter = Factory.CreateSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
-						loader,
-						asyncCoroutineHelper
+						importOptions
 						);
 
 				}
@@ -151,11 +151,11 @@ namespace UnityGLTF
 			}
 			finally
 			{
-				if(loader != null)
+				if(importOptions.ExternalDataLoader != null)
 				{
 					sceneImporter?.Dispose();
 					sceneImporter = null;
-					loader = null;
+					importOptions.ExternalDataLoader = null;
 				}
 			}
 		}

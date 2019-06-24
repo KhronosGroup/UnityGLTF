@@ -11,6 +11,12 @@ using WrapMode = GLTF.Schema.WrapMode;
 
 namespace UnityGLTF
 {
+	public class ExportOptions
+	{
+		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
+		public bool ExportInactivePrimitives = true;
+	}
+
 	public class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
@@ -53,7 +59,7 @@ namespace UnityGLTF
 		private List<Material> _materials;
 		private bool _shouldUseInternalBufferForImages;
 
-		private RetrieveTexturePathDelegate _retrieveTexturePathDelegate;
+		private ExportOptions _exportOptions;
 
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _normalChannelMaterial;
@@ -82,9 +88,19 @@ namespace UnityGLTF
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
 		/// <param name="rootTransforms">Root transform of object to export</param>
-		public GLTFSceneExporter(Transform[] rootTransforms, RetrieveTexturePathDelegate retrieveTexturePathDelegate)
+		[Obsolete("Please switch to GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options).  This constructor is deprecated and will be removed in a future release.")]
+		public GLTFSceneExporter(Transform[] rootTransforms, RetrieveTexturePathDelegate texturePathRetriever)
+			: this(rootTransforms, new ExportOptions { TexturePathRetriever = texturePathRetriever })
 		{
-			_retrieveTexturePathDelegate = retrieveTexturePathDelegate;
+		}
+
+		/// <summary>
+		/// Create a GLTFExporter that exports out a transform
+		/// </summary>
+		/// <param name="rootTransforms">Root transform of object to export</param>
+		public GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options)
+		{
+			_exportOptions = options;
 
 			var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
 			_metalGlossChannelSwapMaterial = new Material(metalGlossChannelSwapShader);
@@ -412,7 +428,7 @@ namespace UnityGLTF
 
 		private string ConstructImageFilenamePath(Texture2D texture, string outputPath)
 		{
-			var imagePath = _retrieveTexturePathDelegate(texture);
+			var imagePath = _exportOptions.TexturePathRetriever(texture);
 			if (string.IsNullOrEmpty(imagePath))
 			{
 				imagePath = Path.Combine(outputPath, texture.name);
@@ -1254,7 +1270,7 @@ namespace UnityGLTF
 				textureMapType = texturMapType
 			});
 
-			var imagePath =_retrieveTexturePathDelegate(texture);
+			var imagePath = _exportOptions.TexturePathRetriever(texture);
 			if (string.IsNullOrEmpty(imagePath))
 			{
 				imagePath = texture.name;

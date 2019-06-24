@@ -334,12 +334,15 @@ namespace UnityGLTF
 
         private GameObject CreateGLTFScene(string projectFilePath)
         {
-			ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
+			var importOptions = new ImportOptions
+			{
+				ExternalDataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
+			};
 			using (var stream = File.OpenRead(projectFilePath))
 			{
 				GLTFRoot gLTFRoot;
 				GLTFParser.ParseJson(stream, out gLTFRoot);
-				var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, null, stream);
+				var loader = new GLTFSceneImporter(gLTFRoot, stream, importOptions);
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
