@@ -17,7 +17,7 @@ using Object = System.Object;
 
 public class GLTFAssetGeneratorTests
 {
-	private static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/";
+	private static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/Positive/";
 	private static string GLTF_CAMERA_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
 	private static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
 	private static string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
