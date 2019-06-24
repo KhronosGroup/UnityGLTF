@@ -28,7 +28,7 @@ namespace UnityGLTF
 	{
 		public ILoader ExternalDataLoader = null;
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
-		public bool CheckForLowMemory = true;
+		public bool ThrowOnLowMemory = true;
 	}
 
 	public struct MeshConstructionData
@@ -231,7 +231,7 @@ namespace UnityGLTF
 			}
 		}
 
-		[Obsolete]
+		[Obsolete("Only called by obsolete public constructors.  This will be removed when those obsolete constructors are removed.")]
 		private GLTFSceneImporter(ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
 		{
 			_options = new ImportOptions
@@ -273,7 +273,7 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
-				if (_options.CheckForLowMemory)
+				if (_options.ThrowOnLowMemory)
 				{
 					_memoryChecker = new MemoryChecker();
 				}
@@ -751,7 +751,7 @@ namespace UnityGLTF
 					}
 				}
 
-				await YieldOnTimeoutAndCheckMemory();
+				await YieldOnTimeoutAndThrowOnLowMemory();
 				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
 			}
 		}
@@ -765,7 +765,7 @@ namespace UnityGLTF
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
-					await YieldOnTimeoutAndCheckMemory();
+					await YieldOnTimeoutAndThrowOnLowMemory();
 					texture.LoadImage(memoryStream.ToArray(), markGpuOnly);
 				}
 			}
@@ -780,7 +780,7 @@ namespace UnityGLTF
 				}
 				stream.Read(buffer, 0, (int)stream.Length);
 
-				await YieldOnTimeoutAndCheckMemory();
+				await YieldOnTimeoutAndThrowOnLowMemory();
 				//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 				texture.LoadImage(buffer, markGpuOnly);
 			}
@@ -1834,7 +1834,7 @@ namespace UnityGLTF
 			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 			bool hasNormals = unityMeshData.Normals != null;
 
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			Mesh mesh = new Mesh
 			{
 
@@ -1844,25 +1844,25 @@ namespace UnityGLTF
 			};
 
 			mesh.vertices = unityMeshData.Vertices;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.normals = unityMeshData.Normals;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv = unityMeshData.Uv1;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv2 = unityMeshData.Uv2;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv3 = unityMeshData.Uv3;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.uv4 = unityMeshData.Uv4;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.colors = unityMeshData.Colors;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.triangles = unityMeshData.Triangles;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.tangents = unityMeshData.Tangents;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 			mesh.boneWeights = unityMeshData.BoneWeights;
-			await YieldOnTimeoutAndCheckMemory();
+			await YieldOnTimeoutAndThrowOnLowMemory();
 
 			if (!hasNormals)
 			{
@@ -2272,9 +2272,9 @@ namespace UnityGLTF
 			else return null;
 		}
 
-		protected async Task YieldOnTimeoutAndCheckMemory()
+		protected async Task YieldOnTimeoutAndThrowOnLowMemory()
 		{
-			if (_options.CheckForLowMemory)
+			if (_options.ThrowOnLowMemory)
 			{
 				_memoryChecker.ThrowIfOutOfMemory();
 			}
