@@ -250,7 +250,12 @@ namespace Sketchfab
 			GUILayout.FlexibleSpace();
 			bool previous = _myModels;
 			GUIContent content = _logger.isUserBasic() ? new GUIContent("My Models", SketchfabUI.getPlanIcon("pro")) : new GUIContent("My Models");
+
+			bool previousState = GUI.enabled;
+			GUI.enabled = SketchfabPlugin.getLogger().isUserLogged();
 			_myModels = GUILayout.Toggle(_myModels, content, GUILayout.Height(18));
+			GUI.enabled = previousState;
+
 			if (_myModels != previous)
 			{
 				if(_myModels)
@@ -295,7 +300,7 @@ namespace Sketchfab
 			if (_animated != previous)
 				triggerSearch();
 			previous = _staffpicked;
-			_staffpicked = GUILayout.Toggle(_staffpicked, "StaffPicked");
+			_staffpicked = GUILayout.Toggle(_staffpicked, "Staff Picked");
 			if (_staffpicked != previous)
 				triggerSearch();
 		}

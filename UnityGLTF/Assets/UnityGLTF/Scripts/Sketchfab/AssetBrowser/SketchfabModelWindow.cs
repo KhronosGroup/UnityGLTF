@@ -104,10 +104,15 @@ namespace Sketchfab
 
 				GUILayout.BeginVertical(GUILayout.Width(300));
 				_ui.displayTitle("LICENSE");
-				if(model.licenseJson != null)
+				if(model.licenseJson != null && model.licenseJson["fullName"] != null)
 				{
 					_ui.displayContent(model.licenseJson["fullName"]);
 					_ui.displaySubContent(model.licenseJson["requirements"]);
+				}
+				else if(model.vertexCount != 0)
+				{
+					_ui.displayContent("Personal");
+					_ui.displaySubContent("You own this model");
 				}
 				else
 				{
@@ -165,7 +170,7 @@ namespace Sketchfab
 			
 			if (!_window._logger.isUserLogged())
 			{
-				buttonCaption = "You need to be logged in to download and import assets";
+				buttonCaption = "You need to be logged in to download assets";
 				GUI.enabled = false;
 			}
 			else if(modelIsAvailable)
