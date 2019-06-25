@@ -192,13 +192,13 @@ namespace UnityGLTF
 			_gltfFileName = gltfFileName;
 		}
 
-		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper, Stream gltfStream = null) : this(externalDataLoader, asyncCoroutineHelper)
+		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper, Stream gltfStream = null, int startPosition = 0) : this(externalDataLoader, asyncCoroutineHelper)
 		{
 			_gltfRoot = rootNode;
 			_loader = externalDataLoader;
 			if (gltfStream != null)
 			{
-				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
+				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = startPosition };
 			}
 		}
 
