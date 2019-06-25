@@ -90,7 +90,7 @@ namespace UnityGLTF
                     {
                         mesh.normals = new Vector3[0];
                     }
-                    if (_importNormals == GLTFImporterNormals.Calculate)
+                    if (_importNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
                     {
                         mesh.RecalculateNormals();
                     }
@@ -334,12 +334,16 @@ namespace UnityGLTF
 
         private GameObject CreateGLTFScene(string projectFilePath)
         {
-			ILoader fileLoader = new FileLoader(Path.GetDirectoryName(projectFilePath));
+			var importOptions = new ImportOptions
+			{
+				ExternalDataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
+			};
 			using (var stream = File.OpenRead(projectFilePath))
 			{
 				GLTFRoot gLTFRoot;
 				GLTFParser.ParseJson(stream, out gLTFRoot);
-				var loader = new GLTFSceneImporter(gLTFRoot, fileLoader, null, stream, 0);
+				stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
+				var loader = new GLTFSceneImporter(gLTFRoot, stream, importOptions);
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 

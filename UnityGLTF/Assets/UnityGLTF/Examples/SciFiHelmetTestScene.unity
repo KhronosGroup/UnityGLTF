@@ -187,11 +187,6 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5255039e40b37b14fbcc0b72a30fc62e, type: 2}
   m_IsPrefabParent: 0
---- !u!4 &10002064 stripped
-Transform:
-  m_PrefabParentObject: {fileID: 4000011406631220, guid: 5255039e40b37b14fbcc0b72a30fc62e,
-    type: 2}
-  m_PrefabInternal: {fileID: 10002063}
 --- !u!1 &328853373
 GameObject:
   m_ObjectHideFlags: 0
@@ -207,7 +202,7 @@ GameObject:
   - component: {fileID: 328853374}
   m_Layer: 0
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -223,10 +218,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70ff706d2c89cc247a850af95597fcbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 10002064}
+  targetPosition: {x: 0, y: 0, z: 0}
   distance: 5
   xSpeed: 120
   ySpeed: 120
+  zoomSpeed: 0.8
   yMinLimit: -20
   yMaxLimit: 80
   distanceMin: 0.5
