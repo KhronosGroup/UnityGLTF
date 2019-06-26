@@ -12,20 +12,20 @@ namespace Sketchfab
 {
 	public class SketchfabPlugin : MonoBehaviour
 	{
-		public static string VERSION = "1.1.0";
+		public static string VERSION = "1.1.1";
 
 		public struct Urls
 		{
 			public static string baseApi = "https://api.sketchfab.com";
 
 			public static string server = "https://sketchfab.com";
-			public static string latestRelease = "https://github.com/sketchfab/UnityGLTF/releases/latest";
+			public static string latestRelease = "https://github.com/sketchfab/unity-plugin/releases/latest";
 			public static string resetPassword = "https://sketchfab.com/login/reset-password";
 			public static string createAccount = "https://sketchfab.com/signup";
 			public static string reportAnIssue = "https://help.sketchfab.com/hc/en-us/requests/new?type=exporters&subject=Unity+Exporter";
 			public static string privateInfo = "https://help.sketchfab.com/hc/en-us/articles/115000422206-Private-Models";
 			public static string draftInfo = "https://help.sketchfab.com/hc/en-us/articles/115000472906-Draft-Mode";
-			public static string latestReleaseCheck = "https://api.github.com/repos/sketchfab/UnityGLTF/releases";
+			public static string latestReleaseCheck = "https://api.github.com/repos/sketchfab/unity-plugin/releases";
 			public static string plans = "https://sketchfab.com/plans?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=download-api-pro-cta";
 			public static string bannerUrl = "https://static.sketchfab.com/plugins/unity/banner.jpg";
 			public static string storeUrl = "https://sketchfab.com/store?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=store-banner";
