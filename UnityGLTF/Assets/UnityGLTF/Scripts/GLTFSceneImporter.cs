@@ -28,7 +28,7 @@ namespace UnityGLTF
 	{
 		public ILoader ExternalDataLoader = null;
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
-		public bool ThrowOnLowMemory = true;
+		public IMemoryEnforcer MemoryEnforcer = new MemoryEnforcer();
 	}
 
 	public struct MeshConstructionData
@@ -174,7 +174,7 @@ namespace UnityGLTF
 		}
 
 		protected ImportOptions _options;
-		protected MemoryChecker _memoryChecker;
+		protected MemoryEnforcer _memoryChecker;
 
 		protected GameObject _lastLoadedScene;
 		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();
@@ -272,11 +272,6 @@ namespace UnityGLTF
 					}
 
 					_isRunning = true;
-				}
-
-				if (_options.ThrowOnLowMemory)
-				{
-					_memoryChecker = new MemoryChecker();
 				}
 
 				this.progressStatus = new ImportProgress();
@@ -2276,9 +2271,9 @@ namespace UnityGLTF
 
 		protected async Task YieldOnTimeoutAndThrowOnLowMemory()
 		{
-			if (_options.ThrowOnLowMemory)
+			if (_options.MemoryEnforcer != null)
 			{
-				_memoryChecker.ThrowIfOutOfMemory();
+				_options.MemoryEnforcer.ThrowIfOutOfMemory();
 			}
 
 			if (_options.AsyncCoroutineHelper != null)

@@ -6,7 +6,12 @@ using Windows.System;
 
 namespace UnityGLTF
 {
-	public class MemoryChecker
+	public interface IMemoryEnforcer
+	{
+		void ThrowIfOutOfMemory();
+	}
+
+	public class MemoryEnforcer : IMemoryEnforcer
 	{
 		private bool outOfMemory = false;
 
@@ -14,7 +19,7 @@ namespace UnityGLTF
 		/// Allows polling for app low memory situation.  Listens to Application.lowMemory, which works for iOS and Android.
 		/// Also listens to Windows-specific MemoryManager.AppMemoryUsageIncreased.
 		/// </summary>
-		public MemoryChecker()
+		public MemoryEnforcer()
 		{
 			Application.lowMemory += Application_lowMemory;
 
