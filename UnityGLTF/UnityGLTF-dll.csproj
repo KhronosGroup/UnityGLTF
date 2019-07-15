@@ -60,6 +60,7 @@
     <Compile Include="Assets\UnityGLTF\Scripts\Cache\TextureCacheData.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\Exceptions.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\Extensions\SchemaExtensions.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\Factories\ImporterFactory.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\GLTFComponent.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\GLTFSceneExporter.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\GLTFSceneImporter.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Assets\UnityGLTF\Scripts\Loader\ILoader.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\Loader\StorageFolderLoader.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\Loader\WebRequestLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Scripts\MemoryChecker.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\MetalRough2StandardMap.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\MetalRoughMap.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\SpecGloss2StandardMap.cs" />
@@ -76,7 +78,6 @@
     <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\UniformMap.cs" />
     <Compile Include="Assets\UnityGLTF\Scripts\URIHelper.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
