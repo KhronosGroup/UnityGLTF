@@ -31,12 +31,6 @@ namespace UnityGLTF
 		public bool ThrowOnLowMemory = true;
 	}
 
-	public struct MeshConstructionData
-	{
-		public MeshPrimitive Primitive { get; set; }
-		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
-	}
-
 	public class UnityMeshData
 	{
 		public Vector3[] Vertices;
@@ -894,6 +888,8 @@ namespace UnityGLTF
 						break;
 					case SemanticProperties.TEXCOORD_0:
 					case SemanticProperties.TEXCOORD_1:
+					case SemanticProperties.TEXCOORD_2:
+					case SemanticProperties.TEXCOORD_3:
 						SchemaExtensions.FlipTexCoordArrayV(ref aa);
 						break;
 				}
@@ -1391,7 +1387,22 @@ namespace UnityGLTF
 
 			if (node.Mesh != null)
 			{
-				await ConstructMesh(node.Mesh.Value, nodeObj, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null, cancellationToken);
+				var materials = node.Mesh.Value.Primitives.Select(p => _assetCache.MaterialCache[p.Material.Id].UnityMaterial).ToArray();
+				if (node.Skin != null)
+				{
+					await ConstructMesh(node.Mesh.Value, node.Mesh.Id, node.Skin.Value, cancellationToken);
+					var renderer = nodeObj.AddComponent<SkinnedMeshRenderer>();
+					renderer.sharedMesh = _assetCache.MeshCache[node.Mesh.Id].LoadedMesh;
+					renderer.sharedMaterials = materials;
+				}
+				else
+				{
+					await ConstructMesh(node.Mesh.Value, node.Mesh.Id, null, cancellationToken);
+					var filter = nodeObj.AddComponent<MeshFilter>();
+					filter.sharedMesh = _assetCache.MeshCache[node.Mesh.Id].LoadedMesh;
+					var renderer = nodeObj.AddComponent<MeshRenderer>();
+					renderer.sharedMaterials = materials;
+				}
 			}
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
@@ -1562,29 +1573,30 @@ namespace UnityGLTF
 		/// <param name="skin">Skinning information for this mesh</param>
 		/// <param name="cancellationToken"></param>
 		/// <returns>A task that completes when the mesh is attached to the given GameObject</returns>
-		protected virtual async Task ConstructMesh(GLTFMesh mesh, GameObject node, int meshId, Skin skin, CancellationToken cancellationToken)
+		protected virtual async Task ConstructMesh(GLTFMesh mesh, int meshId, Skin skin, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (_assetCache.MeshCache[meshId] == null)
 			{
-				throw new Exception("Cannot generate mesh from un-preloaded attributes");
+				throw new Exception("Cannot generate mesh before ConstructBufferData is called!");
 			}
+
+			var vertCount = mesh.Primitives.Aggregate((uint)0, (sum, p) => sum + p.Attributes[SemanticProperties.POSITION].Value.Count);
+			UnityMeshData unityMeshData = new UnityMeshData();
 
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
 				var primitive = mesh.Primitives[i];
 				int materialIndex = primitive.Material != null ? primitive.Material.Id : -1;
 
-				await ConstructMeshPrimitive(primitive, meshId, i, materialIndex);
+				await ConstructMeshPrimitive(primitive, meshId, i);
 				cancellationToken.ThrowIfCancellationRequested();
-
-				var primitiveObj = new GameObject("Primitive");
 
 				MaterialCacheData materialCacheData =
 					materialIndex >= 0 ? _assetCache.MaterialCache[materialIndex] : _defaultLoadedMaterial;
 
-				Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
+				Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color[0]));
 
 				Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
 				if (NeedsSkinnedMeshRenderer(primitive, skin))
@@ -1642,7 +1654,7 @@ namespace UnityGLTF
 		}
 
 
-		protected virtual async Task ConstructMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex, int materialIndex)
+		protected virtual async Task ConstructMeshPrimitive(MeshPrimitive primitive, int meshID, int primitiveIndex)
 		{
 			if (_assetCache.MeshCache[meshID][primitiveIndex] == null)
 			{
@@ -1674,26 +1686,33 @@ namespace UnityGLTF
 
 			GLTFMaterial materialToLoad = shouldUseDefaultMaterial ? DefaultMaterial : primitive.Material.Value;
 			if ((shouldUseDefaultMaterial && _defaultLoadedMaterial == null) ||
-				(!shouldUseDefaultMaterial && _assetCache.MaterialCache[materialIndex] == null))
+				(!shouldUseDefaultMaterial && _assetCache.MaterialCache[primitive.Material.Id] == null))
 			{
-				await ConstructMaterial(materialToLoad, shouldUseDefaultMaterial ? -1 : materialIndex);
+				await ConstructMaterial(materialToLoad, shouldUseDefaultMaterial ? -1 : primitive.Material.Id);
 			}
 		}
 
-		protected UnityMeshData ConvertAccessorsToUnityTypes(MeshConstructionData meshConstructionData)
+		protected UnityMeshData ConvertAccessorsToUnityTypes(Dictionary<string, AttributeAccessor> meshAttributes)
 		{
 			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
-			MeshPrimitive primitive = meshConstructionData.Primitive;
-			Dictionary<string, AttributeAccessor> meshAttributes = meshConstructionData.MeshAttributes;
+			
+			int vertexCount = (int)meshAttributes[SemanticProperties.POSITION].AccessorId.Value.Count;
 
-			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
-
-			var indices = primitive.Indices != null
+			var indices = meshAttributes.ContainsKey(SemanticProperties.INDICES)
 					? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
 					: MeshPrimitive.GenerateIndices(vertexCount);
 
 			var topology = GetTopology(meshConstructionData.Primitive.Mode);
 			if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
+
+			BoneWeight[] boneWeights = null;
+			if (meshAttributes.ContainsKey(SemanticProperties.Weight[0]) && meshAttributes.ContainsKey(SemanticProperties.Joint[0]))
+			{
+				boneWeights = CreateBoneWeightArray(
+					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+					vertexCount);
+			}
 
 			return new UnityMeshData
 			{
@@ -1705,24 +1724,24 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw()
 					: null,
 
-				Uv1 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(0))
-					? meshAttributes[SemanticProperties.TexCoord(0)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+				Uv1 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord[0])
+					? meshAttributes[SemanticProperties.TexCoord[0]].AccessorContent.AsTexcoords.ToUnityVector2Raw()
 					: null,
 
-				Uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(1))
-					? meshAttributes[SemanticProperties.TexCoord(1)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+				Uv2 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord[1])
+					? meshAttributes[SemanticProperties.TexCoord[1]].AccessorContent.AsTexcoords.ToUnityVector2Raw()
 					: null,
 
-				Uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(2))
-					? meshAttributes[SemanticProperties.TexCoord(2)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+				Uv3 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord[2])
+					? meshAttributes[SemanticProperties.TexCoord[2]].AccessorContent.AsTexcoords.ToUnityVector2Raw()
 					: null,
 
-				Uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord(3))
-					? meshAttributes[SemanticProperties.TexCoord(3)].AccessorContent.AsTexcoords.ToUnityVector2Raw()
+				Uv4 = primitive.Attributes.ContainsKey(SemanticProperties.TexCoord[3])
+					? meshAttributes[SemanticProperties.TexCoord[3]].AccessorContent.AsTexcoords.ToUnityVector2Raw()
 					: null,
 
-				Colors = primitive.Attributes.ContainsKey(SemanticProperties.Color(0))
-					? meshAttributes[SemanticProperties.Color(0)].AccessorContent.AsColors.ToUnityColorRaw()
+				Colors = primitive.Attributes.ContainsKey(SemanticProperties.Color[0])
+					? meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorRaw()
 					: null,
 
 				Topology = topology,
@@ -1732,10 +1751,7 @@ namespace UnityGLTF
 					? meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw()
 					: null,
 
-				BoneWeights = meshAttributes.ContainsKey(SemanticProperties.Weight(0)) && meshAttributes.ContainsKey(SemanticProperties.Joint(0))
-					? CreateBoneWeightArray(meshAttributes[SemanticProperties.Joint(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-					meshAttributes[SemanticProperties.Weight(0)].AccessorContent.AsVec4s.ToUnityVector4Raw(), vertexCount)
-					: null
+				BoneWeights = boneWeights
 			};
 		}
 
@@ -1822,18 +1838,15 @@ namespace UnityGLTF
 		/// <param name="primitiveIndex"></param>
 		/// <param name="unityMeshData"></param>
 		/// <returns></returns>
-		protected async Task ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex, UnityMeshData unityMeshData)
+		protected async Task ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, UnityMeshData unityMeshData)
 		{
-			MeshPrimitive primitive = meshConstructionData.Primitive;
-			int vertexCount = (int)primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 			bool hasNormals = unityMeshData.Normals != null;
 
 			await YieldOnTimeoutAndThrowOnLowMemory();
 			Mesh mesh = new Mesh
 			{
-
 #if UNITY_2017_3_OR_NEWER
-				indexFormat = vertexCount > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16,
+				indexFormat = meshConstructionData.VertexCount > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16,
 #endif
 			};
 
@@ -1868,7 +1881,7 @@ namespace UnityGLTF
 				mesh.UploadMeshData(true);
 			}
 
-			_assetCache.MeshCache[meshId][primitiveIndex].LoadedMesh = mesh;
+			_assetCache.MeshCache[meshId].LoadedMesh = mesh;
 		}
 
 		protected virtual async Task ConstructMaterial(GLTFMaterial def, int materialIndex)

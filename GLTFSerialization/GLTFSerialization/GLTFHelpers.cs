@@ -245,6 +245,8 @@ namespace GLTF
 						break;
 					case SemanticProperties.TEXCOORD_0:
 					case SemanticProperties.TEXCOORD_1:
+					case SemanticProperties.TEXCOORD_2:
+					case SemanticProperties.TEXCOORD_3:
 						attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 						break;
 					case SemanticProperties.COLOR_0:

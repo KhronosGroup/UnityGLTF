@@ -328,7 +328,9 @@ namespace GLTF.Schema
 
 		public const string TEXCOORD_0 = "TEXCOORD_0";
 		public const string TEXCOORD_1 = "TEXCOORD_1";
-		public static readonly string[] TexCoord = { TEXCOORD_0, TEXCOORD_1 };
+		public const string TEXCOORD_2 = "TEXCOORD_2";
+		public const string TEXCOORD_3 = "TEXCOORD_3";
+		public static readonly string[] TexCoord = { TEXCOORD_0, TEXCOORD_1, TEXCOORD_2, TEXCOORD_3 };
 
 		public const string COLOR_0 = "COLOR_0";
 		public static readonly string[] Color = { COLOR_0 };
