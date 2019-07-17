@@ -223,135 +223,67 @@ namespace GLTF
 		/// <summary>
 		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
 		/// </summary>
-		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
-		/// <summary>
-		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
-		/// </summary>
-		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
+		/// <param name="attributes">A list of attributes to parse</param>
 		public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes)
 		{
-			if (attributes.ContainsKey(SemanticProperties.POSITION))
+			foreach (var kvp in attributes)
 			{
-				var attributeAccessor = attributes[SemanticProperties.POSITION];
+				var attributeAccessor = kvp.Value;
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.INDICES))
-			{
-				var attributeAccessor = attributes[SemanticProperties.INDICES];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.NORMAL))
-			{
-				var attributeAccessor = attributes[SemanticProperties.NORMAL];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(0)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(0)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(1)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(1)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(2)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(2)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(3)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(3)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.Color(0)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.Color(0)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.TANGENT))
-			{
-				var attributeAccessor = attributes[SemanticProperties.TANGENT];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.Weight(0)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.Weight(0)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-			if (attributes.ContainsKey(SemanticProperties.Joint(0)))
-			{
-				var attributeAccessor = attributes[SemanticProperties.Joint(0)];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				switch (kvp.Key)
+				{
+					case SemanticProperties.POSITION:
+					case SemanticProperties.INDICES:
+						attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
+						break;
+					case SemanticProperties.NORMAL:
+						attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
+						break;
+					case SemanticProperties.TANGENT:
+						attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
+						break;
+					case SemanticProperties.TEXCOORD_0:
+					case SemanticProperties.TEXCOORD_1:
+						attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+						break;
+					case SemanticProperties.COLOR_0:
+						attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
+						break;
+					case SemanticProperties.WEIGHTS_0:
+					case SemanticProperties.JOINTS_0:
+						attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+						break;
+					default:
+						throw new System.Exception($"Unrecognized mesh attribute [{kvp.Key}]");
+				}
+				
 				attributeAccessor.AccessorContent = resultArray;
 			}
 		}
 
 		public static void BuildTargetAttributes (ref Dictionary<string, AttributeAccessor> attributes)
 		{
-			if (attributes.ContainsKey(SemanticProperties.POSITION))
+			foreach (var kvp in attributes)
 			{
-				var attributeAccessor = attributes[SemanticProperties.POSITION];
+				var attributeAccessor = kvp.Value;
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				byte[] bufferViewCache;
 				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+
+				switch (kvp.Key)
+				{
+					case SemanticProperties.POSITION:
+					case SemanticProperties.NORMAL:
+					case SemanticProperties.TANGENT:
+						attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+						break;
+					default:
+						throw new System.Exception($"Unrecognized morph target attribute {kvp.Key}");
+				}
+
 				attributeAccessor.AccessorContent = resultArray;
 			}
-
-			if (attributes.ContainsKey(SemanticProperties.NORMAL))
-			{
-				var attributeAccessor = attributes[SemanticProperties.NORMAL];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				byte[] bufferViewCache;
-				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-
-			if (attributes.ContainsKey(SemanticProperties.TANGENT))
-			{
-				var attributeAccessor = attributes[SemanticProperties.TANGENT];
-				NumericArray resultArray = attributeAccessor.AccessorContent;
-				byte[] bufferViewCache;
-				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
-				attributeAccessor.AccessorContent = resultArray;
-			}
-
 		}
 
 		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)

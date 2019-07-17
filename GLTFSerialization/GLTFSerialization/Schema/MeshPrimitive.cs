@@ -321,52 +321,23 @@ namespace GLTF.Schema
 
 	public static class SemanticProperties
 	{
-		public static readonly string POSITION = "POSITION";
-		public static readonly string NORMAL = "NORMAL";
-		public static readonly string JOINT = "JOINT";
-		public static readonly string WEIGHT = "WEIGHT";
-		public static readonly string TANGENT = "TANGENT";
-		public static readonly string INDICES = "INDICIES";
+		public const string POSITION = "POSITION";
+		public const string NORMAL = "NORMAL";
+		public const string TANGENT = "TANGENT";
+		public const string INDICES = "INDICES";
 
-		/// <summary>
-		/// Return the semantic property for the uv buffer.
-		/// </summary>
-		/// <param name="index">The index of the uv buffer</param>
-		/// <returns>The semantic property for the uv buffer</returns>
-		public static string TexCoord(int index)
-		{
-			return "TEXCOORD_" + index;
-		}
+		public const string TEXCOORD_0 = "TEXCOORD_0";
+		public const string TEXCOORD_1 = "TEXCOORD_1";
+		public static readonly string[] TexCoord = { TEXCOORD_0, TEXCOORD_1 };
 
-		/// <summary>
-		/// Return the semantic property for the color buffer.
-		/// </summary>
-		/// <param name="index">The index of the color buffer</param>
-		/// <returns>The semantic property for the color buffer</returns>
-		public static string Color(int index)
-		{
-			return "COLOR_" + index;
-		}
+		public const string COLOR_0 = "COLOR_0";
+		public static readonly string[] Color = { COLOR_0 };
 
-		/// <summary>
-		/// Return the semantic property for the bone weights buffer.
-		/// </summary>
-		/// <param name="index">The index of the bone weights buffer</param>
-		/// <returns>The semantic property for the bone weights buffer</returns>
-		public static string Weight(int index)
-		{
-			return "WEIGHTS_" + index;
-		}
+		public const string WEIGHTS_0 = "WEIGHTS_0";
+		public static readonly string[] Weight = { WEIGHTS_0 };
 
-		/// <summary>
-		/// Return the semantic property for the joints buffer.
-		/// </summary>
-		/// <param name="index">The index of the joints buffer</param>
-		/// <returns>The semantic property for the joints buffer</returns>
-		public static string Joint(int index)
-		{
-			return "JOINTS_" + index;
-		}
+		public const string JOINTS_0 = "JOINTS_0";
+		public static readonly string[] Joint = { JOINTS_0 };
 
 		/// <summary>
 		/// Parse out the index of a given semantic property.

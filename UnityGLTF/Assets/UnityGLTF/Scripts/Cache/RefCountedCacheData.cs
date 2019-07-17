@@ -25,7 +25,7 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// Meshes used by this GLTF node.
 		/// </summary>
-		public MeshCacheData[][] MeshCache { get; private set; }
+		public MeshCacheData[] MeshCache { get; private set; }
 
 		/// <summary>
 		/// Materials used by this GLTF node.
@@ -42,7 +42,7 @@ namespace UnityGLTF.Cache
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
 
-		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[][] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache)
+		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache)
 		{
 			MaterialCache = materialCache;
 			MeshCache = meshCache;
@@ -91,11 +91,8 @@ namespace UnityGLTF.Cache
 			// Destroy the cached meshes
 			for (int i = 0; i < MeshCache.Length; i++)
 			{
-				for (int j = 0; j < MeshCache[i].Length; j++)
-				{
-					MeshCache[i][j]?.Dispose();
-					MeshCache[i][j] = null;
-				}
+				MeshCache[i]?.Dispose();
+				MeshCache[i] = null;
 			}
 
 			// Destroy the cached textures

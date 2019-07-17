@@ -475,34 +475,28 @@ namespace UnityGLTF
 
 		private async Task ConstructMeshAttributes(GLTFMesh mesh, MeshId meshId)
 		{
-			int meshIdIndex = meshId.Id;
+			int meshIndex = meshId.Id;
 
-			if (_assetCache.MeshCache[meshIdIndex] == null)
-			{
-				_assetCache.MeshCache[meshIdIndex] = new MeshCacheData[mesh.Primitives.Count];
-			}
+			if (_assetCache.MeshCache[meshIndex] == null)
+				_assetCache.MeshCache[meshIndex] = new MeshCacheData();
+			else if (_assetCache.MeshCache[meshIndex].Primitives.Count > 0)
+				return;
 
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
 				MeshPrimitive primitive = mesh.Primitives[i];
-				if (_assetCache.MeshCache[meshIdIndex][i] == null)
+
+				await ConstructPrimitiveAttributes(primitive, meshIndex, i);
+
+				if (primitive.Material != null)
 				{
-					_assetCache.MeshCache[meshIdIndex][i] = new MeshCacheData();
+					await ConstructMaterialImageBuffers(primitive.Material.Value);
 				}
 
-				if (_assetCache.MeshCache[meshIdIndex][i].MeshAttributes.Count == 0)
+				if (primitive.Targets != null)
 				{
-					await ConstructMeshAttributes(primitive, meshIdIndex, i);
-					if (primitive.Material != null)
-					{
-						await ConstructMaterialImageBuffers(primitive.Material.Value);
-					}
-
-					if (primitive.Targets != null)
-					{
-						// read mesh primitive targets into assetcache
-						await ConstructMeshTargets(primitive, meshIdIndex, i);
-					}
+					// read mesh primitive targets into assetcache
+					await ConstructMeshTargets(primitive, meshIndex, i);
 				}
 			}
 		}
@@ -792,40 +786,40 @@ namespace UnityGLTF
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 		}
 
-		protected virtual async Task ConstructMeshTargets(MeshPrimitive primitive, int meshID, int primitiveIndex)
+		protected virtual async Task ConstructMeshTargets(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
 		{
-			if (_assetCache.MeshCache[meshID][primitiveIndex].Targets == null || _assetCache.MeshCache[meshID][primitiveIndex].Targets.Count == 0)
+			var newTargets = new List<Dictionary<string, AttributeAccessor>>(primitive.Targets.Count);
+			_assetCache.MeshCache[meshIndex].Primitives[primitiveIndex].Targets = newTargets;
+
+			for (int i = 0; i < primitive.Targets.Count; i++)
 			{
-				List<Dictionary<string, AttributeAccessor>> newTargets = new List<Dictionary<string, AttributeAccessor>>(primitive.Targets.Count);
-				foreach (Dictionary<string, AccessorId> target in primitive.Targets)
+				var target = primitive.Targets[i];
+				newTargets.Add(new Dictionary<string, AttributeAccessor>());
+
+				//NORMALS, POSITIONS, TANGENTS
+				foreach (var targetAttribute in target)
 				{
-					int currentIndex = newTargets.Count;
-					newTargets.Add(new Dictionary<string, AttributeAccessor>());
-					//NORMALS, POSITIONS, TANGENTS
-					foreach (var targetAttribute in target)
+					BufferId bufferIdPair = targetAttribute.Value.Value.BufferView.Value.Buffer;
+					GLTFBuffer buffer = bufferIdPair.Value;
+					int bufferID = bufferIdPair.Id;
+
+					if (_assetCache.BufferCache[bufferID] == null)
 					{
-						BufferId bufferIdPair = targetAttribute.Value.Value.BufferView.Value.Buffer;
-						GLTFBuffer buffer = bufferIdPair.Value;
-						int bufferID = bufferIdPair.Id;
-
-						if (_assetCache.BufferCache[bufferID] == null)
-						{
-							await ConstructBuffer(buffer, bufferID);
-						}
-
-						newTargets[currentIndex][targetAttribute.Key] = new AttributeAccessor
-						{
-							AccessorId = targetAttribute.Value,
-							Stream = _assetCache.BufferCache[bufferID].Stream,
-							Offset = (uint)_assetCache.BufferCache[bufferID].ChunkOffset
-						};
-
+						await ConstructBuffer(buffer, bufferID);
 					}
-					Dictionary<string, AttributeAccessor> att = newTargets[currentIndex];
-					GLTFHelpers.BuildTargetAttributes(ref att);
-					TransformTargets(ref att);
-					_assetCache.MeshCache[meshID][primitiveIndex].Targets = newTargets;
+
+					newTargets[i][targetAttribute.Key] = new AttributeAccessor
+					{
+						AccessorId = targetAttribute.Value,
+						Stream = _assetCache.BufferCache[bufferID].Stream,
+						Offset = (uint)_assetCache.BufferCache[bufferID].ChunkOffset
+					};
+
 				}
+
+				var att = newTargets[i];
+				GLTFHelpers.BuildTargetAttributes(ref att);
+				TransformTargets(ref att);
 			}
 		}
 
@@ -851,76 +845,58 @@ namespace UnityGLTF
 			}
 		}
 
-		protected virtual async Task ConstructMeshAttributes(MeshPrimitive primitive, int meshID, int primitiveIndex)
+		protected virtual async Task ConstructPrimitiveAttributes(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
 		{
-			if (_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes.Count == 0)
+			var attributeAccessors = _assetCache.MeshCache[meshIndex].Primitives[primitiveIndex].Attributes;
+			foreach (var attributePair in primitive.Attributes)
 			{
-				Dictionary<string, AttributeAccessor> attributeAccessors = new Dictionary<string, AttributeAccessor>(primitive.Attributes.Count + 1);
-				foreach (var attributePair in primitive.Attributes)
+				var bufferId = attributePair.Value.Value.BufferView.Value.Buffer;
+				var bufferData = await GetBufferData(bufferId);
+
+				attributeAccessors[attributePair.Key] = new AttributeAccessor
 				{
-					var bufferId = attributePair.Value.Value.BufferView.Value.Buffer;
-
-					var bufferData = await GetBufferData(bufferId);
-
-					AttributeAccessor attributeAccessor = new AttributeAccessor
-					{
-						AccessorId = attributePair.Value,
-						Stream = bufferData.Stream,
-						Offset = (uint)bufferData.ChunkOffset
-					};
-
-					attributeAccessors[attributePair.Key] = attributeAccessor;
-				}
-
-				if (primitive.Indices != null)
-				{
-					var bufferId = primitive.Indices.Value.BufferView.Value.Buffer;
-					var bufferData = await GetBufferData(bufferId);
-
-					AttributeAccessor indexBuilder = new AttributeAccessor
-					{
-						AccessorId = primitive.Indices,
-						Stream = bufferData.Stream,
-						Offset = (uint)bufferData.ChunkOffset
-					};
-
-					attributeAccessors[SemanticProperties.INDICES] = indexBuilder;
-				}
-
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
-
-				TransformAttributes(ref attributeAccessors);
-				_assetCache.MeshCache[meshID][primitiveIndex].MeshAttributes = attributeAccessors;
+					AccessorId = attributePair.Value,
+					Stream = bufferData.Stream,
+					Offset = (uint)bufferData.ChunkOffset
+				};
 			}
-		}
 
+			if (primitive.Indices != null)
+			{
+				var bufferId = primitive.Indices.Value.BufferView.Value.Buffer;
+				var bufferData = await GetBufferData(bufferId);
+
+				attributeAccessors[SemanticProperties.INDICES] = new AttributeAccessor
+				{
+					AccessorId = primitive.Indices,
+					Stream = bufferData.Stream,
+					Offset = (uint)bufferData.ChunkOffset
+				};
+			}
+
+			GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+			TransformAttributes(ref attributeAccessors);
+		}
 
 		protected void TransformAttributes(ref Dictionary<string, AttributeAccessor> attributeAccessors)
 		{
-			// Flip vectors and triangles to the Unity coordinate system.
-			if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
+			foreach (var name in attributeAccessors.Keys)
 			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
-				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
-			}
-			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
-				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
-			}
-			// TexCoord goes from 0 to 3 to match GLTFHelpers.BuildMeshAttributes
-			for (int i = 0; i < 4; i++)
-			{
-				if (attributeAccessors.ContainsKey(SemanticProperties.TexCoord(i)))
+				var aa = attributeAccessors[name];
+				switch (name)
 				{
-					AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TexCoord(i)];
-					SchemaExtensions.FlipTexCoordArrayV(ref attributeAccessor);
+					case SemanticProperties.POSITION:
+					case SemanticProperties.NORMAL:
+						SchemaExtensions.ConvertVector3CoordinateSpace(ref aa, SchemaExtensions.CoordinateSpaceConversionScale);
+						break;
+					case SemanticProperties.TANGENT:
+						SchemaExtensions.ConvertVector4CoordinateSpace(ref aa, SchemaExtensions.TangentSpaceConversionScale);
+						break;
+					case SemanticProperties.TEXCOORD_0:
+					case SemanticProperties.TEXCOORD_1:
+						SchemaExtensions.FlipTexCoordArrayV(ref aa);
+						break;
 				}
-			}
-			if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
-				SchemaExtensions.ConvertVector4CoordinateSpace(ref attributeAccessor, SchemaExtensions.TangentSpaceConversionScale);
 			}
 		}
 
@@ -1415,7 +1391,7 @@ namespace UnityGLTF
 
 			if (node.Mesh != null)
 			{
-				await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null, cancellationToken);
+				await ConstructMesh(node.Mesh.Value, nodeObj, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null, cancellationToken);
 			}
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
@@ -1535,7 +1511,7 @@ namespace UnityGLTF
 		{
 			Vector3[] zeroes = new Vector3[unityMesh.vertexCount];
 			
-			var targets = _assetCache.MeshCache[meshId][primitiveIndex].Targets;
+			var targets = _assetCache.MeshCache[meshId].Primitives[primitiveIndex].Targets;
 			bool hasNames = primitive.TargetNames != null;
 			string blendShapeName;
 
@@ -1552,10 +1528,9 @@ namespace UnityGLTF
 					
 				unityMesh.AddBlendShapeFrame(blendShapeName, 0, zeroes, zeroes, zeroes);
 				unityMesh.AddBlendShapeFrame(blendShapeName, 100,
-											targets[i].ContainsKey(SemanticProperties.POSITION) ? targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
-											targets[i].ContainsKey(SemanticProperties.NORMAL) ? targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
-											targets[i].ContainsKey(SemanticProperties.TANGENT) ? targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes);
-
+					targets[i].ContainsKey(SemanticProperties.POSITION) ? targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
+					targets[i].ContainsKey(SemanticProperties.NORMAL) ? targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes,
+					targets[i].ContainsKey(SemanticProperties.TANGENT) ? targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw() : zeroes);
 			}
 		}
 
@@ -1578,13 +1553,22 @@ namespace UnityGLTF
 			}
 		}
 
-		protected virtual async Task ConstructMesh(GLTFMesh mesh, Transform parent, int meshId, Skin skin, CancellationToken cancellationToken)
+		/// <summary>
+		/// Triggers loading, converting, and constructing of a UnityEngine.Mesh, and assigns to this node
+		/// </summary>
+		/// <param name="mesh">The definition of the mesh to generate</param>
+		/// <param name="node">The UnityEngine.GameObject that needs this mesh assigned</param>
+		/// <param name="meshId">The index of the mesh to generate</param>
+		/// <param name="skin">Skinning information for this mesh</param>
+		/// <param name="cancellationToken"></param>
+		/// <returns>A task that completes when the mesh is attached to the given GameObject</returns>
+		protected virtual async Task ConstructMesh(GLTFMesh mesh, GameObject node, int meshId, Skin skin, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (_assetCache.MeshCache[meshId] == null)
 			{
-				_assetCache.MeshCache[meshId] = new MeshCacheData[mesh.Primitives.Count];
+				throw new Exception("Cannot generate mesh from un-preloaded attributes");
 			}
 
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
@@ -1830,6 +1814,14 @@ namespace UnityGLTF
 			return Task.WhenAll(tasks);
 		}
 
+		/// <summary>
+		/// Populate a UnityEngine.Mesh from preloaded and preprocessed buffer data
+		/// </summary>
+		/// <param name="meshConstructionData"></param>
+		/// <param name="meshId"></param>
+		/// <param name="primitiveIndex"></param>
+		/// <param name="unityMeshData"></param>
+		/// <returns></returns>
 		protected async Task ConstructUnityMesh(MeshConstructionData meshConstructionData, int meshId, int primitiveIndex, UnityMeshData unityMeshData)
 		{
 			MeshPrimitive primitive = meshConstructionData.Primitive;
