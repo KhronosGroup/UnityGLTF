@@ -1404,7 +1404,10 @@ namespace UnityGLTF
 					_defaultLoadedMaterial.UnityMaterialWithVertexColor
 				).ToArray();
 
-				if (node.Skin != null || mesh.Weights != null)
+				var morphTargets = mesh.Primitives[0].Targets;
+				var weights = node.Weights ?? mesh.Weights ??
+					(morphTargets != null ? new List<double>(morphTargets.Select(mt => 0.0)) : null);
+				if (node.Skin != null || weights != null)
 				{
 					var renderer = nodeObj.AddComponent<SkinnedMeshRenderer>();
 					renderer.sharedMesh = unityMesh;
@@ -1414,12 +1417,12 @@ namespace UnityGLTF
 						await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
 					// morph target weights
-					if (mesh.Weights != null)
+					if (weights != null)
 					{
-						for (int i = 0; i < mesh.Weights.Count; ++i)
+						for (int i = 0; i < weights.Count; ++i)
 						{
 							// GLTF weights are [0, 1] range but Unity weights are [0, 100] range
-							renderer.SetBlendShapeWeight(i, (float)(mesh.Weights[i] * 100));
+							renderer.SetBlendShapeWeight(i, (float)(weights[i] * 100));
 						}
 					}
 				}
