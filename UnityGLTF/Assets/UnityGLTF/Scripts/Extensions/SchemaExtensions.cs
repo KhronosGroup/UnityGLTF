@@ -266,6 +266,14 @@ namespace UnityGLTF.Extensions
 			return outVecArr;
 		}
 
+		public static void ToUnityVector2Raw(this GLTF.Math.Vector2[] inArr, Vector2[] outArr, int offset = 0)
+		{
+			for (int i = 0; i < inArr.Length; i++)
+			{
+				outArr[offset + i] = inArr[i].ToUnityVector2Raw();
+			}
+		}
+
 		public static Vector3 ToUnityVector3Raw(this GLTF.Math.Vector3 vec3)
 		{
 			return new Vector3(vec3.X, vec3.Y, vec3.Z);
@@ -281,6 +289,14 @@ namespace UnityGLTF.Extensions
 			return outVecArr;
 		}
 
+		public static void ToUnityVector3Raw(this GLTF.Math.Vector3[] inArr, Vector3[] outArr, int offset = 0)
+		{
+			for (int i = 0; i < inArr.Length; i++)
+			{
+				outArr[offset + i] = inArr[i].ToUnityVector3Raw();
+			}
+		}
+
 		public static Vector4 ToUnityVector4Raw(this GLTF.Math.Vector4 vec4)
 		{
 			return new Vector4(vec4.X, vec4.Y, vec4.Z, vec4.W);
@@ -294,6 +310,14 @@ namespace UnityGLTF.Extensions
 				outVecArr[i] = inVecArr[i].ToUnityVector4Raw();
 			}
 			return outVecArr;
+		}
+
+		public static void ToUnityVector4Raw(this GLTF.Math.Vector4[] inArr, Vector4[] outArr, int offset = 0)
+		{
+			for (int i = 0; i < inArr.Length; i++)
+			{
+				outArr[offset + i] = inArr[i].ToUnityVector4Raw();
+			}
 		}
 
 		public static UnityEngine.Color ToUnityColorRaw(this GLTF.Math.Color color)
@@ -314,6 +338,14 @@ namespace UnityGLTF.Extensions
 				outColorArr[i] = inColorArr[i].ToUnityColorRaw();
 			}
 			return outColorArr;
+		}
+
+		public static void ToUnityColorRaw(this GLTF.Math.Color[] inArr, Color[] outArr, int offset = 0)
+		{
+			for (int i = 0; i < inArr.Length; i++)
+			{
+				outArr[offset + i] = inArr[i].ToUnityColorRaw();
+			}
 		}
 
 		public static int[] ToIntArrayRaw(this uint[] uintArr)

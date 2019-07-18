@@ -234,7 +234,6 @@ namespace GLTF
 				switch (kvp.Key)
 				{
 					case SemanticProperties.POSITION:
-					case SemanticProperties.INDICES:
 						attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
 						break;
 					case SemanticProperties.NORMAL:
@@ -255,6 +254,9 @@ namespace GLTF
 					case SemanticProperties.WEIGHTS_0:
 					case SemanticProperties.JOINTS_0:
 						attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+						break;
+					case SemanticProperties.INDICES:
+						attributeAccessor.AccessorId.Value.AsUIntArray(ref resultArray, bufferViewCache, offset);
 						break;
 					default:
 						throw new System.Exception($"Unrecognized mesh attribute [{kvp.Key}]");

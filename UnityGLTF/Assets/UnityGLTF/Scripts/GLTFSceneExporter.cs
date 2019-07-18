@@ -791,11 +791,11 @@ namespace UnityGLTF
 				if (aTangent != null)
 					primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
 				if (aTexcoord0 != null)
-					primitive.Attributes.Add(SemanticProperties.TexCoord(0), aTexcoord0);
+					primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, aTexcoord0);
 				if (aTexcoord1 != null)
-					primitive.Attributes.Add(SemanticProperties.TexCoord(1), aTexcoord1);
+					primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, aTexcoord1);
 				if (aColor0 != null)
-					primitive.Attributes.Add(SemanticProperties.Color(0), aColor0);
+					primitive.Attributes.Add(SemanticProperties.COLOR_0, aColor0);
 
 				if (submesh < materialsObj.Length)
 				{
