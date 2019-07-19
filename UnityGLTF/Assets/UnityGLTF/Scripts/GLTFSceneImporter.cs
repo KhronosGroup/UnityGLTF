@@ -1483,31 +1483,47 @@ namespace UnityGLTF
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
 
-			int bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer.Id;
-			AttributeAccessor attributeAccessor = new AttributeAccessor
+			Matrix4x4[] gltfBindPoses = null;
+			if (skin.InverseBindMatrices != null)
 			{
-				AccessorId = skin.InverseBindMatrices,
-				Stream = _assetCache.BufferCache[bufferId].Stream,
-				Offset = _assetCache.BufferCache[bufferId].ChunkOffset
-			};
+				int bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer.Id;
+				AttributeAccessor attributeAccessor = new AttributeAccessor
+				{
+					AccessorId = skin.InverseBindMatrices,
+					Stream = _assetCache.BufferCache[bufferId].Stream,
+					Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+				};
 
-			GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
+				GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
+				gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;
+			}
 
-			Matrix4x4[] gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;
 			UnityEngine.Matrix4x4[] bindPoses = new UnityEngine.Matrix4x4[skin.Joints.Count];
-
 			for (int i = 0; i < boneCount; i++)
 			{
 				var node = await GetNode(skin.Joints[i].Id, cancellationToken);
 
 				bones[i] = node.transform;
-				bindPoses[i] = gltfBindPoses[i].ToUnityMatrix4x4Convert();
+				bindPoses[i] = gltfBindPoses != null ? gltfBindPoses[i].ToUnityMatrix4x4Convert() : UnityEngine.Matrix4x4.identity;
 			}
 
 			if (skin.Skeleton != null)
 			{
 				var rootBoneNode = await GetNode(skin.Skeleton.Id, cancellationToken);
 				renderer.rootBone = rootBoneNode.transform;
+			}
+			else
+			{
+				var rootBoneId = GLTFHelpers.FindCommonAncestor(skin.Joints);
+				if (rootBoneId != null)
+				{
+					var rootBoneNode = await GetNode(rootBoneId.Id, cancellationToken);
+					renderer.rootBone = rootBoneNode.transform;
+				}
+				else
+				{
+					throw new Exception("glTF skin joints do not share a root node!");
+				}
 			}
 			renderer.sharedMesh.bindposes = bindPoses;
 			renderer.bones = bones;

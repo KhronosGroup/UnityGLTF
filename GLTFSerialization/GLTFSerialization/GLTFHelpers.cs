@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
 using GLTF.Math;
@@ -876,6 +877,58 @@ namespace GLTF
 		{
 			string fileName = Path.GetFileName(oldPath);
 			return newCanonicalPath + Path.DirectorySeparatorChar + fileName;
+		}
+
+		public static NodeId FindCommonAncestor(IEnumerable<NodeId> nodes)
+		{
+			// build parentage
+			GLTFRoot root = nodes.First().Root;
+			Dictionary<int, int> parentage = new Dictionary<int, int>(root.Nodes.Count);
+			for (int i = 0; i < root.Nodes.Count; i++)
+			{
+				if (root.Nodes[i].Children == null) continue;
+
+				foreach (NodeId j in root.Nodes[i].Children)
+				{
+					parentage[j.Id] = i;
+				}
+			}
+
+			// scan for common ancestor
+			int? commonAncestorIndex = nodes
+				.Select(n => n.Id)
+				.Aggregate((int?)null, (elder, node) => FindCommonAncestor(elder, node));
+
+			return commonAncestorIndex != null ? new NodeId() { Id = commonAncestorIndex.Value, Root = root } : null;
+
+			int? FindCommonAncestor(int? a, int? b)
+			{
+				// trivial cases
+				if (a == null && b == null)
+					return null;
+				else if (a != null)
+					return a;
+				else if (b != null)
+					return b;
+				else if (AncestorOf(a.Value, b.Value))
+					return a;
+				else
+				{
+					return FindCommonAncestor(parentage[a.Value], b.Value);
+				}
+			}
+
+			bool AncestorOf(int ancestor, int descendant)
+			{
+				while (parentage.ContainsKey(descendant))
+				{
+					if (parentage[descendant] == ancestor)
+						return true;
+					descendant = parentage[descendant];
+				}
+
+				return false;
+			}
 		}
 	}
 }
