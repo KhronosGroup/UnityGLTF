@@ -38,6 +38,11 @@ Work Items and Issues targeting a 1.0 release of the library can be found in
 	Although the UnityGLTF Project is maintained at Unity version 5.6.5f1, make sure that the Unity release you have installed on your local machine is up to date. This is so the Exporter can export the latest features, but the Importer can support importing on older Unity builds. You can download the free version [here](https://unity3d.com/get-unity/download/archive). You can run this project simply by opening the directory as a project on Unity.
 - ##### Project Components
 	The Unity project offers two main functionalities: importing and exporting GLTF assets. These functionalities are primarily implemented in [GLTFSceneImporter] and [GLTFSceneExporter]. 
+- ##### Building
+	1. Add the *GLTF/PbrMetallicRoughness* and *GLTF/PbrSpecularGlossiness shaders* into the graphics settings : **PlayerSettings** > **Graphics**
+	2. Use stream to load objects in the *GLTFComponent*. You can use the [Application.persistentDataPath](https://docs.unity3d.com/ScriptReference/Application-persistentDataPath.html) as a base path for your files.  
+	**Warning** : [Application.streamingAssetsPath](https://docs.unity3d.com/ScriptReference/Application-streamingAssetsPath.html) where two of the meshes are in the current Unity Project will not work on Android.
+	
 
 ## Examples
 1. Clone or download the repository.
