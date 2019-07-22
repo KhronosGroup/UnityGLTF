@@ -342,6 +342,7 @@ namespace UnityGLTF
 			{
 				GLTFRoot gLTFRoot;
 				GLTFParser.ParseJson(stream, out gLTFRoot);
+				stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
 				var loader = new GLTFSceneImporter(gLTFRoot, stream, importOptions);
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
