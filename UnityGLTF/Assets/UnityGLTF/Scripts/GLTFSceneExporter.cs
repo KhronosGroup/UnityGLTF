@@ -360,7 +360,7 @@ namespace UnityGLTF
 			var finalFilenamePath = ConstructImageFilenamePath(texture, outputPath);
 			File.WriteAllBytes(finalFilenamePath, exportTexture.EncodeToPNG());
 
-			destRenderTexture.Release();
+			RenderTexture.ReleaseTemporary(destRenderTexture);
 			if (Application.isEditor)
 			{
 				GameObject.DestroyImmediate(exportTexture);
@@ -390,8 +390,7 @@ namespace UnityGLTF
 			var finalFilenamePath = ConstructImageFilenamePath(texture, outputPath);
 			File.WriteAllBytes(finalFilenamePath, exportTexture.EncodeToPNG());
 
-			destRenderTexture.Release();
-
+			RenderTexture.ReleaseTemporary(destRenderTexture);
 			if (Application.isEditor)
 			{
 				GameObject.DestroyImmediate(exportTexture);
@@ -415,7 +414,7 @@ namespace UnityGLTF
 			var finalFilenamePath = ConstructImageFilenamePath(texture, outputPath);
 			File.WriteAllBytes(finalFilenamePath, exportTexture.EncodeToPNG());
 
-			destRenderTexture.Release();
+			RenderTexture.ReleaseTemporary(destRenderTexture);
 			if (Application.isEditor)
 			{
 				GameObject.DestroyImmediate(exportTexture);
