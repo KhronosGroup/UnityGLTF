@@ -1412,6 +1412,7 @@ namespace UnityGLTF
 					var renderer = nodeObj.AddComponent<SkinnedMeshRenderer>();
 					renderer.sharedMesh = unityMesh;
 					renderer.sharedMaterials = materials;
+					renderer.quality = SkinQuality.Auto;
 
 					if (node.Skin != null)
 						await SetupBones(node.Skin.Value, renderer, cancellationToken);
@@ -1483,6 +1484,7 @@ namespace UnityGLTF
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
 
+			// TODO: build bindpose arrays only once per skin, instead of once per node
 			Matrix4x4[] gltfBindPoses = null;
 			if (skin.InverseBindMatrices != null)
 			{
@@ -1498,7 +1500,7 @@ namespace UnityGLTF
 				gltfBindPoses = attributeAccessor.AccessorContent.AsMatrix4x4s;
 			}
 
-			UnityEngine.Matrix4x4[] bindPoses = new UnityEngine.Matrix4x4[skin.Joints.Count];
+			UnityEngine.Matrix4x4[] bindPoses = new UnityEngine.Matrix4x4[boneCount];
 			for (int i = 0; i < boneCount; i++)
 			{
 				var node = await GetNode(skin.Joints[i].Id, cancellationToken);
@@ -1529,8 +1531,19 @@ namespace UnityGLTF
 			renderer.bones = bones;
 		}
 
-		private void CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, BoneWeight[] destArr, int offset = 0)
+		private void CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, ref BoneWeight[] destArr, int offset = 0)
 		{
+			// normalize weights (built-in normalize function only normalizes three components)
+			for(int i = 0; i < weights.Length; i++)
+			{
+				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
+
+				if (!Mathf.Approximately(weightSum, 0))
+				{
+					weights[i] /= weightSum;
+				}
+			}
+
 			for (int i = 0; i < joints.Length; i++)
 			{
 				destArr[offset + i].boneIndex0 = (int)joints[i].x;
@@ -1538,11 +1551,10 @@ namespace UnityGLTF
 				destArr[offset + i].boneIndex2 = (int)joints[i].z;
 				destArr[offset + i].boneIndex3 = (int)joints[i].w;
 
-				var weight = weights[i].normalized;
-				destArr[offset + i].weight0 = weight.x;
-				destArr[offset + i].weight1 = weight.y;
-				destArr[offset + i].weight2 = weight.z;
-				destArr[offset + i].weight3 = weight.w;
+				destArr[offset + i].weight0 = weights[i].x;
+				destArr[offset + i].weight1 = weights[i].y;
+				destArr[offset + i].weight2 = weights[i].z;
+				destArr[offset + i].weight3 = weights[i].w;
 			}
 		}
 
@@ -1662,7 +1674,7 @@ namespace UnityGLTF
 				CreateBoneWeightArray(
 					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
 					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-					unityData.BoneWeights,
+					ref unityData.BoneWeights,
 					vertOffset);
 			}
 
