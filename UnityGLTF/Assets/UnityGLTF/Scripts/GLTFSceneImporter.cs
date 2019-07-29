@@ -1627,11 +1627,11 @@ namespace UnityGLTF
 
 				if (IsMultithreaded)
 				{
-					await Task.Run(() => ConvertAttributeAccessorsToUnityTypes(ref primCache, ref unityData, vertOffset, i));
+					await Task.Run(() => ConvertAttributeAccessorsToUnityTypes(primCache, unityData, vertOffset, i));
 				}
 				else
 				{
-					ConvertAttributeAccessorsToUnityTypes(ref primCache, ref unityData, vertOffset, i);
+					ConvertAttributeAccessorsToUnityTypes(primCache, unityData, vertOffset, i);
 				}
 
 				bool shouldUseDefaultMaterial = primitive.Material == null;
@@ -1653,8 +1653,8 @@ namespace UnityGLTF
 		}
 
 		protected void ConvertAttributeAccessorsToUnityTypes(
-			ref MeshCacheData.PrimitiveCacheData primData,
-			ref UnityMeshData unityData,
+			MeshCacheData.PrimitiveCacheData primData,
+			UnityMeshData unityData,
 			int vertOffset,
 			int indexOffset)
 		{
@@ -1679,21 +1679,37 @@ namespace UnityGLTF
 			}
 
 			if (meshAttributes.ContainsKey(SemanticProperties.POSITION))
+			{
 				meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw(unityData.Vertices, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.NORMAL))
+			{
 				meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw(unityData.Normals, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.TANGENT))
+			{
 				meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw(unityData.Tangents, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[0]))
+			{
 				meshAttributes[SemanticProperties.TexCoord[0]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv1, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[1]))
+			{
 				meshAttributes[SemanticProperties.TexCoord[1]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv2, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[2]))
+			{
 				meshAttributes[SemanticProperties.TexCoord[2]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv3, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[3]))
+			{
 				meshAttributes[SemanticProperties.TexCoord[3]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv4, vertOffset);
+			}
 			if (meshAttributes.ContainsKey(SemanticProperties.Color[0]))
+			{
 				meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorRaw(unityData.Colors, vertOffset);
+			}
 
 			var targets = primData.Targets;
 			if (targets != null)
@@ -1701,11 +1717,17 @@ namespace UnityGLTF
 				for(int i = 0; i < targets.Count; ++i)
 				{
 					if (targets[i].ContainsKey(SemanticProperties.POSITION))
+					{
 						targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], vertOffset);
+					}
 					if (targets[i].ContainsKey(SemanticProperties.NORMAL))
+					{
 						targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetNormals[i], vertOffset);
+					}
 					if (targets[i].ContainsKey(SemanticProperties.TANGENT))
+					{
 						targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetTangents[i], vertOffset);
+					}
 				}
 			}
 		}

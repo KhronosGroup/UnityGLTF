@@ -883,14 +883,17 @@ namespace GLTF
 		{
 			// build parentage
 			GLTFRoot root = nodes.First().Root;
-			Dictionary<int, int> parentage = new Dictionary<int, int>(root.Nodes.Count);
+			Dictionary<int, int> childToParent = new Dictionary<int, int>(root.Nodes.Count);
 			for (int i = 0; i < root.Nodes.Count; i++)
 			{
-				if (root.Nodes[i].Children == null) continue;
+				if (root.Nodes[i].Children == null)
+				{
+					continue;
+				}
 
 				foreach (NodeId child in root.Nodes[i].Children)
 				{
-					parentage[child.Id] = i;
+					childToParent[child.Id] = i;
 				}
 			}
 
@@ -905,26 +908,36 @@ namespace GLTF
 			{
 				// trivial cases
 				if (a == null && b == null)
+				{
 					return null;
+				}
 				else if (a != null)
+				{
 					return a;
+				}
 				else if (b != null)
+				{
 					return b;
+				}
 				else if (AncestorOf(a.Value, b.Value))
+				{
 					return a;
+				}
 				else
 				{
-					return FindCommonAncestor(parentage[a.Value], b.Value);
+					return FindCommonAncestor(childToParent[a.Value], b.Value);
 				}
 			}
 
 			bool AncestorOf(int ancestor, int descendant)
 			{
-				while (parentage.ContainsKey(descendant))
+				while (childToParent.ContainsKey(descendant))
 				{
-					if (parentage[descendant] == ancestor)
+					if (childToParent[descendant] == ancestor)
+					{
 						return true;
-					descendant = parentage[descendant];
+					}
+					descendant = childToParent[descendant];
 				}
 
 				return false;
