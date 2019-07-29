@@ -7,16 +7,14 @@ namespace UnityGLTF.Cache
 {
 	public class MeshCacheData : IDisposable
 	{
-		public Mesh LoadedMesh { get; set; }
-		public Dictionary<string, AttributeAccessor> MeshAttributes { get; set; }
-		public GameObject PrimitiveGO { get; set; }
-        
-		public List<Dictionary<string, AttributeAccessor>> Targets;
-
-		public MeshCacheData()
+		public class PrimitiveCacheData
 		{
-			MeshAttributes = new Dictionary<string, AttributeAccessor>();
+			public Dictionary<string, AttributeAccessor> Attributes = new Dictionary<string, AttributeAccessor>(4);
+			public List<Dictionary<string, AttributeAccessor>> Targets = new List<Dictionary<string, AttributeAccessor>>(4);
 		}
+
+		public List<PrimitiveCacheData> Primitives = new List<PrimitiveCacheData>(5);
+		public Mesh LoadedMesh { get; set; }
 
 		/// <summary>
 		/// Unloads the meshes in this cache.
