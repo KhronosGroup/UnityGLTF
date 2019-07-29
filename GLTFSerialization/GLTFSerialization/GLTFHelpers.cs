@@ -888,9 +888,9 @@ namespace GLTF
 			{
 				if (root.Nodes[i].Children == null) continue;
 
-				foreach (NodeId j in root.Nodes[i].Children)
+				foreach (NodeId child in root.Nodes[i].Children)
 				{
-					parentage[j.Id] = i;
+					parentage[child.Id] = i;
 				}
 			}
 
