@@ -377,7 +377,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot CreateTexture while GLTFSceneImporter is already running");
+						throw new GLTFLoadException("Cannot CreateMaterial while GLTFSceneImporter is already running");
 					}
 
 					_isRunning = true;
@@ -415,6 +415,58 @@ namespace UnityGLTF
 
 			return _assetCache.MaterialCache[materialIndex].UnityMaterialWithVertexColor;
 		}
+
+        /// <summary>
+        /// Load a Mesh from the glTF by index
+        /// </summary>
+        /// <param name="meshIndex"></param>
+        /// <returns></returns>
+        public virtual async Task<Mesh> LoadMeshAsync(int meshIndex, CancellationToken cancellationToken)
+        {
+            try
+            {
+                lock (this)
+                {
+                    if (_isRunning)
+                    {
+                        throw new GLTFLoadException("Cannot CreateMesh while GLTFSceneImporter is already running");
+                    }
+
+                    _isRunning = true;
+                }
+
+                if (_gltfRoot == null)
+                {
+                    await LoadJson(_gltfFileName);
+                }
+
+                if (meshIndex < 0 || meshIndex >= _gltfRoot.Meshes.Count)
+                {
+                    throw new ArgumentException($"There is no mesh for index {meshIndex}");
+                }
+
+                if (_assetCache == null)
+                {
+                    _assetCache = new AssetCache(_gltfRoot);
+                }
+
+                if (_assetCache.MeshCache[meshIndex] == null)
+                {
+                    var def = _gltfRoot.Meshes[meshIndex];
+                    await ConstructMeshAttributes(def, new MeshId() { Id = meshIndex, Root = _gltfRoot });
+                    await ConstructMesh(def, meshIndex, cancellationToken);
+                }
+            }
+            finally
+            {
+                lock(this)
+                {
+                    _isRunning = false;
+                }
+            }
+
+            return _assetCache.MeshCache[meshIndex].LoadedMesh;
+        }
 
 		/// <summary>
 		/// Initializes the top-level created node by adding an instantiated GLTF object component to it,
@@ -1589,7 +1641,7 @@ namespace UnityGLTF
 
 			if (_assetCache.MeshCache[meshIndex] == null)
 			{
-				throw new Exception("Cannot generate mesh before ConstructBufferData is called!");
+				throw new Exception("Cannot generate mesh before ConstructMeshAttributes is called!");
 			}
 
 			var totalVertCount = mesh.Primitives.Aggregate((uint)0, (sum, p) => sum + p.Attributes[SemanticProperties.POSITION].Value.Count);
