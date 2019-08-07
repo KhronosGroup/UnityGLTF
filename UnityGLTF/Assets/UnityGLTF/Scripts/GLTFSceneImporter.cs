@@ -342,6 +342,11 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				if (_options.ThrowOnLowMemory)
+				{
+					_memoryChecker = new MemoryChecker();
+				}
+
 				if (_gltfRoot == null)
 				{
 					await LoadJson(_gltfFileName);
@@ -381,6 +386,11 @@ namespace UnityGLTF
 					}
 
 					_isRunning = true;
+				}
+
+				if (_options.ThrowOnLowMemory)
+				{
+					_memoryChecker = new MemoryChecker();
 				}
 
 				if (_gltfRoot == null)
@@ -435,7 +445,12 @@ namespace UnityGLTF
                     _isRunning = true;
                 }
 
-                if (_gltfRoot == null)
+				if (_options.ThrowOnLowMemory)
+				{
+					_memoryChecker = new MemoryChecker();
+				}
+
+				if (_gltfRoot == null)
                 {
                     await LoadJson(_gltfFileName);
                 }
@@ -2157,6 +2172,11 @@ namespace UnityGLTF
 					}
 
 					_isRunning = true;
+				}
+
+				if (_options.ThrowOnLowMemory)
+				{
+					_memoryChecker = new MemoryChecker();
 				}
 
 				if (_gltfRoot == null)
