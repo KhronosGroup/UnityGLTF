@@ -24,6 +24,7 @@ namespace UnityEditor
         private static class Styles
         {
             public static GUIContent albedoText = new GUIContent("Base Color", "Albedo (RGB) and Transparency (A)");
+            public static GUIContent vertexColorText = new GUIContent("Apply Vertex Colors", "Process vertex colors");
             public static GUIContent alphaCutoffText = new GUIContent("Alpha Cutoff", "Threshold for alpha cutoff");
             public static GUIContent specularMapText = new GUIContent("Spec Gloss", "Specular (RGB) and Glossiness (A)");
             public static GUIContent metallicMapText = new GUIContent("Metal Rough", "Metallic (B) and Roughness (G)");
@@ -47,6 +48,7 @@ namespace UnityEditor
         MaterialProperty blendMode = null;
         MaterialProperty albedoMap = null;
         MaterialProperty albedoColor = null;
+        MaterialProperty vertexColors = null;
         MaterialProperty alphaCutoff = null;
         MaterialProperty specularMap = null;
         MaterialProperty specularColor = null;
@@ -70,6 +72,7 @@ namespace UnityEditor
             blendMode = FindProperty("_Mode", props);
             albedoMap = FindProperty("_MainTex", props);
             albedoColor = FindProperty("_Color", props);
+            vertexColors = FindProperty("_VertexColors", props);
             alphaCutoff = FindProperty("_Cutoff", props);
             specularMap = FindProperty("_SpecGlossMap", props, false);
             specularColor = FindProperty("_SpecColor", props, false);
@@ -164,6 +167,8 @@ namespace UnityEditor
         void DoAlbedoArea(Material material)
         {
             m_MaterialEditor.TexturePropertySingleLine(Styles.albedoText, albedoMap, albedoColor);
+            m_MaterialEditor.ShaderProperty(vertexColors, Styles.vertexColorText, MaterialEditor.kMiniTextureFieldLabelIndentLevel + 1);
+            
             if (((BlendMode)material.GetFloat("_Mode") == BlendMode.Mask))
             {
                 m_MaterialEditor.ShaderProperty(alphaCutoff, Styles.alphaCutoffText.text, MaterialEditor.kMiniTextureFieldLabelIndentLevel + 1);

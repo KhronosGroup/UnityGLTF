@@ -6,9 +6,11 @@ Shader "GLTF/PbrSpecularGlossiness"
 	{
 		_Color("Base Color Factor", Color) = (1,1,1,1)
 		_MainTex("Base Color Texture", 2D) = "white" {}
-		
-		_Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
+		[Toggle(_VERTEX_COLORS)] _VertexColors("Vertex Colors", Float) = 1.0
+
+		_Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+		
 		_Glossiness("Glossiness Factor", Range(0.0, 1.0)) = 0.5
 		[HideInInspector]  _SmoothnessTextureChannel ("Smoothness texture channel", Float) = 0
 
@@ -50,13 +52,12 @@ Shader "GLTF/PbrSpecularGlossiness"
 	CGINCLUDE
 		#define UNITY_SETUP_BRDF_INPUT SpecularSetup
 	ENDCG
-
+	
 	SubShader
 	{
 		Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
 		LOD 300
-	
-
+		
 		// ------------------------------------------------------------------
 		//  Base forward pass (directional light, emission, lightmaps, ...)
 		Pass
@@ -95,6 +96,19 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			ENDCG
 		}
+
+		Pass {
+			Name "VERTEXCOLOR"
+			Blend DstColor Zero
+			Tags { "LightMode" = "Always" }
+			
+			CGPROGRAM
+			#pragma vertex vert_vcol
+			#pragma fragment frag_vcol
+			#pragma shader_feature _VERTEX_COLORS
+			#include "VertexColor.cginc"
+			ENDCG
+		}
 		// ------------------------------------------------------------------
 		//  Additive forward pass (one light per pass)
 		Pass
@@ -130,6 +144,9 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			ENDCG
 		}
+
+		
+		
 		// ------------------------------------------------------------------
 		//  Shadow rendering pass
 		Pass {
@@ -259,6 +276,20 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			ENDCG
 		}
+
+		Pass {
+			Name "VERTEXCOLOR"
+			Blend DstColor Zero
+			Tags { "LightMode" = "Always" }
+			
+			CGPROGRAM
+			#pragma vertex vert_vcol
+			#pragma fragment frag_vcol
+			#pragma shader_feature _VERTEX_COLORS
+			#include "VertexColor.cginc"
+			ENDCG
+		}
+
 		// ------------------------------------------------------------------
 		//  Additive forward pass (one light per pass)
 		Pass
