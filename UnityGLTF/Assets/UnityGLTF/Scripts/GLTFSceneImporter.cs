@@ -330,43 +330,11 @@ namespace UnityGLTF
 		/// <returns></returns>
 		public async Task LoadNodeAsync(int nodeIndex, CancellationToken cancellationToken)
 		{
-			try
+			await SetupLoad(async () =>
 			{
-				lock (this)
-				{
-					if (_isRunning)
-					{
-						throw new GLTFLoadException("Cannot call LoadNode while GLTFSceneImporter is already running");
-					}
-
-					_isRunning = true;
-				}
-
-				if (_options.ThrowOnLowMemory)
-				{
-					_memoryChecker = new MemoryChecker();
-				}
-
-				if (_gltfRoot == null)
-				{
-					await LoadJson(_gltfFileName);
-				}
-
-				if (_assetCache == null)
-				{
-					_assetCache = new AssetCache(_gltfRoot);
-				}
-
 				CreatedObject = await GetNode(nodeIndex, cancellationToken);
 				InitializeGltfTopLevelObject();
-			}
-			finally
-			{
-				lock (this)
-				{
-					_isRunning = false;
-				}
-			}
+			});
 		}
 
 		/// <summary>
@@ -376,36 +344,11 @@ namespace UnityGLTF
 		/// <returns></returns>
 		public virtual async Task<Material> LoadMaterialAsync(int materialIndex)
 		{
-			try
+			await SetupLoad(async () =>
 			{
-				lock (this)
-				{
-					if (_isRunning)
-					{
-						throw new GLTFLoadException("Cannot CreateMaterial while GLTFSceneImporter is already running");
-					}
-
-					_isRunning = true;
-				}
-
-				if (_options.ThrowOnLowMemory)
-				{
-					_memoryChecker = new MemoryChecker();
-				}
-
-				if (_gltfRoot == null)
-				{
-					await LoadJson(_gltfFileName);
-				}
-
 				if (materialIndex < 0 || materialIndex >= _gltfRoot.Materials.Count)
 				{
 					throw new ArgumentException($"There is no material for index {materialIndex}");
-				}
-
-				if (_assetCache == null)
-				{
-					_assetCache = new AssetCache(_gltfRoot);
 				}
 
 				if (_assetCache.MaterialCache[materialIndex] == null)
@@ -414,74 +357,33 @@ namespace UnityGLTF
 					await ConstructMaterialImageBuffers(def);
 					await ConstructMaterial(def, materialIndex);
 				}
-			}
-			finally
-			{
-				lock (this)
-				{
-					_isRunning = false;
-				}
-			}
-
+			});
 			return _assetCache.MaterialCache[materialIndex].UnityMaterialWithVertexColor;
 		}
 
-        /// <summary>
-        /// Load a Mesh from the glTF by index
-        /// </summary>
-        /// <param name="meshIndex"></param>
-        /// <returns></returns>
-        public virtual async Task<Mesh> LoadMeshAsync(int meshIndex, CancellationToken cancellationToken)
-        {
-            try
-            {
-                lock (this)
-                {
-                    if (_isRunning)
-                    {
-                        throw new GLTFLoadException("Cannot CreateMesh while GLTFSceneImporter is already running");
-                    }
-
-                    _isRunning = true;
-                }
-
-				if (_options.ThrowOnLowMemory)
+		/// <summary>
+		/// Load a Mesh from the glTF by index
+		/// </summary>
+		/// <param name="meshIndex"></param>
+		/// <returns></returns>
+		public virtual async Task<Mesh> LoadMeshAsync(int meshIndex, CancellationToken cancellationToken)
+		{
+			await SetupLoad(async () =>
+			{
+				if (meshIndex < 0 || meshIndex >= _gltfRoot.Meshes.Count)
 				{
-					_memoryChecker = new MemoryChecker();
+					throw new ArgumentException($"There is no mesh for index {meshIndex}");
 				}
 
-				if (_gltfRoot == null)
-                {
-                    await LoadJson(_gltfFileName);
-                }
-
-                if (meshIndex < 0 || meshIndex >= _gltfRoot.Meshes.Count)
-                {
-                    throw new ArgumentException($"There is no mesh for index {meshIndex}");
-                }
-
-                if (_assetCache == null)
-                {
-                    _assetCache = new AssetCache(_gltfRoot);
-                }
-
-                if (_assetCache.MeshCache[meshIndex] == null)
-                {
-                    var def = _gltfRoot.Meshes[meshIndex];
-                    await ConstructMeshAttributes(def, new MeshId() { Id = meshIndex, Root = _gltfRoot });
-                    await ConstructMesh(def, meshIndex, cancellationToken);
-                }
-            }
-            finally
-            {
-                lock(this)
-                {
-                    _isRunning = false;
-                }
-            }
-
-            return _assetCache.MeshCache[meshIndex].LoadedMesh;
-        }
+				if (_assetCache.MeshCache[meshIndex] == null)
+				{
+					var def = _gltfRoot.Meshes[meshIndex];
+					await ConstructMeshAttributes(def, new MeshId() { Id = meshIndex, Root = _gltfRoot });
+					await ConstructMesh(def, meshIndex, cancellationToken);
+				}
+			});
+			return _assetCache.MeshCache[meshIndex].LoadedMesh;
+		}
 
 		/// <summary>
 		/// Initializes the top-level created node by adding an instantiated GLTF object component to it,
@@ -2410,6 +2312,50 @@ namespace UnityGLTF
 			{
 				_assetCache.Dispose();
 				_assetCache = null;
+			}
+		}
+
+		private async Task SetupLoad(Func<Task> callback)
+		{
+			try
+			{
+				lock (this)
+				{
+					if (_isRunning)
+					{
+						throw new GLTFLoadException("Cannot start a load while GLTFSceneImporter is already running");
+					}
+
+					_isRunning = true;
+				}
+
+				if (_options.ThrowOnLowMemory)
+				{
+					_memoryChecker = new MemoryChecker();
+				}
+
+				if (_gltfRoot == null)
+				{
+					await LoadJson(_gltfFileName);
+				}
+
+				if (_assetCache == null)
+				{
+					_assetCache = new AssetCache(_gltfRoot);
+				}
+
+				await callback();
+			}
+			catch
+			{
+				Cleanup();
+			}
+			finally
+			{
+				lock (this)
+				{
+					_isRunning = false;
+				}
 			}
 		}
 	}
