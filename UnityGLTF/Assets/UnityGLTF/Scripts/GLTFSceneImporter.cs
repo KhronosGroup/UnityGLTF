@@ -1012,8 +1012,7 @@ namespace UnityGLTF
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
 				// copy all key frames data to animation curve and add it to the clip
-				AnimationCurve curve = new AnimationCurve();
-				curve.keys = keyframes[ci];
+				AnimationCurve curve = new AnimationCurve(keyframes[ci]);
 
 				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
 				// For the rest, set them appropriately.
@@ -1021,16 +1020,15 @@ namespace UnityGLTF
 				{
 					for (var i = 0; i < keyframes[ci].Length; i++)
 					{
-						SetTangentMode(curve, i, mode);
+						SetTangentMode(curve, keyframes[ci], i, mode);
 					}
 				}
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
 
-		private static void SetTangentMode(AnimationCurve curve, int keyframeIndex, InterpolationType interpolation)
-		{
-			var key = curve.keys[keyframeIndex];
+		private static void SetTangentMode(AnimationCurve curve, Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation) {
+			var key = keyframes[keyframeIndex];
 
 			switch (interpolation)
 			{
@@ -1039,8 +1037,8 @@ namespace UnityGLTF
 					key.outTangent = 0;
 					break;
 				case InterpolationType.LINEAR:
-					key.inTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex);
-					key.outTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex + 1);
+					key.inTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex);
+					key.outTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex + 1);
 					break;
 				case InterpolationType.STEP:
 					key.inTangent = float.PositiveInfinity;
@@ -1054,15 +1052,15 @@ namespace UnityGLTF
 			curve.MoveKey(keyframeIndex, key);
 		}
 
-		private static float GetCurveKeyframeLeftLinearSlope(AnimationCurve curve, int keyframeIndex)
+		private static float GetCurveKeyframeLeftLinearSlope(Keyframe[] keyframes, int keyframeIndex)
 		{
-			if (keyframeIndex <= 0 || keyframeIndex >= curve.keys.Length)
+			if (keyframeIndex <= 0 || keyframeIndex >= keyframes.Length)
 			{
 				return 0;
 			}
 
-			var valueDelta = curve.keys[keyframeIndex].value - curve.keys[keyframeIndex - 1].value;
-			var timeDelta = curve.keys[keyframeIndex].time - curve.keys[keyframeIndex - 1].time;
+			var valueDelta = keyframes[keyframeIndex].value - keyframes[keyframeIndex - 1].value;
+			var timeDelta = keyframes[keyframeIndex].time - keyframes[keyframeIndex - 1].time;
 
 			Debug.Assert(timeDelta > 0, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
 
