@@ -1560,6 +1560,10 @@ namespace UnityGLTF
 			{
 				throw new Exception("Cannot generate mesh before ConstructMeshAttributes is called!");
 			}
+			else if (_assetCache.MeshCache[meshIndex].LoadedMesh)
+			{
+				return;
+			}
 
 			var totalVertCount = mesh.Primitives.Aggregate((uint)0, (sum, p) => sum + p.Attributes[SemanticProperties.POSITION].Value.Count);
 			var vertOffset = 0;
