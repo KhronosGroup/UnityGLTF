@@ -2353,6 +2353,7 @@ namespace UnityGLTF
 			catch
 			{
 				Cleanup();
+				throw;
 			}
 			finally
 			{
