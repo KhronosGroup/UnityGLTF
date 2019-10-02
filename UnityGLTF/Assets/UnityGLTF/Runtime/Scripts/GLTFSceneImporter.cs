@@ -862,8 +862,11 @@ namespace UnityGLTF
 					Offset = (uint)bufferData.ChunkOffset
 				};
 			}
-
-			GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+			try { 
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+			} catch (System.Exception e) {
+				Debug.LogWarning(e.ToString());
+			}
 			TransformAttributes(ref attributeAccessors);
 		}
 
