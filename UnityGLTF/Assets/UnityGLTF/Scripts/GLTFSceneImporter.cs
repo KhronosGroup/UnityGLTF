@@ -1634,7 +1634,7 @@ namespace UnityGLTF
 				var vertCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 				vertOffset += (int)vertCount;
 
-				if (unityData.Topology[i] == MeshTopology.Triangles)
+				if (unityData.Topology[i] == MeshTopology.Triangles && primitive.Indices != null && primitive.Indices.Value != null)
 				{
 					Statistics.TriangleCount += primitive.Indices.Value.Count / 3;
 				}
