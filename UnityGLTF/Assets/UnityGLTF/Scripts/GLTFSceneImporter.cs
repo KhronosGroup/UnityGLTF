@@ -973,54 +973,51 @@ namespace UnityGLTF
 				keyframes[ci] = new Keyframe[frameCount];
 			}
 
-			for (var i = 0; i < frameCount; ++i)
+			if (mode == InterpolationType.CUBICSPLINE)
 			{
-				var time = input.AsFloats[i];
-
-				float[] values = null;
-				float[] inTangents = null;
-				float[] outTangents = null;
-				if (mode == InterpolationType.CUBICSPLINE)
+				for (var i = 0; i < frameCount; ++i)
 				{
+					var time = input.AsFloats[i];
+
 					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
 					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
 
 					var cubicIndex = i * 3;
-					inTangents = getConvertedValues(output, cubicIndex);
-					values = getConvertedValues(output, cubicIndex + 1);
-					outTangents = getConvertedValues(output, cubicIndex + 2);
-				}
-				else
-				{
-					// For other interpolation types, the output will only contain one value per keyframe
-					values = getConvertedValues(output, i);
-				}
+					float[] inTangents = getConvertedValues(output, cubicIndex);
+					float[] values = getConvertedValues(output, cubicIndex + 1);
+					float[] outTangents = getConvertedValues(output, cubicIndex + 2);
 
-				for (var ci = 0; ci < channelCount; ++ci)
-				{
-					if (mode == InterpolationType.CUBICSPLINE)
+					for (var ci = 0; ci < channelCount; ++ci)
 					{
 						keyframes[ci][i] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
 					}
-					else
+				}
+			}
+			else
+			{
+				for (var i = 0; i < frameCount; ++i)
+				{
+					var time = input.AsFloats[i];
+
+					// For interpolation types other than cubic spline, the output will only contain one value per keyframe
+					float[] values = getConvertedValues(output, i);
+
+					for (var ci = 0; ci < channelCount; ++ci)
 					{
 						keyframes[ci][i] = new Keyframe(time, values[ci]);
 					}
 				}
-			}
-
-			for (var ci = 0; ci < channelCount; ++ci)
-			{
-				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
-				// For the rest, set them appropriately.
-				if (mode != InterpolationType.CUBICSPLINE)
+				for (var ci = 0; ci < channelCount; ++ci)
 				{
 					for (int i = 0; i < keyframes[ci].Length; i++)
 					{
 						SetTangentMode(keyframes[ci], i, mode);
 					}
 				}
+			}
 
+			for (var ci = 0; ci < channelCount; ++ci)
+			{
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve
 				{
