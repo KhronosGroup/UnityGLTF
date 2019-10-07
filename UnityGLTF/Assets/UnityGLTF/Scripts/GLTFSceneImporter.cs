@@ -82,6 +82,12 @@ namespace UnityGLTF
 		}
 	}
 
+	public struct ImportStatistics
+	{
+		public long TriangleCount;
+		public long VertexCount;
+	}
+
 	/// <summary>
 	/// Converts gltf animation data to unity
 	/// </summary>
@@ -165,6 +171,11 @@ namespace UnityGLTF
 		/// When screen coverage is above threashold and no LOD mesh cull the object
 		/// </summary>
 		public bool CullFarLOD = false;
+
+		/// <summary>
+		/// Statistics from the scene
+		/// </summary>
+		public ImportStatistics Statistics;
 
 		protected struct GLBStream
 		{
@@ -280,6 +291,8 @@ namespace UnityGLTF
 
 				this.progressStatus = new ImportProgress();
 				this.progress = progress;
+
+				Statistics = new ImportStatistics();
 				progress?.Report(progressStatus);
 
 				if (_gltfRoot == null)
@@ -1620,8 +1633,14 @@ namespace UnityGLTF
 
 				var vertCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
 				vertOffset += (int)vertCount;
+
+				if (unityData.Topology[i] == MeshTopology.Triangles && primitive.Indices != null && primitive.Indices.Value != null)
+				{
+					Statistics.TriangleCount += primitive.Indices.Value.Count / 3;
+				}
 			}
 
+			Statistics.VertexCount += vertOffset;
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
 		}
 
@@ -2333,6 +2352,7 @@ namespace UnityGLTF
 					_isRunning = true;
 				}
 
+				Statistics = new ImportStatistics();
 				if (_options.ThrowOnLowMemory)
 				{
 					_memoryChecker = new MemoryChecker();

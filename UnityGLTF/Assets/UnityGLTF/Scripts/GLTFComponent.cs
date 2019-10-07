@@ -140,6 +140,7 @@ namespace UnityGLTF
 					}
 				}
 
+				print("model loaded with vertices: " + sceneImporter.Statistics.VertexCount.ToString() + ", triangles: " + sceneImporter.Statistics.TriangleCount.ToString());
 				LastLoadedScene = sceneImporter.LastLoadedScene;
 
 				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
