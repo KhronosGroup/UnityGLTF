@@ -966,6 +966,9 @@ namespace UnityGLTF
 			var channelCount = propertyNames.Length;
 			var frameCount = input.AsFloats.Length;
 
+			var keyframeIndex = 0;
+			var prevTime = input.AsFloats[0];
+
 			// copy all the key frame data to cache
 			Keyframe[][] keyframes = new Keyframe[channelCount][];
 			for (var ci = 0; ci < channelCount; ++ci)
@@ -978,6 +981,7 @@ namespace UnityGLTF
 				for (var i = 0; i < frameCount; ++i)
 				{
 					var time = input.AsFloats[i];
+					if (time == prevTime) { continue; }
 
 					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
 					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
@@ -989,32 +993,53 @@ namespace UnityGLTF
 
 					for (var ci = 0; ci < channelCount; ++ci)
 					{
-						keyframes[ci][i] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
+						keyframes[ci][keyframeIndex] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
 					}
-				}
-			}
+
+					prevTime = time;
+                    keyframeIndex++;
+                }
+
+                if (keyframeIndex <= frameCount)
+                {
+                    for (var ci = 0; ci < channelCount; ++ci)
+                    {
+                        Array.Resize(ref keyframes[ci], keyframeIndex);
+                    }
+                }
+            }
 			else
 			{
 				for (var i = 0; i < frameCount; ++i)
 				{
 					var time = input.AsFloats[i];
+					if (time == prevTime) { continue; }
 
 					// For interpolation types other than cubic spline, the output will only contain one value per keyframe
 					float[] values = getConvertedValues(output, i);
 
 					for (var ci = 0; ci < channelCount; ++ci)
 					{
-						keyframes[ci][i] = new Keyframe(time, values[ci]);
+						keyframes[ci][keyframeIndex] = new Keyframe(time, values[ci]);
 					}
-				}
-				for (var ci = 0; ci < channelCount; ++ci)
+
+                    prevTime = time;
+                    keyframeIndex++;
+                }
+
+                if (keyframeIndex <= frameCount)
+                {
+                    for (var ci = 0; ci < channelCount; ++ci)
+                    {
+                        Array.Resize(ref keyframes[ci], keyframeIndex);
+                    }
+                }
+
+                for (var ci = 0; ci < channelCount; ++ci)
 				{
-					for (int i = 0; i < keyframes[ci].Length; i++)
-					{
-						SetTangentMode(keyframes[ci], i, mode);
-					}
-				}
-			}
+                    SetTangentMode(keyframes[ci], mode);
+                }
+            }
 
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
@@ -1028,30 +1053,33 @@ namespace UnityGLTF
 			}
 		}
 
-		private static void SetTangentMode(Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
+		private static void SetTangentMode(Keyframe[] keyframes, InterpolationType interpolation)
 		{
-			var key = keyframes[keyframeIndex];
+            for (int i = 0; i < keyframes.Length; i++)
+            {
+                var key = keyframes[i];
 
-			switch (interpolation)
-			{
-				case InterpolationType.CATMULLROMSPLINE:
-					key.inTangent = 0;
-					key.outTangent = 0;
-					break;
-				case InterpolationType.LINEAR:
-					key.inTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex);
-					key.outTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex + 1);
-					break;
-				case InterpolationType.STEP:
-					key.inTangent = float.PositiveInfinity;
-					key.outTangent = float.PositiveInfinity;
-					break;
+                switch (interpolation)
+                {
+                    case InterpolationType.CATMULLROMSPLINE:
+                        key.inTangent = 0;
+                        key.outTangent = 0;
+                        break;
+                    case InterpolationType.LINEAR:
+                        key.inTangent = GetCurveKeyframeLeftLinearSlope(keyframes, i);
+                        key.outTangent = GetCurveKeyframeLeftLinearSlope(keyframes, i + 1);
+                        break;
+                    case InterpolationType.STEP:
+                        key.inTangent = float.PositiveInfinity;
+                        key.outTangent = float.PositiveInfinity;
+                        break;
 
-				default:
-					throw new NotImplementedException();
-			}
+                    default:
+                        throw new NotImplementedException();
+                }
 
-			keyframes[keyframeIndex] = key;
+                keyframes[i] = key;
+            }
 		}
 
 		private static float GetCurveKeyframeLeftLinearSlope(Keyframe[] keyframes, int keyframeIndex)
