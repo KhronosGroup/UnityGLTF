@@ -168,6 +168,11 @@ namespace UnityGLTF
 		public bool KeepCPUCopyOfTexture = true;
 
 		/// <summary>
+		/// Specifies whether the MipMap chain should be generated for model textures
+		/// </summary>
+		public bool GenerateMipMapsForTextures = true;
+
+		/// <summary>
 		/// When screen coverage is above threashold and no LOD mesh cull the object
 		/// </summary>
 		public bool CullFarLOD = false;
@@ -734,7 +739,7 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
 		{
-			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, true, isLinear);
+			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = nameof(GLTFSceneImporter) + (image.Name != null ? ("." + image.Name) : "");
 
 			if (stream is MemoryStream)
