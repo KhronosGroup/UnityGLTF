@@ -91,13 +91,13 @@ namespace GLTF.Schema
 
 			if (WrapS != WrapMode.Repeat)
 			{
-				writer.WritePropertyName("WrapS");
+				writer.WritePropertyName("wrapS");
 				writer.WriteValue((int)WrapS);
 			}
 
 			if (WrapT != WrapMode.Repeat)
 			{
-				writer.WritePropertyName("WrapT");
+				writer.WritePropertyName("wrapT");
 				writer.WriteValue((int)WrapT);
 			}
 
