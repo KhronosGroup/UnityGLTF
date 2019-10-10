@@ -1,0 +1,22 @@
+{
+	"name": "org.khronos.unitygltf",
+	"displayName": "Khronos GLTF Loader",
+	"version": "1.0.0",
+	"unity": "2018.3",
+	"description": "Unity3D library for importing and exporting GLTF 2.0 assets. https://github.com/KhronosGroup/UnityGLTF",
+	"keywords": [
+		"gltf",
+		"khronos",
+		"runtime",
+		"loader"
+	],
+	"author": "Khronos Group",
+	"samples": [
+		{
+			"displayName": "Sample Scenes",
+			"description": "Various scenes showing GLTF functionality.",
+			"path": "Samples~"
+		}
+	],
+	"dependencies": {}
+}
