@@ -970,126 +970,161 @@ namespace UnityGLTF
 			GLTFHelpers.BuildAnimationSamplers(ref samplersByType);
 		}
 
-		protected void SetAnimationCurve(
-			AnimationClip clip,
-			string relativePath,
-			string[] propertyNames,
-			NumericArray input,
-			NumericArray output,
-			InterpolationType mode,
-			Type curveType,
-			ValuesConvertion getConvertedValues)
-		{
+        protected void SetAnimationCurve(
+            AnimationClip clip,
+            string relativePath,
+            string[] propertyNames,
+            NumericArray input,
+            NumericArray output,
+            InterpolationType mode,
+            Type curveType,
+            ValuesConvertion getConvertedValues)
+        {
 
-			var channelCount = propertyNames.Length;
-			var frameCount = input.AsFloats.Length;
+            var channelCount = propertyNames.Length;
+            var frameCount = input.AsFloats.Length;
 
-			// copy all the key frame data to cache
-			Keyframe[][] keyframes = new Keyframe[channelCount][];
-			for (var ci = 0; ci < channelCount; ++ci)
-			{
-				keyframes[ci] = new Keyframe[frameCount];
-			}
+            if (frameCount == 0) { return; }
 
-			for (var i = 0; i < frameCount; ++i)
-			{
-				var time = input.AsFloats[i];
+            var keyframeIndex = 0;
+            var prevTime = input.AsFloats[0] - 1;
 
-				float[] values = null;
-				float[] inTangents = null;
-				float[] outTangents = null;
-				if (mode == InterpolationType.CUBICSPLINE)
-				{
-					// For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
-					// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
+            // copy all the key frame data to cache
+            Keyframe[][] keyframes = new Keyframe[channelCount][];
+            for (var ci = 0; ci < channelCount; ++ci)
+            {
+                keyframes[ci] = new Keyframe[frameCount];
+            }
 
-					var cubicIndex = i * 3;
-					inTangents = getConvertedValues(output, cubicIndex);
-					values = getConvertedValues(output, cubicIndex + 1);
-					outTangents = getConvertedValues(output, cubicIndex + 2);
-				}
-				else
-				{
-					// For other interpolation types, the output will only contain one value per keyframe
-					values = getConvertedValues(output, i);
-				}
+            switch (mode)
+            {
+                case InterpolationType.CUBICSPLINE:
+                    {
+                        for (var i = 0; i < frameCount; ++i)
+                        {
+                            var time = input.AsFloats[i];
+                            if (time == prevTime) { continue; }
 
-				for (var ci = 0; ci < channelCount; ++ci)
-				{
-					if (mode == InterpolationType.CUBICSPLINE)
-					{
-						keyframes[ci][i] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
-					}
-					else
-					{
-						keyframes[ci][i] = new Keyframe(time, values[ci]);
-					}
-				}
-			}
+                            // For cubic spline, the output will contain 3 values per keyframe; inTangent, dataPoint, and outTangent.
+                            // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
 
-			for (var ci = 0; ci < channelCount; ++ci)
-			{
-				// copy all key frames data to animation curve and add it to the clip
-				AnimationCurve curve = new AnimationCurve();
-				curve.keys = keyframes[ci];
+                            var cubicIndex = i * 3;
+                            float[] inTangents = getConvertedValues(output, cubicIndex);
+                            float[] values = getConvertedValues(output, cubicIndex + 1);
+                            float[] outTangents = getConvertedValues(output, cubicIndex + 2);
 
-				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
-				// For the rest, set them appropriately.
-				if (mode != InterpolationType.CUBICSPLINE)
-				{
-					for (var i = 0; i < keyframes[ci].Length; i++)
-					{
-						SetTangentMode(curve, i, mode);
-					}
-				}
-				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
-			}
-		}
+                            for (var ci = 0; ci < channelCount; ++ci)
+                            {
+                                keyframes[ci][keyframeIndex] = new Keyframe(time, values[ci], inTangents[ci], outTangents[ci]);
+                            }
 
-		private static void SetTangentMode(AnimationCurve curve, int keyframeIndex, InterpolationType interpolation)
-		{
-			var key = curve.keys[keyframeIndex];
+                            prevTime = time;
+                            keyframeIndex++;
+                        }
+                        break;
+                    }
+                case InterpolationType.LINEAR:
+                    {
+                        float[] prev = getConvertedValues(output, 0);
+                        float[] cur = getConvertedValues(output, 0);
 
-			switch (interpolation)
-			{
-				case InterpolationType.CATMULLROMSPLINE:
-					key.inTangent = 0;
-					key.outTangent = 0;
-					break;
-				case InterpolationType.LINEAR:
-					key.inTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex);
-					key.outTangent = GetCurveKeyframeLeftLinearSlope(curve, keyframeIndex + 1);
-					break;
-				case InterpolationType.STEP:
-					key.inTangent = float.PositiveInfinity;
-					key.outTangent = float.PositiveInfinity;
-					break;
+                        for (var i = 0; i < frameCount - 1; ++i)
+                        {
+                            var time = input.AsFloats[i];
+                            if (time == prevTime) { continue; }
 
-				default:
-					throw new NotImplementedException();
-			}
+                            float[] next = getConvertedValues(output, i + 1);
+                            var timeDelta = time - prevTime;
 
-			curve.MoveKey(keyframeIndex, key);
-		}
+                            for (var ci = 0; ci < channelCount; ++ci)
+                            {
+                                keyframes[ci][keyframeIndex] = new Keyframe(
+                                    time, cur[ci], (cur[ci] - prev[ci]) / timeDelta, (next[ci] - cur[ci]) / timeDelta);
+                            }
 
-		private static float GetCurveKeyframeLeftLinearSlope(AnimationCurve curve, int keyframeIndex)
-		{
-			if (keyframeIndex <= 0 || keyframeIndex >= curve.keys.Length)
-			{
-				return 0;
-			}
+                            prevTime = time;
+                            prev = cur;
+                            cur = next;
+                            keyframeIndex++;
+                        }
 
-			var valueDelta = curve.keys[keyframeIndex].value - curve.keys[keyframeIndex - 1].value;
-			var timeDelta = curve.keys[keyframeIndex].time - curve.keys[keyframeIndex - 1].time;
+                        var endTime = input.AsFloats[frameCount - 1];
+                        if (endTime == prevTime) { break; }
+                        var endTimeDelta = endTime - prevTime;
 
-			Debug.Assert(timeDelta > 0, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
+                        for (var ci = 0; ci < channelCount; ++ci)
+                        {
+                            keyframes[ci][keyframeIndex] = new Keyframe(endTime, cur[ci], (cur[ci] - prev[ci]) / endTimeDelta, 0);
+                        }
 
-			return valueDelta / timeDelta;
-		}
+                        keyframeIndex++;
+                        break;
+                    }
+                case InterpolationType.STEP:
+                    {
+                        for (var i = 0; i < frameCount; ++i)
+                        {
+                            var time = input.AsFloats[i];
+                            if (time == prevTime) { continue; }
 
-		protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
-		{
-			GLTFAnimation animation = _gltfRoot.Animations[animationId];
+                            float[] values = getConvertedValues(output, i);
+
+                            for (var ci = 0; ci < channelCount; ++ci)
+                            {
+                                keyframes[ci][keyframeIndex] = new Keyframe(time, values[ci], float.PositiveInfinity, float.PositiveInfinity);
+                            }
+
+                            prevTime = time;
+                            keyframeIndex++;
+                        }
+                        break;
+                    }
+                case InterpolationType.CATMULLROMSPLINE:
+                    {
+                        for (var i = 0; i < frameCount; ++i)
+                        {
+                            var time = input.AsFloats[i];
+                            if (time == prevTime) { continue; }
+
+                            float[] values = getConvertedValues(output, i);
+
+                            for (var ci = 0; ci < channelCount; ++ci)
+                            {
+                                keyframes[ci][keyframeIndex] = new Keyframe(time, values[ci], 0, 0);
+                            }
+
+                            prevTime = time;
+                            keyframeIndex++;
+                        }
+                        break;
+                    }
+                default:
+                    break;
+            }
+
+            if (keyframeIndex <= frameCount)
+            {
+                for (var ci = 0; ci < channelCount; ++ci)
+                {
+                    Array.Resize(ref keyframes[ci], keyframeIndex);
+                }
+            }
+
+            for (var ci = 0; ci < channelCount; ++ci)
+            {
+                // copy all key frames data to animation curve and add it to the clip
+                AnimationCurve curve = new AnimationCurve
+                {
+                    keys = keyframes[ci]
+                };
+
+                clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
+            }
+        }
+
+        protected async Task<AnimationClip> ConstructClip(Transform root, int animationId, CancellationToken cancellationToken)
+        {
+            GLTFAnimation animation = _gltfRoot.Animations[animationId];
 
 			AnimationCacheData animationCache = _assetCache.AnimationCache[animationId];
 			if (animationCache == null)
