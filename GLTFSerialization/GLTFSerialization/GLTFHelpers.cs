@@ -274,7 +274,7 @@ namespace GLTF
 
 			// TODO This should be a warning. Unrecognized attributes (e.g. TEXCOORD_4) should not cause full exceptions.
 			if (unrecognizedAttributes.Count > 0) {
-				throw new System.Exception($"Unrecognized mesh attributes [{string.Join(", ", unrecognizedAttributes.ToArray())}]");
+				throw new GLTFLoadException($"Unrecognized mesh attributes [{string.Join(", ", unrecognizedAttributes.ToArray())}]");
 			}
 		}
 

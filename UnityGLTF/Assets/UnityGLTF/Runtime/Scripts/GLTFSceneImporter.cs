@@ -864,7 +864,7 @@ namespace UnityGLTF
 			}
 			try { 
 				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
-			} catch (System.Exception e) {
+			} catch (GLTFLoadException e) {
 				Debug.LogWarning(e.ToString());
 			}
 			TransformAttributes(ref attributeAccessors);
