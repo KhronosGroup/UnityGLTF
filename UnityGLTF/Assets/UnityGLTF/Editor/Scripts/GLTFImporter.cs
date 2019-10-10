@@ -279,8 +279,6 @@ namespace UnityGLTF
                                                 // Force disable sprite mode, even for 2D projects
                                                 importer.textureType = TextureImporterType.Default;
                                             }
-
-                                            //importer.SaveAndReimport();
                                         }
                                         else
                                         {
