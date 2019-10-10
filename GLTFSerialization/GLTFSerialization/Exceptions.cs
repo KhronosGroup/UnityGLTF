@@ -26,15 +26,15 @@ namespace GLTF
 #endif
 	}
 
-    public class GLTFLoadException : Exception
-    {
-        public GLTFLoadException() : base() { }
-        public GLTFLoadException(string message) : base(message) { }
-        public GLTFLoadException(string message, Exception inner) : base(message, inner) { }
+	public class GLTFLoadException : Exception
+	{
+		public GLTFLoadException() : base() { }
+		public GLTFLoadException(string message) : base(message) { }
+		public GLTFLoadException(string message, Exception inner) : base(message, inner) { }
 #if !WINDOWS_UWP
-        protected GLTFLoadException(System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context)
-        { }
+		protected GLTFLoadException(System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+		{ }
 #endif
-    }
+	}
 }
