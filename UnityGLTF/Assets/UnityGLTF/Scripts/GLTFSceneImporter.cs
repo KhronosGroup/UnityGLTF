@@ -1027,7 +1027,8 @@ namespace UnityGLTF
 			}
 		}
 
-		private static void SetTangentMode(AnimationCurve curve, Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation) {
+		private static void SetTangentMode(AnimationCurve curve, Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
+		{
 			var key = keyframes[keyframeIndex];
 
 			switch (interpolation)
