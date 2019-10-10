@@ -227,6 +227,7 @@ namespace GLTF
 		/// <param name="attributes">A list of attributes to parse</param>
 		public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes)
 		{
+			List<string> unrecognizedAttributes = new List<string>();
 			foreach (var kvp in attributes)
 			{
 				var attributeAccessor = kvp.Value;
@@ -260,10 +261,20 @@ namespace GLTF
 						attributeAccessor.AccessorId.Value.AsUIntArray(ref resultArray, bufferViewCache, offset);
 						break;
 					default:
-						throw new System.Exception($"Unrecognized mesh attribute [{kvp.Key}]");
+						unrecognizedAttributes.Add(kvp.Key);
+						continue;
 				}
 				
 				attributeAccessor.AccessorContent = resultArray;
+			}
+
+			foreach (var attrib in unrecognizedAttributes) { 
+				attributes.Remove(attrib);
+			}
+
+			// TODO This should be a warning. Unrecognized attributes (e.g. TEXCOORD_4) should not cause full exceptions.
+			if (unrecognizedAttributes.Count > 0) {
+				throw new GLTFLoadException($"Unrecognized mesh attributes [{string.Join(", ", unrecognizedAttributes.ToArray())}]");
 			}
 		}
 
