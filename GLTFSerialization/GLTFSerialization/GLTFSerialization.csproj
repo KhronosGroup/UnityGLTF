@@ -15,7 +15,7 @@
     <Company></Company>
     <Product>GLTFSerialization</Product>
     <PackageId>GLTFSerialization</PackageId>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/README.md</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/KhronosGroup/UnityGLTF/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/KhronosGroup/UnityGLTF</RepositoryUrl>
@@ -27,7 +27,6 @@
     <IsUAPTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('uap10.0'))">true</IsUAPTargetFramework>
     <IsNETStandardTargetFramework Condition="$(TargetFramework.ToLower().StartsWith('netstandard'))">true</IsNETStandardTargetFramework>
     <IsNETTargetFramework Condition="'$(IsNETStandardTargetFramework)' != 'true' and $(TargetFramework.ToLower().StartsWith('net'))">true</IsNETTargetFramework>
-
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
@@ -59,13 +58,13 @@
       </PropertyGroup>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
-        <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="5.2.3" />
+        <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.1.9" />
       </ItemGroup>
     </When>
     <When Condition="'$(IsNETTargetFramework)' == 'true'">
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
-        <PackageReference Include="Microsoft.Net.Compilers" Version="2.2.0">
+        <PackageReference Include="Microsoft.Net.Compilers" Version="2.7.0">
           <IncludeAssets>all</IncludeAssets>
           <ExcludeAssets>contentFiles</ExcludeAssets>
           <PrivateAssets>contentFiles;analyzers</PrivateAssets>
@@ -88,4 +87,12 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+
+  <!-- Leverages copy task to move the meta files to output directory. https://docs.microsoft.com/en-us/visualstudio/msbuild/copy-task?view=vs-2017#example-1 -->
+  <ItemGroup>
+    <MetaFiles Include="..\External\meta\**\*.meta" />
+  </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="@(MetaFiles)" DestinationFiles="@(MetaFiles->'..\..\UnityGLTF\Assets\UnityGLTF\Plugins\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
 </Project>

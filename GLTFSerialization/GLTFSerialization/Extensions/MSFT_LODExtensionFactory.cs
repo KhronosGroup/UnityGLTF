@@ -24,9 +24,11 @@ namespace GLTF.Schema
 			List<int> meshIds = new List<int>();
 			if (extensionToken != null)
 			{
+#if DEBUG
+				// Broken on il2cpp. Don't ship debug DLLs there.
 				System.Diagnostics.Debug.WriteLine(extensionToken.Value.ToString());
 				System.Diagnostics.Debug.WriteLine(extensionToken.Value.Type);
-
+#endif
 				JToken meshIdsToken = extensionToken.Value[IDS];
 				meshIds = meshIdsToken.CreateReader().ReadInt32List();
 			}

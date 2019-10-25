@@ -60,7 +60,6 @@ artifacts/
 *.pdb
 *.pgc
 *.pgd
-*.rsp
 *.sbr
 *.tlb
 *.tli
@@ -151,3 +150,6 @@ _pkginfo.txt
 !*.[Cc]ache/
 
 *.orig
+
+# Current_Package folder
+current-package/
