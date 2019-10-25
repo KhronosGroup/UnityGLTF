@@ -168,7 +168,7 @@ namespace UnityEditor
         {
             m_MaterialEditor.TexturePropertySingleLine(Styles.albedoText, albedoMap, albedoColor);
             m_MaterialEditor.ShaderProperty(vertexColors, Styles.vertexColorText, MaterialEditor.kMiniTextureFieldLabelIndentLevel + 1);
-            
+
             if (((BlendMode)material.GetFloat("_Mode") == BlendMode.Mask))
             {
                 m_MaterialEditor.ShaderProperty(alphaCutoff, Styles.alphaCutoffText.text, MaterialEditor.kMiniTextureFieldLabelIndentLevel + 1);
