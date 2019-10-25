@@ -58,6 +58,7 @@ Shader "GLTF/PbrSpecularGlossiness"
 		Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
 		LOD 300
 		
+
 		// ------------------------------------------------------------------
 		//  Base forward pass (directional light, emission, lightmaps, ...)
 		Pass
@@ -96,11 +97,13 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			ENDCG
 		}
-
-		Pass {
+		// ------------------------------------------------------------------
+		//  Vertex color pass
+		Pass
+		{
 			Name "VERTEXCOLOR"
-			Blend DstColor Zero
 			Tags { "LightMode" = "Always" }
+			Blend DstColor Zero
 			
 			CGPROGRAM
 			#pragma vertex vert_vcol
@@ -144,9 +147,6 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			ENDCG
 		}
-
-		
-		
 		// ------------------------------------------------------------------
 		//  Shadow rendering pass
 		Pass {
@@ -276,12 +276,14 @@ Shader "GLTF/PbrSpecularGlossiness"
 
 			ENDCG
 		}
-
-		Pass {
+		// ------------------------------------------------------------------
+		//  Vertex color pass
+		Pass
+		{
 			Name "VERTEXCOLOR"
-			Blend DstColor Zero
 			Tags { "LightMode" = "Always" }
-			
+			Blend DstColor Zero
+
 			CGPROGRAM
 			#pragma vertex vert_vcol
 			#pragma fragment frag_vcol
@@ -289,7 +291,6 @@ Shader "GLTF/PbrSpecularGlossiness"
 			#include "VertexColor.cginc"
 			ENDCG
 		}
-
 		// ------------------------------------------------------------------
 		//  Additive forward pass (one light per pass)
 		Pass

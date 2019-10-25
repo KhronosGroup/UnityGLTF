@@ -81,11 +81,13 @@ Shader "GLTF/PbrMetallicRoughness"
 
 			ENDCG
 		}
-
-		Pass {
+		// ------------------------------------------------------------------
+		//  Vertex color pass
+		Pass
+		{
 			Name "VERTEXCOLOR"
-			Blend DstColor Zero
 			Tags { "LightMode" = "Always" }
+			Blend DstColor Zero
 			
 			CGPROGRAM
 			#pragma vertex vert_vcol
@@ -94,7 +96,6 @@ Shader "GLTF/PbrMetallicRoughness"
 			#include "VertexColor.cginc"
 			ENDCG
 		}
-
 		// ------------------------------------------------------------------
 		//  Additive forward pass (one light per pass)
 		Pass
@@ -256,11 +257,13 @@ Shader "GLTF/PbrMetallicRoughness"
 
 			ENDCG
 		}
-
-		Pass {
+		// ------------------------------------------------------------------
+		//  Vertex color pass
+		Pass
+		{
 			Name "VERTEXCOLOR"
-			Blend DstColor Zero
 			Tags { "LightMode" = "Always" }
+			Blend DstColor Zero
 			
 			CGPROGRAM
 			#pragma vertex vert_vcol
@@ -269,7 +272,6 @@ Shader "GLTF/PbrMetallicRoughness"
 			#include "VertexColor.cginc"
 			ENDCG
 		}
-
 		// ------------------------------------------------------------------
 		//  Additive forward pass (one light per pass)
 		Pass
