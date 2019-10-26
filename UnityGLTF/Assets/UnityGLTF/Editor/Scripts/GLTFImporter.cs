@@ -211,6 +211,8 @@ namespace UnityGLTF
                         }
                     }
 
+					AssetDatabase.Refresh();
+
                     // Save materials as separate assets and rewrite refs
                     if (materials.Length > 0)
                     {
@@ -277,8 +279,6 @@ namespace UnityGLTF
                                                 // Force disable sprite mode, even for 2D projects
                                                 importer.textureType = TextureImporterType.Default;
                                             }
-
-                                            importer.SaveAndReimport();
                                         }
                                         else
                                         {
@@ -289,7 +289,10 @@ namespace UnityGLTF
                             }
                         }
                     }
-                }
+
+					AssetDatabase.SaveAssets();
+					AssetDatabase.Refresh();
+				}
                 else
                 {
                     var temp = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -309,6 +312,8 @@ namespace UnityGLTF
                 throw;
             }
 
+			
+
 #if UNITY_2017_3_OR_NEWER
 			// Set main asset
 			ctx.AddObjectToAsset("main asset", gltfScene);
@@ -316,7 +321,11 @@ namespace UnityGLTF
 			// Add meshes
 			foreach (var mesh in meshes)
 			{
-				ctx.AddObjectToAsset("mesh " + mesh.name, mesh);
+				try { 
+					ctx.AddObjectToAsset("mesh " + mesh.name, mesh);
+				} catch(System.InvalidOperationException e) {
+					Debug.LogWarning(e.ToString(), mesh);
+				}
 			}
 
 			ctx.SetMainObject(gltfScene);
@@ -327,12 +336,16 @@ namespace UnityGLTF
             // Add meshes
             foreach (var mesh in meshes)
             {
-                ctx.AddSubAsset("mesh " + mesh.name, mesh);
+                try {
+					ctx.AddSubAsset("mesh " + mesh.name, mesh);
+				} catch (System.InvalidOperationException e) {
+					Debug.LogWarning(e.ToString(), mesh);
+				}
             }
 #endif
-        }
+		}
 
-        private GameObject CreateGLTFScene(string projectFilePath)
+		private GameObject CreateGLTFScene(string projectFilePath)
         {
 			var importOptions = new ImportOptions
 			{
