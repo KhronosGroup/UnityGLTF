@@ -7,6 +7,8 @@ Shader "GLTF/PbrMetallicRoughness"
 		_Color("Base Color Factor", Color) = (1,1,1,1)
 		_MainTex("Base Color Texture", 2D) = "white" {}
 		
+		[Toggle(_VERTEX_COLORS)] _VertexColors("Vertex Colors", Float) = 1.0
+
 		_Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
 		_Glossiness("Roughness Factor", Range(0.0, 1.0)) = 1.0
@@ -72,10 +74,10 @@ Shader "GLTF/PbrMetallicRoughness"
 			#pragma multi_compile_fog
 			#pragma multi_compile_instancing
 
-			#pragma vertex vertBase
-			#pragma fragment fragBase
-			#include "UnityStandardInput.cginc"
-			#include "UnityStandardCoreForward.cginc"
+			#pragma vertex vert_vcol
+			#pragma fragment frag_vcol
+			#pragma shader_feature _VERTEX_COLORS
+			#include "VertexColor.cginc"
 
 			ENDCG
 		}
@@ -233,10 +235,10 @@ Shader "GLTF/PbrMetallicRoughness"
 			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog
 
-			#pragma vertex vertBase
-			#pragma fragment fragBase
-			#include "UnityStandardInput.cginc"
-			#include "UnityStandardCoreForward.cginc"
+			#pragma vertex vert_vcol
+			#pragma fragment frag_vcol
+			#pragma shader_feature _VERTEX_COLORS
+			#include "VertexColor.cginc"
 
 			ENDCG
 		}
