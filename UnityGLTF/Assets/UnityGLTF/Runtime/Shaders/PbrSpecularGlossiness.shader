@@ -90,26 +90,11 @@ Shader "GLTF/PbrSpecularGlossiness"
 			#pragma multi_compile_fog
 			#pragma multi_compile_instancing
 
-			#pragma vertex vertBase
-			#pragma fragment fragBase
-			#include "UnityStandardInput.cginc"
-			#include "UnityStandardCoreForward.cginc"
-
-			ENDCG
-		}
-		// ------------------------------------------------------------------
-		//  Vertex color pass
-		Pass
-		{
-			Name "VERTEXCOLOR"
-			Tags { "LightMode" = "Always" }
-			Blend DstColor Zero
-			
-			CGPROGRAM
 			#pragma vertex vert_vcol
 			#pragma fragment frag_vcol
 			#pragma shader_feature _VERTEX_COLORS
 			#include "VertexColor.cginc"
+
 			ENDCG
 		}
 		// ------------------------------------------------------------------
@@ -269,28 +254,14 @@ Shader "GLTF/PbrSpecularGlossiness"
 			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog
 
-			#pragma vertex vertBase
-			#pragma fragment fragBase
-			#include "UnityStandardInput.cginc"
-			#include "UnityStandardCoreForward.cginc"
-
-			ENDCG
-		}
-		// ------------------------------------------------------------------
-		//  Vertex color pass
-		Pass
-		{
-			Name "VERTEXCOLOR"
-			Tags { "LightMode" = "Always" }
-			Blend DstColor Zero
-
-			CGPROGRAM
 			#pragma vertex vert_vcol
 			#pragma fragment frag_vcol
 			#pragma shader_feature _VERTEX_COLORS
 			#include "VertexColor.cginc"
+
 			ENDCG
 		}
+
 		// ------------------------------------------------------------------
 		//  Additive forward pass (one light per pass)
 		Pass
