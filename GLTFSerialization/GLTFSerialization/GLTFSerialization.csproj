@@ -79,7 +79,7 @@
   </Choose>
 
   <PropertyGroup Condition="'$(Platform)' == 'AnyCPU'">
-    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Plugins\</OutputPath>
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Runtime\Plugins\</OutputPath>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)' == 'x86'">
@@ -93,6 +93,6 @@
     <MetaFiles Include="..\External\meta\**\*.meta" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="@(MetaFiles)" DestinationFiles="@(MetaFiles->'..\..\UnityGLTF\Assets\UnityGLTF\Plugins\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(MetaFiles)" DestinationFiles="@(MetaFiles->'..\..\UnityGLTF\Assets\UnityGLTF\Runtime\Plugins\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 </Project>

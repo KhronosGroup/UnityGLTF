@@ -1,0 +1,11 @@
+{
+    "name": "UnityGLTFTests",
+    "references": [
+        "UnityGLTFScripts",
+        "UnityGLTFEditor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
