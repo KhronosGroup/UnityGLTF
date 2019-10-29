@@ -39,8 +39,10 @@ fixed4 frag_vcol(WrappedVertexOutputForwardBase wvofb) : SV_Target
     // (e.g. FRAGMENT_SETUP) that assume that naming convention.
     VertexOutputForwardBase i = wvofb.innerValue;
 
-    // The following section is copied from the fragBase implementation, but with
-    // an inserted section to modify the diffColor after it is calculated but before
+    // The following section is copied from the fragBase implementation, found in
+    // C:\Program Files\Unity\Hub\Editor\2017.4.33f1\Editor\Data\CGIncludes\UnityStandardCore.cginc,
+    // with the name fragForwardBase/fragForwardBaseInternal.  It has been modified to
+    // include a section to modify the diffColor after it is calculated but before
     // it is used in the remaining calculations.
     UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
 
