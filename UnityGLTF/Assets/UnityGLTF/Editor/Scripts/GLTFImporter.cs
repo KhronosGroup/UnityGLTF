@@ -316,7 +316,14 @@ namespace UnityGLTF
 			// Add meshes
 			foreach (var mesh in meshes)
 			{
-				ctx.AddObjectToAsset("mesh " + mesh.name, mesh);
+				try
+                {
+                    ctx.AddObjectToAsset("mesh " + mesh.name, mesh);
+                }
+                catch (InvalidOperationException e)
+                {
+                    Debug.LogWarning(e);
+                }
 			}
 
 			ctx.SetMainObject(gltfScene);
@@ -327,7 +334,14 @@ namespace UnityGLTF
             // Add meshes
             foreach (var mesh in meshes)
             {
-                ctx.AddSubAsset("mesh " + mesh.name, mesh);
+				try
+                {
+					ctx.AddSubAsset("mesh " + mesh.name, mesh);
+				}
+				catch (InvalidOperationException e)
+                {
+                    Debug.LogWarning(e);
+                }
             }
 #endif
         }
