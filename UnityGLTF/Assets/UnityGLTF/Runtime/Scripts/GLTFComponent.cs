@@ -19,6 +19,7 @@ namespace UnityGLTF
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
+        public bool UseRest = false;
         public ImporterFactory Factory = null;
 
         public IEnumerable<Animation> Animations { get; private set; }
@@ -102,9 +103,17 @@ namespace UnityGLTF
 				{
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
 					importOptions.ExternalDataLoader = new WebRequestLoader(directoryPath);
+    
+                    string uri = "";
+                    // append filename to path for non-restful web sources
+                    if(!UseRest)
+                    {
+                        uri = URIHelper.GetFileFromUri(new Uri(GLTFUri));
+                    }
 
 					sceneImporter = Factory.CreateSceneImporter(
-						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
+						uri,
+						loader,
 						importOptions
 						);
 
