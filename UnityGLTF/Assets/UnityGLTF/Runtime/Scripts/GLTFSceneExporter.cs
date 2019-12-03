@@ -201,7 +201,7 @@ namespace UnityGLTF
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 
-			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
+			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
 			_root.Serialize(jsonWriter, true);
 
