@@ -12,7 +12,8 @@ echo "Building project and running tests."
   -silent-crashes \
   -logFile "$log_file" \
   -projectPath "$project_path" \
-  -runEditorTests
+  -runTests \
+  -testPlatform playmode
 if [ $? = 0 ] ; then
   echo "Project built and tests run successfully."
   error_code=0
