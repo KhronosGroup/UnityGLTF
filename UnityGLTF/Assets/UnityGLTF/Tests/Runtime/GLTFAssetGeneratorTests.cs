@@ -17,7 +17,7 @@ using Object = System.Object;
 
 public class GLTFAssetGeneratorTests
 {
-	private const float PIXEL_TOLERANCE = (float)(1.5 / 255);
+	private const float PIXEL_TOLERANCE = 0.01f; // Tolerance based on the estimate that humans see about 1 million colors
 	private static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/Positive/";
 	private static string GLTF_CAMERA_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
 	private static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
