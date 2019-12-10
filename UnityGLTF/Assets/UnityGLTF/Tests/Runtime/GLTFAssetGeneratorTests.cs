@@ -143,6 +143,8 @@ public class GLTFAssetGeneratorTests
 
 				for (int i = 0; i < expectedPixels.Length; i++)
 				{
+					// NOTE: When upgraded to Unity 2018, this custom equality comparison can be replaced with the ColorEqualityComparer, akin to:
+					// Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(UnityEngine.TestTools.Utils.ColorEqualityComparer.Instance));
 					var rDelta = Math.Abs(expectedPixels[i].r - actualPixels[i].r);
 					var gDelta = Math.Abs(expectedPixels[i].g - actualPixels[i].g);
 					var bDelta = Math.Abs(expectedPixels[i].b - actualPixels[i].b);
