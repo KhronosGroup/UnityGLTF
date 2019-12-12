@@ -135,9 +135,10 @@ namespace UnityGLTF
 			var manifestRelativePath = serializedObject.FindProperty(SampleModelList.ManifestRelativePathFieldName).stringValue;
 
 			var loader = new WebRequestLoader(pathRoot);
+			Stream stream;
 			try
 			{
-				await loader.LoadStream(manifestRelativePath);
+				stream = await loader.LoadStreamAsync(manifestRelativePath);
 			}
 			catch (HttpRequestException)
 			{
@@ -145,11 +146,11 @@ namespace UnityGLTF
 				throw;
 			}
 
-			var jsonReader = CreateJsonReaderFromStream(loader.LoadedStream);
+			var jsonReader = CreateJsonReaderFromStream(stream);
 			jsonReader.Read();
 			var listType = SampleModelListParser.DetermineListSource(jsonReader);
 
-			jsonReader = CreateJsonReaderFromStream(loader.LoadedStream);
+			jsonReader = CreateJsonReaderFromStream(stream);
 			jsonReader.Read();
 
 

@@ -19,28 +19,29 @@ public class GLTFAssetGeneratorTests
 {
 	private const float PIXEL_TOLERANCE = 0.01f; // Tolerance based on the estimate that humans see about 1 million colors
 	private static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/Positive/";
-	private static string GLTF_CAMERA_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
+	private static string GLTF_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
 	private static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
 	private static string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
-	//set to true to generate the master images
-	private static bool GENERATE_REFERENCEDATA = false;
-	public GameObject ActiveGLTFObject { get; set; }
-	
-	private Dictionary<string, AssetGenerator.Manifest.Camera> cameras =
-		new Dictionary<string, AssetGenerator.Manifest.Camera>();
+
+	private static GLTFComponent gltfComponent;
+	private readonly Dictionary<string, Manifest.Model> modelManifests = new Dictionary<string, Manifest.Model>();
 
 	[OneTimeSetUp]
 	public void SetupEnvironment()
 	{
-		MonoBehaviour.Instantiate(Resources.Load<GameObject>("TestScenePrefab"));
+		var scenePrefab = MonoBehaviour.Instantiate(Resources.Load<GameObject>("TestScenePrefab"));
+		gltfComponent = scenePrefab.GetComponentInChildren<GLTFComponent>() ;
 
-		//parse camera position manifest
-		List<Manifest> manifests = JsonConvert.DeserializeObject<List<Manifest>>(File.ReadAllText(GLTF_CAMERA_MANIFEST_PATH));
+		// Parse manifest into a lookup dictionary
+		List<Manifest> manifests = JsonConvert.DeserializeObject<List<Manifest>>(File.ReadAllText(GLTF_MANIFEST_PATH));
 		foreach (Manifest manifest in manifests)
 		{
-			foreach (AssetGenerator.Manifest.Model model in manifest.Models)
+			foreach (Manifest.Model model in manifest.Models)
 			{
-				cameras[Path.GetFileNameWithoutExtension(model.FileName)] = model.Camera;
+				// Rather than establishing a new data structure to hold the information, simply augment the
+				// SampleImageName (which is actually a path) to include the starting folder as well.
+				model.SampleImageName = Path.Combine(manifest.Folder, model.SampleImageName);
+				modelManifests[Path.GetFileNameWithoutExtension(model.FileName)] = model;
 			}
 		}
 	}
@@ -48,19 +49,12 @@ public class GLTFAssetGeneratorTests
 	[TearDown]
 	public void CleanupEnvironment()
 	{
-		if (ActiveGLTFObject != null)
+		if (gltfComponent.LastLoadedScene != null)
 		{
-			GameObject.DestroyImmediate(ActiveGLTFObject);
-		}
-		var objects = GameObject.FindObjectsOfType(typeof(GameObject));
-		foreach (GameObject o in objects)
-		{
-			if (o.name.Contains("GLTF"))
-			{
-				GameObject.DestroyImmediate(o);
-			}
+			GameObject.DestroyImmediate(gltfComponent.LastLoadedScene);
 		}
 	}
+
 	public static IEnumerable<string> ModelFilePaths
 	{
 		get
@@ -94,67 +88,66 @@ public class GLTFAssetGeneratorTests
 	[UnityTest]
 	public IEnumerator GLTFScenarios([ValueSource("ModelFilePaths")] string modelPath)
 	{
-		ActiveGLTFObject = new GameObject();
-		
-		GLTFComponent gltfcomponent = ActiveGLTFObject.AddComponent<GLTFComponent>();
-		gltfcomponent.UseStream = true;
-		gltfcomponent.AppendStreamingAssets = false;
-		gltfcomponent.GLTFUri = GLTF_ASSETS_PATH + modelPath;
-
-		AssetGenerator.Manifest.Camera cam = cameras[Path.GetFileNameWithoutExtension(modelPath)];
+		// Update the camera position
+		Manifest.Model modelManifest = modelManifests[Path.GetFileNameWithoutExtension(modelPath)];
+		Manifest.Camera cam = modelManifest.Camera;
 		Camera.main.transform.position = new Vector3(cam.Translation[0], cam.Translation[1], cam.Translation[2]);
-		yield return gltfcomponent.Load().AsCoroutine();
 
-		//wait one frame for rendering to complete
+		// Load the corresponding model
+		gltfComponent.GLTFUri = GLTF_ASSETS_PATH + modelPath;
+		yield return gltfComponent.Load().AsCoroutine();
+
+		// Wait one frame for rendering to complete
 		yield return null;
 
+		// Read the expected image
+		string expectedFilePath = Path.Combine(GLTF_ASSETS_PATH, modelManifest.SampleImageName);
+		if (!File.Exists(expectedFilePath))
+		{
+			Assert.Fail("Could not find expected image to compare against: '" + expectedFilePath + "'");
+		}
+		byte[] expectedFileContents = File.ReadAllBytes(expectedFilePath);
+		// TODO: Can we determine this programmatically instead?
+		int dimension = 400; // (int)Math.Round(Math.Sqrt(expectedFileContents.Length));
+		Texture2D expectedContents = new Texture2D(dimension, dimension, TextureFormat.RGB24, false);
+		expectedContents.LoadImage(expectedFileContents);
+		Color[] expectedPixels = expectedContents.GetPixels();
+
+		// Capture a render of a matching size
 		Camera mainCamera = Camera.main;
-		RenderTexture rt = new RenderTexture(512, 512, 24);
+		RenderTexture rt = new RenderTexture(expectedContents.width, expectedContents.height, 24);
 		mainCamera.targetTexture = rt;
-		Texture2D actualContents = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+		Texture2D actualContents = new Texture2D(expectedContents.width, expectedContents.height, TextureFormat.RGB24, false);
 		mainCamera.Render();
 		RenderTexture.active = rt;
-		actualContents.ReadPixels(new Rect(0, 0, 512, 512), 0, 0);
+		actualContents.ReadPixels(new Rect(0, 0, expectedContents.width, expectedContents.height), 0, 0);
+		Color[] actualPixels = actualContents.GetPixels();
+
+		// For easier debugging, save the captured contents to a file
 		byte[] pngActualfile = actualContents.EncodeToPNG();
 		string outputpath = Path.GetDirectoryName(modelPath);
 		string outputfullpath = GLTF_SCENARIO_OUTPUT_PATH + outputpath;
 		Directory.CreateDirectory(outputfullpath);
 		string filename = Path.GetFileNameWithoutExtension(modelPath);
-		string expectedFilePath = outputfullpath + "/" + filename + "_EXPECTED.png";
 		string actualFilePath = outputfullpath + "/" + filename + "_ACTUAL.png";
-		if (GENERATE_REFERENCEDATA)
-		{
-			File.WriteAllBytes(expectedFilePath, pngActualfile);
-		}
-		else
-		{
-			if (File.Exists(expectedFilePath))
-			{
-				byte[] pngActualfileContents = File.ReadAllBytes(expectedFilePath);
+		File.WriteAllBytes(actualFilePath, pngActualfile);
 
-				File.WriteAllBytes(actualFilePath, pngActualfile);
-				//compare against expected
-				Texture2D expectedContents = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
-				expectedContents.LoadImage(pngActualfileContents);
-				Color[] expectedPixels = expectedContents.GetPixels();
-				Color[] actualPixels = actualContents.GetPixels();
-				Assert.AreEqual(expectedPixels.Length, actualPixels.Length);
-				string errormessage = "\r\nImage does not match expected within configured tolerance.\r\nExpectedPath: " + expectedFilePath + "\r\n ActualPath: " + actualFilePath;
+		// Compare the capture against the expected image
+		Assert.AreEqual(expectedPixels.Length, actualPixels.Length);
+		string errormessage = "\r\nImage does not match expected within configured tolerance.\r\nExpectedPath: " + expectedFilePath + "\r\n ActualPath: " + actualFilePath;
 
-				for (int i = 0; i < expectedPixels.Length; i++)
-				{
-					// NOTE: When upgraded to Unity 2018, this custom equality comparison can be replaced with the ColorEqualityComparer, akin to:
-					// Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(UnityEngine.TestTools.Utils.ColorEqualityComparer.Instance));
-					var rDelta = Math.Abs(expectedPixels[i].r - actualPixels[i].r);
-					var gDelta = Math.Abs(expectedPixels[i].g - actualPixels[i].g);
-					var bDelta = Math.Abs(expectedPixels[i].b - actualPixels[i].b);
-					var aDelta = Math.Abs(expectedPixels[i].a - actualPixels[i].a);
-					Assert.Less(rDelta, PIXEL_TOLERANCE, errormessage);
-					Assert.Less(gDelta, PIXEL_TOLERANCE, errormessage);
-					Assert.Less(bDelta, PIXEL_TOLERANCE, errormessage);
-					Assert.Less(aDelta, PIXEL_TOLERANCE, errormessage);
-				}
-			}
+		for (int i = 0; i < expectedPixels.Length; i++)
+		{
+			// NOTE: When upgraded to Unity 2018, this custom equality comparison can be replaced with the ColorEqualityComparer, akin to:
+			// Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(UnityEngine.TestTools.Utils.ColorEqualityComparer.Instance));
+			var rDelta = Math.Abs(expectedPixels[i].r - actualPixels[i].r);
+			var gDelta = Math.Abs(expectedPixels[i].g - actualPixels[i].g);
+			var bDelta = Math.Abs(expectedPixels[i].b - actualPixels[i].b);
+			var aDelta = Math.Abs(expectedPixels[i].a - actualPixels[i].a);
+			Assert.Less(rDelta, PIXEL_TOLERANCE, errormessage);
+			Assert.Less(gDelta, PIXEL_TOLERANCE, errormessage);
+			Assert.Less(bDelta, PIXEL_TOLERANCE, errormessage);
+			Assert.Less(aDelta, PIXEL_TOLERANCE, errormessage);
 		}
 	}
 }
