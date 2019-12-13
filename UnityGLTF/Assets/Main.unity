@@ -167,6 +167,16 @@ Prefab:
       propertyPath: loadOnStart
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114819471581835328, guid: 426ae0d14f1f31f48af072147ac6abe9,
+        type: 2}
+      propertyPath: distance
+      value: 1.283
+      objectReference: {fileID: 0}
+    - target: {fileID: 114819471581835328, guid: 426ae0d14f1f31f48af072147ac6abe9,
+        type: 2}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 426ae0d14f1f31f48af072147ac6abe9, type: 2}
   m_IsPrefabParent: 0
