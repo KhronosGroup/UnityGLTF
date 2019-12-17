@@ -47,14 +47,16 @@ import ssl
 
 # ---- CONFIGURATION ----
 
-VERSION = '0.1.1'
+VERSION = '0.1.4'
 
 # URL to look for main Unity releases
 UNITY_DOWNLOADS = 'https://unity3d.com/get-unity/download/archive'
+# URL to look for LTS Unity releases
+UNITY_LTS_DOWNLOADS = 'https://unity3d.com/unity/qa/lts-releases'
 # URL to look for Unity patch releases
 UNITY_PATCHES = 'https://unity3d.com/unity/qa/patch-releases'
 # URL to look for beta releases
-UNITY_BETAS = 'https://unity3d.com/unity/beta/archive'
+UNITY_BETAS = 'https://unity3d.com/unity/beta-download'
 # URL for Unity patch release notes
 UNITY_PATCH_RELEASE_NOTES = 'https://unity3d.com/unity/qa/patch-releases/%s'
 # URL for Unity beta release notes
@@ -64,7 +66,7 @@ UNITY_BETAVERSION_RE = '"/unity/beta/unity(\d+\.\d+\.\d+\w\d+)"'
 # parametrized beta version URL, given its version
 UNITY_BETAVERSION_URL = "https://unity3d.com/unity/beta/unity%s"
 # Regex to parse package URLs from HTML
-UNITY_DOWNLOADS_RE = '"(https?:\/\/[\w\/.-]+\/[0-9a-f]{12}\/)MacEditorInstaller\/[\w\/.-]+-(\d+\.\d+\.\d+\w\d+)[\w\/.-]+"'
+UNITY_DOWNLOADS_RE = '"(https?:\/\/[\w\/.-]+\/[0-9a-f]{12}\/)[\w\/.-]+-(\d+\.\d+\.\d+\w\d+)(?:\.dmg|\.pkg)"'
 
 # Name of the ini file at the package URL that contains package information (%s = version)
 UNITY_INI_NAME = 'unity-%s-osx.ini'
@@ -212,6 +214,8 @@ class version_cache:
             self.cache['release']['_lastupdate'] = datetime.datetime.utcnow().isoformat()
             count = self._load_and_parse(UNITY_DOWNLOADS, UNITY_DOWNLOADS_RE, self.cache['release'])
             if count > 0: print 'Found %i Unity releases.' % count
+            count = self._load_and_parse(UNITY_LTS_DOWNLOADS, UNITY_DOWNLOADS_RE, self.cache['release'])
+            if count > 0: print 'Found %i Unity LTS releases.' % count
 
         if strength >= 2 and (force or self.is_outdated(self.cache.get('patch', None))):
             print 'Loading Unity patch releases...'
@@ -225,7 +229,7 @@ class version_cache:
             self.cache['beta'] = {}
             self.cache['beta']['_lastupdate'] = datetime.datetime.utcnow().isoformat()
             count = self._load_and_parse_betas(UNITY_BETAS, UNITY_DOWNLOADS_RE, self.cache['beta'])
-            if count > 0: print 'Found %i Unity patch releases.' % count
+            if count > 0: print 'Found %i Unity beta releases.' % count
 
         print ''
         
@@ -255,9 +259,11 @@ class version_cache:
                 return 0
         
         result = re.findall(pattern, response.read())
+        versions = {}
         for match in result:
             unity_versions[match[1]] = match[0]
-        return len(result)
+            versions[match[1]] = True
+        return len(versions)
     
     def save(self):
         with open(self.cache_file, 'w') as file:
@@ -715,7 +721,7 @@ def find_unity_installs(silent = False):
     if not os.path.isdir(app_dir):
         error('Applications directory on target volume "%s" not found' % args.volume)
     
-    install_paths = [x for x in os.listdir(app_dir) if x.startswith('Unity')]
+    install_paths = [x for x in os.listdir(app_dir) if x.startswith('Unity') and not x.startswith('Unity Hub')]
     for install_name in install_paths:
         plist_path = os.path.join(app_dir, install_name, 'Unity.app', 'Contents', 'Info.plist')
         if not os.path.isfile(plist_path):
