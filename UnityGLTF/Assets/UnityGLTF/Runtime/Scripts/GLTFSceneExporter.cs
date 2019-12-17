@@ -2717,7 +2717,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private AccessorId ExportAccessor(Matrix4x4[] arr, bool switchHandedness = false)
+		private AccessorId ExportAccessor(Matrix4x4[] arr)
 		{
 			var count = (uint)arr.Length;
 
@@ -2737,8 +2737,7 @@ namespace UnityGLTF
 
 			foreach (var mat in arr)
 			{
-				Matrix4x4 mamat = switchHandedness ? mat.switchHandedness() : mat;
-				var m = SchemaExtensions.ToGltfMatrix4x4Convert(mamat);
+				var m = SchemaExtensions.ToGltfMatrix4x4Convert(mat);
 				for (uint i = 0; i < 4; ++i)
 				{
 					var col = m.GetColumn(i);
