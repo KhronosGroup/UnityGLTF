@@ -520,15 +520,9 @@ namespace UnityGLTF.Extensions
 			return outMatrixArr;
 		}
 
-
-		public static Vector3 switchHandedness(this Vector3 input)
-		{
-			return new Vector3(input.x, input.y, -input.z);
-		}
-
 		public static Vector4 switchHandedness(this Vector4 input)
 		{
-			return new Vector4(input.x, input.y, -input.z, -input.w);
+			return new Vector4(-input.x, input.y, input.z, -input.w);
 		}
 
 
