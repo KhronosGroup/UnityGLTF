@@ -22,18 +22,16 @@ namespace UnityGLTF
 		private async Task Start()
 		{
 			var fullPath0 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset0Path;
-			ILoader loader0 = new FileLoader(URIHelper.GetDirectoryName(fullPath0));
+			IDataLoader loader0 = new FileLoader(URIHelper.GetDirectoryName(fullPath0));
 
 			var fullPath1 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset1Path;
-			ILoader loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
+			IDataLoader loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
 
-			await loader0.LoadStream(Path.GetFileName(asset0Path));
-			var asset0Stream = loader0.LoadedStream;
+			var asset0Stream = await loader0.LoadStreamAsync(Path.GetFileName(asset0Path));
 			GLTFRoot asset0Root;
 			GLTFParser.ParseJson(asset0Stream, out asset0Root);
 
-			await loader1.LoadStream(Path.GetFileName(asset1Path));
-			var asset1Stream = loader1.LoadedStream;
+			var asset1Stream = await loader1.LoadStreamAsync(Path.GetFileName(asset1Path));
 			GLTFRoot asset1Root;
 			GLTFParser.ParseJson(asset1Stream, out asset1Root);
 
@@ -72,7 +70,7 @@ namespace UnityGLTF
 				null,
 				new ImportOptions
 				{
-					ExternalDataLoader = loader1,
+					DataLoader = loader1,
 					AsyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>()
 				});
 

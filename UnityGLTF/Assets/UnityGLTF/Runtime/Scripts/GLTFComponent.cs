@@ -68,8 +68,7 @@ namespace UnityGLTF
 		{
 			var importOptions = new ImportOptions
 			{
-				AsyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>(),
-				ExternalDataLoader = null,
+				AsyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>()
 			};
 
 			GLTFSceneImporter sceneImporter = null;
@@ -92,7 +91,7 @@ namespace UnityGLTF
 						fullPath = GLTFUri;
 					}
 					string directoryPath = URIHelper.GetDirectoryName(fullPath);
-					importOptions.ExternalDataLoader = new FileLoader(directoryPath);
+					importOptions.DataLoader = new FileLoader(directoryPath);
 					sceneImporter = Factory.CreateSceneImporter(
 						Path.GetFileName(GLTFUri),
 						importOptions
@@ -101,7 +100,7 @@ namespace UnityGLTF
 				else
 				{
 					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					importOptions.ExternalDataLoader = new WebRequestLoader(directoryPath);
+					importOptions.DataLoader = new WebRequestLoader(directoryPath);
 
 					sceneImporter = Factory.CreateSceneImporter(
 						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
@@ -152,11 +151,11 @@ namespace UnityGLTF
 			}
 			finally
 			{
-				if(importOptions.ExternalDataLoader != null)
+				if(importOptions.DataLoader != null)
 				{
 					sceneImporter?.Dispose();
 					sceneImporter = null;
-					importOptions.ExternalDataLoader = null;
+					importOptions.DataLoader = null;
 				}
 			}
 		}

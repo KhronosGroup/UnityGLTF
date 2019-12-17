@@ -1,10 +1,10 @@
-﻿using System.Collections;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using GLTF;
-using GLTF.Schema;
+
 namespace UnityGLTF.Loader
 {
+	[Obsolete("Please switch to IDataLoader.  This interface is deprecated and will be removed in a future release.")]
 	public interface ILoader
 	{
 		Task LoadStream(string relativeFilePath);
