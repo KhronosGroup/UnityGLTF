@@ -30,6 +30,7 @@ namespace GLTF.Schema
 
 		public Skin()
 		{
+			Joints = new List<NodeId>();
 		}
 
 		public Skin(Skin skin, GLTFRoot gltfRoot) : base(skin, gltfRoot)
