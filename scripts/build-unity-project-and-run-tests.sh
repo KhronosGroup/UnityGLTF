@@ -6,9 +6,10 @@ log_file=$(pwd)/build/unity-mac.log
 error_code=0
 
 echo "Building project and running tests."
-# NOTE: Can't use -nographics because our tests capture rendered graphics
+# NOTE: -nographics is required to run on the lab builds, but means that any tests that need to compare rendered pixels cannot successfully execute
 /Applications/Unity/Unity.app/Contents/MacOS/Unity \
   -batchmode \
+  -nographics \
   -silent-crashes \
   -logFile "$log_file" \
   -projectPath "$project_path" \
