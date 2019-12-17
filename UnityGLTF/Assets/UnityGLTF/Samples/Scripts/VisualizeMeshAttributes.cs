@@ -4,7 +4,7 @@ namespace UnityGLTF.Examples
 {
 	public class VisualizeMeshAttributes : MonoBehaviour
 	{
-		[SerializeField] private MeshFilter Mesh;
+		[SerializeField] private MeshFilter Mesh = default;
 		[SerializeField] private float NormalScale = 0.1f;
 		[SerializeField] private float TangentScale = 0.1f;
 		[SerializeField] private bool VisualizeTangents = false;
