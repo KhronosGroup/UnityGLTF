@@ -215,6 +215,16 @@ namespace UnityGLTF
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
+			if (_exportAnimation)
+			{
+				exportAnimation();
+				// Export skins
+				for (int i = 0; i < _skinnedNodes.Count; ++i)
+				{
+					Transform t = _skinnedNodes[i];
+					exportSkinFromNode(t);
+				}
+			}
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
