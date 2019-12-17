@@ -22,10 +22,10 @@ namespace UnityGLTF
 		private async Task Start()
 		{
 			var fullPath0 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset0Path;
-			IDataLoader2 loader0 = new FileLoader(URIHelper.GetDirectoryName(fullPath0));
+			IDataLoader loader0 = new FileLoader(URIHelper.GetDirectoryName(fullPath0));
 
 			var fullPath1 = Application.streamingAssetsPath + Path.DirectorySeparatorChar + asset1Path;
-			IDataLoader2 loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
+			IDataLoader loader1 = new FileLoader(URIHelper.GetDirectoryName(fullPath1));
 
 			var asset0Stream = await loader0.LoadStreamAsync(Path.GetFileName(asset0Path));
 			GLTFRoot asset0Root;

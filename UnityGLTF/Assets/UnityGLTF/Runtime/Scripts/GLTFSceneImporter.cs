@@ -549,7 +549,6 @@ namespace UnityGLTF
 			else
 #endif
 			{
-				// HACK: Force the coroutine to run synchronously in the editor
 				_gltfStream.Stream = await _options.DataLoader.LoadStreamAsync(jsonFilePath);
 			}
 
