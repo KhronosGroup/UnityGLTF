@@ -2447,7 +2447,7 @@ namespace UnityGLTF
 					});
 			}
 
-			gltfSkin.InverseBindMatrices = ExportAccessor(mesh.bindposes, true);
+			gltfSkin.InverseBindMatrices = ExportAccessor(mesh.bindposes);
 
 			Vector4[] bones = boneWeightToBoneVec4(mesh.boneWeights);
 			Vector4[] weights = boneWeightToWeightVec4(mesh.boneWeights);
@@ -2741,13 +2741,14 @@ namespace UnityGLTF
 			foreach (var mat in arr)
 			{
 				Matrix4x4 mamat = switchHandedness ? mat.switchHandedness() : mat;
-				for (int i = 0; i < 4; ++i)
+				var m = SchemaExtensions.ToGltfMatrix4x4Convert(mamat);
+				for (uint i = 0; i < 4; ++i)
 				{
-					Vector4 col = mamat.GetColumn(i);
-					_bufferWriter.Write(col.x);
-					_bufferWriter.Write(col.y);
-					_bufferWriter.Write(col.z);
-					_bufferWriter.Write(col.w);
+					var col = m.GetColumn(i);
+					_bufferWriter.Write(col.X);
+					_bufferWriter.Write(col.Y);
+					_bufferWriter.Write(col.Z);
+					_bufferWriter.Write(col.W);
 				}
 			}
 
