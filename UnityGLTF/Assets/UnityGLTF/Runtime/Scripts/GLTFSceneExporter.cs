@@ -88,8 +88,11 @@ namespace UnityGLTF
 		public static bool ExportNames = true;
 		public static bool ExportFullPath = true;
 		public static bool RequireExtensions = false;
-		private bool _exportAnimation = true;
-		private bool _bakeSkinnedMeshes = false;
+		public static bool ExportAnimations = true;
+		public static bool BakeSkinnedMeshes = false;
+
+		private static int AnimationBakingFramerate = 30; // FPS
+		private static bool BakeAnimationData = true;
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -125,7 +128,7 @@ namespace UnityGLTF
 			_root = new GLTFRoot
 			{
 				Accessors = new List<Accessor>(),
-				Animations = new List<GLTF.Schema.GLTFAnimation>(),
+				Animations = new List<GLTFAnimation>(),
 				Asset = new Asset
 				{
 					Version = "2.0"
@@ -215,14 +218,14 @@ namespace UnityGLTF
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
-			if (_exportAnimation)
+			if (ExportAnimations)
 			{
-				exportAnimation();
+				ExportAnimation();
 				// Export skins
 				for (int i = 0; i < _skinnedNodes.Count; ++i)
 				{
 					Transform t = _skinnedNodes[i];
-					exportSkinFromNode(t);
+					ExportSkinFromNode(t);
 				}
 			}
 
@@ -324,14 +327,14 @@ namespace UnityGLTF
 			_bufferWriter = new BinaryWriter(binFile);
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
-			if (_exportAnimation)
+			if (ExportAnimations)
 			{
-				exportAnimation();
+				ExportAnimation();
 				// Export skins
 				for (int i = 0; i < _skinnedNodes.Count; ++i)
 				{
 					Transform t = _skinnedNodes[i];
-					exportSkinFromNode(t);
+					ExportSkinFromNode(t);
 
 					// updateProgress(EXPORT_STEP.SKINNING, i, _skinnedNodes.Count);
 				}
@@ -643,7 +646,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private static bool ContainsValidRenderer (GameObject gameObject)
+		private static bool ContainsValidRenderer(GameObject gameObject)
 		{
 			return (gameObject.GetComponent<MeshFilter>() != null && gameObject.GetComponent<MeshRenderer>() != null) 
 					|| (gameObject.GetComponent<SkinnedMeshRenderer>() != null);
@@ -691,16 +694,15 @@ namespace UnityGLTF
 				&& ContainsValidRenderer(gameObject);
 
 		}
-		private void exportAnimation()
+		private void ExportAnimation()
 		{
-			GLTF.Schema.GLTFAnimation anim = new GLTF.Schema.GLTFAnimation();
+			GLTFAnimation anim = new GLTFAnimation();
 			anim.Name = "Take 001";
+
 			for (int i = 0; i < _animatedNodes.Count; ++i)
 			{
 				Transform t = _animatedNodes[i];
-				exportAnimationFromNode(ref t, ref anim);
-
-				// updateProgress(EXPORT_STEP.ANIMATIONS, i, _animatedNodes.Count);
+				ExportAnimationFromNode(ref t, ref anim);
 			}
 
 			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
@@ -2051,11 +2053,11 @@ namespace UnityGLTF
 		}
 
 
-		public enum ROTATION_TYPE
+		public enum AnimationKeyRotationType
 		{
-			UNKNOWN,
-			QUATERNION,
-			EULER
+			Unknown,
+			Quaternion,
+			Euler
 		};
 
 		private struct TargetCurveSet
@@ -2066,7 +2068,8 @@ namespace UnityGLTF
 			public AnimationCurve[] localEulerAnglesRaw;
 			public AnimationCurve[] m_LocalEuler;
 			public AnimationCurve[] scaleCurves;
-			public ROTATION_TYPE rotationType;
+			public AnimationKeyRotationType rotationType;
+
 			public void Init()
 			{
 				translationCurves = new AnimationCurve[3];
@@ -2075,11 +2078,8 @@ namespace UnityGLTF
 			}
 		}
 
-		static int bakingFramerate = 30; // FPS
-		static bool bake = true;
-
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
-		public void exportAnimationFromNode(ref Transform transform, ref GLTF.Schema.GLTFAnimation anim)
+		public void ExportAnimationFromNode(ref Transform transform, ref GLTF.Schema.GLTFAnimation anim)
 		{
 			Animator a = transform.GetComponent<Animator>();
 			if (a != null)
@@ -2127,14 +2127,14 @@ namespace UnityGLTF
 
 			// 1. browse clip, collect all curves and create a TargetCurveSet for each target
 			Dictionary<string, TargetCurveSet> targetCurvesBinding = new Dictionary<string, TargetCurveSet>();
-			collectClipCurves(clip, ref targetCurvesBinding);
+			CollectClipCurves(clip, ref targetCurvesBinding);
 
 			// Baking needs all properties, fill missing curves with transform data in 2 keyframes (start, endTime)
 			// where endTime is clip duration
 			// Note: we should avoid creating curves for a property if none of it's components is animated
-			generateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
+			GenerateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
 
-			if (bake)
+			if (BakeAnimationData)
 			{
 				// Bake animation for all animated nodes
 				foreach (string target in targetCurvesBinding.Keys)
@@ -2152,7 +2152,7 @@ namespace UnityGLTF
 					Vector3[] positions = null;
 					Vector3[] scales = null;
 					Vector4[] rotations = null;
-					bakeCurveSet(targetCurvesBinding[target], clip.length, bakingFramerate, ref times, ref positions, ref rotations, ref scales);
+					BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, ref times, ref positions, ref rotations, ref scales);
 
 					int channelTargetId = getTargetIdFromTransform(ref targetTr);
 					AccessorId timeAccessor = ExportAccessor(times);
@@ -2240,7 +2240,7 @@ namespace UnityGLTF
 
 		}
 
-		private void collectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
+		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
 		{
 			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
 			{
@@ -2274,7 +2274,7 @@ namespace UnityGLTF
 				}
 				else if (binding.propertyName.ToLower().Contains("localrotation"))
 				{
-					current.rotationType = ROTATION_TYPE.QUATERNION;
+					current.rotationType = AnimationKeyRotationType.Quaternion;
 					if (binding.propertyName.Contains(".x"))
 						current.rotationCurves[0] = curve;
 					else if (binding.propertyName.Contains(".y"))
@@ -2287,7 +2287,7 @@ namespace UnityGLTF
 				// Takes into account 'localEuler', 'localEulerAnglesBaked' and 'localEulerAnglesRaw'
 				else if (binding.propertyName.ToLower().Contains("localeuler"))
 				{
-					current.rotationType = ROTATION_TYPE.EULER;
+					current.rotationType = AnimationKeyRotationType.Euler;
 					if (binding.propertyName.Contains(".x"))
 						current.rotationCurves[0] = curve;
 					else if (binding.propertyName.Contains(".y"))
@@ -2299,7 +2299,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private void generateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
+		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
 		{
 			foreach (string target in targetCurvesBinding.Keys)
 			{
@@ -2310,29 +2310,29 @@ namespace UnityGLTF
 				TargetCurveSet current = targetCurvesBinding[target];
 				if (current.translationCurves[0] == null)
 				{
-					current.translationCurves[0] = createConstantCurve(targetTr.localPosition.x, endTime);
-					current.translationCurves[1] = createConstantCurve(targetTr.localPosition.y, endTime);
-					current.translationCurves[2] = createConstantCurve(targetTr.localPosition.z, endTime);
+					current.translationCurves[0] = CreateConstantCurve(targetTr.localPosition.x, endTime);
+					current.translationCurves[1] = CreateConstantCurve(targetTr.localPosition.y, endTime);
+					current.translationCurves[2] = CreateConstantCurve(targetTr.localPosition.z, endTime);
 				}
 
 				if (current.scaleCurves[0] == null)
 				{
-					current.scaleCurves[0] = createConstantCurve(targetTr.localScale.x, endTime);
-					current.scaleCurves[1] = createConstantCurve(targetTr.localScale.y, endTime);
-					current.scaleCurves[2] = createConstantCurve(targetTr.localScale.z, endTime);
+					current.scaleCurves[0] = CreateConstantCurve(targetTr.localScale.x, endTime);
+					current.scaleCurves[1] = CreateConstantCurve(targetTr.localScale.y, endTime);
+					current.scaleCurves[2] = CreateConstantCurve(targetTr.localScale.z, endTime);
 				}
 
 				if (current.rotationCurves[0] == null)
 				{
-					current.rotationCurves[0] = createConstantCurve(targetTr.localRotation.x, endTime);
-					current.rotationCurves[1] = createConstantCurve(targetTr.localRotation.y, endTime);
-					current.rotationCurves[2] = createConstantCurve(targetTr.localRotation.z, endTime);
-					current.rotationCurves[3] = createConstantCurve(targetTr.localRotation.w, endTime);
+					current.rotationCurves[0] = CreateConstantCurve(targetTr.localRotation.x, endTime);
+					current.rotationCurves[1] = CreateConstantCurve(targetTr.localRotation.y, endTime);
+					current.rotationCurves[2] = CreateConstantCurve(targetTr.localRotation.z, endTime);
+					current.rotationCurves[3] = CreateConstantCurve(targetTr.localRotation.w, endTime);
 				}
 			}
 		}
 
-		private AnimationCurve createConstantCurve(float value, float endTime)
+		private AnimationCurve CreateConstantCurve(float value, float endTime)
 		{
 			// No translation curves, adding them
 			AnimationCurve curve = new AnimationCurve();
@@ -2341,7 +2341,7 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private void bakeCurveSet(TargetCurveSet curveSet, float length, int bakingFramerate, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
+		private void BakeCurveSet(TargetCurveSet curveSet, float length, int bakingFramerate, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
 		{
 			int nbSamples = (int)(length * 30);
 			float deltaTime = length / nbSamples;
@@ -2359,7 +2359,7 @@ namespace UnityGLTF
 				times[i] = currentTime;
 				positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
 				scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
-				if (curveSet.rotationType == ROTATION_TYPE.EULER)
+				if (curveSet.rotationType == AnimationKeyRotationType.Euler)
 				{
 					Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
 					rotations[i] = new Vector4(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
@@ -2381,7 +2381,7 @@ namespace UnityGLTF
 			SkinnedMeshRenderer skinMesh = gameObject.GetComponent<SkinnedMeshRenderer>();
 			if (skinMesh)
 			{
-				if (!_exportAnimation && _bakeSkinnedMeshes)
+				if (!ExportAnimations && BakeSkinnedMeshes)
 				{
 					if (!_bakedMeshes.ContainsKey(skinMesh))
 					{
@@ -2414,22 +2414,7 @@ namespace UnityGLTF
 			return null;
 		}
 
-		private UnityEngine.Material[] getMaterials(GameObject gameObject)
-		{
-			if (gameObject.GetComponent<MeshRenderer>())
-			{
-				return gameObject.GetComponent<MeshRenderer>().sharedMaterials;
-			}
-
-			if (gameObject.GetComponent<SkinnedMeshRenderer>())
-			{
-				return gameObject.GetComponent<SkinnedMeshRenderer>().sharedMaterials;
-			}
-
-			return null;
-		}
-
-		private void exportSkinFromNode(Transform transform)
+		private void ExportSkinFromNode(Transform transform)
 		{
 			PrimKey key = new PrimKey();
 			UnityEngine.Mesh mesh = getMesh(transform.gameObject);
