@@ -17,9 +17,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UnityGLTF/Samples/LanternSpecGlossTestScene.unity
     guid: 3d986f306d83ee14d96b5fb1c7e86169
-  - enabled: 0
-    path: 
-    guid: 00000000000000000000000000000000
   - enabled: 1
     path: Assets/UnityGLTF/Samples/LanternTestScene.unity
     guid: 5a247e41f19cb4f40b0fe8392fd4901f
@@ -38,9 +35,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UnityGLTF/Samples/BuggyTestScene.unity
     guid: 9765b46364f55db4da07dbf1c868e131
-  - enabled: 1
-    path: Assets/UnityGLTF/Tests/TestScene.unity
-    guid: 0c315d6353f330540bb7f667982b0931
   - enabled: 1
     path: Assets/UnityGLTF/Samples/SkinnedAnimationTestScene.unity
     guid: 99b419859af06014699108078f89d05e
@@ -89,3 +83,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/UnityGLTF/Samples/FarmlandDioramaTestScene.unity
     guid: df36c2dfaf0bc35488e81c2faf022bd5
+  m_configObjects: {}
