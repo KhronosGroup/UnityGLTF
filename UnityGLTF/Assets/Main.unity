@@ -151,16 +151,6 @@ PrefabInstance:
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 114819471581835328, guid: 426ae0d14f1f31f48af072147ac6abe9,
-        type: 3}
-      propertyPath: distance
-      value: 1.283
-      objectReference: {fileID: 0}
-    - target: {fileID: 114819471581835328, guid: 426ae0d14f1f31f48af072147ac6abe9,
-        type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 114843937143698750, guid: 426ae0d14f1f31f48af072147ac6abe9,
         type: 3}
       propertyPath: GLTFUri
