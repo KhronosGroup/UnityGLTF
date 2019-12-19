@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311992, g: 0.38074034, b: 0.35872713, a: 1}
+  m_IndirectSpecularColor: {r: 0.45140028, g: 0.5008927, b: 0.5723123, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -164,7 +164,7 @@ PrefabInstance:
     - target: {fileID: 114843937143698750, guid: 426ae0d14f1f31f48af072147ac6abe9,
         type: 3}
       propertyPath: GLTFUri
-      value: http://localhost:8080/glTF-Asset-Generator/Output/Positive/Material/Material_07.gltf
+      value: http://localhost:8080/glTF-Asset-Generator/Output/Positive/Material/Material_01.gltf
       objectReference: {fileID: 0}
     - target: {fileID: 114843937143698750, guid: 426ae0d14f1f31f48af072147ac6abe9,
         type: 3}
@@ -251,7 +251,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df99c459245b3cd40be06aca24a19170, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loader: {fileID: 0}
+  loader: {fileID: 1226067820}
   pathRoot: http://localhost:8080/glTF-Sample-Models/2.0/
   manifestRelativePath: model-index.json
   modelRelativePath: 
@@ -282,11 +282,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df99c459245b3cd40be06aca24a19170, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loader: {fileID: 0}
+  loader: {fileID: 1226067820}
   pathRoot: http://localhost:8080/glTF-Asset-Generator/Output/Positive/
   manifestRelativePath: Manifest.json
   modelRelativePath: 
   loadThisFrame: 0
+--- !u!114 &1226067820 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114843937143698750, guid: 426ae0d14f1f31f48af072147ac6abe9,
+    type: 3}
+  m_PrefabInstance: {fileID: 468343020}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9087a95f22bcee64ebc45f6deec08714, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1904599574
 GameObject:
   m_ObjectHideFlags: 0
