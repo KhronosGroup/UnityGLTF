@@ -5,6 +5,10 @@ log_file=$(pwd)/build/unity-mac.log
 
 error_code=0
 
+# Turn off kqueue, which is broken in OS X but left enabled in some systems
+# If this can be turned off without receiving warnings about kq_init then the systems have all been updated
+export EVENT_NOKQUEUE=1
+
 echo "Building project and running tests."
 # NOTE: -nographics is required to run on the lab builds, but means that any tests that need to compare rendered pixels cannot successfully execute
 /Applications/Unity/Unity.app/Contents/MacOS/Unity \
