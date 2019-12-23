@@ -1335,7 +1335,8 @@ namespace UnityGLTF
 			var pngImageData = exportTexture.EncodeToPNG();
 			_bufferWriter.Write(pngImageData);
 
-			destRenderTexture.Release();
+			RenderTexture.ReleaseTemporary(destRenderTexture);
+
 			GL.sRGBWrite = false;
 			if (Application.isEditor)
 			{
