@@ -322,20 +322,26 @@ namespace UnityGLTF
 			for (int t = 0; t < _imageInfos.Count; ++t)
 			{
 				var image = _imageInfos[t].texture;
-				int height = image.height;
-				int width = image.width;
 
-				switch (_imageInfos[t].textureMapType)
+				if (TryGetTextureDataFromDisk(image, out string path, out byte[] imageBytes))
 				{
-					case TextureMapType.MetallicGloss:
-						ExportMetallicGlossTexture(image, outputPath);
-						break;
-					case TextureMapType.Bump:
-						ExportNormalTexture(image, outputPath);
-						break;
-					default:
-						ExportTexture(image, outputPath);
-						break;
+					var finalFilenamePath = ConstructImageFilenamePath(image, outputPath);
+					finalFilenamePath = Path.ChangeExtension(finalFilenamePath, Path.GetExtension(path));
+					File.WriteAllBytes(finalFilenamePath, imageBytes);
+				}
+				else {
+					switch (_imageInfos[t].textureMapType)
+					{
+						case TextureMapType.MetallicGloss:
+							ExportMetallicGlossTexture(image, outputPath);
+							break;
+						case TextureMapType.Bump:
+							ExportNormalTexture(image, outputPath);
+							break;
+						default:
+							ExportTexture(image, outputPath);
+							break;
+					}
 				}
 			}
 		}
@@ -1232,13 +1238,13 @@ namespace UnityGLTF
 			}
 
 			if (_shouldUseInternalBufferForImages)
-		    	{
+		    {
 				texture.Source = ExportImageInternalBuffer(textureObj, textureMapType);
-		    	}
-		    	else
-		    	{
+		    }
+		    else
+		    {
 				texture.Source = ExportImage(textureObj, textureMapType);
-		    	}
+		    }
 			texture.Sampler = ExportSampler(textureObj);
 
 			_textures.Add(textureObj);
@@ -1281,10 +1287,22 @@ namespace UnityGLTF
 				imagePath = texture.name;
 			}
 
-			var filenamePath = Path.ChangeExtension(imagePath, ".png");
-			if (!ExportFullPath)
+			var filenamePath = imagePath;
+			var isGltfCompatible = IsPng(imagePath) || IsJpeg(imagePath);
+
+			if (ExportFullPath)
 			{
-				filenamePath = Path.ChangeExtension(texture.name, ".png");
+				if (!isGltfCompatible)
+				{
+					filenamePath = Path.ChangeExtension(imagePath, ".png");
+				}
+			}
+			else
+			{
+				filenamePath = texture.name;
+				if(!isGltfCompatible) { 
+					filenamePath = Path.ChangeExtension(texture.name, ".png");
+				}
 			}
 			image.Uri = Uri.EscapeUriString(filenamePath);
 
@@ -1299,66 +1317,109 @@ namespace UnityGLTF
 			return id;
 		}
 
+		bool TryGetTextureDataFromDisk(Texture texture, out string path, out byte[] data)
+		{
+#if UNITY_EDITOR
+			if (Application.isEditor && UnityEditor.AssetDatabase.Contains(texture))
+			{
+				path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+				if (File.Exists(path))
+				{
+					data = File.ReadAllBytes(path);
+					return true;
+				}
+			}
+#endif
+			path = null;
+			data = null;
+			return false;
+		}
+
+		bool IsPng(string filename)
+		{
+			return Path.GetExtension(filename).EndsWith("png", StringComparison.InvariantCultureIgnoreCase);
+		}
+
+		bool IsJpeg(string filename)
+		{
+			return Path.GetExtension(filename).EndsWith("jpg", StringComparison.InvariantCultureIgnoreCase) || Path.GetExtension(filename).EndsWith("jpeg", StringComparison.InvariantCultureIgnoreCase);
+		}
+
 		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType texturMapType)
 		{
-
 		    if (texture == null)
 		    {
-			throw new Exception("texture can not be NULL.");
+				throw new Exception("texture can not be NULL.");
 		    }
 
 		    var image = new GLTFImage();
-		    image.MimeType = "image/png";
-
 		    var byteOffset = _bufferWriter.BaseStream.Position;
 
-		    {//
-			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
-			GL.sRGBWrite = true;
-			switch (texturMapType)
-			{
-			    case TextureMapType.MetallicGloss:
-				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
-				break;
-			    case TextureMapType.Bump:
-				Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
-				break;
-			    default:
-				Graphics.Blit(texture, destRenderTexture);
-				break;
+			bool wasAbleToExportFromDisk = false;
+
+			if(TryGetTextureDataFromDisk(texture, out string path, out byte[] imageBytes))
+			{ 
+				if(IsPng(path))
+				{
+					image.MimeType = "image/png";
+					_bufferWriter.Write(imageBytes);
+					wasAbleToExportFromDisk = true;
+				}
+				else if(IsJpeg(path))
+				{
+					image.MimeType = "image/jpeg";
+					_bufferWriter.Write(imageBytes);
+					wasAbleToExportFromDisk = true;
+				}
 			}
 
-			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
-			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
-			exportTexture.Apply();
+			if(!wasAbleToExportFromDisk)
+		    {
+				image.MimeType = "image/png";
 
-			var pngImageData = exportTexture.EncodeToPNG();
-			_bufferWriter.Write(pngImageData);
+				var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+				GL.sRGBWrite = true;
+				switch (texturMapType)
+				{
+					case TextureMapType.MetallicGloss:
+					Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+					break;
+					case TextureMapType.Bump:
+					Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
+					break;
+					default:
+					Graphics.Blit(texture, destRenderTexture);
+					break;
+				}
 
-			RenderTexture.ReleaseTemporary(destRenderTexture);
+				var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
+				exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
+				exportTexture.Apply();
 
-			GL.sRGBWrite = false;
-			if (Application.isEditor)
-			{
-			    UnityEngine.Object.DestroyImmediate(exportTexture);
-			}
-			else
-			{
-			    UnityEngine.Object.Destroy(exportTexture);
-			}
+				var pngImageData = exportTexture.EncodeToPNG();
+				_bufferWriter.Write(pngImageData);
+
+				RenderTexture.ReleaseTemporary(destRenderTexture);
+
+				GL.sRGBWrite = false;
+				if (Application.isEditor)
+				{
+					UnityEngine.Object.DestroyImmediate(exportTexture);
+				}
+				else
+				{
+					UnityEngine.Object.Destroy(exportTexture);
+				}
 		    }
 
 		    var byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-
 		    byteLength = AppendToBufferMultiplyOf4(byteOffset, byteLength);
-
 		    image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
-
 
 		    var id = new ImageId
 		    {
-			Id = _root.Images.Count,
-			Root = _root
+				Id = _root.Images.Count,
+				Root = _root
 		    };
 		    _root.Images.Add(image);
 
