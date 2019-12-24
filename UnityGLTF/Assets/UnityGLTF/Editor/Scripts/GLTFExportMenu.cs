@@ -45,7 +45,7 @@ public class GLTFExportMenu : EditorWindow
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
-		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
 		if (!string.IsNullOrEmpty(path)) {
 			exporter.SaveGLTFandBin (path, name);
 		}
@@ -65,7 +65,7 @@ public class GLTFExportMenu : EditorWindow
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
-		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
 		if (!string.IsNullOrEmpty(path))
 		{
 			exporter.SaveGLB(path, name);
@@ -81,7 +81,7 @@ public class GLTFExportMenu : EditorWindow
 
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(transforms, exportOptions);
-		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
 		if (path != "") {
 			exporter.SaveGLTFandBin (path, scene.name);
 		}
