@@ -1209,6 +1209,7 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
+			clip.EnsureQuaternionContinuity();
 			return clip;
 		}
 		#endregion
