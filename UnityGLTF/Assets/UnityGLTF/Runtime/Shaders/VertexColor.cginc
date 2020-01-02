@@ -6,7 +6,8 @@
 #include "UnityStandardCoreForward.cginc"
 
 struct WrappedVertexOutputForwardBase {
-    VertexOutputForwardBase innerValue;
+    //VertexOutputForwardBase innerValue;
+	VertexOutputBaseSimple innerValue;
     fixed4 color : COLOR;
 };
 
