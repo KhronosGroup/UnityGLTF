@@ -22,40 +22,15 @@ jobs:
   - stage: test
     script: "./scripts/docker_test.sh"
     env: TEST_PLATFORM=editmode IMAGE_NAME=gableroux/unity3d:2018.4.14f1
-    addons:
-      artifacts:
-        s3_region: "us-west-1"
-        paths:
-        - "$(pwd)/$TEST_PLATFORM-results.xml"
   - stage: test
     script: "./scripts/docker_test.sh"
     env: TEST_PLATFORM=playmode IMAGE_NAME=gableroux/unity3d:2018.4.14f1
-    addons:
-      artifacts:
-        s3_region: "us-west-1"
-        paths:
-        - "$(pwd)/$TEST_PLATFORM-results.xml"
   - stage: build
     env: BUILD_TARGET=StandaloneLinux64 IMAGE_NAME=gableroux/unity3d:2018.4.14f1
     script: "./scripts/docker_build.sh"
-    addons:
-      artifacts:
-        s3_region: "us-west-1"
-        paths:
-        - "./Builds/"
   - stage: build
     env: BUILD_TARGET=StandaloneOSX IMAGE_NAME=gableroux/unity3d:2018.4.14f1-mac
     script: "./scripts/docker_build.sh"
-    addons:
-      artifacts:
-        s3_region: "us-west-1"
-        paths:
-        - "./Builds/"
   - stage: build
     env: BUILD_TARGET=StandaloneWindows64 IMAGE_NAME=gableroux/unity3d:2018.4.14f1-windows
     script: "./scripts/docker_build.sh"
-    addons:
-      artifacts:
-        s3_region: "us-west-1"
-        paths:
-        - "./Builds/"

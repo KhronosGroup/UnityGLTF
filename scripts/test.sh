@@ -24,5 +24,9 @@ else
   echo "Unexpected exit code $UNITY_EXIT_CODE";
 fi
 
+echo "Verbose results:"
+cat $(pwd)/$TEST_PLATFORM-results.xml
+
+echo "Results summary:"
 cat $(pwd)/$TEST_PLATFORM-results.xml | grep test-run | grep Passed
 exit $UNITY_TEST_EXIT_CODE
