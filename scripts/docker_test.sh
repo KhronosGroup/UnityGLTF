@@ -3,6 +3,7 @@
 set -e
 
 docker run \
+  -e PROJECT_PATH \
   -e UNITY_LICENSE_CONTENT \
   -e TEST_PLATFORM \
   -e UNITY_USERNAME \

@@ -4,6 +4,7 @@ set -e
 
 docker run \
   -e BUILD_NAME \
+  -e PROJECT_PATH \
   -e UNITY_LICENSE_CONTENT \
   -e BUILD_TARGET \
   -e UNITY_USERNAME \
