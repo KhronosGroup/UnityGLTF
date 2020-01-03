@@ -1,4 +1,5 @@
 sudo: required
+os: osx
 language: bash
 env:
   global:
