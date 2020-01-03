@@ -1,6 +1,5 @@
 sudo: required
-os: osx
-language: bash
+language: csharp
 env:
   global:
   - BUILD_NAME=UnityGLTF
