@@ -1,11 +1,62 @@
-os: osx
-language: csharp
+sudo: required
+language: bash
+env:
+  global:
+  - BUILD_NAME=UnityGLTF
+  - PROJECT_PATH="$(pwd)/UnityGLTF"
+services:
+- docker
+before_install:
+- openssl aes-256-cbc -K $encrypted_e8f14f722d4f_key -iv $encrypted_e8f14f722d4f_iv
+  -in ./scripts/Unity_v2018.x.ulf.enc -out ./Unity_v2018.x.ulf -d
+- export UNITY_LICENSE_CONTENT=`cat Unity_v2018.x.ulf`
+- rm Unity_v2018.x.ulf
+- docker pull $IMAGE_NAME
 install:
 - nuget restore ./GLTFSerialization/GLTFSerialization.sln
-- sudo python2 ./scripts/install-unity.py --package Unity 2018.4.14f1
-before_script:
-- sudo chmod -R a+rwx /Applications/Unity
-script:
-- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
-- "./scripts/build-unity-project-and-run-tests.sh"
-
+- chmod -R +rwx ./scripts/*
+# - chmod -R a+rwx /Applications/Unity
+jobs:
+  include:
+  - stage: pre-Unity
+    script: "msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35"
+  - stage: test
+    script: "./scripts/docker_test.sh"
+    env: TEST_PLATFORM=editmode IMAGE_NAME=gableroux/unity3d:2018.4.14f1
+    addons:
+      artifacts:
+        s3_region: "us-west-1"
+        paths:
+        - "$(pwd)/$TEST_PLATFORM-results.xml"
+  - stage: test
+    script: "./scripts/docker_test.sh"
+    env: TEST_PLATFORM=playmode IMAGE_NAME=gableroux/unity3d:2018.4.14f1
+    addons:
+      artifacts:
+        s3_region: "us-west-1"
+        paths:
+        - "$(pwd)/$TEST_PLATFORM-results.xml"
+  - stage: build
+    env: BUILD_TARGET=StandaloneLinux64 IMAGE_NAME=gableroux/unity3d:2018.4.14f1
+    script: "./scripts/docker_build.sh"
+    addons:
+      artifacts:
+        s3_region: "us-west-1"
+        paths:
+        - "./Builds/"
+  - stage: build
+    env: BUILD_TARGET=StandaloneOSX IMAGE_NAME=gableroux/unity3d:2018.4.14f1-mac
+    script: "./scripts/docker_build.sh"
+    addons:
+      artifacts:
+        s3_region: "us-west-1"
+        paths:
+        - "./Builds/"
+  - stage: build
+    env: BUILD_TARGET=StandaloneWindows64 IMAGE_NAME=gableroux/unity3d:2018.4.14f1-windows
+    script: "./scripts/docker_build.sh"
+    addons:
+      artifacts:
+        s3_region: "us-west-1"
+        paths:
+        - "./Builds/"
