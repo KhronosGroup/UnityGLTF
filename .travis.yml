@@ -3,7 +3,7 @@ language: csharp
 env:
   global:
   - BUILD_NAME=UnityGLTF
-  - PROJECT_PATH="$(pwd)/UnityGLTF"
+  - PROJECT_PATH="UnityGLTF"
 services:
 - docker
 before_install:
