@@ -12,9 +12,9 @@ before_install:
 - export UNITY_LICENSE_CONTENT=`cat Unity_v2018.x.ulf`
 - rm Unity_v2018.x.ulf
 - docker pull $IMAGE_NAME
-- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
 install:
 - nuget restore ./GLTFSerialization/GLTFSerialization.sln
+- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
 - chmod -R +rwx ./scripts/*
 # - chmod -R a+rwx /Applications/Unity
 jobs:
