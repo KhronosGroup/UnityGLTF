@@ -201,7 +201,7 @@ namespace UnityGLTF
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 
-			_buffer.ByteLength = (uint)_bufferWriter.BaseStream.Length;
+			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
 			_root.Serialize(jsonWriter, true);
 
@@ -851,33 +851,35 @@ namespace UnityGLTF
 
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
 				materialObj.GetInt("_Cull") == (float)CullMode.Off;
-				
-			if (materialObj.HasProperty("_EmissionColor"))
-			{
-				material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
-			}
 
-			if (materialObj.HasProperty("_EmissionMap"))
-			{
-				var emissionTex = materialObj.GetTexture("_EmissionMap");
-
-				if (emissionTex != null)
+			if(materialObj.IsKeywordEnabled("_EMISSION"))
+			{ 
+				if (materialObj.HasProperty("_EmissionColor"))
 				{
-					if(emissionTex is Texture2D)
-					{
-						material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
+					material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
+				}
 
-						ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
-					}
-					else
-					{
-						Debug.LogErrorFormat("Can't export a {0} emissive texture in material {1}", emissionTex.GetType(), materialObj.name);
-					}
+				if (materialObj.HasProperty("_EmissionMap"))
+				{
+					var emissionTex = materialObj.GetTexture("_EmissionMap");
 
+					if (emissionTex != null)
+					{
+						if(emissionTex is Texture2D)
+						{
+							material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
+
+							ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+						}
+						else
+						{
+							Debug.LogErrorFormat("Can't export a {0} emissive texture in material {1}", emissionTex.GetType(), materialObj.name);
+						}
+
+					}
 				}
 			}
-
-			if (materialObj.HasProperty("_BumpMap"))
+			if (materialObj.HasProperty("_BumpMap") && materialObj.IsKeywordEnabled("_NORMALMAP"))
 			{
 				var normalTex = materialObj.GetTexture("_BumpMap");
 
@@ -1333,7 +1335,8 @@ namespace UnityGLTF
 			var pngImageData = exportTexture.EncodeToPNG();
 			_bufferWriter.Write(pngImageData);
 
-			destRenderTexture.Release();
+			RenderTexture.ReleaseTemporary(destRenderTexture);
+
 			GL.sRGBWrite = false;
 			if (Application.isEditor)
 			{

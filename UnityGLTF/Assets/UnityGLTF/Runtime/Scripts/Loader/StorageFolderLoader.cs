@@ -7,46 +7,32 @@ using System.Collections;
 
 namespace UnityGLTF.Loader
 {
-    public class StorageFolderLoader : ILoader
+    public class StorageFolderLoader : IDataLoader
     {
         private StorageFolder _rootFolder;
-        public Stream LoadedStream { get; private set; }
-
-        public bool HasSyncLoadMethod => false;
 
         public StorageFolderLoader(StorageFolder rootFolder)
         {
             _rootFolder = rootFolder;
         }
 
-        public Task LoadStream(string gltfFilePath)
+        public async Task<Stream> LoadStreamAsync(string relativeFilePath)
         {
-            if (gltfFilePath == null)
+            if (relativeFilePath == null)
             {
-                throw new ArgumentNullException("gltfFilePath");
+                throw new ArgumentNullException("relativeFilePath");
             }
-            
-            return LoadStorageFile(gltfFilePath);
-        }
 
-        public void LoadStreamSync(string gltfFilePath)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        public async Task LoadStorageFile(string path)
-        {
             StorageFolder parentFolder = _rootFolder;
-            string fileName = Path.GetFileName(path);
-            if (path != fileName)
+            string fileName = Path.GetFileName(relativeFilePath);
+            if (relativeFilePath != fileName)
             {
-                string folderToLoad = path.Substring(0, path.Length - fileName.Length);
+                string folderToLoad = relativeFilePath.Substring(0, relativeFilePath.Length - fileName.Length);
                 parentFolder = await _rootFolder.GetFolderAsync(folderToLoad);
             }
 
             StorageFile bufferFile = await parentFolder.GetFileAsync(fileName);
-            LoadedStream = await bufferFile.OpenStreamForReadAsync();
+            return await bufferFile.OpenStreamForReadAsync();
         }
     }
 }

@@ -4,8 +4,6 @@
         "UnityGLTFScripts",
         "UnityGLTFEditor"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": []
 }

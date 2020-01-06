@@ -336,7 +336,7 @@ namespace UnityGLTF
         {
 			var importOptions = new ImportOptions
 			{
-				ExternalDataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
+				DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
 			};
 			using (var stream = File.OpenRead(projectFilePath))
 			{

@@ -26,7 +26,14 @@ namespace UnityGLTF
 {
 	public class ImportOptions
 	{
+#pragma warning disable CS0618 // Type or member is obsolete
 		public ILoader ExternalDataLoader = null;
+#pragma warning restore CS0618 // Type or member is obsolete
+
+		/// <summary>
+		/// Optional <see cref="IDataLoader"/> for loading references from the GLTF to external streams.  May also optionally implement <see cref="IDataLoader2"/>.
+		/// </summary>
+		public IDataLoader DataLoader = null;
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
 	}
@@ -208,6 +215,10 @@ namespace UnityGLTF
 		{
 			_gltfFileName = gltfFileName;
 			_options = options;
+			if (_options.DataLoader == null)
+			{
+				_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
+			}
 		}
 
 		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
@@ -220,6 +231,10 @@ namespace UnityGLTF
 			}
 
 			_options = options;
+			if (_options.DataLoader == null)
+			{
+				_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
+			}
 		}
 
 		/// <summary>
@@ -252,7 +267,7 @@ namespace UnityGLTF
 		{
 			_options = new ImportOptions
 			{
-				ExternalDataLoader = externalDataLoader,
+				DataLoader = LegacyLoaderWrapper.Wrap(externalDataLoader),
 				AsyncCoroutineHelper = asyncCoroutineHelper
 			};
 		}
@@ -497,8 +512,7 @@ namespace UnityGLTF
 				// we only load the streams if not a base64 uri, meaning the data is in the uri
 				if (image.Uri != null && !URIHelper.IsBase64Uri(image.Uri))
 				{
-					await _options.ExternalDataLoader.LoadStream(image.Uri);
-					_assetCache.ImageStreamCache[sourceId] = _options.ExternalDataLoader.LoadedStream;
+					_assetCache.ImageStreamCache[sourceId] = await _options.DataLoader.LoadStreamAsync(image.Uri);
 				}
 				else if (image.Uri == null && image.BufferView != null && _assetCache.BufferCache[image.BufferView.Value.Buffer.Id] == null)
 				{
@@ -524,9 +538,10 @@ namespace UnityGLTF
 		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP
-			if (IsMultithreaded && _options.ExternalDataLoader.HasSyncLoadMethod)
+			var dataLoader2 = _options.DataLoader as IDataLoader2;
+			if (IsMultithreaded && dataLoader2 != null)
 			{
-				Thread loadThread = new Thread(() => _options.ExternalDataLoader.LoadStreamSync(jsonFilePath));
+				Thread loadThread = new Thread(() => _gltfStream.Stream = dataLoader2.LoadStream(jsonFilePath));
 				loadThread.Priority = ThreadPriority.Highest;
 				loadThread.Start();
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !loadThread.IsAlive)));
@@ -534,11 +549,9 @@ namespace UnityGLTF
 			else
 #endif
 			{
-				// HACK: Force the coroutine to run synchronously in the editor
-				await _options.ExternalDataLoader.LoadStream(jsonFilePath);
+				_gltfStream.Stream = await _options.DataLoader.LoadStreamAsync(jsonFilePath);
 			}
 
-			_gltfStream.Stream = _options.ExternalDataLoader.LoadedStream;
 			_gltfStream.StartPosition = 0;
 
 #if !WINDOWS_UWP
@@ -687,8 +700,7 @@ namespace UnityGLTF
 				}
 				else
 				{
-					await _options.ExternalDataLoader.LoadStream(buffer.Uri);
-					bufferDataStream = _options.ExternalDataLoader.LoadedStream;
+					bufferDataStream = await _options.DataLoader.LoadStreamAsync(buffer.Uri);
 				}
 
 				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
@@ -1197,6 +1209,7 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
+			clip.EnsureQuaternionContinuity();
 			return clip;
 		}
 		#endregion

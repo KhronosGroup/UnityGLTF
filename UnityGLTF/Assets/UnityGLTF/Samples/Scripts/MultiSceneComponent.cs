@@ -21,7 +21,7 @@ namespace UnityGLTF.Examples
 			var directoryPath = URIHelper.AbsoluteUriPath(uri);
 			_importOptions = new ImportOptions
 			{
-				ExternalDataLoader = new WebRequestLoader(directoryPath),
+				DataLoader = new WebRequestLoader(directoryPath),
 				AsyncCoroutineHelper = gameObject.AddComponent<AsyncCoroutineHelper>(),
 			};
 			_fileName = URIHelper.GetFileFromUri(uri);

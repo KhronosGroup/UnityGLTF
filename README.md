@@ -29,9 +29,9 @@ Work Items and Issues targeting a 1.0 release of the library can be found in
 	- Each schema can then be grouped under the GLTFRoot object, which represents the underlying GLTF Asset. Serializing the asset is then done by serializing the root object, which recursively serializes all individual schemas. Deserializing a GLTF asset is done similarly: instantiate a GLTFRoot, and parse the required schemas.
 
 - **Building**: You will need to build this library into the Plugins folder of the core Unity project: 
-	1. Open `GLTFSerialization\GLTFSerialization.sln` and compile for release. This will put the binaries in `UnityGLTF\Assets\UnityGLTF\Plugins`
+	1. Open `GLTFSerialization\GLTFSerialization.sln` and compile for release. This will put the binaries in `UnityGLTF\Assets\UnityGLTF\Runtime\Plugins`
 	2. Open the Unity project located in `UnityGLTF\`
-		* If the meta file gets overridden, the binaries in `UnityGLTF\Assets\UnityGLTF\Plugins` should be configured for everything but UWP. The binaries in `UnityGLTF\Assets\UnityGLTF\Plugins\UWP` should be configured for UWP
+		* If the meta file gets overridden, the binaries in `UnityGLTF\Assets\UnityGLTF\Runtime\Plugins` should be configured for everything but UWP. The binaries in `UnityGLTF\Assets\UnityGLTF\Runtime\Plugins\UWP` should be configured for UWP
 
 ### [The Unity Project](https://github.com/KhronosGroup/UnityGLTF/tree/master/UnityGLTF)
 - #### Unity Version
