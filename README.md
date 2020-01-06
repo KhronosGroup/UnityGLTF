@@ -41,7 +41,8 @@ Work Items and Issues targeting a 1.0 release of the library can be found in
 
 ## Examples
 1. Clone or download the repository.
-2. Open up the Unity project and run any of the example scenes in `Assets/GLTF/Examples`
+2. Open up the Unity project and run any of the example scenes in `Assets/UnityGLTF/Samples`
+3. Some samples will require downloading models from [KhronosGroup/glTF-Sample-Models] (https://github.com/KhronosGroup/glTF-Sample-Models) into `UnityGLTF\www\glTF-Sample-Models`
 
 You should see something like this:
 

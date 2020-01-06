@@ -38,7 +38,9 @@ namespace UnityGLTF.Loader
 				throw new FileNotFoundException("Buffer file not found", fileToLoad);
 			}
 
-			return Task.Run(() => { LoadedStream = File.OpenRead(pathToLoad); });
+			Task fileOpenTask = Task.Run(() => { LoadedStream = File.OpenRead(pathToLoad); });
+			fileOpenTask.Wait();
+			return fileOpenTask;
 		}
 
 		public void LoadStreamSync(string gltfFilePath)
