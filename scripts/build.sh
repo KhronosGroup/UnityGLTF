@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-set -x
 
 echo "Building for $BUILD_TARGET"
 

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-
 echo "Testing for $TEST_PLATFORM"
 
 ${UNITY_EXECUTABLE:-xvfb-run --auto-servernum --server-args='-screen 0 640x480x24' /opt/Unity/Editor/Unity} \
@@ -24,9 +22,9 @@ else
   echo "Unexpected exit code $UNITY_EXIT_CODE";
 fi
 
-echo "Verbose results:"
+echo "cat $(pwd)/$TEST_PLATFORM-results.xml" && echo -en "travis_fold:start:test_results.1\\r"
 cat $(pwd)/$TEST_PLATFORM-results.xml
+echo -en "travis_fold:end:test_results.1\\r"
 
-echo "Results summary:"
 cat $(pwd)/$TEST_PLATFORM-results.xml | grep test-run | grep Passed
 exit $UNITY_TEST_EXIT_CODE
