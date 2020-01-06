@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+echo "Applying Unity license" && echo -en "travis_fold:start:before_script.1\\r"
+
 set -e
 set -x
 mkdir -p /root/.cache/unity3d
@@ -31,4 +33,6 @@ fi
 
 echo "Writing $LICENSE to license file /root/.local/share/unity3d/Unity/Unity_lic.ulf"
 echo "${!LICENSE}" | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+
+echo -en "travis_fold:end:before_script.1\\r"
 

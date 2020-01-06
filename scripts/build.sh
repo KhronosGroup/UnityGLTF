@@ -2,10 +2,7 @@
 
 set -e
 
-echo "Building for $BUILD_TARGET"
-
-export BUILD_PATH=/project/Builds/$BUILD_TARGET/
-mkdir -p $BUILD_PATH
+echo "Building for $BUILD_TARGET" && echo -en "travis_fold:start:build.1\\r"
 
 ${UNITY_EXECUTABLE:-xvfb-run --auto-servernum --server-args='-screen 0 640x480x24' /opt/Unity/Editor/Unity} \
   -projectPath $PROJECT_PATH \
@@ -26,5 +23,5 @@ else
   echo "Unexpected exit code $UNITY_EXIT_CODE";
 fi
 
-ls -la $BUILD_PATH
-[ -n "$(ls -A $BUILD_PATH)" ] # fail job if build folder is empty
+echo -en "travis_fold:end:build.1\\r"
+
