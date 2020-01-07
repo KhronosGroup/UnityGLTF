@@ -13,6 +13,7 @@ before_install:
   -in ./scripts/Unity_v2018.x.ulf.enc -out ./Unity_v2018.x.ulf -d
 - export UNITY_LICENSE_CONTENT=`cat Unity_v2018.x.ulf`
 - rm Unity_v2018.x.ulf
+# Pull down docker image for this job
 - docker pull $IMAGE_NAME
 install:
 # Build GLTFSerialization for the Unity project
@@ -22,19 +23,23 @@ install:
 - chmod -R +rwx ./scripts/*
 jobs:
   include:
-  - stage: test
+  - name: "EditMode Test"
+    stage: test
     script: "./scripts/docker_test.sh"
     env: TEST_PLATFORM=editmode IMAGE_NAME=gableroux/unity3d:$UNITY_VERSION
-# TODO: Re-enable playmode tests once they are passing on server builds
-#  - stage: test
-#    script: "./scripts/docker_test.sh"
-#    env: TEST_PLATFORM=playmode IMAGE_NAME=gableroux/unity3d:$UNITY_VERSION
-  - stage: build
+  - name: "PlayMode Test"
+    stage: test
+    script: "./scripts/docker_test.sh"
+    env: TEST_PLATFORM=playmode IMAGE_NAME=gableroux/unity3d:$UNITY_VERSION
+  - name: "StandaloneLinux64 Build"
+    stage: build
     env: BUILD_TARGET=StandaloneLinux64 IMAGE_NAME=gableroux/unity3d:$UNITY_VERSION
     script: "./scripts/docker_build.sh"
-  - stage: build
+  - name: "StandaloneOSX Build"
+    stage: build
     env: BUILD_TARGET=StandaloneOSX IMAGE_NAME=gableroux/unity3d:$UNITY_VERSION-mac
     script: "./scripts/docker_build.sh"
-  - stage: build
+  - name: "StandaloneWindows64 Build"
+    stage: build
     env: BUILD_TARGET=StandaloneWindows64 IMAGE_NAME=gableroux/unity3d:$UNITY_VERSION-windows
     script: "./scripts/docker_build.sh"

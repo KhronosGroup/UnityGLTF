@@ -2,7 +2,7 @@
 
 set -e
 
-echo "Building for $BUILD_TARGET" && echo -en "travis_fold:start:build.1\\r"
+echo -en "travis_fold:start:build.1\\r" && echo "Building for $BUILD_TARGET"
 
 ${UNITY_EXECUTABLE:-xvfb-run --auto-servernum --server-args='-screen 0 640x480x24' /opt/Unity/Editor/Unity} \
   -projectPath $PROJECT_PATH \

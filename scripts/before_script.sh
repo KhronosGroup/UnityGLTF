@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Applying Unity license" && echo -en "travis_fold:start:before_script.1\\r"
+echo -en "travis_fold:start:before_script.1\\r" && echo "Applying Unity license"
 
 set -e
 set -x

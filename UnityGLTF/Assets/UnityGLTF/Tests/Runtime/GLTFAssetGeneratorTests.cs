@@ -8,13 +8,15 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Utils;
 using UnityGLTF;
 
 public class GLTFAssetGeneratorTests
 {
 	private const int IMAGE_SIZE = 400;
+	private static readonly ColorEqualityComparer ColorEqualityComparer = new ColorEqualityComparer(0.1f);
 	private static readonly string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/Positive/";
-	private static readonly string GLTF_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
+	private static readonly string GLTF_MANIFEST_PATH = GLTF_ASSETS_PATH + "Manifest.json";
 	private static readonly string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
 	private static readonly string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
 
@@ -136,7 +138,7 @@ public class GLTFAssetGeneratorTests
 		string errormessage = "\r\nImage does not match expected within configured tolerance.\r\nExpectedPath: " + expectedFilePath + "\r\n ActualPath: " + actualFilePath;
 		for (int i = 0; i < expectedPixels.Length; i++)
 		{
-			Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(UnityEngine.TestTools.Utils.ColorEqualityComparer.Instance));
+			Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(ColorEqualityComparer));
 		}
 	}
 }
