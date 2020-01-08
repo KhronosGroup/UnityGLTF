@@ -5,15 +5,24 @@
 #include "UnityStandardInput.cginc"
 #include "UnityStandardCoreForward.cginc"
 
-struct WrappedVertexOutputForwardBase {
+// Structure for holding the return type of vertBase (see UnityStandardCoreForward.cginc for vertBase definition) and the color information
+#if UNITY_STANDARD_SIMPLE
+struct WrappedVertexOutput {
+    VertexOutputBaseSimple innerValue;
+    fixed4 color : COLOR;
+};
+#else
+struct WrappedVertexOutput {
     VertexOutputForwardBase innerValue;
     fixed4 color : COLOR;
 };
+#endif
 
-WrappedVertexOutputForwardBase vert_vcol (appdata_full v)
+// Simple replacement for vertBase that captures the additional color information needed later
+WrappedVertexOutput vert_vcol(appdata_full v)
 {
     // Save the color information
-    WrappedVertexOutputForwardBase o;
+    WrappedVertexOutput o;
     o.color = v.color;
 
     // Forward this call to the default vertBase
@@ -33,11 +42,61 @@ WrappedVertexOutputForwardBase vert_vcol (appdata_full v)
     return o;
 }
 
-fixed4 frag_vcol(WrappedVertexOutputForwardBase wvofb) : SV_Target
+#if UNITY_STANDARD_SIMPLE
+fixed4 frag_vcol(WrappedVertexOutput wvo)
 {
     // Put the original output from vertBase in a variable called 'i' for the macros
     // (e.g. FRAGMENT_SETUP) that assume that naming convention.
-    VertexOutputForwardBase i = wvofb.innerValue;
+    VertexOutputForwardBase i = wvo.innerValue;
+
+    // The following section is copied from the fragBase implementation, found in
+    // C:\Program Files\Unity\Hub\Editor\2018.4.14f1\Editor\Data\CGIncludes\UnityStandardCoreForwardSimple.cginc,
+    // with the name fragForwardBaseSimpleInternal.  It has been modified to
+    // include a section to modify the diffColor after it is calculated but before
+    // it is used in the remaining calculations.
+    UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
+
+    FragmentCommonData s = FragmentSetupSimple(i);
+
+    UnityLight mainLight = MainLightSimple(i, s);
+
+#if !defined(LIGHTMAP_ON) && defined(_NORMALMAP)
+    half ndotl = saturate(dot(s.tangentSpaceNormal, i.tangentSpaceLightDir));
+#else
+    half ndotl = saturate(dot(s.normalWorld, mainLight.dir));
+#endif
+
+    //we can't have worldpos here (not enough interpolator on SM 2.0) so no shadow fade in that case.
+    half shadowMaskAttenuation = UnitySampleBakedOcclusion(i.ambientOrLightmapUV, 0);
+    half realtimeShadowAttenuation = SHADOW_ATTENUATION(i);
+    half atten = UnityMixRealtimeAndBakedShadows(realtimeShadowAttenuation, shadowMaskAttenuation, 0);
+
+    // Start: Modified section
+    s.diffColor.x *= wvo.color.x;
+    s.diffColor.y *= wvo.color.y;
+    s.diffColor.z *= wvo.color.z;
+    // End: Modified section
+
+    half occlusion = Occlusion(i.tex.xy);
+    half rl = dot(REFLECTVEC_FOR_SPECULAR(i, s), LightDirForSpecular(i, mainLight));
+
+    UnityGI gi = FragmentGI(s, occlusion, i.ambientOrLightmapUV, atten, mainLight);
+    half3 attenuatedLightColor = gi.light.color * ndotl;
+
+    half3 c = BRDF3_Indirect(s.diffColor, s.specColor, gi.indirect, PerVertexGrazingTerm(i, s), PerVertexFresnelTerm(i));
+    c += BRDF3DirectSimple(s.diffColor, s.specColor, s.smoothness, rl) * attenuatedLightColor;
+    c += Emission(i.tex.xy);
+
+    UNITY_APPLY_FOG(i.fogCoord, c);
+
+    return OutputForward(half4(c, 1), s.alpha);
+}
+#else
+fixed4 frag_vcol(WrappedVertexOutput wvo) : SV_Target
+{
+    // Put the original output from vertBase in a variable called 'i' for the macros
+    // (e.g. FRAGMENT_SETUP) that assume that naming convention.
+    VertexOutputForwardBase i = wvo.innerValue;
 
     // The following section is copied from the fragBase implementation, found in
     // C:\Program Files\Unity\Hub\Editor\2018.4.14f1\Editor\Data\CGIncludes\UnityStandardCore.cginc,
@@ -55,9 +114,9 @@ fixed4 frag_vcol(WrappedVertexOutputForwardBase wvofb) : SV_Target
     UNITY_LIGHT_ATTENUATION(atten, i, s.posWorld);
 
     // Start: Modified section
-    s.diffColor.x *= wvofb.color.x;
-    s.diffColor.y *= wvofb.color.y;
-    s.diffColor.z *= wvofb.color.z;
+    s.diffColor.x *= wvo.color.x;
+    s.diffColor.y *= wvo.color.y;
+    s.diffColor.z *= wvo.color.z;
     // End: Modified section
 
     half occlusion = Occlusion(i.tex.xy);
@@ -70,4 +129,5 @@ fixed4 frag_vcol(WrappedVertexOutputForwardBase wvofb) : SV_Target
     UNITY_APPLY_FOG(_unity_fogCoord, c.rgb);
     return OutputForward(c, s.alpha);
 }
+#endif
 #endif
