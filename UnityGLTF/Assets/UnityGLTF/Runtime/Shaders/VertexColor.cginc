@@ -40,7 +40,7 @@ fixed4 frag_vcol(WrappedVertexOutputForwardBase wvofb) : SV_Target
     VertexOutputForwardBase i = wvofb.innerValue;
 
     // The following section is copied from the fragBase implementation, found in
-    // C:\Program Files\Unity\Hub\Editor\2017.4.33f1\Editor\Data\CGIncludes\UnityStandardCore.cginc,
+    // C:\Program Files\Unity\Hub\Editor\2018.4.14f1\Editor\Data\CGIncludes\UnityStandardCore.cginc,
     // with the name fragForwardBase/fragForwardBaseInternal.  It has been modified to
     // include a section to modify the diffColor after it is calculated but before
     // it is used in the remaining calculations.
@@ -66,7 +66,8 @@ fixed4 frag_vcol(WrappedVertexOutputForwardBase wvofb) : SV_Target
     half4 c = UNITY_BRDF_PBS(s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, gi.light, gi.indirect);
     c.rgb += Emission(i.tex.xy);
 
-    UNITY_APPLY_FOG(i.fogCoord, c.rgb);
+    UNITY_EXTRACT_FOG_FROM_EYE_VEC(i);
+    UNITY_APPLY_FOG(_unity_fogCoord, c.rgb);
     return OutputForward(c, s.alpha);
 }
 #endif

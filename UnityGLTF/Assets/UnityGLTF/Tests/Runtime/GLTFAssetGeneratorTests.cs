@@ -8,16 +8,17 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Utils;
 using UnityGLTF;
 
 public class GLTFAssetGeneratorTests
 {
 	private const int IMAGE_SIZE = 400;
-	private const float PIXEL_TOLERANCE = 0.01f; // Tolerance based on the estimate that humans see about 1 million colors
-	private static string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/Positive/";
-	private static string GLTF_MANIFEST_PATH = GLTF_ASSETS_PATH + "manifest.json";
-	private static string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
-	private static string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
+	private static readonly ColorEqualityComparer ColorEqualityComparer = new ColorEqualityComparer(0.1f);
+	private static readonly string GLTF_ASSETS_PATH = Application.dataPath + "/../www/glTF-Asset-Generator/Output/Positive/";
+	private static readonly string GLTF_MANIFEST_PATH = GLTF_ASSETS_PATH + "Manifest.json";
+	private static readonly string GLTF_SCENARIO_OUTPUT_PATH = Application.dataPath + "/../ScenarioTests/Output/";
+	private static readonly string GLTF_SCENARIO_TESTS_TO_RUN = Application.dataPath + "/../ScenarioTests/TestsToRun.txt";
 
 	private static GLTFComponent gltfComponent;
 	private readonly Dictionary<string, Manifest.Model> modelManifests = new Dictionary<string, Manifest.Model>();
@@ -137,16 +138,7 @@ public class GLTFAssetGeneratorTests
 		string errormessage = "\r\nImage does not match expected within configured tolerance.\r\nExpectedPath: " + expectedFilePath + "\r\n ActualPath: " + actualFilePath;
 		for (int i = 0; i < expectedPixels.Length; i++)
 		{
-			// NOTE: When upgraded to Unity 2018, this custom equality comparison can be replaced with the ColorEqualityComparer, akin to:
-			// Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(UnityEngine.TestTools.Utils.ColorEqualityComparer.Instance));
-			var rDelta = Math.Abs(expectedPixels[i].r - actualPixels[i].r);
-			var gDelta = Math.Abs(expectedPixels[i].g - actualPixels[i].g);
-			var bDelta = Math.Abs(expectedPixels[i].b - actualPixels[i].b);
-			var aDelta = Math.Abs(expectedPixels[i].a - actualPixels[i].a);
-			Assert.Less(rDelta, PIXEL_TOLERANCE, errormessage);
-			Assert.Less(gDelta, PIXEL_TOLERANCE, errormessage);
-			Assert.Less(bDelta, PIXEL_TOLERANCE, errormessage);
-			Assert.Less(aDelta, PIXEL_TOLERANCE, errormessage);
+			Assert.That(actualPixels[i], Is.EqualTo(expectedPixels[i]).Using(ColorEqualityComparer));
 		}
 	}
 }
