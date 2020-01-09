@@ -43,11 +43,11 @@ WrappedVertexOutput vert_vcol(appdata_full v)
 }
 
 #if UNITY_STANDARD_SIMPLE
-fixed4 frag_vcol(WrappedVertexOutput wvo)
+half4 frag_vcol(WrappedVertexOutput wvo) : SV_Target
 {
-    // Put the original output from vertBase in a variable called 'i' for the macros
-    // (e.g. FRAGMENT_SETUP) that assume that naming convention.
-    VertexOutputForwardBase i = wvo.innerValue;
+    // Put the original output from vertBase in a variable called 'i' so the code can be cleanly
+    // copy/pasted, as well as for any macros (e.g. FRAGMENT_SETUP) that assume that naming convention.
+    VertexOutputBaseSimple i = wvo.innerValue;
 
     // The following section is copied from the fragBase implementation, found in
     // C:\Program Files\Unity\Hub\Editor\2018.4.14f1\Editor\Data\CGIncludes\UnityStandardCoreForwardSimple.cginc,
@@ -92,15 +92,15 @@ fixed4 frag_vcol(WrappedVertexOutput wvo)
     return OutputForward(half4(c, 1), s.alpha);
 }
 #else
-fixed4 frag_vcol(WrappedVertexOutput wvo) : SV_Target
+half4 frag_vcol(WrappedVertexOutput wvo) : SV_Target
 {
-    // Put the original output from vertBase in a variable called 'i' for the macros
-    // (e.g. FRAGMENT_SETUP) that assume that naming convention.
+    // Put the original output from vertBase in a variable called 'i' so the code can be cleanly
+    // copy/pasted, as well as for any macros (e.g. FRAGMENT_SETUP) that assume that naming convention.
     VertexOutputForwardBase i = wvo.innerValue;
 
     // The following section is copied from the fragBase implementation, found in
     // C:\Program Files\Unity\Hub\Editor\2018.4.14f1\Editor\Data\CGIncludes\UnityStandardCore.cginc,
-    // with the name fragForwardBase/fragForwardBaseInternal.  It has been modified to
+    // with the name fragForwardBaseInternal.  It has been modified to
     // include a section to modify the diffColor after it is calculated but before
     // it is used in the remaining calculations.
     UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
