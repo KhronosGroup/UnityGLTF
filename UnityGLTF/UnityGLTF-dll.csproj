@@ -32,7 +32,7 @@
   <ItemGroup>
     <Reference Include="GLTFSerialization, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Assets\UnityGLTF\Plugins\net35\GLTFSerialization.dll</HintPath>
+      <HintPath>Assets\UnityGLTF\Runtime\Plugins\net35\GLTFSerialization.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
@@ -49,34 +49,37 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\UnityGLTF\Scripts\Async\AsyncCoroutineHelper.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Async\TaskExtensions.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\AnimationCacheData.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\AssetCache.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\BufferCacheData.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\MaterialCacheData.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\MeshCacheData.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\RefCountedCacheData.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Cache\TextureCacheData.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Exceptions.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Extensions\SchemaExtensions.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Factories\ImporterFactory.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\GLTFComponent.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\GLTFSceneExporter.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\GLTFSceneImporter.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\InstantiatedGLTFObject.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Loader\FileLoader.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Loader\ILoader.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Loader\StorageFolderLoader.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\Loader\WebRequestLoader.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\MemoryChecker.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\MetalRough2StandardMap.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\MetalRoughMap.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\SpecGloss2StandardMap.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\SpecGlossMap.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\StandardMap.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\UniformMaps\UniformMap.cs" />
-    <Compile Include="Assets\UnityGLTF\Scripts\URIHelper.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Async\AsyncCoroutineHelper.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Async\TaskExtensions.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\AnimationCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\AssetCache.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\BufferCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\MaterialCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\MeshCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\RefCountedCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Cache\TextureCacheData.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Exceptions.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Extensions\SchemaExtensions.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Factories\ImporterFactory.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\GLTFComponent.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\GLTFSceneExporter.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\GLTFSceneImporter.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\InstantiatedGLTFObject.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\FileLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\IDataLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\IDataLoader2.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\ILoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\LegacyLoaderWrapper.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\StorageFolderLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\Loader\WebRequestLoader.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\MemoryChecker.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\UniformMaps\MetalRough2StandardMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\UniformMaps\MetalRoughMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\UniformMaps\SpecGloss2StandardMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\UniformMaps\SpecGlossMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\UniformMaps\StandardMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\UniformMaps\UniformMap.cs" />
+    <Compile Include="Assets\UnityGLTF\Runtime\Scripts\URIHelper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
