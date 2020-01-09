@@ -5,18 +5,16 @@
 #include "UnityStandardInput.cginc"
 #include "UnityStandardCoreForward.cginc"
 
-// Structure for holding the return type of vertBase (see UnityStandardCoreForward.cginc for vertBase definition) and the color information
+// Structure for holding the return type of vertBase and the color information.  For vertBase definition see
+// C:\Program Files\Unity\Hub\Editor\2018.4.14f1\Editor\Data\CGIncludes\UnityStandardCoreForward.cginc
+struct WrappedVertexOutput {
 #if UNITY_STANDARD_SIMPLE
-struct WrappedVertexOutput {
     VertexOutputBaseSimple innerValue;
-    fixed4 color : COLOR;
-};
 #else
-struct WrappedVertexOutput {
     VertexOutputForwardBase innerValue;
+#endif
     fixed4 color : COLOR;
 };
-#endif
 
 // Simple replacement for vertBase that captures the additional color information needed later
 WrappedVertexOutput vert_vcol(appdata_full v)
