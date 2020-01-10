@@ -1955,8 +1955,8 @@ namespace UnityGLTF
 					|| textureObj.filterMode == FilterMode.Trilinear && root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
 
 				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == WrapMode.ClampToEdge
-					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != WrapMode.Repeat
-					|| textureObj.wrapMode == TextureWrapMode.Mirror && root.Samplers[i].WrapS != WrapMode.MirroredRepeat;
+					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS == WrapMode.Repeat
+					|| textureObj.wrapMode == TextureWrapMode.Mirror && root.Samplers[i].WrapS == WrapMode.MirroredRepeat;
 
 				if (filterMatched && wrapMatched)
 				{
