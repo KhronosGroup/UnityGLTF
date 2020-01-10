@@ -19,7 +19,7 @@ namespace UnityGLTF.Examples
 		public float distanceMin = .5f;
 		public float distanceMax = 150f;
 
-		private new Camera camera;
+		private Camera _camera;
 
 		private Rigidbody cameraRigidBody;
 
@@ -32,7 +32,7 @@ namespace UnityGLTF.Examples
 		// Use this for initialization
 		void Start()
 		{
-			camera = GetComponent<Camera>();
+			_camera = GetComponent<Camera>();
 
 			Vector3 angles = transform.eulerAngles;
 			x = angles.y;
@@ -94,10 +94,10 @@ namespace UnityGLTF.Examples
 
 		private Vector3 ProjectScreenPointToTargetPlane(Vector3 screenPosition)
 		{
-			var ray = camera.ScreenPointToRay(screenPosition);
-			var planeDistance = distance / Mathf.Cos(Mathf.Deg2Rad * Vector3.Angle(camera.transform.forward, ray.direction));
+			var ray = _camera.ScreenPointToRay(screenPosition);
+			var planeDistance = distance / Mathf.Cos(Mathf.Deg2Rad * Vector3.Angle(_camera.transform.forward, ray.direction));
 
-			return camera.transform.position + (ray.direction * planeDistance);
+			return _camera.transform.position + (ray.direction * planeDistance);
 		}
 
 		public static float ClampAngle(float angle, float min, float max)
