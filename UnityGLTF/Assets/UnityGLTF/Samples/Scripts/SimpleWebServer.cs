@@ -105,7 +105,7 @@ new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 #if !WINDOWS_UWP
 		private HttpListener _listener;
 #endif
-		private int _port;
+		private int _port = default;
 
 		public int Port
 		{
