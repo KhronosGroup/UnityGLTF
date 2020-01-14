@@ -18,7 +18,7 @@ before_install:
 install:
 # Build GLTFSerialization for the Unity project
 - nuget restore ./GLTFSerialization/GLTFSerialization.sln
-- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization /p:TargetFramework=net35
+- msbuild ./GLTFSerialization/GLTFSerialization.sln /t:GLTFSerialization
 # Mark all the scripts as executable
 - chmod -R +rwx ./scripts/*
 jobs:

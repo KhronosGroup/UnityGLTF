@@ -8,6 +8,9 @@
     <TargetFrameworks Condition="'$(MSBuildRuntimeType)' != 'Mono'">$(TargetFrameworks);uap10.0.10586</TargetFrameworks>
 
     <OutputType>Library</OutputType>
+    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Runtime\Plugins\</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
 
     <Authors>Khronos Group</Authors>
     <Copyright></Copyright>
@@ -30,7 +33,6 @@
     <ErrorReport>prompt</ErrorReport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -55,6 +57,7 @@
         <TargetFrameworkIdentifier>.NETCore</TargetFrameworkIdentifier>
         <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
         <DefineConstants>$(DefineConstants);NETFX_CORE;WINDOWS_UWP</DefineConstants>
+        <UnityPlayer>UAP</UnityPlayer>
       </PropertyGroup>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
@@ -62,6 +65,9 @@
       </ItemGroup>
     </When>
     <When Condition="'$(IsNETTargetFramework)' == 'true'">
+      <PropertyGroup>
+        <ExcludedUnityPlayers>UAP</ExcludedUnityPlayers>
+      </PropertyGroup>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
         <PackageReference Include="Microsoft.Net.Compilers" Version="2.7.0">
@@ -72,27 +78,21 @@
       </ItemGroup>
     </When>
     <When Condition="'$(IsNETStandardTargetFramework)' == 'true'">
+      <PropertyGroup>
+        <!-- The .NET or .NETStandard can be used in the Unity project, but only one at a time.  To avoid duplicate definition errors only one is output to the project at a time. -->
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <ExcludedUnityPlayers>UAP</ExcludedUnityPlayers>
+      </PropertyGroup>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
       </ItemGroup>
     </When>
   </Choose>
 
-  <PropertyGroup Condition="'$(Platform)' == 'AnyCPU'">
-    <OutputPath>..\..\UnityGLTF\Assets\UnityGLTF\Runtime\Plugins\</OutputPath>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Platform)' == 'x86'">
-    <OutputPath>bin\x86\$(Configuration)\</OutputPath>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-
-  <!-- Leverages copy task to move the meta files to output directory. https://docs.microsoft.com/en-us/visualstudio/msbuild/copy-task?view=vs-2017#example-1 -->
   <ItemGroup>
-    <MetaFiles Include="..\External\meta\**\*.meta" />
+    <PackageReference Include="MSBuildForUnity" Version="0.8.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="@(MetaFiles)" DestinationFiles="@(MetaFiles->'..\..\UnityGLTF\Assets\UnityGLTF\Runtime\Plugins\%(RecursiveDir)%(Filename)%(Extension)')" />
-  </Target>
 </Project>
