@@ -3,13 +3,13 @@
 --- !u!200 &20000000
 ShaderVariantCollection:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Standard (Specular setup)
   m_Shaders:
-    data:
-      first: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
-      second:
-        variants:
-        - keywords: DIRECTIONAL _ALPHATEST_ON _EMISSION _NORMALMAP _SPECGLOSSMAP
-          passType: 4
+  - first: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: DIRECTIONAL _ALPHATEST_ON _EMISSION _NORMALMAP _SPECGLOSSMAP
+        passType: 4
