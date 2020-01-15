@@ -83,6 +83,7 @@ namespace UnityGLTF
 		public static bool ExportNames = true;
 		public static bool ExportFullPath = true;
 		public static bool RequireExtensions = false;
+		public static bool TryExportTexturesFromDisk = true;
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -323,7 +324,7 @@ namespace UnityGLTF
 			{
 				var image = _imageInfos[t].texture;
 
-				if (TryGetTextureDataFromDisk(image, out string path, out byte[] imageBytes))
+				if (TryExportTexturesFromDisk && TryGetTextureDataFromDisk(image, out string path, out byte[] imageBytes))
 				{
 					var finalFilenamePath = ConstructImageFilenamePath(image, outputPath);
 					finalFilenamePath = Path.ChangeExtension(finalFilenamePath, Path.GetExtension(path));
@@ -1357,7 +1358,7 @@ namespace UnityGLTF
 
 			bool wasAbleToExportFromDisk = false;
 
-			if(TryGetTextureDataFromDisk(texture, out string path, out byte[] imageBytes))
+			if(TryExportTexturesFromDisk && TryGetTextureDataFromDisk(texture, out string path, out byte[] imageBytes))
 			{ 
 				if(IsPng(path))
 				{
@@ -1373,7 +1374,7 @@ namespace UnityGLTF
 				}
 			}
 
-			if(!wasAbleToExportFromDisk)
+			if(!TryExportTexturesFromDisk && !wasAbleToExportFromDisk)
 		    {
 				image.MimeType = "image/png";
 

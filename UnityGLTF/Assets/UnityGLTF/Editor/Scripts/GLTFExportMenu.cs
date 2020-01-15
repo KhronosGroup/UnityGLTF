@@ -24,6 +24,7 @@ public class GLTFExportMenu : EditorWindow
         GLTFSceneExporter.ExportFullPath = EditorGUILayout.Toggle("Export using original path", GLTFSceneExporter.ExportFullPath);
         GLTFSceneExporter.ExportNames = EditorGUILayout.Toggle("Export names of nodes", GLTFSceneExporter.ExportNames);
         GLTFSceneExporter.RequireExtensions= EditorGUILayout.Toggle("Require extensions", GLTFSceneExporter.RequireExtensions);
+        GLTFSceneExporter.TryExportTexturesFromDisk = EditorGUILayout.Toggle("Try to export textures from disk", GLTFSceneExporter.TryExportTexturesFromDisk);
         EditorGUILayout.Separator();
         EditorGUILayout.LabelField("Importer", EditorStyles.boldLabel);
         EditorGUILayout.Separator();
