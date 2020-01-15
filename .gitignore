@@ -153,3 +153,8 @@ _pkginfo.txt
 
 # Current_Package folder
 current-package/
+TestProjects/*/Library/
+TestProjects/*/Temp/
+.vscode/
+TestProjects/*/*.sln
+TestProjects/*/*.csproj
