@@ -5,13 +5,12 @@ using UnityGLTF.Loader;
 
 namespace UnityGLTF.Tests.Integration
 {
-#if UNITY_5
-    public class GLTFTestComponent : MonoBehaviour
+	public class GLTFTestComponent : MonoBehaviour
 	{
 		public string Url;
 		public bool Multithreaded = true;
 
-
+#if UNITY_5
 		IEnumerator Start()
 		{
 			ILoader loader = new WebRequestLoader(URIHelper.GetDirectoryName(Url));
@@ -25,6 +24,7 @@ namespace UnityGLTF.Tests.Integration
 			yield return sceneImporter.LoadScene(-1);
 			IntegrationTest.Pass();
 		}
-	}
+		
 #endif
+	}
 }
