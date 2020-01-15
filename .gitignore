@@ -73,7 +73,6 @@ artifacts/
 *.pidb
 *.svclog
 *.scc
-*.dll*
 *.pdb*
 *.pri*
 
@@ -153,6 +152,8 @@ _pkginfo.txt
 
 # Current_Package folder
 current-package/
+UnityGLTF/Assets/UnityGLTF/Runtime/Plugins/uap10.0.10586
+UnityGLTF/Assets/UnityGLTF/Runtime/Plugins/uap10.0.10586.meta
 TestProjects/*/Library/
 TestProjects/*/Temp/
 .vscode/
