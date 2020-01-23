@@ -63,7 +63,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Intensity: 9
+    - _Intensity: 7.5
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
@@ -76,6 +76,6 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _EquatorColor: {r: 0.6392157, g: 0.7058824, b: 0.7490196, a: 1}
+    - _EquatorColor: {r: 0.627451, g: 0.59607846, b: 0.62352943, a: 1}
     - _GroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
     - _SkyColor: {r: 1, g: 1, b: 1, a: 1}
