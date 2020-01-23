@@ -99,7 +99,7 @@ Skybox:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1034827199715104}
   m_Enabled: 1
-  m_CustomSkybox: {fileID: 2100000, guid: ab1d3ce216922394fa9b7b0bcf303df6, type: 2}
+  m_CustomSkybox: {fileID: 2100000, guid: b4101f3a635a9cd4187c92cf274d68ce, type: 2}
 --- !u!114 &114771327033317188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,6 +192,7 @@ GameObject:
   - component: {fileID: 4095513381898270}
   - component: {fileID: 20961921853974160}
   - component: {fileID: 114819471581835328}
+  - component: {fileID: 3629069418977858857}
   m_Layer: 0
   m_Name: Camera
   m_TagString: MainCamera
@@ -277,3 +278,12 @@ MonoBehaviour:
   yMaxLimit: 80
   distanceMin: 0.5
   distanceMax: 500
+--- !u!45 &3629069418977858857
+Skybox:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1478240168550960}
+  m_Enabled: 1
+  m_CustomSkybox: {fileID: 2100000, guid: ab1d3ce216922394fa9b7b0bcf303df6, type: 2}
