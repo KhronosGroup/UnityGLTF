@@ -1,6 +1,8 @@
 # UnityGLTF
 
- [![Build Status](https://travis-ci.org/KhronosGroup/UnityGLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/UnityGLTF) [![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+UnityGLTF: [![Build Status](https://travis-ci.org/KhronosGroup/UnityGLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/UnityGLTF)
+GLTFSerialization: [![Build status](https://ci.appveyor.com/api/projects/status/amgnavcqiiiqhjbl/branch/master?svg=true)](https://ci.appveyor.com/project/Khronoswebmaster/unitygltf/branch/master)
+[![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Unity3D library for importing and exporting [GLTF 2.0](https://github.com/KhronosGroup/glTF/) assets.
 
