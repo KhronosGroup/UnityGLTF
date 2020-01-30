@@ -874,9 +874,12 @@ namespace UnityGLTF
 					Offset = (uint)bufferData.ChunkOffset
 				};
 			}
-			try { 
+			try
+			{
 				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
-			} catch (GLTFLoadException e) {
+			}
+			catch (GLTFLoadException e)
+			{
 				Debug.LogWarning(e.ToString());
 			}
 			TransformAttributes(ref attributeAccessors);
@@ -1536,7 +1539,7 @@ namespace UnityGLTF
 		private void CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, ref BoneWeight[] destArr, int offset = 0)
 		{
 			// normalize weights (built-in normalize function only normalizes three components)
-			for(int i = 0; i < weights.Length; i++)
+			for (int i = 0; i < weights.Length; i++)
 			{
 				var weightSum = (weights[i].x + weights[i].y + weights[i].z + weights[i].w);
 
@@ -1560,22 +1563,17 @@ namespace UnityGLTF
 			}
 		}
 
-		// Should be allocated pretty compactly, but still allows row access unlike a rectangular array
-		private T[][] Allocate2dArray<T>(uint x, uint y)
+		/// <summary>
+		/// Allocate a generic type 2D array. The size is depending on the given parameters.
+		/// </summary>		
+		/// <param name="x">Defines the depth of the arrays first dimension</param>
+		/// <param name="y">>Defines the depth of the arrays second dimension</param>
+		/// <returns></returns>
+		private static T[][] Allocate2dArray<T>(uint x, uint y)
 		{
-			switch (x)
-			{
-				case 0: return new T[][] { };
-				case 1: return new T[][] { new T[y] };
-				case 2: return new T[][] { new T[y], new T[y] };
-				case 3: return new T[][] { new T[y], new T[y], new T[y] };
-				case 4: return new T[][] { new T[y], new T[y], new T[y], new T[y] };
-				case 5: return new T[][] { new T[y], new T[y], new T[y], new T[y], new T[y] };
-				case 6: return new T[][] { new T[y], new T[y], new T[y], new T[y], new T[y], new T[y] };
-				case 7: return new T[][] { new T[y], new T[y], new T[y], new T[y], new T[y], new T[y], new T[y] };
-				case 8: return new T[][] { new T[y], new T[y], new T[y], new T[y], new T[y], new T[y], new T[y], new T[y] };
-				default: throw new ArgumentOutOfRangeException(nameof(x));
-			}
+			var result = new T[x][];
+			for (var i = 0; i < x; i++) result[i] = new T[y];
+			return result;
 		}
 
 		/// <summary>
@@ -1726,7 +1724,7 @@ namespace UnityGLTF
 			var targets = primData.Targets;
 			if (targets != null)
 			{
-				for(int i = 0; i < targets.Count; ++i)
+				for (int i = 0; i < targets.Count; ++i)
 				{
 					if (targets[i].ContainsKey(SemanticProperties.POSITION))
 					{
@@ -2336,7 +2334,8 @@ namespace UnityGLTF
 
 		protected static MeshTopology GetTopology(DrawMode mode)
 		{
-			switch (mode) {
+			switch (mode)
+			{
 				case DrawMode.Points: return MeshTopology.Points;
 				case DrawMode.Lines: return MeshTopology.Lines;
 				case DrawMode.LineStrip: return MeshTopology.LineStrip;
