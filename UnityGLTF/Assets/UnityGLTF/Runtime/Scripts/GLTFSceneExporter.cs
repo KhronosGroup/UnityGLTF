@@ -393,13 +393,11 @@ namespace UnityGLTF
 			{
 				var image = _imageInfos[t].texture;
 
-				Debug.Log(outputPath + ", " + image.name, image);
-
 				bool wasAbleToExportTexture = false;
 				if (TryExportTexturesFromDisk && TryGetTextureDataFromDisk(image, out string path, out byte[] imageBytes))
 				{
-					var finalFilenamePath = ConstructImageFilenamePath(image, outputPath, "png");
-					Debug.Log(finalFilenamePath + ", " + image.name, image);
+					var finalFilenamePath = ConstructImageFilenamePath(image, outputPath, Path.GetExtension(path));
+					//Debug.Log(finalFilenamePath + ", " + image.name, image);
 					if(IsPng(finalFilenamePath) || IsJpeg(finalFilenamePath)) {
 						wasAbleToExportTexture = true;
 						finalFilenamePath = Path.ChangeExtension(finalFilenamePath, Path.GetExtension(path));
@@ -526,7 +524,9 @@ namespace UnityGLTF
 			file.Directory.Create();
 			if(!string.IsNullOrEmpty(enforceExtension)) {
 				Path.ChangeExtension(filenamePath, enforceExtension);
-				if (!filenamePath.EndsWith("." + enforceExtension))
+				if (enforceExtension.StartsWith(".") && !filenamePath.EndsWith(enforceExtension))
+					filenamePath += enforceExtension;
+				else if (!enforceExtension.StartsWith(".") && !filenamePath.EndsWith(enforceExtension))
 					filenamePath += "." + enforceExtension;
 			}
 			return filenamePath; 
@@ -1374,6 +1374,36 @@ namespace UnityGLTF
 			return id;
 		}
 
+		private string GetImageOutputPath(Texture texture)
+		{
+			var imagePath = _exportOptions.TexturePathRetriever(texture);
+			if (string.IsNullOrEmpty(imagePath))
+			{
+				imagePath = texture.name;
+			}
+
+			var filenamePath = imagePath;
+			var isGltfCompatible = IsPng(imagePath) || IsJpeg(imagePath);
+
+			if (ExportFullPath)
+			{
+				if (!isGltfCompatible)
+				{
+					filenamePath = Path.ChangeExtension(imagePath, ".png");
+				}
+			}
+			else
+			{ 
+				filenamePath = Path.GetFileName(filenamePath);
+				if (!isGltfCompatible)
+				{
+					filenamePath = Path.ChangeExtension(texture.name, ".png");
+				}
+			}
+
+			return filenamePath;
+		}
+
 		private ImageId ExportImage(Texture texture, TextureMapType texturMapType)
 		{
 			ImageId id = GetImageId(_root, texture);
@@ -1395,29 +1425,8 @@ namespace UnityGLTF
 				textureMapType = texturMapType
 			});
 
-			var imagePath = _exportOptions.TexturePathRetriever(texture);
-			if (string.IsNullOrEmpty(imagePath))
-			{
-				imagePath = texture.name;
-			}
+			var filenamePath = GetImageOutputPath(texture);
 
-			var filenamePath = imagePath;
-			var isGltfCompatible = IsPng(imagePath) || IsJpeg(imagePath);
-
-			if (ExportFullPath)
-			{
-				if (!isGltfCompatible)
-				{
-					filenamePath = Path.ChangeExtension(imagePath, ".png");
-				}
-			}
-			else
-			{
-				filenamePath = texture.name;
-				if(!isGltfCompatible) { 
-					filenamePath = Path.ChangeExtension(texture.name, ".png");
-				}
-			}
 			image.Uri = Uri.EscapeUriString(filenamePath);
 
 			id = new ImageId
