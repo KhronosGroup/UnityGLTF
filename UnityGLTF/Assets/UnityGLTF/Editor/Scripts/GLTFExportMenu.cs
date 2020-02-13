@@ -46,7 +46,8 @@ public class GLTFExportMenu : EditorWindow
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
-		var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+		GLTFSceneExporter.SaveFolderPath = path;
 		if (!string.IsNullOrEmpty(path)) {
 			exporter.SaveGLTFandBin (path, name);
 		}

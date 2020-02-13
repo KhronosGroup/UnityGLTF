@@ -84,12 +84,42 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<Mesh, MeshPrimitive[]>();
 
 		// Settings
-		public static bool ExportNames = true;
-		public static bool ExportFullPath = true;
-		public static bool RequireExtensions = false;
-		public static bool TryExportTexturesFromDisk = true;
-		public static bool ExportAnimations = true;
-		public static bool BakeSkinnedMeshes = false;
+		static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
+
+		public static bool ExportNames {
+			get { return settings.ExportNames; }
+			set { settings.ExportNames = value; }
+		}
+		public static bool ExportFullPath
+		{
+			get { return settings.ExportFullPath; }
+			set { settings.ExportFullPath = value; }
+		}
+		public static bool RequireExtensions
+		{
+			get { return settings.RequireExtensions; }
+			set { settings.RequireExtensions = value; }
+		}
+		public static bool TryExportTexturesFromDisk
+		{
+			get { return settings.TryExportTexturesFromDisk; }
+			set { settings.TryExportTexturesFromDisk = value; }
+		}
+		public static bool ExportAnimations
+		{
+			get { return settings.ExportAnimations; }
+			set { settings.ExportAnimations = value; }
+		}
+		public static bool BakeSkinnedMeshes
+		{
+			get { return settings.BakeSkinnedMeshes; }
+			set { settings.BakeSkinnedMeshes = value; }
+		}
+		public static string SaveFolderPath
+		{
+			get { return settings.SaveFolderPath; }
+			set { settings.SaveFolderPath = value; }
+		}
 
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
