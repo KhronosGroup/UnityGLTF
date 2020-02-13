@@ -2703,18 +2703,21 @@ namespace UnityGLTF
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
-			float minX = arr[0].x;
-			float minY = arr[0].y;
-			float minZ = arr[0].z;
-			float minW = arr[0].w;
-			float maxX = arr[0].x;
-			float maxY = arr[0].y;
-			float maxZ = arr[0].z;
-			float maxW = arr[0].w;
+			var a0 = arr[0];
+			a0 = switchHandedness ? a0.switchHandedness() : a0;
+			float minX = a0.x;
+			float minY = a0.y;
+			float minZ = a0.z;
+			float minW = a0.w;
+			float maxX = a0.x;
+			float maxY = a0.y;
+			float maxZ = a0.z;
+			float maxW = a0.w;
 
 			for (var i = 1; i < count; i++)
 			{
 				var cur = arr[i];
+				cur = switchHandedness ? cur.switchHandedness() : cur;
 
 				if (cur.x < minX)
 				{
@@ -2774,6 +2777,8 @@ namespace UnityGLTF
 				Root = _root
 			};
 			_root.Accessors.Add(accessor);
+
+			Debug.Log(id.Id + " - " + minX + ", " + minY + ", " + minZ + ", " + minW);
 
 			return id;
 		}
