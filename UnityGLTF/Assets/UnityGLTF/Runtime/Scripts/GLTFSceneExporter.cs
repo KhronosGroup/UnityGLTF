@@ -1494,8 +1494,6 @@ namespace UnityGLTF
 					_bufferWriter.Write(imageBytes);
 					wasAbleToExportFromDisk = true;
 				}
-
-				Debug.Log("was able to export: " + wasAbleToExportFromDisk + ", " + path);
 			}
 
 
@@ -2689,6 +2687,7 @@ namespace UnityGLTF
 			return id;
 		}
 
+		// This is used for Quaternions / Rotations
 		private AccessorId ExportAccessor(Vector4[] arr, bool switchHandedness = false)
 		{
 			var count = (uint)arr.Length;
@@ -2705,6 +2704,7 @@ namespace UnityGLTF
 
 			var a0 = arr[0];
 			a0 = switchHandedness ? a0.switchHandedness() : a0;
+			a0 = a0.normalized;
 			float minX = a0.x;
 			float minY = a0.y;
 			float minZ = a0.z;
@@ -2718,6 +2718,7 @@ namespace UnityGLTF
 			{
 				var cur = arr[i];
 				cur = switchHandedness ? cur.switchHandedness() : cur;
+				cur = cur.normalized;
 
 				if (cur.x < minX)
 				{
@@ -2761,6 +2762,7 @@ namespace UnityGLTF
 			foreach (var vec in arr)
 			{
 				Vector4 vect = switchHandedness ? vec.switchHandedness() : vec;
+				vect = vect.normalized;
 				_bufferWriter.Write(vect.x);
 				_bufferWriter.Write(vect.y);
 				_bufferWriter.Write(vect.z);
@@ -2777,8 +2779,6 @@ namespace UnityGLTF
 				Root = _root
 			};
 			_root.Accessors.Add(accessor);
-
-			Debug.Log(id.Id + " - " + minX + ", " + minY + ", " + minZ + ", " + minW);
 
 			return id;
 		}
