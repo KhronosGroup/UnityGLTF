@@ -1178,8 +1178,8 @@ namespace UnityGLTF
 			}
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
-				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null,
-				aJoint0 = null, aWeight0 = null;
+				aTexcoord0 = null, aTexcoord1 = null, aTexcoord2 = null, aTexcoord3 = null,
+				aColor0 = null, aJoint0 = null, aWeight0 = null;
 			
 			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
@@ -1194,6 +1194,12 @@ namespace UnityGLTF
 
 			if (meshObj.uv2.Length != 0)
 				aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
+
+			if (meshObj.uv3.Length != 0)
+				aTexcoord2 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv3));
+
+			if (meshObj.uv4.Length != 0)
+				aTexcoord3 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv4));
 
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
@@ -1234,6 +1240,10 @@ namespace UnityGLTF
 					primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, aTexcoord0);
 				if (aTexcoord1 != null)
 					primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, aTexcoord1);
+				if (aTexcoord2 != null)
+					primitive.Attributes.Add(SemanticProperties.TEXCOORD_2, aTexcoord2);
+				if (aTexcoord3 != null)
+					primitive.Attributes.Add(SemanticProperties.TEXCOORD_3, aTexcoord3);
 				if (aColor0 != null)
 					primitive.Attributes.Add(SemanticProperties.COLOR_0, aColor0);
 				if (aJoint0 != null)
