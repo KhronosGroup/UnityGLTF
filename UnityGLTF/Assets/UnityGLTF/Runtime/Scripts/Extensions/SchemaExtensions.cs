@@ -494,7 +494,26 @@ namespace UnityGLTF.Extensions
 
 			return returnArray;
 		}
-		
+
+		/// <summary>
+		/// Converts and copies based on the specified coordinate space
+		/// </summary>
+		/// <param name="array">The array to convert and copy</param>
+		/// <returns>The copied and converted Matrix4x4 array</returns>
+		public static Matrix4x4[] ConvertMatrix4x4CoordinateSpaceAndCopy(Matrix4x4[] array)
+		{
+			var returnArr = new Matrix4x4[array.Length];
+
+			for (int i = 0; i < array.Length; ++i)
+			{
+				Vector3 coordinateSpaceConversionScale = CoordinateSpaceConversionScale.ToUnityVector3Raw();
+				Matrix4x4 convert = Matrix4x4.Scale(coordinateSpaceConversionScale);
+				returnArr[i] = convert * array[i] * convert;
+			}
+
+			return returnArr;
+		}
+
 		/// <summary>
 		/// Extract the joint values
 		/// </summary>

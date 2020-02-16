@@ -1207,7 +1207,7 @@ namespace UnityGLTF
 			if(skin != null)
 			{
 				if (meshObj.bindposes.Length != 0)
-					skin.InverseBindMatrices = ExportAccessor(meshObj.bindposes);
+					skin.InverseBindMatrices = ExportAccessor(SchemaExtensions.ConvertMatrix4x4CoordinateSpaceAndCopy(meshObj.bindposes));
 			}
 
 			MaterialId lastMaterialId = null;
