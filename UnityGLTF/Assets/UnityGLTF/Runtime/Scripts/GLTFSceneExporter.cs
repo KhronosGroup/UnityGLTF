@@ -940,11 +940,16 @@ namespace UnityGLTF
 				foreach(var property in curveBindingGroup.properties)
 				{
 					GLTFAnimationChannelPath path;
+					AccessorId accessorId = ExportCurve(animationClip, property.name, property.curveBindings, frameCount, out path);
+					if(accessorId == null)
+					{
+						continue;
+					}
 					var sampler = new AnimationSampler()
 					{
 						Input = timesstampsId,
 						Interpolation = InterpolationType.LINEAR,
-						Output = ExportCurve(animationClip, property.name, property.curveBindings, frameCount, out path)
+						Output = accessorId
 					};
 					
 					var samplerId = new SamplerId()
@@ -1052,8 +1057,10 @@ namespace UnityGLTF
 					throw new Exception("Parsing of localEulerAnglesRaw is not supported.");
 				}
 			}
-			
-			throw new Exception("Unrecognized property name.");
+
+			Debug.LogError("Unrecognized property name: " + propertyName);
+			path = GLTFAnimationChannelPath.translation;
+			return null;
 		}
 
 		private List<CurveBindingGroup> CurveMarshalling(EditorCurveBinding[] curveBindings)
