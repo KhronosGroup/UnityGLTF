@@ -209,6 +209,31 @@ namespace GLTF.Schema
 		}
 	}
 
+	public class AnimationId : GLTFId<GLTFAnimation>
+	{
+		public AnimationId()
+		{
+		}
+
+		public AnimationId(AnimationId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
+
+		public override GLTFAnimation Value
+		{
+			get { return Root.Animations[Id]; }
+		}
+
+		public static AnimationId Deserialize(GLTFRoot root, JsonReader reader)
+		{
+			return new AnimationId
+			{
+				Id = reader.ReadAsInt32().Value,
+				Root = root
+			};
+		}
+	}
+
 	public class NodeId : GLTFId<Node>
 	{
 		public NodeId()

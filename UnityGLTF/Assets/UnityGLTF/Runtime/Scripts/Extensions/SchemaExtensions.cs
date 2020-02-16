@@ -417,7 +417,7 @@ namespace UnityGLTF.Extensions
 		}
 
 		/// <summary>
-		/// Converts and copies based on the specified coordinate scale
+		/// Converts and copies based on the specified coordinate space
 		/// </summary>
 		/// <param name="array">The array to convert and copy</param>
 		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
@@ -453,7 +453,7 @@ namespace UnityGLTF.Extensions
 		}
 
 		/// <summary>
-		/// Converts and copies based on the specified coordinate scale
+		/// Converts and copies based on the specified coordinate space
 		/// </summary>
 		/// <param name="array">The array to convert and copy</param>
 		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
@@ -468,6 +468,68 @@ namespace UnityGLTF.Extensions
 				returnArray[i].y = array[i].y * coordinateSpaceCoordinateScale.Y;
 				returnArray[i].z = array[i].z * coordinateSpaceCoordinateScale.Z;
 				returnArray[i].w = array[i].w * coordinateSpaceCoordinateScale.W;
+			}
+
+			return returnArray;
+		}
+		
+		/// <summary>
+		/// Converts and copies based on the specified coordinate space
+		/// </summary>
+		/// <param name="array">The array to convert and copy</param>
+		/// <returns>The copied and converted Quaternion array</returns>
+		public static Quaternion[] ConvertQuaternionCoordinateSpaceAndCopy(Quaternion[] array)
+		{
+			var returnArray = new Quaternion[array.Length];
+
+			for (var i = 0; i < array.Length; i++)
+			{
+				var unityQuat = array[i];
+				Vector3 fromAxisOfRotation = new Vector3(unityQuat.x, unityQuat.y, unityQuat.z);
+				float axisFlipScale = CoordinateSpaceConversionRequiresHandednessFlip ? -1.0f : 1.0f;
+				Vector3 toAxisOfRotation = axisFlipScale * Vector3.Scale(fromAxisOfRotation, CoordinateSpaceConversionScale.ToUnityVector3Raw());
+
+				returnArray[i] = new Quaternion(toAxisOfRotation.x, toAxisOfRotation.y, toAxisOfRotation.z, unityQuat.w);
+			}
+
+			return returnArray;
+		}
+		
+		/// <summary>
+		/// Extract the joint values
+		/// </summary>
+		/// <param name="array">The array to extract from and copy</param>
+		/// <returns>Copied Vector4 with joints</returns>
+		public static Vector4[] ExtractJointAndCopy(BoneWeight[] array)
+		{
+			var returnArray = new Vector4[array.Length];
+
+			for (var i = 0; i < array.Length; i++)
+			{
+				returnArray[i].x = array[i].boneIndex0;
+				returnArray[i].y = array[i].boneIndex1;
+				returnArray[i].z = array[i].boneIndex2;
+				returnArray[i].w = array[i].boneIndex3;
+			}
+
+			return returnArray;
+		}
+
+		/// <summary>
+		/// Extract the weight values
+		/// </summary>
+		/// <param name="array">The array to extract from and copy</param>
+		/// <returns>Copied Vector4 with weights</returns>
+		public static Vector4[] ExtractWeightAndCopy(BoneWeight[] array)
+		{
+			var returnArray = new Vector4[array.Length];
+
+			for (var i = 0; i < array.Length; i++)
+			{
+				returnArray[i].x = array[i].weight0;
+				returnArray[i].y = array[i].weight1;
+				returnArray[i].z = array[i].weight2;
+				returnArray[i].w = array[i].weight3;
 			}
 
 			return returnArray;
