@@ -1495,12 +1495,18 @@ namespace UnityGLTF
 					_bufferWriter.Write(imageBytes);
 					wasAbleToExportFromDisk = true;
 				}
+				else
+				{
+					Debug.Log("Texture can't be exported from disk: " + path + ". Only PNG & JPEG are supported. The texture will be re-encoded as PNG.", texture);
+				}
 			}
 
 
-			if(!TryExportTexturesFromDisk && !wasAbleToExportFromDisk)
+			if(!wasAbleToExportFromDisk)
 		    {
 				image.MimeType = "image/png";
+
+				// TODO we could make sure texture size is power-of-two here
 
 				var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 				GL.sRGBWrite = true;
@@ -1536,6 +1542,12 @@ namespace UnityGLTF
 					UnityEngine.Object.Destroy(exportTexture);
 				}
 		    }
+
+			// Check for potential warnings in GLTF validation
+			if (!Mathf.IsPowerOfTwo(texture.width) || !Mathf.IsPowerOfTwo(texture.height))
+			{
+				Debug.LogWarning("Validation Warning: " + "Image has non-power-of-two dimensions: " + texture.width + "x" + texture.height + ".", texture);
+			}
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 			image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
