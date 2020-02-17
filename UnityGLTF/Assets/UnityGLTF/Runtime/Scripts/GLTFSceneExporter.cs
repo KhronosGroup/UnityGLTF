@@ -314,7 +314,17 @@ namespace UnityGLTF
 			binFile.Close();
 #endif
 			ExportImages(path);
+		}
 
+		private Texture2D FlipTexture(Texture source, Texture2D flipped, RenderTextureFormat format, RenderTextureReadWrite readWrite)
+		{
+			var flippedRenderTexture = RenderTexture.GetTemporary(source.width, source.height, 0, format, readWrite);
+			Graphics.Blit(source, flippedRenderTexture, new Vector2(1.0f, -1.0f), new Vector2(0.0f, 1.0f));
+			flipped.name = source.name;
+			flipped.ReadPixels(new Rect(0, 0, flippedRenderTexture.width, flippedRenderTexture.height), 0, 0);
+			flipped.Apply();
+			RenderTexture.ReleaseTemporary(flippedRenderTexture);
+			return flipped;
 		}
 
 		private void ExportImages(string outputPath)
@@ -349,6 +359,8 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath)
 		{
+			var flipped = new Texture2D(texture.width, texture.height);
+			texture = FlipTexture(texture, flipped, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
 			Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
@@ -364,10 +376,12 @@ namespace UnityGLTF
 			if (Application.isEditor)
 			{
 				GameObject.DestroyImmediate(exportTexture);
+				GameObject.DestroyImmediate(flipped);
 			}
 			else
 			{
 				GameObject.Destroy(exportTexture);
+				GameObject.Destroy(flipped);
 			}
 		}
 
@@ -379,6 +393,8 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportNormalTexture(Texture2D texture, string outputPath)
 		{
+			var flipped = new Texture2D(texture.width, texture.height);
+			texture = FlipTexture(texture, flipped, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
 			Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
@@ -394,15 +410,19 @@ namespace UnityGLTF
 			if (Application.isEditor)
 			{
 				GameObject.DestroyImmediate(exportTexture);
+				GameObject.DestroyImmediate(flipped);
 			}
 			else
 			{
 				GameObject.Destroy(exportTexture);
+				GameObject.Destroy(flipped);
 			}
 		}
 
 		private void ExportTexture(Texture2D texture, string outputPath)
 		{
+			var flipped = new Texture2D(texture.width, texture.height);
+			texture = FlipTexture(texture, flipped, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 
 			Graphics.Blit(texture, destRenderTexture);
@@ -418,10 +438,12 @@ namespace UnityGLTF
 			if (Application.isEditor)
 			{
 				GameObject.DestroyImmediate(exportTexture);
+				GameObject.DestroyImmediate(flipped);
 			}
 			else
 			{
 				GameObject.Destroy(exportTexture);
+				GameObject.Destroy(flipped);
 			}
 		}
 
@@ -750,7 +772,8 @@ namespace UnityGLTF
 			}
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
-				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
+				aTexcoord0 = null, aTexcoord1 = null, aTexcoord2 = null, aTexcoord3 = null,
+				aColor0 = null, aJoint0 = null, aWeight0 = null;
 				
 			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
@@ -760,12 +783,30 @@ namespace UnityGLTF
 			if (meshObj.tangents.Length != 0)
 				aTangent = ExportAccessor(SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
 
+			// Better not to flip the texture coordinates. If uv* represents something else other than coordinates, we cannot simply perform 1 - uv*.y on it.
+			//if (meshObj.uv.Length != 0)
+			//	aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
+
+			//if (meshObj.uv2.Length != 0)
+			//	aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
+
+			//if (meshObj.uv3.Length != 0)
+			//	aTexcoord2 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv3));
+
+			//if (meshObj.uv4.Length != 0)
+			//	aTexcoord3 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv4));
+
 			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
+				aTexcoord0 = ExportAccessor(meshObj.uv);
 
 			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
+				aTexcoord1 = ExportAccessor(meshObj.uv2);
 
+			if (meshObj.uv3.Length != 0)
+				aTexcoord2 = ExportAccessor(meshObj.uv3);
+
+			if (meshObj.uv4.Length != 0)
+				aTexcoord3 = ExportAccessor(meshObj.uv4);
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
 
@@ -793,6 +834,10 @@ namespace UnityGLTF
 					primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, aTexcoord0);
 				if (aTexcoord1 != null)
 					primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, aTexcoord1);
+				if (aTexcoord2 != null)
+					primitive.Attributes.Add(SemanticProperties.TEXCOORD_2, aTexcoord2);
+				if (aTexcoord3 != null)
+					primitive.Attributes.Add(SemanticProperties.TEXCOORD_3, aTexcoord3);
 				if (aColor0 != null)
 					primitive.Attributes.Add(SemanticProperties.COLOR_0, aColor0);
 
