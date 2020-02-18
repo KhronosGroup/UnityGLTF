@@ -78,6 +78,7 @@ namespace UnityGLTF
 		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<Mesh, MeshPrimitive[]>();
+		private readonly Dictionary<int, TextureId> _existedLightmap = new Dictionary<int, TextureId>();
 
 		// Settings
 		public static bool ExportNames = true;
@@ -742,7 +743,7 @@ namespace UnityGLTF
 				{
 					prims[i] = new MeshPrimitive(primVariations[i], _root)
 					{
-						Material = ExportMaterial(materialsObj[i])
+						Material = ExportMaterial(materialsObj[i], renderer)
 					};
 				}
 
@@ -798,7 +799,7 @@ namespace UnityGLTF
 
 				if (submesh < materialsObj.Length)
 				{
-					primitive.Material = ExportMaterial(materialsObj[submesh]);
+					primitive.Material = ExportMaterial(materialsObj[submesh], renderer);
 					lastMaterialId = primitive.Material;
 				}
 				else
@@ -816,7 +817,7 @@ namespace UnityGLTF
 			return prims;
 		}
 
-		private MaterialId ExportMaterial(Material materialObj)
+		private MaterialId ExportMaterial(Material materialObj, MeshRenderer renderer)
 		{
 			MaterialId id = GetMaterialId(_root, materialObj);
 			if (id != null)
@@ -868,8 +869,9 @@ namespace UnityGLTF
 						if(emissionTex is Texture2D)
 						{
 							material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
-
-							ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+							Vector2 offset = materialObj.GetTextureOffset("_EmissionMap");
+							Vector2 scale = materialObj.GetTextureScale("_EmissionMap");
+							ExportTextureTransform(material.EmissiveTexture, scale, offset);
 						}
 						else
 						{
@@ -888,7 +890,9 @@ namespace UnityGLTF
 					if(normalTex is Texture2D)
 					{
 						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
-						ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+						Vector2 offset = materialObj.GetTextureOffset("_BumpMap");
+						Vector2 scale = materialObj.GetTextureScale("_BumpMap");
+						ExportTextureTransform(material.NormalTexture, scale, offset);
 					}
 					else
 					{
@@ -905,7 +909,9 @@ namespace UnityGLTF
 					if(occTex is Texture2D)
 					{
 						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
-						ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
+						Vector2 offset = materialObj.GetTextureOffset("_OcclusionMap");
+						Vector2 scale = materialObj.GetTextureScale("_OcclusionMap");
+						ExportTextureTransform(material.OcclusionTexture, scale, offset);
 					}
 					else
 					{
@@ -921,6 +927,11 @@ namespace UnityGLTF
 			else if (IsCommonConstant(materialObj))
 			{
 				material.CommonConstant = ExportCommonConstant(materialObj);
+			}
+
+			if(HasMaterialsModmap(materialObj, renderer))
+			{
+				ExportModmap(material, materialObj, renderer);
 			}
 
 			_materials.Add(materialObj);
@@ -997,11 +1008,13 @@ namespace UnityGLTF
 			material.HasProperty("_LightFactor");
 		}
 
-		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
+		private bool HasMaterialsModmap(Material material, MeshRenderer renderer)
 		{
-			Vector2 offset = mat.GetTextureOffset(texName);
-			Vector2 scale = mat.GetTextureScale(texName);
+			return ((renderer != null) && (-1 != renderer.lightmapIndex)) || material.HasProperty("_LightMap");
+		}
 
+		private void ExportTextureTransform(TextureInfo def, Vector2 scale, Vector2 offset)
+		{
 			if (offset == Vector2.zero && scale == Vector2.one) return;
 
 			if (_root.ExtensionsUsed == null)
@@ -1092,7 +1105,9 @@ namespace UnityGLTF
 					if(mainTex is Texture2D)
 					{
 						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+						Vector2 offset = material.GetTextureOffset("_MainTex");
+						Vector2 scale = material.GetTextureScale("_MainTex");
+						ExportTextureTransform(pbr.BaseColorTexture, scale, offset);
 					}
 					else
 					{
@@ -1122,7 +1137,9 @@ namespace UnityGLTF
 					if(mrTex is Texture2D)
 					{
 						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
-						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+						Vector2 offset = material.GetTextureOffset("_MetallicGlossMap");
+						Vector2 scale = material.GetTextureScale("_MetallicGlossMap");
+						ExportTextureTransform(pbr.MetallicRoughnessTexture, scale, offset);
 					}
 					else
 					{
@@ -1139,7 +1156,9 @@ namespace UnityGLTF
 					if(mgTex is Texture2D)
 					{
 						pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
-						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+						Vector2 offset = material.GetTextureOffset("_SpecGlossMap");
+						Vector2 scale = material.GetTextureScale("_SpecGlossMap");
+						ExportTextureTransform(pbr.MetallicRoughnessTexture, scale, offset);
 					}
 					else
 					{
@@ -1188,9 +1207,10 @@ namespace UnityGLTF
 				if (lmTex != null)
 				{
 					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
-					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
+					Vector2 offset = materialObj.GetTextureOffset("_LightMap");
+					Vector2 scale = materialObj.GetTextureScale("_LightMap");
+					ExportTextureTransform(constant.LightmapTexture, scale, offset);
 				}
-
 			}
 
 			if (materialObj.HasProperty("_LightFactor"))
@@ -1199,6 +1219,93 @@ namespace UnityGLTF
 			}
 
 			return constant;
+		}
+
+		private void ExportModmap(GLTFMaterial material, Material materialObj, MeshRenderer renderer)
+		{
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(new[] { "FB_materials_modmap" });
+			}
+			else if (!_root.ExtensionsUsed.Contains("FB_materials_modmap"))
+			{
+				_root.ExtensionsUsed.Add("FB_materials_modmap");
+			}
+
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
+				{
+					_root.ExtensionsRequired = new List<string>(new[] { "FB_materials_modmap" });
+				}
+				else if (!_root.ExtensionsRequired.Contains("FB_materials_modmap"))
+				{
+					_root.ExtensionsRequired.Add("FB_materials_modmap");
+				}
+			}
+
+			if (material.Extensions == null)
+			{
+				material.Extensions = new Dictionary<string, IExtension>();
+			}
+
+			GLTF.Math.Vector3 modmapFactor = FB_materials_modmapExtension.MODMAP_FACTOR_DEFAULT;
+			TextureInfo modmapTexture = FB_materials_modmapExtension.MODMAP_TEXTURE_DEFAULT;
+
+			if (materialObj.HasProperty("_LightFactor"))
+			{
+				Color color = materialObj.GetColor("_LightFactor");
+				modmapFactor = new GLTF.Math.Vector3(color.r, color.g, color.b);
+			}
+
+			TextureInfo lightmapTexture = null;
+			Texture lmTex = null;
+
+			if (materialObj.HasProperty("_LightMap"))
+			{
+				lmTex = materialObj.GetTexture("_LightMap");
+
+				if (lmTex != null)
+				{
+					lightmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
+					Vector2 offset = materialObj.GetTextureOffset("_LightMap");
+					Vector2 scale = materialObj.GetTextureScale("_LightMap");
+					ExportTextureTransform(lightmapTexture, scale, offset);
+				}
+			}
+
+			if (lmTex == null)
+			{
+				if (null != LightmapSettings.lightmaps &&
+					LightmapSettings.lightmaps.Length > 0 &&
+					renderer.lightmapIndex < LightmapSettings.lightmaps.Length)
+				{
+					var lightmapData = LightmapSettings.lightmaps[renderer.lightmapIndex];
+					lmTex = lightmapData.lightmapColor;
+					if (lmTex != null)
+					{
+						lightmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
+						var lmScaleOffset = renderer.lightmapScaleOffset;
+						ExportTextureTransform(lightmapTexture, new Vector2(lmScaleOffset.x, lmScaleOffset.y), new Vector2(lmScaleOffset.z, lmScaleOffset.w));
+					}
+				}
+			}
+
+			material.Extensions[FB_materials_modmapExtensionFactory.EXTENSION_NAME] = new FB_materials_modmapExtension(
+				modmapFactor,
+				modmapTexture
+			);
+		}
+
+		private TextureInfo ExportLightmapTextureInfo(Texture texture, TextureMapType textureMapType)
+		{
+			var info = new TextureInfo();
+			if (!_existedLightmap.TryGetValue(texture.GetInstanceID(), out info.Index))
+			{
+				info = ExportTextureInfo(texture, textureMapType);
+				_existedLightmap.Add(texture.GetInstanceID(), info.Index);
+			}
+			return info;
 		}
 
 		private TextureInfo ExportTextureInfo(Texture texture, TextureMapType textureMapType)

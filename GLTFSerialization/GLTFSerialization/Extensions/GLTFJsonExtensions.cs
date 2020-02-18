@@ -114,6 +114,22 @@ namespace GLTF.Extensions
 			return textureInfo;
 		}
 
+		public static bool DeserializeAsBool(this JToken token)
+		{
+			if (token != null)
+			{
+				JValue boolValue = token as JValue;
+				if (boolValue == null)
+				{
+					throw new Exception("JToken used for bool deserialization was not a JValue. It was a " + token.Type.ToString());
+				}
+
+				return (bool)boolValue;
+			}
+
+			return false;
+		}
+
 		public static int DeserializeAsInt(this JToken token)
 		{
 			if (token != null)
@@ -130,6 +146,22 @@ namespace GLTF.Extensions
 			return 0;
 		}
 
+		public static float DeserializeAsFloat(this JToken token)
+		{
+			if (token != null)
+			{
+				JValue floatValue = token as JValue;
+				if (floatValue == null)
+				{
+					throw new Exception("JToken used for float deserialization was not a JValue. It was a " + token.Type.ToString());
+				}
+
+				return (float)floatValue;
+			}
+
+			return 0.0f;
+		}
+
 		public static double DeserializeAsDouble(this JToken token)
 		{
 			if (token != null)
@@ -144,6 +176,22 @@ namespace GLTF.Extensions
 			}
 
 			return 0d;
+		}
+
+		public static string DeserializeAsString(this JToken token)
+		{
+			if (token != null)
+			{
+				JValue stringValue = token as JValue;
+				if (stringValue == null)
+				{
+					throw new Exception("JToken used for string deserialization was not a JValue. It was a " + token.Type.ToString());
+				}
+
+				return (string)stringValue;
+			}
+
+			return "";
 		}
 
 		public static Color ReadAsRGBAColor(this JsonReader reader)

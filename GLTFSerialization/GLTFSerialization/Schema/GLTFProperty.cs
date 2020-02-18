@@ -10,9 +10,10 @@ namespace GLTF.Schema
 	{
 		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>()
 		{
+			{ FB_materials_modmapExtensionFactory.EXTENSION_NAME, new FB_materials_modmapExtensionFactory() },
 			{ ExtTextureTransformExtensionFactory.EXTENSION_NAME, new ExtTextureTransformExtensionFactory() },
 			{ KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME, new KHR_materials_pbrSpecularGlossinessExtensionFactory() },
-      { MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
+			{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
 		};
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
 
