@@ -1196,7 +1196,6 @@ namespace UnityGLTF
 				modmapFactor = new GLTF.Math.Vector3(color.r, color.g, color.b);
 			}
 
-			TextureInfo lightmapTexture = null;
 			Texture lmTex = null;
 
 			if (materialObj.HasProperty("_LightMap"))
@@ -1205,10 +1204,10 @@ namespace UnityGLTF
 
 				if (lmTex != null)
 				{
-					lightmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
+					modmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
 					Vector2 offset = materialObj.GetTextureOffset("_LightMap");
 					Vector2 scale = materialObj.GetTextureScale("_LightMap");
-					ExportTextureTransform(lightmapTexture, scale, offset);
+					ExportTextureTransform(modmapTexture, scale, offset);
 				}
 			}
 
@@ -1222,9 +1221,9 @@ namespace UnityGLTF
 					lmTex = lightmapData.lightmapColor;
 					if (lmTex != null)
 					{
-						lightmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
+						modmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
 						var lmScaleOffset = renderer.lightmapScaleOffset;
-						ExportTextureTransform(lightmapTexture, new Vector2(lmScaleOffset.x, lmScaleOffset.y), new Vector2(lmScaleOffset.z, lmScaleOffset.w));
+						ExportTextureTransform(modmapTexture, new Vector2(lmScaleOffset.x, lmScaleOffset.y), new Vector2(lmScaleOffset.z, lmScaleOffset.w));
 					}
 				}
 			}
