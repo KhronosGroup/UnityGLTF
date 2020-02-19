@@ -924,10 +924,6 @@ namespace UnityGLTF
 			{
 				material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
 			}
-			else if (IsCommonConstant(materialObj))
-			{
-				material.CommonConstant = ExportCommonConstant(materialObj);
-			}
 
 			if(HasMaterialsModmap(materialObj, renderer))
 			{
@@ -999,13 +995,6 @@ namespace UnityGLTF
 		private bool IsPBRMetallicRoughness(Material material)
 		{
 			return material.HasProperty("_Metallic") && material.HasProperty("_MetallicGlossMap");
-		}
-
-		private bool IsCommonConstant(Material material)
-		{
-			return material.HasProperty("_AmbientFactor") &&
-			material.HasProperty("_LightMap") &&
-			material.HasProperty("_LightFactor");
 		}
 
 		private bool HasMaterialsModmap(Material material, MeshRenderer renderer)
@@ -1168,57 +1157,6 @@ namespace UnityGLTF
 			}
 
 			return pbr;
-		}
-
-		private MaterialCommonConstant ExportCommonConstant(Material materialObj)
-		{
-			if (_root.ExtensionsUsed == null)
-			{
-				_root.ExtensionsUsed = new List<string>(new[] { "KHR_materials_common" });
-			}
-			else if (!_root.ExtensionsUsed.Contains("KHR_materials_common"))
-			{
-				_root.ExtensionsUsed.Add("KHR_materials_common");
-			}
-
-			if (RequireExtensions)
-			{
-				if (_root.ExtensionsRequired == null)
-				{
-					_root.ExtensionsRequired = new List<string>(new[] { "KHR_materials_common" });
-				}
-				else if (!_root.ExtensionsRequired.Contains("KHR_materials_common"))
-				{
-					_root.ExtensionsRequired.Add("KHR_materials_common");
-				}
-			}
-
-			var constant = new MaterialCommonConstant();
-
-			if (materialObj.HasProperty("_AmbientFactor"))
-			{
-				constant.AmbientFactor = materialObj.GetColor("_AmbientFactor").ToNumericsColorRaw();
-			}
-
-			if (materialObj.HasProperty("_LightMap"))
-			{
-				var lmTex = materialObj.GetTexture("_LightMap");
-
-				if (lmTex != null)
-				{
-					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
-					Vector2 offset = materialObj.GetTextureOffset("_LightMap");
-					Vector2 scale = materialObj.GetTextureScale("_LightMap");
-					ExportTextureTransform(constant.LightmapTexture, scale, offset);
-				}
-			}
-
-			if (materialObj.HasProperty("_LightFactor"))
-			{
-				constant.LightmapFactor = materialObj.GetColor("_LightFactor").ToNumericsColorRaw();
-			}
-
-			return constant;
 		}
 
 		private void ExportModmap(GLTFMaterial material, Material materialObj, MeshRenderer renderer)
