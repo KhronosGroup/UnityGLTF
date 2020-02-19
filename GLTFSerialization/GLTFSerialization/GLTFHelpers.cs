@@ -649,14 +649,6 @@ namespace GLTF
 						}
 					}
 
-					MaterialCommonConstant commonConstant = material.CommonConstant;
-					if (commonConstant?.LightmapTexture != null)
-					{
-						TextureId textureId = material.CommonConstant.LightmapTexture.Index;
-						textureId.Id += previousGLTFSizes.PreviousTextureCount;
-						textureId.Root = mergeToRoot;
-					}
-
 					if (material.EmissiveTexture != null)
 					{
 						TextureId textureId = material.EmissiveTexture.Index;

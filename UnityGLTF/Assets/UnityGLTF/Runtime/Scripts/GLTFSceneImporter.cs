@@ -1762,16 +1762,6 @@ namespace UnityGLTF
 				}
 			}
 
-			if (def.CommonConstant != null)
-			{
-				if (def.CommonConstant.LightmapTexture != null)
-				{
-					var textureId = def.CommonConstant.LightmapTexture.Index;
-
-					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
-				}
-			}
-
 			if (def.NormalTexture != null)
 			{
 				var textureId = def.NormalTexture.Index;
@@ -1810,6 +1800,18 @@ namespace UnityGLTF
 				if (specGlossDef.SpecularGlossinessTexture != null)
 				{
 					var textureId = specGlossDef.SpecularGlossinessTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
+
+			// FB_materials_modmap extension
+			const string modmapExtName = FB_materials_modmapExtensionFactory.EXTENSION_NAME;
+			if (def.Extensions != null && def.Extensions.ContainsKey(modmapExtName))
+			{
+				var modmapDef = (FB_materials_modmapExtension)def.Extensions[modmapExtName];
+				if (modmapDef.ModmapTexture != null)
+				{
+					var textureId = modmapDef.ModmapTexture.Index;
 					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
 				}
 			}
@@ -2088,7 +2090,6 @@ namespace UnityGLTF
 				_defaultLoadedMaterial = materialWrapper;
 			}
 		}
-
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
