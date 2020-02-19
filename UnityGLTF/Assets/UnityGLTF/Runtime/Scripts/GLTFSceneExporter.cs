@@ -924,6 +924,10 @@ namespace UnityGLTF
 			{
 				material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
 			}
+			else
+			{
+				ExportCommonMaterial(material, materialObj);
+			}
 
 			if(HasMaterialsModmap(materialObj, renderer))
 			{
@@ -995,6 +999,41 @@ namespace UnityGLTF
 		private bool IsPBRMetallicRoughness(Material material)
 		{
 			return material.HasProperty("_Metallic") && material.HasProperty("_MetallicGlossMap");
+		}
+
+		private bool IsCommonConstantMaterial(Material material)
+		{
+			return material.HasProperty("_Ambient") &&
+				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
+				material.HasProperty("_Transparency");
+		}
+
+		private bool IsCommonLambertMaterial(Material material)
+		{
+			return material.HasProperty("_Color") && material.HasProperty("_Ambient") &&
+				(material.HasProperty("_MainTex") || material.HasProperty("_DiffuseColor")) &&
+				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
+				material.HasProperty("_Transparency");
+		}
+
+		private bool IsCommonPhongMaterial(Material material)
+		{
+			return material.HasProperty("_Color") && material.HasProperty("_Ambient") &&
+				(material.HasProperty("_MainTex") || material.HasProperty("_DiffuseColor")) &&
+				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
+				(material.HasProperty("_SpecularTex") || material.HasProperty("_SpecularColor")) &&
+				material.HasProperty("_Shininess") &&
+				material.HasProperty("_Transparency");
+		}
+
+		private bool IsCommonBlinnMaterial(Material material)
+		{
+			return material.HasProperty("_Color") && material.HasProperty("_Ambient") &&
+				(material.HasProperty("_MainTex") || material.HasProperty("_DiffuseColor")) &&
+				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
+				(material.HasProperty("_SpecularTex") || material.HasProperty("_SpecularColor")) &&
+				material.HasProperty("_Shininess") &&
+				material.HasProperty("_Transparency");
 		}
 
 		private bool HasMaterialsModmap(Material material, MeshRenderer renderer)
@@ -1157,6 +1196,169 @@ namespace UnityGLTF
 			}
 
 			return pbr;
+		}
+
+		private void ExportCommonMaterial(GLTFMaterial material, Material materialObj)
+		{
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(new[] { "KHR_materials_common" });
+			}
+			else if (!_root.ExtensionsUsed.Contains("KHR_materials_common"))
+			{
+				_root.ExtensionsUsed.Add("KHR_materials_common");
+			}
+
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
+				{
+					_root.ExtensionsRequired = new List<string>(new[] { "KHR_materials_common" });
+				}
+				else if (!_root.ExtensionsRequired.Contains("KHR_materials_common"))
+				{
+					_root.ExtensionsRequired.Add("KHR_materials_common");
+				}
+			}
+
+			if (material.Extensions == null)
+			{
+				material.Extensions = new Dictionary<string, IExtension>();
+			}
+
+			KHR_materials_commonExtension.CommonTechnique technique = KHR_materials_commonExtension.TECHNIQUE_DEFAULT;
+			GLTF.Math.Color ambient = KHR_materials_commonExtension.AMBIENT_DEFAULT;
+			GLTF.Math.Color emissionColor = KHR_materials_commonExtension.EMISSIONCOLOR_DEFAULT;
+			TextureInfo emissionTexture = KHR_materials_commonExtension.EMISSIONTEXTURE_DEFAULT;
+			GLTF.Math.Color diffuseColor = KHR_materials_commonExtension.DIFFUSECOLOR_DEFAULT;
+			TextureInfo diffuseTexture = KHR_materials_commonExtension.DIFFUSETEXTURE_DEFAULT;
+			GLTF.Math.Color specularColor = KHR_materials_commonExtension.SPECULARCOLOR_DEFAULT;
+			TextureInfo specularTexture = KHR_materials_commonExtension.SPECULARTEXTURE_DEFAULT;
+			float shininess = KHR_materials_commonExtension.SHININESS_DEFAULT;
+			float transparency = KHR_materials_commonExtension.TRANSPARENCY_DEFAULT;
+			bool transparent = material.AlphaMode == AlphaMode.OPAQUE ? false : true;
+			bool doubleSided = material.DoubleSided;
+
+			if (materialObj.HasProperty("_Ambient"))
+			{
+				ambient = materialObj.GetColor("_Ambient").ToNumericsColorRaw();
+			}
+
+			if (materialObj.HasProperty("_EmissionTex"))
+			{
+				var emissionTex = materialObj.GetTexture("_EmissionTex");
+
+				if (emissionTex != null)
+				{
+					if (emissionTex is Texture2D)
+					{
+						emissionTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
+						Vector2 offset = materialObj.GetTextureOffset("_EmissionTex");
+						Vector2 scale = materialObj.GetTextureScale("_EmissionTex");
+						ExportTextureTransform(emissionTexture, scale, offset);
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} emission texture in material {1}", emissionTex.GetType(), materialObj.name);
+					}
+				}
+			}
+			else if (materialObj.HasProperty("_EmissionColor"))
+			{
+				emissionColor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
+			}
+
+			if (materialObj.HasProperty("_MainTex"))
+			{
+				var mainTex = materialObj.GetTexture("_MainTex");
+
+				if (mainTex != null)
+				{
+					if (mainTex is Texture2D)
+					{
+						diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+						Vector2 offset = materialObj.GetTextureOffset("_MainTex");
+						Vector2 scale = materialObj.GetTextureScale("_MainTex");
+						ExportTextureTransform(diffuseTexture, scale, offset);
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} base texture in material {1}", mainTex.GetType(), materialObj.name);
+					}
+				}
+			}
+			else if (materialObj.HasProperty("_DiffuseColor"))
+			{
+				diffuseColor = materialObj.GetColor("_DiffuseColor").ToNumericsColorRaw();
+			}
+
+			if (materialObj.HasProperty("_SpecularTex"))
+			{
+				var specTex = materialObj.GetTexture("_SpecularTex");
+
+				if (specTex != null)
+				{
+					if (specTex is Texture2D)
+					{
+						specularTexture = ExportTextureInfo(specTex, TextureMapType.SpecGloss);
+						Vector2 offset = materialObj.GetTextureOffset("_SpecularTex");
+						Vector2 scale = materialObj.GetTextureScale("_SpecularTex");
+						ExportTextureTransform(specularTexture, scale, offset);
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} specular texture in material {1}", specularTexture.GetType(), materialObj.name);
+					}
+				}
+			}
+			else if (materialObj.HasProperty("_SpecularColor"))
+			{
+				specularColor = materialObj.GetColor("_SpecularColor").ToNumericsColorRaw();
+			}
+
+			if (materialObj.HasProperty("_Shininess"))
+			{
+				shininess = materialObj.GetFloat("_Shininess");
+			}
+
+			if (materialObj.HasProperty("_Transparency"))
+			{
+				transparency = materialObj.GetFloat("_Transparency");
+			}
+
+			if (IsCommonBlinnMaterial(materialObj))
+			{
+				technique = KHR_materials_commonExtension.CommonTechnique.PHONG;
+			}
+			else if (IsCommonPhongMaterial(materialObj))
+			{
+				technique = KHR_materials_commonExtension.CommonTechnique.BLINN;
+			}
+			else if (IsCommonLambertMaterial(materialObj))
+			{
+				technique = KHR_materials_commonExtension.CommonTechnique.LAMBERT;
+			}
+			else if (IsCommonConstantMaterial(materialObj))
+			{
+				technique = KHR_materials_commonExtension.CommonTechnique.CONSTANT;
+			}
+
+			if(technique == KHR_materials_commonExtension.CommonTechnique.NONE) throw new Exception("Please check the material and change a valid one.");
+
+			material.Extensions[KHR_materials_commonExtensionFactory.EXTENSION_NAME] = new KHR_materials_commonExtension(
+				technique,
+				ambient,
+				emissionColor,
+				emissionTexture,
+				diffuseColor,
+				diffuseTexture,
+				specularColor,
+				specularTexture,
+				shininess,
+				transparency,
+				transparent,
+				doubleSided
+			);
 		}
 
 		private void ExportModmap(GLTFMaterial material, Material materialObj, MeshRenderer renderer)
