@@ -78,7 +78,6 @@ namespace UnityGLTF
 		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<Mesh, MeshPrimitive[]>();
-		private readonly Dictionary<int, TextureId> _existedLightmap = new Dictionary<int, TextureId>();
 
 		// Settings
 		public static bool ExportNames = true;
@@ -1004,36 +1003,32 @@ namespace UnityGLTF
 		private bool IsCommonConstantMaterial(Material material)
 		{
 			return material.HasProperty("_Ambient") &&
-				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
-				material.HasProperty("_Transparency");
+				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor"));
 		}
 
 		private bool IsCommonLambertMaterial(Material material)
 		{
-			return material.HasProperty("_Color") && material.HasProperty("_Ambient") &&
+			return material.HasProperty("_Ambient") &&
 				(material.HasProperty("_MainTex") || material.HasProperty("_DiffuseColor")) &&
-				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
-				material.HasProperty("_Transparency");
+				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor"));
 		}
 
 		private bool IsCommonPhongMaterial(Material material)
 		{
-			return material.HasProperty("_Color") && material.HasProperty("_Ambient") &&
+			return material.HasProperty("_Ambient") &&
 				(material.HasProperty("_MainTex") || material.HasProperty("_DiffuseColor")) &&
 				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
 				(material.HasProperty("_SpecularTex") || material.HasProperty("_SpecularColor")) &&
-				material.HasProperty("_Shininess") &&
-				material.HasProperty("_Transparency");
+				material.HasProperty("_Shininess");
 		}
 
 		private bool IsCommonBlinnMaterial(Material material)
 		{
-			return material.HasProperty("_Color") && material.HasProperty("_Ambient") &&
+			return material.HasProperty("_Ambient") &&
 				(material.HasProperty("_MainTex") || material.HasProperty("_DiffuseColor")) &&
 				(material.HasProperty("_EmissionTex") || material.HasProperty("_EmissionColor")) &&
 				(material.HasProperty("_SpecularTex") || material.HasProperty("_SpecularColor")) &&
-				material.HasProperty("_Shininess") &&
-				material.HasProperty("_Transparency");
+				material.HasProperty("_Shininess");
 		}
 
 		private bool HasMaterialsModmap(Material material, MeshRenderer renderer)
@@ -1406,7 +1401,7 @@ namespace UnityGLTF
 
 				if (lmTex != null)
 				{
-					modmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
+					modmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
 					Vector2 offset = materialObj.GetTextureOffset("_LightMap");
 					Vector2 scale = materialObj.GetTextureScale("_LightMap");
 					ExportTextureTransform(modmapTexture, scale, offset);
@@ -1423,7 +1418,7 @@ namespace UnityGLTF
 					lmTex = lightmapData.lightmapColor;
 					if (lmTex != null)
 					{
-						modmapTexture = ExportLightmapTextureInfo(lmTex, TextureMapType.Light);
+						modmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
 						var lmScaleOffset = renderer.lightmapScaleOffset;
 						ExportTextureTransform(modmapTexture, new Vector2(lmScaleOffset.x, lmScaleOffset.y), new Vector2(lmScaleOffset.z, lmScaleOffset.w));
 					}
@@ -1434,17 +1429,6 @@ namespace UnityGLTF
 				modmapFactor,
 				modmapTexture
 			);
-		}
-
-		private TextureInfo ExportLightmapTextureInfo(Texture texture, TextureMapType textureMapType)
-		{
-			var info = new TextureInfo();
-			if (!_existedLightmap.TryGetValue(texture.GetInstanceID(), out info.Index))
-			{
-				info = ExportTextureInfo(texture, textureMapType);
-				_existedLightmap.Add(texture.GetInstanceID(), info.Index);
-			}
-			return info;
 		}
 
 		private TextureInfo ExportTextureInfo(Texture texture, TextureMapType textureMapType)

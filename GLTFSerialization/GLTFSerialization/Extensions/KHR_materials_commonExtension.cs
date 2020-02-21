@@ -38,7 +38,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// Texture for light emitted by the surface of the object.
 		/// </summary>
-		public TextureInfo EmissionTexture;
+		public TextureInfo EmissionTexture = EMISSIONTEXTURE_DEFAULT;
 		public static readonly TextureInfo EMISSIONTEXTURE_DEFAULT = new TextureInfo();
 
 		/// <summary>
@@ -50,7 +50,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// Texture defining the amount of light diffusely reflected from the surface of the object.
 		/// </summary>
-		public TextureInfo DiffuseTexture;
+		public TextureInfo DiffuseTexture = DIFFUSETEXTURE_DEFAULT;
 		public static readonly TextureInfo DIFFUSETEXTURE_DEFAULT = new TextureInfo();
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// Texture defining the color of light specularly reflected from the surface of the object.
 		/// </summary>
-		public TextureInfo SpecularTexture;
+		public TextureInfo SpecularTexture = SPECULARTEXTURE_DEFAULT;
 		public static readonly TextureInfo SPECULARTEXTURE_DEFAULT = new TextureInfo();
 
 		/// <summary>
@@ -169,7 +169,7 @@ namespace GLTF.Schema
 				));
 			}
 
-			if (EmissionTexture != null)
+			if (EmissionTexture != EMISSIONTEXTURE_DEFAULT)
 			{
 				valuesObj.Add(new JProperty(
 					KHR_materials_commonExtensionFactory.EMISSION,
@@ -195,7 +195,7 @@ namespace GLTF.Schema
 				Technique == CommonTechnique.BLINN ||
 				Technique == CommonTechnique.CONSTANT)
 			{
-				if (DiffuseTexture != null)
+				if (DiffuseTexture != DIFFUSETEXTURE_DEFAULT)
 				{
 					valuesObj.Add(new JProperty(
 						KHR_materials_commonExtensionFactory.DIFFUSE,
@@ -220,7 +220,7 @@ namespace GLTF.Schema
 			if (Technique == CommonTechnique.PHONG ||
 				Technique == CommonTechnique.BLINN)
 			{
-				if (SpecularTexture != null)
+				if (SpecularTexture != SPECULARTEXTURE_DEFAULT)
 				{
 					valuesObj.Add(new JProperty(
 						KHR_materials_commonExtensionFactory.SPECULAR,

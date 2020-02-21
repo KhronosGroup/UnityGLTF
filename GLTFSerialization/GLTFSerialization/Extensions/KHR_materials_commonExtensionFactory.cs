@@ -110,7 +110,7 @@ namespace GLTF.Schema
 							technique == KHR_materials_commonExtension.CommonTechnique.BLINN)
 						{
 							JToken specularToken = valuesObject[SPECULAR];
-							if (specularToken == null)
+							if (specularToken != null)
 							{
 								if (specularToken.Type == JTokenType.Integer)
 								{
