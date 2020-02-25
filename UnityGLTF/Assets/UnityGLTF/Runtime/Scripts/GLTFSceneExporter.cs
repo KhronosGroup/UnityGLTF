@@ -2581,6 +2581,50 @@ namespace UnityGLTF
 					}
 				}
 			}
+
+			// remove keys again where prev/next keyframe are identical
+			List<float> t2 = new List<float>();
+			List<Vector3> p2 = new List<Vector3>();
+			List<Vector3> s2 = new List<Vector3>();
+			List<Vector4> r2 = new List<Vector4>();
+
+			t2.Add(times[0]);
+			if (haveTranslationKeys) p2.Add(positions[0]);
+			if (haveRotationKeys) r2.Add(rotations[0]);
+			if (haveScaleKeys) s2.Add(scales[0]);
+
+			for (int i = 1; i < times.Length - 1; i++)
+			{
+				// check identical
+				bool isIdentical = true;
+				if (haveTranslationKeys)
+					isIdentical &= positions[i - 1] == positions[i] && positions[i] == positions[i + 1];
+				if(haveRotationKeys)
+					isIdentical &= rotations[i - 1] == rotations[i] && rotations[i] == rotations[i + 1];
+				if (haveScaleKeys)
+					isIdentical &= scales[i - 1] == scales[i] && scales[i] == scales[i + 1];
+
+				if(!isIdentical)
+				{
+					t2.Add(times[i]);
+					if (haveTranslationKeys) p2.Add(positions[i]);
+					if (haveRotationKeys) r2.Add(rotations[i]);
+					if (haveScaleKeys) s2.Add(scales[i]);
+				}
+			}
+			var max = times.Length - 1;
+
+			t2.Add(times[max]);
+			if (haveTranslationKeys) p2.Add(positions[max]);
+			if (haveRotationKeys) r2.Add(rotations[max]);
+			if (haveScaleKeys) s2.Add(scales[max]);
+
+			Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
+
+			times = t2.ToArray();
+			if (haveTranslationKeys) positions = p2.ToArray();
+			if (haveRotationKeys) rotations = r2.ToArray();
+			if (haveScaleKeys) scales = s2.ToArray();
 		}
 
 		private UnityEngine.Mesh getMesh(GameObject gameObject)
