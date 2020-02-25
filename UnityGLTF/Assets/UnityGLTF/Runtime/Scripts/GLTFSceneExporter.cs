@@ -2272,7 +2272,7 @@ namespace UnityGLTF
 
 			if (BakeAnimationData)
 			{
-				Debug.LogWarning("Animated Properties: " + targetCurvesBinding.Count);
+				// Debug.Log("<b>Animated Properties: " + targetCurvesBinding.Count + "</b>");
 				// Bake animation for all animated nodes
 				foreach (string target in targetCurvesBinding.Keys)
 				{
@@ -2287,7 +2287,7 @@ namespace UnityGLTF
 					int haveScaleCurves = current.scaleCurves[0] != null ? current.scaleCurves.Length : 0;
 					int haveRotationCurves = current.rotationCurves[0] != null ? current.rotationCurves.Length : 0;
 
-					Debug.Log(target + ": " + "translation: " + haveTranslationCurves + " scale: " + haveScaleCurves + " rotation: " + haveRotationCurves);
+					// Debug.Log(target + ": " + "translation: " + haveTranslationCurves + " scale: " + haveScaleCurves + " rotation: " + haveRotationCurves);
 
 					// Initialize data
 					// Bake and populate animation data
@@ -2619,7 +2619,7 @@ namespace UnityGLTF
 			if (haveRotationKeys) r2.Add(rotations[max]);
 			if (haveScaleKeys) s2.Add(scales[max]);
 
-			Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
+			// Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
 
 			times = t2.ToArray();
 			if (haveTranslationKeys) positions = p2.ToArray();
