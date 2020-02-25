@@ -88,11 +88,9 @@ namespace GLTF.Schema
 			writer.WritePropertyName("input");
 			writer.WriteValue(Input.Id);
 
-			if (Interpolation != InterpolationType.LINEAR)
-			{
-				writer.WritePropertyName("interpolation");
-				writer.WriteValue(Interpolation.ToString());
-			}
+			// the spec defines "LINEAR" as default, but we need to explicitly export this since there are issues with Google SceneViewer when no interpolation is specified
+			writer.WritePropertyName("interpolation");
+			writer.WriteValue(Interpolation.ToString());
 
 			writer.WritePropertyName("output");
 			writer.WriteValue(Output.Id);
