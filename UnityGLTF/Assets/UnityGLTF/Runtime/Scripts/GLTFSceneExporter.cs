@@ -746,7 +746,7 @@ namespace UnityGLTF
 		private void ExportAnimation()
 		{
 			GLTFAnimation anim = new GLTFAnimation();
-			anim.Name = "Take 001";
+			anim.Name = "Take001";
 
 			for (int i = 0; i < _animatedNodes.Count; ++i)
 			{
@@ -2259,13 +2259,20 @@ namespace UnityGLTF
 			Dictionary<string, TargetCurveSet> targetCurvesBinding = new Dictionary<string, TargetCurveSet>();
 			CollectClipCurves(clip, ref targetCurvesBinding);
 
+			//foreach(var str in targetCurvesBinding)
+			//{
+			//	Debug.Log(clip.name + ": " + transform.name + ": " + str);
+			//}
+
 			// Baking needs all properties, fill missing curves with transform data in 2 keyframes (start, endTime)
 			// where endTime is clip duration
 			// Note: we should avoid creating curves for a property if none of it's components is animated
-			GenerateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
+
+			// GenerateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
 
 			if (BakeAnimationData)
 			{
+				Debug.LogWarning("Animated Properties: " + targetCurvesBinding.Count);
 				// Bake animation for all animated nodes
 				foreach (string target in targetCurvesBinding.Keys)
 				{
@@ -2275,6 +2282,12 @@ namespace UnityGLTF
 						continue;
 					}
 
+					TargetCurveSet current = targetCurvesBinding[target];
+					int haveTranslationCurves = current.translationCurves[0] != null ? current.translationCurves.Length : 0;
+					int haveScaleCurves = current.scaleCurves[0] != null ? current.scaleCurves.Length : 0;
+					int haveRotationCurves = current.rotationCurves[0] != null ? current.rotationCurves.Length : 0;
+
+					Debug.Log(target + ": " + "translation: " + haveTranslationCurves + " scale: " + haveScaleCurves + " rotation: " + haveRotationCurves);
 
 					// Initialize data
 					// Bake and populate animation data
@@ -2285,82 +2298,97 @@ namespace UnityGLTF
 					BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, ref times, ref positions, ref rotations, ref scales);
 
 					int channelTargetId = getTargetIdFromTransform(ref targetTr);
-					AccessorId timeAccessor = ExportAccessor(times);
 
-					// Create channel
-					AnimationChannel Tchannel = new AnimationChannel();
-					AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-					TchannelTarget.Path = GLTFAnimationChannelPath.translation;
-					TchannelTarget.Node = new NodeId
-					{
-						Id = channelTargetId,
-						Root = _root
-					};
+					bool haveAnimation = positions != null || rotations != null || scales != null;
 
-					Tchannel.Target = TchannelTarget;
+					if(haveAnimation)
+					{ 
+						AccessorId timeAccessor = ExportAccessor(times);
 
-					AnimationSampler Tsampler = new AnimationSampler();
-					Tsampler.Input = timeAccessor;
-					Tsampler.Output = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(positions, SchemaExtensions.CoordinateSpaceConversionScale));
-					Tchannel.Sampler = new AnimationSamplerId
-					{
-						Id = animation.Samplers.Count,
-						GLTFAnimation = animation,
-						Root = _root
-					};
+						// Translation
+						if(positions != null)
+						{ 
+							AnimationChannel Tchannel = new AnimationChannel();
+							AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
+							TchannelTarget.Path = GLTFAnimationChannelPath.translation;
+							TchannelTarget.Node = new NodeId
+							{
+								Id = channelTargetId,
+								Root = _root
+							};
 
-					animation.Samplers.Add(Tsampler);
-					animation.Channels.Add(Tchannel);
+							Tchannel.Target = TchannelTarget;
 
-					// Rotation
-					AnimationChannel Rchannel = new AnimationChannel();
-					AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
-					RchannelTarget.Path = GLTFAnimationChannelPath.rotation;
-					RchannelTarget.Node = new NodeId
-					{
-						Id = channelTargetId,
-						Root = _root
-					};
+							AnimationSampler Tsampler = new AnimationSampler();
+							Tsampler.Input = timeAccessor;
+							Tsampler.Output = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(positions, SchemaExtensions.CoordinateSpaceConversionScale));
+							Tchannel.Sampler = new AnimationSamplerId
+							{
+								Id = animation.Samplers.Count,
+								GLTFAnimation = animation,
+								Root = _root
+							};
 
-					Rchannel.Target = RchannelTarget;
+							animation.Samplers.Add(Tsampler);
+							animation.Channels.Add(Tchannel);
+						}
 
-					AnimationSampler Rsampler = new AnimationSampler();
-					Rsampler.Input = timeAccessor; // Float, for time
-					Rsampler.Output = ExportAccessor(rotations, true); // Vec4 for
-					Rchannel.Sampler = new AnimationSamplerId
-					{
-						Id = animation.Samplers.Count,
-						GLTFAnimation = animation,
-						Root = _root
-					};
+						if(rotations != null)
+						{ 
+							// Rotation
+							AnimationChannel Rchannel = new AnimationChannel();
+							AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
+							RchannelTarget.Path = GLTFAnimationChannelPath.rotation;
+							RchannelTarget.Node = new NodeId
+							{
+								Id = channelTargetId,
+								Root = _root
+							};
 
-					animation.Samplers.Add(Rsampler);
-					animation.Channels.Add(Rchannel);
+							Rchannel.Target = RchannelTarget;
 
-					// Scale
-					AnimationChannel Schannel = new AnimationChannel();
-					AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
-					SchannelTarget.Path = GLTFAnimationChannelPath.scale;
-					SchannelTarget.Node = new NodeId
-					{
-						Id = channelTargetId,
-						Root = _root
-					};
+							AnimationSampler Rsampler = new AnimationSampler();
+							Rsampler.Input = timeAccessor; // Float, for time
+							Rsampler.Output = ExportAccessor(rotations, true); // Vec4 for
+							Rchannel.Sampler = new AnimationSamplerId
+							{
+								Id = animation.Samplers.Count,
+								GLTFAnimation = animation,
+								Root = _root
+							};
 
-					Schannel.Target = SchannelTarget;
+							animation.Samplers.Add(Rsampler);
+							animation.Channels.Add(Rchannel);
+						}
 
-					AnimationSampler Ssampler = new AnimationSampler();
-					Ssampler.Input = timeAccessor; // Float, for time
-					Ssampler.Output = ExportAccessor(scales); // Vec3 for scale
-					Schannel.Sampler = new AnimationSamplerId
-					{
-						Id = animation.Samplers.Count,
-						GLTFAnimation = animation,
-						Root = _root
-					};
+						if(scales != null)
+						{ 
+							// Scale
+							AnimationChannel Schannel = new AnimationChannel();
+							AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
+							SchannelTarget.Path = GLTFAnimationChannelPath.scale;
+							SchannelTarget.Node = new NodeId
+							{
+								Id = channelTargetId,
+								Root = _root
+							};
 
-					animation.Samplers.Add(Ssampler);
-					animation.Channels.Add(Schannel);
+							Schannel.Target = SchannelTarget;
+
+							AnimationSampler Ssampler = new AnimationSampler();
+							Ssampler.Input = timeAccessor; // Float, for time
+							Ssampler.Output = ExportAccessor(scales); // Vec3 for scale
+							Schannel.Sampler = new AnimationSamplerId
+							{
+								Id = animation.Samplers.Count,
+								GLTFAnimation = animation,
+								Root = _root
+							};
+
+							animation.Samplers.Add(Ssampler);
+							animation.Channels.Add(Schannel);
+						}
+					}
 				}
 			}
 			else
@@ -2430,7 +2458,7 @@ namespace UnityGLTF
 			}
 			#endif
 		}
-
+		
 		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
 		{
 			foreach (string target in targetCurvesBinding.Keys)
@@ -2478,27 +2506,79 @@ namespace UnityGLTF
 			int nbSamples = Mathf.Max(1, (int)(length * 30));
 			float deltaTime = length / nbSamples;
 
+			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
+			bool haveRotationKeys = curveSet.rotationCurves != null && curveSet.rotationCurves.Length > 0 && curveSet.rotationCurves[0] != null;
+			bool haveScaleKeys = curveSet.scaleCurves != null && curveSet.scaleCurves.Length > 0 && curveSet.scaleCurves[0] != null;
+
+			if(haveScaleKeys)
+			{
+				if(curveSet.scaleCurves.Length < 3)
+				{
+					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now");
+					return;
+				}
+				bool anyIsNull = false;
+				foreach (var sc in curveSet.scaleCurves)
+					anyIsNull |= sc == null;
+
+				if (anyIsNull)
+				{
+					Debug.LogWarning("A scale curve has at least one null property curve! Ignoring");
+					haveScaleKeys = false;
+				}
+			}
+
+			if(haveRotationKeys)
+			{
+				bool anyIsNull = false;
+				foreach (var sc in curveSet.rotationCurves)
+					anyIsNull |= sc == null;
+
+				if (anyIsNull)
+				{
+					Debug.LogWarning("A rotation curve has at least one null property curve! Ignoring");
+					haveRotationKeys = false;
+				}
+			}
+
+			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys)
+			{
+				Debug.LogError("No keys in curveSet!");
+				return;
+			}
+
 			// Initialize Arrays
 			times = new float[nbSamples];
-			positions = new Vector3[nbSamples];
-			scales = new Vector3[nbSamples];
-			rotations = new Vector4[nbSamples];
+			if(haveTranslationKeys)
+				positions = new Vector3[nbSamples];
+			if(haveScaleKeys)
+				scales = new Vector3[nbSamples];
+			if(haveRotationKeys)
+				rotations = new Vector4[nbSamples];
 
 			// Assuming all the curves exist now
 			for (int i = 0; i < nbSamples; ++i)
 			{
 				float currentTime = i * deltaTime;
 				times[i] = currentTime;
-				positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
-				scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
-				if (curveSet.rotationType == AnimationKeyRotationType.Euler)
-				{
-					Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
-					rotations[i] = new Vector4(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
-				}
-				else
-				{
-					rotations[i] = new Vector4(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
+
+				if(haveTranslationKeys)
+					positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
+
+				if(haveScaleKeys)
+					scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
+
+				if(haveRotationKeys)
+				{ 
+					if (curveSet.rotationType == AnimationKeyRotationType.Euler)
+					{
+						Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
+						rotations[i] = new Vector4(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
+					}
+					else
+					{
+						rotations[i] = new Vector4(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
+					}
 				}
 			}
 		}
