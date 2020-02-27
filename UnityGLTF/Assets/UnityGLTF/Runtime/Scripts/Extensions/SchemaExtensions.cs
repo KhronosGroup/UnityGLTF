@@ -519,16 +519,16 @@ namespace UnityGLTF.Extensions
 		/// </summary>
 		/// <param name="array">The array to extract from and copy</param>
 		/// <returns>Copied Vector4 with joints</returns>
-		public static Vector4[] ExtractJointAndCopy(BoneWeight[] array)
+		public static int[] ExtractJointAndCopy(BoneWeight[] array)
 		{
-			var returnArray = new Vector4[array.Length];
+			var returnArray = new int[array.Length * 4];
 
 			for (var i = 0; i < array.Length; i++)
 			{
-				returnArray[i].x = array[i].boneIndex0;
-				returnArray[i].y = array[i].boneIndex1;
-				returnArray[i].z = array[i].boneIndex2;
-				returnArray[i].w = array[i].boneIndex3;
+				returnArray[i * 4] = array[i].boneIndex0;
+				returnArray[i * 4 + 1] = array[i].boneIndex1;
+				returnArray[i * 4 + 2] = array[i].boneIndex2;
+				returnArray[i * 4 + 3] = array[i].boneIndex3;
 			}
 
 			return returnArray;
