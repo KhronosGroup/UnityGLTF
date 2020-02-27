@@ -26,13 +26,13 @@ namespace GLTF.Schema
 		/// <summary>
 		/// RGBA value for ambient light reflected from the surface of the object.
 		/// </summary>
-		public Color Ambient = Color.Black;
+		public Color Ambient = AMBIENT_DEFAULT;
 		public static readonly Color AMBIENT_DEFAULT = Color.Black;
 
 		/// <summary>
 		/// RGBA value for light emitted by the surface of the object.
 		/// </summary>
-		public Color EmissionColor = Color.Black;
+		public Color EmissionColor = EMISSIONCOLOR_DEFAULT;
 		public static readonly Color EMISSIONCOLOR_DEFAULT = Color.Black;
 
 		/// <summary>
@@ -44,7 +44,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// RGBA value defining the amount of light diffusely reflected from the surface of the object.
 		/// </summary>
-		public Color DiffuseColor = Color.Black;
+		public Color DiffuseColor = DIFFUSECOLOR_DEFAULT;
 		public static readonly Color DIFFUSECOLOR_DEFAULT = Color.Black;
 
 		/// <summary>
@@ -56,7 +56,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// RGBA value defining the color of light specularly reflected from the surface of the object.
 		/// </summary>
-		public Color SpecularColor = Color.Black;
+		public Color SpecularColor = SPECULARCOLOR_DEFAULT;
 		public static readonly Color SPECULARCOLOR_DEFAULT = Color.Black;
 
 		/// <summary>
@@ -68,13 +68,13 @@ namespace GLTF.Schema
 		/// <summary>
 		/// Defines the specularity or roughness of the specular reflection lobe of the object.
 		/// </summary>
-		public float Shininess = 0.0f;
+		public float Shininess = SHININESS_DEFAULT;
 		public static readonly float SHININESS_DEFAULT = 0.0f;
 
 		/// <summary>
 		/// Declares the amount of transparency as an opacity value between 0.0 and 1.0.
 		/// </summary>
-		public float Transparency = 1.0f;
+		public float Transparency = TRANSPARENCY_DEFAULT;
 		public static readonly float TRANSPARENCY_DEFAULT = 1.0f;
 
 		/// <summary>
@@ -82,13 +82,13 @@ namespace GLTF.Schema
 		/// Corresponds to enabling the BLEND render state, setting the depthMask property to false,
 		/// and defining blend equations and blend functions as described in the implementation note.
 		/// </summary>
-		public bool Transparent = false;
+		public bool Transparent = TRANSPARENT_DEFAULT;
 		public static readonly bool TRANSPARENT_DEFAULT = false;
 
 		/// <summary>
 		/// Declares whether backface culling should be disabled for this visual. Corresponds to disabling the CULL_FACE render state.
 		/// </summary>
-		public bool DoubleSided = false;
+		public bool DoubleSided = DOUBLESIDED_DEFAULT;
 		public static readonly bool DOUBLESIDED_DEFAULT = false;
 
 

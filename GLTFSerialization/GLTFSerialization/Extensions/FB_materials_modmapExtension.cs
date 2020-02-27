@@ -18,7 +18,7 @@ namespace GLTF.Schema
 		/// The modmap texture.
 		/// This texture contains RGB components of the modmap data of the material in sRGB color space.  
 		/// </summary>
-		public TextureInfo ModmapTexture;
+		public TextureInfo ModmapTexture = MODMAP_TEXTURE_DEFAULT;
 		public static readonly TextureInfo MODMAP_TEXTURE_DEFAULT = new TextureInfo();
 
 
@@ -52,7 +52,7 @@ namespace GLTF.Schema
 				));
 			}
 
-			if (ModmapTexture != null)
+			if (ModmapTexture != MODMAP_TEXTURE_DEFAULT)
 			{
 				ext.Add(new JProperty(
 					FB_materials_modmapExtensionFactory.MODMAP_TEXTURE,
