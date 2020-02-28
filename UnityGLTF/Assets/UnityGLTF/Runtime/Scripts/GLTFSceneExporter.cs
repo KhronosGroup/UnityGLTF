@@ -1206,7 +1206,7 @@ namespace UnityGLTF
 
 			if(meshObj.boneWeights.Length != 0)
 			{
-				aJoint0 = ExportAccessor(SchemaExtensions.ExtractJointAndCopy(meshObj.boneWeights));
+				aJoint0 = ExportAccessor(SchemaExtensions.ExtractJointAndCopy(meshObj.boneWeights), SemanticProperties.JOINTS_0);
 				aWeight0 = ExportAccessor(SchemaExtensions.ExtractWeightAndCopy(meshObj.boneWeights));
 			}
 
@@ -1227,7 +1227,7 @@ namespace UnityGLTF
 				if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
 
 				primitive.Mode = GetDrawMode(topology);
-				primitive.Indices = ExportAccessor(indices, true);
+				primitive.Indices = ExportAccessor(indices, SemanticProperties.INDICES);
 
 				primitive.Attributes = new Dictionary<string, AccessorId>();
 				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
@@ -1936,7 +1936,7 @@ namespace UnityGLTF
 			return id;
 		}
 		
-		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
+		private AccessorId ExportAccessor(int[] arr, string property)
 		{
 			uint count = (uint)arr.Length;
 
@@ -1945,9 +1945,12 @@ namespace UnityGLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
+			bool isJoints = property == SemanticProperties.JOINTS_0;
+			bool isIndices = property == SemanticProperties.INDICES;
+
 			var accessor = new Accessor();
-			accessor.Count = count;
-			accessor.Type = GLTFAccessorAttributeType.SCALAR;
+			accessor.Count = isJoints ? count / 4 : count;
+			accessor.Type = isJoints ? GLTFAccessorAttributeType.VEC4 : GLTFAccessorAttributeType.SCALAR;
 
 			int min = arr[0];
 			int max = arr[0];
