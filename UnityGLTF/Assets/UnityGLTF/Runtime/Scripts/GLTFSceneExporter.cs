@@ -113,8 +113,8 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<Mesh, MeshPrimitive[]>();
 
 		private readonly Dictionary<int, NodeId> _existedNodes = new Dictionary<int, NodeId>();
-		private readonly Dictionary<int, AnimationId> _existedAnimation = new Dictionary<int, AnimationId>();
-		private readonly Dictionary<int, SkinId> _existedSkin = new Dictionary<int, SkinId>();
+		private readonly Dictionary<int, AnimationId> _existedAnimations = new Dictionary<int, AnimationId>();
+		private readonly Dictionary<int, SkinId> _existedSkins = new Dictionary<int, SkinId>();
 
 		// Settings
 		public static bool ExportNames = true;
@@ -731,7 +731,7 @@ namespace UnityGLTF
 			foreach (var prim in primitives)
 			{
 				var smr = prim.GetComponent<SkinnedMeshRenderer>();
-				if (_existedSkin.TryGetValue(smr.rootBone.GetInstanceID(), out SkinId skinId))
+				if (_existedSkins.TryGetValue(smr.rootBone.GetInstanceID(), out SkinId skinId))
 				{
 					node.Skin = skinId;
 					node.Mesh = ExportMesh(prim.name, new GameObject[] { prim });
@@ -824,7 +824,7 @@ namespace UnityGLTF
 				
 				node.Mesh = ExportMesh(prim.name, new GameObject[] { prim });
 
-				_existedSkin.Add(smr.rootBone.GetInstanceID(), skinId);
+				_existedSkins.Add(smr.rootBone.GetInstanceID(), skinId);
 			}
 		}
 
@@ -906,10 +906,10 @@ namespace UnityGLTF
 			{
 				var animInstId = animationClip.GetInstanceID();
 				AnimationId existedAnimId;
-				if (!_existedAnimation.TryGetValue(animInstId, out existedAnimId))
+				if (!_existedAnimations.TryGetValue(animInstId, out existedAnimId))
 				{
 					var animId = ExportAnimationClip(animationClip, rootNodeTransform);
-					_existedAnimation.Add(animInstId, animId);
+					_existedAnimations.Add(animInstId, animId);
 				}
 			}
 		}
