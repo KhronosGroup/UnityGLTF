@@ -114,7 +114,7 @@ namespace UnityGLTF
 
 		private readonly Dictionary<int, NodeId> _existedNodes = new Dictionary<int, NodeId>();
 		private readonly Dictionary<int, AnimationId> _existedAnimation = new Dictionary<int, AnimationId>();
-
+		private readonly Dictionary<int, SkinId> _existedSkin = new Dictionary<int, SkinId>();
 
 		// Settings
 		public static bool ExportNames = true;
@@ -731,22 +731,34 @@ namespace UnityGLTF
 			foreach (var prim in primitives)
 			{
 				var smr = prim.GetComponent<SkinnedMeshRenderer>();
-				
+				if (_existedSkin.TryGetValue(smr.rootBone.GetInstanceID(), out SkinId skinId))
+				{
+					node.Skin = skinId;
+					node.Mesh = ExportMesh(prim.name, new GameObject[] { prim });
+					continue;
+				}
+
 				var skin = new Skin
 				{
 					Joints = new List<NodeId>()
 				};
-				
+
+				var mesh = smr.sharedMesh;
+				if (mesh.bindposes.Length != 0)
+				{
+					skin.InverseBindMatrices = ExportAccessor(SchemaExtensions.ConvertMatrix4x4CoordinateSpaceAndCopy(mesh.bindposes));
+				}
+
 				var baseId = _root.Nodes.Count;
-				
-				foreach(var bone in smr.bones)
+
+				foreach (var bone in smr.bones)
 				{
 					var translation = bone.localPosition;
 					var rotation = bone.localRotation;
 					var scale = bone.localScale;
 					
 					NodeId nodeId = null;
-					if(!_existedNodes.TryGetValue(bone.GetInstanceID(), out nodeId))
+					if (!_existedNodes.TryGetValue(bone.GetInstanceID(), out nodeId))
 					{
 						var boneNode = new Node
 						{
@@ -800,7 +812,7 @@ namespace UnityGLTF
 
 				skin.Skeleton = rootBoneId;
 
-				var skinId = new SkinId
+				skinId = new SkinId
 				{
 					Id = _root.Skins.Count,
 					Root = _root
@@ -810,11 +822,13 @@ namespace UnityGLTF
 
 				node.Skin = skinId;
 				
-				node.Mesh = ExportMesh(prim.name, new GameObject[] { prim }, skin);
+				node.Mesh = ExportMesh(prim.name, new GameObject[] { prim });
+
+				_existedSkin.Add(smr.rootBone.GetInstanceID(), skinId);
 			}
 		}
 
-		private MeshId ExportMesh(string name, GameObject[] primitives, Skin skin = null)
+		private MeshId ExportMesh(string name, GameObject[] primitives)
 		{
 			// check if this set of primitives is already a mesh
 			MeshId existingMeshId = null;
@@ -864,7 +878,7 @@ namespace UnityGLTF
 			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
 			foreach (var prim in primitives)
 			{
-				MeshPrimitive[] meshPrimitives = ExportPrimitive(prim, mesh, skin);
+				MeshPrimitive[] meshPrimitives = ExportPrimitive(prim, mesh);
 				if (meshPrimitives != null)
 				{
 					mesh.Primitives.AddRange(meshPrimitives);
@@ -1136,7 +1150,7 @@ namespace UnityGLTF
 		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
-		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh, Skin skin = null)
+		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh)
 		{
 			Mesh meshObj = null;
 			SkinnedMeshRenderer smr = null;
@@ -1208,12 +1222,6 @@ namespace UnityGLTF
 			{
 				aJoint0 = ExportAccessor(SchemaExtensions.ExtractJointAndCopy(meshObj.boneWeights), SemanticProperties.JOINTS_0);
 				aWeight0 = ExportAccessor(SchemaExtensions.ExtractWeightAndCopy(meshObj.boneWeights));
-			}
-
-			if(skin != null)
-			{
-				if (meshObj.bindposes.Length != 0)
-					skin.InverseBindMatrices = ExportAccessor(SchemaExtensions.ConvertMatrix4x4CoordinateSpaceAndCopy(meshObj.bindposes));
 			}
 
 			MaterialId lastMaterialId = null;
@@ -2027,8 +2035,11 @@ namespace UnityGLTF
 				}
 			}
 
-			accessor.Min = new List<double> { min };
-			accessor.Max = new List<double> { max };
+			if (accessor.Type == GLTFAccessorAttributeType.SCALAR)
+			{
+				accessor.Min = new List<double> { min };
+				accessor.Max = new List<double> { max };
+			}
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
