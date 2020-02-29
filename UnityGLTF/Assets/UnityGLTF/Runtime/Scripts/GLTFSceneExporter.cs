@@ -676,7 +676,7 @@ namespace UnityGLTF
 			{
 				if (ContainsValidRenderer(gameObject))
 				{
-					if(gameObject.GetComponent<SkinnedMeshRenderer>() != null)
+					if (gameObject.GetComponent<SkinnedMeshRenderer>() != null)
 					{
 						skinnedMeshPrims.Add(gameObject);
 					}
@@ -691,7 +691,7 @@ namespace UnityGLTF
 				var go = transform.GetChild(i).gameObject;
 				if (IsPrimitive(go))
 				{
-					if(go.GetComponent<SkinnedMeshRenderer>() != null)
+					if (go.GetComponent<SkinnedMeshRenderer>() != null)
 					{
 						skinnedMeshPrims.Add(go);
 					}
@@ -897,7 +897,7 @@ namespace UnityGLTF
 
 		private void ExportAnimations(AnimationClip[] animationClips, Transform rootNodeTransform)
 		{
-			if(null == animationClips)
+			if (null == animationClips)
 			{
 				return;
 			}
@@ -955,7 +955,7 @@ namespace UnityGLTF
 				{
 					GLTFAnimationChannelPath path;
 					AccessorId accessorId = ExportCurve(animationClip, property.name, property.curveBindings, frameCount, out path);
-					if(accessorId == null)
+					if (accessorId == null)
 					{
 						continue;
 					}
@@ -1093,14 +1093,14 @@ namespace UnityGLTF
 						bool bFoundCurveBindingSlot = false;
 						foreach (var property in curveGroup.properties)
 						{
-							if(property.name == Path.GetFileNameWithoutExtension(curveBinding.propertyName))
+							if (property.name == Path.GetFileNameWithoutExtension(curveBinding.propertyName))
 							{
 								property.curveBindings.Add(curveBinding);
 								bFoundCurveBindingSlot = true;
 							}
 						}
 						
-						if(!bFoundCurveBindingSlot)
+						if (!bFoundCurveBindingSlot)
 						{
 							curveGroup.properties.Add(new PropertyCurveBindings(Path.GetFileNameWithoutExtension(curveBinding.propertyName), curveBinding));
 						}
@@ -1218,7 +1218,7 @@ namespace UnityGLTF
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
 
-			if(meshObj.boneWeights.Length != 0)
+			if (meshObj.boneWeights.Length != 0)
 			{
 				aJoint0 = ExportAccessor(SchemaExtensions.ExtractJointAndCopy(meshObj.boneWeights), SemanticProperties.JOINTS_0);
 				aWeight0 = ExportAccessor(SchemaExtensions.ExtractWeightAndCopy(meshObj.boneWeights));
@@ -1315,7 +1315,7 @@ namespace UnityGLTF
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
 				materialObj.GetInt("_Cull") == (float)CullMode.Off;
 
-			if(materialObj.IsKeywordEnabled("_EMISSION"))
+			if (materialObj.IsKeywordEnabled("_EMISSION"))
 			{ 
 				if (materialObj.HasProperty("_EmissionColor"))
 				{
@@ -1328,7 +1328,7 @@ namespace UnityGLTF
 
 					if (emissionTex != null)
 					{
-						if(emissionTex is Texture2D)
+						if (emissionTex is Texture2D)
 						{
 							material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
 
@@ -1348,7 +1348,7 @@ namespace UnityGLTF
 
 				if (normalTex != null)
 				{
-					if(normalTex is Texture2D)
+					if (normalTex is Texture2D)
 					{
 						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
 						ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
@@ -1365,7 +1365,7 @@ namespace UnityGLTF
 				var occTex = materialObj.GetTexture("_OcclusionMap");
 				if (occTex != null)
 				{
-					if(occTex is Texture2D)
+					if (occTex is Texture2D)
 					{
 						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
 						ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
@@ -1552,7 +1552,7 @@ namespace UnityGLTF
 
 				if (mainTex != null)
 				{
-					if(mainTex is Texture2D)
+					if (mainTex is Texture2D)
 					{
 						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
@@ -1582,7 +1582,7 @@ namespace UnityGLTF
 
 				if (mrTex != null)
 				{
-					if(mrTex is Texture2D)
+					if (mrTex is Texture2D)
 					{
 						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
 						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
@@ -1599,7 +1599,7 @@ namespace UnityGLTF
 
 				if (mgTex != null)
 				{
-					if(mgTex is Texture2D)
+					if (mgTex is Texture2D)
 					{
 						pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
 						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
