@@ -8,7 +8,8 @@ using Newtonsoft.Json;
 
 public class GLTFExportMenu : EditorWindow
 {
-	public static string settingsPath = "./Temp/GLTFSettings.json";
+	public static string SettingsPath = "./Temp/GLTFSettings.json";
+	public static string OutputPath = "";
 
     public static string RetrieveTexturePath(UnityEngine.Texture texture)
     {
@@ -24,12 +25,12 @@ public class GLTFExportMenu : EditorWindow
 
 	private void OnEnable()
 	{
-		if (!File.Exists(settingsPath))
+		if (!File.Exists(SettingsPath))
 		{
 			return;
 		}
 
-		var settingsStream = File.OpenRead(settingsPath);
+		var settingsStream = File.OpenRead(SettingsPath);
 		TextReader textReader = new StreamReader(settingsStream);
 		var jsonReader = new JsonTextReader(textReader);
 
@@ -43,6 +44,9 @@ public class GLTFExportMenu : EditorWindow
 			var curProp = jsonReader.Value.ToString();
 			switch (curProp)
 			{
+				case "OutputPath":
+					OutputPath = jsonReader.ReadAsString();
+					break;
 				case "ExportNames":
 					GLTFSceneExporter.ExportNames = jsonReader.ReadAsBoolean().Value;
 					break;
@@ -62,20 +66,22 @@ public class GLTFExportMenu : EditorWindow
 	private void OnDisable()
 	{
 		FileStream settingsStream = null;
-		if (!File.Exists(settingsPath))
+		if (!File.Exists(SettingsPath))
 		{
-			settingsStream = File.Create(settingsPath);
+			settingsStream = File.Create(SettingsPath);
 		}
 
 		if (settingsStream == null)
 		{
-			settingsStream = File.OpenWrite(settingsPath);
+			settingsStream = File.OpenWrite(SettingsPath);
 		}
 		
 		TextWriter textWriter = new StreamWriter(settingsStream);
 		JsonWriter jsonWriter = new JsonTextWriter(textWriter);
 
 		jsonWriter.WriteStartObject();
+		jsonWriter.WritePropertyName("OutputPath");
+		jsonWriter.WriteValue(OutputPath);
 		jsonWriter.WritePropertyName("ExportNames");	
 		jsonWriter.WriteValue(GLTFSceneExporter.ExportNames);
 		jsonWriter.WritePropertyName("ExportFullPath");
@@ -117,9 +123,11 @@ public class GLTFExportMenu : EditorWindow
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
-		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		if (!string.IsNullOrEmpty(path)) {
-			exporter.SaveGLTFandBin (path, name);
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", OutputPath, "");
+		if (!string.IsNullOrEmpty(path))
+		{
+			OutputPath = path;
+			exporter.SaveGLTFandBin(OutputPath, name);
 		}
 	}
 	
@@ -137,10 +145,11 @@ public class GLTFExportMenu : EditorWindow
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
-		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", OutputPath, "");
 		if (!string.IsNullOrEmpty(path))
 		{
-			exporter.SaveGLB(path, name);
+			OutputPath = path;
+			exporter.SaveGLB(OutputPath, name);
 		}
 	}
 
@@ -153,9 +162,11 @@ public class GLTFExportMenu : EditorWindow
 
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(transforms, exportOptions);
-		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		if (path != "") {
-			exporter.SaveGLTFandBin (path, scene.name);
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", OutputPath, "");
+		if (!string.IsNullOrEmpty(path))
+		{
+			OutputPath = path;
+			exporter.SaveGLTFandBin(OutputPath, scene.name);
 		}
 	}
 }
