@@ -2244,7 +2244,7 @@ namespace UnityGLTF
 			}
 			else
 			{
-				Debug.Log(transform.name + " " + transform.GetInstanceID());
+				Debug.LogError("Transform is not part of _exportedTransforms: " + transform.name + " " + transform.GetInstanceID(), transform);
 				return 0;
 			}
 		}
