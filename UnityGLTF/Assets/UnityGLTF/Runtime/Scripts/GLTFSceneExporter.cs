@@ -718,10 +718,12 @@ namespace UnityGLTF
 			for (var i = 0; i < childCount; i++)
 			{
 				var go = transform.GetChild(i).gameObject;
-				if (IsPrimitive(go))
-					prims.Add(go);
-				else
-					nonPrims.Add(go);
+
+				// This seems to be a performance optimization but results in transforms that are detected as "primtives" not being animated
+				// if (IsPrimitive(go))
+				// 	 prims.Add(go);
+				// else
+				nonPrims.Add(go);
 			}
 
 			primitives = prims.ToArray();
