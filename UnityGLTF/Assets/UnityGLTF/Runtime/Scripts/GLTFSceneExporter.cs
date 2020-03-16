@@ -953,14 +953,13 @@ namespace UnityGLTF
 				material.Name = materialObj.name;
 			}
 
-			if (materialObj.HasProperty("_Cutoff"))
-			{
-				material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
-			}
-
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
 				case "TransparentCutout":
+					if (materialObj.HasProperty("_Cutoff"))
+					{
+						material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
+					}
 					material.AlphaMode = AlphaMode.MASK;
 					break;
 				case "Transparent":
