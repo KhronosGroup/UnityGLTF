@@ -2532,8 +2532,11 @@ namespace UnityGLTF
 			if(haveRotationKeys)
 			{
 				bool anyIsNull = false;
-				foreach (var sc in curveSet.rotationCurves)
-					anyIsNull |= sc == null;
+				int checkRotationKeyCount = curveSet.rotationType == AnimationKeyRotationType.Euler ? 3 : 4;
+				for (int i = 0; i < checkRotationKeyCount; i++)
+				{
+					anyIsNull |= curveSet.rotationCurves.Length - 1 < i || curveSet.rotationCurves[i] == null;
+				}
 
 				if (anyIsNull)
 				{
