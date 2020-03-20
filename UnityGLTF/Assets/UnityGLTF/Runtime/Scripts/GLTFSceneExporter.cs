@@ -891,13 +891,13 @@ namespace UnityGLTF
 
 			if (meshObj.uv.Length != 0)
 				aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
-
+			/*
 			if (meshObj.uv2.Length != 0)
 				aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
 
 			if (meshObj.colors.Length != 0)
 				aColor0 = ExportAccessor(meshObj.colors);
-
+			*/
 			MaterialId lastMaterialId = null;
 
 			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
