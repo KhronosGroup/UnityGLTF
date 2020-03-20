@@ -851,7 +851,14 @@ namespace UnityGLTF
 			}
 
 			var renderer = gameObject.GetComponent<MeshRenderer>();
-			var materialsObj = renderer != null ? renderer.sharedMaterials : smr.sharedMaterials;
+			if (!renderer) smr = gameObject.GetComponent<SkinnedMeshRenderer>();
+
+			if(!renderer && !smr)
+			{
+				Debug.LogWarning("GameObject does have neither renderer nor SkinnedMeshRenderer! " + gameObject.name, gameObject);
+				return new MeshPrimitive[] { };
+			}
+			var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
 
