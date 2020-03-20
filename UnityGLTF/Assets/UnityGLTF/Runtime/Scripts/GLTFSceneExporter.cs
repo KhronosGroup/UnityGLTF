@@ -155,14 +155,14 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLB(string path, string fileName)
+		public void SaveGLB(string path, string fileName, bool exportTransform = true)
 		{
 			_shouldUseInternalBufferForImages = true;
 			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
 			
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
 			{
-				SaveGLBToStream(glbFile, fileName);
+				SaveGLBToStream(glbFile, fileName, exportTransform);
 			}
 
 			if (!_shouldUseInternalBufferForImages)
@@ -180,7 +180,7 @@ namespace UnityGLTF
 		{
 			using (var stream = new MemoryStream())
 			{
-				SaveGLBToStream(stream, sceneName);
+				SaveGLBToStream(stream, sceneName, true);
 				return stream.ToArray();
 			}
 		}
@@ -190,7 +190,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLBToStream(Stream stream, string sceneName)
+		public void SaveGLBToStream(Stream stream, string sceneName, bool exportTransform)
 		{
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
@@ -199,7 +199,7 @@ namespace UnityGLTF
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
-			_root.Scene = ExportScene(sceneName, _rootTransforms);
+			_root.Scene = ExportScene(sceneName, _rootTransforms, exportTransform);
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
@@ -292,13 +292,13 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the GLTF and binary files</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLTFandBin(string path, string fileName)
+		public void SaveGLTFandBin(string path, string fileName, bool exportTransform = true)
 		{
 			_shouldUseInternalBufferForImages = false;
 			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
 			_bufferWriter = new BinaryWriter(binFile);
 
-			_root.Scene = ExportScene(fileName, _rootTransforms);
+			_root.Scene = ExportScene(fileName, _rootTransforms, exportTransform);
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
@@ -443,7 +443,7 @@ namespace UnityGLTF
 			return Path.ChangeExtension(filenamePath, ".png");
 		}
 
-		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
+		private SceneId ExportScene(string name, Transform[] rootObjTransforms, bool exportTransform)
 		{
 			var scene = new GLTFScene();
 
@@ -455,7 +455,7 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
-				scene.Nodes.Add(ExportNode(transform));
+				scene.Nodes.Add(ExportNode(transform, exportTransform));
 			}
 
 			_root.Scenes.Add(scene);
@@ -467,7 +467,7 @@ namespace UnityGLTF
 			};
 		}
 
-		private NodeId ExportNode(Transform nodeTransform)
+		private NodeId ExportNode(Transform nodeTransform, bool exportTransform = true)
 		{
 			var node = new Node();
 
@@ -483,7 +483,20 @@ namespace UnityGLTF
 				node.Camera = ExportCamera(unityCamera);
 			}
 
-			node.SetUnityTransform(nodeTransform);
+			if (exportTransform)
+			{
+				node.SetUnityTransform(nodeTransform);
+			}
+			else
+			{
+				var lastPos = nodeTransform.position;
+				var lastQuat = nodeTransform.rotation;
+				nodeTransform.position = Vector3.zero;
+				nodeTransform.rotation = Quaternion.identity;
+				node.SetUnityTransform(nodeTransform);
+				nodeTransform.position = lastPos;
+				nodeTransform.rotation = lastQuat;
+			}
 
 			var id = new NodeId
 			{

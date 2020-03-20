@@ -31,6 +31,48 @@ public class GLTFExportMenu : EditorWindow
         EditorGUILayout.HelpBox("Supported extensions: KHR_material_pbrSpecularGlossiness, ExtTextureTransform", MessageType.Info);
     }
 
+	[MenuItem("GLTF/Export Selected With Root Transform")]
+	static void ExportSelectedWithTransform()
+	{
+		string name;
+		if (Selection.transforms.Length > 1)
+			name = SceneManager.GetActiveScene().name;
+		else if (Selection.transforms.Length == 1)
+			name = Selection.activeGameObject.name;
+		else
+			throw new Exception("No objects selected, cannot export.");
+
+		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
+
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
+		if (!string.IsNullOrEmpty(path))
+		{
+			exporter.SaveGLTFandBin(path, name);
+		}
+	}
+
+	[MenuItem("GLTF/ExportGLB Selected With Root Transform")]
+	static void ExportGLBSelectedWithTransform()
+	{
+		string name;
+		if (Selection.transforms.Length > 1)
+			name = SceneManager.GetActiveScene().name;
+		else if (Selection.transforms.Length == 1)
+			name = Selection.activeGameObject.name;
+		else
+			throw new Exception("No objects selected, cannot export.");
+
+		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
+
+		var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
+		if (!string.IsNullOrEmpty(path))
+		{
+			exporter.SaveGLB(path, name);
+		}
+	}
+
     [MenuItem("GLTF/Export Selected")]
 	static void ExportSelected()
 	{
@@ -46,8 +88,9 @@ public class GLTFExportMenu : EditorWindow
 		var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
 
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		if (!string.IsNullOrEmpty(path)) {
-			exporter.SaveGLTFandBin (path, name);
+		if (!string.IsNullOrEmpty(path))
+		{
+			exporter.SaveGLTFandBin (path, name, false);
 		}
 	}
 	
@@ -68,7 +111,7 @@ public class GLTFExportMenu : EditorWindow
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
 		if (!string.IsNullOrEmpty(path))
 		{
-			exporter.SaveGLB(path, name);
+			exporter.SaveGLB(path, name, false);
 		}
 	}
 
@@ -82,7 +125,8 @@ public class GLTFExportMenu : EditorWindow
 		var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 		var exporter = new GLTFSceneExporter(transforms, exportOptions);
 		var path = EditorUtility.OpenFolderPanel("glTF Export Path", "", "");
-		if (path != "") {
+		if (path != "")
+		{
 			exporter.SaveGLTFandBin (path, scene.name);
 		}
 	}
