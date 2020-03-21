@@ -925,7 +925,10 @@ namespace UnityGLTF
 			}
 			else
 			{
-				ExportCommonMaterial(material, materialObj);
+				if (!ExportCommonMaterial(material, materialObj)) 
+				{
+					throw new Exception(String.Format("Please check the material of game object {0} and change a valid one.", renderer.transform.name));
+				}
 			}
 
 			if(HasMaterialsModmap(materialObj, renderer))
@@ -1338,7 +1341,10 @@ namespace UnityGLTF
 				technique = KHR_materials_commonExtension.CommonTechnique.CONSTANT;
 			}
 
-			if(technique == KHR_materials_commonExtension.CommonTechnique.NONE) throw new Exception("Please check the material and change a valid one.");
+			if (technique == KHR_materials_commonExtension.CommonTechnique.NONE)
+			{
+				return false;
+			}
 
 			material.Extensions[KHR_materials_commonExtensionFactory.EXTENSION_NAME] = new KHR_materials_commonExtension(
 				technique,
@@ -1354,6 +1360,8 @@ namespace UnityGLTF
 				transparent,
 				doubleSided
 			);
+
+			return true;
 		}
 
 		private void ExportModmap(GLTFMaterial material, Material materialObj, MeshRenderer renderer)
