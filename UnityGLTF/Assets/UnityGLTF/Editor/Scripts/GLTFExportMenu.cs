@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 public class GLTFExportMenu : EditorWindow
 {
-	public static string SettingsPath = "./GLTFSettings.json";
+	public static string SettingsPath = "./ProjectSettings/GLTFSettings.json";
 	public static string OutputPath = "";
 
     public static string RetrieveTexturePath(UnityEngine.Texture texture)
