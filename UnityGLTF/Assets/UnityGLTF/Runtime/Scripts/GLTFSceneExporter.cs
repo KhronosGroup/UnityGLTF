@@ -1196,7 +1196,7 @@ namespace UnityGLTF
 			return pbr;
 		}
 
-		private void ExportCommonMaterial(GLTFMaterial material, Material materialObj)
+		private bool ExportCommonMaterial(GLTFMaterial material, Material materialObj)
 		{
 			if (_root.ExtensionsUsed == null)
 			{
