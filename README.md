@@ -54,3 +54,12 @@ For details on the automated server-side builds and how to update them, see [\sc
 1. Clone or download the repository (including submodules).
 2. Open up the Unity project and run any of the example scenes in `Assets/GLTF/Examples` OR run the main scene in `Assets` and use the `Model List` component to dynamically switch between models.
 
+
+## How to use it for your Unity Project ?
+
+1. Download the [lastest UnityPackage](https://github.com/KhronosGroup/UnityGLTF/releases/latest).
+2. Download the [source code](https://github.com/KhronosGroup/UnityGLTF/archive/v1.0.1.zip).
+3. Import the UnityPackage into your Unity Project.
+4. Unzip the source code in a folder outside your Unity Project.
+5. Go inside this folder and look for `UnityGLTF\UnityGLTF\Assets\UnityGLTF\Runtime\Resources`.
+6. Copy the folder `Resources` from this folder to your UnityProject inside the new `UnityGLTF` folder that has been created after importing the package.
