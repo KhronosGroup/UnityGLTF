@@ -80,9 +80,11 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<Mesh, MeshPrimitive[]>();
 
 		// Settings
-		public static bool ExportNames = true;
-		public static bool ExportFullPath = true;
-		public static bool RequireExtensions = false;
+		public static GLTFSettings Settings;
+		public static void InitSettings()
+		{
+			Settings = GLTFSettings.CreateInstance();
+		}
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -100,6 +102,8 @@ namespace UnityGLTF
 		/// <param name="rootTransforms">Root transform of object to export</param>
 		public GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options)
 		{
+			InitSettings();
+
 			_exportOptions = options;
 
 			var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
@@ -434,7 +438,7 @@ namespace UnityGLTF
 			}
 
 			var filenamePath = Path.Combine(outputPath, imagePath);
-			if (!ExportFullPath)
+			if (!Settings.exportFullPath)
 			{
 				filenamePath = outputPath + "/" + texture.name;
 			}
@@ -447,7 +451,7 @@ namespace UnityGLTF
 		{
 			var scene = new GLTFScene();
 
-			if (ExportNames)
+			if (Settings.exportNames)
 			{
 				scene.Name = name;
 			}
@@ -471,7 +475,7 @@ namespace UnityGLTF
 		{
 			var node = new Node();
 
-			if (ExportNames)
+			if (Settings.exportNames)
 			{
 				node.Name = nodeTransform.name;
 			}
@@ -682,7 +686,7 @@ namespace UnityGLTF
 			// if not, create new mesh and return its id
 			var mesh = new GLTFMesh();
 
-			if (ExportNames)
+			if (Settings.exportNames)
 			{
 				mesh.Name = name;
 			}
@@ -826,7 +830,7 @@ namespace UnityGLTF
 
 			var material = new GLTFMaterial();
 
-			if (ExportNames)
+			if (Settings.exportNames)
 			{
 				material.Name = materialObj.name;
 			}
@@ -1015,7 +1019,7 @@ namespace UnityGLTF
 				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
 			}
 
-			if (RequireExtensions)
+			if (Settings.requireExtensions)
 			{
 				if (_root.ExtensionsRequired == null)
 				{
@@ -1162,7 +1166,7 @@ namespace UnityGLTF
 				_root.ExtensionsUsed.Add("KHR_materials_common");
 			}
 
-			if (RequireExtensions)
+			if (Settings.requireExtensions)
 			{
 				if (_root.ExtensionsRequired == null)
 				{
@@ -1226,7 +1230,7 @@ namespace UnityGLTF
 				textureObj.name = (_root.Textures.Count + 1).ToString();
 			}
 
-			if (ExportNames)
+			if (Settings.exportNames)
 			{
 				texture.Name = textureObj.name;
 			}
@@ -1264,7 +1268,7 @@ namespace UnityGLTF
 
 			var image = new GLTFImage();
 
-			if (ExportNames)
+			if (Settings.exportNames)
 			{
 				image.Name = texture.name;
 			}
@@ -1282,7 +1286,7 @@ namespace UnityGLTF
 			}
 
 			var filenamePath = Path.ChangeExtension(imagePath, ".png");
-			if (!ExportFullPath)
+			if (!Settings.exportFullPath)
 			{
 				filenamePath = Path.ChangeExtension(texture.name, ".png");
 			}
