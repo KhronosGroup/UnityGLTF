@@ -18,14 +18,11 @@ public class GLTFSettings : ScriptableObject
 	public static SerializedProperty ExportFullPathSp;
 	public static GUIContent RequireExtensionsGc = new GUIContent("Require extensions");
 	public static SerializedProperty RequireExtensionsSp;
-	public static GUIContent ExportPhysicsCollidersGc = new GUIContent("Export physics colliders");
-	public static SerializedProperty ExportPhysicsCollidersSp;
 
 	public string outputPath = "";
 	public bool exportNames = true;
 	public bool exportFullPath = true;
 	public bool requireExtensions = false;
-	public bool exportPhysicsColliders = true;
 
 
 	public static GLTFSettings CreateInstance()
@@ -79,7 +76,6 @@ public class GLTFSettings : ScriptableObject
 		ExportNamesSp = FindProperty("exportNames");
 		ExportFullPathSp = FindProperty("exportFullPath");
 		RequireExtensionsSp = FindProperty("requireExtensions");
-		ExportPhysicsCollidersSp = FindProperty("exportPhysicsColliders");
 	}
 
 	public static void Update()
