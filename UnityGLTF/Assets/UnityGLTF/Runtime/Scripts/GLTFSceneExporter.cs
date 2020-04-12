@@ -531,7 +531,10 @@ namespace UnityGLTF
 			};
 			_root.Nodes.Add(node);
 
-			_existedNodes.Add(nodeTransform.GetInstanceID(), id);
+			if (!_existedNodes.ContainsKey(nodeTransform.GetInstanceID()))
+			{
+				_existedNodes.Add(nodeTransform.GetInstanceID(), id);
+			}
 
 			// children that are primitives get put in a mesh
 			GameObject[] meshPrimitives, skinnedMeshPrimitives, nonPrimitives;
@@ -541,7 +544,21 @@ namespace UnityGLTF
 			if (nonPrimitives.Length > 0)
 			{
 				node.Children = new List<NodeId>(nonPrimitives.Length);
+				List<GameObject> postProcess = new List<GameObject>();
 				foreach (var child in nonPrimitives)
+				{
+					GameObject[] childMeshPrimitives, childSkinnedMeshPrimitives, childNonPrimitives;
+					FilterPrimitives(child.transform, out childMeshPrimitives, out childSkinnedMeshPrimitives, out childNonPrimitives);
+					if (childMeshPrimitives.Length + childSkinnedMeshPrimitives.Length > 0)
+					{
+						postProcess.Add(child);
+						continue;
+					}
+
+					node.Children.Add(ExportNode(child.transform));
+				}
+
+				foreach (var child in postProcess)
 				{
 					node.Children.Add(ExportNode(child.transform));
 				}
@@ -762,7 +779,7 @@ namespace UnityGLTF
 					{
 						var boneNode = new Node
 						{
-							Name = bone.gameObject.name,
+							Name = ExportNames ? bone.gameObject.name : null,
 							Translation = new GLTF.Math.Vector3(translation.x, translation.y, translation.z),
 							Rotation = new GLTF.Math.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w),
 							Scale = new GLTF.Math.Vector3(scale.x, scale.y, scale.z),
@@ -795,6 +812,7 @@ namespace UnityGLTF
 						};
 						
 						_root.Nodes.Add(boneNode);
+						_existedNodes.Add(bone.GetInstanceID(), nodeId);
 					}
 
 					skin.Joints.Add(nodeId);
@@ -808,6 +826,7 @@ namespace UnityGLTF
 						Id = baseId,
 						Root = _root
 					};
+					_existedNodes.Add(smr.rootBone.GetInstanceID(), rootBoneId);
 				}
 
 				skin.Skeleton = rootBoneId;
