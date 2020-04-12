@@ -1078,7 +1078,7 @@ namespace UnityGLTF
 				def.Extensions = new Dictionary<string, IExtension>();
 
 			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
-				new GLTF.Math.Vector2(offset.x, -offset.y),
+				new GLTF.Math.Vector2(offset.x, offset.y),
 				0, // TODO: support rotation
 				new GLTF.Math.Vector2(scale.x, scale.y),
 				0 // TODO: support UV channels
