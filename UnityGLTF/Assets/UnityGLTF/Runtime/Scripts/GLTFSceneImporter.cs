@@ -1897,6 +1897,7 @@ namespace UnityGLTF
 		{
 			IUniformMap mapper;
 			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
+			const string unlitExtName = KHR_materials_unlitExtensionFactory.EXTENSION_NAME;
 			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName)
 				&& def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
 			{
@@ -1907,6 +1908,18 @@ namespace UnityGLTF
 				else
 				{
 					mapper = new SpecGlossMap(MaximumLod);
+				}
+			}
+			else if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(unlitExtName)
+				&& def.Extensions != null && def.Extensions.ContainsKey(unlitExtName))
+			{
+				if (!string.IsNullOrEmpty(CustomShaderName))
+				{
+					mapper = new UnlitMap(CustomShaderName, MaximumLod);
+				}
+				else
+				{
+					mapper = new UnlitMap(MaximumLod);
 				}
 			}
 			else
@@ -2011,6 +2024,30 @@ namespace UnityGLTF
 						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
 						sgMapper.SpecularGlossinessXScale = ext.Scale.ToUnityVector2Raw();
 						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
+					}
+				}
+			}
+
+			var unlitMapper = mapper as IUnlitUniformMap;
+			if (unlitMapper != null)
+			{
+				var pbr = def.PbrMetallicRoughness;
+				unlitMapper.BaseColorFactor = pbr.BaseColorFactor.ToUnityColorRaw().gamma;
+
+				if (pbr.BaseColorTexture != null)
+				{
+					TextureId textureId = pbr.BaseColorTexture.Index;
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
+					unlitMapper.BaseColorTexture = _assetCache.TextureCache[textureId.Id].Texture;
+					unlitMapper.BaseColorTexCoord = pbr.BaseColorTexture.TexCoord;
+
+					var ext = GetTextureTransform(pbr.BaseColorTexture);
+					if (ext != null)
+					{
+						unlitMapper.BaseColorXOffset = ext.Offset.ToUnityVector2Raw();
+						unlitMapper.BaseColorXRotation = ext.Rotation;
+						unlitMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
 					}
 				}
 			}
