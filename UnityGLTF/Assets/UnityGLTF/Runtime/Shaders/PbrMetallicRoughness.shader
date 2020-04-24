@@ -1,5 +1,14 @@
 // Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
 
+// Derived from DefaultResourcesExtra\Standard.shader.
+// Available as part of the "Built in shaders" download from https://unity3d.com/get-unity/download/archive
+// Changes include:
+//   Excluding _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A from all ShadowCaster passes
+//   Removing many Properties not relevant to this shader's logic (and rename visible strings for others)
+//   Using a CustomEditor GUI for the shader configuration
+//   Adding and respecting the _Cull property to support double-sided materials
+//   Forwarding calls through VetexColor.cginc's vert_vcol/frag_vcol (instead of directly to UnityStandardCoreForward.cginc's vertBase/fragBase) to add VertexColor support
+
 Shader "GLTF/PbrMetallicRoughness"
 {
 	Properties
