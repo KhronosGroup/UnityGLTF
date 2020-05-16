@@ -20,6 +20,11 @@ namespace UnityGLTF.Loader
 		private readonly HttpClient httpClient = new HttpClient();
 		private readonly Uri baseAddress;
 
+		/// <summary>
+		/// The HTTP response of the last call to LoadStream
+		/// </summary>
+		public HttpResponseMessage LastResponse { get; private set; }
+
 		public WebRequestLoader(string rootUri)
 		{
 #if !WINDOWS_UWP
@@ -35,14 +40,19 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(gltfFilePath));
 			}
 
-			HttpResponseMessage response;
+			if (LastResponse != null)
+			{
+				LastResponse.Dispose();
+				LastResponse = null;
+			}
+
 			try
 			{
 #if WINDOWS_UWP
-				response = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath));
+				LastResponse = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath));
 #else
 				var tokenSource = new CancellationTokenSource(30000);
-				response = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath), tokenSource.Token);
+				LastResponse = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath), tokenSource.Token);
 #endif
 			}
 			catch (TaskCanceledException)
@@ -54,17 +64,16 @@ namespace UnityGLTF.Loader
 #endif
 			}
 
-			response.EnsureSuccessStatusCode();
+			LastResponse.EnsureSuccessStatusCode();
 
 			// HACK: Download the whole file before returning the stream
 			// Ideally the parsers would wait for data to be available, but they don't.
-			var result = new MemoryStream((int?)response.Content.Headers.ContentLength ?? 5000);
+			var result = new MemoryStream((int?)LastResponse.Content.Headers.ContentLength ?? 5000);
 #if WINDOWS_UWP
 			await response.Content.WriteToStreamAsync(result.AsOutputStream());
 #else
-			await response.Content.CopyToAsync(result);
+			await LastResponse.Content.CopyToAsync(result);
 #endif
-			response.Dispose();
 			return result;
 		}
 
