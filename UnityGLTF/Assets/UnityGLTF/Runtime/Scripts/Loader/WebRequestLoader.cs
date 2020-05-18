@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace UnityGLTF.Loader
 {
-	public class WebRequestLoader : IDataLoader
+	public class WebRequestLoader : IDataLoader, IDisposable
 	{
 		private readonly HttpClient httpClient = new HttpClient();
 		private readonly Uri baseAddress;
@@ -106,5 +106,13 @@ namespace UnityGLTF.Loader
 			return isOk;
 		}
 #endif
+
+		public void Dispose()
+		{
+			if (LastResponse != null)
+			{
+				LastResponse.Dispose();
+			}
+		}
 	}
 }

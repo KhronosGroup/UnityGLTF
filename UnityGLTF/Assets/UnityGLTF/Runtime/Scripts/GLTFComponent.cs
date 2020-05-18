@@ -153,6 +153,11 @@ namespace UnityGLTF
 			{
 				if(importOptions.DataLoader != null)
 				{
+					if (importOptions.DataLoader is WebRequestLoader webLoader)
+					{
+						webLoader.Dispose();
+					}
+
 					sceneImporter?.Dispose();
 					sceneImporter = null;
 					importOptions.DataLoader = null;
