@@ -20,6 +20,8 @@ namespace UnityGLTF.Loader
 		private readonly HttpClient httpClient = new HttpClient();
 		private readonly Uri baseAddress;
 
+		public Action<HttpRequestMessage> BeforeRequestCallback;
+
 		/// <summary>
 		/// The HTTP response of the last call to LoadStream
 		/// </summary>
@@ -52,7 +54,9 @@ namespace UnityGLTF.Loader
 				LastResponse = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath));
 #else
 				var tokenSource = new CancellationTokenSource(30000);
-				LastResponse = await httpClient.GetAsync(new Uri(baseAddress, gltfFilePath), tokenSource.Token);
+				var message = new HttpRequestMessage(HttpMethod.Get, new Uri(baseAddress, gltfFilePath));
+				BeforeRequestCallback?.Invoke(message);
+				LastResponse = await httpClient.SendAsync(message, tokenSource.Token);
 #endif
 			}
 			catch (TaskCanceledException)
