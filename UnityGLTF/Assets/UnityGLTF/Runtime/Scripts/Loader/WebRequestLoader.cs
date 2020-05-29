@@ -20,7 +20,7 @@ namespace UnityGLTF.Loader
 		private readonly HttpClient httpClient = new HttpClient();
 		private readonly Uri baseAddress;
 
-		public Action<HttpRequestMessage> BeforeRequestCallback;
+		public event Action<HttpRequestMessage> BeforeRequestCallback;
 
 		/// <summary>
 		/// The HTTP response of the last call to LoadStream
@@ -74,7 +74,7 @@ namespace UnityGLTF.Loader
 			// Ideally the parsers would wait for data to be available, but they don't.
 			var result = new MemoryStream((int?)LastResponse.Content.Headers.ContentLength ?? 5000);
 #if WINDOWS_UWP
-			await response.Content.WriteToStreamAsync(result.AsOutputStream());
+			await LastResponse.Content.WriteToStreamAsync(result.AsOutputStream());
 #else
 			await LastResponse.Content.CopyToAsync(result);
 #endif
