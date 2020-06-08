@@ -74,7 +74,7 @@ namespace UnityGLTF.Cache
 			{
 				foreach (var stream in ImageStreamCache)
 				{
-					stream.Dispose();
+					stream?.Dispose();
 				}
 
 				ImageStreamCache = null;
