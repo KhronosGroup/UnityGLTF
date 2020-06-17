@@ -27,7 +27,9 @@ namespace UnityGLTF
 			set {
 				if(exportNames != value) {
 					exportNames = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
@@ -37,7 +39,9 @@ namespace UnityGLTF
 			set {
 				if(exportFullPath != value) {
 					exportFullPath = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
@@ -46,7 +50,9 @@ namespace UnityGLTF
 			set {
 				if(requireExtensions != value) {
 					requireExtensions = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
@@ -56,7 +62,9 @@ namespace UnityGLTF
 			set {
 				if(tryExportTexturesFromDisk != value) {
 					tryExportTexturesFromDisk = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
@@ -66,7 +74,9 @@ namespace UnityGLTF
 			set {
 				if(exportAnimations != value) {
 					exportAnimations = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
@@ -76,7 +86,9 @@ namespace UnityGLTF
 			set {
 				if(bakeSkinnedMeshes != value) {
 					bakeSkinnedMeshes = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
@@ -86,13 +98,16 @@ namespace UnityGLTF
 			set {
 				if(saveFolderPath != value) {
 					saveFolderPath = value;
+					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
+					#endif
 				}
 			}
 		}
 
 		internal static GLTFSettings GetOrCreateSettings()
 		{
+			#if UNITY_EDITOR
 			var settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(k_MyCustomSettingsPath);
 			if (settings == null)
 			{
@@ -101,11 +116,16 @@ namespace UnityGLTF
 				AssetDatabase.SaveAssets();
 			}
 			return settings;
+			#else
+			return ScriptableObject.CreateInstance<GLTFSettings>();
+			#endif
 		}
 
+#if UNITY_EDITOR
 		internal static SerializedObject GetSerializedSettings()
 		{
 			return new SerializedObject(GetOrCreateSettings());
 		}
+#endif
 	}
 }
