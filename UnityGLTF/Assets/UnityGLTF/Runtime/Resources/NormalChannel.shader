@@ -42,9 +42,12 @@
 			fixed4 frag (v2f i) : SV_Target
 			{
 				float4 col = tex2D(_MainTex, i.uv);
+				float4 res = float4(col.a, col.g, 1, 1);
+				//res = float4(0.5,0.5,1,1);
+				//res.xyz = GammaToLinearSpaceExact(res.xyz);
 				// If a texture is marked as a normal map
 				// the values are stored in the A and G channel.
-				return float4(col.a, col.g, 1, 1);
+				return res;
 			}
 			ENDCG
 		}
