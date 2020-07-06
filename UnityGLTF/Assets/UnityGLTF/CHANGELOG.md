@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-pfc.2] - 2020-07-07
+- fix build errors preventing builds
+- fix PBR texture roundtrip with incorrect red channel
+
 ## [1.0.4-pfc] - 2020-04-24
 - lots of improvements to animation export
 - automatic keyframe reduction
