@@ -247,6 +247,12 @@ namespace UnityGLTF
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
+			// rotate 180°
+			if(_rootTransforms.Length > 1) 
+				Debug.LogWarning("Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
+			foreach(var t in _rootTransforms)
+				t.rotation *= Quaternion.Euler(0,180,0);
+
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 			if (ExportAnimations)
 			{
@@ -294,6 +300,9 @@ namespace UnityGLTF
 			CopyStream(binStream, writer);
 
 			writer.Flush();
+
+			foreach(var t in _rootTransforms)
+				t.rotation *= Quaternion.Euler(0,-180,0);
 		}
 
 		/// <summary>
@@ -356,6 +365,12 @@ namespace UnityGLTF
 			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
 			_bufferWriter = new BinaryWriter(binFile);
 
+			// rotate 180°
+			if(_rootTransforms.Length > 1) 
+				Debug.LogWarning("Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
+			foreach(var t in _rootTransforms)
+				t.rotation *= Quaternion.Euler(0,180,0);
+
 			_root.Scene = ExportScene(fileName, _rootTransforms);
 			if (ExportAnimations)
 			{
@@ -385,6 +400,8 @@ namespace UnityGLTF
 #endif
 			ExportImages(path);
 
+			foreach(var t in _rootTransforms)
+				t.rotation *= Quaternion.Euler(0,-180,0);
 		}
 
 		private void ExportImages(string outputPath)
@@ -581,7 +598,7 @@ namespace UnityGLTF
 			{
 				node.Camera = ExportCamera(unityCamera);
 			}
-
+			
 			node.SetUnityTransform(nodeTransform);
 
 			var id = new NodeId
