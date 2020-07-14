@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.6] - 2020-07-15
+- fix sRGB/linear conversion for colors exported from Unity
+- fix rotation order for 180° hack
+- note: please use Linear color space, normal maps break in Gamma color space right now
+
 ## [1.0.4-preview.5] - 2020-07-13
 - hack: added 180° rotation on export (experimental), needs to be tested with animations, only works with a single root transform on export
 - changed back to "preview" instead of "pfc" tag because stupid PackMan
