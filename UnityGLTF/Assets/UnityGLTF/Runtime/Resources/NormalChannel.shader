@@ -39,16 +39,35 @@
 			
 			sampler2D _MainTex;
 
-			fixed4 frag (v2f i) : SV_Target
+			// fixed4 frag (v2f i) : SV_Target
+			// {
+			// 	float4 col = tex2D(_MainTex, i.uv);
+			// 	float4 res = float4(col.a, col.g, 1, 1);
+			// 	//res = float4(0.5,0.5,1,1);
+			// 	//res.xyz = GammaToLinearSpaceExact(res.xyz);
+			// 	// If a texture is marked as a normal map
+			// 	// the values are stored in the A and G channel.
+			// 	return res;
+			// }
+
+			
+			float4 frag (v2f i) : SV_Target
 			{
 				float4 col = tex2D(_MainTex, i.uv);
-				float4 res = float4(col.a, col.g, 1, 1);
-				//res = float4(0.5,0.5,1,1);
-				//res.xyz = GammaToLinearSpaceExact(res.xyz);
 				// If a texture is marked as a normal map
 				// the values are stored in the A and G channel.
-				return res;
+				float3 unpacked = UnpackNormalmapRGorAG(col);
+				// unpacked.xyz = LinearToGammaSpace(unpacked.xyz);
+				float4 result = float4(unpacked * 0.5f + 0.5f, 1);
+				#ifdef UNITY_COLORSPACE_GAMMA
+				#else
+				// hack for linear color space, need to figure out
+				// right way to sample textures.
+				result.xyz = GammaToLinearSpace(result.xyz);
+				#endif
+				return result;
 			}
+
 			ENDCG
 		}
 	}
