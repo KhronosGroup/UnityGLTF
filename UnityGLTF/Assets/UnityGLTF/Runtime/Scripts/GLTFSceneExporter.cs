@@ -452,7 +452,7 @@ namespace UnityGLTF
 
 			Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
 
-			var exportTexture = new Texture2D(texture.width, texture.height);
+			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false, true);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 			exportTexture.Apply();
 
