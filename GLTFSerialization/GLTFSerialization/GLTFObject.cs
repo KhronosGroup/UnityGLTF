@@ -8,9 +8,9 @@ namespace GLTF
 	public class GLTFObject : IGLTFObject
 	{
 		public GLTFObject(GLTFRoot root)
-		{
-			Root = root;
-		}
+        {
+            Root = root;
+        }
 
 		/// <summary>
 		/// Parsed glTF into a strongly typed C# object

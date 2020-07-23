@@ -396,4 +396,29 @@ namespace GLTF.Schema
 			};
 		}
 	}
+
+	public class LightId : GLTFId<GLTFLight>
+	{
+		public LightId()
+		{
+		}
+
+		public LightId(LightId id, GLTFRoot newRoot) : base(id, newRoot)
+		{
+		}
+
+		public override GLTFLight Value
+		{
+			get { return Root.Lights[Id]; } //should be extensions?
+		}
+
+		public static LightId Deserialize(GLTFRoot root, JsonReader reader)
+		{
+			return new LightId
+			{
+				Id = reader.ReadAsInt32().Value,
+				Root = root
+			};
+		}
+	}
 }

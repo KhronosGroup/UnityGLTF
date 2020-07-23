@@ -17,6 +17,8 @@ namespace GLTF.Schema
 		};
 		
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
+		private static KHR_materials_pbrSpecularGlossinessExtensionFactory _KHRExtensionFactory = new KHR_materials_pbrSpecularGlossinessExtensionFactory();
+		private static ExtTextureTransformExtensionFactory _TexTransformFactory = new ExtTextureTransformExtensionFactory();
 
 		public static bool IsExtensionRegistered(string extensionName)
 		{
@@ -152,7 +154,7 @@ namespace GLTF.Schema
 				}
 			}
 		}
-
+		
 		private Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
@@ -162,27 +164,38 @@ namespace GLTF.Schema
 
 			JObject extensions = (JObject)JToken.ReadFrom(reader);
 			var extensionsCollection = new Dictionary<string, IExtension>();
-
-			foreach (JToken child in extensions.Children())
+			
+			foreach(JToken child in extensions.Children())
 			{
 				if (child.Type != JTokenType.Property)
 				{
 					throw new GLTFParseException("Children token of extensions should be properties");
 				}
 
-				JProperty childAsJProperty = (JProperty)child;
+				JProperty childAsJProperty = (JProperty) child;
 				string extensionName = childAsJProperty.Name;
 				ExtensionFactory extensionFactory;
 
 				lock (_extensionRegistry)
 				{
-					if (!_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
+
+					if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 					{
-						extensionFactory = _defaultExtensionFactory;
+						extensionsCollection.Add(extensionName, extensionFactory.Deserialize(root, childAsJProperty));
+					}
+					else if (extensionName.Equals(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
+					{
+						extensionsCollection.Add(extensionName, _KHRExtensionFactory.Deserialize(root, childAsJProperty));
+					}
+					else if (extensionName.Equals(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
+					{
+						extensionsCollection.Add(extensionName, _TexTransformFactory.Deserialize(root, childAsJProperty));
+					}
+					else
+					{
+						extensionsCollection.Add(extensionName, _defaultExtensionFactory.Deserialize(root, childAsJProperty));
 					}
 				}
-
-				extensionsCollection.Add(extensionName, extensionFactory.Deserialize(root, childAsJProperty));
 			}
 
 			return extensionsCollection;
@@ -202,7 +215,7 @@ namespace GLTF.Schema
 				writer.WriteEndObject();
 			}
 
-			if (Extras != null)
+			if(Extras != null)
 			{
 				writer.WritePropertyName("extras");
 				Extras.WriteTo(writer);
