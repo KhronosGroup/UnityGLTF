@@ -32,9 +32,9 @@ namespace GLTF
 	
 	public class GLTFParser
 	{
-		public const uint HEADER_SIZE = 12;
-		public const uint CHUNK_HEADER_SIZE = 8;
-		public const uint MAGIC_NUMBER = 0x46546c67;
+		public static readonly uint HEADER_SIZE = 12;
+		public static readonly uint CHUNK_HEADER_SIZE = 8;
+		public static readonly uint MAGIC_NUMBER = 0x46546c67;
 
 		public static void ParseJson(Stream stream, out GLTFRoot gltfRoot, long startPosition = 0)
 		{
@@ -54,13 +54,14 @@ namespace GLTF
 			gltfRoot = GLTFRoot.Deserialize(new StreamReader(stream));
 			gltfRoot.IsGLB = isGLB;
 		}
-		
+
+		// todo: this needs reimplemented. There is no such thing as a binary chunk index, and the chunk may not be in 0, 1, 2 order
 		// Moves stream position to binary chunk location
 		public static ChunkInfo SeekToBinaryChunk(Stream stream, int binaryChunkIndex, long startPosition = 0)
 		{
 			stream.Position = startPosition + 4;	 // start after magic number chunk
 			GLBHeader header = ParseGLBHeader(stream);
-			uint chunkOffset = (uint)startPosition + 12;   // sizeof(GLBHeader) + magic number
+			uint chunkOffset = 12;   // sizeof(GLBHeader) + magic number
 			uint chunkLength = 0;
 			for (int i = 0; i < binaryChunkIndex + 2; ++i)
 			{
@@ -71,7 +72,7 @@ namespace GLTF
 			}
 
 			// Load Binary Chunk
-			if (chunkOffset + chunkLength - (uint)startPosition <= header.FileLength)
+			if (chunkOffset + chunkLength <= header.FileLength)
 			{
 				ChunkFormat chunkType = (ChunkFormat)GetUInt32(stream);
 				if (chunkType != ChunkFormat.BIN)
