@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.7] - 2020-07-24
+- fix sRGB/linear conversion for normal maps depending on Unity color space
+
 ## [1.0.4-preview.6] - 2020-07-15
 - fix sRGB/linear conversion for colors exported from Unity
 - fix rotation order for 180° hack
