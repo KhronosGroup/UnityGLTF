@@ -327,7 +327,9 @@ namespace UnityGLTF.Extensions
 
 		public static GLTF.Math.Color ToNumericsColorRaw(this UnityEngine.Color color)
 		{
-			var c = color.linear;
+			var c = color;
+			// if (QualitySettings.activeColorSpace == ColorSpace.Linear)
+			//	c = c.linear;
 			return new GLTF.Math.Color(c.r, c.g, c.b, c.a);
 		}
 
