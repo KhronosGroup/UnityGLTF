@@ -1,5 +1,5 @@
 #if UNITY_2017_1_OR_NEWER
-using UnityEditor.Experimental.AssetImporters;
+
 using UnityEditor;
 using System.IO;
 using UnityEngine;
@@ -12,6 +12,11 @@ using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
 using System.Threading.Tasks;
+#if UNITY_2020_2_OR_NEWER
+using UnityEditor.AssetImporters;
+#else
+using UnityEditor.Experimental.AssetImporters;
+#endif
 
 namespace UnityGLTF
 {
@@ -312,7 +317,7 @@ namespace UnityGLTF
                 throw;
             }
 
-			
+
 
 #if UNITY_2017_3_OR_NEWER
 			// Set main asset
@@ -321,7 +326,7 @@ namespace UnityGLTF
 			// Add meshes
 			foreach (var mesh in meshes)
 			{
-				try { 
+				try {
 					ctx.AddObjectToAsset("mesh " + mesh.name, mesh);
 				} catch(System.InvalidOperationException e) {
 					Debug.LogWarning(e.ToString(), mesh);
