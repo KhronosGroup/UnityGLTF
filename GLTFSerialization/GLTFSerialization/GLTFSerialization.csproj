@@ -60,7 +60,6 @@
         <UnityPlayer>UAP</UnityPlayer>
       </PropertyGroup>
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
         <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.1.9" />
       </ItemGroup>
     </When>
@@ -69,7 +68,6 @@
         <ExcludedUnityPlayers>UAP</ExcludedUnityPlayers>
       </PropertyGroup>
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
         <PackageReference Include="Microsoft.Net.Compilers" Version="2.7.0">
           <IncludeAssets>all</IncludeAssets>
           <ExcludeAssets>contentFiles</ExcludeAssets>
@@ -83,9 +81,6 @@
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <ExcludedUnityPlayers>UAP</ExcludedUnityPlayers>
       </PropertyGroup>
-      <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
-      </ItemGroup>
     </When>
   </Choose>
 
@@ -94,5 +89,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 </Project>
