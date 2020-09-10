@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.8] - 2020-09-10
+- built GLTFSerialization.dll against Newtonsoft.JSON 12.0.3
+- removed Newtonsoft.JSON.dll from package
+- added dependency on com.unity.nuget.newtonsoft-json@2.0.0
+- added 2020.2 compatibility
+
 ## [1.0.4-preview.7] - 2020-07-24
 - fix sRGB/linear conversion for normal maps depending on Unity color space
 

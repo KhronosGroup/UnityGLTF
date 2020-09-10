@@ -159,3 +159,4 @@ TestProjects/*/Temp/
 .vscode/
 TestProjects/*/*.sln
 TestProjects/*/*.csproj
+GLTFSerialization/.idea
