@@ -714,10 +714,11 @@ namespace UnityGLTF
 
 		private static bool ContainsValidRenderer(GameObject gameObject)
 		{
-			var meshRender = gameObject.GetComponent<MeshRenderer>();
+			if(!gameObject) return false;
+			var meshRenderer = gameObject.GetComponent<MeshRenderer>();
 			var meshFilter = gameObject.GetComponent<MeshFilter>();
 			var skinnedMeshRender = gameObject.GetComponent<SkinnedMeshRenderer>();
-			return (meshFilter != null && meshRender != null && meshRender.enabled) || (skinnedMeshRender != null && skinnedMeshRender.enabled);
+			return (meshFilter && meshRenderer && meshRenderer.enabled) || (skinnedMeshRender && skinnedMeshRender.enabled);
 		}
 
 		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
