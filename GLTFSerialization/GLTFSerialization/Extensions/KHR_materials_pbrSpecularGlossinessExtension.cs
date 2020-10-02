@@ -10,12 +10,12 @@ namespace GLTF.Schema
 	/// material model from Physically-Based Rendering (PBR) methodology.
 	/// 
 	/// Spec can be found here:
-	/// https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
+	/// https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness
 	/// </summary>
 	public class KHR_materials_pbrSpecularGlossinessExtension : IExtension
 	{
-		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(0.2f, 0.2f, 0.2f);
-		public static readonly double GLOSS_FACTOR_DEFAULT = 0.5d; 
+		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(1.0f, 1.0f, 1.0f);
+		public static readonly double GLOSS_FACTOR_DEFAULT = 1.0d; 
 
 		/// <summary>
 		/// The RGBA components of the reflected diffuse color of the material. 
@@ -25,6 +25,7 @@ namespace GLTF.Schema
 		/// The values are linear.
 		/// </summary>
 		public Color DiffuseFactor = Color.White;
+		public static readonly Color DIFFUSE_FACTOR_DEFAULT = Color.White;
 
 		/// <summary>
 		/// The diffuse texture. 
@@ -35,6 +36,7 @@ namespace GLTF.Schema
 		/// The stored texels must not be premultiplied.
 		/// </summary>
 		public TextureInfo DiffuseTexture;
+		public static readonly TextureInfo DIFFUSE_TEXTURE_DEFAULT = new TextureInfo();
 
 		/// <summary>
 		/// The specular RGB color of the material. This value is linear
@@ -54,6 +56,7 @@ namespace GLTF.Schema
 		/// The values are in sRGB space.
 		/// </summary>
 		public TextureInfo SpecularGlossinessTexture;
+		public static readonly TextureInfo SPECULAR_GLOSSINESS_TEXTURE_DEFAULT = new TextureInfo();
 
 		public KHR_materials_pbrSpecularGlossinessExtension(Color diffuseFactor, TextureInfo diffuseTexture, Vector3 specularFactor, double glossinessFactor, TextureInfo specularGlossinessTexture)
 		{

@@ -12,8 +12,10 @@ namespace GLTF.Schema
 		{
 			{ ExtTextureTransformExtensionFactory.EXTENSION_NAME, new ExtTextureTransformExtensionFactory() },
 			{ KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME, new KHR_materials_pbrSpecularGlossinessExtensionFactory() },
-      { MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
+			{ KHR_materials_unlitExtensionFactory.EXTENSION_NAME, new KHR_materials_unlitExtensionFactory() },
+      		{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
 		};
+		
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
 
 		public static bool IsExtensionRegistered(string extensionName)
