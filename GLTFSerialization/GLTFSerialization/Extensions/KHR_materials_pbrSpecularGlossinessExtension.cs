@@ -25,6 +25,7 @@ namespace GLTF.Schema
 		/// The values are linear.
 		/// </summary>
 		public Color DiffuseFactor = Color.White;
+		public static readonly Color DIFFUSE_FACTOR_DEFAULT = Color.White;
 
 		/// <summary>
 		/// The diffuse texture. 
@@ -35,11 +36,13 @@ namespace GLTF.Schema
 		/// The stored texels must not be premultiplied.
 		/// </summary>
 		public TextureInfo DiffuseTexture;
+		public static readonly TextureInfo DIFFUSE_TEXTURE_DEFAULT = new TextureInfo();
 
 		/// <summary>
 		/// The specular RGB color of the material. This value is linear
 		/// </summary>
 		public Vector3 SpecularFactor = SPEC_FACTOR_DEFAULT;
+		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(0.2f, 0.2f, 0.2f);
 
 		/// <summary>
 		/// The glossiness or smoothness of the material. 
@@ -48,12 +51,14 @@ namespace GLTF.Schema
 		/// This value is linear.
 		/// </summary>
 		public double GlossinessFactor = GLOSS_FACTOR_DEFAULT;
+		public static readonly double GLOSS_FACTOR_DEFAULT = 0.5d;
 
 		/// <summary>
 		/// The specular-glossiness texture is RGBA texture, containing the specular color of the material (RGB components) and its glossiness (A component). 
 		/// The values are in sRGB space.
 		/// </summary>
 		public TextureInfo SpecularGlossinessTexture;
+		public static readonly TextureInfo SPECULAR_GLOSSINESS_TEXTURE_DEFAULT = new TextureInfo();
 
 		public KHR_materials_pbrSpecularGlossinessExtension(Color diffuseFactor, TextureInfo diffuseTexture, Vector3 specularFactor, double glossinessFactor, TextureInfo specularGlossinessTexture)
 		{
