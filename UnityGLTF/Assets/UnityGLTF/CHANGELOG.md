@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.9] - 2020-10-03
+- merged in a number of material fix and null ref PRs
+- add namespaces to scripts that didn't have them
+
 ## [1.0.4-preview.8] - 2020-09-10
 - built GLTFSerialization.dll against Newtonsoft.JSON 12.0.3
 - removed Newtonsoft.JSON.dll from package
