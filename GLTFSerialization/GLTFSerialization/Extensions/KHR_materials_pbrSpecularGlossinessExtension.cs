@@ -42,7 +42,6 @@ namespace GLTF.Schema
 		/// The specular RGB color of the material. This value is linear
 		/// </summary>
 		public Vector3 SpecularFactor = SPEC_FACTOR_DEFAULT;
-		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(0.2f, 0.2f, 0.2f);
 
 		/// <summary>
 		/// The glossiness or smoothness of the material. 
@@ -51,7 +50,6 @@ namespace GLTF.Schema
 		/// This value is linear.
 		/// </summary>
 		public double GlossinessFactor = GLOSS_FACTOR_DEFAULT;
-		public static readonly double GLOSS_FACTOR_DEFAULT = 0.5d;
 
 		/// <summary>
 		/// The specular-glossiness texture is RGBA texture, containing the specular color of the material (RGB components) and its glossiness (A component). 
