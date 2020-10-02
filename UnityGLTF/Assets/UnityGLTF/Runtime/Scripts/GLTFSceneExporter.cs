@@ -1065,6 +1065,10 @@ namespace UnityGLTF
 			{
 				material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
 			}
+			else if (IsPBRSpecularGlossiness(materialObj))
+			{
+				ExportPBRSpecularGlossiness(material, materialObj);
+			}
 			else if (IsCommonConstant(materialObj))
 			{
 				material.CommonConstant = ExportCommonConstant(materialObj);
@@ -1135,6 +1139,11 @@ namespace UnityGLTF
 		private bool IsPBRMetallicRoughness(Material material)
 		{
 			return material.HasProperty("_Metallic") && material.HasProperty("_MetallicGlossMap");
+		}
+
+		private bool IsPBRSpecularGlossiness(Material material)
+		{
+			return material.HasProperty("_SpecColor") && material.HasProperty("_SpecGlossMap");
 		}
 
 		private bool IsCommonConstant(Material material)
@@ -1277,25 +1286,111 @@ namespace UnityGLTF
 					}
 				}
 			}
-			else if (material.HasProperty("_SpecGlossMap"))
-			{
-				var mgTex = material.GetTexture("_SpecGlossMap");
 
-				if (mgTex != null)
+			return pbr;
+		}
+
+		private void ExportPBRSpecularGlossiness(GLTFMaterial material, Material materialObj)
+		{
+			if (_root.ExtensionsUsed == null)
+			{
+				_root.ExtensionsUsed = new List<string>(new[] { "KHR_materials_pbrSpecularGlossiness" });
+			}
+			else if (!_root.ExtensionsUsed.Contains("KHR_materials_pbrSpecularGlossiness"))
+			{
+				_root.ExtensionsUsed.Add("KHR_materials_pbrSpecularGlossiness");
+			}
+
+			if (RequireExtensions)
+			{
+				if (_root.ExtensionsRequired == null)
 				{
-					if(mgTex is Texture2D)
+					_root.ExtensionsRequired = new List<string>(new[] { "KHR_materials_pbrSpecularGlossiness" });
+				}
+				else if (!_root.ExtensionsRequired.Contains("KHR_materials_pbrSpecularGlossiness"))
+				{
+					_root.ExtensionsRequired.Add("KHR_materials_pbrSpecularGlossiness");
+				}
+			}
+
+			if (material.Extensions == null)
+			{
+				material.Extensions = new Dictionary<string, IExtension>();
+			}
+
+			GLTF.Math.Color diffuseFactor = KHR_materials_pbrSpecularGlossinessExtension.DIFFUSE_FACTOR_DEFAULT;
+			TextureInfo diffuseTexture = KHR_materials_pbrSpecularGlossinessExtension.DIFFUSE_TEXTURE_DEFAULT;
+			GLTF.Math.Vector3 specularFactor = KHR_materials_pbrSpecularGlossinessExtension.SPEC_FACTOR_DEFAULT;
+			double glossinessFactor = KHR_materials_pbrSpecularGlossinessExtension.GLOSS_FACTOR_DEFAULT;
+			TextureInfo specularGlossinessTexture = KHR_materials_pbrSpecularGlossinessExtension.SPECULAR_GLOSSINESS_TEXTURE_DEFAULT;
+
+			if (materialObj.HasProperty("_Color"))
+			{
+				diffuseFactor = materialObj.GetColor("_Color").ToNumericsColorRaw();
+			}
+
+			if (materialObj.HasProperty("_MainTex"))
+			{
+				var mainTex = materialObj.GetTexture("_MainTex");
+
+				if (mainTex != null)
+				{
+					if (mainTex is Texture2D)
 					{
-						pbr.MetallicRoughnessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
-						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_SpecGlossMap");
+						diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+						ExportTextureTransform(diffuseTexture, materialObj, "_MainTex");
 					}
 					else
 					{
-						Debug.LogErrorFormat("Can't export a {0} metallic roughness texture in material {1}", mgTex.GetType(), material.name);
+						Debug.LogErrorFormat("Can't export a {0} diffuse texture in material {1}", mainTex.GetType(), materialObj.name);
 					}
 				}
 			}
 
-			return pbr;
+			if (materialObj.HasProperty("_SpecColor"))
+			{
+				var specGlossMap = materialObj.GetTexture("_SpecGlossMap");
+				if (specGlossMap == null)
+				{
+					Color specColor = materialObj.GetColor("_SpecColor");
+					specularFactor = new GLTF.Math.Vector3(specColor.r, specColor.g, specColor.b);
+				}
+			}
+
+			if (materialObj.HasProperty("_Glossiness"))
+			{
+				var specGlossMap = materialObj.GetTexture("_SpecGlossMap");
+				if (specGlossMap == null)
+				{
+					glossinessFactor = materialObj.GetFloat("_Glossiness");
+				}
+			}
+
+			if (materialObj.HasProperty("_SpecGlossMap"))
+			{
+				var mgTex = materialObj.GetTexture("_SpecGlossMap");
+
+				if (mgTex != null)
+				{
+					if (mgTex is Texture2D)
+					{
+						specularGlossinessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
+						ExportTextureTransform(specularGlossinessTexture, materialObj, "_SpecGlossMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} specular glossiness texture in material {1}", mgTex.GetType(), materialObj.name);
+					}
+				}
+			}
+
+			material.Extensions[KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME] = new KHR_materials_pbrSpecularGlossinessExtension(
+				diffuseFactor,
+				diffuseTexture,
+				specularFactor,
+				glossinessFactor,
+				specularGlossinessTexture
+			);
 		}
 
 		private MaterialCommonConstant ExportCommonConstant(Material materialObj)
