@@ -10,12 +10,12 @@ namespace GLTF.Schema
 	/// material model from Physically-Based Rendering (PBR) methodology.
 	/// 
 	/// Spec can be found here:
-	/// https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
+	/// https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness
 	/// </summary>
 	public class KHR_materials_pbrSpecularGlossinessExtension : IExtension
 	{
-		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(0.2f, 0.2f, 0.2f);
-		public static readonly double GLOSS_FACTOR_DEFAULT = 0.5d; 
+		public static readonly Vector3 SPEC_FACTOR_DEFAULT = new Vector3(1.0f, 1.0f, 1.0f);
+		public static readonly double GLOSS_FACTOR_DEFAULT = 1.0d; 
 
 		/// <summary>
 		/// The RGBA components of the reflected diffuse color of the material. 
