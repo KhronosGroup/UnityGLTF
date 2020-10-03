@@ -73,6 +73,8 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<double> Weights;
 
+		public LightId Light;
+
 		public Node()
 		{
 		}
@@ -121,6 +123,11 @@ namespace GLTF.Schema
 			if (node.Weights != null)
 			{
 				Weights = node.Weights.ToList();
+			}
+
+			if (node.Light != null)
+			{
+				Light = node.Light;
 			}
 		}
 
@@ -264,6 +271,18 @@ namespace GLTF.Schema
 					writer.WriteValue(weight);
 				}
 				writer.WriteEndArray();
+			}
+
+			if (Light != null)
+			{
+				writer.WritePropertyName("extensions");
+				writer.WriteStartObject();
+				writer.WritePropertyName("KHR_lights_punctual");
+				writer.WriteStartObject();
+				writer.WritePropertyName("light");
+				writer.WriteValue(Light.Id);
+				writer.WriteEndObject();
+				writer.WriteEndObject();
 			}
 
 			base.Serialize(writer);

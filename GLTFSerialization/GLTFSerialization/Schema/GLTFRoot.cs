@@ -98,6 +98,8 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<GLTFTexture> Textures;
 
+		public List<GLTFLight> Lights;
+
 		public GLTFRoot()
 		{
 		}
@@ -333,6 +335,9 @@ namespace GLTF.Schema
 					case "textures":
 						root.Textures = jsonReader.ReadList(() => GLTFTexture.Deserialize(root, jsonReader));
 						break;
+					//case "lights":
+					//	root.Lights = jsonReader.ReadList(() => GLTFLight.Deserialize(root, jsonReader));
+					//	break;
 					default:
 						root.DefaultPropertyDeserializer(root, jsonReader);
 						break;
@@ -529,6 +534,27 @@ namespace GLTF.Schema
 				}
 				jsonWriter.WriteEndArray();
 			}
+
+			if (Lights != null)
+			{
+				//TODO this is a terrible hack. should use proper extensions object to add light data array
+
+				jsonWriter.WritePropertyName("extensions");
+				jsonWriter.WriteStartObject();
+				jsonWriter.WritePropertyName("KHR_lights_punctual");
+				jsonWriter.WriteStartObject();
+				jsonWriter.WritePropertyName("lights");
+				jsonWriter.WriteStartArray();
+				foreach (var light in Lights)
+				{
+					light.Serialize(jsonWriter);
+				}
+				jsonWriter.WriteEndArray();
+				jsonWriter.WriteEndObject();
+				jsonWriter.WriteEndObject();
+			}
+
+			
 
 			base.Serialize(jsonWriter);
 
