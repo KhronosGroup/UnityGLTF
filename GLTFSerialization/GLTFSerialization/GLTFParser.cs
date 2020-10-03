@@ -55,6 +55,7 @@ namespace GLTF
 			gltfRoot.IsGLB = isGLB;
 		}
 		
+		// todo: this needs reimplemented. There is no such thing as a binary chunk index, and the chunk may not be in 0, 1, 2 order
 		// Moves stream position to binary chunk location
 		public static ChunkInfo SeekToBinaryChunk(Stream stream, int binaryChunkIndex, long startPosition = 0)
 		{
