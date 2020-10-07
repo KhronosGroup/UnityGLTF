@@ -1493,12 +1493,13 @@ namespace UnityGLTF
 			Matrix4x4[] gltfBindPoses = null;
 			if (skin.InverseBindMatrices != null)
 			{
-				int bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer.Id;
+				var bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer;
+				var bufferData = await GetBufferData(bufferId);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = skin.InverseBindMatrices,
-					Stream = _assetCache.BufferCache[bufferId].Stream,
-					Offset = _assetCache.BufferCache[bufferId].ChunkOffset
+					Stream = bufferData.Stream,
+					Offset = bufferData.ChunkOffset
 				};
 
 				GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
