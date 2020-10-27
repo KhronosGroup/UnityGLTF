@@ -244,18 +244,14 @@ namespace GLTF.Schema
 				}
 			}
 
-			//if (ExtensionsRequired.Contains("KHR_lightspunctualExtension"))
+
+			if (gltfRoot.Lights != null)
 			{
-				//if (gltfRoot.Lights != null)
-				//{
-				//	Extensions["lights"] = new KHR_lights_punctualExtension(gltfRoot.Lights); //serialize lights
-				//	
-				//	Lights = new List<GLTFLight>(gltfRoot.Lights.Count);
-				//	foreach (GLTFLight light in gltfRoot.Lights)
-				//	{
-				//		Lights.Add(new GLTFLight(light, this));
-				//	}
-				//}
+				Lights = new List<GLTFLight>(gltfRoot.Lights.Count);
+				foreach (GLTFLight light in gltfRoot.Lights)
+				{
+					Lights.Add(new GLTFLight(light, this));
+				}
 			}
 		}
 
