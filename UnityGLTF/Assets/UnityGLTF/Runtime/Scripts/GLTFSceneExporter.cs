@@ -177,6 +177,9 @@ namespace UnityGLTF
 			};
 
 			_imageInfos = new List<ImageInfo>();
+            if (_root.ExtensionsUsed == null)
+                _root.ExtensionsUsed = new List<string>(new[] { "KHR_lights_punctual" });
+
 			_materials = new List<Material>();
 			_textures = new List<Texture>();
 
@@ -594,14 +597,30 @@ namespace UnityGLTF
 
 			//export camera attached to node
 			Camera unityCamera = nodeTransform.GetComponent<Camera>();
-			if (unityCamera != null)
+			if (unityCamera != null && unityCamera.enabled)
 			{
 				node.Camera = ExportCamera(unityCamera);
 			}
-			
-			node.SetUnityTransform(nodeTransform);
 
-			var id = new NodeId
+            Light unityLight = nodeTransform.GetComponent<Light>();
+            if (unityLight != null && unityLight.enabled)
+            {
+                node.Light = ExportLight(unityLight);
+
+                nodeTransform.rotation *= new Quaternion(0, -1, 0, 0);
+
+                node.SetUnityTransform(nodeTransform);
+
+                nodeTransform.rotation *= new Quaternion(0, 1, 0, 0);
+
+                //node.SetUnityTransformForce(nodeTransform,false); //forward is flipped
+            }
+            else
+            {
+                node.SetUnityTransform(nodeTransform);
+            }
+
+            var id = new NodeId
 			{
 				Id = _root.Nodes.Count,
 				Root = _root
@@ -720,8 +739,70 @@ namespace UnityGLTF
 			var skinnedMeshRender = gameObject.GetComponent<SkinnedMeshRenderer>();
 			return (meshFilter && meshRenderer && meshRenderer.enabled) || (skinnedMeshRender && skinnedMeshRender.enabled);
 		}
+        private LightId ExportLight(Light unityLight)
+        {
+            GLTFLight light;
 
-		private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
+            if (unityLight.type == LightType.Spot)
+            {
+                light = new GLTFSpotLight() { innerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad*0.8f, outerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad };
+                //name
+                light.Name = unityLight.name;
+
+                light.type = unityLight.type.ToString().ToLower();
+                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+                light.range = unityLight.range;
+                light.intensity = unityLight.intensity;
+            }
+            else if (unityLight.type == LightType.Directional)
+            {
+                light = new GLTFDirectionalLight();
+                //name
+                light.Name = unityLight.name;
+
+                light.type = unityLight.type.ToString().ToLower();
+                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+                light.intensity = unityLight.intensity;
+            }
+            else if (unityLight.type == LightType.Point)
+            {
+                light = new GLTFPointLight();
+                //name
+                light.Name = unityLight.name;
+
+                light.type = unityLight.type.ToString().ToLower();
+                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+                light.range = unityLight.range;
+                light.intensity = unityLight.intensity;
+            }
+            else
+            {
+                light = new GLTFLight();
+                //name
+                light.Name = unityLight.name;
+
+                light.type = unityLight.type.ToString().ToLower();
+                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+            }
+
+            if (_root.Lights == null)
+            {
+                _root.Lights = new List<GLTFLight>();
+            }
+
+            var id = new LightId
+            {
+                Id = _root.Lights.Count,
+                Root = _root
+            };
+
+            //list of lightids should be in extensions object
+            _root.Lights.Add(light);
+
+            return id;
+        }
+
+        private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
 		{
 			var childCount = transform.childCount;
 			var prims = new List<GameObject>(childCount + 1);
@@ -959,14 +1040,28 @@ namespace UnityGLTF
 
 				prims[submesh] = primitive;
 			}
+            //remove any prims that have empty triangles
+            List<MeshPrimitive> listPrims = new List<MeshPrimitive>(prims);
+            listPrims.RemoveAll(EmptyPrimitive);
+            prims = listPrims.ToArray();
 
 			_meshToPrims[meshObj] = prims;
 
 			return prims;
 		}
 
-		private MaterialId ExportMaterial(Material materialObj)
+        private static bool EmptyPrimitive(MeshPrimitive prim)
+        {
+            if (prim == null || prim.Attributes == null)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private MaterialId ExportMaterial(Material materialObj)
 		{
+            //TODO if material is null
 			MaterialId id = GetMaterialId(_root, materialObj);
 			if (id != null)
 			{
@@ -974,6 +1069,24 @@ namespace UnityGLTF
 			}
 
 			var material = new GLTFMaterial();
+
+            if (materialObj == null)
+            {
+                if (ExportNames)
+                {
+                    material.Name = "null";
+                }
+                _materials.Add(materialObj);
+                material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
+
+                id = new MaterialId
+                {
+                    Id = _root.Materials.Count,
+                    Root = _root
+                };
+                _root.Materials.Add(material);
+                return id;
+            }
 
 			if (ExportNames)
 			{
@@ -1074,6 +1187,25 @@ namespace UnityGLTF
 			{
 				material.CommonConstant = ExportCommonConstant(materialObj);
 			}
+            else if (materialObj.HasProperty("_MainTex")) //else export main texture
+            {
+                var mainTex = materialObj.GetTexture("_MainTex");
+
+                if (mainTex != null)
+                {
+                    material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
+                    material.PbrMetallicRoughness.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+                    ExportTextureTransform(material.PbrMetallicRoughness.BaseColorTexture, materialObj, "_MainTex");
+                }
+                if (materialObj.HasProperty("_TintColor")) //particles use _TintColor instead of _Color
+                {
+                    if (material.PbrMetallicRoughness == null)
+                        material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
+
+                    material.PbrMetallicRoughness.BaseColorFactor = materialObj.GetColor("_TintColor").ToNumericsColorRaw();
+                }
+                material.DoubleSided = true;
+            }
 
 			_materials.Add(materialObj);
 
@@ -1233,14 +1365,25 @@ namespace UnityGLTF
 
 		private PbrMetallicRoughness ExportPBRMetallicRoughness(Material material)
 		{
-			var pbr = new PbrMetallicRoughness();
+			var pbr = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
 
 			if (material.HasProperty("_Color"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorRaw();
 			}
+            if (material.HasProperty("_TintColor")) //particles use _TintColor instead of _Color
+            {
+                float white = 1;
+                if (material.HasProperty("_Color"))
+                {
+                    var c = material.GetColor("_Color");
+                    white = (c.r + c.g + c.b) / 3.0f; //multiply alpha by overall whiteness of TintColor
+                }
 
-			if (material.HasProperty("_MainTex"))
+                pbr.BaseColorFactor = (material.GetColor("_TintColor") * white).ToNumericsColorRaw() ;
+            }
+
+            if (material.HasProperty("_MainTex")) //TODO if additive particle, render black into alpha
 			{
 				var mainTex = material.GetTexture("_MainTex");
 
@@ -1542,7 +1685,30 @@ namespace UnityGLTF
 				image.Name = texture.name;
 			}
 
-			_imageInfos.Add(new ImageInfo
+            if (texture.GetType() == typeof(RenderTexture))
+            {
+                Texture2D tempTexture = new Texture2D(texture.width, texture.height);
+                tempTexture.name = texture.name;
+
+                RenderTexture.active = texture as RenderTexture;
+                tempTexture.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
+                tempTexture.Apply();
+                texture = tempTexture;
+            }
+#if UNITY_2017_1_OR_NEWER
+            if (texture.GetType() == typeof(CustomRenderTexture))
+            {
+                Texture2D tempTexture = new Texture2D(texture.width, texture.height);
+                tempTexture.name = texture.name;
+
+                RenderTexture.active = texture as CustomRenderTexture;
+                tempTexture.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
+                tempTexture.Apply();
+                texture = tempTexture;
+            }
+#endif
+
+            _imageInfos.Add(new ImageInfo
 			{
 				texture = texture as Texture2D,
 				textureMapType = texturMapType
@@ -1849,21 +2015,6 @@ namespace UnityGLTF
 
 			return id;
 		}
-
-		//private long AppendToBufferMultiplyOf4(long byteOffset, long byteLength)
-		//{
-		//    var moduloOffset = byteLength % 4;
-		//    if (moduloOffset > 0)
-		//    {
-		//	for (int i = 0; i < (4 - moduloOffset); i++)
-		//	{
-		//	    _bufferWriter.Write((byte)0x00);
-		//	}
-		//	byteLength = _bufferWriter.BaseStream.Position - byteOffset;
-		//    }
-
-		//    return byteLength;
-		//}
 
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
@@ -2265,18 +2416,17 @@ namespace UnityGLTF
 			{
 				bool filterIsNearest = root.Samplers[i].MinFilter == MinFilterMode.Nearest
 					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapNearest
-					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
+					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
 
 				bool filterIsLinear = root.Samplers[i].MinFilter == MinFilterMode.Linear
-					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
+					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
 
 				bool filterMatched = textureObj.filterMode == FilterMode.Point && filterIsNearest
 					|| textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
 					|| textureObj.filterMode == FilterMode.Trilinear && root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
 
 				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == WrapMode.ClampToEdge
-					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS == WrapMode.Repeat
-					|| textureObj.wrapMode == TextureWrapMode.Mirror && root.Samplers[i].WrapS == WrapMode.MirroredRepeat;
+					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != WrapMode.ClampToEdge;
 
 				if (filterMatched && wrapMatched)
 				{
