@@ -1466,6 +1466,54 @@ namespace UnityGLTF
 			}
 			*/
 
+
+			const string lightExt = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;
+			KHR_lights_punctualExtension lightsExtension = null;
+			if (_gltfRoot.ExtensionsUsed != null
+			    && _gltfRoot.ExtensionsUsed.Contains(lightExt)
+			    && node.Extensions != null
+			    && node.Extensions.ContainsKey(lightExt))
+			{
+				lightsExtension = node.Extensions[lightExt] as KHR_lights_punctualExtension;
+			}
+
+			if (node.Light != null)
+			{
+				var newLight = nodeObj.AddComponent<Light>();
+				var light = node.Light.Value;
+				switch (light.type.ToLowerInvariant())
+				{
+					case "spot":
+						newLight.type = LightType.Spot;
+						break;
+					case "directional":
+						newLight.type = LightType.Directional;
+						break;
+					case "point":
+						newLight.type = LightType.Point;
+						break;
+					case "area":
+						newLight.type = LightType.Area;
+						break;
+					case "rectangle":
+						newLight.type = LightType.Rectangle;
+						break;
+					case "disc":
+						newLight.type = LightType.Disc;
+						break;
+				}
+
+				newLight.name = light.Name;
+				newLight.intensity = light.intensity;
+				newLight.color = new Color(light.color.R, light.color.G, light.color.B, light.color.A);
+				newLight.range = light.range;
+				if(light is GLTFSpotLight a)
+				{
+					newLight.innerSpotAngle = a.innerConeAngle * 2 / (Mathf.Deg2Rad * 0.8f);
+					newLight.spotAngle = a.outerConeAngle * 2 / Mathf.Deg2Rad;
+				}
+			}
+
 			nodeObj.SetActive(true);
 
 			progressStatus.NodeLoaded++;
@@ -1565,7 +1613,7 @@ namespace UnityGLTF
 
 		/// <summary>
 		/// Allocate a generic type 2D array. The size is depending on the given parameters.
-		/// </summary>		
+		/// </summary>
 		/// <param name="x">Defines the depth of the arrays first dimension</param>
 		/// <param name="y">>Defines the depth of the arrays second dimension</param>
 		/// <returns></returns>

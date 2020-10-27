@@ -242,6 +242,16 @@ namespace GLTF.Schema
 					Textures.Add(new GLTFTexture(texture, this));
 				}
 			}
+
+
+			if (gltfRoot.Lights != null)
+			{
+				Lights = new List<GLTFLight>(gltfRoot.Lights.Count);
+				foreach (GLTFLight light in gltfRoot.Lights)
+				{
+					Lights.Add(new GLTFLight(light, this));
+				}
+			}
 		}
 
 		/// <summary>
