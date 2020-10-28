@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GLTF.Extensions;
+using GLTF.Schema.KHR_lights_punctual;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -13,9 +14,10 @@ namespace GLTF.Schema
 			{ ExtTextureTransformExtensionFactory.EXTENSION_NAME, new ExtTextureTransformExtensionFactory() },
 			{ KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME, new KHR_materials_pbrSpecularGlossinessExtensionFactory() },
 			{ KHR_materials_unlitExtensionFactory.EXTENSION_NAME, new KHR_materials_unlitExtensionFactory() },
+			{ KHR_lights_punctualExtensionFactory.EXTENSION_NAME, new KHR_lights_punctualExtensionFactory() },
       		{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
 		};
-		
+
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
 		private static KHR_materials_pbrSpecularGlossinessExtensionFactory _KHRExtensionFactory = new KHR_materials_pbrSpecularGlossinessExtensionFactory();
 		private static ExtTextureTransformExtensionFactory _TexTransformFactory = new ExtTextureTransformExtensionFactory();
