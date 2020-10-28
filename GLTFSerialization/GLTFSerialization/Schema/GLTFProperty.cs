@@ -156,7 +156,7 @@ namespace GLTF.Schema
 				}
 			}
 		}
-
+		
 		private Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
@@ -166,15 +166,15 @@ namespace GLTF.Schema
 
 			JObject extensions = (JObject)JToken.ReadFrom(reader);
 			var extensionsCollection = new Dictionary<string, IExtension>();
-
-			foreach (JToken child in extensions.Children())
+			
+			foreach(JToken child in extensions.Children())
 			{
 				if (child.Type != JTokenType.Property)
 				{
 					throw new GLTFParseException("Children token of extensions should be properties");
 				}
 
-				JProperty childAsJProperty = (JProperty)child;
+				JProperty childAsJProperty = (JProperty) child;
 				string extensionName = childAsJProperty.Name;
 				ExtensionFactory extensionFactory;
 
@@ -217,7 +217,7 @@ namespace GLTF.Schema
 				writer.WriteEndObject();
 			}
 
-			if (Extras != null)
+			if(Extras != null)
 			{
 				writer.WritePropertyName("extras");
 				Extras.WriteTo(writer);

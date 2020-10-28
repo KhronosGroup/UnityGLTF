@@ -32,9 +32,9 @@ namespace GLTF
 	
 	public class GLTFParser
 	{
-		public const uint HEADER_SIZE = 12;
-		public const uint CHUNK_HEADER_SIZE = 8;
-		public const uint MAGIC_NUMBER = 0x46546c67;
+		public static readonly uint HEADER_SIZE = 12;
+		public static readonly uint CHUNK_HEADER_SIZE = 8;
+		public static readonly uint MAGIC_NUMBER = 0x46546c67;
 
 		public static void ParseJson(Stream stream, out GLTFRoot gltfRoot, long startPosition = 0)
 		{
@@ -61,7 +61,7 @@ namespace GLTF
 		{
 			stream.Position = startPosition + 4;	 // start after magic number chunk
 			GLBHeader header = ParseGLBHeader(stream);
-			uint chunkOffset = (uint)startPosition + 12;   // sizeof(GLBHeader) + magic number
+			uint chunkOffset = 12;   // sizeof(GLBHeader) + magic number
 			uint chunkLength = 0;
 			for (int i = 0; i < binaryChunkIndex + 2; ++i)
 			{
@@ -72,7 +72,7 @@ namespace GLTF
 			}
 
 			// Load Binary Chunk
-			if (chunkOffset + chunkLength - (uint)startPosition <= header.FileLength)
+			if (chunkOffset + chunkLength <= header.FileLength)
 			{
 				ChunkFormat chunkType = (ChunkFormat)GetUInt32(stream);
 				if (chunkType != ChunkFormat.BIN)
