@@ -10,11 +10,13 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
+using LightType = UnityEngine.LightType;
 using Matrix4x4 = GLTF.Math.Matrix4x4;
 using Object = UnityEngine.Object;
 #if !WINDOWS_UWP
@@ -1468,50 +1470,44 @@ namespace UnityGLTF
 
 
 			const string lightExt = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;
-			KHR_lights_punctualExtension lightsExtension = null;
+			KHR_LightsPunctualNodeExtension lightsExtension = null;
 			if (_gltfRoot.ExtensionsUsed != null
 			    && _gltfRoot.ExtensionsUsed.Contains(lightExt)
 			    && node.Extensions != null
 			    && node.Extensions.ContainsKey(lightExt))
 			{
-				lightsExtension = node.Extensions[lightExt] as KHR_lights_punctualExtension;
-			}
+				lightsExtension = node.Extensions[lightExt] as KHR_LightsPunctualNodeExtension;
+				var l = lightsExtension.LightId;
+				// var allLights = _gltfRoot.Extensions[KHR_lights_punctualExtensionFactory.EXTENSION_NAME] as KHR_LightsPunctualExtension;
+				// var selected = allLights.Lights[l.Id];
+				var light = l.Value;
 
-			if (node.Light != null)
-			{
 				var newLight = nodeObj.AddComponent<Light>();
-				var light = node.Light.Value;
-				switch (light.type.ToLowerInvariant())
+				switch (light.Type)
 				{
-					case "spot":
+					case GLTF.Schema.KHR_lights_punctual.LightType.spot:
 						newLight.type = LightType.Spot;
 						break;
-					case "directional":
+					case GLTF.Schema.KHR_lights_punctual.LightType.directional:
 						newLight.type = LightType.Directional;
 						break;
-					case "point":
+					case GLTF.Schema.KHR_lights_punctual.LightType.point:
 						newLight.type = LightType.Point;
-						break;
-					case "area":
-						newLight.type = LightType.Area;
-						break;
-					case "rectangle":
-						newLight.type = LightType.Rectangle;
-						break;
-					case "disc":
-						newLight.type = LightType.Disc;
 						break;
 				}
 
 				newLight.name = light.Name;
-				newLight.intensity = light.intensity;
-				newLight.color = new Color(light.color.R, light.color.G, light.color.B, light.color.A);
-				newLight.range = light.range;
-				if(light is GLTFSpotLight a)
+				newLight.intensity = (float) light.Intensity;
+				newLight.color = new Color(light.Color.R, light.Color.G, light.Color.B, light.Color.A);
+				newLight.range = (float) light.Range;
+				if(light.Spot != null)
 				{
-					newLight.innerSpotAngle = a.innerConeAngle * 2 / (Mathf.Deg2Rad * 0.8f);
-					newLight.spotAngle = a.outerConeAngle * 2 / Mathf.Deg2Rad;
+					newLight.innerSpotAngle = (float) light.Spot.InnerConeAngle * 2 / (Mathf.Deg2Rad * 0.8f);
+					newLight.spotAngle = (float) light.Spot.OuterConeAngle * 2 / Mathf.Deg2Rad;
 				}
+
+				// flip?
+				nodeObj.transform.localRotation *= Quaternion.Euler(0, 180, 0);
 			}
 
 			nodeObj.SetActive(true);
