@@ -962,6 +962,12 @@ namespace UnityGLTF
 			var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
+			var vertices = meshObj.vertices;
+			if (vertices.Length < 1)
+			{
+				Debug.LogWarning("MeshFilter does not contain any vertices, won't export: " + gameObject.name, gameObject);
+				return new MeshPrimitive[] { };
+			}
 
 			// don't export any more accessors if this mesh is already exported
 			MeshPrimitive[] primVariations;
