@@ -210,7 +210,7 @@ namespace UnityGLTF
 		{
 			_shouldUseInternalBufferForImages = true;
 			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
-			
+
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
 			{
 				SaveGLBToStream(glbFile, fileName);
@@ -251,10 +251,10 @@ namespace UnityGLTF
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
 			// rotate 180°
-			if(_rootTransforms.Length > 1) 
+			if(_rootTransforms.Length > 1)
 				Debug.LogWarning("Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
-			foreach(var t in _rootTransforms)
-				t.rotation = Quaternion.Euler(0,180,0) * t.rotation;
+			// foreach(var t in _rootTransforms)
+			// 	t.rotation = Quaternion.Euler(0,180,0) * t.rotation;
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 			if (ExportAnimations)
@@ -304,8 +304,8 @@ namespace UnityGLTF
 
 			writer.Flush();
 
-			foreach(var t in _rootTransforms)
-				t.rotation = Quaternion.Euler(0,-180,0) * t.rotation;
+			// foreach(var t in _rootTransforms)
+			// 	t.rotation = Quaternion.Euler(0,-180,0) * t.rotation;
 		}
 
 		/// <summary>
@@ -369,10 +369,10 @@ namespace UnityGLTF
 			_bufferWriter = new BinaryWriter(binFile);
 
 			// rotate 180°
-			if(_rootTransforms.Length > 1) 
+			if(_rootTransforms.Length > 1)
 				Debug.LogWarning("Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
-			foreach(var t in _rootTransforms)
-				t.rotation *= Quaternion.Euler(0,180,0);
+			// foreach(var t in _rootTransforms)
+			// 	t.rotation *= Quaternion.Euler(0,180,0);
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
 			if (ExportAnimations)
@@ -403,8 +403,8 @@ namespace UnityGLTF
 #endif
 			ExportImages(path);
 
-			foreach(var t in _rootTransforms)
-				t.rotation *= Quaternion.Euler(0,-180,0);
+			// foreach(var t in _rootTransforms)
+			// 	t.rotation *= Quaternion.Euler(0,-180,0);
 		}
 
 		private void ExportImages(string outputPath)
@@ -549,7 +549,7 @@ namespace UnityGLTF
 				else if (!enforceExtension.StartsWith(".") && !filenamePath.EndsWith(enforceExtension))
 					filenamePath += "." + enforceExtension;
 			}
-			return filenamePath; 
+			return filenamePath;
 		}
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
@@ -919,7 +919,7 @@ namespace UnityGLTF
 					mesh.Primitives.AddRange(meshPrimitives);
 				}
 			}
-			
+
 			var id = new MeshId
 			{
 				Id = _root.Meshes.Count,
@@ -987,7 +987,7 @@ namespace UnityGLTF
 
 			AccessorId aPosition = null, aNormal = null, aTangent = null,
 				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
-				
+
 			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
 			if (meshObj.normals.Length != 0)
@@ -1120,7 +1120,7 @@ namespace UnityGLTF
 				materialObj.GetInt("_Cull") == (float)CullMode.Off;
 
 			if(materialObj.IsKeywordEnabled("_EMISSION"))
-			{ 
+			{
 				if (materialObj.HasProperty("_EmissionColor"))
 				{
 					material.EmissiveFactor = materialObj.GetColor("_EmissionColor").ToNumericsColorRaw();
@@ -1665,7 +1665,7 @@ namespace UnityGLTF
 				}
 			}
 			else
-			{ 
+			{
 				filenamePath = Path.GetFileName(filenamePath);
 				if (!isGltfCompatible)
 				{
@@ -1777,7 +1777,7 @@ namespace UnityGLTF
 			bool wasAbleToExportFromDisk = false;
 
 			if(TryExportTexturesFromDisk && TryGetTextureDataFromDisk(texture, out string path, out byte[] imageBytes))
-			{ 
+			{
 				if(IsPng(path))
 				{
 					image.MimeType = "image/png";
@@ -2581,12 +2581,12 @@ namespace UnityGLTF
 					bool haveAnimation = positions != null || rotations != null || scales != null;
 
 					if(haveAnimation)
-					{ 
+					{
 						AccessorId timeAccessor = ExportAccessor(times);
 
 						// Translation
 						if(positions != null)
-						{ 
+						{
 							AnimationChannel Tchannel = new AnimationChannel();
 							AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
 							TchannelTarget.Path = GLTFAnimationChannelPath.translation;
@@ -2613,7 +2613,7 @@ namespace UnityGLTF
 						}
 
 						if(rotations != null)
-						{ 
+						{
 							// Rotation
 							AnimationChannel Rchannel = new AnimationChannel();
 							AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
@@ -2641,7 +2641,7 @@ namespace UnityGLTF
 						}
 
 						if(scales != null)
-						{ 
+						{
 							// Scale
 							AnimationChannel Schannel = new AnimationChannel();
 							AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
@@ -2737,7 +2737,7 @@ namespace UnityGLTF
 			}
 			#endif
 		}
-		
+
 		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
 		{
 			foreach (string target in targetCurvesBinding.Keys)
@@ -2851,7 +2851,7 @@ namespace UnityGLTF
 					scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
 
 				if(haveRotationKeys)
-				{ 
+				{
 					if (curveSet.rotationType == AnimationKeyRotationType.Euler)
 					{
 						Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
@@ -3291,7 +3291,7 @@ namespace UnityGLTF
 					_bufferWriter.Write(col.W);
 				}
 			}
-			
+
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
