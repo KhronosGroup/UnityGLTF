@@ -925,9 +925,13 @@ namespace UnityGLTF
 				Id = _root.Meshes.Count,
 				Root = _root
 			};
-			_root.Meshes.Add(mesh);
+			if (mesh.Primitives.Count > 0)
+			{
+				_root.Meshes.Add(mesh);
+				return id;
+			}
 
-			return id;
+			return null;
 		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
@@ -957,7 +961,7 @@ namespace UnityGLTF
 			if(!renderer && !smr)
 			{
 				Debug.LogWarning("GameObject does have neither renderer nor SkinnedMeshRenderer! " + gameObject.name, gameObject);
-				return new MeshPrimitive[] { };
+				return null;
 			}
 			var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
 
@@ -966,7 +970,7 @@ namespace UnityGLTF
 			if (vertices.Length < 1)
 			{
 				Debug.LogWarning("MeshFilter does not contain any vertices, won't export: " + gameObject.name, gameObject);
-				return new MeshPrimitive[] { };
+				return null;
 			}
 
 			// don't export any more accessors if this mesh is already exported
