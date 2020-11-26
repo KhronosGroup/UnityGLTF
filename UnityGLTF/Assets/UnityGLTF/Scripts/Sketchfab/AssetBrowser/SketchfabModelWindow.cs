@@ -41,7 +41,7 @@ namespace Sketchfab
 			if(_currentModel == null || model.uid != _currentModel.uid)
 			{
 				_currentModel = model;
-				_prefabName = GLTFUtils.cleanName(_currentModel.name);
+				_prefabName = GLTFUtils.cleanName(_currentModel.name).Replace(" ", "_");
 				_importDirectory = Application.dataPath + "/Import/" + _prefabName.Replace(" ", "_");
 			}
 			else

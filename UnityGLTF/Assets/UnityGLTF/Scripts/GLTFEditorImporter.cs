@@ -148,6 +148,7 @@ namespace UnityGLTF
 			_useGLTFMaterial = useGLTFMaterial;
 			LoadFile();
 			LoadGLTFScene();
+			CopyLicenseFile();
 		}
 
 		// Private
@@ -206,6 +207,16 @@ namespace UnityGLTF
 
 			if (_root.Skins != null && _root.Skins.Count > 0)
 				LoadSkinsEnum();
+		}
+
+		private void CopyLicenseFile()
+		{
+			String licensePath = Path.Combine(_gltfDirectoryPath, "license.txt");
+			String destLicensePath = GLTFUtils.SystemToUnityPath(GLTFUtils.getPathAbsoluteFromProject(Path.Combine(_projectDirectoryPath, "license.txt")));
+			if (File.Exists(licensePath))
+			{
+				File.Copy(licensePath, destLicensePath);
+			}
 		}
 
 		private void LoadBuffersEnum()
