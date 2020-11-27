@@ -177,9 +177,6 @@ namespace UnityGLTF
 			};
 
 			_imageInfos = new List<ImageInfo>();
-            if (_root.ExtensionsUsed == null)
-                _root.ExtensionsUsed = new List<string>(new[] { "KHR_lights_punctual" });
-
 			_materials = new List<Material>();
 			_textures = new List<Texture>();
 
@@ -741,6 +738,15 @@ namespace UnityGLTF
 		}
         private LightId ExportLight(Light unityLight)
         {
+	        if (_root.ExtensionsUsed == null)
+	        {
+		        _root.ExtensionsUsed = new List<string>(new[] { "KHR_lights_punctual" });
+	        }
+	        else if (!_root.ExtensionsUsed.Contains("KHR_lights_punctual"))
+	        {
+		        _root.ExtensionsUsed.Add("KHR_lights_punctual");
+	        }
+
             GLTFLight light;
 
             if (unityLight.type == LightType.Spot)
