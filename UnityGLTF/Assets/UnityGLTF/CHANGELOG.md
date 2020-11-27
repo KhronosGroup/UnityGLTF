@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.11] - 2020-11-27
+- fix KHR_lights_punctual extension always being set, even if no lights were exported
+- fix invalid primitives being exported for meshes with 0 vertices
+- removed export rotation offset that caused incorrect rotation in other softwares
+
 ## [1.0.4-preview.10] - 2020-11-16
 - fix error thrown when vertex arrays have 0 elements (this is valid in FBX)
 - add light export/import extensions
