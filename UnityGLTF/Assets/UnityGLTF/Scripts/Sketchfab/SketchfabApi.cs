@@ -68,7 +68,8 @@ namespace Sketchfab
 			}
 
 			readable = Mathf.Round(readable * 100) / 100;
-			return readable + suffix;
+			
+			return readable.ToString().Replace(',', '.') + suffix;
 		}
 	}
 

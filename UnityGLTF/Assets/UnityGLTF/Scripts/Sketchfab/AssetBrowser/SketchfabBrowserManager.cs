@@ -21,6 +21,12 @@ namespace Sketchfab
 		RECENT,
 	}
 
+	public enum SEARCH_ENDPOINT
+	{
+		DOWNLOADABLE,
+		MY_MODELS,
+	}
+
 	public class SketchfabModel
 	{
 		// Model info
@@ -33,6 +39,7 @@ namespace Sketchfab
 		public string hasAnimation = "";
 		public string hasSkin = null;
 		public JSONNode licenseJson;
+		public string formattedLicenseRequirements;
 		public int archiveSize;
 
 		// Reuse download url while it's still valid
@@ -86,6 +93,28 @@ namespace Sketchfab
 
 			hasAnimation = node["animationCount"].AsInt > 0 ? "Yes" : "No";
 			licenseJson = node["license"].AsObject;
+
+			formattedLicenseRequirements = licenseJson["requirements"];
+
+			if (formattedLicenseRequirements.Length > 0)
+			{
+				formattedLicenseRequirements = licenseJson["requirements"].ToString();
+				formattedLicenseRequirements = formattedLicenseRequirements.Replace(".", ".\n");
+				formattedLicenseRequirements = formattedLicenseRequirements.Replace("\"", " ");
+			}
+
+			// Dirty formatting for Standard/Editorial licenses.
+			// There should be a better formatting code if we add more licenses
+			if (licenseJson["slug"].ToString() == "\"ed\"")
+			{
+				formattedLicenseRequirements = formattedLicenseRequirements.Replace("that", "\n that");
+			}
+
+			if (licenseJson["slug"].ToString() == "\"st\"")
+			{
+				formattedLicenseRequirements = formattedLicenseRequirements.Replace(" on ", "\n on ");
+				formattedLicenseRequirements = formattedLicenseRequirements.Replace(" and ", "\n and ");
+			}
 		}
 	}
 
@@ -100,8 +129,7 @@ namespace Sketchfab
 		Dictionary<string, string> _categories;
 
 		// Search
-		private const string INITIAL_SEARCH = "&staffpicked=true&sort_by=-publishedAt";
-		private const string START_QUERY = "?type=models&downloadable=true&";
+		private const string INITIAL_SEARCH = "type=models&downloadable=true&staffpicked=true&min_face_count=1&sort_by=-publishedAt";
 		string _lastQuery;
 		string _prevCursor = "";
 		string _nextCursor = "";
@@ -249,15 +277,8 @@ namespace Sketchfab
 			startSearch();
 		}
 
-		public void search(string query, bool staffpicked, bool animated, string categoryName, SORT_BY sortby, string maxFaceCount = "", string minFaceCount = "", bool myModels=false)
+		public string applySearchFilters(string searchQuery, bool staffpicked, bool animated, string categoryName, string maxFaceCount, string minFaceCount)
 		{
-			reset();
-			string searchQuery = (myModels ? SketchfabPlugin.Urls.ownModelsSearchEndpoint : SketchfabPlugin.Urls.searchEndpoint);
-			if (query.Length > 0)
-			{
-				searchQuery = searchQuery + "&q=" + query;
-			}
-
 			if (minFaceCount != "")
 			{
 				searchQuery = searchQuery + "&min_face_count=" + minFaceCount;
@@ -277,7 +298,41 @@ namespace Sketchfab
 				searchQuery = searchQuery + "&animated=true";
 			}
 
-			switch (sortby)
+			if (_categories[categoryName].Length > 0)
+				searchQuery = searchQuery + "&categories=" + _categories[categoryName];
+
+			return searchQuery;
+		}
+
+		public void search(string query, bool staffpicked, bool animated, string categoryName, string maxFaceCount = "", string minFaceCount = "", SEARCH_ENDPOINT endpoint = SEARCH_ENDPOINT.DOWNLOADABLE, SORT_BY sortBy = SORT_BY.RECENT)
+		{
+			reset();
+			string searchQuery;
+			switch(endpoint)
+			{
+				case SEARCH_ENDPOINT.DOWNLOADABLE:
+					searchQuery = SketchfabPlugin.Urls.searchEndpoint;
+					break;
+				case SEARCH_ENDPOINT.MY_MODELS:
+					searchQuery = SketchfabPlugin.Urls.ownModelsSearchEndpoint;
+					break;
+				default:
+					searchQuery = SketchfabPlugin.Urls.searchEndpoint;
+					break;
+			}
+
+			// Apply default filters
+			searchQuery = searchQuery + "type=models&downloadable=true";
+
+			// Text query
+			if (query.Length > 0)
+			{
+				searchQuery = searchQuery + "&q=" + query;
+			}
+
+			// Filters and results sorting
+			searchQuery = applySearchFilters(searchQuery, staffpicked, animated, categoryName, maxFaceCount, minFaceCount);
+			switch (sortBy)
 			{
 				case SORT_BY.RECENT:
 					searchQuery = searchQuery + "&sort_by=" + "-publishedAt";
@@ -289,9 +344,6 @@ namespace Sketchfab
 					searchQuery = searchQuery + "&sort_by=" + "-likeCount";
 					break;
 			}
-
-			if (_categories[categoryName].Length > 0)
-				searchQuery = searchQuery + "&categories=" + _categories[categoryName];
 
 			_lastQuery = searchQuery;
 
@@ -350,7 +402,7 @@ namespace Sketchfab
 
 		public bool hasNextResults()
 		{
-			return _nextCursor.Length > 0;
+			return _nextCursor != "0" && _nextCursor != "null" && _nextCursor.Length > 0;
 		}
 
 		public void requestNextResults()
@@ -369,7 +421,7 @@ namespace Sketchfab
 
 		public bool hasPreviousResults()
 		{
-			return _prevCursor != "null" && _prevCursor.Length > 0;
+			return _prevCursor != "0" && _prevCursor != "null" && _prevCursor.Length > 0;
 		}
 
 		public void requestPreviousResults()
