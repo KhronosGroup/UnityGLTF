@@ -549,6 +549,28 @@ namespace UnityGLTF
 			return filenamePath;
 		}
 
+		private void DeclareExtensionUsage(string extension, bool isRequired=false)
+		{
+			if( _root.ExtensionsUsed == null ){
+				_root.ExtensionsUsed = new List<string>();
+			}
+			if(!_root.ExtensionsUsed.Contains(extension))
+			{
+				_root.ExtensionsUsed.Add(extension);
+			}
+
+			if(isRequired){
+
+				if( _root.ExtensionsRequired == null ){
+					_root.ExtensionsRequired = new List<string>();
+				}
+				if( !_root.ExtensionsRequired.Contains(extension))
+				{
+					_root.ExtensionsRequired.Add(extension);
+				}
+			}
+		}
+
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
 			var scene = new GLTFScene();
@@ -1190,7 +1212,10 @@ namespace UnityGLTF
 					}
 				}
 			}
+			if( IsUnlit(materialObj)){
 
+				ExportUnlit( material, materialObj );
+			}
 			if (IsPBRMetallicRoughness(materialObj))
 			{
 				material.PbrMetallicRoughness = ExportPBRMetallicRoughness(materialObj);
@@ -1202,6 +1227,28 @@ namespace UnityGLTF
 			else if (IsCommonConstant(materialObj))
 			{
 				material.CommonConstant = ExportCommonConstant(materialObj);
+			}
+			else if (materialObj.HasProperty("_BaseMap"))
+			{
+				var mainTex = materialObj.GetTexture("_BaseMap");
+				material.PbrMetallicRoughness = new PbrMetallicRoughness()
+				{
+					BaseColorFactor = (materialObj.HasProperty("_BaseColor")
+						? materialObj.GetColor("_BaseColor")
+						: Color.white).ToNumericsColorRaw(),
+					BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main)
+				};
+			}
+			else if (materialObj.HasProperty("_ColorTexture"))
+			{
+				var mainTex = materialObj.GetTexture("_ColorTexture");
+				material.PbrMetallicRoughness = new PbrMetallicRoughness()
+				{
+					BaseColorFactor = (materialObj.HasProperty("_BaseColor")
+						? materialObj.GetColor("_BaseColor")
+						: Color.white).ToNumericsColorRaw(),
+					BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main)
+				};
 			}
             else if (materialObj.HasProperty("_MainTex")) //else export main texture
             {
@@ -1288,6 +1335,11 @@ namespace UnityGLTF
 		private bool IsPBRMetallicRoughness(Material material)
 		{
 			return material.HasProperty("_Metallic") && material.HasProperty("_MetallicGlossMap");
+		}
+
+		private bool IsUnlit(Material material)
+		{
+			return material.shader.name.ToLowerInvariant().Contains("unlit");
 		}
 
 		private bool IsPBRSpecularGlossiness(Material material)
@@ -1449,6 +1501,41 @@ namespace UnityGLTF
 
 			return pbr;
 		}
+
+		private void ExportUnlit(GLTFMaterial def, Material material){
+
+			const string extname = KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME;
+			DeclareExtensionUsage( extname, true );
+			def.AddExtension( extname, new KHR_MaterialsUnlitExtension());
+
+			var pbr = new PbrMetallicRoughness();
+
+			if (material.HasProperty("_Color"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
+			}
+
+			if (material.HasProperty("_MainTex"))
+			{
+				var mainTex = material.GetTexture("_MainTex");
+				if (mainTex != null)
+				{
+					if(mainTex is Texture2D)
+					{
+						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} base texture in material {1}", mainTex.GetType(), material.name);
+					}
+				}
+			}
+
+			def.PbrMetallicRoughness = pbr;
+
+		}
+
 
 		private void ExportPBRSpecularGlossiness(GLTFMaterial material, Material materialObj)
 		{

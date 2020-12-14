@@ -1719,7 +1719,7 @@ namespace UnityGLTF
 
 			var indices = meshAttributes.ContainsKey(SemanticProperties.INDICES)
 				? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-				: MeshPrimitive.GenerateIndices(vertexCount);
+				: MeshPrimitive.GenerateTriangles(vertexCount);
 			if (unityData.Topology[indexOffset] == MeshTopology.Triangles)
 				SchemaExtensions.FlipTriangleFaces(indices);
 			unityData.Indices[indexOffset] = indices;

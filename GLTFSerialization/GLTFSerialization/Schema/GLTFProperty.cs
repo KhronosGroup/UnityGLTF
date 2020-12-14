@@ -13,7 +13,7 @@ namespace GLTF.Schema
 		{
 			{ ExtTextureTransformExtensionFactory.EXTENSION_NAME, new ExtTextureTransformExtensionFactory() },
 			{ KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME, new KHR_materials_pbrSpecularGlossinessExtensionFactory() },
-			{ KHR_materials_unlitExtensionFactory.EXTENSION_NAME, new KHR_materials_unlitExtensionFactory() },
+			{ KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME, new KHR_MaterialsUnlitExtensionFactory() },
 			{ KHR_lights_punctualExtensionFactory.EXTENSION_NAME, new KHR_lights_punctualExtensionFactory() },
       		{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
 		};

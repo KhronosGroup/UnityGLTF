@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
 using GLTF.Math;
+using System.Linq;
 
 namespace GLTF
 {
@@ -254,41 +255,41 @@ namespace GLTF
 				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(0)))
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[0]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(0)];
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(1)))
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[1]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(1)];
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[1]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(2)))
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[2]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(2)];
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[2]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.TexCoord(3)))
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[3]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.TexCoord(3)];
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[3]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.Color(0)))
+			if (attributes.ContainsKey(SemanticProperties.Color[0]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.Color(0)];
+				var attributeAccessor = attributes[SemanticProperties.Color[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
@@ -302,20 +303,44 @@ namespace GLTF
 				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.Weight(0)))
+			if (attributes.ContainsKey(SemanticProperties.Weight[0]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.Weight(0)];
+				var attributeAccessor = attributes[SemanticProperties.Weight[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-			if (attributes.ContainsKey(SemanticProperties.Joint(0)))
+			if (attributes.ContainsKey(SemanticProperties.Joint[0]))
 			{
-				var attributeAccessor = attributes[SemanticProperties.Joint(0)];
+				var attributeAccessor = attributes[SemanticProperties.Joint[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+		}
+
+		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes)
+		{
+			foreach (var kvp in attributes)
+			{
+				var attributeAccessor = kvp.Value;
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				byte[] bufferViewCache;
+				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
+
+				switch (kvp.Key)
+				{
+					case SemanticProperties.POSITION:
+					case SemanticProperties.NORMAL:
+					case SemanticProperties.TANGENT:
+						attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+						break;
+					default:
+						throw new System.Exception($"Unrecognized morph target attribute {kvp.Key}");
+				}
+
 				attributeAccessor.AccessorContent = resultArray;
 			}
 		}
@@ -906,6 +931,71 @@ namespace GLTF
 		{
 			string fileName = Path.GetFileName(oldPath);
 			return newCanonicalPath + Path.DirectorySeparatorChar + fileName;
+		}
+
+		public static NodeId FindCommonAncestor(IEnumerable<NodeId> nodes)
+		{
+			// build parentage
+			GLTFRoot root = nodes.First().Root;
+			Dictionary<int, int> childToParent = new Dictionary<int, int>(root.Nodes.Count);
+			for (int i = 0; i < root.Nodes.Count; i++)
+			{
+				if (root.Nodes[i].Children == null)
+				{
+					continue;
+				}
+
+				foreach (NodeId child in root.Nodes[i].Children)
+				{
+					childToParent[child.Id] = i;
+				}
+			}
+
+			// scan for common ancestor
+			int? commonAncestorIndex = nodes
+				.Select(n => n.Id)
+				.Aggregate((int?)null, (elder, node) => FindCommonAncestor(elder, node));
+
+			return commonAncestorIndex != null ? new NodeId() { Id = commonAncestorIndex.Value, Root = root } : null;
+
+			int? FindCommonAncestor(int? a, int? b)
+			{
+				// trivial cases
+				if (a == null && b == null)
+				{
+					return null;
+				}
+				else if (a != null)
+				{
+					return a;
+				}
+				else if (b != null)
+				{
+					return b;
+				}
+				else if (AncestorOf(a.Value, b.Value))
+				{
+					return a;
+				}
+				else
+				{
+					return FindCommonAncestor(childToParent[a.Value], b.Value);
+				}
+			}
+
+			bool AncestorOf(int ancestor, int descendant)
+			{
+				while (childToParent.ContainsKey(descendant))
+				{
+					if (childToParent[descendant] == ancestor)
+					{
+						return true;
+					}
+					descendant = childToParent[descendant];
+				}
+
+				return false;
+			}
 		}
 	}
 }

@@ -6,18 +6,18 @@ using GLTF.Extensions;
 
 namespace GLTF.Schema
 {
-	public class KHR_materials_unlitExtensionFactory : ExtensionFactory
-	{
-		public const string EXTENSION_NAME = "KHR_materials_unlit";
+    public class KHR_MaterialsUnlitExtensionFactory : ExtensionFactory
+    {
+        public const string EXTENSION_NAME = "KHR_materials_unlit";
 
-		public KHR_materials_unlitExtensionFactory()
-		{
-			ExtensionName = EXTENSION_NAME;
-		}
+        public KHR_MaterialsUnlitExtensionFactory()
+        {
+            ExtensionName = EXTENSION_NAME;
+        }
 
-		public override IExtension Deserialize(GLTFRoot root, JProperty extensionToken)
-		{
-			return new KHR_materials_unlitExtension();
-		}
-	}
+        public override IExtension Deserialize(GLTFRoot root, JProperty extensionToken)
+        {
+            return new KHR_MaterialsUnlitExtension();
+        }
+    }
 }
