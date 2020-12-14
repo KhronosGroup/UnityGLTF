@@ -110,6 +110,19 @@ namespace GLTF.Schema
 			}
 		}
 
+		public void AddExtension(string extname, IExtension extension)
+		{
+			if (Extensions == null)
+			{
+				Extensions = new Dictionary<string, IExtension>();
+			}
+			if (Extensions.ContainsKey(extname))
+			{
+				throw new Exception($"Extension {extname} already exist on GLTFProperty");
+			}
+			Extensions.Add(extname, extension);
+		}
+
 		private void SkipValue(JsonReader reader)
 		{
 			if (!reader.Read())

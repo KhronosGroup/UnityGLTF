@@ -1942,7 +1942,7 @@ namespace UnityGLTF
 		{
 			IUniformMap mapper;
 			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
-			const string unlitExtName = KHR_materials_unlitExtensionFactory.EXTENSION_NAME;
+			const string unlitExtName = KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME;
 			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName)
 				&& def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
 			{
