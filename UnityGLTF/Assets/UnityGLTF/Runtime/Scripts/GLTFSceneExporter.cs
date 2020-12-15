@@ -2663,15 +2663,17 @@ namespace UnityGLTF
 					int haveScaleCurves = current.scaleCurves[0] != null ? current.scaleCurves.Length : 0;
 					int haveRotationCurves = current.rotationCurves[0] != null ? current.rotationCurves.Length : 0;
 
-					// Debug.Log(target + ": " + "translation: " + haveTranslationCurves + " scale: " + haveScaleCurves + " rotation: " + haveRotationCurves);
-
 					// Initialize data
 					// Bake and populate animation data
 					float[] times = null;
 					Vector3[] positions = null;
 					Vector3[] scales = null;
 					Vector4[] rotations = null;
-					BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, ref times, ref positions, ref rotations, ref scales);
+
+					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, ref times, ref positions, ref rotations, ref scales))
+					{
+						Debug.LogWarning("Warning: Export failed for animation curve " + target + " in " + clip + " from " + transform, transform);
+					}
 
 					int channelTargetId = getTargetIdFromTransform(ref targetTr);
 
@@ -2877,7 +2879,7 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private void BakeCurveSet(TargetCurveSet curveSet, float length, int bakingFramerate, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
+		private bool BakeCurveSet(TargetCurveSet curveSet, float length, int bakingFramerate, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
 		{
 			int nbSamples = Mathf.Max(1, (int)(length * 30));
 			float deltaTime = length / nbSamples;
@@ -2891,7 +2893,7 @@ namespace UnityGLTF
 				if(curveSet.scaleCurves.Length < 3)
 				{
 					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now");
-					return;
+					return false;
 				}
 				bool anyIsNull = false;
 				foreach (var sc in curveSet.scaleCurves)
@@ -2922,8 +2924,8 @@ namespace UnityGLTF
 
 			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys)
 			{
-				Debug.LogError("No keys in curveSet!");
-				return;
+				Debug.LogWarning("No keys in curve set");
+				return false;
 			}
 
 			// Initialize Arrays
@@ -3004,6 +3006,8 @@ namespace UnityGLTF
 			if (haveTranslationKeys) positions = p2.ToArray();
 			if (haveRotationKeys) rotations = r2.ToArray();
 			if (haveScaleKeys) scales = s2.ToArray();
+
+			return true;
 		}
 
 		private UnityEngine.Mesh getMesh(GameObject gameObject)
