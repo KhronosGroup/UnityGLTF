@@ -277,7 +277,7 @@ namespace Sketchfab
 			startSearch();
 		}
 
-		public string applySearchFilters(string searchQuery, bool staffpicked, bool animated, string categoryName, string maxFaceCount, string minFaceCount)
+		public string applySearchFilters(string searchQuery, bool staffpicked, bool animated, string categoryName, string licenseSmug, string maxFaceCount, string minFaceCount)
 		{
 			if (minFaceCount != "")
 			{
@@ -301,10 +301,13 @@ namespace Sketchfab
 			if (_categories[categoryName].Length > 0)
 				searchQuery = searchQuery + "&categories=" + _categories[categoryName];
 
+			if (licenseSmug.Length > 0)
+				searchQuery = searchQuery + "&license=" + licenseSmug;
+
 			return searchQuery;
 		}
 
-		public void search(string query, bool staffpicked, bool animated, string categoryName, string maxFaceCount = "", string minFaceCount = "", SEARCH_ENDPOINT endpoint = SEARCH_ENDPOINT.DOWNLOADABLE, SORT_BY sortBy = SORT_BY.RECENT)
+		public void search(string query, bool staffpicked, bool animated, string categoryName, string licenseSmug, string maxFaceCount = "", string minFaceCount = "", SEARCH_ENDPOINT endpoint = SEARCH_ENDPOINT.DOWNLOADABLE, SORT_BY sortBy = SORT_BY.RECENT)
 		{
 			reset();
 			string searchQuery;
@@ -331,7 +334,7 @@ namespace Sketchfab
 			}
 
 			// Filters and results sorting
-			searchQuery = applySearchFilters(searchQuery, staffpicked, animated, categoryName, maxFaceCount, minFaceCount);
+			searchQuery = applySearchFilters(searchQuery, staffpicked, animated, categoryName, licenseSmug, maxFaceCount, minFaceCount);
 			switch (sortBy)
 			{
 				case SORT_BY.RECENT:

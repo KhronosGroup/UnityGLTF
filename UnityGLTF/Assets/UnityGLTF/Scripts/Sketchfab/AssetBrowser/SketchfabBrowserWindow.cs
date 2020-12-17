@@ -38,6 +38,7 @@ namespace Sketchfab
 
 		int _thumbnailSize = 128;
 		Vector2 _scrollView = new Vector2();
+		int _licenseIndex;
 		int _categoryIndex;
 		int _sortByIndex;
 		int _polyCountIndex;
@@ -53,6 +54,7 @@ namespace Sketchfab
 		string[] _sortBy;
 		string[] _polyCount;
 		string[] _searchIn;
+		string[] _license;
 		string _query = "";
 		bool _animated = false;
 		bool _staffpicked = true;
@@ -81,6 +83,7 @@ namespace Sketchfab
 				_sortBy = new string[] { "Relevance", "Likes", "Views", "Recent" };
 				_polyCount = new string[] { "Any", "Up to 10k", "10k to 50k", "50k to 100k", "100k to 250k", "250k +" };
 				_searchIn = new string[] { "free downloadable", "my models" };
+				_license = new string[] { "any", "CC BY", "CC BY SA", "CC BY-ND", "CC BY-NC", "CC BY-NC-SA", "CC BY-NC-ND", "CC0" }; // No search for store models so only CC licenses here
 				this.Repaint();
 				GL.sRGBWrite = true;
 			}
@@ -125,6 +128,38 @@ namespace Sketchfab
 
 			if (_skfbWin != null)
 				_skfbWin.Close();
+
+			string licenseSmug;
+			switch (_licenseIndex)
+			{
+				case 0:
+					licenseSmug = "";
+					break;
+				case 1:
+					licenseSmug = "by";
+					break;
+				case 2:
+					licenseSmug = "by-sa";
+					break;
+				case 3:
+					licenseSmug = "by-nd";
+					break;
+				case 4:
+					licenseSmug = "by-nc";
+					break;
+				case 5:
+					licenseSmug = "by-nc-sa";
+					break;
+				case 6:
+					licenseSmug = "by-nc-nd";
+					break;
+				case 7:
+					licenseSmug = "cc0";
+					break;
+				default:
+					licenseSmug = "";
+					break;
+			}
 
 			SORT_BY sort;
 			switch (_sortByIndex)
@@ -185,7 +220,7 @@ namespace Sketchfab
 					break;
 			}
 
-			_browserManager.search(_query, _staffpicked, _animated, _categoryName, _maxFaceCount, _minFaceCount, endpoint, sort);
+			_browserManager.search(_query, _staffpicked, _animated, _categoryName, licenseSmug, _maxFaceCount, _minFaceCount, endpoint, sort);
 			framesSinceLastSearch = 0.0f;
 		}
 
@@ -225,6 +260,7 @@ namespace Sketchfab
 
 		void resetFilters()
 		{
+			_licenseIndex = 0;
 			_categoryIndex = 0;
 			_sortByIndex = 3;
 			_polyCountIndex = 0;
@@ -237,6 +273,7 @@ namespace Sketchfab
 
 		void resetFilersOwnModels()
 		{
+			_licenseIndex = 0;
 			_categoryIndex = 0;
 			_sortByIndex = 3;
 			_polyCountIndex = 0;
@@ -288,6 +325,16 @@ namespace Sketchfab
 			}	
 		}
 
+		void displayLicenseFilter()
+		{
+			int old = _licenseIndex;
+			_licenseIndex = EditorGUILayout.Popup((int)_licenseIndex, _license, GUILayout.Width(130));
+			if (_licenseIndex != old)
+			{
+				triggerSearch();
+			}
+		}
+
 		void displaySearchBox()
 		{
 			GUILayout.BeginHorizontal();
@@ -314,6 +361,9 @@ namespace Sketchfab
 				{
 					triggerSearch();
 				}
+
+				GUILayout.Label("with license");
+				displayLicenseFilter();
 
 				// Search button
 				if (GUILayout.Button("Search", GUILayout.Width(120)))
