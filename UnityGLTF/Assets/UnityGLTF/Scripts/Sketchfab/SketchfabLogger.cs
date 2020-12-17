@@ -33,6 +33,11 @@ namespace Sketchfab
 
 			switch (planLb)
 			{
+				case "plus":
+					maxUploadSize = 100 * 1024 * 1024;
+					accountLabel = "PLUS";
+					planIcon = SketchfabUI.getPlanIcon(planLb);
+					break;
 				case "pro":
 					maxUploadSize = 200 * 1024 * 1024;
 					accountLabel = "PRO";
@@ -357,7 +362,7 @@ namespace Sketchfab
 		public bool isUserBasic()
 		{
 			if (_current != null)
-				return _current.accountLabel == "BASIC";
+				return _current.accountLabel == "BASIC" || _current.accountLabel == "PLUS";
 			else
 				return true;
 		}

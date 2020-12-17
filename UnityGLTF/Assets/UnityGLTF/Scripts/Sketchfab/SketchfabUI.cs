@@ -22,6 +22,7 @@ namespace Sketchfab
 		public static Texture2D HEADER;
 		public static Texture2D DEFAULT_AVATAR;
 
+		public static Texture2D plusPlanIcon;
 		public static Texture2D proPlanIcon;
 		public static Texture2D premPlanIcon;
 		public static Texture2D bizPlanIcon;
@@ -66,6 +67,10 @@ namespace Sketchfab
 		{
 			switch (planLb)
 			{
+				case "plus":
+					if (!plusPlanIcon)
+						plusPlanIcon = Resources.Load<Texture2D>("planPlus");
+					return plusPlanIcon;
 				case "pro":
 					if (!proPlanIcon)
 						proPlanIcon = Resources.Load<Texture2D>("planPro");
