@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using GLTF.Schema;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
@@ -2583,15 +2584,34 @@ namespace UnityGLTF
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
 		public void ExportAnimationFromNode(ref Transform transform, ref GLTF.Schema.GLTFAnimation anim)
 		{
-			Animator a = transform.GetComponent<Animator>();
-			if (a != null)
+			Animator animator = transform.GetComponent<Animator>();
+			if (animator != null)
 			{
 				#if UNITY_EDITOR
 				AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
+				var animatorController = animator.runtimeAnimatorController as AnimatorController;
+
+				float GetAnimatorMotionSpeedForClip(AnimationClip clip)
+				{
+					if (!animatorController) return 1f;
+
+					foreach (var layer in animatorController.layers)
+					{
+						foreach (var state in layer.stateMachine.states)
+						{
+							// find a matching clip in the animator
+							if (state.state.motion is AnimationClip c && c == clip)
+								return state.state.speed * (state.state.speedParameterActive ? animator.GetFloat(state.state.speedParameter) : 1f);
+						}
+					}
+
+					return 1f;
+				}
+
 				for (int i = 0; i < clips.Length; i++)
 				{
 					//FIXME It seems not good to generate one animation per animator.
-					convertClipToGLTFAnimation(ref clips[i], ref transform, ref anim);
+					ConvertClipToGLTFAnimation(ref clips[i], ref transform, ref anim, GetAnimatorMotionSpeedForClip(clips[i]));
 				}
 				#endif
 			}
@@ -2604,7 +2624,7 @@ namespace UnityGLTF
 				for (int i = 0; i < clips.Length; i++)
 				{
 					//FIXME It seems not good to generate one animation per animator.
-					convertClipToGLTFAnimation(ref clips[i], ref transform, ref anim);
+					ConvertClipToGLTFAnimation(ref clips[i], ref transform, ref anim);
 				}
 				#endif
 			}
@@ -2625,7 +2645,7 @@ namespace UnityGLTF
 
 
 
-		private void convertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation)
+		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed = 1f)
 		{
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
 			// 1 channel per node T/R/S, one sampler per node T/R/S
@@ -2670,7 +2690,8 @@ namespace UnityGLTF
 					Vector3[] scales = null;
 					Vector4[] rotations = null;
 
-					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, ref times, ref positions, ref rotations, ref scales))
+					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
+					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales))
 					{
 						Debug.LogWarning("Warning: Export failed for animation curve " + target + " in " + clip + " from " + transform, transform);
 					}
@@ -2879,9 +2900,9 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private bool BakeCurveSet(TargetCurveSet curveSet, float length, int bakingFramerate, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
+		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
 		{
-			int nbSamples = Mathf.Max(1, (int)(length * 30));
+			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
 			float deltaTime = length / nbSamples;
 
 			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
@@ -2941,7 +2962,7 @@ namespace UnityGLTF
 			for (int i = 0; i < nbSamples; ++i)
 			{
 				float currentTime = i * deltaTime;
-				times[i] = currentTime;
+				times[i] = currentTime / speedMultiplier;
 
 				if(haveTranslationKeys)
 					positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
