@@ -25,6 +25,7 @@ namespace Sketchfab
 	{
 		DOWNLOADABLE,
 		MY_MODELS,
+		STORE_PURCHASES
 	}
 
 	public class SketchfabModel
@@ -41,6 +42,7 @@ namespace Sketchfab
 		public JSONNode licenseJson;
 		public string formattedLicenseRequirements;
 		public int archiveSize;
+		public bool isModelAvailable = false;
 
 		// Reuse download url while it's still valid
 		public string tempDownloadUrl = "";
@@ -103,18 +105,26 @@ namespace Sketchfab
 				formattedLicenseRequirements = formattedLicenseRequirements.Replace("\"", " ");
 			}
 
+			bool isEditorial = licenseJson["slug"].ToString() == "\"ed\"";
+			bool isStandard = licenseJson["slug"].ToString() == "\"st\"";
+
 			// Dirty formatting for Standard/Editorial licenses.
 			// There should be a better formatting code if we add more licenses
-			if (licenseJson["slug"].ToString() == "\"ed\"")
+			if (isEditorial)
 			{
 				formattedLicenseRequirements = formattedLicenseRequirements.Replace("that", "\n that");
 			}
 
-			if (licenseJson["slug"].ToString() == "\"st\"")
+			if (isStandard)
 			{
 				formattedLicenseRequirements = formattedLicenseRequirements.Replace(" on ", "\n on ");
 				formattedLicenseRequirements = formattedLicenseRequirements.Replace(" and ", "\n and ");
 			}
+
+			bool isStoreLicense = (isStandard || isEditorial);
+			// Archive size is not returned by the API on store purchases for now, so in this case we can't
+			// rely on it
+			isModelAvailable = (archiveSize > 0 || isStoreLicense);
 		}
 	}
 
@@ -310,7 +320,7 @@ namespace Sketchfab
 		public void search(string query, bool staffpicked, bool animated, string categoryName, string licenseSmug, string maxFaceCount = "", string minFaceCount = "", SEARCH_ENDPOINT endpoint = SEARCH_ENDPOINT.DOWNLOADABLE, SORT_BY sortBy = SORT_BY.RECENT)
 		{
 			reset();
-			string searchQuery;
+			string searchQuery = "";
 			switch(endpoint)
 			{
 				case SEARCH_ENDPOINT.DOWNLOADABLE:
@@ -319,33 +329,42 @@ namespace Sketchfab
 				case SEARCH_ENDPOINT.MY_MODELS:
 					searchQuery = SketchfabPlugin.Urls.ownModelsSearchEndpoint;
 					break;
-				default:
-					searchQuery = SketchfabPlugin.Urls.searchEndpoint;
+				case SEARCH_ENDPOINT.STORE_PURCHASES:
+					searchQuery = SketchfabPlugin.Urls.storePurchasesModelsSearchEndpoint;
 					break;
 			}
+			if (endpoint != SEARCH_ENDPOINT.STORE_PURCHASES)
+			{
+				// Apply default filters
+				searchQuery = searchQuery + "type=models&downloadable=true";
+			}
 
-			// Apply default filters
-			searchQuery = searchQuery + "type=models&downloadable=true";
-
-			// Text query
 			if (query.Length > 0)
 			{
-				searchQuery = searchQuery + "&q=" + query;
+				if (endpoint != SEARCH_ENDPOINT.STORE_PURCHASES)
+				{
+					searchQuery = searchQuery + "&";
+				}
+
+				searchQuery = searchQuery + "q=" + query;
 			}
 
-			// Filters and results sorting
-			searchQuery = applySearchFilters(searchQuery, staffpicked, animated, categoryName, licenseSmug, maxFaceCount, minFaceCount);
-			switch (sortBy)
+			// Search filters are not available for store purchases
+			if (endpoint != SEARCH_ENDPOINT.STORE_PURCHASES)
 			{
-				case SORT_BY.RECENT:
-					searchQuery = searchQuery + "&sort_by=" + "-publishedAt";
-					break;
-				case SORT_BY.VIEWS:
-					searchQuery = searchQuery + "&sort_by=" + "-viewCount";
-					break;
-				case SORT_BY.LIKES:
-					searchQuery = searchQuery + "&sort_by=" + "-likeCount";
-					break;
+				searchQuery = applySearchFilters(searchQuery, staffpicked, animated, categoryName, licenseSmug, maxFaceCount, minFaceCount);
+				switch (sortBy)
+				{
+					case SORT_BY.RECENT:
+						searchQuery = searchQuery + "&sort_by=" + "-publishedAt";
+						break;
+					case SORT_BY.VIEWS:
+						searchQuery = searchQuery + "&sort_by=" + "-viewCount";
+						break;
+					case SORT_BY.LIKES:
+						searchQuery = searchQuery + "&sort_by=" + "-likeCount";
+						break;
+				}
 			}
 
 			_lastQuery = searchQuery;

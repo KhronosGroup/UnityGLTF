@@ -227,7 +227,11 @@ namespace Sketchfab
 			}
 			else if (modelIsAvailable)
 			{
-				buttonText = "Download model (" + Utils.humanifyFileSize(_currentModel.archiveSize) + ")";
+				buttonText = "Download model";
+				if (_currentModel.archiveSize > 0)
+				{
+					buttonText += " (" + Utils.humanifyFileSize(_currentModel.archiveSize) + ")";
+				}
 			}
 			else
 			{
@@ -252,7 +256,7 @@ namespace Sketchfab
 
 		void displayImportSettings()
 		{
-			bool modelIsAvailable = _currentModel.archiveSize > 0;
+			bool modelIsAvailable = _currentModel.isModelAvailable;
 			bool isUserLoggedIn = _window._logger.isUserLogged();
 			GUI.enabled = modelIsAvailable;
 

@@ -27,7 +27,8 @@ namespace Sketchfab
 		enum SEARCH_IN
 		{
 			ALL_FREE_DOWNLOADABLE=0,
-			MY_MODELS = 1
+			MY_MODELS = 1,
+			MY_STORE_PURCHASES=2
 		}
 
 		// Sketchfab elements
@@ -82,7 +83,7 @@ namespace Sketchfab
 				// Setup sortBy
 				_sortBy = new string[] { "Relevance", "Likes", "Views", "Recent" };
 				_polyCount = new string[] { "Any", "Up to 10k", "10k to 50k", "50k to 100k", "100k to 250k", "250k +" };
-				_searchIn = new string[] { "free downloadable", "my models" };
+				_searchIn = new string[] { "free downloadable", "my models", "store purchases" };
 				_license = new string[] { "any", "CC BY", "CC BY SA", "CC BY-ND", "CC BY-NC", "CC BY-NC-SA", "CC BY-NC-ND", "CC0" }; // No search for store models so only CC licenses here
 				this.Repaint();
 				GL.sRGBWrite = true;
@@ -215,6 +216,9 @@ namespace Sketchfab
 				case SEARCH_IN.MY_MODELS:
 					endpoint = SEARCH_ENDPOINT.MY_MODELS;
 					break;
+				case SEARCH_IN.MY_STORE_PURCHASES:
+					endpoint = SEARCH_ENDPOINT.STORE_PURCHASES;
+					break;
 				default:
 					endpoint = SEARCH_ENDPOINT.DOWNLOADABLE;
 					break;
@@ -240,6 +244,18 @@ namespace Sketchfab
 			_scrollView = GUILayout.BeginScrollView(_scrollView);
 			displayResults();
 			GUILayout.EndScrollView();
+
+			if(_searchInIndex == SEARCH_IN.MY_STORE_PURCHASES && !_browserManager.hasResults())
+			{
+				if(_query.Length > 0)
+				{
+					displayCenteredMessage("There is no result for '" + _query +"' in your purchases.");
+				}
+				else
+				{
+					displayCenteredMessage("It looks like you didn't do any purchase yet on Sketchfab Store");
+				}
+			}
 
 			if (_searchInIndex == SEARCH_IN.MY_MODELS && _logger.isUserLogged() && !_logger.canAccessOwnModels())
 			{
@@ -297,6 +313,7 @@ namespace Sketchfab
 
 			GUILayout.BeginHorizontal("Box");
 			{
+				GUI.enabled = _searchInIndex != SEARCH_IN.MY_STORE_PURCHASES;
 				displayCategories();
 
 				displayFeatures();
@@ -305,6 +322,8 @@ namespace Sketchfab
 				displaySortBy();
 			}
 			GUILayout.EndHorizontal();
+
+			GUI.enabled = true;
 		}
 
 		void displaySearchIn()
@@ -362,8 +381,11 @@ namespace Sketchfab
 					triggerSearch();
 				}
 
+				// License filter is not available for store purchases
+				GUI.enabled = _searchInIndex != SEARCH_IN.MY_STORE_PURCHASES;
 				GUILayout.Label("with license");
 				displayLicenseFilter();
+				GUI.enabled = true;
 
 				// Search button
 				if (GUILayout.Button("Search", GUILayout.Width(120)))

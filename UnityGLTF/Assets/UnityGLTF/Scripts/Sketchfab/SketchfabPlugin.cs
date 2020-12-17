@@ -41,6 +41,7 @@ namespace Sketchfab
 			// AssetBrowser
 			public static string searchEndpoint = baseApi + "/v3/search?";
 			public static string ownModelsSearchEndpoint = baseApi + "/v3/me/search?";
+			public static string storePurchasesModelsSearchEndpoint = baseApi + "/v3/me/models/purchases?";
 			public static string categoryEndpoint = baseApi + "/v3/categories";
 			public static string modelEndPoint = baseApi + "/v3/models";
 		};
