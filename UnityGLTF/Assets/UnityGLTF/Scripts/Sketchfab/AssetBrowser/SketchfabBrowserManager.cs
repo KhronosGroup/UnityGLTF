@@ -131,8 +131,8 @@ namespace Sketchfab
 		// Search
 		private const string INITIAL_SEARCH = "type=models&downloadable=true&staffpicked=true&min_face_count=1&sort_by=-publishedAt";
 		string _lastQuery;
-		string _prevCursor = "";
-		string _nextCursor = "";
+		string _prevCursorUrl = "";
+		string _nextCursorUrl = "";
 		public bool _isFetching = false;
 
 		//Results
@@ -359,6 +359,14 @@ namespace Sketchfab
 			_api.registerRequest(request);
 		}
 
+		void searchCursor(string cursorUrl)
+		{
+			_hasFetchedPreviews = false;
+			SketchfabRequest request = new SketchfabRequest(cursorUrl, SketchfabPlugin.getLogger().getHeader());
+			request.setCallback(handleSearch);
+			_api.registerRequest(request);
+		}
+
 		void handleSearch(string response)
 		{
 			JSONNode json = Utils.JSONParse(response);
@@ -366,19 +374,8 @@ namespace Sketchfab
 			if (array == null)
 				return;
 
-			if (json["cursors"] != null)
-			{
-				if (json["cursors"]["next"].AsInt == 24)
-				{
-					_prevCursor = "";
-				}
-				else if (_nextCursor != "null" && _nextCursor != "")
-				{
-					_prevCursor = int.Parse(_nextCursor) - 24 + "";
-				}
-
-				_nextCursor = json["cursors"]["next"];
-			}
+			_prevCursorUrl = json["previous"];
+			_nextCursorUrl = json["next"];
 
 			// First model fetch from uid
 			foreach (JSONNode node in array)
@@ -402,7 +399,7 @@ namespace Sketchfab
 
 		public bool hasNextResults()
 		{
-			return _nextCursor != "0" && _nextCursor != "null" && _nextCursor.Length > 0;
+			return  _nextCursorUrl.Length > 0 && _nextCursorUrl != "null";
 		}
 
 		public void requestNextResults()
@@ -415,13 +412,12 @@ namespace Sketchfab
 			if (_sketchfabModels.Count > 0)
 				_sketchfabModels.Clear();
 
-			string cursorParam = "&cursor=" + _nextCursor;
-			startSearch(cursorParam);
+			searchCursor(_nextCursorUrl);
 		}
 
 		public bool hasPreviousResults()
 		{
-			return _prevCursor != "0" && _prevCursor != "null" && _prevCursor.Length > 0;
+			return _prevCursorUrl.Length > 0 && _prevCursorUrl != "null";
 		}
 
 		public void requestPreviousResults()
@@ -434,8 +430,7 @@ namespace Sketchfab
 			if (_sketchfabModels.Count > 0)
 				_sketchfabModels.Clear();
 
-			string cursorParam = "&cursor=" + _prevCursor;
-			startSearch(cursorParam);
+			searchCursor(_prevCursorUrl);
 		}
 
 		public bool hasResults()
