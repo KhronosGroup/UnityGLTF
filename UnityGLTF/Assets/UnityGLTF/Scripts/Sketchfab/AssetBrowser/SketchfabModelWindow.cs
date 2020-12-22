@@ -41,7 +41,7 @@ namespace Sketchfab
 			if(_currentModel == null || model.uid != _currentModel.uid)
 			{
 				_currentModel = model;
-				_prefabName = GLTFUtils.cleanName(_currentModel.name);
+				_prefabName = GLTFUtils.cleanName(_currentModel.name).Replace(" ", "_");
 				_importDirectory = Application.dataPath + "/Import/" + _prefabName.Replace(" ", "_");
 			}
 			else
@@ -60,152 +60,261 @@ namespace Sketchfab
 				_scrollView = GUILayout.BeginScrollView(_scrollView);
 				SketchfabModel model = _currentModel;
 
+				// Model name, author, view On Sketchfab bloc
 				GUILayout.BeginHorizontal();
+				{
+					GUILayout.FlexibleSpace();
+					GUILayout.BeginVertical();
+					{
+						// Name
+						GUILayout.BeginHorizontal();
+						GUILayout.FlexibleSpace();
+						GUILayout.Label(model.name, _ui.getSketchfabModelName());
+						GUILayout.FlexibleSpace();
+						GUILayout.EndHorizontal();
 
-				GUILayout.BeginVertical();
-				_ui.displayModelName(model.name);
-				_ui.displayContent("by " + model.author);
+						// Author
+						GUILayout.BeginHorizontal();
+						GUILayout.FlexibleSpace();
+						GUILayout.Label(model.author, _ui.getSketchfabContentLabel());
+						GUILayout.FlexibleSpace();
+						GUILayout.EndHorizontal();
+
+						// View on Sketchfab
+						GUILayout.BeginHorizontal();
+						GUILayout.FlexibleSpace();
+						GUIContent viewSkfb = new GUIContent("View on Sketchfab", _ui.SKETCHFAB_ICON);
+						if (GUILayout.Button(viewSkfb, GUILayout.Height(24), GUILayout.Width(140)))
+						{
+							Application.OpenURL(SketchfabPlugin.Urls.modelUrl + "/" + _currentModel.uid);
+						}
+						GUILayout.FlexibleSpace();
+						GUILayout.EndHorizontal();
+					}
+					GUILayout.EndVertical();
+					GUILayout.FlexibleSpace();
+				}
+				GUILayout.EndHorizontal();
+
+				// Model preview
 				GUILayout.BeginHorizontal();
-				GUIContent viewSkfb = new GUIContent("View on Sketchfab", _ui.SKETCHFAB_ICON);
-				if (GUILayout.Button(viewSkfb, GUILayout.Height(24), GUILayout.Width(140)))
 				{
-					Application.OpenURL(SketchfabPlugin.Urls.modelUrl + "/" + _currentModel.uid);
+					GUILayout.Space(4);
+					GUILayout.FlexibleSpace();
+					GUILayout.Label(model._preview);
+					GUILayout.FlexibleSpace();
 				}
-				GUILayout.FlexibleSpace();
-				GUILayout.EndHorizontal();
-				GUILayout.EndVertical();
 				GUILayout.EndHorizontal();
 
-
-				GUIStyle blackGround = new GUIStyle(GUI.skin.box);
-				blackGround.normal.background = SketchfabUI.MakeTex(2, 2, new Color(0f, 0f, 0f, 1f));
-
-				GUILayout.BeginHorizontal(blackGround);
-				GUILayout.FlexibleSpace();
-
-				GUILayout.Label(model._preview);
-
-				GUILayout.FlexibleSpace();
-				GUILayout.EndHorizontal();
-
-				displayImportSettings();
-				GUILayout.Label("");
-
+				// Import settings
 				GUILayout.BeginHorizontal();
-
-				GUILayout.BeginVertical(GUILayout.Width(250));
-				_ui.displayTitle("MODEL INFORMATION");
-				_ui.displayModelStats("Vertex count", " " + Utils.humanifySize(model.vertexCount));
-				_ui.displayModelStats("Face count", " " + Utils.humanifySize(model.faceCount));
-				if(model.hasAnimation != "")
-					_ui.displayModelStats("Animation", model.hasAnimation);
-
-				GUILayout.EndVertical();
-
-				GUILayout.BeginVertical(GUILayout.Width(300));
-				_ui.displayTitle("LICENSE");
-				if(model.licenseJson != null && model.licenseJson["fullName"] != null)
 				{
-					_ui.displayContent(model.licenseJson["fullName"]);
-					_ui.displaySubContent(model.licenseJson["requirements"]);
+					displayImportSettings();
 				}
-				else if(model.vertexCount != 0)
-				{
-					_ui.displayContent("Personal");
-					_ui.displaySubContent("You own this model");
-				}
-				else
-				{
-					_ui.displaySubContent("Fetching license data");
-				}
-				GUILayout.EndVertical();
-
 				GUILayout.EndHorizontal();
+
+
+				// Model info title
+				GUILayout.BeginHorizontal();
+				{
+					GUILayout.FlexibleSpace();
+					_ui.displayTitle("ABOUT THE MODEL");
+					GUILayout.FlexibleSpace();
+				}
+				GUILayout.EndHorizontal();
+
+				// Model info data
+				GUILayout.BeginHorizontal();
+				{
+					GUILayout.BeginVertical();
+					{
+						if (model.licenseJson != null && model.licenseJson["label"] != null)
+						{
+							GUILayout.BeginHorizontal();
+							{
+								GUILayout.BeginVertical();
+
+								// License label
+								GUILayout.BeginHorizontal();
+								GUILayout.FlexibleSpace();
+								GUILayout.Label(model.licenseJson["label"], EditorStyles.boldLabel);
+								GUILayout.FlexibleSpace();
+								GUILayout.EndHorizontal();
+
+								// License detail
+								GUILayout.BeginHorizontal();
+								GUILayout.FlexibleSpace();
+								GUILayout.Label(model.formattedLicenseRequirements, EditorStyles.miniLabel);
+								GUILayout.FlexibleSpace();
+								GUILayout.EndHorizontal();
+
+								GUILayout.FlexibleSpace();
+								GUILayout.EndVertical();
+
+								GUILayout.FlexibleSpace();
+							}
+							GUILayout.EndHorizontal();
+						}
+
+						else if (model.vertexCount != 0)
+						{
+							_ui.displayContent("Personal");
+							_ui.displaySubContent("You own this model");
+						}
+						else
+						{
+							_ui.displaySubContent("Fetching license data");
+						}
+					}
+					GUILayout.EndVertical();
+
+					GUILayout.FlexibleSpace();
+
+					GUILayout.BeginVertical();
+					{
+						_ui.displayModelStats(" Vertex count", " " + Utils.humanifySize(model.vertexCount));
+						_ui.displayModelStats(" Face count", " " + Utils.humanifySize(model.faceCount));
+						if (model.hasAnimation != "")
+							_ui.displayModelStats(" Animation", model.hasAnimation);
+
+						GUILayout.FlexibleSpace();
+					}
+					GUILayout.EndVertical();
+					GUILayout.Space(20);
+				}
+				GUILayout.EndHorizontal();
+
 				GUILayout.EndScrollView();
 			}
 		}
 
-		void displayImportSettings()
+		void onChangImportDirectoryClick()
 		{
-			bool modelIsAvailable = _currentModel.archiveSize > 0;
-			GUI.enabled = modelIsAvailable;
-			GUILayout.BeginVertical("Box");
-			_ui.displayContent("Import into");
-			GUILayout.BeginHorizontal();
-			GUILayout.Label(GLTFUtils.getPathProjectFromAbsolute(_importDirectory), GUILayout.Height(18));
-			GUILayout.FlexibleSpace();
-			if (GUILayout.Button("Change", GUILayout.Width(80), GUILayout.Height(18)))
+			string newImportDir = EditorUtility.OpenFolderPanel("Choose import directory", Application.dataPath, "");
+			if (GLTFUtils.isFolderInProjectDirectory(newImportDir))
 			{
-				string newImportDir = EditorUtility.OpenFolderPanel("Choose import directory", Application.dataPath, "");
-				if (GLTFUtils.isFolderInProjectDirectory(newImportDir))
+				_importDirectory = newImportDir;
+			}
+			else if (newImportDir != "")
+			{
+				EditorUtility.DisplayDialog("Error", "Please select a path within your current Unity project (with Assets/)", "Ok");
+			}
+		}
+
+		void onImportModelClick()
+		{
+			if (!assetAlreadyExists() || EditorUtility.DisplayDialog("Override asset", "The asset " + _prefabName + " already exists in project. Do you want to override it ?", "Override", "Cancel"))
+			{
+				// Reuse if still valid
+				if (_currentModel.tempDownloadUrl.Length > 0 && EditorApplication.timeSinceStartup - _currentModel.downloadRequestTime < _currentModel.urlValidityDuration)
 				{
-					_importDirectory = newImportDir;
-				}
-				else if (newImportDir != "")
-				{
-					EditorUtility.DisplayDialog("Error", "Please select a path within your current Unity project (with Assets/)", "Ok");
+					requestArchive(_currentModel.tempDownloadUrl);
 				}
 				else
 				{
-					// Path is empty, user canceled. Do nothing
+					fetchGLTFModel(_currentModel.uid, OnArchiveUpdate, _window._logger.getHeader());
 				}
 			}
-			GUILayout.EndHorizontal();
-			_ui.displayContent("Options");
-			GUILayout.BeginHorizontal();
-			GUILayout.Label("Prefab name");
-			_prefabName = GUILayout.TextField(_prefabName, GUILayout.Width(200));
-			GUILayout.FlexibleSpace();
-			GUILayout.EndHorizontal();
+		}
 
-			_addToCurrentScene = GUILayout.Toggle(_addToCurrentScene, "Add to current scene");
-
-			GUILayout.BeginHorizontal();
-			Color old = GUI.color;
-			GUI.color = SketchfabUI.SKFB_BLUE;
-			GUI.contentColor = Color.white;
-			GUILayout.FlexibleSpace();
-			string buttonCaption = "";
-
-			
-			if (!_window._logger.isUserLogged())
+		void displayImportButton(bool isUserLoggedIn, bool modelIsAvailable)
+		{
+			string buttonText;
+			if (!isUserLoggedIn)
 			{
-				buttonCaption = "You need to be logged in to download assets";
+				buttonText = "You need to log in to download models";
 				GUI.enabled = false;
 			}
-			else if(modelIsAvailable)
+			else if (modelIsAvailable)
 			{
-				buttonCaption = "<b>Download model</b> (" + Utils.humanifyFileSize(_currentModel.archiveSize) + ")";
+				buttonText = "Download model";
+				if (_currentModel.archiveSize > 0)
+				{
+					buttonText += " (" + Utils.humanifyFileSize(_currentModel.archiveSize) + ")";
+				}
 			}
 			else
 			{
-				buttonCaption = "Model not yet available";
+				buttonText = "Model not yet available";
 			}
-			
-			buttonCaption = "<color=" + Color.white + ">" + buttonCaption + "</color>";
-			
 
-			if (GUILayout.Button(buttonCaption, _ui.getSketchfabBigButton(), GUILayout.Height(64), GUILayout.Width(450)))
+			Color old = GUI.color;
+			GUI.color = SketchfabUI.SKFB_BLUE;
+			GUILayout.FlexibleSpace();
+
+			string htmlCaption = "<color=" + Color.white + ">" + buttonText + "</color>";
+			if (GUILayout.Button(htmlCaption, _ui.getSketchfabBigButton(), GUILayout.Height(64), GUILayout.Width(450)))
 			{
-				if (!assetAlreadyExists() || EditorUtility.DisplayDialog("Override asset", "The asset " + _prefabName + " already exists in project. Do you want to override it ?", "Override", "Cancel"))
-				{
-					// Reuse if still valid
-					if(_currentModel.tempDownloadUrl.Length > 0 && EditorApplication.timeSinceStartup - _currentModel.downloadRequestTime < _currentModel.urlValidityDuration)
-					{
-						requestArchive(_currentModel.tempDownloadUrl);
-					}
-					else
-					{
-						fetchGLTFModel(_currentModel.uid, OnArchiveUpdate, _window._logger.getHeader());
-					}
-				}
+				onImportModelClick();
 			}
 
 			GUI.enabled = true;
 			GUILayout.FlexibleSpace();
 			GUI.color = old;
 			GUI.enabled = true;
-			GUILayout.EndHorizontal();
+		}
+
+		void displayImportSettings()
+		{
+			bool modelIsAvailable = _currentModel.isModelAvailable;
+			bool isUserLoggedIn = _window._logger.isUserLogged();
+			GUI.enabled = modelIsAvailable;
+
+			GUILayout.BeginVertical("Box");
+			{
+				// Import options title
+				GUILayout.BeginHorizontal();
+				GUILayout.FlexibleSpace();
+				_ui.displayTitle("IMPORT OPTIONS");
+				GUILayout.FlexibleSpace();
+				GUILayout.EndHorizontal();
+
+				// Import directory in project
+				GUILayout.BeginHorizontal();
+				{
+					_ui.displayModelStats("Import into      ", GLTFUtils.getPathProjectFromAbsolute(_importDirectory));
+					GUILayout.FlexibleSpace();
+					if (GUILayout.Button("Change", GUILayout.Width(80), GUILayout.Height(18)))
+					{
+						onChangImportDirectoryClick();
+					}
+				}
+				GUILayout.EndHorizontal();
+
+				// random space
+				GUILayout.Space(2);
+
+				// Prefab name
+				GUILayout.BeginHorizontal();
+				GUILayout.Label("Prefab name  ", _ui.getKeyStyle());
+				_prefabName = GUILayout.TextField(_prefabName, GUILayout.MaxWidth(300));
+				GUILayout.FlexibleSpace();
+				GUILayout.EndHorizontal();
+
+				// random space
+				GUILayout.Space(10);
+
+				// Big import button
+				GUILayout.BeginHorizontal();
+				{
+					displayImportButton(isUserLoggedIn, modelIsAvailable);
+				}
+				GUILayout.EndHorizontal();
+
+				// random space
+				GUILayout.Space(3);
+
+				GUILayout.BeginHorizontal();
+				{
+					GUILayout.FlexibleSpace();
+					_addToCurrentScene = GUILayout.Toggle(_addToCurrentScene, "Instanciate prefab into current scene");
+					GUILayout.FlexibleSpace();
+				}
+				GUILayout.EndHorizontal();
+
+				// random final space
+				GUILayout.Space(5);
+			}
 			GUILayout.EndVertical();
 		}
 

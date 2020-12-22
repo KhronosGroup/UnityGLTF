@@ -12,7 +12,7 @@ namespace Sketchfab
 {
 	public class SketchfabPlugin : MonoBehaviour
 	{
-		public static string VERSION = "1.1.1";
+		public static string VERSION = "1.2.0";
 
 		public struct Urls
 		{
@@ -29,6 +29,7 @@ namespace Sketchfab
 			public static string plans = "https://sketchfab.com/plans?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=download-api-pro-cta";
 			public static string bannerUrl = "https://static.sketchfab.com/plugins/unity/banner.jpg";
 			public static string storeUrl = "https://sketchfab.com/store?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=store-banner";
+			public static string storeUrlButton = "https://sketchfab.com/store?utm_source=unity-plugin&utm_medium=plugin&utm_campaign=store-button";
 			public static string categories = server + "/v3/categories";
 			private static string dummyClientId = "IUO8d5VVOIUCzWQArQ3VuXfbwx5QekZfLeDlpOmW";
 			public static string oauth = server + "/oauth2/token/?grant_type=password&client_id=" + dummyClientId;
@@ -38,8 +39,9 @@ namespace Sketchfab
 			public static string modelUrl = server + "/models";
 
 			// AssetBrowser
-			public static string searchEndpoint = baseApi + "/v3/search?type=models&downloadable=true&";
-			public static string ownModelsSearchEndpoint = baseApi + "/v3/me/search?type=models&downloadable=true";
+			public static string searchEndpoint = baseApi + "/v3/search?";
+			public static string ownModelsSearchEndpoint = baseApi + "/v3/me/search?";
+			public static string storePurchasesModelsSearchEndpoint = baseApi + "/v3/me/models/purchases?";
 			public static string categoryEndpoint = baseApi + "/v3/categories";
 			public static string modelEndPoint = baseApi + "/v3/models";
 		};
@@ -155,35 +157,45 @@ namespace Sketchfab
 		// GUI functions
 		public static void displayHeader()
 		{
-			GUIStyle whiteGround = new GUIStyle(GUI.skin.box);
-			whiteGround.normal.background = SketchfabUI.MakeTex(2, 2, new Color(1f, 1f, 1f, 1f));
-
-			GUILayout.BeginHorizontal(whiteGround, GUILayout.Height(75));
+			GUILayout.BeginHorizontal(GUILayout.Height(75));
+			GUILayout.BeginVertical();
+			GUILayout.Space(5);
 			_logger.showLoginUi();
+			GUILayout.Space(5);
+			GUILayout.EndVertical();
 			GUILayout.FlexibleSpace();
 
 			// If banner available, display it
 			if (bannerTexture != null)
 			{
-				GUILayout.BeginVertical();
-				GUILayout.FlexibleSpace();
-				if(GUILayout.Button(bannerTexture, _ui.getSketchfabLabel()))
-				{
-					Application.OpenURL(Urls.storeUrl);
-				}
-				GUILayout.FlexibleSpace();
-				GUILayout.EndVertical();
+				displayBanner();
 			}
 
 			GUILayout.FlexibleSpace();
 			GUILayout.BeginVertical();
+			GUILayout.Space(5);
 			GUILayout.FlexibleSpace();
-			GUILayout.Label(Resources.Load("SketchfabGrey") as Texture2D, GUILayout.Height(40), GUILayout.Width(190));
+			GUILayout.Label(Resources.Load("SketchfabWhite") as Texture2D, GUILayout.Height(40), GUILayout.Width(180));
 			GUILayout.FlexibleSpace();
+			GUILayout.Space(5);
 			GUILayout.EndVertical();
+			GUILayout.Space(5);
 			GUILayout.EndHorizontal();
 		}
 
+		public static void displayBanner()
+		{
+			GUILayout.BeginVertical();
+			GUILayout.Space(5);
+			GUILayout.FlexibleSpace();
+			if (GUILayout.Button(bannerTexture, _ui.getSketchfabLabel(), GUILayout.Width(345), GUILayout.Height(68)))
+			{
+				Application.OpenURL(Urls.storeUrl);
+			}
+			GUILayout.FlexibleSpace();
+			GUILayout.Space(5);
+			GUILayout.EndVertical();
+		}
 
 		public static void displayFooter()
 		{
@@ -193,11 +205,11 @@ namespace Sketchfab
 				Application.OpenURL(Urls.latestRelease);
 			}
 			GUILayout.FlexibleSpace();
-			if(GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Help </color>", _ui.getSketchfabLabel(), GUILayout.Height(20)))
+			if(GUILayout.Button("Help", _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.latestRelease);
 			}
-			if (GUILayout.Button("<color=" + SketchfabUI.CLICKABLE_COLOR + "> Report an issue </color>", _ui.getSketchfabLabel(), GUILayout.Height(20)))
+			if (GUILayout.Button("Report an issue", _ui.getSketchfabLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(Urls.reportAnIssue);
 			}

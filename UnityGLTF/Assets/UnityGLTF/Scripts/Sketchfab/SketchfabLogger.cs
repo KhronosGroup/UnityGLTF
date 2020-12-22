@@ -18,13 +18,26 @@ namespace Sketchfab
 		public int _userCanPrivate = -1; // Can protect model = 1  // Cannot = 0
 		public Texture2D planIcon;
 
+		public static int MAX_DISPLAY_NAME_LENGTH = 25;
+
 		public SketchfabProfile(string usrName, string usr, string planLb)
 		{
 			username = usrName;
-			displayName = usr;
+			// Format display name
+			string limitedDisplayName = usr;
+			if (usr.Length > MAX_DISPLAY_NAME_LENGTH)
+			{
+				limitedDisplayName = usr.Substring(0, MAX_DISPLAY_NAME_LENGTH) + "...";
+			}
+			displayName = limitedDisplayName;
 
 			switch (planLb)
 			{
+				case "plus":
+					maxUploadSize = 100 * 1024 * 1024;
+					accountLabel = "PLUS";
+					planIcon = SketchfabUI.getPlanIcon(planLb);
+					break;
 				case "pro":
 					maxUploadSize = 200 * 1024 * 1024;
 					accountLabel = "PRO";
@@ -69,8 +82,8 @@ namespace Sketchfab
 		private string accessTokenKey = "skfb_access_token";
 		SketchfabProfile _current;
 		RefreshCallback _refresh;
-		public Vector2 UI_SIZE = new Vector2(200, 30);
-		public Vector2 AVATAR_SIZE = new Vector2(50, 50);
+		public Vector2 UI_SIZE = new Vector2(120, 30);
+		public Vector2 AVATAR_SIZE = new Vector2(58, 58);
 
 		string username;
 		string password = "";
@@ -111,19 +124,22 @@ namespace Sketchfab
 
 		public void showLoginUi()
 		{
-			GUILayout.BeginVertical(GUILayout.MinWidth(UI_SIZE.x), GUILayout.MinHeight(UI_SIZE.y));
+			GUILayout.BeginVertical(GUILayout.MinWidth(UI_SIZE.x), GUILayout.MinHeight(UI_SIZE.y), GUILayout.MaxHeight(68));
+
 			if (_current == null)
 			{
 				if (_hasCheckedSession)
 				{
-					GUILayout.Label("You're not logged", EditorStyles.centeredGreyMiniLabel);
-					GUILayout.BeginHorizontal();
+					//GUILayout.Label("You're not logged", EditorStyles.centeredGreyMiniLabel);
+					//GUILayout.Space(5);
+					GUILayout.BeginHorizontal(GUILayout.Width(200), GUILayout.Height(64));
+					GUILayout.Space(5);
 					GUILayout.BeginVertical();
 					username = GUILayout.TextField(username);
 					password = GUILayout.PasswordField(password, '*');
 
 					GUI.enabled = username != null && password != null && username.Length > 0 && password.Length > 0;
-					if (GUILayout.Button("Login"))
+					if (GUILayout.Button("Login", GUILayout.Width(216)))
 					{
 						requestAccessToken(username, password);
 					}
@@ -135,26 +151,29 @@ namespace Sketchfab
 				{
 					GUILayout.Label("Retrieving user data", EditorStyles.centeredGreyMiniLabel);
 				}
-
 			}
 			else if (_current.isDisplayable())
 			{
-				GUILayout.Label("Logged in as", EditorStyles.centeredGreyMiniLabel);
-				GUILayout.BeginHorizontal();
-				GUILayout.Label(_current.avatar);
+				//GUILayout.Label("Logged in as", EditorStyles.centeredGreyMiniLabel);
+				GUILayout.BeginHorizontal(GUILayout.Width(120));
+				GUILayout.Label(_current.avatar, GUILayout.Width(AVATAR_SIZE.x), GUILayout.Width(AVATAR_SIZE.y));
 				GUILayout.BeginVertical();
-
+				GUILayout.Label(_current.displayName);
 				GUILayout.BeginHorizontal();
-				GUILayout.Label("" + _current.displayName);
 				if (_current.planIcon)
-					GUILayout.Label(_current.planIcon, GUILayout.Height(18));
+					GUILayout.Label(_current.planIcon, GUILayout.Height(16), GUILayout.Width(100));
+				GUILayout.FlexibleSpace();
 				GUILayout.EndHorizontal();
+				GUILayout.Space(4);
+				GUILayout.BeginHorizontal();
+				GUILayout.Space(5);
 
-				if (GUILayout.Button("Logout"))
+				if (GUILayout.Button("Logout", GUILayout.Height(18), GUILayout.Width(54)))
 				{
 					logout();
 					return;
 				}
+				GUILayout.EndHorizontal();
 				GUILayout.EndVertical();
 				GUILayout.EndHorizontal();
 				if (_current._userCanPrivate == -1)
@@ -343,7 +362,7 @@ namespace Sketchfab
 		public bool isUserBasic()
 		{
 			if (_current != null)
-				return _current.accountLabel == "BASIC";
+				return _current.accountLabel == "BASIC" || _current.accountLabel == "PLUS";
 			else
 				return true;
 		}

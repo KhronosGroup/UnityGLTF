@@ -227,21 +227,26 @@ namespace Sketchfab
 				if (_logger.isUserBasic())
 				{
 					GUILayout.BeginHorizontal();
-					GUIContent content = new GUIContent("features", SketchfabUI.getPlanIcon("pro"));
-					GUILayout.Label(content, EditorStyles.boldLabel, GUILayout.Height(18));
-					Color old = GUI.color;
-					GUI.color = SketchfabUI.SKFB_BLUE;
-					if (GUILayout.Button("<color=" + Color.white + ">UPGRADE</color>", _ui.getSketchfabButton(), GUILayout.Height(18)))
+					GUILayout.BeginVertical();
+					GUILayout.FlexibleSpace();
+					GUIContent content = new GUIContent(" features", SketchfabUI.getPlanIcon("pro"));
+					GUILayout.Label(content, EditorStyles.boldLabel, GUILayout.Height(12));
+					GUILayout.FlexibleSpace();
+					GUILayout.EndVertical();
+					GUILayout.BeginVertical();
+					GUILayout.FlexibleSpace();
+					if (GUILayout.Button("Upgrade your account", GUILayout.Height(18)))
 					{
 						Application.OpenURL(SketchfabPlugin.Urls.plans);
 					}
-					GUI.color = old;
+					GUILayout.FlexibleSpace();
+					GUILayout.EndVertical();
 					GUILayout.FlexibleSpace();
 					GUILayout.EndHorizontal();
 				}
 				else
 				{
-					if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("You cannot set any other model to private (limit reached)") + ")", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
+					if (GUILayout.Button("(You cannot set any other model to private (limit reached))", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
 					{
 						Application.OpenURL(SketchfabPlugin.Urls.plans);
 					}
@@ -257,7 +262,7 @@ namespace Sketchfab
 			GUILayout.BeginHorizontal();
 			param_private = EditorGUILayout.Toggle("Private model", param_private);
 
-			if (GUILayout.Button("( " + SketchfabUI.ClickableTextColor("more info") + ")", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
+			if (GUILayout.Button("more info", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(SketchfabPlugin.Urls.privateInfo);
 			}
@@ -286,7 +291,7 @@ namespace Sketchfab
 
 			GUILayout.BeginHorizontal();
 			param_autopublish = EditorGUILayout.Toggle("Publish immediately ", param_autopublish);
-			if (GUILayout.Button("(" + SketchfabUI.ClickableTextColor("more info") + ")", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
+			if (GUILayout.Button("more info", _ui.getSketchfabClickableLabel(), GUILayout.Height(20)))
 			{
 				Application.OpenURL(SketchfabPlugin.Urls.latestRelease);
 			}

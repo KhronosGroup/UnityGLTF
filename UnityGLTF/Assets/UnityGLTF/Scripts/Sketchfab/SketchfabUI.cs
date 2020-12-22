@@ -17,11 +17,12 @@ namespace Sketchfab
 		public static Color SKFB_RED = new Color(0.8f, 0.0f, 0.0f);
 		public static Color SKFB_BLUE = new Color(28 / 255.0f, 170 / 255.0f, 223 / 255.0f);
 		public static Color SKFB_BLUE_2 = new Color(69 / 255.0f, 185 / 255.0f, 223 / 255.0f);
-		public static string CLICKABLE_COLOR = "navy";
+
 		public static string ERROR_COLOR = "red";
 		public static Texture2D HEADER;
 		public static Texture2D DEFAULT_AVATAR;
 
+		public static Texture2D plusPlanIcon;
 		public static Texture2D proPlanIcon;
 		public static Texture2D premPlanIcon;
 		public static Texture2D bizPlanIcon;
@@ -55,7 +56,6 @@ namespace Sketchfab
 		public GUIStyle _sketchfabBigLabel;
 
 		public Texture SKETCHFAB_ICON;
-		
 
 		public SketchfabUI()
 		{
@@ -67,6 +67,10 @@ namespace Sketchfab
 		{
 			switch (planLb)
 			{
+				case "plus":
+					if (!plusPlanIcon)
+						plusPlanIcon = Resources.Load<Texture2D>("planPlus");
+					return plusPlanIcon;
 				case "pro":
 					if (!proPlanIcon)
 						proPlanIcon = Resources.Load<Texture2D>("planPro");
@@ -92,7 +96,7 @@ namespace Sketchfab
 		{
 			if(_sketchfabModelName == null)
 			{
-				_sketchfabModelName = new GUIStyle(EditorStyles.wordWrappedMiniLabel);
+				_sketchfabModelName = new GUIStyle(EditorStyles.miniLabel);
 				_sketchfabModelName.font = TitiliumBold;
 				_sketchfabModelName.fontSize = 20;
 			}
@@ -132,7 +136,7 @@ namespace Sketchfab
 			{
 				_sketchfabMiniModelname = new GUIStyle(EditorStyles.miniLabel);
 				_sketchfabMiniModelname.font = OSSemiBold;
-				_sketchfabMiniModelname.fontSize = 12;
+				_sketchfabMiniModelname.fontSize = 10;
 				_sketchfabMiniModelname.wordWrap = true;
 				_sketchfabMiniModelname.alignment = TextAnchor.UpperCenter;
 				_sketchfabMiniModelname.clipping = TextClipping.Clip;
@@ -149,7 +153,7 @@ namespace Sketchfab
 			{
 				_sketchfabMiniAuthorname = new GUIStyle(EditorStyles.miniLabel);
 				_sketchfabMiniAuthorname.font = OSRegular;
-				_sketchfabMiniAuthorname.fontSize = 10;
+				_sketchfabMiniAuthorname.fontSize = 8;
 				_sketchfabMiniAuthorname.wordWrap = true;
 				_sketchfabMiniAuthorname.alignment = TextAnchor.UpperCenter;
 				_sketchfabMiniAuthorname.clipping = TextClipping.Clip;
@@ -247,7 +251,6 @@ namespace Sketchfab
 			}
 
 			return _sketchfabClickableLabel;
-
 		}
 
 		public GUIStyle getSketchfabLabel()
@@ -286,11 +289,6 @@ namespace Sketchfab
 			LoadFonts();
 		}
 
-		public void displayModelName(string modelName)
-		{
-			GUILayout.Label(modelName, getSketchfabModelName());
-		}
-
 		public void displayTitle(string title)
 		{
 			GUILayout.Label(title, getSketchfabTitleLabel());
@@ -306,24 +304,6 @@ namespace Sketchfab
 			GUILayout.Label(subContent, getSketchfabSubContentLabel());
 		}
 
-		public void showUpToDate(string latestVersion)
-		{
-			GUILayout.BeginHorizontal();
-			GUILayout.Label("Exporter is up to date (version:" + latestVersion + ")", EditorStyles.centeredGreyMiniLabel);
-
-			GUILayout.FlexibleSpace();
-			if (GUILayout.Button(ClickableTextColor("Help"), getSketchfabClickableLabel(), GUILayout.Height(20)))
-			{
-				Application.OpenURL(SketchfabPlugin.Urls.latestRelease);
-			}
-
-			if (GUILayout.Button(ClickableTextColor("Report an issue"), getSketchfabClickableLabel(), GUILayout.Height(20)))
-			{
-				Application.OpenURL(SketchfabPlugin.Urls.reportAnIssue);
-			}
-			GUILayout.EndHorizontal();
-		}
-
 		public  void displayModelStats(string key, string value)
 		{
 			GUILayout.BeginHorizontal(GUILayout.Width(200));
@@ -332,28 +312,10 @@ namespace Sketchfab
 			GUILayout.EndHorizontal();
 		}
 
-		public static Texture2D MakeTex(int width, int height, Color col)
-		{
-			Color[] pix = new Color[width * height];
-			for (int i = 0; i < pix.Length; ++i)
-			{
-				pix[i] = col;
-			}
-			Texture2D result = new Texture2D(width, height);
-			result.SetPixels(pix);
-			result.Apply();
-			return result;
-		}
-
-		public static string ClickableTextColor(string text)
-		{
-			return "<color=" + SketchfabUI.CLICKABLE_COLOR + ">" + text + "</color>";
-		}
-
 		public static string ErrorTextColor(string text)
-		{
+        {
 			return "<color=" + SketchfabUI.ERROR_COLOR + ">" + text + "</color>";
 		}
-	}
+}
 }
 #endif
