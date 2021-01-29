@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.13] - 2021-01-30
+- fixed missing references in materials and prefabs
+- fixed issue preventing build with UnityGLTF in project
+- moved samples into subfolder
+- added support for animation clip speed being set inside Animator States
+
 ## [1.0.4-preview.12] - 2020-12-15
 - fix compilation errors in GLTFSerialization.dll on recompiling
 - fix Newtonsoft.Json being copied to output directory
