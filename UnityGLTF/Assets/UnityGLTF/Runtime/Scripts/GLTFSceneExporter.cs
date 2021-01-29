@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using GLTF.Schema;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
 using CameraType = GLTF.Schema.CameraType;
 using WrapMode = GLTF.Schema.WrapMode;
+#if UNITY_EDITOR
+using UnityEditor.Animations;
+#endif
 
 namespace UnityGLTF
 {
