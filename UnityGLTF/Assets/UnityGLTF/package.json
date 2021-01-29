@@ -15,7 +15,7 @@
     {
       "displayName": "Sample Scenes",
       "description": "Various scenes showing GLTF functionality.",
-      "path": "Samples~"
+      "path": "Samples~/Sample Scenes"
     }
   ],
   "dependencies": {
