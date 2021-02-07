@@ -1239,7 +1239,7 @@ namespace UnityGLTF
 					BaseColorFactor = (materialObj.HasProperty("_BaseColor")
 						? materialObj.GetColor("_BaseColor")
 						: Color.white).ToNumericsColorRaw(),
-					BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main)
+					BaseColorTexture = mainTex ? ExportTextureInfo(mainTex, TextureMapType.Main) : null
 				};
 			}
 			else if (materialObj.HasProperty("_ColorTexture"))
@@ -1250,7 +1250,7 @@ namespace UnityGLTF
 					BaseColorFactor = (materialObj.HasProperty("_BaseColor")
 						? materialObj.GetColor("_BaseColor")
 						: Color.white).ToNumericsColorRaw(),
-					BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main)
+					BaseColorTexture = mainTex ? ExportTextureInfo(mainTex, TextureMapType.Main) : null
 				};
 			}
             else if (materialObj.HasProperty("_MainTex")) //else export main texture
@@ -1595,6 +1595,7 @@ namespace UnityGLTF
 						Debug.LogErrorFormat("Can't export a {0} diffuse texture in material {1}", mainTex.GetType(), materialObj.name);
 					}
 				}
+				else Debug.LogError("Empty tex in " + materialObj.name, materialObj);
 			}
 
 			if (materialObj.HasProperty("_SpecColor"))
