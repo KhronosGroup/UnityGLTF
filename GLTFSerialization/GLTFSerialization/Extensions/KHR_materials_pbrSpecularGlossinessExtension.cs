@@ -71,39 +71,26 @@ namespace GLTF.Schema
 		{
 			return new KHR_materials_pbrSpecularGlossinessExtension(
 				DiffuseFactor,
-				new TextureInfo(
-					DiffuseTexture,
-					gltfRoot
-					), 
+				DiffuseTexture != null ? new TextureInfo(DiffuseTexture, gltfRoot) : null, 
 				SpecularFactor,
 				GlossinessFactor,
-				new TextureInfo(
-					SpecularGlossinessTexture,
-					gltfRoot
-					)
-				);
+				SpecularGlossinessTexture != null ? new TextureInfo(SpecularGlossinessTexture, gltfRoot) : null);
 		}
 
 		public JProperty Serialize()
 		{
-			JProperty jProperty =
-				new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME,
-					new JObject(
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_FACTOR, new JArray(DiffuseFactor.R, DiffuseFactor.G, DiffuseFactor.B, DiffuseFactor.A)),
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_TEXTURE,
-							new JObject(
-								new JProperty(TextureInfo.INDEX, DiffuseTexture.Index.Id)
-								)
-							),
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_FACTOR, new JArray(SpecularFactor.X, SpecularFactor.Y, SpecularFactor.Z)),
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.GLOSSINESS_FACTOR, GlossinessFactor),
-						new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_GLOSSINESS_TEXTURE,
-							new JObject(
-								new JProperty(TextureInfo.INDEX, SpecularGlossinessTexture.Index.Id)
-								)
-							)
-						)
-					);
+			var jo = new JObject();
+			jo.Add(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_FACTOR, new JArray(DiffuseFactor.R, DiffuseFactor.G, DiffuseFactor.B, DiffuseFactor.A));
+			if(DiffuseTexture != null && DiffuseTexture.Index != null)
+				jo.Add(KHR_materials_pbrSpecularGlossinessExtensionFactory.DIFFUSE_TEXTURE, new JObject(
+					new JProperty(TextureInfo.INDEX, DiffuseTexture.Index.Id)));
+			jo.Add(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_FACTOR, new JArray(SpecularFactor.X, SpecularFactor.Y, SpecularFactor.Z));
+			jo.Add(KHR_materials_pbrSpecularGlossinessExtensionFactory.GLOSSINESS_FACTOR, GlossinessFactor);
+			if(SpecularGlossinessTexture != null && SpecularGlossinessTexture.Index != null)
+				jo.Add(KHR_materials_pbrSpecularGlossinessExtensionFactory.SPECULAR_GLOSSINESS_TEXTURE, new JObject(
+					new JProperty(TextureInfo.INDEX, SpecularGlossinessTexture.Index.Id)));
+						
+			JProperty jProperty = new JProperty(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME, jo);
 
 			return jProperty;
 		}

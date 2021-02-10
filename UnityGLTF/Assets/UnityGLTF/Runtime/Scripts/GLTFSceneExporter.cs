@@ -1595,7 +1595,6 @@ namespace UnityGLTF
 						Debug.LogErrorFormat("Can't export a {0} diffuse texture in material {1}", mainTex.GetType(), materialObj.name);
 					}
 				}
-				else Debug.LogError("Empty tex in " + materialObj.name, materialObj);
 			}
 
 			if (materialObj.HasProperty("_SpecColor"))
