@@ -1181,7 +1181,7 @@ namespace UnityGLTF
 					}
 				}
 			}
-			if (materialObj.HasProperty("_BumpMap") && materialObj.IsKeywordEnabled("_NORMALMAP"))
+			if (materialObj.HasProperty("_BumpMap") && (materialObj.IsKeywordEnabled("_NORMALMAP") || materialObj.IsKeywordEnabled("_BUMPMAP")))
 			{
 				var normalTex = materialObj.GetTexture("_BumpMap");
 
@@ -1442,6 +1442,11 @@ namespace UnityGLTF
 			{
 				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorRaw();
 			}
+			else if (material.HasProperty("_BaseColor"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorRaw();
+			}
+
             if (material.HasProperty("_TintColor")) //particles use _TintColor instead of _Color
             {
                 float white = 1;
@@ -1454,11 +1459,11 @@ namespace UnityGLTF
                 pbr.BaseColorFactor = (material.GetColor("_TintColor") * white).ToNumericsColorRaw() ;
             }
 
-            if (material.HasProperty("_MainTex")) //TODO if additive particle, render black into alpha
+            if (material.HasProperty("_MainTex") || material.HasProperty("_BaseMap")) //TODO if additive particle, render black into alpha
 			{
-				var mainTex = material.GetTexture("_MainTex");
+				var mainTex = material.HasProperty("_MainTex") ? material.GetTexture("_MainTex") : material.GetTexture("_BaseMap");
 
-				if (mainTex != null)
+				if (mainTex)
 				{
 					if(mainTex is Texture2D)
 					{
