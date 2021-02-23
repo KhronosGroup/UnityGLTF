@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.15] - 2021-02-23
+- fixed issues with material export in URP where PBR wasn't properly detected and exported
+
 ## [1.0.4-preview.14] - 2021-02-10
 - fixed issues with KHR_materials_pbrSpecularGlossinessExtension and materials that don't have textures
 
