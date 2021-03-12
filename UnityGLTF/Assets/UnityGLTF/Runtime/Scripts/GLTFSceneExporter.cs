@@ -1362,7 +1362,14 @@ namespace UnityGLTF
 			Vector2 offset = mat.GetTextureOffset(texName);
 			Vector2 scale = mat.GetTextureScale(texName);
 
-			if (offset == Vector2.zero && scale == Vector2.one) return;
+			if (offset == Vector2.zero && scale == Vector2.one)
+			{
+				// difficult choice here: some shaders might support texture transform per-texture, others use the main transform.
+				offset = mat.mainTextureOffset;
+				scale = mat.mainTextureScale;
+				// offset.x = 1 - offset.x;
+				// return;
+			}
 
 			if (_root.ExtensionsUsed == null)
 			{
