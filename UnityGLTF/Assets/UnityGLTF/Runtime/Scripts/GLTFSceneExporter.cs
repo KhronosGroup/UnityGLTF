@@ -1239,7 +1239,7 @@ namespace UnityGLTF
 				{
 					BaseColorFactor = (materialObj.HasProperty("_BaseColor")
 						? materialObj.GetColor("_BaseColor")
-						: Color.white).ToNumericsColorRaw(),
+						: Color.white).ToNumericsColorLinear(),
 					BaseColorTexture = mainTex ? ExportTextureInfo(mainTex, TextureMapType.Main) : null
 				};
 			}
@@ -1250,7 +1250,7 @@ namespace UnityGLTF
 				{
 					BaseColorFactor = (materialObj.HasProperty("_BaseColor")
 						? materialObj.GetColor("_BaseColor")
-						: Color.white).ToNumericsColorRaw(),
+						: Color.white).ToNumericsColorLinear(),
 					BaseColorTexture = mainTex ? ExportTextureInfo(mainTex, TextureMapType.Main) : null
 				};
 			}
@@ -1269,7 +1269,7 @@ namespace UnityGLTF
                     if (material.PbrMetallicRoughness == null)
                         material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
 
-                    material.PbrMetallicRoughness.BaseColorFactor = materialObj.GetColor("_TintColor").ToNumericsColorRaw();
+                    material.PbrMetallicRoughness.BaseColorFactor = materialObj.GetColor("_TintColor").ToNumericsColorLinear();
                 }
                 material.DoubleSided = true;
             }
