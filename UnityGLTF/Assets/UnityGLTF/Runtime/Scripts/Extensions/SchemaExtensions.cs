@@ -328,8 +328,8 @@ namespace UnityGLTF.Extensions
 		public static GLTF.Math.Color ToNumericsColorRaw(this UnityEngine.Color color)
 		{
 			var c = color;
-			// if (QualitySettings.activeColorSpace == ColorSpace.Linear)
-			//	c = c.linear;
+			if (QualitySettings.activeColorSpace == ColorSpace.Gamma)
+				 c = c.linear;
 			return new GLTF.Math.Color(c.r, c.g, c.b, c.a);
 		}
 
@@ -339,12 +339,32 @@ namespace UnityGLTF.Extensions
 			return new GLTF.Math.Color(lc.r, lc.g, lc.b, lc.a);
 		}
 
+		public static GLTF.Math.Color[] ToNumericsColorLinear(this UnityEngine.Color[] inColorArr)
+		{
+			GLTF.Math.Color[] outColorArr = new GLTF.Math.Color[inColorArr.Length];
+			for (int i = 0; i < inColorArr.Length; ++i)
+			{
+				outColorArr[i] = inColorArr[i].ToNumericsColorLinear();
+			}
+			return outColorArr;
+		}
+
 		public static UnityEngine.Color[] ToUnityColorRaw(this GLTF.Math.Color[] inColorArr)
 		{
 			UnityEngine.Color[] outColorArr = new UnityEngine.Color[inColorArr.Length];
 			for (int i = 0; i < inColorArr.Length; ++i)
 			{
 				outColorArr[i] = inColorArr[i].ToUnityColorRaw();
+			}
+			return outColorArr;
+		}
+
+		public static UnityEngine.Color[] ToLinear(this UnityEngine.Color[] inColorArr)
+		{
+			UnityEngine.Color[] outColorArr = new UnityEngine.Color[inColorArr.Length];
+			for (int i = 0; i < inColorArr.Length; ++i)
+			{
+				outColorArr[i] = inColorArr[i].linear;
 			}
 			return outColorArr;
 		}
