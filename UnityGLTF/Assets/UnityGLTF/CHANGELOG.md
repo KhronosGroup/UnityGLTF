@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.16] - 2021-03-15
+- fixed color space issues with vertex colors and emissive
+- fixed export of UV offset/tiling for non-main textures
+- fixed exporting materials as PBR when they have _Metallic and _Glossiness (required only _MetallicGlossMap before)
+
 ## [1.0.4-preview.15] - 2021-02-23
 - fixed issues with material export in URP where PBR wasn't properly detected and exported
 
