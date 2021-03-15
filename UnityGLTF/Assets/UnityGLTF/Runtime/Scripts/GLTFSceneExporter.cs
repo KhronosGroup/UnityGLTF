@@ -1338,7 +1338,7 @@ namespace UnityGLTF
 
 		private bool IsPBRMetallicRoughness(Material material)
 		{
-			return material.HasProperty("_Metallic") && material.HasProperty("_MetallicGlossMap");
+			return material.HasProperty("_Metallic") && (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness"));
 		}
 
 		private bool IsUnlit(Material material)
