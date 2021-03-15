@@ -1488,13 +1488,15 @@ namespace UnityGLTF
 			if (material.HasProperty("_Metallic"))
 			{
 				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
-				pbr.MetallicFactor = (metallicGlossMap != null) ? 1.0 : material.GetFloat("_Metallic");
+				pbr.MetallicFactor = material.GetFloat("_Metallic");
 			}
 
 			if (material.HasProperty("_Glossiness"))
 			{
 				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
-				pbr.RoughnessFactor = (metallicGlossMap != null) ? 1.0 : 1.0 - material.GetFloat("_Glossiness");
+				float gms = material.GetFloat("_GlossMapScale");
+				float gloss = material.GetFloat("_Glossiness");
+				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - material.GetFloat("_Glossiness");
 			}
 
 			if (material.HasProperty("_MetallicGlossMap"))
