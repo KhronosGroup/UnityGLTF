@@ -322,7 +322,14 @@ namespace UnityGLTF.Extensions
 
 		public static UnityEngine.Color ToUnityColorRaw(this GLTF.Math.Color color)
 		{
-			return new UnityEngine.Color(color.R, color.G, color.B, color.A).gamma;
+			var c = new UnityEngine.Color(color.R, color.G, color.B, color.A).gamma;
+			return c;
+		}
+
+		public static UnityEngine.Color ToUnityColorLinear(this GLTF.Math.Color color)
+		{
+			var c = new UnityEngine.Color(color.R, color.G, color.B, color.A);
+			return c;
 		}
 
 		public static GLTF.Math.Color ToNumericsColorRaw(this UnityEngine.Color color)
@@ -372,6 +379,14 @@ namespace UnityGLTF.Extensions
 			for (int i = 0; i < inArr.Length; i++)
 			{
 				outArr[offset + i] = inArr[i].ToUnityColorRaw();
+			}
+		}
+
+		public static void ToUnityColorLinear(this GLTF.Math.Color[] inArr, Color[] outArr, int offset = 0)
+		{
+			for (int i = 0; i < inArr.Length; i++)
+			{
+				outArr[offset + i] = inArr[i].ToUnityColorLinear();
 			}
 		}
 

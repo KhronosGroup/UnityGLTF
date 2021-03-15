@@ -1763,7 +1763,7 @@ namespace UnityGLTF
 			}
 			if (meshAttributes.ContainsKey(SemanticProperties.Color[0]))
 			{
-				meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorRaw(unityData.Colors, vertOffset);
+				meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorLinear(unityData.Colors, vertOffset);
 			}
 
 			var targets = primData.Targets;
@@ -2077,7 +2077,7 @@ namespace UnityGLTF
 			if (unlitMapper != null)
 			{
 				var pbr = def.PbrMetallicRoughness;
-				unlitMapper.BaseColorFactor = pbr.BaseColorFactor.ToUnityColorRaw().gamma;
+				unlitMapper.BaseColorFactor = pbr.BaseColorFactor.ToUnityColorRaw();
 
 				if (pbr.BaseColorTexture != null)
 				{
