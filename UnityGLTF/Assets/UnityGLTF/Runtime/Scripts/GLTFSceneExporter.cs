@@ -208,8 +208,12 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
+			var fullPath = Path.Combine(path, fileName);
+			if (!Path.GetExtension(fileName).Equals("glb", StringComparison.OrdinalIgnoreCase))
+			{
+				fullPath = Path.Combine(path, fileName + ".glb");
+			}
 			_shouldUseInternalBufferForImages = true;
-			string fullPath = Path.Combine(path, Path.ChangeExtension(fileName, "glb"));
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
 			{
