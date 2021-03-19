@@ -208,11 +208,12 @@ namespace UnityGLTF
 
                         foreach (var tex in textures)
                         {
-                            var ext = _useJpgTextures ? ".jpg" : ".png";
-                            var texPath = string.Concat(texturesRoot, tex.name, ext);
-                            File.WriteAllBytes(texPath, _useJpgTextures ? tex.EncodeToJPG() : tex.EncodeToPNG());
-
-                            AssetDatabase.ImportAsset(texPath);
+                            // var ext = _useJpgTextures ? ".jpg" : ".png";
+                            // var texPath = string.Concat(texturesRoot, tex.name, ext);
+                            // File.WriteAllBytes(texPath, _useJpgTextures ? tex.EncodeToJPG() : tex.EncodeToPNG());
+                            //
+                            // AssetDatabase.ImportAsset(texPath);
+                            ctx.AddObjectToAsset(tex.name, tex);
                         }
                     }
 
@@ -221,77 +222,79 @@ namespace UnityGLTF
                     // Save materials as separate assets and rewrite refs
                     if (materials.Length > 0)
                     {
-                        var materialRoot = string.Concat(folderName, "/", "Materials/");
-                        Directory.CreateDirectory(materialRoot);
+                        // var materialRoot = string.Concat(folderName, "/", "Materials/");
+                        // Directory.CreateDirectory(materialRoot);
 
                         foreach (var mat in materials)
                         {
-                            var materialPath = string.Concat(materialRoot, mat.name, ".mat");
-                            var newMat = mat;
-                            CopyOrNew(mat, materialPath, m =>
-                            {
-                                // Fix references
-                                newMat = m;
-                                foreach (var r in renderers)
-                                {
-                                    var sharedMaterials = r.sharedMaterials;
-                                    for (var i = 0; i < sharedMaterials.Length; ++i)
-                                    {
-                                        var sharedMaterial = sharedMaterials[i];
-                                        if (sharedMaterial.name == mat.name) sharedMaterials[i] = m;
-                                    }
-                                    sharedMaterials = sharedMaterials.Where(sm => sm).ToArray();
-                                    r.sharedMaterials = sharedMaterials;
-                                }
-                            });
+                            // var materialPath = string.Concat(materialRoot, mat.name, ".mat");
+                            // var newMat = mat;
+                            // CopyOrNew(mat, materialPath, m =>
+                            // {
+                            //     // Fix references
+                            //     newMat = m;
+                            //     foreach (var r in renderers)
+                            //     {
+                            //         var sharedMaterials = r.sharedMaterials;
+                            //         for (var i = 0; i < sharedMaterials.Length; ++i)
+                            //         {
+                            //             var sharedMaterial = sharedMaterials[i];
+                            //             if (sharedMaterial.name == mat.name) sharedMaterials[i] = m;
+                            //         }
+                            //         sharedMaterials = sharedMaterials.Where(sm => sm).ToArray();
+                            //         r.sharedMaterials = sharedMaterials;
+                            //     }
+                            // });
+                            ctx.AddObjectToAsset(mat.name, mat);
+
                             // Fix textures
                             // HACK: This needs to be a delayed call.
                             // Unity needs a frame to kick off the texture import so we can rewrite the ref
-                            if (textures.Length > 0)
-                            {
-                                EditorApplication.delayCall += () =>
-                                {
-                                    for (var i = 0; i < textures.Length; ++i)
-                                    {
-                                        var tex = textures[i];
-                                        var texturesRoot = string.Concat(folderName, "/", "Textures/");
-                                        var ext = _useJpgTextures ? ".jpg" : ".png";
-                                        var texPath = string.Concat(texturesRoot, tex.name, ext);
-
-                                        // Grab new imported texture
-                                        var materialMaps = texMaterialMap[tex];
-                                        var importer = (TextureImporter)TextureImporter.GetAtPath(texPath);
-                                        var importedTex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
-                                        if (importer != null)
-                                        {
-                                            var isNormalMap = false;
-                                            foreach (var materialMap in materialMaps)
-                                            {
-                                                if (materialMap.Material == mat)
-                                                {
-                                                    isNormalMap |= materialMap.IsNormalMap;
-                                                    newMat.SetTexture(materialMap.Property, importedTex);
-                                                }
-                                            };
-
-                                            if (isNormalMap)
-                                            {
-                                                // Try to auto-detect normal maps
-                                                importer.textureType = TextureImporterType.NormalMap;
-                                            }
-                                            else if (importer.textureType == TextureImporterType.Sprite)
-                                            {
-                                                // Force disable sprite mode, even for 2D projects
-                                                importer.textureType = TextureImporterType.Default;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Debug.LogWarning("GLTFImporter: Unable to import texture from path reference");
-                                        }
-                                    }
-                                };
-                            }
+                            // if (textures.Length > 0)
+                            // {
+                            //     EditorApplication.delayCall += () =>
+                            //     {
+                            //         for (var i = 0; i < textures.Length; ++i)
+                            //         {
+                            //             var tex = textures[i];
+                            //             var texturesRoot = string.Concat(folderName, "/", "Textures/");
+                            //             var ext = _useJpgTextures ? ".jpg" : ".png";
+                            //             var texPath = string.Concat(texturesRoot, tex.name, ext);
+                            //
+                            //             // Grab new imported texture
+                            //             var materialMaps = texMaterialMap[tex];
+                            //             var importer = (TextureImporter)TextureImporter.GetAtPath(texPath);
+                            //             var importedTex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                            //             if (importer != null)
+                            //             {
+                            //                 var isNormalMap = false;
+                            //                 foreach (var materialMap in materialMaps)
+                            //                 {
+                            //                     if (materialMap.Material == mat)
+                            //                     {
+                            //                         isNormalMap |= materialMap.IsNormalMap;
+                            //                         newMat.SetTexture(materialMap.Property, importedTex);
+                            //                     }
+                            //                 };
+                            //
+                            //                 if (isNormalMap)
+                            //                 {
+                            //                     // Try to auto-detect normal maps
+                            //                     importer.textureType = TextureImporterType.NormalMap;
+                            //                 }
+                            //                 else if (importer.textureType == TextureImporterType.Sprite)
+                            //                 {
+                            //                     // Force disable sprite mode, even for 2D projects
+                            //                     importer.textureType = TextureImporterType.Default;
+                            //                 }
+                            //             }
+                            //             else
+                            //             {
+                            //                 Debug.LogWarning("GLTFImporter: Unable to import texture from path reference");
+                            //             }
+                            //         }
+                            //     };
+                            // }
                         }
                     }
 
