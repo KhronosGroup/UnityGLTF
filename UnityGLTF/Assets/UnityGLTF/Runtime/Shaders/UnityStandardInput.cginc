@@ -181,7 +181,7 @@ half2 MetallicGloss(float2 uv)
 	#endif
 #endif
 	// it's roughness, not glossiness. invert it
-	mg.g = 1.0f - mg.g;
+	// mg.g = 1.0f - mg.g;
 	return mg;
 }
 
