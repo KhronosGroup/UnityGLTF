@@ -208,11 +208,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = Path.Combine(path, fileName);
-			if (!Path.GetExtension(fileName).Equals("glb", StringComparison.OrdinalIgnoreCase))
-			{
-				fullPath = Path.Combine(path, fileName + ".glb");
-			}
+			var fullPath = GetFileName(Path.Combine(path, fileName), "glb");
 			_shouldUseInternalBufferForImages = true;
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
@@ -369,7 +365,8 @@ namespace UnityGLTF
 		public void SaveGLTFandBin(string path, string fileName)
 		{
 			_shouldUseInternalBufferForImages = false;
-			var binFile = File.Create(Path.Combine(path, fileName + ".bin"));
+			var fullPath = GetFileName(Path.Combine(path, fileName), "bin");
+			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
 			// rotate 180°
@@ -395,7 +392,7 @@ namespace UnityGLTF
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
-			var gltfFile = File.CreateText(Path.Combine(path, fileName + ".gltf"));
+			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, ".gltf"));
 			_root.Serialize(gltfFile);
 
 #if WINDOWS_UWP
@@ -411,6 +408,22 @@ namespace UnityGLTF
 			// 	t.rotation *= Quaternion.Euler(0,-180,0);
 		}
 
+		/// <summary>
+		/// Ensures a specific file extension from an absolute path that may or may not already have that extension.
+		/// </summary>
+		/// <param name="absolutePathThatMayHaveExtension">Absolute path that may or may not already have the required extension</param>
+		/// <param name="requiredExtension">The extension to ensure</param>
+		/// <returns>An absolute path that has the required extension</returns>
+		private string GetFileName(string absolutePathThatMayHaveExtension, string requiredExtension)
+		{
+			if (!Path.GetExtension(absolutePathThatMayHaveExtension).Equals(requiredExtension, StringComparison.OrdinalIgnoreCase))
+			{
+				return absolutePathThatMayHaveExtension + "." + requiredExtension;
+			}
+
+			return absolutePathThatMayHaveExtension;
+		}
+		
 		private void ExportImages(string outputPath)
 		{
 			for (int t = 0; t < _imageInfos.Count; ++t)
