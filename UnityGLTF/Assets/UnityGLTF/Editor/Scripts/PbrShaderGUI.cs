@@ -30,9 +30,9 @@ namespace UnityEditor
             public static GUIContent metallicMapText = new GUIContent("Metal Rough", "Metallic (B) and Roughness (G)");
             public static GUIContent metallicText = new GUIContent("Metallic", "Metallic value");
             public static GUIContent metallicScaleText = new GUIContent("Metallic", "Metallic scale factor");
-            public static GUIContent roughnessText = new GUIContent("Glossiness (1 - Roughness)", "Roughness value");
+            public static GUIContent roughnessText = new GUIContent("Roughness", "Roughness value");
 
-            public static GUIContent roughnessScaleText = new GUIContent("Glossiness (1 - Roughness)", "Roughness scale factor");
+            public static GUIContent roughnessScaleText = new GUIContent("Roughness", "Roughness scale factor");
             public static GUIContent glossinessText = new GUIContent("Glossiness", "Glossiness value");
             public static GUIContent glossinessScaleText = new GUIContent("Glossiness", "Glossiness scale factor");
             public static GUIContent normalMapText = new GUIContent("Normal Map", "Normal Map");

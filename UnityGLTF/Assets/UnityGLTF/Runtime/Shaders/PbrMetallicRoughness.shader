@@ -20,7 +20,7 @@ Shader "GLTF/PbrMetallicRoughness"
 
 		_Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
-		_Glossiness("Glossiness Factor (1 - Roughness)", Range(0.0, 1.0)) = 1.0
+		_Glossiness("Roughness Factor", Range(0.0, 1.0)) = 1.0
 
 		_Metallic("Metallic Factor", Range(0.0, 1.0)) = 0.0
 		_MetallicGlossMap("Metal Rough Texture", 2D) = "white" {}
