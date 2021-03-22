@@ -222,7 +222,7 @@ half3 UnpackScaleNormalGLTF(half4 packednormal, half bumpScale)
 	float3 normal = normalize(packednormal.xyz);
 	normal = (normal*2.0 - 1.0);
 	normal.xy *= bumpScale;
-	return normalize(normal);
+	return LinearToGammaSpace(normalize(normal));
 }
 
 #ifdef _NORMALMAP
