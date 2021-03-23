@@ -208,7 +208,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = GetFileName(Path.Combine(path, fileName), "glb");
+			var fullPath = GetFileName(Path.Combine(path, fileName), ".glb");
 			_shouldUseInternalBufferForImages = true;
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
@@ -365,7 +365,7 @@ namespace UnityGLTF
 		public void SaveGLTFandBin(string path, string fileName)
 		{
 			_shouldUseInternalBufferForImages = false;
-			var fullPath = GetFileName(Path.Combine(path, fileName), "bin");
+			var fullPath = GetFileName(Path.Combine(path, fileName), ".bin");
 			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -412,7 +412,7 @@ namespace UnityGLTF
 		/// Ensures a specific file extension from an absolute path that may or may not already have that extension.
 		/// </summary>
 		/// <param name="absolutePathThatMayHaveExtension">Absolute path that may or may not already have the required extension</param>
-		/// <param name="requiredExtension">The extension to ensure</param>
+		/// <param name="requiredExtension">The extension to ensure, with leading dot</param>
 		/// <returns>An absolute path that has the required extension</returns>
 		private string GetFileName(string absolutePathThatMayHaveExtension, string requiredExtension)
 		{
