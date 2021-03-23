@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.17] - 2021-03-23
+- fixed ACCESSOR_INDEX_PRIMITIVE_RESTART for meshes that have exactly 256 or 65536 vertices and used the wrong buffer type
+- fixed vertex color import color space and alpha usage
+- fixed incorrect keyframe values causing import abort, just warns now
+- fixed GLB/GLTF export paths sometimes being incorrect (double or no extension)
+- changed: GLB importer now embeds all meshes and textures as sub assets instead of putting them in the project; needs better importer inspector to allow for asset remapping.
+
 ## [1.0.4-preview.16] - 2021-03-15
 - fixed color space issues with vertex colors and emissive
 - fixed export of UV offset/tiling for non-main textures
