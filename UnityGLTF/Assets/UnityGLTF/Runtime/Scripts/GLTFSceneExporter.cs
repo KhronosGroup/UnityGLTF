@@ -2082,7 +2082,13 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
-			if (max <= byte.MaxValue && min >= byte.MinValue)
+			// From the spec:
+			// Values of the index accessor must not include the maximum value for the given component type,
+			// which triggers primitive restart in several graphics APIs and would require client implementations to rebuild the index buffer.
+			// Primitive restart values are disallowed and all index values must refer to actual vertices.
+			int maxAllowedValue = isIndices ? max + 1 : max;
+
+			if (maxAllowedValue <= byte.MaxValue && min >= byte.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
@@ -2091,7 +2097,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((byte)v);
 				}
 			}
-			else if (max <= sbyte.MaxValue && min >= sbyte.MinValue && !isIndices)
+			else if (maxAllowedValue <= sbyte.MaxValue && min >= sbyte.MinValue && !isIndices)
 			{
 				accessor.ComponentType = GLTFComponentType.Byte;
 
@@ -2100,7 +2106,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((sbyte)v);
 				}
 			}
-			else if (max <= short.MaxValue && min >= short.MinValue && !isIndices)
+			else if (maxAllowedValue <= short.MaxValue && min >= short.MinValue && !isIndices)
 			{
 				accessor.ComponentType = GLTFComponentType.Short;
 
@@ -2109,7 +2115,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((short)v);
 				}
 			}
-			else if (max <= ushort.MaxValue && min >= ushort.MinValue)
+			else if (maxAllowedValue <= ushort.MaxValue && min >= ushort.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedShort;
 
@@ -2118,7 +2124,7 @@ namespace UnityGLTF
 					_bufferWriter.Write((ushort)v);
 				}
 			}
-			else if (min >= uint.MinValue)
+			else if (maxAllowedValue >= uint.MinValue)
 			{
 				accessor.ComponentType = GLTFComponentType.UnsignedInt;
 
