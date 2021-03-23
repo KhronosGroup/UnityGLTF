@@ -16,6 +16,18 @@ The goal of this library is to support the full glTF 2.0 specification and enabl
 
 The library will be modularized such that it can be extended to support additional capabilities in Unity or support additional extensions to the glTF specification.  The library was designed to work with Unity 5.6 and above, but is currently only tested/maintained/supported with Unity 2018 and above.
 
+## Installation
+
+You can install this right from git as Unity Package, compatible with UPM (Unity Package Manager).
+1. Open `Window > Package Manager`
+2. In Package Manager, click <kbd>+</kbd> and select <kbd>Add Package from git URL</kbd>
+3. Paste ```https://github.com/prefrontalcortex/UnityGLTF.git?path=/UnityGLTF/Assets/UnityGLTF#dev```
+4. Click <kbd>Add</kbd>.  
+   
+Done!  
+
+If you want to target a specific version, specify `#release/pfc/1.0.4-preview.17` or another specific tag from the [release section](https://github.com/prefrontalcortex/UnityGLTF/releases) instead of `#dev`.
+
 ## Current Status
 
 Work Items and Issues targeting a 1.0 release of the library can be found in
