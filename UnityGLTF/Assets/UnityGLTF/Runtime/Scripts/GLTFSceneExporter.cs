@@ -210,7 +210,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = GetFileName(Path.Combine(path, fileName), "glb");
+			var fullPath = GetFileName(Path.Combine(path, fileName), ".glb");
 			_shouldUseInternalBufferForImages = true;
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
@@ -367,7 +367,7 @@ namespace UnityGLTF
 		public void SaveGLTFandBin(string path, string fileName)
 		{
 			_shouldUseInternalBufferForImages = false;
-			var fullPath = GetFileName(Path.Combine(path, fileName), "bin");
+			var fullPath = GetFileName(Path.Combine(path, fileName), ".bin");
 			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -394,7 +394,7 @@ namespace UnityGLTF
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
-			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, "gltf"));
+			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, ".gltf"));
 			_root.Serialize(gltfFile);
 
 #if WINDOWS_UWP
@@ -418,10 +418,11 @@ namespace UnityGLTF
 		/// <returns>An absolute path that has the required extension</returns>
 		private string GetFileName(string absolutePathThatMayHaveExtension, string requiredExtension)
 		{
+			if (!requiredExtension.StartsWith(".", StringComparison.Ordinal))
+				requiredExtension = "." + requiredExtension;
+
 			if (!Path.GetExtension(absolutePathThatMayHaveExtension).Equals(requiredExtension, StringComparison.OrdinalIgnoreCase))
-			{
-				return absolutePathThatMayHaveExtension + "." + requiredExtension;
-			}
+				return absolutePathThatMayHaveExtension + requiredExtension;
 
 			return absolutePathThatMayHaveExtension;
 		}
