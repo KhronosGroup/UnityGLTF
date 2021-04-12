@@ -1504,7 +1504,9 @@ namespace UnityGLTF
 				newLight.range = (float) light.Range;
 				if(light.Spot != null)
 				{
+					#if UNITY_2019_1_OR_NEWER
 					newLight.innerSpotAngle = (float) light.Spot.InnerConeAngle * 2 / (Mathf.Deg2Rad * 0.8f);
+					#endif
 					newLight.spotAngle = (float) light.Spot.OuterConeAngle * 2 / Mathf.Deg2Rad;
 				}
 
