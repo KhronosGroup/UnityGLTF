@@ -63,6 +63,7 @@ namespace UnityGLTF
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
 		private List<Transform> _animatedNodes;
+		private List<AnimationClip> _animationClips;
 		private List<Transform> _skinnedNodes;
 		private Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh> _bakedMeshes;
 
@@ -155,6 +156,7 @@ namespace UnityGLTF
 
 			_exportedTransforms = new Dictionary<int, int>();
 			_animatedNodes = new List<Transform>();
+			_animationClips = new List<AnimationClip>();
 			_skinnedNodes = new List<Transform>();
 			_bakedMeshes = new Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh>();
 
@@ -208,7 +210,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = GetFileName(Path.Combine(path, fileName), ".glb");
+			var fullPath = GetFileName(Path.Combine(path, fileName), "glb");
 			_shouldUseInternalBufferForImages = true;
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
@@ -365,7 +367,7 @@ namespace UnityGLTF
 		public void SaveGLTFandBin(string path, string fileName)
 		{
 			_shouldUseInternalBufferForImages = false;
-			var fullPath = GetFileName(Path.Combine(path, fileName), ".bin");
+			var fullPath = GetFileName(Path.Combine(path, fileName), "bin");
 			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -392,7 +394,7 @@ namespace UnityGLTF
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
-			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, ".gltf"));
+			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, "gltf"));
 			_root.Serialize(gltfFile);
 
 #if WINDOWS_UWP
@@ -896,18 +898,11 @@ namespace UnityGLTF
 		}
 		private void ExportAnimation()
 		{
-			GLTFAnimation anim = new GLTFAnimation();
-			anim.Name = "Take001";
 
 			for (int i = 0; i < _animatedNodes.Count; ++i)
 			{
 				Transform t = _animatedNodes[i];
-				ExportAnimationFromNode(ref t, ref anim);
-			}
-
-			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
-			{
-				_root.Animations.Add(anim);
+				ExportAnimationFromNode(ref t);
 			}
 		}
 
@@ -2622,51 +2617,65 @@ namespace UnityGLTF
 		}
 
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
-		public void ExportAnimationFromNode(ref Transform transform, ref GLTF.Schema.GLTFAnimation anim)
+		// This may need additional work to fully support animatorControllers
+		public void ExportAnimationFromNode(ref Transform transform)
 		{
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator != null)
 			{
-				#if UNITY_EDITOR
-				AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
-				var animatorController = animator.runtimeAnimatorController as AnimatorController;
+#if UNITY_EDITOR
+                AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
+                var animatorController = animator.runtimeAnimatorController as AnimatorController;
 
-				float GetAnimatorMotionSpeedForClip(AnimationClip clip)
-				{
-					if (!animatorController) return 1f;
-
-					foreach (var layer in animatorController.layers)
-					{
-						foreach (var state in layer.stateMachine.states)
-						{
-							// find a matching clip in the animator
-							if (state.state.motion is AnimationClip c && c == clip)
-								return state.state.speed * (state.state.speedParameterActive ? animator.GetFloat(state.state.speedParameter) : 1f);
-						}
-					}
-
-					return 1f;
-				}
-
-				for (int i = 0; i < clips.Length; i++)
-				{
-					//FIXME It seems not good to generate one animation per animator.
-					ConvertClipToGLTFAnimation(ref clips[i], ref transform, ref anim, GetAnimatorMotionSpeedForClip(clips[i]));
-				}
-				#endif
+                ExportAnimationClips(transform, clips, animatorController);
+#endif
 			}
 
 			UnityEngine.Animation animation = transform.GetComponent<UnityEngine.Animation>();
 			if (animation != null)
 			{
-				#if UNITY_EDITOR
-				AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
+#if UNITY_EDITOR
+                AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
+                ExportAnimationClips(transform, clips);
+#endif
+			}
+
+			float GetAnimatorMotionSpeedForClip(AnimationClip clip, AnimatorController animatorController)
+			{
+				if (!animatorController) return 1f;
+
+				foreach (var layer in animatorController.layers)
+				{
+					foreach (var state in layer.stateMachine.states)
+					{
+						// find a matching clip in the animator
+						if (state.state.motion is AnimationClip c && c == clip)
+							return state.state.speed * (state.state.speedParameterActive ? animator.GetFloat(state.state.speedParameter) : 1f);
+					}
+				}
+
+				return 1f;
+			}
+
+			/// <summary>Creates GLTFAnimation for each clip and adds it to the _root</summary>
+			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
+			{
 				for (int i = 0; i < clips.Length; i++)
 				{
-					//FIXME It seems not good to generate one animation per animator.
-					ConvertClipToGLTFAnimation(ref clips[i], ref transform, ref anim);
+					// track animation clips to ensure we don't save duplicates
+					if (_animationClips.Contains(clips[i])) continue;
+
+					_animationClips.Add(clips[i]);
+
+					GLTFAnimation anim = new GLTFAnimation();
+					anim.Name = clips[i].name;
+					ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, animatorController ? GetAnimatorMotionSpeedForClip(clips[i], animatorController) : 1f);
+
+					if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
+					{
+						_root.Animations.Add(anim);
+					}
 				}
-				#endif
 			}
 		}
 
