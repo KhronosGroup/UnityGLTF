@@ -63,7 +63,6 @@ namespace UnityGLTF
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
 		private List<Transform> _animatedNodes;
-		private List<AnimationClip> _animationClips;
 		private List<Transform> _skinnedNodes;
 		private Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh> _bakedMeshes;
 
@@ -156,7 +155,6 @@ namespace UnityGLTF
 
 			_exportedTransforms = new Dictionary<int, int>();
 			_animatedNodes = new List<Transform>();
-			_animationClips = new List<AnimationClip>();
 			_skinnedNodes = new List<Transform>();
 			_bakedMeshes = new Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh>();
 
@@ -426,7 +424,8 @@ namespace UnityGLTF
 
 			return absolutePathThatMayHaveExtension;
 		}
-		
+
+
 		private void ExportImages(string outputPath)
 		{
 			for (int t = 0; t < _imageInfos.Count; ++t)
@@ -2641,9 +2640,13 @@ namespace UnityGLTF
 #endif
 			}
 
-			float GetAnimatorMotionSpeedForClip(AnimationClip clip, AnimatorController animatorController)
+			IEnumerable<AnimatorState> GetAnimatorStateParametersForClip(AnimationClip clip, AnimatorController animatorController)
 			{
-				if (!animatorController) return 1f;
+				if (!clip)
+					yield break;
+
+				if (!animatorController)
+					yield return new AnimatorState() { name = clip.name, speed = 1f };
 
 				foreach (var layer in animatorController.layers)
 				{
@@ -2651,11 +2654,11 @@ namespace UnityGLTF
 					{
 						// find a matching clip in the animator
 						if (state.state.motion is AnimationClip c && c == clip)
-							return state.state.speed * (state.state.speedParameterActive ? animator.GetFloat(state.state.speedParameter) : 1f);
+						{
+							yield return state.state;
+						}
 					}
 				}
-
-				return 1f;
 			}
 
 			/// <summary>Creates GLTFAnimation for each clip and adds it to the _root</summary>
@@ -2663,18 +2666,19 @@ namespace UnityGLTF
 			{
 				for (int i = 0; i < clips.Length; i++)
 				{
-					// track animation clips to ensure we don't save duplicates
-					if (_animationClips.Contains(clips[i])) continue;
-
-					_animationClips.Add(clips[i]);
-
-					GLTFAnimation anim = new GLTFAnimation();
-					anim.Name = clips[i].name;
-					ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, animatorController ? GetAnimatorMotionSpeedForClip(clips[i], animatorController) : 1f);
-
-					if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
+					// special case: there could be multiple states with the same animation clip.
+					// if we want to handle this here, we need to find all states that match this clip
+					foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
 					{
-						_root.Animations.Add(anim);
+						GLTFAnimation anim = new GLTFAnimation();
+						anim.Name = state.name;
+						var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
+						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
+
+						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
+						{
+							_root.Animations.Add(anim);
+						}
 					}
 				}
 			}
