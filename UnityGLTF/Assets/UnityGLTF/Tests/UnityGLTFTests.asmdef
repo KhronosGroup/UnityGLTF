@@ -1,12 +1,24 @@
 {
     "name": "UnityGLTFTests",
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
     "references": [
         "UnityGLTFScripts",
-        "UnityGLTFEditor"
+        "UnityGLTFEditor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
     ],
     "includePlatforms": [],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "GLTFSerialization.dll",
+        "Newtonsoft.Json.dll",
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
