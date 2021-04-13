@@ -1,6 +1,6 @@
 {
-  "name": "com.pfc.org.khronos.unitygltf",
-  "displayName": "pfc Khronos GLTF Loader",
+  "name": "org.khronos.unitygltf",
+  "displayName": "Khronos GLTF",
   "version": "1.0.4-preview.17",
   "unity": "2018.3",
   "description": "Unity3D library for importing and exporting GLTF 2.0 assets. https://github.com/KhronosGroup/UnityGLTF",
