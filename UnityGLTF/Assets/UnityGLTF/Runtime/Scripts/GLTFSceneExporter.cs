@@ -1018,10 +1018,11 @@ namespace UnityGLTF
 
 			// don't export any more accessors if this mesh is already exported
 			MeshPrimitive[] primVariations;
+			Debug.Log(meshObj.name, meshObj);
 			if (_meshToPrims.TryGetValue(meshObj, out primVariations)
 				&& meshObj.subMeshCount == primVariations.Length)
 			{
-				for (var i = 0; i < primVariations.Length; i++)
+				for (var i = 0; i < Mathf.Min(primVariations.Length, materialsObj.Length); i++)
 				{
 					prims[i] = new MeshPrimitive(primVariations[i], _root)
 					{
