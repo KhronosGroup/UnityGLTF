@@ -994,7 +994,7 @@ namespace UnityGLTF
 			}
 			if (meshObj == null)
 			{
-				Debug.LogError(string.Format("MeshFilter.sharedMesh on gameobject:{0} is missing , skipping", gameObject.name));
+				Debug.LogWarning(string.Format("MeshFilter.sharedMesh on gameobject:{0} is missing, skipping", gameObject.name), gameObject);
 				return null;
 			}
 
