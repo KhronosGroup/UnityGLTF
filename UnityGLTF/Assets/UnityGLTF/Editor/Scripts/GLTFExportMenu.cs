@@ -1,6 +1,6 @@
 using System;
+using System.Linq;
 using UnityEditor;
-using UnityGLTF;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -34,19 +34,49 @@ namespace UnityGLTF
 	        EditorGUILayout.HelpBox("Supported extensions: KHR_material_pbrSpecularGlossiness, ExtTextureTransform", MessageType.Info);
 	    }
 
+	    static bool TryGetExportNameAndRootTransformsFromSelection(out string name, out Transform[] rootTransforms)
+	    {
+		    if (Selection.transforms.Length > 1)
+		    {
+			    name = SceneManager.GetActiveScene().name;
+			    rootTransforms = Selection.transforms;
+			    return true;
+		    }
+		    if (Selection.transforms.Length == 1)
+		    {
+			    name = Selection.activeGameObject.name;
+			    rootTransforms = Selection.transforms;
+			    return true;
+		    }
+		    if (Selection.objects.Any() && Selection.objects.All(x => x is GameObject))
+		    {
+			    name = Selection.objects.First().name;
+			    rootTransforms = Selection.objects.Select(x => (x as GameObject).transform).ToArray();
+			    return true;
+		    }
+
+		    name = null;
+		    rootTransforms = null;
+		    return false;
+	    }
+
+	    [MenuItem("GLTF/Export Selected", true)]
+	    static bool ExportSelectedValidate()
+	    {
+		    return TryGetExportNameAndRootTransformsFromSelection(out _, out _);
+	    }
+
 	    [MenuItem("GLTF/Export Selected")]
 		static void ExportSelected()
 		{
-			string name;
-			if (Selection.transforms.Length > 1)
-				name = SceneManager.GetActiveScene().name;
-			else if (Selection.transforms.Length == 1)
-				name = Selection.activeGameObject.name;
-			else
-				throw new Exception("No objects selected, cannot export.");
+			if (!TryGetExportNameAndRootTransformsFromSelection(out var name, out var rootTransforms))
+			{
+				Debug.LogError("Can't export: selection is empty");
+				return;
+			}
 
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
-			var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
+			var exporter = new GLTFSceneExporter(rootTransforms, exportOptions);
 
 			var path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
 			if (!string.IsNullOrEmpty(path))
@@ -56,19 +86,23 @@ namespace UnityGLTF
 			}
 		}
 
+		[MenuItem("GLTF/ExportGLB Selected", true)]
+		static bool ExportGLBSelectedValidate()
+		{
+			return TryGetExportNameAndRootTransformsFromSelection(out _, out _);
+		}
+
 		[MenuItem("GLTF/ExportGLB Selected")]
 		static void ExportGLBSelected()
 		{
-			string name;
-			if (Selection.transforms.Length > 1)
-				name = SceneManager.GetActiveScene().name;
-			else if (Selection.transforms.Length == 1)
-				name = Selection.activeGameObject.name;
-			else
-				throw new Exception("No objects selected, cannot export.");
+			if (!TryGetExportNameAndRootTransformsFromSelection(out var name, out var rootTransforms))
+			{
+				Debug.LogError("Can't export: selection is empty");
+				return;
+			}
 
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
-			var exporter = new GLTFSceneExporter(Selection.transforms, exportOptions);
+			var exporter = new GLTFSceneExporter(rootTransforms, exportOptions);
 
 			var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
 			if (!string.IsNullOrEmpty(path))
