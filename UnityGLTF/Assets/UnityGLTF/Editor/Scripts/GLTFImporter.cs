@@ -146,7 +146,7 @@ namespace UnityGLTF
 
                             return mat;
                         });
-                    }).ToArray();
+                    }).Distinct().ToArray();
 
                     // Get textures
                     var textureNames = new List<string>();
@@ -195,7 +195,7 @@ namespace UnityGLTF
                             }
                         }
                         return matTextures;
-                    }).ToArray();
+                    }).Distinct().ToArray();
 
                     var folderName = Path.GetDirectoryName(ctx.assetPath);
 
