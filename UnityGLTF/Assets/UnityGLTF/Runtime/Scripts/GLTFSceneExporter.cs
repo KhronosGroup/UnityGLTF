@@ -83,8 +83,14 @@ namespace UnityGLTF
 			public Mesh Mesh;
 			public Material Material;
 		}
+
+		private struct MeshAccessors
+		{
+			public AccessorId aPosition, aNormal, aTangent, aTexcoord0, aTexcoord1, aColor0;
+			public Dictionary<int, MeshPrimitive> subMeshPrimitives;
+		}
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
-		private readonly Dictionary<Mesh, MeshPrimitive[]> _meshToPrims = new Dictionary<Mesh, MeshPrimitive[]>();
+		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 
 		// Settings
 		static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
@@ -1017,92 +1023,151 @@ namespace UnityGLTF
 				return null;
 			}
 
-			// don't export any more accessors if this mesh is already exported
-			MeshPrimitive[] primVariations;
-			if (_meshToPrims.TryGetValue(meshObj, out primVariations)
-				&& meshObj.subMeshCount == primVariations.Length)
+			if (!_meshToPrims.ContainsKey(meshObj))
 			{
-				for (var i = 0; i < Mathf.Min(primVariations.Length, materialsObj.Length); i++)
-				{
-					prims[i] = new MeshPrimitive(primVariations[i], _root)
-					{
-						Material = ExportMaterial(materialsObj[i])
-					};
-				}
+				AccessorId aPosition = null, aNormal = null, aTangent = null, aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
 
-				nonEmptyPrims = new List<MeshPrimitive>(prims);
-				nonEmptyPrims.RemoveAll(EmptyPrimitive);
-				prims = nonEmptyPrims.ToArray();
-				return prims;
+				aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
+
+				if (meshObj.normals.Length != 0)
+					aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
+
+				if (meshObj.tangents.Length != 0)
+					aTangent = ExportAccessor(SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
+
+				if (meshObj.uv.Length != 0)
+					aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
+
+				if (meshObj.uv2.Length != 0)
+					aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
+
+				if (meshObj.colors.Length != 0)
+					aColor0 = ExportAccessor(QualitySettings.activeColorSpace == ColorSpace.Linear ? meshObj.colors : meshObj.colors.ToLinear());
+
+				_meshToPrims.Add(meshObj, new MeshAccessors()
+				{
+					aPosition = aPosition,
+					aNormal = aNormal,
+					aTangent = aTangent,
+					aTexcoord0 = aTexcoord0,
+					aTexcoord1 = aTexcoord1,
+					aColor0 = aColor0,
+					subMeshPrimitives = new Dictionary<int, MeshPrimitive>()
+				});
 			}
 
-			AccessorId aPosition = null, aNormal = null, aTangent = null,
-				aTexcoord0 = null, aTexcoord1 = null, aColor0 = null;
+			var accessors = _meshToPrims[meshObj];
 
-			aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
-
-			if (meshObj.normals.Length != 0)
-				aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
-
-			if (meshObj.tangents.Length != 0)
-				aTangent = ExportAccessor(SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
-
-			if (meshObj.uv.Length != 0)
-				aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
-
-			if (meshObj.uv2.Length != 0)
-				aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
-
-			if (meshObj.colors.Length != 0)
-				aColor0 = ExportAccessor(QualitySettings.activeColorSpace == ColorSpace.Linear ? meshObj.colors : meshObj.colors.ToLinear());
-
-			MaterialId lastMaterialId = null;
-
-			for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
+			// walk submeshes and export the ones with non-null meshes
+			for (int submesh = 0; submesh < meshObj.subMeshCount; submesh++)
 			{
-				var primitive = new MeshPrimitive();
+				if (submesh >= materialsObj.Length) continue;
+				if (!materialsObj[submesh]) continue;
 
-				var topology = meshObj.GetTopology(submesh);
-				var indices = meshObj.GetIndices(submesh);
-				if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
-
-				primitive.Mode = GetDrawMode(topology);
-				primitive.Indices = ExportAccessor(indices, true);
-
-				primitive.Attributes = new Dictionary<string, AccessorId>();
-				primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
-
-				if (aNormal != null)
-					primitive.Attributes.Add(SemanticProperties.NORMAL, aNormal);
-				if (aTangent != null)
-					primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
-				if (aTexcoord0 != null)
-					primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, aTexcoord0);
-				if (aTexcoord1 != null)
-					primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, aTexcoord1);
-				if (aColor0 != null)
-					primitive.Attributes.Add(SemanticProperties.COLOR_0, aColor0);
-
-				if (submesh < materialsObj.Length)
+				if (!accessors.subMeshPrimitives.ContainsKey(submesh))
 				{
-					primitive.Material = ExportMaterial(materialsObj[submesh]);
-					lastMaterialId = primitive.Material;
+					var primitive = new MeshPrimitive();
+
+					var topology = meshObj.GetTopology(submesh);
+					var indices = meshObj.GetIndices(submesh);
+					if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
+
+					primitive.Mode = GetDrawMode(topology);
+					primitive.Indices = ExportAccessor(indices, true);
+
+					primitive.Attributes = new Dictionary<string, AccessorId>();
+					primitive.Attributes.Add(SemanticProperties.POSITION, accessors.aPosition);
+
+					if (accessors.aNormal != null)
+						primitive.Attributes.Add(SemanticProperties.NORMAL, accessors.aNormal);
+					if (accessors.aTangent != null)
+						primitive.Attributes.Add(SemanticProperties.TANGENT, accessors.aTangent);
+					if (accessors.aTexcoord0 != null)
+						primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, accessors.aTexcoord0);
+					if (accessors.aTexcoord1 != null)
+						primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, accessors.aTexcoord1);
+					if (accessors.aColor0 != null)
+						primitive.Attributes.Add(SemanticProperties.COLOR_0, accessors.aColor0);
+
+					primitive.Material = null;
+
+					ExportBlendShapes(smr, meshObj, primitive, mesh);
+
+					accessors.subMeshPrimitives.Add(submesh, primitive);
 				}
-				else
+
+				var submeshPrimitive = accessors.subMeshPrimitives[submesh];
+				prims[submesh] = new MeshPrimitive(submeshPrimitive, _root)
 				{
-					primitive.Material = lastMaterialId;
-				}
-
-				ExportBlendShapes(smr, meshObj, primitive, mesh);
-
-				prims[submesh] = primitive;
+					Material = ExportMaterial(materialsObj[submesh]),
+				};
 			}
+
+			// // don't export any more accessors if this mesh is already exported
+			// MeshPrimitive[] primVariations;
+			// if (_meshToPrims.TryGetValue(meshObj, out primVariations)
+			// 	&& meshObj.subMeshCount == primVariations.Length)
+			// {
+			// 	for (var i = 0; i < Mathf.Min(primVariations.Length, materialsObj.Length); i++)
+			// 	{
+			// 		prims[i] = new MeshPrimitive(primVariations[i], _root)
+			// 		{
+			// 			Material = ExportMaterial(materialsObj[i])
+			// 		};
+			// 	}
+			//
+			// 	nonEmptyPrims = new List<MeshPrimitive>(prims);
+			// 	nonEmptyPrims.RemoveAll(EmptyPrimitive);
+			// 	prims = nonEmptyPrims.ToArray();
+			// 	return prims;
+			// }
+			//
+			// MaterialId lastMaterialId = null;
+			//
+			// for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
+			// {
+			// 	var primitive = new MeshPrimitive();
+			//
+			// 	var topology = meshObj.GetTopology(submesh);
+			// 	var indices = meshObj.GetIndices(submesh);
+			// 	if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
+			//
+			// 	primitive.Mode = GetDrawMode(topology);
+			// 	primitive.Indices = ExportAccessor(indices, true);
+			//
+			// 	primitive.Attributes = new Dictionary<string, AccessorId>();
+			// 	primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
+			//
+			// 	if (aNormal != null)
+			// 		primitive.Attributes.Add(SemanticProperties.NORMAL, aNormal);
+			// 	if (aTangent != null)
+			// 		primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
+			// 	if (aTexcoord0 != null)
+			// 		primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, aTexcoord0);
+			// 	if (aTexcoord1 != null)
+			// 		primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, aTexcoord1);
+			// 	if (aColor0 != null)
+			// 		primitive.Attributes.Add(SemanticProperties.COLOR_0, aColor0);
+			//
+			// 	if (submesh < materialsObj.Length)
+			// 	{
+			// 		primitive.Material = ExportMaterial(materialsObj[submesh]);
+			// 		lastMaterialId = primitive.Material;
+			// 	}
+			// 	else
+			// 	{
+			// 		primitive.Material = lastMaterialId;
+			// 	}
+			//
+			// 	ExportBlendShapes(smr, meshObj, primitive, mesh);
+			//
+			// 	prims[submesh] = primitive;
+			// }
+
             //remove any prims that have empty triangles
             nonEmptyPrims = new List<MeshPrimitive>(prims);
             nonEmptyPrims.RemoveAll(EmptyPrimitive);
             prims = nonEmptyPrims.ToArray();
-
-			_meshToPrims[meshObj] = prims;
 
 			return prims;
 		}
