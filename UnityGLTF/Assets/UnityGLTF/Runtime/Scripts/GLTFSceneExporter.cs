@@ -81,7 +81,7 @@ namespace UnityGLTF
 		protected struct PrimKey
 		{
 			public Mesh Mesh;
-			public Material Material;
+			public Material[] Materials;
 		}
 
 		private struct MeshAccessors
@@ -692,13 +692,13 @@ namespace UnityGLTF
 					var smr = prim.GetComponent<SkinnedMeshRenderer>();
 					if (smr != null)
 					{
-						_primOwner[new PrimKey { Mesh = smr.sharedMesh, Material = smr.sharedMaterial }] = node.Mesh;
+						_primOwner[new PrimKey { Mesh = smr.sharedMesh, Materials = smr.sharedMaterials }] = node.Mesh;
 					}
 					else
 					{
 						var filter = prim.GetComponent<MeshFilter>();
 						var renderer = prim.GetComponent<MeshRenderer>();
-						_primOwner[new PrimKey { Mesh = filter.sharedMesh, Material = renderer.sharedMaterial }] = node.Mesh;
+						_primOwner[new PrimKey { Mesh = filter.sharedMesh, Materials = renderer.sharedMaterials }] = node.Mesh;
 					}
 				}
 			}
@@ -923,14 +923,14 @@ namespace UnityGLTF
 				if (smr != null)
 				{
 					key.Mesh = smr.sharedMesh;
-					key.Material = smr.sharedMaterial;
+					key.Materials = smr.sharedMaterials;
 				}
 				else
 				{
 					var filter = prim.GetComponent<MeshFilter>();
 					var renderer = prim.GetComponent<MeshRenderer>();
 					key.Mesh = filter.sharedMesh;
-					key.Material = renderer.sharedMaterial;
+					key.Materials = renderer.sharedMaterials;
 				}
 
 				MeshId tempMeshId;
@@ -3182,16 +3182,16 @@ namespace UnityGLTF
 			return null;
 		}
 
-		private UnityEngine.Material getMaterial(GameObject gameObject)
+		private UnityEngine.Material[] getMaterial(GameObject gameObject)
 		{
 			if (gameObject.GetComponent<MeshRenderer>())
 			{
-				return gameObject.GetComponent<MeshRenderer>().sharedMaterial;
+				return gameObject.GetComponent<MeshRenderer>().sharedMaterials;
 			}
 
 			if (gameObject.GetComponent<SkinnedMeshRenderer>())
 			{
-				return gameObject.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
+				return gameObject.GetComponent<SkinnedMeshRenderer>().sharedMaterials;
 			}
 
 			return null;
@@ -3202,7 +3202,7 @@ namespace UnityGLTF
 			PrimKey key = new PrimKey();
 			UnityEngine.Mesh mesh = getMesh(transform.gameObject);
 			key.Mesh = mesh;
-			key.Material = getMaterial(transform.gameObject);
+			key.Materials = getMaterial(transform.gameObject);
 			MeshId val;
 			if (!_primOwner.TryGetValue(key, out val))
 			{
