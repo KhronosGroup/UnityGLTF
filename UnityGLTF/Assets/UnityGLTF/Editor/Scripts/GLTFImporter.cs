@@ -20,7 +20,11 @@ using UnityEditor.Experimental.AssetImporters;
 
 namespace UnityGLTF
 {
+	#if UNITY_2020_2_OR_NEWER
     [ScriptedImporter(1, null, overrideExts: new[] { "glb" })]
+    #else
+	[ScriptedImporter(1, new[] { "glb" })]
+	#endif
     public class GLTFImporter : ScriptedImporter
     {
         [SerializeField] private bool _removeEmptyRootObjects = true;
