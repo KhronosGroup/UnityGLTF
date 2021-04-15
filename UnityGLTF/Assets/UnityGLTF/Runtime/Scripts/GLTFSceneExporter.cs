@@ -1458,13 +1458,13 @@ namespace UnityGLTF
 		{
 			var pbr = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
 
-			if (material.HasProperty("_Color"))
-			{
-				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
-			}
-			else if (material.HasProperty("_BaseColor"))
+			if (material.HasProperty("_BaseColor"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorLinear();
+			}
+			else if (material.HasProperty("_Color"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
 			}
 
             if (material.HasProperty("_TintColor")) //particles use _TintColor instead of _Color
@@ -1481,14 +1481,16 @@ namespace UnityGLTF
 
             if (material.HasProperty("_MainTex") || material.HasProperty("_BaseMap")) //TODO if additive particle, render black into alpha
 			{
-				var mainTex = material.HasProperty("_MainTex") ? material.GetTexture("_MainTex") : material.GetTexture("_BaseMap");
+				// TODO use private Material.GetFirstPropertyNameIdByAttribute here, supported from 2020.1+
+				var mainTexPropertyName = material.HasProperty("_BaseMap") ? "_BaseMap" : "_MainTex";
+				var mainTex = material.GetTexture(mainTexPropertyName);
 
 				if (mainTex)
 				{
 					if(mainTex is Texture2D)
 					{
 						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
+						ExportTextureTransform(pbr.BaseColorTexture, material, mainTexPropertyName);
 					}
 					else
 					{
@@ -1503,12 +1505,13 @@ namespace UnityGLTF
 				pbr.MetallicFactor = material.GetFloat("_Metallic");
 			}
 
-			if (material.HasProperty("_Glossiness"))
+			if (material.HasProperty("_Glossiness") || material.HasProperty("_Smoothness"))
 			{
+				var smoothnessPropertyName = material.HasProperty("_Smoothness") ? "_Smoothness" : "_Glossiness";
 				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
-				float gms = material.GetFloat("_GlossMapScale");
-				float gloss = material.GetFloat("_Glossiness");
-				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - material.GetFloat("_Glossiness");
+				// float gms = material.GetFloat("_GlossMapScale");
+				float smoothness = material.GetFloat(smoothnessPropertyName);
+				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - smoothness;
 			}
 
 			if (material.HasProperty("_MetallicGlossMap"))
