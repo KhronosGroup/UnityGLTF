@@ -1,8 +1,8 @@
 {
   "name": "org.khronos.unitygltf",
   "displayName": "Khronos GLTF",
-  "version": "1.0.4-preview.17",
-  "unity": "2018.3",
+  "version": "1.0.4-preview.18",
+  "unity": "2018.4",
   "description": "Unity3D library for importing and exporting GLTF 2.0 assets. https://github.com/KhronosGroup/UnityGLTF",
   "keywords": [
     "gltf",

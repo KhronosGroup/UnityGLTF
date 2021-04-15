@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.18] - 2021-04-16
+- CHANGED: package name is now back to org.khronos.unitygltf
+- fixed missing mesh logging an error, is now a warning
+- fixed property export order for URP shaders that also have built-in property fallbacks
+- fixed export path omitting extensions for cases such as 15-1.0.3.glb
+- fixed issue with shared meshes that have different materials not being properly exported (https://github.com/prefrontalcortex/UnityGLTF/issues/15)
+- added MenuItem validation methods to disable them if no valid object for export is selected
+- added ability to export selected Prefabs from the Project window directly
+- changed the GLTFImporter to overrideExt for 2020.1+ so that importer for .glb files can be chosen when multiple are present
+
 ## [1.0.4-preview.17] - 2021-03-23
 - fixed ACCESSOR_INDEX_PRIMITIVE_RESTART for meshes that have exactly 256 or 65536 vertices and used the wrong buffer type
 - fixed vertex color import color space and alpha usage
