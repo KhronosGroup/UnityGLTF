@@ -1009,6 +1009,7 @@ namespace UnityGLTF
 			var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
+			List<MeshPrimitive> nonEmptyPrims = null;
 			var vertices = meshObj.vertices;
 			if (vertices.Length < 1)
 			{
@@ -1018,7 +1019,6 @@ namespace UnityGLTF
 
 			// don't export any more accessors if this mesh is already exported
 			MeshPrimitive[] primVariations;
-			Debug.Log(meshObj.name, meshObj);
 			if (_meshToPrims.TryGetValue(meshObj, out primVariations)
 				&& meshObj.subMeshCount == primVariations.Length)
 			{
@@ -1030,6 +1030,9 @@ namespace UnityGLTF
 					};
 				}
 
+				nonEmptyPrims = new List<MeshPrimitive>(prims);
+				nonEmptyPrims.RemoveAll(EmptyPrimitive);
+				prims = nonEmptyPrims.ToArray();
 				return prims;
 			}
 
@@ -1095,9 +1098,9 @@ namespace UnityGLTF
 				prims[submesh] = primitive;
 			}
             //remove any prims that have empty triangles
-            List<MeshPrimitive> listPrims = new List<MeshPrimitive>(prims);
-            listPrims.RemoveAll(EmptyPrimitive);
-            prims = listPrims.ToArray();
+            nonEmptyPrims = new List<MeshPrimitive>(prims);
+            nonEmptyPrims.RemoveAll(EmptyPrimitive);
+            prims = nonEmptyPrims.ToArray();
 
 			_meshToPrims[meshObj] = prims;
 
