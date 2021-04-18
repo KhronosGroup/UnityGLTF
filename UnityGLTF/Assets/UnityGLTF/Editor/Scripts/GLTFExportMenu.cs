@@ -22,6 +22,8 @@ namespace UnityGLTF
 
 	    void OnGUI()
 	    {
+		    EditorGUILayout.HelpBox("This Window is deprecated and will be removed in a future release. Please use ProjectSettings/UnityGLTF instead.", MessageType.Info);
+		    EditorGUILayout.Space();
 	        EditorGUILayout.LabelField("Exporter", EditorStyles.boldLabel);
 	        GLTFSceneExporter.ExportFullPath = EditorGUILayout.Toggle("Export using original path", GLTFSceneExporter.ExportFullPath);
 	        GLTFSceneExporter.ExportNames = EditorGUILayout.Toggle("Export names of nodes", GLTFSceneExporter.ExportNames);
