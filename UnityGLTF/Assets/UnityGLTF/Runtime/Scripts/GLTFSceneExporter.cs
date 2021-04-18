@@ -266,12 +266,6 @@ namespace UnityGLTF
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
-			// rotate 180°
-			if(_rootTransforms.Length > 1)
-				Debug.LogWarning("Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
-			// foreach(var t in _rootTransforms)
-			// 	t.rotation = Quaternion.Euler(0,180,0) * t.rotation;
-
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 			if (ExportAnimations)
 			{
@@ -319,9 +313,6 @@ namespace UnityGLTF
 			CopyStream(binStream, writer);
 
 			writer.Flush();
-
-			// foreach(var t in _rootTransforms)
-			// 	t.rotation = Quaternion.Euler(0,-180,0) * t.rotation;
 		}
 
 		/// <summary>
