@@ -18,6 +18,14 @@ namespace UnityGLTF
 	{
 		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
 		public bool ExportInactivePrimitives = true;
+		public LayerMask ExportLayers = -1;
+
+		public ExportOptions()
+		{
+			var settings = GLTFSettings.GetOrCreateSettings();
+			if(settings.UseMainCameraVisibility)
+				ExportLayers = Camera.main ? Camera.main.cullingMask : -1;
+		}
 	}
 
 	public class GLTFSceneExporter
@@ -66,6 +74,7 @@ namespace UnityGLTF
 		private List<Transform> _skinnedNodes;
 		private Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh> _bakedMeshes;
 
+		private int _exportLayerMask;
 		private ExportOptions _exportOptions;
 
 		private Material _metalGlossChannelSwapMaterial;
@@ -150,6 +159,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options)
 		{
 			_exportOptions = options;
+			_exportLayerMask = _exportOptions.ExportLayers;
 
 			var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
 			_metalGlossChannelSwapMaterial = new Material(metalGlossChannelSwapShader);
@@ -599,6 +609,13 @@ namespace UnityGLTF
 			}
 		}
 
+		private bool ShouldExportTransform(Transform transform)
+		{
+			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeInHierarchy) return false;
+			if (settings.UseMainCameraVisibility && (_exportLayerMask >= 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
+			return true;
+		}
+
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
 			var scene = new GLTFScene();
@@ -611,6 +628,7 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
+				if(!ShouldExportTransform(transform)) continue;
 				scene.Nodes.Add(ExportNode(transform));
 			}
 
@@ -631,7 +649,6 @@ namespace UnityGLTF
 			{
 				node.Name = nodeTransform.name;
 			}
-
 
 			if (nodeTransform.GetComponent<UnityEngine.Animation>() || nodeTransform.GetComponent<UnityEngine.Animator>())
 			{
@@ -709,6 +726,7 @@ namespace UnityGLTF
 				node.Children = new List<NodeId>(nonPrimitives.Length);
 				foreach (var child in nonPrimitives)
 				{
+					if(!ShouldExportTransform(child.transform)) continue;
 					node.Children.Add(ExportNode(child.transform));
 				}
 			}

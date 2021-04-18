@@ -59,12 +59,16 @@ namespace UnityGLTF
 		[SerializeField]
 		private bool exportFullPath = true;
 		[SerializeField]
+		[Tooltip("Uses Camera.main layer settings to filter which objects are exported")]
+		private bool useMainCameraVisibility = true;
 		[SerializeField]
 		private bool requireExtensions = false;
 		[SerializeField]
 		[Tooltip("Exports PNG/JPEG directly from disk instead of re-encoding from Unity's import result. Textures in other formats (PSD, TGA etc) not supported by glTF and in-memory textures (e.g. RenderTextures) are always re-encoded.")]
 		private bool tryExportTexturesFromDisk = true;
 		[SerializeField]
+		[Tooltip("glTF does not support visibility state. If this setting is true, disabled GameObjects will still be exported and be visible in the glTF file.")]
+		private bool exportDisabledGameObjects = false;
 		[SerializeField]
 		private bool exportAnimations = true;
 		[SerializeField]
@@ -92,6 +96,19 @@ namespace UnityGLTF
 				}
 			}
 		}
+
+		public bool UseMainCameraVisibility
+		{ get => useMainCameraVisibility;
+			set {
+				if(useMainCameraVisibility != value) {
+					useMainCameraVisibility = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
+
 		public bool RequireExtensions
 		{ get => requireExtensions;
 			set {
@@ -115,7 +132,18 @@ namespace UnityGLTF
 				}
 			}
 		}
-		
+
+		public bool ExportDisabledGameObjects
+		{ get => exportDisabledGameObjects;
+			set {
+				if(exportDisabledGameObjects != value) {
+					exportDisabledGameObjects = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
 
 		public bool ExportAnimations
 		{ get => exportAnimations;
