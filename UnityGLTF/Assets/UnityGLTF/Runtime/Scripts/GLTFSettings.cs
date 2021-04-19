@@ -64,8 +64,8 @@ namespace UnityGLTF
 		[SerializeField]
 		private bool requireExtensions = false;
 		[SerializeField]
-		[Tooltip("Exports PNG/JPEG directly from disk instead of re-encoding from Unity's import result. Textures in other formats (PSD, TGA etc) not supported by glTF and in-memory textures (e.g. RenderTextures) are always re-encoded.")]
-		private bool tryExportTexturesFromDisk = true;
+		[Tooltip("(Experimental) Exports PNG/JPEG directly from disk instead of re-encoding from Unity's import result. No channel repacking will happen for these textures. Textures in other formats (PSD, TGA etc) not supported by glTF and in-memory textures (e.g. RenderTextures) are always re-encoded.")]
+		private bool tryExportTexturesFromDisk = false;
 		[SerializeField]
 		[Tooltip("glTF does not support visibility state. If this setting is true, disabled GameObjects will still be exported and be visible in the glTF file.")]
 		private bool exportDisabledGameObjects = false;
