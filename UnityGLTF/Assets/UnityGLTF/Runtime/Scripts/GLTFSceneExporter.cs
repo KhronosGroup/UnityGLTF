@@ -645,7 +645,7 @@ namespace UnityGLTF
 			{
 				_animatedNodes.Add(nodeTransform);
 			}
-			if (nodeTransform.GetComponent<SkinnedMeshRenderer>())
+			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject))
 			{
 				_skinnedNodes.Add(nodeTransform);
 			}
@@ -793,7 +793,12 @@ namespace UnityGLTF
 			var meshRenderer = gameObject.GetComponent<MeshRenderer>();
 			var meshFilter = gameObject.GetComponent<MeshFilter>();
 			var skinnedMeshRender = gameObject.GetComponent<SkinnedMeshRenderer>();
-			return (meshFilter && meshRenderer && meshRenderer.enabled) || (skinnedMeshRender && skinnedMeshRender.enabled);
+			var materials = meshRenderer ? meshRenderer.sharedMaterials : skinnedMeshRender ? skinnedMeshRender.sharedMaterials : null;
+			var anyMaterialIsNonNull = false;
+			if(materials != null)
+				for (int i = 0; i < materials.Length; i++)
+					anyMaterialIsNonNull |= materials[i];
+			return (meshFilter && meshRenderer && meshRenderer.enabled) || (skinnedMeshRender && skinnedMeshRender.enabled) && anyMaterialIsNonNull;
 		}
         private LightId ExportLight(Light unityLight)
         {
@@ -3218,7 +3223,7 @@ namespace UnityGLTF
 			MeshId val;
 			if (!_primOwner.TryGetValue(key, out val))
 			{
-				Debug.Log("No mesh found for skin");
+				Debug.Log("No mesh found for skin on " + transform, transform);
 				return;
 			}
 			SkinnedMeshRenderer skin = transform.GetComponent<SkinnedMeshRenderer>();
