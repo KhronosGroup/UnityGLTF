@@ -3226,10 +3226,16 @@ namespace UnityGLTF
 
 			for (int i = 0; i < skin.bones.Length; ++i)
 			{
+				var nodeId = skin.bones[i].GetInstanceID();
+				if (!_exportedTransforms.ContainsKey(nodeId))
+				{
+					throw new KeyNotFoundException("Skin " + skin + " references bone " + skin.bones[i] + ", but that bone wasn't exported. Make sure referenced bones are part of the same export hierarchy.");
+				}
+
 				gltfSkin.Joints.Add(
 					new NodeId
 					{
-						Id = _exportedTransforms[skin.bones[i].GetInstanceID()],
+						Id = _exportedTransforms[nodeId],
 						Root = _root
 					});
 			}
