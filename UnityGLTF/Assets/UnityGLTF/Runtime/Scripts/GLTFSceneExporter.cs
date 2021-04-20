@@ -89,6 +89,41 @@ namespace UnityGLTF
 
 		protected struct PrimKey
 		{
+			public bool Equals(PrimKey other)
+			{
+				if (!Equals(Mesh, other.Mesh)) return false;
+				if (Materials == null && other.Materials == null) return true;
+				if (!(Materials != null && other.Materials != null)) return false;
+				if (!Equals(Materials.Length, other.Materials.Length)) return false;
+				for (var i = 0; i < Materials.Length; i++)
+				{
+					if (!Equals(Materials[i], other.Materials[i])) return false;
+				}
+
+				return true;
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is PrimKey other && Equals(other);
+			}
+
+			public override int GetHashCode()
+			{
+				unchecked
+				{
+					var code = (Mesh != null ? Mesh.GetHashCode() : 0) * 397;
+					if (Materials != null)
+					{
+						code = code ^ Materials.Length.GetHashCode() * 397;
+						foreach (var mat in Materials)
+							code = (code ^ (mat != null ? mat.GetHashCode() : 0)) * 397;
+					}
+
+					return code;
+				}
+			}
+
 			public Mesh Mesh;
 			public Material[] Materials;
 		}
