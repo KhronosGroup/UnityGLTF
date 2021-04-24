@@ -686,7 +686,7 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
-				if(!ShouldExportTransform(transform)) continue;
+				// if(!ShouldExportTransform(transform)) continue;
 				scene.Nodes.Add(ExportNode(transform));
 			}
 
