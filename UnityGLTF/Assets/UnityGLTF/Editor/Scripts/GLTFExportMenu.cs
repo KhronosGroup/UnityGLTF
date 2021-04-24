@@ -106,7 +106,7 @@ namespace UnityGLTF
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(rootTransforms, exportOptions);
 
-			var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
+			var path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
 			if (!string.IsNullOrEmpty(path))
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
