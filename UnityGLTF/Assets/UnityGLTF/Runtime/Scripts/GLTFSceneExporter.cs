@@ -1,7 +1,10 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+#define ANIMATION_EXPORT_SUPPORTED
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
@@ -10,7 +13,9 @@ using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
 using CameraType = GLTF.Schema.CameraType;
 using WrapMode = GLTF.Schema.WrapMode;
-#if UNITY_EDITOR
+
+#if ANIMATION_EXPORT_SUPPORTED
+using UnityEditor;
 using UnityEditor.Animations;
 #endif
 
@@ -170,11 +175,14 @@ namespace UnityGLTF
 			get { return settings.BakeSkinnedMeshes; }
 			set { settings.BakeSkinnedMeshes = value; }
 		}
+
+#if UNITY_EDITOR
 		public static string SaveFolderPath
 		{
 			get { return settings.SaveFolderPath; }
 			set { settings.SaveFolderPath = value; }
 		}
+#endif
 
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
@@ -2776,8 +2784,8 @@ namespace UnityGLTF
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator != null)
 			{
-#if UNITY_EDITOR
-                AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
+#if ANIMATION_EXPORT_SUPPORTED
+                AnimationClip[] clips = AnimationUtility.GetAnimationClips(transform.gameObject);
                 var animatorController = animator.runtimeAnimatorController as AnimatorController;
 
                 ExportAnimationClips(transform, clips, animatorController);
@@ -2787,12 +2795,13 @@ namespace UnityGLTF
 			UnityEngine.Animation animation = transform.GetComponent<UnityEngine.Animation>();
 			if (animation != null)
 			{
-#if UNITY_EDITOR
+#if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
                 ExportAnimationClips(transform, clips);
 #endif
 			}
 
+#if ANIMATION_EXPORT_SUPPORTED
 			IEnumerable<AnimatorState> GetAnimatorStateParametersForClip(AnimationClip clip, AnimatorController animatorController)
 			{
 				if (!clip)
@@ -2835,6 +2844,7 @@ namespace UnityGLTF
 					}
 				}
 			}
+#endif
 		}
 
 		private int getTargetIdFromTransform(ref Transform transform)
