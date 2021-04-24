@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.4-preview.19] - 2021-04-24
+## [1.0.4-preview.20] - 2021-04-24
 - added settings provider to change GLTF settings from `Project Settings/UnityGLTF`
 - added settings for control over object export based on visibility (`Camera.cullingMask`) and active state (`GameObject.activeInHierarchy`)
 - changed: experimental texture-from-disk export is now disabled by default
