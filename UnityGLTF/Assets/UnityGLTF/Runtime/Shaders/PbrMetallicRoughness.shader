@@ -180,7 +180,7 @@ Shader "GLTF/PbrMetallicRoughness"
 
 			#pragma vertex vertDeferred
 			#pragma fragment fragDeferred
-
+			#include "UnityStandardInput.cginc"
 			#include "UnityStandardCore.cginc"
 
 			ENDCG
