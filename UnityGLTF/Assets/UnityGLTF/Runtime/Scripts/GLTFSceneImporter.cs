@@ -2275,11 +2275,11 @@ namespace UnityGLTF
 					{
 						case MinFilterMode.Nearest:
 						case MinFilterMode.NearestMipmapNearest:
-						case MinFilterMode.LinearMipmapNearest:
+						case MinFilterMode.NearestMipmapLinear:
 							desiredFilterMode = FilterMode.Point;
 							break;
 						case MinFilterMode.Linear:
-						case MinFilterMode.NearestMipmapLinear:
+						case MinFilterMode.LinearMipmapNearest:
 							desiredFilterMode = FilterMode.Bilinear;
 							break;
 						case MinFilterMode.LinearMipmapLinear:

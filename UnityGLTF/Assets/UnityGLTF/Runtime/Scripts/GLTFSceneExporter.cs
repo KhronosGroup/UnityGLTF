@@ -2172,7 +2172,7 @@ namespace UnityGLTF
 					sampler.MagFilter = MagFilterMode.Nearest;
 					break;
 				case FilterMode.Bilinear:
-					sampler.MinFilter = MinFilterMode.NearestMipmapLinear;
+					sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
 					sampler.MagFilter = MagFilterMode.Linear;
 					break;
 				case FilterMode.Trilinear:
