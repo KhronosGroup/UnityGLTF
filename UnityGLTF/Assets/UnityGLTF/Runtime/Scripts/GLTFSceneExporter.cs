@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -259,7 +261,7 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = GetFileName(Path.Combine(path, fileName), ".glb");
+			var fullPath = GetFileName(path, fileName, ".glb");
 			_shouldUseInternalBufferForImages = true;
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
@@ -407,7 +409,7 @@ namespace UnityGLTF
 		public void SaveGLTFandBin(string path, string fileName)
 		{
 			_shouldUseInternalBufferForImages = false;
-			var fullPath = GetFileName(Path.Combine(path, fileName), ".bin");
+			var fullPath = GetFileName(path, fileName, ".bin");
 			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -451,13 +453,43 @@ namespace UnityGLTF
 		}
 
 		/// <summary>
+		/// Strip illegal chars and reserved words from a candidate filename (should not include the directory path)
+		/// </summary>
+		/// <remarks>
+		/// http://stackoverflow.com/questions/309485/c-sharp-sanitize-file-name
+		/// </remarks>
+		private static string EnsureValidFileName(string filename)
+		{
+			var invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
+			var invalidReStr = string.Format(@"[{0}]+", invalidChars);
+
+			var reservedWords = new []
+			{
+				"CON", "PRN", "AUX", "CLOCK$", "NUL", "COM0", "COM1", "COM2", "COM3", "COM4",
+				"COM5", "COM6", "COM7", "COM8", "COM9", "LPT0", "LPT1", "LPT2", "LPT3", "LPT4",
+				"LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+			};
+
+			var sanitisedNamePart = Regex.Replace(filename, invalidReStr, "_");
+			foreach (var reservedWord in reservedWords)
+			{
+				var reservedWordPattern = string.Format("^{0}\\.", reservedWord);
+				sanitisedNamePart = Regex.Replace(sanitisedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
+			}
+
+			return sanitisedNamePart;
+		}
+
+		/// <summary>
 		/// Ensures a specific file extension from an absolute path that may or may not already have that extension.
 		/// </summary>
 		/// <param name="absolutePathThatMayHaveExtension">Absolute path that may or may not already have the required extension</param>
 		/// <param name="requiredExtension">The extension to ensure, with leading dot</param>
 		/// <returns>An absolute path that has the required extension</returns>
-		private string GetFileName(string absolutePathThatMayHaveExtension, string requiredExtension)
+		private static string GetFileName(string directory, string fileNameThatMayHaveExtension, string requiredExtension)
 		{
+			var absolutePathThatMayHaveExtension = Path.Combine(directory, EnsureValidFileName(fileNameThatMayHaveExtension));
+
 			if (!requiredExtension.StartsWith(".", StringComparison.Ordinal))
 				requiredExtension = "." + requiredExtension;
 
