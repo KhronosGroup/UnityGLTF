@@ -51,7 +51,7 @@ namespace UnityGLTF
     {
 	    private const string k_PreferencesPrefix = "UnityGLTF_Preferences_";
 	    private const string k_SettingsFileName = "UnityGLTFSettings.asset";
-	    public const string k_MyCustomSettingsPath = "Assets/Resources/" + k_SettingsFileName;
+	    public const string k_RuntimeAndEditorSettingsPath = "Assets/Resources/" + k_SettingsFileName;
 
 	    [Header("Export")]
 		[SerializeField]
@@ -182,7 +182,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 			if(!settings)
 			{
-				settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(k_MyCustomSettingsPath);
+				settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(k_RuntimeAndEditorSettingsPath);
 			}
 			if (!settings)
 			{
@@ -195,7 +195,7 @@ namespace UnityGLTF
 			if (!settings)
 			{
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
-				AssetDatabase.CreateAsset(settings, k_MyCustomSettingsPath);
+				AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
 				AssetDatabase.SaveAssets();
 			}
 			return settings;
