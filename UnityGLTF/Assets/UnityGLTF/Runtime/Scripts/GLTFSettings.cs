@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
+using System.IO;
 using UnityEditor;
 #endif
 
@@ -198,6 +199,7 @@ namespace UnityGLTF
 			if (!settings)
 			{
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
+				if (!Directory.Exists(k_RuntimeAndEditorSettingsPath)) Directory.CreateDirectory(k_RuntimeAndEditorSettingsPath);
 				AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
 				AssetDatabase.SaveAssets();
 			}
