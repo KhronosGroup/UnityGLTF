@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AssetGenerator
+namespace UnityGLTF.AssetGenerator
 {
     internal class Manifest
     {
