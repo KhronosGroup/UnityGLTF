@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
@@ -2768,12 +2769,14 @@ namespace UnityGLTF
 			public AnimationCurve[] rotationCurves;
 			public AnimationCurve[] scaleCurves;
 			public AnimationKeyRotationType rotationType;
+			public Dictionary<string, AnimationCurve> weightCurves;
 
 			public void Init()
 			{
 				translationCurves = new AnimationCurve[3];
 				rotationCurves = new AnimationCurve[4];
 				scaleCurves = new AnimationCurve[3];
+				weightCurves = new Dictionary<string, AnimationCurve>();
 			}
 		}
 
@@ -2881,7 +2884,7 @@ namespace UnityGLTF
 			// where endTime is clip duration
 			// Note: we should avoid creating curves for a property if none of it's components is animated
 
-			// GenerateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
+			GenerateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
 
 			if (BakeAnimationData)
 			{
@@ -2890,7 +2893,7 @@ namespace UnityGLTF
 				foreach (string target in targetCurvesBinding.Keys)
 				{
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
-					if (targetTr == null || targetTr.GetComponent<SkinnedMeshRenderer>())
+					if (targetTr == null)// || targetTr.GetComponent<SkinnedMeshRenderer>())
 					{
 						continue;
 					}
@@ -2906,16 +2909,17 @@ namespace UnityGLTF
 					Vector3[] positions = null;
 					Vector3[] scales = null;
 					Vector4[] rotations = null;
+					float[] weights = null;
 
 					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
-					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales))
+					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales, ref weights))
 					{
 						Debug.LogWarning("Warning: Export failed for animation curve " + target + " in " + clip + " from " + transform, transform);
 					}
 
 					int channelTargetId = getTargetIdFromTransform(ref targetTr);
 
-					bool haveAnimation = positions != null || rotations != null || scales != null;
+					bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
 
 					if(haveAnimation)
 					{
@@ -2949,9 +2953,9 @@ namespace UnityGLTF
 							animation.Channels.Add(Tchannel);
 						}
 
+						// Rotation
 						if(rotations != null)
 						{
-							// Rotation
 							AnimationChannel Rchannel = new AnimationChannel();
 							AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
 							RchannelTarget.Path = GLTFAnimationChannelPath.rotation;
@@ -2977,9 +2981,9 @@ namespace UnityGLTF
 							animation.Channels.Add(Rchannel);
 						}
 
+						// Scale
 						if(scales != null)
 						{
-							// Scale
 							AnimationChannel Schannel = new AnimationChannel();
 							AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
 							SchannelTarget.Path = GLTFAnimationChannelPath.scale;
@@ -3003,6 +3007,33 @@ namespace UnityGLTF
 
 							animation.Samplers.Add(Ssampler);
 							animation.Channels.Add(Schannel);
+						}
+
+						if (weights != null)
+						{
+							AnimationChannel Wchannel = new AnimationChannel();
+							AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();
+							WchannelTarget.Path = GLTFAnimationChannelPath.weights;
+							WchannelTarget.Node = new NodeId()
+							{
+								Id = channelTargetId,
+								Root = _root
+							};
+
+							Wchannel.Target = WchannelTarget;
+
+							AnimationSampler Wsampler = new AnimationSampler();
+							Wsampler.Input = timeAccessor;
+							Wsampler.Output = ExportAccessor(weights);
+							Wchannel.Sampler = new AnimationSamplerId()
+							{
+								Id = animation.Samplers.Count,
+								GLTFAnimation = animation,
+								Root = _root
+							};
+
+							animation.Samplers.Add(Wsampler);
+							animation.Channels.Add(Wchannel);
 						}
 					}
 				}
@@ -3070,6 +3101,11 @@ namespace UnityGLTF
 					else if (binding.propertyName.Contains(".z"))
 						current.rotationCurves[2] = curve;
 				}
+				else if (binding.propertyName.StartsWith("blendShape."))
+				{
+					var weightName = binding.propertyName.Substring("blendShape.".Length);
+					current.weightCurves.Add(weightName, curve);
+				}
 				targetCurves[binding.path] = current;
 			}
 			#endif
@@ -3077,34 +3113,57 @@ namespace UnityGLTF
 
 		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
 		{
-			foreach (string target in targetCurvesBinding.Keys)
+			var keyList = targetCurvesBinding.Keys.ToList();
+			foreach (string target in keyList)
 			{
 				Transform targetTr = target.Length > 0 ? tr.Find(target) : tr;
 				if (targetTr == null)
 					continue;
 
 				TargetCurveSet current = targetCurvesBinding[target];
-				if (current.translationCurves[0] == null)
+				// if (current.translationCurves[0] == null)
+				// {
+				// 	current.translationCurves[0] = CreateConstantCurve(targetTr.localPosition.x, endTime);
+				// 	current.translationCurves[1] = CreateConstantCurve(targetTr.localPosition.y, endTime);
+				// 	current.translationCurves[2] = CreateConstantCurve(targetTr.localPosition.z, endTime);
+				// }
+				//
+				// if (current.scaleCurves[0] == null)
+				// {
+				// 	current.scaleCurves[0] = CreateConstantCurve(targetTr.localScale.x, endTime);
+				// 	current.scaleCurves[1] = CreateConstantCurve(targetTr.localScale.y, endTime);
+				// 	current.scaleCurves[2] = CreateConstantCurve(targetTr.localScale.z, endTime);
+				// }
+				//
+				// if (current.rotationCurves[0] == null)
+				// {
+				// 	current.rotationCurves[0] = CreateConstantCurve(targetTr.localRotation.x, endTime);
+				// 	current.rotationCurves[1] = CreateConstantCurve(targetTr.localRotation.y, endTime);
+				// 	current.rotationCurves[2] = CreateConstantCurve(targetTr.localRotation.z, endTime);
+				// 	current.rotationCurves[3] = CreateConstantCurve(targetTr.localRotation.w, endTime);
+				// }
+
+				if (current.weightCurves.Count > 0)
 				{
-					current.translationCurves[0] = CreateConstantCurve(targetTr.localPosition.x, endTime);
-					current.translationCurves[1] = CreateConstantCurve(targetTr.localPosition.y, endTime);
-					current.translationCurves[2] = CreateConstantCurve(targetTr.localPosition.z, endTime);
+					// need to sort and generate the other matching curves as constant curves for all blend shapes
+					var renderer = targetTr.GetComponent<SkinnedMeshRenderer>();
+					var mesh = renderer.sharedMesh;
+					var shapeCount = mesh.blendShapeCount;
+					if(shapeCount != current.weightCurves.Count)
+					{
+						var newWeights = new Dictionary<string, AnimationCurve>();
+						for (int i = 0; i < shapeCount; i++)
+						{
+							var shapeName = mesh.GetBlendShapeName(i);
+							var shapeCurve = current.weightCurves.ContainsKey(shapeName) ? current.weightCurves[shapeName] : CreateConstantCurve(renderer.GetBlendShapeWeight(i), endTime);
+							newWeights.Add(shapeName, shapeCurve);
+						}
+
+						current.weightCurves = newWeights;
+					}
 				}
 
-				if (current.scaleCurves[0] == null)
-				{
-					current.scaleCurves[0] = CreateConstantCurve(targetTr.localScale.x, endTime);
-					current.scaleCurves[1] = CreateConstantCurve(targetTr.localScale.y, endTime);
-					current.scaleCurves[2] = CreateConstantCurve(targetTr.localScale.z, endTime);
-				}
-
-				if (current.rotationCurves[0] == null)
-				{
-					current.rotationCurves[0] = CreateConstantCurve(targetTr.localRotation.x, endTime);
-					current.rotationCurves[1] = CreateConstantCurve(targetTr.localRotation.y, endTime);
-					current.rotationCurves[2] = CreateConstantCurve(targetTr.localRotation.z, endTime);
-					current.rotationCurves[3] = CreateConstantCurve(targetTr.localRotation.w, endTime);
-				}
+				targetCurvesBinding[target] = current;
 			}
 		}
 
@@ -3117,14 +3176,28 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales)
+		private bool ArrayRangeEquals(float[] array, int sectionLength, int prevSectionStart, int sectionStart, int nextSectionStart)
+		{
+			var equals = true;
+			for (int i = 0; i < sectionLength; i++)
+			{
+				equals &= array[prevSectionStart + i] == array[sectionStart + i] && array[sectionStart + i] == array[nextSectionStart + i];
+				if (!equals) return false;
+			}
+
+			return true;
+		}
+
+		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights)
 		{
 			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
 			float deltaTime = length / nbSamples;
+			var weightCount = curveSet.weightCurves?.Count ?? 0;
 
 			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
 			bool haveRotationKeys = curveSet.rotationCurves != null && curveSet.rotationCurves.Length > 0 && curveSet.rotationCurves[0] != null;
 			bool haveScaleKeys = curveSet.scaleCurves != null && curveSet.scaleCurves.Length > 0 && curveSet.scaleCurves[0] != null;
+			bool haveWeightKeys = curveSet.weightCurves != null && curveSet.weightCurves.Count > 0;
 
 			if(haveScaleKeys)
 			{
@@ -3160,7 +3233,7 @@ namespace UnityGLTF
 				}
 			}
 
-			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys)
+			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys && !haveWeightKeys)
 			{
 				Debug.LogWarning("No keys in curve set");
 				return false;
@@ -3174,6 +3247,8 @@ namespace UnityGLTF
 				scales = new Vector3[nbSamples];
 			if(haveRotationKeys)
 				rotations = new Vector4[nbSamples];
+			if (haveWeightKeys)
+				weights = new float[nbSamples * weightCount];
 
 			// Assuming all the curves exist now
 			for (int i = 0; i < nbSamples; ++i)
@@ -3199,6 +3274,15 @@ namespace UnityGLTF
 						rotations[i] = new Vector4(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
 					}
 				}
+
+				if (haveWeightKeys)
+				{
+					var curveArray = curveSet.weightCurves.Values.ToArray();
+					for(int j = 0; j < weightCount; j++)
+					{
+						weights[i * weightCount + j] = curveArray[j].Evaluate(times[i]) * 0.01f; // glTF weights 0..1 match to Unity weights 0..100
+					}
+				}
 			}
 
 			// remove keys again where prev/next keyframe are identical
@@ -3206,11 +3290,13 @@ namespace UnityGLTF
 			List<Vector3> p2 = new List<Vector3>();
 			List<Vector3> s2 = new List<Vector3>();
 			List<Vector4> r2 = new List<Vector4>();
+			List<float> w2 = new List<float>();
 
 			t2.Add(times[0]);
 			if (haveTranslationKeys) p2.Add(positions[0]);
 			if (haveRotationKeys) r2.Add(rotations[0]);
 			if (haveScaleKeys) s2.Add(scales[0]);
+			if (haveWeightKeys) w2.AddRange(weights.Take(weightCount));
 
 			for (int i = 1; i < times.Length - 1; i++)
 			{
@@ -3222,6 +3308,8 @@ namespace UnityGLTF
 					isIdentical &= rotations[i - 1] == rotations[i] && rotations[i] == rotations[i + 1];
 				if (haveScaleKeys)
 					isIdentical &= scales[i - 1] == scales[i] && scales[i] == scales[i + 1];
+				if (haveWeightKeys)
+					isIdentical &= ArrayRangeEquals(weights, weightCount, (i - 1) * weightCount, i * weightCount, (i+1) * weightCount);
 
 				if(!isIdentical)
 				{
@@ -3229,6 +3317,7 @@ namespace UnityGLTF
 					if (haveTranslationKeys) p2.Add(positions[i]);
 					if (haveRotationKeys) r2.Add(rotations[i]);
 					if (haveScaleKeys) s2.Add(scales[i]);
+					if (haveWeightKeys) w2.AddRange(weights.Skip((i-1) * weightCount).Take(weightCount));
 				}
 			}
 			var max = times.Length - 1;
@@ -3237,6 +3326,7 @@ namespace UnityGLTF
 			if (haveTranslationKeys) p2.Add(positions[max]);
 			if (haveRotationKeys) r2.Add(rotations[max]);
 			if (haveScaleKeys) s2.Add(scales[max]);
+			if(haveWeightKeys) w2.AddRange(weights.Skip((max - 1) * weightCount).Take(weightCount));
 
 			// Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
 
@@ -3244,6 +3334,7 @@ namespace UnityGLTF
 			if (haveTranslationKeys) positions = p2.ToArray();
 			if (haveRotationKeys) rotations = r2.ToArray();
 			if (haveScaleKeys) scales = s2.ToArray();
+			if (haveWeightKeys) weights = w2.ToArray();
 
 			return true;
 		}
@@ -3306,13 +3397,26 @@ namespace UnityGLTF
 			SkinnedMeshRenderer skin = transform.GetComponent<SkinnedMeshRenderer>();
 			GLTF.Schema.Skin gltfSkin = new Skin();
 
+			bool allBoneTransformNodesHaveBeenExported = true;
 			for (int i = 0; i < skin.bones.Length; ++i)
 			{
 				var nodeId = skin.bones[i].GetInstanceID();
 				if (!_exportedTransforms.ContainsKey(nodeId))
 				{
-					throw new KeyNotFoundException("Skin " + skin + " references bone " + skin.bones[i] + ", but that bone wasn't exported. Make sure referenced bones are part of the same export hierarchy.");
+					allBoneTransformNodesHaveBeenExported = false;
+					break;
 				}
+			}
+
+			if (!allBoneTransformNodesHaveBeenExported)
+			{
+				Debug.LogWarning("Not all bones for SkinnedMeshRenderer " + transform + " were exported. Skin information will be skipped. Make sure the bones are active and enabled if you want to export them.", transform);
+				return;
+			}
+
+			for (int i = 0; i < skin.bones.Length; ++i)
+			{
+				var nodeId = skin.bones[i].GetInstanceID();
 
 				gltfSkin.Joints.Add(
 					new NodeId
