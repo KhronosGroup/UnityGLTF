@@ -76,7 +76,8 @@ namespace UnityGLTF
                 // Get meshes
                 var meshNames = new List<string>();
                 var meshHash = new HashSet<UnityEngine.Mesh>();
-                var meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>();
+                var meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
+                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>().Select(x => (x.gameObject, x.sharedMesh)));
                 var vertexBuffer = new List<Vector3>();
                 meshes = meshFilters.Select(mf =>
                 {
@@ -121,6 +122,13 @@ namespace UnityGLTF
                     return mesh;
                 }).ToArray();
 
+                var animations = gltfScene.GetComponentsInChildren<Animation>();
+                var clips = animations.SelectMany(x => AnimationUtility.GetAnimationClips(x.gameObject));
+                foreach (var clip in clips)
+                {
+	                ctx.AddObjectToAsset(clip.name, clip);
+                }
+
                 var renderers = gltfScene.GetComponentsInChildren<Renderer>();
 
                 if (_importMaterials)
@@ -141,7 +149,7 @@ namespace UnityGLTF
                                 }
 
                                 // Ensure name is unique
-                                matName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(matName));
+                                matName = ObjectNames.NicifyVariableName(matName);
                                 matName = ObjectNames.GetUniqueName(materialNames.ToArray(), matName);
 
                                 mat.name = matName;
