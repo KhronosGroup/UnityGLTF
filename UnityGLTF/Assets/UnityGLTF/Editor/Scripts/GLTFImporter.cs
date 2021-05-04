@@ -35,7 +35,7 @@ namespace UnityGLTF
         [SerializeField] private bool _swapUvs = false;
         [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] private bool _importMaterials = true;
-        [SerializeField] private bool _useJpgTextures = false;
+        // [SerializeField] private bool _useJpgTextures = false;
 
         public override void OnImportAsset(AssetImportContext ctx)
         {

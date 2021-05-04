@@ -24,6 +24,7 @@ namespace UnityGLTF
             }
 
             SerializedProperty prop = m_SerializedObject.GetIterator();
+            prop.NextVisible(true);
             if (prop.NextVisible(true))
             {
 	            do
