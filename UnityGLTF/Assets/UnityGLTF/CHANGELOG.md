@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.22] - 2021-05-04
+- fixed ScriptedImporter not importing meshes from SkinnedMeshRenderers
+- fixed ScriptedImporter not importing AnimationClips
+- fixed ScriptedImporter changing material names on import
+- fixed blend shape data being exported multiple times when meshes have multiple submeshes
+- added blendshape animation export
+
 ## [1.0.4-preview.21] - 2021-04-26
 - fixed settings file directory not being created on settings file creation
 
