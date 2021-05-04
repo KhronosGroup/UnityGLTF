@@ -141,8 +141,17 @@ namespace UnityGLTF
 			public AccessorId aPosition, aNormal, aTangent, aTexcoord0, aTexcoord1, aColor0;
 			public Dictionary<int, MeshPrimitive> subMeshPrimitives;
 		}
+
+		private struct BlendShapeAccessors
+		{
+			public List<Dictionary<string, AccessorId>> targets;
+			public List<Double> weights;
+			public List<string> targetNames;
+		}
+
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
+		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
 
 		// Settings
 		static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
@@ -1181,7 +1190,7 @@ namespace UnityGLTF
 
 					primitive.Material = null;
 
-					ExportBlendShapes(smr, meshObj, primitive, mesh);
+					ExportBlendShapes(smr, meshObj, submesh, primitive, mesh);
 
 					accessors.subMeshPrimitives.Add(submesh, primitive);
 				}
@@ -1460,8 +1469,16 @@ namespace UnityGLTF
 		// Blend Shapes / Morph Targets
 		// Adopted from Gary Hsu (bghgary)
 		// https://github.com/bghgary/glTF-Tools-for-Unity/blob/master/UnityProject/Assets/Gltf/Editor/Exporter.cs
-		private void ExportBlendShapes(SkinnedMeshRenderer smr, Mesh meshObj, MeshPrimitive primitive, GLTFMesh mesh)
+		private void ExportBlendShapes(SkinnedMeshRenderer smr, Mesh meshObj, int submeshIndex, MeshPrimitive primitive, GLTFMesh mesh)
 		{
+			if (_meshToBlendShapeAccessors.TryGetValue(meshObj, out var data))
+			{
+				mesh.Weights = data.weights;
+				primitive.Targets = data.targets;
+				primitive.TargetNames = data.targetNames;
+				return;
+			}
+
 			if (smr != null && meshObj.blendShapeCount > 0)
 			{
 				List<Dictionary<string, AccessorId>> targets = new List<Dictionary<string, AccessorId>>(meshObj.blendShapeCount);
@@ -1470,7 +1487,6 @@ namespace UnityGLTF
 
 				for (int blendShapeIndex = 0; blendShapeIndex < meshObj.blendShapeCount; blendShapeIndex++)
 				{
-
 					targetNames.Add(meshObj.GetBlendShapeName(blendShapeIndex));
 					// As described above, a blend shape can have multiple frames.  Given that glTF only supports a single frame
 					// per blend shape, we'll always use the final frame (the one that would be for when 100% weight is applied).
@@ -1504,6 +1520,14 @@ namespace UnityGLTF
 				mesh.Weights = weights;
 				primitive.Targets = targets;
 				primitive.TargetNames = targetNames;
+
+				// cache the exported data; we can re-use it between all submeshes of a mesh.
+				_meshToBlendShapeAccessors.Add(meshObj, new BlendShapeAccessors()
+				{
+					targets = targets,
+					weights = weights,
+					targetNames = targetNames
+				});
 			}
 		}
 
