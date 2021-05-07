@@ -547,8 +547,6 @@ namespace GLTF.Schema
 
 			if (Lights != null)
 			{
-				//TODO this is a terrible hack. should use proper extensions object to add light data array
-
 				jsonWriter.WritePropertyName("extensions");
 				jsonWriter.WriteStartObject();
 				jsonWriter.WritePropertyName("KHR_lights_punctual");
@@ -563,8 +561,6 @@ namespace GLTF.Schema
 				jsonWriter.WriteEndObject();
 				jsonWriter.WriteEndObject();
 			}
-
-			
 
 			base.Serialize(jsonWriter);
 
