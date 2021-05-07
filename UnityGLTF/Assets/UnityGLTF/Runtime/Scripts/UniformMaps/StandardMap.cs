@@ -263,6 +263,7 @@ namespace UnityGLTF
 				if (_material.HasProperty("_EmissionColor"))
 				{
 					_material.SetColor("_EmissionColor", value);
+					_material.EnableKeyword("_EMISSION");
 				}
 				else
 				{

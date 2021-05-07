@@ -45,7 +45,7 @@ namespace UnityGLTF
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importMaterials"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_useJpgTextures"), new GUIContent("Use JPG Textures"));
+			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_useJpgTextures"), new GUIContent("Use JPG Textures"));
 
 			ApplyRevertGUI();
 		}
