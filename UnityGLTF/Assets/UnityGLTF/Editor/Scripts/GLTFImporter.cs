@@ -209,14 +209,14 @@ namespace UnityGLTF
                         return matTextures;
                     }).Distinct().ToArray();
 
-                    var folderName = Path.GetDirectoryName(ctx.assetPath);
+                    // var folderName = Path.GetDirectoryName(ctx.assetPath);
 
                     // Save textures as separate assets and rewrite refs
                     // TODO: Support for other texture types
                     if (textures.Length > 0)
                     {
-                        var texturesRoot = string.Concat(folderName, "/", "Textures/");
-                        Directory.CreateDirectory(texturesRoot);
+                        // var texturesRoot = string.Concat(folderName, "/", "Textures/");
+                        // Directory.CreateDirectory(texturesRoot);
 
                         foreach (var tex in textures)
                         {
