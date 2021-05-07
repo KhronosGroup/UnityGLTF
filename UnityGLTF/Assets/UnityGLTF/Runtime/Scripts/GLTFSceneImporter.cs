@@ -754,7 +754,7 @@ namespace UnityGLTF
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
 		{
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
-			texture.name = nameof(GLTFSceneImporter) + (image.Name != null ? ("." + image.Name) : "");
+			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
 			if (stream is MemoryStream)
 			{
@@ -2328,6 +2328,7 @@ namespace UnityGLTF
 				else
 				{
 					var unityTexture = Object.Instantiate(source);
+					unityTexture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 					unityTexture.filterMode = desiredFilterMode;
 					unityTexture.wrapMode = desiredWrapMode;
 
