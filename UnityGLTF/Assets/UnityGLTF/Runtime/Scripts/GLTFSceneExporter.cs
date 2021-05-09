@@ -1332,7 +1332,7 @@ namespace UnityGLTF
 			}
 
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
-				materialObj.GetInt("_Cull") == (float)CullMode.Off;
+				materialObj.GetInt("_Cull") == (int) CullMode.Off;
 
 			if(materialObj.IsKeywordEnabled("_EMISSION"))
 			{
@@ -1692,8 +1692,10 @@ namespace UnityGLTF
 			{
 				var smoothnessPropertyName = material.HasProperty("_Smoothness") ? "_Smoothness" : "_Glossiness";
 				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
-				// float gms = material.GetFloat("_GlossMapScale");
 				float smoothness = material.GetFloat(smoothnessPropertyName);
+				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
+				if(material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal))
+					smoothness = 1 - smoothness;
 				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - smoothness;
 			}
 
