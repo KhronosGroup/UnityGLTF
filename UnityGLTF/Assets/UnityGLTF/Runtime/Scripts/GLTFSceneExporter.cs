@@ -1324,6 +1324,7 @@ namespace UnityGLTF
 					material.AlphaMode = AlphaMode.MASK;
 					break;
 				case "Transparent":
+				case "Fade":
 					material.AlphaMode = AlphaMode.BLEND;
 					break;
 				default:
