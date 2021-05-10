@@ -1683,9 +1683,8 @@ namespace UnityGLTF
 				}
 			}
 
-			if (material.HasProperty("_Metallic"))
+			if (material.HasProperty("_Metallic") && !material.IsKeywordEnabled("_METALLICGLOSSMAP"))
 			{
-				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
 				pbr.MetallicFactor = material.GetFloat("_Metallic");
 			}
 
@@ -1709,6 +1708,8 @@ namespace UnityGLTF
 					if(mrTex is Texture2D)
 					{
 						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
+						if (material.IsKeywordEnabled("_METALLICGLOSSMAP"))
+							pbr.MetallicFactor = 1.0f;
 						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 					}
 					else
