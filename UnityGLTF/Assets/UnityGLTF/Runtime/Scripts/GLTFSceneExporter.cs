@@ -3423,6 +3423,10 @@ namespace UnityGLTF
 			SkinnedMeshRenderer skin = transform.GetComponent<SkinnedMeshRenderer>();
 			GLTF.Schema.Skin gltfSkin = new Skin();
 
+			// early out of this SkinnedMeshRenderer has no bones assigned (could be BlendShapes-only)
+			if (skin.bones == null || skin.bones.Length == 0)
+				return;
+
 			bool allBoneTransformNodesHaveBeenExported = true;
 			for (int i = 0; i < skin.bones.Length; ++i)
 			{
