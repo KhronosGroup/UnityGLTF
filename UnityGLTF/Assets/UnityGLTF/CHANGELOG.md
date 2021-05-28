@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.23] - 2021-05-28
+- fixed animation export from legacy Animation component
+- fixed exporting blendshapes for meshes that don't have bones
+- fixed empty textures being generated on import
+- fixed emission keyword missing on material import when only color but no texture was set
+- fixed metallic and fade export not being correct in some cases
+- added option to select which properties (normals/tangents) to export with blendshapes
+
 ## [1.0.4-preview.22] - 2021-05-04
 - fixed ScriptedImporter not importing meshes from SkinnedMeshRenderers
 - fixed ScriptedImporter not importing AnimationClips
