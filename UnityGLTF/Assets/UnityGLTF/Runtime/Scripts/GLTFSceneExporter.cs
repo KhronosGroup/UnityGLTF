@@ -2813,7 +2813,7 @@ namespace UnityGLTF
 		public void ExportAnimationFromNode(ref Transform transform)
 		{
 			Animator animator = transform.GetComponent<Animator>();
-			if (animator != null)
+			if (animator)
 			{
 #if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = AnimationUtility.GetAnimationClips(transform.gameObject);
@@ -2824,7 +2824,7 @@ namespace UnityGLTF
 			}
 
 			UnityEngine.Animation animation = transform.GetComponent<UnityEngine.Animation>();
-			if (animation != null)
+			if (animation)
 			{
 #if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
@@ -2857,16 +2857,37 @@ namespace UnityGLTF
 			/// <summary>Creates GLTFAnimation for each clip and adds it to the _root</summary>
 			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
 			{
-				for (int i = 0; i < clips.Length; i++)
+				if(animatorController)
 				{
-					// special case: there could be multiple states with the same animation clip.
-					// if we want to handle this here, we need to find all states that match this clip
-					foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
+					for (int i = 0; i < clips.Length; i++)
 					{
+						if(!clips[i]) continue;
+
+						// special case: there could be multiple states with the same animation clip.
+						// if we want to handle this here, we need to find all states that match this clip
+						foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
+						{
+							GLTFAnimation anim = new GLTFAnimation();
+							anim.Name = state.name;
+							var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
+							ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
+
+							if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
+							{
+								_root.Animations.Add(anim);
+							}
+						}
+					}
+				}
+				else
+				{
+					for (int i = 0; i < clips.Length; i++)
+					{
+						if(!clips[i]) continue;
+
 						GLTFAnimation anim = new GLTFAnimation();
-						anim.Name = state.name;
-						var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
-						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
+						anim.Name = clips[i].name;
+						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, 1);
 
 						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
 						{
