@@ -56,6 +56,15 @@ namespace UnityGLTF
 	    private const string k_SettingsFileName = "UnityGLTFSettings.asset";
 	    public const string k_RuntimeAndEditorSettingsPath = "Assets/Resources/" + k_SettingsFileName;
 
+	    [System.Flags]
+	    public enum BlendShapeExportPropertyFlags
+	    {
+		    PositionOnly = 0,
+		    Normal = 2,
+		    Tangent = 4,
+		    All = ~0
+	    }
+
 	    [Header("Export")]
 		[SerializeField]
 		private bool exportNames = true;
@@ -74,6 +83,8 @@ namespace UnityGLTF
 		private bool exportDisabledGameObjects = false;
 		[SerializeField]
 		private bool exportAnimations = true;
+		[SerializeField]
+		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
 		[SerializeField]
 		private bool bakeSkinnedMeshes = false;
 
@@ -160,6 +171,18 @@ namespace UnityGLTF
 			}
 		}
 
+		public BlendShapeExportPropertyFlags BlendShapeExportProperties
+		{ get => blendShapeExportProperties;
+			set {
+				if(blendShapeExportProperties != value) {
+					blendShapeExportProperties = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
+
 		public bool BakeSkinnedMeshes
 		{ get => bakeSkinnedMeshes;
 			set {
@@ -181,8 +204,12 @@ namespace UnityGLTF
 		}
 #endif
 
+	    internal static GLTFSettings cachedSettings;
 		internal static GLTFSettings GetOrCreateSettings()
 		{
+			if (cachedSettings)
+				return cachedSettings;
+
 			var settings = Resources.Load<GLTFSettings>(k_SettingsFileName);
 #if UNITY_EDITOR
 			if(!settings)
@@ -204,12 +231,16 @@ namespace UnityGLTF
 				AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
 				AssetDatabase.SaveAssets();
 			}
+
+			cachedSettings = settings;
 			return settings;
 #else
 			if(!settings)
 			{
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
 			}
+
+			cachedSettings = settings;
 			return settings;
 #endif
 		}

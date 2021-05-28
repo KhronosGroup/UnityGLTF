@@ -13,7 +13,7 @@ namespace UnityGLTF
 	        return AssetDatabase.GetAssetPath(texture);
 	    }
 
-	    [MenuItem("GLTF/Settings")]
+	    [MenuItem("GLTF/Settings", priority = 10000)]
 	    static void Init()
 	    {
 	        GLTFExportMenu window = (GLTFExportMenu)EditorWindow.GetWindow(typeof(GLTFExportMenu), false, "GLTF Settings");
@@ -22,18 +22,11 @@ namespace UnityGLTF
 
 	    void OnGUI()
 	    {
-		    EditorGUILayout.HelpBox("This Window is deprecated and will be removed in a future release. Please use ProjectSettings/UnityGLTF instead.", MessageType.Info);
-		    EditorGUILayout.Space();
-	        EditorGUILayout.LabelField("Exporter", EditorStyles.boldLabel);
-	        GLTFSceneExporter.ExportFullPath = EditorGUILayout.Toggle("Export using original path", GLTFSceneExporter.ExportFullPath);
-	        GLTFSceneExporter.ExportNames = EditorGUILayout.Toggle("Export names of nodes", GLTFSceneExporter.ExportNames);
-	        GLTFSceneExporter.RequireExtensions= EditorGUILayout.Toggle("Require extensions", GLTFSceneExporter.RequireExtensions);
-	        GLTFSceneExporter.TryExportTexturesFromDisk = EditorGUILayout.Toggle("Try to export textures from disk", GLTFSceneExporter.TryExportTexturesFromDisk);
-	        EditorGUILayout.Separator();
-	        EditorGUILayout.LabelField("Importer", EditorStyles.boldLabel);
-	        EditorGUILayout.Separator();
-	        EditorGUILayout.HelpBox("UnityGLTF version 0.1", MessageType.Info);
-	        EditorGUILayout.HelpBox("Supported extensions: KHR_material_pbrSpecularGlossiness, ExtTextureTransform", MessageType.Info);
+		    EditorGUILayout.HelpBox("This Window is deprecated and will be removed in a future release. Please use ProjectSettings/UnityGLTF instead.", MessageType.Warning);
+		    if (GUILayout.Button("Open Project Settings/UnityGLTF"))
+		    {
+			    SettingsService.OpenProjectSettings("Project/UnityGLTF");
+		    }
 	    }
 
 	    static bool TryGetExportNameAndRootTransformsFromSelection(out string name, out Transform[] rootTransforms)
