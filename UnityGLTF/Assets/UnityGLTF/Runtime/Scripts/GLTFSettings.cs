@@ -87,6 +87,9 @@ namespace UnityGLTF
 		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
 		[SerializeField]
 		private bool bakeSkinnedMeshes = false;
+	    [SerializeField]
+	    [Tooltip("Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
+		private bool exportVertexColors = true;
 
 		public bool ExportNames { get => exportNames;
 			set {
@@ -147,6 +150,17 @@ namespace UnityGLTF
 			}
 		}
 
+		public bool ExportVertexColors
+		{ get => exportVertexColors;
+			set {
+				if(exportVertexColors != value) {
+					exportVertexColors = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
 		public bool ExportDisabledGameObjects
 		{ get => exportDisabledGameObjects;
 			set {

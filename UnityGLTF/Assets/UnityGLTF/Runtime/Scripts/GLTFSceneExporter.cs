@@ -1146,7 +1146,7 @@ namespace UnityGLTF
 				if (meshObj.uv2.Length != 0)
 					aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
 
-				if (meshObj.colors.Length != 0)
+				if (settings.ExportVertexColors && meshObj.colors.Length != 0)
 					aColor0 = ExportAccessor(QualitySettings.activeColorSpace == ColorSpace.Linear ? meshObj.colors : meshObj.colors.ToLinear());
 
 				_meshToPrims.Add(meshObj, new MeshAccessors()
