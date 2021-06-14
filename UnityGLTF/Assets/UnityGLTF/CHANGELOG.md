@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.24] - 2021-06-14
+- fix: don't attempt to export blendshape normals/tangents when mesh doesn't have them
+- fix: warn and skip null bones in SkinnedMeshRenderer export
+- added: settings for determining texture export type (png/jpeg depending on alpha channel) and JPEG quality
+- added: setting to determine if vertex colors should be exported
+
 ## [1.0.4-preview.23] - 2021-05-28
 - fixed animation export from legacy Animation component
 - fixed exporting blendshapes for meshes that don't have bones
