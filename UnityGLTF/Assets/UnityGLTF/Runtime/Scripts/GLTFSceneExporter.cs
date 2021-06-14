@@ -1486,6 +1486,14 @@ namespace UnityGLTF
 				List<Double> weights = new List<double>(meshObj.blendShapeCount);
 				List<string> targetNames = new List<string>(meshObj.blendShapeCount);
 
+#if UNITY_2019_3_OR_NEWER
+				var meshHasNormals = meshObj.HasVertexAttribute(VertexAttribute.Normal);
+				var meshHasTangents = meshObj.HasVertexAttribute(VertexAttribute.Tangent);
+#else
+				var meshHasNormals = meshObj.normals.Length > 0;
+				var meshHasTangents = meshObj.tangents.Length > 0;
+#endif
+
 				for (int blendShapeIndex = 0; blendShapeIndex < meshObj.blendShapeCount; blendShapeIndex++)
 				{
 					targetNames.Add(meshObj.GetBlendShapeName(blendShapeIndex));
@@ -1500,11 +1508,11 @@ namespace UnityGLTF
 
 					var exportTargets = new Dictionary<string, AccessorId>();
 					exportTargets.Add(SemanticProperties.POSITION, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)));
-					if (settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Normal))
+					if (meshHasNormals && settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Normal))
 					{
 						exportTargets.Add(SemanticProperties.NORMAL, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals, SchemaExtensions.CoordinateSpaceConversionScale)));
 					}
-					if (settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Tangent))
+					if (meshHasTangents && settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Tangent))
 					{
 						exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
 					}
