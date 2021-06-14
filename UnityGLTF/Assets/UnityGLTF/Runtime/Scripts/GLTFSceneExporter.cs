@@ -3466,6 +3466,11 @@ namespace UnityGLTF
 			bool allBoneTransformNodesHaveBeenExported = true;
 			for (int i = 0; i < skin.bones.Length; ++i)
 			{
+				if (!skin.bones[i])
+				{
+					Debug.LogWarning("Skin has null bone at index " + i + ": " + skin, skin);
+					continue;
+				}
 				var nodeId = skin.bones[i].GetInstanceID();
 				if (!_exportedTransforms.ContainsKey(nodeId))
 				{
@@ -3482,6 +3487,11 @@ namespace UnityGLTF
 
 			for (int i = 0; i < skin.bones.Length; ++i)
 			{
+				if (!skin.bones[i])
+				{
+					continue;
+				}
+
 				var nodeId = skin.bones[i].GetInstanceID();
 
 				gltfSkin.Joints.Add(
