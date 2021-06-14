@@ -65,28 +65,36 @@ namespace UnityGLTF
 		    All = ~0
 	    }
 
-	    [Header("Export")]
+	    [Header("Export Settings")]
 		[SerializeField]
 		private bool exportNames = true;
 		[SerializeField]
 		private bool exportFullPath = true;
 		[SerializeField]
+		private bool requireExtensions = false;
+		[Header("Export Visibility")]
+		[SerializeField]
 		[Tooltip("Uses Camera.main layer settings to filter which objects are exported")]
 		private bool useMainCameraVisibility = true;
 		[SerializeField]
-		private bool requireExtensions = false;
+		[Tooltip("glTF does not support visibility state. If this setting is true, disabled GameObjects will still be exported and be visible in the glTF file.")]
+		private bool exportDisabledGameObjects = false;
+		[Header("Export Textures")]
 		[SerializeField]
 		[Tooltip("(Experimental) Exports PNG/JPEG directly from disk instead of re-encoding from Unity's import result. No channel repacking will happen for these textures. Textures in other formats (PSD, TGA etc) not supported by glTF and in-memory textures (e.g. RenderTextures) are always re-encoded.")]
 		private bool tryExportTexturesFromDisk = false;
-		[SerializeField]
-		[Tooltip("glTF does not support visibility state. If this setting is true, disabled GameObjects will still be exported and be visible in the glTF file.")]
-		private bool exportDisabledGameObjects = false;
+		[SerializeField] [Tooltip("Determines texture export type (PNG or JPEG) based on alpha channel. When false, always exports lossless PNG files.")]
+		private bool useTextureFileTypeHeuristic = true;
+		[SerializeField] [Tooltip("Quality setting for exported JPEG files.")]
+		private int defaultJpegQuality = 90;
+		[Header("Export Animation")]
 		[SerializeField]
 		private bool exportAnimations = true;
 		[SerializeField]
-		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
-		[SerializeField]
 		private bool bakeSkinnedMeshes = false;
+		[Header("Export Mesh Data")]
+		[SerializeField]
+		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
 	    [SerializeField]
 	    [Tooltip("Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
 		private bool exportVertexColors = true;
@@ -150,6 +158,18 @@ namespace UnityGLTF
 			}
 		}
 
+		public bool UseTextureFileTypeHeuristic
+		{ get => useTextureFileTypeHeuristic;
+			set {
+				if(useTextureFileTypeHeuristic != value) {
+					useTextureFileTypeHeuristic = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
+
 		public bool ExportVertexColors
 		{ get => exportVertexColors;
 			set {
@@ -161,6 +181,19 @@ namespace UnityGLTF
 				}
 			}
 		}
+
+		public int DefaultJpegQuality
+		{ get => defaultJpegQuality;
+			set {
+				if(defaultJpegQuality != value) {
+					defaultJpegQuality = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
+
 		public bool ExportDisabledGameObjects
 		{ get => exportDisabledGameObjects;
 			set {

@@ -2212,8 +2212,9 @@ namespace UnityGLTF
 				exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 				exportTexture.Apply();
 
-				var imageData = textureHasAlpha ? exportTexture.EncodeToPNG() : exportTexture.EncodeToJPG(90);
-				image.MimeType = textureHasAlpha ? PNGMimeType : JPEGMimeType;
+				var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
+				var imageData = canExportAsJpeg ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();
+				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
 				_bufferWriter.Write(imageData);
 
 				RenderTexture.ReleaseTemporary(destRenderTexture);
