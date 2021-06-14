@@ -523,9 +523,10 @@ namespace UnityGLTF
 			for (int t = 0; t < _imageInfos.Count; ++t)
 			{
 				var image = _imageInfos[t].texture;
+				var textureMapType = _imageInfos[t].textureMapType;
 
 				bool wasAbleToExportTexture = false;
-				if (TryExportTexturesFromDisk && TryGetTextureDataFromDisk(image, out string path, out byte[] imageBytes))
+				if (TryExportTexturesFromDisk && TryGetTextureDataFromDisk(textureMapType, image, out string path, out byte[] imageBytes))
 				{
 					var finalFilenamePath = ConstructImageFilenamePath(image, outputPath, Path.GetExtension(path));
 					//Debug.Log(finalFilenamePath + ", " + image.name, image);
@@ -537,7 +538,7 @@ namespace UnityGLTF
 				}
 
 				if(!wasAbleToExportTexture) {
-					switch (_imageInfos[t].textureMapType)
+					switch (textureMapType)
 					{
 						case TextureMapType.MetallicGloss:
 							ExportMetallicGlossTexture(image, outputPath);
@@ -570,8 +571,13 @@ namespace UnityGLTF
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 			exportTexture.Apply();
 
-			var finalFilenamePath = ConstructImageFilenamePath(texture, outputPath, "png");
-			File.WriteAllBytes(finalFilenamePath, exportTexture.EncodeToPNG());
+			// TODO refactor texture export path so that choosing the right extension is more sane
+			var textureHasAlpha = false;
+			var imageData = textureHasAlpha ? exportTexture.EncodeToPNG() : exportTexture.EncodeToJPG(90);
+			var extension = textureHasAlpha ? "png" : "jpg";
+
+			var finalFilenamePath = ConstructImageFilenamePath(texture, outputPath, extension);
+			File.WriteAllBytes(finalFilenamePath, imageData);
 
 			RenderTexture.ReleaseTemporary(destRenderTexture);
 			if (Application.isEditor)
@@ -2006,7 +2012,7 @@ namespace UnityGLTF
 			return filenamePath;
 		}
 
-		private ImageId ExportImage(Texture texture, TextureMapType texturMapType)
+		private ImageId ExportImage(Texture texture, TextureMapType textureMapType)
 		{
 			ImageId id = GetImageId(_root, texture);
 			if (id != null)
@@ -2047,7 +2053,7 @@ namespace UnityGLTF
             _imageInfos.Add(new ImageInfo
 			{
 				texture = texture as Texture2D,
-				textureMapType = texturMapType
+				textureMapType = textureMapType
 			});
 
 			var filenamePath = GetImageOutputPath(texture);
@@ -2065,12 +2071,32 @@ namespace UnityGLTF
 			return id;
 		}
 
-		bool TryGetTextureDataFromDisk(Texture texture, out string path, out byte[] data)
+		bool TryGetTextureDataFromDisk(TextureMapType textureMapType, Texture texture, out string path, out byte[] data)
 		{
+			path = null;
+			data = null;
+
 #if UNITY_EDITOR
 			if (Application.isEditor && UnityEditor.AssetDatabase.Contains(texture))
 			{
 				path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+				var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+
+				switch (textureMapType)
+				{
+					// if this is a normal map generated from greyscale, we shouldn't attempt to export from disk
+					case TextureMapType.Bump:
+						if (importer && importer.textureType == TextureImporterType.NormalMap && importer.convertToNormalmap)
+							return false;
+						break;
+					// check if the texture contains an alpha channel; if yes, we shouldn't attempt to export from disk but instead convert.
+					case TextureMapType.MetallicGloss:
+					case TextureMapType.SpecGloss:
+						if (importer && importer.DoesSourceTextureHaveAlpha())
+							return false;
+						break;
+				}
+
 				if (File.Exists(path))
 				{
 					data = File.ReadAllBytes(path);
@@ -2078,9 +2104,37 @@ namespace UnityGLTF
 				}
 			}
 #endif
-			path = null;
-			data = null;
 			return false;
+		}
+
+		bool TextureHasAlphaChannel(Texture sourceTexture)
+		{
+			var hasAlpha = false;
+
+#if UNITY_EDITOR
+			if (AssetDatabase.Contains(sourceTexture) && sourceTexture is Texture2D)
+			{
+				var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(sourceTexture)) as TextureImporter;
+				if (importer)
+				{
+					switch (importer.alphaSource)
+					{
+						case TextureImporterAlphaSource.FromInput:
+							hasAlpha = importer.DoesSourceTextureHaveAlpha();
+							break;
+						case TextureImporterAlphaSource.FromGrayScale:
+							hasAlpha = true;
+							break;
+						case TextureImporterAlphaSource.None:
+							hasAlpha = false;
+							break;
+					}
+				}
+			}
+#endif
+
+			hasAlpha |= UnityEngine.Experimental.Rendering.GraphicsFormatUtility.HasAlphaChannel(sourceTexture.graphicsFormat);
+			return hasAlpha;
 		}
 
 		bool IsPng(string filename)
@@ -2093,30 +2147,36 @@ namespace UnityGLTF
 			return Path.GetExtension(filename).EndsWith("jpg", StringComparison.InvariantCultureIgnoreCase) || Path.GetExtension(filename).EndsWith("jpeg", StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType texturMapType)
+		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType textureMapType)
 		{
-		    if (texture == null)
+			const string PNGMimeType = "image/png";
+			const string JPEGMimeType = "image/jpeg";
+
+			if (texture == null)
 		    {
 				throw new Exception("texture can not be NULL.");
 		    }
 
 		    var image = new GLTFImage();
+		    image.MimeType = PNGMimeType;
+
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			bool wasAbleToExportFromDisk = false;
+			bool textureHasAlpha = true;
 
-			if(TryExportTexturesFromDisk && TryGetTextureDataFromDisk(texture, out string path, out byte[] imageBytes))
+			if(TryExportTexturesFromDisk && TryGetTextureDataFromDisk(textureMapType, texture, out string path, out byte[] imageBytes))
 			{
 				if(IsPng(path))
 				{
-					image.MimeType = "image/png";
+					image.MimeType = PNGMimeType;
 					_bufferWriter.Write(imageBytes);
 					wasAbleToExportFromDisk = true;
 				}
 				else if(IsJpeg(path))
 				{
-					image.MimeType = "image/jpeg";
+					image.MimeType = JPEGMimeType;
 					_bufferWriter.Write(imageBytes);
 					wasAbleToExportFromDisk = true;
 				}
@@ -2126,25 +2186,25 @@ namespace UnityGLTF
 				}
 			}
 
-
 			if(!wasAbleToExportFromDisk)
 		    {
-				image.MimeType = "image/png";
-
 				// TODO we could make sure texture size is power-of-two here
 
 				var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 				GL.sRGBWrite = true;
-				switch (texturMapType)
+				switch (textureMapType)
 				{
 					case TextureMapType.MetallicGloss:
 					Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+					textureHasAlpha = false;
 					break;
 					case TextureMapType.Bump:
 					Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
+					textureHasAlpha = false;
 					break;
 					default:
 					Graphics.Blit(texture, destRenderTexture);
+					textureHasAlpha = TextureHasAlphaChannel(texture);
 					break;
 				}
 
@@ -2152,8 +2212,9 @@ namespace UnityGLTF
 				exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 				exportTexture.Apply();
 
-				var pngImageData = exportTexture.EncodeToPNG();
-				_bufferWriter.Write(pngImageData);
+				var imageData = textureHasAlpha ? exportTexture.EncodeToPNG() : exportTexture.EncodeToJPG(90);
+				image.MimeType = textureHasAlpha ? PNGMimeType : JPEGMimeType;
+				_bufferWriter.Write(imageData);
 
 				RenderTexture.ReleaseTemporary(destRenderTexture);
 
