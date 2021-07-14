@@ -95,7 +95,10 @@ namespace UnityGLTF
 		[Header("Export Mesh Data")]
 		[SerializeField]
 		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
-	    [SerializeField]
+		[SerializeField]
+		[Tooltip("(Experimental) Use Sparse Accessors for blend shape export. Not supported on some viewers.")]
+		private bool blendShapeExportSparseAccessors = false;
+		[SerializeField]
 	    [Tooltip("Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
 		private bool exportVertexColors = true;
 
@@ -214,6 +217,18 @@ namespace UnityGLTF
 					#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
 					#endif
+				}
+			}
+		}
+
+		public bool BlendShapeExportSparseAccessors
+		{ get => blendShapeExportSparseAccessors;
+			set {
+				if (blendShapeExportSparseAccessors != value) {
+					blendShapeExportSparseAccessors = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
 				}
 			}
 		}

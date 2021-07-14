@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using GLTF;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -1513,14 +1514,50 @@ namespace UnityGLTF
 					meshObj.GetBlendShapeFrameVertices(blendShapeIndex, frameIndex, deltaVertices, deltaNormals, deltaTangents);
 
 					var exportTargets = new Dictionary<string, AccessorId>();
-					exportTargets.Add(SemanticProperties.POSITION, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)));
+
+					if (!settings.BlendShapeExportSparseAccessors)
+					{
+						exportTargets.Add(SemanticProperties.POSITION, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)));
+					}
+					else
+					{
+						// Debug.Log("Delta Vertices:\n"+string.Join("\n ", deltaVertices));
+						// Debug.Log("Vertices:\n"+string.Join("\n ", meshObj.vertices));
+						// Experimental: sparse accessor.
+						// - get the accessor we want to base this upon
+						// - this is how position is originally exported:
+						//   ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
+						var baseAccessor = _meshToPrims[meshObj].aPosition;
+						var exportedAccessor = ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale));
+						if(exportedAccessor != null)
+							exportTargets.Add(SemanticProperties.POSITION, exportedAccessor);
+					}
+
 					if (meshHasNormals && settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Normal))
 					{
-						exportTargets.Add(SemanticProperties.NORMAL, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals, SchemaExtensions.CoordinateSpaceConversionScale)));
+						if (!settings.BlendShapeExportSparseAccessors)
+						{
+							exportTargets.Add(SemanticProperties.NORMAL, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals, SchemaExtensions.CoordinateSpaceConversionScale)));
+						}
+						else
+						{
+							var baseAccessor = _meshToPrims[meshObj].aNormal;
+							exportTargets.Add(SemanticProperties.NORMAL, ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)));
+						}
 					}
 					if (meshHasTangents && settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Tangent))
 					{
-						exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
+						if (!settings.BlendShapeExportSparseAccessors)
+						{
+							exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
+						}
+						else
+						{
+							// 	var baseAccessor = _meshToPrims[meshObj].aTangent;
+							// 	exportTargets.Add(SemanticProperties.TANGENT, ExportSparseAccessor(baseAccessor, SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale), SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.TangentSpaceConversionScale)));
+							exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
+							Debug.LogWarning("Blend Shape Tangents for " + meshObj + " won't be exported with sparse accessors – sparse accessor for tangents isn't supported right now.");
+						}
 					}
 					targets.Add(exportTargets);
 
@@ -1534,12 +1571,22 @@ namespace UnityGLTF
 					// to the values in this frame) and then any weight between 50-100 would be relevant to the weights in
 					// the second frame.  See Post 20 for more info:
 					// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
-					weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / 100);
+					if(exportTargets.Any())
+						weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / 100);
 				}
 
-				mesh.Weights = weights;
-				primitive.Targets = targets;
-				primitive.TargetNames = targetNames;
+				if(weights.Any() && targets.Any())
+				{
+					mesh.Weights = weights;
+					primitive.Targets = targets;
+					primitive.TargetNames = targetNames;
+				}
+				else
+				{
+					mesh.Weights = null;
+					primitive.Targets = null;
+					primitive.TargetNames = null;
+				}
 
 				// cache the exported data; we can re-use it between all submeshes of a mesh.
 				_meshToBlendShapeAccessors.Add(meshObj, new BlendShapeAccessors()
@@ -2553,7 +2600,156 @@ namespace UnityGLTF
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
-			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength, sizeof(float) * 3);
+
+			var id = new AccessorId
+			{
+				Id = _root.Accessors.Count,
+				Root = _root
+			};
+			_root.Accessors.Add(accessor);
+
+			return id;
+		}
+
+		/// <summary>
+		///
+		/// </summary>
+		/// <param name="baseAccessor"></param>
+		/// <param name="baseData">The data is treated as "additive" (e.g. blendshapes) when baseData != null</param>
+		/// <param name="arr"></param>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		private AccessorId ExportSparseAccessor(AccessorId baseAccessor, Vector3[] baseData, Vector3[] arr)
+		{
+			uint dataCount = (uint) arr.Length;
+			if (dataCount == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
+			}
+
+			// TODO need to assert that these types match to the base accessor
+			// TODO we might need to build a data <> accessor dict as well to avoid having to pass in the base data again
+
+			// need to assert data and baseData have the same length etc.
+			if (baseData != null && baseData.Length != arr.Length)
+			{
+				throw new Exception("Sparse Accessor Base Data must either be null or the same length as the data array, current: " + baseData.Length + " != " + arr.Length);
+			}
+
+			var accessor = new Accessor();
+			accessor.ComponentType = GLTFComponentType.Float;
+			accessor.Count = dataCount;
+			accessor.Type = GLTFAccessorAttributeType.VEC3;
+
+			if(baseAccessor != null)
+			{
+				accessor.BufferView = baseAccessor.Value.BufferView;
+				accessor.ByteOffset = baseAccessor.Value.ByteOffset;
+			}
+
+			accessor.Sparse = new AccessorSparse();
+			var sparse = accessor.Sparse;
+
+			var indices = new List<int>();
+
+			// Debug.Log("Values for sparse data array:\n " + string.Join("\n ", arr));
+			for (int i = 0; i < arr.Length; i++)
+			{
+				var comparer = (baseAccessor == null || baseData == null) ? Vector3.zero : baseData[i];
+				if (comparer != arr[i])
+				{
+					indices.Add(i);
+				}
+			}
+
+			// HACK since GLTF doesn't allow 0 buffer length, but that can well happen when a morph target exactly matches the base mesh
+			// NOT doing this results in GLTF validation errors about buffers having length 0
+			if (indices.Count < 1)
+			{
+				indices = new List<int>() {0};
+			}
+
+			// we need to calculate the min/max of the entire new data array
+			uint count = (uint) arr.Length;
+
+			var firstElement = baseData != null ? (baseData[0] + arr[0]) : arr[0];
+			float minX = firstElement.x;
+			float minY = firstElement.y;
+			float minZ = firstElement.z;
+			float maxX = firstElement.x;
+			float maxY = firstElement.y;
+			float maxZ = firstElement.z;
+
+			for (var i = 1; i < count; i++)
+			{
+				var cur = baseData != null ? (baseData[i] + arr[i]) : arr[i];
+
+				if (cur.x < minX)
+				{
+					minX = cur.x;
+				}
+				if (cur.y < minY)
+				{
+					minY = cur.y;
+				}
+				if (cur.z < minZ)
+				{
+					minZ = cur.z;
+				}
+				if (cur.x > maxX)
+				{
+					maxX = cur.x;
+				}
+				if (cur.y > maxY)
+				{
+					maxY = cur.y;
+				}
+				if (cur.z > maxZ)
+				{
+					maxZ = cur.z;
+				}
+			}
+
+			accessor.Min = new List<double> { minX, minY, minZ };
+			accessor.Max = new List<double> { maxX, maxY, maxZ };
+
+			// write indices
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffsetIndices = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+
+			Debug.Log("Storing " + indices.Count + " sparse indices + values");
+
+			foreach (var index in indices)
+			{
+				_bufferWriter.Write(index);
+			}
+
+			uint byteLengthIndices = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffsetIndices, 4);
+
+			sparse.Indices = new AccessorSparseIndices();
+			// TODO should be properly using the smallest possible component type
+			sparse.Indices.ComponentType = GLTFComponentType.UnsignedInt;
+			sparse.Indices.BufferView = ExportBufferView(byteOffsetIndices, byteLengthIndices);
+
+			// write values
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+
+			foreach (var i in indices)
+			{
+				var vec = arr[i];
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
+			}
+
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+
+			sparse.Values = new AccessorSparseValues();
+			sparse.Values.BufferView = ExportBufferView(byteOffset, byteLength);
+
+			sparse.Count = indices.Count;
 
 			var id = new AccessorId
 			{
@@ -2743,13 +2939,14 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private BufferViewId ExportBufferView(uint byteOffset, uint byteLength)
+		private BufferViewId ExportBufferView(uint byteOffset, uint byteLength, uint byteStride = 0)
 		{
 			var bufferView = new BufferView
 			{
 				Buffer = _bufferId,
 				ByteOffset = byteOffset,
-				ByteLength = byteLength
+				ByteLength = byteLength,
+				ByteStride = byteStride
 			};
 
 			var id = new BufferViewId
