@@ -336,11 +336,13 @@ namespace GLTF.Schema
 		public static readonly string[] Color = { COLOR_0 };
 
 		public const string WEIGHTS_0 = "WEIGHTS_0";
-		public static readonly string[] Weight = { WEIGHTS_0 };
+		public const string WEIGHTS_1 = "WEIGHTS_1";
+		public static readonly string[] Weight = { WEIGHTS_0, WEIGHTS_1 };
+
 
 		public const string JOINTS_0 = "JOINTS_0";
-		public static readonly string[] Joint = { JOINTS_0 };
-
+		public const string JOINTS_1 = "JOINTS_1";
+		public static readonly string[] Joint = { JOINTS_0, JOINTS_1 };
 		/// <summary>
 		/// Parse out the index of a given semantic property.
 		/// </summary>

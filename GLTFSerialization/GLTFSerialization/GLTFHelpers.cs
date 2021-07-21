@@ -254,7 +254,9 @@ namespace GLTF
 						attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
 						break;
 					case SemanticProperties.WEIGHTS_0:
+					case SemanticProperties.WEIGHTS_1:
 					case SemanticProperties.JOINTS_0:
+					case SemanticProperties.JOINTS_1:
 						attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
 						break;
 					case SemanticProperties.INDICES:
