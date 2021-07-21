@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System;
 
 namespace GLTF.Schema
 {
@@ -32,6 +33,10 @@ namespace GLTF.Schema
 		{
 			var values = new AccessorSparseValues();
 
+			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+			{
+				throw new Exception("Asset must be an object.");
+			}
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
 				var curProp = reader.Value.ToString();
