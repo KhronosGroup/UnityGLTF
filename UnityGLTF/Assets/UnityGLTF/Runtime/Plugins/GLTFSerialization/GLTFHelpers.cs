@@ -311,9 +311,25 @@ namespace GLTF
 				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
+			if (attributes.ContainsKey(SemanticProperties.Weight[1]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Weight[1]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
 			if (attributes.ContainsKey(SemanticProperties.Joint[0]))
 			{
 				var attributeAccessor = attributes[SemanticProperties.Joint[0]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Joint[1]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Joint[1]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
