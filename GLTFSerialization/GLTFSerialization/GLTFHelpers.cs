@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
 using GLTF.Math;
+using System.Linq;
 
 namespace GLTF
 {
@@ -224,61 +224,120 @@ namespace GLTF
 		/// <summary>
 		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
 		/// </summary>
-		/// <param name="attributes">A list of attributes to parse</param>
+		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
+		/// <summary>
+		/// Uses the accessor to parse the buffer into attributes needed to construct the mesh primitive
+		/// </summary>
+		/// <param name="attributes">A dictionary that contains a mapping of attribute name to data needed to parse</param>
 		public static void BuildMeshAttributes(ref Dictionary<string, AttributeAccessor> attributes)
 		{
-			List<string> unrecognizedAttributes = new List<string>();
-			foreach (var kvp in attributes)
+			if (attributes.ContainsKey(SemanticProperties.POSITION))
 			{
-				var attributeAccessor = kvp.Value;
+				var attributeAccessor = attributes[SemanticProperties.POSITION];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				switch (kvp.Key)
-				{
-					case SemanticProperties.POSITION:
-						attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
-						break;
-					case SemanticProperties.NORMAL:
-						attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
-						break;
-					case SemanticProperties.TANGENT:
-						attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
-						break;
-					case SemanticProperties.TEXCOORD_0:
-					case SemanticProperties.TEXCOORD_1:
-					case SemanticProperties.TEXCOORD_2:
-					case SemanticProperties.TEXCOORD_3:
-						attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
-						break;
-					case SemanticProperties.COLOR_0:
-						attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
-						break;
-					case SemanticProperties.WEIGHTS_0:
-					case SemanticProperties.JOINTS_0:
-						attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
-						break;
-					case SemanticProperties.INDICES:
-						attributeAccessor.AccessorId.Value.AsUIntArray(ref resultArray, bufferViewCache, offset);
-						break;
-					default:
-						unrecognizedAttributes.Add(kvp.Key);
-						continue;
-				}
-				
+				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
 				attributeAccessor.AccessorContent = resultArray;
 			}
-
-			foreach (var attrib in unrecognizedAttributes) { 
-				attributes.Remove(attrib);
+			if (attributes.ContainsKey(SemanticProperties.INDICES))
+			{
+				var attributeAccessor = attributes[SemanticProperties.INDICES];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
 			}
-
-			// TODO This should be a warning. Unrecognized attributes (e.g. TEXCOORD_4) should not cause full exceptions.
-			if (unrecognizedAttributes.Count > 0) {
-				throw new GLTFLoadException($"Unrecognized mesh attributes [{string.Join(", ", unrecognizedAttributes.ToArray())}]");
+			if (attributes.ContainsKey(SemanticProperties.NORMAL))
+			{
+				var attributeAccessor = attributes[SemanticProperties.NORMAL];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[0]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[0]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[1]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[1]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[2]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[2]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.TexCoord[3]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.TexCoord[3]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Color[0]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Color[0]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.TANGENT))
+			{
+				var attributeAccessor = attributes[SemanticProperties.TANGENT];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Weight[0]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Weight[0]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Weight[1]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Weight[1]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Joint[0]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Joint[0]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
+			}
+			if (attributes.ContainsKey(SemanticProperties.Joint[1]))
+			{
+				var attributeAccessor = attributes[SemanticProperties.Joint[1]];
+				NumericArray resultArray = attributeAccessor.AccessorContent;
+				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				attributeAccessor.AccessorContent = resultArray;
 			}
 		}
 
-		public static void BuildTargetAttributes (ref Dictionary<string, AttributeAccessor> attributes)
+		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes)
 		{
 			foreach (var kvp in attributes)
 			{
