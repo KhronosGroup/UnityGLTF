@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+﻿#if UNITY_EDITOR && HAVE_ASSET_GENERATOR
 using AssetGenerator;
 using Newtonsoft.Json;
 using NUnit.Framework;

@@ -1,5 +1,6 @@
 {
     "name": "UnityGLTFTests",
+    "rootNamespace": "",
     "references": [
         "UnityGLTFScripts",
         "UnityGLTFEditor",
@@ -19,6 +20,12 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Select...",
+            "expression": "0.0.0",
+            "define": "HAVE_ASSET_GENERATOR"
+        }
+    ],
     "noEngineReferences": false
 }
