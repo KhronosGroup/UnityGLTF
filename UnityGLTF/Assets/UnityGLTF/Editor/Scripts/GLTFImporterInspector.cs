@@ -20,6 +20,7 @@ namespace UnityGLTF
 
 		public override void OnInspectorGUI()
 		{
+			serializedObject.Update();
 			if (_importNormalsNames == null)
 			{
 				_importNormalsNames = Enum.GetNames(typeof(GLTFImporterNormals))
@@ -33,6 +34,7 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_readWriteEnabled"), new GUIContent("Read/Write Enabled"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_generateColliders"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_swapUvs"), new GUIContent("Swap UVs"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty("_generateLightmapUVs"), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Normals", EditorStyles.boldLabel);
 			EditorGUI.BeginChangeCheck();
@@ -47,6 +49,7 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importMaterials"));
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_useJpgTextures"), new GUIContent("Use JPG Textures"));
 
+			serializedObject.ApplyModifiedProperties();
 			ApplyRevertGUI();
 		}
 	}

@@ -33,6 +33,7 @@ namespace UnityGLTF
         [SerializeField] private bool _readWriteEnabled = true;
         [SerializeField] private bool _generateColliders = false;
         [SerializeField] private bool _swapUvs = false;
+        [SerializeField] private bool _generateLightmapUVs = false;
         [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] private bool _importMaterials = true;
         // [SerializeField] private bool _useJpgTextures = false;
@@ -89,12 +90,19 @@ namespace UnityGLTF
                         vertexBuffer[i] *= _scaleFactor;
                     }
                     mesh.SetVertices(vertexBuffer);
+                    if (_generateLightmapUVs)
+                    {
+	                    var uv2 = mesh.uv2;
+	                    if(uv2 == null || uv2.Length < 1)
+		                    Unwrapping.GenerateSecondaryUVSet(mesh);
+                    }
                     if (_swapUvs)
                     {
                         var uv = mesh.uv;
                         var uv2 = mesh.uv2;
                         mesh.uv = uv2;
-                        mesh.uv2 = uv2;
+                        if(uv.Length > 0)
+							mesh.uv2 = uv;
                     }
                     if (_importNormals == GLTFImporterNormals.None)
                     {
