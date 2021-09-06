@@ -629,7 +629,7 @@ namespace Sketchfab
 				_skfbWin = ScriptableObject.CreateInstance<SketchfabModelWindow>();
 				_skfbWin.displayModelPage(_browserManager.getModel(_currentUid), this);
 				_skfbWin.position = new Rect(this.position.position, new Vector2(530, 660));
-				_skfbWin.title = "Model details";
+				_skfbWin.titleContent.text = "Model details";
 				_skfbWin.Show();
 				_skfbWin.Repaint();
 			}
