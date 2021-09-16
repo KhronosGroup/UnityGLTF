@@ -1045,38 +1045,62 @@ namespace UnityGLTF
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj)
 		{
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
-			sceneObj.SetActive(showSceneObj);
 
-			Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
-			for (int i = 0; i < scene.Nodes.Count; ++i)
-			{
-				NodeId node = scene.Nodes[i];
-				await _LoadNode(node.Id);
-				GameObject nodeObj = _assetCache.NodeCache[node.Id];
-				nodeObj.transform.SetParent(sceneObj.transform, false);
-				nodeTransforms[i] = nodeObj.transform;
-			}
+            try
+            {
+                sceneObj.SetActive(showSceneObj);
 
-			if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
-			{
-				// create the AnimationClip that will contain animation data
-				Animation animation = sceneObj.AddComponent<Animation>();
-				for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
-				{
-					AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache, i);
+                Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
+                for (int i = 0; i < scene.Nodes.Count; ++i)
+                {
+                    NodeId node = scene.Nodes[i];
+                    await _LoadNode(node.Id);
+                    GameObject nodeObj = _assetCache.NodeCache[node.Id];
+                    nodeObj.transform.SetParent(sceneObj.transform, false);
+                    nodeTransforms[i] = nodeObj.transform;
+                }
 
-					clip.wrapMode = WrapMode.Loop;
+                if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
+                {
+                    // create the AnimationClip that will contain animation data
+                    Animation animation = sceneObj.AddComponent<Animation>();
+                    for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
+                    {
+                        AnimationClip clip = ConstructClip(sceneObj.transform, _assetCache.NodeCache, i);
 
-					animation.AddClip(clip, clip.name);
-					if (i == 0)
-					{
-						animation.clip = clip;
-					}
-				}
-			}
+                        clip.wrapMode = WrapMode.Loop;
 
-			CreatedObject = sceneObj;
-			InitializeGltfTopLevelObject();
+                        animation.AddClip(clip, clip.name);
+                        if (i == 0)
+                        {
+                            animation.clip = clip;
+                        }
+                    }
+                }
+
+                CreatedObject = sceneObj;
+                InitializeGltfTopLevelObject();
+            }
+            catch (Exception ex)
+            {
+                // If some failure occured during loading, clean up the GameObject that may not be explicitly parented
+                GameObject.DestroyImmediate(sceneObj);
+                CreatedObject = null;
+
+                // There is no need to explicitly destroy _assetCache.NodeCache since the GameObject
+                // for the current node should already be cleaned up and the GameObjects for the
+                // previous nodes should be parented to sceneObj so destroying sceneObj should take
+                // care of them.
+
+                if (ex is OutOfMemoryException)
+                {
+                    Resources.UnloadUnusedAssets();
+                }
+
+                Debug.Log($"ConstructScene exception caught: {ex.GetType().ToString()} for scene {_gltfFileName}");
+
+                throw;
+            }
 		}
 
 
@@ -1088,94 +1112,120 @@ namespace UnityGLTF
 			}
 
 			var nodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode" + nodeIndex) : node.Name);
-			// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
-			nodeObj.SetActive(false);
 
-			Vector3 position;
-			Quaternion rotation;
-			Vector3 scale;
-			node.GetUnityTRSProperties(out position, out rotation, out scale);
-			nodeObj.transform.localPosition = position;
-			nodeObj.transform.localRotation = rotation;
-			nodeObj.transform.localScale = scale;
+            try
+            {
+                // If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
+                nodeObj.SetActive(false);
 
-			if (node.Mesh != null)
-			{
-				await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null);
-			}
-			/* TODO: implement camera (probably a flag to disable for VR as well)
-			if (camera != null)
-			{
-				GameObject cameraObj = camera.Value.Create();
-				cameraObj.transform.parent = nodeObj.transform;
-			}
-			*/
+                Vector3 position;
+                Quaternion rotation;
+                Vector3 scale;
+                node.GetUnityTRSProperties(out position, out rotation, out scale);
+                nodeObj.transform.localPosition = position;
+                nodeObj.transform.localRotation = rotation;
+                nodeObj.transform.localScale = scale;
 
-			if (node.Children != null)
-			{
-				foreach (var child in node.Children)
-				{
-					// todo blgross: replace with an iterartive solution
-					await ConstructNode(child.Value, child.Id);
-					GameObject childObj = _assetCache.NodeCache[child.Id];
-					childObj.transform.SetParent(nodeObj.transform, false);
-				}
-			}
+                if (node.Mesh != null)
+                {
+                    await ConstructMesh(node.Mesh.Value, nodeObj.transform, node.Mesh.Id, node.Skin != null ? node.Skin.Value : null);
+                }
+                /* TODO: implement camera (probably a flag to disable for VR as well)
+                if (camera != null)
+                {
+                    GameObject cameraObj = camera.Value.Create();
+                    cameraObj.transform.parent = nodeObj.transform;
+                }
+                */
 
-			nodeObj.SetActive(true);
-			_assetCache.NodeCache[nodeIndex] = nodeObj;
+                if (node.Children != null)
+                {
+                    foreach (var child in node.Children)
+                    {
+                        // todo blgross: replace with an iterartive solution
+                        await ConstructNode(child.Value, child.Id);
+                        GameObject childObj = _assetCache.NodeCache[child.Id];
+                        childObj.transform.SetParent(nodeObj.transform, false);
+                    }
+                }
 
-			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
-			MSFT_LODExtension lodsextension = null;
-			if (_gltfRoot.ExtensionsUsed != null
-				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
-				&& node.Extensions != null
-				&& node.Extensions.ContainsKey(msft_LODExtName))
-			{
-				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
-				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
-				{
-					int lodCount = lodsextension.MeshIds.Count + 1;
-					if (!CullFarLOD)
-					{
-						//create a final lod with the mesh as the last LOD in file
-						lodCount += 1;
-					}
-					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 2];
-					List<double> lodCoverage = lodsextension.GetLODCoverage(node);
+                nodeObj.SetActive(true);
+                _assetCache.NodeCache[nodeIndex] = nodeObj;
 
-					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
-					lodGroupNodeObj.SetActive(false);
-					nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
-					MeshRenderer[] childRenders = nodeObj.GetComponentsInChildren<MeshRenderer>();
-					lods[0] = new LOD(GetLodCoverage(lodCoverage, 0), childRenders);
+                const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
+                MSFT_LODExtension lodsextension = null;
+                if (_gltfRoot.ExtensionsUsed != null
+                    && _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+                    && node.Extensions != null
+                    && node.Extensions.ContainsKey(msft_LODExtName))
+                {
+                    lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
+                    if (lodsextension != null && lodsextension.MeshIds.Count > 0)
+                    {
+                        int lodCount = lodsextension.MeshIds.Count + 1;
+                        if (!CullFarLOD)
+                        {
+                            //create a final lod with the mesh as the last LOD in file
+                            lodCount += 1;
+                        }
+                        LOD[] lods = new LOD[lodsextension.MeshIds.Count + 2];
+                        List<double> lodCoverage = lodsextension.GetLODCoverage(node);
 
-					LODGroup lodGroup = lodGroupNodeObj.AddComponent<LODGroup>();
-					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
-					{
-						int lodNodeId = lodsextension.MeshIds[i];
-						await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId);
-						int lodIndex = i + 1;
-						GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
-						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
-						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
-						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
-					}
+                        var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
 
-					if (!CullFarLOD)
-					{
-						//use the last mesh as the LOD
-						lods[lodsextension.MeshIds.Count + 1] = new LOD(0, childRenders);
-					}
+                        try
+                        {
+                            lodGroupNodeObj.SetActive(false);
+                            nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
+                            MeshRenderer[] childRenders = nodeObj.GetComponentsInChildren<MeshRenderer>();
+                            lods[0] = new LOD(GetLodCoverage(lodCoverage, 0), childRenders);
 
-					lodGroup.SetLODs(lods);
-					lodGroup.RecalculateBounds();
-					lodGroupNodeObj.SetActive(true);
-					_assetCache.NodeCache[nodeIndex] = lodGroupNodeObj;
-				}
-			}
+                            LODGroup lodGroup = lodGroupNodeObj.AddComponent<LODGroup>();
+                            for (int i = 0; i < lodsextension.MeshIds.Count; i++)
+                            {
+                                int lodNodeId = lodsextension.MeshIds[i];
+                                await ConstructNode(_gltfRoot.Nodes[lodNodeId], lodNodeId);
+                                int lodIndex = i + 1;
+                                GameObject lodNodeObj = _assetCache.NodeCache[lodNodeId];
+                                lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
+                                childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
+                                lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
+                            }
 
-		}
+                            if (!CullFarLOD)
+                            {
+                                //use the last mesh as the LOD
+                                lods[lodsextension.MeshIds.Count + 1] = new LOD(0, childRenders);
+                            }
+
+                            lodGroup.SetLODs(lods);
+                            lodGroup.RecalculateBounds();
+                            lodGroupNodeObj.SetActive(true);
+                            _assetCache.NodeCache[nodeIndex] = lodGroupNodeObj;
+                        }
+                        catch (Exception ex)
+                        {
+                            // If some failure occured during loading, clean up the GameObject that may not be explicitly parented
+                            GameObject.DestroyImmediate(lodGroupNodeObj);
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // If some failure occured during loading, clean up the GameObject that may not be explicitly parented
+                GameObject.DestroyImmediate(nodeObj);
+                _assetCache.NodeCache[nodeIndex] = null;
+
+                if (ex is OutOfMemoryException)
+                {
+                    Resources.UnloadUnusedAssets();
+                }
+
+                throw;
+            }
+        }
 
 		float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
 		{
@@ -1291,57 +1341,73 @@ namespace UnityGLTF
 
 				var primitiveObj = new GameObject("Primitive");
 
-				MaterialCacheData materialCacheData =
-					materialIndex >= 0 ? _assetCache.MaterialCache[materialIndex] : _defaultLoadedMaterial;
+                try
+                {
+                    MaterialCacheData materialCacheData =
+                    materialIndex >= 0 ? _assetCache.MaterialCache[materialIndex] : _defaultLoadedMaterial;
 
-				Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
+                    Material material = materialCacheData.GetContents(primitive.Attributes.ContainsKey(SemanticProperties.Color(0)));
 
-				Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
-				if (NeedsSkinnedMeshRenderer(primitive, skin))
-				{
-					var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
-					skinnedMeshRenderer.material = material;
-					skinnedMeshRenderer.quality = SkinQuality.Auto;
-					// TODO: add support for blend shapes/morph targets
-					//if (HasBlendShapes(primitive))
-					//	SetupBlendShapes(primitive);
-					if (HasBones(skin))
-					{
-						await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
-					}
+                    Mesh curMesh = _assetCache.MeshCache[meshId][i].LoadedMesh;
+                    if (NeedsSkinnedMeshRenderer(primitive, skin))
+                    {
+                        var skinnedMeshRenderer = primitiveObj.AddComponent<SkinnedMeshRenderer>();
+                        skinnedMeshRenderer.material = material;
+                        skinnedMeshRenderer.quality = SkinQuality.Auto;
+                        // TODO: add support for blend shapes/morph targets
+                        //if (HasBlendShapes(primitive))
+                        //	SetupBlendShapes(primitive);
+                        if (HasBones(skin))
+                        {
+                            await SetupBones(skin, primitive, skinnedMeshRenderer, primitiveObj, curMesh);
+                        }
 
-					skinnedMeshRenderer.sharedMesh = curMesh;
-				}
-				else
-				{
-					var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
-					meshRenderer.material = material;
-				}
+                        skinnedMeshRenderer.sharedMesh = curMesh;
+                    }
+                    else
+                    {
+                        var meshRenderer = primitiveObj.AddComponent<MeshRenderer>();
+                        meshRenderer.material = material;
+                    }
 
-				MeshFilter meshFilter = primitiveObj.AddComponent<MeshFilter>();
-				meshFilter.sharedMesh = curMesh;
+                    MeshFilter meshFilter = primitiveObj.AddComponent<MeshFilter>();
+                    meshFilter.sharedMesh = curMesh;
 
-				switch (Collider)
-				{
-					case ColliderType.Box:
-						var boxCollider = primitiveObj.AddComponent<BoxCollider>();
-						boxCollider.center = curMesh.bounds.center;
-						boxCollider.size = curMesh.bounds.size;
-						break;
-					case ColliderType.Mesh:
-						var meshCollider = primitiveObj.AddComponent<MeshCollider>();
-						meshCollider.sharedMesh = curMesh;
-						break;
-					case ColliderType.MeshConvex:
-						var meshConvexCollider = primitiveObj.AddComponent<MeshCollider>();
-						meshConvexCollider.sharedMesh = curMesh;
-						meshConvexCollider.convex = true;
-						break;
-				}
+                    switch (Collider)
+                    {
+                        case ColliderType.Box:
+                            var boxCollider = primitiveObj.AddComponent<BoxCollider>();
+                            boxCollider.center = curMesh.bounds.center;
+                            boxCollider.size = curMesh.bounds.size;
+                            break;
+                        case ColliderType.Mesh:
+                            var meshCollider = primitiveObj.AddComponent<MeshCollider>();
+                            meshCollider.sharedMesh = curMesh;
+                            break;
+                        case ColliderType.MeshConvex:
+                            var meshConvexCollider = primitiveObj.AddComponent<MeshCollider>();
+                            meshConvexCollider.sharedMesh = curMesh;
+                            meshConvexCollider.convex = true;
+                            break;
+                    }
 
-				primitiveObj.transform.SetParent(parent, false);
-				primitiveObj.SetActive(true);
-				_assetCache.MeshCache[meshId][i].PrimitiveGO = primitiveObj;
+                    primitiveObj.transform.SetParent(parent, false);
+                    primitiveObj.SetActive(true);
+                    _assetCache.MeshCache[meshId][i].PrimitiveGO = primitiveObj;
+                }
+                catch (Exception ex)
+                {
+                    // If some failure occured during loading, clean up the GameObject that may not be explicitly parented
+                    GameObject.DestroyImmediate(primitiveObj);
+                    _assetCache.MeshCache[meshId][i].PrimitiveGO = null;
+
+                    if (ex is OutOfMemoryException)
+                    {
+                        Resources.UnloadUnusedAssets();
+                    }
+
+                    throw;
+                }
 			}
 		}
 
