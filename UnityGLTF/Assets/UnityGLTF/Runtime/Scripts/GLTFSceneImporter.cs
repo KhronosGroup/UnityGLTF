@@ -325,7 +325,7 @@ namespace UnityGLTF
 
 				cancellationToken.ThrowIfCancellationRequested();
 
-				if (_gltfRoot.ExtensionsRequired.Contains("KHR_draco_mesh_compression"))
+				if (_gltfRoot.ExtensionsRequired != null && _gltfRoot.ExtensionsRequired.Contains("KHR_draco_mesh_compression"))
 					throw new NotSupportedException("Draco compression (using KHR_draco_mesh_compression) isn't currently supported. Use glTFast instead for loading meshes that use Draco compression.");
 
 				if (_assetCache == null)
@@ -760,7 +760,7 @@ namespace UnityGLTF
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
-			void CheckMimeTypeAndLoadImage(byte[] data)
+			async Task CheckMimeTypeAndLoadImage(byte[] data)
 			{
 				switch (image.MimeType)
 				{
@@ -770,7 +770,19 @@ namespace UnityGLTF
 						texture.LoadImage(data, markGpuOnly);
 						break;
 					case "image/ktx2":
+#if HAVE_KTX
+						// TODO doesn't work yet, blocks?
+						// var ktxTexture = new KtxUnity.KtxTexture();
+						// using(var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
+						// {
+						// 	var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
+						// 	var tmp = texture;
+						// 	texture = resultTextureData.texture;
+						// 	texture.name = tmp.name;
+						// }
+#else
 						Debug.LogWarning("The KTX2 Texture Format (KHR_texture_basisu) isn't supported right now. The texture " + texture.name + " won't load and will be black. Try using glTFast instead.");
+#endif
 						break;
 				}
 			}
@@ -780,7 +792,7 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					CheckMimeTypeAndLoadImage(memoryStream.ToArray());
+					await CheckMimeTypeAndLoadImage(memoryStream.ToArray());
 				}
 			}
 			else
@@ -795,7 +807,7 @@ namespace UnityGLTF
 				stream.Read(buffer, 0, (int)stream.Length);
 
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				CheckMimeTypeAndLoadImage(buffer);
+				await CheckMimeTypeAndLoadImage(buffer);
 			}
 
 			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");

@@ -1,6 +1,9 @@
 {
     "name": "UnityGLTFScripts",
-    "references": [],
+    "rootNamespace": "",
+    "references": [
+        "GUID:3d354272d3f2f4c3387dbccbaebd0f60"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -10,5 +13,12 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [
+        {
+            "name": "com.atteneder.ktx",
+            "expression": "1.0.0",
+            "define": "HAVE_KTX"
+        }
+    ],
+    "noEngineReferences": false
 }
