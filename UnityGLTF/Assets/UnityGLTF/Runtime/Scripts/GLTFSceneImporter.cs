@@ -2178,7 +2178,7 @@ namespace UnityGLTF
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
-			return texture.Source.Id;
+			return texture.Source?.Id ?? 0;
 		}
 
 		/// <summary>

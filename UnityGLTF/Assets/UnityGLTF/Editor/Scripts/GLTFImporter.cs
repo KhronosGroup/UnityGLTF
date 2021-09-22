@@ -43,6 +43,16 @@ namespace UnityGLTF
             string sceneName = null;
             GameObject gltfScene = null;
             UnityEngine.Mesh[] meshes = null;
+
+            var uniqueNames = new List<string>() { "main asset" };
+
+            string GetUniqueName(string desiredName)
+            {
+	            var uniqueName = ObjectNames.GetUniqueName(uniqueNames.ToArray(), desiredName);
+	            if (!uniqueNames.Contains(uniqueName)) uniqueNames.Add(uniqueName);
+	            return uniqueName;
+            }
+
             try
             {
                 sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
@@ -75,7 +85,6 @@ namespace UnityGLTF
                 gltfScene.transform.position = Vector3.zero;
 
                 // Get meshes
-                var meshNames = new List<string>();
                 var meshHash = new HashSet<UnityEngine.Mesh>();
                 var meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
                 meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>().Select(x => (x.gameObject, x.sharedMesh)));
@@ -83,6 +92,10 @@ namespace UnityGLTF
                 meshes = meshFilters.Select(mf =>
                 {
                     var mesh = mf.sharedMesh;
+                    if (meshHash.Contains(mesh))
+	                    return null;
+                    meshHash.Add(mesh);
+
                     vertexBuffer.Clear();
                     mesh.GetVertices(vertexBuffer);
                     for (var i = 0; i < vertexBuffer.Count; ++i)
@@ -120,21 +133,17 @@ namespace UnityGLTF
                         collider.sharedMesh = mesh;
                     }
 
-                    if (meshHash.Add(mesh))
-                    {
-                        var meshName = string.IsNullOrEmpty(mesh.name) ? mf.gameObject.name : mesh.name;
-                        mesh.name = ObjectNames.GetUniqueName(meshNames.ToArray(), meshName);
-                        meshNames.Add(mesh.name);
-                    }
+	                var meshName = string.IsNullOrEmpty(mesh.name) ? mf.gameObject.name : mesh.name;
+	                mesh.name = meshName;
 
                     return mesh;
-                }).ToArray();
+                }).Where(x => x).ToArray();
 
                 var animations = gltfScene.GetComponentsInChildren<Animation>();
                 var clips = animations.SelectMany(x => AnimationUtility.GetAnimationClips(x.gameObject));
                 foreach (var clip in clips)
                 {
-	                ctx.AddObjectToAsset(clip.name, clip);
+	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
                 }
 
                 var renderers = gltfScene.GetComponentsInChildren<Renderer>();
@@ -142,7 +151,6 @@ namespace UnityGLTF
                 if (_importMaterials)
                 {
                     // Get materials
-                    var materialNames = new List<string>();
                     var materialHash = new HashSet<UnityEngine.Material>();
                     var materials = renderers.SelectMany(r =>
                     {
@@ -153,15 +161,12 @@ namespace UnityGLTF
                                 var matName = string.IsNullOrEmpty(mat.name) ? mat.shader.name : mat.name;
                                 if (matName == mat.shader.name)
                                 {
-                                    matName = matName.Substring(Mathf.Min(matName.LastIndexOf("/") + 1, matName.Length - 1));
+                                    matName = matName.Substring(Mathf.Min(matName.LastIndexOf("/", StringComparison.Ordinal) + 1, matName.Length - 1));
                                 }
 
                                 // Ensure name is unique
                                 matName = ObjectNames.NicifyVariableName(matName);
-                                matName = ObjectNames.GetUniqueName(materialNames.ToArray(), matName);
-
                                 mat.name = matName;
-                                materialNames.Add(matName);
                             }
 
                             return mat;
@@ -169,7 +174,6 @@ namespace UnityGLTF
                     }).Distinct().ToArray();
 
                     // Get textures
-                    var textureNames = new List<string>();
                     var textureHash = new HashSet<Texture2D>();
                     var texMaterialMap = new Dictionary<Texture2D, List<TexMaterialMap>>();
                     var textures = materials.SelectMany(mat =>
@@ -196,10 +200,8 @@ namespace UnityGLTF
 
                                         // Ensure name is unique
                                         texName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(texName));
-                                        texName = ObjectNames.GetUniqueName(textureNames.ToArray(), texName);
 
                                         tex.name = texName;
-                                        textureNames.Add(texName);
                                         matTextures.Add(tex);
                                     }
 
@@ -233,7 +235,7 @@ namespace UnityGLTF
                             // File.WriteAllBytes(texPath, _useJpgTextures ? tex.EncodeToJPG() : tex.EncodeToPNG());
                             //
                             // AssetDatabase.ImportAsset(texPath);
-                            ctx.AddObjectToAsset(tex.name, tex);
+                            ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
                         }
                     }
 
@@ -265,7 +267,7 @@ namespace UnityGLTF
                             //         r.sharedMaterials = sharedMaterials;
                             //     }
                             // });
-                            ctx.AddObjectToAsset(mat.name, mat);
+                            ctx.AddObjectToAsset(GetUniqueName(mat.name), mat);
 
                             // Fix textures
                             // HACK: This needs to be a delayed call.
@@ -349,8 +351,9 @@ namespace UnityGLTF
 			// Add meshes
 			foreach (var mesh in meshes)
 			{
-				try {
-					ctx.AddObjectToAsset("mesh " + mesh.name, mesh);
+				try
+				{
+					ctx.AddObjectToAsset(GetUniqueName("mesh-" + mesh.name), mesh);
 				} catch(System.InvalidOperationException e) {
 					Debug.LogWarning(e.ToString(), mesh);
 				}
