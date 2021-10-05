@@ -3090,7 +3090,7 @@ namespace UnityGLTF
 #if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = AnimationUtility.GetAnimationClips(transform.gameObject);
                 var animatorController = animator.runtimeAnimatorController as AnimatorController;
-
+Debug.Log("animator: " + animator + "=> " + animatorController);
                 ExportAnimationClips(transform, clips, animatorController);
 #endif
 			}
@@ -3129,6 +3129,7 @@ namespace UnityGLTF
 			/// <summary>Creates GLTFAnimation for each clip and adds it to the _root</summary>
 			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
 			{
+				Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
 				if(animatorController)
 				{
 					for (int i = 0; i < clips.Length; i++)
@@ -3139,12 +3140,14 @@ namespace UnityGLTF
 						// if we want to handle this here, we need to find all states that match this clip
 						foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
 						{
-							GLTFAnimation anim = new GLTFAnimation();
+							// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
+							var existingAnim = _root.Animations.FirstOrDefault(x => x.Name == state.name);
+							GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
 							anim.Name = state.name;
 							var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
 							ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
 
-							if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
+							if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
 							{
 								_root.Animations.Add(anim);
 							}
@@ -3156,12 +3159,12 @@ namespace UnityGLTF
 					for (int i = 0; i < clips.Length; i++)
 					{
 						if(!clips[i]) continue;
-
-						GLTFAnimation anim = new GLTFAnimation();
+						var existingAnim = _root.Animations.FirstOrDefault(x => x.Name == clips[i].name);
+						GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
 						anim.Name = clips[i].name;
 						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, 1);
 
-						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
+						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
 						{
 							_root.Animations.Add(anim);
 						}
