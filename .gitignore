@@ -152,11 +152,13 @@ _pkginfo.txt
 
 # Current_Package folder
 current-package/
-UnityGLTF/Assets/UnityGLTF/Runtime/Plugins/uap10.0.10586
-UnityGLTF/Assets/UnityGLTF/Runtime/Plugins/uap10.0.10586.meta
+**/Plugins/uap10.0.10586
+**/Plugins/uap10.0.10586.meta
 TestProjects/*/Library/
 TestProjects/*/Temp/
 .vscode/
 TestProjects/*/*.sln
 TestProjects/*/*.csproj
-GLTFSerialization/.idea
+**/GLTFSerialization/.idea
+**/GLTFSerialization/bin~
+**/GLTFSerialization/obj~

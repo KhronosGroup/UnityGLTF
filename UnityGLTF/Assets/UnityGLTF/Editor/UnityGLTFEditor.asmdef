@@ -1,6 +1,8 @@
 {
     "name": "UnityGLTFEditor",
+    "rootNamespace": "",
     "references": [
+        "GLTFSerialization",
         "UnityGLTFScripts"
     ],
     "includePlatforms": [
@@ -14,5 +16,6 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

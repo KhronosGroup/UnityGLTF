@@ -2,6 +2,7 @@
     "name": "UnityGLTFScripts",
     "rootNamespace": "",
     "references": [
+        "GUID:40f39bff7bc9be34182ebe488fcf8228",
         "GUID:3d354272d3f2f4c3387dbccbaebd0f60"
     ],
     "includePlatforms": [],
