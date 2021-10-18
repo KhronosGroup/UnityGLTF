@@ -755,21 +755,16 @@ namespace UnityGLTF
 		}
 
 
-		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
+		async Task CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, byte[] data, bool markGpuOnly)
 		{
-			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
-			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
-
-			async Task CheckMimeTypeAndLoadImage(byte[] data)
+			switch (image.MimeType)
 			{
-				switch (image.MimeType)
-				{
-					case "image/png":
-					case "image/jpeg":
-						//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-						texture.LoadImage(data, markGpuOnly);
-						break;
-					case "image/ktx2":
+				case "image/png":
+				case "image/jpeg":
+					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
+					texture.LoadImage(data, markGpuOnly);
+					break;
+				case "image/ktx2":
 #if HAVE_KTX
 						// TODO doesn't work yet, blocks?
 						// var ktxTexture = new KtxUnity.KtxTexture();
@@ -781,18 +776,24 @@ namespace UnityGLTF
 						// 	texture.name = tmp.name;
 						// }
 #else
-						Debug.LogWarning("The KTX2 Texture Format (KHR_texture_basisu) isn't supported right now. The texture " + texture.name + " won't load and will be black. Try using glTFast instead.");
+					Debug.LogWarning("The KTX2 Texture Format (KHR_texture_basisu) isn't supported right now. The texture " + texture.name + " won't load and will be black. Try using glTFast instead.");
+					await Task.CompletedTask;
 #endif
-						break;
-				}
+					break;
 			}
+		}
+
+		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
+		{
+			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
+			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
 			if (stream is MemoryStream)
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					await CheckMimeTypeAndLoadImage(memoryStream.ToArray());
+					await CheckMimeTypeAndLoadImage(image, texture, memoryStream.ToArray(), markGpuOnly);
 				}
 			}
 			else
@@ -807,7 +808,7 @@ namespace UnityGLTF
 				stream.Read(buffer, 0, (int)stream.Length);
 
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				await CheckMimeTypeAndLoadImage(buffer);
+				await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
 			}
 
 			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");
