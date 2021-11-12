@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.25] - 2021-11-12
+- fixed imported object names potentially not being unique
+- fixed normal map export format when build target is Android
+- fixed export of animations when multiple exported objects share the same animation name (gets merged on export now)
+- moved GLTF serialization from DLL to package to improve platform support (Unity will compile this for all platforms, no need for special DLLs)
+- added sparse accessor export for blendshape positions/normals
+- added ability to generate secondary UVs in UnityGLTF importer
+- added warning when trying to use KTX2 textures which is currently not supported
+
 ## [1.0.4-preview.24] - 2021-06-14
 - fix: don't attempt to export blendshape normals/tangents when mesh doesn't have them
 - fix: warn and skip null bones in SkinnedMeshRenderer export
