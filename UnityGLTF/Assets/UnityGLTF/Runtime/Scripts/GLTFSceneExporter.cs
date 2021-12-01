@@ -60,7 +60,8 @@ namespace UnityGLTF
 			Emission,
 			MetallicGloss,
 			Light,
-			Occlusion
+			Occlusion,
+			MetallicGloss_DontConvert,
 		}
 
 		private struct ImageInfo
@@ -542,7 +543,10 @@ namespace UnityGLTF
 					switch (textureMapType)
 					{
 						case TextureMapType.MetallicGloss:
-							ExportMetallicGlossTexture(image, outputPath);
+							ExportMetallicGlossTexture(image, outputPath, true);
+							break;
+						case TextureMapType.MetallicGloss_DontConvert:
+							ExportMetallicGlossTexture(image, outputPath, false);
 							break;
 						case TextureMapType.Bump:
 							ExportNormalTexture(image, outputPath);
@@ -562,11 +566,14 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="texture">Unity's metallic-gloss texture to be exported</param>
 		/// <param name="outputPath">The location to export the texture</param>
-		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath)
+		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
 		{
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
-			Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+			if (swapMetalGlossChannels)
+				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+			else
+				Graphics.Blit(texture, destRenderTexture);
 
 			var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false, true);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
@@ -1708,6 +1715,7 @@ namespace UnityGLTF
 		private PbrMetallicRoughness ExportPBRMetallicRoughness(Material material)
 		{
 			var pbr = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
+			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
 
 			if (material.HasProperty("_BaseColor"))
 			{
@@ -1761,7 +1769,7 @@ namespace UnityGLTF
 				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
 				float smoothness = material.GetFloat(smoothnessPropertyName);
 				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
-				if(material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal))
+				if(isGltfPbrMetallicRoughnessShader)
 					smoothness = 1 - smoothness;
 				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - smoothness;
 			}
@@ -1774,7 +1782,7 @@ namespace UnityGLTF
 				{
 					if(mrTex is Texture2D)
 					{
-						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
+						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, isGltfPbrMetallicRoughnessShader ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
 						if (material.IsKeywordEnabled("_METALLICGLOSSMAP"))
 							pbr.MetallicFactor = 1.0f;
 						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
@@ -2244,6 +2252,11 @@ namespace UnityGLTF
 				{
 					case TextureMapType.MetallicGloss:
 					Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+					textureHasAlpha = false;
+					break;
+					case TextureMapType.MetallicGloss_DontConvert:
+					GL.sRGBWrite = false; // seems we need to convert here, otherwise color space is wrong
+					Graphics.Blit(texture, destRenderTexture);
 					textureHasAlpha = false;
 					break;
 					case TextureMapType.Bump:
