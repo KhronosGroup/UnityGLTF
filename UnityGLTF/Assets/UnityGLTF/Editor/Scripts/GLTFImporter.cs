@@ -84,6 +84,16 @@ namespace UnityGLTF
                 // Zero position
                 gltfScene.transform.position = Vector3.zero;
 
+                // scale all localPosition values if necessary
+                if (!Mathf.Approximately(_scaleFactor, 1))
+                {
+	                var transforms = gltfScene.GetComponentsInChildren<Transform>();
+	                foreach (var tr in transforms)
+	                {
+		                tr.localPosition *= _scaleFactor;
+	                }
+                }
+
                 // Get meshes
                 var meshHash = new HashSet<UnityEngine.Mesh>();
                 var meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
