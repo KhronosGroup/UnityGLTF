@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.27] - 2021-12-02
+- fixed `_scaleFactor` not being applied to child transform positions for editor import
+- fixed roundtrip issues when exporting models that have been imported by UnityGLTF or glTFast
+- fixed metallicGlossMap being in the wrong color space on export if emission texture was also used
+- fixed light/occlusion map being in the wrong color space during roundtrip
+
 ## [1.0.4-preview.26] - 2021-11-16
 - fixed objects with EditorOnly tag being exported, are skipped now
 
