@@ -2257,6 +2257,8 @@ namespace UnityGLTF
 					textureHasAlpha = false;
 					break;
 					case TextureMapType.MetallicGloss_DontConvert:
+					case TextureMapType.Light:
+					case TextureMapType.Occlusion:
 					GL.sRGBWrite = false; // seems we need to convert here, otherwise color space is wrong
 					Graphics.Blit(texture, destRenderTexture);
 					textureHasAlpha = false;
