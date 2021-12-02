@@ -1716,6 +1716,7 @@ namespace UnityGLTF
 		{
 			var pbr = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
 			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
+			var isGlTFastShader = material.shader.name.Equals("glTF/PbrMetallicRoughness", StringComparison.Ordinal);
 
 			if (material.HasProperty("_BaseColor"))
 			{
@@ -1758,18 +1759,24 @@ namespace UnityGLTF
 				}
 			}
 
-			if (material.HasProperty("_Metallic") && !material.IsKeywordEnabled("_METALLICGLOSSMAP"))
+            var ignoreMetallicFactor = material.IsKeywordEnabled("_METALLICGLOSSMAP") && !isGltfPbrMetallicRoughnessShader && !isGlTFastShader;
+			if (material.HasProperty("_Metallic") && !ignoreMetallicFactor)
 			{
 				pbr.MetallicFactor = material.GetFloat("_Metallic");
 			}
 
-			if (material.HasProperty("_Glossiness") || material.HasProperty("_Smoothness"))
+			if (material.HasProperty("_Roughness"))
+			{
+				float roughness = material.GetFloat("_Roughness");
+				pbr.RoughnessFactor = roughness;
+			}
+			else if (material.HasProperty("_Glossiness") || material.HasProperty("_Smoothness"))
 			{
 				var smoothnessPropertyName = material.HasProperty("_Smoothness") ? "_Smoothness" : "_Glossiness";
 				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
 				float smoothness = material.GetFloat(smoothnessPropertyName);
 				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
-				if(isGltfPbrMetallicRoughnessShader)
+				if (isGltfPbrMetallicRoughnessShader)
 					smoothness = 1 - smoothness;
 				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - smoothness;
 			}
@@ -1782,10 +1789,10 @@ namespace UnityGLTF
 				{
 					if(mrTex is Texture2D)
 					{
-						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, isGltfPbrMetallicRoughnessShader ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
+						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, (isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
 						// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
 						// that's not true for the gltf shaders though, so we keep the value there.
-						if (material.IsKeywordEnabled("_METALLICGLOSSMAP") && !isGltfPbrMetallicRoughnessShader)
+						if (ignoreMetallicFactor)
 							pbr.MetallicFactor = 1.0f;
 						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 					}
