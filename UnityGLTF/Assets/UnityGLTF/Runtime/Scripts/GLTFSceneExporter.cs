@@ -187,6 +187,11 @@ namespace UnityGLTF
 			get { return settings.BakeSkinnedMeshes; }
 			set { settings.BakeSkinnedMeshes = value; }
 		}
+		public static bool ExportDisabledGameObjects
+		{
+			get { return settings.ExportDisabledGameObjects; }
+			set { settings.ExportDisabledGameObjects = value; }
+		}
 
 #if UNITY_EDITOR
 		public static string SaveFolderPath
@@ -3218,8 +3223,6 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 			}
 		}
 
-
-
 		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed = 1f)
 		{
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
@@ -3230,11 +3233,6 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 			Dictionary<string, TargetCurveSet> targetCurvesBinding = new Dictionary<string, TargetCurveSet>();
 			CollectClipCurves(clip, ref targetCurvesBinding);
 
-			//foreach(var str in targetCurvesBinding)
-			//{
-			//	Debug.Log(clip.name + ": " + transform.name + ": " + str);
-			//}
-
 			// Baking needs all properties, fill missing curves with transform data in 2 keyframes (start, endTime)
 			// where endTime is clip duration
 			// Note: we should avoid creating curves for a property if none of it's components is animated
@@ -3243,7 +3241,6 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 
 			if (BakeAnimationData)
 			{
-				// Debug.Log("<b>Animated Properties: " + targetCurvesBinding.Count + "</b>");
 				// Bake animation for all animated nodes
 				foreach (string target in targetCurvesBinding.Keys)
 				{
@@ -3254,16 +3251,13 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 					}
 
 					TargetCurveSet current = targetCurvesBinding[target];
-					int haveTranslationCurves = current.translationCurves[0] != null ? current.translationCurves.Length : 0;
-					int haveScaleCurves = current.scaleCurves[0] != null ? current.scaleCurves.Length : 0;
-					int haveRotationCurves = current.rotationCurves[0] != null ? current.rotationCurves.Length : 0;
 
 					// Initialize data
 					// Bake and populate animation data
 					float[] times = null;
 					Vector3[] positions = null;
-					Vector3[] scales = null;
 					Vector4[] rotations = null;
+					Vector3[] scales = null;
 					float[] weights = null;
 
 					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
@@ -3272,124 +3266,11 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 						Debug.LogWarning("Warning: Export failed for animation curve " + target + " in " + clip + " from " + transform, transform);
 					}
 
-					int channelTargetId = getTargetIdFromTransform(ref targetTr);
-
 					bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
 
 					if(haveAnimation)
 					{
-						AccessorId timeAccessor = ExportAccessor(times);
-
-						// Translation
-						if(positions != null)
-						{
-							AnimationChannel Tchannel = new AnimationChannel();
-							AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-							TchannelTarget.Path = GLTFAnimationChannelPath.translation;
-							TchannelTarget.Node = new NodeId
-							{
-								Id = channelTargetId,
-								Root = _root
-							};
-
-							Tchannel.Target = TchannelTarget;
-
-							AnimationSampler Tsampler = new AnimationSampler();
-							Tsampler.Input = timeAccessor;
-							Tsampler.Output = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(positions, SchemaExtensions.CoordinateSpaceConversionScale));
-							Tchannel.Sampler = new AnimationSamplerId
-							{
-								Id = animation.Samplers.Count,
-								GLTFAnimation = animation,
-								Root = _root
-							};
-
-							animation.Samplers.Add(Tsampler);
-							animation.Channels.Add(Tchannel);
-						}
-
-						// Rotation
-						if(rotations != null)
-						{
-							AnimationChannel Rchannel = new AnimationChannel();
-							AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
-							RchannelTarget.Path = GLTFAnimationChannelPath.rotation;
-							RchannelTarget.Node = new NodeId
-							{
-								Id = channelTargetId,
-								Root = _root
-							};
-
-							Rchannel.Target = RchannelTarget;
-
-							AnimationSampler Rsampler = new AnimationSampler();
-							Rsampler.Input = timeAccessor; // Float, for time
-							Rsampler.Output = ExportAccessor(rotations, true); // Vec4 for
-							Rchannel.Sampler = new AnimationSamplerId
-							{
-								Id = animation.Samplers.Count,
-								GLTFAnimation = animation,
-								Root = _root
-							};
-
-							animation.Samplers.Add(Rsampler);
-							animation.Channels.Add(Rchannel);
-						}
-
-						// Scale
-						if(scales != null)
-						{
-							AnimationChannel Schannel = new AnimationChannel();
-							AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
-							SchannelTarget.Path = GLTFAnimationChannelPath.scale;
-							SchannelTarget.Node = new NodeId
-							{
-								Id = channelTargetId,
-								Root = _root
-							};
-
-							Schannel.Target = SchannelTarget;
-
-							AnimationSampler Ssampler = new AnimationSampler();
-							Ssampler.Input = timeAccessor; // Float, for time
-							Ssampler.Output = ExportAccessor(scales); // Vec3 for scale
-							Schannel.Sampler = new AnimationSamplerId
-							{
-								Id = animation.Samplers.Count,
-								GLTFAnimation = animation,
-								Root = _root
-							};
-
-							animation.Samplers.Add(Ssampler);
-							animation.Channels.Add(Schannel);
-						}
-
-						if (weights != null)
-						{
-							AnimationChannel Wchannel = new AnimationChannel();
-							AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();
-							WchannelTarget.Path = GLTFAnimationChannelPath.weights;
-							WchannelTarget.Node = new NodeId()
-							{
-								Id = channelTargetId,
-								Root = _root
-							};
-
-							Wchannel.Target = WchannelTarget;
-
-							AnimationSampler Wsampler = new AnimationSampler();
-							Wsampler.Input = timeAccessor;
-							Wsampler.Output = ExportAccessor(weights);
-							Wchannel.Sampler = new AnimationSamplerId()
-							{
-								Id = animation.Samplers.Count,
-								GLTFAnimation = animation,
-								Root = _root
-							};
-
-							animation.Samplers.Add(Wsampler);
-							animation.Channels.Add(Wchannel);
-						}
+						AddAnimationData(targetTr, ref animation, times, positions, rotations, scales, weights);
 					}
 				}
 			}
@@ -3398,6 +3279,130 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 				Debug.LogError("Only baked animation is supported for now. Skipping animation");
 			}
 
+		}
+
+		public void AddAnimationData(
+			Transform target,
+			ref GLTF.Schema.GLTFAnimation animation,
+			float[] times = null,
+			Vector3[] positions = null,
+			Vector4[] rotations = null,
+			Vector3[] scales = null,
+			float[] weights = null)
+		{
+			int channelTargetId = getTargetIdFromTransform(ref target);
+			AccessorId timeAccessor = ExportAccessor(times);
+
+			// Translation
+			if(positions != null)
+			{
+				AnimationChannel Tchannel = new AnimationChannel();
+				AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
+				TchannelTarget.Path = GLTFAnimationChannelPath.translation;
+				TchannelTarget.Node = new NodeId
+				{
+					Id = channelTargetId,
+					Root = _root
+				};
+
+				Tchannel.Target = TchannelTarget;
+
+				AnimationSampler Tsampler = new AnimationSampler();
+				Tsampler.Input = timeAccessor;
+				Tsampler.Output = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(positions, SchemaExtensions.CoordinateSpaceConversionScale));
+				Tchannel.Sampler = new AnimationSamplerId
+				{
+					Id = animation.Samplers.Count,
+					GLTFAnimation = animation,
+					Root = _root
+				};
+
+				animation.Samplers.Add(Tsampler);
+				animation.Channels.Add(Tchannel);
+			}
+
+			// Rotation
+			if(rotations != null)
+			{
+				AnimationChannel Rchannel = new AnimationChannel();
+				AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
+				RchannelTarget.Path = GLTFAnimationChannelPath.rotation;
+				RchannelTarget.Node = new NodeId
+				{
+					Id = channelTargetId,
+					Root = _root
+				};
+
+				Rchannel.Target = RchannelTarget;
+
+				AnimationSampler Rsampler = new AnimationSampler();
+				Rsampler.Input = timeAccessor; // Float, for time
+				Rsampler.Output = ExportAccessor(rotations, true); // Vec4 for
+				Rchannel.Sampler = new AnimationSamplerId
+				{
+					Id = animation.Samplers.Count,
+					GLTFAnimation = animation,
+					Root = _root
+				};
+
+				animation.Samplers.Add(Rsampler);
+				animation.Channels.Add(Rchannel);
+			}
+
+			// Scale
+			if(scales != null)
+			{
+				AnimationChannel Schannel = new AnimationChannel();
+				AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
+				SchannelTarget.Path = GLTFAnimationChannelPath.scale;
+				SchannelTarget.Node = new NodeId
+				{
+					Id = channelTargetId,
+					Root = _root
+				};
+
+				Schannel.Target = SchannelTarget;
+
+				AnimationSampler Ssampler = new AnimationSampler();
+				Ssampler.Input = timeAccessor; // Float, for time
+				Ssampler.Output = ExportAccessor(scales); // Vec3 for scale
+				Schannel.Sampler = new AnimationSamplerId
+				{
+					Id = animation.Samplers.Count,
+					GLTFAnimation = animation,
+					Root = _root
+				};
+
+				animation.Samplers.Add(Ssampler);
+				animation.Channels.Add(Schannel);
+			}
+
+			if (weights != null)
+			{
+				AnimationChannel Wchannel = new AnimationChannel();
+				AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();
+				WchannelTarget.Path = GLTFAnimationChannelPath.weights;
+				WchannelTarget.Node = new NodeId()
+				{
+					Id = channelTargetId,
+					Root = _root
+				};
+
+				Wchannel.Target = WchannelTarget;
+
+				AnimationSampler Wsampler = new AnimationSampler();
+				Wsampler.Input = timeAccessor;
+				Wsampler.Output = ExportAccessor(weights);
+				Wchannel.Sampler = new AnimationSamplerId()
+				{
+					Id = animation.Samplers.Count,
+					GLTFAnimation = animation,
+					Root = _root
+				};
+
+				animation.Samplers.Add(Wsampler);
+				animation.Channels.Add(Wchannel);
+			}
 		}
 
 		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
@@ -3640,6 +3645,18 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 				}
 			}
 
+			RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
+
+			return true;
+		}
+
+		public void RemoveUnneededKeyframes(ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights, ref int weightCount)
+		{
+			var haveTranslationKeys = positions?.Any() ?? false;
+			var haveRotationKeys = rotations?.Any() ?? false;
+			var haveScaleKeys = scales?.Any() ?? false;
+			var haveWeightKeys = weights?.Any() ?? false;
+
 			// remove keys again where prev/next keyframe are identical
 			List<float> t2 = new List<float>();
 			List<Vector3> p2 = new List<Vector3>();
@@ -3690,8 +3707,6 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 			if (haveRotationKeys) rotations = r2.ToArray();
 			if (haveScaleKeys) scales = s2.ToArray();
 			if (haveWeightKeys) weights = w2.ToArray();
-
-			return true;
 		}
 
 		private UnityEngine.Mesh getMesh(GameObject gameObject)
@@ -4123,6 +4138,5 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 
 			return id;
 		}
-
 	}
 }
