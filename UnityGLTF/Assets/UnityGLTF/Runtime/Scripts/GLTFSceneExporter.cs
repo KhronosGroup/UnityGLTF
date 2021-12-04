@@ -35,11 +35,14 @@ namespace UnityGLTF
 			if(settings.UseMainCameraVisibility)
 				ExportLayers = Camera.main ? Camera.main.cullingMask : -1;
 		}
+
+		public GLTFSceneExporter.AfterSceneExportDelegate AfterSceneExport;
 	}
 
 	public class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
+		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 
 		private enum IMAGETYPE
 		{
@@ -339,6 +342,9 @@ namespace UnityGLTF
 					ExportSkinFromNode(t);
 				}
 			}
+
+			if (_exportOptions.AfterSceneExport != null)
+				_exportOptions.AfterSceneExport(this, _root);
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
