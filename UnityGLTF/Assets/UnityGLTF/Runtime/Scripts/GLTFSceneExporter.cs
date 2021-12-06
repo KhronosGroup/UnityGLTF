@@ -990,7 +990,7 @@ namespace UnityGLTF
 			var nonPrims = new List<GameObject>(childCount);
 
 			// add another primitive if the root object also has a mesh
-			if (transform.gameObject.activeSelf)
+			if (transform.gameObject.activeSelf || ExportDisabledGameObjects)
 			{
 				if (ContainsValidRenderer(transform.gameObject))
 				{
@@ -1001,7 +1001,7 @@ namespace UnityGLTF
 			{
 				var go = transform.GetChild(i).gameObject;
 
-				// This seems to be a performance optimization but results in transforms that are detected as "primtives" not being animated
+				// This seems to be a performance optimization but results in transforms that are detected as "primitives" not being animated
 				// if (IsPrimitive(go))
 				// 	 prims.Add(go);
 				// else

@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "GUID:40f39bff7bc9be34182ebe488fcf8228",
-        "GUID:3d354272d3f2f4c3387dbccbaebd0f60"
+        "GUID:3d354272d3f2f4c3387dbccbaebd0f60",
+        "GUID:f06555f75b070af458a003d92f9efb00"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -19,6 +20,11 @@
             "name": "com.atteneder.ktx",
             "expression": "1.0.0",
             "define": "HAVE_KTX"
+        },
+        {
+            "name": "com.unity.timeline",
+            "expression": "1.0.0",
+            "define": "HAVE_TIMELINE"
         }
     ],
     "noEngineReferences": false
