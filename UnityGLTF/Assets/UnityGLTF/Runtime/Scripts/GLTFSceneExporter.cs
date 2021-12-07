@@ -3216,17 +3216,18 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 #endif
 		}
 
-		private int getTargetIdFromTransform(ref Transform transform)
+		public int GetNodeIdFromTransform(Transform transform)
+		{
+			return getTargetIdFromTransform(transform);
+		}
+
+		private int getTargetIdFromTransform(Transform transform)
 		{
 			if (_exportedTransforms.ContainsKey(transform.GetInstanceID()))
 			{
 				return _exportedTransforms[transform.GetInstanceID()];
 			}
-			else
-			{
-				Debug.LogError("Transform is not part of _exportedTransforms: " + transform.name + " " + transform.GetInstanceID(), transform);
-				return 0;
-			}
+			return -1;
 		}
 
 		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed = 1f)
@@ -3296,7 +3297,12 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 			Vector3[] scales = null,
 			float[] weights = null)
 		{
-			int channelTargetId = getTargetIdFromTransform(ref target);
+			int channelTargetId = getTargetIdFromTransform(target);
+			if (channelTargetId < 0)
+			{
+				Debug.LogError("Transform is not part of _exportedTransforms: " + target.name + " " + target.GetInstanceID(), target);
+				return;
+			}
 			AccessorId timeAccessor = ExportAccessor(times);
 
 			// Translation
