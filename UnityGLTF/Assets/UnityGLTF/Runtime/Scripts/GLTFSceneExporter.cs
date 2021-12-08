@@ -44,6 +44,8 @@ namespace UnityGLTF
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 
+		public Texture GetTexture(int id) => _textures[id];
+
 		private enum IMAGETYPE
 		{
 			RGB,
