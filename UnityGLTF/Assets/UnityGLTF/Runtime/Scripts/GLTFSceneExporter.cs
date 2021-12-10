@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
 using CameraType = GLTF.Schema.CameraType;
+using Object = UnityEngine.Object;
 using WrapMode = GLTF.Schema.WrapMode;
 
 #if ANIMATION_EXPORT_SUPPORTED
@@ -1498,9 +1499,15 @@ namespace UnityGLTF
 						var tex = materialObj.GetTexture(name);
 						if (tex)
 						{
-							var isNormalMap = false;// tex.name.EndsWith("Bush_normal", StringComparison.OrdinalIgnoreCase); //.graphicsFormat.ToString().EndsWith("Norm", StringComparison.CurrentCultureIgnoreCase);
-							var type = isNormalMap ? TextureMapType.Bump : TextureMapType.Custom_Unknown;
-							var texId = ExportTexture(tex, type);
+							var hasImporter = TryGetImporter<TextureImporter>(tex, out var importer);
+							if (hasImporter && importer.textureType == TextureImporterType.NormalMap)
+							{
+								ExportNormalTextureInfo(tex, TextureMapType.Bump, materialObj);
+							}
+							else
+							{
+								ExportTexture(tex, TextureMapType.Custom_Unknown);
+							}
 						}
 					}
 				}
@@ -2254,6 +2261,18 @@ namespace UnityGLTF
 			return Path.GetExtension(filename).EndsWith("jpg", StringComparison.InvariantCultureIgnoreCase) || Path.GetExtension(filename).EndsWith("jpeg", StringComparison.InvariantCultureIgnoreCase);
 		}
 
+		private bool TryGetImporter<T>(Object obj, out T importer) where T : AssetImporter
+		{
+			if (EditorUtility.IsPersistent(obj))
+			{
+				var texturePath = AssetDatabase.GetAssetPath(obj);
+				importer = TextureImporter.GetAtPath(texturePath) as T;
+				return importer;
+			}
+			importer = null;
+			return false;
+		}
+
 		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType textureMapType)
 		{
 			const string PNGMimeType = "image/png";
@@ -2295,10 +2314,25 @@ namespace UnityGLTF
 
 			if(!wasAbleToExportFromDisk)
 		    {
-				// TODO we could make sure texture size is power-of-two here
+				var sRGB = true;
 
-				var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
-				GL.sRGBWrite = true;
+				if (textureMapType == TextureMapType.Custom_Unknown)
+				{
+					if (TryGetImporter<TextureImporter>(texture, out var importer))
+					{
+						if (!importer.sRGBTexture)
+							sRGB = false;
+						else
+							sRGB = true;
+					}
+				}
+
+				var format = sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear;
+
+				// TODO we could make sure texture size is power-of-two here
+				var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, format);
+				GL.sRGBWrite = sRGB;
+
 				switch (textureMapType)
 				{
 					case TextureMapType.MetallicGloss:
