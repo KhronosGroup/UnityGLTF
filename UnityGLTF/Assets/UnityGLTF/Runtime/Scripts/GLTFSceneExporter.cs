@@ -43,6 +43,9 @@ namespace UnityGLTF
 	{
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
+		public delegate bool ShouldExportAdditionalTextureDelegate(Material material, string texturePropertyName);
+
+		public event ShouldExportAdditionalTextureDelegate ExportAdditionalTexture;
 
 		public Texture GetTexture(int id) => _textures[id];
 
@@ -57,7 +60,7 @@ namespace UnityGLTF
 			G_INVERT
 		}
 
-		private enum TextureMapType
+		public enum TextureMapType
 		{
 			Main,
 			Bump,
@@ -67,6 +70,7 @@ namespace UnityGLTF
 			Light,
 			Occlusion,
 			MetallicGloss_DontConvert,
+			Custom_Unknown
 		}
 
 		private struct ImageInfo
@@ -1483,6 +1487,25 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
+			if (ExportAdditionalTexture != null)
+			{
+				var textureProps = materialObj.GetTexturePropertyNames();
+				foreach (var name in textureProps)
+				{
+					if (ExportAdditionalTexture == null) break;
+					if (ExportAdditionalTexture.Invoke(materialObj, name))
+					{
+						var tex = materialObj.GetTexture(name);
+						if (tex)
+						{
+							var isNormalMap = false;// tex.name.EndsWith("Bush_normal", StringComparison.OrdinalIgnoreCase); //.graphicsFormat.ToString().EndsWith("Norm", StringComparison.CurrentCultureIgnoreCase);
+							var type = isNormalMap ? TextureMapType.Bump : TextureMapType.Custom_Unknown;
+							var texId = ExportTexture(tex, type);
+						}
+					}
+				}
+			}
+
 			_materials.Add(materialObj);
 
 			id = new MaterialId
@@ -2022,7 +2045,7 @@ namespace UnityGLTF
 			return info;
 		}
 
-		private TextureId ExportTexture(Texture textureObj, TextureMapType textureMapType)
+		public TextureId ExportTexture(Texture textureObj, TextureMapType textureMapType)
 		{
 			TextureId id = GetTextureId(_root, textureObj);
 			if (id != null)
