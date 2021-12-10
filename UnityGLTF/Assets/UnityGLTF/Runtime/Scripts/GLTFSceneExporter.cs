@@ -3191,7 +3191,7 @@ namespace UnityGLTF
 #if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = AnimationUtility.GetAnimationClips(transform.gameObject);
                 var animatorController = animator.runtimeAnimatorController as AnimatorController;
-Debug.Log("animator: " + animator + "=> " + animatorController);
+				// Debug.Log("animator: " + animator + "=> " + animatorController);
                 ExportAnimationClips(transform, clips, animatorController);
 #endif
 			}
@@ -3230,7 +3230,7 @@ Debug.Log("animator: " + animator + "=> " + animatorController);
 			/// <summary>Creates GLTFAnimation for each clip and adds it to the _root</summary>
 			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
 			{
-				Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
+				// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
 				if(animatorController)
 				{
 					for (int i = 0; i < clips.Length; i++)
