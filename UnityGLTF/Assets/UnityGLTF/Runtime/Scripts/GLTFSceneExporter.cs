@@ -1413,6 +1413,23 @@ namespace UnityGLTF
 					}
 				}
 			}
+			if (materialObj.HasProperty("normalTexture"))
+			{
+				var normalTex = materialObj.GetTexture("normalTexture");
+
+				if (normalTex != null)
+				{
+					if(normalTex is Texture2D)
+					{
+						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
+						ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+					}
+					else
+					{
+						Debug.LogErrorFormat("Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+					}
+				}
+			}
 
 			if (materialObj.HasProperty("_OcclusionMap"))
 			{
@@ -1651,7 +1668,7 @@ namespace UnityGLTF
 
 		private bool IsPBRMetallicRoughness(Material material)
 		{
-			return material.HasProperty("_Metallic") && (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness"));
+			return material.HasProperty("_Metallic") && (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness") || material.HasProperty("metallicRoughnessTexture"));
 		}
 
 		private bool IsUnlit(Material material)
@@ -1822,7 +1839,7 @@ namespace UnityGLTF
 			else if (material.HasProperty("_Glossiness") || material.HasProperty("_Smoothness"))
 			{
 				var smoothnessPropertyName = material.HasProperty("_Smoothness") ? "_Smoothness" : "_Glossiness";
-				var metallicGlossMap = material.GetTexture("_MetallicGlossMap");
+				var metallicGlossMap = material.HasProperty("_MetallicGlossMap") ? material.GetTexture("_MetallicGlossMap") : null;
 				float smoothness = material.GetFloat(smoothnessPropertyName);
 				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
 				if (isGltfPbrMetallicRoughnessShader)
@@ -1849,6 +1866,13 @@ namespace UnityGLTF
 					{
 						Debug.LogErrorFormat("Can't export a {0} metallic smoothness texture in material {1}", mrTex.GetType(), material.name);
 					}
+				}
+			}
+			else if (material.HasProperty("metallicRoughnessTexture"))
+			{
+				var mrTex = material.GetTexture("metallicRoughnessTexture");
+				if (mrTex && mrTex is Texture2D) {
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss_DontConvert);
 				}
 			}
 
