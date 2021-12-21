@@ -1698,8 +1698,11 @@ namespace UnityGLTF
 				if(mat.HasProperty("_MainTex_ST"))
 				{
 					// difficult choice here: some shaders might support texture transform per-texture, others use the main transform.
-					offset = mat.mainTextureOffset;
-					scale = mat.mainTextureScale;
+					if(mat.HasProperty("_MainTex"))
+					{
+						offset = mat.mainTextureOffset;
+						scale = mat.mainTextureScale;
+					}
 				}
 				else
 				{
