@@ -2457,25 +2457,33 @@ namespace UnityGLTF
 					break;
 			}
 
-			switch (texture.filterMode)
+			if(texture.mipmapCount > 1)
 			{
-				case FilterMode.Point:
-					sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
-					sampler.MagFilter = MagFilterMode.Nearest;
-					break;
-				case FilterMode.Bilinear:
-					sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
-					sampler.MagFilter = MagFilterMode.Linear;
-					break;
-				case FilterMode.Trilinear:
-					sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
-					sampler.MagFilter = MagFilterMode.Linear;
-					break;
-				default:
-					Debug.LogWarning("Unsupported Texture.filterMode: " + texture.filterMode);
-					sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
-					sampler.MagFilter = MagFilterMode.Linear;
-					break;
+				switch (texture.filterMode)
+				{
+					case FilterMode.Point:
+						sampler.MinFilter = MinFilterMode.NearestMipmapNearest;
+						sampler.MagFilter = MagFilterMode.Nearest;
+						break;
+					case FilterMode.Bilinear:
+						sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
+						sampler.MagFilter = MagFilterMode.Linear;
+						break;
+					case FilterMode.Trilinear:
+						sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
+						sampler.MagFilter = MagFilterMode.Linear;
+						break;
+					default:
+						Debug.LogWarning("Unsupported Texture.filterMode: " + texture.filterMode);
+						sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
+						sampler.MagFilter = MagFilterMode.Linear;
+						break;
+				}
+			}
+			else
+			{
+				sampler.MinFilter = MinFilterMode.None;
+				sampler.MagFilter = MagFilterMode.None;
 			}
 
 			samplerId = new SamplerId
