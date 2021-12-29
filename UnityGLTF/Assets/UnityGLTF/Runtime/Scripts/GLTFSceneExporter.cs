@@ -252,7 +252,8 @@ namespace UnityGLTF
 				Animations = new List<GLTFAnimation>(),
 				Asset = new Asset
 				{
-					Version = "2.0"
+					Version = "2.0",
+					Generator = "UnityGLTF (prefrontal cortex' fork)"
 				},
 				Buffers = new List<GLTFBuffer>(),
 				BufferViews = new List<BufferView>(),
