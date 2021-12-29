@@ -2489,6 +2489,63 @@ namespace UnityGLTF
 			return samplerId;
 		}
 
+		public AccessorId ExportAccessor(byte[] arr)
+		{
+			uint count = (uint)arr.Length;
+
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
+			}
+
+			var accessor = new Accessor();
+			accessor.Count = count;
+			accessor.Type = GLTFAccessorAttributeType.SCALAR;
+
+			int min = arr[0];
+			int max = arr[0];
+
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
+
+				if (cur < min)
+				{
+					min = cur;
+				}
+				if (cur > max)
+				{
+					max = cur;
+				}
+			}
+
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+
+			accessor.ComponentType = GLTFComponentType.UnsignedByte;
+
+			foreach (var v in arr)
+			{
+				_bufferWriter.Write((byte)v);
+			}
+
+			accessor.Min = new List<double> { min };
+			accessor.Max = new List<double> { max };
+
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
+
+			var id = new AccessorId
+			{
+				Id = _root.Accessors.Count,
+				Root = _root
+			};
+			_root.Accessors.Add(accessor);
+
+			return id;
+		}
+
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
 			uint count = (uint)arr.Length;
