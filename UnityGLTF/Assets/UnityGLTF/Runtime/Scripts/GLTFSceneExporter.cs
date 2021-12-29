@@ -470,6 +470,10 @@ namespace UnityGLTF
 					// updateProgress(EXPORT_STEP.SKINNING, i, _skinnedNodes.Count);
 				}
 			}
+
+			if (_exportOptions.AfterSceneExport != null)
+				_exportOptions.AfterSceneExport(this, _root);
+
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			_buffer.Uri = fileName + ".bin";
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
