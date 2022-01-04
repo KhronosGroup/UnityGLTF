@@ -945,7 +945,7 @@ namespace UnityGLTF
                 light.type = unityLight.type.ToString().ToLower();
                 light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
                 light.range = unityLight.range;
-                light.intensity = unityLight.intensity;
+                light.intensity = unityLight.intensity * Mathf.PI;
             }
             else if (unityLight.type == LightType.Directional)
             {
@@ -955,7 +955,7 @@ namespace UnityGLTF
 
                 light.type = unityLight.type.ToString().ToLower();
                 light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
-                light.intensity = unityLight.intensity;
+                light.intensity = unityLight.intensity * Mathf.PI;
             }
             else if (unityLight.type == LightType.Point)
             {
@@ -966,7 +966,7 @@ namespace UnityGLTF
                 light.type = unityLight.type.ToString().ToLower();
                 light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
                 light.range = unityLight.range;
-                light.intensity = unityLight.intensity;
+                light.intensity = unityLight.intensity * Mathf.PI;
             }
             else
             {
