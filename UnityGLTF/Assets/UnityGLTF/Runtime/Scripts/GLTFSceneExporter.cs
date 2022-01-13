@@ -1900,6 +1900,11 @@ namespace UnityGLTF
 				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
 			}
 
+			if (material.HasProperty("_BaseColor"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorLinear();
+			}
+
 			if (material.HasProperty("_MainTex"))
 			{
 				var mainTex = material.GetTexture("_MainTex");
