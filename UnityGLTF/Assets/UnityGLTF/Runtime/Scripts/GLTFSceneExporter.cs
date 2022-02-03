@@ -2514,7 +2514,7 @@ namespace UnityGLTF
 
 		#region Accessors Export
 
-		public AccessorId ExportAccessor(byte[] arr)
+		private AccessorId ExportAccessor(byte[] arr)
 		{
 			uint count = (uint)arr.Length;
 
@@ -3395,10 +3395,10 @@ namespace UnityGLTF
 
 		public int GetNodeIdFromTransform(Transform transform)
 		{
-			return getTargetIdFromTransform(transform);
+			return GetAnimationTargetIdFromTransform(transform);
 		}
 
-		private int getTargetIdFromTransform(Transform transform)
+		private int GetAnimationTargetIdFromTransform(Transform transform)
 		{
 			if (_exportedTransforms.ContainsKey(transform.GetInstanceID()))
 			{
@@ -3474,7 +3474,7 @@ namespace UnityGLTF
 			Vector3[] scales = null,
 			float[] weights = null)
 		{
-			int channelTargetId = getTargetIdFromTransform(target);
+			int channelTargetId = GetAnimationTargetIdFromTransform(target);
 			if (channelTargetId < 0)
 			{
 				Debug.LogError("Transform is not part of _exportedTransforms: " + target.name + " " + target.GetInstanceID(), target);
@@ -3898,7 +3898,7 @@ namespace UnityGLTF
 			if (haveWeightKeys) weights = w2.ToArray();
 		}
 
-		private UnityEngine.Mesh getMesh(GameObject gameObject)
+		private UnityEngine.Mesh GetMeshFromGameObject(GameObject gameObject)
 		{
 			if (gameObject.GetComponent<MeshFilter>())
 			{
@@ -3926,7 +3926,7 @@ namespace UnityGLTF
 			return null;
 		}
 
-		private UnityEngine.Material[] getMaterial(GameObject gameObject)
+		private UnityEngine.Material[] GetMaterialsFromGameObject(GameObject gameObject)
 		{
 			if (gameObject.GetComponent<MeshRenderer>())
 			{
@@ -3944,9 +3944,9 @@ namespace UnityGLTF
 		private void ExportSkinFromNode(Transform transform)
 		{
 			PrimKey key = new PrimKey();
-			UnityEngine.Mesh mesh = getMesh(transform.gameObject);
+			UnityEngine.Mesh mesh = GetMeshFromGameObject(transform.gameObject);
 			key.Mesh = mesh;
-			key.Materials = getMaterial(transform.gameObject);
+			key.Materials = GetMaterialsFromGameObject(transform.gameObject);
 			MeshId val;
 			if (!_primOwner.TryGetValue(key, out val))
 			{
