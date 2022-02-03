@@ -38,15 +38,24 @@ namespace UnityGLTF
 		}
 
 		public GLTFSceneExporter.AfterSceneExportDelegate AfterSceneExport;
+		public GLTFSceneExporter.BeforeSceneExportDelegate BeforeSceneExport;
+		public GLTFSceneExporter.AfterNodeExportDelegate AfterNodeExport;
+		public GLTFSceneExporter.BeforeMaterialExport BeforeMaterialExport;
+		public GLTFSceneExporter.AfterMaterialExport AfterMaterialExport;
+		public GLTFSceneExporter.AfterMaterialExportShouldExportTexture AfterMaterialExportShouldExportTexture;
 	}
 
 	public class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
-		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
-		public delegate bool ShouldExportAdditionalTextureDelegate(Material material, string texturePropertyName);
 
-		public event ShouldExportAdditionalTextureDelegate ExportAdditionalTexture;
+		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
+		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
+		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
+		// return true here to signal that material export is complete, no regular export will happen then
+		public delegate bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
+		public delegate void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
+		public delegate bool AfterMaterialExportShouldExportTexture(Material material, string texturePropertyName);
 
 		public Texture GetTexture(int id) => _textures[id];
 
@@ -339,6 +348,8 @@ namespace UnityGLTF
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
+			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
+
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 			if (ExportAnimations)
 			{
@@ -351,8 +362,7 @@ namespace UnityGLTF
 				}
 			}
 
-			if (_exportOptions.AfterSceneExport != null)
-				_exportOptions.AfterSceneExport(this, _root);
+			_exportOptions.AfterSceneExport?.Invoke(this, _root);
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
@@ -773,25 +783,22 @@ namespace UnityGLTF
 				_skinnedNodes.Add(nodeTransform);
 			}
 
-			//export camera attached to node
+			// export camera attached to node
 			Camera unityCamera = nodeTransform.GetComponent<Camera>();
 			if (unityCamera != null && unityCamera.enabled)
 			{
 				node.Camera = ExportCamera(unityCamera);
 			}
 
+			// export lights
             Light unityLight = nodeTransform.GetComponent<Light>();
             if (unityLight != null && unityLight.enabled)
             {
                 node.Light = ExportLight(unityLight);
-
+                var prevRotation = nodeTransform.rotation;
                 nodeTransform.rotation *= new Quaternion(0, -1, 0, 0);
-
                 node.SetUnityTransform(nodeTransform);
-
-                nodeTransform.rotation *= new Quaternion(0, 1, 0, 0);
-
-                //node.SetUnityTransformForce(nodeTransform,false); //forward is flipped
+                nodeTransform.rotation = prevRotation;
             }
             else
             {
@@ -805,7 +812,7 @@ namespace UnityGLTF
 			};
 
 
-			// Register nodes for animation parsing (could be disabled is animation is disables)
+			// Register nodes for animation parsing (could be disabled if animation is disabled)
 			_exportedTransforms.Add(nodeTransform.GetInstanceID(), _root.Nodes.Count);
 
 			_root.Nodes.Add(node);
@@ -844,6 +851,10 @@ namespace UnityGLTF
 					node.Children.Add(ExportNode(child.transform));
 				}
 			}
+
+			// node export callback
+			_exportOptions.AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
+
 
 			return id;
 		}
@@ -1329,7 +1340,7 @@ namespace UnityGLTF
 
 			var material = new GLTFMaterial();
 
-            if (materialObj == null)
+            if (!materialObj)
             {
                 if (ExportNames)
                 {
@@ -1350,6 +1361,24 @@ namespace UnityGLTF
 			if (ExportNames)
 			{
 				material.Name = materialObj.name;
+			}
+
+			// before material export: only continue with regular export if that didn't succeed.
+			if (_exportOptions.BeforeMaterialExport != null)
+			{
+				if (_exportOptions.BeforeMaterialExport.Invoke(this, _root, materialObj, material))
+				{
+					_materials.Add(materialObj);
+
+					id = new MaterialId
+					{
+						Id = _root.Materials.Count,
+						Root = _root
+					};
+					_root.Materials.Add(material);
+
+					return id;
+				}
 			}
 
 			switch (materialObj.GetTag("RenderType", false, ""))
@@ -1510,13 +1539,13 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
-			if (ExportAdditionalTexture != null)
+			if (_exportOptions.AfterMaterialExportShouldExportTexture != null)
 			{
 				var textureProps = materialObj.GetTexturePropertyNames();
 				foreach (var name in textureProps)
 				{
-					if (ExportAdditionalTexture == null) break;
-					if (ExportAdditionalTexture.Invoke(materialObj, name))
+					if (_exportOptions.AfterMaterialExportShouldExportTexture == null) break;
+					if (_exportOptions.AfterMaterialExportShouldExportTexture.Invoke(materialObj, name))
 					{
 						var tex = materialObj.GetTexture(name);
 						if (tex)
@@ -1533,6 +1562,12 @@ namespace UnityGLTF
 						}
 					}
 				}
+			}
+
+			// after material export
+			if (_exportOptions.AfterMaterialExport != null)
+			{
+				_exportOptions.AfterMaterialExport.Invoke(this, _root, materialObj, material);
 			}
 
 			_materials.Add(materialObj);
