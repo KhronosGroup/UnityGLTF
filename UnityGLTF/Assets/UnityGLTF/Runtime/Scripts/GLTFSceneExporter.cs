@@ -46,6 +46,9 @@ namespace UnityGLTF
 
 	public class GLTFSceneExporter
 	{
+		// Available export callbacks.
+		// Callbacks can be either set statically (for exporters that register themselves)
+		// or added in the ExportOptions.
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
 		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
@@ -53,6 +56,13 @@ namespace UnityGLTF
 		// Return true here to signal that material export is complete, no regular export will happen then. Return false to continue regular export.
 		public delegate bool BeforeMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
 		public delegate void AfterMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
+
+		// Static callbacks
+		public static event BeforeSceneExportDelegate BeforeSceneExport;
+		public static event AfterSceneExportDelegate AfterSceneExport;
+		public static event AfterNodeExportDelegate AfterNodeExport;
+		public static event BeforeMaterialExportDelegate BeforeMaterialExport;
+		public static event BeforeMaterialExportDelegate AfterMaterialExport;
 
 		private enum IMAGETYPE
 		{
@@ -348,6 +358,7 @@ namespace UnityGLTF
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
 			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
+			BeforeSceneExport?.Invoke(this, _root);
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 			if (ExportAnimations)
@@ -483,6 +494,9 @@ namespace UnityGLTF
 
 			if (_exportOptions.AfterSceneExport != null)
 				_exportOptions.AfterSceneExport(this, _root);
+
+			if (AfterSceneExport != null)
+				AfterSceneExport.Invoke(this, _root);
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			_buffer.Uri = fileName + ".bin";
@@ -853,6 +867,7 @@ namespace UnityGLTF
 
 			// node export callback
 			_exportOptions.AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
+			AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
 
 
 			return id;
@@ -1328,6 +1343,20 @@ namespace UnityGLTF
             return false;
         }
 
+
+        private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
+        {
+	        _materials.Add(materialObj);
+
+	        var id = new MaterialId
+	        {
+		        Id = _root.Materials.Count,
+		        Root = _root
+	        };
+	        _root.Materials.Add(material);
+	        return id;
+        }
+
         private MaterialId ExportMaterial(Material materialObj)
 		{
             //TODO if material is null
@@ -1345,16 +1374,8 @@ namespace UnityGLTF
                 {
                     material.Name = "null";
                 }
-                _materials.Add(materialObj);
                 material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
-
-                id = new MaterialId
-                {
-                    Id = _root.Materials.Count,
-                    Root = _root
-                };
-                _root.Materials.Add(material);
-                return id;
+                return CreateAndAddMaterialId(materialObj, material);
             }
 
 			if (ExportNames)
@@ -1367,16 +1388,22 @@ namespace UnityGLTF
 			{
 				if (_exportOptions.BeforeMaterialExport.Invoke(this, _root, materialObj, material))
 				{
-					_materials.Add(materialObj);
+					return CreateAndAddMaterialId(materialObj, material);
+				}
+			}
 
-					id = new MaterialId
+			// static callback, run after options callback
+			// we're iterating here because we want to stop calling any once we hit one that can export this material.
+			if (BeforeMaterialExport != null)
+			{
+				var list = BeforeMaterialExport.GetInvocationList();
+				foreach (var entry in list)
+				{
+					var cb = (BeforeMaterialExportDelegate) entry;
+					if (cb != null && cb.Invoke(this, _root, materialObj, material))
 					{
-						Id = _root.Materials.Count,
-						Root = _root
-					};
-					_root.Materials.Add(material);
-
-					return id;
+						return CreateAndAddMaterialId(materialObj, material);
+					}
 				}
 			}
 
@@ -1539,21 +1566,10 @@ namespace UnityGLTF
             }
 
 			// after material export
-			if (_exportOptions.AfterMaterialExport != null)
-			{
-				_exportOptions.AfterMaterialExport.Invoke(this, _root, materialObj, material);
-			}
+			_exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+			AfterMaterialExport?.Invoke(this, _root, materialObj, material);
 
-			_materials.Add(materialObj);
-
-			id = new MaterialId
-			{
-				Id = _root.Materials.Count,
-				Root = _root
-			};
-			_root.Materials.Add(material);
-
-			return id;
+			return CreateAndAddMaterialId(materialObj, material);
 		}
 
 		// Blend Shapes / Morph Targets
@@ -1795,7 +1811,7 @@ namespace UnityGLTF
 			return info;
 		}
 
-		private PbrMetallicRoughness ExportPBRMetallicRoughness(Material material)
+		public PbrMetallicRoughness ExportPBRMetallicRoughness(Material material)
 		{
 			var pbr = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
 			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
@@ -1896,7 +1912,7 @@ namespace UnityGLTF
 			return pbr;
 		}
 
-		private void ExportUnlit(GLTFMaterial def, Material material){
+		public void ExportUnlit(GLTFMaterial def, Material material){
 
 			const string extname = KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME;
 			DeclareExtensionUsage( extname, true );
@@ -1919,22 +1935,14 @@ namespace UnityGLTF
 				var mainTex = material.GetTexture("_MainTex");
 				if (mainTex != null)
 				{
-					if(mainTex is Texture2D)
-					{
-						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-						ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
-					}
-					else
-					{
-						Debug.LogErrorFormat("Can't export a {0} base texture in material {1}", mainTex.GetType(), material.name);
-					}
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
 
 			def.PbrMetallicRoughness = pbr;
 
 		}
-
 
 		private void ExportPBRSpecularGlossiness(GLTFMaterial material, Material materialObj)
 		{
