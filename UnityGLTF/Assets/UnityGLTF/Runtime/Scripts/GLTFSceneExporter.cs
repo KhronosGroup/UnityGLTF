@@ -40,9 +40,8 @@ namespace UnityGLTF
 		public GLTFSceneExporter.AfterSceneExportDelegate AfterSceneExport;
 		public GLTFSceneExporter.BeforeSceneExportDelegate BeforeSceneExport;
 		public GLTFSceneExporter.AfterNodeExportDelegate AfterNodeExport;
-		public GLTFSceneExporter.BeforeMaterialExport BeforeMaterialExport;
-		public GLTFSceneExporter.AfterMaterialExport AfterMaterialExport;
-		public GLTFSceneExporter.AfterMaterialExportShouldExportTexture AfterMaterialExportShouldExportTexture;
+		public GLTFSceneExporter.BeforeMaterialExportDelegate BeforeMaterialExport;
+		public GLTFSceneExporter.AfterMaterialExportDelegate AfterMaterialExport;
 	}
 
 	public class GLTFSceneExporter
@@ -53,9 +52,8 @@ namespace UnityGLTF
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
 		// return true here to signal that material export is complete, no regular export will happen then
-		public delegate bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
-		public delegate void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
-		public delegate bool AfterMaterialExportShouldExportTexture(Material material, string texturePropertyName);
+		public delegate bool BeforeMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
+		public delegate void AfterMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
 
 		public Texture GetTexture(int id) => _textures[id];
 
@@ -1539,31 +1537,6 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
-			if (_exportOptions.AfterMaterialExportShouldExportTexture != null)
-			{
-				var textureProps = materialObj.GetTexturePropertyNames();
-				foreach (var name in textureProps)
-				{
-					if (_exportOptions.AfterMaterialExportShouldExportTexture == null) break;
-					if (_exportOptions.AfterMaterialExportShouldExportTexture.Invoke(materialObj, name))
-					{
-						var tex = materialObj.GetTexture(name);
-						if (tex)
-						{
-							var hasImporter = TryGetImporter<TextureImporter>(tex, out var importer);
-							if (hasImporter && importer.textureType == TextureImporterType.NormalMap)
-							{
-								ExportNormalTextureInfo(tex, TextureMapType.Bump, materialObj);
-							}
-							else
-							{
-								ExportTexture(tex, TextureMapType.Custom_Unknown);
-							}
-						}
-					}
-				}
-			}
-
 			// after material export
 			if (_exportOptions.AfterMaterialExport != null)
 			{
@@ -1787,7 +1760,7 @@ namespace UnityGLTF
 			);
 		}
 
-		private NormalTextureInfo ExportNormalTextureInfo(
+		public NormalTextureInfo ExportNormalTextureInfo(
 			Texture texture,
 			TextureMapType textureMapType,
 			Material material)
