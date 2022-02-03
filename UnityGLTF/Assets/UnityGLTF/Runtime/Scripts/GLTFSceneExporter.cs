@@ -26,17 +26,17 @@ namespace UnityGLTF
 {
 	public class ExportOptions
 	{
-		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
 		public bool ExportInactivePrimitives = true;
 		public LayerMask ExportLayers = -1;
 
 		public ExportOptions()
 		{
 			var settings = GLTFSettings.GetOrCreateSettings();
-			if(settings.UseMainCameraVisibility)
+			if (settings.UseMainCameraVisibility)
 				ExportLayers = Camera.main ? Camera.main.cullingMask : -1;
 		}
 
+		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
 		public GLTFSceneExporter.AfterSceneExportDelegate AfterSceneExport;
 		public GLTFSceneExporter.BeforeSceneExportDelegate BeforeSceneExport;
 		public GLTFSceneExporter.AfterNodeExportDelegate AfterNodeExport;
@@ -47,15 +47,12 @@ namespace UnityGLTF
 	public class GLTFSceneExporter
 	{
 		public delegate string RetrieveTexturePathDelegate(Texture texture);
-
 		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
-		// return true here to signal that material export is complete, no regular export will happen then
+		// Return true here to signal that material export is complete, no regular export will happen then. Return false to continue regular export.
 		public delegate bool BeforeMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
 		public delegate void AfterMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
-
-		public Texture GetTexture(int id) => _textures[id];
 
 		private enum IMAGETYPE
 		{
@@ -172,6 +169,8 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
 
+		#region Settings
+
 		// Settings
 		static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
 
@@ -220,6 +219,8 @@ namespace UnityGLTF
 
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
+
+		#endregion
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -2441,6 +2442,7 @@ namespace UnityGLTF
 
 		    return id;
 		}
+
 		private SamplerId ExportSampler(Texture texture)
 		{
 			var samplerId = GetSamplerId(_root, texture);
@@ -2509,6 +2511,8 @@ namespace UnityGLTF
 
 			return samplerId;
 		}
+
+		#region Accessors Export
 
 		public AccessorId ExportAccessor(byte[] arr)
 		{
@@ -3171,6 +3175,8 @@ namespace UnityGLTF
 			return id;
 		}
 
+		#endregion
+
 		public MaterialId GetMaterialId(GLTFRoot root, Material materialObj)
 		{
 			for (var i = 0; i < _materials.Count; i++)
@@ -3204,6 +3210,8 @@ namespace UnityGLTF
 
 			return null;
 		}
+
+		public Texture GetTexture(int id) => _textures[id];
 
 		public ImageId GetImageId(GLTFRoot root, Texture imageObj)
 		{
