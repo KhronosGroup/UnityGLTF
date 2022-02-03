@@ -1846,15 +1846,8 @@ namespace UnityGLTF
 
 				if (mainTex)
 				{
-					if(mainTex is Texture2D)
-					{
-						pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-						ExportTextureTransform(pbr.BaseColorTexture, material, mainTexPropertyName);
-					}
-					else
-					{
-						Debug.LogErrorFormat("Can't export a {0} base texture in material {1}", mainTex.GetType(), material.name);
-					}
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, mainTexPropertyName);
 				}
 			}
 
@@ -1884,27 +1877,21 @@ namespace UnityGLTF
 			{
 				var mrTex = material.GetTexture("_MetallicGlossMap");
 
-				if (mrTex != null)
+				if (mrTex)
 				{
-					if(mrTex is Texture2D)
-					{
-						pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, (isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
-						// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
-						// that's not true for the gltf shaders though, so we keep the value there.
-						if (ignoreMetallicFactor)
-							pbr.MetallicFactor = 1.0f;
-						ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
-					}
-					else
-					{
-						Debug.LogErrorFormat("Can't export a {0} metallic smoothness texture in material {1}", mrTex.GetType(), material.name);
-					}
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, (isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
+					// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
+					// that's not true for the gltf shaders though, so we keep the value there.
+					if (ignoreMetallicFactor)
+						pbr.MetallicFactor = 1.0f;
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 				}
 			}
 			else if (material.HasProperty("metallicRoughnessTexture"))
 			{
 				var mrTex = material.GetTexture("metallicRoughnessTexture");
-				if (mrTex && mrTex is Texture2D) {
+				if (mrTex)
+				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss_DontConvert);
 				}
 			}
@@ -1933,7 +1920,7 @@ namespace UnityGLTF
 			if (material.HasProperty("_MainTex"))
 			{
 				var mainTex = material.GetTexture("_MainTex");
-				if (mainTex != null)
+				if (mainTex)
 				{
 					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
@@ -1989,15 +1976,8 @@ namespace UnityGLTF
 
 				if (mainTex != null)
 				{
-					if (mainTex is Texture2D)
-					{
-						diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-						ExportTextureTransform(diffuseTexture, materialObj, "_MainTex");
-					}
-					else
-					{
-						Debug.LogErrorFormat("Can't export a {0} diffuse texture in material {1}", mainTex.GetType(), materialObj.name);
-					}
+					diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(diffuseTexture, materialObj, "_MainTex");
 				}
 			}
 
@@ -2024,17 +2004,10 @@ namespace UnityGLTF
 			{
 				var mgTex = materialObj.GetTexture("_SpecGlossMap");
 
-				if (mgTex != null)
+				if (mgTex)
 				{
-					if (mgTex is Texture2D)
-					{
-						specularGlossinessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
-						ExportTextureTransform(specularGlossinessTexture, materialObj, "_SpecGlossMap");
-					}
-					else
-					{
-						Debug.LogErrorFormat("Can't export a {0} specular glossiness texture in material {1}", mgTex.GetType(), materialObj.name);
-					}
+					specularGlossinessTexture = ExportTextureInfo(mgTex, TextureMapType.SpecGloss);
+					ExportTextureTransform(specularGlossinessTexture, materialObj, "_SpecGlossMap");
 				}
 			}
 
@@ -2081,7 +2054,7 @@ namespace UnityGLTF
 			{
 				var lmTex = materialObj.GetTexture("_LightMap");
 
-				if (lmTex != null)
+				if (lmTex)
 				{
 					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
 					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
