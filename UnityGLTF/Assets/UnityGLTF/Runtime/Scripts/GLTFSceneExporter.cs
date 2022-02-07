@@ -27,6 +27,7 @@ namespace UnityGLTF
 	public class ExportOptions
 	{
 		public bool ExportInactivePrimitives = true;
+		public bool TreatEmptyRootAsScene = false;
 		public LayerMask ExportLayers = -1;
 
 		public ExportOptions()
@@ -760,6 +761,19 @@ namespace UnityGLTF
 			if (ExportNames)
 			{
 				scene.Name = name;
+			}
+
+			if(_exportOptions.TreatEmptyRootAsScene)
+			{
+				// if we're exporting with a single object selected, that object can be the scene root, no need for an extra root node.
+				if (rootObjTransforms.Length == 1 && rootObjTransforms[0].GetComponents<Component>().Length == 1) // single root with a single transform
+				{
+					var firstRoot = rootObjTransforms[0];
+					var newRoots = new Transform[firstRoot.childCount];
+					for (int i = 0; i < firstRoot.childCount; i++)
+						newRoots[i] = firstRoot.GetChild(i);
+					rootObjTransforms = newRoots;
+				}
 			}
 
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
