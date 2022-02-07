@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.28] - 2022-02-07
+- added glTF Timeline exporter track that allows for both editor and runtime animation export
+- added ability to export RenderTextures instead of erroring out, these can be exported for a while now
+- added export callbacks and made an initial set of export methods public to enable custom export extensions (similar to three.js export callbacks)
+- added export generator name
+- fixed URP/Unlit color not being exported
+- fixed light intensity values being incorrect depending on Unity settings
+- fixed removeEmptyRootObjects on import not actually removing empty root objects
+- fixed warning when exporting texture transforms if _MainTex_ST is present but _MainTex isn't
+- fixed non-specific textures using the wrong export type in some cases, asking the AssetImporter now if one exists
+- changed menu items, export options are now in "Assets/UnityGltf/" instead of a toplevel "GLTF" menu
+
 ## [1.0.4-preview.27] - 2021-12-02
 - fixed `_scaleFactor` not being applied to child transform positions for editor import
 - fixed roundtrip issues when exporting models that have been imported by UnityGLTF or glTFast
