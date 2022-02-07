@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.29] - 2022-02-07
+- added GLTFRecorderComponent to record at runtime
+- renamed recorder files to follow existing filenames
+- fixed compilation warning in GLTFSceneImporter
+- fixed: create export directory if it doesn't exist
+- fixed: blendshape export was missing flag to export no blendshapes at all
+- fixed: in some cases would attempt to record duplicate timestamps which is not allowed
+
 ## [1.0.4-preview.28] - 2022-02-07
 - added glTF Timeline exporter track that allows for both editor and runtime animation export
 - added ability to export RenderTextures instead of erroring out, these can be exported for a while now
