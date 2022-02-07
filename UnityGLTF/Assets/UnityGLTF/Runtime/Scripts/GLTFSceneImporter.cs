@@ -781,6 +781,8 @@ namespace UnityGLTF
 #endif
 					break;
 			}
+
+			await Task.CompletedTask;
 		}
 
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
