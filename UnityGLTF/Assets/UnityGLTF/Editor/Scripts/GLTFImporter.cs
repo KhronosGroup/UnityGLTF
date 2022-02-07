@@ -27,6 +27,7 @@ namespace UnityGLTF
 	#endif
     public class GLTFImporter : ScriptedImporter
     {
+	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
         [SerializeField] private bool _removeEmptyRootObjects = true;
         [SerializeField] private float _scaleFactor = 1.0f;
         [SerializeField] private int _maximumLod = 300;
@@ -57,6 +58,8 @@ namespace UnityGLTF
             {
                 sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
                 gltfScene = CreateGLTFScene(ctx.assetPath);
+                var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
+                if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
 
                 // Remove empty roots
                 if (_removeEmptyRootObjects)
@@ -70,7 +73,7 @@ namespace UnityGLTF
                         gltfScene = gltfScene.transform.GetChild(0).gameObject;
                         t = gltfScene.transform;
                         t.parent = null; // To keep transform information in the new parent
-                        Object.DestroyImmediate(parent); // Get rid of the parent
+                        DestroyImmediate(parent); // Get rid of the parent
                     }
                 }
 
@@ -80,9 +83,6 @@ namespace UnityGLTF
                 {
                     child.gameObject.hideFlags &= ~(HideFlags.HideAndDontSave);
                 }
-
-                // Zero position
-                gltfScene.transform.position = Vector3.zero;
 
                 // scale all localPosition values if necessary
                 if (!Mathf.Approximately(_scaleFactor, 1))
@@ -229,22 +229,12 @@ namespace UnityGLTF
                         return matTextures;
                     }).Distinct().ToArray();
 
-                    // var folderName = Path.GetDirectoryName(ctx.assetPath);
-
                     // Save textures as separate assets and rewrite refs
                     // TODO: Support for other texture types
                     if (textures.Length > 0)
                     {
-                        // var texturesRoot = string.Concat(folderName, "/", "Textures/");
-                        // Directory.CreateDirectory(texturesRoot);
-
                         foreach (var tex in textures)
                         {
-                            // var ext = _useJpgTextures ? ".jpg" : ".png";
-                            // var texPath = string.Concat(texturesRoot, tex.name, ext);
-                            // File.WriteAllBytes(texPath, _useJpgTextures ? tex.EncodeToJPG() : tex.EncodeToPNG());
-                            //
-                            // AssetDatabase.ImportAsset(texPath);
                             ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
                         }
                     }
@@ -254,79 +244,9 @@ namespace UnityGLTF
                     // Save materials as separate assets and rewrite refs
                     if (materials.Length > 0)
                     {
-                        // var materialRoot = string.Concat(folderName, "/", "Materials/");
-                        // Directory.CreateDirectory(materialRoot);
-
                         foreach (var mat in materials)
                         {
-                            // var materialPath = string.Concat(materialRoot, mat.name, ".mat");
-                            // var newMat = mat;
-                            // CopyOrNew(mat, materialPath, m =>
-                            // {
-                            //     // Fix references
-                            //     newMat = m;
-                            //     foreach (var r in renderers)
-                            //     {
-                            //         var sharedMaterials = r.sharedMaterials;
-                            //         for (var i = 0; i < sharedMaterials.Length; ++i)
-                            //         {
-                            //             var sharedMaterial = sharedMaterials[i];
-                            //             if (sharedMaterial.name == mat.name) sharedMaterials[i] = m;
-                            //         }
-                            //         sharedMaterials = sharedMaterials.Where(sm => sm).ToArray();
-                            //         r.sharedMaterials = sharedMaterials;
-                            //     }
-                            // });
                             ctx.AddObjectToAsset(GetUniqueName(mat.name), mat);
-
-                            // Fix textures
-                            // HACK: This needs to be a delayed call.
-                            // Unity needs a frame to kick off the texture import so we can rewrite the ref
-                            // if (textures.Length > 0)
-                            // {
-                            //     EditorApplication.delayCall += () =>
-                            //     {
-                            //         for (var i = 0; i < textures.Length; ++i)
-                            //         {
-                            //             var tex = textures[i];
-                            //             var texturesRoot = string.Concat(folderName, "/", "Textures/");
-                            //             var ext = _useJpgTextures ? ".jpg" : ".png";
-                            //             var texPath = string.Concat(texturesRoot, tex.name, ext);
-                            //
-                            //             // Grab new imported texture
-                            //             var materialMaps = texMaterialMap[tex];
-                            //             var importer = (TextureImporter)TextureImporter.GetAtPath(texPath);
-                            //             var importedTex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
-                            //             if (importer != null)
-                            //             {
-                            //                 var isNormalMap = false;
-                            //                 foreach (var materialMap in materialMaps)
-                            //                 {
-                            //                     if (materialMap.Material == mat)
-                            //                     {
-                            //                         isNormalMap |= materialMap.IsNormalMap;
-                            //                         newMat.SetTexture(materialMap.Property, importedTex);
-                            //                     }
-                            //                 };
-                            //
-                            //                 if (isNormalMap)
-                            //                 {
-                            //                     // Try to auto-detect normal maps
-                            //                     importer.textureType = TextureImporterType.NormalMap;
-                            //                 }
-                            //                 else if (importer.textureType == TextureImporterType.Sprite)
-                            //                 {
-                            //                     // Force disable sprite mode, even for 2D projects
-                            //                     importer.textureType = TextureImporterType.Default;
-                            //                 }
-                            //             }
-                            //             else
-                            //             {
-                            //                 Debug.LogWarning("GLTFImporter: Unable to import texture from path reference");
-                            //             }
-                            //         }
-                            //     };
-                            // }
                         }
                     }
 
@@ -357,6 +277,8 @@ namespace UnityGLTF
 #if UNITY_2017_3_OR_NEWER
 			// Set main asset
 			ctx.AddObjectToAsset("main asset", gltfScene);
+			// This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
+			// ctx.AddObjectToAsset($"scenes/{gltfScene.name}", gltfScene);
 
 			// Add meshes
 			foreach (var mesh in meshes)
