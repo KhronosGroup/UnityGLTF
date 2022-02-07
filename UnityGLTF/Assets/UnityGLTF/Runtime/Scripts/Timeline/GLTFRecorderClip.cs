@@ -7,7 +7,7 @@ using UnityEngine.Timeline;
 namespace UnityGLTF.Timeline
 {
 	[System.ComponentModel.DisplayName("glTF Recorder Clip")]
-	public class GltfRecorderClip : PlayableAsset, ITimelineClipAsset
+	public class GLTFRecorderClip : PlayableAsset, ITimelineClipAsset
 	{
 	    public ExposedReference<Transform> m_exportRoot;
 	    public string m_File = "Assets/Recording.glb";
@@ -15,7 +15,7 @@ namespace UnityGLTF.Timeline
 
 	    public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
 	    {
-	        var ret = ScriptPlayable<GltfRecorderBehaviour>.Create(graph);
+	        var ret = ScriptPlayable<GLTFRecorderBehaviour>.Create(graph);
 	        var behaviour = ret.GetBehaviour();
 	        behaviour.Clip = this; // TOD check if needed
 	        return ret;

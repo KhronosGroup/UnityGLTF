@@ -9,9 +9,9 @@ using UnityEngine;
 
 namespace UnityGLTF.Timeline
 {
-	public class GltfRecorder
+	public class GLTFRecorder
 	{
-		public GltfRecorder(Transform root)
+		public GLTFRecorder(Transform root)
 		{
 			this.root = root;
 		}
@@ -85,7 +85,7 @@ namespace UnityGLTF.Timeline
 		{
 			if (!isRecording)
 			{
-				throw new InvalidOperationException($"{nameof(GltfRecorder)} isn't recording, but {nameof(UpdateRecording)} was called. This is invalid.");
+				throw new InvalidOperationException($"{nameof(GLTFRecorder)} isn't recording, but {nameof(UpdateRecording)} was called. This is invalid.");
 			}
 			if (time < lastRecordedTime)
 			{

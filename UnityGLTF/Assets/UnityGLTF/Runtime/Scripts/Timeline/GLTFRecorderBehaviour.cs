@@ -8,9 +8,9 @@ using UnityEditor;
 
 namespace UnityGLTF.Timeline
 {
-	public class GltfRecorderBehaviour : PlayableBehaviour
+	public class GLTFRecorderBehaviour : PlayableBehaviour
 	{
-	    private GltfRecorder recorder = null;
+	    private GLTFRecorder recorder = null;
 	    private void BeginRecording(double getTime, Transform getExportRoot)
 	    {
 	        if (!getExportRoot)
@@ -22,7 +22,7 @@ namespace UnityGLTF.Timeline
 
 	        Time.captureFramerate = Clip.m_CaptureFrameRate;
 
-	        recorder = new GltfRecorder(getExportRoot);
+	        recorder = new GLTFRecorder(getExportRoot);
 	        recorder.StartRecording(getTime);
 	    }
 
@@ -36,7 +36,7 @@ namespace UnityGLTF.Timeline
 	        recorder?.UpdateRecording(getTime);
 	    }
 
-	    public GltfRecorderClip Clip;
+	    public GLTFRecorderClip Clip;
 	    private bool m_isPaused = false;
 
 	    private static bool IsPlaying()
