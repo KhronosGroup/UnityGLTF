@@ -1598,6 +1598,9 @@ namespace UnityGLTF
 		// https://github.com/bghgary/glTF-Tools-for-Unity/blob/master/UnityProject/Assets/Gltf/Editor/Exporter.cs
 		private void ExportBlendShapes(SkinnedMeshRenderer smr, Mesh meshObj, int submeshIndex, MeshPrimitive primitive, GLTFMesh mesh)
 		{
+			if (settings.BlendShapeExportProperties == GLTFSettings.BlendShapeExportPropertyFlags.None)
+				return;
+
 			if (_meshToBlendShapeAccessors.TryGetValue(meshObj, out var data))
 			{
 				mesh.Weights = data.weights;

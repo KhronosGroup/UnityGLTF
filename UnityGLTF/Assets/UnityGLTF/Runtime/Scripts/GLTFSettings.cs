@@ -59,7 +59,8 @@ namespace UnityGLTF
 	    [System.Flags]
 	    public enum BlendShapeExportPropertyFlags
 	    {
-		    PositionOnly = 0,
+		    None = 0,
+		    PositionOnly = 1,
 		    Normal = 2,
 		    Tangent = 4,
 		    All = ~0
