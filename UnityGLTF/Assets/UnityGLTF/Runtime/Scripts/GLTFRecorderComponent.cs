@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityGLTF.Timeline;
 #if UNITY_EDITOR
 using UnityEditor.ShortcutManagement;
@@ -17,6 +18,9 @@ namespace UnityGLTF
 
 	    public bool IsRecording => recorder?.IsRecording ?? false;
 	    private GLTFRecorder recorder;
+
+	    public UnityEvent recordingStarted;
+		public UnityEvent<string> recordingEnded;
 
 #if UNITY_EDITOR
 	    [Shortcut("gltf-recording-toggle", KeyCode.F11, displayName = "Start/Stop GLTF Recording")]
@@ -60,6 +64,7 @@ namespace UnityGLTF
 
 	        recorder = new GLTFRecorder(exportRoot);
 	        recorder.StartRecording(Time.timeAsDouble);
+	        recordingStarted?.Invoke();
 
 	        StartCoroutine(_UpdateRecording());
 	    }
@@ -75,6 +80,7 @@ namespace UnityGLTF
 	    {
 	        var filename = outputFile.Replace("<Timestamp>", System.DateTime.Now.ToString("yyyyMMdd-HHmmss"));
 	        recorder.EndRecording(filename);
+	        recordingEnded?.Invoke(filename);
 	    }
 
 	    private IEnumerator _UpdateRecording()
