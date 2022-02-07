@@ -8,12 +8,14 @@ namespace UnityGLTF
 {
 	public class GLTFExportMenu : EditorWindow
 	{
+		private const string MenuPrefix = "Assets/UnityGLTF/";
+
 	    public static string RetrieveTexturePath(UnityEngine.Texture texture)
 	    {
 	        return AssetDatabase.GetAssetPath(texture);
 	    }
 
-	    [MenuItem("GLTF/Settings", priority = 10000)]
+	    [MenuItem(MenuPrefix + "Settings", priority = 10000)]
 	    static void Init()
 	    {
 	        GLTFExportMenu window = (GLTFExportMenu)EditorWindow.GetWindow(typeof(GLTFExportMenu), false, "GLTF Settings");
@@ -55,13 +57,13 @@ namespace UnityGLTF
 		    return false;
 	    }
 
-	    [MenuItem("GLTF/Export Selected", true)]
+	    [MenuItem(MenuPrefix + "Export selected as glTF", true)]
 	    static bool ExportSelectedValidate()
 	    {
 		    return TryGetExportNameAndRootTransformsFromSelection(out _, out _);
 	    }
 
-	    [MenuItem("GLTF/Export Selected")]
+	    [MenuItem(MenuPrefix + "Export selected as glTF")]
 		static void ExportSelected()
 		{
 			if (!TryGetExportNameAndRootTransformsFromSelection(out var name, out var rootTransforms))
@@ -81,13 +83,13 @@ namespace UnityGLTF
 			}
 		}
 
-		[MenuItem("GLTF/ExportGLB Selected", true)]
+		[MenuItem(MenuPrefix + "Export selected as GLB", true)]
 		static bool ExportGLBSelectedValidate()
 		{
 			return TryGetExportNameAndRootTransformsFromSelection(out _, out _);
 		}
 
-		[MenuItem("GLTF/ExportGLB Selected")]
+		[MenuItem(MenuPrefix + "Export selected as GLB")]
 		static void ExportGLBSelected()
 		{
 			if (!TryGetExportNameAndRootTransformsFromSelection(out var name, out var rootTransforms))
@@ -107,7 +109,7 @@ namespace UnityGLTF
 			}
 		}
 
-		[MenuItem("GLTF/Export Scene")]
+		[MenuItem(MenuPrefix + "Export active scene as glTF")]
 		static void ExportScene()
 		{
 			var scene = SceneManager.GetActiveScene();
