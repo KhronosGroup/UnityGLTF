@@ -3486,7 +3486,7 @@ namespace UnityGLTF
 			int channelTargetId = GetAnimationTargetIdFromTransform(target);
 			if (channelTargetId < 0)
 			{
-				Debug.LogError("Transform is not part of _exportedTransforms: " + target.name + " " + target.GetInstanceID(), target);
+				Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
 				return;
 			}
 			AccessorId timeAccessor = ExportAccessor(times);
