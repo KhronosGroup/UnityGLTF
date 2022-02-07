@@ -87,7 +87,7 @@ namespace UnityGLTF.Timeline
 			{
 				throw new InvalidOperationException($"{nameof(GLTFRecorder)} isn't recording, but {nameof(UpdateRecording)} was called. This is invalid.");
 			}
-			if (time < lastRecordedTime)
+			if (time <= lastRecordedTime)
 			{
 				Debug.LogWarning("Can't record backwards in time, please avoid this.");
 				return;
