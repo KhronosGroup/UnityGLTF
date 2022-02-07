@@ -476,7 +476,7 @@ namespace UnityGLTF
 			var dirName = Path.GetDirectoryName(fullPath);
 			if (dirName != null && !Directory.Exists(dirName))
 				Directory.CreateDirectory(dirName);
-			
+
 			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
@@ -2312,6 +2312,7 @@ namespace UnityGLTF
 			return Path.GetExtension(filename).EndsWith("jpg", StringComparison.InvariantCultureIgnoreCase) || Path.GetExtension(filename).EndsWith("jpeg", StringComparison.InvariantCultureIgnoreCase);
 		}
 
+#if UNITY_EDITOR
 		private bool TryGetImporter<T>(Object obj, out T importer) where T : AssetImporter
 		{
 			if (EditorUtility.IsPersistent(obj))
@@ -2323,6 +2324,7 @@ namespace UnityGLTF
 			importer = null;
 			return false;
 		}
+#endif
 
 		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType textureMapType)
 		{
@@ -2367,6 +2369,7 @@ namespace UnityGLTF
 		    {
 				var sRGB = true;
 
+#if UNITY_EDITOR
 				if (textureMapType == TextureMapType.Custom_Unknown)
 				{
 					if (TryGetImporter<TextureImporter>(texture, out var importer))
@@ -2377,6 +2380,7 @@ namespace UnityGLTF
 							sRGB = true;
 					}
 				}
+#endif
 
 				var format = sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear;
 

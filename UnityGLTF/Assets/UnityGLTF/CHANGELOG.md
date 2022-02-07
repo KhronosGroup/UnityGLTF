@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fixed: create export directory if it doesn't exist
 - fixed: blendshape export was missing flag to export no blendshapes at all
 - fixed: in some cases would attempt to record duplicate timestamps which is not allowed
+- fixed build error from GLTFSceneExporter
 
 ## [1.0.4-preview.28] - 2022-02-07
 - added glTF Timeline exporter track that allows for both editor and runtime animation export
