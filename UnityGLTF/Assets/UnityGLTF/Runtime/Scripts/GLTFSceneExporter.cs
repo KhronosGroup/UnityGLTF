@@ -317,6 +317,9 @@ namespace UnityGLTF
 		public void SaveGLB(string path, string fileName)
 		{
 			var fullPath = GetFileName(path, fileName, ".glb");
+			var dirName = Path.GetDirectoryName(fullPath);
+			if (dirName != null && !Directory.Exists(dirName))
+				Directory.CreateDirectory(dirName);
 			_shouldUseInternalBufferForImages = true;
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
@@ -470,6 +473,10 @@ namespace UnityGLTF
 		{
 			_shouldUseInternalBufferForImages = false;
 			var fullPath = GetFileName(path, fileName, ".bin");
+			var dirName = Path.GetDirectoryName(fullPath);
+			if (dirName != null && !Directory.Exists(dirName))
+				Directory.CreateDirectory(dirName);
+			
 			var binFile = File.Create(fullPath);
 			_bufferWriter = new BinaryWriter(binFile);
 
