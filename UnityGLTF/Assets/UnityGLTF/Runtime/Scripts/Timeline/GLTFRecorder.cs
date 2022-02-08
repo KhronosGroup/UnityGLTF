@@ -11,9 +11,10 @@ namespace UnityGLTF.Timeline
 {
 	public class GLTFRecorder
 	{
-		public GLTFRecorder(Transform root)
+		public GLTFRecorder(Transform root, bool recordBlendShapes = true)
 		{
 			this.root = root;
+			this.recordBlendShapes = recordBlendShapes;
 		}
 
 		private Transform root;
@@ -21,6 +22,8 @@ namespace UnityGLTF.Timeline
 		private double startTime;
 		private double lastRecordedTime;
 		private bool isRecording;
+		private readonly bool recordBlendShapes;
+
 		public bool IsRecording => isRecording;
 		public double LastRecordedTime => lastRecordedTime;
 
@@ -28,21 +31,23 @@ namespace UnityGLTF.Timeline
 		{
 			public int Size => 4 + 4 + keys.Count * (4 + 4 + 40);
 			private Transform tr;
-			public TransformData lastData;
-			public Dictionary<double, TransformData> keys = new Dictionary<double, TransformData>();
+			public FrameData lastData;
+			public Dictionary<double, FrameData> keys = new Dictionary<double, FrameData>();
 
 			private bool skippedLastFrame = false;
 			private double skippedTime;
+			private bool recordBlendShapes;
 
-			public AnimationData(Transform tr, double time, bool zeroScale = false)
+			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true)
 			{
 				this.tr = tr;
-				keys.Add(time, new TransformData(tr, zeroScale));
+				this.recordBlendShapes = recordBlendShapes;
+				keys.Add(time, new FrameData(tr, zeroScale, this.recordBlendShapes));
 			}
 
 			public void Update(double time)
 			{
-				var newTr = new TransformData(tr, !tr.gameObject.activeSelf);
+				var newTr = new FrameData(tr, !tr.gameObject.activeSelf, recordBlendShapes);
 				if (newTr.Equals(lastData))
 				{
 					skippedLastFrame = true;
@@ -102,7 +107,7 @@ namespace UnityGLTF.Timeline
 				if (!data.ContainsKey(tr))
 				{
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame
-					var emptyData = new AnimationData(tr, lastRecordedTime, true);
+					var emptyData = new AnimationData(tr, lastRecordedTime, true, recordBlendShapes);
 					data.Add(tr, emptyData);
 					// insert actual keyframe
 					data[tr].Update(currentTime);
@@ -141,13 +146,13 @@ namespace UnityGLTF.Timeline
 			GLTFAnimation anim = new GLTFAnimation();
 			anim.Name = gltfRoot.GetDefaultScene()?.Name ?? "Recording";
 
-			CollectAnimation(exporter, ref root, ref anim, 1f);
+			CollectAndProcessAnimation(exporter, ref root, ref anim, 1f);
 
 			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
 				gltfRoot.Animations.Add(anim);
 		}
 
-		private void CollectAnimation(GLTFSceneExporter gltfSceneExporter, ref Transform root, ref GLTFAnimation anim, float speed)
+		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, ref Transform root, ref GLTFAnimation anim, float speed)
 		{
 			foreach (var kvp in data)
 			{
@@ -160,33 +165,60 @@ namespace UnityGLTF.Timeline
 				var scales = values.Select(x => x.scale).ToArray();
 				float[] weights = null;
 				int weightCount = 0;
+				if(values.All(x => x.weights != null))
+				{
+					weights = values.SelectMany(x => x.weights).ToArray();
+					weightCount = values.First().weights.Length;
+				}
 
 				gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
-				gltfSceneExporter.AddAnimationData(kvp.Key, ref anim, times, positions, rotations, scales);
+				gltfSceneExporter.AddAnimationData(kvp.Key, ref anim, times, positions, rotations, scales, weights);
 			}
 		}
 
-		internal readonly struct TransformData
+		internal readonly struct FrameData
 		{
 			public readonly Vector3 position;
 			public readonly Quaternion rotation;
 			public readonly Vector3 scale;
+			public readonly float[] weights;
 
-			public TransformData(Transform tr, bool zeroScale = false)
+			public FrameData(Transform tr, bool zeroScale, bool recordBlendShapes)
 			{
 				position = tr.localPosition;
 				rotation = tr.localRotation;
 				scale = zeroScale ? Vector3.zero : tr.localScale;
+
+				if (recordBlendShapes)
+				{
+					var skinnedMesh = tr.GetComponent<SkinnedMeshRenderer>();
+					if (skinnedMesh)
+					{
+						var mesh = skinnedMesh.sharedMesh;
+						var blendShapeCount = mesh.blendShapeCount;
+						weights = new float[blendShapeCount];
+						for (var i = 0; i < blendShapeCount; i++)
+							weights[i] = skinnedMesh.GetBlendShapeWeight(i);
+					}
+					else
+					{
+						weights = null;
+					}
+				}
+				else
+				{
+					weights = null;
+				}
 			}
 
-			public bool Equals(TransformData other)
+			public bool Equals(FrameData other)
 			{
-				return position.Equals(other.position) && rotation.Equals(other.rotation) && scale.Equals(other.scale);
+				return position.Equals(other.position) && rotation.Equals(other.rotation) && scale.Equals(other.scale) && ((weights == null && other.weights == null) || (weights != null && other.weights != null && weights.SequenceEqual(other.weights)));
 			}
 
 			public override bool Equals(object obj)
 			{
-				return obj is TransformData other && Equals(other);
+				return obj is FrameData other && Equals(other);
 			}
 
 			public override int GetHashCode()
@@ -196,16 +228,18 @@ namespace UnityGLTF.Timeline
 					var hashCode = position.GetHashCode();
 					hashCode = (hashCode * 397) ^ rotation.GetHashCode();
 					hashCode = (hashCode * 397) ^ scale.GetHashCode();
+					if(weights != null)
+						hashCode = (hashCode * 397) ^ weights.GetHashCode();
 					return hashCode;
 				}
 			}
 
-			public static bool operator ==(TransformData left, TransformData right)
+			public static bool operator ==(FrameData left, FrameData right)
 			{
 				return left.Equals(right);
 			}
 
-			public static bool operator !=(TransformData left, TransformData right)
+			public static bool operator !=(FrameData left, FrameData right)
 			{
 				return !left.Equals(right);
 			}

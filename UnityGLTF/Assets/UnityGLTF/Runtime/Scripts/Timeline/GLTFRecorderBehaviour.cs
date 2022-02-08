@@ -33,7 +33,8 @@ namespace UnityGLTF.Timeline
 
 	    private void ProcessRecording(double getTime, Transform getExportRoot)
 	    {
-	        recorder?.UpdateRecording(getTime);
+		    if(getTime > recorder.LastRecordedTime)
+				recorder?.UpdateRecording(getTime);
 	    }
 
 	    public GLTFRecorderClip Clip;

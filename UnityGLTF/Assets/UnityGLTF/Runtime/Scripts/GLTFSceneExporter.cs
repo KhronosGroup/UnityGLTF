@@ -3492,7 +3492,7 @@ namespace UnityGLTF
 			AccessorId timeAccessor = ExportAccessor(times);
 
 			// Translation
-			if(positions != null)
+			if(positions != null && positions.Length > 0)
 			{
 				AnimationChannel Tchannel = new AnimationChannel();
 				AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
@@ -3520,7 +3520,7 @@ namespace UnityGLTF
 			}
 
 			// Rotation
-			if(rotations != null)
+			if(rotations != null && rotations.Length > 0)
 			{
 				AnimationChannel Rchannel = new AnimationChannel();
 				AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
@@ -3548,7 +3548,7 @@ namespace UnityGLTF
 			}
 
 			// Scale
-			if(scales != null)
+			if(scales != null && scales.Length > 0)
 			{
 				AnimationChannel Schannel = new AnimationChannel();
 				AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
@@ -3575,7 +3575,7 @@ namespace UnityGLTF
 				animation.Channels.Add(Schannel);
 			}
 
-			if (weights != null)
+			if (weights != null && weights.Length > 0)
 			{
 				AnimationChannel Wchannel = new AnimationChannel();
 				AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();

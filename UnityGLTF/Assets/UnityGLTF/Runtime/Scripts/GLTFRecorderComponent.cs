@@ -9,6 +9,7 @@ namespace UnityGLTF
 	{
 	    public string outputFile = "Assets/Recordings/Recorded_<Timestamp>.glb";
 	    public Transform exportRoot;
+	    public bool recordBlendShapes = true;
 	    public KeyCode recordingKey = KeyCode.F11;
 
 	    public bool IsRecording => recorder?.IsRecording ?? false;
@@ -23,7 +24,15 @@ namespace UnityGLTF
 		{
 			if (!isActiveAndEnabled) return;
 
-			recorder = new GLTFRecorder(exportRoot);
+			var settings = GLTFSettings.GetOrCreateSettings();
+			var shouldRecordBlendShapes = recordBlendShapes;
+			if (settings.BlendShapeExportProperties == GLTFSettings.BlendShapeExportPropertyFlags.None && recordBlendShapes)
+			{
+				Debug.LogWarning("Attempting to record blend shapes but export is disabled in ProjectSettings/UnityGLTF. Set BlendShapeExportProperties to something other than \"None\" if you want to export them.");
+				shouldRecordBlendShapes = false;
+			}
+
+			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes);
 			recorder.StartRecording(Time.timeAsDouble);
 			recordingStarted?.Invoke();
 
