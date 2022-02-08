@@ -71,7 +71,8 @@ namespace UnityGLTF
 
 	    protected virtual void UpdateRecording()
 	    {
-		    recorder.UpdateRecording(Time.timeAsDouble);
+		    if(Time.timeAsDouble > recorder.LastRecordedTime)
+				recorder.UpdateRecording(Time.timeAsDouble);
 	    }
 
 	    private IEnumerator _UpdateRecording()

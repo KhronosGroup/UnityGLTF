@@ -22,6 +22,7 @@ namespace UnityGLTF.Timeline
 		private double lastRecordedTime;
 		private bool isRecording;
 		public bool IsRecording => isRecording;
+		public double LastRecordedTime => lastRecordedTime;
 
 		internal class AnimationData
 		{
