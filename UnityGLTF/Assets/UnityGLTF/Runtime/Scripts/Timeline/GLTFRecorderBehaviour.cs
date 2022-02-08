@@ -11,6 +11,7 @@ namespace UnityGLTF.Timeline
 	public class GLTFRecorderBehaviour : PlayableBehaviour
 	{
 	    private GLTFRecorder recorder = null;
+
 	    private void BeginRecording(double getTime, Transform getExportRoot)
 	    {
 	        if (!getExportRoot)
@@ -22,7 +23,7 @@ namespace UnityGLTF.Timeline
 
 	        Time.captureFramerate = Clip.m_CaptureFrameRate;
 
-	        recorder = new GLTFRecorder(getExportRoot);
+	        recorder = new GLTFRecorder(getExportRoot, Clip.m_RecordBlendShapes);
 	        recorder.StartRecording(getTime);
 	    }
 
