@@ -1,11 +1,5 @@
 # UnityGLTF
 
-UnityGLTF: [![Build Status](https://travis-ci.org/KhronosGroup/UnityGLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/UnityGLTF)
-
-GLTFSerialization: [![Build status](https://ci.appveyor.com/api/projects/status/amgnavcqiiiqhjbl/branch/master?svg=true)](https://ci.appveyor.com/project/Khronoswebmaster/unitygltf/branch/master)
-
-[![Join the chat at https://gitter.im/KhronosGroup/UnityGLTF](https://badges.gitter.im/KhronosGroup/UnityGLTF.svg)](https://gitter.im/KhronosGroup/UnityGLTF?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 Unity3D library for importing and exporting [GLTF 2.0](https://github.com/KhronosGroup/glTF/) assets.
 
 The goal of this library is to support the full glTF 2.0 specification and enable the following scenarios:
@@ -21,12 +15,12 @@ The library will be modularized such that it can be extended to support addition
 You can install this right from git as Unity Package, compatible with UPM (Unity Package Manager).
 1. Open `Window > Package Manager`
 2. In Package Manager, click <kbd>+</kbd> and select <kbd>Add Package from git URL</kbd>
-3. Paste ```https://github.com/prefrontalcortex/UnityGLTF.git?path=/UnityGLTF/Assets/UnityGLTF#dev```
+3. Paste ```https://github.com/prefrontalcortex/UnityGLTF.git?path=/UnityGLTF/Assets/UnityGLTF```
 4. Click <kbd>Add</kbd>.  
    
 Done!  
 
-If you want to target a specific version, specify `#release/pfc/1.0.4-preview.17` or another specific tag from the [release section](https://github.com/prefrontalcortex/UnityGLTF/releases) instead of `#dev`.
+If you want to target a specific version, append `#release/pfc/1.0.4-preview.31` or another specific tag from the [release section](https://github.com/prefrontalcortex/UnityGLTF/releases).
 
 ## Current Status
 

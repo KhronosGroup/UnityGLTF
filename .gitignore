@@ -165,3 +165,4 @@ TestProjects/*/*.csproj
 TestProjects/*/.idea
 TestProjects/*/Logs
 TestProjects/*/UserSettings
+TestProjects/*/.vsconfig
