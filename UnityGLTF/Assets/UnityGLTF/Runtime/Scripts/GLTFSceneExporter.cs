@@ -3339,6 +3339,8 @@ namespace UnityGLTF
 		// This may need additional work to fully support animatorControllers
 		public void ExportAnimationFromNode(ref Transform transform)
 		{
+			transform.TryGetComponent(out GLTFAnimationExportSettings animationExportSettings);
+
 #if UNITY_ANIMATION
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator)
@@ -3396,8 +3398,11 @@ namespace UnityGLTF
 						// if we want to handle this here, we need to find all states that match this clip
 						foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
 						{
-							// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
-							var existingAnim = _root.Animations.FirstOrDefault(x => x.Name == state.name);
+							var existingAnim = default(GLTFAnimation);
+							if(animationExportSettings && animationExportSettings.mergeClipsWithMatchingNames)
+								// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
+								existingAnim = _root.Animations?.FirstOrDefault(x => x.Name == state.name);
+
 							GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
 							anim.Name = state.name;
 							var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
@@ -3415,7 +3420,11 @@ namespace UnityGLTF
 					for (int i = 0; i < clips.Length; i++)
 					{
 						if(!clips[i]) continue;
-						var existingAnim = _root.Animations.FirstOrDefault(x => x.Name == clips[i].name);
+						var existingAnim = default(GLTFAnimation);
+						if(animationExportSettings && animationExportSettings.mergeClipsWithMatchingNames)
+							// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
+							existingAnim = _root.Animations.FirstOrDefault(x => x.Name == clips[i].name);
+
 						GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
 						anim.Name = clips[i].name;
 						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, 1);
