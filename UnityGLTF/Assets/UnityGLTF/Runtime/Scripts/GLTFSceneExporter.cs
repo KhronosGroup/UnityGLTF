@@ -1846,13 +1846,14 @@ namespace UnityGLTF
 			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
 			var isGlTFastShader = material.shader.name.Equals("glTF/PbrMetallicRoughness", StringComparison.Ordinal);
 
+			if (material.HasProperty("_Color"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
+			}
+
 			if (material.HasProperty("_BaseColor"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorLinear();
-			}
-			else if (material.HasProperty("_Color"))
-			{
-				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
 			}
 
             if (material.HasProperty("_TintColor")) //particles use _TintColor instead of _Color
@@ -1956,6 +1957,16 @@ namespace UnityGLTF
 				}
 			}
 
+			if (material.HasProperty("_BaseMap"))
+			{
+				var mainTex = material.GetTexture("_BaseMap");
+				if (mainTex)
+				{
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_BaseMap");
+				}
+			}
+
 			def.PbrMetallicRoughness = pbr;
 
 		}
@@ -1999,6 +2010,11 @@ namespace UnityGLTF
 				diffuseFactor = materialObj.GetColor("_Color").ToNumericsColorLinear();
 			}
 
+			if (materialObj.HasProperty("_BaseColor"))
+			{
+				diffuseFactor = materialObj.GetColor("_BaseColor").ToNumericsColorLinear();
+			}
+
 			if (materialObj.HasProperty("_MainTex"))
 			{
 				var mainTex = materialObj.GetTexture("_MainTex");
@@ -2007,6 +2023,17 @@ namespace UnityGLTF
 				{
 					diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 					ExportTextureTransform(diffuseTexture, materialObj, "_MainTex");
+				}
+			}
+
+			if (materialObj.HasProperty("_BaseMap"))
+			{
+				var mainTex = materialObj.GetTexture("_BaseMap");
+
+				if (mainTex != null)
+				{
+					diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(diffuseTexture, materialObj, "_BaseMap");
 				}
 			}
 
