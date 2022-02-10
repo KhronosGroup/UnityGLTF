@@ -2318,7 +2318,7 @@ namespace UnityGLTF
 			if (EditorUtility.IsPersistent(obj))
 			{
 				var texturePath = AssetDatabase.GetAssetPath(obj);
-				importer = TextureImporter.GetAtPath(texturePath) as T;
+				importer = AssetImporter.GetAtPath(texturePath) as T;
 				return importer;
 			}
 			importer = null;
@@ -2372,6 +2372,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 				if (textureMapType == TextureMapType.Custom_Unknown)
 				{
+#if UNITY_EDITOR
 					if (TryGetImporter<TextureImporter>(texture, out var importer))
 					{
 						if (!importer.sRGBTexture)
@@ -2379,6 +2380,7 @@ namespace UnityGLTF
 						else
 							sRGB = true;
 					}
+#endif
 				}
 #endif
 
