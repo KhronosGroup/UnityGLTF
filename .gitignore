@@ -162,3 +162,5 @@ TestProjects/*/*.csproj
 **/GLTFSerialization/.idea
 **/GLTFSerialization/bin~
 **/GLTFSerialization/obj~
+TestProjects/*/.idea
+TestProjects/*/Logs
