@@ -18,6 +18,12 @@ namespace UnityGLTF
 	    public UnityEvent recordingStarted;
 		public UnityEvent<string> recordingEnded;
 
+		private double CurrentTime =>
+#if UNITY_2019_1_OR_NEWER
+			Time.timeAsDouble;
+#else
+			Time.time;
+#endif
 
 		[ContextMenu("Start Recording")]
 		public virtual void StartRecording()
@@ -33,7 +39,7 @@ namespace UnityGLTF
 			}
 
 			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes);
-			recorder.StartRecording(Time.timeAsDouble);
+			recorder.StartRecording(CurrentTime);
 			recordingStarted?.Invoke();
 
 			StartCoroutine(_UpdateRecording());
@@ -80,8 +86,8 @@ namespace UnityGLTF
 
 	    protected virtual void UpdateRecording()
 	    {
-		    if(Time.timeAsDouble > recorder.LastRecordedTime)
-				recorder.UpdateRecording(Time.timeAsDouble);
+		    if(CurrentTime > recorder.LastRecordedTime)
+				recorder.UpdateRecording(CurrentTime);
 	    }
 
 	    private IEnumerator _UpdateRecording()

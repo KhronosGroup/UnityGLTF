@@ -4,6 +4,7 @@
     "references": [
         "UnityGLTFScripts",
         "UnityGLTFEditor",
+        "GLTFSerialization",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

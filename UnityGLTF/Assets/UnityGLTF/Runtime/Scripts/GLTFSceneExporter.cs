@@ -2302,7 +2302,19 @@ namespace UnityGLTF
 			}
 #endif
 
-			hasAlpha |= UnityEngine.Experimental.Rendering.GraphicsFormatUtility.HasAlphaChannel(sourceTexture.graphicsFormat);
+			UnityEngine.Experimental.Rendering.GraphicsFormat graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.None;
+#if !UNITY_2019_1_OR_NEWER
+			if (sourceTexture is Texture2D tex2D)
+				graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormatUtility.GetGraphicsFormat(tex2D.format, true);
+#else
+			graphicsFormat = sourceTexture.graphicsFormat;
+#endif
+#if UNITY_2018_2_OR_NEWER
+			if(graphicsFormat != UnityEngine.Experimental.Rendering.GraphicsFormat.None)
+				hasAlpha |= UnityEngine.Experimental.Rendering.GraphicsFormatUtility.HasAlphaChannel(graphicsFormat);
+#else
+			hasAlpha = true;
+#endif
 			return hasAlpha;
 		}
 
@@ -2487,7 +2499,13 @@ namespace UnityGLTF
 					break;
 			}
 
-			if(texture.mipmapCount > 1)
+			var mipmapCount = 1;
+#if UNITY_2019_2_OR_NEWER
+			mipmapCount = texture.mipmapCount;
+#else
+			if (texture is Texture2D tex2D) mipmapCount = tex2D.mipmapCount;
+#endif
+			if(mipmapCount > 1)
 			{
 				switch (texture.filterMode)
 				{
@@ -2527,7 +2545,7 @@ namespace UnityGLTF
 			return samplerId;
 		}
 
-		#region Accessors Export
+#region Accessors Export
 
 		private AccessorId ExportAccessor(byte[] arr)
 		{
@@ -3190,7 +3208,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		#endregion
+#endregion
 
 		public MaterialId GetMaterialId(GLTFRoot root, Material materialObj)
 		{
@@ -3288,32 +3306,6 @@ namespace UnityGLTF
 
 			throw new Exception("glTF does not support Unity mesh topology: " + topology);
 		}
-
-
-		public enum AnimationKeyRotationType
-		{
-			Unknown,
-			Quaternion,
-			Euler
-		};
-
-		private struct TargetCurveSet
-		{
-			public AnimationCurve[] translationCurves;
-			public AnimationCurve[] rotationCurves;
-			public AnimationCurve[] scaleCurves;
-			public AnimationKeyRotationType rotationType;
-			public Dictionary<string, AnimationCurve> weightCurves;
-
-			public void Init()
-			{
-				translationCurves = new AnimationCurve[3];
-				rotationCurves = new AnimationCurve[4];
-				scaleCurves = new AnimationCurve[3];
-				weightCurves = new Dictionary<string, AnimationCurve>();
-			}
-		}
-
 
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
 		// This may need additional work to fully support animatorControllers
@@ -3413,6 +3405,30 @@ namespace UnityGLTF
 
 #if UNITY_ANIMATION
 
+		public enum AnimationKeyRotationType
+		{
+			Unknown,
+			Quaternion,
+			Euler
+		}
+
+		private struct TargetCurveSet
+		{
+			public AnimationCurve[] translationCurves;
+			public AnimationCurve[] rotationCurves;
+			public AnimationCurve[] scaleCurves;
+			public AnimationKeyRotationType rotationType;
+			public Dictionary<string, AnimationCurve> weightCurves;
+
+			public void Init()
+			{
+				translationCurves = new AnimationCurve[3];
+				rotationCurves = new AnimationCurve[4];
+				scaleCurves = new AnimationCurve[3];
+				weightCurves = new Dictionary<string, AnimationCurve>();
+			}
+		}
+
 		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed = 1f)
 		{
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
@@ -3472,7 +3488,7 @@ namespace UnityGLTF
 
 		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
 		{
-			#if UNITY_EDITOR
+#if UNITY_EDITOR
 			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
 			{
 				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
@@ -3533,7 +3549,7 @@ namespace UnityGLTF
 				}
 				targetCurves[binding.path] = current;
 			}
-			#endif
+#endif
 		}
 
 		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)

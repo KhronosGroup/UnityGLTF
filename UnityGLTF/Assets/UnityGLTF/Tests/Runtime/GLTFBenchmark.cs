@@ -20,6 +20,7 @@ public class GLTFBenchmark : MonoBehaviour
 	public int NumberOfIterations = 5;
 	public bool SaveCSV = true;
 
+#if UNITY_WEBREQUEST
 	IEnumerator Start ()
 	{
 		var timer = new System.Diagnostics.Stopwatch();
@@ -76,5 +77,6 @@ public class GLTFBenchmark : MonoBehaviour
 			}
 		}
 	}
+#endif
 }
 #endif
