@@ -1,5 +1,3 @@
-#if HAVE_TIMELINE
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -246,4 +244,3 @@ namespace UnityGLTF.Timeline
 		}
 	}
 }
-#endif

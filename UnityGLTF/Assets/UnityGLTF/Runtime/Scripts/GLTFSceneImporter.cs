@@ -944,6 +944,7 @@ namespace UnityGLTF
 			}
 		}
 
+#if UNITY_ANIMATION
 		#region Animation
 		static string RelativePathFrom(Transform self, Transform root)
 		{
@@ -1253,6 +1254,7 @@ namespace UnityGLTF
 			return clip;
 		}
 		#endregion
+#endif
 
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
 		{
@@ -1273,6 +1275,7 @@ namespace UnityGLTF
 
 				if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 				{
+#if UNITY_ANIMATION
 					// create the AnimationClip that will contain animation data
 					Animation animation = sceneObj.AddComponent<Animation>();
 					for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
@@ -1287,6 +1290,9 @@ namespace UnityGLTF
 							animation.clip = clip;
 						}
 					}
+#else
+					Debug.LogWarning("glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
+#endif
 				}
 
 				CreatedObject = sceneObj;
@@ -1477,6 +1483,7 @@ namespace UnityGLTF
 					renderer.sharedMaterials = materials;
 				}
 
+#if UNITY_PHYSICS
 				switch (Collider)
 				{
 					case ColliderType.Box:
@@ -1494,6 +1501,7 @@ namespace UnityGLTF
 						meshConvexCollider.convex = true;
 						break;
 				}
+#endif
 			}
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)

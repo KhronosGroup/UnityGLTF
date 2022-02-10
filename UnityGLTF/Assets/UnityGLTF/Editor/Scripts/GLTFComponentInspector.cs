@@ -15,10 +15,9 @@ namespace UnityGLTF
 			DrawDefaultInspector();
 			serializedObject.ApplyModifiedProperties();
 
+#if UNITY_ANIMATION
 			var gltfComponent = serializedObject.targetObject as GLTFComponent;
-
-			if (gltfComponent != null &&
-				gltfComponent.Animations != null)
+			if (gltfComponent != null && gltfComponent.Animations != null)
 			{
 				EditorGUILayout.LabelField("Animations:");
 				using (var scrollView = new EditorGUILayout.ScrollViewScope(scrollPosition))
@@ -30,6 +29,7 @@ namespace UnityGLTF
 					}
 				}
 			}
+#endif
 		}
 
 		private void DrawAnimation(Animation animation)
@@ -38,7 +38,7 @@ namespace UnityGLTF
 
 			foreach (AnimationState animationState in animation)
 			{
-				using (var horizontal = new EditorGUILayout.HorizontalScope())
+				using (new EditorGUILayout.HorizontalScope())
 				{
 					var clip = animationState.clip;
 					var clipName = clip.name;

@@ -20,12 +20,12 @@ namespace UnityGLTF.Cache
 		/// Loaded raw texture data
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
-		
+
 		/// <summary>
 		/// Textures to be used for assets. Textures from image cache with samplers applied
 		/// </summary>
 		public TextureCacheData[] TextureCache { get; private set; }
-		
+
 		/// <summary>
 		/// Cache for materials to be applied to the meshes
 		/// </summary>
@@ -41,10 +41,12 @@ namespace UnityGLTF.Cache
 		/// </summary>
 		public MeshCacheData[] MeshCache { get; private set; }
 
+#if UNITY_ANIMATION
 		/// <summary>
 		/// Cache of loaded animations
 		/// </summary>
 		public AnimationCacheData[] AnimationCache { get; private set; }
+#endif
 
 		/// <summary>
 		/// Cache of loaded node objects
@@ -65,7 +67,9 @@ namespace UnityGLTF.Cache
 			MeshCache = new MeshCacheData[root.Meshes?.Count ?? 0];
 
 			NodeCache = new GameObject[root.Nodes?.Count ?? 0];
+#if UNITY_ANIMATION
 			AnimationCache = new AnimationCacheData[root.Animations?.Count ?? 0];
+#endif
 		}
 
 		public void Dispose()
@@ -105,7 +109,9 @@ namespace UnityGLTF.Cache
 			}
 
 			MeshCache = null;
+#if UNITY_ANIMATION
 			AnimationCache = null;
+#endif
 		}
 	}
 }

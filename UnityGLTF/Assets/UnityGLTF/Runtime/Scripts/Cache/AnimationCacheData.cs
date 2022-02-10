@@ -1,4 +1,6 @@
-﻿using GLTF;
+﻿#if UNITY_ANIMATION
+
+using GLTF;
 using GLTF.Schema;
 
 namespace UnityGLTF.Cache
@@ -21,3 +23,5 @@ namespace UnityGLTF.Cache
 		}
 	}
 }
+
+#endif

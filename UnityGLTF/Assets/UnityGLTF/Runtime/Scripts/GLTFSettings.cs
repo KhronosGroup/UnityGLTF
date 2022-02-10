@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿#if UNITY_EDITOR && HAVE_IMGUI
+#define SHOW_SETTINGS_EDITOR
+#endif
+
+using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 #if UNITY_EDITOR
@@ -7,7 +11,7 @@ using UnityEditor;
 
 namespace UnityGLTF
 {
-#if UNITY_EDITOR
+#if SHOW_SETTINGS_EDITOR
     internal class GltfSettingsProvider : SettingsProvider
     {
 	    private GLTFSettings settings;
@@ -107,9 +111,9 @@ namespace UnityGLTF
 			set {
 				if(exportNames != value) {
 					exportNames = value;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
-					#endif
+#endif
 				}
 			}
 		}
@@ -119,9 +123,9 @@ namespace UnityGLTF
 			set {
 				if(exportFullPath != value) {
 					exportFullPath = value;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
-					#endif
+#endif
 				}
 			}
 		}
@@ -143,9 +147,9 @@ namespace UnityGLTF
 			set {
 				if(requireExtensions != value) {
 					requireExtensions = value;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
-					#endif
+#endif
 				}
 			}
 		}
@@ -155,9 +159,9 @@ namespace UnityGLTF
 			set {
 				if(tryExportTexturesFromDisk != value) {
 					tryExportTexturesFromDisk = value;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
-					#endif
+#endif
 				}
 			}
 		}
@@ -215,9 +219,9 @@ namespace UnityGLTF
 			set {
 				if(exportAnimations != value) {
 					exportAnimations = value;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
-					#endif
+#endif
 				}
 			}
 		}
@@ -251,9 +255,9 @@ namespace UnityGLTF
 			set {
 				if(bakeSkinnedMeshes != value) {
 					bakeSkinnedMeshes = value;
-					#if UNITY_EDITOR
+#if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
-					#endif
+#endif
 				}
 			}
 		}

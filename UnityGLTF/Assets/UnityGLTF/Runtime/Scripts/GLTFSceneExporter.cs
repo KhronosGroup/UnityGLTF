@@ -228,8 +228,10 @@ namespace UnityGLTF
 		}
 #endif
 
+#if UNITY_ANIMATION
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
+#endif
 
 		#endregion
 
@@ -808,10 +810,12 @@ namespace UnityGLTF
 				node.Name = nodeTransform.name;
 			}
 
+#if UNITY_ANIMATION
 			if (nodeTransform.GetComponent<UnityEngine.Animation>() || nodeTransform.GetComponent<UnityEngine.Animator>())
 			{
 				_animatedNodes.Add(nodeTransform);
 			}
+#endif
 			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject))
 			{
 				_skinnedNodes.Add(nodeTransform);
@@ -3310,10 +3314,12 @@ namespace UnityGLTF
 			}
 		}
 
+
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
 		// This may need additional work to fully support animatorControllers
 		public void ExportAnimationFromNode(ref Transform transform)
 		{
+#if UNITY_ANIMATION
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator)
 			{
@@ -3356,7 +3362,7 @@ namespace UnityGLTF
 				}
 			}
 
-			/// <summary>Creates GLTFAnimation for each clip and adds it to the _root</summary>
+			// Creates GLTFAnimation for each clip and adds it to the _root
 			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
 			{
 				// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
@@ -3402,21 +3408,10 @@ namespace UnityGLTF
 				}
 			}
 #endif
+#endif
 		}
 
-		public int GetNodeIdFromTransform(Transform transform)
-		{
-			return GetAnimationTargetIdFromTransform(transform);
-		}
-
-		private int GetAnimationTargetIdFromTransform(Transform transform)
-		{
-			if (_exportedTransforms.ContainsKey(transform.GetInstanceID()))
-			{
-				return _exportedTransforms[transform.GetInstanceID()];
-			}
-			return -1;
-		}
+#if UNITY_ANIMATION
 
 		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed = 1f)
 		{
@@ -3473,7 +3468,234 @@ namespace UnityGLTF
 			{
 				Debug.LogError("Only baked animation is supported for now. Skipping animation");
 			}
+		}
 
+		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
+		{
+			#if UNITY_EDITOR
+			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
+			{
+				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
+
+				if (!targetCurves.ContainsKey(binding.path))
+				{
+					TargetCurveSet curveSet = new TargetCurveSet();
+					curveSet.Init();
+					targetCurves.Add(binding.path, curveSet);
+				}
+
+				TargetCurveSet current = targetCurves[binding.path];
+				if (binding.propertyName.Contains("m_LocalPosition"))
+				{
+					if (binding.propertyName.Contains(".x"))
+						current.translationCurves[0] = curve;
+					else if (binding.propertyName.Contains(".y"))
+						current.translationCurves[1] = curve;
+					else if (binding.propertyName.Contains(".z"))
+						current.translationCurves[2] = curve;
+				}
+				else if (binding.propertyName.Contains("m_LocalScale"))
+				{
+					if (binding.propertyName.Contains(".x"))
+						current.scaleCurves[0] = curve;
+					else if (binding.propertyName.Contains(".y"))
+						current.scaleCurves[1] = curve;
+					else if (binding.propertyName.Contains(".z"))
+						current.scaleCurves[2] = curve;
+				}
+				else if (binding.propertyName.ToLower().Contains("localrotation"))
+				{
+					current.rotationType = AnimationKeyRotationType.Quaternion;
+					if (binding.propertyName.Contains(".x"))
+						current.rotationCurves[0] = curve;
+					else if (binding.propertyName.Contains(".y"))
+						current.rotationCurves[1] = curve;
+					else if (binding.propertyName.Contains(".z"))
+						current.rotationCurves[2] = curve;
+					else if (binding.propertyName.Contains(".w"))
+						current.rotationCurves[3] = curve;
+				}
+				// Takes into account 'localEuler', 'localEulerAnglesBaked' and 'localEulerAnglesRaw'
+				else if (binding.propertyName.ToLower().Contains("localeuler"))
+				{
+					current.rotationType = AnimationKeyRotationType.Euler;
+					if (binding.propertyName.Contains(".x"))
+						current.rotationCurves[0] = curve;
+					else if (binding.propertyName.Contains(".y"))
+						current.rotationCurves[1] = curve;
+					else if (binding.propertyName.Contains(".z"))
+						current.rotationCurves[2] = curve;
+				}
+				else if (binding.propertyName.StartsWith("blendShape."))
+				{
+					var weightName = binding.propertyName.Substring("blendShape.".Length);
+					current.weightCurves.Add(weightName, curve);
+				}
+				targetCurves[binding.path] = current;
+			}
+			#endif
+		}
+
+		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
+		{
+			var keyList = targetCurvesBinding.Keys.ToList();
+			foreach (string target in keyList)
+			{
+				Transform targetTr = target.Length > 0 ? tr.Find(target) : tr;
+				if (targetTr == null)
+					continue;
+
+				TargetCurveSet current = targetCurvesBinding[target];
+
+				if (current.weightCurves.Count > 0)
+				{
+					// need to sort and generate the other matching curves as constant curves for all blend shapes
+					var renderer = targetTr.GetComponent<SkinnedMeshRenderer>();
+					var mesh = renderer.sharedMesh;
+					var shapeCount = mesh.blendShapeCount;
+					if(shapeCount != current.weightCurves.Count)
+					{
+						var newWeights = new Dictionary<string, AnimationCurve>();
+						for (int i = 0; i < shapeCount; i++)
+						{
+							var shapeName = mesh.GetBlendShapeName(i);
+							var shapeCurve = current.weightCurves.ContainsKey(shapeName) ? current.weightCurves[shapeName] : CreateConstantCurve(renderer.GetBlendShapeWeight(i), endTime);
+							newWeights.Add(shapeName, shapeCurve);
+						}
+
+						current.weightCurves = newWeights;
+					}
+				}
+
+				targetCurvesBinding[target] = current;
+			}
+		}
+
+		private AnimationCurve CreateConstantCurve(float value, float endTime)
+		{
+			// No translation curves, adding them
+			AnimationCurve curve = new AnimationCurve();
+			curve.AddKey(0, value);
+			curve.AddKey(endTime, value);
+			return curve;
+		}
+
+		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights)
+		{
+			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
+			float deltaTime = length / nbSamples;
+			var weightCount = curveSet.weightCurves?.Count ?? 0;
+
+			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
+			bool haveRotationKeys = curveSet.rotationCurves != null && curveSet.rotationCurves.Length > 0 && curveSet.rotationCurves[0] != null;
+			bool haveScaleKeys = curveSet.scaleCurves != null && curveSet.scaleCurves.Length > 0 && curveSet.scaleCurves[0] != null;
+			bool haveWeightKeys = curveSet.weightCurves != null && curveSet.weightCurves.Count > 0;
+
+			if(haveScaleKeys)
+			{
+				if(curveSet.scaleCurves.Length < 3)
+				{
+					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now");
+					return false;
+				}
+				bool anyIsNull = false;
+				foreach (var sc in curveSet.scaleCurves)
+					anyIsNull |= sc == null;
+
+				if (anyIsNull)
+				{
+					Debug.LogWarning("A scale curve has at least one null property curve! Ignoring");
+					haveScaleKeys = false;
+				}
+			}
+
+			if(haveRotationKeys)
+			{
+				bool anyIsNull = false;
+				int checkRotationKeyCount = curveSet.rotationType == AnimationKeyRotationType.Euler ? 3 : 4;
+				for (int i = 0; i < checkRotationKeyCount; i++)
+				{
+					anyIsNull |= curveSet.rotationCurves.Length - 1 < i || curveSet.rotationCurves[i] == null;
+				}
+
+				if (anyIsNull)
+				{
+					Debug.LogWarning("A rotation curve has at least one null property curve! Ignoring");
+					haveRotationKeys = false;
+				}
+			}
+
+			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys && !haveWeightKeys)
+			{
+				Debug.LogWarning("No keys in curve set");
+				return false;
+			}
+
+			// Initialize Arrays
+			times = new float[nbSamples];
+			if(haveTranslationKeys)
+				positions = new Vector3[nbSamples];
+			if(haveScaleKeys)
+				scales = new Vector3[nbSamples];
+			if(haveRotationKeys)
+				rotations = new Vector4[nbSamples];
+			if (haveWeightKeys)
+				weights = new float[nbSamples * weightCount];
+
+			// Assuming all the curves exist now
+			for (int i = 0; i < nbSamples; ++i)
+			{
+				float currentTime = i * deltaTime;
+				times[i] = currentTime / speedMultiplier;
+
+				if(haveTranslationKeys)
+					positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
+
+				if(haveScaleKeys)
+					scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
+
+				if(haveRotationKeys)
+				{
+					if (curveSet.rotationType == AnimationKeyRotationType.Euler)
+					{
+						Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
+						rotations[i] = new Vector4(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
+					}
+					else
+					{
+						rotations[i] = new Vector4(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
+					}
+				}
+
+				if (haveWeightKeys)
+				{
+					var curveArray = curveSet.weightCurves.Values.ToArray();
+					for(int j = 0; j < weightCount; j++)
+					{
+						weights[i * weightCount + j] = curveArray[j].Evaluate(times[i]) * 0.01f; // glTF weights 0..1 match to Unity weights 0..100
+					}
+				}
+			}
+
+			RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
+
+			return true;
+		}
+
+#endif
+
+		public int GetNodeIdFromTransform(Transform transform)
+		{
+			return GetAnimationTargetIdFromTransform(transform);
+		}
+
+		private int GetAnimationTargetIdFromTransform(Transform transform)
+		{
+			if (_exportedTransforms.ContainsKey(transform.GetInstanceID()))
+			{
+				return _exportedTransforms[transform.GetInstanceID()];
+			}
+			return -1;
 		}
 
 		public void AddAnimationData(
@@ -3605,137 +3827,6 @@ namespace UnityGLTF
 			}
 		}
 
-		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
-		{
-			#if UNITY_EDITOR
-			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
-			{
-				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
-
-				if (!targetCurves.ContainsKey(binding.path))
-				{
-					TargetCurveSet curveSet = new TargetCurveSet();
-					curveSet.Init();
-					targetCurves.Add(binding.path, curveSet);
-				}
-
-				TargetCurveSet current = targetCurves[binding.path];
-				if (binding.propertyName.Contains("m_LocalPosition"))
-				{
-					if (binding.propertyName.Contains(".x"))
-						current.translationCurves[0] = curve;
-					else if (binding.propertyName.Contains(".y"))
-						current.translationCurves[1] = curve;
-					else if (binding.propertyName.Contains(".z"))
-						current.translationCurves[2] = curve;
-				}
-				else if (binding.propertyName.Contains("m_LocalScale"))
-				{
-					if (binding.propertyName.Contains(".x"))
-						current.scaleCurves[0] = curve;
-					else if (binding.propertyName.Contains(".y"))
-						current.scaleCurves[1] = curve;
-					else if (binding.propertyName.Contains(".z"))
-						current.scaleCurves[2] = curve;
-				}
-				else if (binding.propertyName.ToLower().Contains("localrotation"))
-				{
-					current.rotationType = AnimationKeyRotationType.Quaternion;
-					if (binding.propertyName.Contains(".x"))
-						current.rotationCurves[0] = curve;
-					else if (binding.propertyName.Contains(".y"))
-						current.rotationCurves[1] = curve;
-					else if (binding.propertyName.Contains(".z"))
-						current.rotationCurves[2] = curve;
-					else if (binding.propertyName.Contains(".w"))
-						current.rotationCurves[3] = curve;
-				}
-				// Takes into account 'localEuler', 'localEulerAnglesBaked' and 'localEulerAnglesRaw'
-				else if (binding.propertyName.ToLower().Contains("localeuler"))
-				{
-					current.rotationType = AnimationKeyRotationType.Euler;
-					if (binding.propertyName.Contains(".x"))
-						current.rotationCurves[0] = curve;
-					else if (binding.propertyName.Contains(".y"))
-						current.rotationCurves[1] = curve;
-					else if (binding.propertyName.Contains(".z"))
-						current.rotationCurves[2] = curve;
-				}
-				else if (binding.propertyName.StartsWith("blendShape."))
-				{
-					var weightName = binding.propertyName.Substring("blendShape.".Length);
-					current.weightCurves.Add(weightName, curve);
-				}
-				targetCurves[binding.path] = current;
-			}
-			#endif
-		}
-
-		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
-		{
-			var keyList = targetCurvesBinding.Keys.ToList();
-			foreach (string target in keyList)
-			{
-				Transform targetTr = target.Length > 0 ? tr.Find(target) : tr;
-				if (targetTr == null)
-					continue;
-
-				TargetCurveSet current = targetCurvesBinding[target];
-				// if (current.translationCurves[0] == null)
-				// {
-				// 	current.translationCurves[0] = CreateConstantCurve(targetTr.localPosition.x, endTime);
-				// 	current.translationCurves[1] = CreateConstantCurve(targetTr.localPosition.y, endTime);
-				// 	current.translationCurves[2] = CreateConstantCurve(targetTr.localPosition.z, endTime);
-				// }
-				//
-				// if (current.scaleCurves[0] == null)
-				// {
-				// 	current.scaleCurves[0] = CreateConstantCurve(targetTr.localScale.x, endTime);
-				// 	current.scaleCurves[1] = CreateConstantCurve(targetTr.localScale.y, endTime);
-				// 	current.scaleCurves[2] = CreateConstantCurve(targetTr.localScale.z, endTime);
-				// }
-				//
-				// if (current.rotationCurves[0] == null)
-				// {
-				// 	current.rotationCurves[0] = CreateConstantCurve(targetTr.localRotation.x, endTime);
-				// 	current.rotationCurves[1] = CreateConstantCurve(targetTr.localRotation.y, endTime);
-				// 	current.rotationCurves[2] = CreateConstantCurve(targetTr.localRotation.z, endTime);
-				// 	current.rotationCurves[3] = CreateConstantCurve(targetTr.localRotation.w, endTime);
-				// }
-
-				if (current.weightCurves.Count > 0)
-				{
-					// need to sort and generate the other matching curves as constant curves for all blend shapes
-					var renderer = targetTr.GetComponent<SkinnedMeshRenderer>();
-					var mesh = renderer.sharedMesh;
-					var shapeCount = mesh.blendShapeCount;
-					if(shapeCount != current.weightCurves.Count)
-					{
-						var newWeights = new Dictionary<string, AnimationCurve>();
-						for (int i = 0; i < shapeCount; i++)
-						{
-							var shapeName = mesh.GetBlendShapeName(i);
-							var shapeCurve = current.weightCurves.ContainsKey(shapeName) ? current.weightCurves[shapeName] : CreateConstantCurve(renderer.GetBlendShapeWeight(i), endTime);
-							newWeights.Add(shapeName, shapeCurve);
-						}
-
-						current.weightCurves = newWeights;
-					}
-				}
-
-				targetCurvesBinding[target] = current;
-			}
-		}
-
-		private AnimationCurve CreateConstantCurve(float value, float endTime)
-		{
-			// No translation curves, adding them
-			AnimationCurve curve = new AnimationCurve();
-			curve.AddKey(0, value);
-			curve.AddKey(endTime, value);
-			return curve;
-		}
-
 		private bool ArrayRangeEquals(float[] array, int sectionLength, int prevSectionStart, int sectionStart, int nextSectionStart)
 		{
 			var equals = true;
@@ -3744,108 +3835,6 @@ namespace UnityGLTF
 				equals &= array[prevSectionStart + i] == array[sectionStart + i] && array[sectionStart + i] == array[nextSectionStart + i];
 				if (!equals) return false;
 			}
-
-			return true;
-		}
-
-		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights)
-		{
-			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
-			float deltaTime = length / nbSamples;
-			var weightCount = curveSet.weightCurves?.Count ?? 0;
-
-			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
-			bool haveRotationKeys = curveSet.rotationCurves != null && curveSet.rotationCurves.Length > 0 && curveSet.rotationCurves[0] != null;
-			bool haveScaleKeys = curveSet.scaleCurves != null && curveSet.scaleCurves.Length > 0 && curveSet.scaleCurves[0] != null;
-			bool haveWeightKeys = curveSet.weightCurves != null && curveSet.weightCurves.Count > 0;
-
-			if(haveScaleKeys)
-			{
-				if(curveSet.scaleCurves.Length < 3)
-				{
-					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now");
-					return false;
-				}
-				bool anyIsNull = false;
-				foreach (var sc in curveSet.scaleCurves)
-					anyIsNull |= sc == null;
-
-				if (anyIsNull)
-				{
-					Debug.LogWarning("A scale curve has at least one null property curve! Ignoring");
-					haveScaleKeys = false;
-				}
-			}
-
-			if(haveRotationKeys)
-			{
-				bool anyIsNull = false;
-				int checkRotationKeyCount = curveSet.rotationType == AnimationKeyRotationType.Euler ? 3 : 4;
-				for (int i = 0; i < checkRotationKeyCount; i++)
-				{
-					anyIsNull |= curveSet.rotationCurves.Length - 1 < i || curveSet.rotationCurves[i] == null;
-				}
-
-				if (anyIsNull)
-				{
-					Debug.LogWarning("A rotation curve has at least one null property curve! Ignoring");
-					haveRotationKeys = false;
-				}
-			}
-
-			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys && !haveWeightKeys)
-			{
-				Debug.LogWarning("No keys in curve set");
-				return false;
-			}
-
-			// Initialize Arrays
-			times = new float[nbSamples];
-			if(haveTranslationKeys)
-				positions = new Vector3[nbSamples];
-			if(haveScaleKeys)
-				scales = new Vector3[nbSamples];
-			if(haveRotationKeys)
-				rotations = new Vector4[nbSamples];
-			if (haveWeightKeys)
-				weights = new float[nbSamples * weightCount];
-
-			// Assuming all the curves exist now
-			for (int i = 0; i < nbSamples; ++i)
-			{
-				float currentTime = i * deltaTime;
-				times[i] = currentTime / speedMultiplier;
-
-				if(haveTranslationKeys)
-					positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
-
-				if(haveScaleKeys)
-					scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
-
-				if(haveRotationKeys)
-				{
-					if (curveSet.rotationType == AnimationKeyRotationType.Euler)
-					{
-						Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
-						rotations[i] = new Vector4(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
-					}
-					else
-					{
-						rotations[i] = new Vector4(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
-					}
-				}
-
-				if (haveWeightKeys)
-				{
-					var curveArray = curveSet.weightCurves.Values.ToArray();
-					for(int j = 0; j < weightCount; j++)
-					{
-						weights[i * weightCount + j] = curveArray[j].Evaluate(times[i]) * 0.01f; // glTF weights 0..1 match to Unity weights 0..100
-					}
-				}
-			}
-
-			RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
 
 			return true;
 		}
