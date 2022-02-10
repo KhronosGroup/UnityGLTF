@@ -164,3 +164,4 @@ TestProjects/*/*.csproj
 **/GLTFSerialization/obj~
 TestProjects/*/.idea
 TestProjects/*/Logs
+TestProjects/*/UserSettings
