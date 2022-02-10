@@ -21,6 +21,11 @@
             "name": "com.unity.modules.animation",
             "expression": "1.0.0",
             "define": "UNITY_ANIMATION"
+        },
+        {
+            "name": "com.unity.modules.imgui",
+            "expression": "1.0.0",
+            "define": "UNITY_IMGUI"
         }
     ],
     "noEngineReferences": false
