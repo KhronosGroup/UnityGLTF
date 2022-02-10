@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.32] - 2022-02-10
+- fixed compilation issues on older Unity versions
+- fixed exporting in memory to GLB byte array
+- fixed dependency to Timeline and some modules not being clear / not guarded
+- fixed Readme containing outdated install instructions
+- fixed compiler errors when building to some platforms
+
 ## [1.0.4-preview.31] - 2022-02-08
 - added ability to record and export blend shapes at runtime
 - fixed settings not being loaded from Resources correctly at runtime
