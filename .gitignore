@@ -166,3 +166,5 @@ TestProjects/*/.idea
 TestProjects/*/Logs
 TestProjects/*/UserSettings
 TestProjects/*/.vsconfig
+TestProjects/*/Builds
+TestProjects/*/Assets/WSATestCertificate.pfx*
