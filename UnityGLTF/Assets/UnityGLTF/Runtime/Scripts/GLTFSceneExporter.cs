@@ -28,6 +28,7 @@ namespace UnityGLTF
 	{
 		public bool ExportInactivePrimitives = true;
 		public bool TreatEmptyRootAsScene = false;
+		public bool MergeClipsWithMatchingNames = false;
 		public LayerMask ExportLayers = -1;
 
 		public ExportOptions()
@@ -179,6 +180,9 @@ namespace UnityGLTF
 		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
+#if ANIMATION_EXPORT_SUPPORTED
+		private readonly Dictionary<(AnimationClip clip, string stateName), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, string), GLTFAnimation>();
+#endif
 
 		#region Settings
 
@@ -3339,8 +3343,6 @@ namespace UnityGLTF
 		// This may need additional work to fully support animatorControllers
 		public void ExportAnimationFromNode(ref Transform transform)
 		{
-			transform.TryGetComponent(out GLTFAnimationExportSettings animationExportSettings);
-
 #if UNITY_ANIMATION
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator)
@@ -3384,26 +3386,47 @@ namespace UnityGLTF
 				}
 			}
 
+			GLTFAnimation GetOrCreateAnimation(AnimationClip clip, string searchForDuplicateName)
+			{
+				var existingAnim = default(GLTFAnimation);
+				if (_exportOptions.MergeClipsWithMatchingNames)
+				{
+					// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
+					// This allows to merge multiple animations into one if required (e.g. a character and an instrument that should play at the same time but have individual clips).
+					existingAnim = _root.Animations?.FirstOrDefault(x => x.Name == searchForDuplicateName);
+				}
+
+				// TODO when multiple AnimationClips are exported, we're currently not properly merging those;
+				// we should only export the GLTFAnimation once but then apply that to all nodes that require it (duplicating the animation but not the accessors)
+				// instead of naively writing over the GLTFAnimation with the same data.
+				if (existingAnim == null)
+				{
+					_clipToAnimation.TryGetValue((clip, searchForDuplicateName), out existingAnim);
+				}
+
+				GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
+
+				// add to set of already exported clip-state pairs
+				_clipToAnimation.Add((clip, searchForDuplicateName), anim);
+
+				return anim;
+			}
+
 			// Creates GLTFAnimation for each clip and adds it to the _root
 			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
 			{
 				// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
-				if(animatorController)
+				if (animatorController)
 				{
 					for (int i = 0; i < clips.Length; i++)
 					{
-						if(!clips[i]) continue;
+						if (!clips[i]) continue;
 
 						// special case: there could be multiple states with the same animation clip.
 						// if we want to handle this here, we need to find all states that match this clip
 						foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
 						{
-							var existingAnim = default(GLTFAnimation);
-							if(animationExportSettings && animationExportSettings.mergeClipsWithMatchingNames)
-								// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
-								existingAnim = _root.Animations?.FirstOrDefault(x => x.Name == state.name);
-
-							GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
+							GLTFAnimation anim = GetOrCreateAnimation(clips[i], state.name);
 							anim.Name = state.name;
 							var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
 							ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
@@ -3419,13 +3442,9 @@ namespace UnityGLTF
 				{
 					for (int i = 0; i < clips.Length; i++)
 					{
-						if(!clips[i]) continue;
-						var existingAnim = default(GLTFAnimation);
-						if(animationExportSettings && animationExportSettings.mergeClipsWithMatchingNames)
-							// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
-							existingAnim = _root.Animations.FirstOrDefault(x => x.Name == clips[i].name);
+						if (!clips[i]) continue;
 
-						GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
+						GLTFAnimation anim = GetOrCreateAnimation(clips[i], clips[i].name);
 						anim.Name = clips[i].name;
 						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, 1);
 
