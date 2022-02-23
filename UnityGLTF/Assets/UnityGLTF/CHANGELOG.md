@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.34] - 2022-02-23
+- added Accessor reuse between exported animations when they come from the same AnimationClip/speed pair
+- added optional project setting to export animation clips with unique names (lots of viewers don't support that)
+- fixed animation clips being merged when the same clip was used in multiple Animators
+
 ## [1.0.4-preview.33] - 2022-02-21
 - added export option to merge animator states with identical names into one animation
 - fixed export of multiple animations when they had the same name (was implicitly merged before, now explicit)
