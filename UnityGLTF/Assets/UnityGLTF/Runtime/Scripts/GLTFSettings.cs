@@ -96,6 +96,9 @@ namespace UnityGLTF
 		[SerializeField]
 		private bool exportAnimations = true;
 		[SerializeField]
+		[Tooltip("Some viewers can't distinguish between animation clips that have the same name. This option ensures all exported animation names are unique.")]
+		private bool uniqueAnimationNames = false;
+		[SerializeField]
 		private bool bakeSkinnedMeshes = false;
 		[Header("Export Mesh Data")]
 		[SerializeField]
@@ -219,6 +222,18 @@ namespace UnityGLTF
 			set {
 				if(exportAnimations != value) {
 					exportAnimations = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
+
+		public bool UniqueAnimationNames
+		{ get => uniqueAnimationNames;
+			set {
+				if(uniqueAnimationNames != value) {
+					uniqueAnimationNames = value;
 #if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
 #endif

@@ -214,6 +214,11 @@ namespace UnityGLTF
 			get { return settings.ExportAnimations; }
 			set { settings.ExportAnimations = value; }
 		}
+		public static bool UniqueAnimationNames
+		{
+			get { return settings.UniqueAnimationNames; }
+			set { settings.UniqueAnimationNames = value; }
+		}
 		public static bool BakeSkinnedMeshes
 		{
 			get { return settings.BakeSkinnedMeshes; }
@@ -3437,7 +3442,8 @@ namespace UnityGLTF
 							GLTFAnimation anim = GetOrCreateAnimation(clips[i], state.name, speed);
 
 							anim.Name = state.name;
-							// anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), state.name);
+							if(settings.UniqueAnimationNames)
+								anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
 
 							ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
 
@@ -3458,7 +3464,8 @@ namespace UnityGLTF
 						GLTFAnimation anim = GetOrCreateAnimation(clips[i], clips[i].name, speed);
 
 						anim.Name = clips[i].name;
-						// anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), state.name);
+						if(settings.UniqueAnimationNames)
+							anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
 
 						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
 
