@@ -3399,10 +3399,14 @@ namespace UnityGLTF
 				// TODO when multiple AnimationClips are exported, we're currently not properly merging those;
 				// we should only export the GLTFAnimation once but then apply that to all nodes that require it (duplicating the animation but not the accessors)
 				// instead of naively writing over the GLTFAnimation with the same data.
-				var animationClipAndStateNameAndSpeed = (clip, searchForDuplicateName, speed);
+				var animationClipAndStateNameAndSpeed = (clip, "", speed);
 				if (existingAnim == null)
 				{
-					_clipToAnimation.TryGetValue(animationClipAndStateNameAndSpeed, out existingAnim);
+					if(_clipToAnimation.TryGetValue(animationClipAndStateNameAndSpeed, out existingAnim))
+					{
+						// we duplicate the clip it was exported before so we can retarget to another transform.
+						existingAnim = new GLTFAnimation(existingAnim, _root);
+					}
 				}
 
 				GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
@@ -3430,7 +3434,10 @@ namespace UnityGLTF
 						{
 							var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
 							GLTFAnimation anim = GetOrCreateAnimation(clips[i], state.name, speed);
+
 							anim.Name = state.name;
+							// anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), state.name);
+
 							ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
 
 							if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
@@ -3448,7 +3455,10 @@ namespace UnityGLTF
 
 						var speed = 1f;
 						GLTFAnimation anim = GetOrCreateAnimation(clips[i], clips[i].name, speed);
+
 						anim.Name = clips[i].name;
+						// anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), state.name);
+
 						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
 
 						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
@@ -3488,7 +3498,8 @@ namespace UnityGLTF
 			}
 		}
 
-		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed = 1f)
+		private Dictionary<(AnimationClip clip, float speed, string targetPath), Transform> clipAndSpeedAndPathToExportedTransform = new Dictionary<(AnimationClip, float, string), Transform>();
+		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed)
 		{
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
 			// 1 channel per node T/R/S, one sampler per node T/R/S
@@ -3509,13 +3520,64 @@ namespace UnityGLTF
 				// Bake animation for all animated nodes
 				foreach (string target in targetCurvesBinding.Keys)
 				{
+					var hadAlreadyExportedThisBindingBefore = clipAndSpeedAndPathToExportedTransform.TryGetValue((clip, speed, target), out var alreadyExportedTransform);
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
-					if (targetTr == null)// || targetTr.GetComponent<SkinnedMeshRenderer>())
+					int newTargetId = targetTr ? GetAnimationTargetIdFromTransform(targetTr) : -1;
+
+					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{
+						// warn: the transform for this binding exists, but its Node isn't exported. It's probably disabled and "Export Disabled" is off.
+						if (targetTr)
+						{
+							Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + targetTr.name + " (InstanceID: " + targetTr.GetInstanceID() + ")", targetTr);
+						}
+
+						// we need to remove the channels and samplers from the existing animation that was passed in if they exist
+						int alreadyExportedChannelTargetId = GetAnimationTargetIdFromTransform(alreadyExportedTransform);
+						animation.Channels.RemoveAll(x => x.Target.Node.Id == alreadyExportedChannelTargetId);
+
+						// TODO remove all samplers from this animation that were targeting the channels that we just removed
+						// var remainingSamplers = new HashSet<int>();
+						// foreach (var c in animation.Channels)
+						// {
+						// 	remainingSamplers.Add(c.Sampler.Id);
+						// }
+						//
+						// for (int i = animation.Samplers.Count - 1; i >= 0; i--)
+						// {
+						// 	if (!remainingSamplers.Contains(i))
+						// 	{
+						// 		animation.Samplers.RemoveAt(i);
+						// 		// TODO: this doesn't work because we're punching holes in the sampler order; all channel sampler IDs would need to be adjusted as well.
+						// 	}
+						// }
+
 						continue;
 					}
 
-					TargetCurveSet current = targetCurvesBinding[target];
+					if (!targetTr)
+						continue;
+
+					if (hadAlreadyExportedThisBindingBefore && targetTr)
+					{
+						int alreadyExportedChannelTargetId = GetAnimationTargetIdFromTransform(alreadyExportedTransform);
+
+						for (int i = 0; i < animation.Channels.Count; i++)
+						{
+							var existingTarget = animation.Channels[i].Target;
+							if (existingTarget.Node.Id != alreadyExportedChannelTargetId) continue;
+
+							existingTarget.Node = new NodeId()
+							{
+								Id = newTargetId,
+								Root = _root
+							};
+						}
+						continue;
+					}
+
+					// add to cache: this is the first time we're exporting that particular binding.
+					clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
 
 					// Initialize data
 					// Bake and populate animation data
@@ -3788,6 +3850,7 @@ namespace UnityGLTF
 				Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
 				return;
 			}
+
 			AccessorId timeAccessor = ExportAccessor(times);
 
 			// Translation
