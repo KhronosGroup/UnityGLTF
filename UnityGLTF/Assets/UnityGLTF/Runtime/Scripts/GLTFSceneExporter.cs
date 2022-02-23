@@ -181,7 +181,8 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
 #if ANIMATION_EXPORT_SUPPORTED
-		private readonly Dictionary<(AnimationClip clip, string stateName, float stateSpeed), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, string, float), GLTFAnimation>();
+		private readonly Dictionary<(AnimationClip clip, float speed), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, float), GLTFAnimation>();
+		private readonly Dictionary<(AnimationClip clip, float speed, string targetPath), Transform> _clipAndSpeedAndPathToExportedTransform = new Dictionary<(AnimationClip, float, string), Transform>();
 #endif
 
 		#region Settings
@@ -3399,10 +3400,10 @@ namespace UnityGLTF
 				// TODO when multiple AnimationClips are exported, we're currently not properly merging those;
 				// we should only export the GLTFAnimation once but then apply that to all nodes that require it (duplicating the animation but not the accessors)
 				// instead of naively writing over the GLTFAnimation with the same data.
-				var animationClipAndStateNameAndSpeed = (clip, "", speed);
+				var animationClipAndSpeed = (clip, speed);
 				if (existingAnim == null)
 				{
-					if(_clipToAnimation.TryGetValue(animationClipAndStateNameAndSpeed, out existingAnim))
+					if(_clipToAnimation.TryGetValue(animationClipAndSpeed, out existingAnim))
 					{
 						// we duplicate the clip it was exported before so we can retarget to another transform.
 						existingAnim = new GLTFAnimation(existingAnim, _root);
@@ -3412,8 +3413,8 @@ namespace UnityGLTF
 				GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
 
 				// add to set of already exported clip-state pairs
-				if (!_clipToAnimation.ContainsKey(animationClipAndStateNameAndSpeed))
-					_clipToAnimation.Add(animationClipAndStateNameAndSpeed, anim);
+				if (!_clipToAnimation.ContainsKey(animationClipAndSpeed))
+					_clipToAnimation.Add(animationClipAndSpeed, anim);
 
 				return anim;
 			}
@@ -3498,7 +3499,6 @@ namespace UnityGLTF
 			}
 		}
 
-		private Dictionary<(AnimationClip clip, float speed, string targetPath), Transform> clipAndSpeedAndPathToExportedTransform = new Dictionary<(AnimationClip, float, string), Transform>();
 		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed)
 		{
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
@@ -3520,7 +3520,7 @@ namespace UnityGLTF
 				// Bake animation for all animated nodes
 				foreach (string target in targetCurvesBinding.Keys)
 				{
-					var hadAlreadyExportedThisBindingBefore = clipAndSpeedAndPathToExportedTransform.TryGetValue((clip, speed, target), out var alreadyExportedTransform);
+					var hadAlreadyExportedThisBindingBefore = _clipAndSpeedAndPathToExportedTransform.TryGetValue((clip, speed, target), out var alreadyExportedTransform);
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
 					int newTargetId = targetTr ? GetAnimationTargetIdFromTransform(targetTr) : -1;
 
@@ -3577,7 +3577,7 @@ namespace UnityGLTF
 					}
 
 					// add to cache: this is the first time we're exporting that particular binding.
-					clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
+					_clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
 
 					// Initialize data
 					// Bake and populate animation data
