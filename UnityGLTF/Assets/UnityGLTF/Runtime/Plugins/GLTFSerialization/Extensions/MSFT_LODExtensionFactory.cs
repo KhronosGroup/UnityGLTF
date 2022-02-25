@@ -1,7 +1,4 @@
-﻿using System;
-using Newtonsoft.Json.Linq;
-using GLTF.Math;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json.Linq;
 using GLTF.Extensions;
 using System.Collections.Generic;
 
@@ -12,7 +9,7 @@ namespace GLTF.Schema
 		public const string EXTENSION_NAME = "MSFT_lod";
 		public const string SCREEN_COVERAGE_EXTRAS = "MSFT_screencoverage";
 		public const string IDS = "ids";
-	
+
 		public MSFT_LODExtensionFactory()
 		{
 			ExtensionName = EXTENSION_NAME;

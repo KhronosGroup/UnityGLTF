@@ -1,15 +1,11 @@
 ﻿using GLTF.Extensions;
-using GLTF.Math;
-using GLTF.Schema;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 
 namespace GLTF.Schema
 {
 	/// <summary>
-	/// glTF extension that defines the LOD 
+	/// glTF extension that defines the LOD
 	/// </summary>
 	public class MSFT_LODExtension : IExtension
 	{
