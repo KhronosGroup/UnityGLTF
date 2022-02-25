@@ -55,7 +55,7 @@ namespace UnityGLTF
 		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
-		// Return true here to signal that material export is complete, no regular export will happen then. Return false to continue regular export.
+		/// <returns>True: material export is complete. False: continue regular export.</returns>
 		public delegate bool BeforeMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
 		public delegate void AfterMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
 
@@ -63,8 +63,9 @@ namespace UnityGLTF
 		public static event BeforeSceneExportDelegate BeforeSceneExport;
 		public static event AfterSceneExportDelegate AfterSceneExport;
 		public static event AfterNodeExportDelegate AfterNodeExport;
+		/// <returns>True: material export is complete. False: continue regular export.</returns>
 		public static event BeforeMaterialExportDelegate BeforeMaterialExport;
-		public static event BeforeMaterialExportDelegate AfterMaterialExport;
+		public static event AfterMaterialExportDelegate AfterMaterialExport;
 
 		private enum IMAGETYPE
 		{
@@ -746,7 +747,7 @@ namespace UnityGLTF
 			return filenamePath;
 		}
 
-		private void DeclareExtensionUsage(string extension, bool isRequired=false)
+		public void DeclareExtensionUsage(string extension, bool isRequired=false)
 		{
 			if( _root.ExtensionsUsed == null ){
 				_root.ExtensionsUsed = new List<string>();
