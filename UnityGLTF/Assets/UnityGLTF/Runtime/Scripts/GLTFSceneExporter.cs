@@ -3449,18 +3449,8 @@ namespace UnityGLTF
 					foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
 					{
 						var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
-						GLTFAnimation anim = GetOrCreateAnimation(clips[i], state.name, speed);
-
-						anim.Name = state.name;
-						if(settings.UniqueAnimationNames)
-							anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
-
-						ConvertClipToGLTFAnimation(clips[i], nodeTransform, anim, speed);
-
-						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
-						{
-							_root.Animations.Add(anim);
-						}
+						var name = clips[i].name;
+						ExportAnimationClip(clips[i], name, nodeTransform, speed);
 					}
 				}
 			}
@@ -3469,22 +3459,28 @@ namespace UnityGLTF
 				for (int i = 0; i < clips.Count; i++)
 				{
 					if (!clips[i]) continue;
-
 					var speed = 1f;
-					GLTFAnimation anim = GetOrCreateAnimation(clips[i], clips[i].name, speed);
-
-					anim.Name = clips[i].name;
-					if(settings.UniqueAnimationNames)
-						anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
-
-					ConvertClipToGLTFAnimation(clips[i], nodeTransform, anim, speed);
-
-					if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
-					{
-						_root.Animations.Add(anim);
-					}
+					ExportAnimationClip(clips[i], clips[i].name, nodeTransform, speed);
 				}
 			}
+		}
+
+		public GLTFAnimation ExportAnimationClip(AnimationClip clip, string name, Transform node, float speed)
+		{
+			if (!clip) return null;
+			GLTFAnimation anim = GetOrCreateAnimation(clip, name, speed);
+
+			anim.Name = name;
+			if(settings.UniqueAnimationNames)
+				anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
+
+			ConvertClipToGLTFAnimation(clip, node, anim, speed);
+
+			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
+			{
+				_root.Animations.Add(anim);
+			}
+			return anim;
 		}
 #endif
 
