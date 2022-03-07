@@ -1913,7 +1913,7 @@ namespace UnityGLTF
 				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
 				if (isGltfPbrMetallicRoughnessShader)
 					smoothness = 1 - smoothness;
-				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - smoothness;
+				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? (1 - material.GetFloat("_GlossMapScale")) : (1.0 - smoothness);
 			}
 
 			if (material.HasProperty("_MetallicGlossMap"))
