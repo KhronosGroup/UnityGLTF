@@ -23,8 +23,8 @@ namespace UnityGLTF.Timeline
 
 	        Time.captureFramerate = Clip.m_CaptureFrameRate;
 
-	        recorder = new GLTFRecorder(getExportRoot, Clip.m_RecordBlendShapes);
-	        recorder.StartRecording(getTime);
+	        // will be initialized lazy to ensure that the first frame is correct and not pre-timeline refresh
+	        recorder = null;
 	    }
 
 	    private void StopRecording(double getTime)
@@ -34,8 +34,15 @@ namespace UnityGLTF.Timeline
 
 	    private void ProcessRecording(double getTime, Transform getExportRoot)
 	    {
-		    if(getTime > recorder.LastRecordedTime)
-				recorder?.UpdateRecording(getTime);
+		    if (recorder == null)
+		    {
+			    recorder = new GLTFRecorder(getExportRoot, Clip.m_RecordBlendShapes);
+			    recorder.StartRecording(getTime);
+		    }
+		    else if (getTime > recorder.LastRecordedTime)
+		    {
+			    recorder?.UpdateRecording(getTime);
+		    }
 	    }
 
 	    public GLTFRecorderClip Clip;
