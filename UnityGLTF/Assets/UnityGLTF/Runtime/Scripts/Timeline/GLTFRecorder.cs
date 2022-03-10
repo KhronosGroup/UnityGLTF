@@ -150,13 +150,13 @@ namespace UnityGLTF.Timeline
 			GLTFAnimation anim = new GLTFAnimation();
 			anim.Name = gltfRoot.GetDefaultScene()?.Name ?? "Recording";
 
-			CollectAndProcessAnimation(exporter, ref root, ref anim, 1f);
+			CollectAndProcessAnimation(exporter, anim);
 
 			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
 				gltfRoot.Animations.Add(anim);
 		}
 
-		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, ref Transform root, ref GLTFAnimation anim, float speed)
+		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, GLTFAnimation anim)
 		{
 			foreach (var kvp in data)
 			{
@@ -176,7 +176,7 @@ namespace UnityGLTF.Timeline
 				}
 
 				gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
-				gltfSceneExporter.AddAnimationData(kvp.Key, ref anim, times, positions, rotations, scales, weights);
+				gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
 			}
 		}
 

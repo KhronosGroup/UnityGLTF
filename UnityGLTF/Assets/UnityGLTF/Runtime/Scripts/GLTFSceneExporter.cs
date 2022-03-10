@@ -1916,7 +1916,7 @@ namespace UnityGLTF
 				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
 				if (isGltfPbrMetallicRoughnessShader)
 					smoothness = 1 - smoothness;
-				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? material.GetFloat("_GlossMapScale") : 1.0 - smoothness;
+				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? (1 - material.GetFloat("_GlossMapScale")) : (1.0 - smoothness);
 			}
 
 			if (material.HasProperty("_MetallicGlossMap"))
@@ -3363,7 +3363,7 @@ namespace UnityGLTF
                 AnimationClip[] clips = AnimationUtility.GetAnimationClips(transform.gameObject);
                 var animatorController = animator.runtimeAnimatorController as AnimatorController;
 				// Debug.Log("animator: " + animator + "=> " + animatorController);
-                ExportAnimationClips(transform, clips, animatorController);
+                ExportAnimationClips(transform, clips, animator, animatorController);
 #endif
 			}
 
@@ -3376,118 +3376,118 @@ namespace UnityGLTF
 #endif
 			}
 
-#if ANIMATION_EXPORT_SUPPORTED
-			IEnumerable<AnimatorState> GetAnimatorStateParametersForClip(AnimationClip clip, AnimatorController animatorController)
-			{
-				if (!clip)
-					yield break;
 
-				if (!animatorController)
-					yield return new AnimatorState() { name = clip.name, speed = 1f };
 
-				foreach (var layer in animatorController.layers)
-				{
-					foreach (var state in layer.stateMachine.states)
-					{
-						// find a matching clip in the animator
-						if (state.state.motion is AnimationClip c && c == clip)
-						{
-							yield return state.state;
-						}
-					}
-				}
-			}
-
-			GLTFAnimation GetOrCreateAnimation(AnimationClip clip, string searchForDuplicateName, float speed)
-			{
-				var existingAnim = default(GLTFAnimation);
-				if (_exportOptions.MergeClipsWithMatchingNames)
-				{
-					// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
-					// This allows to merge multiple animations into one if required (e.g. a character and an instrument that should play at the same time but have individual clips).
-					existingAnim = _root.Animations?.FirstOrDefault(x => x.Name == searchForDuplicateName);
-				}
-
-				// TODO when multiple AnimationClips are exported, we're currently not properly merging those;
-				// we should only export the GLTFAnimation once but then apply that to all nodes that require it (duplicating the animation but not the accessors)
-				// instead of naively writing over the GLTFAnimation with the same data.
-				var animationClipAndSpeed = (clip, speed);
-				if (existingAnim == null)
-				{
-					if(_clipToAnimation.TryGetValue(animationClipAndSpeed, out existingAnim))
-					{
-						// we duplicate the clip it was exported before so we can retarget to another transform.
-						existingAnim = new GLTFAnimation(existingAnim, _root);
-					}
-				}
-
-				GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
-
-				// add to set of already exported clip-state pairs
-				if (!_clipToAnimation.ContainsKey(animationClipAndSpeed))
-					_clipToAnimation.Add(animationClipAndSpeed, anim);
-
-				return anim;
-			}
-
-			// Creates GLTFAnimation for each clip and adds it to the _root
-			void ExportAnimationClips(Transform nodeTransform, AnimationClip[] clips, AnimatorController animatorController = null)
-			{
-				// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
-				if (animatorController)
-				{
-					for (int i = 0; i < clips.Length; i++)
-					{
-						if (!clips[i]) continue;
-
-						// special case: there could be multiple states with the same animation clip.
-						// if we want to handle this here, we need to find all states that match this clip
-						foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
-						{
-							var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
-							GLTFAnimation anim = GetOrCreateAnimation(clips[i], state.name, speed);
-
-							anim.Name = state.name;
-							if(settings.UniqueAnimationNames)
-								anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
-
-							ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
-
-							if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
-							{
-								_root.Animations.Add(anim);
-							}
-						}
-					}
-				}
-				else
-				{
-					for (int i = 0; i < clips.Length; i++)
-					{
-						if (!clips[i]) continue;
-
-						var speed = 1f;
-						GLTFAnimation anim = GetOrCreateAnimation(clips[i], clips[i].name, speed);
-
-						anim.Name = clips[i].name;
-						if(settings.UniqueAnimationNames)
-							anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
-
-						ConvertClipToGLTFAnimation(ref clips[i], ref nodeTransform, ref anim, speed);
-
-						if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
-						{
-							_root.Animations.Add(anim);
-						}
-					}
-				}
-			}
-#endif
 #endif
 		}
 
-#if UNITY_ANIMATION
+#if ANIMATION_EXPORT_SUPPORTED
+		private IEnumerable<AnimatorState> GetAnimatorStateParametersForClip(AnimationClip clip, AnimatorController animatorController)
+		{
+			if (!clip)
+				yield break;
 
+			if (!animatorController)
+				yield return new AnimatorState() { name = clip.name, speed = 1f };
+
+			foreach (var layer in animatorController.layers)
+			{
+				foreach (var state in layer.stateMachine.states)
+				{
+					// find a matching clip in the animator
+					if (state.state.motion is AnimationClip c && c == clip)
+					{
+						yield return state.state;
+					}
+				}
+			}
+		}
+
+		private GLTFAnimation GetOrCreateAnimation(AnimationClip clip, string searchForDuplicateName, float speed)
+		{
+			var existingAnim = default(GLTFAnimation);
+			if (_exportOptions.MergeClipsWithMatchingNames)
+			{
+				// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
+				// This allows to merge multiple animations into one if required (e.g. a character and an instrument that should play at the same time but have individual clips).
+				existingAnim = _root.Animations?.FirstOrDefault(x => x.Name == searchForDuplicateName);
+			}
+
+			// TODO when multiple AnimationClips are exported, we're currently not properly merging those;
+			// we should only export the GLTFAnimation once but then apply that to all nodes that require it (duplicating the animation but not the accessors)
+			// instead of naively writing over the GLTFAnimation with the same data.
+			var animationClipAndSpeed = (clip, speed);
+			if (existingAnim == null)
+			{
+				if(_clipToAnimation.TryGetValue(animationClipAndSpeed, out existingAnim))
+				{
+					// we duplicate the clip it was exported before so we can retarget to another transform.
+					existingAnim = new GLTFAnimation(existingAnim, _root);
+				}
+			}
+
+			GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
+
+			// add to set of already exported clip-state pairs
+			if (!_clipToAnimation.ContainsKey(animationClipAndSpeed))
+				_clipToAnimation.Add(animationClipAndSpeed, anim);
+
+			return anim;
+		}
+
+		// Creates GLTFAnimation for each clip and adds it to the _root
+		public void ExportAnimationClips(Transform nodeTransform, IList<AnimationClip> clips,
+			Animator animator = null, AnimatorController animatorController = null)
+		{
+			// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
+			if (animatorController)
+			{
+				if (!animator) throw new ArgumentNullException("Missing " + nameof(animator));
+				for (int i = 0; i < clips.Count; i++)
+				{
+					if (!clips[i]) continue;
+
+					// special case: there could be multiple states with the same animation clip.
+					// if we want to handle this here, we need to find all states that match this clip
+					foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
+					{
+						var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
+						var name = clips[i].name;
+						ExportAnimationClip(clips[i], name, nodeTransform, speed);
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < clips.Count; i++)
+				{
+					if (!clips[i]) continue;
+					var speed = 1f;
+					ExportAnimationClip(clips[i], clips[i].name, nodeTransform, speed);
+				}
+			}
+		}
+
+		public GLTFAnimation ExportAnimationClip(AnimationClip clip, string name, Transform node, float speed)
+		{
+			if (!clip) return null;
+			GLTFAnimation anim = GetOrCreateAnimation(clip, name, speed);
+
+			anim.Name = name;
+			if(settings.UniqueAnimationNames)
+				anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
+
+			ConvertClipToGLTFAnimation(clip, node, anim, speed);
+
+			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
+			{
+				_root.Animations.Add(anim);
+			}
+			return anim;
+		}
+#endif
+
+#if UNITY_ANIMATION
 		public enum AnimationKeyRotationType
 		{
 			Unknown,
@@ -3512,7 +3512,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private void ConvertClipToGLTFAnimation(ref AnimationClip clip, ref Transform transform, ref GLTF.Schema.GLTFAnimation animation, float speed)
+		private void ConvertClipToGLTFAnimation(AnimationClip clip, Transform transform, GLTFAnimation animation, float speed)
 		{
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
 			// 1 channel per node T/R/S, one sampler per node T/R/S
@@ -3526,7 +3526,7 @@ namespace UnityGLTF
 			// where endTime is clip duration
 			// Note: we should avoid creating curves for a property if none of it's components is animated
 
-			GenerateMissingCurves(clip.length, ref transform, ref targetCurvesBinding);
+			GenerateMissingCurves(clip.length, transform, ref targetCurvesBinding);
 
 			if (BakeAnimationData)
 			{
@@ -3610,7 +3610,7 @@ namespace UnityGLTF
 
 					if(haveAnimation)
 					{
-						AddAnimationData(targetTr, ref animation, times, positions, rotations, scales, weights);
+						AddAnimationData(targetTr, animation, times, positions, rotations, scales, weights);
 					}
 				}
 			}
@@ -3697,7 +3697,7 @@ namespace UnityGLTF
 #endif
 		}
 
-		private void GenerateMissingCurves(float endTime, ref Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
+		private void GenerateMissingCurves(float endTime, Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
 		{
 			var keyList = targetCurvesBinding.Keys.ToList();
 			foreach (string target in keyList)
@@ -3860,7 +3860,7 @@ namespace UnityGLTF
 
 		public void AddAnimationData(
 			Transform target,
-			ref GLTF.Schema.GLTFAnimation animation,
+			GLTF.Schema.GLTFAnimation animation,
 			float[] times = null,
 			Vector3[] positions = null,
 			Vector4[] rotations = null,
