@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-preview.35] - 2022-03-11
+- added better logs for unsupported animation tracks on export
+- added public methods in GLTFSceneExporter to allow for custom animation export
+- added first batch of samples for custom extensions export
+- fixed: Auto Referenced is back on on AsmDefs to keep legacy behaviour
+- fixed: first timeline keyframe was exported incorrectly in some cases
+- fixed: skins should be exported even when animation export is off
+- fixed: animation clips shouldn't be exported when exporting from Timeline recorder
+- fixed: MetallicGlossMap scale was incorrectly exported in some cases
+
 ## [1.0.4-preview.34] - 2022-02-23
 - added Accessor reuse between exported animations when they come from the same AnimationClip/speed pair
 - added optional project setting to export animation clips with unique names (lots of viewers don't support that)
