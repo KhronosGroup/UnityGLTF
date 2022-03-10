@@ -3600,7 +3600,7 @@ namespace UnityGLTF
 					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
 					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales, ref weights))
 					{
-						Debug.LogWarning("Warning: Export failed for animation curve " + target + " in " + clip + " from " + transform, transform);
+						Debug.LogWarning("Warning: Animation curves for " + target + " in " + clip + " from " + transform, transform);
 					}
 
 					bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
@@ -3620,9 +3620,19 @@ namespace UnityGLTF
 		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
 		{
 #if UNITY_EDITOR
+
 			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
 			{
 				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
+
+				var containsPosition = binding.propertyName.Contains("m_LocalPosition");
+				var containsScale = binding.propertyName.Contains("m_LocalScale");
+				var containsRotation = binding.propertyName.ToLowerInvariant().Contains("localrotation");
+				var containsEuler = binding.propertyName.ToLowerInvariant().Contains("localeuler");
+				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
+				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
+
+				if (!containsCompatibleData) continue;
 
 				if (!targetCurves.ContainsKey(binding.path))
 				{
@@ -3632,7 +3642,7 @@ namespace UnityGLTF
 				}
 
 				TargetCurveSet current = targetCurves[binding.path];
-				if (binding.propertyName.Contains("m_LocalPosition"))
+				if (containsPosition)
 				{
 					if (binding.propertyName.Contains(".x"))
 						current.translationCurves[0] = curve;
@@ -3641,7 +3651,7 @@ namespace UnityGLTF
 					else if (binding.propertyName.Contains(".z"))
 						current.translationCurves[2] = curve;
 				}
-				else if (binding.propertyName.Contains("m_LocalScale"))
+				else if (containsScale)
 				{
 					if (binding.propertyName.Contains(".x"))
 						current.scaleCurves[0] = curve;
@@ -3650,7 +3660,7 @@ namespace UnityGLTF
 					else if (binding.propertyName.Contains(".z"))
 						current.scaleCurves[2] = curve;
 				}
-				else if (binding.propertyName.ToLower().Contains("localrotation"))
+				else if (containsRotation)
 				{
 					current.rotationType = AnimationKeyRotationType.Quaternion;
 					if (binding.propertyName.Contains(".x"))
@@ -3663,7 +3673,7 @@ namespace UnityGLTF
 						current.rotationCurves[3] = curve;
 				}
 				// Takes into account 'localEuler', 'localEulerAnglesBaked' and 'localEulerAnglesRaw'
-				else if (binding.propertyName.ToLower().Contains("localeuler"))
+				else if (containsEuler)
 				{
 					current.rotationType = AnimationKeyRotationType.Euler;
 					if (binding.propertyName.Contains(".x"))
@@ -3673,7 +3683,8 @@ namespace UnityGLTF
 					else if (binding.propertyName.Contains(".z"))
 						current.rotationCurves[2] = curve;
 				}
-				else if (binding.propertyName.StartsWith("blendShape."))
+				// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+				else if (containsBlendShapeWeight)
 				{
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
@@ -3774,7 +3785,6 @@ namespace UnityGLTF
 
 			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys && !haveWeightKeys)
 			{
-				Debug.LogWarning("No keys in curve set");
 				return false;
 			}
 

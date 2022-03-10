@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ef6cb75f3165f943a1369cc90aa73cf, type: 3}
   m_Name: Volume Transmission Ext
   m_EditorClassIdentifier: 
-  enabled: 1
+  enabled: 0
   overridePBR: 1
   pbrSettings:
     metallic: 0
