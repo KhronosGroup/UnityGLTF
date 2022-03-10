@@ -19,7 +19,7 @@ namespace UnityGLTF
 		public UnityEvent<string> recordingEnded;
 
 		private double CurrentTime =>
-#if UNITY_2019_1_OR_NEWER
+#if UNITY_2020_1_OR_NEWER
 			Time.timeAsDouble;
 #else
 			Time.time;
