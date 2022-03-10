@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using GLTF.Schema;
 using Newtonsoft.Json.Linq;
@@ -12,10 +13,12 @@ using Color = GLTF.Math.Color;
 public class VolumeTransmissionExt : ScriptableObject
 {
     public bool enabled = false;
+    public bool targetAllMaterials = false;
+    public Material[] targetMaterials;
 
     [Header("PBR")]
     public bool overridePBR = true;
-    
+
     [Serializable]
     public class PbrSettings
     {
@@ -23,16 +26,16 @@ public class VolumeTransmissionExt : ScriptableObject
         public float roughness = 0.2f;
         public UnityEngine.Color baseColor;
     }
-    
+
     public PbrSettings pbrSettings = new PbrSettings();
 
-    [Header("Extensions")] 
+    [Header("Extensions")]
     public MaterialsTransmissionExtension transmission;
     public MaterialsVolumeExtension volume;
     public MaterialsIorExtension ior;
     public MaterialsClearcoatExtension clearcoat;
     public MaterialsSheenExtension sheen;
-    
+
 #region Helpers for Inspector Display
 
     [Serializable]
@@ -46,19 +49,19 @@ public class VolumeTransmissionExt : ScriptableObject
             attenuationColor = _attenuationColor.ToNumericsColorLinear();
         }
     }
-    
+
     [Serializable]
     public class MaterialsIorExtension : KHR_MaterialsIorExtension
     {
         public bool enabled = false;
     }
-    
+
     [Serializable]
     public class MaterialsTransmissionExtension : KHR_MaterialsTransmissionExtension
     {
         public bool enabled = false;
     }
-    
+
     [Serializable]
     public class MaterialsSheenExtension : KHR_MaterialsSheenExtension
     {
@@ -70,53 +73,65 @@ public class VolumeTransmissionExt : ScriptableObject
             sheenColorFactor = _sheenColorFactor.ToNumericsColorLinear();
         }
     }
-    
+
     [Serializable]
     public class MaterialsClearcoatExtension : KHR_MaterialsClearcoatExtension
     {
         public bool enabled = false;
     }
-    
+
 #endregion
-    
+
     [InitializeOnLoadMethod]
     static void InitExt()
     {
+	    GLTFSceneExporter.BeforeSceneExport += CollectSettings;
         GLTFSceneExporter.AfterMaterialExport += GLTFSceneExporterOnAfterMaterialExport;
+    }
+
+    private static List<VolumeTransmissionExt> profiles = null;
+
+    private static void CollectSettings(GLTFSceneExporter exporter, GLTFRoot gltfroot)
+    {
+	    // load settings
+	    var settingsGuids = AssetDatabase.FindAssets("t:" + nameof(VolumeTransmissionExt));
+	    var settingsList = settingsGuids
+		    .Select(x => AssetDatabase.LoadAssetAtPath<VolumeTransmissionExt>(AssetDatabase.GUIDToAssetPath(x)))
+		    .Where(x => x.enabled);
+	    profiles = settingsList.ToList();
     }
 
     private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
     {
-        // load settings
-        var settingsGuid = AssetDatabase.FindAssets("t:" + nameof(VolumeTransmissionExt)).FirstOrDefault();
-        var settings = AssetDatabase.LoadAssetAtPath<VolumeTransmissionExt>(AssetDatabase.GUIDToAssetPath(settingsGuid));
+        // check if any setting applies here
+        var settings = profiles.FirstOrDefault(x => x.targetAllMaterials || (x.targetMaterials != null && x.targetMaterials.Contains(material)));
 
         if (!settings || !settings.enabled) return;
-        
+
         // override existing PBR for testing
         if (settings.overridePBR)
         {
             materialnode.PbrMetallicRoughness = new PbrMetallicRoughness()
             {
-                MetallicFactor = settings.pbrSettings.metallic, 
-                RoughnessFactor = settings.pbrSettings.roughness, 
+                MetallicFactor = settings.pbrSettings.metallic,
+                RoughnessFactor = settings.pbrSettings.roughness,
                 BaseColorFactor = settings.pbrSettings.baseColor.ToNumericsColorLinear(),
             };
             materialnode.AlphaMode = AlphaMode.OPAQUE;
         }
-        
+
         if(settings.volume.enabled)
         {
             settings.volume.ConvertData();
             exporter.DeclareExtensionUsage(KHR_MaterialsVolumeExtension.ExtensionName, false);
             materialnode.AddExtension(KHR_MaterialsVolumeExtension.ExtensionName, new KHR_MaterialsVolumeExtension()
             {
-                thicknessFactor = 1f, 
-                attenuationDistance = 1f, 
+                thicknessFactor = 1f,
+                attenuationDistance = 1f,
                 attenuationColor = new Color(0.05f, 0.24f, 0.905f, 1f),
             });
         }
-        
+
         if(settings.ior.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsIorExtension.ExtensionName, false);
@@ -125,7 +140,7 @@ public class VolumeTransmissionExt : ScriptableObject
                 ior = 1.75f
             });
         }
-        
+
         if(settings.transmission.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsTransmissionExtension.ExtensionName, false);
@@ -140,17 +155,17 @@ public class VolumeTransmissionExt : ScriptableObject
             exporter.DeclareExtensionUsage(KHR_MaterialsSheenExtension.ExtensionName, false);
             materialnode.AddExtension(KHR_MaterialsSheenExtension.ExtensionName, new KHR_MaterialsSheenExtension()
             {
-                sheenRoughnessFactor = 0.4f, 
+                sheenRoughnessFactor = 0.4f,
                 sheenColorFactor = new Color(1,0,1,1),
             });
         }
-        
+
         if(settings.clearcoat.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsClearcoatExtension.ExtensionName, false);
             materialnode.AddExtension(KHR_MaterialsClearcoatExtension.ExtensionName, new KHR_MaterialsClearcoatExtension()
             {
-                clearcoatFactor = 0.5f, 
+                clearcoatFactor = 0.5f,
                 clearcoatRoughnessFactor = 0.8f,
             });
         }
@@ -239,7 +254,7 @@ namespace GLTF.Schema
             };
         }
     }
-    
+
     // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat
     [Serializable]
     public class KHR_MaterialsClearcoatExtension : IExtension
@@ -258,7 +273,7 @@ namespace GLTF.Schema
 
             jo.Add(new JProperty(nameof(clearcoatFactor), clearcoatFactor));
             jo.Add(new JProperty(nameof(clearcoatRoughnessFactor), clearcoatRoughnessFactor));
-            
+
             return jProperty;
         }
 
@@ -267,7 +282,7 @@ namespace GLTF.Schema
             return new KHR_MaterialsClearcoatExtension() { clearcoatFactor = clearcoatFactor, clearcoatRoughnessFactor = clearcoatRoughnessFactor };
         }
     }
-    
+
     // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_sheen
     [Serializable]
     public class KHR_MaterialsSheenExtension : IExtension
@@ -285,7 +300,7 @@ namespace GLTF.Schema
 
             jo.Add(new JProperty(nameof(sheenColorFactor), new JArray(sheenColorFactor.R, sheenColorFactor.G, sheenColorFactor.B)));
             jo.Add(new JProperty(nameof(sheenRoughnessFactor), sheenRoughnessFactor));
-            
+
             return jProperty;
         }
 

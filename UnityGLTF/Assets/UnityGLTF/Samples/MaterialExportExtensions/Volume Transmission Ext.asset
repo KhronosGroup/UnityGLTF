@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Volume Transmission Ext
   m_EditorClassIdentifier: 
   enabled: 0
+  targetAllMaterials: 0
+  targetMaterials: []
   overridePBR: 1
   pbrSettings:
     metallic: 0
