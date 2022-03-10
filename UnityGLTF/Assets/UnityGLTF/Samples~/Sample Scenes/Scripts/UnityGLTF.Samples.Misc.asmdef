@@ -1,0 +1,16 @@
+{
+    "name": "UnityGLTF.Samples.Misc",
+    "references": [
+        "UnityGLTFScripts",
+        "GLTFSerialization"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
