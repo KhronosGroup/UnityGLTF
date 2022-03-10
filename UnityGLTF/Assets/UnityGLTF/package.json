@@ -16,6 +16,16 @@
       "displayName": "Sample Scenes",
       "description": "Various scenes showing GLTF functionality.",
       "path": "Samples~/Sample Scenes"
+    },
+    {
+      "displayName": "Material Export Extensions",
+      "description": "Example for custom export extension callbacks",
+      "path": "Samples~/MaterialExportExtensions"
+    },
+    {
+      "displayName": "Export TMPro materials as textures",
+      "description": "Example for custom export callbacks.",
+      "path": "Samples~/TMProAsTextureExport"
     }
   ],
   "dependencies": {
