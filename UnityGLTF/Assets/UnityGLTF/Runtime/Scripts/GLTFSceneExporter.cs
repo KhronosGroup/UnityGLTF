@@ -381,15 +381,17 @@ namespace UnityGLTF
 			BeforeSceneExport?.Invoke(this, _root);
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
+
 			if (ExportAnimations)
 			{
 				ExportAnimation();
-				// Export skins
-				for (int i = 0; i < _skinnedNodes.Count; ++i)
-				{
-					Transform t = _skinnedNodes[i];
-					ExportSkinFromNode(t);
-				}
+			}
+
+			// Export skins
+			for (int i = 0; i < _skinnedNodes.Count; ++i)
+			{
+				Transform t = _skinnedNodes[i];
+				ExportSkinFromNode(t);
 			}
 
 			_exportOptions.AfterSceneExport?.Invoke(this, _root);
@@ -503,17 +505,19 @@ namespace UnityGLTF
 			// 	t.rotation *= Quaternion.Euler(0,180,0);
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
+
 			if (ExportAnimations)
 			{
 				ExportAnimation();
-				// Export skins
-				for (int i = 0; i < _skinnedNodes.Count; ++i)
-				{
-					Transform t = _skinnedNodes[i];
-					ExportSkinFromNode(t);
+			}
 
-					// updateProgress(EXPORT_STEP.SKINNING, i, _skinnedNodes.Count);
-				}
+			// Export skins
+			for (int i = 0; i < _skinnedNodes.Count; ++i)
+			{
+				Transform t = _skinnedNodes[i];
+				ExportSkinFromNode(t);
+
+				// updateProgress(EXPORT_STEP.SKINNING, i, _skinnedNodes.Count);
 			}
 
 			if (_exportOptions.AfterSceneExport != null)
@@ -1105,7 +1109,6 @@ namespace UnityGLTF
 		}
 		private void ExportAnimation()
 		{
-
 			for (int i = 0; i < _animatedNodes.Count; ++i)
 			{
 				Transform t = _animatedNodes[i];

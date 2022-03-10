@@ -125,7 +125,10 @@ namespace UnityGLTF.Timeline
 			// log
 			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Keys: " + data.First().Value.keys.Count + ",\nTotal Keys: " + data.Sum(x => x.Value.keys.Count));
 
+			var previousExportDisabledState = GLTFSceneExporter.ExportDisabledGameObjects;
+			var previousExportAnimationState = GLTFSceneExporter.ExportAnimations;
 			GLTFSceneExporter.ExportDisabledGameObjects = true;
+			GLTFSceneExporter.ExportAnimations = false;
 
 			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions()
 			{
@@ -135,6 +138,9 @@ namespace UnityGLTF.Timeline
 			var path = Path.GetDirectoryName(filename);
 			var file = Path.GetFileName(filename);
 			exporter.SaveGLB(path, file);
+
+			GLTFSceneExporter.ExportDisabledGameObjects = previousExportDisabledState;
+			GLTFSceneExporter.ExportAnimations = previousExportAnimationState;
 		}
 
 		private void PostExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
