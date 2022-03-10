@@ -94,9 +94,8 @@ namespace UnityGLTF.Timeline
 	            return;
 	        }
 
-	        // TODO move this to end of frame
-	        // UsdWaitForEndOfFrame.Add(() => OnFrameEnd(playable, info, playerData));
-	        OnFrameEnd(playable, info, playerData);
+	        double time = playable.GetTime();
+	        GLTFRecorderHelper.Add(() => OnFrameEnd(time, playable, info, playerData));
 	    }
 
 	    public override void OnBehaviourPlay(Playable playable, FrameData info)
@@ -109,7 +108,7 @@ namespace UnityGLTF.Timeline
 	        m_isPaused = true;
 	    }
 
-	    public void OnFrameEnd(Playable playable, FrameData info, object playerData)
+	    public void OnFrameEnd(double time, Playable playable, FrameData info, object playerData)
 	    {
 	        if (!playable.IsValid())
 	        {
@@ -122,7 +121,7 @@ namespace UnityGLTF.Timeline
 	            return;
 	        }
 
-	        ProcessRecording(playable.GetTime(), root);
+	        ProcessRecording(time, root);
 	    }
 	}
 }
