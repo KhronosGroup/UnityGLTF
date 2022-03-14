@@ -2142,7 +2142,7 @@ namespace UnityGLTF
 			return constant;
 		}
 
-		private TextureInfo ExportTextureInfo(Texture texture, TextureMapType textureMapType)
+		public TextureInfo ExportTextureInfo(Texture texture, TextureMapType textureMapType)
 		{
 			var info = new TextureInfo();
 

@@ -43,10 +43,16 @@ public class VolumeTransmissionExt : ScriptableObject
     {
         public bool enabled = false;
         public UnityEngine.Color _attenuationColor;
+        [Tooltip("G Channel")]
+        public Texture2D _thicknessTexture;
 
-        public void ConvertData()
+        public void ConvertData(GLTFSceneExporter exporter)
         {
             attenuationColor = _attenuationColor.ToNumericsColorLinear();
+            if(_thicknessTexture)
+	            thicknessTexture = exporter.ExportTextureInfo(_thicknessTexture, GLTFSceneExporter.TextureMapType.Custom_Unknown);
+            else
+	            thicknessTexture = null;
         }
     }
 
@@ -60,6 +66,16 @@ public class VolumeTransmissionExt : ScriptableObject
     public class MaterialsTransmissionExtension : KHR_MaterialsTransmissionExtension
     {
         public bool enabled = false;
+        [Tooltip("R Channel")]
+        public Texture2D _transmissionTexture;
+
+        public void ConvertData(GLTFSceneExporter exporter)
+        {
+	        if(_transmissionTexture)
+				transmissionTexture = exporter.ExportTextureInfo(_transmissionTexture, GLTFSceneExporter.TextureMapType.Custom_Unknown);
+	        else
+		        transmissionTexture = null;
+        }
     }
 
     [Serializable]
@@ -122,52 +138,34 @@ public class VolumeTransmissionExt : ScriptableObject
 
         if(settings.volume.enabled)
         {
-            settings.volume.ConvertData();
+            settings.volume.ConvertData(exporter);
             exporter.DeclareExtensionUsage(KHR_MaterialsVolumeExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsVolumeExtension.ExtensionName, new KHR_MaterialsVolumeExtension()
-            {
-                thicknessFactor = 1f,
-                attenuationDistance = 1f,
-                attenuationColor = new Color(0.05f, 0.24f, 0.905f, 1f),
-            });
+            materialnode.AddExtension(KHR_MaterialsVolumeExtension.ExtensionName, settings.volume.Clone(exporter.GetRoot()));
         }
 
         if(settings.ior.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsIorExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsIorExtension.ExtensionName, new KHR_MaterialsIorExtension()
-            {
-                ior = 1.75f
-            });
+            materialnode.AddExtension(KHR_MaterialsIorExtension.ExtensionName, settings.ior.Clone(exporter.GetRoot()));
         }
 
         if(settings.transmission.enabled)
         {
+	        settings.transmission.ConvertData(exporter);
             exporter.DeclareExtensionUsage(KHR_MaterialsTransmissionExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsTransmissionExtension.ExtensionName, new KHR_MaterialsTransmissionExtension()
-            {
-                transmissionFactor = 1f
-            });
+            materialnode.AddExtension(KHR_MaterialsTransmissionExtension.ExtensionName, settings.transmission.Clone(exporter.GetRoot()));
         }
 
         if(settings.sheen.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsSheenExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsSheenExtension.ExtensionName, new KHR_MaterialsSheenExtension()
-            {
-                sheenRoughnessFactor = 0.4f,
-                sheenColorFactor = new Color(1,0,1,1),
-            });
+            materialnode.AddExtension(KHR_MaterialsSheenExtension.ExtensionName, settings.sheen.Clone(exporter.GetRoot()));
         }
 
         if(settings.clearcoat.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsClearcoatExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsClearcoatExtension.ExtensionName, new KHR_MaterialsClearcoatExtension()
-            {
-                clearcoatFactor = 0.5f,
-                clearcoatRoughnessFactor = 0.8f,
-            });
+            materialnode.AddExtension(KHR_MaterialsClearcoatExtension.ExtensionName, settings.clearcoat.Clone(exporter.GetRoot()));
         }
     }
 }
@@ -180,21 +178,28 @@ namespace GLTF.Schema
     {
         public const string ExtensionName = "KHR_materials_transmission";
         public float transmissionFactor = 0.0f;
-        // transmissionTexture // R channel
+        public TextureInfo transmissionTexture; // transmissionTexture // R channel
 
         public JProperty Serialize()
         {
-            JProperty jProperty = new JProperty(ExtensionName,
-                new JObject(
-                    new JProperty(nameof(transmissionFactor), transmissionFactor)
-                )
-            );
+	        var jo = new JObject(
+		        new JProperty(nameof(transmissionFactor), transmissionFactor)
+	        );
+	        if(transmissionTexture != null)
+		        jo.Add(new JProperty(nameof(transmissionTexture),
+			        new JObject(
+				        new JProperty(TextureInfo.INDEX, transmissionTexture.Index.Id),
+				        new JProperty(TextureInfo.TEXCOORD, transmissionTexture.TexCoord) // TODO don't write if default
+			        )
+				)
+		    );
+	        JProperty jProperty = new JProperty(ExtensionName, jo);
             return jProperty;
         }
 
         public IExtension Clone(GLTFRoot root)
         {
-            return new KHR_MaterialsTransmissionExtension() { transmissionFactor = transmissionFactor };
+            return new KHR_MaterialsTransmissionExtension() { transmissionFactor = transmissionFactor, transmissionTexture = transmissionTexture };
         }
     }
 
@@ -227,7 +232,7 @@ namespace GLTF.Schema
     {
         public const string ExtensionName = "KHR_materials_volume";
         public float thicknessFactor = 0f;
-        // thicknessTexture // G channel
+        public TextureInfo thicknessTexture;// thicknessTexture // G channel
         public float attenuationDistance = Mathf.Infinity;
         public Color attenuationColor = new Color(1, 1, 1, 1);
 
@@ -241,7 +246,15 @@ namespace GLTF.Schema
             jo.Add(new JProperty(nameof(thicknessFactor), thicknessFactor));
             jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
             jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
-
+            if(thicknessTexture != null) {
+	            jo.Add(new JProperty(nameof(thicknessTexture),
+			            new JObject(
+				            new JProperty(TextureInfo.INDEX, thicknessTexture.Index.Id),
+				            new JProperty(TextureInfo.TEXCOORD, thicknessTexture.TexCoord) // TODO don't write if default
+			            )
+		            )
+	            );
+            }
             return jProperty;
         }
 
@@ -250,7 +263,7 @@ namespace GLTF.Schema
             return new KHR_MaterialsVolumeExtension()
             {
                 thicknessFactor = thicknessFactor, attenuationDistance = attenuationDistance,
-                attenuationColor = attenuationColor
+                attenuationColor = attenuationColor, thicknessTexture = thicknessTexture,
             };
         }
     }
