@@ -292,10 +292,13 @@ namespace UnityGLTF
 
 
 #if UNITY_2017_3_OR_NEWER
+#if !UNITYGLTF_IMPORT_IDENTIFIER_V2
 			// Set main asset
 			ctx.AddObjectToAsset("main asset", gltfScene);
+#else
 			// This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
-			// ctx.AddObjectToAsset($"scenes/{gltfScene.name}", gltfScene);
+			ctx.AddObjectToAsset($"scenes/{gltfScene.name}", gltfScene);
+#endif
 
 			// Add meshes
 			foreach (var mesh in meshes)
