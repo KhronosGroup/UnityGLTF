@@ -26,6 +26,11 @@
             "name": "com.unity.modules.imgui",
             "expression": "1.0.0",
             "define": "UNITY_IMGUI"
+        },
+        {
+            "name": "com.atteneder.gltfast",
+            "expression": "3.0.0",
+            "define": "HAVE_GLTFAST"
         }
     ],
     "noEngineReferences": false

@@ -1,5 +1,20 @@
 #if UNITY_2017_1_OR_NEWER
 
+// glTFast is on the path to being official, so it should have highest priority as importer by default
+// This ifdef is included for completeness.
+// Other glTF importers should specify this via AsmDef dependency, for example
+// `com.atteneder.gltfast@3.0.0: HAVE_GLTFAST` and then checking here `#if HAVE_GLTFAST`
+#if HAVE_GLTFAST
+#define ANOTHER_IMPORTER_HAS_HIGHER_PRIORITY
+#endif
+
+#if !ANOTHER_IMPORTER_HAS_HIGHER_PRIORITY && !UNITYGLTF_FORCE_DEFAULT_IMPORTER_OFF
+#define ENABLE_DEFAULT_GLB_IMPORTER
+#endif
+#if UNITYGLTF_FORCE_DEFAULT_IMPORTER_ON
+#define ENABLE_DEFAULT_GLB_IMPORTER
+#endif
+
 using UnityEditor;
 using System.IO;
 using UnityEngine;
@@ -7,11 +22,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using Object = UnityEngine.Object;
-using System.Collections;
 using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
-using System.Threading.Tasks;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -20,11 +33,15 @@ using UnityEditor.Experimental.AssetImporters;
 
 namespace UnityGLTF
 {
-	#if UNITY_2020_2_OR_NEWER
-    [ScriptedImporter(1, null, overrideExts: new[] { "glb" })]
-    #else
-	[ScriptedImporter(1, new[] { "glb" })]
-	#endif
+#if UNITY_2020_2_OR_NEWER
+#if ENABLE_DEFAULT_GLB_IMPORTER
+    [ScriptedImporter(2, new[] { "glb" })]
+#else
+    [ScriptedImporter(2, null, overrideExts: new[] { "glb" })]
+#endif
+#else
+	[ScriptedImporter(2, new[] { "glb" })]
+#endif
     public class GLTFImporter : ScriptedImporter
     {
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
