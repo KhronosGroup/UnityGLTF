@@ -3714,18 +3714,18 @@ namespace UnityGLTF
 					var renderer = targetTr.GetComponent<SkinnedMeshRenderer>();
 					var mesh = renderer.sharedMesh;
 					var shapeCount = mesh.blendShapeCount;
-					if(shapeCount != current.weightCurves.Count)
-					{
-						var newWeights = new Dictionary<string, AnimationCurve>();
-						for (int i = 0; i < shapeCount; i++)
-						{
-							var shapeName = mesh.GetBlendShapeName(i);
-							var shapeCurve = current.weightCurves.ContainsKey(shapeName) ? current.weightCurves[shapeName] : CreateConstantCurve(renderer.GetBlendShapeWeight(i), endTime);
-							newWeights.Add(shapeName, shapeCurve);
-						}
 
-						current.weightCurves = newWeights;
+					// need to reorder weights: Unity stores the weights alphabetically in the AnimationClip,
+					// not in the order of the weights.
+					var newWeights = new Dictionary<string, AnimationCurve>();
+					for (int i = 0; i < shapeCount; i++)
+					{
+						var shapeName = mesh.GetBlendShapeName(i);
+						var shapeCurve = current.weightCurves.ContainsKey(shapeName) ? current.weightCurves[shapeName] : CreateConstantCurve(renderer.GetBlendShapeWeight(i), endTime);
+						newWeights.Add(shapeName, shapeCurve);
 					}
+
+					current.weightCurves = newWeights;
 				}
 
 				targetCurvesBinding[target] = current;
@@ -3832,7 +3832,7 @@ namespace UnityGLTF
 					var curveArray = curveSet.weightCurves.Values.ToArray();
 					for(int j = 0; j < weightCount; j++)
 					{
-						weights[i * weightCount + j] = curveArray[j].Evaluate(times[i]) * 0.01f; // glTF weights 0..1 match to Unity weights 0..100
+						weights[i * weightCount + j] = curveArray[j].Evaluate(times[i]);
 					}
 				}
 			}
@@ -3962,6 +3962,37 @@ namespace UnityGLTF
 
 			if (weights != null && weights.Length > 0)
 			{
+				// scale weights correctly if there are any#
+				var skinnedMesh = target.GetComponent<SkinnedMeshRenderer>();
+				if (skinnedMesh)
+				{
+					// similar to SkinnedMeshRendererEditor
+
+					var minBlendShapeFrameWeight = 0.0f;
+					var maxBlendShapeFrameWeight = 0.0f;
+
+					var sharedMesh = skinnedMesh.sharedMesh;
+					var shapeCount = sharedMesh.blendShapeCount;
+					for (int index = 0; index < shapeCount; ++index)
+					{
+						var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
+						for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
+						{
+							var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
+							minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
+							maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
+						}
+					}
+
+					Debug.Log($"min: {minBlendShapeFrameWeight}, max: {maxBlendShapeFrameWeight}");
+					// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
+					if (maxBlendShapeFrameWeight > 0)
+					{
+						for (int i = 0; i < weights.Length; i++)
+							weights[i] *= 1 / maxBlendShapeFrameWeight;
+					}
+				}
+
 				AnimationChannel Wchannel = new AnimationChannel();
 				AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();
 				WchannelTarget.Path = GLTFAnimationChannelPath.weights;
