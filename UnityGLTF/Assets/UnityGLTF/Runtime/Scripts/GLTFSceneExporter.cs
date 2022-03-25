@@ -3962,12 +3962,12 @@ namespace UnityGLTF
 
 			if (weights != null && weights.Length > 0)
 			{
-				// scale weights correctly if there are any#
+				// scale weights correctly if there are any
 				var skinnedMesh = target.GetComponent<SkinnedMeshRenderer>();
 				if (skinnedMesh)
 				{
-					// similar to SkinnedMeshRendererEditor
-
+					// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
+					// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
 					var minBlendShapeFrameWeight = 0.0f;
 					var maxBlendShapeFrameWeight = 0.0f;
 
@@ -3984,7 +3984,7 @@ namespace UnityGLTF
 						}
 					}
 
-					Debug.Log($"min: {minBlendShapeFrameWeight}, max: {maxBlendShapeFrameWeight}");
+					// Debug.Log($"min: {minBlendShapeFrameWeight}, max: {maxBlendShapeFrameWeight}");
 					// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
 					if (maxBlendShapeFrameWeight > 0)
 					{
