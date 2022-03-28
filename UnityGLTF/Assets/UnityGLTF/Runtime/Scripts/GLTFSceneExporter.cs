@@ -3685,10 +3685,16 @@ namespace UnityGLTF
 			Euler
 		}
 
-		private struct PropertyCurve
+		private class PropertyCurve
 		{
 			public string propertyName;
-			public AnimationCurve curve;
+			public Type propertyType;
+			public List<AnimationCurve> curve;
+
+			public float Evaluate(float time, int index)
+			{
+				return curve[index].Evaluate(time);
+			}
 		}
 
 		private struct TargetCurveSet
@@ -3701,6 +3707,35 @@ namespace UnityGLTF
 			public Dictionary<string, AnimationCurve> weightCurves;
 			public PropertyCurve propertyCurve;
 			#pragma warning restore
+			
+			public Dictionary<string, PropertyCurve> curves;
+
+			public void Register(AnimationCurve curve, EditorCurveBinding binding)
+			{
+				if (curves == null) curves = new Dictionary<string, PropertyCurve>();
+				if (!binding.propertyName.Contains("."))
+				{
+					var prop = new PropertyCurve() { curve = new List<AnimationCurve>(){curve}, propertyName = binding.propertyName };
+					curves.Add(binding.propertyName, prop);
+				}
+				else
+				{
+					var memberName = binding.propertyName.Substring(0, binding.propertyName.LastIndexOf(".", StringComparison.Ordinal));
+					if (curves.TryGetValue(memberName, out var existing))
+					{
+						existing.curve.Add(curve);
+					}
+					else
+					{
+						var prop = new PropertyCurve() { curve = new List<AnimationCurve>(){curve}, propertyName = memberName };
+						curves.Add(memberName, prop);
+						var member = binding.type.GetMember(prop.propertyName,
+							BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault();
+						if (member is FieldInfo field) prop.propertyType = field.FieldType;
+						else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
+					}
+				}
+			}
 
 			public void Init()
 			{
@@ -3803,11 +3838,18 @@ namespace UnityGLTF
 					Vector3[] scales = null;
 					float[] weights = null;
 
-					if (curve.propertyCurve.curve != null)
+					if (curve.curves != null && curve.curves.Count > 0)
 					{
-						if (BakePropertyAnimation(curve.propertyCurve.curve, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
+						var curves = curve.curves;
+						foreach (var c in curves)
 						{
-							AddAnimationData(curve.propertyCurve.propertyName, targetTr, animation, times, values);
+							var name = c.Key;
+							var curves_ = c.Value;
+							if (BakePropertyAnimation(curves_, clip.length, AnimationBakingFramerate, speedMultiplier,
+								    out times, out var values))
+							{
+								AddAnimationData(name, targetTr, animation, times, values);
+							}
 						}
 						continue;
 					}
@@ -3909,7 +3951,7 @@ namespace UnityGLTF
 				}
 				else
 				{
-					current.propertyCurve = new PropertyCurve() { curve = curve, propertyName = binding.propertyName };
+					current.Register(curve, binding);
 				}
 				targetCurves[binding.path] = current;
 			}
@@ -3960,7 +4002,7 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private bool BakePropertyAnimation(AnimationCurve curve, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values)
+		private bool BakePropertyAnimation(PropertyCurve prop, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values)
 		{
 			times = null;
 			values = null;
@@ -3974,9 +4016,37 @@ namespace UnityGLTF
 			// Assuming all the curves exist now
 			for (int i = 0; i < nbSamples; ++i)
 			{
-				float currentTime = i * deltaTime;
-				times[i] = currentTime / speedMultiplier;
-				values[i] = curve.Evaluate(currentTime);
+				float t = i * deltaTime;
+				times[i] = t / speedMultiplier;
+				if (prop.curve.Count == 1)
+				{
+					values[i] = prop.curve[0].Evaluate(t);
+				}
+				else
+				{
+					var type = prop.propertyType;
+					if (typeof(Vector2) == type)
+					{
+						values[i] = new Vector2(prop.Evaluate(t, 0), prop.Evaluate(t, 1));
+					}
+					else if (typeof(Vector3) == type)
+					{
+						values[i] = new Vector3(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2));
+					}
+					else if (typeof(Vector4) == type)
+					{
+						values[i] = new Vector4(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3));
+					}
+					else if (typeof(Color) == type)
+					{
+						values[i] = new Color(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3));
+					}
+					else
+					{
+						Debug.LogError("Property is not handled" + prop.propertyName + ", " + prop.propertyType);
+						return false;
+					}
+				}
 			}
 
 			return true;
@@ -4129,6 +4199,18 @@ namespace UnityGLTF
 			{
 				case float _:
 					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
+					break;
+				case Vector2 _:
+					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector2)e));
+					break;
+				case Vector3 _:
+					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector3)e));
+					break;
+				case Vector4 _:
+					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector4)e));
+					break;
+				case Color _:
+					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Color)e));
 					break;
 			}
 			Tchannel.Sampler = new AnimationSamplerId
