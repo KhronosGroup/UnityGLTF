@@ -17,7 +17,7 @@ namespace GLTF.Schema
 		/// <summary>
 		/// The name of the node's TRS property to modify.
 		/// </summary>
-		public GLTFAnimationChannelPath Path;
+		public string Path;
 
 		public static AnimationChannelTarget Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -38,7 +38,7 @@ namespace GLTF.Schema
 						animationChannelTarget.Node = NodeId.Deserialize(root, reader);
 						break;
 					case "path":
-						animationChannelTarget.Path = reader.ReadStringEnum<GLTFAnimationChannelPath>();
+						animationChannelTarget.Path = reader.ReadAsString();// reader.ReadStringEnum<GLTFAnimationChannelPath>();
 						break;
 					default:
 						animationChannelTarget.DefaultPropertyDeserializer(root, reader);
@@ -65,8 +65,12 @@ namespace GLTF.Schema
 		{
 			writer.WriteStartObject();
 
-			writer.WritePropertyName("node");
-			writer.WriteValue(Node.Id);
+			// in KHR_animation2 node might not exist, instead it has an extensions field
+			if (Node != null)
+			{
+				writer.WritePropertyName("node");
+				writer.WriteValue(Node.Id);
+			}
 
 			writer.WritePropertyName("path");
 			writer.WriteValue(Path.ToString());

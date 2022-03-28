@@ -1203,8 +1203,9 @@ namespace UnityGLTF
 					output = samplerCache.Output.AccessorContent;
 
 				string[] propertyNames;
-
-				switch (channel.Target.Path)
+				var known = Enum.TryParse(channel.Target.Path, out GLTFAnimationChannelPath path);
+				if (!known) continue;
+				switch (path)
 				{
 					case GLTFAnimationChannelPath.translation:
 						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };

@@ -2752,6 +2752,64 @@ namespace UnityGLTF
 			return id;
 		}
 
+
+		private AccessorId ExportAccessor(float[] arr)
+		{
+			uint count = (uint)arr.Length;
+
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
+			}
+
+			var accessor = new Accessor();
+			accessor.Count = count;
+			accessor.Type = GLTFAccessorAttributeType.SCALAR;
+
+			var min = arr[0];
+			var max = arr[0];
+
+			for (var i = 1; i < count; i++)
+			{
+				var cur = arr[i];
+
+				if (cur < min)
+				{
+					min = cur;
+				}
+				if (cur > max)
+				{
+					max = cur;
+				}
+			}
+
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, sizeof(float));
+
+			accessor.ComponentType = GLTFComponentType.Float;
+
+			foreach (var v in arr)
+			{
+				_bufferWriter.Write((float)v);
+			}
+
+			accessor.Min = new List<double> { min };
+			accessor.Max = new List<double> { max };
+
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
+
+			var id = new AccessorId
+			{
+				Id = _root.Accessors.Count,
+				Root = _root
+			};
+			_root.Accessors.Add(accessor);
+
+			return id;
+		}
+
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
 			exportAccessorMarker.Begin();
@@ -3627,6 +3685,12 @@ namespace UnityGLTF
 			Euler
 		}
 
+		private struct PropertyCurve
+		{
+			public string propertyName;
+			public AnimationCurve curve;
+		}
+
 		private struct TargetCurveSet
 		{
 			#pragma warning disable 0649
@@ -3635,6 +3699,7 @@ namespace UnityGLTF
 			public AnimationCurve[] scaleCurves;
 			public AnimationKeyRotationType rotationType;
 			public Dictionary<string, AnimationCurve> weightCurves;
+			public PropertyCurve propertyCurve;
 			#pragma warning restore
 
 			public void Init()
@@ -3656,7 +3721,7 @@ namespace UnityGLTF
 
 			// 1. browse clip, collect all curves and create a TargetCurveSet for each target
 			Dictionary<string, TargetCurveSet> targetCurvesBinding = new Dictionary<string, TargetCurveSet>();
-			CollectClipCurves(clip, ref targetCurvesBinding);
+			CollectClipCurves(clip, targetCurvesBinding);
 
 			// Baking needs all properties, fill missing curves with transform data in 2 keyframes (start, endTime)
 			// where endTime is clip duration
@@ -3727,6 +3792,8 @@ namespace UnityGLTF
 
 					// add to cache: this is the first time we're exporting that particular binding.
 					_clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
+					var curve = targetCurvesBinding[target];
+					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
 
 					// Initialize data
 					// Bake and populate animation data
@@ -3736,18 +3803,27 @@ namespace UnityGLTF
 					Vector3[] scales = null;
 					float[] weights = null;
 
-					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
-					if (!BakeCurveSet(targetCurvesBinding[target], clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales, ref weights))
+					if (curve.propertyCurve.curve != null)
 					{
-						Debug.LogWarning("Warning: Animation curves for " + target + " in " + clip + " from " + transform, transform);
+						if (BakePropertyAnimation(curve.propertyCurve.curve, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
+						{
+							AddAnimationData(curve.propertyCurve.propertyName, targetTr, animation, times, values);
+						}
+						continue;
 					}
 
-					bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
-
-					if(haveAnimation)
+					if (BakeCurveSet(curve, clip.length, AnimationBakingFramerate, speedMultiplier,
+						    ref times, ref positions, ref rotations, ref scales, ref weights))
 					{
-						AddAnimationData(targetTr, animation, times, positions, rotations, scales, weights);
+						bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
+						if(haveAnimation)
+						{
+							AddAnimationData(targetTr, animation, times, positions, rotations, scales, weights);
+						}
+						continue;
 					}
+
+					Debug.LogWarning("Warning: Animation curves for " + target + " in " + clip + " from " + transform, transform);
 				}
 			}
 			else
@@ -3758,7 +3834,7 @@ namespace UnityGLTF
 			convertClipToGLTFAnimationMarker.End();
 		}
 
-		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
+		private void CollectClipCurves(AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 #if UNITY_EDITOR
 
@@ -3766,6 +3842,7 @@ namespace UnityGLTF
 			{
 				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
 
+				var supportKhrAnimation2 = true;
 				var containsPosition = binding.propertyName.Contains("m_LocalPosition");
 				var containsScale = binding.propertyName.Contains("m_LocalScale");
 				var containsRotation = binding.propertyName.ToLowerInvariant().Contains("localrotation");
@@ -3773,7 +3850,7 @@ namespace UnityGLTF
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
 				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
 
-				if (!containsCompatibleData) continue;
+				if (!containsCompatibleData && !supportKhrAnimation2) continue;
 
 				if (!targetCurves.ContainsKey(binding.path))
 				{
@@ -3830,6 +3907,10 @@ namespace UnityGLTF
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
 				}
+				else
+				{
+					current.propertyCurve = new PropertyCurve() { curve = curve, propertyName = binding.propertyName };
+				}
 				targetCurves[binding.path] = current;
 			}
 #endif
@@ -3877,6 +3958,28 @@ namespace UnityGLTF
 			curve.AddKey(0, value);
 			curve.AddKey(endTime, value);
 			return curve;
+		}
+
+		private bool BakePropertyAnimation(AnimationCurve curve, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values)
+		{
+			times = null;
+			values = null;
+
+			var nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
+			var deltaTime = length / nbSamples;
+
+			times = new float[nbSamples];
+			values = new object[nbSamples];
+
+			// Assuming all the curves exist now
+			for (int i = 0; i < nbSamples; ++i)
+			{
+				float currentTime = i * deltaTime;
+				times[i] = currentTime / speedMultiplier;
+				values[i] = curve.Evaluate(currentTime);
+			}
+
+			return true;
 		}
 
 		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights)
@@ -3996,6 +4099,49 @@ namespace UnityGLTF
 			return -1;
 		}
 
+		public void AddAnimationData(string path, Transform target, GLTFAnimation animation, float[] times, object[] values)
+		{
+			if (values.Length <= 0) return;
+			int channelTargetId = GetAnimationTargetIdFromTransform(target);
+			if (channelTargetId < 0)
+			{
+				Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
+				return;
+			}
+
+			AccessorId timeAccessor = ExportAccessor(times);
+			AnimationChannel Tchannel = new AnimationChannel();
+			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
+			TchannelTarget.Path = path;// GLTFAnimationChannelPath.translation;
+			var nodePath = "/nodes/" + channelTargetId + "/" + path;
+			TchannelTarget.AddExtension(KHR_animation2.EXTENSION_NAME, new KHR_animation2(nodePath));
+			// TchannelTarget.Node = new NodeId
+			// {
+			// 	Id = channelTargetId,
+			// 	Root = _root
+			// };
+			Tchannel.Target = TchannelTarget;
+
+			AnimationSampler Tsampler = new AnimationSampler();
+			Tsampler.Input = timeAccessor;
+			var val = values[0];
+			switch (val)
+			{
+				case float _:
+					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
+					break;
+			}
+			Tchannel.Sampler = new AnimationSamplerId
+			{
+				Id = animation.Samplers.Count,
+				GLTFAnimation = animation,
+				Root = _root
+			};
+
+			animation.Samplers.Add(Tsampler);
+			animation.Channels.Add(Tchannel);
+		}
+
 		public void AddAnimationData(
 			Transform target,
 			GLTF.Schema.GLTFAnimation animation,
@@ -4020,7 +4166,7 @@ namespace UnityGLTF
 			{
 				AnimationChannel Tchannel = new AnimationChannel();
 				AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-				TchannelTarget.Path = GLTFAnimationChannelPath.translation;
+				TchannelTarget.Path = GLTFAnimationChannelPath.translation.ToString();
 				TchannelTarget.Node = new NodeId
 				{
 					Id = channelTargetId,
@@ -4049,7 +4195,7 @@ namespace UnityGLTF
 			{
 				AnimationChannel Rchannel = new AnimationChannel();
 				AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
-				RchannelTarget.Path = GLTFAnimationChannelPath.rotation;
+				RchannelTarget.Path = GLTFAnimationChannelPath.rotation.ToString();
 				RchannelTarget.Node = new NodeId
 				{
 					Id = channelTargetId,
@@ -4078,7 +4224,7 @@ namespace UnityGLTF
 			{
 				AnimationChannel Schannel = new AnimationChannel();
 				AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
-				SchannelTarget.Path = GLTFAnimationChannelPath.scale;
+				SchannelTarget.Path = GLTFAnimationChannelPath.scale.ToString();
 				SchannelTarget.Node = new NodeId
 				{
 					Id = channelTargetId,
@@ -4137,7 +4283,7 @@ namespace UnityGLTF
 
 				AnimationChannel Wchannel = new AnimationChannel();
 				AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();
-				WchannelTarget.Path = GLTFAnimationChannelPath.weights;
+				WchannelTarget.Path = GLTFAnimationChannelPath.weights.ToString();
 				WchannelTarget.Node = new NodeId()
 				{
 					Id = channelTargetId,
@@ -4564,63 +4710,6 @@ namespace UnityGLTF
 				Id = _root.Accessors.Count,
 				Root = _root
 			};
-			_root.Accessors.Add(accessor);
-
-			return id;
-		}
-
-		private AccessorId ExportAccessor(float[] arr)
-		{
-			var count = (uint)arr.Length;
-
-			if (count == 0)
-			{
-				throw new Exception("Accessors can not have a count of 0.");
-			}
-
-			var accessor = new Accessor();
-			accessor.ComponentType = GLTFComponentType.Float;
-			accessor.Count = count;
-			accessor.Type = GLTFAccessorAttributeType.SCALAR;
-
-			float min = arr[0];
-			float max = arr[0];
-
-			for (var i = 1; i < count; i++)
-			{
-				var cur = arr[i];
-
-				if (cur < min)
-				{
-					min = cur;
-				}
-				if (cur > max)
-				{
-					max = cur;
-				}
-			}
-
-			accessor.Min = new List<double> { min };
-			accessor.Max = new List<double> { max };
-
-			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
-
-			foreach (var value in arr)
-			{
-				_bufferWriter.Write(value);
-			}
-
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
-
-			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
-
-			var id = new AccessorId
-			{
-				Id = _root.Accessors.Count,
-				Root = _root
-			};
-
 			_root.Accessors.Add(accessor);
 
 			return id;
