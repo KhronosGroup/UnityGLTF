@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using GLTF;
@@ -1193,6 +1194,11 @@ namespace UnityGLTF
 			return null;
 		}
 
+#if UNITY_EDITOR
+		private static PropertyInfo canAccessProperty =
+			typeof(Mesh).GetProperty("canAccess", BindingFlags.Instance | BindingFlags.Default | BindingFlags.NonPublic);
+#endif
+
 		// a mesh *might* decode to multiple prims if there are submeshes
 		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh)
 		{
@@ -1214,6 +1220,21 @@ namespace UnityGLTF
 				return null;
 			}
 
+#if UNITY_EDITOR
+			if (!meshObj.isReadable)
+			{
+				if ((bool)(canAccessProperty?.GetMethod?.Invoke(meshObj, null) ?? true) == false)
+				{
+					var path = AssetDatabase.GetAssetPath(meshObj);
+					var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+					if (importer)
+					{
+						importer.isReadable = true;
+						importer.SaveAndReimport();
+					}
+				}
+			}
+#endif
 			var renderer = gameObject.GetComponent<MeshRenderer>();
 			if (!renderer) smr = gameObject.GetComponent<SkinnedMeshRenderer>();
 
