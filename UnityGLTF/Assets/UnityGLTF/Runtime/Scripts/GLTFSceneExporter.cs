@@ -127,6 +127,8 @@ namespace UnityGLTF
 		private int _exportLayerMask;
 		private ExportOptions _exportOptions;
 
+		private KHR_animation2_Resolver khr_resolver = new KHR_animation2_Resolver();
+
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _normalChannelMaterial;
 
@@ -432,6 +434,8 @@ namespace UnityGLTF
 			}
 
 			_exportOptions.AfterSceneExport?.Invoke(this, _root);
+
+			khr_resolver?.Resolve(this);
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
@@ -3685,11 +3689,19 @@ namespace UnityGLTF
 			Euler
 		}
 
-		private class PropertyCurve
+		public class PropertyCurve
 		{
 			public string propertyName;
 			public Type propertyType;
 			public List<AnimationCurve> curve;
+			public Object target;
+
+			public PropertyCurve(Object target, EditorCurveBinding binding)
+			{
+				this.target = target;
+				this.propertyName = binding.propertyName;
+				curve = new List<AnimationCurve>();
+			}
 
 			public float Evaluate(float time, int index)
 			{
@@ -3710,12 +3722,13 @@ namespace UnityGLTF
 			
 			public Dictionary<string, PropertyCurve> curves;
 
-			public void Register(AnimationCurve curve, EditorCurveBinding binding)
+			public void Register(Object animatedObject, AnimationCurve curve, EditorCurveBinding binding)
 			{
 				if (curves == null) curves = new Dictionary<string, PropertyCurve>();
 				if (!binding.propertyName.Contains("."))
 				{
-					var prop = new PropertyCurve() { curve = new List<AnimationCurve>(){curve}, propertyName = binding.propertyName };
+					var prop = new PropertyCurve(animatedObject, binding);
+					prop.curve.Add(curve);
 					curves.Add(binding.propertyName, prop);
 				}
 				else
@@ -3727,12 +3740,54 @@ namespace UnityGLTF
 					}
 					else
 					{
-						var prop = new PropertyCurve() { curve = new List<AnimationCurve>(){curve}, propertyName = memberName };
+						var prop = new PropertyCurve(animatedObject, binding);
+						prop.propertyName = memberName;
+						prop.curve.Add(curve);
 						curves.Add(memberName, prop);
-						var member = binding.type.GetMember(prop.propertyName,
-							BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault();
-						if (member is FieldInfo field) prop.propertyType = field.FieldType;
-						else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
+						if (memberName.StartsWith("material.") && animatedObject is Renderer rend)
+						{
+							var mat = rend.sharedMaterial;
+							if (!mat)
+							{
+								Debug.LogWarning("Animated missing material?", animatedObject);
+							}
+							memberName = memberName.Substring("material.".Length);
+							prop.propertyName = memberName;
+							prop.target = mat;
+							var found = false;
+							for (var i = 0; i < ShaderUtil.GetPropertyCount(mat.shader); i++)
+							{
+								if (found) break;
+								var name = ShaderUtil.GetPropertyName(mat.shader, i);
+								if (!memberName.EndsWith(name)) continue;
+								found = true;
+								var materialProperty = ShaderUtil.GetPropertyType(mat.shader, i);
+								switch (materialProperty)
+								{
+									case ShaderUtil.ShaderPropertyType.Color:
+										prop.propertyType = typeof(Color);
+										break;
+									case ShaderUtil.ShaderPropertyType.Vector:
+										prop.propertyType = typeof(Vector4);
+										break;
+									case ShaderUtil.ShaderPropertyType.Float:
+										prop.propertyType = typeof(float);
+										prop.propertyType = typeof(float);
+										break;
+									case ShaderUtil.ShaderPropertyType.TexEnv:
+										prop.propertyType = typeof(Texture);
+										break;
+								}
+							}
+						}
+						else
+						{
+							var member = binding.type.GetMember(prop.propertyName,
+									BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+								.FirstOrDefault();
+							if (member is FieldInfo field) prop.propertyType = field.FieldType;
+							else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
+						}
 					}
 				}
 			}
@@ -3756,7 +3811,7 @@ namespace UnityGLTF
 
 			// 1. browse clip, collect all curves and create a TargetCurveSet for each target
 			Dictionary<string, TargetCurveSet> targetCurvesBinding = new Dictionary<string, TargetCurveSet>();
-			CollectClipCurves(clip, targetCurvesBinding);
+			CollectClipCurves(transform.gameObject, clip, targetCurvesBinding);
 
 			// Baking needs all properties, fill missing curves with transform data in 2 keyframes (start, endTime)
 			// where endTime is clip duration
@@ -3841,14 +3896,14 @@ namespace UnityGLTF
 					if (curve.curves != null && curve.curves.Count > 0)
 					{
 						var curves = curve.curves;
-						foreach (var c in curves)
+						foreach (KeyValuePair<string, PropertyCurve> c in curves)
 						{
-							var name = c.Key;
-							var curves_ = c.Value;
-							if (BakePropertyAnimation(curves_, clip.length, AnimationBakingFramerate, speedMultiplier,
+							var propertyName = c.Key;
+							var prop = c.Value;
+							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier,
 								    out times, out var values))
 							{
-								AddAnimationData(name, targetTr, animation, times, values);
+								AddAnimationData(prop.target, prop.propertyName, targetTr, animation, times, values);
 							}
 						}
 						continue;
@@ -3876,7 +3931,7 @@ namespace UnityGLTF
 			convertClipToGLTFAnimationMarker.End();
 		}
 
-		private void CollectClipCurves(AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
+		private void CollectClipCurves(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 #if UNITY_EDITOR
 
@@ -3951,7 +4006,8 @@ namespace UnityGLTF
 				}
 				else
 				{
-					current.Register(curve, binding);
+					var obj = AnimationUtility.GetAnimatedObject(root, binding);
+					current.Register(obj, curve, binding);
 				}
 				targetCurves[binding.path] = current;
 			}
@@ -4160,7 +4216,7 @@ namespace UnityGLTF
 			return GetAnimationTargetIdFromTransform(transform);
 		}
 
-		private int GetAnimationTargetIdFromTransform(Transform transform)
+		public int GetAnimationTargetIdFromTransform(Transform transform)
 		{
 			if (_exportedTransforms.ContainsKey(transform.GetInstanceID()))
 			{
@@ -4169,27 +4225,40 @@ namespace UnityGLTF
 			return -1;
 		}
 
-		public void AddAnimationData(string path, Transform target, GLTFAnimation animation, float[] times, object[] values)
+		public int GetAnimationTargetIdFromMaterial(Material mat)
+		{
+			for (var i = 0; i < _materials.Count; i++)
+			{
+				if (_materials[i] == mat) return i;
+			}
+			return -1;
+		}
+
+		public void AddAnimationData(Object animatedObject, string propertyName, Transform target, GLTFAnimation animation, float[] times, object[] values)
 		{
 			if (values.Length <= 0) return;
-			int channelTargetId = GetAnimationTargetIdFromTransform(target);
-			if (channelTargetId < 0)
-			{
-				Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
-				return;
-			}
+
+			// var channelTargetId = GetAnimationTargetIdFromTransform(target);
+			// if (channelTargetId < 0)
+			// {
+			// 	Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
+			// 	return;
+			// }
+			// var nodePath = "/nodes/" + channelTargetId + "/" + path;
 
 			AccessorId timeAccessor = ExportAccessor(times);
 			AnimationChannel Tchannel = new AnimationChannel();
 			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-			TchannelTarget.Path = path;// GLTFAnimationChannelPath.translation;
-			var nodePath = "/nodes/" + channelTargetId + "/" + path;
-			TchannelTarget.AddExtension(KHR_animation2.EXTENSION_NAME, new KHR_animation2(nodePath));
-			// TchannelTarget.Node = new NodeId
-			// {
-			// 	Id = channelTargetId,
-			// 	Root = _root
-			// };
+
+			var ext = new KHR_animation2();
+			ext.propertyBinding = propertyName;
+			ext.animatedObject = animatedObject;
+			ext.channel = TchannelTarget;
+			khr_resolver.Add(ext);
+
+			// TchannelTarget.Path = propertyName;// GLTFAnimationChannelPath.translation;
+			TchannelTarget.AddExtension(KHR_animation2.EXTENSION_NAME, ext);
+
 			Tchannel.Target = TchannelTarget;
 
 			AnimationSampler Tsampler = new AnimationSampler();

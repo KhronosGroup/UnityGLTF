@@ -3,16 +3,15 @@ using Newtonsoft.Json.Linq;
 
 namespace UnityGLTF.Extensions
 {
+
 	public class KHR_animation2 : IExtension
 	{
 		public const string EXTENSION_NAME = "KHR_animation2";
 
-		private readonly string path;
-
-		public KHR_animation2(string path)
-		{
-			this.path = path;
-		}
+		public object animatedObject;
+		public string propertyBinding;
+		public string path;
+		public AnimationChannelTarget channel;
 
 		public JProperty Serialize()
 		{
@@ -21,7 +20,13 @@ namespace UnityGLTF.Extensions
 
 		public IExtension Clone(GLTFRoot root)
 		{
-			return new KHR_animation2(path);
+			return new KHR_animation2()
+			{
+				animatedObject = animatedObject,
+				propertyBinding = propertyBinding,
+				path = path,
+				channel = channel
+			};
 		}
 	}
 }
