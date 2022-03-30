@@ -76,7 +76,16 @@ namespace Sketchfab
 			uid = node["uid"];
 			vertexCount = node["vertexCount"].AsInt;
 			faceCount = node["faceCount"].AsInt;
-			archiveSize = node["archives"]["gltf"]["size"].AsInt;
+
+			JSONArray archives = node["archives"].AsArray;
+			foreach (JSONNode archive in archives)
+			{
+				if ((string)archive["type"] == "gltf")
+				{
+					archiveSize = archive["size"].AsInt;
+					return;
+				}
+			}
 		}
 
 		private string richifyText(string text)
@@ -139,7 +148,7 @@ namespace Sketchfab
 		Dictionary<string, string> _categories;
 
 		// Search
-		private const string INITIAL_SEARCH = "type=models&downloadable=true&staffpicked=true&min_face_count=1&sort_by=-publishedAt";
+		private const string INITIAL_SEARCH = "type=models&downloadable=true&available_archive_type=gltf&staffpicked=true&min_face_count=1&sort_by=-publishedAt";
 		string _lastQuery;
 		string _prevCursorUrl = "";
 		string _nextCursorUrl = "";
@@ -336,7 +345,7 @@ namespace Sketchfab
 			if (endpoint != SEARCH_ENDPOINT.STORE_PURCHASES)
 			{
 				// Apply default filters
-				searchQuery = searchQuery + "type=models&downloadable=true";
+				searchQuery = searchQuery + "type=models&downloadable=true&available_archive_type=gltf";
 			}
 
 			if (query.Length > 0)
