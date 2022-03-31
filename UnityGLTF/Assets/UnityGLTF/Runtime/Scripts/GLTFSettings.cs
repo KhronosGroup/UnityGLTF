@@ -287,44 +287,50 @@ namespace UnityGLTF
 #endif
 
 	    internal static GLTFSettings cachedSettings;
-		internal static GLTFSettings GetOrCreateSettings()
-		{
-			if (cachedSettings)
-				return cachedSettings;
 
-			var settings = Resources.Load<GLTFSettings>(Path.GetFileNameWithoutExtension(k_SettingsFileName));
+	    public static GLTFSettings GetOrCreateSettings()
+	    {
+		    if (!TryGetSettings(out var settings))
+		    {
 #if UNITY_EDITOR
-			if(!settings)
-			{
-				settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(k_RuntimeAndEditorSettingsPath);
-			}
-			if (!settings)
-			{
-				var allSettings = AssetDatabase.FindAssets("t:GLTFSettings");
-				if (allSettings.Length > 0)
-				{
-					settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(AssetDatabase.GUIDToAssetPath(allSettings[0]));
-				}
-			}
-			if (!settings)
-			{
-				settings = ScriptableObject.CreateInstance<GLTFSettings>();
-				if (!Directory.Exists(k_RuntimeAndEditorSettingsPath)) Directory.CreateDirectory(k_RuntimeAndEditorSettingsPath);
-				AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
-				AssetDatabase.SaveAssets();
-			}
-
-			cachedSettings = settings;
-			return settings;
+			    settings = ScriptableObject.CreateInstance<GLTFSettings>();
+			    if (!Directory.Exists(k_RuntimeAndEditorSettingsPath)) Directory.CreateDirectory(k_RuntimeAndEditorSettingsPath);
+			    AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
+			    AssetDatabase.SaveAssets();
 #else
-			if(!settings)
-			{
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
-			}
+#endif
+		    }
+		    cachedSettings = settings;
+		    return settings;
+	    }
 
-			cachedSettings = settings;
+	    public static bool TryGetSettings(out GLTFSettings settings)
+	    {
+		    settings = cachedSettings;
+		    if (settings)
+			    return true;
+
+		    settings = Resources.Load<GLTFSettings>(Path.GetFileNameWithoutExtension(k_SettingsFileName));
+
+#if UNITY_EDITOR
+		    if (!settings)
+		    {
+			    settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(k_RuntimeAndEditorSettingsPath);
+		    }
+		    if (!settings)
+		    {
+			    var allSettings = AssetDatabase.FindAssets("t:GLTFSettings");
+			    if (allSettings.Length > 0)
+			    {
+				    settings = AssetDatabase.LoadAssetAtPath<GLTFSettings>(AssetDatabase.GUIDToAssetPath(allSettings[0]));
+			    }
+		    }
+		    cachedSettings = settings;
+		    return settings;
+#else
 			return settings;
 #endif
-		}
-	}
+	    }
+    }
 }
