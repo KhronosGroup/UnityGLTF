@@ -1195,9 +1195,15 @@ namespace UnityGLTF
 		}
 
 #if UNITY_EDITOR
+		private const string MakeMeshReadableDialogueDecisionKey = nameof(MakeMeshReadableDialogueDecisionKey);
 		private static PropertyInfo canAccessProperty =
 			typeof(Mesh).GetProperty("canAccess", BindingFlags.Instance | BindingFlags.Default | BindingFlags.NonPublic);
 #endif
+
+		private static bool MeshIsReadable(Mesh mesh)
+		{
+			return mesh.isReadable || (bool) (canAccessProperty?.GetMethod?.Invoke(mesh, null) ?? true);
+		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
 		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh)
@@ -1205,25 +1211,33 @@ namespace UnityGLTF
 			Mesh meshObj = null;
 			SkinnedMeshRenderer smr = null;
 			var filter = gameObject.GetComponent<MeshFilter>();
-			if (filter != null)
+			if (filter)
 			{
 				meshObj = filter.sharedMesh;
 			}
 			else
 			{
 				smr = gameObject.GetComponent<SkinnedMeshRenderer>();
-				meshObj = smr.sharedMesh;
+				if (smr)
+				{
+					meshObj = smr.sharedMesh;
+				}
 			}
-			if (meshObj == null)
+			if (!meshObj)
 			{
-				Debug.LogWarning(string.Format("MeshFilter.sharedMesh on gameobject:{0} is missing, skipping", gameObject.name), gameObject);
+				Debug.LogWarning($"MeshFilter.sharedMesh on GameObject:{gameObject.name} is missing, skipping", gameObject);
 				return null;
 			}
 
 #if UNITY_EDITOR
-			if (!meshObj.isReadable)
+			if (!MeshIsReadable(meshObj))
 			{
-				if ((bool)(canAccessProperty?.GetMethod?.Invoke(meshObj, null) ?? true) == false)
+#if UNITY_2019_3_OR_NEWER
+				if(EditorUtility.DisplayDialog("Exporting mesh but mesh is not readable",
+					   $"The mesh {meshObj.name} is not readable. Do you want to change its import settings and make it readable now?",
+					   "Make it readable", "No, skip mesh",
+					   DialogOptOutDecisionType.ForThisSession, MakeMeshReadableDialogueDecisionKey))
+#endif
 				{
 					var path = AssetDatabase.GetAssetPath(meshObj);
 					var importer = AssetImporter.GetAtPath(path) as ModelImporter;
@@ -1233,6 +1247,13 @@ namespace UnityGLTF
 						importer.SaveAndReimport();
 					}
 				}
+#if UNITY_2019_3_OR_NEWER
+				else
+				{
+					Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping");
+					return null;
+				}
+#endif
 			}
 #endif
 			var renderer = gameObject.GetComponent<MeshRenderer>();
