@@ -16,6 +16,7 @@ public static class TextMeshExport
 
     private static void CleanUpRenderTextureCache(GLTFSceneExporter _, GLTFRoot __)
     {
+	    if (rtCache == null) return;
         foreach (var kvp in rtCache)
             kvp.Value.Release();
         rtCache.Clear();
