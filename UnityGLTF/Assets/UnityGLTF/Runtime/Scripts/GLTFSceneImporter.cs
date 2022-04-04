@@ -780,6 +780,9 @@ namespace UnityGLTF
 					await Task.CompletedTask;
 #endif
 					break;
+				default:
+					texture.LoadImage(data, markGpuOnly);
+					break;
 			}
 
 			await Task.CompletedTask;
