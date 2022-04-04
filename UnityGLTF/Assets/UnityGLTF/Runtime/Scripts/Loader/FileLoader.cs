@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace UnityGLTF.Loader
 {
@@ -15,7 +16,12 @@ namespace UnityGLTF.Loader
 
 		public Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
-			return Task.Run(() => LoadStream(relativeFilePath));
+			// seems the Editor locks up in some cases when directly using Task.Run(() => {})
+			if (Application.isPlaying)
+			{
+				return Task.Run(() => LoadStream(relativeFilePath));
+			}
+			return Task.FromResult(LoadStream(relativeFilePath));
 		}
 
 		public Stream LoadStream(string relativeFilePath)
