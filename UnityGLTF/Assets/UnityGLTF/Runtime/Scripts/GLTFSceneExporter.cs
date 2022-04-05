@@ -1447,7 +1447,7 @@ namespace UnityGLTF
 	        return id;
         }
 
-        private MaterialId ExportMaterial(Material materialObj)
+        public MaterialId ExportMaterial(Material materialObj)
 		{
             //TODO if material is null
 			MaterialId id = GetMaterialId(_root, materialObj);
@@ -1655,11 +1655,14 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
+
+			var newId = CreateAndAddMaterialId(materialObj, material);
+
 			// after material export
 			_exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
 			AfterMaterialExport?.Invoke(this, _root, materialObj, material);
 
-			return CreateAndAddMaterialId(materialObj, material);
+			return newId;
 		}
 
 		// Blend Shapes / Morph Targets
