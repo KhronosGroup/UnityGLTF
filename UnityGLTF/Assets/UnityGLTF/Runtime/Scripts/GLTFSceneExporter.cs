@@ -347,12 +347,6 @@ namespace UnityGLTF
 			{
 				ExportImages(path);
 			}
-
-			if (_exportOptions.AfterSceneExport != null)
-				_exportOptions.AfterSceneExport(this, _root);
-
-			if (AfterSceneExport != null)
-				AfterSceneExport.Invoke(this, _root);
 		}
 
 		/// <summary>
