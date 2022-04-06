@@ -8,26 +8,56 @@ The goal of this library is to support the full glTF 2.0 specification and enabl
 - Design-time import of glTF 2.0 files
 - Design-time export of glTF 2.0 files
 
-The library will be modularized such that it can be extended to support additional capabilities in Unity or support additional extensions to the glTF specification.  The library was designed to work with Unity 5.6 and above, but is currently only tested/maintained/supported with Unity 2018 and above.
+The library allows to be extended with additional capabilities in Unity or support additional extensions to the glTF specification.  The library was originally designed to work with Unity 5.6 and above, but is currently only tested/maintained/supported with Unity 2018.4 and above.
 
 ## Installation
 
-You can install this right from git as Unity Package, compatible with UPM (Unity Package Manager).
+You can install this package from git, compatible with UPM (Unity Package Manager).
 1. Open `Window > Package Manager`
 2. In Package Manager, click <kbd>+</kbd> and select <kbd>Add Package from git URL</kbd>
 3. Paste ```https://github.com/prefrontalcortex/UnityGLTF.git?path=/UnityGLTF/Assets/UnityGLTF```
 4. Click <kbd>Add</kbd>.  
    
-Done!  
+Done! 
 
 If you want to target a specific version, append `#release/pfc/1.0.4-preview.31` or another specific tag from the [release section](https://github.com/prefrontalcortex/UnityGLTF/releases).
 
+UnityGLTF will now be available in the Packages/ folder. You can import a number of samples:
+1. Open `Window > Package Manager`
+2. Select `UnityGLTF`
+3. Select `Samples` and import the desired ones.
+
 ## Current Status
 
-Work Items and Issues targeting a 1.0 release of the library can be found in
-[Road to 1.0](https://github.com/KhronosGroup/UnityGLTF/projects/1)
+UnityGLTF hasn't received official support since early 2020. However, a number of forks have fixed issues and improved several key areas, especially animation support,export workflows, color spaces and extendibility.  
 
-## Getting Started
+A separate glTF implementation for Unity, [glTFast](https://github.com/atteneder/glTFast), is on its path towards becoming feature complete, with import already being complete. It leverages modern Unity features such as Burst and Jobs, has better compression support (importing compressed textures and meshes), and also has wider Render Pipeline support, notably supporting URP and HDRP import (and partial export).  
+
+glTFast and UnityGLTF can coexist in the same project; you can for example use glTFast for import and UnityGLTF for export, where each of these shine.  
+
+> **TL;DR:**
+> - UnityGLTF has very good export support (runtime, editor, animation).
+> - glTFast has better general import support (more extensions supported, wider SRP support).
+> - If you're playing with custom extensions, UnityGLTF might still be the right choice for import.  
+
+## Supported Extensions
+
+
+
+## Known Issues
+
+Each known issue can be reproduced from a specific [glTF Sample Model](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0):
+
+- khronos-SimpleSparseAccessor: sparse accessors not supported on import (can be exported though)  
+- khronos-TriangleWithoutIndices: meshes without indices import with wrong winding order  
+- khronos-MultiUVTest: UV per texture is imported but not supported in the GLTF-Builtin shader  
+- khronos-MorphPrimitivesTest: isn't correctly importing at runtime (in some cases?)  
+- khronos-AlphaBlendModeTest: cutoff=0.25 doesn't import correctly  
+- khronos-NormalTangentTest: import results don't match expected look  
+
+PRs welcome!  
+
+## Contributing
 
 - This section is dedicated to those who wish to contribute to the project. This should clarify the main project structure without flooding you with too many details.
 - UnityGLTF project is divided into two parts: the GLTFSerializer (Visual Studio Solution), and the Unity Project (which is the package we wish to make available to users).
