@@ -262,7 +262,40 @@ namespace GLTF.Schema.KHR_lights_punctual
 
 	}
 
+	public class KHR_LightsPunctualRootExtension : IExtension
+	{
+		public const string EXTENSION_NAME = "KHR_lights_punctual";
 
+		public readonly IList<GLTFLight> lights;
+
+		public KHR_LightsPunctualRootExtension(IList<GLTFLight> lights)
+		{
+			this.lights = lights;
+		}
+
+		public JProperty Serialize()
+		{
+			var obj = new JObject();
+			var arr = new JArray();
+			obj.Add("lights", arr);
+			foreach (var light in lights)
+			{
+				var lightInfo = new JObject();
+				arr.Add(lightInfo);
+				lightInfo.Add("type", light.type);
+				if (light.range > 0) lightInfo.Add("range", light.range);
+				if(System.Math.Abs(light.intensity - 1f) > .0000001) lightInfo.Add("intensity", light.intensity);
+				lightInfo.Add("name",  light.Name ?? light.name);
+				lightInfo.Add("color", new JArray(light.color.R, light.color.G, light.color.B));
+			}
+			return new JProperty(EXTENSION_NAME, obj);
+		}
+
+		public IExtension Clone(GLTFRoot root)
+		{
+			return new KHR_LightsPunctualRootExtension(lights);
+		}
+	}
 
 	public class KHR_LightsPunctualExtension : IExtension
 	{

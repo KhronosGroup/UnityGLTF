@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using GLTF.Extensions;
+using GLTF.Schema.KHR_lights_punctual;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -547,19 +548,8 @@ namespace GLTF.Schema
 
 			if (Lights != null)
 			{
-				jsonWriter.WritePropertyName("extensions");
-				jsonWriter.WriteStartObject();
-				jsonWriter.WritePropertyName("KHR_lights_punctual");
-				jsonWriter.WriteStartObject();
-				jsonWriter.WritePropertyName("lights");
-				jsonWriter.WriteStartArray();
-				foreach (var light in Lights)
-				{
-					light.Serialize(jsonWriter);
-				}
-				jsonWriter.WriteEndArray();
-				jsonWriter.WriteEndObject();
-				jsonWriter.WriteEndObject();
+				var ext = new KHR_LightsPunctualRootExtension(Lights);
+				this.AddExtension(KHR_LightsPunctualRootExtension.EXTENSION_NAME, ext);
 			}
 
 			base.Serialize(jsonWriter);
