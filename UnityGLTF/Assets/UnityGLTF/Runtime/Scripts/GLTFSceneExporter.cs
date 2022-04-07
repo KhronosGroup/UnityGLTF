@@ -1196,7 +1196,11 @@ namespace UnityGLTF
 
 		private static bool MeshIsReadable(Mesh mesh)
 		{
+#if UNITY_EDITOR
 			return mesh.isReadable || (bool) (canAccessProperty?.GetMethod?.Invoke(mesh, null) ?? true);
+#else
+			return mesh.isReadable;
+#endif
 		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
