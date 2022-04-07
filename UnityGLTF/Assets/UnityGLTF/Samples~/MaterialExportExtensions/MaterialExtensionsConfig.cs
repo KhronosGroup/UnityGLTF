@@ -10,7 +10,7 @@ using UnityGLTF.Extensions;
 using Color = GLTF.Math.Color;
 
 [CreateAssetMenu]
-public class VolumeTransmissionExt : ScriptableObject
+public class MaterialExtensionsConfig : ScriptableObject
 {
     public bool enabled = false;
     public bool targetAllMaterials = false;
@@ -105,14 +105,14 @@ public class VolumeTransmissionExt : ScriptableObject
         GLTFSceneExporter.AfterMaterialExport += GLTFSceneExporterOnAfterMaterialExport;
     }
 
-    private static List<VolumeTransmissionExt> profiles = null;
+    private static List<MaterialExtensionsConfig> profiles = null;
 
     private static void CollectSettings(GLTFSceneExporter exporter, GLTFRoot gltfroot)
     {
 	    // load settings
-	    var settingsGuids = AssetDatabase.FindAssets("t:" + nameof(VolumeTransmissionExt));
+	    var settingsGuids = AssetDatabase.FindAssets("t:" + nameof(MaterialExtensionsConfig));
 	    var settingsList = settingsGuids
-		    .Select(x => AssetDatabase.LoadAssetAtPath<VolumeTransmissionExt>(AssetDatabase.GUIDToAssetPath(x)))
+		    .Select(x => AssetDatabase.LoadAssetAtPath<MaterialExtensionsConfig>(AssetDatabase.GUIDToAssetPath(x)))
 		    .Where(x => x.enabled);
 	    profiles = settingsList.ToList();
     }

@@ -10,26 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ef6cb75f3165f943a1369cc90aa73cf, type: 3}
-  m_Name: Volume Transmission Ext
+  m_Name: Mat Config 5
   m_EditorClassIdentifier: 
-  enabled: 0
+  enabled: 1
   targetAllMaterials: 0
-  targetMaterials: []
-  overridePBR: 1
+  targetMaterials:
+  - {fileID: 2100000, guid: 9f92958862f4c1743af80dbbeb17236d, type: 2}
+  overridePBR: 0
   pbrSettings:
     metallic: 0
     roughness: 0.2
     baseColor: {r: 0, g: 0, b: 0, a: 0}
   transmission:
-    transmissionFactor: 0
+    transmissionFactor: 1
     enabled: 0
+    _transmissionTexture: {fileID: 0}
   volume:
-    thicknessFactor: 0
-    attenuationDistance: Infinity
+    thicknessFactor: 1
+    attenuationDistance: 2
     enabled: 0
-    _attenuationColor: {r: 0, g: 0, b: 0, a: 0}
+    _attenuationColor: {r: 0.8679245, g: 0.3234247, b: 0.79755825, a: 0}
+    _thicknessTexture: {fileID: 0}
   ior:
-    ior: 1.5
+    ior: 2.2
     enabled: 0
   clearcoat:
     clearcoatFactor: 0
