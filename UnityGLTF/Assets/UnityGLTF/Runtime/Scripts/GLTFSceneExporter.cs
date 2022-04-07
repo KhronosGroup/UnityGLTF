@@ -1444,6 +1444,11 @@ namespace UnityGLTF
 		        Root = _root
 	        };
 	        _root.Materials.Add(material);
+
+	        // after material export
+	        _exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+	        AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+
 	        return id;
         }
 
@@ -1655,14 +1660,7 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
-
-			var newId = CreateAndAddMaterialId(materialObj, material);
-
-			// after material export
-			_exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
-			AfterMaterialExport?.Invoke(this, _root, materialObj, material);
-
-			return newId;
+			return CreateAndAddMaterialId(materialObj, material);
 		}
 
 		// Blend Shapes / Morph Targets
