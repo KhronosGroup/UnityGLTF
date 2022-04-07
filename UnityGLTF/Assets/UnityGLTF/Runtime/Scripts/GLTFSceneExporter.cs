@@ -98,6 +98,8 @@ namespace UnityGLTF
 			public TextureMapType textureMapType;
 		}
 
+		public IReadOnlyList<Transform> RootTransforms => _rootTransforms;
+
 		private Transform[] _rootTransforms;
 		private GLTFRoot _root;
 		private BufferId _bufferId;
