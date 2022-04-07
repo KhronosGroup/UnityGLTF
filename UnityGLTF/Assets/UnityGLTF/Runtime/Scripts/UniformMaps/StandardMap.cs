@@ -280,7 +280,7 @@ namespace UnityGLTF
 				if (value == AlphaMode.MASK)
 				{
 					_material.SetOverrideTag("RenderType", "TransparentCutout");
-					_material.SetFloat("_Mode", 2);
+					_material.SetFloat("_Mode", 1);
 					_material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
 					_material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
 					_material.SetInt("_ZWrite", 1);
