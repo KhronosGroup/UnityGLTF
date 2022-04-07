@@ -1528,7 +1528,18 @@ namespace UnityGLTF
 				if (materialObj.HasProperty("_EmissionColor"))
 				{
 					var c = materialObj.GetColor("_EmissionColor");
-					material.EmissiveFactor = c.ToNumericsColorLinear();
+					var emissiveAmount = c.ToNumericsColorLinear();
+					var maxEmissiveAmount = Mathf.Max(emissiveAmount.R, emissiveAmount.G, emissiveAmount.B);
+					if (maxEmissiveAmount > 1)
+					{
+						emissiveAmount.R /= maxEmissiveAmount;
+						emissiveAmount.G /= maxEmissiveAmount;
+						emissiveAmount.B /= maxEmissiveAmount;
+					}
+					emissiveAmount.A = Mathf.Clamp01(emissiveAmount.A);
+					material.EmissiveFactor = emissiveAmount;
+					material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
+					DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
 				}
 
 				if (materialObj.HasProperty("_EmissionMap"))
