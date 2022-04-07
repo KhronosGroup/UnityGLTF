@@ -52,7 +52,6 @@ Each known issue can be reproduced from a specific [glTF Sample Model](https://g
 - khronos-TriangleWithoutIndices: meshes without indices import with wrong winding order  
 - khronos-MultiUVTest: UV per texture is imported but not supported in the GLTF-Builtin shader  
 - khronos-MorphPrimitivesTest: isn't correctly importing at runtime (in some cases?)  
-- khronos-AlphaBlendModeTest: cutoff=0.25 doesn't import correctly  
 - khronos-NormalTangentTest: import results don't match expected look  
 
 PRs welcome!  
