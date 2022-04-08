@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.5.0-pre] - 2022-04-08
+
+- added: dialogue window will ask when meshes are not readable at runtime in the editor
+- added: more samples regarding custom material extension export
+- changed: more GltfSceneExporter methods are now  public to allow for custom extension exporting
+- changed: moving back to proper versioning; big jump from 1.0 to 1.5 to show that lots of changes have happened
+- fixed: no more ScriptedImporter collisions between UnityGltf, glTFast and Siccity glTF
+- fixed: corrected some export callback orders
+- fixed: random hangs when importing .gltf files via ScriptedImporter
+- fixed: correctly importing wrapModeS and wrapModeT now
+- fixed: correctly importing Mask mode and cutoff now
+
 ## [1.0.4-preview.35] - 2022-03-11
 - added better logs for unsupported animation tracks on export
 - added public methods in GLTFSceneExporter to allow for custom animation export

@@ -290,7 +290,7 @@ namespace UnityGLTF
 				Asset = new Asset
 				{
 					Version = "2.0",
-					Generator = "UnityGLTF (prefrontal cortex' fork)"
+					Generator = "UnityGLTF"
 				},
 				Buffers = new List<GLTFBuffer>(),
 				BufferViews = new List<BufferView>(),
