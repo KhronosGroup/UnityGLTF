@@ -80,7 +80,9 @@ namespace UnityGLTF
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
 				exporter.SaveGLTFandBin (path, name);
+				EditorUtility.RevealInFinder(path + "/" + name + ".gltf");
 			}
+
 		}
 
 		[MenuItem(MenuPrefix + "Export selected as GLB", true)]
@@ -106,6 +108,7 @@ namespace UnityGLTF
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
 				exporter.SaveGLB(path, name);
+				EditorUtility.RevealInFinder(path + "/" + name + ".glb");
 			}
 		}
 
@@ -123,6 +126,7 @@ namespace UnityGLTF
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
 				exporter.SaveGLTFandBin (path, scene.name);
+				EditorUtility.RevealInFinder(path + "/" + scene.name + ".gltf");
 			}
 		}
 	}
