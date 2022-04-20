@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.5.0-pre.2] - 2022-04-20
+- fixed: incorrect UV offset for tiled textures on export in some cases
+- feat: show exported glTF/GLB in explorer after exporting via Menu Item
+- feat: expose API for `GetAnimationId` for custom export logic
+
 ## [1.5.0-pre] - 2022-04-08
 
 - added: dialogue window will ask when meshes are not readable at runtime in the editor
