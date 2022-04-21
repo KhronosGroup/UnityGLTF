@@ -273,18 +273,6 @@ namespace GLTF.Schema
 				writer.WriteEndArray();
 			}
 
-			if (Light != null)
-			{
-				writer.WritePropertyName("extensions");
-				writer.WriteStartObject();
-				writer.WritePropertyName("KHR_lights_punctual");
-				writer.WriteStartObject();
-				writer.WritePropertyName("light");
-				writer.WriteValue(Light.Id);
-				writer.WriteEndObject();
-				writer.WriteEndObject();
-			}
-
 			base.Serialize(writer);
 
 			writer.WriteEndObject();

@@ -491,6 +491,12 @@ namespace GLTF.Schema
 				jsonWriter.WriteStartArray();
 				foreach (var node in Nodes)
 				{
+					if (node.Light != null)
+					{
+						var khrLightPunctual = new KHR_LightsPunctualNodeExtension(node.Light.Id, this);
+						node.AddExtension(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, khrLightPunctual);
+					}
+					
 					node.Serialize(jsonWriter);
 				}
 				jsonWriter.WriteEndArray();
