@@ -271,7 +271,7 @@ namespace GLTF.Schema
 				return Scene.Value;
 			}
 
-			if (Scenes.Count > 0)
+			if (Scenes?.Count > 0)
 			{
 				return Scenes[0];
 			}

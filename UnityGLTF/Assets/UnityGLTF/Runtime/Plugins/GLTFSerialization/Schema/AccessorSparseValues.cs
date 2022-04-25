@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -31,6 +32,11 @@ namespace GLTF.Schema
 		public static AccessorSparseValues Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var values = new AccessorSparseValues();
+
+			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+			{
+				throw new Exception("Asset must be an object.");
+			}
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
