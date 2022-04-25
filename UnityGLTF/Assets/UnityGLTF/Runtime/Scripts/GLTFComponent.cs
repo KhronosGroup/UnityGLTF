@@ -77,53 +77,38 @@ namespace UnityGLTF
 			GLTFSceneImporter sceneImporter = null;
 			try
 			{
-				var isFileUri = GLTFUri.StartsWith("file://");
                 Factory = Factory ?? ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
-				if (UseStream || isFileUri)
-				{
-					string fullPath;
-					if (AppendStreamingAssets && !isFileUri)
-					{
-						// Path.Combine treats paths that start with the separator character
-						// as absolute paths, ignoring the first path passed in. This removes
-						// that character to properly handle a filename written with it.
-						fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
-					}
-					else
-					{
-						fullPath = GLTFUri;
-					}
+                // UseStream is currently not supported...
+                string fullPath;
+                if (AppendStreamingAssets)
+	                fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
+                else
+	                fullPath = GLTFUri;
 
-					var uri = GLTFUri;
-					if (isFileUri) uri = uri.Substring("file://".Length);
-					string directoryPath = URIHelper.GetDirectoryName(uri);
-					importOptions.DataLoader = new FileLoader(directoryPath);
-					sceneImporter = Factory.CreateSceneImporter(
-						Path.GetFileName(uri),
-						importOptions
-						);
-				}
-				else
-				{
-					string directoryPath = URIHelper.GetDirectoryName(GLTFUri);
-					importOptions.DataLoader = new WebRequestLoader(directoryPath);
+                string dir = URIHelper.GetDirectoryName(fullPath);
+                importOptions.DataLoader = new UnityWebRequestLoader(dir);
+                sceneImporter = Factory.CreateSceneImporter(
+	                Path.GetFileName(fullPath),
+	                importOptions
+                );
 
-					sceneImporter = Factory.CreateSceneImporter(
-						URIHelper.GetFileFromUri(new Uri(GLTFUri)),
-						importOptions
-						);
-
-				}
-
-				sceneImporter.SceneParent = gameObject.transform;
+                sceneImporter.SceneParent = gameObject.transform;
 				sceneImporter.Collider = Collider;
 				sceneImporter.MaximumLod = MaximumLod;
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.IsMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
-				await sceneImporter.LoadSceneAsync(onLoadComplete:LoadCompleteAction);
+				// for logging progress
+				await sceneImporter.LoadSceneAsync(
+					onLoadComplete:LoadCompleteAction
+					// ,progress: new Progress<ImportProgress>(
+					// 	p =>
+					// 	{
+					// 		Debug.Log("Progress: " + p);
+					// 	})
+				);
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
