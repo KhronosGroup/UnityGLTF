@@ -16,7 +16,7 @@ namespace UnityGLTF
         {
             if (Time.realtimeSinceStartup > _timeout)
             {
-                await Task.Delay(1);
+                await Task.Yield();
                 _timeout = Time.realtimeSinceStartup + BudgetPerFrameInSeconds;
             }
         }

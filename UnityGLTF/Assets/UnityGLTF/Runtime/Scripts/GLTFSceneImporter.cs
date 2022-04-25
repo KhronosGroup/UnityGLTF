@@ -19,7 +19,7 @@ using UnityGLTF.Loader;
 using LightType = UnityEngine.LightType;
 using Matrix4x4 = GLTF.Math.Matrix4x4;
 using Object = UnityEngine.Object;
-#if !WINDOWS_UWP
+#if !WINDOWS_UWP && !UNITY_WEBGL
 using ThreadPriority = System.Threading.ThreadPriority;
 #endif
 using WrapMode = UnityEngine.WrapMode;
@@ -89,6 +89,11 @@ namespace UnityGLTF
 				}
 			}
 		}
+
+		public override string ToString()
+		{
+			return $"{(Progress * 100.0):F2}% (Buffers: {BuffersLoaded}/{BuffersTotal}, Nodes: {NodeLoaded}/{NodeTotal}, Texs: {TextureLoaded}/{TextureTotal})";
+		}
 	}
 
 	public struct ImportStatistics
@@ -132,7 +137,7 @@ namespace UnityGLTF
 		{
 			get
 			{
-				return Application.isEditor ? false : _isMultithreaded;
+				return (Application.isEditor || Application.platform == RuntimePlatform.WebGLPlayer) ? false : _isMultithreaded;
 			}
 			set
 			{
@@ -542,7 +547,7 @@ namespace UnityGLTF
 
 		private async Task LoadJson(string jsonFilePath)
 		{
-#if !WINDOWS_UWP
+#if !WINDOWS_UWP && !UNITY_WEBGL
 			var dataLoader2 = _options.DataLoader as IDataLoader2;
 			if (IsMultithreaded && dataLoader2 != null)
 			{
@@ -559,7 +564,7 @@ namespace UnityGLTF
 
 			_gltfStream.StartPosition = 0;
 
-#if !WINDOWS_UWP
+#if !WINDOWS_UWP && !UNITY_WEBGL
 			if (IsMultithreaded)
 			{
 				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
