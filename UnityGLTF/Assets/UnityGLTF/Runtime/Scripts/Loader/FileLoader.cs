@@ -28,13 +28,13 @@ namespace UnityGLTF.Loader
 		{
 			if (relativeFilePath == null)
 			{
-				throw new ArgumentNullException("relativeFilePath");
+				throw new ArgumentNullException(nameof(relativeFilePath));
 			}
 
 			string pathToLoad = Path.Combine(_rootDirectoryPath, relativeFilePath);
 			if (!File.Exists(pathToLoad))
 			{
-				throw new FileNotFoundException("Buffer file not found", relativeFilePath);
+				throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath, relativeFilePath);
 			}
 
 			return File.OpenRead(pathToLoad);
