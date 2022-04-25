@@ -1,11 +1,10 @@
 ﻿using System.IO;
 using System;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace UnityGLTF.Loader
 {
-	public class FileLoader : IDataLoader, IDataLoader2
+	public class FileLoader : IDataLoader2
 	{
 		private readonly string _rootDirectoryPath;
 
@@ -16,11 +15,13 @@ namespace UnityGLTF.Loader
 
 		public Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
+#if !WINDOWS_UWP && !UNITY_WEBGL
 			// seems the Editor locks up in some cases when directly using Task.Run(() => {})
-			if (Application.isPlaying)
+			if (UnityEngine.Application.isPlaying)
 			{
 				return Task.Run(() => LoadStream(relativeFilePath));
 			}
+#endif
 			return Task.FromResult(LoadStream(relativeFilePath));
 		}
 
@@ -31,10 +32,13 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(relativeFilePath));
 			}
 
+			if (File.Exists(relativeFilePath))
+				return File.OpenRead(relativeFilePath);
+
 			string pathToLoad = Path.Combine(_rootDirectoryPath, relativeFilePath);
 			if (!File.Exists(pathToLoad))
 			{
-				throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath, relativeFilePath);
+				throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad, relativeFilePath);
 			}
 
 			return File.OpenRead(pathToLoad);
