@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityGLTF.Loader;
 
 namespace UnityGLTF
@@ -20,6 +22,7 @@ namespace UnityGLTF
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
         public ImporterFactory Factory = null;
+        public UnityAction onLoadComplete;
 
 #if UNITY_ANIMATION
         public IEnumerable<Animation> Animations { get; private set; }
@@ -27,8 +30,6 @@ namespace UnityGLTF
 
 		[SerializeField]
 		private bool loadOnStart = true;
-
-		[SerializeField] private bool MaterialsOnly = false;
 
 		[SerializeField] private int RetryCount = 10;
 		[SerializeField] private float RetryTimeout = 2.0f;
@@ -76,12 +77,13 @@ namespace UnityGLTF
 			GLTFSceneImporter sceneImporter = null;
 			try
 			{
+				var isFileUri = GLTFUri.StartsWith("file://");
                 Factory = Factory ?? ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
-				if (UseStream)
+				if (UseStream || isFileUri)
 				{
 					string fullPath;
-					if (AppendStreamingAssets)
+					if (AppendStreamingAssets && !isFileUri)
 					{
 						// Path.Combine treats paths that start with the separator character
 						// as absolute paths, ignoring the first path passed in. This removes
@@ -92,10 +94,13 @@ namespace UnityGLTF
 					{
 						fullPath = GLTFUri;
 					}
-					string directoryPath = URIHelper.GetDirectoryName(fullPath);
+
+					var uri = GLTFUri;
+					if (isFileUri) uri = uri.Substring("file://".Length);
+					string directoryPath = URIHelper.GetDirectoryName(uri);
 					importOptions.DataLoader = new FileLoader(directoryPath);
 					sceneImporter = Factory.CreateSceneImporter(
-						Path.GetFileName(GLTFUri),
+						Path.GetFileName(uri),
 						importOptions
 						);
 				}
@@ -118,18 +123,7 @@ namespace UnityGLTF
 				sceneImporter.IsMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
 
-				if (MaterialsOnly)
-				{
-					var mat = await sceneImporter.LoadMaterialAsync(0);
-					var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-					cube.transform.SetParent(gameObject.transform);
-					var renderer = cube.GetComponent<Renderer>();
-					renderer.sharedMaterial = mat;
-				}
-				else
-				{
-					await sceneImporter.LoadSceneAsync();
-				}
+				await sceneImporter.LoadSceneAsync(onLoadComplete:LoadCompleteAction);
 
 				// Override the shaders on all materials if a shader is provided
 				if (shaderOverride != null)
@@ -141,7 +135,6 @@ namespace UnityGLTF
 					}
 				}
 
-				// print("model loaded with vertices: " + sceneImporter.Statistics.VertexCount.ToString() + ", triangles: " + sceneImporter.Statistics.TriangleCount.ToString());
 				LastLoadedScene = sceneImporter.LastLoadedScene;
 
 #if UNITY_ANIMATION
@@ -149,7 +142,7 @@ namespace UnityGLTF
 
 				if (PlayAnimationOnLoad && Animations.Any())
 				{
-					Animations.FirstOrDefault().Play();
+					Animations.First().Play();
 				}
 #endif
 			}
@@ -162,6 +155,11 @@ namespace UnityGLTF
 					importOptions.DataLoader = null;
 				}
 			}
+		}
+
+		private void LoadCompleteAction(GameObject obj, ExceptionDispatchInfo exceptionDispatchInfo)
+		{
+			onLoadComplete?.Invoke();
 		}
 	}
 }
