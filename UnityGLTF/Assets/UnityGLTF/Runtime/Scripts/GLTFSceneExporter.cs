@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using GLTF;
 using GLTF.Schema;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
@@ -251,6 +252,10 @@ namespace UnityGLTF
 #endif
 
 		#endregion
+
+
+		private static ProfilerMarker exportAccessorMarker = new ProfilerMarker("Export Accessor");
+		private static ProfilerMarker exportSparseAccessorMarker = new ProfilerMarker("Export Sparse Accessor");
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -2655,6 +2660,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(byte[] arr)
 		{
+			using var auto = exportAccessorMarker.Auto();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2712,6 +2719,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
+			using var auto = exportAccessorMarker.Auto();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2823,6 +2832,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
+			using var auto = exportAccessorMarker.Auto();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2890,6 +2901,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(Vector3[] arr)
 		{
+			using var auto = exportAccessorMarker.Auto();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2976,6 +2989,8 @@ namespace UnityGLTF
 		/// <exception cref="Exception"></exception>
 		private AccessorId ExportSparseAccessor(AccessorId baseAccessor, Vector3[] baseData, Vector3[] arr)
 		{
+			using var auto = exportSparseAccessorMarker.Auto();
+
 			uint dataCount = (uint) arr.Length;
 			if (dataCount == 0)
 			{
@@ -3115,8 +3130,11 @@ namespace UnityGLTF
 			return id;
 		}
 
+
 		private AccessorId ExportAccessor(Vector4[] arr)
 		{
+			using var auto = exportAccessorMarker.Auto();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -3206,6 +3224,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(Color[] arr)
 		{
+			using var auto = exportAccessorMarker.Auto();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
