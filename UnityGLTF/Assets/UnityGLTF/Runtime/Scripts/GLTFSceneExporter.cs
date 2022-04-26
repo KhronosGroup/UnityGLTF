@@ -377,6 +377,7 @@ namespace UnityGLTF
 		{
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
+			_shouldUseInternalBufferForImages = true;
 
 			_bufferWriter = new BinaryWriter(binStream);
 
