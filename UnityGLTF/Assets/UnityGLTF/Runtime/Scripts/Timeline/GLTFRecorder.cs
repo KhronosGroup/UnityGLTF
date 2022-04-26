@@ -117,7 +117,15 @@ namespace UnityGLTF.Timeline
 			lastRecordedTime = time;
 		}
 
-		public void EndRecording(string filename)
+		public void EndRecording(string filename, string sceneName = "scene")
+		{
+			using (var filestream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
+			{
+				EndRecording(filestream, sceneName);
+			}
+		}
+
+		public void EndRecording(Stream stream, string sceneName = "scene")
 		{
 			if (!isRecording) return;
 			isRecording = false;
@@ -135,9 +143,8 @@ namespace UnityGLTF.Timeline
 				ExportInactivePrimitives = true,
 				AfterSceneExport = PostExport,
 			});
-			var path = Path.GetDirectoryName(filename);
-			var file = Path.GetFileName(filename);
-			exporter.SaveGLB(path, file);
+
+			exporter.SaveGLBToStream(stream, sceneName);
 
 			GLTFSceneExporter.ExportDisabledGameObjects = previousExportDisabledState;
 			GLTFSceneExporter.ExportAnimations = previousExportAnimationState;
