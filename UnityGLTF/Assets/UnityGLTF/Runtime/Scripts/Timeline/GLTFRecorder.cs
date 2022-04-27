@@ -122,6 +122,8 @@ namespace UnityGLTF.Timeline
 			using (var filestream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
 			{
 				EndRecording(filestream, sceneName);
+				filestream.Flush();
+				filestream.SetLength(filestream.Position);
 			}
 		}
 
@@ -152,10 +154,11 @@ namespace UnityGLTF.Timeline
 
 		private void PostExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
 		{
-			exporter.ExportAnimationFromNode(ref root);
+			// this would include animation from the original root
+			// exporter.ExportAnimationFromNode(ref root);
 
 			GLTFAnimation anim = new GLTFAnimation();
-			anim.Name = gltfRoot.GetDefaultScene()?.Name ?? "Recording";
+			anim.Name = "Recording";
 
 			CollectAndProcessAnimation(exporter, anim);
 
