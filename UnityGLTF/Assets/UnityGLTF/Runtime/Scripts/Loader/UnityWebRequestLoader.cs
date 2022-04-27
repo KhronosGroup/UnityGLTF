@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace UnityGLTF.Loader
@@ -26,7 +25,6 @@ namespace UnityGLTF.Loader
 			}
 
 			var results = request.downloadHandler.data;
-			Debug.Log("got stream, length " + results.Length);
 			var stream = new MemoryStream(results, 0, results.Length, false, true);
 			return stream;
 		}
