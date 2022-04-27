@@ -1534,7 +1534,7 @@ namespace UnityGLTF
 			material.DoubleSided = materialObj.HasProperty("_Cull") &&
 				materialObj.GetInt("_Cull") == (int) CullMode.Off;
 
-			if(materialObj.IsKeywordEnabled("_EMISSION"))
+			if(materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION"))
 			{
 				if (materialObj.HasProperty("_EmissionColor"))
 				{
@@ -1549,7 +1549,7 @@ namespace UnityGLTF
 					}
 					emissiveAmount.A = Mathf.Clamp01(emissiveAmount.A);
 					material.EmissiveFactor = emissiveAmount;
-					
+
 					if(maxEmissiveAmount > 1)
 					{
 						material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
@@ -1577,7 +1577,10 @@ namespace UnityGLTF
 					}
 				}
 			}
-			if (materialObj.HasProperty("_BumpMap") && (materialObj.IsKeywordEnabled("_NORMALMAP") || materialObj.IsKeywordEnabled("_BUMPMAP")))
+
+			// workaround for glTFast roundtrip: has a _BumpMap but no _NORMALMAP or _BUMPMAP keyword.
+			var is_glTFastShader = materialObj.shader.name.IndexOf("glTF", StringComparison.Ordinal) > -1;
+			if (materialObj.HasProperty("_BumpMap") && (materialObj.IsKeywordEnabled("_NORMALMAP") || materialObj.IsKeywordEnabled("_BUMPMAP") || is_glTFastShader))
 			{
 				var normalTex = materialObj.GetTexture("_BumpMap");
 
