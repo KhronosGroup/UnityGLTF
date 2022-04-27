@@ -31,6 +31,7 @@ Shader "GLTF/PbrMetallicRoughness"
 		_OcclusionStrength("Occlusion Strength", Range(0.0, 1.0)) = 1.0
 		_OcclusionMap("Occlusion Texture", 2D) = "white" {}
 
+		[HDR]
 		_EmissionColor("Emissive Factor", Color) = (0,0,0)
 		_EmissionMap("Emissive Texture", 2D) = "white" {}
 
