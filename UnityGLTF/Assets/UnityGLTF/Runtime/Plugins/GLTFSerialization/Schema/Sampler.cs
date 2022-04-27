@@ -77,13 +77,13 @@ namespace GLTF.Schema
 		{
 			writer.WriteStartObject();
 
-			if (MagFilter != MagFilterMode.Linear)
+			if (MagFilter != MagFilterMode.Linear && MagFilter != MagFilterMode.None)
 			{
 				writer.WritePropertyName("magFilter");
 				writer.WriteValue((int)MagFilter);
 			}
 
-			if (MinFilter != MinFilterMode.NearestMipmapLinear)
+			if (MinFilter != MinFilterMode.NearestMipmapLinear && MinFilter != MinFilterMode.None)
 			{
 				writer.WritePropertyName("minFilter");
 				writer.WriteValue((int)MinFilter);
