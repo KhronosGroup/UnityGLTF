@@ -2204,6 +2204,11 @@ namespace UnityGLTF
 			}
 
 			mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColorRaw();
+			var emissiveExt = GetEmissiveStrength(def);
+			if (emissiveExt != null)
+			{
+				mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColorRaw() * emissiveExt.emissiveStrength;
+			}
 
 			var vertColorMapper = mapper.Clone();
 			vertColorMapper.VertexColorsEnabled = true;
@@ -2430,6 +2435,16 @@ namespace UnityGLTF
 				def.Extensions.TryGetValue(ExtTextureTransformExtensionFactory.EXTENSION_NAME, out extension))
 			{
 				return (ExtTextureTransformExtension)extension;
+			}
+			else return null;
+		}
+
+		protected virtual KHR_materials_emissive_strength GetEmissiveStrength(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_emissive_strength_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_emissive_strength) extension;
 			}
 			else return null;
 		}

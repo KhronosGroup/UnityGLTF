@@ -14,12 +14,11 @@ namespace GLTF.Schema
 			{ KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME, new KHR_materials_pbrSpecularGlossinessExtensionFactory() },
 			{ KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME, new KHR_MaterialsUnlitExtensionFactory() },
 			{ KHR_lights_punctualExtensionFactory.EXTENSION_NAME, new KHR_lights_punctualExtensionFactory() },
+			{ KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength_Factory() },
       		{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
 		};
 
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
-		private static KHR_materials_pbrSpecularGlossinessExtensionFactory _KHRExtensionFactory = new KHR_materials_pbrSpecularGlossinessExtensionFactory();
-		private static ExtTextureTransformExtensionFactory _TexTransformFactory = new ExtTextureTransformExtensionFactory();
 
 		public static bool IsExtensionRegistered(string extensionName)
 		{
@@ -192,18 +191,9 @@ namespace GLTF.Schema
 
 				lock (_extensionRegistry)
 				{
-
 					if (_extensionRegistry.TryGetValue(extensionName, out extensionFactory))
 					{
 						extensionsCollection.Add(extensionName, extensionFactory.Deserialize(root, childAsJProperty));
-					}
-					else if (extensionName.Equals(KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME))
-					{
-						extensionsCollection.Add(extensionName, _KHRExtensionFactory.Deserialize(root, childAsJProperty));
-					}
-					else if (extensionName.Equals(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
-					{
-						extensionsCollection.Add(extensionName, _TexTransformFactory.Deserialize(root, childAsJProperty));
 					}
 					else
 					{
