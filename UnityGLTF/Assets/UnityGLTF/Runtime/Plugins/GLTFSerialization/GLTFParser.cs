@@ -151,7 +151,7 @@ namespace GLTF
 				throw new GLTFHeaderInvalidException("Unsupported glTF version");
 			};
 
-			if (header.FileLength != (stream.Length - startPosition))
+			if (header.FileLength > (stream.Length - startPosition))
 			{
 				throw new GLTFHeaderInvalidException("File length does not match header.");
 			}
