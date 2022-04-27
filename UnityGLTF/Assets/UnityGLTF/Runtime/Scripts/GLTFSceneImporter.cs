@@ -2203,11 +2203,12 @@ namespace UnityGLTF
 				}
 			}
 
-			mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColorRaw();
+			mapper.EmissiveFactor = QualitySettings.activeColorSpace == ColorSpace.Linear ? def.EmissiveFactor.ToUnityColorLinear() : def.EmissiveFactor.ToUnityColorRaw();
+
 			var emissiveExt = GetEmissiveStrength(def);
 			if (emissiveExt != null)
 			{
-				mapper.EmissiveFactor = def.EmissiveFactor.ToUnityColorRaw() * emissiveExt.emissiveStrength;
+				mapper.EmissiveFactor = mapper.EmissiveFactor * emissiveExt.emissiveStrength;
 			}
 
 			var vertColorMapper = mapper.Clone();

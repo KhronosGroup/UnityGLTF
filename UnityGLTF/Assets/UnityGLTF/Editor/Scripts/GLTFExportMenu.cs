@@ -12,7 +12,14 @@ namespace UnityGLTF
 
 	    public static string RetrieveTexturePath(UnityEngine.Texture texture)
 	    {
-	        return AssetDatabase.GetAssetPath(texture);
+	        var path = AssetDatabase.GetAssetPath(texture);
+	        // texture is a subasset
+	        if(AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(Texture2D))
+	        {
+		        var ext = System.IO.Path.GetExtension(path);
+		        path = path.Replace(ext, "-" + texture.name + ext);
+	        }
+	        return path;
 	    }
 
 	    [MenuItem(MenuPrefix + "Settings", priority = 10000)]
