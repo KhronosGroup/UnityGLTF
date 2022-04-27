@@ -1299,6 +1299,13 @@ namespace UnityGLTF
 				if (settings.ExportVertexColors && meshObj.colors.Length != 0)
 					aColor0 = ExportAccessor(QualitySettings.activeColorSpace == ColorSpace.Linear ? meshObj.colors : meshObj.colors.ToLinear());
 
+				aPosition.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+				if (aNormal != null) aNormal.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+				if (aTangent != null) aTangent.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+				if (aTexcoord0 != null) aTexcoord0.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+				if (aTexcoord1 != null) aTexcoord1.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+				if (aColor0 != null) aColor0.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+
 				_meshToPrims.Add(meshObj, new MeshAccessors()
 				{
 					aPosition = aPosition,
@@ -1329,6 +1336,7 @@ namespace UnityGLTF
 
 					primitive.Mode = GetDrawMode(topology);
 					primitive.Indices = ExportAccessor(indices, true);
+					primitive.Indices.Value.BufferView.Value.Target = BufferViewTarget.ElementArrayBuffer;
 
 					primitive.Attributes = new Dictionary<string, AccessorId>();
 					primitive.Attributes.Add(SemanticProperties.POSITION, accessors.aPosition);
@@ -1723,7 +1731,9 @@ namespace UnityGLTF
 
 					if (!settings.BlendShapeExportSparseAccessors)
 					{
-						exportTargets.Add(SemanticProperties.POSITION, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)));
+						var positionAccessor = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale));
+						positionAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+						exportTargets.Add(SemanticProperties.POSITION, positionAccessor);
 					}
 					else
 					{
@@ -1735,15 +1745,19 @@ namespace UnityGLTF
 						//   ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 						var baseAccessor = _meshToPrims[meshObj].aPosition;
 						var exportedAccessor = ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale));
-						if(exportedAccessor != null)
+						if (exportedAccessor != null)
+						{
 							exportTargets.Add(SemanticProperties.POSITION, exportedAccessor);
+						}
 					}
 
 					if (meshHasNormals && settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Normal))
 					{
 						if (!settings.BlendShapeExportSparseAccessors)
 						{
-							exportTargets.Add(SemanticProperties.NORMAL, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals, SchemaExtensions.CoordinateSpaceConversionScale)));
+							var accessor = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals, SchemaExtensions.CoordinateSpaceConversionScale));
+							accessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+							exportTargets.Add(SemanticProperties.NORMAL, accessor);
 						}
 						else
 						{
@@ -1755,14 +1769,16 @@ namespace UnityGLTF
 					{
 						if (!settings.BlendShapeExportSparseAccessors)
 						{
-							exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
+							var accessor = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale));
+							accessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+							exportTargets.Add(SemanticProperties.TANGENT, accessor);
 						}
 						else
 						{
 							// 	var baseAccessor = _meshToPrims[meshObj].aTangent;
 							// 	exportTargets.Add(SemanticProperties.TANGENT, ExportSparseAccessor(baseAccessor, SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale), SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.TangentSpaceConversionScale)));
 							exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
-							Debug.LogWarning("Blend Shape Tangents for " + meshObj + " won't be exported with sparse accessors – sparse accessor for tangents isn't supported right now.");
+							// Debug.LogWarning("Blend Shape Tangents for " + meshObj + " won't be exported with sparse accessors – sparse accessor for tangents isn't supported right now.");
 						}
 					}
 					targets.Add(exportTargets);
@@ -4275,9 +4291,18 @@ namespace UnityGLTF
 			foreach (MeshPrimitive prim in gltfMesh.Primitives)
 			{
 				if (!prim.Attributes.ContainsKey("JOINTS_0"))
-					prim.Attributes.Add("JOINTS_0", ExportAccessorUint(bones));
+				{
+					var jointsAccessor = ExportAccessorUint(bones);
+					jointsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+					prim.Attributes.Add("JOINTS_0", jointsAccessor);
+				}
+
 				if (!prim.Attributes.ContainsKey("WEIGHTS_0"))
-					prim.Attributes.Add("WEIGHTS_0", ExportAccessor(weights));
+				{
+					var weightsAccessor = ExportAccessor(weights);
+					weightsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+					prim.Attributes.Add("WEIGHTS_0", weightsAccessor);
+				}
 			}
 
 			_root.Nodes[_exportedTransforms[transform.GetInstanceID()]].Skin = new SkinId() { Id = _root.Skins.Count, Root = _root };
