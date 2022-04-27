@@ -73,6 +73,7 @@ half4 frag_vcol(WrappedVertexOutput wvo) : SV_Target
     s.diffColor.x *= wvo.color.x;
     s.diffColor.y *= wvo.color.y;
     s.diffColor.z *= wvo.color.z;
+	s.alpha *= wvo.color.a;
     // End: Modified section
 
     half occlusion = Occlusion(i.tex.xy);
@@ -115,6 +116,7 @@ half4 frag_vcol(WrappedVertexOutput wvo) : SV_Target
     s.diffColor.x *= wvo.color.x;
     s.diffColor.y *= wvo.color.y;
     s.diffColor.z *= wvo.color.z;
+	s.alpha *= wvo.color.a;
     // End: Modified section
 
     half occlusion = Occlusion(i.tex.xy);
