@@ -1549,8 +1549,12 @@ namespace UnityGLTF
 					}
 					emissiveAmount.A = Mathf.Clamp01(emissiveAmount.A);
 					material.EmissiveFactor = emissiveAmount;
-					material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
-					DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
+					
+					if(maxEmissiveAmount > 1)
+					{
+						material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
+						DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
+					}
 				}
 
 				if (materialObj.HasProperty("_EmissionMap"))
