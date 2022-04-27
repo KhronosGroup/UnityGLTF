@@ -3945,6 +3945,7 @@ namespace UnityGLTF
 			}
 
 			AccessorId timeAccessor = ExportAccessor(times);
+			timeAccessor.Value.BufferView.Value.ByteStride = 0;
 
 			// Translation
 			if(positions != null && positions.Length > 0)
@@ -3963,6 +3964,7 @@ namespace UnityGLTF
 				AnimationSampler Tsampler = new AnimationSampler();
 				Tsampler.Input = timeAccessor;
 				Tsampler.Output = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(positions, SchemaExtensions.CoordinateSpaceConversionScale));
+				Tsampler.Output.Value.BufferView.Value.ByteStride = 0;
 				Tchannel.Sampler = new AnimationSamplerId
 				{
 					Id = animation.Samplers.Count,
@@ -3991,6 +3993,7 @@ namespace UnityGLTF
 				AnimationSampler Rsampler = new AnimationSampler();
 				Rsampler.Input = timeAccessor; // Float, for time
 				Rsampler.Output = ExportAccessor(rotations, true); // Vec4 for
+				Rsampler.Output.Value.BufferView.Value.ByteStride = 0;
 				Rchannel.Sampler = new AnimationSamplerId
 				{
 					Id = animation.Samplers.Count,
@@ -4019,6 +4022,7 @@ namespace UnityGLTF
 				AnimationSampler Ssampler = new AnimationSampler();
 				Ssampler.Input = timeAccessor; // Float, for time
 				Ssampler.Output = ExportAccessor(scales); // Vec3 for scale
+				Ssampler.Output.Value.BufferView.Value.ByteStride = 0;
 				Schannel.Sampler = new AnimationSamplerId
 				{
 					Id = animation.Samplers.Count,
@@ -4077,6 +4081,7 @@ namespace UnityGLTF
 				AnimationSampler Wsampler = new AnimationSampler();
 				Wsampler.Input = timeAccessor;
 				Wsampler.Output = ExportAccessor(weights);
+				Wsampler.Output.Value.BufferView.Value.ByteStride = 0;
 				Wchannel.Sampler = new AnimationSamplerId()
 				{
 					Id = animation.Samplers.Count,

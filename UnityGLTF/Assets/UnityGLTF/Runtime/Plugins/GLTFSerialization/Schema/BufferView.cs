@@ -5,8 +5,17 @@ namespace GLTF.Schema
 {
 	public enum BufferViewTarget
 	{
+		/// <summary>
+		/// For animation or
+		/// </summary>
 		None = 0,
+		/// <summary>
+		/// For vertex data
+		/// </summary>
 		ArrayBuffer = 34962,
+		/// <summary>
+		/// For index data
+		/// </summary>
 		ElementArrayBuffer = 34963,
 	}
 
