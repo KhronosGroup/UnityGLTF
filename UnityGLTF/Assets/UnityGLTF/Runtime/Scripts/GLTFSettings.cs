@@ -106,9 +106,9 @@ namespace UnityGLTF
 		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
 		[SerializeField]
 		[Tooltip("(Experimental) Use Sparse Accessors for blend shape export. Not supported on some viewers.")]
-		private bool blendShapeExportSparseAccessors = false;
+		private bool blendShapeExportSparseAccessors = true;
 		[SerializeField]
-	    [Tooltip("Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
+	    [Tooltip("If off, vertex colors are not exported. Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
 		private bool exportVertexColors = true;
 
 		public bool ExportNames { get => exportNames;
