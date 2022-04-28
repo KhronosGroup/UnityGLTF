@@ -295,7 +295,8 @@ namespace UnityGLTF
 		    {
 #if UNITY_EDITOR
 			    settings = ScriptableObject.CreateInstance<GLTFSettings>();
-			    if (!Directory.Exists(k_RuntimeAndEditorSettingsPath)) Directory.CreateDirectory(k_RuntimeAndEditorSettingsPath);
+			    var dir = Path.GetDirectoryName(k_RuntimeAndEditorSettingsPath);
+			    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 			    AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
 			    AssetDatabase.SaveAssets();
 #else
