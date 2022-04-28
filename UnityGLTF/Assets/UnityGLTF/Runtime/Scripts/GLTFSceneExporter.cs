@@ -2412,17 +2412,16 @@ namespace UnityGLTF
 			return false;
 		}
 
-#if UNITY_EDITOR
-		byte[] GetTextureDataFromDisk(Texture texture)
+		private byte[] GetTextureDataFromDisk(Texture texture)
 		{
+#if UNITY_EDITOR
 			var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
 
 			if (File.Exists(path))
 				return File.ReadAllBytes(path);
-
+#endif
 			return null;
 		}
-#endif
 
 		bool TextureHasAlphaChannel(Texture sourceTexture)
 		{
