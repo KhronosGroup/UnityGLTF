@@ -2,6 +2,10 @@
 #define ANIMATION_EXPORT_SUPPORTED
 #endif
 
+#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
+#define ANIMATION_SUPPORTED
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -190,7 +194,7 @@ namespace UnityGLTF
 #if ANIMATION_EXPORT_SUPPORTED
 		private readonly Dictionary<(AnimationClip clip, float speed), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, float), GLTFAnimation>();
 #endif
-#if UNITY_ANIMATION
+#if ANIMATION_SUPPORTED
 		private readonly Dictionary<(AnimationClip clip, float speed, string targetPath), Transform> _clipAndSpeedAndPathToExportedTransform = new Dictionary<(AnimationClip, float, string), Transform>();
 #endif
 
@@ -247,7 +251,7 @@ namespace UnityGLTF
 		}
 #endif
 
-#if UNITY_ANIMATION
+#if ANIMATION_SUPPORTED
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
 #endif
@@ -773,7 +777,7 @@ namespace UnityGLTF
 				node.Name = nodeTransform.name;
 			}
 
-#if UNITY_ANIMATION
+#if ANIMATION_SUPPORTED
 			if (nodeTransform.GetComponent<UnityEngine.Animation>() || nodeTransform.GetComponent<UnityEngine.Animator>())
 			{
 				_animatedNodes.Add(nodeTransform);
@@ -3447,7 +3451,7 @@ namespace UnityGLTF
 		// This may need additional work to fully support animatorControllers
 		public void ExportAnimationFromNode(ref Transform transform)
 		{
-#if UNITY_ANIMATION
+#if ANIMATION_SUPPORTED
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator)
 			{
@@ -3580,7 +3584,7 @@ namespace UnityGLTF
 		}
 #endif
 
-#if UNITY_ANIMATION
+#if ANIMATION_SUPPORTED
 		public enum AnimationKeyRotationType
 		{
 			Unknown,

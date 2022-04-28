@@ -827,6 +827,13 @@ namespace UnityGLTF
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 		}
 
+		private static void AddNewBufferAndViewToAccessor(byte[] data, Accessor accessor, GLTFRoot _gltfRoot)
+		{
+			_gltfRoot.Buffers.Add(new GLTFBuffer() { ByteLength = (uint) data.Length });
+			_gltfRoot.BufferViews.Add(new BufferView() { ByteLength = (uint) data.Length, ByteOffset = 0, Buffer = new BufferId() { Id = _gltfRoot.Buffers.Count, Root = _gltfRoot } });
+			accessor.BufferView = new BufferViewId() { Id = _gltfRoot.BufferViews.Count - 1, Root = _gltfRoot };
+		}
+
 		protected virtual async Task ConstructMeshTargets(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
 		{
 			var newTargets = new List<Dictionary<string, AttributeAccessor>>(primitive.Targets.Count);
