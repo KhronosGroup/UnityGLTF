@@ -1,12 +1,14 @@
 using System;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace UnityGLTF
 {
-	public class GLTFExportMenu : EditorWindow
+	public static class GLTFExportMenu
 	{
 		private const string MenuPrefix = "Assets/UnityGLTF/";
 
@@ -20,22 +22,6 @@ namespace UnityGLTF
 		        path = path.Replace(ext, "-" + texture.name + ext);
 	        }
 	        return path;
-	    }
-
-	    [MenuItem(MenuPrefix + "Settings", priority = 10000)]
-	    static void Init()
-	    {
-	        GLTFExportMenu window = (GLTFExportMenu)EditorWindow.GetWindow(typeof(GLTFExportMenu), false, "GLTF Settings");
-	        window.Show();
-	    }
-
-	    void OnGUI()
-	    {
-		    EditorGUILayout.HelpBox("This Window is deprecated and will be removed in a future release. Please use ProjectSettings/UnityGLTF instead.", MessageType.Warning);
-		    if (GUILayout.Button("Open Project Settings/UnityGLTF"))
-		    {
-			    SettingsService.OpenProjectSettings("Project/UnityGLTF");
-		    }
 	    }
 
 	    static bool TryGetExportNameAndRootTransformsFromSelection(out string name, out Transform[] rootTransforms)
@@ -82,12 +68,19 @@ namespace UnityGLTF
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(rootTransforms, exportOptions);
 
-			var path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+			var invokedByShortcut = Event.current?.type == EventType.KeyDown;
+			var path = GLTFSceneExporter.SaveFolderPath;
+			if (!invokedByShortcut || !Directory.Exists(path))
+				path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+
 			if (!string.IsNullOrEmpty(path))
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
 				exporter.SaveGLTFandBin (path, name);
-				EditorUtility.RevealInFinder(path + "/" + name + ".gltf");
+
+				var resultPath = $"{path}/{name}.gltf";
+				Debug.Log("Exported to " + resultPath);
+				EditorUtility.RevealInFinder(resultPath);
 			}
 
 		}
@@ -110,12 +103,19 @@ namespace UnityGLTF
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(rootTransforms, exportOptions);
 
-			var path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+			var invokedByShortcut = Event.current?.type == EventType.KeyDown;
+			var path = GLTFSceneExporter.SaveFolderPath;
+			if (!invokedByShortcut || !Directory.Exists(path))
+				path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+
 			if (!string.IsNullOrEmpty(path))
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
 				exporter.SaveGLB(path, name);
-				EditorUtility.RevealInFinder(path + "/" + name + ".glb");
+
+				var resultPath = $"{path}/{name}.glb";
+				Debug.Log("Exported to " + resultPath);
+				EditorUtility.RevealInFinder(resultPath);
 			}
 		}
 
@@ -128,12 +128,20 @@ namespace UnityGLTF
 
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(transforms, exportOptions);
-			var path = EditorUtility.SaveFolderPanel("glTF Export Path", "", "");
-			if (path != "")
+
+			var invokedByShortcut = Event.current?.type == EventType.KeyDown;
+			var path = GLTFSceneExporter.SaveFolderPath;
+			if (!invokedByShortcut || !Directory.Exists(path))
+				path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+
+			if (!string.IsNullOrEmpty(path))
 			{
 				GLTFSceneExporter.SaveFolderPath = path;
 				exporter.SaveGLTFandBin (path, scene.name);
-				EditorUtility.RevealInFinder(path + "/" + scene.name + ".gltf");
+
+				var resultPath = $"{path}/{scene.name}.gltf";
+				Debug.Log("Exported to " + resultPath);
+				EditorUtility.RevealInFinder(resultPath);
 			}
 		}
 	}
