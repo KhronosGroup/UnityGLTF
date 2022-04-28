@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.6.0-pre] - 2022-04-28
+- feat: added WebGL import support (export was already supported)
+- feat: added WebGL animation export support
+- feat: added onLoadComplete action to GLTFComponent
+- feat: added ProfilerMarkers for export
+- feat: import support for KHR_materials_emissive_strength
+- changed: replaced FileLoader/WebRequestLoader with simpler UnityWebRequestLoader for better platform support. Use the previous ones if you need streaming.
+- removed: removed unused shader variants from BiRP shaders
+- fixed: sparse accessor JSON is properly parsed (no sparse accessor import support yet though)
+- fixed: no more validation errors regarding minMag filters, bufferView.byteStride for animation samplers, bufferView.target for index/vertex data
+- fixed: only export KHR_materials_emissive_strength if emissive intensity > 1
+- fixed: URP roundtrip now works with glTFast imports (#42)
+- fixed: better handling of filenames for glTF + bin + textures export (#41, #40)
+- fixed: add vertex color alpha support, add _EmissionMap_ST support to BiRP shader
+- fixed: exporting Prefab assets directly from Project Window wasn't working properly when ExportDisabled was off
+- fixed: regression with serialization and roundtrip behaviour of spotlights
+
 ## [1.5.0-pre.2] - 2022-04-20
 - fixed: incorrect UV offset for tiled textures on export in some cases
 - feat: show exported glTF/GLB in explorer after exporting via Menu Item
