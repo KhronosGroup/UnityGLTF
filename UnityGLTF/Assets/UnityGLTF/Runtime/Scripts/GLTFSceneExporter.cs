@@ -759,7 +759,7 @@ namespace UnityGLTF
 
 		private bool ShouldExportTransform(Transform transform)
 		{
-			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeInHierarchy) return false;
+			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf) return false;
 			if (settings.UseMainCameraVisibility && (_exportLayerMask >= 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
 			if (transform.CompareTag("EditorOnly")) return false;
 			return true;
