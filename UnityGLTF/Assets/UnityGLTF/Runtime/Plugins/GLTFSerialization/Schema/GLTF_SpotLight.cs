@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GLTF.Extensions;
 using GLTF.Math;
+using GLTF.Schema.KHR_lights_punctual;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -48,6 +49,11 @@ namespace GLTF.Schema
 					case "name":
 						node.name = reader.ReadAsString();
 						break;
+					case "spot":
+						var spot = Spot.Deserialize(reader);
+						node.innerConeAngle = (float) spot.InnerConeAngle;
+						node.outerConeAngle = (float) spot.OuterConeAngle;
+						break;
 				}
 			}
 
@@ -60,13 +66,13 @@ namespace GLTF.Schema
 
 			writer.WritePropertyName("type");
 			writer.WriteValue(type);
-			
+
 			if (range > 0)
 			{
 				writer.WritePropertyName("range");
 				writer.WriteValue(range);
 			}
-			
+
 			if (intensity != 1.0f)
 			{
 				writer.WritePropertyName("intensity");
@@ -78,18 +84,24 @@ namespace GLTF.Schema
 				writer.WriteValue(name);
 			}
 
-			//writer.WritePropertyName("spot");
-			//writer.WriteStartObject();
-			//writer.WritePropertyName("innerConeAngle");
-			//writer.WriteValue(innerConeAngle);
-			//writer.WritePropertyName("outerConeAngle");
-			//writer.WriteValue(outerConeAngle);
-			//writer.WriteEndObject();
+			writer.WritePropertyName("spot");
+			writer.WriteStartObject();
+			if(innerConeAngle != 0)
+			{
+				writer.WritePropertyName("innerConeAngle");
+				writer.WriteValue(innerConeAngle);
+			}
+			// if (outerConeAngle != PI / 4)
+			{
+				writer.WritePropertyName("outerConeAngle");
+				writer.WriteValue(outerConeAngle);
+			}
+			writer.WriteEndObject();
 
-			//write raw json
-			writer.WriteRaw(",\"spot\":{\"innerConeAngle\":" + innerConeAngle.ToString(System.Globalization.CultureInfo.InvariantCulture));
-			writer.WriteRaw(",\"outerConeAngle\":" + outerConeAngle.ToString(System.Globalization.CultureInfo.InvariantCulture));
-			writer.WriteRaw("}");
+			// //write raw json
+			// writer.WriteRaw(",\"spot\":{\"innerConeAngle\":" + innerConeAngle.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			// writer.WriteRaw(",\"outerConeAngle\":" + outerConeAngle.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			// writer.WriteRaw("}");
 
 			writer.WritePropertyName("color");
 			writer.WriteStartArray();

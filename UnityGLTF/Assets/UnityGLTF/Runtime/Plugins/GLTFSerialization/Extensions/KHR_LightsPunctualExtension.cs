@@ -7,7 +7,6 @@ using GLTF.Extensions;
 
 namespace GLTF.Schema.KHR_lights_punctual
 {
-
 	/// <summary>
 	/// Specifies the light type.
 	/// </summary>
@@ -18,14 +17,11 @@ namespace GLTF.Schema.KHR_lights_punctual
 		spot
 	}
 
-	
-
 	/// <summary>
 	/// Texture sampler properties for filtering and wrapping modes.
 	/// </summary>
 	public class Spot
 	{
-
 		private const string PNAME_INNERCONEANGLE = "innerConeAngle";
 		private const string PNAME_OUTERCONEANGLE = "outerConeAngle";
 
@@ -45,10 +41,14 @@ namespace GLTF.Schema.KHR_lights_punctual
 		{
 		}
 
-
 		public static Spot Deserialize(JsonReader reader)
 		{
 			var spot = new Spot();
+
+			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+			{
+				return spot;
+			}
 
 			while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
 			{
@@ -70,7 +70,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 
 		public void Serialize(JsonWriter writer)
 		{
-
 			if( InnerConeAngle > OuterConeAngle)
 			{
 				throw new Exception("Spot's InnerConeAngle must be less or equal OuterConeAngle");
@@ -95,46 +94,36 @@ namespace GLTF.Schema.KHR_lights_punctual
 				writer.WriteValue(OuterConeAngle);
 			}
 
-
 			writer.WriteEndObject();
 		}
 	}
 
-
-
-
 	public class PunctualLight : GLTFChildOfRootProperty
 	{
-
 		private const string PNAME_TYPE = "type";
 		private const string PNAME_COLOR = "color";
 		private const string PNAME_INTENSITY = "intensity";
 		private const string PNAME_RANGE = "range";
 		private const string PNAME_SPOT = "spot";
 
-
 		public static readonly Color COLOR_DEFAULT = Color.White;
 		public static readonly double RANGE_DEFAULT = -1d;
 		public static readonly double INTENSITY_DEFAULT = 1d;
-
 
 		/// <summary>
 		/// Specifies the light type.
 		/// </summary>
 		public LightType Type;
 
-
 		/// <summary>
 		/// Color of the light source.
 		/// </summary>
 		public Color Color = COLOR_DEFAULT;
 
-
 		/// <summary>
 		/// Intensity of the light source. `point` and `spot` lights use luminous intensity in candela (lm/sr) while `directional` lights use illuminance in lux (lm/m^2)
 		/// </summary>
 		public double Intensity = INTENSITY_DEFAULT;
-
 
 		/// <summary>
 		/// A distance cutoff at which the light's intensity may be considered to have reached zero.
@@ -145,7 +134,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 		/// spot's inner and outer angle, must exist for spot types
 		/// </summary>
 		public Spot Spot;
-
 
 		public PunctualLight()
 		{
@@ -160,7 +148,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 			Range = light.Range;
 			Spot = light.Spot;
 		}
-
 
 		public static PunctualLight Deserialize(GLTFRoot root, JsonReader reader)
 		{
@@ -209,7 +196,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 			}
 		}
 
-
 		override public void Serialize(JsonWriter writer)
 		{
 			writer.WriteStartObject();
@@ -246,12 +232,10 @@ namespace GLTF.Schema.KHR_lights_punctual
 				Spot.Serialize(writer);
 			}
 
-
 			base.Serialize(writer);
 
 			writer.WriteEndObject();
 		}
-
 
 		public JObject Serialize()
 		{
@@ -259,7 +243,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 			Serialize(writer);
 			return (JObject)writer.Token;
 		}
-
 	}
 
 	public class KHR_LightsPunctualRootExtension : IExtension
@@ -287,6 +270,13 @@ namespace GLTF.Schema.KHR_lights_punctual
 				if(System.Math.Abs(light.intensity - 1f) > .0000001) lightInfo.Add("intensity", light.intensity);
 				lightInfo.Add("name",  light.Name ?? light.name);
 				lightInfo.Add("color", new JArray(light.color.R, light.color.G, light.color.B));
+				// TODO why is this not using the specific spotlight serializer/deserializer?
+				if (light is GLTFSpotLight spotLight)
+				{
+					lightInfo.Add("spot", new JObject(
+						new JProperty(nameof(spotLight.innerConeAngle), spotLight.innerConeAngle),
+						new JProperty(nameof(spotLight.outerConeAngle), spotLight.outerConeAngle)));
+				}
 			}
 			return new JProperty(EXTENSION_NAME, obj);
 		}
@@ -299,7 +289,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 
 	public class KHR_LightsPunctualExtension : IExtension
 	{
-
 		public List<PunctualLight> Lights;
 
 		public KHR_LightsPunctualExtension()
@@ -317,7 +306,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 			return clone;
 		}
 
-
 		public JProperty Serialize()
 		{
 			return new JProperty(KHR_lights_punctualExtensionFactory.EXTENSION_NAME,
@@ -325,11 +313,8 @@ namespace GLTF.Schema.KHR_lights_punctual
 					new JProperty(KHR_lights_punctualExtensionFactory.PNAME_LIGHTS, new JArray(Lights))
 				)
 			);
-
 		}
 	}
-
-
 
 	public class PunctualLightId : GLTFId<PunctualLight>
 	{
@@ -365,22 +350,16 @@ namespace GLTF.Schema.KHR_lights_punctual
 				Root = root
 			};
 		}
-
-
 	}
-
-
 
 	public class KHR_LightsPunctualNodeExtension : IExtension
 	{
-
 		public PunctualLightId LightId;
 
 		public KHR_LightsPunctualNodeExtension()
 		{
 
 		}
-
 
 		public KHR_LightsPunctualNodeExtension(PunctualLightId lightId, GLTFRoot gltfRoot)
 		{
@@ -401,7 +380,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 			return new KHR_LightsPunctualNodeExtension(LightId.Id, root);
 		}
 
-
 		public JProperty Serialize()
 		{
 			return new JProperty(KHR_lights_punctualExtensionFactory.EXTENSION_NAME,
@@ -410,6 +388,5 @@ namespace GLTF.Schema.KHR_lights_punctual
 				)
 			);
 		}
-
 	}
 }

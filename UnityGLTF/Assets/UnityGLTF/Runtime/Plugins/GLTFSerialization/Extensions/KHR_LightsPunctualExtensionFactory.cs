@@ -19,10 +19,8 @@ namespace GLTF.Schema.KHR_lights_punctual
 
 		public override IExtension Deserialize(GLTFRoot root, JProperty extensionToken)
 		{
-
 			if (extensionToken != null)
 			{
-
 				JToken lightsToken = extensionToken.Value[PNAME_LIGHTS];
 
 				if (lightsToken != null)
@@ -36,7 +34,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 					return extension;
 				}
 
-
 				JToken nodelightToken = extensionToken.Value[PNAME_LIGHT];
 
 				if (nodelightToken != null)
@@ -44,7 +41,6 @@ namespace GLTF.Schema.KHR_lights_punctual
 					PunctualLightId lightId = PunctualLightId.Deserialize(root, nodelightToken.CreateReader() );
 					return new KHR_LightsPunctualNodeExtension( lightId, root );
 				}
-
 			}
 
 			return null;

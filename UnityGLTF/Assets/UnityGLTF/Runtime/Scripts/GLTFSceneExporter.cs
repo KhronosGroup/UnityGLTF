@@ -15,11 +15,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using GLTF;
 using GLTF.Schema;
+using GLTF.Schema.KHR_lights_punctual;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
 using CameraType = GLTF.Schema.CameraType;
+using LightType = UnityEngine.LightType;
 using Object = UnityEngine.Object;
 using WrapMode = GLTF.Schema.WrapMode;
 
@@ -987,20 +989,13 @@ namespace UnityGLTF
 
         private LightId ExportLight(Light unityLight)
         {
-	        if (_root.ExtensionsUsed == null)
-	        {
-		        _root.ExtensionsUsed = new List<string>(new[] { "KHR_lights_punctual" });
-	        }
-	        else if (!_root.ExtensionsUsed.Contains("KHR_lights_punctual"))
-	        {
-		        _root.ExtensionsUsed.Add("KHR_lights_punctual");
-	        }
+	        DeclareExtensionUsage(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, false);
 
             GLTFLight light;
 
             if (unityLight.type == LightType.Spot)
             {
-                light = new GLTFSpotLight() { innerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad*0.8f, outerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad };
+                light = new GLTFSpotLight() { innerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad * 0.8f, outerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad };
                 //name
                 light.Name = unityLight.name;
 
