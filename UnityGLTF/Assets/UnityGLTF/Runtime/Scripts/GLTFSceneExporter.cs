@@ -3634,11 +3634,13 @@ namespace UnityGLTF
 
 		private struct TargetCurveSet
 		{
+			#pragma warning disable 0649
 			public AnimationCurve[] translationCurves;
 			public AnimationCurve[] rotationCurves;
 			public AnimationCurve[] scaleCurves;
 			public AnimationKeyRotationType rotationType;
 			public Dictionary<string, AnimationCurve> weightCurves;
+			#pragma warning restore
 
 			public void Init()
 			{
