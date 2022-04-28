@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using GLTF;
 using GLTF.Schema;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
@@ -113,7 +114,7 @@ namespace UnityGLTF
 		private BinaryWriter _bufferWriter;
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
-		private List<Material> _materials;
+		private Dictionary<Material, int> _materials;
 		private List<AnimationClip> _animationClips;
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
@@ -258,6 +259,24 @@ namespace UnityGLTF
 
 		#endregion
 
+		private static ProfilerMarker exportGltfMarker = new ProfilerMarker("Export glTF");
+		private static ProfilerMarker gltfSerializationMarker = new ProfilerMarker("Serialize exported data");
+		private static ProfilerMarker exportMeshMarker = new ProfilerMarker("Export Mesh");
+		private static ProfilerMarker exportPrimitiveMarker = new ProfilerMarker("Export Primitive");
+		private static ProfilerMarker exportBlendShapeMarker = new ProfilerMarker("Export BlendShape");
+		private static ProfilerMarker exportAccessorMarker = new ProfilerMarker("Export Accessor");
+		private static ProfilerMarker exportSparseAccessorMarker = new ProfilerMarker("Export Sparse Accessor");
+		private static ProfilerMarker exportNodeMarker = new ProfilerMarker("Export Node");
+		private static ProfilerMarker afterNodeExportMarker = new ProfilerMarker("After Node Export (Callback)");
+		private static ProfilerMarker exportAnimationFromNodeMarker = new ProfilerMarker("Export Animation from Node");
+		private static ProfilerMarker convertClipToGLTFAnimationMarker = new ProfilerMarker("Convert Clip to GLTF Animation");
+		private static ProfilerMarker beforeSceneExportMarker = new ProfilerMarker("Before Scene Export (Callback)");
+		private static ProfilerMarker exportSceneMarker = new ProfilerMarker("Export Scene");
+		private static ProfilerMarker afterMaterialExportMarker = new ProfilerMarker("After Material Export (Callback)");
+		private static ProfilerMarker exportMaterialMarker = new ProfilerMarker("Export Material");
+		private static ProfilerMarker beforeMaterialExportMarker = new ProfilerMarker("Before Material Export (Callback)");
+		private static ProfilerMarker writeImageToDiskMarker = new ProfilerMarker("Export Image - Write to Disk");
+
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
@@ -313,7 +332,7 @@ namespace UnityGLTF
 			};
 
 			_imageInfos = new List<ImageInfo>();
-			_materials = new List<Material>();
+			_materials = new Dictionary<Material, int>();
 			_textures = new List<Texture>();
 			_animationClips = new List<AnimationClip>();
 
@@ -381,6 +400,8 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLBToStream(Stream stream, string sceneName)
 		{
+			exportGltfMarker.Begin();
+
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
 			_shouldUseInternalBufferForImages = true;
@@ -389,8 +410,10 @@ namespace UnityGLTF
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 
+			beforeSceneExportMarker.Begin();
 			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
 			BeforeSceneExport?.Invoke(this, _root);
+			beforeSceneExportMarker.End();
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
 
@@ -410,7 +433,9 @@ namespace UnityGLTF
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
+			gltfSerializationMarker.Begin();
 			_root.Serialize(jsonWriter, true);
+			gltfSerializationMarker.End();
 
 			_bufferWriter.Flush();
 			jsonWriter.Flush();
@@ -443,6 +468,8 @@ namespace UnityGLTF
 			CopyStream(binStream, writer);
 
 			writer.Flush();
+
+			exportGltfMarker.End();
 		}
 
 		/// <summary>
@@ -501,6 +528,8 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLTFandBin(string path, string fileName)
 		{
+			exportGltfMarker.Begin();
+
 			_shouldUseInternalBufferForImages = false;
 			var fullPath = GetFileName(path, fileName, ".bin");
 			var dirName = Path.GetDirectoryName(fullPath);
@@ -543,7 +572,9 @@ namespace UnityGLTF
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
 			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, ".gltf"));
+			gltfSerializationMarker.Begin();
 			_root.Serialize(gltfFile);
+			gltfSerializationMarker.End();
 
 #if WINDOWS_UWP
 			gltfFile.Dispose();
@@ -554,8 +585,7 @@ namespace UnityGLTF
 #endif
 			ExportImages(path);
 
-			// foreach(var t in _rootTransforms)
-			// 	t.rotation *= Quaternion.Euler(0,-180,0);
+			exportGltfMarker.End();
 		}
 
 		/// <summary>
@@ -610,6 +640,8 @@ namespace UnityGLTF
 		{
 			for (int t = 0; t < _imageInfos.Count; ++t)
 			{
+				writeImageToDiskMarker.Begin();
+
 				var image = _imageInfos[t].texture;
 				var textureMapType = _imageInfos[t].textureMapType;
 				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
@@ -625,7 +657,8 @@ namespace UnityGLTF
 					File.WriteAllBytes(fileOutputPath, GetTextureDataFromDisk(image));
 				}
 
-				if(!wasAbleToExportTexture) {
+				if(!wasAbleToExportTexture)
+				{
 					switch (textureMapType)
 					{
 						case TextureMapType.MetallicGloss:
@@ -642,6 +675,8 @@ namespace UnityGLTF
 							break;
 					}
 				}
+
+				writeImageToDiskMarker.End();
 			}
 		}
 
@@ -732,6 +767,8 @@ namespace UnityGLTF
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
+			exportSceneMarker.Begin();
+
 			var scene = new GLTFScene();
 
 			if (ExportNames)
@@ -761,6 +798,8 @@ namespace UnityGLTF
 
 			_root.Scenes.Add(scene);
 
+			exportSceneMarker.End();
+
 			return new SceneId
 			{
 				Id = _root.Scenes.Count - 1,
@@ -770,6 +809,8 @@ namespace UnityGLTF
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
+			exportNodeMarker.Begin();
+
 			var node = new Node();
 
 			if (ExportNames)
@@ -846,6 +887,8 @@ namespace UnityGLTF
 				}
 			}
 
+			exportNodeMarker.End();
+
 			// children that are not primitives get added as child nodes
 			if (nonPrimitives.Length > 0)
 			{
@@ -858,9 +901,10 @@ namespace UnityGLTF
 			}
 
 			// node export callback
+			afterNodeExportMarker.Begin();
 			_exportOptions.AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
 			AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
-
+			afterNodeExportMarker.End();
 
 			return id;
 		}
@@ -940,6 +984,7 @@ namespace UnityGLTF
 					anyMaterialIsNonNull |= materials[i];
 			return (meshFilter && meshRenderer && meshRenderer.enabled) || (skinnedMeshRender && skinnedMeshRender.enabled) && anyMaterialIsNonNull;
 		}
+
         private LightId ExportLight(Light unityLight)
         {
 	        if (_root.ExtensionsUsed == null)
@@ -1067,6 +1112,8 @@ namespace UnityGLTF
 
 		private MeshId ExportMesh(string name, GameObject[] primitives)
 		{
+			exportMeshMarker.Begin();
+
 			// check if this set of primitives is already a mesh
 			MeshId existingMeshId = null;
 			var key = new PrimKey();
@@ -1127,6 +1174,9 @@ namespace UnityGLTF
 				Id = _root.Meshes.Count,
 				Root = _root
 			};
+
+			exportMeshMarker.End();
+
 			if (mesh.Primitives.Count > 0)
 			{
 				_root.Meshes.Add(mesh);
@@ -1154,6 +1204,8 @@ namespace UnityGLTF
 		// a mesh *might* decode to multiple prims if there are submeshes
 		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh)
 		{
+			exportPrimitiveMarker.Begin();
+
 			Mesh meshObj = null;
 			SkinnedMeshRenderer smr = null;
 			var filter = gameObject.GetComponent<MeshFilter>();
@@ -1309,71 +1361,12 @@ namespace UnityGLTF
 				};
 			}
 
-			// // don't export any more accessors if this mesh is already exported
-			// MeshPrimitive[] primVariations;
-			// if (_meshToPrims.TryGetValue(meshObj, out primVariations)
-			// 	&& meshObj.subMeshCount == primVariations.Length)
-			// {
-			// 	for (var i = 0; i < Mathf.Min(primVariations.Length, materialsObj.Length); i++)
-			// 	{
-			// 		prims[i] = new MeshPrimitive(primVariations[i], _root)
-			// 		{
-			// 			Material = ExportMaterial(materialsObj[i])
-			// 		};
-			// 	}
-			//
-			// 	nonEmptyPrims = new List<MeshPrimitive>(prims);
-			// 	nonEmptyPrims.RemoveAll(EmptyPrimitive);
-			// 	prims = nonEmptyPrims.ToArray();
-			// 	return prims;
-			// }
-			//
-			// MaterialId lastMaterialId = null;
-			//
-			// for (var submesh = 0; submesh < meshObj.subMeshCount; submesh++)
-			// {
-			// 	var primitive = new MeshPrimitive();
-			//
-			// 	var topology = meshObj.GetTopology(submesh);
-			// 	var indices = meshObj.GetIndices(submesh);
-			// 	if (topology == MeshTopology.Triangles) SchemaExtensions.FlipTriangleFaces(indices);
-			//
-			// 	primitive.Mode = GetDrawMode(topology);
-			// 	primitive.Indices = ExportAccessor(indices, true);
-			//
-			// 	primitive.Attributes = new Dictionary<string, AccessorId>();
-			// 	primitive.Attributes.Add(SemanticProperties.POSITION, aPosition);
-			//
-			// 	if (aNormal != null)
-			// 		primitive.Attributes.Add(SemanticProperties.NORMAL, aNormal);
-			// 	if (aTangent != null)
-			// 		primitive.Attributes.Add(SemanticProperties.TANGENT, aTangent);
-			// 	if (aTexcoord0 != null)
-			// 		primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, aTexcoord0);
-			// 	if (aTexcoord1 != null)
-			// 		primitive.Attributes.Add(SemanticProperties.TEXCOORD_1, aTexcoord1);
-			// 	if (aColor0 != null)
-			// 		primitive.Attributes.Add(SemanticProperties.COLOR_0, aColor0);
-			//
-			// 	if (submesh < materialsObj.Length)
-			// 	{
-			// 		primitive.Material = ExportMaterial(materialsObj[submesh]);
-			// 		lastMaterialId = primitive.Material;
-			// 	}
-			// 	else
-			// 	{
-			// 		primitive.Material = lastMaterialId;
-			// 	}
-			//
-			// 	ExportBlendShapes(smr, meshObj, primitive, mesh);
-			//
-			// 	prims[submesh] = primitive;
-			// }
-
-            //remove any prims that have empty triangles
+			//remove any prims that have empty triangles
             nonEmptyPrims = new List<MeshPrimitive>(prims);
             nonEmptyPrims.RemoveAll(EmptyPrimitive);
             prims = nonEmptyPrims.ToArray();
+
+            exportPrimitiveMarker.End();
 
 			return prims;
 		}
@@ -1390,7 +1383,7 @@ namespace UnityGLTF
 
         private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
         {
-	        _materials.Add(materialObj);
+	        _materials.Add(materialObj, _materials.Count);
 
 	        var id = new MaterialId
 	        {
@@ -1400,8 +1393,10 @@ namespace UnityGLTF
 	        _root.Materials.Add(material);
 
 	        // after material export
+	        afterMaterialExportMarker.Begin();
 	        _exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
 	        AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+	        afterMaterialExportMarker.End();
 
 	        return id;
         }
@@ -1435,11 +1430,18 @@ namespace UnityGLTF
 			// before material export: only continue with regular export if that didn't succeed.
 			if (_exportOptions.BeforeMaterialExport != null)
 			{
+				beforeMaterialExportMarker.Begin();
 				if (_exportOptions.BeforeMaterialExport.Invoke(this, _root, materialObj, material))
 				{
+					beforeMaterialExportMarker.End();
 					return CreateAndAddMaterialId(materialObj, material);
 				}
+				else
+				{
+					beforeMaterialExportMarker.End();
+				}
 			}
+
 
 			// static callback, run after options callback
 			// we're iterating here because we want to stop calling any once we hit one that can export this material.
@@ -1448,13 +1450,21 @@ namespace UnityGLTF
 				var list = BeforeMaterialExport.GetInvocationList();
 				foreach (var entry in list)
 				{
+					beforeMaterialExportMarker.Begin();
 					var cb = (BeforeMaterialExportDelegate) entry;
 					if (cb != null && cb.Invoke(this, _root, materialObj, material))
 					{
+						beforeMaterialExportMarker.End();
 						return CreateAndAddMaterialId(materialObj, material);
+					}
+					else
+					{
+						beforeMaterialExportMarker.End();
 					}
 				}
 			}
+
+			exportMaterialMarker.Begin();
 
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
@@ -1635,6 +1645,8 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
+			exportMaterialMarker.End();
+
 			return CreateAndAddMaterialId(materialObj, material);
 		}
 
@@ -1670,6 +1682,8 @@ namespace UnityGLTF
 
 				for (int blendShapeIndex = 0; blendShapeIndex < meshObj.blendShapeCount; blendShapeIndex++)
 				{
+					exportBlendShapeMarker.Begin();
+
 					targetNames.Add(meshObj.GetBlendShapeName(blendShapeIndex));
 					// As described above, a blend shape can have multiple frames.  Given that glTF only supports a single frame
 					// per blend shape, we'll always use the final frame (the one that would be for when 100% weight is applied).
@@ -1748,6 +1762,8 @@ namespace UnityGLTF
 					// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
 					if(exportTargets.Any())
 						weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / 100);
+
+					exportBlendShapeMarker.End();
 				}
 
 				if(weights.Any() && targets.Any())
@@ -2585,11 +2601,11 @@ namespace UnityGLTF
 				}
 		    }
 
-			// Check for potential warnings in GLTF validation
-			if (!Mathf.IsPowerOfTwo(texture.width) || !Mathf.IsPowerOfTwo(texture.height))
-			{
-				Debug.LogWarning("Validation Warning: " + "Image has non-power-of-two dimensions: " + texture.width + "x" + texture.height + ".", texture);
-			}
+			// // Check for potential warnings in GLTF validation
+			// if (!Mathf.IsPowerOfTwo(texture.width) || !Mathf.IsPowerOfTwo(texture.height))
+			// {
+			// 	Debug.LogWarning("Validation Warning: " + "Image has non-power-of-two dimensions: " + texture.width + "x" + texture.height + ".", texture);
+			// }
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 			image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
@@ -2683,6 +2699,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(byte[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2735,11 +2753,15 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2846,11 +2868,15 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2913,11 +2939,15 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
 		private AccessorId ExportAccessor(Vector3[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2991,6 +3021,8 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
@@ -3004,6 +3036,8 @@ namespace UnityGLTF
 		/// <exception cref="Exception"></exception>
 		private AccessorId ExportSparseAccessor(AccessorId baseAccessor, Vector3[] baseData, Vector3[] arr)
 		{
+			exportSparseAccessorMarker.Begin();
+
 			uint dataCount = (uint) arr.Length;
 			if (dataCount == 0)
 			{
@@ -3100,7 +3134,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffsetIndices = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
-			Debug.Log("Storing " + indices.Count + " sparse indices + values");
+			// Debug.Log("Storing " + indices.Count + " sparse indices + values");
 
 			foreach (var index in indices)
 			{
@@ -3140,11 +3174,16 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportSparseAccessorMarker.End();
+
 			return id;
 		}
 
+
 		private AccessorId ExportAccessor(Vector4[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -3229,11 +3268,15 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
 		private AccessorId ExportAccessor(Color[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -3318,6 +3361,8 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
@@ -3352,16 +3397,13 @@ namespace UnityGLTF
 
 		public MaterialId GetMaterialId(GLTFRoot root, Material materialObj)
 		{
-			for (var i = 0; i < _materials.Count; i++)
+			if (_materials.TryGetValue(materialObj, out var id))
 			{
-				if (_materials[i] == materialObj)
+				return new MaterialId
 				{
-					return new MaterialId
-					{
-						Id = i,
-						Root = root
-					};
-				}
+					Id = id,
+					Root = root
+				};
 			}
 
 			return null;
@@ -3451,6 +3493,8 @@ namespace UnityGLTF
 		// This may need additional work to fully support animatorControllers
 		public void ExportAnimationFromNode(ref Transform transform)
 		{
+			exportAnimationFromNodeMarker.Begin();
+
 #if ANIMATION_SUPPORTED
 			Animator animator = transform.GetComponent<Animator>();
 			if (animator)
@@ -3471,10 +3515,8 @@ namespace UnityGLTF
                 ExportAnimationClips(transform, clips);
 #endif
 			}
-
-
-
 #endif
+			exportAnimationFromNodeMarker.End();
 		}
 
 #if ANIMATION_EXPORT_SUPPORTED
@@ -3532,8 +3574,7 @@ namespace UnityGLTF
 		}
 
 		// Creates GLTFAnimation for each clip and adds it to the _root
-		public void ExportAnimationClips(Transform nodeTransform, IList<AnimationClip> clips,
-			Animator animator = null, AnimatorController animatorController = null)
+		public void ExportAnimationClips(Transform nodeTransform, IList<AnimationClip> clips, Animator animator = null, AnimatorController animatorController = null)
 		{
 			// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
 			if (animatorController)
@@ -3611,6 +3652,8 @@ namespace UnityGLTF
 
 		private void ConvertClipToGLTFAnimation(AnimationClip clip, Transform transform, GLTFAnimation animation, float speed)
 		{
+			convertClipToGLTFAnimationMarker.Begin();
+
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
 			// 1 channel per node T/R/S, one sampler per node T/R/S
 			// Need to keep a list of nodes to convert to indexes
@@ -3715,6 +3758,8 @@ namespace UnityGLTF
 			{
 				Debug.LogError("Only baked animation is supported for now. Skipping animation");
 			}
+
+			convertClipToGLTFAnimationMarker.End();
 		}
 
 		private void CollectClipCurves(AnimationClip clip, ref Dictionary<string, TargetCurveSet> targetCurves)
