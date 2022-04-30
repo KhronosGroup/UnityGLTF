@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace UnityGLTF.Extensions
 {
-	public class KHR_animation2_Resolver
+	public class KHR_animation_pointer_Resolver
 	{
-		private readonly List<KHR_animation2> registered = new List<KHR_animation2>();
+		private readonly List<KHR_animation_pointer> registered = new List<KHR_animation_pointer>();
 
-		public void Add(KHR_animation2 anim)
+		public void Add(KHR_animation_pointer anim)
 		{
 			registered.Add(anim);
 		}
@@ -42,7 +42,7 @@ namespace UnityGLTF.Extensions
 						break;
 					case Material mat:
 						var path = ResolvePropertyBindingName(reg.propertyBinding);
-						reg.channel.Path = path;
+						// reg.channel.Path = path;
 						reg.path = "/materials/" + exporter.GetAnimationTargetIdFromMaterial(mat) + "/" + path;
 						break;
 				}
@@ -54,7 +54,12 @@ namespace UnityGLTF.Extensions
 			switch (name)
 			{
 				case "_BaseColor":
-					return "color";
+					return "baseColorFactor";
+				// TODO smoothness values need to be inverted! different shading model!
+				case "_Smoothness":
+					return "roughnessFactor";
+				case "_Metallic":
+					return "metallicFactor";
 			}
 			return name;
 		}

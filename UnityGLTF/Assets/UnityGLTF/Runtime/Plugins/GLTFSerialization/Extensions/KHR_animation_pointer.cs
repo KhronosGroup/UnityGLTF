@@ -4,9 +4,10 @@ using Newtonsoft.Json.Linq;
 namespace UnityGLTF.Extensions
 {
 
-	public class KHR_animation2 : IExtension
+	// see https://github.com/KhronosGroup/glTF/pull/2147
+	public class KHR_animation_pointer : IExtension
 	{
-		public const string EXTENSION_NAME = "KHR_animation2";
+		public const string EXTENSION_NAME = "KHR_animation_pointer";
 
 		public object animatedObject;
 		public string propertyBinding;
@@ -20,7 +21,7 @@ namespace UnityGLTF.Extensions
 
 		public IExtension Clone(GLTFRoot root)
 		{
-			return new KHR_animation2()
+			return new KHR_animation_pointer()
 			{
 				animatedObject = animatedObject,
 				propertyBinding = propertyBinding,

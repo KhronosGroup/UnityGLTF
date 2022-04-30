@@ -127,7 +127,7 @@ namespace UnityGLTF
 		private int _exportLayerMask;
 		private ExportOptions _exportOptions;
 
-		private KHR_animation2_Resolver khr_resolver = new KHR_animation2_Resolver();
+		private KHR_animation_pointer_Resolver animationPointerResolver = new KHR_animation_pointer_Resolver();
 
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _normalChannelMaterial;
@@ -433,9 +433,13 @@ namespace UnityGLTF
 				ExportSkinFromNode(t);
 			}
 
-			_exportOptions.AfterSceneExport?.Invoke(this, _root);
+			if (_exportOptions.AfterSceneExport != null)
+				_exportOptions.AfterSceneExport(this, _root);
 
-			khr_resolver?.Resolve(this);
+			if (AfterSceneExport != null)
+				AfterSceneExport.Invoke(this, _root);
+
+			animationPointerResolver?.Resolve(this);
 
 			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
 
@@ -572,6 +576,8 @@ namespace UnityGLTF
 
 			if (AfterSceneExport != null)
 				AfterSceneExport.Invoke(this, _root);
+
+			animationPointerResolver?.Resolve(this);
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			_buffer.Uri = fileName + ".bin";
@@ -3719,7 +3725,7 @@ namespace UnityGLTF
 			public Dictionary<string, AnimationCurve> weightCurves;
 			public PropertyCurve propertyCurve;
 			#pragma warning restore
-			
+
 			public Dictionary<string, PropertyCurve> curves;
 
 			public void Register(Object animatedObject, AnimationCurve curve, EditorCurveBinding binding)
@@ -3733,7 +3739,12 @@ namespace UnityGLTF
 				}
 				else
 				{
-					var memberName = binding.propertyName.Substring(0, binding.propertyName.LastIndexOf(".", StringComparison.Ordinal));
+					var memberName = binding.propertyName;
+					// Color is animated as a Vector4
+					if (memberName.EndsWith(".r", StringComparison.Ordinal) || memberName.EndsWith(".g", StringComparison.Ordinal) ||
+					    memberName.EndsWith(".b", StringComparison.Ordinal) || memberName.EndsWith(".a", StringComparison.Ordinal))
+						memberName = binding.propertyName.Substring(0, binding.propertyName.LastIndexOf(".", StringComparison.Ordinal));
+
 					if (curves.TryGetValue(memberName, out var existing))
 					{
 						existing.curve.Add(curve);
@@ -3900,8 +3911,7 @@ namespace UnityGLTF
 						{
 							var propertyName = c.Key;
 							var prop = c.Value;
-							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier,
-								    out times, out var values))
+							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
 							{
 								AddAnimationData(prop.target, prop.propertyName, targetTr, animation, times, values);
 							}
@@ -3940,6 +3950,7 @@ namespace UnityGLTF
 				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
 
 				var supportKhrAnimation2 = true;
+
 				var containsPosition = binding.propertyName.Contains("m_LocalPosition");
 				var containsScale = binding.propertyName.Contains("m_LocalScale");
 				var containsRotation = binding.propertyName.ToLowerInvariant().Contains("localrotation");
@@ -3957,6 +3968,15 @@ namespace UnityGLTF
 				}
 
 				TargetCurveSet current = targetCurves[binding.path];
+
+				if (supportKhrAnimation2)
+				{
+					var obj = AnimationUtility.GetAnimatedObject(root, binding);
+					current.Register(obj, curve, binding);
+					targetCurves[binding.path] = current;
+					continue;
+				}
+
 				if (containsPosition)
 				{
 					if (binding.propertyName.Contains(".x"))
@@ -4004,11 +4024,7 @@ namespace UnityGLTF
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
 				}
-				else
-				{
-					var obj = AnimationUtility.GetAnimatedObject(root, binding);
-					current.Register(obj, curve, binding);
-				}
+
 				targetCurves[binding.path] = current;
 			}
 #endif
@@ -4099,7 +4115,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Debug.LogError("Property is not handled" + prop.propertyName + ", " + prop.propertyType);
+						Debug.LogError("Property is not handled: " + prop.propertyName + ", " + prop.propertyType);
 						return false;
 					}
 				}
@@ -4227,10 +4243,7 @@ namespace UnityGLTF
 
 		public int GetAnimationTargetIdFromMaterial(Material mat)
 		{
-			for (var i = 0; i < _materials.Count; i++)
-			{
-				if (_materials[i] == mat) return i;
-			}
+			if (_materials.TryGetValue(mat, out var index)) return index;
 			return -1;
 		}
 
@@ -4250,14 +4263,15 @@ namespace UnityGLTF
 			AnimationChannel Tchannel = new AnimationChannel();
 			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
 
-			var ext = new KHR_animation2();
+			var ext = new KHR_animation_pointer();
 			ext.propertyBinding = propertyName;
 			ext.animatedObject = animatedObject;
 			ext.channel = TchannelTarget;
-			khr_resolver.Add(ext);
+			animationPointerResolver.Add(ext);
 
 			// TchannelTarget.Path = propertyName;// GLTFAnimationChannelPath.translation;
-			TchannelTarget.AddExtension(KHR_animation2.EXTENSION_NAME, ext);
+			TchannelTarget.Path = "pointer";
+			TchannelTarget.AddExtension(KHR_animation_pointer.EXTENSION_NAME, ext);
 
 			Tchannel.Target = TchannelTarget;
 
