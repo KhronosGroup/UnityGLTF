@@ -39,6 +39,12 @@ namespace UnityGLTF.Extensions
 					case Component comp:
 						// TODO: how to get component id
 						reg.path = "/nodes/" + exporter.GetAnimationTargetIdFromTransform(comp.transform) + "/" + reg.propertyBinding;
+						var componentPath = reg.path;
+						foreach (var res in exporter.pointerResolvers)
+						{
+							if (res.TryResolve(reg.animatedObject, ref componentPath))
+								reg.path = componentPath;
+						}
 						break;
 					case Material mat:
 						var path = ResolvePropertyBindingName(reg.propertyBinding);

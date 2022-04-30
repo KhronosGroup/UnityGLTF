@@ -20,6 +20,7 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
+using UnityGLTF.JsonPointer;
 using CameraType = GLTF.Schema.CameraType;
 using LightType = UnityEngine.LightType;
 using Object = UnityEngine.Object;
@@ -74,6 +75,13 @@ namespace UnityGLTF
 		/// <returns>True: material export is complete. False: continue regular export.</returns>
 		public static event BeforeMaterialExportDelegate BeforeMaterialExport;
 		public static event AfterMaterialExportDelegate AfterMaterialExport;
+
+		internal readonly List<IJsonPointerResolver> pointerResolvers = new List<IJsonPointerResolver>();
+		public void RegisterResolver(IJsonPointerResolver resolver)
+		{
+			if(!this.pointerResolvers.Contains(resolver))
+				this.pointerResolvers.Add(resolver);
+		}
 
 		private enum IMAGETYPE
 		{
