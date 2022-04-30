@@ -3734,16 +3734,17 @@ namespace UnityGLTF
 			public PropertyCurve propertyCurve;
 			#pragma warning restore
 
-			public Dictionary<string, PropertyCurve> curves;
+			public Dictionary<string, PropertyCurve> propertyCurves;
 
-			public void Register(Object animatedObject, AnimationCurve curve, EditorCurveBinding binding)
+			// for KHR_animation_pointer
+			public void AddPropertyCurves(Object animatedObject, AnimationCurve curve, EditorCurveBinding binding)
 			{
-				if (curves == null) curves = new Dictionary<string, PropertyCurve>();
+				if (propertyCurves == null) propertyCurves = new Dictionary<string, PropertyCurve>();
 				if (!binding.propertyName.Contains("."))
 				{
 					var prop = new PropertyCurve(animatedObject, binding);
 					prop.curve.Add(curve);
-					curves.Add(binding.propertyName, prop);
+					propertyCurves.Add(binding.propertyName, prop);
 				}
 				else
 				{
@@ -3753,7 +3754,7 @@ namespace UnityGLTF
 					    memberName.EndsWith(".b", StringComparison.Ordinal) || memberName.EndsWith(".a", StringComparison.Ordinal))
 						memberName = binding.propertyName.Substring(0, binding.propertyName.LastIndexOf(".", StringComparison.Ordinal));
 
-					if (curves.TryGetValue(memberName, out var existing))
+					if (propertyCurves.TryGetValue(memberName, out var existing))
 					{
 						existing.curve.Add(curve);
 					}
@@ -3762,7 +3763,7 @@ namespace UnityGLTF
 						var prop = new PropertyCurve(animatedObject, binding);
 						prop.propertyName = memberName;
 						prop.curve.Add(curve);
-						curves.Add(memberName, prop);
+						propertyCurves.Add(memberName, prop);
 						if (memberName.StartsWith("material.") && animatedObject is Renderer rend)
 						{
 							var mat = rend.sharedMaterial;
@@ -3801,8 +3802,8 @@ namespace UnityGLTF
 						}
 						else
 						{
-							var member = binding.type.GetMember(prop.propertyName,
-									BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+							var member = binding.type
+								.GetMember(prop.propertyName, BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 								.FirstOrDefault();
 							if (member is FieldInfo field) prop.propertyType = field.FieldType;
 							else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
@@ -3912,9 +3913,10 @@ namespace UnityGLTF
 					Vector3[] scales = null;
 					float[] weights = null;
 
-					if (curve.curves != null && curve.curves.Count > 0)
+					// arbitrary properties require the KHR_animation_pointer extension
+					if (settings.UseAnimationPointer && curve.propertyCurves != null && curve.propertyCurves.Count > 0)
 					{
-						var curves = curve.curves;
+						var curves = curve.propertyCurves;
 						foreach (KeyValuePair<string, PropertyCurve> c in curves)
 						{
 							var propertyName = c.Key;
@@ -3957,8 +3959,6 @@ namespace UnityGLTF
 			{
 				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
 
-				var supportKhrAnimation2 = true;
-
 				var containsPosition = binding.propertyName.Contains("m_LocalPosition");
 				var containsScale = binding.propertyName.Contains("m_LocalScale");
 				var containsRotation = binding.propertyName.ToLowerInvariant().Contains("localrotation");
@@ -3966,7 +3966,7 @@ namespace UnityGLTF
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
 				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
 
-				if (!containsCompatibleData && !supportKhrAnimation2) continue;
+				if (!containsCompatibleData && !settings.UseAnimationPointer) continue;
 
 				if (!targetCurves.ContainsKey(binding.path))
 				{
@@ -4024,10 +4024,10 @@ namespace UnityGLTF
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
 				}
-				else if (supportKhrAnimation2)
+				else if (settings.UseAnimationPointer)
 				{
 					var obj = AnimationUtility.GetAnimatedObject(root, binding);
-					current.Register(obj, curve, binding);
+					current.AddPropertyCurves(obj, curve, binding);
 					targetCurves[binding.path] = current;
 					continue;
 				}
@@ -4256,6 +4256,11 @@ namespace UnityGLTF
 
 		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
 		{
+			if (!settings.UseAnimationPointer)
+			{
+				Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer");
+				return;
+			}
 			if (values.Length <= 0) return;
 
 			// var channelTargetId = GetAnimationTargetIdFromTransform(target);
@@ -4305,8 +4310,6 @@ namespace UnityGLTF
 
 			ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
 		}
-
-		private bool newAnimation = true;
 
 		void ConvertToAnimationPointer(object animatedObject, string propertyName, AnimationChannelTarget target)
 		{
@@ -4367,7 +4370,8 @@ namespace UnityGLTF
 				animation.Samplers.Add(Tsampler);
 				animation.Channels.Add(Tchannel);
 
-				ConvertToAnimationPointer(target, "translation", TchannelTarget);
+				if (settings.UseAnimationPointer)
+					ConvertToAnimationPointer(target, "translation", TchannelTarget);
 			}
 
 			// Rotation
@@ -4398,7 +4402,8 @@ namespace UnityGLTF
 				animation.Samplers.Add(Rsampler);
 				animation.Channels.Add(Rchannel);
 
-				ConvertToAnimationPointer(target, "rotation", RchannelTarget);
+				if (settings.UseAnimationPointer)
+					ConvertToAnimationPointer(target, "rotation", RchannelTarget);
 			}
 
 			// Scale
@@ -4429,7 +4434,8 @@ namespace UnityGLTF
 				animation.Samplers.Add(Ssampler);
 				animation.Channels.Add(Schannel);
 
-				ConvertToAnimationPointer(target, "scale", SchannelTarget);
+				if (settings.UseAnimationPointer)
+					ConvertToAnimationPointer(target, "scale", SchannelTarget);
 			}
 
 			if (weights != null && weights.Length > 0)
@@ -4490,7 +4496,8 @@ namespace UnityGLTF
 				animation.Samplers.Add(Wsampler);
 				animation.Channels.Add(Wchannel);
 
-				ConvertToAnimationPointer(target, "weights", WchannelTarget);
+				if (settings.UseAnimationPointer)
+					ConvertToAnimationPointer(target, "weights", WchannelTarget);
 			}
 		}
 

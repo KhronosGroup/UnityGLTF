@@ -96,6 +96,9 @@ namespace UnityGLTF
 		[Header("Export Animation")]
 		[SerializeField]
 		private bool exportAnimations = true;
+		[Tooltip("(Experimental) Export animations using KHR_animation_pointer. Requires the viewer to also support this extension.")]
+		[SerializeField]
+		private bool useAnimationPointer = false;
 		[SerializeField]
 		[Tooltip("Some viewers can't distinguish between animation clips that have the same name. This option ensures all exported animation names are unique.")]
 		private bool uniqueAnimationNames = false;
@@ -223,6 +226,18 @@ namespace UnityGLTF
 			set {
 				if(exportAnimations != value) {
 					exportAnimations = value;
+#if UNITY_EDITOR
+					EditorUtility.SetDirty(this);
+#endif
+				}
+			}
+		}
+
+		public bool UseAnimationPointer
+		{ get => useAnimationPointer;
+			set {
+				if(useAnimationPointer != value) {
+					useAnimationPointer = value;
 #if UNITY_EDITOR
 					EditorUtility.SetDirty(this);
 #endif
