@@ -3921,10 +3921,10 @@ namespace UnityGLTF
 							var prop = c.Value;
 							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
 							{
-								AddAnimationData(prop.target, prop.propertyName, targetTr, animation, times, values);
+								AddAnimationData(prop.target, prop.propertyName, animation, times, values);
 							}
 						}
-						continue;
+						// continue;
 					}
 
 					if (BakeCurveSet(curve, clip.length, AnimationBakingFramerate, speedMultiplier,
@@ -3977,14 +3977,6 @@ namespace UnityGLTF
 
 				TargetCurveSet current = targetCurves[binding.path];
 
-				if (supportKhrAnimation2)
-				{
-					var obj = AnimationUtility.GetAnimatedObject(root, binding);
-					current.Register(obj, curve, binding);
-					targetCurves[binding.path] = current;
-					continue;
-				}
-
 				if (containsPosition)
 				{
 					if (binding.propertyName.Contains(".x"))
@@ -4031,6 +4023,13 @@ namespace UnityGLTF
 				{
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
+				}
+				else if (supportKhrAnimation2)
+				{
+					var obj = AnimationUtility.GetAnimatedObject(root, binding);
+					current.Register(obj, curve, binding);
+					targetCurves[binding.path] = current;
+					continue;
 				}
 
 				targetCurves[binding.path] = current;
@@ -4255,7 +4254,7 @@ namespace UnityGLTF
 			return -1;
 		}
 
-		public void AddAnimationData(Object animatedObject, string propertyName, Transform target, GLTFAnimation animation, float[] times, object[] values)
+		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
 		{
 			if (values.Length <= 0) return;
 
@@ -4270,16 +4269,6 @@ namespace UnityGLTF
 			AccessorId timeAccessor = ExportAccessor(times);
 			AnimationChannel Tchannel = new AnimationChannel();
 			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-
-			var ext = new KHR_animation_pointer();
-			ext.propertyBinding = propertyName;
-			ext.animatedObject = animatedObject;
-			ext.channel = TchannelTarget;
-			animationPointerResolver.Add(ext);
-
-			// TchannelTarget.Path = propertyName;// GLTFAnimationChannelPath.translation;
-			TchannelTarget.Path = "pointer";
-			TchannelTarget.AddExtension(KHR_animation_pointer.EXTENSION_NAME, ext);
 
 			Tchannel.Target = TchannelTarget;
 
@@ -4313,6 +4302,22 @@ namespace UnityGLTF
 
 			animation.Samplers.Add(Tsampler);
 			animation.Channels.Add(Tchannel);
+
+			ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
+		}
+
+		private bool newAnimation = true;
+
+		void ConvertToAnimationPointer(object animatedObject, string propertyName, AnimationChannelTarget target)
+		{
+			var ext = new KHR_animation_pointer();
+			ext.propertyBinding = propertyName;
+			ext.animatedObject = animatedObject;
+			ext.channel = target;
+			animationPointerResolver.Add(ext);
+
+			target.Path = "pointer";
+			target.AddExtension(KHR_animation_pointer.EXTENSION_NAME, ext);
 		}
 
 		public void AddAnimationData(
@@ -4361,6 +4366,8 @@ namespace UnityGLTF
 
 				animation.Samplers.Add(Tsampler);
 				animation.Channels.Add(Tchannel);
+
+				ConvertToAnimationPointer(target, "translation", TchannelTarget);
 			}
 
 			// Rotation
@@ -4390,6 +4397,8 @@ namespace UnityGLTF
 
 				animation.Samplers.Add(Rsampler);
 				animation.Channels.Add(Rchannel);
+
+				ConvertToAnimationPointer(target, "rotation", RchannelTarget);
 			}
 
 			// Scale
@@ -4419,6 +4428,8 @@ namespace UnityGLTF
 
 				animation.Samplers.Add(Ssampler);
 				animation.Channels.Add(Schannel);
+
+				ConvertToAnimationPointer(target, "scale", SchannelTarget);
 			}
 
 			if (weights != null && weights.Length > 0)
@@ -4478,6 +4489,8 @@ namespace UnityGLTF
 
 				animation.Samplers.Add(Wsampler);
 				animation.Channels.Add(Wchannel);
+
+				ConvertToAnimationPointer(target, "weights", WchannelTarget);
 			}
 		}
 
