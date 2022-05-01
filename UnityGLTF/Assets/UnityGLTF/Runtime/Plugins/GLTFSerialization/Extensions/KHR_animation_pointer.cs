@@ -14,20 +14,26 @@ namespace UnityGLTF.Extensions
 		public string path;
 		public AnimationChannelTarget channel;
 
+		// when cloned, the path is late resolved in gltf exporter so the clone path will not be resolved because it wont be registered to the exporter's resolver
+		private KHR_animation_pointer clonedFrom;
+
 		public JProperty Serialize()
 		{
+			if (path == null && clonedFrom != null) path = clonedFrom.path;
 			return new JProperty(EXTENSION_NAME, new JObject(new JProperty("path", path)));
 		}
 
 		public IExtension Clone(GLTFRoot root)
 		{
-			return new KHR_animation_pointer()
+			var clone = new KHR_animation_pointer()
 			{
 				animatedObject = animatedObject,
 				propertyBinding = propertyBinding,
 				path = path,
 				channel = channel
 			};
+			clone.clonedFrom = this;
+			return clone;
 		}
 	}
 }
