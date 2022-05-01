@@ -13,6 +13,7 @@ namespace UnityGLTF.Timeline
 	    public string m_File = "Assets/Recording.glb";
 	    public int m_CaptureFrameRate = 60;
 	    public bool m_RecordBlendShapes = true;
+	    public bool m_RecordAnimationPointer = false;
 
 	    public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
 	    {

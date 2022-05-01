@@ -10,6 +10,7 @@ namespace UnityGLTF
 	    public string outputFile = "Assets/Recordings/Recorded_<Timestamp>.glb";
 	    public Transform exportRoot;
 	    public bool recordBlendShapes = true;
+	    public bool recordAnimationPointer = true;
 	    public KeyCode recordingKey = KeyCode.F11;
 
 	    public bool IsRecording => recorder?.IsRecording ?? false;
@@ -38,7 +39,14 @@ namespace UnityGLTF
 				shouldRecordBlendShapes = false;
 			}
 
-			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes);
+			var shouldUseAnimationPointer = recordAnimationPointer;
+			if (!settings.UseAnimationPointer && recordAnimationPointer)
+			{
+				Debug.LogWarning("Attempting to record KHR_animation_pointer but that is disabled in ProjectSettings/UnityGLTF. Please enable it.");
+				shouldUseAnimationPointer = false;
+			}
+
+			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes, shouldUseAnimationPointer);
 			recorder.StartRecording(CurrentTime);
 			recordingStarted?.Invoke();
 

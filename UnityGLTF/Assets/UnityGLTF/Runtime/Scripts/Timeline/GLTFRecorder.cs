@@ -4,15 +4,19 @@ using System.IO;
 using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Timeline
 {
 	public class GLTFRecorder
 	{
-		public GLTFRecorder(Transform root, bool recordBlendShapes = true)
+		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordAnimationPointer = false)
 		{
 			this.root = root;
 			this.recordBlendShapes = recordBlendShapes;
+			this.recordAnimationPointer = recordAnimationPointer;
+
+
 		}
 
 		private Transform root;
@@ -21,6 +25,7 @@ namespace UnityGLTF.Timeline
 		private double lastRecordedTime;
 		private bool isRecording;
 		private readonly bool recordBlendShapes;
+		private readonly bool recordAnimationPointer;
 
 		public bool IsRecording => isRecording;
 		public double LastRecordedTime => lastRecordedTime;
@@ -36,15 +41,139 @@ namespace UnityGLTF.Timeline
 			private double skippedTime;
 			private bool recordBlendShapes;
 
+			private static List<ExportPlan> exportPlans;
+			private static MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
+			internal List<Track> tracks = new List<Track>();
+
+			internal class ExportPlan
+			{
+				public string propertyName;
+				public Type dataType;
+				public Func<Transform, Object> GetTarget;
+				public Func<Transform, Object, object> GetData;
+
+				public ExportPlan(string propertyName, Type dataType, Func<Transform, Object> GetTarget, Func<Transform, Object, object> GetData)
+				{
+					this.propertyName = propertyName;
+					this.dataType = dataType;
+					this.GetTarget = GetTarget;
+					this.GetData = GetData;
+				}
+
+				public object Sample(Transform tr)
+				{
+					var target = GetTarget(tr);
+					return GetData(tr, target);
+				}
+			}
+
 			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true)
 			{
 				this.tr = tr;
 				this.recordBlendShapes = recordBlendShapes;
 				keys.Add(time, new FrameData(tr, zeroScale, this.recordBlendShapes));
+
+				if (exportPlans == null)
+				{
+					exportPlans = new List<ExportPlan>();
+					exportPlans.Add(new ExportPlan("translation", typeof(Vector3), x => x, (tr, _) => tr.localPosition));
+					exportPlans.Add(new ExportPlan("rotation", typeof(Quaternion), x => x, (tr, _) =>
+					{
+						var q = tr.localRotation;
+						return new Vector4(q.x, q.y, q.z, q.w);
+					}));
+					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr, _) => tr.localScale));
+
+					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr, x) =>
+					{
+						if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh)
+						{
+							var mesh = skinnedMesh.sharedMesh;
+							var blendShapeCount = mesh.blendShapeCount;
+							var weights = new float[blendShapeCount];
+							for (var i = 0; i < blendShapeCount; i++)
+								weights[i] = skinnedMesh.GetBlendShapeWeight(i);
+							return weights;
+						}
+						return null;
+					}));
+
+					exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr, mat) =>
+					{
+						var r = tr.GetComponent<Renderer>();
+
+						if (r.HasPropertyBlock())
+						{
+							r.GetPropertyBlock(materialPropertyBlock);
+#if UNITY_2021_1_OR_NEWER
+							if (materialPropertyBlock.HasColor("_BaseColor")) return materialPropertyBlock.GetColor("_BaseColor");
+							if (materialPropertyBlock.HasColor("_Color")) return materialPropertyBlock.GetColor("_Color");
+#else
+							var c = materialPropertyBlock.GetColor("_BaseColor");
+							if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
+							c = materialPropertyBlock.GetColor("_Color");
+							if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
+#endif
+						}
+
+						if (mat is Material m && m)
+						{
+							if (m.HasProperty("_BaseColor")) return m.GetColor("_BaseColor");
+							if (m.HasProperty("_Color")) return m.GetColor("_Color");
+						}
+
+						return null;
+					}));
+				}
+
+				foreach (var plan in exportPlans)
+				{
+					if (plan.GetTarget(tr))
+						tracks.Add(new Track(tr, plan, time));
+				}
+			}
+
+			internal class Track
+			{
+				public Object animatedObject => plan.GetTarget(tr);
+				public string propertyName => plan.propertyName;
+				// TODO sample as floats?
+				public float[] times => samples.Keys.Select(x => (float) x).ToArray();
+				public object[] values => samples.Values.ToArray();
+
+				private Transform tr;
+				private ExportPlan plan;
+				private Dictionary<double, object> samples;
+				private object lastSample;
+
+				public Track(Transform tr, ExportPlan plan, double time)
+				{
+					this.tr = tr;
+					this.plan = plan;
+					var value = this.plan.Sample(tr);
+					samples = new Dictionary<double, object>();
+					samples.Add(time, value);
+					lastSample = value;
+				}
+
+				public void SampleIfChanged(double time)
+				{
+					var value = plan.Sample(tr);
+					if (!value.Equals(lastSample))
+					{
+						samples[time] = value;
+						lastSample = value;
+					}
+				}
 			}
 
 			public void Update(double time)
 			{
+				foreach (var track in tracks)
+				{
+					track.SampleIfChanged(time);
+				}
+
 				var newTr = new FrameData(tr, !tr.gameObject.activeSelf, recordBlendShapes);
 				if (newTr.Equals(lastData))
 				{
@@ -119,11 +248,13 @@ namespace UnityGLTF.Timeline
 
 		public void EndRecording(string filename, string sceneName = "scene")
 		{
-			using (var filestream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
+			if (!isRecording) return;
+
+			var dir = Path.GetDirectoryName(filename);
+			if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+			using (var filestream = new FileStream(filename, FileMode.Create, FileAccess.Write))
 			{
 				EndRecording(filestream, sceneName);
-				filestream.Flush();
-				filestream.SetLength(filestream.Position);
 			}
 		}
 
@@ -133,7 +264,7 @@ namespace UnityGLTF.Timeline
 			isRecording = false;
 
 			// log
-			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Keys: " + data.First().Value.keys.Count + ",\nTotal Keys: " + data.Sum(x => x.Value.keys.Count));
+			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keys: " + data.Sum(x => x.Value.keys.Count));
 
 			var previousExportDisabledState = GLTFSceneExporter.ExportDisabledGameObjects;
 			var previousExportAnimationState = GLTFSceneExporter.ExportAnimations;
@@ -171,6 +302,13 @@ namespace UnityGLTF.Timeline
 			foreach (var kvp in data)
 			{
 				if(kvp.Value.keys.Count < 1) continue;
+
+				foreach (var tr in kvp.Value.tracks)
+				{
+					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, tr.times, tr.values);
+				}
+
+				continue;
 
 				var times = kvp.Value.keys.Keys.Select(x => (float) x).ToArray();
 				var values = kvp.Value.keys.Values.ToArray();
