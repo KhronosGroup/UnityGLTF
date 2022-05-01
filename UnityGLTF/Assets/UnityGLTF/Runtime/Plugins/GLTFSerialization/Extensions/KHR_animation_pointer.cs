@@ -25,15 +25,14 @@ namespace UnityGLTF.Extensions
 
 		public IExtension Clone(GLTFRoot root)
 		{
-			var clone = new KHR_animation_pointer()
+			return new KHR_animation_pointer
 			{
 				animatedObject = animatedObject,
 				propertyBinding = propertyBinding,
 				path = path,
-				channel = channel
+				channel = channel,
+				clonedFrom = this
 			};
-			clone.clonedFrom = this;
-			return clone;
 		}
 	}
 }
