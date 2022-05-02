@@ -1414,6 +1414,25 @@ namespace UnityGLTF
 	        return id;
         }
 
+        static void DecomposeEmissionColor(Color input, out Color output, out float intensity)
+        {
+	        var emissiveAmount = input.linear;
+	        var maxEmissiveAmount = Mathf.Max(emissiveAmount.r, emissiveAmount.g, emissiveAmount.b);
+	        if (maxEmissiveAmount > 1)
+	        {
+		        emissiveAmount.r /= maxEmissiveAmount;
+		        emissiveAmount.g /= maxEmissiveAmount;
+		        emissiveAmount.b /= maxEmissiveAmount;
+	        }
+	        emissiveAmount.a = Mathf.Clamp01(emissiveAmount.a);
+
+	        // this feels wrong but leads to the right results, probably the above calculations are in the wrong color space
+	        maxEmissiveAmount = Mathf.LinearToGammaSpace(maxEmissiveAmount);
+
+	        output = emissiveAmount;
+	        intensity = maxEmissiveAmount;
+        }
+
         public MaterialId ExportMaterial(Material materialObj)
 		{
             //TODO if material is null
@@ -1505,19 +1524,8 @@ namespace UnityGLTF
 				if (materialObj.HasProperty("_EmissionColor"))
 				{
 					var c = materialObj.GetColor("_EmissionColor");
-					var emissiveAmount = c.ToNumericsColorLinear();
-					var maxEmissiveAmount = Mathf.Max(emissiveAmount.R, emissiveAmount.G, emissiveAmount.B);
-					if (maxEmissiveAmount > 1)
-					{
-						emissiveAmount.R /= maxEmissiveAmount;
-						emissiveAmount.G /= maxEmissiveAmount;
-						emissiveAmount.B /= maxEmissiveAmount;
-					}
-					emissiveAmount.A = Mathf.Clamp01(emissiveAmount.A);
-					material.EmissiveFactor = emissiveAmount;
-
-					// this feels wrong but leads to the right results, probably the above calculations are in the wrong color space
-					maxEmissiveAmount = Mathf.LinearToGammaSpace(maxEmissiveAmount);
+					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
+					material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 
 					if(maxEmissiveAmount > 1)
 					{
@@ -4271,19 +4279,58 @@ namespace UnityGLTF
 			// }
 			// var nodePath = "/nodes/" + channelTargetId + "/" + path;
 
+			bool flipValueRange = false;
+			string secondPropertyName = null;
+
+			// mapping from known Unity property names to glTF property names
+			switch (propertyName)
+			{
+				case "_Color":
+				case "_BaseColor":
+					propertyName = "baseColorFactor";
+					break;
+				case "_EmissionColor":
+					propertyName = "emissiveFactor";
+					secondPropertyName = "extensions/KHR_materials_emissive_strength/emissiveStrength";
+					break;
+				case "_Smoothness":
+					propertyName = "roughnessFactor";
+					flipValueRange = true;
+					break;
+				case "_Roughness":
+					propertyName = "roughnessFactor";
+					break;
+				case "_Metalllic":
+					propertyName = "metallicFactor";
+					break;
+			}
+
 			AccessorId timeAccessor = ExportAccessor(times);
+
 			AnimationChannel Tchannel = new AnimationChannel();
 			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-
 			Tchannel.Target = TchannelTarget;
 
 			AnimationSampler Tsampler = new AnimationSampler();
 			Tsampler.Input = timeAccessor;
+
+			// for cases where one property needs to be split up into multiple tracks
+			// example: emissiveFactor * emissiveStrength
+			// TODO not needed when secondPropertyName==null
+			AnimationChannel Tchannel2 = new AnimationChannel();
+			AnimationChannelTarget TchannelTarget2 = new AnimationChannelTarget();
+			Tchannel2.Target = TchannelTarget2;
+			AnimationSampler Tsampler2 = new AnimationSampler();
+			Tsampler2.Input = timeAccessor;
+
 			var val = values[0];
 			switch (val)
 			{
 				case float _:
-					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
+					if (flipValueRange)
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
+					else
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
 					break;
 				case Vector2 _:
 					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector2)e));
@@ -4295,20 +4342,50 @@ namespace UnityGLTF
 					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector4)e));
 					break;
 				case Color _:
-					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Color)e));
+					if (propertyName == "emissiveFactor" && secondPropertyName != null)
+					{
+						var colors = new Color[values.Length];
+						var strengths = new float[values.Length];
+						for (int i = 0; i < values.Length; i++)
+						{
+							DecomposeEmissionColor((Color) values[i], out var color, out var intensity);
+							colors[i] = color;
+							strengths[i] = intensity;
+						}
+						Tsampler.Output = ExportAccessor(colors);
+						Tsampler2.Output = ExportAccessor(strengths);
+					}
+					else
+					{
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Color)e));
+					}
 					break;
 			}
+
 			Tchannel.Sampler = new AnimationSamplerId
 			{
 				Id = animation.Samplers.Count,
 				GLTFAnimation = animation,
 				Root = _root
 			};
-
 			animation.Samplers.Add(Tsampler);
 			animation.Channels.Add(Tchannel);
 
 			ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
+
+			if(secondPropertyName != null)
+			{
+				Tchannel2.Sampler = new AnimationSamplerId
+				{
+					Id = animation.Samplers.Count,
+					GLTFAnimation = animation,
+					Root = _root
+				};
+				animation.Samplers.Add(Tsampler2);
+				animation.Channels.Add(Tchannel2);
+
+				ConvertToAnimationPointer(animatedObject, secondPropertyName, TchannelTarget2);
+			}
 		}
 
 		void ConvertToAnimationPointer(object animatedObject, string propertyName, AnimationChannelTarget target)
