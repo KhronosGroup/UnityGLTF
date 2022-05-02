@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEditor;
@@ -54,3 +56,5 @@ public static class TextMeshExport
         return false;
     }
 }
+
+#endif
