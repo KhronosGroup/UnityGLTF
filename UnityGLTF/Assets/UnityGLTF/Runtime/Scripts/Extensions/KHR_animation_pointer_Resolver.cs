@@ -36,6 +36,9 @@ namespace UnityGLTF.Extensions
 			{
 				switch (reg.animatedObject)
 				{
+					case Light light:
+						reg.path = "/extensions/KHR_lights_punctual/lights/" + "0" + "/" + reg.propertyBinding;
+						break;
 					case Component comp:
 						reg.path = "/nodes/" + exporter.GetAnimationTargetIdFromTransform(comp.transform) + "/" + reg.propertyBinding;
 						var componentPath = reg.path;
@@ -46,27 +49,10 @@ namespace UnityGLTF.Extensions
 						}
 						break;
 					case Material mat:
-						var path = ResolvePropertyBindingName(reg.propertyBinding);
-						// reg.channel.Path = path;
-						reg.path = "/materials/" + exporter.GetAnimationTargetIdFromMaterial(mat) + "/" + path;
+						reg.path = "/materials/" + exporter.GetAnimationTargetIdFromMaterial(mat) + "/" + reg.propertyBinding;
 						break;
 				}
 			}
-		}
-
-		private string ResolvePropertyBindingName(string name)
-		{
-			switch (name)
-			{
-				case "_BaseColor":
-					return "baseColorFactor";
-				// TODO smoothness values need to be inverted! different shading model!
-				case "_Smoothness":
-					return "roughnessFactor";
-				case "_Metallic":
-					return "metallicFactor";
-			}
-			return name;
 		}
 	}
 }
