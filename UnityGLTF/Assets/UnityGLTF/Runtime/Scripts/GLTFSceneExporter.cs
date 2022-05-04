@@ -1512,12 +1512,20 @@ namespace UnityGLTF
 					material.AlphaMode = AlphaMode.BLEND;
 					break;
 				default:
+					if (materialObj.IsKeywordEnabled("_ALPHATEST_ON"))
+					{
+						if (materialObj.HasProperty("_Cutoff"))
+						{
+							material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
+						}
+						material.AlphaMode = AlphaMode.MASK;
+					}
 					material.AlphaMode = AlphaMode.OPAQUE;
 					break;
 			}
 
-			material.DoubleSided = materialObj.HasProperty("_Cull") &&
-				materialObj.GetInt("_Cull") == (int) CullMode.Off;
+			material.DoubleSided = (materialObj.HasProperty("_Cull") && materialObj.GetInt("_Cull") == (int)CullMode.Off) ||
+			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off);
 
 			if(materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION"))
 			{
