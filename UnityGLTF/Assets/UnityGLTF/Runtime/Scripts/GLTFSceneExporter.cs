@@ -1433,6 +1433,12 @@ namespace UnityGLTF
 	        intensity = maxEmissiveAmount;
         }
 
+        static void DecomposeScaleOffset(Vector4 input, out Vector2 scale, out Vector2 offset)
+        {
+	        scale = new Vector2(input.x, input.y);
+	        offset = new Vector2(input.z, 1 - input.w - input.y);
+        }
+
         public MaterialId ExportMaterial(Material materialObj)
 		{
             //TODO if material is null
@@ -3765,9 +3771,12 @@ namespace UnityGLTF
 				else
 				{
 					var memberName = binding.propertyName;
-					// Color is animated as a Vector4
+
+					// Color is animated as a Color/Vector4
 					if (memberName.EndsWith(".r", StringComparison.Ordinal) || memberName.EndsWith(".g", StringComparison.Ordinal) ||
-					    memberName.EndsWith(".b", StringComparison.Ordinal) || memberName.EndsWith(".a", StringComparison.Ordinal))
+					    memberName.EndsWith(".b", StringComparison.Ordinal) || memberName.EndsWith(".a", StringComparison.Ordinal) ||
+					    memberName.EndsWith(".x", StringComparison.Ordinal) || memberName.EndsWith(".y", StringComparison.Ordinal) ||
+					    memberName.EndsWith(".z", StringComparison.Ordinal) || memberName.EndsWith(".w", StringComparison.Ordinal))
 						memberName = binding.propertyName.Substring(0, binding.propertyName.LastIndexOf(".", StringComparison.Ordinal));
 
 					if (propertyCurves.TryGetValue(memberName, out var existing))
@@ -3790,30 +3799,49 @@ namespace UnityGLTF
 							memberName = memberName.Substring("material.".Length);
 							prop.propertyName = memberName;
 							prop.target = mat;
-							var found = false;
-							for (var i = 0; i < ShaderUtil.GetPropertyCount(mat.shader); i++)
+							if (memberName.EndsWith("_ST", StringComparison.Ordinal))
 							{
-								if (found) break;
-								var name = ShaderUtil.GetPropertyName(mat.shader, i);
-								if (!memberName.EndsWith(name)) continue;
-								found = true;
-								var materialProperty = ShaderUtil.GetPropertyType(mat.shader, i);
-								switch (materialProperty)
+								prop.propertyType = typeof(Vector4);
+							}
+							else
+							{
+								var found = false;
+								for (var i = 0; i < ShaderUtil.GetPropertyCount(mat.shader); i++)
 								{
-									case ShaderUtil.ShaderPropertyType.Color:
-										prop.propertyType = typeof(Color);
-										break;
-									case ShaderUtil.ShaderPropertyType.Vector:
-										prop.propertyType = typeof(Vector4);
-										break;
-									case ShaderUtil.ShaderPropertyType.Float:
-										prop.propertyType = typeof(float);
-										prop.propertyType = typeof(float);
-										break;
-									case ShaderUtil.ShaderPropertyType.TexEnv:
-										prop.propertyType = typeof(Texture);
-										break;
+									if (found) break;
+									var name = ShaderUtil.GetPropertyName(mat.shader, i);
+									if (!memberName.EndsWith(name)) continue;
+									found = true;
+									var materialProperty = ShaderUtil.GetPropertyType(mat.shader, i);
+									switch (materialProperty)
+									{
+										case ShaderUtil.ShaderPropertyType.Color:
+											prop.propertyType = typeof(Color);
+											break;
+										case ShaderUtil.ShaderPropertyType.Vector:
+											prop.propertyType = typeof(Vector4);
+											break;
+										case ShaderUtil.ShaderPropertyType.Float:
+											prop.propertyType = typeof(float);
+											prop.propertyType = typeof(float);
+											break;
+										case ShaderUtil.ShaderPropertyType.TexEnv:
+											prop.propertyType = typeof(Texture);
+											break;
+									}
 								}
+							}
+						}
+						else if (animatedObject is Light)
+						{
+							switch (memberName)
+							{
+								case "m_Color":
+									prop.propertyType = typeof(Color);
+									break;
+								case "m_Intensity":
+									prop.propertyType = typeof(float);
+									break;
 							}
 						}
 						else
@@ -3930,6 +3958,7 @@ namespace UnityGLTF
 					float[] weights = null;
 
 					// arbitrary properties require the KHR_animation_pointer extension
+					bool sampledAnimationData = false;
 					if (settings.UseAnimationPointer && curve.propertyCurves != null && curve.propertyCurves.Count > 0)
 					{
 						var curves = curve.propertyCurves;
@@ -3940,23 +3969,24 @@ namespace UnityGLTF
 							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
 							{
 								AddAnimationData(prop.target, prop.propertyName, animation, times, values);
+								sampledAnimationData = true;
 							}
 						}
-						// continue;
 					}
 
-					if (BakeCurveSet(curve, clip.length, AnimationBakingFramerate, speedMultiplier,
-						    ref times, ref positions, ref rotations, ref scales, ref weights))
+					if (BakeCurveSet(curve, clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales, ref weights))
 					{
 						bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
 						if(haveAnimation)
 						{
 							AddAnimationData(targetTr, animation, times, positions, rotations, scales, weights);
+							sampledAnimationData = true;
 						}
 						continue;
 					}
 
-					Debug.LogWarning("Warning: Animation curves for " + target + " in " + clip + " from " + transform, transform);
+					if(!sampledAnimationData)
+						Debug.LogWarning("Warning: empty animation curves for " + target + " in " + clip + " from " + transform, transform);
 				}
 			}
 			else
@@ -4120,6 +4150,7 @@ namespace UnityGLTF
 				else
 				{
 					var type = prop.propertyType;
+
 					if (typeof(Vector2) == type)
 					{
 						values[i] = new Vector2(prop.Evaluate(t, 0), prop.Evaluate(t, 1));
@@ -4288,28 +4319,60 @@ namespace UnityGLTF
 			// var nodePath = "/nodes/" + channelTargetId + "/" + path;
 
 			bool flipValueRange = false;
+			bool isTextureTransform = false;
 			string secondPropertyName = null;
 
-			// mapping from known Unity property names to glTF property names
-			switch (propertyName)
+			switch (animatedObject)
 			{
-				case "_Color":
-				case "_BaseColor":
-					propertyName = "baseColorFactor";
+				case Material material:
+					// mapping from known Unity property names to glTF property names
+					switch (propertyName)
+					{
+						case "_Color":
+						case "_BaseColor":
+							propertyName = "baseColorFactor";
+							break;
+						case "_MainTex_ST":
+						case "_BaseMap_ST":
+							if (!(material.HasProperty("_MainTex") && material.GetTexture("_MainTex")) &&
+							    !(material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap"))) return;
+							propertyName = $"baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
+							secondPropertyName = $"baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
+							isTextureTransform = true;
+							break;
+						case "_EmissionColor":
+							propertyName = "emissiveFactor";
+							secondPropertyName = $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}";
+							break;
+						case "_EmissionMap_ST":
+							if (!(material.HasProperty("_EmissionMap") && material.GetTexture("_EmissionMap"))) return;
+							propertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
+							secondPropertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
+							isTextureTransform = true;
+							break;
+						case "_Smoothness":
+							propertyName = "roughnessFactor";
+							flipValueRange = true;
+							break;
+						case "_Roughness":
+							propertyName = "roughnessFactor";
+							break;
+						case "_Metalllic":
+							propertyName = "metallicFactor";
+							break;
+					}
 					break;
-				case "_EmissionColor":
-					propertyName = "emissiveFactor";
-					secondPropertyName = "extensions/KHR_materials_emissive_strength/emissiveStrength";
-					break;
-				case "_Smoothness":
-					propertyName = "roughnessFactor";
-					flipValueRange = true;
-					break;
-				case "_Roughness":
-					propertyName = "roughnessFactor";
-					break;
-				case "_Metalllic":
-					propertyName = "metallicFactor";
+				case Light light:
+					Debug.Log("light prop: " + propertyName);
+					switch (propertyName)
+					{
+						case "m_Color":
+							propertyName = $"color";
+							break;
+						case "m_Intensity":
+							propertyName = $"intensity";
+							break;
+					}
 					break;
 			}
 
@@ -4347,7 +4410,23 @@ namespace UnityGLTF
 					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector3)e));
 					break;
 				case Vector4 _:
-					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector4)e));
+					if (!isTextureTransform)
+					{
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector4)e));
+					}
+					else
+					{
+						var scales = new Vector2[values.Length];
+						var offsets = new Vector2[values.Length];
+						for (int i = 0; i < values.Length; i++)
+						{
+							DecomposeScaleOffset((Vector4) values[i], out var scale, out var offset);
+							scales[i] = scale;
+							offsets[i] = offset;
+						}
+						Tsampler.Output = ExportAccessor(scales);
+						Tsampler2.Output = ExportAccessor(offsets);
+					}
 					break;
 				case Color _:
 					if (propertyName == "emissiveFactor" && secondPropertyName != null)
