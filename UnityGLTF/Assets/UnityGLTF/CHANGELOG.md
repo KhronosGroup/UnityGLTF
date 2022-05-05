@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.6.1-pre] - 2022-05-06
+- feat: added experimental support for KHR_animation_pointer in-editor animation export (for select properties), can be turned on in `ProjectSettings/UnityGltf`
+- feat: added scene export as GLB (fixes #22)
+- fixed: roundtrip issues with glTFast when alpha testing is used
+- fixed: no build errors in Samples anymore
+- fixed: allow exporting skinned mesh animations even when the mesh isn't readable (bone animation is then still exported)
+
 ## [1.6.0-pre] - 2022-04-28
 - feat: added WebGL import support (export was already supported)
 - feat: added WebGL animation export support
