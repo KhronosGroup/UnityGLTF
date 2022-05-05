@@ -11,6 +11,9 @@ namespace UnityGLTF.Timeline
 	{
 		public GLTFRecorder(Transform root, bool recordBlendShapes = true)
 		{
+			if (!root)
+				throw new ArgumentNullException(nameof(root), "Please provide a root transform to record.");
+
 			this.root = root;
 			this.recordBlendShapes = recordBlendShapes;
 		}
@@ -206,7 +209,7 @@ namespace UnityGLTF.Timeline
 				if (recordBlendShapes)
 				{
 					var skinnedMesh = tr.GetComponent<SkinnedMeshRenderer>();
-					if (skinnedMesh)
+					if (skinnedMesh && skinnedMesh.sharedMesh && skinnedMesh.sharedMesh.blendShapeCount > 0)
 					{
 						var mesh = skinnedMesh.sharedMesh;
 						var blendShapeCount = mesh.blendShapeCount;
