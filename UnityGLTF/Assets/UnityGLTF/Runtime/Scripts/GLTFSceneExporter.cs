@@ -1241,7 +1241,7 @@ namespace UnityGLTF
 			}
 
 #if UNITY_EDITOR
-			if (!MeshIsReadable(meshObj))
+			if (!MeshIsReadable(meshObj) && EditorUtility.IsPersistent(meshObj))
 			{
 #if UNITY_2019_3_OR_NEWER
 				if(EditorUtility.DisplayDialog("Exporting mesh but mesh is not readable",
@@ -1267,6 +1267,13 @@ namespace UnityGLTF
 #endif
 			}
 #endif
+
+			if (Application.isPlaying && !MeshIsReadable(meshObj))
+			{
+				Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping");
+				return null;
+			}
+
 			var renderer = gameObject.GetComponent<MeshRenderer>();
 			if (!renderer) smr = gameObject.GetComponent<SkinnedMeshRenderer>();
 
@@ -4842,21 +4849,28 @@ namespace UnityGLTF
 			Vector4[] bones = boneWeightToBoneVec4(mesh.boneWeights);
 			Vector4[] weights = boneWeightToWeightVec4(mesh.boneWeights);
 
-			GLTF.Schema.GLTFMesh gltfMesh = _root.Meshes[val.Id];
-			foreach (MeshPrimitive prim in gltfMesh.Primitives)
-			{
-				if (!prim.Attributes.ContainsKey("JOINTS_0"))
-				{
-					var jointsAccessor = ExportAccessorUint(bones);
-					jointsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
-					prim.Attributes.Add("JOINTS_0", jointsAccessor);
-				}
 
-				if (!prim.Attributes.ContainsKey("WEIGHTS_0"))
+			if(val != null)
+			{
+				GLTF.Schema.GLTFMesh gltfMesh = _root.Meshes[val.Id];
+				if(gltfMesh != null)
 				{
-					var weightsAccessor = ExportAccessor(weights);
-					weightsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
-					prim.Attributes.Add("WEIGHTS_0", weightsAccessor);
+					foreach (MeshPrimitive prim in gltfMesh.Primitives)
+					{
+						if (!prim.Attributes.ContainsKey("JOINTS_0"))
+						{
+							var jointsAccessor = ExportAccessorUint(bones);
+							jointsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+							prim.Attributes.Add("JOINTS_0", jointsAccessor);
+						}
+
+						if (!prim.Attributes.ContainsKey("WEIGHTS_0"))
+						{
+							var weightsAccessor = ExportAccessor(weights);
+							weightsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+							prim.Attributes.Add("WEIGHTS_0", weightsAccessor);
+						}
+					}
 				}
 			}
 
