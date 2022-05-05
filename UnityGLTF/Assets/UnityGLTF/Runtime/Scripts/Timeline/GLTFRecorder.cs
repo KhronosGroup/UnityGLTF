@@ -1,3 +1,6 @@
+// #define USE_ANIMATION_POINTER
+#define USE_REGULAR_ANIMATION
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,8 +21,6 @@ namespace UnityGLTF.Timeline
 			this.root = root;
 			this.recordBlendShapes = recordBlendShapes;
 			this.recordAnimationPointer = recordAnimationPointer;
-
-
 		}
 
 		private Transform root;
@@ -35,15 +36,18 @@ namespace UnityGLTF.Timeline
 
 		internal class AnimationData
 		{
-			public int Size => 4 + 4 + keys.Count * (4 + 4 + 40);
 			private Transform tr;
+			private bool recordBlendShapes;
+			private bool recordAnimationPointer;
+
+#if USE_REGULAR_ANIMATION
 			public FrameData lastData;
 			public Dictionary<double, FrameData> keys = new Dictionary<double, FrameData>();
-
 			private bool skippedLastFrame = false;
 			private double skippedTime;
-			private bool recordBlendShapes;
+#endif
 
+#if USE_ANIMATION_POINTER
 			private static List<ExportPlan> exportPlans;
 			private static MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
 			internal List<Track> tracks = new List<Track>();
@@ -69,13 +73,18 @@ namespace UnityGLTF.Timeline
 					return GetData(tr, target);
 				}
 			}
+#endif
 
-			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true)
+			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true, bool recordAnimationPointer = false)
 			{
 				this.tr = tr;
 				this.recordBlendShapes = recordBlendShapes;
+				this.recordAnimationPointer = recordAnimationPointer;
+#if USE_REGULAR_ANIMATION
 				keys.Add(time, new FrameData(tr, zeroScale, this.recordBlendShapes));
+#endif
 
+#if USE_ANIMATION_POINTER
 				if (exportPlans == null)
 				{
 					exportPlans = new List<ExportPlan>();
@@ -101,32 +110,37 @@ namespace UnityGLTF.Timeline
 						return null;
 					}));
 
-					exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr, mat) =>
+					if(recordAnimationPointer)
 					{
-						var r = tr.GetComponent<Renderer>();
-
-						if (r.HasPropertyBlock())
+						exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr, mat) =>
 						{
-							r.GetPropertyBlock(materialPropertyBlock);
-#if UNITY_2021_1_OR_NEWER
-							if (materialPropertyBlock.HasColor("_BaseColor")) return materialPropertyBlock.GetColor("_BaseColor");
-							if (materialPropertyBlock.HasColor("_Color")) return materialPropertyBlock.GetColor("_Color");
-#else
-							var c = materialPropertyBlock.GetColor("_BaseColor");
-							if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
-							c = materialPropertyBlock.GetColor("_Color");
-							if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
-#endif
-						}
+							var r = tr.GetComponent<Renderer>();
 
-						if (mat is Material m && m)
-						{
-							if (m.HasProperty("_BaseColor")) return m.GetColor("_BaseColor");
-							if (m.HasProperty("_Color")) return m.GetColor("_Color");
-						}
+							if (r.HasPropertyBlock())
+							{
+								r.GetPropertyBlock(materialPropertyBlock);
+	#if UNITY_2021_1_OR_NEWER
+								if (materialPropertyBlock.HasColor("_BaseColor")) return materialPropertyBlock.GetColor("_BaseColor");
+								if (materialPropertyBlock.HasColor("_Color")) return materialPropertyBlock.GetColor("_Color");
+	#else
+								var c = materialPropertyBlock.GetColor("_BaseColor");
+								if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
+								c = materialPropertyBlock.GetColor("_Color");
+								if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
+								// this leaves an edge case where someone is actually animating color to black:
+								// in that case, the un-animated color would now be exported...
+	#endif
+							}
 
-						return null;
-					}));
+							if (mat is Material m && m)
+							{
+								if (m.HasProperty("_BaseColor")) return m.GetColor("_BaseColor");
+								if (m.HasProperty("_Color")) return m.GetColor("_Color");
+							}
+
+							return null;
+						}));
+					}
 				}
 
 				foreach (var plan in exportPlans)
@@ -134,8 +148,10 @@ namespace UnityGLTF.Timeline
 					if (plan.GetTarget(tr))
 						tracks.Add(new Track(tr, plan, time));
 				}
+#endif
 			}
 
+#if USE_ANIMATION_POINTER
 			internal class Track
 			{
 				public Object animatedObject => plan.GetTarget(tr);
@@ -169,14 +185,23 @@ namespace UnityGLTF.Timeline
 					}
 				}
 			}
+#endif
 
 			public void Update(double time)
 			{
-				foreach (var track in tracks)
+#if USE_ANIMATION_POINTER
+				if(recordAnimationPointer)
 				{
-					track.SampleIfChanged(time);
-				}
+					foreach (var track in tracks)
+					{
+						track.SampleIfChanged(time);
+					}
 
+					return;
+				}
+#endif
+
+#if USE_REGULAR_ANIMATION
 				var newTr = new FrameData(tr, !tr.gameObject.activeSelf, recordBlendShapes);
 				if (newTr.Equals(lastData))
 				{
@@ -203,6 +228,7 @@ namespace UnityGLTF.Timeline
 				{
 					keys.Add(time, newTr);
 				}
+#endif
 			}
 		}
 		public void StartRecording(double time)
@@ -237,7 +263,7 @@ namespace UnityGLTF.Timeline
 				if (!data.ContainsKey(tr))
 				{
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame
-					var emptyData = new AnimationData(tr, lastRecordedTime, true, recordBlendShapes);
+					var emptyData = new AnimationData(tr, lastRecordedTime, true, recordBlendShapes, recordAnimationPointer);
 					data.Add(tr, emptyData);
 					// insert actual keyframe
 					data[tr].Update(currentTime);
@@ -266,8 +292,11 @@ namespace UnityGLTF.Timeline
 			if (!isRecording) return;
 			isRecording = false;
 
-			// log
-			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keys: " + data.Sum(x => x.Value.keys.Count));
+#if USE_ANIMATION_POINTER
+			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.tracks.Sum(y => y.values.Count())));
+#elif USE_REGULAR_ANIMATION
+			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.keys.Count));
+#endif
 
 			var previousExportDisabledState = GLTFSceneExporter.ExportDisabledGameObjects;
 			var previousExportAnimationState = GLTFSceneExporter.ExportAnimations;
@@ -304,14 +333,22 @@ namespace UnityGLTF.Timeline
 		{
 			foreach (var kvp in data)
 			{
-				if(kvp.Value.keys.Count < 1) continue;
-
-				foreach (var tr in kvp.Value.tracks)
+#if USE_ANIMATION_POINTER
+				if (recordAnimationPointer)
 				{
-					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, tr.times, tr.values);
-				}
+					foreach (var tr in kvp.Value.tracks)
+					{
+						if(tr.times.Length == 0) continue;
+						// TODO add RemoveUnneededKeyframes
+						gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, tr.times, tr.values);
+					}
 
-				continue;
+					continue;
+				}
+#endif
+
+#if USE_REGULAR_ANIMATION
+				if (kvp.Value.keys.Count < 1) continue;
 
 				var times = kvp.Value.keys.Keys.Select(x => (float) x).ToArray();
 				var values = kvp.Value.keys.Values.ToArray();
@@ -320,7 +357,7 @@ namespace UnityGLTF.Timeline
 				var scales = values.Select(x => x.scale).ToArray();
 				float[] weights = null;
 				int weightCount = 0;
-				if(values.All(x => x.weights != null))
+				if (values.All(x => x.weights != null))
 				{
 					weights = values.SelectMany(x => x.weights).ToArray();
 					weightCount = values.First().weights.Length;
@@ -328,9 +365,12 @@ namespace UnityGLTF.Timeline
 
 				gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
 				gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
+#endif
 			}
 		}
 
+#if USE_REGULAR_ANIMATION
+		// TODO deprecate this once the ExportPlan approach is fully tested.
 		internal readonly struct FrameData
 		{
 			public readonly Vector3 position;
@@ -399,5 +439,6 @@ namespace UnityGLTF.Timeline
 				return !left.Equals(right);
 			}
 		}
+#endif
 	}
 }
