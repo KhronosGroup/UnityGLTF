@@ -13,13 +13,14 @@ namespace UnityGLTF.Timeline
 {
 	public class GLTFRecorder
 	{
-		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordAnimationPointer = false)
+		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordRootInWorldSpace = false, bool recordAnimationPointer = false)
 		{
 			if (!root)
 				throw new ArgumentNullException(nameof(root), "Please provide a root transform to record.");
 
 			this.root = root;
 			this.recordBlendShapes = recordBlendShapes;
+			this.recordRootInWorldSpace = recordRootInWorldSpace;
 			this.recordAnimationPointer = recordAnimationPointer;
 		}
 
@@ -29,6 +30,7 @@ namespace UnityGLTF.Timeline
 		private double lastRecordedTime;
 		private bool isRecording;
 		private readonly bool recordBlendShapes;
+		private readonly bool recordRootInWorldSpace;
 		private readonly bool recordAnimationPointer;
 
 		public bool IsRecording => isRecording;
@@ -38,6 +40,7 @@ namespace UnityGLTF.Timeline
 		{
 			private Transform tr;
 			private bool recordBlendShapes;
+			private bool inWorldSpace = false;
 			private bool recordAnimationPointer;
 
 #if USE_REGULAR_ANIMATION
@@ -75,13 +78,14 @@ namespace UnityGLTF.Timeline
 			}
 #endif
 
-			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true, bool recordAnimationPointer = false)
+			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true, bool inWorldSpace = false, bool recordAnimationPointer = false)
 			{
 				this.tr = tr;
 				this.recordBlendShapes = recordBlendShapes;
+				this.inWorldSpace = inWorldSpace;
 				this.recordAnimationPointer = recordAnimationPointer;
 #if USE_REGULAR_ANIMATION
-				keys.Add(time, new FrameData(tr, zeroScale, this.recordBlendShapes));
+				keys.Add(time, new FrameData(tr, zeroScale, this.recordBlendShapes, this.inWorldSpace));
 #endif
 
 #if USE_ANIMATION_POINTER
@@ -202,7 +206,7 @@ namespace UnityGLTF.Timeline
 #endif
 
 #if USE_REGULAR_ANIMATION
-				var newTr = new FrameData(tr, !tr.gameObject.activeSelf, recordBlendShapes);
+				var newTr = new FrameData(tr, !tr.gameObject.activeSelf, recordBlendShapes, inWorldSpace);
 				if (newTr.Equals(lastData))
 				{
 					skippedLastFrame = true;
@@ -237,10 +241,10 @@ namespace UnityGLTF.Timeline
 			lastRecordedTime = time;
 			var trs = root.GetComponentsInChildren<Transform>(true);
 			data.Clear();
+
 			foreach (var tr in trs)
-			{
-				data.Add(tr, new AnimationData(tr, 0, !tr.gameObject.activeSelf));
-			}
+				data.Add(tr, new AnimationData(tr, 0, !tr.gameObject.activeSelf, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
+
 			isRecording = true;
 		}
 
@@ -364,7 +368,9 @@ namespace UnityGLTF.Timeline
 				}
 
 				gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
-				gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
+				// no need to add single-keyframe tracks, that's recorded as base data anyways
+				if (times.Length > 1)
+					gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
 #endif
 			}
 		}
@@ -378,11 +384,20 @@ namespace UnityGLTF.Timeline
 			public readonly Vector3 scale;
 			public readonly float[] weights;
 
-			public FrameData(Transform tr, bool zeroScale, bool recordBlendShapes)
+			public FrameData(Transform tr, bool zeroScale, bool recordBlendShapes, bool inWorldSpace)
 			{
-				position = tr.localPosition;
-				rotation = tr.localRotation;
-				scale = zeroScale ? Vector3.zero : tr.localScale;
+				if (!inWorldSpace)
+				{
+					position = tr.localPosition;
+					rotation = tr.localRotation;
+					scale = zeroScale ? Vector3.zero : tr.localScale;
+				}
+				else
+				{
+					position = tr.position;
+					rotation = tr.rotation;
+					scale = zeroScale ? Vector3.zero : tr.lossyScale;
+				}
 
 				if (recordBlendShapes)
 				{
