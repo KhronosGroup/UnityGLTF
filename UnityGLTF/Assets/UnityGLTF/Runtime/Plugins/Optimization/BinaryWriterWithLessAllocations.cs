@@ -4,23 +4,24 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-	// It seems that BinaryWriter creates a ton of garbage: the implementation allocates a byte[4] for every float write (and for other data types as well)
+	// It seems that BinaryWriter creates a ton of garbage: the implementation allocates a byte[4] for every float write. (and for double as well)
 	// foreach (var v in arr)
 	// {
-	// 	_bufferWriter.Write(v); // this will allocate 36B per call
+	//     _bufferWriter.Write(v); // this will allocate 36B per call
 	// }
 	// For large accessors, this adds up to hundreds of megabytes of garbage.
 	// This class adds special implementations that skip BitConverterLE and instead convert with the same logic,
 	// differentiating between LittleEndian and BigEndian.
 
 	// Following https://github.com/mono/mono/blob/4a5ffcabd58d6439e60126f46e0063bcf30e7a47/mcs/class/referencesource/mscorlib/system/io/binarywriter.cs#L381
-	// Here's the 4-byte allocation we were seeing: https://github.com/mono/mono/blob/4a5ffcabd58d6439e60126f46e0063bcf30e7a47/mcs/class/System.ServiceModel/Mono.Security.Protocol.Ntlm/BitConverterLE.cs#L127
+	// Here's the 4-byte allocation we're seeing: https://github.com/mono/mono/blob/4a5ffcabd58d6439e60126f46e0063bcf30e7a47/mcs/class/System.ServiceModel/Mono.Security.Protocol.Ntlm/BitConverterLE.cs#L127
+	// Another discussion of this problem: https://forum.unity.com/threads/binarywriter-floats.1108478/
 	// The implementations here pull BitConverter.IsLittleEndian out of the loop and directly write converted bytes into the BinaryWriter.
-	public class FastBinaryWriter : BinaryWriter
+	internal class BinaryWriterWithLessAllocations : BinaryWriter
 	{
 		private static readonly byte[] _buffer = new byte[16];    // temp space for writing primitives to.
 
-		public FastBinaryWriter(Stream binStream) : base(binStream) { }
+		public BinaryWriterWithLessAllocations(Stream binStream) : base(binStream) { }
 
 		public unsafe void Write(float[] value)
 		{

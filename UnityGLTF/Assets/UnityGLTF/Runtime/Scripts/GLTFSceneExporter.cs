@@ -127,7 +127,7 @@ namespace UnityGLTF
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
 #if USE_FAST_BINARY_WRITER
-		private FastBinaryWriter _bufferWriter;
+		private BinaryWriterWithLessAllocations _bufferWriter;
 #else
 		private BinaryWriter _bufferWriter;
 #endif
@@ -464,7 +464,7 @@ namespace UnityGLTF
 			Stream jsonStream = new MemoryStream();
 			_shouldUseInternalBufferForImages = true;
 
-			_bufferWriter = new FastBinaryWriter(binStream);
+			_bufferWriter = new BinaryWriterWithLessAllocations(binStream);
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 			exportGltfInitMarker.End();
@@ -611,7 +611,7 @@ namespace UnityGLTF
 				Directory.CreateDirectory(dirName);
 
 			var binFile = File.Create(fullPath);
-			_bufferWriter = new FastBinaryWriter(binFile);
+			_bufferWriter = new BinaryWriterWithLessAllocations(binFile);
 			exportGltfInitMarker.End();
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
