@@ -6,6 +6,8 @@
 #define ANIMATION_SUPPORTED
 #endif
 
+#define USE_FAST_BINARY_WRITER
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -124,7 +126,11 @@ namespace UnityGLTF
 		private GLTFRoot _root;
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
+#if USE_FAST_BINARY_WRITER
 		private FastBinaryWriter _bufferWriter;
+#else
+		private BinaryWriter _bufferWriter;
+#endif
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
 		private Dictionary<Material, int> _materials;
@@ -2896,7 +2902,14 @@ namespace UnityGLTF
 			exportAccessorBufferWriteMarker.Begin();
 			accessor.ComponentType = GLTFComponentType.Float;
 
+#if USE_FAST_BINARY_WRITER
 			_bufferWriter.Write(arr);
+#else
+			foreach (var v in arr)
+			{
+				_bufferWriter.Write((float)v);
+			}
+#endif
 			exportAccessorBufferWriteMarker.End();
 
 			accessor.Min = new List<double> { min };
@@ -3170,13 +3183,16 @@ namespace UnityGLTF
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
+#if USE_FAST_BINARY_WRITER
 			_bufferWriter.Write(arr);
-			// foreach (var vec in arr)
-			// {
-			// 	_bufferWriter.Write(vec.x);
-			// 	_bufferWriter.Write(vec.y);
-			// 	_bufferWriter.Write(vec.z);
-			// }
+#else
+			foreach (var vec in arr)
+			{
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
+			}
+#endif
 			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
@@ -3423,14 +3439,17 @@ namespace UnityGLTF
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
+#if USE_FAST_BINARY_WRITER
 			_bufferWriter.Write(arr);
-			// foreach (var vec in arr)
-			// {
-			// 	_bufferWriter.Write(vec.x);
-			// 	_bufferWriter.Write(vec.y);
-			// 	_bufferWriter.Write(vec.z);
-			// 	_bufferWriter.Write(vec.w);
-			// }
+#else
+			foreach (var vec in arr)
+			{
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
+				_bufferWriter.Write(vec.w);
+			}
+#endif
 			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
@@ -4650,7 +4669,7 @@ namespace UnityGLTF
 
 				AnimationSampler Rsampler = new AnimationSampler();
 				Rsampler.Input = timeAccessor; // Float, for time
-				Rsampler.Output = ExportAccessor(rotations, true); // Vec4 for
+				Rsampler.Output = ExportAccessorSwitchHandedness(rotations); // Vec4 for rotations
 				Rsampler.Output.Value.BufferView.Value.ByteStride = 0;
 				Rchannel.Sampler = new AnimationSamplerId
 				{
@@ -5136,7 +5155,7 @@ namespace UnityGLTF
 		}
 
 		// This is used for Quaternions / Rotations
-		private AccessorId ExportAccessor(Vector4[] arr, bool switchHandedness = false)
+		private AccessorId ExportAccessorSwitchHandedness(Vector4[] arr)
 		{
 			exportAccessorMarker.Begin();
 			exportAccessorVector4ArrayMarker.Begin();
@@ -5154,8 +5173,8 @@ namespace UnityGLTF
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
 			var a0 = arr[0];
-			a0 = switchHandedness ? a0.switchHandedness() : a0;
-			a0 = a0.normalized;
+			a0 = a0.SwitchHandedness();
+			a0.Normalize();
 			float minX = a0.x;
 			float minY = a0.y;
 			float minZ = a0.z;
@@ -5168,8 +5187,8 @@ namespace UnityGLTF
 			for (var i = 1; i < count; i++)
 			{
 				var cur = arr[i];
-				cur = switchHandedness ? cur.switchHandedness() : cur;
-				cur = cur.normalized;
+				cur = cur.SwitchHandedness();
+				cur.Normalize();
 
 				if (cur.x < minX)
 				{
@@ -5212,17 +5231,19 @@ namespace UnityGLTF
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
-
+#if USE_FAST_BINARY_WRITER
 			_bufferWriter.WriteNormalizedSwitchHandedness(arr);
-			// foreach (var vec in arr)
-			// {
-			// 	Vector4 vect = switchHandedness ? vec.switchHandedness() : vec;
-			// 	vect = vect.normalized;
-			// 	_bufferWriter.Write(vect.x);
-			// 	_bufferWriter.Write(vect.y);
-			// 	_bufferWriter.Write(vect.z);
-			// 	_bufferWriter.Write(vect.w);
-			// }
+#else
+			foreach (var vec in arr)
+			{
+				Vector4 vect = vec.SwitchHandedness();
+				vect.Normalize();
+				_bufferWriter.Write(vect.x);
+				_bufferWriter.Write(vect.y);
+				_bufferWriter.Write(vect.z);
+				_bufferWriter.Write(vect.w);
+			}
+#endif
 			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);

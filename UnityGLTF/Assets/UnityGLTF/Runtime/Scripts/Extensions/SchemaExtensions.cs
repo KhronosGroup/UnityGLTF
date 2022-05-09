@@ -561,21 +561,21 @@ namespace UnityGLTF.Extensions
 			return outMatrixArr;
 		}
 
-		public static Vector4 switchHandedness(this Vector4 input)
+		public static Vector4 SwitchHandedness(this Vector4 input)
 		{
 			return new Vector4(-input.x, input.y, input.z, -input.w);
 		}
 
 
-		public static Quaternion switchHandedness(this Quaternion input)
+		public static Quaternion SwitchHandedness(this Quaternion input)
 		{
 			return new Quaternion(input.x, input.y, -input.z, -input.w);
 		}
 
-		public static Matrix4x4 switchHandedness(this Matrix4x4 matrix)
+		public static Matrix4x4 SwitchHandedness(this Matrix4x4 matrix)
 		{
-			Vector3 position = matrix.GetColumn(3).switchHandedness();
-			Quaternion rotation = Quaternion.LookRotation(matrix.GetColumn(2), matrix.GetColumn(1)).switchHandedness();
+			Vector3 position = matrix.GetColumn(3).SwitchHandedness();
+			Quaternion rotation = Quaternion.LookRotation(matrix.GetColumn(2), matrix.GetColumn(1)).SwitchHandedness();
 			Vector3 scale = new Vector3(matrix.GetColumn(0).magnitude, matrix.GetColumn(1).magnitude, matrix.GetColumn(2).magnitude);
 
 			float epsilon = 0.00001f;
