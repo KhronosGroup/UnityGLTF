@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using GLTF.Schema;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -235,6 +236,7 @@ namespace UnityGLTF.Timeline
 #endif
 			}
 		}
+
 		public void StartRecording(double time)
 		{
 			startTime = time;
@@ -254,6 +256,7 @@ namespace UnityGLTF.Timeline
 			{
 				throw new InvalidOperationException($"{nameof(GLTFRecorder)} isn't recording, but {nameof(UpdateRecording)} was called. This is invalid.");
 			}
+
 			if (time <= lastRecordedTime)
 			{
 				Debug.LogWarning("Can't record backwards in time, please avoid this.");
@@ -307,13 +310,18 @@ namespace UnityGLTF.Timeline
 			GLTFSceneExporter.ExportDisabledGameObjects = true;
 			GLTFSceneExporter.ExportAnimations = false;
 
+			var logHandler = new StringBuilderLogHandler();
+
 			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions()
 			{
 				ExportInactivePrimitives = true,
 				AfterSceneExport = PostExport,
+				logger = new Logger(logHandler),
 			});
 
 			exporter.SaveGLBToStream(stream, sceneName);
+
+			logHandler.LogAndClear();
 
 			GLTFSceneExporter.ExportDisabledGameObjects = previousExportDisabledState;
 			GLTFSceneExporter.ExportAnimations = previousExportAnimationState;
@@ -354,7 +362,7 @@ namespace UnityGLTF.Timeline
 #if USE_REGULAR_ANIMATION
 				if (kvp.Value.keys.Count < 1) continue;
 
-				var times = kvp.Value.keys.Keys.Select(x => (float) x).ToArray();
+				var times = kvp.Value.keys.Keys.Select(x => (float)x).ToArray();
 				var values = kvp.Value.keys.Values.ToArray();
 				var positions = values.Select(x => x.position).ToArray();
 				var rotations = values.Select(x => x.rotation).Select(x => new Vector4(x.x, x.y, x.z, x.w)).ToArray();
@@ -438,7 +446,7 @@ namespace UnityGLTF.Timeline
 					var hashCode = position.GetHashCode();
 					hashCode = (hashCode * 397) ^ rotation.GetHashCode();
 					hashCode = (hashCode * 397) ^ scale.GetHashCode();
-					if(weights != null)
+					if (weights != null)
 						hashCode = (hashCode * 397) ^ weights.GetHashCode();
 					return hashCode;
 				}
@@ -455,5 +463,19 @@ namespace UnityGLTF.Timeline
 			}
 		}
 #endif
+
+		private class StringBuilderLogHandler : ILogHandler
+		{
+			private readonly StringBuilder sb = new StringBuilder();
+
+			public void LogFormat(LogType logType, Object context, string format, params object[] args) => sb.AppendLine($"[{logType}] {string.Format(format, args)}");
+			public void LogException(Exception exception, Object context) => sb.AppendLine($"[Exception] {exception}");
+
+			public void LogAndClear()
+			{
+				Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}", sb.ToString());
+				sb.Clear();
+			}
+		}
 	}
 }
