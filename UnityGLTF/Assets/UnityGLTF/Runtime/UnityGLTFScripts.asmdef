@@ -4,7 +4,8 @@
     "references": [
         "GLTFSerialization",
         "Unity.Timeline",
-        "Ktx"
+        "Ktx",
+        "UnityGLTF.Helpers"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

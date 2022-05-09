@@ -124,7 +124,7 @@ namespace UnityGLTF
 		private GLTFRoot _root;
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
-		private BinaryWriter _bufferWriter;
+		private FastBinaryWriter _bufferWriter;
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
 		private Dictionary<Material, int> _materials;
@@ -313,6 +313,17 @@ namespace UnityGLTF
 		private static ProfilerMarker gltfWriteJsonStreamMarker = new ProfilerMarker("Write JSON stream");
 		private static ProfilerMarker gltfWriteBinaryStreamMarker = new ProfilerMarker("Write binary stream");
 
+		private static ProfilerMarker addAnimationDataMarker = new ProfilerMarker("Add animation data to glTF");
+		private static ProfilerMarker exportRotationAnimationDataMarker = new ProfilerMarker("Rotation Keyframes");
+		private static ProfilerMarker exportPositionAnimationDataMarker = new ProfilerMarker("Position Keyframes");
+		private static ProfilerMarker exportScaleAnimationDataMarker = new ProfilerMarker("Scale Keyframes");
+		private static ProfilerMarker exportWeightsAnimationDataMarker = new ProfilerMarker("Weights Keyframes");
+		private static ProfilerMarker removeAnimationUnneededKeyframesMarker = new ProfilerMarker("Simplify Keyframes");
+		private static ProfilerMarker removeAnimationUnneededKeyframesInitMarker = new ProfilerMarker("Init");
+		private static ProfilerMarker removeAnimationUnneededKeyframesCheckIdenticalMarker = new ProfilerMarker("Check Identical");
+		private static ProfilerMarker removeAnimationUnneededKeyframesCheckIdenticalKeepMarker = new ProfilerMarker("Keep Keyframe");
+		private static ProfilerMarker removeAnimationUnneededKeyframesFinalizeMarker = new ProfilerMarker("Finalize");
+
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
@@ -447,7 +458,7 @@ namespace UnityGLTF
 			Stream jsonStream = new MemoryStream();
 			_shouldUseInternalBufferForImages = true;
 
-			_bufferWriter = new BinaryWriter(binStream);
+			_bufferWriter = new FastBinaryWriter(binStream);
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
 			exportGltfInitMarker.End();
@@ -594,7 +605,7 @@ namespace UnityGLTF
 				Directory.CreateDirectory(dirName);
 
 			var binFile = File.Create(fullPath);
-			_bufferWriter = new CustomBinaryWriter(binFile);
+			_bufferWriter = new FastBinaryWriter(binFile);
 			exportGltfInitMarker.End();
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
@@ -1275,6 +1286,7 @@ namespace UnityGLTF
 			if (!meshObj)
 			{
 				Debug.LogWarning($"MeshFilter.sharedMesh on GameObject:{gameObject.name} is missing, skipping", gameObject);
+				exportPrimitiveMarker.End();
 				return null;
 			}
 
@@ -1300,6 +1312,7 @@ namespace UnityGLTF
 				else
 				{
 					Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
+					exportPrimitiveMarker.End();
 					return null;
 				}
 #endif
@@ -1309,6 +1322,7 @@ namespace UnityGLTF
 			if (Application.isPlaying && !MeshIsReadable(meshObj))
 			{
 				Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
+				exportPrimitiveMarker.End();
 				return null;
 			}
 
@@ -1318,6 +1332,7 @@ namespace UnityGLTF
 			if(!renderer && !smr)
 			{
 				Debug.LogWarning("GameObject does have neither renderer nor SkinnedMeshRenderer! " + gameObject.name, gameObject);
+				exportPrimitiveMarker.End();
 				return null;
 			}
 			var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
@@ -1328,6 +1343,7 @@ namespace UnityGLTF
 			if (vertices.Length < 1)
 			{
 				Debug.LogWarning("MeshFilter does not contain any vertices, won't export: " + gameObject.name, gameObject);
+				exportPrimitiveMarker.End();
 				return null;
 			}
 
@@ -2880,10 +2896,7 @@ namespace UnityGLTF
 			exportAccessorBufferWriteMarker.Begin();
 			accessor.ComponentType = GLTFComponentType.Float;
 
-			foreach (var v in arr)
-			{
-				_bufferWriter.Write((float)v);
-			}
+			_bufferWriter.Write(arr);
 			exportAccessorBufferWriteMarker.End();
 
 			accessor.Min = new List<double> { min };
@@ -3157,12 +3170,13 @@ namespace UnityGLTF
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
-			foreach (var vec in arr)
-			{
-				_bufferWriter.Write(vec.x);
-				_bufferWriter.Write(vec.y);
-				_bufferWriter.Write(vec.z);
-			}
+			_bufferWriter.Write(arr);
+			// foreach (var vec in arr)
+			// {
+			// 	_bufferWriter.Write(vec.x);
+			// 	_bufferWriter.Write(vec.y);
+			// 	_bufferWriter.Write(vec.z);
+			// }
 			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
@@ -3409,13 +3423,14 @@ namespace UnityGLTF
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
-			foreach (var vec in arr)
-			{
-				_bufferWriter.Write(vec.x);
-				_bufferWriter.Write(vec.y);
-				_bufferWriter.Write(vec.z);
-				_bufferWriter.Write(vec.w);
-			}
+			_bufferWriter.Write(arr);
+			// foreach (var vec in arr)
+			// {
+			// 	_bufferWriter.Write(vec.x);
+			// 	_bufferWriter.Write(vec.y);
+			// 	_bufferWriter.Write(vec.z);
+			// 	_bufferWriter.Write(vec.w);
+			// }
 			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
@@ -3429,7 +3444,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
-			exportAccessorVector4ArrayMarker.Begin();
+			exportAccessorVector4ArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -4568,10 +4583,13 @@ namespace UnityGLTF
 			Vector3[] scales = null,
 			float[] weights = null)
 		{
+			addAnimationDataMarker.Begin();
+
 			int channelTargetId = GetAnimationTargetIdFromTransform(target);
 			if (channelTargetId < 0)
 			{
 				Debug.LogWarning($"An animated transform seems to be {(settings.ExportDisabledGameObjects ? "missing" : "missing or disabled")}: {target.name} (InstanceID: {target.GetInstanceID()})", target);
+				addAnimationDataMarker.End();
 				return;
 			}
 
@@ -4581,6 +4599,8 @@ namespace UnityGLTF
 			// Translation
 			if(positions != null && positions.Length > 0)
 			{
+				exportPositionAnimationDataMarker.Begin();
+
 				AnimationChannel Tchannel = new AnimationChannel();
 				AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
 				TchannelTarget.Path = GLTFAnimationChannelPath.translation.ToString();
@@ -4608,11 +4628,15 @@ namespace UnityGLTF
 
 				if (settings.UseAnimationPointer)
 					ConvertToAnimationPointer(target, "translation", TchannelTarget);
+
+				exportPositionAnimationDataMarker.End();
 			}
 
 			// Rotation
 			if(rotations != null && rotations.Length > 0)
 			{
+				exportRotationAnimationDataMarker.Begin();
+
 				AnimationChannel Rchannel = new AnimationChannel();
 				AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
 				RchannelTarget.Path = GLTFAnimationChannelPath.rotation.ToString();
@@ -4640,11 +4664,15 @@ namespace UnityGLTF
 
 				if (settings.UseAnimationPointer)
 					ConvertToAnimationPointer(target, "rotation", RchannelTarget);
+
+				exportRotationAnimationDataMarker.End();
 			}
 
 			// Scale
 			if(scales != null && scales.Length > 0)
 			{
+				exportScaleAnimationDataMarker.Begin();
+
 				AnimationChannel Schannel = new AnimationChannel();
 				AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
 				SchannelTarget.Path = GLTFAnimationChannelPath.scale.ToString();
@@ -4672,10 +4700,14 @@ namespace UnityGLTF
 
 				if (settings.UseAnimationPointer)
 					ConvertToAnimationPointer(target, "scale", SchannelTarget);
+
+				exportScaleAnimationDataMarker.End();
 			}
 
 			if (weights != null && weights.Length > 0)
 			{
+				exportWeightsAnimationDataMarker.Begin();
+
 				// scale weights correctly if there are any
 				var skinnedMesh = target.GetComponent<SkinnedMeshRenderer>();
 				if (skinnedMesh)
@@ -4734,7 +4766,11 @@ namespace UnityGLTF
 
 				if (settings.UseAnimationPointer)
 					ConvertToAnimationPointer(target, "weights", WchannelTarget);
+
+				exportWeightsAnimationDataMarker.End();
 			}
+
+			addAnimationDataMarker.End();
 		}
 
 		private bool ArrayRangeEquals(float[] array, int sectionLength, int prevSectionStart, int sectionStart, int nextSectionStart)
@@ -4751,53 +4787,78 @@ namespace UnityGLTF
 
 		public void RemoveUnneededKeyframes(ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights, ref int weightCount)
 		{
+			removeAnimationUnneededKeyframesMarker.Begin();
+			removeAnimationUnneededKeyframesInitMarker.Begin();
+
 			var haveTranslationKeys = positions?.Any() ?? false;
 			var haveRotationKeys = rotations?.Any() ?? false;
 			var haveScaleKeys = scales?.Any() ?? false;
 			var haveWeightKeys = weights?.Any() ?? false;
 
 			// remove keys again where prev/next keyframe are identical
-			List<float> t2 = new List<float>();
-			List<Vector3> p2 = new List<Vector3>();
-			List<Vector3> s2 = new List<Vector3>();
-			List<Vector4> r2 = new List<Vector4>();
-			List<float> w2 = new List<float>();
+			List<float> t2 = new List<float>(times.Length);
+			List<Vector3> p2 = new List<Vector3>(times.Length);
+			List<Vector3> s2 = new List<Vector3>(times.Length);
+			List<Vector4> r2 = new List<Vector4>(times.Length);
+			List<float> w2 = new List<float>(times.Length);
+			var singleFrameWeights = new float[weightCount];
 
 			t2.Add(times[0]);
 			if (haveTranslationKeys) p2.Add(positions[0]);
 			if (haveRotationKeys) r2.Add(rotations[0]);
 			if (haveScaleKeys) s2.Add(scales[0]);
-			if (haveWeightKeys) w2.AddRange(weights.Take(weightCount));
+			if (haveWeightKeys)
+			{
+				Array.Copy(weights, 0, singleFrameWeights, 0, weightCount);
+				w2.AddRange(singleFrameWeights);
+			}
+
+			removeAnimationUnneededKeyframesInitMarker.End();
 
 			for (int i = 1; i < times.Length - 1; i++)
 			{
+				removeAnimationUnneededKeyframesCheckIdenticalMarker.Begin();
 				// check identical
 				bool isIdentical = true;
 				if (haveTranslationKeys)
 					isIdentical &= positions[i - 1] == positions[i] && positions[i] == positions[i + 1];
-				if(haveRotationKeys)
+				if (isIdentical && haveRotationKeys)
 					isIdentical &= rotations[i - 1] == rotations[i] && rotations[i] == rotations[i + 1];
-				if (haveScaleKeys)
+				if (isIdentical && haveScaleKeys)
 					isIdentical &= scales[i - 1] == scales[i] && scales[i] == scales[i + 1];
-				if (haveWeightKeys)
+				exportWeightsAnimationDataMarker.Begin();
+				if (isIdentical && haveWeightKeys)
 					isIdentical &= ArrayRangeEquals(weights, weightCount, (i - 1) * weightCount, i * weightCount, (i+1) * weightCount);
+				exportWeightsAnimationDataMarker.End();
 
-				if(!isIdentical)
+				if (!isIdentical)
 				{
+					removeAnimationUnneededKeyframesCheckIdenticalKeepMarker.Begin();
 					t2.Add(times[i]);
 					if (haveTranslationKeys) p2.Add(positions[i]);
 					if (haveRotationKeys) r2.Add(rotations[i]);
 					if (haveScaleKeys) s2.Add(scales[i]);
-					if (haveWeightKeys) w2.AddRange(weights.Skip((i-1) * weightCount).Take(weightCount));
+					exportWeightsAnimationDataMarker.Begin();
+					if (haveWeightKeys)
+					{
+						Array.Copy(weights, (i - 1) * weightCount, singleFrameWeights, 0, weightCount);
+						w2.AddRange(singleFrameWeights);
+					}
+					exportWeightsAnimationDataMarker.End();
+					removeAnimationUnneededKeyframesCheckIdenticalKeepMarker.End();
 				}
+				removeAnimationUnneededKeyframesCheckIdenticalMarker.End();
 			}
+
+			removeAnimationUnneededKeyframesFinalizeMarker.Begin();
+
 			var max = times.Length - 1;
 
 			t2.Add(times[max]);
 			if (haveTranslationKeys) p2.Add(positions[max]);
 			if (haveRotationKeys) r2.Add(rotations[max]);
 			if (haveScaleKeys) s2.Add(scales[max]);
-			if(haveWeightKeys) w2.AddRange(weights.Skip((max - 1) * weightCount).Take(weightCount));
+			if (haveWeightKeys) w2.AddRange(weights.Skip((max - 1) * weightCount).Take(weightCount));
 
 			// Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
 
@@ -4806,6 +4867,10 @@ namespace UnityGLTF
 			if (haveRotationKeys) rotations = r2.ToArray();
 			if (haveScaleKeys) scales = s2.ToArray();
 			if (haveWeightKeys) weights = w2.ToArray();
+
+			removeAnimationUnneededKeyframesFinalizeMarker.End();
+
+			removeAnimationUnneededKeyframesMarker.End();
 		}
 
 		private UnityEngine.Mesh GetMeshFromGameObject(GameObject gameObject)
@@ -5147,15 +5212,17 @@ namespace UnityGLTF
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
-			foreach (var vec in arr)
-			{
-				Vector4 vect = switchHandedness ? vec.switchHandedness() : vec;
-				vect = vect.normalized;
-				_bufferWriter.Write(vect.x);
-				_bufferWriter.Write(vect.y);
-				_bufferWriter.Write(vect.z);
-				_bufferWriter.Write(vect.w);
-			}
+
+			_bufferWriter.WriteNormalizedSwitchHandedness(arr);
+			// foreach (var vec in arr)
+			// {
+			// 	Vector4 vect = switchHandedness ? vec.switchHandedness() : vec;
+			// 	vect = vect.normalized;
+			// 	_bufferWriter.Write(vect.x);
+			// 	_bufferWriter.Write(vect.y);
+			// 	_bufferWriter.Write(vect.z);
+			// 	_bufferWriter.Write(vect.w);
+			// }
 			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);

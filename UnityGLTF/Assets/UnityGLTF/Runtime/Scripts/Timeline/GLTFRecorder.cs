@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using GLTF.Schema;
+using Unity.Profiling;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -26,7 +27,7 @@ namespace UnityGLTF.Timeline
 		}
 
 		private Transform root;
-		private Dictionary<Transform, AnimationData> data = new Dictionary<Transform, AnimationData>();
+		private Dictionary<Transform, AnimationData> data = new Dictionary<Transform, AnimationData>(64);
 		private double startTime;
 		private double lastRecordedTime;
 		private bool isRecording;
@@ -40,13 +41,14 @@ namespace UnityGLTF.Timeline
 		internal class AnimationData
 		{
 			private Transform tr;
+			private SkinnedMeshRenderer smr;
 			private bool recordBlendShapes;
 			private bool inWorldSpace = false;
 			private bool recordAnimationPointer;
 
 #if USE_REGULAR_ANIMATION
 			public FrameData lastData;
-			public Dictionary<double, FrameData> keys = new Dictionary<double, FrameData>();
+			public Dictionary<double, FrameData> keys = new Dictionary<double, FrameData>(1024);
 			private bool skippedLastFrame = false;
 			private double skippedTime;
 #endif
@@ -82,11 +84,12 @@ namespace UnityGLTF.Timeline
 			public AnimationData(Transform tr, double time, bool zeroScale = false, bool recordBlendShapes = true, bool inWorldSpace = false, bool recordAnimationPointer = false)
 			{
 				this.tr = tr;
+				this.smr = tr.GetComponent<SkinnedMeshRenderer>();
 				this.recordBlendShapes = recordBlendShapes;
 				this.inWorldSpace = inWorldSpace;
 				this.recordAnimationPointer = recordAnimationPointer;
 #if USE_REGULAR_ANIMATION
-				keys.Add(time, new FrameData(tr, zeroScale, this.recordBlendShapes, this.inWorldSpace));
+				keys.Add(time, new FrameData(tr, smr, zeroScale, this.recordBlendShapes, this.inWorldSpace));
 #endif
 
 #if USE_ANIMATION_POINTER
@@ -207,7 +210,7 @@ namespace UnityGLTF.Timeline
 #endif
 
 #if USE_REGULAR_ANIMATION
-				var newTr = new FrameData(tr, !tr.gameObject.activeSelf, recordBlendShapes, inWorldSpace);
+				var newTr = new FrameData(tr, smr, !tr.gameObject.activeSelf, recordBlendShapes, inWorldSpace);
 				if (newTr.Equals(lastData))
 				{
 					skippedLastFrame = true;
@@ -341,10 +344,14 @@ namespace UnityGLTF.Timeline
 				gltfRoot.Animations.Add(anim);
 		}
 
+		private static ProfilerMarker processAnimationMarker = new ProfilerMarker("Process Animation");
+		private static ProfilerMarker simplifyKeyframesMarker = new ProfilerMarker("Simplify Keyframes");
+		private static ProfilerMarker convertValuesMarker = new ProfilerMarker("Convert Values to Arrays");
 		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, GLTFAnimation anim)
 		{
 			foreach (var kvp in data)
 			{
+				processAnimationMarker.Begin();
 #if USE_ANIMATION_POINTER
 				if (recordAnimationPointer)
 				{
@@ -360,7 +367,11 @@ namespace UnityGLTF.Timeline
 #endif
 
 #if USE_REGULAR_ANIMATION
-				if (kvp.Value.keys.Count < 1) continue;
+				if (kvp.Value.keys.Count < 1)
+				{
+					processAnimationMarker.End();
+					continue;
+				}
 
 				var times = kvp.Value.keys.Keys.Select(x => (float)x).ToArray();
 				var values = kvp.Value.keys.Values.ToArray();
@@ -376,9 +387,12 @@ namespace UnityGLTF.Timeline
 				}
 
 				gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
+
 				// no need to add single-keyframe tracks, that's recorded as base data anyways
 				if (times.Length > 1)
 					gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
+
+				processAnimationMarker.End();
 #endif
 			}
 		}
@@ -392,7 +406,7 @@ namespace UnityGLTF.Timeline
 			public readonly Vector3 scale;
 			public readonly float[] weights;
 
-			public FrameData(Transform tr, bool zeroScale, bool recordBlendShapes, bool inWorldSpace)
+			public FrameData(Transform tr, SkinnedMeshRenderer smr, bool zeroScale, bool recordBlendShapes, bool inWorldSpace)
 			{
 				if (!inWorldSpace)
 				{
@@ -409,14 +423,13 @@ namespace UnityGLTF.Timeline
 
 				if (recordBlendShapes)
 				{
-					var skinnedMesh = tr.GetComponent<SkinnedMeshRenderer>();
-					if (skinnedMesh && skinnedMesh.sharedMesh && skinnedMesh.sharedMesh.blendShapeCount > 0)
+					if (smr && smr.sharedMesh && smr.sharedMesh.blendShapeCount > 0)
 					{
-						var mesh = skinnedMesh.sharedMesh;
+						var mesh = smr.sharedMesh;
 						var blendShapeCount = mesh.blendShapeCount;
 						weights = new float[blendShapeCount];
 						for (var i = 0; i < blendShapeCount; i++)
-							weights[i] = skinnedMesh.GetBlendShapeWeight(i);
+							weights[i] = smr.GetBlendShapeWeight(i);
 					}
 					else
 					{
@@ -473,7 +486,8 @@ namespace UnityGLTF.Timeline
 
 			public void LogAndClear()
 			{
-				Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}", sb.ToString());
+				if(sb.Length > 0)
+					Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Export Messages:\n{0}", sb.ToString());
 				sb.Clear();
 			}
 		}

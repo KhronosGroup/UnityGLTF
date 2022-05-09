@@ -467,12 +467,12 @@ namespace UnityGLTF.Extensions
 		public static UnityEngine.Vector3[] ConvertVector3CoordinateSpaceAndCopy(Vector3[] array, GLTF.Math.Vector3 coordinateSpaceCoordinateScale)
 		{
 			var returnArray = new UnityEngine.Vector3[array.Length];
+			var coordinateScale = coordinateSpaceCoordinateScale.ToUnityVector3Raw();
 
 			for (int i = 0; i < array.Length; i++)
 			{
-				returnArray[i].x = array[i].x * coordinateSpaceCoordinateScale.X;
-				returnArray[i].y = array[i].y * coordinateSpaceCoordinateScale.Y;
-				returnArray[i].z = array[i].z * coordinateSpaceCoordinateScale.Z;
+				returnArray[i] = array[i];
+				returnArray[i].Scale(coordinateScale);
 			}
 
 			return returnArray;
@@ -503,13 +503,12 @@ namespace UnityGLTF.Extensions
 		public static Vector4[] ConvertVector4CoordinateSpaceAndCopy(Vector4[] array, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
 		{
 			var returnArray = new Vector4[array.Length];
+			var coordinateScale = coordinateSpaceCoordinateScale.ToUnityVector4Raw();
 
 			for (var i = 0; i < array.Length; i++)
 			{
-				returnArray[i].x = array[i].x * coordinateSpaceCoordinateScale.X;
-				returnArray[i].y = array[i].y * coordinateSpaceCoordinateScale.Y;
-				returnArray[i].z = array[i].z * coordinateSpaceCoordinateScale.Z;
-				returnArray[i].w = array[i].w * coordinateSpaceCoordinateScale.W;
+				returnArray[i] = array[i];
+				returnArray[i].Scale(coordinateScale);
 			}
 
 			return returnArray;
