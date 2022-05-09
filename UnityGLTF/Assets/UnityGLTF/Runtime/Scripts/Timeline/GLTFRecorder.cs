@@ -487,7 +487,11 @@ namespace UnityGLTF.Timeline
 			public void LogAndClear()
 			{
 				if(sb.Length > 0)
+#if UNITY_2019_1_OR_NEWER
 					Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Export Messages:\n{0}", sb.ToString());
+#else
+					Debug.Log(string.Format("Export Messages:\n{0}", sb.ToString()));
+#endif
 				sb.Clear();
 			}
 		}
