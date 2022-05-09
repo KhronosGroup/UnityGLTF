@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.6.1-pre.3] - 2022-05-10
+- feat: allow replacing logger for GLTFSceneExporter with a custom one, allows to reduce number of logs
+- feat: added more ProfilerMarkers
+- removed: removed submodules from repository to make usage as submodule in other projects easier
+- fixed: bad performance in GLTFRecorder when recording lots of animation and/or Blendshape weights
+- fixed: some mismatched ProfilerMarker.Begin/End calls
+- fixed: less allocations when writing accessors
+
 ## [1.6.1-pre.2] - 2022-05-06
 - feat: allow recording root object in worldspace in GLTFRecorder
 
