@@ -350,6 +350,8 @@ namespace UnityGLTF
 			_exportOptions = options;
 			if (options.logger != null)
 				Debug = options.logger;
+			else
+				Debug = UnityEngine.Debug.unityLogger;
 
 			_exportLayerMask = _exportOptions.ExportLayers;
 
