@@ -2802,6 +2802,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessor(float[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			uint count = (uint)arr.Length;
 
 			if (count == 0)
@@ -2853,6 +2855,8 @@ namespace UnityGLTF
 				Root = _root
 			};
 			_root.Accessors.Add(accessor);
+
+			exportAccessorMarker.End();
 
 			return id;
 		}
@@ -4902,6 +4906,8 @@ namespace UnityGLTF
 
 		private AccessorId ExportAccessorUint(Vector4[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			var count = (uint)arr.Length;
 
 			if (count == 0)
@@ -4986,12 +4992,16 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
 		// This is used for Quaternions / Rotations
 		private AccessorId ExportAccessor(Vector4[] arr, bool switchHandedness = false)
 		{
+			exportAccessorMarker.Begin();
+
 			var count = (uint)arr.Length;
 
 			if (count == 0)
@@ -5083,11 +5093,15 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMarker.End();
+
 			return id;
 		}
 
 		private AccessorId ExportAccessor(Matrix4x4[] arr)
 		{
+			exportAccessorMarker.Begin();
+
 			var count = (uint)arr.Length;
 
 			if (count == 0)
@@ -5128,6 +5142,8 @@ namespace UnityGLTF
 				Root = _root
 			};
 			_root.Accessors.Add(accessor);
+
+			exportAccessorMarker.End();
 
 			return id;
 		}
