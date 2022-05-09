@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace UnityGLTF.Extensions
@@ -6,6 +7,7 @@ namespace UnityGLTF.Extensions
 	public class KHR_animation_pointer_Resolver
 	{
 		private readonly List<KHR_animation_pointer> registered = new List<KHR_animation_pointer>();
+		private static readonly ProfilerMarker animationPointerResolverMarker = new ProfilerMarker("Resolve Animation Pointer");
 
 		public void Add(KHR_animation_pointer anim)
 		{
@@ -34,6 +36,7 @@ namespace UnityGLTF.Extensions
 		{
 			foreach (var reg in registered)
 			{
+				animationPointerResolverMarker.Begin();
 				switch (reg.animatedObject)
 				{
 					case Light light:
@@ -52,6 +55,7 @@ namespace UnityGLTF.Extensions
 						reg.path = "/materials/" + exporter.GetAnimationTargetIdFromMaterial(mat) + "/" + reg.propertyBinding;
 						break;
 				}
+				animationPointerResolverMarker.End();
 			}
 		}
 	}

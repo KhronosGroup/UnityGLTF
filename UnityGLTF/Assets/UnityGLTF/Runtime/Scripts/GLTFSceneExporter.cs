@@ -279,7 +279,7 @@ namespace UnityGLTF
 		private static ProfilerMarker exportMeshMarker = new ProfilerMarker("Export Mesh");
 		private static ProfilerMarker exportPrimitiveMarker = new ProfilerMarker("Export Primitive");
 		private static ProfilerMarker exportBlendShapeMarker = new ProfilerMarker("Export BlendShape");
-		private static ProfilerMarker exportAccessorMarker = new ProfilerMarker("Export Accessor");
+		private static ProfilerMarker exportSkinFromNodeMarker = new ProfilerMarker("Export Skin");
 		private static ProfilerMarker exportSparseAccessorMarker = new ProfilerMarker("Export Sparse Accessor");
 		private static ProfilerMarker exportNodeMarker = new ProfilerMarker("Export Node");
 		private static ProfilerMarker afterNodeExportMarker = new ProfilerMarker("After Node Export (Callback)");
@@ -291,6 +291,27 @@ namespace UnityGLTF
 		private static ProfilerMarker exportMaterialMarker = new ProfilerMarker("Export Material");
 		private static ProfilerMarker beforeMaterialExportMarker = new ProfilerMarker("Before Material Export (Callback)");
 		private static ProfilerMarker writeImageToDiskMarker = new ProfilerMarker("Export Image - Write to Disk");
+		private static ProfilerMarker afterSceneExportMarker = new ProfilerMarker("After Scene Export (Callback)");
+
+		private static ProfilerMarker exportAccessorMarker = new ProfilerMarker("Export Accessor");
+		private static ProfilerMarker exportAccessorMatrix4x4ArrayMarker = new ProfilerMarker("Matrix4x4[]");
+		private static ProfilerMarker exportAccessorVector4ArrayMarker = new ProfilerMarker("Vector4[]");
+		private static ProfilerMarker exportAccessorUintArrayMarker = new ProfilerMarker("Uint[]");
+		private static ProfilerMarker exportAccessorColorArrayMarker = new ProfilerMarker("Color[]");
+		private static ProfilerMarker exportAccessorVector3ArrayMarker = new ProfilerMarker("Vector3[]");
+		private static ProfilerMarker exportAccessorVector2ArrayMarker = new ProfilerMarker("Vector2[]");
+		private static ProfilerMarker exportAccessorIntArrayIndicesMarker = new ProfilerMarker("int[] (Indices)");
+		private static ProfilerMarker exportAccessorIntArrayMarker = new ProfilerMarker("int[]");
+		private static ProfilerMarker exportAccessorFloatArrayMarker = new ProfilerMarker("float[]");
+		private static ProfilerMarker exportAccessorByteArrayMarker = new ProfilerMarker("byte[]");
+
+		private static ProfilerMarker exportAccessorMinMaxMarker = new ProfilerMarker("Calculate min/max");
+		private static ProfilerMarker exportAccessorBufferWriteMarker = new ProfilerMarker("Buffer.Write");
+
+		private static ProfilerMarker exportGltfInitMarker = new ProfilerMarker("Init glTF Export");
+		private static ProfilerMarker gltfWriteOutMarker = new ProfilerMarker("Write glTF");
+		private static ProfilerMarker gltfWriteJsonStreamMarker = new ProfilerMarker("Write JSON stream");
+		private static ProfilerMarker gltfWriteBinaryStreamMarker = new ProfilerMarker("Write binary stream");
 
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
@@ -421,6 +442,7 @@ namespace UnityGLTF
 		{
 			exportGltfMarker.Begin();
 
+			exportGltfInitMarker.Begin();
 			Stream binStream = new MemoryStream();
 			Stream jsonStream = new MemoryStream();
 			_shouldUseInternalBufferForImages = true;
@@ -428,6 +450,7 @@ namespace UnityGLTF
 			_bufferWriter = new BinaryWriter(binStream);
 
 			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
+			exportGltfInitMarker.End();
 
 			beforeSceneExportMarker.Begin();
 			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
@@ -448,11 +471,13 @@ namespace UnityGLTF
 				ExportSkinFromNode(t);
 			}
 
+			afterSceneExportMarker.Begin();
 			if (_exportOptions.AfterSceneExport != null)
 				_exportOptions.AfterSceneExport(this, _root);
 
 			if (AfterSceneExport != null)
 				AfterSceneExport.Invoke(this, _root);
+			afterSceneExportMarker.End();
 
 			animationPointerResolver?.Resolve(this);
 
@@ -462,6 +487,7 @@ namespace UnityGLTF
 			_root.Serialize(jsonWriter, true);
 			gltfSerializationMarker.End();
 
+			gltfWriteOutMarker.Begin();
 			_bufferWriter.Flush();
 			jsonWriter.Flush();
 
@@ -479,21 +505,26 @@ namespace UnityGLTF
 			writer.Write(Version);
 			writer.Write(glbLength);
 
+			gltfWriteJsonStreamMarker.Begin();
 			// write JSON chunk header.
 			writer.Write((int)jsonStream.Length);
 			writer.Write(MagicJson);
 
 			jsonStream.Position = 0;
 			CopyStream(jsonStream, writer);
+			gltfWriteJsonStreamMarker.End();
 
+			gltfWriteBinaryStreamMarker.Begin();
 			writer.Write((int)binStream.Length);
 			writer.Write(MagicBin);
 
 			binStream.Position = 0;
 			CopyStream(binStream, writer);
+			gltfWriteBinaryStreamMarker.End();
 
 			writer.Flush();
 
+			gltfWriteOutMarker.End();
 			exportGltfMarker.End();
 		}
 
@@ -555,6 +586,7 @@ namespace UnityGLTF
 		{
 			exportGltfMarker.Begin();
 
+			exportGltfInitMarker.Begin();
 			_shouldUseInternalBufferForImages = false;
 			var fullPath = GetFileName(path, fileName, ".bin");
 			var dirName = Path.GetDirectoryName(fullPath);
@@ -562,13 +594,8 @@ namespace UnityGLTF
 				Directory.CreateDirectory(dirName);
 
 			var binFile = File.Create(fullPath);
-			_bufferWriter = new BinaryWriter(binFile);
-
-			// rotate 180°
-			if(_rootTransforms.Length > 1)
-				Debug.Log(LogType.Warning, "Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
-			// foreach(var t in _rootTransforms)
-			// 	t.rotation *= Quaternion.Euler(0,180,0);
+			_bufferWriter = new CustomBinaryWriter(binFile);
+			exportGltfInitMarker.End();
 
 			_root.Scene = ExportScene(fileName, _rootTransforms);
 
@@ -586,11 +613,13 @@ namespace UnityGLTF
 				// updateProgress(EXPORT_STEP.SKINNING, i, _skinnedNodes.Count);
 			}
 
+			afterSceneExportMarker.Begin();
 			if (_exportOptions.AfterSceneExport != null)
 				_exportOptions.AfterSceneExport(this, _root);
 
 			if (AfterSceneExport != null)
 				AfterSceneExport.Invoke(this, _root);
+			afterSceneExportMarker.End();
 
 			animationPointerResolver?.Resolve(this);
 
@@ -603,6 +632,7 @@ namespace UnityGLTF
 			_root.Serialize(gltfFile);
 			gltfSerializationMarker.End();
 
+			gltfWriteOutMarker.Begin();
 #if WINDOWS_UWP
 			gltfFile.Dispose();
 			binFile.Dispose();
@@ -611,6 +641,7 @@ namespace UnityGLTF
 			binFile.Close();
 #endif
 			ExportImages(path);
+			gltfWriteOutMarker.End();
 
 			exportGltfMarker.End();
 		}
@@ -2748,6 +2779,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(byte[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorByteArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -2801,15 +2833,16 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorByteArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
 		}
 
-
 		private AccessorId ExportAccessor(float[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorFloatArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -2822,6 +2855,7 @@ namespace UnityGLTF
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.SCALAR;
 
+			exportAccessorMinMaxMarker.Begin();
 			var min = arr[0];
 			var max = arr[0];
 
@@ -2838,16 +2872,19 @@ namespace UnityGLTF
 					max = cur;
 				}
 			}
+			exportAccessorMinMaxMarker.End();
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, sizeof(float));
 
+			exportAccessorBufferWriteMarker.Begin();
 			accessor.ComponentType = GLTFComponentType.Float;
 
 			foreach (var v in arr)
 			{
 				_bufferWriter.Write((float)v);
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			accessor.Min = new List<double> { min };
 			accessor.Max = new List<double> { max };
@@ -2863,6 +2900,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorFloatArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -2871,6 +2909,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(int[] arr, bool isIndices = false)
 		{
 			exportAccessorMarker.Begin();
+			if (isIndices) exportAccessorIntArrayIndicesMarker.Begin(); else exportAccessorIntArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -2978,6 +3017,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			if (isIndices) exportAccessorIntArrayIndicesMarker.End(); else exportAccessorIntArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -2986,6 +3026,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(Vector2[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorVector2ArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -3049,6 +3090,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorVector2ArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -3057,6 +3099,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(Vector3[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorVector3ArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -3113,12 +3156,14 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
+			exportAccessorBufferWriteMarker.Begin();
 			foreach (var vec in arr)
 			{
 				_bufferWriter.Write(vec.x);
 				_bufferWriter.Write(vec.y);
 				_bufferWriter.Write(vec.z);
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
@@ -3131,6 +3176,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorVector3ArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -3262,6 +3308,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
+			exportAccessorBufferWriteMarker.Begin();
 			foreach (var i in indices)
 			{
 				var vec = arr[i];
@@ -3269,6 +3316,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(vec.y);
 				_bufferWriter.Write(vec.z);
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
@@ -3293,6 +3341,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(Vector4[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorVector4ArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -3359,6 +3408,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
+			exportAccessorBufferWriteMarker.Begin();
 			foreach (var vec in arr)
 			{
 				_bufferWriter.Write(vec.x);
@@ -3366,6 +3416,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(vec.z);
 				_bufferWriter.Write(vec.w);
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
@@ -3378,6 +3429,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorVector4ArrayMarker.Begin();
 			exportAccessorMarker.End();
 
 			return id;
@@ -3386,6 +3438,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(Color[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorColorArrayMarker.Begin();
 
 			uint count = (uint)arr.Length;
 
@@ -3471,6 +3524,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorColorArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -4799,6 +4853,8 @@ namespace UnityGLTF
 
 		private void ExportSkinFromNode(Transform transform)
 		{
+			exportSkinFromNodeMarker.Begin();
+
 			PrimKey key = new PrimKey();
 			UnityEngine.Mesh mesh = GetMeshFromGameObject(transform.gameObject);
 			key.Mesh = mesh;
@@ -4807,6 +4863,7 @@ namespace UnityGLTF
 			if (!_primOwner.TryGetValue(key, out val))
 			{
 				Debug.Log("No mesh found for skin on " + transform, transform);
+				exportSkinFromNodeMarker.End();
 				return;
 			}
 			SkinnedMeshRenderer skin = transform.GetComponent<SkinnedMeshRenderer>();
@@ -4814,7 +4871,10 @@ namespace UnityGLTF
 
 			// early out of this SkinnedMeshRenderer has no bones assigned (could be BlendShapes-only)
 			if (skin.bones == null || skin.bones.Length == 0)
+			{
+				exportSkinFromNodeMarker.End();
 				return;
+			}
 
 			bool allBoneTransformNodesHaveBeenExported = true;
 			for (int i = 0; i < skin.bones.Length; ++i)
@@ -4835,6 +4895,7 @@ namespace UnityGLTF
 			if (!allBoneTransformNodesHaveBeenExported)
 			{
 				Debug.LogWarning("Not all bones for SkinnedMeshRenderer " + transform + " were exported. Skin information will be skipped. Make sure the bones are active and enabled if you want to export them.", transform);
+				exportSkinFromNodeMarker.End();
 				return;
 			}
 
@@ -4859,7 +4920,6 @@ namespace UnityGLTF
 
 			Vector4[] bones = boneWeightToBoneVec4(mesh.boneWeights);
 			Vector4[] weights = boneWeightToWeightVec4(mesh.boneWeights);
-
 
 			if(val != null)
 			{
@@ -4887,6 +4947,8 @@ namespace UnityGLTF
 
 			_root.Nodes[_exportedTransforms[transform.GetInstanceID()]].Skin = new SkinId() { Id = _root.Skins.Count, Root = _root };
 			_root.Skins.Add(gltfSkin);
+
+			exportSkinFromNodeMarker.End();
 		}
 
 		private Vector4[] boneWeightToBoneVec4(BoneWeight[] bw)
@@ -4914,6 +4976,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessorUint(Vector4[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorUintArrayMarker.Begin();
 
 			var count = (uint)arr.Length;
 
@@ -4980,6 +5043,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
+			exportAccessorBufferWriteMarker.Begin();
 			foreach (var vec in arr)
 			{
 				_bufferWriter.Write((ushort)vec.x);
@@ -4987,6 +5051,7 @@ namespace UnityGLTF
 				_bufferWriter.Write((ushort)vec.z);
 				_bufferWriter.Write((ushort)vec.w);
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
@@ -4999,6 +5064,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorUintArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -5008,6 +5074,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(Vector4[] arr, bool switchHandedness = false)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorVector4ArrayMarker.Begin();
 
 			var count = (uint)arr.Length;
 
@@ -5079,6 +5146,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
+			exportAccessorBufferWriteMarker.Begin();
 			foreach (var vec in arr)
 			{
 				Vector4 vect = switchHandedness ? vec.switchHandedness() : vec;
@@ -5088,6 +5156,7 @@ namespace UnityGLTF
 				_bufferWriter.Write(vect.z);
 				_bufferWriter.Write(vect.w);
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
@@ -5100,6 +5169,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorVector4ArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
@@ -5108,6 +5178,7 @@ namespace UnityGLTF
 		private AccessorId ExportAccessor(Matrix4x4[] arr)
 		{
 			exportAccessorMarker.Begin();
+			exportAccessorMatrix4x4ArrayMarker.Begin();
 
 			var count = (uint)arr.Length;
 
@@ -5126,6 +5197,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
+			exportAccessorBufferWriteMarker.Begin();
 			foreach (var mat in arr)
 			{
 				var m = SchemaExtensions.ToGltfMatrix4x4Convert(mat);
@@ -5138,6 +5210,7 @@ namespace UnityGLTF
 					_bufferWriter.Write(col.W);
 				}
 			}
+			exportAccessorBufferWriteMarker.End();
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 
@@ -5150,6 +5223,7 @@ namespace UnityGLTF
 			};
 			_root.Accessors.Add(accessor);
 
+			exportAccessorMatrix4x4ArrayMarker.End();
 			exportAccessorMarker.End();
 
 			return id;
