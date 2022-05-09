@@ -39,6 +39,7 @@ namespace UnityGLTF
 		public bool TreatEmptyRootAsScene = false;
 		public bool MergeClipsWithMatchingNames = false;
 		public LayerMask ExportLayers = -1;
+		public ILogger logger;
 
 		public ExportOptions()
 		{
@@ -75,6 +76,8 @@ namespace UnityGLTF
 		/// <returns>True: material export is complete. False: continue regular export.</returns>
 		public static event BeforeMaterialExportDelegate BeforeMaterialExport;
 		public static event AfterMaterialExportDelegate AfterMaterialExport;
+
+		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
 		internal readonly List<IJsonPointerResolver> pointerResolvers = new List<IJsonPointerResolver>();
 		public void RegisterResolver(IJsonPointerResolver resolver)
@@ -303,9 +306,13 @@ namespace UnityGLTF
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
 		/// <param name="rootTransforms">Root transform of object to export</param>
+		/// <param name="options">Export Settings</param>
 		public GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options)
 		{
 			_exportOptions = options;
+			if (options.logger != null)
+				Debug = options.logger;
+
 			_exportLayerMask = _exportOptions.ExportLayers;
 
 			var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
@@ -559,7 +566,7 @@ namespace UnityGLTF
 
 			// rotate 180°
 			if(_rootTransforms.Length > 1)
-				Debug.LogWarning("Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
+				Debug.Log(LogType.Warning, "Exporting multiple selected objects will most likely fail with the current rotation flip to match USDZ behaviour. Make sure to select a single root transform before export.");
 			// foreach(var t in _rootTransforms)
 			// 	t.rotation *= Quaternion.Euler(0,180,0);
 
@@ -1261,7 +1268,7 @@ namespace UnityGLTF
 #if UNITY_2019_3_OR_NEWER
 				else
 				{
-					Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping");
+					Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
 					return null;
 				}
 #endif
@@ -1270,7 +1277,7 @@ namespace UnityGLTF
 
 			if (Application.isPlaying && !MeshIsReadable(meshObj))
 			{
-				Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping");
+				Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
 				return null;
 			}
 
@@ -1569,7 +1576,7 @@ namespace UnityGLTF
 						}
 						else
 						{
-							Debug.LogErrorFormat("Can't export a {0} emissive texture in material {1}", emissionTex.GetType(), materialObj.name);
+							Debug.LogFormat(LogType.Error, "Can't export a {0} emissive texture in material {1}", emissionTex.GetType(), materialObj.name);
 						}
 
 					}
@@ -1591,7 +1598,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Debug.LogErrorFormat("Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+						Debug.LogFormat(LogType.Error, "Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
 					}
 				}
 			}
@@ -1608,7 +1615,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Debug.LogErrorFormat("Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+						Debug.LogFormat(LogType.Error, "Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
 					}
 				}
 			}
@@ -1625,7 +1632,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Debug.LogErrorFormat("Can't export a {0} occlusion texture in material {1}", occTex.GetType(), materialObj.name);
+						Debug.LogFormat(LogType.Error, "Can't export a {0} occlusion texture in material {1}", occTex.GetType(), materialObj.name);
 					}
 				}
 			}
@@ -2684,7 +2691,7 @@ namespace UnityGLTF
 					sampler.WrapT = WrapMode.MirroredRepeat;
 					break;
 				default:
-					Debug.LogWarning("Unsupported Texture.wrapMode: " + texture.wrapMode);
+					Debug.LogWarning("Unsupported Texture.wrapMode: " + texture.wrapMode, texture);
 					sampler.WrapS = WrapMode.Repeat;
 					sampler.WrapT = WrapMode.Repeat;
 					break;
@@ -2713,7 +2720,7 @@ namespace UnityGLTF
 						sampler.MagFilter = MagFilterMode.Linear;
 						break;
 					default:
-						Debug.LogWarning("Unsupported Texture.filterMode: " + texture.filterMode);
+						Debug.LogWarning("Unsupported Texture.filterMode: " + texture.filterMode, texture);
 						sampler.MinFilter = MinFilterMode.LinearMipmapLinear;
 						sampler.MagFilter = MagFilterMode.Linear;
 						break;
@@ -4002,7 +4009,7 @@ namespace UnityGLTF
 			}
 			else
 			{
-				Debug.LogError("Only baked animation is supported for now. Skipping animation");
+				Debug.LogError("Only baked animation is supported for now. Skipping animation", null);
 			}
 
 			convertClipToGLTFAnimationMarker.End();
@@ -4180,7 +4187,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Debug.LogError("Property is not handled: " + prop.propertyName + ", " + prop.propertyType);
+						Debug.LogError("Property is not handled: " + prop.propertyName + ", " + prop.propertyType, null);
 						return false;
 					}
 				}
@@ -4204,7 +4211,7 @@ namespace UnityGLTF
 			{
 				if(curveSet.scaleCurves.Length < 3)
 				{
-					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now");
+					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now", null);
 					return false;
 				}
 				bool anyIsNull = false;
@@ -4213,7 +4220,7 @@ namespace UnityGLTF
 
 				if (anyIsNull)
 				{
-					Debug.LogWarning("A scale curve has at least one null property curve! Ignoring");
+					Debug.LogWarning("A scale curve has at least one null property curve! Ignoring", null);
 					haveScaleKeys = false;
 				}
 			}
@@ -4229,7 +4236,7 @@ namespace UnityGLTF
 
 				if (anyIsNull)
 				{
-					Debug.LogWarning("A rotation curve has at least one null property curve! Ignoring");
+					Debug.LogWarning("A rotation curve has at least one null property curve! Ignoring", null);
 					haveRotationKeys = false;
 				}
 			}
@@ -4316,7 +4323,7 @@ namespace UnityGLTF
 		{
 			if (!settings.UseAnimationPointer)
 			{
-				Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer");
+				Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer", animatedObject);
 				return;
 			}
 			if (values.Length <= 0) return;
@@ -4510,7 +4517,7 @@ namespace UnityGLTF
 			int channelTargetId = GetAnimationTargetIdFromTransform(target);
 			if (channelTargetId < 0)
 			{
-				Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
+				Debug.LogWarning($"An animated transform seems to be {(settings.ExportDisabledGameObjects ? "missing" : "missing or disabled")}: {target.name} (InstanceID: {target.GetInstanceID()})", target);
 				return;
 			}
 
