@@ -4593,6 +4593,7 @@ namespace UnityGLTF
 
 			target.Path = "pointer";
 			target.AddExtension(KHR_animation_pointer.EXTENSION_NAME, ext);
+			DeclareExtensionUsage(KHR_animation_pointer.EXTENSION_NAME, false);
 		}
 
 		public void AddAnimationData(
