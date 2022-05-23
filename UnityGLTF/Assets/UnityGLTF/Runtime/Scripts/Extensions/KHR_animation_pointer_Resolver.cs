@@ -34,16 +34,21 @@ namespace UnityGLTF.Extensions
 
 		public void Resolve(GLTFSceneExporter exporter)
 		{
+			var toRemove = new List<KHR_animation_pointer>();
 			foreach (var reg in registered)
 			{
 				animationPointerResolverMarker.Begin();
+				int id = exporter.GetAnimationTargetId(reg.animatedObject);
 				switch (reg.animatedObject)
 				{
 					case Light light:
-						reg.path = "/extensions/KHR_lights_punctual/lights/" + "0" + "/" + reg.propertyBinding;
+						reg.path = "/extensions/KHR_lights_punctual/lights/" + id + "/" + reg.propertyBinding;
+						break;
+					case Camera camera:
+						reg.path = "/cameras/" + id + "/" + reg.propertyBinding;
 						break;
 					case Component comp:
-						reg.path = "/nodes/" + exporter.GetAnimationTargetIdFromTransform(comp.transform) + "/" + reg.propertyBinding;
+						reg.path = "/nodes/" + id + "/" + reg.propertyBinding;
 						var componentPath = reg.path;
 						foreach (var res in exporter.pointerResolvers)
 						{
@@ -52,9 +57,10 @@ namespace UnityGLTF.Extensions
 						}
 						break;
 					case Material mat:
-						reg.path = "/materials/" + exporter.GetAnimationTargetIdFromMaterial(mat) + "/" + reg.propertyBinding;
+						reg.path = "/materials/" + id + "/" + reg.propertyBinding;
 						break;
 				}
+
 				animationPointerResolverMarker.End();
 			}
 		}

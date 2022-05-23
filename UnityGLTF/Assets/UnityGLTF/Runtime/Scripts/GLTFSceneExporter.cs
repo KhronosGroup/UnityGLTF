@@ -137,6 +137,8 @@ namespace UnityGLTF
 		private List<AnimationClip> _animationClips;
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
+		private Dictionary<int, int> _exportedCameras;
+		private Dictionary<int, int> _exportedLights;
 		private List<Transform> _animatedNodes;
 		private List<Transform> _skinnedNodes;
 		private Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh> _bakedMeshes;
@@ -364,6 +366,8 @@ namespace UnityGLTF
 			_rootTransforms = rootTransforms;
 
 			_exportedTransforms = new Dictionary<int, int>();
+			_exportedCameras = new Dictionary<int, int>();
+			_exportedLights = new Dictionary<int, int>();
 			_animatedNodes = new List<Transform>();
 			_skinnedNodes = new List<Transform>();
 			_bakedMeshes = new Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh>();
@@ -1043,6 +1047,8 @@ namespace UnityGLTF
 				Root = _root
 			};
 
+			// Register nodes for animation parsing (could be disabled if animation is disabled)
+			_exportedCameras.Add(unityCamera.GetInstanceID(), _root.Cameras.Count);
 			_root.Cameras.Add(camera);
 
 			return id;
@@ -1120,6 +1126,9 @@ namespace UnityGLTF
                 Id = _root.Lights.Count,
                 Root = _root
             };
+
+            // Register nodes for animation parsing (could be disabled if animation is disabled)
+            _exportedLights.Add(unityLight.GetInstanceID(), _root.Lights.Count);
 
             //list of lightids should be in extensions object
             _root.Lights.Add(light);
@@ -4405,23 +4414,47 @@ namespace UnityGLTF
 
 #endif
 
+		[Obsolete("Please use " + nameof(GetAnimationTargetIdFromTransform), false)]
 		public int GetNodeIdFromTransform(Transform transform)
 		{
 			return GetAnimationTargetIdFromTransform(transform);
 		}
 
+		internal int GetAnimationTargetId(object obj)
+		{
+			switch (obj)
+			{
+				case Material m: return GetAnimationTargetIdFromMaterial(m);
+				case Light l: return GetAnimationTargetIdFromLight(l);
+				case Camera c: return GetAnimationTargetIdFromCamera(c);
+				case Transform t: return GetAnimationTargetIdFromTransform(t);
+				case Component k: return GetAnimationTargetIdFromTransform(k.transform);
+			}
+
+			return -1;
+		}
+
 		public int GetAnimationTargetIdFromTransform(Transform transform)
 		{
-			if (_exportedTransforms.ContainsKey(transform.GetInstanceID()))
-			{
-				return _exportedTransforms[transform.GetInstanceID()];
-			}
+			if (_exportedTransforms.TryGetValue(transform.GetInstanceID(), out var index)) return index;
 			return -1;
 		}
 
 		public int GetAnimationTargetIdFromMaterial(Material mat)
 		{
 			if (_materials.TryGetValue(mat, out var index)) return index;
+			return -1;
+		}
+
+		public int GetAnimationTargetIdFromLight(Light light)
+		{
+			if (_exportedLights.TryGetValue(light.GetInstanceID(), out var index)) return index;
+			return -1;
+		}
+
+		public int GetAnimationTargetIdFromCamera(Camera cam)
+		{
+			if (_exportedCameras.TryGetValue(cam.GetInstanceID(), out var index)) return index;
 			return -1;
 		}
 
@@ -4434,13 +4467,12 @@ namespace UnityGLTF
 			}
 			if (values.Length <= 0) return;
 
-			// var channelTargetId = GetAnimationTargetIdFromTransform(target);
-			// if (channelTargetId < 0)
-			// {
-			// 	Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + target.name + " (InstanceID: " + target.GetInstanceID() + ")", target);
-			// 	return;
-			// }
-			// var nodePath = "/nodes/" + channelTargetId + "/" + path;
+			var channelTargetId = GetAnimationTargetId(animatedObject);
+			if (channelTargetId < 0)
+			{
+				Debug.LogWarning($"An animated {animatedObject.GetType()} has not been exported, is the object disabled? {animatedObject.name} (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+				return;
+			}
 
 			bool flipValueRange = false;
 			bool isTextureTransform = false;
