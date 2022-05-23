@@ -3849,6 +3849,16 @@ namespace UnityGLTF
 
 			public float Evaluate(float time, int index)
 			{
+				if (index < 0 || index >= curve.Count)
+				{
+					// common case: A not animated but RGB is.
+					// TODO this should actually use the value from the material.
+					if (propertyType == typeof(Color) && index == 3)
+						return 1;
+
+					throw new ArgumentOutOfRangeException(nameof(index), $"PropertyCurve {propertyName} ({propertyType}) has only {curve.Count} curves but index {index} was accessed for time {time}");
+				}
+
 				return curve[index].Evaluate(time);
 			}
 		}
@@ -3950,6 +3960,10 @@ namespace UnityGLTF
 								case "m_Intensity":
 									prop.propertyType = typeof(float);
 									break;
+								case "m_SpotAngle":
+								case "m_InnerSpotAngle":
+									prop.propertyType = typeof(float);
+									break;
 							}
 						}
 						else
@@ -3959,6 +3973,7 @@ namespace UnityGLTF
 								.FirstOrDefault();
 							if (member is FieldInfo field) prop.propertyType = field.FieldType;
 							else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
+							Debug.LogWarning($"No property conversion found: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
 						}
 					}
 				}
@@ -4273,6 +4288,7 @@ namespace UnityGLTF
 					}
 					else if (typeof(Color) == type)
 					{
+						// TODO should actually access r,g,b,a separately since any of these can have curves assigned.
 						values[i] = new Color(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3));
 					}
 					else
@@ -4459,14 +4475,18 @@ namespace UnityGLTF
 							isTextureTransform = true;
 							break;
 						case "_Smoothness":
+						case "_Glossiness":
 							propertyName = "roughnessFactor";
 							flipValueRange = true;
 							break;
 						case "_Roughness":
 							propertyName = "roughnessFactor";
 							break;
-						case "_Metalllic":
+						case "_Metallic":
 							propertyName = "metallicFactor";
+							break;
+						case "_Cutoff":
+							propertyName = "alphaCutoff";
 							break;
 					}
 					break;
@@ -4478,9 +4498,40 @@ namespace UnityGLTF
 							propertyName = $"color";
 							break;
 						case "m_Intensity":
+							// TODO conversion factor
 							propertyName = $"intensity";
 							break;
+						case "m_SpotAngle":
+							// TODO conversion factor
+							propertyName = $"spot/outerConeAngle";
+							break;
+						case "m_InnerSpotAngle":
+							// TODO conversion factor
+							propertyName = $"spot/innerConeAngle";
+							break;
+						case "m_Range":
+							propertyName = "range";
+							break;
 					}
+					break;
+				case Camera camera:
+					Debug.Log("camera prop: " + propertyName);
+					switch (propertyName)
+					{
+						case "field of view":
+							// TODO conversion factor
+							propertyName = "yfov";
+							break;
+						case "near clip plane":
+							propertyName = "znear";
+							break;
+						case "far clip plane":
+							propertyName = "zfar";
+							break;
+					}
+					break;
+				default:
+					Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
 					break;
 			}
 
