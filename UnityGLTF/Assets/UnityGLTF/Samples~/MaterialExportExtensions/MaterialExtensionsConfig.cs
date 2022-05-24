@@ -121,10 +121,41 @@ public class MaterialExtensionsConfig : ScriptableObject
 
     private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
     {
-        // check if any setting applies here
-        var settings = profiles.FirstOrDefault(x => x.targetAllMaterials || (x.targetMaterials != null && x.targetMaterials.Contains(material)));
+	    if (!material) return;
 
-        if (!settings || !settings.enabled) return;
+        // check if any setting applies here
+        var settings = profiles?.FirstOrDefault(x => x && (x.targetAllMaterials || (x.targetMaterials != null && x.targetMaterials.Contains(material))));
+
+        if (!settings || !settings.enabled)
+        {
+	        if (material.IsKeywordEnabled("_TRANSMISSION"))
+	        {
+		        exporter.DeclareExtensionUsage(KHR_MaterialsVolumeExtension.ExtensionName, false);
+		        exporter.DeclareExtensionUsage(KHR_MaterialsIorExtension.ExtensionName, false);
+		        exporter.DeclareExtensionUsage(KHR_MaterialsTransmissionExtension.ExtensionName, false);
+
+		        var ve = new KHR_MaterialsVolumeExtension();
+		        var vi = new KHR_MaterialsIorExtension();
+		        var vt = new KHR_MaterialsTransmissionExtension();
+
+		        if (material.HasProperty("_ThicknessFactor"))
+			        ve.thicknessFactor = material.GetFloat("_ThicknessFactor");
+		        if (material.HasProperty("_AttenuationDistance"))
+			        ve.attenuationDistance = material.GetFloat("_AttenuationDistance");
+		        if (material.HasProperty("_AttenuationColor"))
+			        ve.attenuationColor = material.GetColor("_AttenuationColor").ToNumericsColorLinear();
+		        if (material.HasProperty("_IOR"))
+			        vi.ior = material.GetFloat("_IOR");
+		        if (material.HasProperty("_TransmissionFactor"))
+					vt.transmissionFactor = material.GetFloat("_TransmissionFactor");
+
+		        materialnode.AddExtension(KHR_MaterialsVolumeExtension.ExtensionName, ve);
+		        materialnode.AddExtension(KHR_MaterialsIorExtension.ExtensionName, vi);
+		        materialnode.AddExtension(KHR_MaterialsTransmissionExtension.ExtensionName, vt);
+	        }
+
+	        return;
+        }
 
         // override existing PBR for testing
         if (settings.overridePBR)
