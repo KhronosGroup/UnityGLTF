@@ -246,7 +246,8 @@ namespace GLTF.Schema
             JProperty jProperty = new JProperty(ExtensionName, jo);
 
             jo.Add(new JProperty(nameof(thicknessFactor), thicknessFactor));
-            jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
+            if(!float.IsPositiveInfinity(attenuationDistance))
+				jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
             jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
             if(thicknessTexture != null) {
 	            jo.Add(new JProperty(nameof(thicknessTexture),
