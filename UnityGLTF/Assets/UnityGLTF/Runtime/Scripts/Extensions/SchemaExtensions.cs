@@ -60,10 +60,11 @@ namespace UnityGLTF.Extensions
 		/// </summary>
 		/// <param name="node">gltf node to modify</param>
 		/// <param name="transform">unity transform to convert</param>
-		public static void SetUnityTransform(this Node node, Transform transform)
+		/// <param name="invertLookDirection">invert look direction (e.g. for lights and cameras)</param>
+		public static void SetUnityTransform(this Node node, Transform transform, bool invertLookDirection)
 		{
 			node.Translation = transform.localPosition.ToGltfVector3Convert();
-			node.Rotation = transform.localRotation.ToGltfQuaternionConvert();
+			node.Rotation = (transform.localRotation * (invertLookDirection ? new Quaternion(0, -1, 0, 0) : Quaternion.identity)).ToGltfQuaternionConvert();
 			node.Scale = transform.localScale.ToGltfVector3Raw();
 		}
 
@@ -561,15 +562,15 @@ namespace UnityGLTF.Extensions
 			return outMatrixArr;
 		}
 
+		public static Quaternion SwitchHandedness(this Quaternion input)
+		{
+			return new Quaternion(-input.x, input.y, input.z, -input.w);
+		}
+
+		/*
 		public static Vector4 SwitchHandedness(this Vector4 input)
 		{
 			return new Vector4(-input.x, input.y, input.z, -input.w);
-		}
-
-
-		public static Quaternion SwitchHandedness(this Quaternion input)
-		{
-			return new Quaternion(input.x, input.y, -input.z, -input.w);
 		}
 
 		public static Matrix4x4 SwitchHandedness(this Matrix4x4 matrix)
@@ -598,5 +599,6 @@ namespace UnityGLTF.Extensions
 			// convert transform values from left handed to right handed
 			return Matrix4x4.TRS(position, rotation, scale);
 		}
+		*/
 	}
 }

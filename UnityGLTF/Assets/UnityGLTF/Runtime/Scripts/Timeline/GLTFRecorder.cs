@@ -376,7 +376,7 @@ namespace UnityGLTF.Timeline
 				var times = kvp.Value.keys.Keys.Select(x => (float)x).ToArray();
 				var values = kvp.Value.keys.Values.ToArray();
 				var positions = values.Select(x => x.position).ToArray();
-				var rotations = values.Select(x => x.rotation).Select(x => new Vector4(x.x, x.y, x.z, x.w)).ToArray();
+				var rotations = values.Select(x => x.rotation).ToArray();
 				var scales = values.Select(x => x.scale).ToArray();
 				float[] weights = null;
 				int weightCount = 0;

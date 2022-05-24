@@ -917,19 +917,19 @@ namespace UnityGLTF
 				node.Camera = ExportCamera(unityCamera);
 			}
 
-			// export lights
-            Light unityLight = nodeTransform.GetComponent<Light>();
-            if (unityLight != null && unityLight.enabled)
+			Light unityLight = nodeTransform.GetComponent<Light>();
+			if (unityLight != null && unityLight.enabled)
+			{
+				node.Light = ExportLight(unityLight);
+			}
+
+            if (unityLight != null || unityCamera != null)
             {
-                node.Light = ExportLight(unityLight);
-                var prevRotation = nodeTransform.rotation;
-                nodeTransform.rotation *= new Quaternion(0, -1, 0, 0);
-                node.SetUnityTransform(nodeTransform);
-                nodeTransform.rotation = prevRotation;
+                node.SetUnityTransform(nodeTransform, true);
             }
             else
             {
-                node.SetUnityTransform(nodeTransform);
+                node.SetUnityTransform(nodeTransform, false);
             }
 
             var id = new NodeId
@@ -1076,6 +1076,7 @@ namespace UnityGLTF
 
             if (unityLight.type == LightType.Spot)
             {
+	            // TODO URP/HDRP can distinguish here, no need to guess innerConeAngle there
                 light = new GLTFSpotLight() { innerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad * 0.8f, outerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad };
                 //name
                 light.Name = unityLight.name;
@@ -4085,7 +4086,7 @@ namespace UnityGLTF
 					// Bake and populate animation data
 					float[] times = null;
 					Vector3[] positions = null;
-					Vector4[] rotations = null;
+					Quaternion[] rotations = null;
 					Vector3[] scales = null;
 					float[] weights = null;
 
@@ -4311,7 +4312,7 @@ namespace UnityGLTF
 			return true;
 		}
 
-		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights)
+		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Quaternion[] rotations, ref Vector3[] scales, ref float[] weights)
 		{
 			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
 			float deltaTime = length / nbSamples;
@@ -4368,7 +4369,7 @@ namespace UnityGLTF
 			if(haveScaleKeys)
 				scales = new Vector3[nbSamples];
 			if(haveRotationKeys)
-				rotations = new Vector4[nbSamples];
+				rotations = new Quaternion[nbSamples];
 			if (haveWeightKeys)
 				weights = new float[nbSamples * weightCount];
 
@@ -4389,11 +4390,11 @@ namespace UnityGLTF
 					if (curveSet.rotationType == AnimationKeyRotationType.Euler)
 					{
 						Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
-						rotations[i] = new Vector4(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
+						rotations[i] = new Quaternion(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
 					}
 					else
 					{
-						rotations[i] = new Vector4(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
+						rotations[i] = new Quaternion(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
 					}
 				}
 
@@ -4475,6 +4476,7 @@ namespace UnityGLTF
 			}
 
 			bool flipValueRange = false;
+			float? valueMultiplier = null;
 			bool isTextureTransform = false;
 			string secondPropertyName = null;
 
@@ -4530,15 +4532,15 @@ namespace UnityGLTF
 							propertyName = $"color";
 							break;
 						case "m_Intensity":
-							// TODO conversion factor
+							valueMultiplier = Mathf.PI; // matches ExportLight
 							propertyName = $"intensity";
 							break;
 						case "m_SpotAngle":
-							// TODO conversion factor
+							valueMultiplier = Mathf.Deg2Rad / 2;
 							propertyName = $"spot/outerConeAngle";
 							break;
 						case "m_InnerSpotAngle":
-							// TODO conversion factor
+							valueMultiplier = Mathf.Deg2Rad / 2;
 							propertyName = $"spot/innerConeAngle";
 							break;
 						case "m_Range":
@@ -4590,9 +4592,18 @@ namespace UnityGLTF
 			{
 				case float _:
 					if (flipValueRange)
+					{
 						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
+					}
+					else if (valueMultiplier.HasValue)
+					{
+						var multiplier = valueMultiplier.Value;
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => ((float)e) * multiplier));
+					}
 					else
+					{
 						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
+					}
 					break;
 				case Vector2 _:
 					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector2)e));
@@ -4674,6 +4685,7 @@ namespace UnityGLTF
 			ext.channel = target;
 			animationPointerResolver.Add(ext);
 
+			target.Node = null;
 			target.Path = "pointer";
 			target.AddExtension(KHR_animation_pointer.EXTENSION_NAME, ext);
 			DeclareExtensionUsage(KHR_animation_pointer.EXTENSION_NAME, false);
@@ -4684,7 +4696,7 @@ namespace UnityGLTF
 			GLTF.Schema.GLTFAnimation animation,
 			float[] times = null,
 			Vector3[] positions = null,
-			Vector4[] rotations = null,
+			Quaternion[] rotations = null,
 			Vector3[] scales = null,
 			float[] weights = null)
 		{
@@ -4697,6 +4709,9 @@ namespace UnityGLTF
 				addAnimationDataMarker.End();
 				return;
 			}
+
+			var animatedNode = _root.Nodes[channelTargetId];
+			var needsFlippedLookDirection = animatedNode.Light != null || animatedNode.Camera != null;
 
 			AccessorId timeAccessor = ExportAccessor(times);
 			timeAccessor.Value.BufferView.Value.ByteStride = 0;
@@ -4755,7 +4770,7 @@ namespace UnityGLTF
 
 				AnimationSampler Rsampler = new AnimationSampler();
 				Rsampler.Input = timeAccessor; // Float, for time
-				Rsampler.Output = ExportAccessorSwitchHandedness(rotations); // Vec4 for rotations
+				Rsampler.Output = ExportAccessorSwitchHandedness(rotations, needsFlippedLookDirection); // Vec4 for rotations
 				Rsampler.Output.Value.BufferView.Value.ByteStride = 0;
 				Rchannel.Sampler = new AnimationSamplerId
 				{
@@ -4890,7 +4905,7 @@ namespace UnityGLTF
 			return true;
 		}
 
-		public void RemoveUnneededKeyframes(ref float[] times, ref Vector3[] positions, ref Vector4[] rotations, ref Vector3[] scales, ref float[] weights, ref int weightCount)
+		public void RemoveUnneededKeyframes(ref float[] times, ref Vector3[] positions, ref Quaternion[] rotations, ref Vector3[] scales, ref float[] weights, ref int weightCount)
 		{
 			removeAnimationUnneededKeyframesMarker.Begin();
 			removeAnimationUnneededKeyframesInitMarker.Begin();
@@ -4904,7 +4919,7 @@ namespace UnityGLTF
 			List<float> t2 = new List<float>(times.Length);
 			List<Vector3> p2 = new List<Vector3>(times.Length);
 			List<Vector3> s2 = new List<Vector3>(times.Length);
-			List<Vector4> r2 = new List<Vector4>(times.Length);
+			List<Quaternion> r2 = new List<Quaternion>(times.Length);
 			List<float> w2 = new List<float>(times.Length);
 			var singleFrameWeights = new float[weightCount];
 
@@ -5240,8 +5255,8 @@ namespace UnityGLTF
 			return id;
 		}
 
-		// This is used for Quaternions / Rotations
-		private AccessorId ExportAccessorSwitchHandedness(Vector4[] arr)
+		// This is used for Quaternions / Rotations. Lights' and Cameras' orientations need to be flipped.
+		private AccessorId ExportAccessorSwitchHandedness(Quaternion[] arr, bool invertLookDirection)
 		{
 			exportAccessorMarker.Begin();
 			exportAccessorVector4ArrayMarker.Begin();
@@ -5253,14 +5268,26 @@ namespace UnityGLTF
 				throw new Exception("Accessors can not have a count of 0.");
 			}
 
+			var copy = new Quaternion[count];
+			Array.Copy(arr, copy, count);
+			for (int i = 0; i < count; i++)
+			{
+				var v = copy[i];
+				if (invertLookDirection)
+				{
+					v *= new Quaternion(0, -1, 0, 0);
+				}
+				v = v.SwitchHandedness().normalized;
+				copy[i] = v;
+			}
+			arr = copy;
+
 			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
 			var a0 = arr[0];
-			a0 = a0.SwitchHandedness();
-			a0.Normalize();
 			float minX = a0.x;
 			float minY = a0.y;
 			float minZ = a0.z;
@@ -5273,8 +5300,6 @@ namespace UnityGLTF
 			for (var i = 1; i < count; i++)
 			{
 				var cur = arr[i];
-				cur = cur.SwitchHandedness();
-				cur.Normalize();
 
 				if (cur.x < minX)
 				{
@@ -5318,12 +5343,10 @@ namespace UnityGLTF
 
 			exportAccessorBufferWriteMarker.Begin();
 #if USE_FAST_BINARY_WRITER
-			_bufferWriter.WriteNormalizedSwitchHandedness(arr);
+			_bufferWriter.Write(arr);
 #else
 			foreach (var vec in arr)
 			{
-				Vector4 vect = vec.SwitchHandedness();
-				vect.Normalize();
 				_bufferWriter.Write(vect.x);
 				_bufferWriter.Write(vect.y);
 				_bufferWriter.Write(vect.z);

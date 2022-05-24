@@ -209,23 +209,21 @@ namespace UnityGLTF
 					_buffer[10] = (byte) (tmpValue >> 8);
 					_buffer[11] = (byte) (tmpValue);
 
-
 					Write(_buffer, 0, 12);
 				}
 			}
 		}
 
-		public unsafe void WriteNormalizedSwitchHandedness(Vector4[] arr)
+		public unsafe void Write(Quaternion[] arr)
 		{
 			if (BitConverter.IsLittleEndian)
 			{
 				foreach (var v0 in arr)
 				{
-					v0.Normalize();
-					float vx = -v0.x;
+					float vx = v0.x;
 					float vy = v0.y;
 					float vz = v0.z;
-					float vw = -v0.w;
+					float vw = v0.w;
 
 					uint tmpValue = *(uint *)&vx;
 					_buffer[ 0] = (byte) (tmpValue);
@@ -251,7 +249,6 @@ namespace UnityGLTF
 					_buffer[14] = (byte) (tmpValue >> 16);
 					_buffer[15] = (byte) (tmpValue >> 24);
 
-
 					Write(_buffer, 0, 16);
 				}
 			}
@@ -259,11 +256,10 @@ namespace UnityGLTF
 			{
 				foreach (var v0 in arr)
 				{
-					v0.Normalize();
-					float vx = -v0.x;
+					float vx = v0.x;
 					float vy = v0.y;
 					float vz = v0.z;
-					float vw = -v0.w;
+					float vw = v0.w;
 
 					uint tmpValue = *(uint *)&vx;
 					_buffer[ 0] = (byte) (tmpValue >> 24);
@@ -288,7 +284,6 @@ namespace UnityGLTF
 					_buffer[13] = (byte) (tmpValue >> 16);
 					_buffer[14] = (byte) (tmpValue >> 8);
 					_buffer[15] = (byte) (tmpValue);
-
 
 					Write(_buffer, 0, 16);
 				}
