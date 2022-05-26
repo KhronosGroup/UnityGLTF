@@ -64,6 +64,25 @@ namespace UnityGLTF
 		double RoughnessFactor { get; set; }
 	}
 
+	public interface IVolumeMap : IMetalRoughUniformMap
+	{
+		double ThicknessFactor { get; set; }
+		Texture ThicknessTexture { get; set; }
+		double AttenuationDistance { get; set; }
+		Color AttenuationColor { get; set; }
+	}
+
+	public interface ITransmissionMap : IMetalRoughUniformMap
+	{
+		double TransmissionFactor { get; set; }
+		Texture TransmissionTexture { get; set; }
+	}
+
+	public interface IIORMap : IMetalRoughUniformMap
+	{
+		double IOR { get; set; }
+	}
+
 	public interface ISpecGlossUniformMap : IUniformMap
 	{
 		Texture DiffuseTexture { get; set; }
