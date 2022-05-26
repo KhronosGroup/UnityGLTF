@@ -32,16 +32,16 @@ public class MaterialExtensionsConfig : ScriptableObject
     public PbrSettings pbrSettings = new PbrSettings();
 
     [Header("Extensions")]
-    public MaterialsTransmissionExtension transmission;
-    public MaterialsVolumeExtension volume;
-    public MaterialsIorExtension ior;
+    public MaterialsTransmission transmission;
+    public MaterialsVolume volume;
+    public MaterialsIor ior;
     public MaterialsClearcoatExtension clearcoat;
     public MaterialsSheenExtension sheen;
 
 #region Helpers for Inspector Display
 
     [Serializable]
-    public class MaterialsVolumeExtension : KHR_MaterialsVolumeExtension
+    public class MaterialsVolume : KHR_materials_volume
     {
         public bool enabled = false;
         public UnityEngine.Color _attenuationColor;
@@ -50,7 +50,7 @@ public class MaterialExtensionsConfig : ScriptableObject
 
         public void ConvertData(GLTFSceneExporter exporter)
         {
-            attenuationColor = _attenuationColor.ToNumericsColorLinear();
+            attenuationColor = _attenuationColor.ToNumericsColorRaw();
             if(_thicknessTexture)
 	            thicknessTexture = exporter.ExportTextureInfo(_thicknessTexture, GLTFSceneExporter.TextureMapType.Custom_Unknown);
             else
@@ -59,13 +59,13 @@ public class MaterialExtensionsConfig : ScriptableObject
     }
 
     [Serializable]
-    public class MaterialsIorExtension : KHR_MaterialsIorExtension
+    public class MaterialsIor : KHR_materials_ior
     {
         public bool enabled = false;
     }
 
     [Serializable]
-    public class MaterialsTransmissionExtension : KHR_MaterialsTransmissionExtension
+    public class MaterialsTransmission : KHR_materials_transmission
     {
         public bool enabled = false;
         [Tooltip("R Channel")]
@@ -119,6 +119,14 @@ public class MaterialExtensionsConfig : ScriptableObject
 	    profiles = settingsList.ToList();
     }
 
+    private static readonly int ThicknessTexture = Shader.PropertyToID("_ThicknessTexture");
+    private static readonly int ThicknessFactor = Shader.PropertyToID("_ThicknessFactor");
+    private static readonly int AttenuationDistance = Shader.PropertyToID("_AttenuationDistance");
+    private static readonly int AttenuationColor = Shader.PropertyToID("_AttenuationColor");
+    private static readonly int IOR = Shader.PropertyToID("_IOR");
+    private static readonly int TransmissionFactor = Shader.PropertyToID("_TransmissionFactor");
+    private static readonly int TransmissionTexture = Shader.PropertyToID("_TransmissionTexture");
+
     private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
     {
 	    if (!material) return;
@@ -130,28 +138,34 @@ public class MaterialExtensionsConfig : ScriptableObject
         {
 	        if (material.IsKeywordEnabled("_TRANSMISSION"))
 	        {
-		        exporter.DeclareExtensionUsage(KHR_MaterialsVolumeExtension.ExtensionName, false);
-		        exporter.DeclareExtensionUsage(KHR_MaterialsIorExtension.ExtensionName, false);
-		        exporter.DeclareExtensionUsage(KHR_MaterialsTransmissionExtension.ExtensionName, false);
+		        exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
+		        exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
+		        exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
 
-		        var ve = new KHR_MaterialsVolumeExtension();
-		        var vi = new KHR_MaterialsIorExtension();
-		        var vt = new KHR_MaterialsTransmissionExtension();
+		        var ve = new KHR_materials_volume();
+		        var vi = new KHR_materials_ior();
+		        var vt = new KHR_materials_transmission();
 
-		        if (material.HasProperty("_ThicknessFactor"))
-			        ve.thicknessFactor = material.GetFloat("_ThicknessFactor");
-		        if (material.HasProperty("_AttenuationDistance"))
-			        ve.attenuationDistance = material.GetFloat("_AttenuationDistance");
-		        if (material.HasProperty("_AttenuationColor"))
-			        ve.attenuationColor = material.GetColor("_AttenuationColor").ToNumericsColorLinear();
-		        if (material.HasProperty("_IOR"))
-			        vi.ior = material.GetFloat("_IOR");
-		        if (material.HasProperty("_TransmissionFactor"))
-					vt.transmissionFactor = material.GetFloat("_TransmissionFactor");
+		        if (material.HasProperty(ThicknessFactor))
+			        ve.thicknessFactor = material.GetFloat(ThicknessFactor);
+		        if (material.HasProperty(ThicknessTexture) && material.GetTexture(ThicknessTexture))
+			        ve.thicknessTexture = exporter.ExportTextureInfo(material.GetTexture(ThicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+		        if (material.HasProperty(AttenuationDistance))
+			        ve.attenuationDistance = material.GetFloat(AttenuationDistance);
+		        if (material.HasProperty(AttenuationColor))
+			        ve.attenuationColor = material.GetColor(AttenuationColor).ToNumericsColorRaw();
 
-		        materialnode.AddExtension(KHR_MaterialsVolumeExtension.ExtensionName, ve);
-		        materialnode.AddExtension(KHR_MaterialsIorExtension.ExtensionName, vi);
-		        materialnode.AddExtension(KHR_MaterialsTransmissionExtension.ExtensionName, vt);
+		        if (material.HasProperty(IOR))
+			        vi.ior = material.GetFloat(IOR);
+
+		        if (material.HasProperty(TransmissionFactor))
+					vt.transmissionFactor = material.GetFloat(TransmissionFactor);
+		        if (material.HasProperty(TransmissionTexture) && material.GetTexture(TransmissionTexture))
+			        vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(TransmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+
+		        materialnode.AddExtension(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
+		        materialnode.AddExtension(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
+		        materialnode.AddExtension(KHR_materials_transmission_Factory.EXTENSION_NAME, vt);
 	        }
 
 	        return;
@@ -172,21 +186,21 @@ public class MaterialExtensionsConfig : ScriptableObject
         if(settings.volume.enabled)
         {
             settings.volume.ConvertData(exporter);
-            exporter.DeclareExtensionUsage(KHR_MaterialsVolumeExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsVolumeExtension.ExtensionName, settings.volume.Clone(exporter.GetRoot()));
+            exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
+            materialnode.AddExtension(KHR_materials_volume_Factory.EXTENSION_NAME, settings.volume.Clone(exporter.GetRoot()));
         }
 
         if(settings.ior.enabled)
         {
-            exporter.DeclareExtensionUsage(KHR_MaterialsIorExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsIorExtension.ExtensionName, settings.ior.Clone(exporter.GetRoot()));
+            exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
+            materialnode.AddExtension(KHR_materials_ior_Factory.EXTENSION_NAME, settings.ior.Clone(exporter.GetRoot()));
         }
 
         if(settings.transmission.enabled)
         {
 	        settings.transmission.ConvertData(exporter);
-            exporter.DeclareExtensionUsage(KHR_MaterialsTransmissionExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsTransmissionExtension.ExtensionName, settings.transmission.Clone(exporter.GetRoot()));
+            exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
+            materialnode.AddExtension(KHR_materials_transmission_Factory.EXTENSION_NAME, settings.transmission.Clone(exporter.GetRoot()));
         }
 
         if(settings.sheen.enabled)
@@ -205,103 +219,6 @@ public class MaterialExtensionsConfig : ScriptableObject
 
 namespace GLTF.Schema
 {
-    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_transmission
-    [Serializable]
-    public class KHR_MaterialsTransmissionExtension : IExtension
-    {
-        public const string ExtensionName = "KHR_materials_transmission";
-        public float transmissionFactor = 0.0f;
-        public TextureInfo transmissionTexture; // transmissionTexture // R channel
-
-        public JProperty Serialize()
-        {
-	        var jo = new JObject(
-		        new JProperty(nameof(transmissionFactor), transmissionFactor)
-	        );
-	        if(transmissionTexture != null)
-		        jo.Add(new JProperty(nameof(transmissionTexture),
-			        new JObject(
-				        new JProperty(TextureInfo.INDEX, transmissionTexture.Index.Id),
-				        new JProperty(TextureInfo.TEXCOORD, transmissionTexture.TexCoord) // TODO don't write if default
-			        )
-				)
-		    );
-	        JProperty jProperty = new JProperty(ExtensionName, jo);
-            return jProperty;
-        }
-
-        public IExtension Clone(GLTFRoot root)
-        {
-            return new KHR_MaterialsTransmissionExtension() { transmissionFactor = transmissionFactor, transmissionTexture = transmissionTexture };
-        }
-    }
-
-    // https: //github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_ior
-    [Serializable]
-    public class KHR_MaterialsIorExtension : IExtension
-    {
-        public const string ExtensionName = "KHR_materials_ior";
-        public float ior = 1.5f;
-
-        public JProperty Serialize()
-        {
-            JProperty jProperty = new JProperty(ExtensionName,
-                new JObject(
-                    new JProperty(nameof(ior), ior)
-                )
-            );
-            return jProperty;
-        }
-
-        public IExtension Clone(GLTFRoot root)
-        {
-            return new KHR_MaterialsIorExtension() { ior = ior };
-        }
-    }
-
-    // https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_volume
-    [Serializable]
-    public class KHR_MaterialsVolumeExtension : IExtension
-    {
-        public const string ExtensionName = "KHR_materials_volume";
-        public float thicknessFactor = 0f;
-        public TextureInfo thicknessTexture;// thicknessTexture // G channel
-        public float attenuationDistance = Mathf.Infinity;
-        public Color attenuationColor = new Color(1, 1, 1, 1);
-
-        public static readonly Color COLOR_DEFAULT = Color.White;
-
-        public JProperty Serialize()
-        {
-            var jo = new JObject();
-            JProperty jProperty = new JProperty(ExtensionName, jo);
-
-            jo.Add(new JProperty(nameof(thicknessFactor), thicknessFactor));
-            if(!float.IsPositiveInfinity(attenuationDistance))
-				jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
-            jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
-            if(thicknessTexture != null) {
-	            jo.Add(new JProperty(nameof(thicknessTexture),
-			            new JObject(
-				            new JProperty(TextureInfo.INDEX, thicknessTexture.Index.Id),
-				            new JProperty(TextureInfo.TEXCOORD, thicknessTexture.TexCoord) // TODO don't write if default
-			            )
-		            )
-	            );
-            }
-            return jProperty;
-        }
-
-        public IExtension Clone(GLTFRoot root)
-        {
-            return new KHR_MaterialsVolumeExtension()
-            {
-                thicknessFactor = thicknessFactor, attenuationDistance = attenuationDistance,
-                attenuationColor = attenuationColor, thicknessTexture = thicknessTexture,
-            };
-        }
-    }
-
     // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat
     [Serializable]
     public class KHR_MaterialsClearcoatExtension : IExtension

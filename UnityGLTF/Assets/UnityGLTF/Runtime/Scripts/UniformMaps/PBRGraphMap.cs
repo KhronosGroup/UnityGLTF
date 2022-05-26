@@ -1,5 +1,6 @@
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityGLTF;
 
 public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap
@@ -21,6 +22,13 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	protected PBRGraphMap(Material mat)
 	{
 		_material = mat;
+	}
+
+	public IUniformMap Clone()
+	{
+		var clone = new PBRGraphMap(new Material(_material));
+		clone.Material.shaderKeywords = _material.shaderKeywords;
+		return clone;
 	}
 
 	public Material Material => _material;
@@ -131,12 +139,29 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    get => _material.GetFloat("_AlphaCutoff");
 	    set => _material.SetFloat("_AlphaCutoff", (float) value);
     }
-    public bool DoubleSided { get; set; }
-    public bool VertexColorsEnabled { get; set; }
 
-    public IUniformMap Clone()
+    public virtual bool DoubleSided
     {
-	    return new PBRGraphMap(new Material(_material));
+	    get { return _material.GetInt("_Cull") == (int)CullMode.Off; }
+	    set
+	    {
+		    if (value)
+			    _material.SetInt("_Cull", (int)CullMode.Off);
+		    else
+			    _material.SetInt("_Cull", (int)CullMode.Back);
+	    }
+    }
+
+    public virtual bool VertexColorsEnabled
+    {
+	    get { return _material.IsKeywordEnabled("VERTEX_COLOR_ON"); }
+	    set
+	    {
+		    if (value)
+			    _material.EnableKeyword("VERTEX_COLOR_ON");
+		    else
+			    _material.DisableKeyword("VERTEX_COLOR_ON");
+	    }
     }
 
     public Texture BaseColorTexture
@@ -209,13 +234,21 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
     public double ThicknessFactor
     {
-	    get => _material.GetFloat("_RoughnessFactor");
-	    set => _material.SetFloat("_RoughnessFactor", (float) value);
+	    get => _material.GetFloat("_ThicknessFactor");
+	    set
+	    {
+		    _material.SetFloat("_ThicknessFactor", (float) value);
+		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
+	    }
     }
     public Texture ThicknessTexture
     {
 	    get => _material.GetTexture("_ThicknessTexture");
-	    set => _material.SetTexture("_ThicknessTexture", value);
+	    set
+	    {
+		    _material.SetTexture("_ThicknessTexture", value);
+		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
+	    }
     }
     public double AttenuationDistance
     {
@@ -230,12 +263,20 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
     public double TransmissionFactor
     {
 	    get => _material.GetFloat("_TransmissionFactor");
-	    set => _material.SetFloat("_TransmissionFactor", (float) value);
+	    set
+	    {
+		    _material.SetFloat("_TransmissionFactor", (float) value);
+		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
+	    }
     }
     public Texture TransmissionTexture
     {
 	    get => _material.GetTexture("_TransmissionTexture");
-	    set => _material.SetTexture("_TransmissionTexture", value);
+	    set
+	    {
+		    _material.SetTexture("_TransmissionTexture", value);
+		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
+	    }
     }
     public double IOR
     {

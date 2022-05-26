@@ -19,6 +19,10 @@ using UnityGLTF.Loader;
 using LightType = UnityEngine.LightType;
 using Matrix4x4 = GLTF.Math.Matrix4x4;
 using Object = UnityEngine.Object;
+using Quaternion = UnityEngine.Quaternion;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
+using Vector4 = UnityEngine.Vector4;
 #if !WINDOWS_UWP && !UNITY_WEBGL
 using ThreadPriority = System.Threading.ThreadPriority;
 #endif
@@ -1916,6 +1920,26 @@ namespace UnityGLTF
 				}
 			}
 
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_transmission_Factory.EXTENSION_NAME))
+			{
+				var transmissionDef = (KHR_materials_transmission)def.Extensions[KHR_materials_transmission_Factory.EXTENSION_NAME];
+				if (transmissionDef.transmissionTexture != null)
+				{
+					var textureId = transmissionDef.transmissionTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
+
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_volume_Factory.EXTENSION_NAME))
+			{
+				var transmissionDef = (KHR_materials_volume)def.Extensions[KHR_materials_volume_Factory.EXTENSION_NAME];
+				if (transmissionDef.thicknessTexture != null)
+				{
+					var textureId = transmissionDef.thicknessTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
+
 			return Task.WhenAll(tasks);
 		}
 
@@ -1995,9 +2019,48 @@ namespace UnityGLTF
 			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
 		}
 
+		private class TextureData
+		{
+			public Texture Texture = null;
+			public int TexCoord = 0;
+			public double DataMultiplier = 1;
+			public Vector2 Offset = Vector2.zero;
+			public double Rotation = 0;
+			public Vector2 Scale = Vector2.one;
+			public int TexCoordExtra = 0;
+		}
+
+		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo)
+		{
+			var result = new TextureData();
+			if (textureInfo?.Index?.Value == null) return result;
+
+			TextureId textureId = textureInfo.Index;
+			await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
+			result.Texture = _assetCache.TextureCache[textureId.Id].Texture;
+			result.TexCoord = textureInfo.TexCoord;
+
+			if (textureInfo is NormalTextureInfo nti)
+				result.DataMultiplier = nti.Scale;
+			if (textureInfo is OcclusionTextureInfo oti)
+				result.DataMultiplier = oti.Strength;
+
+			var ext = GetTextureTransform(textureInfo);
+			if (ext != null)
+			{
+				result.Offset = ext.Offset.ToUnityVector2Raw();
+				result.Rotation = ext.Rotation;
+				result.Scale = ext.Scale.ToUnityVector2Raw();
+				result.TexCoordExtra = ext.TexCoord;
+			}
+
+			return result;
+		}
+
 		protected virtual async Task ConstructMaterial(GLTFMaterial def, int materialIndex)
 		{
 			IUniformMap mapper;
+
 			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
 			const string unlitExtName = KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME;
 			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName)
@@ -2032,7 +2095,8 @@ namespace UnityGLTF
 				}
 				else
 				{
-					mapper = new MetalRoughMap(MaximumLod);
+					// do we have URP or Unity 2021.2+? Use the PBR Graph Material!
+					mapper = new PBRGraphMap(MaximumLod);
 				}
 			}
 
@@ -2151,6 +2215,48 @@ namespace UnityGLTF
 						unlitMapper.BaseColorXRotation = ext.Rotation;
 						unlitMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
+					}
+				}
+			}
+
+			var iorMapper = mapper as IIORMap;
+			if (iorMapper != null)
+			{
+				var ior = GetIOR(def);
+				if (ior != null)
+				{
+					iorMapper.IOR = ior.ior;
+				}
+			}
+
+			var transmissionMapper = mapper as ITransmissionMap;
+			if (transmissionMapper != null)
+			{
+				var transmission = GetTransmission(def);
+				if (transmission != null)
+				{
+					transmissionMapper.TransmissionFactor = transmission.transmissionFactor;
+					var td = await FromTextureInfo(transmission.transmissionTexture);
+					transmissionMapper.TransmissionTexture = td.Texture;
+				}
+			}
+
+			var volumeMapper = mapper as IVolumeMap;
+			if (volumeMapper != null)
+			{
+				var volume = GetVolume(def);
+				if (volume != null)
+				{
+					volumeMapper.AttenuationColor = volume.attenuationColor.ToUnityColorRaw();
+					volumeMapper.AttenuationDistance = volume.attenuationDistance;
+					volumeMapper.ThicknessFactor = volume.thicknessFactor;
+					var td = await FromTextureInfo(volume.thicknessTexture);
+					volumeMapper.ThicknessTexture = td.Texture;
+
+					// if (volumeMapper.ThicknessFactor > 0)
+					{
+						mapper.Material.renderQueue = 3000;
+						mapper.Material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
 					}
 				}
 			}
@@ -2315,8 +2421,7 @@ namespace UnityGLTF
 			return _assetCache.TextureCache[textureIndex].Texture;
 		}
 
-		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex,
-			bool markGpuOnly, bool isLinear)
+		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear)
 		{
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
@@ -2452,6 +2557,36 @@ namespace UnityGLTF
 				return (KHR_materials_emissive_strength) extension;
 			}
 			else return null;
+		}
+
+		protected virtual KHR_materials_transmission GetTransmission(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_transmission_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_transmission_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_transmission) extension;
+			}
+			return null;
+		}
+
+		protected virtual KHR_materials_volume GetVolume(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_volume_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_volume_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_volume) extension;
+			}
+			return null;
+		}
+
+		protected virtual KHR_materials_ior GetIOR(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_ior_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_ior_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_ior) extension;
+			}
+			return null;
 		}
 
 		protected async Task YieldOnTimeoutAndThrowOnLowMemory()
