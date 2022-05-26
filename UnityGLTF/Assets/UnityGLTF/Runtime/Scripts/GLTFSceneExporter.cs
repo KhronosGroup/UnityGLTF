@@ -1586,10 +1586,10 @@ namespace UnityGLTF
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
 				case "TransparentCutout":
-					if (materialObj.HasProperty("_Cutoff"))
-					{
+					if (materialObj.HasProperty("_AlphaCutoff"))
+						material.AlphaCutoff = materialObj.GetFloat("_AlphaCutoff");
+					else if (materialObj.HasProperty("_Cutoff"))
 						material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
-					}
 					material.AlphaMode = AlphaMode.MASK;
 					break;
 				case "Transparent":
@@ -1599,10 +1599,10 @@ namespace UnityGLTF
 				default:
 					if (materialObj.IsKeywordEnabled("_ALPHATEST_ON"))
 					{
-						if (materialObj.HasProperty("_Cutoff"))
-						{
+						if (materialObj.HasProperty("_AlphaCutoff"))
+							material.AlphaCutoff = materialObj.GetFloat("_AlphaCutoff");
+						else if (materialObj.HasProperty("_Cutoff"))
 							material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
-						}
 						material.AlphaMode = AlphaMode.MASK;
 					}
 					material.AlphaMode = AlphaMode.OPAQUE;
@@ -1614,9 +1614,9 @@ namespace UnityGLTF
 
 			if(materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION"))
 			{
-				if (materialObj.HasProperty("_EmissionColor"))
+				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("_EmissiveFactor"))
 				{
-					var c = materialObj.GetColor("_EmissionColor");
+					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.GetColor("_EmissiveFactor");
 					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
 					material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 
@@ -1627,17 +1627,18 @@ namespace UnityGLTF
 					}
 				}
 
-				if (materialObj.HasProperty("_EmissionMap"))
+				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap"))
 				{
-					var emissionTex = materialObj.GetTexture("_EmissionMap");
+					var propName = materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
+					var emissionTex = materialObj.GetTexture(propName);
 
-					if (emissionTex != null)
+					if (emissionTex)
 					{
 						if(emissionTex is Texture2D)
 						{
 							material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emission);
 
-							ExportTextureTransform(material.EmissiveTexture, materialObj, "_EmissionMap");
+							ExportTextureTransform(material.EmissiveTexture, materialObj, propName);
 						}
 						else
 						{
@@ -1654,7 +1655,7 @@ namespace UnityGLTF
 			{
 				var normalTex = materialObj.GetTexture("_BumpMap");
 
-				if (normalTex != null)
+				if (normalTex)
 				{
 					if(normalTex is Texture2D)
 					{
@@ -1667,16 +1668,17 @@ namespace UnityGLTF
 					}
 				}
 			}
-			if (materialObj.HasProperty("normalTexture"))
+			if (materialObj.HasProperty("normalTexture") || materialObj.HasProperty("_NormalTexture"))
 			{
-				var normalTex = materialObj.GetTexture("normalTexture");
+				var propName = materialObj.HasProperty("normalTexture") ? "normalTexture" : "_NormalTexture";
+				var normalTex = materialObj.GetTexture("propName");
 
-				if (normalTex != null)
+				if (normalTex)
 				{
 					if(normalTex is Texture2D)
 					{
 						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Bump, materialObj);
-						ExportTextureTransform(material.NormalTexture, materialObj, "_BumpMap");
+						ExportTextureTransform(material.NormalTexture, materialObj, propName);
 					}
 					else
 					{
@@ -1688,7 +1690,7 @@ namespace UnityGLTF
 			if (materialObj.HasProperty("_OcclusionMap"))
 			{
 				var occTex = materialObj.GetTexture("_OcclusionMap");
-				if (occTex != null)
+				if (occTex)
 				{
 					if(occTex is Texture2D)
 					{
@@ -1701,8 +1703,8 @@ namespace UnityGLTF
 					}
 				}
 			}
-			if( IsUnlit(materialObj)){
-
+			if (IsUnlit(materialObj))
+			{
 				ExportUnlit( material, materialObj );
 			}
 			else if (IsPBRMetallicRoughness(materialObj))
@@ -1906,7 +1908,9 @@ namespace UnityGLTF
 		private bool IsPBRMetallicRoughness(Material material)
 		{
 			return (material.HasProperty("_Metallic") || material.HasProperty("_MetallicFactor")) &&
-			       (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness") || material.HasProperty("_Roughness") || material.HasProperty("metallicRoughnessTexture"));
+			       (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness") ||
+			        material.HasProperty("_Roughness") || material.HasProperty("_RoughnessFactor") ||
+			        material.HasProperty("_MetallicRoughnessTexture") || material.HasProperty("metallicRoughnessTexture"));
 		}
 
 		private bool IsUnlit(Material material)
@@ -2065,10 +2069,19 @@ namespace UnityGLTF
 			{
 				pbr.MetallicFactor = material.GetFloat("_Metallic");
 			}
+			else if (material.HasProperty("_MetallicFactor") && !ignoreMetallicFactor)
+			{
+				pbr.MetallicFactor = material.GetFloat("_MetallicFactor");
+			}
 
 			if (material.HasProperty("_Roughness"))
 			{
 				float roughness = material.GetFloat("_Roughness");
+				pbr.RoughnessFactor = roughness;
+			}
+			else if (material.HasProperty("_RoughnessFactor"))
+			{
+				float roughness = material.GetFloat("_RoughnessFactor");
 				pbr.RoughnessFactor = roughness;
 			}
 			else if (material.HasProperty("_Glossiness") || material.HasProperty("_Smoothness"))
@@ -2104,6 +2117,14 @@ namespace UnityGLTF
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss_DontConvert);
 				}
 			}
+			else if (material.HasProperty("_MetallicRoughnessTexture"))
+			{
+				var mrTex = material.GetTexture("_MetallicRoughnessTexture");
+				if (mrTex)
+				{
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss_DontConvert);
+				}
+			}
 
 			return pbr;
 		}
@@ -2116,24 +2137,13 @@ namespace UnityGLTF
 
 			var pbr = new PbrMetallicRoughness();
 
-			if (material.HasProperty("_Color"))
-			{
-				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
-			}
-
 			if (material.HasProperty("_BaseColor"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorLinear();
 			}
-
-			if (material.HasProperty("_MainTex"))
+			else if (material.HasProperty("_Color"))
 			{
-				var mainTex = material.GetTexture("_MainTex");
-				if (mainTex)
-				{
-					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
-				}
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
 			}
 
 			if (material.HasProperty("_BaseMap"))
@@ -2143,6 +2153,15 @@ namespace UnityGLTF
 				{
 					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 					ExportTextureTransform(pbr.BaseColorTexture, material, "_BaseMap");
+				}
+			}
+			else if (material.HasProperty("_MainTex"))
+			{
+				var mainTex = material.GetTexture("_MainTex");
+				if (mainTex)
+				{
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_MainTex");
 				}
 			}
 
@@ -2184,25 +2203,13 @@ namespace UnityGLTF
 			double glossinessFactor = KHR_materials_pbrSpecularGlossinessExtension.GLOSS_FACTOR_DEFAULT;
 			TextureInfo specularGlossinessTexture = KHR_materials_pbrSpecularGlossinessExtension.SPECULAR_GLOSSINESS_TEXTURE_DEFAULT;
 
-			if (materialObj.HasProperty("_Color"))
-			{
-				diffuseFactor = materialObj.GetColor("_Color").ToNumericsColorLinear();
-			}
-
 			if (materialObj.HasProperty("_BaseColor"))
 			{
 				diffuseFactor = materialObj.GetColor("_BaseColor").ToNumericsColorLinear();
 			}
-
-			if (materialObj.HasProperty("_MainTex"))
+			else if (materialObj.HasProperty("_Color"))
 			{
-				var mainTex = materialObj.GetTexture("_MainTex");
-
-				if (mainTex != null)
-				{
-					diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
-					ExportTextureTransform(diffuseTexture, materialObj, "_MainTex");
-				}
+				diffuseFactor = materialObj.GetColor("_Color").ToNumericsColorLinear();
 			}
 
 			if (materialObj.HasProperty("_BaseMap"))
@@ -2213,6 +2220,16 @@ namespace UnityGLTF
 				{
 					diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 					ExportTextureTransform(diffuseTexture, materialObj, "_BaseMap");
+				}
+			}
+			else if (materialObj.HasProperty("_MainTex"))
+			{
+				var mainTex = materialObj.GetTexture("_MainTex");
+
+				if (mainTex != null)
+				{
+					diffuseTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(diffuseTexture, materialObj, "_MainTex");
 				}
 			}
 
@@ -4489,22 +4506,28 @@ namespace UnityGLTF
 					{
 						case "_Color":
 						case "_BaseColor":
+						case "_BaseColorFactor":
 							propertyName = "baseColorFactor";
 							break;
 						case "_MainTex_ST":
 						case "_BaseMap_ST":
+						case "_BaseColorTexture_ST":
 							if (!(material.HasProperty("_MainTex") && material.GetTexture("_MainTex")) &&
-							    !(material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap"))) return;
+							    !(material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap")) &&
+							    !(material.HasProperty("_BaseColorTexture") && material.GetTexture("_BaseColorTexture"))) return;
 							propertyName = $"baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
 							break;
 						case "_EmissionColor":
+						case "_EmissiveFactor":
 							propertyName = "emissiveFactor";
 							secondPropertyName = $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}";
 							break;
 						case "_EmissionMap_ST":
-							if (!(material.HasProperty("_EmissionMap") && material.GetTexture("_EmissionMap"))) return;
+						case "_EmissiveTexture_ST":
+							if (!(material.HasProperty("_EmissionMap") && material.GetTexture("_EmissionMap")) &&
+							    !(material.HasProperty("_EmissiveTexture") && material.GetTexture("_EmissiveTexture"))) return;
 							propertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
@@ -4515,12 +4538,15 @@ namespace UnityGLTF
 							flipValueRange = true;
 							break;
 						case "_Roughness":
+						case "_RoughnessFactor":
 							propertyName = "roughnessFactor";
 							break;
 						case "_Metallic":
+						case "_MetallicFactor":
 							propertyName = "metallicFactor";
 							break;
 						case "_Cutoff":
+						case "_AlphaCutoff":
 							propertyName = "alphaCutoff";
 							break;
 					}
