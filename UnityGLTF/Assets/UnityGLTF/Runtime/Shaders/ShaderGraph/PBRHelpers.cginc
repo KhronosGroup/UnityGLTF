@@ -34,7 +34,7 @@ void SampleSceneColor_float(float2 uv, float lod, out float3 color)
 {
 	#define REQUIRE_OPAQUE_TEXTURE // seems we need to define this ourselves? HDSceneColorNode does that as well
 
-#ifdef UNIVERSAL_LIGHTING_INCLUDED
+#ifdef UNIVERSAL_LIGHTING_INCLUDED // how to detect built-in?
 	// For URP, with custom renderer feature for rough refractions
     color = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
 #else
