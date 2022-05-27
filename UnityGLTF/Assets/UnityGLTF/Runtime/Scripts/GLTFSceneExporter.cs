@@ -1671,7 +1671,7 @@ namespace UnityGLTF
 			if (materialObj.HasProperty("normalTexture") || materialObj.HasProperty("_NormalTexture"))
 			{
 				var propName = materialObj.HasProperty("normalTexture") ? "normalTexture" : "_NormalTexture";
-				var normalTex = materialObj.GetTexture("propName");
+				var normalTex = materialObj.GetTexture(propName);
 
 				if (normalTex)
 				{
@@ -2029,14 +2029,17 @@ namespace UnityGLTF
 			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
 			var isGlTFastShader = material.shader.name.Equals("glTF/PbrMetallicRoughness", StringComparison.Ordinal);
 
-			if (material.HasProperty("_Color"))
+			if (material.HasProperty("_BaseColorFactor"))
 			{
-				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
+				pbr.BaseColorFactor = material.GetColor("_BaseColorFactor").ToNumericsColorLinear();
 			}
-
-			if (material.HasProperty("_BaseColor"))
+			else if (material.HasProperty("_BaseColor"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorLinear();
+			}
+			else if (material.HasProperty("_Color"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
 			}
 
             if (material.HasProperty("_TintColor")) //particles use _TintColor instead of _Color
@@ -2051,10 +2054,10 @@ namespace UnityGLTF
                 pbr.BaseColorFactor = (material.GetColor("_TintColor") * white).ToNumericsColorLinear() ;
             }
 
-            if (material.HasProperty("_MainTex") || material.HasProperty("_BaseMap")) //TODO if additive particle, render black into alpha
+            if (material.HasProperty("_MainTex") || material.HasProperty("_BaseMap") || material.HasProperty("_BaseColorTexture")) //TODO if additive particle, render black into alpha
 			{
 				// TODO use private Material.GetFirstPropertyNameIdByAttribute here, supported from 2020.1+
-				var mainTexPropertyName = material.HasProperty("_BaseMap") ? "_BaseMap" : "_MainTex";
+				var mainTexPropertyName = material.HasProperty("_BaseMap") ? "_BaseMap" : material.HasProperty("_MainTex") ? "_MainTex" : "_BaseColorTexture";
 				var mainTex = material.GetTexture(mainTexPropertyName);
 
 				if (mainTex)

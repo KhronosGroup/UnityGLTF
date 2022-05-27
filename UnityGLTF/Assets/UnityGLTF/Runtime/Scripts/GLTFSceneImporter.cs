@@ -2096,7 +2096,14 @@ namespace UnityGLTF
 				else
 				{
 					// do we have URP or Unity 2021.2+? Use the PBR Graph Material!
+#if UNITY_2021_3_OR_NEWER
 					mapper = new PBRGraphMap(MaximumLod);
+#else
+					if(GraphicsSettings.currentRenderPipeline)
+						mapper = new PBRGraphMap(MaximumLod);
+					else
+						mapper = new MetalRoughMap(MaximumLod);
+#endif
 				}
 			}
 
