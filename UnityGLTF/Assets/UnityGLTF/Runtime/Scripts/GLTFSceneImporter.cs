@@ -2292,7 +2292,7 @@ namespace UnityGLTF
 				var volume = GetVolume(def);
 				if (volume != null)
 				{
-					volumeMapper.AttenuationColor = volume.attenuationColor.ToUnityColorLinear();
+					volumeMapper.AttenuationColor = QualitySettings.activeColorSpace == ColorSpace.Linear ? volume.attenuationColor.ToUnityColorLinear() : volume.attenuationColor.ToUnityColorRaw();
 					volumeMapper.AttenuationDistance = volume.attenuationDistance;
 					volumeMapper.ThicknessFactor = volume.thicknessFactor;
 					var td = await FromTextureInfo(volume.thicknessTexture);
