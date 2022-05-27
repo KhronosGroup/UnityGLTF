@@ -1940,6 +1940,21 @@ namespace UnityGLTF
 				}
 			}
 
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_iridescence_Factory.EXTENSION_NAME))
+			{
+				var iridescenceDef = (KHR_materials_iridescence) def.Extensions[KHR_materials_iridescence_Factory.EXTENSION_NAME];
+				if (iridescenceDef.iridescenceTexture != null)
+				{
+					var textureId = iridescenceDef.iridescenceTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+				if (iridescenceDef.iridescenceThicknessTexture != null)
+				{
+					var textureId = iridescenceDef.iridescenceThicknessTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
+
 			return Task.WhenAll(tasks);
 		}
 
@@ -2273,6 +2288,27 @@ namespace UnityGLTF
 				}
 			}
 
+			var iridescenceMapper = mapper as IIridescenceMap;
+			if (iridescenceMapper != null)
+			{
+				var iridescence = GetIridescence(def);
+				if (iridescence != null)
+				{
+					iridescenceMapper.IridescenceFactor = iridescence.iridescenceFactor;
+					iridescenceMapper.IridescenceIor = iridescence.iridescenceIor;
+					iridescenceMapper.IridescenceThicknessMinimum = iridescence.iridescenceThicknessMinimum;
+					var td = await FromTextureInfo(iridescence.iridescenceTexture);
+					iridescenceMapper.IridescenceTexture = td.Texture;
+					var td2 = await FromTextureInfo(iridescence.iridescenceThicknessTexture);
+					iridescenceMapper.IridescenceThicknessTexture = td2.Texture;
+
+					if (iridescenceMapper.IridescenceFactor > 0)
+					{
+						mapper.Material.EnableKeyword("IRIDESCENCE_ON");
+					}
+				}
+			}
+
 			if (def.NormalTexture != null)
 			{
 				TextureId textureId = def.NormalTexture.Index;
@@ -2599,6 +2635,16 @@ namespace UnityGLTF
 			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_ior_Factory.EXTENSION_NAME, out var extension))
 			{
 				return (KHR_materials_ior) extension;
+			}
+			return null;
+		}
+
+		protected virtual KHR_materials_iridescence GetIridescence(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_iridescence_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_iridescence_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_iridescence) extension;
 			}
 			return null;
 		}

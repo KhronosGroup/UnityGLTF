@@ -5,13 +5,13 @@ using Color = GLTF.Math.Color;
 
 namespace GLTF.Schema
 {
-// https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_volume
+    // https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_volume
 	[Serializable]
 	public class KHR_materials_volume : IExtension
 	{
 		public float thicknessFactor = 0f;
 		public TextureInfo thicknessTexture;// thicknessTexture // G channel
-		public float attenuationDistance = Single.PositiveInfinity;
+		public float attenuationDistance = float.PositiveInfinity;
 		public Color attenuationColor = new Color(1, 1, 1, 1);
 
 		public static readonly Color COLOR_DEFAULT = Color.White;
@@ -63,8 +63,8 @@ namespace GLTF.Schema
 				var extension = new KHR_materials_volume();
 				extension.thicknessFactor = extensionToken.Value[nameof(KHR_materials_volume.thicknessFactor)]?.Value<float>() ?? 0;
 				extension.attenuationColor = extensionToken.Value[nameof(KHR_materials_volume.attenuationColor)]?.DeserializeAsColor() ?? Color.White;
-				extension.attenuationDistance = extensionToken.Value[nameof(KHR_materials_volume.attenuationDistance)]?.Value<float>() ?? Single.PositiveInfinity;
-				extension.thicknessTexture = extensionToken.Value[nameof(KHR_materials_volume.thicknessTexture)].DeserializeAsTexture(root);
+				extension.attenuationDistance = extensionToken.Value[nameof(KHR_materials_volume.attenuationDistance)]?.Value<float>() ?? float.PositiveInfinity;
+				extension.thicknessTexture = extensionToken.Value[nameof(KHR_materials_volume.thicknessTexture)]?.DeserializeAsTexture(root);
 				return extension;
 			}
 

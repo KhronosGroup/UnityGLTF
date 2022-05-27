@@ -83,6 +83,16 @@ namespace UnityGLTF
 		double IOR { get; set; }
 	}
 
+	public interface IIridescenceMap : IMetalRoughUniformMap
+	{
+		double IridescenceFactor { get; set; }
+		double IridescenceIor { get; set; }
+		double IridescenceThicknessMinimum { get; set; }
+		double IridescenceThicknessMaximum { get; set; }
+		Texture IridescenceTexture { get; set; }
+		Texture IridescenceThicknessTexture { get; set; }
+	}
+
 	public interface ISpecGlossUniformMap : IUniformMap
 	{
 		Texture DiffuseTexture { get; set; }

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF;
 
-public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap
+public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap
 {
 	protected Material _material;
 
@@ -76,58 +76,71 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    get => _material.GetTexture("_OcclusionTexture");
 	    set => _material.SetTexture("_OcclusionTexture", value);
     }
+
     public int OcclusionTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public double OcclusionTexStrength
     {
 	    get => _material.GetFloat("_OcclusionStrength");
 	    set => _material.SetFloat("_OcclusionStrength", (float) value);
     }
+
     public Vector2 OcclusionXOffset
     {
 	    get => _material.GetTextureOffset("_OcclusionTexture");
 	    set => _material.SetTextureOffset("_OcclusionTexture", value);
     }
+
     public double OcclusionXRotation { get; set; }
+
     public Vector2 OcclusionXScale
     {
 	    get => _material.GetTextureScale("_OcclusionTexture");
 	    set => _material.SetTextureScale("_OcclusionTexture", value);
     }
+
     public int OcclusionXTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public Texture EmissiveTexture
     {
 	    get => _material.GetTexture("_EmissiveTexture");
 	    set => _material.SetTexture("_EmissiveTexture", value);
     }
+
     public int EmissiveTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public Color EmissiveFactor
     {
 	    get => _material.GetColor("_EmissiveFactor");
 	    set => _material.SetColor("_EmissiveFactor", value);
     }
+
     public Vector2 EmissiveXOffset
     {
 	    get => _material.GetTextureOffset("_EmissiveTexture");
 	    set => _material.SetTextureOffset("_EmissiveTexture", value);
     }
+
     public double EmissiveXRotation { get; set; }
+
     public Vector2 EmissiveXScale
     {
 	    get => _material.GetTextureScale("_EmissiveTexture");
 	    set => _material.SetTextureScale("_EmissiveTexture", value);
     }
+
     public int EmissiveXTexCoord
     {
 	    get => 0;
@@ -196,6 +209,7 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
     }
 
     public static readonly int cutoffPropId = Shader.PropertyToID("_Cutoff");
+
     protected void SetAlphaModeMask(Material material, bool isMask) {
 	    material.SetFloat(cutoffPropId, isMask ? 1 : 0);
 // #if USING_HDRP_10_OR_NEWER || USING_URP_12_OR_NEWER
@@ -205,7 +219,6 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 // #endif
 	    material.SetFloat(k_AlphaClip, 1);
     }
-
 
     static readonly int cullPropId = Shader.PropertyToID("_Cull");
     static readonly int cullModePropId = Shader.PropertyToID("_CullMode");
@@ -286,63 +299,77 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    get => _material.GetTexture("_BaseColorTexture");
 	    set => _material.SetTexture("_BaseColorTexture", value);
     }
+
     public int BaseColorTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public Vector2 BaseColorXOffset
     {
 	    get => _material.GetTextureOffset("_BaseColorTexture");
 	    set => _material.SetTextureOffset("_BaseColorTexture", value);
     }
+
     public double BaseColorXRotation { get; set; }
+
     public Vector2 BaseColorXScale
     {
 	    get => _material.GetTextureScale("_BaseColorTexture");
 	    set => _material.SetTextureScale("_BaseColorTexture", value);
     }
+
     public int BaseColorXTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public Color BaseColorFactor
     {
 	    get => _material.GetColor("_BaseColorFactor");
 	    set => _material.SetColor("_BaseColorFactor", value);
     }
+
     public Texture MetallicRoughnessTexture
     {
 	    get => _material.GetTexture("_MetallicRoughnessTexture");
 	    set => _material.SetTexture("_MetallicRoughnessTexture", value);
     }
+
     public int MetallicRoughnessTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public Vector2 MetallicRoughnessXOffset
     {
 	    get => _material.GetTextureOffset("_MetallicRoughnessTexture");
 	    set => _material.SetTextureOffset("_MetallicRoughnessTexture", value);
     }
+
     public double MetallicRoughnessXRotation { get; set; }
+
     public Vector2 MetallicRoughnessXScale
     {
 	    get => _material.GetTextureOffset("_MetallicRoughnessTexture");
 	    set => _material.SetTextureOffset("_MetallicRoughnessTexture", value);
     }
+
     public int MetallicRoughnessXTexCoord
     {
 	    get => 0;
 	    set {}
     }
+
     public double MetallicFactor
     {
 	    get => _material.GetFloat("_MetallicFactor");
 	    set => _material.SetFloat("_MetallicFactor", (float) value);
     }
+
     public double RoughnessFactor
     {
 	    get => _material.GetFloat("_RoughnessFactor");
@@ -357,6 +384,7 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 		    _material.SetFloat("_ThicknessFactor", (float) value);
 	    }
     }
+
     public Texture ThicknessTexture
     {
 	    get => _material.GetTexture("_ThicknessTexture");
@@ -365,16 +393,19 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 		    _material.SetTexture("_ThicknessTexture", value);
 	    }
     }
+
     public double AttenuationDistance
     {
 	    get => _material.GetFloat("_AttenuationDistance");
 	    set => _material.SetFloat("_AttenuationDistance", (float) value);
     }
+
     public Color AttenuationColor
     {
 	    get => _material.GetColor("_AttenuationColor");
 	    set => _material.SetColor("_AttenuationColor", value);
     }
+
     public double TransmissionFactor
     {
 	    get => _material.GetFloat("_TransmissionFactor");
@@ -383,6 +414,7 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 		    _material.SetFloat("_TransmissionFactor", (float) value);
 	    }
     }
+
     public Texture TransmissionTexture
     {
 	    get => _material.GetTexture("_TransmissionTexture");
@@ -391,9 +423,52 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 		    _material.SetTexture("_TransmissionTexture", value);
 	    }
     }
+
     public double IOR
     {
 	    get => _material.GetFloat("_IOR");
 	    set => _material.SetFloat("_IOR", (float) value);
+    }
+
+    public double IridescenceFactor
+    {
+	    get => _material.GetFloat("_IridescenceFactor");
+	    set => _material.SetFloat("_IridescenceFactor", (float) value);
+    }
+
+    public double IridescenceIor
+    {
+	    get => _material.GetFloat("_IridescenceIor");
+	    set => _material.SetFloat("_IridescenceIor", (float) value);
+    }
+
+    public double IridescenceThicknessMinimum
+    {
+	    get => _material.GetFloat("_IridescenceThicknessMinimum");
+	    set => _material.SetFloat("_IridescenceThicknessMinimum", (float) value);
+    }
+
+    public double IridescenceThicknessMaximum
+    {
+	    get => _material.GetFloat("_IridescenceThicknessMaximum");
+	    set => _material.SetFloat("_IridescenceThicknessMaximum", (float) value);
+    }
+
+    public Texture IridescenceTexture
+    {
+	    get => _material.GetTexture("_IridescenceTexture");
+	    set
+	    {
+		    _material.SetTexture("_IridescenceTexture", value);
+	    }
+    }
+
+    public Texture IridescenceThicknessTexture
+    {
+	    get => _material.GetTexture("_IridescenceThicknessTexture");
+	    set
+	    {
+		    _material.SetTexture("_IridescenceThicknessTexture", value);
+	    }
     }
 }
