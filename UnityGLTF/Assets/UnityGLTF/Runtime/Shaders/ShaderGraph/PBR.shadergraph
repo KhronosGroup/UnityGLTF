@@ -3544,7 +3544,7 @@
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Enable Volume/Transmission",
     "m_DefaultReferenceName": "_ENABLE_VOLUME_TRANSMISSION",
-    "m_OverrideReferenceName": "",
+    "m_OverrideReferenceName": "VOLUME_TRANSMISSION_ON",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
@@ -3553,7 +3553,7 @@
     "m_KeywordScope": 0,
     "m_KeywordStages": 63,
     "m_Entries": [],
-    "m_Value": 0,
+    "m_Value": 1,
     "m_IsEditable": true
 }
 
@@ -9401,7 +9401,7 @@
     "m_ZWriteControl": 0,
     "m_AlphaMode": 1,
     "m_RenderFace": 2,
-    "m_AlphaClip": true,
+    "m_AlphaClip": false,
     "m_CastShadows": true,
     "m_ReceiveShadows": true,
     "m_CustomEditorGUI": "",
@@ -10007,7 +10007,7 @@
     "m_ActiveSubTarget": {
         "m_Id": "dbfb5df95252469d938040e1ba4d8f60"
     },
-    "m_AllowMaterialOverride": false,
+    "m_AllowMaterialOverride": true,
     "m_SurfaceType": 0,
     "m_ZWriteControl": 0,
     "m_ZTestMode": 4,

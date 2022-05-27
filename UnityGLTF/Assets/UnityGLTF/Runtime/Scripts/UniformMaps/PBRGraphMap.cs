@@ -133,7 +133,59 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    get => 0;
 	    set {}
     }
-    public AlphaMode AlphaMode { get; set; }
+
+    private AlphaMode _alphaMode;
+    public virtual AlphaMode AlphaMode
+    {
+	    get { return _alphaMode; }
+	    set
+	    {
+		    if (value == AlphaMode.MASK)
+		    {
+			    _material.SetOverrideTag("RenderType", "TransparentCutout");
+			    _material.SetFloat("_Mode", 1);
+			    _material.SetInt("_SrcBlend", (int)BlendMode.One);
+			    _material.SetInt("_DstBlend", (int)BlendMode.Zero);
+			    _material.SetInt("_ZWrite", 1);
+			    _material.EnableKeyword("_ALPHATEST_ON");
+			    _material.DisableKeyword("_ALPHABLEND_ON");
+			    _material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+			    _material.renderQueue = (int)RenderQueue.AlphaTest;
+			    if (_material.HasProperty("_Cutoff"))
+			    {
+				    _material.SetFloat("_Cutoff", (float)AlphaCutoff);
+			    }
+		    }
+		    else if (value == AlphaMode.BLEND)
+		    {
+			    _material.SetOverrideTag("RenderType", "Transparent");
+			    _material.SetFloat("_Mode", 2);
+			    _material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+			    _material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+			    _material.SetInt("_ZWrite", 0);
+			    _material.DisableKeyword("_ALPHATEST_ON");
+			    _material.EnableKeyword("_ALPHABLEND_ON");
+			    _material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+			    _material.renderQueue = (int)RenderQueue.Transparent;
+			    _material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+		    }
+		    else
+		    {
+			    _material.SetOverrideTag("RenderType", "Opaque");
+			    _material.SetFloat("_Mode", 0);
+			    _material.SetInt("_SrcBlend", (int)BlendMode.One);
+			    _material.SetInt("_DstBlend", (int)BlendMode.Zero);
+			    _material.SetInt("_ZWrite", 1);
+			    _material.DisableKeyword("_ALPHATEST_ON");
+			    _material.DisableKeyword("_ALPHABLEND_ON");
+			    _material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+			    _material.renderQueue = (int)RenderQueue.Geometry;
+		    }
+
+		    _alphaMode = value;
+	    }
+    }
+
     public double AlphaCutoff
     {
 	    get => _material.GetFloat("_AlphaCutoff");
@@ -238,7 +290,6 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set
 	    {
 		    _material.SetFloat("_ThicknessFactor", (float) value);
-		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
 	    }
     }
     public Texture ThicknessTexture
@@ -247,13 +298,12 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set
 	    {
 		    _material.SetTexture("_ThicknessTexture", value);
-		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
 	    }
     }
     public double AttenuationDistance
     {
-	    get => _material.GetFloat("_RoughnessFactor");
-	    set => _material.SetFloat("_RoughnessFactor", (float) value);
+	    get => _material.GetFloat("_AttenuationDistance");
+	    set => _material.SetFloat("_AttenuationDistance", (float) value);
     }
     public Color AttenuationColor
     {
@@ -266,7 +316,6 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set
 	    {
 		    _material.SetFloat("_TransmissionFactor", (float) value);
-		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
 	    }
     }
     public Texture TransmissionTexture
@@ -275,7 +324,6 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set
 	    {
 		    _material.SetTexture("_TransmissionTexture", value);
-		    _material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
 	    }
     }
     public double IOR

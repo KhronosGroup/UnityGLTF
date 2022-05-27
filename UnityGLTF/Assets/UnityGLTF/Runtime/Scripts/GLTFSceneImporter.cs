@@ -2238,6 +2238,11 @@ namespace UnityGLTF
 					transmissionMapper.TransmissionFactor = transmission.transmissionFactor;
 					var td = await FromTextureInfo(transmission.transmissionTexture);
 					transmissionMapper.TransmissionTexture = td.Texture;
+
+					if (transmissionMapper.TransmissionFactor > 0)
+					{
+						mapper.Material.renderQueue = 3000;
+					}
 				}
 			}
 
@@ -2247,16 +2252,16 @@ namespace UnityGLTF
 				var volume = GetVolume(def);
 				if (volume != null)
 				{
-					volumeMapper.AttenuationColor = volume.attenuationColor.ToUnityColorRaw();
+					volumeMapper.AttenuationColor = volume.attenuationColor.ToUnityColorLinear();
 					volumeMapper.AttenuationDistance = volume.attenuationDistance;
 					volumeMapper.ThicknessFactor = volume.thicknessFactor;
 					var td = await FromTextureInfo(volume.thicknessTexture);
 					volumeMapper.ThicknessTexture = td.Texture;
 
-					// if (volumeMapper.ThicknessFactor > 0)
+					if (volumeMapper.ThicknessFactor > 0)
 					{
 						mapper.Material.renderQueue = 3000;
-						mapper.Material.EnableKeyword("_ENABLE_VOLUME_TRANSMISSION");
+						mapper.Material.EnableKeyword("VOLUME_TRANSMISSION_ON");
 					}
 				}
 			}
@@ -2339,6 +2344,8 @@ namespace UnityGLTF
 			{
 				_defaultLoadedMaterial = materialWrapper;
 			}
+
+			Debug.Log("kw is on for " + mapper.Material + ": " + mapper.Material.IsKeywordEnabled("VOLUME_TRANSMISSION_ON"));
 		}
 
 
