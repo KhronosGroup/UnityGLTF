@@ -13,7 +13,9 @@ void SampleSceneColor2_half(half2 uv, half lod, out half3 color)
 }
 
 #else
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+// Needed to comment this out due to IN-4055 - can't build with this include being present here
+// For code changes, comment this out so autocomplete etc. work, but remember to comment it again
+// #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
 float4 _CameraOpaqueTexture_TexelSize;
 TEXTURE2D_X(_CameraOpaqueTexture);

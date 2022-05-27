@@ -7,9 +7,9 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 {
 	protected Material _material;
 
-	public PBRGraphMap(int MaxLOD = 1000) : this("UnityGltf/PBR", MaxLOD) {}
+	public PBRGraphMap() : this("UnityGLTF/PBRGraph") {}
 
-	protected PBRGraphMap(string shaderName, int MaxLOD = 1000)
+	protected PBRGraphMap(string shaderName)
 	{
 		var s = Shader.Find(shaderName);
 		if (s == null)

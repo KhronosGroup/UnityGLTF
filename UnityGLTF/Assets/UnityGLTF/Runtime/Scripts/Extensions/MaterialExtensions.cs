@@ -1,5 +1,4 @@
 using GLTF.Schema;
-using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Extensions;
 
@@ -7,7 +6,9 @@ namespace UnityGLTF
 {
 	public class MaterialExtensions : MonoBehaviour
 	{
-		[InitializeOnLoadMethod]
+#if UNITY_EDITOR
+		[UnityEditor.InitializeOnLoadMethod]
+#endif
 		[RuntimeInitializeOnLoadMethod]
 		static void InitExt()
 		{
@@ -32,6 +33,31 @@ namespace UnityGLTF
 		private static readonly int SpecularColorFactor = Shader.PropertyToID("_SpecularColorFactor");
 		private static readonly int SpecularTexture = Shader.PropertyToID("_SpecularTexture");
 		private static readonly int SpecularColorTexture = Shader.PropertyToID("_SpecularColorTexture");
+
+		public static void ValidateMaterialKeywords(Material material)
+		{
+			var needsVolumeTransmission = false;
+			needsVolumeTransmission |= material.HasProperty(ThicknessFactor) && material.GetFloat(ThicknessFactor) > 0;
+			needsVolumeTransmission |= material.HasProperty(TransmissionFactor) && material.GetFloat(TransmissionFactor) > 0;
+			SetKeyword(material, "_VOLUME_TRANSMISSION", needsVolumeTransmission);
+
+			var needsIridescence = material.HasProperty(IridescenceFactor) && material.GetFloat(IridescenceFactor) > 0;
+			SetKeyword(material, "_IRIDESCENCE", needsIridescence);
+
+			var needsSpecular = material.HasProperty(SpecularFactor) && material.GetFloat(SpecularFactor) > 0;
+			SetKeyword(material, "_SPECULAR", needsSpecular);
+		}
+
+		private static void SetKeyword(Material material, string keyword, bool state)
+		{
+			if (state)
+				material.EnableKeyword(keyword + "_ON");
+			else
+				material.DisableKeyword(keyword + "_ON");
+
+			if (material.HasProperty(keyword))
+				material.SetFloat(keyword, state ? 1 : 0);
+		}
 
 		private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{

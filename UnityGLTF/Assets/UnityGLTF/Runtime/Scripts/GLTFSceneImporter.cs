@@ -2127,10 +2127,10 @@ namespace UnityGLTF
 				{
 					// do we have URP or Unity 2021.2+? Use the PBR Graph Material!
 #if UNITY_2021_3_OR_NEWER
-					mapper = new PBRGraphMap(MaximumLod);
+					mapper = new PBRGraphMap();
 #elif UNITY_2019_1_OR_NEWER
 					if(GraphicsSettings.currentRenderPipeline)
-						mapper = new PBRGraphMap(MaximumLod);
+						mapper = new PBRGraphMap();
 					else
 						mapper = new MetalRoughMap(MaximumLod);
 #else
@@ -2411,6 +2411,11 @@ namespace UnityGLTF
 			var vertColorMapper = mapper.Clone();
 			vertColorMapper.VertexColorsEnabled = true;
 
+			if (mapper is PBRGraphMap pbrGraphMap)
+			{
+				MaterialExtensions.ValidateMaterialKeywords(pbrGraphMap.Material);
+			}
+
 			MaterialCacheData materialWrapper = new MaterialCacheData
 			{
 				UnityMaterial = mapper.Material,
@@ -2426,8 +2431,6 @@ namespace UnityGLTF
 			{
 				_defaultLoadedMaterial = materialWrapper;
 			}
-
-			Debug.Log("kw is on for " + mapper.Material + ": " + mapper.Material.IsKeywordEnabled("VOLUME_TRANSMISSION_ON"));
 		}
 
 

@@ -1,6 +1,5 @@
 {
     "name": "UnityGltf.RenderPipelines",
-    "rootNamespace": "",
     "references": [
         "GUID:15fc0a57446b3144c949da3e2b9737a9",
         "GUID:df380645f10b7bc4b97d4f5eb6303d95",
@@ -12,7 +11,9 @@
     "overrideReferences": true,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "UNITY_2020_3_OR_NEWER"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.render-pipelines.universal",
