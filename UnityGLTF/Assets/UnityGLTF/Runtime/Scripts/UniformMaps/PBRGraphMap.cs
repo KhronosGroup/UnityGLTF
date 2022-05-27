@@ -155,6 +155,8 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 			    {
 				    _material.SetFloat("_Cutoff", (float)AlphaCutoff);
 			    }
+
+			    SetAlphaModeMask(_material, true);
 		    }
 		    else if (value == AlphaMode.BLEND)
 		    {
@@ -168,6 +170,8 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 			    _material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
 			    _material.renderQueue = (int)RenderQueue.Transparent;
 			    _material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+
+			    SetShaderModeBlend(_material);
 		    }
 		    else
 		    {
@@ -184,6 +188,67 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
 		    _alphaMode = value;
 	    }
+    }
+
+    protected void SetDoubleSided(Material material) {
+	    material.doubleSidedGI = true;
+	    material.SetFloat(cullPropId, (int) CullMode.Off);
+    }
+
+    public static readonly int cutoffPropId = Shader.PropertyToID("_Cutoff");
+    protected void SetAlphaModeMask(Material material, bool isMask) {
+	    material.SetFloat(cutoffPropId, isMask ? 1 : 0);
+// #if USING_HDRP_10_OR_NEWER || USING_URP_12_OR_NEWER
+        material.EnableKeyword(KW_ALPHATEST_ON);
+        material.SetOverrideTag(TAG_RENDER_TYPE, TAG_RENDER_TYPE_CUTOUT);
+        material.SetFloat(k_ZTestGBufferPropId, (int)CompareFunction.Equal); //3
+// #endif
+	    material.SetFloat(k_AlphaClip, 1);
+    }
+
+
+    static readonly int cullPropId = Shader.PropertyToID("_Cull");
+    static readonly int cullModePropId = Shader.PropertyToID("_CullMode");
+    static readonly int k_AlphaClip = Shader.PropertyToID("_AlphaClip");
+    static readonly int k_Surface = Shader.PropertyToID("_Surface");
+    static readonly int k_AlphaDstBlendPropId = Shader.PropertyToID("_AlphaDstBlend");
+    static readonly int k_ZTestGBufferPropId = Shader.PropertyToID("_ZTestGBuffer");
+    static readonly int srcBlendPropId = Shader.PropertyToID("_SrcBlend");
+    static readonly int dstBlendPropId = Shader.PropertyToID("_DstBlend");
+    static readonly int zWritePropId = Shader.PropertyToID("_ZWrite");
+
+    const string TAG_RENDER_TYPE = "RenderType";
+    const string TAG_RENDER_TYPE_CUTOUT = "TransparentCutout";
+    const string TAG_RENDER_TYPE_OPAQUE = "Opaque";
+    const string TAG_RENDER_TYPE_FADE = "Fade";
+    const string TAG_RENDER_TYPE_TRANSPARENT = "Transparent";
+    const string KW_ALPHATEST_ON = "_ALPHATEST_ON";
+    const string KW_DISABLE_SSR_TRANSPARENT = "_DISABLE_SSR_TRANSPARENT";
+    const string KW_ENABLE_FOG_ON_TRANSPARENT = "_ENABLE_FOG_ON_TRANSPARENT";
+    const string KW_SURFACE_TYPE_TRANSPARENT = "_SURFACE_TYPE_TRANSPARENT";
+    const string k_ShaderPassTransparentDepthPrepass = "TransparentDepthPrepass";
+    const string k_ShaderPassTransparentDepthPostpass = "TransparentDepthPostpass";
+    const string k_ShaderPassTransparentBackface = "TransparentBackface";
+    const string k_ShaderPassRayTracingPrepass = "RayTracingPrepass";
+    const string k_ShaderPassDepthOnlyPass = "DepthOnly";
+
+    protected void SetShaderModeBlend(Material material)
+    {
+	    material.SetOverrideTag(TAG_RENDER_TYPE, TAG_RENDER_TYPE_TRANSPARENT);
+	    material.EnableKeyword(KW_SURFACE_TYPE_TRANSPARENT);
+	    material.EnableKeyword(KW_DISABLE_SSR_TRANSPARENT);
+	    material.EnableKeyword(KW_ENABLE_FOG_ON_TRANSPARENT);
+	    material.SetShaderPassEnabled(k_ShaderPassTransparentDepthPrepass, false);
+	    material.SetShaderPassEnabled(k_ShaderPassTransparentDepthPostpass, false);
+	    material.SetShaderPassEnabled(k_ShaderPassTransparentBackface, false);
+	    material.SetShaderPassEnabled(k_ShaderPassRayTracingPrepass, false);
+	    material.SetShaderPassEnabled(k_ShaderPassDepthOnlyPass, false);
+	    material.SetFloat(srcBlendPropId, (int) BlendMode.SrcAlpha);//5
+	    material.SetFloat(dstBlendPropId, (int)BlendMode.OneMinusSrcAlpha);//10
+	    material.SetFloat(k_ZTestGBufferPropId, (int)CompareFunction.Equal); //3
+	    material.SetFloat(k_AlphaDstBlendPropId, (int)BlendMode.OneMinusSrcAlpha);//10
+	    material.SetFloat(k_Surface, 1);
+	    material.SetFloat(zWritePropId, 0);
     }
 
     public double AlphaCutoff
