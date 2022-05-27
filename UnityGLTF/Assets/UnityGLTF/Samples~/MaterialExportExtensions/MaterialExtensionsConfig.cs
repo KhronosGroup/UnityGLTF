@@ -127,6 +127,14 @@ public class MaterialExtensionsConfig : ScriptableObject
     private static readonly int TransmissionFactor = Shader.PropertyToID("_TransmissionFactor");
     private static readonly int TransmissionTexture = Shader.PropertyToID("_TransmissionTexture");
 
+    private static readonly int IridescenceFactor = Shader.PropertyToID("_IridescenceFactor");
+    private static readonly int IridescenceIor = Shader.PropertyToID("_IridescenceIor");
+    private static readonly int IridescenceThicknessMinimum = Shader.PropertyToID("_IridescenceThicknessMinimum");
+    private static readonly int IridescenceThicknessMaximum = Shader.PropertyToID("_IridescenceThicknessMaximum");
+    private static readonly int IridescenceTexture = Shader.PropertyToID("_IridescenceTexture");
+    private static readonly int IridescenceThicknessTexture = Shader.PropertyToID("_IridescenceThicknessTexture");
+
+
     private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
     {
 	    if (!material) return;
@@ -134,42 +142,7 @@ public class MaterialExtensionsConfig : ScriptableObject
         // check if any setting applies here
         var settings = profiles?.FirstOrDefault(x => x && (x.targetAllMaterials || (x.targetMaterials != null && x.targetMaterials.Contains(material))));
 
-        if (!settings || !settings.enabled)
-        {
-	        if (material.IsKeywordEnabled("_TRANSMISSION"))
-	        {
-		        exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
-		        exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
-		        exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
-
-		        var ve = new KHR_materials_volume();
-		        var vi = new KHR_materials_ior();
-		        var vt = new KHR_materials_transmission();
-
-		        if (material.HasProperty(ThicknessFactor))
-			        ve.thicknessFactor = material.GetFloat(ThicknessFactor);
-		        if (material.HasProperty(ThicknessTexture) && material.GetTexture(ThicknessTexture))
-			        ve.thicknessTexture = exporter.ExportTextureInfo(material.GetTexture(ThicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-		        if (material.HasProperty(AttenuationDistance))
-			        ve.attenuationDistance = material.GetFloat(AttenuationDistance);
-		        if (material.HasProperty(AttenuationColor))
-			        ve.attenuationColor = material.GetColor(AttenuationColor).ToNumericsColorRaw();
-
-		        if (material.HasProperty(IOR))
-			        vi.ior = material.GetFloat(IOR);
-
-		        if (material.HasProperty(TransmissionFactor))
-					vt.transmissionFactor = material.GetFloat(TransmissionFactor);
-		        if (material.HasProperty(TransmissionTexture) && material.GetTexture(TransmissionTexture))
-			        vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(TransmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-
-		        materialnode.AddExtension(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
-		        materialnode.AddExtension(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
-		        materialnode.AddExtension(KHR_materials_transmission_Factory.EXTENSION_NAME, vt);
-	        }
-
-	        return;
-        }
+        if (!settings || !settings.enabled) return;
 
         // override existing PBR for testing
         if (settings.overridePBR)
@@ -187,32 +160,32 @@ public class MaterialExtensionsConfig : ScriptableObject
         {
             settings.volume.ConvertData(exporter);
             exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
-            materialnode.AddExtension(KHR_materials_volume_Factory.EXTENSION_NAME, settings.volume.Clone(exporter.GetRoot()));
+            materialnode.Extensions[KHR_materials_volume_Factory.EXTENSION_NAME] = settings.volume.Clone(exporter.GetRoot());
         }
 
         if(settings.ior.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
-            materialnode.AddExtension(KHR_materials_ior_Factory.EXTENSION_NAME, settings.ior.Clone(exporter.GetRoot()));
+            materialnode.Extensions[KHR_materials_ior_Factory.EXTENSION_NAME] = settings.ior.Clone(exporter.GetRoot());
         }
 
         if(settings.transmission.enabled)
         {
 	        settings.transmission.ConvertData(exporter);
             exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
-            materialnode.AddExtension(KHR_materials_transmission_Factory.EXTENSION_NAME, settings.transmission.Clone(exporter.GetRoot()));
+            materialnode.Extensions[KHR_materials_transmission_Factory.EXTENSION_NAME] = settings.transmission.Clone(exporter.GetRoot());
         }
 
         if(settings.sheen.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsSheenExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsSheenExtension.ExtensionName, settings.sheen.Clone(exporter.GetRoot()));
+            materialnode.Extensions[KHR_MaterialsSheenExtension.ExtensionName] = settings.sheen.Clone(exporter.GetRoot());
         }
 
         if(settings.clearcoat.enabled)
         {
             exporter.DeclareExtensionUsage(KHR_MaterialsClearcoatExtension.ExtensionName, false);
-            materialnode.AddExtension(KHR_MaterialsClearcoatExtension.ExtensionName, settings.clearcoat.Clone(exporter.GetRoot()));
+            materialnode.Extensions[KHR_MaterialsClearcoatExtension.ExtensionName] = settings.clearcoat.Clone(exporter.GetRoot());
         }
     }
 }

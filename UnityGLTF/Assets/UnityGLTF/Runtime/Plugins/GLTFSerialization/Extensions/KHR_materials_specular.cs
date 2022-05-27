@@ -22,7 +22,7 @@ namespace GLTF.Schema
 			JProperty jProperty = new JProperty(KHR_materials_specular_Factory.EXTENSION_NAME, jo);
 
 			if (specularFactor != 1) jo.Add(new JProperty(nameof(specularFactor), specularFactor));
-			if (specularColorFactor != COLOR_DEFAULT) jo.Add(new JProperty(nameof(specularColorFactor), specularColorFactor));
+			if (specularColorFactor != COLOR_DEFAULT) jo.Add(new JProperty(nameof(specularColorFactor), new JArray(specularColorFactor.R, specularColorFactor.G, specularColorFactor.B)));
 			if (specularTexture != null) {
 				jo.Add(new JProperty(nameof(specularTexture),
 						new JObject(
