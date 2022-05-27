@@ -1955,6 +1955,21 @@ namespace UnityGLTF
 				}
 			}
 
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_specular_Factory.EXTENSION_NAME))
+			{
+				var specularDef = (KHR_materials_specular) def.Extensions[KHR_materials_specular_Factory.EXTENSION_NAME];
+				if (specularDef.specularTexture != null)
+				{
+					var textureId = specularDef.specularTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+				if (specularDef.specularColorTexture != null)
+				{
+					var textureId = specularDef.specularColorTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
+
 			return Task.WhenAll(tasks);
 		}
 
@@ -2264,6 +2279,7 @@ namespace UnityGLTF
 					if (transmissionMapper.TransmissionFactor > 0)
 					{
 						mapper.Material.renderQueue = 3000;
+						mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ON");
 					}
 				}
 			}
@@ -2283,7 +2299,7 @@ namespace UnityGLTF
 					if (volumeMapper.ThicknessFactor > 0)
 					{
 						mapper.Material.renderQueue = 3000;
-						mapper.Material.EnableKeyword("VOLUME_TRANSMISSION_ON");
+						mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ON");
 					}
 				}
 			}
@@ -2297,6 +2313,7 @@ namespace UnityGLTF
 					iridescenceMapper.IridescenceFactor = iridescence.iridescenceFactor;
 					iridescenceMapper.IridescenceIor = iridescence.iridescenceIor;
 					iridescenceMapper.IridescenceThicknessMinimum = iridescence.iridescenceThicknessMinimum;
+					iridescenceMapper.IridescenceThicknessMaximum = iridescence.iridescenceThicknessMaximum;
 					var td = await FromTextureInfo(iridescence.iridescenceTexture);
 					iridescenceMapper.IridescenceTexture = td.Texture;
 					var td2 = await FromTextureInfo(iridescence.iridescenceThicknessTexture);
@@ -2304,7 +2321,27 @@ namespace UnityGLTF
 
 					if (iridescenceMapper.IridescenceFactor > 0)
 					{
-						mapper.Material.EnableKeyword("IRIDESCENCE_ON");
+						mapper.Material.EnableKeyword("_IRIDESCENCE_ON");
+					}
+				}
+			}
+
+			var specularMapper = mapper as ISpecularMap;
+			if (specularMapper != null)
+			{
+				var specular = GetSpecular(def);
+				if (specular != null)
+				{
+					specularMapper.SpecularFactor = specular.specularFactor;
+					specularMapper.SpecularColorFactor = specular.specularColorFactor.ToUnityColorLinear();
+					var td = await FromTextureInfo(specular.specularTexture);
+					specularMapper.SpecularTexture = td.Texture;
+					var td2 = await FromTextureInfo(specular.specularColorTexture);
+					specularMapper.SpecularColorTexture = td2.Texture;
+
+					if (specularMapper.SpecularFactor > 0)
+					{
+						mapper.Material.EnableKeyword("_SPECULAR_ON");
 					}
 				}
 			}
@@ -2645,6 +2682,16 @@ namespace UnityGLTF
 			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_iridescence_Factory.EXTENSION_NAME, out var extension))
 			{
 				return (KHR_materials_iridescence) extension;
+			}
+			return null;
+		}
+
+		protected virtual KHR_materials_specular GetSpecular(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_specular_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_specular_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_specular) extension;
 			}
 			return null;
 		}

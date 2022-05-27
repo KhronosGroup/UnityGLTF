@@ -83,6 +83,14 @@ namespace UnityGLTF
 		double IOR { get; set; }
 	}
 
+	public interface ISpecularMap : IMetalRoughUniformMap
+	{
+		double SpecularFactor { get; set; }
+		Texture SpecularTexture { get; set; }
+		Color SpecularColorFactor { get; set; }
+		Texture SpecularColorTexture { get; set; }
+	}
+
 	public interface IIridescenceMap : IMetalRoughUniformMap
 	{
 		double IridescenceFactor { get; set; }

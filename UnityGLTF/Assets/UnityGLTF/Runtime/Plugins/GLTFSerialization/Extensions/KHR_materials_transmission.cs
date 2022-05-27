@@ -13,10 +13,9 @@ namespace GLTF.Schema
 
 		public JProperty Serialize()
 		{
-			var jo = new JObject(
-				new JProperty(nameof(transmissionFactor), transmissionFactor)
-			);
-			if(transmissionTexture != null)
+			var jo = new JObject();
+			if (transmissionFactor != 0) jo.Add(new JProperty(nameof(transmissionFactor), transmissionFactor));
+			if (transmissionTexture != null)
 				jo.Add(new JProperty(nameof(transmissionTexture),
 						new JObject(
 							new JProperty(TextureInfo.INDEX, transmissionTexture.Index.Id),

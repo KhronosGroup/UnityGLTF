@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF;
 
-public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap
+public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap, ISpecularMap
 {
 	protected Material _material;
 
@@ -469,6 +469,36 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set
 	    {
 		    _material.SetTexture("_IridescenceThicknessTexture", value);
+	    }
+    }
+
+    public double SpecularFactor
+    {
+	    get => _material.GetFloat("_SpecularFactor");
+	    set => _material.SetFloat("_SpecularFactor", (float) value);
+    }
+
+    public Texture SpecularTexture
+    {
+	    get => _material.GetTexture("_SpecularTexture");
+	    set
+	    {
+		    _material.SetTexture("_SpecularTexture", value);
+	    }
+    }
+
+    public Color SpecularColorFactor
+    {
+	    get => _material.GetColor("_SpecularColorFactor");
+	    set => _material.SetColor("_SpecularColorFactor", value);
+    }
+
+    public Texture SpecularColorTexture
+    {
+	    get => _material.GetTexture("_SpecularColorTexture");
+	    set
+	    {
+		    _material.SetTexture("_SpecularColorTexture", value);
 	    }
     }
 }

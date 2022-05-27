@@ -14,20 +14,14 @@ namespace GLTF.Schema
 			return new KHR_materials_emissive_strength(this, gltfRoot);
 		}
 
-		public override void Serialize(JsonWriter writer)
-		{
-			writer.WritePropertyName(KHR_materials_emissive_strength_Factory.EXTENSION_NAME);
-			writer.WriteStartObject();
-			writer.WritePropertyName(nameof(emissiveStrength));
-			writer.WriteValue(emissiveStrength);
-			writer.WriteEndObject();
-		}
-
 		public JProperty Serialize()
 		{
-			JTokenWriter writer = new JTokenWriter();
-			Serialize(writer);
-			return (JProperty)writer.Token;
+			var jo = new JObject();
+			JProperty jProperty = new JProperty(KHR_materials_volume_Factory.EXTENSION_NAME, jo);
+
+			if(emissiveStrength != 0) jo.Add(new JProperty(nameof(emissiveStrength), emissiveStrength));
+
+			return jProperty;
 		}
 
 		public float emissiveStrength = 1.0f;

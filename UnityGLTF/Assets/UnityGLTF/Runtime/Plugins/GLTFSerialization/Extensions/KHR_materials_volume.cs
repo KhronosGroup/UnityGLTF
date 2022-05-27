@@ -21,11 +21,11 @@ namespace GLTF.Schema
 			var jo = new JObject();
 			JProperty jProperty = new JProperty(KHR_materials_volume_Factory.EXTENSION_NAME, jo);
 
-			jo.Add(new JProperty(nameof(thicknessFactor), thicknessFactor));
-			if(!float.IsPositiveInfinity(attenuationDistance))
+			if (thicknessFactor != 0) jo.Add(new JProperty(nameof(thicknessFactor), thicknessFactor));
+			if (!float.IsPositiveInfinity(attenuationDistance))
 				jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
-			jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
-			if(thicknessTexture != null) {
+			if (attenuationColor != COLOR_DEFAULT) jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
+			if (thicknessTexture != null) {
 				jo.Add(new JProperty(nameof(thicknessTexture),
 						new JObject(
 							new JProperty(TextureInfo.INDEX, thicknessTexture.Index.Id),
@@ -61,10 +61,10 @@ namespace GLTF.Schema
 			if (extensionToken != null)
 			{
 				var extension = new KHR_materials_volume();
-				extension.thicknessFactor = extensionToken.Value[nameof(KHR_materials_volume.thicknessFactor)]?.Value<float>() ?? 0;
-				extension.attenuationColor = extensionToken.Value[nameof(KHR_materials_volume.attenuationColor)]?.DeserializeAsColor() ?? Color.White;
+				extension.thicknessFactor     = extensionToken.Value[nameof(KHR_materials_volume.thicknessFactor)]?.Value<float>() ?? 0;
+				extension.attenuationColor    = extensionToken.Value[nameof(KHR_materials_volume.attenuationColor)]?.DeserializeAsColor() ?? Color.White;
 				extension.attenuationDistance = extensionToken.Value[nameof(KHR_materials_volume.attenuationDistance)]?.Value<float>() ?? float.PositiveInfinity;
-				extension.thicknessTexture = extensionToken.Value[nameof(KHR_materials_volume.thicknessTexture)]?.DeserializeAsTexture(root);
+				extension.thicknessTexture    = extensionToken.Value[nameof(KHR_materials_volume.thicknessTexture)]?.DeserializeAsTexture(root);
 				return extension;
 			}
 

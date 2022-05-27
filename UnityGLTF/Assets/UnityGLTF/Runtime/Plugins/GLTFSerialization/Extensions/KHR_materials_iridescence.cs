@@ -23,11 +23,11 @@ namespace GLTF.Schema
 			var jo = new JObject();
 			JProperty jProperty = new JProperty(KHR_materials_iridescence_Factory.EXTENSION_NAME, jo);
 
-			jo.Add(new JProperty(nameof(iridescenceFactor), iridescenceFactor));
-			jo.Add(new JProperty(nameof(iridescenceIor), iridescenceIor));
-			jo.Add(new JProperty(nameof(iridescenceIor), iridescenceIor));
-			jo.Add(new JProperty(nameof(iridescenceThicknessMinimum), iridescenceThicknessMaximum));
-			if(iridescenceTexture != null) {
+			if (iridescenceFactor != 0) jo.Add(new JProperty(nameof(iridescenceFactor), iridescenceFactor));
+			if (iridescenceIor != 1.3f) jo.Add(new JProperty(nameof(iridescenceIor), iridescenceIor));
+			if (iridescenceThicknessMinimum != 100.0f) jo.Add(new JProperty(nameof(iridescenceThicknessMinimum), iridescenceThicknessMinimum));
+			if (iridescenceThicknessMaximum != 400.0f) jo.Add(new JProperty(nameof(iridescenceThicknessMaximum), iridescenceThicknessMaximum));
+			if (iridescenceTexture != null) {
 				jo.Add(new JProperty(nameof(iridescenceTexture),
 						new JObject(
 							new JProperty(TextureInfo.INDEX, iridescenceTexture.Index.Id),
@@ -36,7 +36,7 @@ namespace GLTF.Schema
 					)
 				);
 			}
-			if(iridescenceThicknessTexture != null) {
+			if (iridescenceThicknessTexture != null) {
 				jo.Add(new JProperty(nameof(iridescenceThicknessTexture),
 						new JObject(
 							new JProperty(TextureInfo.INDEX, iridescenceThicknessTexture.Index.Id),
@@ -75,8 +75,8 @@ namespace GLTF.Schema
 				var extension = new KHR_materials_iridescence();
 				extension.iridescenceFactor           = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceFactor)]?.Value<float>() ?? 0;
 				extension.iridescenceIor              = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceIor)]?.Value<float>() ?? 1.3f;
-				extension.iridescenceThicknessMinimum = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceIor)]?.Value<float>() ?? 100f;
-				extension.iridescenceThicknessMaximum = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceIor)]?.Value<float>() ?? 400f;
+				extension.iridescenceThicknessMinimum = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceThicknessMinimum)]?.Value<float>() ?? 100f;
+				extension.iridescenceThicknessMaximum = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceThicknessMaximum)]?.Value<float>() ?? 400f;
 				extension.iridescenceTexture          = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceTexture)]?.DeserializeAsTexture(root);
 				extension.iridescenceThicknessTexture = extensionToken.Value[nameof(KHR_materials_iridescence.iridescenceThicknessTexture)]?.DeserializeAsTexture(root);
 				return extension;
