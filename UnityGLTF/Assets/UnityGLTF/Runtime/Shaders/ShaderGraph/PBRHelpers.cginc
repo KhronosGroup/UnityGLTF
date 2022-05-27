@@ -17,26 +17,38 @@ void SampleSceneColor2_half(half2 uv, half lod, out half3 color)
 // For code changes, comment this out so autocomplete etc. work, but remember to comment it again
 // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+#ifdef UNIVERSAL_LIGHTING_INCLUDED
 float4 _CameraOpaqueTexture_TexelSize;
 TEXTURE2D_X(_CameraOpaqueTexture);
 SAMPLER(sampler_CameraOpaqueTexture);
+#endif
 
-float applyIorToRoughness( const in float roughness, const in float ior ) {
-    // Scale roughness with IOR so that an IOR of 1.0 results in no microfacet refraction and
-    // an IOR of 1.5 results in the default amount of microfacet refraction.
-    return roughness * clamp( ior * 2.0 - 2.0, 0.0, 1.0 );
-}
+// for future use
+// float applyIorToRoughness( const in float roughness, const in float ior ) {
+//     // Scale roughness with IOR so that an IOR of 1.0 results in no microfacet refraction and
+//     // an IOR of 1.5 results in the default amount of microfacet refraction.
+//     return roughness * clamp( ior * 2.0 - 2.0, 0.0, 1.0 );
+// }
 
 void SampleSceneColor_float(float2 uv, float lod, out float3 color)
 {
-    // float framebufferLod = log2( 2048 ) * applyIorToRoughness( roughness, ior );
+#ifdef UNIVERSAL_LIGHTING_INCLUDED
+	// For URP, with custom renderer feature for rough refractions
     color = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
+#else
+	// For HDRP, from HDSceneColorNode
+	#define REQUIRE_OPAQUE_TEXTURE // seems we need to define this ourselves? HDSceneColorNode does that as well
+	#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+	color = SampleCameraColor(uv, lod) * 1.0; // GetInverseCurrentExposureMultiplier()
+	#else
+	color = float3(0.0, 0.0, 0.0);
+	#endif
+#endif
 }
 
 void SampleSceneColor_half(float2 uv, float lod, out float3 color)
 {
-	// float framebufferLod = log2( 2048 ) * applyIorToRoughness( roughness, ior );
-	color = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
+	SampleSceneColor_float(uv, lod, color);
 }
 
 #endif
