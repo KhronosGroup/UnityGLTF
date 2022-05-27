@@ -18,6 +18,11 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "12",
             "define": "HAVE_URP_12_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "10",
+            "define": "HAVE_URP_10_OR_NEWER"
         }
     ],
     "noEngineReferences": false

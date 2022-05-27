@@ -1,4 +1,4 @@
-#if HAVE_URP_12_OR_NEWER
+#if HAVE_URP_12_OR_NEWER || HAVE_URP_10_OR_NEWER
 
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,8 +7,9 @@ using UnityEngine.Rendering.Universal.Internal;
 
 namespace UnityGLTF
 {
+#if HAVE_URP_12_OR_NEWER
 	[DisallowMultipleRendererFeature("Opaque Texture (Rough Refractions)")]
-	[Tooltip("Screen Space Shadows")]
+#endif
 	public class CopyColorWithMipmaps : ScriptableRendererFeature
 	{
 	    public Downsampling downsampling = Downsampling.None;
