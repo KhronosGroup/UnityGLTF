@@ -17,7 +17,10 @@ void SampleSceneColor2_half(half2 uv, half lod, out half3 color)
 // For code changes, comment this out so autocomplete etc. work, but remember to comment it again
 // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-#ifdef UNIVERSAL_LIGHTING_INCLUDED
+// TODO figure out how we can differentiate between BiRP/URP/HDRP here
+#define USE_CAMERA_OPAQUE
+
+#if defined(USE_CAMERA_OPAQUE)
 float4 _CameraOpaqueTexture_TexelSize;
 TEXTURE2D_X(_CameraOpaqueTexture);
 SAMPLER(sampler_CameraOpaqueTexture);
@@ -34,9 +37,8 @@ void SampleSceneColor_float(float2 uv, float lod, out float3 color)
 {
 	#define REQUIRE_OPAQUE_TEXTURE // seems we need to define this ourselves? HDSceneColorNode does that as well
 
-#ifdef UNIVERSAL_LIGHTING_INCLUDED // how to detect built-in?
-	// For URP, with custom renderer feature for rough refractions
-    color = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
+#if defined(USE_CAMERA_OPAQUE)
+	color = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
 #else
 	// For HDRP, from HDSceneColorNode
 	#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
