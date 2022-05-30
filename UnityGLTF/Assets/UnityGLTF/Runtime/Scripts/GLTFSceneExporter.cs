@@ -4552,6 +4552,41 @@ namespace UnityGLTF
 						case "_AlphaCutoff":
 							propertyName = "alphaCutoff";
 							break;
+
+						// KHR_materials_transmission
+						case "_TransmissionFactor":
+							propertyName = $"extensions/{KHR_materials_transmission_Factory.EXTENSION_NAME}/{nameof(KHR_materials_transmission.transmissionFactor)}";
+							break;
+
+						// KHR_materials_volume
+						case "_ThicknessFactor":
+							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.thicknessFactor)}";
+							break;
+						case "_AttenuationDistance":
+							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.attenuationDistance)}";
+							break;
+						case "_AttenuationColor":
+							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.attenuationColor)}";
+							break;
+
+						// KHR_materials_ior
+						case "_IOR":
+							propertyName = $"extensions/{KHR_materials_ior_Factory.EXTENSION_NAME}/{nameof(KHR_materials_ior.ior)}";
+							break;
+
+						// KHR_materials_iridescence
+						case "_IridescenceFactor":
+							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceFactor)}";
+							break;
+						case "_IridescenceIor":
+							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceIor)}";
+							break;
+						case "_IridescenceThicknessMinimum":
+							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMinimum)}";
+							break;
+						case "_IridescenceThicknessMaximum":
+							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMaximum)}";
+							break;
 					}
 					break;
 				case Light light:

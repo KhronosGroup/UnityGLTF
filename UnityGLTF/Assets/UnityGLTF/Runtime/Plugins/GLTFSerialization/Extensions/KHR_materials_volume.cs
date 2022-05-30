@@ -23,7 +23,13 @@ namespace GLTF.Schema
 
 			if (thicknessFactor != 0) jo.Add(new JProperty(nameof(thicknessFactor), thicknessFactor));
 			if (!float.IsPositiveInfinity(attenuationDistance))
+			{
+				// 0 not allowed
+				if (!(attenuationDistance > 0))
+					attenuationDistance = 0.0001f;
+
 				jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
+			}
 			if (attenuationColor != COLOR_DEFAULT) jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
 			if (thicknessTexture != null) {
 				jo.Add(new JProperty(nameof(thicknessTexture),
