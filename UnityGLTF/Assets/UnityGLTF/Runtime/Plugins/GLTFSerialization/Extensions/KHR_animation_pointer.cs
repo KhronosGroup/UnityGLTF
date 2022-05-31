@@ -20,7 +20,7 @@ namespace UnityGLTF.Extensions
 		public JProperty Serialize()
 		{
 			if (path == null && clonedFrom != null) path = clonedFrom.path;
-			return new JProperty(EXTENSION_NAME, new JObject(new JProperty("path", path)));
+			return new JProperty(EXTENSION_NAME, new JObject(new JProperty("pointer", path)));
 		}
 
 		public IExtension Clone(GLTFRoot root)
