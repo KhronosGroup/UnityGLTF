@@ -4613,18 +4613,38 @@ namespace UnityGLTF
 					}
 					break;
 				case Camera camera:
-					switch (propertyName)
+					if(camera.orthographic)
 					{
-						case "field of view":
-							// TODO conversion factor
-							propertyName = "yfov";
-							break;
-						case "near clip plane":
-							propertyName = "znear";
-							break;
-						case "far clip plane":
-							propertyName = "zfar";
-							break;
+						switch (propertyName)
+						{
+							case "orthographic size":
+								// TODO conversion factor
+								propertyName = "orthographic/ymag";
+								secondPropertyName = "orthographic/xmag";
+								break;
+							case "near clip plane":
+								propertyName = "orthographic/znear";
+								break;
+							case "far clip plane":
+								propertyName = "orthographic/zfar";
+								break;
+						}
+					}
+					else
+					{
+						switch (propertyName)
+						{
+							case "field of view":
+								// TODO conversion factor
+								propertyName = "perspective/yfov";
+								break;
+							case "near clip plane":
+								propertyName = "perspective/znear";
+								break;
+							case "far clip plane":
+								propertyName = "perspective/zfar";
+								break;
+						}
 					}
 					break;
 				default:
@@ -4666,6 +4686,11 @@ namespace UnityGLTF
 					else
 					{
 						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
+
+						if (propertyName == "orthographic/ymag")
+						{
+							Tsampler2.Output = Tsampler.Output;
+						}
 					}
 					break;
 				case Vector2 _:
