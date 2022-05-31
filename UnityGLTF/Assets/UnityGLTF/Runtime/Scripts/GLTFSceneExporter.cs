@@ -4590,7 +4590,6 @@ namespace UnityGLTF
 					}
 					break;
 				case Light light:
-					Debug.Log("light prop: " + propertyName);
 					switch (propertyName)
 					{
 						case "m_Color":
@@ -4614,7 +4613,6 @@ namespace UnityGLTF
 					}
 					break;
 				case Camera camera:
-					Debug.Log("camera prop: " + propertyName);
 					switch (propertyName)
 					{
 						case "field of view":
