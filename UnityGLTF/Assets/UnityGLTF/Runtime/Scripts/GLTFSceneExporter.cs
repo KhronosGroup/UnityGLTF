@@ -4504,13 +4504,27 @@ namespace UnityGLTF
 			switch (animatedObject)
 			{
 				case Material material:
+					// Debug.Log("material: " + material + ", propertyName: " + propertyName);
 					// mapping from known Unity property names to glTF property names
 					switch (propertyName)
 					{
 						case "_Color":
 						case "_BaseColor":
 						case "_BaseColorFactor":
-							propertyName = "baseColorFactor";
+							propertyName = "pbrMetallicRoughness/baseColorFactor";
+							break;
+						case "_Smoothness":
+						case "_Glossiness":
+							propertyName = "pbrMetallicRoughness/roughnessFactor";
+							flipValueRange = true;
+							break;
+						case "_Roughness":
+						case "_RoughnessFactor":
+							propertyName = "pbrMetallicRoughness/roughnessFactor";
+							break;
+						case "_Metallic":
+						case "_MetallicFactor":
+							propertyName = "pbrMetallicRoughness/metallicFactor";
 							break;
 						case "_MainTex_ST":
 						case "_BaseMap_ST":
@@ -4518,8 +4532,8 @@ namespace UnityGLTF
 							if (!(material.HasProperty("_MainTex") && material.GetTexture("_MainTex")) &&
 							    !(material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap")) &&
 							    !(material.HasProperty("_BaseColorTexture") && material.GetTexture("_BaseColorTexture"))) return;
-							propertyName = $"baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
-							secondPropertyName = $"baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
+							propertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
+							secondPropertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
 							break;
 						case "_EmissionColor":
@@ -4535,23 +4549,35 @@ namespace UnityGLTF
 							secondPropertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
 							break;
-						case "_Smoothness":
-						case "_Glossiness":
-							propertyName = "roughnessFactor";
-							flipValueRange = true;
-							break;
-						case "_Roughness":
-						case "_RoughnessFactor":
-							propertyName = "roughnessFactor";
-							break;
-						case "_Metallic":
-						case "_MetallicFactor":
-							propertyName = "metallicFactor";
-							break;
 						case "_Cutoff":
 						case "_AlphaCutoff":
 							propertyName = "alphaCutoff";
 							break;
+						case "_BumpScale":
+						case "_NormalScale":
+							propertyName = "normalTexture/scale";
+							break;
+						case "_BumpMap_ST":
+						case "_NormalTexture_ST":
+							if (!(material.HasProperty("_BumpMap") && material.GetTexture("_BumpMap")) &&
+							    !(material.HasProperty("_NormalTexture") && material.GetTexture("_NormalTexture"))) return;
+							propertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
+							secondPropertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
+							isTextureTransform = true;
+							break;
+						case "_OcclusionStrength":
+							propertyName = "occlusionTexture/strength";
+							break;
+						case "_OcclusionMap_ST":
+						case "_OcclusionTexture_ST":
+							if (!(material.HasProperty("_OcclusionMap") && material.GetTexture("_OcclusionMap")) &&
+							    !(material.HasProperty("_OcclusionTexture") && material.GetTexture("_OcclusionTexture"))) return;
+							propertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
+							secondPropertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
+							isTextureTransform = true;
+							break;
+
+						// TODO metallic/roughness _ST
 
 						// KHR_materials_transmission
 						case "_TransmissionFactor":
@@ -4587,6 +4613,30 @@ namespace UnityGLTF
 						case "_IridescenceThicknessMaximum":
 							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMaximum)}";
 							break;
+
+						// KHR_materials_specular
+						case "_SpecularFactor":
+							propertyName = $"extensions/{KHR_materials_specular_Factory.EXTENSION_NAME}/{nameof(KHR_materials_specular.specularFactor)}";
+							break;
+						case "_SpecularColorFactor":
+							propertyName = $"extensions/{KHR_materials_specular_Factory.EXTENSION_NAME}/{nameof(KHR_materials_specular.specularColorFactor)}";
+							break;
+
+						// TODO KHR_materials_clearcoat
+						// case "_ClearcoatFactor":
+						// 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatFactor)}";
+						// 	break;
+						// case "_ClearcoatRoughnessFactor":
+						// 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatRoughnessFactor)}";
+						// 	break;
+
+						// TODO KHR_materials_sheen
+						// case "_SheenColorFactor":
+						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenColorFactor)}";
+						// 	break;
+						// case "_SheenRoughnessFactor":
+						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenRoughnessFactor)}";
+						// 	break;
 					}
 					break;
 				case Light light:
