@@ -15,9 +15,10 @@ namespace UnityGLTF
 	    {
 	        var path = AssetDatabase.GetAssetPath(texture);
 	        // texture is a subasset
-	        if(AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(Texture2D))
+	        if (AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(Texture2D))
 	        {
 		        var ext = System.IO.Path.GetExtension(path);
+		        if (string.IsNullOrWhiteSpace(ext)) return texture.name + ".png";
 		        path = path.Replace(ext, "-" + texture.name + ext);
 	        }
 	        return path;

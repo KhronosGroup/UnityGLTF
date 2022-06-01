@@ -786,7 +786,7 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportNormalTexture(Texture2D texture, string outputPath)
 		{
-			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 			Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
 			WriteRenderTextureToDiskAndRelease(destRenderTexture, outputPath, false);
 		}
