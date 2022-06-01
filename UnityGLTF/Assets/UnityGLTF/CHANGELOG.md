@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.7.0-pre] - 2022-06-01
+- feat: experimental support for KHR_animation_pointer
+- feat: experimental URP (2020.3+) & BiRP (2021.2+) Shader Graph for export and import, `UnityGLTF/PBRGraph`
+- feat: approximated support for exporting and importing KHR_materials_transmission, KHR_materials_volume, KHR_materials_ior, KHR_materials_iridescence, best used with `UnityGLTF/PBRGraph`
+- feat: renderer features and post effect for rough refraction / transmission (for URP and BiRP)
+- fixed: light and camera directions were flipped when animated
+- fixed: normal textures were exported with wrong color space in .gltf
+- fixed: WebRequestLoader edge case with relative paths
+- improved: better heuristic for PBR material export and generally better glTF-related material property export
+
 ## [1.6.1-pre.3] - 2022-05-10
 - feat: allow replacing logger for GLTFSceneExporter with a custom one, allows to reduce number of logs
 - feat: added more ProfilerMarkers
