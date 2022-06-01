@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace UnityGLTF.Loader
@@ -15,13 +16,21 @@ namespace UnityGLTF.Loader
 
 		public async Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
-			var path = Path.Combine(dir, relativeFilePath);
+			var path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
+			if (File.Exists(path))
+				path = "file://" + Path.GetFullPath(path);
 			var request = UnityWebRequest.Get(path);
 			// request.downloadHandler = new DownloadStreamHandler(new byte[1024 * 1024]);
 			var asyncOperation = request.SendWebRequest();
 
 			while (!asyncOperation.isDone) {
 				await Task.Yield();
+			}
+
+			if (request.result != UnityWebRequest.Result.Success)
+			{
+				Debug.LogError($"Error when loading {relativeFilePath} ({path}): {request.error}");
+				return null;
 			}
 
 			var results = request.downloadHandler.data;
