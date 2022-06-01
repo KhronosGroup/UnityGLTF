@@ -60,7 +60,7 @@ namespace GLTF.Schema
 		{
 			if (channelTarget == null) return;
 
-			Node = new NodeId(channelTarget.Node, gltfRoot);
+			Node = channelTarget.Node != null ? new NodeId(channelTarget.Node, gltfRoot) : null;
 			Path = channelTarget.Path;
 		}
 

@@ -4087,7 +4087,7 @@ namespace UnityGLTF
 						for (int i = 0; i < animation.Channels.Count; i++)
 						{
 							var existingTarget = animation.Channels[i].Target;
-							if (existingTarget.Node.Id != alreadyExportedChannelTargetId) continue;
+							if (existingTarget.Node?.Id != alreadyExportedChannelTargetId) continue;
 
 							existingTarget.Node = new NodeId()
 							{
