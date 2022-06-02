@@ -616,7 +616,10 @@ namespace UnityGLTF
 			if (dirName != null && !Directory.Exists(dirName))
 				Directory.CreateDirectory(dirName);
 
+			// sanitized file path can differ
+			fileName = Path.GetFileNameWithoutExtension(fullPath);
 			var binFile = File.Create(fullPath);
+
 			_bufferWriter = new BinaryWriterWithLessAllocations(binFile);
 			exportGltfInitMarker.End();
 
@@ -703,7 +706,7 @@ namespace UnityGLTF
 		/// <param name="absolutePathThatMayHaveExtension">Absolute path that may or may not already have the required extension</param>
 		/// <param name="requiredExtension">The extension to ensure, with leading dot</param>
 		/// <returns>An absolute path that has the required extension</returns>
-		private static string GetFileName(string directory, string fileNameThatMayHaveExtension, string requiredExtension)
+		public static string GetFileName(string directory, string fileNameThatMayHaveExtension, string requiredExtension)
 		{
 			var absolutePathThatMayHaveExtension = Path.Combine(directory, EnsureValidFileName(fileNameThatMayHaveExtension));
 
@@ -716,7 +719,6 @@ namespace UnityGLTF
 			return absolutePathThatMayHaveExtension;
 		}
 
-
 		private void ExportImages(string outputPath)
 		{
 			for (int t = 0; t < _imageInfos.Count; ++t)
@@ -726,6 +728,9 @@ namespace UnityGLTF
 				var image = _imageInfos[t].texture;
 				var textureMapType = _imageInfos[t].textureMapType;
 				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
+
+				Debug.Log(fileOutputPath);
+
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
 				var dir = Path.GetDirectoryName(fileOutputPath);
@@ -738,7 +743,7 @@ namespace UnityGLTF
 					File.WriteAllBytes(fileOutputPath, GetTextureDataFromDisk(image));
 				}
 
-				if(!wasAbleToExportTexture)
+				if (!wasAbleToExportTexture)
 				{
 					switch (textureMapType)
 					{

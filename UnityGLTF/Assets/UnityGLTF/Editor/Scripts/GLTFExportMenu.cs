@@ -117,15 +117,16 @@ namespace UnityGLTF
 
 			if (!string.IsNullOrEmpty(path))
 			{
+				var ext = binary ? ".glb" : ".gltf";
+				var resultFile = GLTFSceneExporter.GetFileName(path, sceneName, ext);
 				GLTFSceneExporter.SaveFolderPath = path;
 				if(binary)
 					exporter.SaveGLB(path, sceneName);
 				else
 					exporter.SaveGLTFandBin(path, sceneName);
 
-				var resultPath = $"{path}/{sceneName}.{(binary?"glb":"gltf")}";
-				Debug.Log("Exported to " + resultPath);
-				EditorUtility.RevealInFinder(resultPath);
+				Debug.Log("Exported to " + resultFile);
+				EditorUtility.RevealInFinder(resultFile);
 			}
 		}
 	}
