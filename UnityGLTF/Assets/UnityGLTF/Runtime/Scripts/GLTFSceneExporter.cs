@@ -1939,16 +1939,37 @@ namespace UnityGLTF
 		{
 			Vector2 offset = mat.GetTextureOffset(texName);
 			Vector2 scale = mat.GetTextureScale(texName);
+			//var rotationMatrix = mat.GetVector(texName + "Rotation");
+			//var rotation = -Mathf.Atan2(offset.y, rotationMatrix.x);
+			var rotProp = texName + "Rotation";
+			var rotation = mat.HasProperty(rotProp) ? mat.GetFloat(rotProp) : 0;
 
-			if (offset == Vector2.zero && scale == Vector2.one)
+			if (offset == Vector2.zero && scale == Vector2.one && rotation == 0)
 			{
-				if(mat.HasProperty("_MainTex_ST"))
+				if(mat.HasProperty("_MainTex_ST") || mat.HasProperty("_BaseMap_ST") || mat.HasProperty("_BaseColorMap_ST") || mat.HasProperty("_BaseColorTexture_ST"))
 				{
 					// difficult choice here: some shaders might support texture transform per-texture, others use the main transform.
-					if(mat.HasProperty("_MainTex"))
+					if (mat.HasProperty("_BaseColorTexture"))
+					{
+						offset = mat.GetTextureOffset("_BaseColorTexture");
+						scale = mat.GetTextureScale("_BaseColorTexture");
+						rotation = mat.HasProperty("_BaseColorTextureRotation") ? mat.GetFloat("_BaseColorTextureRotation") : 0;
+					}
+					else if (mat.HasProperty("_BaseColorMap"))
+					{
+						offset = mat.GetTextureOffset("_BaseColorMap");
+						scale = mat.GetTextureScale("_BaseColorMap");
+					}
+					else if (mat.HasProperty("_BaseMap"))
+					{
+						offset = mat.GetTextureOffset("_BaseMap");
+						scale = mat.GetTextureScale("_BaseMap");
+					}
+					else if(mat.HasProperty("_MainTex"))
 					{
 						offset = mat.mainTextureOffset;
 						scale = mat.mainTextureScale;
+						rotation = mat.HasProperty("_MainTexRotation") ? mat.GetFloat("_MainTexRotation") : 0;
 					}
 				}
 				else
@@ -1988,7 +2009,7 @@ namespace UnityGLTF
 
 			def.Extensions[ExtTextureTransformExtensionFactory.EXTENSION_NAME] = new ExtTextureTransformExtension(
 				new GLTF.Math.Vector2(offset.x, 1 - offset.y - scale.y),
-				0, // TODO: support rotation
+				rotation,
 				new GLTF.Math.Vector2(scale.x, scale.y),
 				0 // TODO: support UV channels
 			);

@@ -312,7 +312,11 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set => _material.SetTextureOffset("_BaseColorTexture", value);
     }
 
-    public double BaseColorXRotation { get; set; }
+    public double BaseColorXRotation
+    {
+	    get => _material.GetFloat("_BaseColorTextureRotation");
+	    set => _material.SetFloat("_BaseColorTextureRotation", (float) value);
+    }
 
     public Vector2 BaseColorXScale
     {

@@ -2161,10 +2161,16 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(pbr.BaseColorTexture);
 					if (ext != null)
 					{
-						mrMapper.BaseColorXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						mrMapper.BaseColorXOffset = offset;
 						mrMapper.BaseColorXRotation = ext.Rotation;
 						mrMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 						mrMapper.BaseColorXTexCoord = ext.TexCoord;
+
+						// offset = new GLTF.Math.Vector2(offset.x, 1 - offset.y - scale.y),
+						// scale = new GLTF.Math.Vector2(scale.x, scale.y),
+
 					}
 				}
 
