@@ -5,7 +5,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+#if NEW_INPUT
 using UnityEngine.InputSystem;
+#endif
 using UnityGLTF.Timeline;
 
 namespace UnityGLTF
