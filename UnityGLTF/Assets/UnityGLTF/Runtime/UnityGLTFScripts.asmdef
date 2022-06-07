@@ -5,7 +5,8 @@
         "GLTFSerialization",
         "Unity.Timeline",
         "Ktx",
-        "UnityGLTF.Helpers"
+        "UnityGLTF.Helpers",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -49,6 +50,11 @@
             "name": "com.unity.modules.imageconversion",
             "expression": "1.0.0",
             "define": "UNITY_IMAGECONVERSION"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.0.0",
+            "define": "HAVE_INPUTSYSTEM"
         }
     ],
     "noEngineReferences": false
