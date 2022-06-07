@@ -173,6 +173,22 @@ namespace UnityGLTF
 	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
                 }
 
+                var animators = gltfScene.GetComponentsInChildren<Animator>();
+                var clips2 = animators.SelectMany(x => AnimationUtility.GetAnimationClips(x.gameObject));
+                foreach (var clip in clips2)
+                {
+	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
+                }
+                // we can't add the Animators as subassets here, since they require their state machines to be direct subassets themselves.
+                // foreach (var anim in animators)
+                // {
+	            //     ctx.AddObjectToAsset(GetUniqueName(anim.runtimeAnimatorController.name), anim.runtimeAnimatorController as AnimatorController);
+	            //     foreach (var layer in (anim.runtimeAnimatorController as AnimatorController).layers)
+	            //     {
+		        //         ctx.AddObjectToAsset(GetUniqueName(layer.name + "-state"), layer.stateMachine);
+	            //     }
+                // }
+
                 var renderers = gltfScene.GetComponentsInChildren<Renderer>();
 
                 if (_importMaterials)
