@@ -1,6 +1,5 @@
 using System;
 using Newtonsoft.Json;
-using System;
 
 namespace GLTF.Schema
 {
@@ -33,7 +32,7 @@ namespace GLTF.Schema
 		public AccessorSparseIndices(AccessorSparseIndices accessorSparseIndices, GLTFRoot gltfRoot) : base(accessorSparseIndices)
 		{
 			if (accessorSparseIndices == null) return;
-			
+
 			BufferView = new BufferViewId(accessorSparseIndices.BufferView, gltfRoot);
 			ByteOffset = accessorSparseIndices.ByteOffset;
 			ComponentType = accessorSparseIndices.ComponentType;

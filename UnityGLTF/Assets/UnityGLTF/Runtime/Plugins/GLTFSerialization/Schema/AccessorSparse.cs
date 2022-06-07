@@ -1,6 +1,5 @@
 using System;
 using Newtonsoft.Json;
-using System;
 
 namespace GLTF.Schema
 {
@@ -28,7 +27,7 @@ namespace GLTF.Schema
 		public AccessorSparse()
 		{
 		}
-		
+
 		public AccessorSparse(AccessorSparse accessorSparse, GLTFRoot gltfRoot) : base(accessorSparse)
 		{
 			if (accessorSparse == null) return;

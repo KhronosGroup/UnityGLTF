@@ -856,14 +856,17 @@ namespace UnityGLTF
 				var target = primitive.Targets[i];
 				newTargets.Add(new Dictionary<string, AttributeAccessor>());
 
-				NumericArray[] sparseNORMALS = null;//NORMALS
-				NumericArray[] sparsePOSITIONS = null;//POSITIONS
-				NumericArray[] sparseTANGENTS = null;//TANGENTS
+				NumericArray[] sparseNormals = null;
+				NumericArray[] sparsePositions = null;
+				NumericArray[] sparseTangents = null;
 
-				//NORMALS, POSITIONS, TANGENTS
+				const string NormalKey = "NORMALS";
+				const string PositionKey = "POSITIONS";
+				const string TangentKey = "TANGENTS";
+
+				// normals, positions, tangents
 				foreach (var targetAttribute in target)
 				{
-
 					BufferId bufferIdPair = null;
 					if (targetAttribute.Value.Value.Sparse == null)
 					{
@@ -888,128 +891,98 @@ namespace UnityGLTF
 						Stream = _assetCache.BufferCache[bufferID].Stream,
 						Offset = (uint)_assetCache.BufferCache[bufferID].ChunkOffset
 					};
-					if (targetAttribute.Value.Value.Sparse != null)
+
+					// if this buffer isn't sparse, we're done here
+					if (targetAttribute.Value.Value.Sparse == null) continue;
+
+					// Values
+					var bufferId = targetAttribute.Value.Value.Sparse.Values.BufferView.Value.Buffer;
+					var bufferData = await GetBufferData(bufferId);
+					AttributeAccessor sparseValues = new AttributeAccessor
 					{
-						//Values
-						var bufferId = targetAttribute.Value.Value.Sparse.Values.BufferView.Value.Buffer;
-						var bufferData = await GetBufferData(bufferId);
-						AttributeAccessor SparseValues = new AttributeAccessor
-						{
-							AccessorId = targetAttribute.Value,
-							Stream = bufferData.Stream,
-							Offset = (uint)bufferData.ChunkOffset
-						};
-						uint offset1 = LoadBufferView(SparseValues.AccessorId.Value.Sparse.Values.BufferView.Value, SparseValues.Offset, SparseValues.Stream, out byte[] bufferViewCache1);
+						AccessorId = targetAttribute.Value,
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
+					};
+					uint offset1 = GLTFHelpers.LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value, sparseValues.Offset, sparseValues.Stream, out byte[] bufferViewCache1);
 
+					// Indices
+					bufferId = targetAttribute.Value.Value.Sparse.Indices.BufferView.Value.Buffer;
+					bufferData = await GetBufferData(bufferId);
+					AttributeAccessor sparseIndices = new AttributeAccessor
+					{
+						AccessorId = targetAttribute.Value,
+						Stream = bufferData.Stream,
+						Offset = (uint)bufferData.ChunkOffset
+					};
+					uint offset2 = GLTFHelpers.LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.Stream, out byte[] bufferViewCache2);
 
-						//Indices
-						bufferId = targetAttribute.Value.Value.Sparse.Indices.BufferView.Value.Buffer;
-						bufferData = await GetBufferData(bufferId);
-						AttributeAccessor SparseIndices = new AttributeAccessor
-						{
-							AccessorId = targetAttribute.Value,
-							Stream = bufferData.Stream,
-							Offset = (uint)bufferData.ChunkOffset
-						};
-						uint offset2 = LoadBufferView(SparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, SparseIndices.Offset, SparseIndices.Stream, out byte[] bufferViewCache2);
-
-
-
-
-						if (targetAttribute.Key.Equals("NORMAL"))
-						{
-							sparseNORMALS = new NumericArray[2];
-							AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNORMALS[0], bufferViewCache1, offset1);
-							AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNORMALS[1], bufferViewCache2, offset2);
-						}
-						else if (targetAttribute.Key.Equals("POSITION"))
-						{
-							sparsePOSITIONS = new NumericArray[2];
-							AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePOSITIONS[0], bufferViewCache1, offset1);
-							AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePOSITIONS[1], bufferViewCache2, offset2);
-						}
-						else if (targetAttribute.Key.Equals("TANGENT"))
-						{
-							sparseTANGENTS = new NumericArray[2];
-							AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTANGENTS[0], bufferViewCache1, offset1);
-							AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTANGENTS[1], bufferViewCache2, offset2);
-						}
+					switch (targetAttribute.Key)
+					{
+						case NormalKey:
+							sparseNormals = new NumericArray[2];
+							GLTFHelpers.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNormals[0], bufferViewCache1, offset1);
+							GLTFHelpers.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNormals[1], bufferViewCache2, offset2);
+							break;
+						case PositionKey:
+							sparsePositions = new NumericArray[2];
+							GLTFHelpers.AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePositions[0], bufferViewCache1, offset1);
+							GLTFHelpers.AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePositions[1], bufferViewCache2, offset2);
+							break;
+						case TangentKey:
+							sparseTangents = new NumericArray[2];
+							GLTFHelpers.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTangents[0], bufferViewCache1, offset1);
+							GLTFHelpers.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTangents[1], bufferViewCache2, offset2);
+							break;
 					}
 				}
 
 				var att = newTargets[i];
 				GLTFHelpers.BuildTargetAttributes(ref att);
 
-				if (sparseNORMALS != null)
+				if (sparseNormals != null)
 				{
+					var current = att[NormalKey].AccessorContent;
 					NumericArray before = new NumericArray();
-					before.AsVec3s = new GLTF.Math.Vector3[att["NORMAL"].AccessorContent.AsVec3s.Length];
-					for (int j = 0; j < sparseNORMALS[1].AsUInts.Length; j++)
+					before.AsVec3s = new GLTF.Math.Vector3[current.AsVec3s.Length];
+					Array.Copy(current.AsVec3s, before.AsVec3s, before.AsVec3s.Length);
+					for (int j = 0; j < sparseNormals[1].AsUInts.Length; j++)
 					{
-						before.AsVec3s[sparseNORMALS[1].AsUInts[j]] = sparseNORMALS[0].AsVec3s[j];
+						before.AsVec3s[sparseNormals[1].AsUInts[j]] = sparseNormals[0].AsVec3s[j];
 					}
-					att["NORMAL"].AccessorContent = before;
+					att[NormalKey].AccessorContent = before;
 				}
 
-				if (sparsePOSITIONS != null)
+				if (sparsePositions != null)
 				{
+					var current = att[PositionKey].AccessorContent;
 					NumericArray before = new NumericArray();
-					before.AsVec3s = new GLTF.Math.Vector3[att["POSITION"].AccessorContent.AsVec3s.Length];
-					for (int j = 0; j < sparsePOSITIONS[1].AsUInts.Length; j++)
+					before.AsVec3s = new GLTF.Math.Vector3[current.AsVec3s.Length];
+					Array.Copy(current.AsVec3s, before.AsVec3s, before.AsVec3s.Length);
+					for (int j = 0; j < sparsePositions[1].AsUInts.Length; j++)
 					{
-						before.AsVec3s[sparsePOSITIONS[1].AsUInts[j]] = sparsePOSITIONS[0].AsVec3s[j];
+						before.AsVec3s[sparsePositions[1].AsUInts[j]] = sparsePositions[0].AsVec3s[j];
 					}
-					att["POSITION"].AccessorContent = before;
+					att[PositionKey].AccessorContent = before;
 				}
 
-				if (sparseTANGENTS != null)
+				if (sparseTangents != null)
 				{
+					var current = att[TangentKey].AccessorContent;
 					NumericArray before = new NumericArray();
-					before.AsVec3s = new GLTF.Math.Vector3[att["TANGENT"].AccessorContent.AsVec3s.Length];
-
-					for (int j = 0; j < sparseTANGENTS[1].AsUInts.Length; j++)
+					before.AsVec3s = new GLTF.Math.Vector3[current.AsVec3s.Length];
+					Array.Copy(current.AsVec3s, before.AsVec3s, before.AsVec3s.Length);
+					for (int j = 0; j < sparseTangents[1].AsUInts.Length; j++)
 					{
-						before.AsVec3s[sparseTANGENTS[1].AsUInts[j]] = sparseTANGENTS[0].AsVec3s[j];
+						before.AsVec3s[sparseTangents[1].AsUInts[j]] = sparseTangents[0].AsVec3s[j];
 					}
-					att["TANGENT"].AccessorContent = before;
+					att[TangentKey].AccessorContent = before;
 				}
+
 				TransformTargets(ref att);
 			}
 		}
 
-		private void GetTypeDetails(GLTFComponentType type, out uint componentSize, out float maxValue)
-		{
-			componentSize = 1;
-			maxValue = byte.MaxValue;
-
-			switch (type)
-			{
-				case GLTFComponentType.Byte:
-					componentSize = sizeof(sbyte);
-					maxValue = sbyte.MaxValue;
-					break;
-				case GLTFComponentType.UnsignedByte:
-					componentSize = sizeof(byte);
-					maxValue = byte.MaxValue;
-					break;
-				case GLTFComponentType.Short:
-					componentSize = sizeof(short);
-					break;
-				case GLTFComponentType.UnsignedShort:
-					componentSize = sizeof(ushort);
-					break;
-				case GLTFComponentType.UnsignedInt:
-					componentSize = sizeof(uint);
-					maxValue = uint.MaxValue;
-					break;
-				case GLTFComponentType.Float:
-					componentSize = sizeof(float);
-					maxValue = float.MaxValue;
-					break;
-				default:
-					throw new Exception("Unsupported component type.");
-			}
-		}
 		public GLTF.Math.Vector4[] AsSparseVector4Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
 		{
 
@@ -1018,7 +991,7 @@ namespace UnityGLTF
 
 			uint componentSize;
 			float maxValue;
-			GetTypeDetails(paraAccessor.ComponentType, out componentSize, out maxValue);
+			GLTFHelpers.GetTypeDetails(paraAccessor.ComponentType, out componentSize, out maxValue);
 			uint stride = componentSize * 4;
 			if (normalizeIntValues) maxValue = 1;
 
@@ -1035,88 +1008,6 @@ namespace UnityGLTF
 
 			contents.AsVec4s = arr;
 			return arr;
-		}
-		public GLTF.Math.Vector3[] AsSparseVector3Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
-		{
-			var arr = new GLTF.Math.Vector3[paraAccessor.Sparse.Count];
-			var totalByteOffset = paraAccessor.Sparse.Values.ByteOffset + offset;
-			uint componentSize;
-			float maxValue;
-			GetTypeDetails(paraAccessor.ComponentType, out componentSize, out maxValue);
-			uint stride = componentSize * 3;
-			if (normalizeIntValues) maxValue = 1;
-			for (uint idx = 0; idx < paraAccessor.Sparse.Count; idx++)
-			{
-				if (paraAccessor.ComponentType == GLTFComponentType.Float)
-				{
-					arr[idx].X = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 0));
-					arr[idx].Y = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 1));
-					arr[idx].Z = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 2));
-				}
-			}
-			contents.AsVec3s = arr;
-			return arr;
-		}
-		public uint[] AsSparseUIntArray(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset)
-		{
-			var arr = new uint[paraAccessor.Sparse.Count];
-			var totalByteOffset = paraAccessor.Sparse.Indices.ByteOffset + offset;
-			uint componentSize;
-			float maxValue;
-
-			GetTypeDetails(paraAccessor.Sparse.Indices.ComponentType, out componentSize, out maxValue);
-
-			uint stride = componentSize;
-			for (uint idx = 0; idx < paraAccessor.Sparse.Count; idx++)
-			{
-				if (stride == 1)
-				{
-					arr[idx] = (uint)bufferViewData[(int)(totalByteOffset + idx)];
-				}
-				else
-				{
-					arr[idx] = BitConverter.ToUInt16(bufferViewData, (int)(totalByteOffset + idx * stride));
-				}
-			}
-			contents.AsUInts = arr;
-			return arr;
-		}
-		private static uint LoadBufferView(BufferView bufferView, uint Offset, Stream Stream, out byte[] bufferViewCache)
-		{
-			uint totalOffset = bufferView.ByteOffset + Offset;
-
-#if !NETFX_CORE
-			if (Stream is System.IO.MemoryStream)
-			{
-
-				MemoryStream memoryStream = (MemoryStream)Stream;
-#if NETFX_CORE || NETSTANDARD1_3
-				if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
-				{
-					bufferViewCache = arraySegment.Array;
-					return totalOffset;
-				}
-			Debug.Log("LoadBufferView1 " + bufferView.ByteOffset);
-
-#else
-				bufferViewCache = memoryStream.GetBuffer();
-				return totalOffset;
-#endif
-			}
-#endif
-			Stream.Position = totalOffset;
-			bufferViewCache = new byte[bufferView.ByteLength];
-
-			// stream.Read only accepts int for length
-			uint remainingSize = bufferView.ByteLength;
-			while (remainingSize != 0)
-			{
-
-				int sizeToLoad = (int)System.Math.Min(remainingSize, int.MaxValue);
-				Stream.Read(bufferViewCache, (int)(bufferView.ByteLength - remainingSize), sizeToLoad);
-				remainingSize -= (uint)sizeToLoad;
-			}
-			return 0;
 		}
 
 		// Flip vectors to Unity coordinate system
@@ -1147,6 +1038,7 @@ namespace UnityGLTF
 			_assetCache.MeshCache[meshIndex].Primitives.Add(primData);
 
 			var attributeAccessors = primData.Attributes;
+			var sparseAccessors = new Dictionary<string, (AttributeAccessor sparseIndices, AttributeAccessor sparseValues)>();
 			foreach (var attributePair in primitive.Attributes)
 			{
 				var bufferId = attributePair.Value.Value.BufferView.Value.Buffer;
@@ -1158,6 +1050,30 @@ namespace UnityGLTF
 					Stream = bufferData.Stream,
 					Offset = (uint)bufferData.ChunkOffset
 				};
+
+				var sparse = attributePair.Value.Value.Sparse;
+				if (sparse != null)
+				{
+					var sparseBufferId = sparse.Values.BufferView.Value.Buffer;
+					var sparseBufferData = await GetBufferData(sparseBufferId);
+					AttributeAccessor sparseValues = new AttributeAccessor
+					{
+						AccessorId = attributePair.Value,
+						Stream = sparseBufferData.Stream,
+						Offset = (uint)sparseBufferData.ChunkOffset
+					};
+
+					var sparseIndicesBufferId = sparse.Indices.BufferView.Value.Buffer;
+					var sparseIndicesBufferData = await GetBufferData(sparseIndicesBufferId);
+					AttributeAccessor sparseIndices = new AttributeAccessor
+					{
+						AccessorId = attributePair.Value,
+						Stream = sparseIndicesBufferData.Stream,
+						Offset = (uint)sparseIndicesBufferData.ChunkOffset
+					};
+
+					sparseAccessors[attributePair.Key] = (sparseIndices, sparseValues);
+				}
 			}
 
 			if (primitive.Indices != null)
@@ -1174,7 +1090,7 @@ namespace UnityGLTF
 			}
 			try
 			{
-				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors);
+				GLTFHelpers.BuildMeshAttributes(ref attributeAccessors, ref sparseAccessors);
 			}
 			catch (GLTFLoadException e)
 			{
