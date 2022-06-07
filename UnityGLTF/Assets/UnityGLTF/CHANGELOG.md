@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.7.1-pre] - 2022-06-07
+- feat: sparse accessors import (partial)
+- feat: UV rotation import/export (for baseColorTexture only right now)
+- fix: GLTFRecorderComponent error in play mode when only new input system is present
+- fix: animation export with KHR_animation_pointer and reused nodes
+- fix: passing invalid file names to Export could result in wrong buffer paths in JSON
+
 ## [1.7.0-pre] - 2022-06-01
 - feat: experimental support for KHR_animation_pointer
 - feat: experimental URP (2020.3+) & BiRP (2021.2+) Shader Graph for export and import, `UnityGLTF/PBRGraph`
