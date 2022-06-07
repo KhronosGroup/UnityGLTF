@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 941ea53b9d7aafa4886b8bdd2c0f2963
+importerOverride: UnityGLTFEditor:UnityGLTF:GLTFImporter
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 804e1ce4c496647cfa3f1a1134187c71, type: 3}
+  _removeEmptyRootObjects: 1
+  _scaleFactor: 1
+  _maximumLod: 300
+  _readWriteEnabled: 1
+  _generateColliders: 0
+  _swapUvs: 0
+  _generateLightmapUVs: 0
+  _importNormals: 0
+  _importAnimations: 2
+  _importMaterials: 2
