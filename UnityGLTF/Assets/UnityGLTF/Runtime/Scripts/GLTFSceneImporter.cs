@@ -921,18 +921,18 @@ namespace UnityGLTF
 					{
 						case NormalKey:
 							sparseNormals = new NumericArray[2];
-							GLTFHelpers.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNormals[0], bufferViewCache1, offset1);
-							GLTFHelpers.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNormals[1], bufferViewCache2, offset2);
+							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNormals[0], bufferViewCache1, offset1);
+							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNormals[1], bufferViewCache2, offset2);
 							break;
 						case PositionKey:
 							sparsePositions = new NumericArray[2];
-							GLTFHelpers.AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePositions[0], bufferViewCache1, offset1);
-							GLTFHelpers.AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePositions[1], bufferViewCache2, offset2);
+							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePositions[0], bufferViewCache1, offset1);
+							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePositions[1], bufferViewCache2, offset2);
 							break;
 						case TangentKey:
 							sparseTangents = new NumericArray[2];
-							GLTFHelpers.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTangents[0], bufferViewCache1, offset1);
-							GLTFHelpers.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTangents[1], bufferViewCache2, offset2);
+							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTangents[0], bufferViewCache1, offset1);
+							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTangents[1], bufferViewCache2, offset2);
 							break;
 					}
 				}
@@ -981,33 +981,6 @@ namespace UnityGLTF
 
 				TransformTargets(ref att);
 			}
-		}
-
-		public GLTF.Math.Vector4[] AsSparseVector4Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
-		{
-
-			var arr = new GLTF.Math.Vector4[paraAccessor.Sparse.Count];
-			var totalByteOffset = paraAccessor.Sparse.Values.ByteOffset + offset;
-
-			uint componentSize;
-			float maxValue;
-			GLTFHelpers.GetTypeDetails(paraAccessor.ComponentType, out componentSize, out maxValue);
-			uint stride = componentSize * 4;
-			if (normalizeIntValues) maxValue = 1;
-
-			for (uint idx = 0; idx < paraAccessor.Sparse.Count; idx++)
-			{
-				if (paraAccessor.ComponentType == GLTFComponentType.Float)
-				{
-					arr[idx].X = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 0));
-					arr[idx].Y = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 1));
-					arr[idx].Z = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 2));
-					arr[idx].W = BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 3));
-				}
-			}
-
-			contents.AsVec4s = arr;
-			return arr;
 		}
 
 		// Flip vectors to Unity coordinate system

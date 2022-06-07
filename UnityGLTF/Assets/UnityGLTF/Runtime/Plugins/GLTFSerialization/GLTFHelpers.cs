@@ -230,8 +230,8 @@ namespace GLTF
 			// Indices
 			uint offset2 = LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.Stream, out byte[] bufferViewCache2);
 
-			AsSparseVector3Array(attributeAccessor.AccessorId.Value, ref sparseArrays[0], bufferViewCache1, offset1);
-			AsSparseUIntArray(attributeAccessor.AccessorId.Value, ref sparseArrays[1], bufferViewCache2, offset2);
+			Accessor.AsSparseVector3Array(attributeAccessor.AccessorId.Value, ref sparseArrays[0], bufferViewCache1, offset1);
+			Accessor.AsSparseUIntArray(attributeAccessor.AccessorId.Value, ref sparseArrays[1], bufferViewCache2, offset2);
 
 			var before = new NumericArray();
 			before.AsVec3s = new GLTF.Math.Vector3[resultArray.AsVec3s.Length];
@@ -455,88 +455,6 @@ namespace GLTF
 			}
 		}
 
-		internal static void GetTypeDetails(GLTFComponentType type, out uint componentSize, out float maxValue)
-		{
-			componentSize = 1;
-			maxValue = byte.MaxValue;
-
-			switch (type)
-			{
-				case GLTFComponentType.Byte:
-					componentSize = sizeof(sbyte);
-					maxValue = sbyte.MaxValue;
-					break;
-				case GLTFComponentType.UnsignedByte:
-					componentSize = sizeof(byte);
-					maxValue = byte.MaxValue;
-					break;
-				case GLTFComponentType.Short:
-					componentSize = sizeof(short);
-					break;
-				case GLTFComponentType.UnsignedShort:
-					componentSize = sizeof(ushort);
-					break;
-				case GLTFComponentType.UnsignedInt:
-					componentSize = sizeof(uint);
-					maxValue = uint.MaxValue;
-					break;
-				case GLTFComponentType.Float:
-					componentSize = sizeof(float);
-					maxValue = float.MaxValue;
-					break;
-				default:
-					throw new System.Exception("Unsupported component type.");
-			}
-		}
-
-
-		public static GLTF.Math.Vector3[] AsSparseVector3Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
-		{
-			var arr = new GLTF.Math.Vector3[paraAccessor.Sparse.Count];
-			var totalByteOffset = paraAccessor.Sparse.Values.ByteOffset + offset;
-			uint componentSize;
-			float maxValue;
-			GetTypeDetails(paraAccessor.ComponentType, out componentSize, out maxValue);
-			uint stride = componentSize * 3;
-			if (normalizeIntValues) maxValue = 1;
-			for (uint idx = 0; idx < paraAccessor.Sparse.Count; idx++)
-			{
-				if (paraAccessor.ComponentType == GLTFComponentType.Float)
-				{
-					arr[idx].X = System.BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 0));
-					arr[idx].Y = System.BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 1));
-					arr[idx].Z = System.BitConverter.ToSingle(bufferViewData, (int)(totalByteOffset + idx * stride + componentSize * 2));
-				}
-			}
-			contents.AsVec3s = arr;
-			return arr;
-		}
-
-		public static uint[] AsSparseUIntArray(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset)
-		{
-			var arr = new uint[paraAccessor.Sparse.Count];
-			var totalByteOffset = paraAccessor.Sparse.Indices.ByteOffset + offset;
-			uint componentSize;
-			float maxValue;
-
-			GetTypeDetails(paraAccessor.Sparse.Indices.ComponentType, out componentSize, out maxValue);
-
-			uint stride = componentSize;
-			for (uint idx = 0; idx < paraAccessor.Sparse.Count; idx++)
-			{
-				if (stride == 1)
-				{
-					arr[idx] = (uint)bufferViewData[(int)(totalByteOffset + idx)];
-				}
-				else
-				{
-					arr[idx] = System.BitConverter.ToUInt16(bufferViewData, (int)(totalByteOffset + idx * stride));
-				}
-			}
-			contents.AsUInts = arr;
-			return arr;
-		}
-
 		/// <summary>
 		/// Merges the right root into the left root
 		/// This function combines all of the lists of objects on each glTF root together and updates the relative indicies
@@ -563,7 +481,7 @@ namespace GLTF
 				PreviousTextureCount = mergeToRoot.Textures?.Count ?? 0
 			};
 
-			GLTFRoot mergeFromRootCopy = new GLTFRoot(mergeFromRoot); 
+			GLTFRoot mergeFromRootCopy = new GLTFRoot(mergeFromRoot);
 
 			// for each type:
 			// 1) add the right hand range to the left hand object
@@ -580,7 +498,7 @@ namespace GLTF
 
 			// merge meshes
 			MergeMeshes(mergeToRoot, mergeFromRootCopy, previousGLTFSize);
-			
+
 			// merge cameras
 			MergeCameras(mergeToRoot, mergeFromRootCopy);
 
@@ -593,7 +511,7 @@ namespace GLTF
 			// merge scenes
 			MergeScenes(mergeToRoot, mergeFromRootCopy, previousGLTFSize);
 		}
-		
+
 		/// <summary>
 		/// Returns whether the input string is a Base64 uri. Images and buffers can both be encoded this way.
 		/// </summary>
@@ -826,7 +744,7 @@ namespace GLTF
 				{
 					mergeToRoot.Materials = new List<GLTFMaterial>(mergeFromRoot.Materials.Count);
 				}
-				
+
 				mergeToRoot.Materials.AddRange(mergeFromRoot.Materials);
 				for (int i = previousGLTFSizes.PreviousMaterialCount; i < mergeToRoot.Materials.Count; ++i)
 				{
@@ -884,7 +802,7 @@ namespace GLTF
 		private static void MergeMeshes(GLTFRoot mergeToRoot, GLTFRoot mergeFromRoot, PreviousGLTFSizes previousGLTFSizes)
 		{
 			if (mergeFromRoot.Meshes == null) return;
-			
+
 			if (mergeToRoot.Meshes == null)
 			{
 				mergeToRoot.Meshes = new List<GLTFMesh>(mergeFromRoot.Meshes.Count);

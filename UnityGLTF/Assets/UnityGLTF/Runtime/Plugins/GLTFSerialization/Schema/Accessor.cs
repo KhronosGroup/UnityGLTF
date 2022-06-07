@@ -294,7 +294,70 @@ namespace GLTF.Schema
 			}
 		}
 
-		private static void GetTypeDetails(
+		public static GLTF.Math.Vector3[] AsSparseVector3Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
+		{
+			var ComponentType = paraAccessor.ComponentType;
+			var BufferView = paraAccessor.BufferView;
+			var Count = paraAccessor.Count;
+
+			var arr = new GLTF.Math.Vector3[paraAccessor.Sparse.Count];
+			var totalByteOffset = (uint) paraAccessor.Sparse.Values.ByteOffset + offset;
+
+			uint componentSize;
+			float maxValue;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+
+			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 3;
+			if (normalizeIntValues) maxValue = 1;
+
+			for (uint idx = 0; idx < Count; idx++)
+			{
+				if (ComponentType == GLTFComponentType.Float)
+				{
+					arr[idx].X = GetFloatElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 0);
+					arr[idx].Y = GetFloatElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 1);
+					arr[idx].Z = GetFloatElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 2);
+				}
+				else
+				{
+					arr[idx].X = GetDiscreteElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 0, ComponentType) / maxValue;
+					arr[idx].Y = GetDiscreteElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 1, ComponentType) / maxValue;
+					arr[idx].Z = GetDiscreteElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 2, ComponentType) / maxValue;
+				}
+			}
+
+			contents.AsVec3s = arr;
+			return arr;
+		}
+
+		public static uint[] AsSparseUIntArray(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset)
+		{
+			var ComponentType = paraAccessor.ComponentType;
+			var BufferView = paraAccessor.BufferView;
+			var Count = paraAccessor.Count;
+
+			var arr = new uint[paraAccessor.Sparse.Count];
+			var totalByteOffset = (uint) paraAccessor.Sparse.Indices.ByteOffset + offset;
+
+			uint componentSize;
+			float maxValue;
+			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+
+			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+
+			for (uint idx = 0; idx < Count; idx++)
+			{
+				if (ComponentType == GLTFComponentType.Float)
+					arr[idx] = (uint)System.Math.Floor(GetFloatElement(bufferViewData, totalByteOffset + idx * stride));
+				else
+					arr[idx] = GetUnsignedDiscreteElement(bufferViewData, totalByteOffset + idx * stride, ComponentType);
+			}
+
+			contents.AsUInts = arr;
+			return arr;
+		}
+
+		internal static void GetTypeDetails(
 			GLTFComponentType type,
 			out uint componentSize,
 			out float maxValue)
