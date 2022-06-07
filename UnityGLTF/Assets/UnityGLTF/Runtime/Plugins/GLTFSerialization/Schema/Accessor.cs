@@ -296,18 +296,16 @@ namespace GLTF.Schema
 
 		public static GLTF.Math.Vector3[] AsSparseVector3Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
 		{
+			var Count = paraAccessor.Sparse.Count;
 			var ComponentType = paraAccessor.ComponentType;
-			var BufferView = paraAccessor.BufferView;
-			var Count = paraAccessor.Count;
 
 			var arr = new GLTF.Math.Vector3[paraAccessor.Sparse.Count];
 			var totalByteOffset = (uint) paraAccessor.Sparse.Values.ByteOffset + offset;
 
 			uint componentSize;
 			float maxValue;
-			GetTypeDetails(ComponentType, out componentSize, out maxValue);
-
-			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 3;
+			GetTypeDetails(paraAccessor.ComponentType, out componentSize, out maxValue);
+			uint stride = componentSize * 3;
 			if (normalizeIntValues) maxValue = 1;
 
 			for (uint idx = 0; idx < Count; idx++)
@@ -325,34 +323,31 @@ namespace GLTF.Schema
 					arr[idx].Z = GetDiscreteElement(bufferViewData, totalByteOffset + idx * stride + componentSize * 2, ComponentType) / maxValue;
 				}
 			}
-
 			contents.AsVec3s = arr;
 			return arr;
 		}
 
 		public static uint[] AsSparseUIntArray(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset)
 		{
-			var ComponentType = paraAccessor.ComponentType;
-			var BufferView = paraAccessor.BufferView;
-			var Count = paraAccessor.Count;
-
 			var arr = new uint[paraAccessor.Sparse.Count];
-			var totalByteOffset = (uint) paraAccessor.Sparse.Indices.ByteOffset + offset;
+			var totalByteOffset = paraAccessor.Sparse.Indices.ByteOffset + offset;
 
 			uint componentSize;
 			float maxValue;
-			GetTypeDetails(ComponentType, out componentSize, out maxValue);
+			GetTypeDetails(paraAccessor.Sparse.Indices.ComponentType, out componentSize, out maxValue);
 
-			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
-
-			for (uint idx = 0; idx < Count; idx++)
+			uint stride = componentSize;
+			for (uint idx = 0; idx < paraAccessor.Sparse.Count; idx++)
 			{
-				if (ComponentType == GLTFComponentType.Float)
-					arr[idx] = (uint)System.Math.Floor(GetFloatElement(bufferViewData, totalByteOffset + idx * stride));
+				if (stride == 1)
+				{
+					arr[idx] = (uint)bufferViewData[(int)(totalByteOffset + idx)];
+				}
 				else
-					arr[idx] = GetUnsignedDiscreteElement(bufferViewData, totalByteOffset + idx * stride, ComponentType);
+				{
+					arr[idx] = System.BitConverter.ToUInt16(bufferViewData, (int)(totalByteOffset + idx * stride));
+				}
 			}
-
 			contents.AsUInts = arr;
 			return arr;
 		}
