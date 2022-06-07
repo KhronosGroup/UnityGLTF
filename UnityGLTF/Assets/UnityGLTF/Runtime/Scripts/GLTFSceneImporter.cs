@@ -42,6 +42,14 @@ namespace UnityGLTF
 		public IDataLoader DataLoader = null;
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
+		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
+	}
+
+	public enum AnimationMethod
+	{
+		None,
+		Legacy,
+		Mecanim
 	}
 
 	public class UnityMeshData
@@ -1422,8 +1430,8 @@ namespace UnityGLTF
 			};
 			_assetCache.AnimationCache[animationId].LoadedAnimationClip = clip;
 
-			// needed because Animator component is unavailable at runtime
-			clip.legacy = true;
+			if (_options.AnimationMethod == AnimationMethod.Legacy)
+				clip.legacy = true;
 
 			foreach (AnimationChannel channel in animation.Channels)
 			{
@@ -1529,26 +1537,44 @@ namespace UnityGLTF
 					nodeTransforms[i] = nodeObj.transform;
 				}
 
-				if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
+				if (_options.AnimationMethod != AnimationMethod.None)
 				{
-#if UNITY_ANIMATION
-					// create the AnimationClip that will contain animation data
-					Animation animation = sceneObj.AddComponent<Animation>();
-					for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
+					if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 					{
-						AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
-
-						clip.wrapMode = WrapMode.Loop;
-
-						animation.AddClip(clip, clip.name);
-						if (i == 0)
+	#if UNITY_ANIMATION
+						// create the AnimationClip that will contain animation data
+						var constructedClips = new List<AnimationClip>();
+						for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
 						{
-							animation.clip = clip;
+							AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
+
+							clip.wrapMode = WrapMode.Loop;
+							constructedClips.Add(clip);
 						}
-					}
+
+						if (_options.AnimationMethod == AnimationMethod.Legacy)
+						{
+							Animation animation = sceneObj.AddComponent<Animation>();
+							for (int i = 0; i < constructedClips.Count; i++)
+							{
+								var clip = constructedClips[i];
+								animation.AddClip(clip, clip.name);
+								if (i == 0)
+								{
+									animation.clip = clip;
+								}
+							}
+						}
+						else if (_options.AnimationMethod == AnimationMethod.Mecanim)
+						{
+							// Animator animator =
+								sceneObj.AddComponent<Animator>();
+							// TODO there's no good way to construct an AnimatorController on import it seems, needs to be a SubAsset etc.
+						}
 #else
-					Debug.LogWarning("glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
-#endif
+						Debug.LogWarning("glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
+	#endif
+					}
 				}
 
 				CreatedObject = sceneObj;

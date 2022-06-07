@@ -53,6 +53,7 @@ namespace UnityGLTF
         [SerializeField] private bool _swapUvs = false;
         [SerializeField] private bool _generateLightmapUVs = false;
         [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
+        [SerializeField] private AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] private bool _importMaterials = true;
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -332,6 +333,7 @@ namespace UnityGLTF
 			var importOptions = new ImportOptions
 			{
 				DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
+				AnimationMethod = _importAnimations,
 			};
 			using (var stream = File.OpenRead(projectFilePath))
 			{

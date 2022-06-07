@@ -36,6 +36,9 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_swapUvs"), new GUIContent("Swap UVs"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_generateLightmapUVs"), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
+			EditorGUILayout.LabelField("Animations", EditorStyles.boldLabel);
+			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importAnimations"), new GUIContent("Animations"));
+			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Normals", EditorStyles.boldLabel);
 			EditorGUI.BeginChangeCheck();
 			var importNormalsProp = serializedObject.FindProperty("_importNormals");
