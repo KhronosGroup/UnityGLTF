@@ -2124,21 +2124,7 @@ namespace UnityGLTF
 				pbr.RoughnessFactor = (metallicGlossMap && material.HasProperty("_GlossMapScale")) ? (1 - material.GetFloat("_GlossMapScale")) : (1.0 - smoothness);
 			}
 
-			if (material.HasProperty("_MetallicGlossMap"))
-			{
-				var mrTex = material.GetTexture("_MetallicGlossMap");
-
-				if (mrTex)
-				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, (isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
-					// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
-					// that's not true for the gltf shaders though, so we keep the value there.
-					if (ignoreMetallicFactor)
-						pbr.MetallicFactor = 1.0f;
-					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
-				}
-			}
-			else if (material.HasProperty("metallicRoughnessTexture"))
+			if (material.HasProperty("metallicRoughnessTexture"))
 			{
 				var mrTex = material.GetTexture("metallicRoughnessTexture");
 				if (mrTex)
@@ -2152,6 +2138,20 @@ namespace UnityGLTF
 				if (mrTex)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss_DontConvert);
+				}
+			}
+			else if (material.HasProperty("_MetallicGlossMap"))
+			{
+				var mrTex = material.GetTexture("_MetallicGlossMap");
+
+				if (mrTex)
+				{
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, (isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.MetallicGloss_DontConvert : TextureMapType.MetallicGloss);
+					// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
+					// that's not true for the gltf shaders though, so we keep the value there.
+					if (ignoreMetallicFactor)
+						pbr.MetallicFactor = 1.0f;
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 				}
 			}
 
@@ -2730,6 +2730,7 @@ namespace UnityGLTF
 						textureHasAlpha = false;
 						break;
 					case TextureMapType.Bump:
+						// GL.sRGBWrite = false; // TODO check what we should do here. Needs tests!
 						Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
 						textureHasAlpha = false;
 						break;
