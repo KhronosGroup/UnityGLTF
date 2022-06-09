@@ -25,6 +25,7 @@ using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
+using Unity.Collections;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -55,6 +56,18 @@ namespace UnityGLTF
         [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] private AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] private bool _importMaterials = true;
+
+        [Serializable]
+        private class ExtensionInfo
+        {
+	        public string name;
+	        public bool supported;
+	        public bool used;
+	        public bool required;
+        }
+
+        // Import messages (extensions, warnings, errors, ...)
+        [SerializeField] private List<ExtensionInfo> _extensions;
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
@@ -206,9 +219,6 @@ namespace UnityGLTF
                                 {
                                     matName = matName.Substring(Mathf.Min(matName.LastIndexOf("/", StringComparison.Ordinal) + 1, matName.Length - 1));
                                 }
-
-                                // Ensure name is unique
-                                matName = ObjectNames.NicifyVariableName(matName);
                                 mat.name = matName;
                             }
 
@@ -239,12 +249,8 @@ namespace UnityGLTF
                                         if (string.IsNullOrEmpty(texName))
                                         {
                                             if (propertyName.StartsWith("_")) texName = propertyName.Substring(Mathf.Min(1, propertyName.Length - 1));
+                                            tex.name = texName;
                                         }
-
-                                        // Ensure name is unique
-                                        texName = string.Format("{0} {1}", sceneName, ObjectNames.NicifyVariableName(texName));
-
-                                        tex.name = texName;
                                         matTextures.Add(tex);
                                     }
 
@@ -368,6 +374,23 @@ namespace UnityGLTF
 				loader.IsMultithreaded = true;
 
 				loader.LoadSceneAsync().Wait();
+
+				if (gLTFRoot.ExtensionsUsed != null)
+				{
+					_extensions = gLTFRoot.ExtensionsUsed
+						.Select(x => new ExtensionInfo()
+						{
+							name = x,
+							supported = true,
+							used = true,
+							required = gLTFRoot.ExtensionsRequired?.Contains(x) ?? false,
+						})
+						.ToList();
+				}
+				else
+				{
+					_extensions = new List<ExtensionInfo>();
+				}
 				return loader.LastLoadedScene;
 			}
         }

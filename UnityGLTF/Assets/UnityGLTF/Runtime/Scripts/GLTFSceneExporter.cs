@@ -611,6 +611,11 @@ namespace UnityGLTF
 
 			exportGltfInitMarker.Begin();
 			_shouldUseInternalBufferForImages = false;
+			var toLower = fileName.ToLowerInvariant();
+			if (toLower.EndsWith(".gltf"))
+				fileName = fileName.Substring(0, fileName.Length - 5);
+			if (toLower.EndsWith(".bin"))
+				fileName = fileName.Substring(0, fileName.Length - 4);
 			var fullPath = GetFileName(path, fileName, ".bin");
 			var dirName = Path.GetDirectoryName(fullPath);
 			if (dirName != null && !Directory.Exists(dirName))
@@ -2024,10 +2029,15 @@ namespace UnityGLTF
 
 			info.Index = ExportTexture(texture, textureMapType);
 
-			if (material.HasProperty("_BumpScale"))
+			if (material.HasProperty("_NormalScale"))
+			{
+				info.Scale = material.GetFloat("_NormalScale");
+			}
+			else if (material.HasProperty("_BumpScale"))
 			{
 				info.Scale = material.GetFloat("_BumpScale");
 			}
+
 
 			return info;
 		}
