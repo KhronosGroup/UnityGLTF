@@ -1632,9 +1632,9 @@ namespace UnityGLTF
 					}
 				}
 
-				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap"))
+				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture"))
 				{
-					var propName = materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
+					var propName = materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" : materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
 					var emissionTex = materialObj.GetTexture(propName);
 
 					if (emissionTex)
