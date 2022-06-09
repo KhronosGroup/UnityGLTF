@@ -2341,9 +2341,7 @@ namespace UnityGLTF
 						mrMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 						mrMapper.BaseColorXTexCoord = ext.TexCoord;
 
-						// offset = new GLTF.Math.Vector2(offset.x, 1 - offset.y - scale.y),
-						// scale = new GLTF.Math.Vector2(scale.x, scale.y),
-
+						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
 					}
 				}
 
@@ -2457,11 +2455,8 @@ namespace UnityGLTF
 					var td = await FromTextureInfo(transmission.transmissionTexture);
 					transmissionMapper.TransmissionTexture = td.Texture;
 
-					if (transmissionMapper.TransmissionFactor > 0)
-					{
-						mapper.Material.renderQueue = 3000;
-						mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ON");
-					}
+					mapper.Material.renderQueue = 3000;
+					mapper.Material.SetKeyword("_VOLUME_TRANSMISSION", true);
 				}
 			}
 
@@ -2477,11 +2472,8 @@ namespace UnityGLTF
 					var td = await FromTextureInfo(volume.thicknessTexture);
 					volumeMapper.ThicknessTexture = td.Texture;
 
-					if (volumeMapper.ThicknessFactor > 0)
-					{
-						mapper.Material.renderQueue = 3000;
-						mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ON");
-					}
+					mapper.Material.renderQueue = 3000;
+					mapper.Material.SetKeyword("_VOLUME_TRANSMISSION", true);
 				}
 			}
 
@@ -2500,10 +2492,7 @@ namespace UnityGLTF
 					var td2 = await FromTextureInfo(iridescence.iridescenceThicknessTexture);
 					iridescenceMapper.IridescenceThicknessTexture = td2.Texture;
 
-					if (iridescenceMapper.IridescenceFactor > 0)
-					{
-						mapper.Material.EnableKeyword("_IRIDESCENCE_ON");
-					}
+					mapper.Material.SetKeyword("_IRIDESCENCE", true);
 				}
 			}
 
@@ -2520,10 +2509,7 @@ namespace UnityGLTF
 					var td2 = await FromTextureInfo(specular.specularColorTexture);
 					specularMapper.SpecularColorTexture = td2.Texture;
 
-					if (specularMapper.SpecularFactor > 0)
-					{
-						mapper.Material.EnableKeyword("_SPECULAR_ON");
-					}
+					mapper.Material.SetKeyword("_SPECULAR", true);
 				}
 			}
 
@@ -2590,10 +2576,10 @@ namespace UnityGLTF
 			var vertColorMapper = mapper.Clone();
 			vertColorMapper.VertexColorsEnabled = true;
 
-			if (mapper is PBRGraphMap pbrGraphMap)
-			{
-				MaterialExtensions.ValidateMaterialKeywords(pbrGraphMap.Material);
-			}
+			// if (mapper is PBRGraphMap pbrGraphMap)
+			// {
+			// 	MaterialExtensions.ValidateMaterialKeywords(pbrGraphMap.Material);
+			// }
 
 			MaterialCacheData materialWrapper = new MaterialCacheData
 			{

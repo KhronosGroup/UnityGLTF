@@ -1622,7 +1622,7 @@ namespace UnityGLTF
 			material.DoubleSided = (materialObj.HasProperty("_Cull") && materialObj.GetInt("_Cull") == (int)CullMode.Off) ||
 			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off);
 
-			if(materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION"))
+			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("_EmissiveTexture"))
 			{
 				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("_EmissiveFactor"))
 				{
@@ -1697,15 +1697,16 @@ namespace UnityGLTF
 				}
 			}
 
-			if (materialObj.HasProperty("_OcclusionMap"))
+			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("_OcclusionTexture"))
 			{
-				var occTex = materialObj.GetTexture("_OcclusionMap");
+				var propName = materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
+				var occTex = materialObj.GetTexture(propName);
 				if (occTex)
 				{
 					if(occTex is Texture2D)
 					{
 						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
-						ExportTextureTransform(material.OcclusionTexture, materialObj, "_OcclusionMap");
+						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
 					}
 					else
 					{
@@ -1942,6 +1943,10 @@ namespace UnityGLTF
 
 		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
 		{
+			// early out if texture transform is explicitly disabled
+			if (mat.HasProperty("_TEXTURE_TRANSFORM") && !mat.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
+				return;
+
 			Vector2 offset = mat.GetTextureOffset(texName);
 			Vector2 scale = mat.GetTextureScale(texName);
 			//var rotationMatrix = mat.GetVector(texName + "Rotation");

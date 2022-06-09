@@ -4,7 +4,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF
 {
-	public class MaterialExtensions : MonoBehaviour
+	public static class MaterialExtensions
 	{
 #if UNITY_EDITOR
 		[UnityEditor.InitializeOnLoadMethod]
@@ -39,16 +39,16 @@ namespace UnityGLTF
 			var needsVolumeTransmission = false;
 			needsVolumeTransmission |= material.HasProperty(ThicknessFactor) && material.GetFloat(ThicknessFactor) > 0;
 			needsVolumeTransmission |= material.HasProperty(TransmissionFactor) && material.GetFloat(TransmissionFactor) > 0;
-			SetKeyword(material, "_VOLUME_TRANSMISSION", needsVolumeTransmission);
+			SetKeyword(material, "_VOLUME_TRANSMISSION_ON", needsVolumeTransmission);
 
 			var needsIridescence = material.HasProperty(IridescenceFactor) && material.GetFloat(IridescenceFactor) > 0;
-			SetKeyword(material, "_IRIDESCENCE", needsIridescence);
+			SetKeyword(material, "_IRIDESCENCE_ON", needsIridescence);
 
 			var needsSpecular = material.HasProperty(SpecularFactor) && material.GetFloat(SpecularFactor) > 0;
-			SetKeyword(material, "_SPECULAR", needsSpecular);
+			SetKeyword(material, "_SPECULAR_ON", needsSpecular);
 		}
 
-		private static void SetKeyword(Material material, string keyword, bool state)
+		public static void SetKeyword(this Material material, string keyword, bool state)
 		{
 			if (state)
 				material.EnableKeyword(keyword + "_ON");

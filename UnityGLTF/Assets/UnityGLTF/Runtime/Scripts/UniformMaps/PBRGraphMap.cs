@@ -79,8 +79,8 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
     public int OcclusionTexCoord
     {
-	    get => 0;
-	    set {}
+	    get => (int) _material.GetFloat("_OcclusionTextureTexCoord");
+	    set => _material.SetFloat("_OcclusionTextureTexCoord", Mathf.RoundToInt(value));
     }
 
     public double OcclusionTexStrength
@@ -284,13 +284,13 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
     public virtual bool VertexColorsEnabled
     {
-	    get { return _material.IsKeywordEnabled("VERTEX_COLOR_ON"); }
+	    get { return _material.IsKeywordEnabled("_VERTEX_COLORS_ON"); }
 	    set
 	    {
 		    if (value)
-			    _material.EnableKeyword("VERTEX_COLOR_ON");
+			    _material.EnableKeyword("_VERTEX_COLORS_ON");
 		    else
-			    _material.DisableKeyword("VERTEX_COLOR_ON");
+			    _material.DisableKeyword("_VERTEX_COLORS_ON");
 	    }
     }
 
@@ -302,8 +302,8 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
     public int BaseColorTexCoord
     {
-	    get => 0;
-	    set {}
+	    get => (int) _material.GetFloat("_BaseColorTextureTexCoord");
+	    set => _material.SetFloat("_BaseColorTextureTexCoord", Mathf.RoundToInt(value));
     }
 
     public Vector2 BaseColorXOffset
