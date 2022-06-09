@@ -523,6 +523,30 @@ namespace UnityGLTF
 			}
 		}
 
+#if UNITY_EDITOR
+		internal class AssetDatabaseStream : Stream
+		{
+			public string AssetUri { get; }
+
+			public AssetDatabaseStream(string imageUri)
+			{
+				AssetUri = imageUri;
+			}
+
+			public override void Flush() => throw new NotImplementedException();
+			public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+			public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
+			public override void SetLength(long value) => throw new NotImplementedException();
+			public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+
+			public override bool CanRead { get; }
+			public override bool CanSeek { get; }
+			public override bool CanWrite { get; }
+			public override long Length { get; }
+			public override long Position { get; set; }
+		}
+#endif
+
 		protected async Task ConstructImageBuffer(GLTFTexture texture, int textureIndex)
 		{
 			int sourceId = GetTextureSourceId(texture);
@@ -806,6 +830,16 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
 		{
+#if UNITY_EDITOR
+			if (stream is AssetDatabaseStream assetDatabaseStream)
+			{
+				var tx = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(assetDatabaseStream.AssetUri);
+				progressStatus.TextureLoaded++;
+				progress?.Report(progressStatus);
+				_assetCache.ImageCache[imageCacheIndex] = tx;
+				return;
+			}
+#endif
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
@@ -2755,6 +2789,9 @@ namespace UnityGLTF
 					}
 				}
 				else
+#if UNITY_EDITOR
+				if (!UnityEditor.AssetDatabase.Contains(source))
+#endif
 				{
 					var unityTexture = Object.Instantiate(source);
 					unityTexture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
@@ -2764,6 +2801,13 @@ namespace UnityGLTF
 
 					Debug.Assert(_assetCache.TextureCache[textureIndex].Texture == null, "Texture should not be reset to prevent memory leaks");
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
+				}
+				else
+				{
+					// don't warn for just filter mode, user choice
+					if (source.wrapModeU != desiredWrapModeS || source.wrapModeV != desiredWrapModeT)
+						Debug.LogWarning(($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT}"));
+					_assetCache.TextureCache[textureIndex].Texture = source;
 				}
 			}
 		}

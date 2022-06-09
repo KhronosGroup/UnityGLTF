@@ -268,7 +268,14 @@ namespace UnityGLTF
                     {
                         foreach (var tex in textures)
                         {
-                            ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
+	                        if (AssetDatabase.Contains(tex) && AssetDatabase.GetAssetPath(tex) != ctx.assetPath)
+	                        {
+		                        ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(tex));
+	                        }
+	                        else
+	                        {
+		                        ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
+	                        }
                         }
                     }
 

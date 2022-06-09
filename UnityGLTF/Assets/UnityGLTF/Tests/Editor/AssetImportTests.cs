@@ -18,7 +18,7 @@ public class AssetImportTests
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
 
 		var so = new SerializedObject(importer);
-		originalAnimationMethod = (AnimationMethod) so.FindProperty("_importAnimations").enumValueFlag;
+		originalAnimationMethod = (AnimationMethod) so.FindProperty("_importAnimations").intValue;
 	}
 
 	[TearDown]
@@ -33,7 +33,7 @@ public class AssetImportTests
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
 
 		var so = new SerializedObject(importer);
-		so.FindProperty("_importAnimations").enumValueFlag = (int) method;
+		so.FindProperty("_importAnimations").intValue = (int) method;
 		so.ApplyModifiedPropertiesWithoutUndo();
 
 		importer.SaveAndReimport();

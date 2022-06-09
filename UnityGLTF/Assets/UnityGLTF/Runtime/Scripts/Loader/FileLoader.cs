@@ -15,6 +15,13 @@ namespace UnityGLTF.Loader
 
 		public Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
+			string path = Path.Combine(_rootDirectoryPath, relativeFilePath).Replace("\\", "/");
+			if (UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(UnityEngine.Texture2D))
+			{
+				var stream = new GLTFSceneImporter.AssetDatabaseStream(path);
+				return Task.FromResult((Stream) stream);
+			}
+
 #if !WINDOWS_UWP && !UNITY_WEBGL
 			// seems the Editor locks up in some cases when directly using Task.Run(() => {})
 			if (UnityEngine.Application.isPlaying)
