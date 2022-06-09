@@ -1707,6 +1707,7 @@ namespace UnityGLTF
 					{
 						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
 						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
+						material.OcclusionTexture.TexCoord = materialObj.HasProperty("_OcclusionTextureTexCoord") ? Mathf.RoundToInt(materialObj.GetFloat("_OcclusionTextureTexCoord")) : 0;
 					}
 					else
 					{
@@ -2105,6 +2106,7 @@ namespace UnityGLTF
 				{
 					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 					ExportTextureTransform(pbr.BaseColorTexture, material, mainTexPropertyName);
+					pbr.BaseColorTexture.TexCoord = material.HasProperty("_BaseColorTextureTexCoord") ? Mathf.RoundToInt(material.GetFloat("_BaseColorTextureTexCoord")) : 0;
 				}
 			}
 

@@ -2316,6 +2316,8 @@ namespace UnityGLTF
 			mapper.AlphaMode = def.AlphaMode;
 			mapper.AlphaCutoff = def.AlphaCutoff;
 			mapper.DoubleSided = def.DoubleSided;
+			mapper.Material.SetFloat("_BUILTIN_QueueControl", -1);
+			mapper.Material.SetFloat("_QueueControl", -1);
 
 			var mrMapper = mapper as IMetalRoughUniformMap;
 			if (def.PbrMetallicRoughness != null && mrMapper != null)
