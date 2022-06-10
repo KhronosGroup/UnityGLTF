@@ -89,7 +89,7 @@ namespace UnityGLTF
 			AssetDatabase.StartAssetEditing();
 			foreach (var x in importer.Textures)
 			{
-				if (!AssetDatabase.Contains(x.texture) || AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is not TextureImporter textureImporter) continue;
+				if (!AssetDatabase.Contains(x.texture) || !(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)) continue;
 
 				textureImporter.sRGBTexture = !x.shouldBeLinear;
 				textureImporter.SaveAndReimport();
