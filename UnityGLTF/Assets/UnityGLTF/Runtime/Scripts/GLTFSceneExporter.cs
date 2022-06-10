@@ -734,8 +734,6 @@ namespace UnityGLTF
 				var textureMapType = _imageInfos[t].textureMapType;
 				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
 
-				Debug.Log(fileOutputPath);
-
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
 				var dir = Path.GetDirectoryName(fileOutputPath);
@@ -756,11 +754,15 @@ namespace UnityGLTF
 							ExportMetallicGlossTexture(image, fileOutputPath, true);
 							break;
 						case TextureMapType.MetallicGloss_DontConvert:
+						case TextureMapType.Custom_Unknown:
+						case TextureMapType.Occlusion:
 							ExportMetallicGlossTexture(image, fileOutputPath, false);
 							break;
 						case TextureMapType.Bump:
 							ExportNormalTexture(image, fileOutputPath);
 							break;
+						case TextureMapType.Main:
+						case TextureMapType.Emission:
 						default:
 							ExportTexture(image, fileOutputPath);
 							break;
@@ -780,7 +782,7 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
 		{
-			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 			if (swapMetalGlossChannels)
 				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
 			else
@@ -797,8 +799,11 @@ namespace UnityGLTF
 		private void ExportNormalTexture(Texture2D texture, string outputPath)
 		{
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			var wr = GL.sRGBWrite;
+			GL.sRGBWrite = true;
 			Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
-			WriteRenderTextureToDiskAndRelease(destRenderTexture, outputPath, false);
+			WriteRenderTextureToDiskAndRelease(destRenderTexture, outputPath, true);
+			GL.sRGBWrite = wr;
 		}
 
 		private void ExportTexture(Texture2D texture, string outputPath)
@@ -812,7 +817,7 @@ namespace UnityGLTF
 		{
 			RenderTexture.active = destRenderTexture;
 
-			var exportTexture = new Texture2D(destRenderTexture.width, destRenderTexture.height, TextureFormat.ARGB32, false, false);
+			var exportTexture = new Texture2D(destRenderTexture.width, destRenderTexture.height, TextureFormat.ARGB32, false, linear);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 			exportTexture.Apply();
 
@@ -821,9 +826,9 @@ namespace UnityGLTF
 
 			RenderTexture.ReleaseTemporary(destRenderTexture);
 			if (Application.isEditor)
-				GameObject.DestroyImmediate(exportTexture);
+				Object.DestroyImmediate(exportTexture);
 			else
-				GameObject.Destroy(exportTexture);
+				Object.Destroy(exportTexture);
 		}
 
 		public void DeclareExtensionUsage(string extension, bool isRequired=false)

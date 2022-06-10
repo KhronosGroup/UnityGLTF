@@ -2539,14 +2539,20 @@ namespace UnityGLTF
 				TextureId textureId = def.OcclusionTexture.Index;
 				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
 				mapper.OcclusionTexture = _assetCache.TextureCache[textureId.Id].Texture;
+				mapper.OcclusionTexCoord = def.OcclusionTexture.TexCoord;
 
 				var ext = GetTextureTransform(def.OcclusionTexture);
+
 				if (ext != null)
 				{
-					mapper.OcclusionXOffset = ext.Offset.ToUnityVector2Raw();
+					var offset = ext.Offset.ToUnityVector2Raw();
+					offset.y = 1 - ext.Scale.Y - offset.y;
+					mapper.OcclusionXOffset = offset;
 					mapper.OcclusionXRotation = ext.Rotation;
 					mapper.OcclusionXScale = ext.Scale.ToUnityVector2Raw();
-					mapper.OcclusionXTexCoord = ext.TexCoord;
+					// mapper.OcclusionXTexCoord = ext.TexCoord;
+
+					mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
 				}
 			}
 

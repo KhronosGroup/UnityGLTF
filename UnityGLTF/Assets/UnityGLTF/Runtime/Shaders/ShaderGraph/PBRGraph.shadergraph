@@ -11917,7 +11917,7 @@
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Occlusion Map",
     "m_DefaultReferenceName": "_Occlusion_Map",
-    "m_OverrideReferenceName": "_OcclusionMap",
+    "m_OverrideReferenceName": "_OcclusionTexture",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",

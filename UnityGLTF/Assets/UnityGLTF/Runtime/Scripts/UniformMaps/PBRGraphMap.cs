@@ -95,7 +95,11 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 	    set => _material.SetTextureOffset("_OcclusionTexture", value);
     }
 
-    public double OcclusionXRotation { get; set; }
+    public double OcclusionXRotation
+    {
+	    get => _material.GetFloat("_OcclusionTextureRotation");
+	    set => _material.SetFloat("_OcclusionTextureRotation", (float) value);
+    }
 
     public Vector2 OcclusionXScale
     {
@@ -105,8 +109,8 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
     public int OcclusionXTexCoord
     {
-	    get => 0;
-	    set {}
+	    get => (int) _material.GetFloat("_OcclusionTextureTexCoord");
+	    set => _material.SetFloat("_OcclusionTextureTexCoord", Mathf.RoundToInt(value));
     }
 
     public Texture EmissiveTexture
@@ -326,8 +330,8 @@ public class PBRGraphMap : IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, 
 
     public int BaseColorXTexCoord
     {
-	    get => 0;
-	    set {}
+	    get => (int) _material.GetFloat("_BaseColorTextureTexCoord");
+	    set => _material.SetFloat("_BaseColorTextureTexCoord", Mathf.RoundToInt(value));
     }
 
     public Color BaseColorFactor
