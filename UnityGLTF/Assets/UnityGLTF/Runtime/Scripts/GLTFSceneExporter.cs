@@ -782,7 +782,7 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
 		{
-			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			if (swapMetalGlossChannels)
 				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
 			else

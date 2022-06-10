@@ -68,7 +68,7 @@ namespace UnityGLTF
         [SerializeField] private bool _importMaterials = true;
 
         [Serializable]
-        private class ExtensionInfo
+        internal class ExtensionInfo
         {
 	        public string name;
 	        public bool supported;
@@ -76,8 +76,17 @@ namespace UnityGLTF
 	        public bool required;
         }
 
+        [Serializable]
+        public class TextureInfo
+        {
+	        public Texture2D texture;
+	        public bool shouldBeLinear;
+        }
+
         // Import messages (extensions, warnings, errors, ...)
-        [SerializeField] private List<ExtensionInfo> _extensions;
+        [NonReorderable] [SerializeField] private List<ExtensionInfo> _extensions;
+        [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
+        internal List<TextureInfo> Textures => _textures;
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
@@ -286,6 +295,7 @@ namespace UnityGLTF
                         {
 	                        if (AssetDatabase.Contains(tex) && AssetDatabase.GetAssetPath(tex) != ctx.assetPath)
 	                        {
+		                        // check texture import settings
 		                        ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(tex));
 	                        }
 	                        else
@@ -401,6 +411,11 @@ namespace UnityGLTF
 				{
 					_extensions = new List<ExtensionInfo>();
 				}
+
+				_textures = loader.TextureCache
+					.Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
+					.ToList();
+
 				return loader.LastLoadedScene;
 			}
         }

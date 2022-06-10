@@ -7,7 +7,8 @@ namespace UnityGLTF.Cache
 	public class TextureCacheData : IDisposable
 	{
 		public GLTFTexture TextureDefinition;
-		public Texture Texture;
+		public Texture2D Texture;
+		public bool IsLinear;
 
 		/// <summary>
 		/// Unloads the textures in this cache.

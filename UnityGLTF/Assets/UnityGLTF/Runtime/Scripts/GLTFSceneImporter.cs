@@ -300,6 +300,8 @@ namespace UnityGLTF
 			get { return _lastLoadedScene; }
 		}
 
+		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
+
 		/// <summary>
 		/// Loads a glTF Scene into the LastLoadedScene field
 		/// </summary>
@@ -2780,6 +2782,8 @@ namespace UnityGLTF
 					_assetCache.TextureCache[textureIndex].Texture = source;
 				}
 			}
+
+			_assetCache.TextureCache[textureIndex].IsLinear = isLinear;
 		}
 
 		protected virtual void ConstructImageFromGLB(GLTFImage image, int imageCacheIndex)
