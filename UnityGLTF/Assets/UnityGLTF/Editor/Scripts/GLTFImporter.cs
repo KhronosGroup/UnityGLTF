@@ -45,6 +45,16 @@ namespace UnityGLTF
 #endif
     public class GLTFImporter : ScriptedImporter
     {
+	    private static string[] GatherDependenciesFromSourceFile(string path)
+	    {
+		    const string PackagePrefix = "Packages/org.khronos.unitygltf/";
+		    return new string[] {
+			    PackagePrefix + "Runtime/Shaders/ShaderGraph/PBRGraph.shadergraph",
+			    PackagePrefix + "Runtime/Shaders/PbrMetallicRoughness.shader",
+			    PackagePrefix + "Runtime/Shaders/Unlit.shader",
+		    };
+	    }
+
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
         [SerializeField] private bool _removeEmptyRootObjects = true;
         [SerializeField] private float _scaleFactor = 1.0f;
