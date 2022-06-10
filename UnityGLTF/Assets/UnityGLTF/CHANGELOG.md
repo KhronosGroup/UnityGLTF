@@ -4,23 +4,27 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.8.0-pre] - 2022-06-10
+- fixed: fixed package version, color space changes require minor version bump, not just patch
+- fixed: C# version error on 2020.3
+
 ## [1.7.1-pre.3] - 2022-06-10
 - feat: show extensions and textures in importer inspector
 - feat: export texture coord (UV0 / UV1) separately for "occlusionTexture" and "everything else", same as three.js
-- fix: editor import of .gltf files with textures now uses those textures directly instead of creating new ones
-- fix: exporting only includes extensions that are actually used or explicitly enabled
-- fix: no more differences in color space between exporting glTF + textures or glb with embedded textures
-- fix: importer properly declares shaders as dependencies, fixes library reimport errors
+- fixed: editor import of .gltf files with textures now uses those textures directly instead of creating new ones
+- fixed: exporting only includes extensions that are actually used or explicitly enabled
+- fixed: no more differences in color space between exporting glTF + textures or glb with embedded textures
+- fixed: importer properly declares shaders as dependencies, fixes library reimport errors
 
 ## [1.7.1-pre.2] - 2022-06-08
-- fix: animation clip import in Editor working again
+- fixed: animation clip import in Editor working again
 
 ## [1.7.1-pre] - 2022-06-07
 - feat: sparse accessors import (partial)
 - feat: UV rotation import/export (for baseColorTexture only right now)
-- fix: GLTFRecorderComponent error in play mode when only new input system is present
-- fix: animation export with KHR_animation_pointer and reused nodes
-- fix: passing invalid file names to Export could result in wrong buffer paths in JSON
+- fixed: GLTFRecorderComponent error in play mode when only new input system is present
+- fixed: animation export with KHR_animation_pointer and reused nodes
+- fixed: passing invalid file names to Export could result in wrong buffer paths in JSON
 
 ## [1.7.0-pre] - 2022-06-01
 - feat: experimental support for KHR_animation_pointer
