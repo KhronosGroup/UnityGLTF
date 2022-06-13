@@ -2774,6 +2774,7 @@ namespace UnityGLTF
 					Debug.Assert(_assetCache.TextureCache[textureIndex].Texture == null, "Texture should not be reset to prevent memory leaks");
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
 				}
+#if UNITY_EDITOR
 				else
 				{
 					// don't warn for just filter mode, user choice
@@ -2781,6 +2782,7 @@ namespace UnityGLTF
 						Debug.LogWarning(($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT}"));
 					_assetCache.TextureCache[textureIndex].Texture = source;
 				}
+#endif
 			}
 
 			_assetCache.TextureCache[textureIndex].IsLinear = isLinear;
