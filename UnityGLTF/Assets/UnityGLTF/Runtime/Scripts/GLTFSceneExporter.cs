@@ -4540,6 +4540,8 @@ namespace UnityGLTF
 
 		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
 		{
+			if (!animatedObject) return;
+
 			if (!settings.UseAnimationPointer)
 			{
 				Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer", animatedObject);
