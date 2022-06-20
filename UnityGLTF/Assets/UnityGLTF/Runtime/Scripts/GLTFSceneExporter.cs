@@ -4136,13 +4136,22 @@ namespace UnityGLTF
 						for (int i = 0; i < animation.Channels.Count; i++)
 						{
 							var existingTarget = animation.Channels[i].Target;
-							if (existingTarget.Node?.Id != alreadyExportedChannelTargetId) continue;
+							if (existingTarget.Node != null && existingTarget.Node.Id != alreadyExportedChannelTargetId) continue;
 
-							existingTarget.Node = new NodeId()
+							if (existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
 							{
-								Id = newTargetId,
-								Root = _root
-							};
+								animationPointer.animatedObject = targetTr;
+								animationPointer.channel = existingTarget;
+								animationPointerResolver.Add(animationPointer);
+							}
+							else
+							{
+								existingTarget.Node = new NodeId()
+								{
+									Id = newTargetId,
+									Root = _root
+								};
+							}
 						}
 						continue;
 					}
