@@ -134,7 +134,7 @@ namespace UnityGLTF
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
 		private Dictionary<Material, int> _materials;
-		private List<AnimationClip> _animationClips;
+		private List<(Transform tr, AnimationClip clip)> _animationClips;
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
 		private Dictionary<int, int> _exportedCameras;
@@ -397,7 +397,7 @@ namespace UnityGLTF
 			_imageInfos = new List<ImageInfo>();
 			_materials = new Dictionary<Material, int>();
 			_textures = new List<Texture>();
-			_animationClips = new List<AnimationClip>();
+			_animationClips = new List<(Transform, AnimationClip)>();
 
 			_buffer = new GLTFBuffer();
 			_bufferId = new BufferId
@@ -3670,9 +3670,14 @@ namespace UnityGLTF
 #endregion
 
 
-		public int GetAnimationId(AnimationClip clip)
+		public int GetAnimationId(AnimationClip clip, Transform transform)
 		{
-			return _animationClips.IndexOf(clip);
+			for (var i = 0; i < _animationClips.Count; i++)
+			{
+				var entry = _animationClips[i];
+				if (entry.tr == transform && entry.clip == clip) return i;
+			}
+			return -1;
 		}
 
 		public MaterialId GetMaterialId(GLTFRoot root, Material materialObj)
@@ -3899,7 +3904,7 @@ namespace UnityGLTF
 			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
 			{
 				_root.Animations.Add(anim);
-				_animationClips.Add(clip);
+				_animationClips.Add((node, clip));
 			}
 			return anim;
 		}
