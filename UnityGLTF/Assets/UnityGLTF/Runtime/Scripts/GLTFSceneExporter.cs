@@ -4145,8 +4145,21 @@ namespace UnityGLTF
 
 							if (existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
 							{
-								if(animationPointer.animatedObject != alreadyExportedTransform) continue;
-								
+								if (animationPointer.animatedObject != alreadyExportedTransform)
+								{
+									if (animationPointer.animatedObject is Component)
+									{
+										var targetType = animationPointer.animatedObject.GetType();
+										var newTarget = targetTr.GetComponent(targetType);
+										if (newTarget)
+										{
+											animationPointer.animatedObject = newTarget;
+											animationPointer.channel = existingTarget;
+											animationPointerResolver.Add(animationPointer);
+										}
+									}
+									continue;
+								}
 								animationPointer.animatedObject = targetTr;
 								animationPointer.channel = existingTarget;
 								animationPointerResolver.Add(animationPointer);
