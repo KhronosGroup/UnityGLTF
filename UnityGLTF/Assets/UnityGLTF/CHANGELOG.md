@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.8.1-pre] - 2022-06-22
+- fixed: same animation used on different objects should result in different pointer values with KHR_animation_pointer used
+- fixed: nullref when adding animation data for null object (e.g. unused property clip)
+- fixed: too many nodes get overwritten by duplicate animations with animation pointer
+- changed: GetAnimationId now takes root transform parameter
+- fixed: previously seen KHR_animation_pointer is now added to resolve list (e.g. when using animations on multiple objects and animating component values)
+
 ## [1.8.0-pre.2] - 2022-06-14
 - fixed: OcclusionTexture tiling now defaults to (1,1)
 - fixed: build errors on certain platforms
