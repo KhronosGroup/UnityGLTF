@@ -4143,7 +4143,7 @@ namespace UnityGLTF
 							var existingTarget = animation.Channels[i].Target;
 							if (existingTarget.Node != null && existingTarget.Node.Id != alreadyExportedChannelTargetId) continue;
 
-							if (existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
+							if (existingTarget.Extensions != null && existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
 							{
 								if (animationPointer.animatedObject != alreadyExportedTransform)
 								{
