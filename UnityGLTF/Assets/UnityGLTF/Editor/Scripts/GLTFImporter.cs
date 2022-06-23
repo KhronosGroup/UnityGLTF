@@ -83,6 +83,10 @@ namespace UnityGLTF
 	        public bool shouldBeLinear;
         }
 
+#if !UNIYT_2020_2_OR_NEWER
+	    private class NonReorderableAttribute : Attribute {}
+#endif
+
         // Import messages (extensions, warnings, errors, ...)
         [NonReorderable] [SerializeField] private List<ExtensionInfo> _extensions;
         [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
@@ -295,8 +299,12 @@ namespace UnityGLTF
                         {
 	                        if (AssetDatabase.Contains(tex) && AssetDatabase.GetAssetPath(tex) != ctx.assetPath)
 	                        {
-		                        // check texture import settings
-		                        ctx.DependsOnArtifact(AssetDatabase.GetAssetPath(tex));
+#if UNITY_2020_2_OR_NEWER
+		                        ctx.DependsOnArtifact(
+#else
+		                        ctx.DependsOnSourceAsset(
+#endif
+			                        AssetDatabase.GetAssetPath(tex));
 	                        }
 	                        else
 	                        {

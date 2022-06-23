@@ -27,7 +27,11 @@ namespace UnityGLTF.Loader
 				await Task.Yield();
 			}
 
+#if UNITY_2020_1_OR_NEWER
 			if (request.result != UnityWebRequest.Result.Success)
+#else
+			if (request.isNetworkError || request.isHttpError)
+#endif
 			{
 				Debug.LogError($"Error when loading {relativeFilePath} ({path}): {request.error}");
 				return null;
