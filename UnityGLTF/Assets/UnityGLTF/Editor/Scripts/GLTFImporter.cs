@@ -36,12 +36,12 @@ namespace UnityGLTF
 {
 #if UNITY_2020_2_OR_NEWER
 #if ENABLE_DEFAULT_GLB_IMPORTER
-    [ScriptedImporter(2, new[] { "glb", "gltf" })]
+    [ScriptedImporter(3, new[] { "glb", "gltf" })]
 #else
-    [ScriptedImporter(2, null, overrideExts: new[] { "glb", "gltf" })]
+    [ScriptedImporter(3, null, overrideExts: new[] { "glb", "gltf" })]
 #endif
 #else
-	[ScriptedImporter(2, new[] { "glb" })]
+	[ScriptedImporter(3, new[] { "glb" })]
 #endif
     public class GLTFImporter : ScriptedImporter
     {
