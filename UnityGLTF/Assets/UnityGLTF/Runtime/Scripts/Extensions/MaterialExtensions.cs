@@ -15,24 +15,24 @@ namespace UnityGLTF
 			GLTFSceneExporter.AfterMaterialExport += GLTFSceneExporterOnAfterMaterialExport;
 		}
 
-		private static readonly int ThicknessTexture = Shader.PropertyToID("_ThicknessTexture");
-		private static readonly int ThicknessFactor = Shader.PropertyToID("_ThicknessFactor");
-		private static readonly int AttenuationDistance = Shader.PropertyToID("_AttenuationDistance");
-		private static readonly int AttenuationColor = Shader.PropertyToID("_AttenuationColor");
-		private static readonly int IOR = Shader.PropertyToID("_IOR");
-		private static readonly int TransmissionFactor = Shader.PropertyToID("_TransmissionFactor");
-		private static readonly int TransmissionTexture = Shader.PropertyToID("_TransmissionTexture");
+		private static readonly int ThicknessTexture = Shader.PropertyToID("thicknessTexture");
+		private static readonly int ThicknessFactor = Shader.PropertyToID("thicknessFactor");
+		private static readonly int AttenuationDistance = Shader.PropertyToID("attenuationDistance");
+		private static readonly int AttenuationColor = Shader.PropertyToID("attenuationColor");
+		private static readonly int IOR = Shader.PropertyToID("ior");
+		private static readonly int TransmissionFactor = Shader.PropertyToID("transmissionFactor");
+		private static readonly int TransmissionTexture = Shader.PropertyToID("transmissionTexture");
 
-		private static readonly int IridescenceFactor = Shader.PropertyToID("_IridescenceFactor");
-		private static readonly int IridescenceIor = Shader.PropertyToID("_IridescenceIor");
-		private static readonly int IridescenceThicknessMinimum = Shader.PropertyToID("_IridescenceThicknessMinimum");
-		private static readonly int IridescenceThicknessMaximum = Shader.PropertyToID("_IridescenceThicknessMaximum");
-		private static readonly int IridescenceTexture = Shader.PropertyToID("_IridescenceTexture");
-		private static readonly int IridescenceThicknessTexture = Shader.PropertyToID("_IridescenceThicknessTexture");
-		private static readonly int SpecularFactor = Shader.PropertyToID("_SpecularFactor");
-		private static readonly int SpecularColorFactor = Shader.PropertyToID("_SpecularColorFactor");
-		private static readonly int SpecularTexture = Shader.PropertyToID("_SpecularTexture");
-		private static readonly int SpecularColorTexture = Shader.PropertyToID("_SpecularColorTexture");
+		private static readonly int IridescenceFactor = Shader.PropertyToID("iridescenceFactor");
+		private static readonly int IridescenceIor = Shader.PropertyToID("iridescenceIor");
+		private static readonly int IridescenceThicknessMinimum = Shader.PropertyToID("iridescenceThicknessMinimum");
+		private static readonly int IridescenceThicknessMaximum = Shader.PropertyToID("iridescenceThicknessMaximum");
+		private static readonly int IridescenceTexture = Shader.PropertyToID("iridescenceTexture");
+		private static readonly int IridescenceThicknessTexture = Shader.PropertyToID("iridescenceThicknessTexture");
+		private static readonly int SpecularFactor = Shader.PropertyToID("specularFactor");
+		private static readonly int SpecularColorFactor = Shader.PropertyToID("specularColorFactor");
+		private static readonly int SpecularTexture = Shader.PropertyToID("specularTexture");
+		private static readonly int SpecularColorTexture = Shader.PropertyToID("specularColorTexture");
 
 		public static void ValidateMaterialKeywords(Material material)
 		{

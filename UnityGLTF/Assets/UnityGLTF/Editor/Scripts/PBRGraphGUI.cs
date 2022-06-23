@@ -10,10 +10,10 @@ namespace UnityGLTF
 {
 	public class PBRGraphGUI : ShaderGUI
 	{
-		private static readonly int ThicknessFactor = Shader.PropertyToID("_ThicknessFactor");
-		private static readonly int TransmissionFactor = Shader.PropertyToID("_TransmissionFactor");
-		private static readonly int IridescenceFactor = Shader.PropertyToID("_IridescenceFactor");
-		private static readonly int SpecularFactor = Shader.PropertyToID("_SpecularFactor");
+		private static readonly int ThicknessFactor = Shader.PropertyToID("thicknessFactor");
+		private static readonly int TransmissionFactor = Shader.PropertyToID("transmissionFactor");
+		private static readonly int IridescenceFactor = Shader.PropertyToID("iridescenceFactor");
+		private static readonly int SpecularFactor = Shader.PropertyToID("specularFactor");
 
 #if UNITY_2021_1_OR_NEWER
 		public override void ValidateMaterial(Material material) => MaterialExtensions.ValidateMaterialKeywords(material);

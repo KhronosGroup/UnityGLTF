@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 #define ANIMATION_EXPORT_SUPPORTED
 #endif
 
@@ -1601,7 +1601,9 @@ namespace UnityGLTF
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
 				case "TransparentCutout":
-					if (materialObj.HasProperty("_AlphaCutoff"))
+					if (materialObj.HasProperty("alphaCutoff"))
+						material.AlphaCutoff = materialObj.GetFloat("alphaCutoff");
+					else if (materialObj.HasProperty("_AlphaCutoff"))
 						material.AlphaCutoff = materialObj.GetFloat("_AlphaCutoff");
 					else if (materialObj.HasProperty("_Cutoff"))
 						material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
@@ -1614,7 +1616,9 @@ namespace UnityGLTF
 				default:
 					if (materialObj.IsKeywordEnabled("_ALPHATEST_ON"))
 					{
-						if (materialObj.HasProperty("_AlphaCutoff"))
+						if (materialObj.HasProperty("alphaCutoff"))
+							material.AlphaCutoff = materialObj.GetFloat("alphaCutoff");
+						else if (materialObj.HasProperty("_AlphaCutoff"))
 							material.AlphaCutoff = materialObj.GetFloat("_AlphaCutoff");
 						else if (materialObj.HasProperty("_Cutoff"))
 							material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
@@ -1627,11 +1631,11 @@ namespace UnityGLTF
 			material.DoubleSided = (materialObj.HasProperty("_Cull") && materialObj.GetInt("_Cull") == (int)CullMode.Off) ||
 			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off);
 
-			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("_EmissiveTexture"))
+			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture"))
 			{
-				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("_EmissiveFactor"))
+				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor"))
 				{
-					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.GetColor("_EmissiveFactor");
+					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") : materialObj.GetColor("_EmissiveFactor");
 					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
 					material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 
@@ -1642,9 +1646,9 @@ namespace UnityGLTF
 					}
 				}
 
-				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture"))
+				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("emissiveTexture"))
 				{
-					var propName = materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" : materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
+					var propName = materialObj.HasProperty("emissiveTexture") ? "emissiveTexture" : materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" : materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
 					var emissionTex = materialObj.GetTexture(propName);
 
 					if (emissionTex)
@@ -1702,9 +1706,9 @@ namespace UnityGLTF
 				}
 			}
 
-			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("_OcclusionTexture"))
+			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture"))
 			{
-				var propName = materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
+				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" : materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
 				var occTex = materialObj.GetTexture(propName);
 				if (occTex)
 				{
@@ -1712,7 +1716,10 @@ namespace UnityGLTF
 					{
 						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
 						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
-						material.OcclusionTexture.TexCoord = materialObj.HasProperty("_OcclusionTextureTexCoord") ? Mathf.RoundToInt(materialObj.GetFloat("_OcclusionTextureTexCoord")) : 0;
+						material.OcclusionTexture.TexCoord = materialObj.HasProperty("occlusionTextureTexCoord") ?
+							Mathf.RoundToInt(materialObj.GetFloat("occlusionTextureTexCoord")) :
+							materialObj.HasProperty("_OcclusionTextureTexCoord") ?
+								Mathf.RoundToInt(materialObj.GetFloat("_OcclusionTextureTexCoord")) : 0;
 					}
 					else
 					{
@@ -1924,9 +1931,9 @@ namespace UnityGLTF
 
 		private bool IsPBRMetallicRoughness(Material material)
 		{
-			return (material.HasProperty("_Metallic") || material.HasProperty("_MetallicFactor")) &&
+			return (material.HasProperty("_Metallic") || material.HasProperty("_MetallicFactor") || material.HasProperty("metallicFactor")) &&
 			       (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness") ||
-			        material.HasProperty("_Roughness") || material.HasProperty("_RoughnessFactor") ||
+			        material.HasProperty("_Roughness") || material.HasProperty("_RoughnessFactor") || material.HasProperty("roughnessFactor") ||
 			        material.HasProperty("_MetallicRoughnessTexture") || material.HasProperty("metallicRoughnessTexture"));
 		}
 
@@ -1962,10 +1969,16 @@ namespace UnityGLTF
 
 			if (offset == Vector2.zero && scale == Vector2.one && rotation == 0)
 			{
-				if(mat.HasProperty("_MainTex_ST") || mat.HasProperty("_BaseMap_ST") || mat.HasProperty("_BaseColorMap_ST") || mat.HasProperty("_BaseColorTexture_ST"))
+				if(mat.HasProperty("_MainTex_ST") || mat.HasProperty("_BaseMap_ST") || mat.HasProperty("_BaseColorMap_ST") || mat.HasProperty("_BaseColorTexture_ST") || mat.HasProperty("baseColorTexture_ST"))
 				{
 					// difficult choice here: some shaders might support texture transform per-texture, others use the main transform.
-					if (mat.HasProperty("_BaseColorTexture"))
+					if (mat.HasProperty("baseColorTexture"))
+					{
+						offset = mat.GetTextureOffset("baseColorTexture");
+						scale = mat.GetTextureScale("baseColorTexture");
+						rotation = mat.HasProperty("baseColorTextureRotation") ? mat.GetFloat("baseColorTextureRotation") : 0;
+					}
+					else if (mat.HasProperty("_BaseColorTexture"))
 					{
 						offset = mat.GetTextureOffset("_BaseColorTexture");
 						scale = mat.GetTextureScale("_BaseColorTexture");
@@ -2040,7 +2053,11 @@ namespace UnityGLTF
 
 			info.Index = ExportTexture(texture, textureMapType);
 
-			if (material.HasProperty("_NormalScale"))
+			if (material.HasProperty("normalScale"))
+			{
+				info.Scale = material.GetFloat("normalScale");
+			}
+			else if (material.HasProperty("_NormalScale"))
 			{
 				info.Scale = material.GetFloat("_NormalScale");
 			}
@@ -2062,7 +2079,11 @@ namespace UnityGLTF
 
 			info.Index = ExportTexture(texture, textureMapType);
 
-			if (material.HasProperty("_OcclusionStrength"))
+			if (material.HasProperty("occlusionStrength"))
+			{
+				info.Strength = material.GetFloat("occlusionStrength");
+			}
+			else if (material.HasProperty("_OcclusionStrength"))
 			{
 				info.Strength = material.GetFloat("_OcclusionStrength");
 			}
@@ -2076,7 +2097,11 @@ namespace UnityGLTF
 			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
 			var isGlTFastShader = material.shader.name.Equals("glTF/PbrMetallicRoughness", StringComparison.Ordinal);
 
-			if (material.HasProperty("_BaseColorFactor"))
+			if (material.HasProperty("baseColorFactor"))
+			{
+				pbr.BaseColorFactor = material.GetColor("baseColorFactor").ToNumericsColorLinear();
+			}
+			else if (material.HasProperty("_BaseColorFactor"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_BaseColorFactor").ToNumericsColorLinear();
 			}
@@ -2101,38 +2126,50 @@ namespace UnityGLTF
                 pbr.BaseColorFactor = (material.GetColor("_TintColor") * white).ToNumericsColorLinear() ;
             }
 
-            if (material.HasProperty("_MainTex") || material.HasProperty("_BaseMap") || material.HasProperty("_BaseColorTexture")) //TODO if additive particle, render black into alpha
+            if (material.HasProperty("_MainTex") || material.HasProperty("_BaseMap") || material.HasProperty("_BaseColorTexture") || material.HasProperty("baseColorTexture")) //TODO if additive particle, render black into alpha
 			{
 				// TODO use private Material.GetFirstPropertyNameIdByAttribute here, supported from 2020.1+
-				var mainTexPropertyName = material.HasProperty("_BaseMap") ? "_BaseMap" : material.HasProperty("_MainTex") ? "_MainTex" : "_BaseColorTexture";
+				var mainTexPropertyName = material.HasProperty("_BaseMap") ? "_BaseMap" : material.HasProperty("_MainTex") ? "_MainTex" : material.HasProperty("baseColorTexture") ? "baseColorTexture" : "_BaseColorTexture";
 				var mainTex = material.GetTexture(mainTexPropertyName);
 
 				if (mainTex)
 				{
 					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
 					ExportTextureTransform(pbr.BaseColorTexture, material, mainTexPropertyName);
-					pbr.BaseColorTexture.TexCoord = material.HasProperty("_BaseColorTextureTexCoord") ? Mathf.RoundToInt(material.GetFloat("_BaseColorTextureTexCoord")) : 0;
+					pbr.BaseColorTexture.TexCoord = material.HasProperty("baseColorTextureTexCoord") ?
+						Mathf.RoundToInt(material.GetFloat("baseColorTextureTexCoord")) :
+						material.HasProperty("_BaseColorTextureTexCoord") ?
+							Mathf.RoundToInt(material.GetFloat("_BaseColorTextureTexCoord")) : 0;
 				}
 			}
 
             var ignoreMetallicFactor = material.IsKeywordEnabled("_METALLICGLOSSMAP") && !isGltfPbrMetallicRoughnessShader && !isGlTFastShader;
-			if (material.HasProperty("_Metallic") && !ignoreMetallicFactor)
+            if (material.HasProperty("metallicFactor") && !ignoreMetallicFactor)
+            {
+	            pbr.MetallicFactor = material.GetFloat("metallicFactor");
+            }
+            else if (material.HasProperty("_MetallicFactor") && !ignoreMetallicFactor)
+            {
+	            pbr.MetallicFactor = material.GetFloat("_MetallicFactor");
+            }
+            else if (material.HasProperty("_Metallic") && !ignoreMetallicFactor)
 			{
 				pbr.MetallicFactor = material.GetFloat("_Metallic");
 			}
-			else if (material.HasProperty("_MetallicFactor") && !ignoreMetallicFactor)
-			{
-				pbr.MetallicFactor = material.GetFloat("_MetallicFactor");
-			}
 
-			if (material.HasProperty("_Roughness"))
+            if (material.HasProperty("roughnessFactor"))
+            {
+	            float roughness = material.GetFloat("roughnessFactor");
+	            pbr.RoughnessFactor = roughness;
+            }
+            else if (material.HasProperty("_RoughnessFactor"))
+            {
+	            float roughness = material.GetFloat("_RoughnessFactor");
+	            pbr.RoughnessFactor = roughness;
+            }
+            else if (material.HasProperty("_Roughness"))
 			{
 				float roughness = material.GetFloat("_Roughness");
-				pbr.RoughnessFactor = roughness;
-			}
-			else if (material.HasProperty("_RoughnessFactor"))
-			{
-				float roughness = material.GetFloat("_RoughnessFactor");
 				pbr.RoughnessFactor = roughness;
 			}
 			else if (material.HasProperty("_Glossiness") || material.HasProperty("_Smoothness"))
@@ -2197,7 +2234,25 @@ namespace UnityGLTF
 				pbr.BaseColorFactor = material.GetColor("_Color").ToNumericsColorLinear();
 			}
 
-			if (material.HasProperty("_BaseMap"))
+			if (material.HasProperty("baseColorTexture"))
+			{
+				var mainTex = material.GetTexture("baseColorTexture");
+				if (mainTex)
+				{
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "baseColorTexture");
+				}
+			}
+			else if (material.HasProperty("_BaseColorTexture"))
+			{
+				var mainTex = material.GetTexture("_BaseColorTexture");
+				if (mainTex)
+				{
+					pbr.BaseColorTexture = ExportTextureInfo(mainTex, TextureMapType.Main);
+					ExportTextureTransform(pbr.BaseColorTexture, material, "_BaseColorTexture");
+				}
+			}
+			else if (material.HasProperty("_BaseMap"))
 			{
 				var mainTex = material.GetTexture("_BaseMap");
 				if (mainTex)
@@ -4591,6 +4646,7 @@ namespace UnityGLTF
 						case "_Color":
 						case "_BaseColor":
 						case "_BaseColorFactor":
+						case "baseColorFactor":
 							propertyName = "pbrMetallicRoughness/baseColorFactor";
 							break;
 						case "_Smoothness":
@@ -4600,58 +4656,72 @@ namespace UnityGLTF
 							break;
 						case "_Roughness":
 						case "_RoughnessFactor":
+						case "roughnessFactor":
 							propertyName = "pbrMetallicRoughness/roughnessFactor";
 							break;
 						case "_Metallic":
 						case "_MetallicFactor":
+						case "metallicFactor":
 							propertyName = "pbrMetallicRoughness/metallicFactor";
 							break;
 						case "_MainTex_ST":
 						case "_BaseMap_ST":
 						case "_BaseColorTexture_ST":
+						case "baseColorTexture_ST":
 							if (!(material.HasProperty("_MainTex") && material.GetTexture("_MainTex")) &&
 							    !(material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap")) &&
-							    !(material.HasProperty("_BaseColorTexture") && material.GetTexture("_BaseColorTexture"))) return;
+							    !(material.HasProperty("_BaseColorTexture") && material.GetTexture("_BaseColorTexture")) &&
+							    !(material.HasProperty("baseColorTexture") && material.GetTexture("baseColorTexture"))) return;
 							propertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
 							break;
 						case "_EmissionColor":
 						case "_EmissiveFactor":
+						case "emissiveFactor":
 							propertyName = "emissiveFactor";
 							secondPropertyName = $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}";
 							break;
 						case "_EmissionMap_ST":
 						case "_EmissiveTexture_ST":
+						case "emissiveTexture_ST":
 							if (!(material.HasProperty("_EmissionMap") && material.GetTexture("_EmissionMap")) &&
-							    !(material.HasProperty("_EmissiveTexture") && material.GetTexture("_EmissiveTexture"))) return;
+							    !(material.HasProperty("_EmissiveTexture") && material.GetTexture("_EmissiveTexture")) &&
+							    !(material.HasProperty("emissiveTexture") && material.GetTexture("emissiveTexture"))) return;
 							propertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
 							break;
 						case "_Cutoff":
 						case "_AlphaCutoff":
+						case "alphaCutoff":
 							propertyName = "alphaCutoff";
 							break;
 						case "_BumpScale":
 						case "_NormalScale":
+						case "normalScale":
 							propertyName = "normalTexture/scale";
 							break;
 						case "_BumpMap_ST":
 						case "_NormalTexture_ST":
+						case "normalTexture_ST":
 							if (!(material.HasProperty("_BumpMap") && material.GetTexture("_BumpMap")) &&
-							    !(material.HasProperty("_NormalTexture") && material.GetTexture("_NormalTexture"))) return;
+							    !(material.HasProperty("_NormalTexture") && material.GetTexture("_NormalTexture")) &&
+							    !(material.HasProperty("normalTexture") && material.GetTexture("normalTexture"))) return;
 							propertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
 							break;
 						case "_OcclusionStrength":
+						case "occlusionStrength":
 							propertyName = "occlusionTexture/strength";
 							break;
 						case "_OcclusionMap_ST":
 						case "_OcclusionTexture_ST":
+						case "occlusionTexture_ST":
 							if (!(material.HasProperty("_OcclusionMap") && material.GetTexture("_OcclusionMap")) &&
-							    !(material.HasProperty("_OcclusionTexture") && material.GetTexture("_OcclusionTexture"))) return;
+							    !(material.HasProperty("_OcclusionTexture") && material.GetTexture("_OcclusionTexture")) &&
+							    !(material.HasProperty("occlusionTexture") && material.GetTexture("occlusionTexture"))) return;
 							propertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
@@ -4661,60 +4731,75 @@ namespace UnityGLTF
 
 						// KHR_materials_transmission
 						case "_TransmissionFactor":
+						case "transmissionFactor":
 							propertyName = $"extensions/{KHR_materials_transmission_Factory.EXTENSION_NAME}/{nameof(KHR_materials_transmission.transmissionFactor)}";
 							break;
 
 						// KHR_materials_volume
 						case "_ThicknessFactor":
+						case "thicknessFactor":
 							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.thicknessFactor)}";
 							break;
 						case "_AttenuationDistance":
+						case "attenuationDistance":
 							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.attenuationDistance)}";
 							break;
 						case "_AttenuationColor":
+						case "attenuationColor":
 							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.attenuationColor)}";
 							break;
 
 						// KHR_materials_ior
 						case "_IOR":
+						case "ior":
 							propertyName = $"extensions/{KHR_materials_ior_Factory.EXTENSION_NAME}/{nameof(KHR_materials_ior.ior)}";
 							break;
 
 						// KHR_materials_iridescence
 						case "_IridescenceFactor":
+						case "iridescenceFactor":
 							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceFactor)}";
 							break;
 						case "_IridescenceIor":
+						case "iridescenceIor":
 							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceIor)}";
 							break;
 						case "_IridescenceThicknessMinimum":
+						case "iridescenceThicknessMinimum":
 							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMinimum)}";
 							break;
 						case "_IridescenceThicknessMaximum":
+						case "iridescenceThicknessMaximum":
 							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMaximum)}";
 							break;
 
 						// KHR_materials_specular
 						case "_SpecularFactor":
+						case "specularFactor":
 							propertyName = $"extensions/{KHR_materials_specular_Factory.EXTENSION_NAME}/{nameof(KHR_materials_specular.specularFactor)}";
 							break;
 						case "_SpecularColorFactor":
+						case "specularColorFactor":
 							propertyName = $"extensions/{KHR_materials_specular_Factory.EXTENSION_NAME}/{nameof(KHR_materials_specular.specularColorFactor)}";
 							break;
 
 						// TODO KHR_materials_clearcoat
 						// case "_ClearcoatFactor":
+						// case "clearcoatFactor":
 						// 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatFactor)}";
 						// 	break;
 						// case "_ClearcoatRoughnessFactor":
+						// case "clearcoatRoughnessFactor":
 						// 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatRoughnessFactor)}";
 						// 	break;
 
 						// TODO KHR_materials_sheen
 						// case "_SheenColorFactor":
+						// case "sheenColorFactor":
 						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenColorFactor)}";
 						// 	break;
 						// case "_SheenRoughnessFactor":
+						// case "sheenRoughnessFactor":
 						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenRoughnessFactor)}";
 						// 	break;
 					}
