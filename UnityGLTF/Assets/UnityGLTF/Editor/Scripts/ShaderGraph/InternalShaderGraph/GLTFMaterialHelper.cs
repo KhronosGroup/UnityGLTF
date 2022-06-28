@@ -43,8 +43,7 @@ namespace UnityGLTF
 				var occlusionStrength = material.GetFloat(_Strength);
 				var emission = material.GetTexture(_EmissionMap);
 				var emissionColor = material.GetColor(_EmissionColor);
-
-				// TODO blend modes and alpha clipping
+				var cutoff = material.GetFloat(_Cutoff);
 
 				material.shader = newShader;
 
@@ -52,6 +51,8 @@ namespace UnityGLTF
 				material.SetTexture(baseColorTexture, albedo);
 				material.SetTextureOffset(baseColorTexture, albedoOffset);
 				material.SetTextureScale(baseColorTexture, albedoTiling);
+				if (albedoOffset != Vector2.zero || albedoTiling != Vector2.one)
+					material.SetKeyword("_TRANSMISSION_VOLUME", true);
 
 				material.SetFloat(metallicFactor, metallic);
 				material.SetFloat(roughnessFactor, 1 - smoothness);
@@ -64,16 +65,28 @@ namespace UnityGLTF
 				material.SetTexture(occlusionTexture, occlusion);
 				material.SetFloat(occlusionStrength1, occlusionStrength);
 				material.SetTexture(emissiveTexture, emission);
+				material.SetFloat(alphaCutoff, cutoff);
 
 				material.SetColor(emissiveFactor, needsEmissiveColorSpaceConversion ? emissionColor.linear : emissionColor);
 
 				// ensure keywords are correctly set after conversion
-				MaterialExtensions.ValidateMaterialKeywords(material);
+				ShaderGraphHelpers.ValidateMaterialKeywords(material);
 			}
 			else
 			{
 				Debug.Log("No automatic conversion from " + oldShader.name + " to " + newShader.name + " found. Make sure your material properties match the new shader. If you think this should have been converted automatically: please report a bug!");
 			}
+		}
+
+		private static void SetKeyword(this Material material, string keyword, bool state)
+		{
+			if (state)
+				material.EnableKeyword(keyword + "_ON");
+			else
+				material.DisableKeyword(keyword + "_ON");
+
+			if (material.HasProperty(keyword))
+				material.SetFloat(keyword, state ? 1 : 0);
 		}
 
 		// ReSharper disable InconsistentNaming
@@ -94,6 +107,7 @@ namespace UnityGLTF
 		private static readonly int _Strength = Shader.PropertyToID("_OcclusionStrength");
 		private static readonly int _EmissionMap = Shader.PropertyToID("_EmissionMap");
 		private static readonly int _EmissionColor = Shader.PropertyToID("_EmissionColor");
+		private static readonly int _Cutoff = Shader.PropertyToID("_Cutoff");
 
 		// glTF property names
 		private static readonly int baseColorFactor = Shader.PropertyToID("baseColorFactor");
@@ -107,6 +121,7 @@ namespace UnityGLTF
 		private static readonly int occlusionStrength1 = Shader.PropertyToID("occlusionStrength");
 		private static readonly int emissiveTexture = Shader.PropertyToID("emissiveTexture");
 		private static readonly int emissiveFactor = Shader.PropertyToID("emissiveFactor");
+		private static readonly int alphaCutoff = Shader.PropertyToID("alphaCutoff");
 		// ReSharper restore InconsistentNaming
 
 #if UNITY_EDITOR
@@ -130,17 +145,5 @@ namespace UnityGLTF
 				if (mat.HasProperty(propName)) mat.SetColor(propName, mat.GetColor(propName).linear);
 		}
 #endif
-
-		public static void SetKeyword(this Material material, string keyword, bool state)
-		{
-			if (state)
-				material.EnableKeyword(keyword + "_ON");
-			else
-				material.DisableKeyword(keyword + "_ON");
-
-			if (material.HasProperty(keyword))
-				material.SetFloat(keyword, state ? 1 : 0);
-		}
-
 	}
 }

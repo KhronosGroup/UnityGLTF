@@ -2608,7 +2608,6 @@ namespace UnityGLTF
 			}
 		}
 
-
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
 			return texture.Source?.Id ?? 0;
@@ -3023,5 +3022,20 @@ namespace UnityGLTF
 			public override long Position { get; set; }
 		}
 #endif
+	}
+
+
+	internal static class MatExt
+	{
+		internal static void SetKeyword(this Material material, string keyword, bool state)
+		{
+			if (state)
+				material.EnableKeyword(keyword + "_ON");
+			else
+				material.DisableKeyword(keyword + "_ON");
+
+			if (material.HasProperty(keyword))
+				material.SetFloat(keyword, state ? 1 : 0);
+		}
 	}
 }

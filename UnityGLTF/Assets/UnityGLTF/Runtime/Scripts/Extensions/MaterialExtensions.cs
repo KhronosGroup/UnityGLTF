@@ -37,25 +37,6 @@ namespace UnityGLTF
 		private static readonly int specularTexture = Shader.PropertyToID("specularTexture");
 		private static readonly int specularColorTexture = Shader.PropertyToID("specularColorTexture");
 
-		public static void ValidateMaterialKeywords(Material material)
-		{
-			// TODO ensure we're setting correct keywords for
-			// - existence of a normal map
-			// - existence of emission color values or texture
-			// -
-
-			// var needsVolumeTransmission = false;
-			// needsVolumeTransmission |= material.HasProperty(thicknessFactor) && material.GetFloat(thicknessFactor) > 0;
-			// needsVolumeTransmission |= material.HasProperty(transmissionFactor) && material.GetFloat(transmissionFactor) > 0;
-			// material.SetKeyword("_VOLUME_TRANSMISSION", needsVolumeTransmission);
-			//
-			// var needsIridescence = material.HasProperty(iridescenceFactor) && material.GetFloat(iridescenceFactor) > 0;
-			// material.SetKeyword("_IRIDESCENCE", needsIridescence);
-			//
-			// var needsSpecular = material.HasProperty(specularFactor) && material.GetFloat(specularFactor) > 0;
-			// material.SetKeyword("_SPECULAR", needsSpecular);
-		}
-
 		private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{
 			if (!material) return;

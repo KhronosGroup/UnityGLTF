@@ -18631,7 +18631,7 @@
     "m_AlphaClip": false,
     "m_CastShadows": true,
     "m_ReceiveShadows": true,
-    "m_CustomEditorGUI": "UnityGLTF.PBRGraphGUI",
+    "m_CustomEditorGUI": "UnityGLTF.PBRGraphUniversalGUI",
     "m_SupportVFX": false
 }
 
