@@ -1,7 +1,11 @@
 #if !NO_INTERNALS_ACCESS
+#if UNITY_2021_3_OR_NEWER
+#define HAVE_CATEGORIES
+#endif
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor.ShaderGraph.Drawing;
 using UnityEngine;
@@ -13,7 +17,11 @@ namespace UnityEditor
 	{
 		public static void DrawShaderGraphGUI(MaterialEditor materialEditor, IEnumerable<MaterialProperty> properties)
 		{
+#if HAVE_CATEGORIES
 			ShaderGraphPropertyDrawers.DrawShaderGraphGUI(materialEditor, properties);
+#else
+			materialEditor.PropertiesDefaultGUI(properties.ToArray());
+#endif
 		}
 
 		private static Type propertyView;

@@ -1,4 +1,7 @@
 #if !NO_INTERNALS_ACCESS
+#if UNITY_2021_3_OR_NEWER
+#define HAVE_CATEGORIES
+#endif
 
 using System;
 using System.Reflection;
@@ -10,6 +13,7 @@ namespace UnityGLTF
 	// matches ShaderGraphLitGUI.cs
 	public class PBRGraphUniversalGUI  : PBRGraphGUI
     {
+#if HAVE_CATEGORIES
 	    private PropertyInfo materialEditorPropertyAccessor;
 	    private ShaderGraphLitGUI litGuiForwarder;
 
@@ -46,6 +50,7 @@ namespace UnityGLTF
             materialEditor.DoubleSidedGIField();
             materialEditor.LightmapEmissionFlagsProperty(0, enabled: true, ignoreEmissionColor: true);
         }
+#endif
     }
 }
 

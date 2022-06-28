@@ -1,17 +1,28 @@
 #if !NO_INTERNALS_ACCESS
+#if UNITY_2021_3_OR_NEWER
+#define HAVE_BUILTIN_SHADERGRAPH
+#define HAVE_CATEGORIES
+#endif
 
 using System;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+#if HAVE_BUILTIN_SHADERGRAPH
 using UnityEditor.Rendering;
 using UnityEditor.Rendering.BuiltIn.ShaderGraph;
+#endif
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace UnityGLTF
 {
-	public class PBRGraphGUI : BuiltInBaseShaderGUI
+	public class PBRGraphGUI :
+#if HAVE_BUILTIN_SHADERGRAPH
+		BuiltInBaseShaderGUI
+#else
+		ShaderGUI
+#endif
 	{
 #if UNITY_2021_1_OR_NEWER
 		public override void ValidateMaterial(Material material) => ShaderGraphHelpers.ValidateMaterialKeywords(material);
@@ -19,10 +30,12 @@ namespace UnityGLTF
 
 		protected MaterialEditor materialEditor;
 		protected MaterialProperty[] properties;
-		private readonly MaterialHeaderScopeList m_MaterialScopeList = new MaterialHeaderScopeList(uint.MaxValue & ~(uint)Expandable.Advanced);
-		private static readonly GUIContent MeshProperties = new GUIContent("Mesh Properties");
-		private const int ExpandableMeshProperties = 1 << 8;
 		private MaterialInfo currentMaterialInfo;
+
+#if HAVE_CATEGORIES
+		private readonly MaterialHeaderScopeList m_MaterialScopeList = new MaterialHeaderScopeList(uint.MaxValue & ~(uint)Expandable.Advanced);
+		private const int ExpandableMeshProperties = 1 << 8;
+		private static readonly GUIContent MeshProperties = new GUIContent("Mesh Properties");
 
 		public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
 		{
@@ -57,6 +70,18 @@ namespace UnityGLTF
 			m_MaterialScopeList.RegisterHeaderScope(Styles.SurfaceInputs, (uint)Expandable.SurfaceInputs, DrawSurfaceInputs);
 			m_MaterialScopeList.RegisterHeaderScope(Styles.AdvancedLabel, (uint)Expandable.Advanced, DrawAdvancedOptions);
 		}
+#else
+		public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
+		{
+			this.materialEditor = materialEditor;
+			this.properties = properties;
+
+			Material targetMat = materialEditor.target as Material;
+
+			DrawGameObjectInfo(targetMat);
+			_DrawSurfaceInputs(targetMat);
+		}
+#endif
 
 		private struct MaterialInfo
 		{
@@ -138,7 +163,10 @@ namespace UnityGLTF
 			}
 		}
 
-		protected override void DrawSurfaceInputs(Material mat)
+#if HAVE_CATEGORIES
+		protected override void DrawSurfaceInputs(Material mat) => _DrawSurfaceInputs(mat);
+#endif
+		protected void _DrawSurfaceInputs(Material mat)
 		{
 			var targetMaterial = materialEditor.target as Material;
 			if (!targetMaterial) return;
@@ -185,7 +213,7 @@ namespace UnityGLTF
 			if (!currentMaterialInfo.hasUV0 && !currentMaterialInfo.hasUV1)
 			{
 				// hide all texture properties?
-				propertyList.RemoveAll(x => x.name.Contains("texture", StringComparison.OrdinalIgnoreCase));
+				propertyList.RemoveAll(x => x.name.Contains("texture"));
 			}
 			if (!currentMaterialInfo.hasUV1 && currentMaterialInfo.occlusionTextureTexCoord == 0 && currentMaterialInfo.baseColorTextureTexCoord == 0)
 			{
