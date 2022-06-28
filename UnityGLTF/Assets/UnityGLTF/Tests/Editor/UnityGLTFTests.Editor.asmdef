@@ -21,7 +21,8 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "UNITY_2019_4_OR_NEWER"
     ],
     "versionDefines": [
         {
