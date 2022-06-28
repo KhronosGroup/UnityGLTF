@@ -1,13 +1,16 @@
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnityGLTF
 {
 	public static class MaterialExtensions
 	{
 #if UNITY_EDITOR
-		[UnityEditor.InitializeOnLoadMethod]
+		[InitializeOnLoadMethod]
 #endif
 		[RuntimeInitializeOnLoadMethod]
 		static void InitExt()
@@ -15,48 +18,42 @@ namespace UnityGLTF
 			GLTFSceneExporter.AfterMaterialExport += GLTFSceneExporterOnAfterMaterialExport;
 		}
 
-		private static readonly int ThicknessTexture = Shader.PropertyToID("thicknessTexture");
-		private static readonly int ThicknessFactor = Shader.PropertyToID("thicknessFactor");
-		private static readonly int AttenuationDistance = Shader.PropertyToID("attenuationDistance");
-		private static readonly int AttenuationColor = Shader.PropertyToID("attenuationColor");
-		private static readonly int IOR = Shader.PropertyToID("ior");
-		private static readonly int TransmissionFactor = Shader.PropertyToID("transmissionFactor");
-		private static readonly int TransmissionTexture = Shader.PropertyToID("transmissionTexture");
+		private static readonly int thicknessTexture = Shader.PropertyToID("thicknessTexture");
+		private static readonly int thicknessFactor = Shader.PropertyToID("thicknessFactor");
+		private static readonly int attenuationDistance = Shader.PropertyToID("attenuationDistance");
+		private static readonly int attenuationColor = Shader.PropertyToID("attenuationColor");
+		private static readonly int ior = Shader.PropertyToID("ior");
+		private static readonly int transmissionFactor = Shader.PropertyToID("transmissionFactor");
+		private static readonly int transmissionTexture = Shader.PropertyToID("transmissionTexture");
 
-		private static readonly int IridescenceFactor = Shader.PropertyToID("iridescenceFactor");
-		private static readonly int IridescenceIor = Shader.PropertyToID("iridescenceIor");
-		private static readonly int IridescenceThicknessMinimum = Shader.PropertyToID("iridescenceThicknessMinimum");
-		private static readonly int IridescenceThicknessMaximum = Shader.PropertyToID("iridescenceThicknessMaximum");
-		private static readonly int IridescenceTexture = Shader.PropertyToID("iridescenceTexture");
-		private static readonly int IridescenceThicknessTexture = Shader.PropertyToID("iridescenceThicknessTexture");
-		private static readonly int SpecularFactor = Shader.PropertyToID("specularFactor");
-		private static readonly int SpecularColorFactor = Shader.PropertyToID("specularColorFactor");
-		private static readonly int SpecularTexture = Shader.PropertyToID("specularTexture");
-		private static readonly int SpecularColorTexture = Shader.PropertyToID("specularColorTexture");
+		private static readonly int iridescenceFactor = Shader.PropertyToID("iridescenceFactor");
+		private static readonly int iridescenceIor = Shader.PropertyToID("iridescenceIor");
+		private static readonly int iridescenceThicknessMinimum = Shader.PropertyToID("iridescenceThicknessMinimum");
+		private static readonly int iridescenceThicknessMaximum = Shader.PropertyToID("iridescenceThicknessMaximum");
+		private static readonly int iridescenceTexture = Shader.PropertyToID("iridescenceTexture");
+		private static readonly int iridescenceThicknessTexture = Shader.PropertyToID("iridescenceThicknessTexture");
+		private static readonly int specularFactor = Shader.PropertyToID("specularFactor");
+		private static readonly int specularColorFactor = Shader.PropertyToID("specularColorFactor");
+		private static readonly int specularTexture = Shader.PropertyToID("specularTexture");
+		private static readonly int specularColorTexture = Shader.PropertyToID("specularColorTexture");
 
 		public static void ValidateMaterialKeywords(Material material)
 		{
-			var needsVolumeTransmission = false;
-			needsVolumeTransmission |= material.HasProperty(ThicknessFactor) && material.GetFloat(ThicknessFactor) > 0;
-			needsVolumeTransmission |= material.HasProperty(TransmissionFactor) && material.GetFloat(TransmissionFactor) > 0;
-			SetKeyword(material, "_VOLUME_TRANSMISSION_ON", needsVolumeTransmission);
+			// TODO ensure we're setting correct keywords for
+			// - existence of a normal map
+			// - existence of emission color values or texture
+			// -
 
-			var needsIridescence = material.HasProperty(IridescenceFactor) && material.GetFloat(IridescenceFactor) > 0;
-			SetKeyword(material, "_IRIDESCENCE_ON", needsIridescence);
-
-			var needsSpecular = material.HasProperty(SpecularFactor) && material.GetFloat(SpecularFactor) > 0;
-			SetKeyword(material, "_SPECULAR_ON", needsSpecular);
-		}
-
-		public static void SetKeyword(this Material material, string keyword, bool state)
-		{
-			if (state)
-				material.EnableKeyword(keyword + "_ON");
-			else
-				material.DisableKeyword(keyword + "_ON");
-
-			if (material.HasProperty(keyword))
-				material.SetFloat(keyword, state ? 1 : 0);
+			// var needsVolumeTransmission = false;
+			// needsVolumeTransmission |= material.HasProperty(thicknessFactor) && material.GetFloat(thicknessFactor) > 0;
+			// needsVolumeTransmission |= material.HasProperty(transmissionFactor) && material.GetFloat(transmissionFactor) > 0;
+			// material.SetKeyword("_VOLUME_TRANSMISSION", needsVolumeTransmission);
+			//
+			// var needsIridescence = material.HasProperty(iridescenceFactor) && material.GetFloat(iridescenceFactor) > 0;
+			// material.SetKeyword("_IRIDESCENCE", needsIridescence);
+			//
+			// var needsSpecular = material.HasProperty(specularFactor) && material.GetFloat(specularFactor) > 0;
+			// material.SetKeyword("_SPECULAR", needsSpecular);
 		}
 
 		private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
@@ -73,22 +70,22 @@ namespace UnityGLTF
 				var vi = new KHR_materials_ior();
 				var vt = new KHR_materials_transmission();
 
-				if (material.HasProperty(ThicknessFactor))
-					ve.thicknessFactor = material.GetFloat(ThicknessFactor);
-				if (material.HasProperty(ThicknessTexture) && material.GetTexture(ThicknessTexture))
-					ve.thicknessTexture = exporter.ExportTextureInfo(material.GetTexture(ThicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-				if (material.HasProperty(AttenuationDistance))
-					ve.attenuationDistance = material.GetFloat(AttenuationDistance);
-				if (material.HasProperty(AttenuationColor))
-					ve.attenuationColor = material.GetColor(AttenuationColor).ToNumericsColorRaw();
+				if (material.HasProperty(thicknessFactor))
+					ve.thicknessFactor = material.GetFloat(thicknessFactor);
+				if (material.HasProperty(thicknessTexture) && material.GetTexture(thicknessTexture))
+					ve.thicknessTexture = exporter.ExportTextureInfo(material.GetTexture(thicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+				if (material.HasProperty(attenuationDistance))
+					ve.attenuationDistance = material.GetFloat(attenuationDistance);
+				if (material.HasProperty(attenuationColor))
+					ve.attenuationColor = material.GetColor(attenuationColor).ToNumericsColorRaw();
 
-				if (material.HasProperty(IOR))
-					vi.ior = material.GetFloat(IOR);
+				if (material.HasProperty(ior))
+					vi.ior = material.GetFloat(ior);
 
-				if (material.HasProperty(TransmissionFactor))
-					vt.transmissionFactor = material.GetFloat(TransmissionFactor);
-				if (material.HasProperty(TransmissionTexture) && material.GetTexture(TransmissionTexture))
-					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(TransmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+				if (material.HasProperty(transmissionFactor))
+					vt.transmissionFactor = material.GetFloat(transmissionFactor);
+				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
+					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(transmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
 
 				materialnode.AddExtension(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
 				materialnode.AddExtension(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
@@ -100,18 +97,18 @@ namespace UnityGLTF
 				exporter.DeclareExtensionUsage(KHR_materials_iridescence_Factory.EXTENSION_NAME, false);
 
 				var vir = new KHR_materials_iridescence();
-				if (material.HasProperty(IridescenceFactor))
-					vir.iridescenceFactor = material.GetFloat(IridescenceFactor);
-				if (material.HasProperty(IridescenceIor))
-					vir.iridescenceIor = material.GetFloat(IridescenceIor);
-				if (material.HasProperty(IridescenceThicknessMinimum))
-					vir.iridescenceThicknessMinimum = material.GetFloat(IridescenceThicknessMinimum);
-				if (material.HasProperty(IridescenceThicknessMaximum))
-					vir.iridescenceThicknessMaximum = material.GetFloat(IridescenceThicknessMaximum);
-				if (material.HasProperty(IridescenceTexture) && material.GetTexture(IridescenceTexture))
-					vir.iridescenceTexture = exporter.ExportTextureInfo(material.GetTexture(IridescenceTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-				if (material.HasProperty(IridescenceThicknessTexture) && material.GetTexture(IridescenceThicknessTexture))
-					vir.iridescenceThicknessTexture = exporter.ExportTextureInfo(material.GetTexture(IridescenceThicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+				if (material.HasProperty(iridescenceFactor))
+					vir.iridescenceFactor = material.GetFloat(iridescenceFactor);
+				if (material.HasProperty(iridescenceIor))
+					vir.iridescenceIor = material.GetFloat(iridescenceIor);
+				if (material.HasProperty(iridescenceThicknessMinimum))
+					vir.iridescenceThicknessMinimum = material.GetFloat(iridescenceThicknessMinimum);
+				if (material.HasProperty(iridescenceThicknessMaximum))
+					vir.iridescenceThicknessMaximum = material.GetFloat(iridescenceThicknessMaximum);
+				if (material.HasProperty(iridescenceTexture) && material.GetTexture(iridescenceTexture))
+					vir.iridescenceTexture = exporter.ExportTextureInfo(material.GetTexture(iridescenceTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+				if (material.HasProperty(iridescenceThicknessTexture) && material.GetTexture(iridescenceThicknessTexture))
+					vir.iridescenceThicknessTexture = exporter.ExportTextureInfo(material.GetTexture(iridescenceThicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
 
 				materialnode.AddExtension(KHR_materials_iridescence_Factory.EXTENSION_NAME, vir);
 			}
@@ -121,14 +118,14 @@ namespace UnityGLTF
 				exporter.DeclareExtensionUsage(KHR_materials_specular_Factory.EXTENSION_NAME, false);
 
 				var vir = new KHR_materials_specular();
-				if (material.HasProperty(SpecularFactor))
-					vir.specularFactor = material.GetFloat(SpecularFactor);
-				if (material.HasProperty(SpecularColorFactor))
-					vir.specularColorFactor = material.GetColor(SpecularColorFactor).ToNumericsColorRaw();
-				if (material.HasProperty(SpecularTexture) && material.GetTexture(SpecularTexture))
-					vir.specularTexture = exporter.ExportTextureInfo(material.GetTexture(SpecularTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-				if (material.HasProperty(SpecularColorTexture) && material.GetTexture(SpecularColorTexture))
-					vir.specularColorTexture = exporter.ExportTextureInfo(material.GetTexture(SpecularColorTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+				if (material.HasProperty(specularFactor))
+					vir.specularFactor = material.GetFloat(specularFactor);
+				if (material.HasProperty(specularColorFactor))
+					vir.specularColorFactor = material.GetColor(specularColorFactor).ToNumericsColorRaw();
+				if (material.HasProperty(specularTexture) && material.GetTexture(specularTexture))
+					vir.specularTexture = exporter.ExportTextureInfo(material.GetTexture(specularTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+				if (material.HasProperty(specularColorTexture) && material.GetTexture(specularColorTexture))
+					vir.specularColorTexture = exporter.ExportTextureInfo(material.GetTexture(specularColorTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
 
 				materialnode.AddExtension(KHR_materials_specular_Factory.EXTENSION_NAME, vir);
 			}
