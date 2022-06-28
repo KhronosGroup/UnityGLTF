@@ -1,3 +1,5 @@
+#if !NO_INTERNALS_ACCESS
+
 using System;
 using System.Linq;
 using System.Reflection;
@@ -210,3 +212,5 @@ namespace UnityGLTF
 		}
 	}
 }
+
+#endif

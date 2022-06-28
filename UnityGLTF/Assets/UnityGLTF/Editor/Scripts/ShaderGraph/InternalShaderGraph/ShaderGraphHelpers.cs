@@ -1,3 +1,5 @@
+#if !NO_INTERNALS_ACCESS
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -82,3 +84,5 @@ namespace UnityEditor
 		}
 	}
 }
+
+#endif

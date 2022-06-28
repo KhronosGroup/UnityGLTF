@@ -1,3 +1,5 @@
+#if !NO_INTERNALS_ACCESS
+
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -147,3 +149,5 @@ namespace UnityGLTF
 #endif
 	}
 }
+
+#endif

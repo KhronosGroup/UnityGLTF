@@ -16,6 +16,12 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "0",
+            "define": "NO_INTERNALS_ACCESS"
+        }
+    ],
     "noEngineReferences": false
 }

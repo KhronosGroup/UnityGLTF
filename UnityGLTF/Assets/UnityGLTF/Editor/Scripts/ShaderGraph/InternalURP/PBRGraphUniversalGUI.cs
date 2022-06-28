@@ -1,3 +1,5 @@
+#if !NO_INTERNALS_ACCESS
+
 using System;
 using System.Reflection;
 using UnityEditor;
@@ -46,3 +48,5 @@ namespace UnityGLTF
         }
     }
 }
+
+#endif
