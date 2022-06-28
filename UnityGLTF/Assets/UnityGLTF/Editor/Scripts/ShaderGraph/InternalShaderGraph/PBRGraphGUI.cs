@@ -176,6 +176,20 @@ namespace UnityGLTF
 
 			EditorGUI.BeginChangeCheck();
 
+			DrawProperties(targetMaterial, properties);
+
+			if (EditorGUI.EndChangeCheck())
+			{
+				foreach (var t in materialEditor.targets)
+				{
+					if (t is Material material)
+						ShaderGraphHelpers.ValidateMaterialKeywords(material);
+				}
+			}
+		}
+
+		private void DrawProperties(Material targetMaterial, MaterialProperty[] properties)
+		{
 			// filter properties based on keywords
 			var propertyList = properties.ToList();
 			if (!targetMaterial.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
@@ -223,15 +237,6 @@ namespace UnityGLTF
 			// TODO we probably want full manual control, all this internal access is horrible...
 			// E.g. impossible to render inline texture properties...
 			ShaderGraphHelpers.DrawShaderGraphGUI(materialEditor, propertyList);
-
-			if (EditorGUI.EndChangeCheck())
-			{
-				foreach (var t in materialEditor.targets)
-				{
-					if (t is Material material)
-						ShaderGraphHelpers.ValidateMaterialKeywords(material);
-				}
-			}
 		}
 
 		public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)

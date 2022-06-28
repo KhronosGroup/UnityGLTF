@@ -31,13 +31,13 @@ namespace UnityGLTF
 				var colorProp = oldShader.name == StandardShader ? _Color : _BaseColor;
 				var colorTexProp = oldShader.name == StandardShader ? _MainTex : _BaseMap;
 
-				var color = material.GetColor(colorProp); // "_BaseColor"
-				var albedo = material.GetTexture(colorTexProp); // "_BaseMap"
+				var color = material.GetColor(colorProp);
+				var albedo = material.GetTexture(colorTexProp);
 				var albedoOffset = material.GetTextureOffset(colorTexProp);
 				var albedoTiling = material.GetTextureScale(colorTexProp);
 
 				var metallic = material.GetFloat(_Metallic);
-				var smoothness = material.GetFloat(_Glossiness);
+				var smoothness = material.HasProperty(_Smoothness) ? material.GetFloat(_Smoothness) : material.GetFloat(_Glossiness);
 				var metallicGloss = material.GetTexture(_MetallicGlossMap);
 				var normal = material.GetTexture(_BumpMap);
 				var normalStrength = material.GetFloat(_BumpScale);
@@ -102,6 +102,7 @@ namespace UnityGLTF
 		private static readonly int _BaseMap = Shader.PropertyToID("_BaseMap");
 		private static readonly int _Metallic = Shader.PropertyToID("_Metallic");
 		private static readonly int _Glossiness = Shader.PropertyToID("_Glossiness");
+		private static readonly int _Smoothness = Shader.PropertyToID("_Smoothness");
 		private static readonly int _MetallicGlossMap = Shader.PropertyToID("_MetallicGlossMap");
 		private static readonly int _BumpMap = Shader.PropertyToID("_BumpMap");
 		private static readonly int _BumpScale = Shader.PropertyToID("_BumpScale");
