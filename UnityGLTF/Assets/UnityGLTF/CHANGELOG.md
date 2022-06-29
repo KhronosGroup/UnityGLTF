@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.9.0-pre] - 2022-06-22
+- fix: properly set BiRP ShaderGraph transparency keywords
+- feat: PBRGraph property names now match glTF names directly (breaking change from 1.7.0+)
+- feat: PBRGraph now has a custom shader GUI that also validates keywords
+
 ## [1.8.1-pre] - 2022-06-22
 - fixed: same animation used on different objects should result in different pointer values with KHR_animation_pointer used
 - fixed: nullref when adding animation data for null object (e.g. unused property clip)
