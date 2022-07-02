@@ -4470,6 +4470,7 @@ namespace UnityGLTF
 		{
 			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
 			float deltaTime = length / nbSamples;
+			nbSamples += 1;
 			var weightCount = curveSet.weightCurves?.Count ?? 0;
 
 			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
