@@ -1,5 +1,6 @@
 #if !NO_INTERNALS_ACCESS
 
+using System.Linq;
 using System.Text;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -108,7 +109,7 @@ namespace UnityGLTF
 			// ImportAndOverrideMaterial(material, glTFMaterial);
 			// that uses all the same heuristics, texture conversions, ...
 
-			var msg = "No automatic conversion\nfrom " + oldShader.name + "\nto " + newShader.name + "\nfound.";
+			var msg = "No automatic conversion\nfrom " + oldShader.name + "\nto " + newShader.name + "\nfound.\n\nYou can create a conversion script, adjust which old properties map to which new properties, and switch the shader again.";
 
 #if UNITY_EDITOR
 			var choice = EditorUtility.DisplayDialogComplex("Shader Conversion", msg, "Just set shader", "Cancel", "Create and open conversion script");
@@ -120,10 +121,6 @@ namespace UnityGLTF
 				case 1: // Cancel
 					break;
 				case 2: // Alt
-					// open conversion window
-					// var wnd = EditorWindow.GetWindow<ShaderConversionWindow>();
-					// wnd.SetData(material, oldShader, newShader);
-					// wnd.Show();
 					var path = ShaderConversion.CreateConversionScript(oldShader, newShader);
 					InternalEditorUtility.OpenFileAtLineExternal(path, 0);
 					break;
@@ -184,7 +181,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 		private static readonly string[] emissivePropNames = new[] { "emissiveFactor", "_EmissionColor" };
 
-		[MenuItem("CONTEXT/Material/Material Fixups/Convert Emissive Colors > sRGB - weaker, darker")]
+		[MenuItem("CONTEXT/Material/UnityGLTF Material Helpers/Convert Emissive Colors > sRGB - weaker, darker")]
 		private static void ConvertToSRGB(MenuCommand command)
 		{
 			if (!(command.context is Material mat)) return;
@@ -193,7 +190,7 @@ namespace UnityGLTF
 				if (mat.HasProperty(propName)) mat.SetColor(propName, mat.GetColor(propName).gamma);
 		}
 
-		[MenuItem("CONTEXT/Material/Material Fixups/Convert Emissive Colors > Linear - brighter, stronger")]
+		[MenuItem("CONTEXT/Material/UnityGLTF Material Helpers/Convert Emissive Colors > Linear - brighter, stronger")]
 		private static void ConvertToLinear(MenuCommand command)
 		{
 			if (!(command.context is Material mat)) return;
@@ -201,11 +198,27 @@ namespace UnityGLTF
 			foreach(var propName in emissivePropNames)
 				if (mat.HasProperty(propName)) mat.SetColor(propName, mat.GetColor(propName).linear);
 		}
+
+		[MenuItem("CONTEXT/Material/UnityGLTF Material Helpers/ Select all materials with this shader", false, -1000)]
+		private static void SelectAllMaterialsWithShader(MenuCommand command)
+		{
+			if (!(command.context is Material mat)) return;
+			var allMaterials = AssetDatabase.FindAssets("t:Material")
+				.Select(AssetDatabase.GUIDToAssetPath)
+				.Select(AssetDatabase.LoadAssetAtPath<Material>)
+				.Where(x => !AssetDatabase.IsSubAsset(x))
+				.Where(x => x.shader == mat.shader)
+				.Cast<Object>()
+				.ToArray();
+			foreach (var obj in allMaterials)
+				EditorGUIUtility.PingObject(obj);
+			Selection.objects = allMaterials;
+		}
 #endif
 	}
 
 #if UNITY_EDITOR
-	static class ShaderConversion
+	internal static class ShaderConversion
 	{
 		public static string CreateConversionScript(Shader oldShader, Shader newShader)
 		{
@@ -222,22 +235,12 @@ namespace UnityGLTF
 			foreach(var (propName, propDisplayName, type) in GetShaderProperties(oldShader))
 			{
 				sb.AppendLine($"\t\tvar {propName} = material.{MethodFromType("Get", type)}(\"{propName}\"); // {propDisplayName}");
-				// if (type == ShaderUtil.ShaderPropertyType.TexEnv)
-				// {
-				// 	sb.AppendLine($"\t\tvar {propName}Offset = material.GetTextureOffset(\"{propName}\");");
-				// 	sb.AppendLine($"\t\tvar {propName}Scale = material.GetTextureScale(\"{propName}\");");
-				// }
 			}
 
 			var sb2 = new StringBuilder();
 			foreach(var (propName, propDisplayName, type) in GetShaderProperties(newShader))
 			{
 				sb2.AppendLine($"\t\t// material.{MethodFromType("Set", type)}(\"{propName}\", insert_value_here); // {propDisplayName}");
-				// if (type == ShaderUtil.ShaderPropertyType.TexEnv)
-				// {
-				// 	sb2.AppendLine($"\t\t// material.SetTextureOffset(\"{propName}\", insert_value_here);");
-				// 	sb2.AppendLine($"\t\t// material.SetTextureScale(\"{propName}\", insert_value_here);");
-				// }
 			}
 
 			scriptFile = scriptFile.Replace("\t\t<OldProperties>", sb.ToString());
@@ -300,10 +303,10 @@ class Convert_<OldShader>_to_GLTF
 	[InitializeOnLoadMethod]
 	private static void Register()
 	{
-		GLTFMaterialHelper.RegisterMaterialConversionToGLTF(ConvertShader);
+		GLTFMaterialHelper.RegisterMaterialConversionToGLTF(ConvertMaterialProperties);
 	}
 
-	private static bool ConvertShader(Material material, Shader oldShader, Shader newShader)
+	private static bool ConvertMaterialProperties(Material material, Shader oldShader, Shader newShader)
 	{
 		if (oldShader.name != shaderName) return false;
 
