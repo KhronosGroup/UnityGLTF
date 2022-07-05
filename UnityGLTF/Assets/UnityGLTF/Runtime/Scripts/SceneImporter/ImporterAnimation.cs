@@ -13,7 +13,7 @@ namespace UnityGLTF
 	public partial class GLTFSceneImporter
 	{
 #if UNITY_ANIMATION
-		static string RelativePathFrom(Transform self, Transform root)
+		private static string RelativePathFrom(Transform self, Transform root)
 		{
 			var path = new List<String>();
 			for (var current = self; current != null; current = current.parent)

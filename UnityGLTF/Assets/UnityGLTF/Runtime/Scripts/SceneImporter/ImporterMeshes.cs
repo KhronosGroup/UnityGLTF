@@ -100,86 +100,6 @@ namespace UnityGLTF
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
 		}
 
-		protected void ConvertAttributeAccessorsToUnityTypes(
-			MeshCacheData.PrimitiveCacheData primData,
-			UnityMeshData unityData,
-			int vertOffset,
-			int indexOffset)
-		{
-			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
-			var meshAttributes = primData.Attributes;
-			int vertexCount = (int)meshAttributes[SemanticProperties.POSITION].AccessorId.Value.Count;
-
-			var indices = meshAttributes.ContainsKey(SemanticProperties.INDICES)
-				? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-				: MeshPrimitive.GenerateTriangles(vertexCount);
-			if (unityData.Topology[indexOffset] == MeshTopology.Triangles)
-				SchemaExtensions.FlipTriangleFaces(indices);
-			unityData.Indices[indexOffset] = indices;
-
-			if (meshAttributes.ContainsKey(SemanticProperties.Weight[0]) && meshAttributes.ContainsKey(SemanticProperties.Joint[0]))
-			{
-				CreateBoneWeightArray(
-					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
-					ref unityData.BoneWeights,
-					vertOffset);
-			}
-
-			if (meshAttributes.ContainsKey(SemanticProperties.POSITION))
-			{
-				meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw(unityData.Vertices, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.NORMAL))
-			{
-				meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw(unityData.Normals, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TANGENT))
-			{
-				meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw(unityData.Tangents, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[0]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[0]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv1, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[1]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[1]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv2, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[2]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[2]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv3, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[3]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[3]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv4, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.Color[0]))
-			{
-				meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorLinear(unityData.Colors, vertOffset);
-			}
-
-			var targets = primData.Targets;
-			if (targets != null)
-			{
-				for (int i = 0; i < targets.Count; ++i)
-				{
-					if (targets[i].ContainsKey(SemanticProperties.POSITION))
-					{
-						targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], vertOffset);
-					}
-					if (targets[i].ContainsKey(SemanticProperties.NORMAL))
-					{
-						targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetNormals[i], vertOffset);
-					}
-					if (targets[i].ContainsKey(SemanticProperties.TANGENT))
-					{
-						targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetTangents[i], vertOffset);
-					}
-				}
-			}
-		}
-
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from preloaded and preprocessed buffer data
 		/// </summary>
@@ -254,15 +174,6 @@ namespace UnityGLTF
 			}
 
 			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
-		}
-
-
-
-		private static void AddNewBufferAndViewToAccessor(byte[] data, Accessor accessor, GLTFRoot _gltfRoot)
-		{
-			_gltfRoot.Buffers.Add(new GLTFBuffer() { ByteLength = (uint) data.Length });
-			_gltfRoot.BufferViews.Add(new BufferView() { ByteLength = (uint) data.Length, ByteOffset = 0, Buffer = new BufferId() { Id = _gltfRoot.Buffers.Count, Root = _gltfRoot } });
-			accessor.BufferView = new BufferViewId() { Id = _gltfRoot.BufferViews.Count - 1, Root = _gltfRoot };
 		}
 
 		protected virtual async Task ConstructMeshTargets(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
@@ -430,28 +341,6 @@ namespace UnityGLTF
 			}
 		}
 
-		// Flip vectors to Unity coordinate system
-		private void TransformTargets(ref Dictionary<string, AttributeAccessor> attributeAccessors)
-		{
-			if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
-				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
-			}
-
-			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
-				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
-			}
-
-			if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
-			{
-				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
-				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
-			}
-		}
-
 		protected virtual async Task ConstructPrimitiveAttributes(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
 		{
 			var primData = new MeshCacheData.PrimitiveCacheData();
@@ -519,6 +408,108 @@ namespace UnityGLTF
 			TransformAttributes(ref attributeAccessors);
 		}
 
+		protected void ConvertAttributeAccessorsToUnityTypes(
+			MeshCacheData.PrimitiveCacheData primData,
+			UnityMeshData unityData,
+			int vertOffset,
+			int indexOffset)
+		{
+			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
+			var meshAttributes = primData.Attributes;
+			int vertexCount = (int)meshAttributes[SemanticProperties.POSITION].AccessorId.Value.Count;
+
+			var indices = meshAttributes.ContainsKey(SemanticProperties.INDICES)
+				? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
+				: MeshPrimitive.GenerateTriangles(vertexCount);
+			if (unityData.Topology[indexOffset] == MeshTopology.Triangles)
+				SchemaExtensions.FlipTriangleFaces(indices);
+			unityData.Indices[indexOffset] = indices;
+
+			if (meshAttributes.ContainsKey(SemanticProperties.Weight[0]) && meshAttributes.ContainsKey(SemanticProperties.Joint[0]))
+			{
+				CreateBoneWeightArray(
+					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
+					ref unityData.BoneWeights,
+					vertOffset);
+			}
+
+			if (meshAttributes.ContainsKey(SemanticProperties.POSITION))
+			{
+				meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw(unityData.Vertices, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.NORMAL))
+			{
+				meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw(unityData.Normals, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.TANGENT))
+			{
+				meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw(unityData.Tangents, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[0]))
+			{
+				meshAttributes[SemanticProperties.TexCoord[0]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv1, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[1]))
+			{
+				meshAttributes[SemanticProperties.TexCoord[1]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv2, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[2]))
+			{
+				meshAttributes[SemanticProperties.TexCoord[2]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv3, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[3]))
+			{
+				meshAttributes[SemanticProperties.TexCoord[3]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv4, vertOffset);
+			}
+			if (meshAttributes.ContainsKey(SemanticProperties.Color[0]))
+			{
+				meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorLinear(unityData.Colors, vertOffset);
+			}
+
+			var targets = primData.Targets;
+			if (targets != null)
+			{
+				for (int i = 0; i < targets.Count; ++i)
+				{
+					if (targets[i].ContainsKey(SemanticProperties.POSITION))
+					{
+						targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], vertOffset);
+					}
+					if (targets[i].ContainsKey(SemanticProperties.NORMAL))
+					{
+						targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetNormals[i], vertOffset);
+					}
+					if (targets[i].ContainsKey(SemanticProperties.TANGENT))
+					{
+						targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetTangents[i], vertOffset);
+					}
+				}
+			}
+		}
+
+		// Flip vectors to Unity coordinate system
+		private void TransformTargets(ref Dictionary<string, AttributeAccessor> attributeAccessors)
+		{
+			if (attributeAccessors.ContainsKey(SemanticProperties.POSITION))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.POSITION];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+
+			if (attributeAccessors.ContainsKey(SemanticProperties.NORMAL))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.NORMAL];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+
+			if (attributeAccessors.ContainsKey(SemanticProperties.TANGENT))
+			{
+				AttributeAccessor attributeAccessor = attributeAccessors[SemanticProperties.TANGENT];
+				SchemaExtensions.ConvertVector3CoordinateSpace(ref attributeAccessor, SchemaExtensions.CoordinateSpaceConversionScale);
+			}
+		}
+
 		protected void TransformAttributes(ref Dictionary<string, AttributeAccessor> attributeAccessors)
 		{
 			foreach (var name in attributeAccessors.Keys)
@@ -541,6 +532,26 @@ namespace UnityGLTF
 						break;
 				}
 			}
+		}
+
+		private static void AddNewBufferAndViewToAccessor(byte[] data, Accessor accessor, GLTFRoot _gltfRoot)
+		{
+			_gltfRoot.Buffers.Add(new GLTFBuffer() { ByteLength = (uint) data.Length });
+			_gltfRoot.BufferViews.Add(new BufferView() { ByteLength = (uint) data.Length, ByteOffset = 0, Buffer = new BufferId() { Id = _gltfRoot.Buffers.Count, Root = _gltfRoot } });
+			accessor.BufferView = new BufferViewId() { Id = _gltfRoot.BufferViews.Count - 1, Root = _gltfRoot };
+		}
+
+		protected static MeshTopology GetTopology(DrawMode mode)
+		{
+			switch (mode)
+			{
+				case DrawMode.Points: return MeshTopology.Points;
+				case DrawMode.Lines: return MeshTopology.Lines;
+				case DrawMode.LineStrip: return MeshTopology.LineStrip;
+				case DrawMode.Triangles: return MeshTopology.Triangles;
+			}
+
+			throw new Exception("Unity does not support glTF draw mode: " + mode);
 		}
 
 		/// <summary>

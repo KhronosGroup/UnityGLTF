@@ -1,10 +1,14 @@
-﻿using GLTF.Schema;
+﻿using System.Collections.Generic;
+using GLTF.Schema;
 using UnityEngine;
 
 namespace UnityGLTF
 {
 	public partial class GLTFSceneExporter
 	{
+		private List<Transform> _skinnedNodes;
+		private Dictionary<SkinnedMeshRenderer, UnityEngine.Mesh> _bakedMeshes;
+
 		private void ExportSkinFromNode(Transform transform)
 		{
 			exportSkinFromNodeMarker.Begin();
@@ -103,6 +107,49 @@ namespace UnityGLTF
 			_root.Skins.Add(gltfSkin);
 
 			exportSkinFromNodeMarker.End();
+		}
+
+		private UnityEngine.Mesh GetMeshFromGameObject(GameObject gameObject)
+		{
+			if (gameObject.GetComponent<MeshFilter>())
+			{
+				return gameObject.GetComponent<MeshFilter>().sharedMesh;
+			}
+
+			SkinnedMeshRenderer skinMesh = gameObject.GetComponent<SkinnedMeshRenderer>();
+			if (skinMesh)
+			{
+				if (!ExportAnimations && BakeSkinnedMeshes)
+				{
+					if (!_bakedMeshes.ContainsKey(skinMesh))
+					{
+						UnityEngine.Mesh bakedMesh = new UnityEngine.Mesh();
+						skinMesh.BakeMesh(bakedMesh);
+						_bakedMeshes.Add(skinMesh, bakedMesh);
+					}
+
+					return _bakedMeshes[skinMesh];
+				}
+
+				return gameObject.GetComponent<SkinnedMeshRenderer>().sharedMesh;
+			}
+
+			return null;
+		}
+
+		private UnityEngine.Material[] GetMaterialsFromGameObject(GameObject gameObject)
+		{
+			if (gameObject.GetComponent<MeshRenderer>())
+			{
+				return gameObject.GetComponent<MeshRenderer>().sharedMaterials;
+			}
+
+			if (gameObject.GetComponent<SkinnedMeshRenderer>())
+			{
+				return gameObject.GetComponent<SkinnedMeshRenderer>().sharedMaterials;
+			}
+
+			return null;
 		}
 
 		private Vector4[] boneWeightToBoneVec4(BoneWeight[] bw)

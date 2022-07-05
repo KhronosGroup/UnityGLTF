@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
@@ -125,6 +124,12 @@ namespace UnityGLTF
 			MeshConvex
 		}
 
+		protected struct GLBStream
+		{
+			public Stream Stream;
+			public long StartPosition;
+		}
+
 		/// <summary>
 		/// Maximum LOD
 		/// </summary>
@@ -173,6 +178,13 @@ namespace UnityGLTF
 		/// </summary>
 		public string CustomShaderName { get; set; }
 
+		public GameObject LastLoadedScene
+		{
+			get { return _lastLoadedScene; }
+		}
+
+		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
+
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
 		/// </summary>
@@ -203,12 +215,6 @@ namespace UnityGLTF
 		/// Statistics from the scene
 		/// </summary>
 		public ImportStatistics Statistics;
-
-		protected struct GLBStream
-		{
-			public Stream Stream;
-			public long StartPosition;
-		}
 
 		protected ImportOptions _options;
 		protected MemoryChecker _memoryChecker;
@@ -291,13 +297,6 @@ namespace UnityGLTF
 		{
 			Cleanup();
 		}
-
-		public GameObject LastLoadedScene
-		{
-			get { return _lastLoadedScene; }
-		}
-
-		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
 
 		/// <summary>
 		/// Loads a glTF Scene into the LastLoadedScene field
@@ -438,67 +437,6 @@ namespace UnityGLTF
 			return _assetCache.MeshCache[meshIndex].LoadedMesh;
 		}
 
-		/// <summary>
-		/// Initializes the top-level created node by adding an instantiated GLTF object component to it,
-		/// so that it can cleanup after itself properly when destroyed
-		/// </summary>
-		private void InitializeGltfTopLevelObject()
-		{
-			InstantiatedGLTFObject instantiatedGltfObject = CreatedObject.AddComponent<InstantiatedGLTFObject>();
-			instantiatedGltfObject.CachedData = new RefCountedCacheData
-			(
-				_assetCache.MaterialCache,
-				_assetCache.MeshCache,
-				_assetCache.TextureCache,
-				_assetCache.ImageCache
-			);
-		}
-
-		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-
-			MeshId mesh = node.Mesh;
-			if (mesh != null)
-			{
-				if (mesh.Value.Primitives != null)
-				{
-					await ConstructMeshAttributes(mesh.Value, mesh);
-				}
-			}
-
-			if (node.Children != null)
-			{
-				foreach (NodeId child in node.Children)
-				{
-					await ConstructBufferData(child.Value, cancellationToken);
-				}
-			}
-
-			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
-			MSFT_LODExtension lodsextension = null;
-			if (_gltfRoot.ExtensionsUsed != null
-				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
-				&& node.Extensions != null
-				&& node.Extensions.ContainsKey(msft_LODExtName))
-			{
-				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
-				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
-				{
-					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
-					{
-						int lodNodeId = lodsextension.MeshIds[i];
-						await ConstructBufferData(_gltfRoot.Nodes[lodNodeId], cancellationToken);
-					}
-				}
-			}
-		}
-
-		protected IEnumerator WaitUntilEnum(WaitUntil waitUntil)
-		{
-			yield return waitUntil;
-		}
-
 		private async Task LoadJson(string jsonFilePath)
 		{
 #if !WINDOWS_UWP && !UNITY_WEBGL
@@ -537,23 +475,20 @@ namespace UnityGLTF
 			}
 		}
 
-		private static void RunCoroutineSync(IEnumerator streamEnum)
+		/// <summary>
+		/// Initializes the top-level created node by adding an instantiated GLTF object component to it,
+		/// so that it can cleanup after itself properly when destroyed
+		/// </summary>
+		private void InitializeGltfTopLevelObject()
 		{
-			var stack = new Stack<IEnumerator>();
-			stack.Push(streamEnum);
-			while (stack.Count > 0)
-			{
-				var enumerator = stack.Pop();
-				if (enumerator.MoveNext())
-				{
-					stack.Push(enumerator);
-					var subEnumerator = enumerator.Current as IEnumerator;
-					if (subEnumerator != null)
-					{
-						stack.Push(subEnumerator);
-					}
-				}
-			}
+			InstantiatedGLTFObject instantiatedGltfObject = CreatedObject.AddComponent<InstantiatedGLTFObject>();
+			instantiatedGltfObject.CachedData = new RefCountedCacheData
+			(
+				_assetCache.MaterialCache,
+				_assetCache.MeshCache,
+				_assetCache.TextureCache,
+				_assetCache.ImageCache
+			);
 		}
 
 		/// <summary>
@@ -640,128 +575,15 @@ namespace UnityGLTF
 			return _assetCache.BufferCache[bufferId.Id];
 		}
 
-		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
+		private float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
 		{
-			if (buffer.Uri == null)
+			if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
 			{
-				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
-				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
-
-				progressStatus.BuffersLoaded++;
-				progress?.Report(progressStatus);
+				return (float)lodcoverageExtras[lodIndex];
 			}
 			else
 			{
-				Stream bufferDataStream = null;
-				var uri = buffer.Uri;
-
-				byte[] bufferData;
-				URIHelper.TryParseBase64(uri, out bufferData);
-				if (bufferData != null)
-				{
-					bufferDataStream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
-				}
-				else
-				{
-					bufferDataStream = await _options.DataLoader.LoadStreamAsync(buffer.Uri);
-				}
-
-				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
-				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
-				{
-					Stream = bufferDataStream
-				};
-
-				progressStatus.BuffersLoaded++;
-				progress?.Report(progressStatus);
-			}
-		}
-
-		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
-		{
-			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
-
-			try
-			{
-				sceneObj.SetActive(showSceneObj);
-
-				Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
-				for (int i = 0; i < scene.Nodes.Count; ++i)
-				{
-					NodeId node = scene.Nodes[i];
-					GameObject nodeObj = await GetNode(node.Id, cancellationToken);
-					nodeObj.transform.SetParent(sceneObj.transform, false);
-					nodeTransforms[i] = nodeObj.transform;
-				}
-
-				if (_options.AnimationMethod != AnimationMethod.None)
-				{
-					if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
-					{
-	#if UNITY_ANIMATION
-						// create the AnimationClip that will contain animation data
-						var constructedClips = new List<AnimationClip>();
-						for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
-						{
-							AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
-
-							clip.wrapMode = WrapMode.Loop;
-							constructedClips.Add(clip);
-						}
-
-						if (_options.AnimationMethod == AnimationMethod.Legacy)
-						{
-							Animation animation = sceneObj.AddComponent<Animation>();
-							for (int i = 0; i < constructedClips.Count; i++)
-							{
-								var clip = constructedClips[i];
-								animation.AddClip(clip, clip.name);
-								if (i == 0)
-								{
-									animation.clip = clip;
-								}
-							}
-						}
-						else if (_options.AnimationMethod == AnimationMethod.Mecanim)
-						{
-							Animator animator = sceneObj.AddComponent<Animator>();
-#if UNITY_EDITOR
-							// TODO there's no good way to construct an AnimatorController on import it seems, needs to be a SubAsset etc.
-							var controller = new UnityEditor.Animations.AnimatorController();
-							controller.name = "AnimatorController";
-							controller.AddLayer("Base Layer");
-							var baseLayer = controller.layers[0];
-							for (int i = 0; i < constructedClips.Count; i++)
-							{
-								var state = baseLayer.stateMachine.AddState(constructedClips[i].name);
-								state.motion = constructedClips[i];
-							}
-							animator.runtimeAnimatorController = controller;
-#else
-							Debug.LogWarning("Importing animations at runtime requires the Legacy AnimationMethod to be enabled, or custom handling of the resulting clips.", animator);
-#endif
-						}
-#else
-						Debug.LogWarning("glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
-	#endif
-					}
-				}
-
-				CreatedObject = sceneObj;
-				InitializeGltfTopLevelObject();
-			}
-			catch (Exception ex)
-			{
-				// If some failure occured during loading, clean up the scene
-				GameObject.DestroyImmediate(sceneObj);
-				CreatedObject = null;
-
-				if (ex is OutOfMemoryException)
-				{
-					Resources.UnloadUnusedAssets();
-				}
-
-				throw;
+				return 1.0f / (lodIndex + 2);
 			}
 		}
 
@@ -811,7 +633,6 @@ namespace UnityGLTF
 				throw;
 			}
 		}
-
 
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
@@ -1009,15 +830,168 @@ namespace UnityGLTF
 			progress?.Report(progressStatus);
 		}
 
-		float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
+		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
-			if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
+			cancellationToken.ThrowIfCancellationRequested();
+
+			MeshId mesh = node.Mesh;
+			if (mesh != null)
 			{
-				return (float)lodcoverageExtras[lodIndex];
+				if (mesh.Value.Primitives != null)
+				{
+					await ConstructMeshAttributes(mesh.Value, mesh);
+				}
+			}
+
+			if (node.Children != null)
+			{
+				foreach (NodeId child in node.Children)
+				{
+					await ConstructBufferData(child.Value, cancellationToken);
+				}
+			}
+
+			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
+			MSFT_LODExtension lodsextension = null;
+			if (_gltfRoot.ExtensionsUsed != null
+				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+				&& node.Extensions != null
+				&& node.Extensions.ContainsKey(msft_LODExtName))
+			{
+				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
+				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
+				{
+					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
+					{
+						int lodNodeId = lodsextension.MeshIds[i];
+						await ConstructBufferData(_gltfRoot.Nodes[lodNodeId], cancellationToken);
+					}
+				}
+			}
+		}
+
+		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
+		{
+			if (buffer.Uri == null)
+			{
+				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
+				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
+
+				progressStatus.BuffersLoaded++;
+				progress?.Report(progressStatus);
 			}
 			else
 			{
-				return 1.0f / (lodIndex + 2);
+				Stream bufferDataStream = null;
+				var uri = buffer.Uri;
+
+				byte[] bufferData;
+				URIHelper.TryParseBase64(uri, out bufferData);
+				if (bufferData != null)
+				{
+					bufferDataStream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
+				}
+				else
+				{
+					bufferDataStream = await _options.DataLoader.LoadStreamAsync(buffer.Uri);
+				}
+
+				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
+				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
+				{
+					Stream = bufferDataStream
+				};
+
+				progressStatus.BuffersLoaded++;
+				progress?.Report(progressStatus);
+			}
+		}
+
+		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
+		{
+			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("GLTFScene") : scene.Name);
+
+			try
+			{
+				sceneObj.SetActive(showSceneObj);
+
+				Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
+				for (int i = 0; i < scene.Nodes.Count; ++i)
+				{
+					NodeId node = scene.Nodes[i];
+					GameObject nodeObj = await GetNode(node.Id, cancellationToken);
+					nodeObj.transform.SetParent(sceneObj.transform, false);
+					nodeTransforms[i] = nodeObj.transform;
+				}
+
+				if (_options.AnimationMethod != AnimationMethod.None)
+				{
+					if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
+					{
+	#if UNITY_ANIMATION
+						// create the AnimationClip that will contain animation data
+						var constructedClips = new List<AnimationClip>();
+						for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
+						{
+							AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
+
+							clip.wrapMode = WrapMode.Loop;
+							constructedClips.Add(clip);
+						}
+
+						if (_options.AnimationMethod == AnimationMethod.Legacy)
+						{
+							Animation animation = sceneObj.AddComponent<Animation>();
+							for (int i = 0; i < constructedClips.Count; i++)
+							{
+								var clip = constructedClips[i];
+								animation.AddClip(clip, clip.name);
+								if (i == 0)
+								{
+									animation.clip = clip;
+								}
+							}
+						}
+						else if (_options.AnimationMethod == AnimationMethod.Mecanim)
+						{
+							Animator animator = sceneObj.AddComponent<Animator>();
+#if UNITY_EDITOR
+							// TODO there's no good way to construct an AnimatorController on import it seems, needs to be a SubAsset etc.
+							var controller = new UnityEditor.Animations.AnimatorController();
+							controller.name = "AnimatorController";
+							controller.AddLayer("Base Layer");
+							var baseLayer = controller.layers[0];
+							for (int i = 0; i < constructedClips.Count; i++)
+							{
+								var state = baseLayer.stateMachine.AddState(constructedClips[i].name);
+								state.motion = constructedClips[i];
+							}
+							animator.runtimeAnimatorController = controller;
+#else
+							Debug.LogWarning("Importing animations at runtime requires the Legacy AnimationMethod to be enabled, or custom handling of the resulting clips.", animator);
+#endif
+						}
+#else
+						Debug.LogWarning("glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
+	#endif
+					}
+				}
+
+				CreatedObject = sceneObj;
+				InitializeGltfTopLevelObject();
+			}
+			catch (Exception ex)
+			{
+				// If some failure occured during loading, clean up the scene
+				GameObject.DestroyImmediate(sceneObj);
+				CreatedObject = null;
+
+				if (ex is OutOfMemoryException)
+				{
+					Resources.UnloadUnusedAssets();
+				}
+
+				throw;
 			}
 		}
 
@@ -1030,19 +1004,6 @@ namespace UnityGLTF
 				ChunkOffset = (uint)_gltfStream.Stream.Position
 			};
 		}
-		protected async Task YieldOnTimeoutAndThrowOnLowMemory()
-		{
-			if (_options.ThrowOnLowMemory)
-			{
-				_memoryChecker.ThrowIfOutOfMemory();
-			}
-
-			if (_options.AsyncCoroutineHelper != null)
-			{
-				await _options.AsyncCoroutineHelper.YieldOnTimeout();
-			}
-		}
-
 
 		/// <summary>
 		///	 Get the absolute path to a gltf uri reference.
@@ -1067,19 +1028,6 @@ namespace UnityGLTF
 			var lastIndex = gltfPath.IndexOf(fileName);
 			var partialPath = gltfPath.Substring(0, lastIndex);
 			return partialPath;
-		}
-
-		protected static MeshTopology GetTopology(DrawMode mode)
-		{
-			switch (mode)
-			{
-				case DrawMode.Points: return MeshTopology.Points;
-				case DrawMode.Lines: return MeshTopology.Lines;
-				case DrawMode.LineStrip: return MeshTopology.LineStrip;
-				case DrawMode.Triangles: return MeshTopology.Triangles;
-			}
-
-			throw new Exception("Unity does not support glTF draw mode: " + mode);
 		}
 
 		/// <summary>
@@ -1139,5 +1087,43 @@ namespace UnityGLTF
 				}
 			}
 		}
+
+		protected async Task YieldOnTimeoutAndThrowOnLowMemory()
+		{
+			if (_options.ThrowOnLowMemory)
+			{
+				_memoryChecker.ThrowIfOutOfMemory();
+			}
+
+			if (_options.AsyncCoroutineHelper != null)
+			{
+				await _options.AsyncCoroutineHelper.YieldOnTimeout();
+			}
+		}
+
+		protected IEnumerator WaitUntilEnum(WaitUntil waitUntil)
+		{
+			yield return waitUntil;
+		}
+
+		private static void RunCoroutineSync(IEnumerator streamEnum)
+		{
+			var stack = new Stack<IEnumerator>();
+			stack.Push(streamEnum);
+			while (stack.Count > 0)
+			{
+				var enumerator = stack.Pop();
+				if (enumerator.MoveNext())
+				{
+					stack.Push(enumerator);
+					var subEnumerator = enumerator.Current as IEnumerator;
+					if (subEnumerator != null)
+					{
+						stack.Push(subEnumerator);
+					}
+				}
+			}
+		}
+
 	}
 }
