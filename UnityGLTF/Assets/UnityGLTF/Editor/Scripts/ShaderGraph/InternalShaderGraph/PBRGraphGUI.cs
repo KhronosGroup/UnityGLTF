@@ -113,8 +113,10 @@ namespace UnityGLTF
 				currentMaterialInfo.hasUV0 = mesh.HasVertexAttribute(VertexAttribute.TexCoord0);
 				currentMaterialInfo.hasUV1 = mesh.HasVertexAttribute(VertexAttribute.TexCoord1);
 
+				EditorGUI.BeginDisabledGroup(true);
 				EditorGUILayout.ObjectField("Target Mesh", mesh, typeof(Mesh), true);
 				EditorGUILayout.Toggle("Has Vertex Colors", currentMaterialInfo.hasColor);
+				EditorGUI.EndDisabledGroup();
 
 				if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
 				{
@@ -127,11 +129,28 @@ namespace UnityGLTF
 					{
 						EditorGUILayout.HelpBox("Mesh has no vertex colors but Enable Vertex Colors is enabled.", MessageType.Info);
 					}
+
+					if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+					{
+						if (currentMaterialInfo.hasColor)
+						{
+							targetMaterial.EnableKeyword("_VERTEX_COLORS_ON");
+							targetMaterial.SetFloat("_VERTEX_COLORS", 1);
+						}
+						else
+						{
+							targetMaterial.DisableKeyword("_VERTEX_COLORS_ON");
+							targetMaterial.SetFloat("_VERTEX_COLORS", 0);
+						}
+					}
 					EditorGUI.indentLevel--;
 				}
 
+				EditorGUI.BeginDisabledGroup(true);
 				EditorGUILayout.Toggle("Has UV0", currentMaterialInfo.hasUV0);
 				EditorGUILayout.Toggle("Has UV1", currentMaterialInfo.hasUV1);
+				EditorGUI.EndDisabledGroup();
+
 				if (currentMaterialInfo.hasUV1 && targetMaterial.GetTexture("occlusionTexture"))
 				{
 					EditorGUI.indentLevel++;
