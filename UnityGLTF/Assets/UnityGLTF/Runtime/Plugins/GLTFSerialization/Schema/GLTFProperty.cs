@@ -54,6 +54,11 @@ namespace GLTF.Schema
 			}
 		}
 
+		public static IExtension CreateEmptyExtension(string extensionName)
+		{
+			return TryGetExtension(extensionName)?.Deserialize(null, new JProperty(extensionName, new JObject()));
+		}
+
 		public static bool TryRegisterExtension(ExtensionFactory extensionFactory)
 		{
 			lock (_extensionRegistry)

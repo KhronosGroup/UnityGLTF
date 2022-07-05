@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
@@ -47,9 +48,28 @@ namespace UnityGLTF
 				exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
 				exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
 
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
+				// if the material already has an extension, we should get and modify that
 				var ve = new KHR_materials_volume();
 				var vi = new KHR_materials_ior();
 				var vt = new KHR_materials_transmission();
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_volume_Factory.EXTENSION_NAME, out var vv0))
+					ve = (KHR_materials_volume)vv0;
+				else
+					materialnode.Extensions.Add(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_ior_Factory.EXTENSION_NAME, out var vv1))
+					vi = (KHR_materials_ior) vv1;
+				else
+					materialnode.Extensions.Add(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_transmission_Factory.EXTENSION_NAME, out var vv2))
+					vt = (KHR_materials_transmission) vv2;
+				else
+					materialnode.Extensions.Add(KHR_materials_transmission_Factory.EXTENSION_NAME, vt);
 
 				if (material.HasProperty(thicknessFactor))
 					ve.thicknessFactor = material.GetFloat(thicknessFactor);
@@ -67,17 +87,22 @@ namespace UnityGLTF
 					vt.transmissionFactor = material.GetFloat(transmissionFactor);
 				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
 					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(transmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-
-				materialnode.AddExtension(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
-				materialnode.AddExtension(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
-				materialnode.AddExtension(KHR_materials_transmission_Factory.EXTENSION_NAME, vt);
 			}
 
 			if (material.IsKeywordEnabled("_IRIDESCENCE_ON"))
 			{
 				exporter.DeclareExtensionUsage(KHR_materials_iridescence_Factory.EXTENSION_NAME, false);
 
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
 				var vir = new KHR_materials_iridescence();
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_iridescence_Factory.EXTENSION_NAME, out var vv0))
+					vir = (KHR_materials_iridescence) vv0;
+				else
+					materialnode.Extensions.Add(KHR_materials_iridescence_Factory.EXTENSION_NAME, vir);
+
 				if (material.HasProperty(iridescenceFactor))
 					vir.iridescenceFactor = material.GetFloat(iridescenceFactor);
 				if (material.HasProperty(iridescenceIor))
@@ -90,15 +115,22 @@ namespace UnityGLTF
 					vir.iridescenceTexture = exporter.ExportTextureInfo(material.GetTexture(iridescenceTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
 				if (material.HasProperty(iridescenceThicknessTexture) && material.GetTexture(iridescenceThicknessTexture))
 					vir.iridescenceThicknessTexture = exporter.ExportTextureInfo(material.GetTexture(iridescenceThicknessTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-
-				materialnode.AddExtension(KHR_materials_iridescence_Factory.EXTENSION_NAME, vir);
 			}
 
 			if (material.IsKeywordEnabled("_SPECULAR_ON"))
 			{
 				exporter.DeclareExtensionUsage(KHR_materials_specular_Factory.EXTENSION_NAME, false);
 
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
 				var vir = new KHR_materials_specular();
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_specular_Factory.EXTENSION_NAME, out var vv0))
+					vir = (KHR_materials_specular) vv0;
+				else
+					materialnode.Extensions.Add(KHR_materials_specular_Factory.EXTENSION_NAME, vir);
+
 				if (material.HasProperty(specularFactor))
 					vir.specularFactor = material.GetFloat(specularFactor);
 				if (material.HasProperty(specularColorFactor))
@@ -107,8 +139,6 @@ namespace UnityGLTF
 					vir.specularTexture = exporter.ExportTextureInfo(material.GetTexture(specularTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
 				if (material.HasProperty(specularColorTexture) && material.GetTexture(specularColorTexture))
 					vir.specularColorTexture = exporter.ExportTextureInfo(material.GetTexture(specularColorTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
-
-				materialnode.AddExtension(KHR_materials_specular_Factory.EXTENSION_NAME, vir);
 			}
 		}
 	}

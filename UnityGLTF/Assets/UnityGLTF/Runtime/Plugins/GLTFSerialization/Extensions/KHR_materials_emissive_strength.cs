@@ -17,9 +17,10 @@ namespace GLTF.Schema
 		public JProperty Serialize()
 		{
 			var jo = new JObject();
-			JProperty jProperty = new JProperty(KHR_materials_volume_Factory.EXTENSION_NAME, jo);
+			JProperty jProperty = new JProperty(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, jo);
 
-			if(emissiveStrength != 0) jo.Add(new JProperty(nameof(emissiveStrength), emissiveStrength));
+			if(emissiveStrength != 1.0f)
+				jo.Add(new JProperty(nameof(emissiveStrength), emissiveStrength));
 
 			return jProperty;
 		}
@@ -40,14 +41,13 @@ namespace GLTF.Schema
 		{
 			if (extensionToken != null)
 			{
-				JToken strength = extensionToken.Value[nameof(KHR_materials_emissive_strength.emissiveStrength)];
+				var extension = new KHR_materials_emissive_strength();
 
+				JToken strength = extensionToken.Value[nameof(KHR_materials_emissive_strength.emissiveStrength)];
 				if (strength != null)
-				{
-					var extension = new KHR_materials_emissive_strength();
 					extension.emissiveStrength = strength.Value<float>();
-					return extension;
-				}
+
+				return extension;
 			}
 
 			return null;
