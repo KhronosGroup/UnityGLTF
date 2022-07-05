@@ -335,7 +335,13 @@ namespace UnityGLTF
 			//var rotationMatrix = mat.GetVector(texName + "Rotation");
 			//var rotation = -Mathf.Atan2(offset.y, rotationMatrix.x);
 			var rotProp = texName + "Rotation";
-			var rotation = mat.HasProperty(rotProp) ? mat.GetFloat(rotProp) : 0;
+			var rotation = 0f;
+#if UNITY_2021_1_OR_NEWER
+			if (mat.HasFloat(rotProp))
+#else
+			if (mat.HasProperty(rotProp))
+#endif
+				rotation = mat.GetFloat(rotProp);
 
 			if (offset == Vector2.zero && scale == Vector2.one && rotation == 0)
 			{
@@ -368,7 +374,13 @@ namespace UnityGLTF
 					{
 						offset = mat.mainTextureOffset;
 						scale = mat.mainTextureScale;
-						rotation = mat.HasProperty("_MainTexRotation") ? mat.GetFloat("_MainTexRotation") : 0;
+						rotation = 0;
+#if UNITY_2021_1_OR_NEWER
+						if (mat.HasFloat("_MainTexRotation"))
+#else
+						if (mat.HasProperty("_MainTexRotation"))
+#endif
+							rotation = mat.GetFloat("_MainTexRotation");
 					}
 				}
 				else

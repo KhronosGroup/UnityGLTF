@@ -111,6 +111,7 @@ namespace UnityGLTF
 						case "emissiveFactor":
 							propertyName = "emissiveFactor";
 							secondPropertyName = $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}";
+							extensionName = KHR_materials_emissive_strength_Factory.EXTENSION_NAME;
 							keepColorAlpha = false;
 							break;
 						case "_EmissionMap_ST":
@@ -132,6 +133,7 @@ namespace UnityGLTF
 						case "_BumpScale":
 						case "_NormalScale":
 						case "normalScale":
+						case "normalTextureScale":
 							propertyName = "normalTexture/scale";
 							break;
 						case "_BumpMap_ST":
@@ -147,6 +149,7 @@ namespace UnityGLTF
 							break;
 						case "_OcclusionStrength":
 						case "occlusionStrength":
+						case "occlusionTextureStrength":
 							propertyName = "occlusionTexture/strength";
 							break;
 						case "_OcclusionMap_ST":
@@ -308,6 +311,7 @@ namespace UnityGLTF
 							case "field of view":
 								// TODO conversion factor
 								propertyName = "perspective/yfov";
+								valueMultiplier = Mathf.Deg2Rad;
 								break;
 							case "near clip plane":
 								propertyName = "perspective/znear";
@@ -434,7 +438,19 @@ namespace UnityGLTF
 			}
 
 			if (extensionName != null)
+			{
 				DeclareExtensionUsage(extensionName, false);
+
+				// add extension to material if needed
+				if(animatedObject is Material material)
+				{
+					var mat = GetMaterialId(_root, material);
+					if (mat.Value.Extensions == null || !mat.Value.Extensions.ContainsKey(extensionName))
+					{
+						mat.Value.AddExtension(extensionName, GLTFProperty.CreateEmptyExtension(extensionName));
+					}
+				}
+			}
 
 			if (secondPropertyName != null)
 			{
