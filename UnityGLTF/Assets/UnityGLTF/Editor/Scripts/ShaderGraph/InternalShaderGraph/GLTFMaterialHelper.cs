@@ -280,13 +280,15 @@ namespace UnityGLTF
 			{
 				case ShaderUtil.ShaderPropertyType.Color:  return prefix + "Color";
 				case ShaderUtil.ShaderPropertyType.Float:  return prefix + "Float";
+#if UNITY_2021_1_OR_NEWER
 				case ShaderUtil.ShaderPropertyType.Int:    return prefix + "Int";
+#endif
 				case ShaderUtil.ShaderPropertyType.Range:  return prefix + "Float";
 				case ShaderUtil.ShaderPropertyType.Vector: return prefix + "Vector";
 				case ShaderUtil.ShaderPropertyType.TexEnv: return prefix + "Texture";
 			}
 
-			return prefix + "Unknown"; // compiler error
+			return prefix + "UnknownPropertyType"; // compiler error
 		}
 
 		private const string ShaderConversionScriptTemplate =
