@@ -290,9 +290,7 @@ namespace UnityGLTF
 		}
 
 		private const string ShaderConversionScriptTemplate =
-@"#if UNITY_EDITOR
-
-using UnityEditor;
+@"using UnityEditor;
 using UnityEngine;
 using UnityGLTF;
 
@@ -328,8 +326,7 @@ class Convert_<OldShader>_to_GLTF
 		return true;
 	}
 }
-
-#endif";
+";
 	}
 #endif
 }
