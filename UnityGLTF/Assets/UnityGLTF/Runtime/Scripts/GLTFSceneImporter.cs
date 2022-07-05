@@ -8,12 +8,10 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
-using LightType = UnityEngine.LightType;
 using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -38,6 +36,9 @@ namespace UnityGLTF
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
 		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
+
+		[NonSerialized]
+		public ILogger logger;
 	}
 
 	public enum AnimationMethod
@@ -232,10 +233,18 @@ namespace UnityGLTF
 		protected ImportProgress progressStatus = default(ImportProgress);
 		protected IProgress<ImportProgress> progress = null;
 
+		private static ILogger Debug = UnityEngine.Debug.unityLogger;
+
 		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
 		{
 			_gltfFileName = gltfFileName;
 			_options = options;
+
+			if (options.logger != null)
+				Debug = options.logger;
+			else
+				Debug = UnityEngine.Debug.unityLogger;
+
 			if (_options.DataLoader == null)
 			{
 				_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
@@ -364,8 +373,8 @@ namespace UnityGLTF
 				}
 			}
 
-			Debug.Assert(progressStatus.NodeLoaded == progressStatus.NodeTotal, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
-			Debug.Assert(progressStatus.TextureLoaded <= progressStatus.TextureTotal, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
+			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
+			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
@@ -784,45 +793,7 @@ namespace UnityGLTF
 			}
 			*/
 
-			// TODO this should be handled by the lights extension directly, not here
-			const string lightExt = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;
-			KHR_LightsPunctualNodeExtension lightsExtension = null;
-			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(lightExt) && node.Extensions != null && node.Extensions.ContainsKey(lightExt))
-			{
-				lightsExtension = node.Extensions[lightExt] as KHR_LightsPunctualNodeExtension;
-				var l = lightsExtension.LightId;
-
-				var light = l.Value;
-
-				var newLight = nodeObj.AddComponent<Light>();
-				switch (light.Type)
-				{
-					case GLTF.Schema.KHR_lights_punctual.LightType.spot:
-						newLight.type = LightType.Spot;
-						break;
-					case GLTF.Schema.KHR_lights_punctual.LightType.directional:
-						newLight.type = LightType.Directional;
-						break;
-					case GLTF.Schema.KHR_lights_punctual.LightType.point:
-						newLight.type = LightType.Point;
-						break;
-				}
-
-				newLight.name = light.Name;
-				newLight.intensity = (float) light.Intensity / Mathf.PI;
-				newLight.color = new Color(light.Color.R, light.Color.G, light.Color.B, light.Color.A);
-				newLight.range = (float) light.Range;
-				if (light.Spot != null)
-				{
-					#if UNITY_2019_1_OR_NEWER
-					newLight.innerSpotAngle = (float) light.Spot.InnerConeAngle * 2 / (Mathf.Deg2Rad * 0.8f);
-					#endif
-					newLight.spotAngle = (float) light.Spot.OuterConeAngle * 2 / Mathf.Deg2Rad;
-				}
-
-				// flip?
-				nodeObj.transform.localRotation *= Quaternion.Euler(0, 180, 0);
-			}
+			ConstructLights(nodeObj, node);
 
 			nodeObj.SetActive(true);
 
@@ -874,7 +845,7 @@ namespace UnityGLTF
 		{
 			if (buffer.Uri == null)
 			{
-				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
 				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 
 				progressStatus.BuffersLoaded++;
@@ -896,7 +867,7 @@ namespace UnityGLTF
 					bufferDataStream = await _options.DataLoader.LoadStreamAsync(buffer.Uri);
 				}
 
-				Debug.Assert(_assetCache.BufferCache[bufferIndex] == null);
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
 				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
 				{
 					Stream = bufferDataStream

@@ -203,7 +203,7 @@ namespace UnityGLTF
 			var timeDelta = keyframes[keyframeIndex].time - keyframes[keyframeIndex - 1].time;
 
 			if(timeDelta <= 0) {
-				Debug.LogWarning("Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
+				Debug.Log(LogType.Warning, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
 				return 0;
 			}
 			return valueDelta / timeDelta;
@@ -313,7 +313,7 @@ namespace UnityGLTF
 						break;
 
 					default:
-						Debug.LogWarning("Cannot read GLTF animation path");
+						Debug.Log(LogType.Warning, "Cannot read GLTF animation path");
 						break;
 				} // switch target type
 			} // foreach channel

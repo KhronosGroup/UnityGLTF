@@ -403,7 +403,7 @@ namespace UnityGLTF
 			}
 			catch (GLTFLoadException e)
 			{
-				Debug.LogWarning(e.ToString());
+				Debug.Log(LogType.Warning, e.ToString());
 			}
 			TransformAttributes(ref attributeAccessors);
 		}

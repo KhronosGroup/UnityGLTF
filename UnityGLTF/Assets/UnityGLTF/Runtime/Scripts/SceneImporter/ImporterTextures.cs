@@ -134,7 +134,7 @@ namespace UnityGLTF
 						// 	texture.name = tmp.name;
 						// }
 #else
-					Debug.LogWarning("The KTX2 Texture Format (KHR_texture_basisu) isn't supported right now. The texture " + texture.name + " won't load and will be black. Try using glTFast instead.");
+					Debug.Log(LogType.Warning, "The KTX2 Texture Format (KHR_texture_basisu) isn't supported right now. The texture " + texture.name + " won't load and will be black. Try using glTFast instead.");
 					await Task.CompletedTask;
 #endif
 					break;
@@ -184,7 +184,7 @@ namespace UnityGLTF
 				await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
 			}
 
-			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");
+			if (_assetCache.ImageCache[imageCacheIndex] != null) Debug.Log(LogType.Assert, "ImageCache should not be loaded multiple times");
 			progressStatus.TextureLoaded++;
 			progress?.Report(progressStatus);
 			_assetCache.ImageCache[imageCacheIndex] = texture;
@@ -300,7 +300,7 @@ namespace UnityGLTF
 							desiredFilterMode = FilterMode.Trilinear;
 							break;
 						default:
-							Debug.LogWarning("Unsupported Sampler.MinFilter: " + sampler.MinFilter);
+							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter);
 							desiredFilterMode = FilterMode.Trilinear;
 							break;
 					}
@@ -316,7 +316,7 @@ namespace UnityGLTF
 							case GLTF.Schema.WrapMode.MirroredRepeat:
 								return TextureWrapMode.Mirror;
 							default:
-								Debug.LogWarning("Unsupported Sampler.Wrap: " + gltfWrapMode);
+								Debug.Log(LogType.Warning, "Unsupported Sampler.Wrap: " + gltfWrapMode);
 								return TextureWrapMode.Repeat;
 						}
 					}
@@ -334,12 +334,12 @@ namespace UnityGLTF
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;
 				if (matchSamplerState || markGpuOnly)
 				{
-					Debug.Assert(_assetCache.TextureCache[textureIndex].Texture == null, "Texture should not be reset to prevent memory leaks");
+					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks");
 					_assetCache.TextureCache[textureIndex].Texture = source;
 
 					if (!matchSamplerState)
 					{
-						Debug.LogWarning($"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}");
+						Debug.Log(LogType.Warning, $"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}");
 					}
 				}
 				else
@@ -353,7 +353,7 @@ namespace UnityGLTF
 					unityTexture.wrapModeU = desiredWrapModeS;
 					unityTexture.wrapModeV = desiredWrapModeT;
 
-					Debug.Assert(_assetCache.TextureCache[textureIndex].Texture == null, "Texture should not be reset to prevent memory leaks");
+					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks");
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
 				}
 #if UNITY_EDITOR
@@ -361,7 +361,7 @@ namespace UnityGLTF
 				{
 					// don't warn for just filter mode, user choice
 					if (source.wrapModeU != desiredWrapModeS || source.wrapModeV != desiredWrapModeT)
-						Debug.LogWarning(($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT}"));
+						Debug.Log(LogType.Warning, ($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT}"));
 					_assetCache.TextureCache[textureIndex].Texture = source;
 				}
 #endif
@@ -382,7 +382,7 @@ namespace UnityGLTF
 			bufferContents.Stream.Read(data, 0, data.Length);
 			texture.LoadImage(data);
 
-			Debug.Assert(_assetCache.ImageCache[imageCacheIndex] == null, "ImageCache should not be loaded multiple times");
+			if (_assetCache.ImageCache[imageCacheIndex] != null) Debug.Log(LogType.Assert, "ImageCache should not be loaded multiple times");
 			progressStatus.TextureLoaded++;
 			progress?.Report(progressStatus);
 			_assetCache.ImageCache[imageCacheIndex] = texture;
