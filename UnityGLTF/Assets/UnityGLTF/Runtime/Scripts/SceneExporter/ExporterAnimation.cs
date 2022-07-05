@@ -664,7 +664,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Debug.LogError("Property is not handled: " + prop.propertyName + ", " + prop.propertyType, null);
+						Debug.LogWarning("Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.", null);
 						return false;
 					}
 				}

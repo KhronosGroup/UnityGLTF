@@ -1004,7 +1004,7 @@ public partial class GLTFSceneExporter
 			return id;
 		}
 
-		private AccessorId ExportAccessor(Color[] arr)
+		private AccessorId ExportAccessor(Color[] arr, bool exportAlphaChannel)
 		{
 			exportAccessorMarker.Begin();
 			exportAccessorColorArrayMarker.Begin();
@@ -1019,7 +1019,7 @@ public partial class GLTFSceneExporter
 			var accessor = new Accessor();
 			accessor.ComponentType = GLTFComponentType.Float;
 			accessor.Count = count;
-			accessor.Type = GLTFAccessorAttributeType.VEC4;
+			accessor.Type = exportAlphaChannel ? GLTFAccessorAttributeType.VEC4 : GLTFAccessorAttributeType.VEC3;
 
 			float minR = arr[0].r;
 			float minG = arr[0].g;
@@ -1068,18 +1068,38 @@ public partial class GLTFSceneExporter
 				}
 			}
 
-			accessor.Min = new List<double> { minR, minG, minB, minA };
-			accessor.Max = new List<double> { maxR, maxG, maxB, maxA };
+			if (exportAlphaChannel)
+			{
+				accessor.Min = new List<double> { minR, minG, minB, minA };
+				accessor.Max = new List<double> { maxR, maxG, maxB, maxA };
+			}
+			else
+			{
+				accessor.Min = new List<double> { minR, minG, minB };
+				accessor.Max = new List<double> { maxR, maxG, maxB };
+			}
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
-			foreach (var color in arr)
+			if(exportAlphaChannel)
 			{
-				_bufferWriter.Write(color.r);
-				_bufferWriter.Write(color.g);
-				_bufferWriter.Write(color.b);
-				_bufferWriter.Write(color.a);
+				foreach (var color in arr)
+				{
+					_bufferWriter.Write(color.r);
+					_bufferWriter.Write(color.g);
+					_bufferWriter.Write(color.b);
+					_bufferWriter.Write(color.a);
+				}
+			}
+			else
+			{
+				foreach (var color in arr)
+				{
+					_bufferWriter.Write(color.r);
+					_bufferWriter.Write(color.g);
+					_bufferWriter.Write(color.b);
+				}
 			}
 
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);

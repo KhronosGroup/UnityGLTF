@@ -207,7 +207,7 @@ namespace UnityGLTF
 					aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
 
 				if (settings.ExportVertexColors && meshObj.colors.Length != 0)
-					aColor0 = ExportAccessor(QualitySettings.activeColorSpace == ColorSpace.Linear ? meshObj.colors : meshObj.colors.ToLinear());
+					aColor0 = ExportAccessor(QualitySettings.activeColorSpace == ColorSpace.Linear ? meshObj.colors : meshObj.colors.ToLinear(), true);
 
 				aPosition.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
 				if (aNormal != null) aNormal.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
