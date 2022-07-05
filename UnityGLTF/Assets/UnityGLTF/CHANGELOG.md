@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.10.0-pre] - 2022-07-06
+- fix: PBRGraph assignable again from shader dropdown
+- fix: various KHR_animation_pointer fixes to extension usage and property names
+- fix: compilation fixes for Unity 2018/2019
+- feat: add helper, callbacks and script generator for shader conversion
+- change: Importer/Exporter are now multiple partials
+- change: change GetAnimationTargetIdFrom[..] to Get[..]Index to clarify what it does
+
 ## [1.9.0-pre] - 2022-06-22
 - fix: properly set BiRP ShaderGraph transparency keywords
 - feat: PBRGraph property names now match glTF names directly (breaking change from 1.7.0+)
