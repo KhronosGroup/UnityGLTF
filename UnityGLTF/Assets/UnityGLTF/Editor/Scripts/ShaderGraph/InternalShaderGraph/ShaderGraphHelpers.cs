@@ -5,8 +5,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+#if HAVE_CATEGORIES
 using UnityEditor.ShaderGraph.Drawing;
+#endif
 using UnityEngine;
 using Object = UnityEngine.Object;
 

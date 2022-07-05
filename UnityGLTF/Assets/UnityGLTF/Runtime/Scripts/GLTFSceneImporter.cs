@@ -939,7 +939,7 @@ namespace UnityGLTF
 							}
 							animator.runtimeAnimatorController = controller;
 #else
-							Debug.Log(LogType.Warning, "Importing animations at runtime requires the Legacy AnimationMethod to be enabled, or custom handling of the resulting clips.", animator);
+							Debug.Log(LogType.Warning, "Importing animations at runtime requires the Legacy AnimationMethod to be enabled, or custom handling of the resulting clips.");
 #endif
 						}
 #else
