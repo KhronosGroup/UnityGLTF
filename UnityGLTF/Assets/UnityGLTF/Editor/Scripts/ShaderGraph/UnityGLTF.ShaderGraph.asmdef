@@ -20,8 +20,8 @@
     ],
     "versionDefines": [
         {
-            "name": "Unity",
-            "expression": "0",
+            "name": "com.unity.modules.imageconversion",
+            "expression": "0.0.0",
             "define": "NO_INTERNALS_ACCESS"
         }
     ],
