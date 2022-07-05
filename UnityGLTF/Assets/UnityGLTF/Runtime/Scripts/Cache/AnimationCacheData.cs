@@ -1,4 +1,4 @@
-﻿#if UNITY_ANIMATION
+﻿#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 
 using GLTF;
 using GLTF.Schema;

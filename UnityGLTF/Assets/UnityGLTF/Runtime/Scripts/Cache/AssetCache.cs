@@ -41,7 +41,7 @@ namespace UnityGLTF.Cache
 		/// </summary>
 		public MeshCacheData[] MeshCache { get; private set; }
 
-#if UNITY_ANIMATION
+#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 		/// <summary>
 		/// Cache of loaded animations
 		/// </summary>
@@ -67,7 +67,7 @@ namespace UnityGLTF.Cache
 			MeshCache = new MeshCacheData[root.Meshes?.Count ?? 0];
 
 			NodeCache = new GameObject[root.Nodes?.Count ?? 0];
-#if UNITY_ANIMATION
+#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 			AnimationCache = new AnimationCacheData[root.Animations?.Count ?? 0];
 #endif
 		}
@@ -109,7 +109,7 @@ namespace UnityGLTF.Cache
 			}
 
 			MeshCache = null;
-#if UNITY_ANIMATION
+#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 			AnimationCache = null;
 #endif
 		}

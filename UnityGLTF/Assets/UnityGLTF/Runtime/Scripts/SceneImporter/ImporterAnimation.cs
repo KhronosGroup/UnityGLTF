@@ -12,7 +12,7 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneImporter
 	{
-#if UNITY_ANIMATION
+#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 		private static string RelativePathFrom(Transform self, Transform root)
 		{
 			var path = new List<String>();

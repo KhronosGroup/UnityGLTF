@@ -899,7 +899,7 @@ namespace UnityGLTF
 				{
 					if (_gltfRoot.Animations != null && _gltfRoot.Animations.Count > 0)
 					{
-	#if UNITY_ANIMATION
+#if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 						// create the AnimationClip that will contain animation data
 						var constructedClips = new List<AnimationClip>();
 						for (int i = 0; i < _gltfRoot.Animations.Count; ++i)
@@ -939,12 +939,12 @@ namespace UnityGLTF
 							}
 							animator.runtimeAnimatorController = controller;
 #else
-							Debug.LogWarning("Importing animations at runtime requires the Legacy AnimationMethod to be enabled, or custom handling of the resulting clips.", animator);
+							Debug.Log(LogType.Warning, "Importing animations at runtime requires the Legacy AnimationMethod to be enabled, or custom handling of the resulting clips.", animator);
 #endif
 						}
 #else
-						Debug.LogWarning("glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
-	#endif
+						Debug.Log(LogType.Warning, "glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
+#endif
 					}
 				}
 
