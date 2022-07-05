@@ -360,7 +360,7 @@ namespace UnityGLTF
 				{
 					var hadAlreadyExportedThisBindingBefore = _clipAndSpeedAndPathToExportedTransform.TryGetValue((clip, speed, target), out var alreadyExportedTransform);
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
-					int newTargetId = targetTr ? GetAnimationTargetIdFromTransform(targetTr) : -1;
+					int newTargetId = targetTr ? GetTransformIndex(targetTr) : -1;
 
 					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{
@@ -371,7 +371,7 @@ namespace UnityGLTF
 						}
 
 						// we need to remove the channels and samplers from the existing animation that was passed in if they exist
-						int alreadyExportedChannelTargetId = GetAnimationTargetIdFromTransform(alreadyExportedTransform);
+						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
 						animation.Channels.RemoveAll(x => x.Target.Node.Id == alreadyExportedChannelTargetId);
 
 						// TODO remove all samplers from this animation that were targeting the channels that we just removed
@@ -398,7 +398,7 @@ namespace UnityGLTF
 
 					if (hadAlreadyExportedThisBindingBefore && targetTr)
 					{
-						int alreadyExportedChannelTargetId = GetAnimationTargetIdFromTransform(alreadyExportedTransform);
+						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
 
 						for (int i = 0; i < animation.Channels.Count; i++)
 						{
@@ -777,47 +777,47 @@ namespace UnityGLTF
 
 #endif
 
-		[Obsolete("Please use " + nameof(GetAnimationTargetIdFromTransform), false)]
+		[Obsolete("Please use " + nameof(GetTransformIndex), false)]
 		public int GetNodeIdFromTransform(Transform transform)
 		{
-			return GetAnimationTargetIdFromTransform(transform);
+			return GetTransformIndex(transform);
 		}
 
-		internal int GetAnimationTargetId(object obj)
+		internal int GetIndex(object obj)
 		{
 			switch (obj)
 			{
-				case Material m: return GetAnimationTargetIdFromMaterial(m);
-				case Light l: return GetAnimationTargetIdFromLight(l);
-				case Camera c: return GetAnimationTargetIdFromCamera(c);
-				case Transform t: return GetAnimationTargetIdFromTransform(t);
-				case Component k: return GetAnimationTargetIdFromTransform(k.transform);
+				case Material m: return GetMaterialIndex(m);
+				case Light l: return GetLightIndex(l);
+				case Camera c: return GetCameraIndex(c);
+				case Transform t: return GetTransformIndex(t);
+				case Component k: return GetTransformIndex(k.transform);
 			}
 
 			return -1;
 		}
 
-		public int GetAnimationTargetIdFromTransform(Transform transform)
+		public int GetTransformIndex(Transform transform)
 		{
-			if (_exportedTransforms.TryGetValue(transform.GetInstanceID(), out var index)) return index;
+			if (transform && _exportedTransforms.TryGetValue(transform.GetInstanceID(), out var index)) return index;
 			return -1;
 		}
 
-		public int GetAnimationTargetIdFromMaterial(Material mat)
+		public int GetMaterialIndex(Material mat)
 		{
-			if (_materials.TryGetValue(mat, out var index)) return index;
+			if (mat && _exportedMaterials.TryGetValue(mat.GetInstanceID(), out var index)) return index;
 			return -1;
 		}
 
-		public int GetAnimationTargetIdFromLight(Light light)
+		public int GetLightIndex(Light light)
 		{
-			if (_exportedLights.TryGetValue(light.GetInstanceID(), out var index)) return index;
+			if (light && _exportedLights.TryGetValue(light.GetInstanceID(), out var index)) return index;
 			return -1;
 		}
 
-		public int GetAnimationTargetIdFromCamera(Camera cam)
+		public int GetCameraIndex(Camera cam)
 		{
-			if (_exportedCameras.TryGetValue(cam.GetInstanceID(), out var index)) return index;
+			if (cam && _exportedCameras.TryGetValue(cam.GetInstanceID(), out var index)) return index;
 			return -1;
 		}
 
@@ -832,7 +832,7 @@ namespace UnityGLTF
 		{
 			addAnimationDataMarker.Begin();
 
-			int channelTargetId = GetAnimationTargetIdFromTransform(target);
+			int channelTargetId = GetTransformIndex(target);
 			if (channelTargetId < 0)
 			{
 				Debug.LogWarning($"An animated transform seems to be {(settings.ExportDisabledGameObjects ? "missing" : "missing or disabled")}: {target.name} (InstanceID: {target.GetInstanceID()})", target);

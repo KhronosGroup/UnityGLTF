@@ -104,7 +104,7 @@ namespace UnityGLTF
 		private GLTFBuffer _buffer;
 		private List<ImageInfo> _imageInfos;
 		private List<Texture> _textures;
-		private Dictionary<Material, int> _materials;
+		private Dictionary<int, int> _exportedMaterials;
 		private List<(Transform tr, AnimationClip clip)> _animationClips;
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
@@ -338,7 +338,7 @@ namespace UnityGLTF
 			};
 
 			_imageInfos = new List<ImageInfo>();
-			_materials = new Dictionary<Material, int>();
+			_exportedMaterials = new Dictionary<int, int>();
 			_textures = new List<Texture>();
 			_animationClips = new List<(Transform, AnimationClip)>();
 
@@ -872,7 +872,7 @@ namespace UnityGLTF
 
 		public MaterialId GetMaterialId(GLTFRoot root, Material materialObj)
 		{
-			if (_materials.TryGetValue(materialObj, out var id))
+			if (_exportedMaterials.TryGetValue(materialObj.GetInstanceID(), out var id))
 			{
 				return new MaterialId
 				{

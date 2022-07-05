@@ -280,7 +280,7 @@ namespace UnityGLTF
 
         private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
         {
-	        _materials.Add(materialObj, _materials.Count);
+	        _exportedMaterials.Add(materialObj.GetInstanceID(), _exportedMaterials.Count);
 
 	        var id = new MaterialId
 	        {

@@ -38,7 +38,7 @@ namespace UnityGLTF.Extensions
 			foreach (var reg in registered)
 			{
 				animationPointerResolverMarker.Begin();
-				int id = exporter.GetAnimationTargetId(reg.animatedObject);
+				int id = exporter.GetIndex(reg.animatedObject);
 				switch (reg.animatedObject)
 				{
 					case Light light:

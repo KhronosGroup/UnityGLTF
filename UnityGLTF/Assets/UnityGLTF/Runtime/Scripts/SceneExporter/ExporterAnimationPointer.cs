@@ -51,7 +51,7 @@ namespace UnityGLTF
 			}
 			if (values.Length <= 0) return;
 
-			var channelTargetId = GetAnimationTargetId(animatedObject);
+			var channelTargetId = GetIndex(animatedObject);
 			if (channelTargetId < 0)
 			{
 				Debug.LogWarning($"An animated {animatedObject.GetType()} has not been exported, is the object disabled? {animatedObject.name} (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
