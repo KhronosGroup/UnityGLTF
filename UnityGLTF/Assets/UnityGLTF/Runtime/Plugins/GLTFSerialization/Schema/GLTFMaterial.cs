@@ -51,7 +51,7 @@ namespace GLTF.Schema
 		/// <minItems>3</minItems>
 		/// <maxItems>3</maxItems>
 		/// </summary>
-		public Color EmissiveFactor = Color.Black;
+		public Color EmissiveFactor = Color.Clear;
 
 		/// <summary>
 		/// The material's alpha rendering mode enumeration specifying the interpretation of the
@@ -198,7 +198,7 @@ namespace GLTF.Schema
 				EmissiveTexture.Serialize(writer);
 			}
 
-			if (EmissiveFactor != Color.Black)
+			if (EmissiveFactor != Color.Clear && !(EmissiveFactor.R == 0 && EmissiveFactor.G == 0 && EmissiveFactor.B == 0))
 			{
 				writer.WritePropertyName("emissiveFactor");
 				writer.WriteStartArray();

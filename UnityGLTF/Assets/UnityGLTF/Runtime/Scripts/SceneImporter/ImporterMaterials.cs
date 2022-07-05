@@ -51,7 +51,7 @@ namespace UnityGLTF
 #if UNITY_2021_3_OR_NEWER
 					mapper = new PBRGraphMap();
 #elif UNITY_2019_1_OR_NEWER
-					if(GraphicsSettings.currentRenderPipeline)
+					if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline)
 						mapper = new PBRGraphMap();
 					else
 						mapper = new MetalRoughMap(MaximumLod);

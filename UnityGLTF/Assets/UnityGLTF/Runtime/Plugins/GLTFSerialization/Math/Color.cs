@@ -5,6 +5,7 @@ namespace GLTF.Math
 	public struct Color : IEquatable<Color>
 	{
 		public static Color Black { get { return new Color(0f, 0f, 0f, 1f); } }
+		public static Color Clear { get { return new Color(0f, 0f, 0f, 0f); } }
 		public static Color White { get { return new Color(1f, 1f, 1f, 1f); } }
 
 		public float R { get; set; }
