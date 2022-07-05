@@ -51,6 +51,7 @@ namespace UnityGLTF
 		    return new string[] {
 			    PackagePrefix + "Runtime/Shaders/ShaderGraph/PBRGraph.shadergraph",
 			    PackagePrefix + "Runtime/Shaders/PbrMetallicRoughness.shader",
+			    PackagePrefix + "Runtime/Shaders/PbrSpecularGlossiness.shader",
 			    PackagePrefix + "Runtime/Shaders/Unlit.shader",
 		    };
 	    }
