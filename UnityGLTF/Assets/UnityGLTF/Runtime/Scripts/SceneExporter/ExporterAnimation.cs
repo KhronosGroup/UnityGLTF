@@ -821,6 +821,15 @@ namespace UnityGLTF
 			return -1;
 		}
 
+		public IEnumerable<(int subMeshIndex, MeshPrimitive prim)> GetPrimitivesForMesh(Mesh mesh)
+		{
+			if (!_meshToPrims.TryGetValue(mesh, out var prims)) yield break;
+			foreach (var k in prims.subMeshPrimitives)
+			{
+				yield return (k.Key, k.Value);
+			}
+		}
+
 		public void AddAnimationData(
 			Transform target,
 			GLTF.Schema.GLTFAnimation animation,
