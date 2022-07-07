@@ -189,7 +189,8 @@ namespace UnityGLTF
 					throw new NotImplementedException();
 			}
 
-			curve.MoveKey(keyframeIndex, key);
+			if(curve.length < keyframeIndex)
+				curve.MoveKey(keyframeIndex, key);
 		}
 
 		private static float GetCurveKeyframeLeftLinearSlope(Keyframe[] keyframes, int keyframeIndex)
