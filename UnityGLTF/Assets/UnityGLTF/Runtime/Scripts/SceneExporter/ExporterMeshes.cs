@@ -274,6 +274,7 @@ namespace UnityGLTF
 				{
 					Material = ExportMaterial(materialsObj[submesh]),
 				};
+				accessors.subMeshPrimitives[submesh] = prims[submesh];
 			}
 
 			//remove any prims that have empty triangles
