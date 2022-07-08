@@ -265,6 +265,7 @@ namespace UnityGLTF
 					{
 						case "m_Color":
 							propertyName = $"color";
+							keepColorAlpha = false;
 							break;
 						case "m_Intensity":
 							valueMultiplier = Mathf.PI; // matches ExportLight
