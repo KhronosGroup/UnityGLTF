@@ -94,17 +94,32 @@ namespace UnityGLTF
 
 		private void DrawGameObjectInfo(Material targetMaterial)
 		{
+			var singleSelection = Selection.count < 2;
+
 			// Strict Mode
 			// - texture transforms only for baseColorTexture, is used for all others as well
 			// - occlusion MUST use UV2 if present
 			var renderer = ShaderGraphHelpers.GetRendererForMaterialEditor(materialEditor);
+			var haveDrawnSomething = false;
+
+			if (renderer && !singleSelection)
+			{
+				EditorGUI.BeginDisabledGroup(true);
+				EditorGUI.showMixedValue = true;
+				EditorGUILayout.ObjectField("Target Mesh", null, typeof(Mesh), true);
+				EditorGUI.showMixedValue = false;
+				EditorGUI.EndDisabledGroup();
+				EditorGUILayout.HelpBox("Multiple objects selected. Can't show mesh properties.", MessageType.Info);
+				haveDrawnSomething = true;
+			}
+
 			currentMaterialInfo.hasColor = true;
 			currentMaterialInfo.hasUV0 = true;
 			currentMaterialInfo.hasUV1 = true;
 			currentMaterialInfo.occlusionTextureTexCoord = Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord"));
 			currentMaterialInfo.baseColorTextureTexCoord = Mathf.RoundToInt(targetMaterial.GetFloat("baseColorTextureTexCoord"));
 
-			if (renderer)
+			if (renderer && singleSelection)
 			{
 				var meshFilter = renderer.GetComponent<MeshFilter>();
 				var mesh = meshFilter.sharedMesh;
@@ -159,7 +174,10 @@ namespace UnityGLTF
 					{
 						EditorGUILayout.HelpBox("This mesh has an Occlusion Texture and UV1 vertex data.\nWhen exporting to three.js, UV1 will be used independent of TexCoord setting.", MessageType.Warning);
 						if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+						{
+							Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 1");
 							targetMaterial.SetFloat("occlusionTextureTexCoord", 1);
+						}
 					}
 					EditorGUI.indentLevel--;
 				}
@@ -170,15 +188,45 @@ namespace UnityGLTF
 					{
 						EditorGUILayout.HelpBox("This mesh does not have UV1 vertex data but Base Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning);
 						if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+						{
+							Undo.RegisterCompleteObjectUndo(targetMaterial, "Set baseColorTextureTexCoord to 0");
 							targetMaterial.SetFloat("baseColorTextureTexCoord", 0);
+						}
 					}
 					if (currentMaterialInfo.occlusionTextureTexCoord > 0)
 					{
 						EditorGUILayout.HelpBox("This mesh does not have UV1 vertex data but Occlusion Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning);
 						if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+						{
+							Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 0");
 							targetMaterial.SetFloat("occlusionTextureTexCoord", 0);
+						}
 					}
 				}
+				haveDrawnSomething = true;
+			}
+
+			if (targetMaterial.GetFloat("_Surface") == 0 && targetMaterial.GetColor("baseColorFactor").a != 1)
+			{
+				EditorGUILayout.HelpBox("Material is opaque but baseColorFactor has an alpha value != 1. This object might render unexpectedly in some viewers that blend results (e.g. AR, Babylon, Stager).", MessageType.Warning);
+				if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+				{
+					Undo.RegisterCompleteObjectUndo(materialEditor.targets, "Set baseColorFactor.a to 1");
+					foreach (var t in materialEditor.targets)
+					{
+						var mat = (Material) t;
+						var color = mat.GetColor("baseColorFactor");
+						color.a = 1;
+						mat.SetColor("baseColorFactor", color);
+						EditorUtility.SetDirty(mat);
+					}
+				}
+				haveDrawnSomething = true;
+			}
+
+			if (!renderer && !haveDrawnSomething)
+			{
+				EditorGUILayout.HelpBox("Select a Renderer to see additional info", MessageType.None);
 			}
 		}
 
