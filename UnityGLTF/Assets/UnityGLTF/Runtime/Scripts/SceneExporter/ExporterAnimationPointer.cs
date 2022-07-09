@@ -324,7 +324,8 @@ namespace UnityGLTF
 					}
 					break;
 				default:
-					Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
+					// propertyName is exported as-is
+					// Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
 					break;
 			}
 
