@@ -362,6 +362,12 @@ namespace UnityGLTF
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
 					int newTargetId = targetTr ? GetTransformIndex(targetTr) : -1;
 
+					if (!targetTr.gameObject.activeInHierarchy && !settings.ExportDisabledGameObjects)
+					{
+						Debug.Log("Object " + targetTr + " is disabled, not exporting animated curve " + target, targetTr);
+						continue;
+					}
+
 					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{
 						// warn: the transform for this binding exists, but its Node isn't exported. It's probably disabled and "Export Disabled" is off.
@@ -1057,12 +1063,14 @@ namespace UnityGLTF
 			offset = new Vector2(input.z, 1 - input.w - input.y);
 		}
 
-		private bool ArrayRangeEquals(float[] array, int sectionLength, int prevSectionStart, int sectionStart, int nextSectionStart)
+		private bool ArrayRangeEquals(float[] array, int sectionLength, int lastExportedSectionStart, int prevSectionStart, int sectionStart, int nextSectionStart)
 		{
 			var equals = true;
 			for (int i = 0; i < sectionLength; i++)
 			{
-				equals &= array[prevSectionStart + i] == array[sectionStart + i] && array[sectionStart + i] == array[nextSectionStart + i];
+				equals &= (lastExportedSectionStart >= prevSectionStart || array[lastExportedSectionStart + i] == array[sectionStart + i]) &&
+				          array[prevSectionStart + i] == array[sectionStart + i] &&
+				          array[sectionStart + i] == array[nextSectionStart + i];
 				if (!equals) return false;
 			}
 
@@ -1099,25 +1107,28 @@ namespace UnityGLTF
 
 			removeAnimationUnneededKeyframesInitMarker.End();
 
+			int lastExportedIndex = 0;
 			for (int i = 1; i < times.Length - 1; i++)
 			{
 				removeAnimationUnneededKeyframesCheckIdenticalMarker.Begin();
 				// check identical
 				bool isIdentical = true;
 				if (haveTranslationKeys)
-					isIdentical &= positions[i - 1] == positions[i] && positions[i] == positions[i + 1];
+					isIdentical &= (lastExportedIndex >= i - 1 || positions[lastExportedIndex] == positions[i]) && positions[i - 1] == positions[i] && positions[i] == positions[i + 1];
 				if (isIdentical && haveRotationKeys)
-					isIdentical &= rotations[i - 1] == rotations[i] && rotations[i] == rotations[i + 1];
+					isIdentical &= (lastExportedIndex >= i - 1 || rotations[lastExportedIndex] == rotations[i]) && rotations[i - 1] == rotations[i] && rotations[i] == rotations[i + 1];
 				if (isIdentical && haveScaleKeys)
-					isIdentical &= scales[i - 1] == scales[i] && scales[i] == scales[i + 1];
+					isIdentical &= (lastExportedIndex >= i - 1 || scales[lastExportedIndex] == scales[i]) && scales[i - 1] == scales[i] && scales[i] == scales[i + 1];
 				exportWeightsAnimationDataMarker.Begin();
 				if (isIdentical && haveWeightKeys)
-					isIdentical &= ArrayRangeEquals(weights, weightCount, (i - 1) * weightCount, i * weightCount, (i+1) * weightCount);
+					isIdentical &= ArrayRangeEquals(weights, weightCount, lastExportedIndex * weightCount, (i - 1) * weightCount, i * weightCount, (i + 1) * weightCount);
+
 				exportWeightsAnimationDataMarker.End();
 
 				if (!isIdentical)
 				{
 					removeAnimationUnneededKeyframesCheckIdenticalKeepMarker.Begin();
+					lastExportedIndex = i;
 					t2.Add(times[i]);
 					if (haveTranslationKeys) p2.Add(positions[i]);
 					if (haveRotationKeys) r2.Add(rotations[i]);
@@ -1142,7 +1153,11 @@ namespace UnityGLTF
 			if (haveTranslationKeys) p2.Add(positions[max]);
 			if (haveRotationKeys) r2.Add(rotations[max]);
 			if (haveScaleKeys) s2.Add(scales[max]);
-			if (haveWeightKeys) w2.AddRange(weights.Skip((max - 1) * weightCount).Take(weightCount));
+			if (haveWeightKeys)
+			{
+				var skipped = weights.Skip((max - 1) * weightCount).ToArray();
+				w2.AddRange(skipped.Take(weightCount));
+			}
 
 			// Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
 
