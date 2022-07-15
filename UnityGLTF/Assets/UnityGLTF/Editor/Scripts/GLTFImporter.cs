@@ -45,15 +45,20 @@ namespace UnityGLTF
 #endif
     public class GLTFImporter : ScriptedImporter
     {
-	    private static string[] GatherDependenciesFromSourceFile(string path)
+	    private static void EnsureShadersAreLoaded()
 	    {
 		    const string PackagePrefix = "Packages/org.khronos.unitygltf/";
-		    return new string[] {
+		    var shaders = new string[] {
 			    PackagePrefix + "Runtime/Shaders/ShaderGraph/PBRGraph.shadergraph",
 			    PackagePrefix + "Runtime/Shaders/PbrMetallicRoughness.shader",
 			    PackagePrefix + "Runtime/Shaders/PbrSpecularGlossiness.shader",
 			    PackagePrefix + "Runtime/Shaders/Unlit.shader",
 		    };
+
+		    foreach (var shaderPath in shaders)
+		    {
+			    AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
+		    }
 	    }
 
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
@@ -100,6 +105,7 @@ namespace UnityGLTF
             UnityEngine.Mesh[] meshes = null;
 
             var uniqueNames = new List<string>() { "main asset" };
+            EnsureShadersAreLoaded();
 
             string GetUniqueName(string desiredName)
             {
