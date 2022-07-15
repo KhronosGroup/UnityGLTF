@@ -7,7 +7,7 @@ using Texture = UnityEngine.Texture;
 
 namespace UnityGLTF
 {
-	public class StandardMap : IUniformMap
+	public class StandardMap : ILitMap
 	{
 		protected Material _material;
 		private AlphaMode _alphaMode = AlphaMode.OPAQUE;
@@ -367,7 +367,7 @@ namespace UnityGLTF
 			return ret;
 		}
 
-		protected virtual void Copy(IUniformMap o)
+		protected virtual void Copy(ILitMap o)
 		{
 			var other = (StandardMap)o;
 			other._material = _material;

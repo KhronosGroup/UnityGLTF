@@ -607,7 +607,15 @@ namespace UnityGLTF
 
 			var pbr = new PbrMetallicRoughness();
 
-			if (material.HasProperty("_BaseColor"))
+			if (material.HasProperty("baseColorFactor"))
+			{
+				pbr.BaseColorFactor = material.GetColor("baseColorFactor").ToNumericsColorLinear();
+			}
+			else if (material.HasProperty("_BaseColorFactor"))
+			{
+				pbr.BaseColorFactor = material.GetColor("_BaseColorFactor").ToNumericsColorLinear();
+			}
+			else if (material.HasProperty("_BaseColor"))
 			{
 				pbr.BaseColorFactor = material.GetColor("_BaseColor").ToNumericsColorLinear();
 			}

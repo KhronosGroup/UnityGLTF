@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace UnityGLTF
 {
@@ -10,6 +6,16 @@ namespace UnityGLTF
 	{
 		Material Material { get; }
 
+		GLTF.Schema.AlphaMode AlphaMode { get; set; }
+		double AlphaCutoff { get; set; }
+		bool DoubleSided { get; set; }
+		bool VertexColorsEnabled { get; set; }
+
+		IUniformMap Clone();
+	}
+
+	public interface ILitMap : IUniformMap
+	{
 		Texture NormalTexture { get; set; }
 		int NormalTexCoord { get; set; }
 		double NormalTexScale { get; set; }
@@ -33,16 +39,9 @@ namespace UnityGLTF
 		double EmissiveXRotation { get; set; }
 		Vector2 EmissiveXScale { get; set; }
 		int EmissiveXTexCoord { get; set; }
-
-		GLTF.Schema.AlphaMode AlphaMode { get; set; }
-		double AlphaCutoff { get; set; }
-		bool DoubleSided { get; set; }
-		bool VertexColorsEnabled { get; set; }
-
-		IUniformMap Clone();
 	}
 
-	public interface IMetalRoughUniformMap : IUniformMap
+	public interface IMetalRoughUniformMap : ILitMap
 	{
 		Texture BaseColorTexture { get; set; }
 		int BaseColorTexCoord { get; set; }
@@ -101,7 +100,7 @@ namespace UnityGLTF
 		Texture IridescenceThicknessTexture { get; set; }
 	}
 
-	public interface ISpecGlossUniformMap : IUniformMap
+	public interface ISpecGlossUniformMap : ILitMap
 	{
 		Texture DiffuseTexture { get; set; }
 		int DiffuseTexCoord { get; set; }

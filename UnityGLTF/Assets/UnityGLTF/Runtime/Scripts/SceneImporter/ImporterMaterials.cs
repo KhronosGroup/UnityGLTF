@@ -15,8 +15,8 @@ namespace UnityGLTF
 
 			const string specGlossExtName = KHR_materials_pbrSpecularGlossinessExtensionFactory.EXTENSION_NAME;
 			const string unlitExtName = KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME;
-			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName)
-				&& def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
+
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName) && def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
 			{
 				if (!string.IsNullOrEmpty(CustomShaderName))
 				{
@@ -27,8 +27,7 @@ namespace UnityGLTF
 					mapper = new SpecGlossMap(MaximumLod);
 				}
 			}
-			else if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(unlitExtName)
-				&& def.Extensions != null && def.Extensions.ContainsKey(unlitExtName))
+			else if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(unlitExtName) && def.Extensions != null && def.Extensions.ContainsKey(unlitExtName))
 			{
 				if (!string.IsNullOrEmpty(CustomShaderName))
 				{
@@ -36,7 +35,14 @@ namespace UnityGLTF
 				}
 				else
 				{
-					mapper = new UnlitMap(MaximumLod);
+#if UNITY_2021_3_OR_NEWER
+					mapper = new UnlitGraphMap();
+#elif UNITY_2019_1_OR_NEWER
+					if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline)
+						mapper = new UnlitGraphMap();
+					else
+						mapper = new UnlitMap(MaximumLod);
+#endif
 				}
 			}
 			else
@@ -182,6 +188,8 @@ namespace UnityGLTF
 						unlitMapper.BaseColorXRotation = ext.Rotation;
 						unlitMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
+
+						unlitMapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
 					}
 				}
 			}
@@ -264,72 +272,75 @@ namespace UnityGLTF
 				}
 			}
 
-			if (def.NormalTexture != null)
+			var uniformMapper = mapper as ILitMap;
+			if (uniformMapper != null)
 			{
-				TextureId textureId = def.NormalTexture.Index;
-				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
-				mapper.NormalTexture = _assetCache.TextureCache[textureId.Id].Texture;
-				mapper.NormalTexCoord = def.NormalTexture.TexCoord;
-				mapper.NormalTexScale = def.NormalTexture.Scale;
-
-				var ext = GetTextureTransform(def.NormalTexture);
-				if (ext != null)
+				if (def.NormalTexture != null)
 				{
-					mapper.NormalXOffset = ext.Offset.ToUnityVector2Raw();
-					mapper.NormalXRotation = ext.Rotation;
-					mapper.NormalXScale = ext.Scale.ToUnityVector2Raw();
-					mapper.NormalXTexCoord = ext.TexCoord;
+					TextureId textureId = def.NormalTexture.Index;
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
+					uniformMapper.NormalTexture = _assetCache.TextureCache[textureId.Id].Texture;
+					uniformMapper.NormalTexCoord = def.NormalTexture.TexCoord;
+					uniformMapper.NormalTexScale = def.NormalTexture.Scale;
+
+					var ext = GetTextureTransform(def.NormalTexture);
+					if (ext != null)
+					{
+						uniformMapper.NormalXOffset = ext.Offset.ToUnityVector2Raw();
+						uniformMapper.NormalXRotation = ext.Rotation;
+						uniformMapper.NormalXScale = ext.Scale.ToUnityVector2Raw();
+						uniformMapper.NormalXTexCoord = ext.TexCoord;
+					}
+				}
+
+				if (def.OcclusionTexture != null)
+				{
+					uniformMapper.OcclusionTexStrength = def.OcclusionTexture.Strength;
+					TextureId textureId = def.OcclusionTexture.Index;
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
+					uniformMapper.OcclusionTexture = _assetCache.TextureCache[textureId.Id].Texture;
+					uniformMapper.OcclusionTexCoord = def.OcclusionTexture.TexCoord;
+
+					var ext = GetTextureTransform(def.OcclusionTexture);
+
+					if (ext != null)
+					{
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						uniformMapper.OcclusionXOffset = offset;
+						uniformMapper.OcclusionXRotation = ext.Rotation;
+						uniformMapper.OcclusionXScale = ext.Scale.ToUnityVector2Raw();
+						// mapper.OcclusionXTexCoord = ext.TexCoord;
+
+						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
+					}
+				}
+
+				if (def.EmissiveTexture != null)
+				{
+					TextureId textureId = def.EmissiveTexture.Index;
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
+					uniformMapper.EmissiveTexture = _assetCache.TextureCache[textureId.Id].Texture;
+					uniformMapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
+
+					var ext = GetTextureTransform(def.EmissiveTexture);
+					if (ext != null)
+					{
+						uniformMapper.EmissiveXOffset = ext.Offset.ToUnityVector2Raw();
+						uniformMapper.EmissiveXRotation = ext.Rotation;
+						uniformMapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
+						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
+					}
+				}
+
+				uniformMapper.EmissiveFactor = QualitySettings.activeColorSpace == ColorSpace.Linear ? def.EmissiveFactor.ToUnityColorLinear() : def.EmissiveFactor.ToUnityColorRaw();
+
+				var emissiveExt = GetEmissiveStrength(def);
+				if (emissiveExt != null)
+				{
+					uniformMapper.EmissiveFactor = uniformMapper.EmissiveFactor * emissiveExt.emissiveStrength;
 				}
 			}
-
-			if (def.OcclusionTexture != null)
-			{
-				mapper.OcclusionTexStrength = def.OcclusionTexture.Strength;
-				TextureId textureId = def.OcclusionTexture.Index;
-				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
-				mapper.OcclusionTexture = _assetCache.TextureCache[textureId.Id].Texture;
-				mapper.OcclusionTexCoord = def.OcclusionTexture.TexCoord;
-
-				var ext = GetTextureTransform(def.OcclusionTexture);
-
-				if (ext != null)
-				{
-					var offset = ext.Offset.ToUnityVector2Raw();
-					offset.y = 1 - ext.Scale.Y - offset.y;
-					mapper.OcclusionXOffset = offset;
-					mapper.OcclusionXRotation = ext.Rotation;
-					mapper.OcclusionXScale = ext.Scale.ToUnityVector2Raw();
-					// mapper.OcclusionXTexCoord = ext.TexCoord;
-
-					mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
-				}
-			}
-
-			if (def.EmissiveTexture != null)
-			{
-				TextureId textureId = def.EmissiveTexture.Index;
-				await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
-				mapper.EmissiveTexture = _assetCache.TextureCache[textureId.Id].Texture;
-				mapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
-
-				var ext = GetTextureTransform(def.EmissiveTexture);
-				if (ext != null)
-				{
-					mapper.EmissiveXOffset = ext.Offset.ToUnityVector2Raw();
-					mapper.EmissiveXRotation = ext.Rotation;
-					mapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
-					mapper.EmissiveXTexCoord = ext.TexCoord;
-				}
-			}
-
-			mapper.EmissiveFactor = QualitySettings.activeColorSpace == ColorSpace.Linear ? def.EmissiveFactor.ToUnityColorLinear() : def.EmissiveFactor.ToUnityColorRaw();
-
-			var emissiveExt = GetEmissiveStrength(def);
-			if (emissiveExt != null)
-			{
-				mapper.EmissiveFactor = mapper.EmissiveFactor * emissiveExt.emissiveStrength;
-			}
-
 			var vertColorMapper = mapper.Clone();
 			vertColorMapper.VertexColorsEnabled = true;
 
