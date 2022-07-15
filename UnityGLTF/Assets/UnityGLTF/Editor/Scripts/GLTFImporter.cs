@@ -162,22 +162,33 @@ namespace UnityGLTF
                 meshes = meshFilters.Select(mf =>
                 {
                     var mesh = mf.sharedMesh;
+
                     if (meshHash.Contains(mesh))
 	                    return null;
                     meshHash.Add(mesh);
 
-                    vertexBuffer.Clear();
-                    mesh.GetVertices(vertexBuffer);
-                    for (var i = 0; i < vertexBuffer.Count; ++i)
+                    if (!Mathf.Approximately(_scaleFactor, 1.0f))
                     {
-                        vertexBuffer[i] *= _scaleFactor;
+	                    vertexBuffer.Clear();
+	                    mesh.GetVertices(vertexBuffer);
+	                    for (var i = 0; i < vertexBuffer.Count; ++i)
+	                    {
+	                        vertexBuffer[i] *= _scaleFactor;
+	                    }
+	                    mesh.SetVertices(vertexBuffer);
                     }
-                    mesh.SetVertices(vertexBuffer);
                     if (_generateLightmapUVs)
                     {
 	                    var uv2 = mesh.uv2;
 	                    if(uv2 == null || uv2.Length < 1)
+	                    {
+		                    // uv2 = Unwrapping.GeneratePerTriangleUV(mesh);
+		                    // mesh.SetUVs(1, uv2);
+
+		                    // There seems to be a bug in Unity's splitting code:
+		                    // for some meshes, the result is broken after splitting.
 		                    Unwrapping.GenerateSecondaryUVSet(mesh);
+	                    }
                     }
                     if (_swapUvs)
                     {
