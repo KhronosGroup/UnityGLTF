@@ -50,6 +50,7 @@ namespace UnityGLTF
 		    const string PackagePrefix = "Packages/org.khronos.unitygltf/";
 		    var shaders = new string[] {
 			    PackagePrefix + "Runtime/Shaders/ShaderGraph/PBRGraph.shadergraph",
+			    PackagePrefix + "Runtime/Shaders/ShaderGraph/UnlitGraph.shadergraph",
 			    PackagePrefix + "Runtime/Shaders/PbrMetallicRoughness.shader",
 			    PackagePrefix + "Runtime/Shaders/PbrSpecularGlossiness.shader",
 			    PackagePrefix + "Runtime/Shaders/Unlit.shader",
