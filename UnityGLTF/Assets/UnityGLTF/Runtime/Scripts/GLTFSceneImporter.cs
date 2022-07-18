@@ -1398,7 +1398,7 @@ namespace UnityGLTF
 				}
 			}
 
-			if (node.Mesh != null)
+			if (node.Mesh != null && node.Mesh.Value.Primitives != null)
 			{
 				var mesh = node.Mesh.Value;
 				await ConstructMesh(mesh, node.Mesh.Id, cancellationToken);
