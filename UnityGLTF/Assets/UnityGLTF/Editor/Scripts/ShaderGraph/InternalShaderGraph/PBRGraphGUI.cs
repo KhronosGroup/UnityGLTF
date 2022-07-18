@@ -94,7 +94,7 @@ namespace UnityGLTF
 
 		private void DrawGameObjectInfo(Material targetMaterial)
 		{
-			var singleSelection = Selection.count < 2;
+			var singleSelection = Selection.objects != null && Selection.objects.Length < 2;
 
 			// Strict Mode
 			// - texture transforms only for baseColorTexture, is used for all others as well

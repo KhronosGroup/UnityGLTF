@@ -42,6 +42,8 @@ namespace UnityGLTF
 						mapper = new UnlitGraphMap();
 					else
 						mapper = new UnlitMap(MaximumLod);
+#else
+					mapper = new UnlitMap(MaximumLod);
 #endif
 				}
 			}
