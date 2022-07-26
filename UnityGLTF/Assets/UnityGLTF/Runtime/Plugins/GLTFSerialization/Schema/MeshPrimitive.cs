@@ -324,7 +324,7 @@ namespace GLTF.Schema
 		public const string JOINT = "JOINT";
 		public const string WEIGHT = "WEIGHT";
 		public const string TANGENT = "TANGENT";
-		public const string INDICES = "INDICIES";
+		public const string INDICES = "INDICES";
 
 		public const string TEXCOORD_0 = "TEXCOORD_0";
 		public const string TEXCOORD_1 = "TEXCOORD_1";
