@@ -38,7 +38,7 @@ namespace UnityGLTF
 #if ENABLE_DEFAULT_GLB_IMPORTER
     [ScriptedImporter(3, new[] { "glb", "gltf" })]
 #else
-    [ScriptedImporter(3, null, overrideExts: new[] { "glb", "gltf" })]
+    [ScriptedImporter(4, null, overrideExts: new[] { "glb", "gltf" })]
 #endif
 #else
 	[ScriptedImporter(3, new[] { "glb" })]
@@ -366,8 +366,6 @@ namespace UnityGLTF
                 if (gltfScene) DestroyImmediate(gltfScene);
                 throw;
             }
-
-
 
 #if UNITY_2017_3_OR_NEWER
 	        // We explicitly turn the new identifier on for new imports, that is, when no meta file existed before this import.

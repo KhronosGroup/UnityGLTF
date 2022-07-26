@@ -63,7 +63,15 @@ namespace UnityGLTF
 				{
 					identifierProp.boolValue = true;
 					serializedObject.ApplyModifiedProperties();
-					Apply();
+					try
+					{
+						ApplyAndImport();
+						GUIUtility.ExitGUI();
+					}
+					catch
+					{
+						// ignore - seems in some cases the GameObjectInspector will throw
+					}
 				}
 			}
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_useJpgTextures"), new GUIContent("Use JPG Textures"));
