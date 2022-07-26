@@ -26,6 +26,15 @@ namespace UnityGLTF
 		static GLTFMaterialHelper()
 		{
 			RegisterMaterialConversionToGLTF(ConvertStandardAndURPLit);
+			RegisterMaterialConversionToGLTF(ConvertUnityGLTFGraphs);
+		}
+
+		private static bool ConvertUnityGLTFGraphs(Material material, Shader oldShader, Shader newShader)
+		{
+			if (oldShader.name != "UnityGLTF/UnlitGraph" && oldShader.name != "UnityGLTF/PBRGraph") return false;
+
+			material.shader = newShader;
+			return true;
 		}
 
 		private static bool ConvertStandardAndURPLit(Material material, Shader oldShader, Shader newShader)

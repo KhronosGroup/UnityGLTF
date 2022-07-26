@@ -116,8 +116,8 @@ namespace UnityGLTF
 			currentMaterialInfo.hasColor = true;
 			currentMaterialInfo.hasUV0 = true;
 			currentMaterialInfo.hasUV1 = true;
-			currentMaterialInfo.occlusionTextureTexCoord = Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord"));
-			currentMaterialInfo.baseColorTextureTexCoord = Mathf.RoundToInt(targetMaterial.GetFloat("baseColorTextureTexCoord"));
+			currentMaterialInfo.occlusionTextureTexCoord = targetMaterial.HasProperty("occlusionTextureTexCoord") ? Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord")) : 0;
+			currentMaterialInfo.baseColorTextureTexCoord = targetMaterial.HasProperty("baseColorTextureTexCoord") ? Mathf.RoundToInt(targetMaterial.GetFloat("baseColorTextureTexCoord")) : 0;
 
 			if (renderer && singleSelection)
 			{
@@ -166,7 +166,7 @@ namespace UnityGLTF
 				EditorGUILayout.Toggle("Has UV1", currentMaterialInfo.hasUV1);
 				EditorGUI.EndDisabledGroup();
 
-				if (currentMaterialInfo.hasUV1 && targetMaterial.GetTexture("occlusionTexture"))
+				if (currentMaterialInfo.hasUV1 && targetMaterial.HasProperty("occlusionTexture") && targetMaterial.GetTexture("occlusionTexture"))
 				{
 					EditorGUI.indentLevel++;
 					var texCoord =  Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord"));
