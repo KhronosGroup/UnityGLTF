@@ -425,10 +425,8 @@ namespace UnityGLTF
 							if (existingTarget.Extensions != null && existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
 							{
 								// Debug.Log($"export? {!targetTrShouldNotBeExported} - {nameof(existingTarget)}: {L(existingTarget)}, {nameof(animationPointer)}: {L(animationPointer.animatedObject)}, {nameof(alreadyExportedTransform)}: {L(alreadyExportedTransform)}, {nameof(targetTr)}: {L(targetTr)}");
-								if (animationPointer.animatedObject == (object) alreadyExportedTransform)
+								if (animationPointer.animatedObject is Component c && c.transform == alreadyExportedTransform)
 								{
-									if (animationPointer.animatedObject is Component)
-									{
 										if (targetTrShouldNotBeExported)
 										{
 											// Debug.LogWarning("Need to remove this", null);
@@ -444,11 +442,23 @@ namespace UnityGLTF
 												animationPointerResolver.Add(animationPointer);
 											}
 										}
+								}
+								else if (animationPointer.animatedObject is Material m)
+								{
+									var renderer = targetTr.GetComponent<MeshRenderer>();
+									if (renderer)
+									{
+										// TODO we don't have a good way right now to solve this if there's multiple materials on this renderer...
+										// would probably need to keep the clip path / binding around and check if that uses a specific index and so on
+										var newTarget = renderer.sharedMaterial;
+										if (newTarget)
+										{
+											animationPointer.animatedObject = newTarget;
+											animationPointer.channel = existingTarget;
+											animationPointerResolver.Add(animationPointer);
+										}
 									}
 								}
-								// animationPointer.animatedObject = targetTr;
-								// animationPointer.channel = existingTarget;
-								// animationPointerResolver.Add(animationPointer);
 							}
 							else if (targetTr)
 							{
@@ -597,8 +607,12 @@ namespace UnityGLTF
 				else if (settings.UseAnimationPointer)
 				{
 					var obj = AnimationUtility.GetAnimatedObject(root, binding);
-					current.AddPropertyCurves(obj, curve, binding);
-					targetCurves[binding.path] = current;
+					if (obj)
+					{
+						current.AddPropertyCurves(obj, curve, binding);
+						targetCurves[binding.path] = current;
+					}
+
 					continue;
 				}
 
