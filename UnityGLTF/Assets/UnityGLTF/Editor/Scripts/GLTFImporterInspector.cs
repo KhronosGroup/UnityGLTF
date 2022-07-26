@@ -54,6 +54,18 @@ namespace UnityGLTF
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importMaterials"));
+			EditorGUILayout.Separator();
+			var identifierProp = serializedObject.FindProperty("_useSceneNameIdentifier");
+			if (!identifierProp.boolValue)
+			{
+				EditorGUILayout.HelpBox("This asset uses the old main asset identifier. Upgrade to the new one if you want to seamlessly switch between glTFast and UnityGLTF on import.\nNOTE: This will break existing scene references.", MessageType.Info);
+				if (GUILayout.Button("Update Asset Identifier"))
+				{
+					identifierProp.boolValue = true;
+					serializedObject.ApplyModifiedProperties();
+					Apply();
+				}
+			}
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_useJpgTextures"), new GUIContent("Use JPG Textures"));
 
 			EditorGUILayout.Separator();
