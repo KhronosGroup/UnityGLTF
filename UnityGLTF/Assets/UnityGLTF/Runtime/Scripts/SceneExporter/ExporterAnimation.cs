@@ -385,9 +385,24 @@ namespace UnityGLTF
 						}
 
 						// we need to remove the channels and samplers from the existing animation that was passed in if they exist
-						// NOTE not implemented for KHR_animation_pointer
 						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
 						animation.Channels.RemoveAll(x => x.Target.Node != null && x.Target.Node.Id == alreadyExportedChannelTargetId);
+
+						if (settings.UseAnimationPointer)
+						{
+							animation.Channels.RemoveAll(x =>
+							{
+								if (x.Target.Extensions != null && x.Target.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
+								{
+									var tr = animationPointer.animatedObject;
+									if (tr is Component c)
+										tr = c.transform;
+									if ((Transform) tr == alreadyExportedTransform)
+										return true;
+								}
+								return false;
+							});
+						}
 
 						// TODO remove all samplers from this animation that were targeting the channels that we just removed
 						// TODO: this doesn't work because we're punching holes in the sampler order; all channel sampler IDs would need to be adjusted as well.
