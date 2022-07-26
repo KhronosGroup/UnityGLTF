@@ -335,6 +335,18 @@ namespace UnityGLTF
 			}
 		}
 
+		private static string LogObject(object obj)
+		{
+			if (obj == null) return "null";
+
+			if (obj is Component tr)
+				return $"{tr.name} (InstanceID: {tr.GetInstanceID()}, Type: {tr.GetType()})";
+			if (obj is GameObject go)
+				return $"{go.name} (InstanceID: {go.GetInstanceID()})";
+
+			return obj.ToString();
+		}
+
 		private void ConvertClipToGLTFAnimation(AnimationClip clip, Transform transform, GLTFAnimation animation, float speed)
 		{
 			convertClipToGLTFAnimationMarker.Begin();
@@ -362,47 +374,28 @@ namespace UnityGLTF
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
 					int newTargetId = targetTr ? GetTransformIndex(targetTr) : -1;
 
-					if (!targetTr.gameObject.activeInHierarchy && !settings.ExportDisabledGameObjects)
-					{
-						Debug.Log("Object " + targetTr + " is disabled, not exporting animated curve " + target, targetTr);
-						continue;
-					}
+					var targetTrShouldNotBeExported = targetTr && !targetTr.gameObject.activeInHierarchy && !settings.ExportDisabledGameObjects;
 
 					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{
 						// warn: the transform for this binding exists, but its Node isn't exported. It's probably disabled and "Export Disabled" is off.
 						if (targetTr)
 						{
-							Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + targetTr.name + " (InstanceID: " + targetTr.GetInstanceID() + ")", targetTr);
+							Debug.LogWarning("An animated transform is not part of _exportedTransforms, is the object disabled? " + LogObject(targetTr), targetTr);
 						}
 
 						// we need to remove the channels and samplers from the existing animation that was passed in if they exist
+						// NOTE not implemented for KHR_animation_pointer
 						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
-						animation.Channels.RemoveAll(x => x.Target.Node.Id == alreadyExportedChannelTargetId);
+						animation.Channels.RemoveAll(x => x.Target.Node != null && x.Target.Node.Id == alreadyExportedChannelTargetId);
 
 						// TODO remove all samplers from this animation that were targeting the channels that we just removed
-						// var remainingSamplers = new HashSet<int>();
-						// foreach (var c in animation.Channels)
-						// {
-						// 	remainingSamplers.Add(c.Sampler.Id);
-						// }
-						//
-						// for (int i = animation.Samplers.Count - 1; i >= 0; i--)
-						// {
-						// 	if (!remainingSamplers.Contains(i))
-						// 	{
-						// 		animation.Samplers.RemoveAt(i);
-						// 		// TODO: this doesn't work because we're punching holes in the sampler order; all channel sampler IDs would need to be adjusted as well.
-						// 	}
-						// }
+						// TODO: this doesn't work because we're punching holes in the sampler order; all channel sampler IDs would need to be adjusted as well.
 
 						continue;
 					}
 
-					if (!targetTr)
-						continue;
-
-					if (hadAlreadyExportedThisBindingBefore && targetTr)
+					if (hadAlreadyExportedThisBindingBefore)
 					{
 						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
 
@@ -411,28 +404,38 @@ namespace UnityGLTF
 							var existingTarget = animation.Channels[i].Target;
 							if (existingTarget.Node != null && existingTarget.Node.Id != alreadyExportedChannelTargetId) continue;
 
+							// if we're here it means that an existing AnimationChannel already targets the same node that we're currently targeting.
+							// Without KHR_animation_pointer, that just means we reuse the existing data and tell it to target a new node.
+							// With KHR_animation_pointer, we need to do the same, and retarget the path to the new node.
 							if (existingTarget.Extensions != null && existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
 							{
-								if (animationPointer.animatedObject != (object) alreadyExportedTransform)
+								// Debug.Log($"export? {!targetTrShouldNotBeExported} - {nameof(existingTarget)}: {L(existingTarget)}, {nameof(animationPointer)}: {L(animationPointer.animatedObject)}, {nameof(alreadyExportedTransform)}: {L(alreadyExportedTransform)}, {nameof(targetTr)}: {L(targetTr)}");
+								if (animationPointer.animatedObject == (object) alreadyExportedTransform)
 								{
 									if (animationPointer.animatedObject is Component)
 									{
-										var targetType = animationPointer.animatedObject.GetType();
-										var newTarget = targetTr.GetComponent(targetType);
-										if (newTarget)
+										if (targetTrShouldNotBeExported)
 										{
-											animationPointer.animatedObject = newTarget;
-											animationPointer.channel = existingTarget;
-											animationPointerResolver.Add(animationPointer);
+											// Debug.LogWarning("Need to remove this", null);
+										}
+										else
+										{
+											var targetType = animationPointer.animatedObject.GetType();
+											var newTarget = targetTr.GetComponent(targetType);
+											if (newTarget)
+											{
+												animationPointer.animatedObject = newTarget;
+												animationPointer.channel = existingTarget;
+												animationPointerResolver.Add(animationPointer);
+											}
 										}
 									}
-									continue;
 								}
-								animationPointer.animatedObject = targetTr;
-								animationPointer.channel = existingTarget;
-								animationPointerResolver.Add(animationPointer);
+								// animationPointer.animatedObject = targetTr;
+								// animationPointer.channel = existingTarget;
+								// animationPointerResolver.Add(animationPointer);
 							}
-							else
+							else if (targetTr)
 							{
 								existingTarget.Node = new NodeId()
 								{
@@ -441,6 +444,12 @@ namespace UnityGLTF
 								};
 							}
 						}
+						continue;
+					}
+
+					if (targetTrShouldNotBeExported)
+					{
+						Debug.Log("Object " + targetTr + " is disabled, not exporting animated curve " + target, targetTr);
 						continue;
 					}
 
