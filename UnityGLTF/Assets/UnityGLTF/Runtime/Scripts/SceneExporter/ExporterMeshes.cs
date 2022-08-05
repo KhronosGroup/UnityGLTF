@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime;
 using GLTF.Schema;
 using UnityEditor;
 using UnityEngine;
@@ -135,8 +136,10 @@ namespace UnityGLTF
 			if (!MeshIsReadable(meshObj) && EditorUtility.IsPersistent(meshObj))
 			{
 #if UNITY_2019_3_OR_NEWER
+				var assetPath = AssetDatabase.GetAssetPath(meshObj);
+				if(assetPath?.Length > 30) assetPath = "..." + assetPath.Substring(assetPath.Length - 30);
 				if(EditorUtility.DisplayDialog("Exporting mesh but mesh is not readable",
-					   $"The mesh {meshObj.name} is not readable. Do you want to change its import settings and make it readable now?",
+					   $"The mesh {meshObj.name} is not readable. Do you want to change its import settings and make it readable now?\n\n" + assetPath,
 					   "Make it readable", "No, skip mesh",
 					   DialogOptOutDecisionType.ForThisSession, MakeMeshReadableDialogueDecisionKey))
 #endif
