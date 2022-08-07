@@ -883,6 +883,12 @@ namespace UnityGLTF
 			Vector3[] scales = null,
 			float[] weights = null)
 		{
+			if (!target)
+			{
+				UnityEngine.Debug.LogWarning("Can not add animation data: missing target transform. " +  animation?.Name);
+				return;
+			}
+
 			addAnimationDataMarker.Begin();
 
 			int channelTargetId = GetTransformIndex(target);
