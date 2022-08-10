@@ -37,5 +37,5 @@ If unforseen problems are encountered, some useful resources include:
 ## Additional Resources
 
 - [GabLeRoux Unity3D docker images](https://hub.docker.com/r/gableroux/unity3d/)
-- [Tavis CI docs](https://docs.travis-ci.com/)
+- [Travis CI docs](https://docs.travis-ci.com/)
 
