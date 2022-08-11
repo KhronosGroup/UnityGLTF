@@ -4,22 +4,12 @@ namespace UnityGLTF
 {
 	public class UnlitGraphMap : BaseGraphMap, IUnlitUniformMap
 	{
+		private const string UnlitGraphGuid = "59541e6caf586ca4f96ccf48a4813a51";
 		public UnlitGraphMap() : this("UnityGLTF/UnlitGraph") {}
 
-		protected UnlitGraphMap(string shaderName)
-		{
-			var s = Shader.Find(shaderName);
-			if (s == null)
-			{
-				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build?");
-			}
-			_material = new Material(s);
-		}
+		protected UnlitGraphMap(string shaderName) : base(shaderName, UnlitGraphGuid) { }
 
-		protected UnlitGraphMap(Material mat)
-		{
-			_material = mat;
-		}
+		protected UnlitGraphMap(Material mat) : base(mat) { }
 
 		public override IUniformMap Clone()
 		{

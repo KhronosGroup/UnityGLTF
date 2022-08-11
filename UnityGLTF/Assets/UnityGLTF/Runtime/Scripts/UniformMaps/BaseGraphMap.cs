@@ -8,9 +8,29 @@ namespace UnityGLTF
 	{
 		public abstract IUniformMap Clone();
 
-		internal Material _material;
+		protected BaseGraphMap(Material mat)
+		{
+			_material = mat;
+		}
+
+		protected BaseGraphMap(string shaderName, string fallbackGuid)
+		{
+			var s = Shader.Find(shaderName);
+
+#if UNITY_EDITOR
+			// workaround for first-import issues with Shader.Find and import order
+			if (!s)
+				s = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(UnityEditor.AssetDatabase.GUIDToAssetPath(fallbackGuid));
+#endif
+
+			if (!s)
+				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build?");
+
+			_material = new Material(s);
+		}
 
 		public Material Material => _material;
+		internal Material _material;
 
 	    private AlphaMode _alphaMode;
 	    public virtual AlphaMode AlphaMode

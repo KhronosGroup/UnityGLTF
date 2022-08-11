@@ -4,22 +4,12 @@ namespace UnityGLTF
 {
 	public class PBRGraphMap : BaseGraphMap, IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap, ISpecularMap
 	{
+		private const string PBRGraphGuid = "478ce3626be7a5f4ea58d6b13f05a2e4";
 		public PBRGraphMap() : this("UnityGLTF/PBRGraph") {}
 
-		protected PBRGraphMap(string shaderName)
-		{
-			var s = Shader.Find(shaderName);
-			if (s == null)
-			{
-				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build?");
-			}
-			_material = new Material(s);
-		}
+		protected PBRGraphMap(string shaderName) : base(shaderName, PBRGraphGuid) { }
 
-		protected PBRGraphMap(Material mat)
-		{
-			_material = mat;
-		}
+		protected PBRGraphMap(Material mat) : base(mat) { }
 
 		public override IUniformMap Clone()
 		{
