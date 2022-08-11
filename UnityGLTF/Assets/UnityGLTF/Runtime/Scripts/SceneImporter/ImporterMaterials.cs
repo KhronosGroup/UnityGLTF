@@ -105,6 +105,7 @@ namespace UnityGLTF
 				}
 
 				mrMapper.MetallicFactor = pbr.MetallicFactor;
+				mrMapper.RoughnessFactor = pbr.RoughnessFactor;
 
 				if (pbr.MetallicRoughnessTexture != null)
 				{
@@ -122,8 +123,12 @@ namespace UnityGLTF
 						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
 					}
 				}
-
-				mrMapper.RoughnessFactor = pbr.RoughnessFactor;
+			}
+			// when PbrMetallicRoughness is not defined, default values MUST apply
+			else if (def.PbrMetallicRoughness == null && mrMapper != null)
+			{
+				mrMapper.MetallicFactor = 1;
+				mrMapper.RoughnessFactor = 1;
 			}
 
 			var sgMapper = mapper as ISpecGlossUniformMap;
