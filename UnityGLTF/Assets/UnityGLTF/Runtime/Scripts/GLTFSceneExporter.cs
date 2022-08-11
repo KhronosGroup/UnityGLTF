@@ -526,7 +526,7 @@ namespace UnityGLTF
 			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
 			BeforeSceneExport?.Invoke(this, _root);
 			beforeSceneExportMarker.End();
-			
+
 			_root.Scene = ExportScene(fileName, _rootTransforms);
 
 			if (ExportAnimations)

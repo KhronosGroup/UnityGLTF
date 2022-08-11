@@ -79,10 +79,10 @@ namespace UnityGLTF
 
 			material.SetFloat(metallicFactor, metallic);
 			material.SetFloat(roughnessFactor, 1 - smoothness);
+			const string ConversionWarning = "The Metallic (R) Smoothness (A) texture needs to be converted to Roughness (B) Metallic (G). ";
 #if UNITY_EDITOR && UNITY_2022_1_OR_NEWER
 			var importerPath = AssetDatabase.GetAssetPath(metallicGloss);
 			var importer = AssetImporter.GetAtPath(importerPath) as TextureImporter;
-			const string ConversionWarning = "The Metallic (R) Smoothness (A) texture needs to be converted to Roughness (B) Metallic (G). ";
 			if (importer && importer.swizzleG != TextureImporterSwizzle.OneMinusR) // can't really detect if this has been done on the texture already, this is just a heuristic...
 			{
 				if (EditorUtility.DisplayDialog("Texture Conversion",
