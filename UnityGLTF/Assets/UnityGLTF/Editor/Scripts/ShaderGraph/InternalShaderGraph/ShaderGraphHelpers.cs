@@ -91,6 +91,9 @@ namespace UnityEditor
 					material.renderQueue = -1;
 				}
 			}
+
+			if (material.HasProperty("emissiveFactor"))
+				material.globalIlluminationFlags = MaterialEditor.FixupEmissiveFlag(material.GetColor("emissiveFactor"), material.globalIlluminationFlags);
 		}
 	}
 }

@@ -3,6 +3,7 @@
 using System.Linq;
 using System.Text;
 using UnityEngine;
+
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
@@ -90,6 +91,10 @@ namespace UnityGLTF
 			material.SetFloat(alphaCutoff, cutoff);
 
 			material.SetColor(emissiveFactor, needsEmissiveColorSpaceConversion ? emissionColor.linear : emissionColor);
+
+			// set the flags on conversion, otherwise it's confusing why they're not on - can't easily replicate the magic that Unity does in their inspectors when changing emissive on/off
+			if (material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.None || material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+				material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
 
 			// ensure keywords are correctly set after conversion
 			ShaderGraphHelpers.ValidateMaterialKeywords(material);
