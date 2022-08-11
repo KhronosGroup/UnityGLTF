@@ -31,7 +31,7 @@ namespace UnityEditor
 		private static PropertyInfo tracker;
 
 		// matches logic in MaterialEditor.ShouldEditorBeHidden to find the right renderer this material is inspected on.
-		public static MeshRenderer GetRendererForMaterialEditor(MaterialEditor materialEditor)
+		public static Renderer GetRendererForMaterialEditor(MaterialEditor materialEditor)
 		{
 			if (propertyViewer == null) propertyViewer = typeof(Editor).GetProperty(nameof(propertyViewer), BindingFlags.Instance | BindingFlags.NonPublic);
 			if (propertyView == null) propertyView = typeof(Editor).Assembly.GetType("UnityEditor.IPropertyView");
@@ -45,7 +45,9 @@ namespace UnityEditor
 
 			GameObject target = editorTracker.activeEditors[0].target as GameObject;
 			if (!target) return null;
-			return target.GetComponent<MeshRenderer>();
+			Renderer c = target.GetComponent<MeshRenderer>();
+			if (!c) c = target.GetComponent<SkinnedMeshRenderer>();
+			return c;
 		}
 
 		public static void ValidateMaterialKeywords(Material material)

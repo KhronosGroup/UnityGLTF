@@ -121,85 +121,95 @@ namespace UnityGLTF
 
 			if (renderer && singleSelection)
 			{
-				var meshFilter = renderer.GetComponent<MeshFilter>();
-				var mesh = meshFilter.sharedMesh;
+				var mesh = default(Mesh);
+				if (renderer is SkinnedMeshRenderer smr)
+					mesh = smr.sharedMesh;
+				else if (renderer is MeshRenderer mr)
+					mesh = mr.GetComponent<MeshFilter>()?.sharedMesh;
 
-				currentMaterialInfo.hasColor = mesh.HasVertexAttribute(VertexAttribute.Color);
-				currentMaterialInfo.hasUV0 = mesh.HasVertexAttribute(VertexAttribute.TexCoord0);
-				currentMaterialInfo.hasUV1 = mesh.HasVertexAttribute(VertexAttribute.TexCoord1);
-
-				EditorGUI.BeginDisabledGroup(true);
-				EditorGUILayout.ObjectField("Target Mesh", mesh, typeof(Mesh), true);
-				EditorGUILayout.Toggle("Has Vertex Colors", currentMaterialInfo.hasColor);
-				EditorGUI.EndDisabledGroup();
-
-				if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
+				if (mesh)
 				{
-					EditorGUI.indentLevel++;
-					if (currentMaterialInfo.hasColor)
-					{
-						EditorGUILayout.HelpBox("Mesh has vertex colors but Enable Vertex Colors is disabled.", MessageType.Info);
-					}
-					else
-					{
-						EditorGUILayout.HelpBox("Mesh has no vertex colors but Enable Vertex Colors is enabled.", MessageType.Info);
-					}
+					currentMaterialInfo.hasColor = mesh.HasVertexAttribute(VertexAttribute.Color);
+					currentMaterialInfo.hasUV0 = mesh.HasVertexAttribute(VertexAttribute.TexCoord0);
+					currentMaterialInfo.hasUV1 = mesh.HasVertexAttribute(VertexAttribute.TexCoord1);
 
-					if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+					EditorGUI.BeginDisabledGroup(true);
+					EditorGUILayout.ObjectField("Target Mesh", mesh, typeof(Mesh), true);
+					EditorGUILayout.Toggle("Has Vertex Colors", currentMaterialInfo.hasColor);
+					EditorGUI.EndDisabledGroup();
+
+					if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
 					{
+						EditorGUI.indentLevel++;
+						var msg = "";
+						var msgType = MessageType.Info;
 						if (currentMaterialInfo.hasColor)
 						{
-							targetMaterial.EnableKeyword("_VERTEX_COLORS_ON");
-							targetMaterial.SetFloat("_VERTEX_COLORS", 1);
+							msg = "Mesh has vertex colors but \"Enable Vertex Colors\" is off. Exported glTF files will look different since vertex color is stored per-mesh, not per-material.";
+							msgType = MessageType.Warning;
 						}
-						else
-						{
-							targetMaterial.DisableKeyword("_VERTEX_COLORS_ON");
-							targetMaterial.SetFloat("_VERTEX_COLORS", 0);
-						}
-					}
-					EditorGUI.indentLevel--;
-				}
+						// else
+						// {
+						//		// doesn't really make sense to encourage turning vertex colors OFF - export will have them anyways.
+						//		EditorGUILayout.HelpBox("Mesh has no vertex colors but \"Enable Vertex Colors\" is on.", MessageType.Info);
+						// }
 
-				EditorGUI.BeginDisabledGroup(true);
-				EditorGUILayout.Toggle("Has UV0", currentMaterialInfo.hasUV0);
-				EditorGUILayout.Toggle("Has UV1", currentMaterialInfo.hasUV1);
-				EditorGUI.EndDisabledGroup();
-
-				if (currentMaterialInfo.hasUV1 && targetMaterial.HasProperty("occlusionTexture") && targetMaterial.GetTexture("occlusionTexture"))
-				{
-					EditorGUI.indentLevel++;
-					var texCoord =  Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord"));
-					if (texCoord != 1)
-					{
-						EditorGUILayout.HelpBox("This mesh has an Occlusion Texture and UV1 vertex data.\nWhen exporting to three.js, UV1 will be used independent of TexCoord setting.", MessageType.Warning);
-						if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+						if (!string.IsNullOrEmpty(msg))
 						{
-							Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 1");
-							targetMaterial.SetFloat("occlusionTextureTexCoord", 1);
+							CoreEditorUtils.DrawFixMeBox(msg, msgType, () =>
+							{
+								if (currentMaterialInfo.hasColor)
+								{
+									targetMaterial.EnableKeyword("_VERTEX_COLORS_ON");
+									targetMaterial.SetFloat("_VERTEX_COLORS", 1);
+								}
+								else
+								{
+									targetMaterial.DisableKeyword("_VERTEX_COLORS_ON");
+									targetMaterial.SetFloat("_VERTEX_COLORS", 0);
+								}
+							});
 						}
+						EditorGUI.indentLevel--;
 					}
-					EditorGUI.indentLevel--;
-				}
 
-				if (!currentMaterialInfo.hasUV1)
-				{
-					if (currentMaterialInfo.baseColorTextureTexCoord > 0)
+					EditorGUI.BeginDisabledGroup(true);
+					EditorGUILayout.Toggle("Has UV0", currentMaterialInfo.hasUV0);
+					EditorGUILayout.Toggle("Has UV1", currentMaterialInfo.hasUV1);
+					EditorGUI.EndDisabledGroup();
+
+					if (currentMaterialInfo.hasUV1 && targetMaterial.HasProperty("occlusionTexture") && targetMaterial.GetTexture("occlusionTexture"))
 					{
-						EditorGUILayout.HelpBox("This mesh does not have UV1 vertex data but Base Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning);
-						if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+						EditorGUI.indentLevel++;
+						var texCoord =  Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord"));
+						if (texCoord != 1)
 						{
-							Undo.RegisterCompleteObjectUndo(targetMaterial, "Set baseColorTextureTexCoord to 0");
-							targetMaterial.SetFloat("baseColorTextureTexCoord", 0);
+							CoreEditorUtils.DrawFixMeBox("This mesh has an Occlusion Texture and UV1 vertex data.\nWhen exporting to three.js, UV1 will be used independent of TexCoord setting.", MessageType.Warning, () =>
+							{
+								Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 1");
+								targetMaterial.SetFloat("occlusionTextureTexCoord", 1);
+							});
 						}
+						EditorGUI.indentLevel--;
 					}
-					if (currentMaterialInfo.occlusionTextureTexCoord > 0)
+
+					if (!currentMaterialInfo.hasUV1)
 					{
-						EditorGUILayout.HelpBox("This mesh does not have UV1 vertex data but Occlusion Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning);
-						if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+						if (currentMaterialInfo.baseColorTextureTexCoord > 0)
 						{
-							Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 0");
-							targetMaterial.SetFloat("occlusionTextureTexCoord", 0);
+							CoreEditorUtils.DrawFixMeBox("This mesh does not have UV1 vertex data but Base Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning, () =>
+							{
+								Undo.RegisterCompleteObjectUndo(targetMaterial, "Set baseColorTextureTexCoord to 0");
+								targetMaterial.SetFloat("baseColorTextureTexCoord", 0);
+							});
+						}
+						if (currentMaterialInfo.occlusionTextureTexCoord > 0)
+						{
+							CoreEditorUtils.DrawFixMeBox("This mesh does not have UV1 vertex data but Occlusion Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning, () =>
+							{
+								Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 0");
+								targetMaterial.SetFloat("occlusionTextureTexCoord", 0);
+							});
 						}
 					}
 				}
@@ -208,19 +218,18 @@ namespace UnityGLTF
 
 			if (targetMaterial.GetFloat("_Surface") == 0 && targetMaterial.GetColor("baseColorFactor").a != 1)
 			{
-				EditorGUILayout.HelpBox("Material is opaque but baseColorFactor has an alpha value != 1. This object might render unexpectedly in some viewers that blend results (e.g. AR, Babylon, Stager).", MessageType.Warning);
-				if (GUILayout.Button("Fix", EditorStyles.miniButtonRight, GUILayout.Width(50)))
+				CoreEditorUtils.DrawFixMeBox("Material is opaque but baseColorFactor has an alpha value != 1. This object might render unexpectedly in some viewers that blend results (e.g. AR, Babylon, Stager).", MessageType.Warning, () =>
 				{
 					Undo.RegisterCompleteObjectUndo(materialEditor.targets, "Set baseColorFactor.a to 1");
 					foreach (var t in materialEditor.targets)
 					{
-						var mat = (Material) t;
+						var mat = (Material)t;
 						var color = mat.GetColor("baseColorFactor");
 						color.a = 1;
 						mat.SetColor("baseColorFactor", color);
 						EditorUtility.SetDirty(mat);
 					}
-				}
+				});
 				haveDrawnSomething = true;
 			}
 
@@ -255,6 +264,11 @@ namespace UnityGLTF
 			}
 		}
 
+		private static bool HasPropertyButNoTex(Material targetMaterial, string name)
+		{
+			return targetMaterial.HasProperty(name) && !targetMaterial.GetTexture(name);
+		}
+
 		private void DrawProperties(Material targetMaterial, MaterialProperty[] properties)
 		{
 			// filter properties based on keywords
@@ -279,15 +293,16 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("clearcoat", StringComparison.Ordinal));
 			}
-			if (!targetMaterial.GetTexture("occlusionTexture"))
+			if (HasPropertyButNoTex(targetMaterial, "occlusionTexture"))
 			{
 				propertyList.RemoveAll(x => x.name == "occlusionStrength" || (x.name.StartsWith("occlusionTexture", StringComparison.Ordinal) && x.name != "occlusionTexture"));
 			}
-			if (!targetMaterial.GetTexture("baseColorTexture") && !targetMaterial.GetTexture("metallicRoughnessTexture") && !targetMaterial.GetTexture("normalTexture") && !targetMaterial.GetTexture("emissiveTexture"))
+			// remove UV-related properties
+			if (HasPropertyButNoTex(targetMaterial, "baseColorTexture") && HasPropertyButNoTex(targetMaterial,"metallicRoughnessTexture") && HasPropertyButNoTex(targetMaterial,"normalTexture") && HasPropertyButNoTex(targetMaterial,"emissiveTexture"))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("baseColorTexture", StringComparison.Ordinal) && x.name != "baseColorTexture");
 			}
-			if (!targetMaterial.GetTexture("normalTexture"))
+			if (HasPropertyButNoTex(targetMaterial,"normalTexture"))
 			{
 				propertyList.RemoveAll(x => x.name == "normalScale");
 			}
