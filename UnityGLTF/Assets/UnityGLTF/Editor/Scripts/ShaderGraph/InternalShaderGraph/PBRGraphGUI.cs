@@ -92,6 +92,20 @@ namespace UnityGLTF
 			public int baseColorTextureTexCoord;
 		}
 
+		private static bool HasAnyTextureAssigned(Material targetMaterial)
+		{
+			var s = targetMaterial.shader;
+			var propertyCount = ShaderUtil.GetPropertyCount(s);
+			for (var i = 0; i < propertyCount; i++)
+			{
+				if (ShaderUtil.GetPropertyType(s, i) != ShaderUtil.ShaderPropertyType.TexEnv) continue;
+				if (ShaderUtil.IsShaderPropertyHidden(s, i)) continue;
+				var tex = targetMaterial.GetTexture(ShaderUtil.GetPropertyName(s, i));
+				if (tex) return true;
+			}
+			return false;
+		}
+
 		private void DrawGameObjectInfo(Material targetMaterial)
 		{
 			var singleSelection = Selection.objects != null && Selection.objects.Length < 2;
@@ -177,6 +191,13 @@ namespace UnityGLTF
 					EditorGUILayout.Toggle("Has UV0", currentMaterialInfo.hasUV0);
 					EditorGUILayout.Toggle("Has UV1", currentMaterialInfo.hasUV1);
 					EditorGUI.EndDisabledGroup();
+
+					if (!currentMaterialInfo.hasUV0 && HasAnyTextureAssigned(targetMaterial))
+					{
+						EditorGUI.indentLevel++;
+						EditorGUILayout.HelpBox("This mesh has no UV coordinates but has textures assigned.", MessageType.Warning);
+						EditorGUI.indentLevel--;
+					}
 
 					if (currentMaterialInfo.hasUV1 && targetMaterial.HasProperty("occlusionTexture") && targetMaterial.GetTexture("occlusionTexture"))
 					{
