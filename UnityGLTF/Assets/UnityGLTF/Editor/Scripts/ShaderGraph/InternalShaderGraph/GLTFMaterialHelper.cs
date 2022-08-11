@@ -79,6 +79,30 @@ namespace UnityGLTF
 
 			material.SetFloat(metallicFactor, metallic);
 			material.SetFloat(roughnessFactor, 1 - smoothness);
+#if UNITY_EDITOR && UNITY_2022_1_OR_NEWER
+			var importerPath = AssetDatabase.GetAssetPath(metallicGloss);
+			var importer = AssetImporter.GetAtPath(importerPath) as TextureImporter;
+			const string ConversionWarning = "The Metallic (R) Smoothness (A) texture needs to be converted to Roughness (B) Metallic (G). ";
+			if (importer && importer.swizzleG != TextureImporterSwizzle.OneMinusR) // can't really detect if this has been done on the texture already, this is just a heuristic...
+			{
+				if (EditorUtility.DisplayDialog("Texture Conversion",
+					    ConversionWarning + "This is done by swizzling texture channels in the importer. Do you want to proceed?",
+					    "OK", DialogOptOutDecisionType.ForThisSession, nameof(GLTFMaterialHelper) + "_texture_conversion"))
+				{
+					importer.swizzleR = TextureImporterSwizzle.B;
+					importer.swizzleG = TextureImporterSwizzle.OneMinusR;
+					importer.swizzleB = TextureImporterSwizzle.G;
+					Undo.RegisterImporterUndo(importerPath, "Texture Swizzles (M__G > _RM_)");
+					importer.SaveAndReimport();
+				}
+			}
+			else
+			{
+				Debug.LogWarning(ConversionWarning + "This currently needs to be done manually. Please swap channels in an external software.", material);
+			}
+#else
+			Debug.LogWarning(ConversionWarning + "This currently needs to be done manually. Please swap channels in an external software.", material);
+#endif
 			// TODO: convert metallicGloss to metallicRoughnessTexture format: Metallic (R) + Smoothness (A) → Roughness (G) + Metallic (B)
 			// TODO: when smoothness is not 0 or 1 and there's a texture, need to convert to a texture and set roughness = 1, otherwise the math doesn't match
 			// TODO: figure out where to put the newly created texture, and how to avoid re-creating it several times when multiple materials may use it.
