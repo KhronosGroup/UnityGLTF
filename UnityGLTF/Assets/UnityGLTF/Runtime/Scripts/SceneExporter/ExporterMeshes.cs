@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime;
 using GLTF.Schema;
 using UnityEditor;
 using UnityEngine;
@@ -29,7 +28,26 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
 
-		private MeshId ExportMesh(string name, GameObject[] primitives)
+		private void RegisterPrimitivesWithNode(Node node, IEnumerable<GameObject> primitives)
+		{
+			// associate unity meshes with gltf mesh id
+			foreach (var prim in primitives)
+			{
+				var smr = prim.GetComponent<SkinnedMeshRenderer>();
+				if (smr != null)
+				{
+					_primOwner[new PrimKey { Mesh = smr.sharedMesh, Materials = smr.sharedMaterials }] = node.Mesh;
+				}
+				else
+				{
+					var filter = prim.GetComponent<MeshFilter>();
+					var renderer = prim.GetComponent<MeshRenderer>();
+					_primOwner[new PrimKey { Mesh = filter.sharedMesh, Materials = renderer.sharedMaterials }] = node.Mesh;
+				}
+			}
+		}
+
+		public MeshId ExportMesh(string name, GameObject[] primitives)
 		{
 			exportMeshMarker.Begin();
 

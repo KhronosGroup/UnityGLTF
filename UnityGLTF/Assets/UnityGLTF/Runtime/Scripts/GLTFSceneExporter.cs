@@ -756,22 +756,7 @@ namespace UnityGLTF
 			if (primitives.Length > 0)
 			{
 				node.Mesh = ExportMesh(nodeTransform.name, primitives);
-
-				// associate unity meshes with gltf mesh id
-				foreach (var prim in primitives)
-				{
-					var smr = prim.GetComponent<SkinnedMeshRenderer>();
-					if (smr != null)
-					{
-						_primOwner[new PrimKey { Mesh = smr.sharedMesh, Materials = smr.sharedMaterials }] = node.Mesh;
-					}
-					else
-					{
-						var filter = prim.GetComponent<MeshFilter>();
-						var renderer = prim.GetComponent<MeshRenderer>();
-						_primOwner[new PrimKey { Mesh = filter.sharedMesh, Materials = renderer.sharedMaterials }] = node.Mesh;
-					}
-				}
+				RegisterPrimitivesWithNode(node, primitives);
 			}
 
 			exportNodeMarker.End();
