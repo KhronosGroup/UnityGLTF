@@ -453,6 +453,7 @@ namespace UnityGLTF
 				}
 
 				_textures = loader.TextureCache
+					.Where(x => x != null)
 					.Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
 					.ToList();
 

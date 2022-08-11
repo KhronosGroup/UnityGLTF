@@ -203,8 +203,8 @@ namespace UnityGLTF
 			var valueDelta = keyframes[keyframeIndex].value - keyframes[keyframeIndex - 1].value;
 			var timeDelta = keyframes[keyframeIndex].time - keyframes[keyframeIndex - 1].time;
 
-			if(timeDelta <= 0) {
-				Debug.Log(LogType.Warning, "Unity does not allow you to put two keyframes in with the same time, so this should never occur.");
+			if (timeDelta <= 0) {
+				Debug.Log(LogType.Warning, "Time of subsequent animation keyframes is not increasing (glTF-Validator error ACCESSOR_ANIMATION_INPUT_NON_INCREASING)");
 				return 0;
 			}
 			return valueDelta / timeDelta;
