@@ -87,9 +87,13 @@ namespace UnityGLTF
 		    }
 	    }
 
-	    protected void SetDoubleSided(Material material) {
-		    material.doubleSidedGI = true;
-		    material.SetFloat(cullPropId, (int) CullMode.Off);
+	    protected void SetDoubleSided (Material material, bool doubleSided)
+	    {
+		    material.doubleSidedGI = doubleSided;
+		    var mode = doubleSided ? (int)CullMode.Off : (int)CullMode.Back;
+		    material.SetFloat(cullPropId, mode);
+		    material.SetFloat(cullModePropId, mode);
+		    material.SetFloat(cullModePropIdBuiltin, mode);
 	    }
 
 	    public static readonly int cutoffPropId = Shader.PropertyToID("_Cutoff");
@@ -110,6 +114,7 @@ namespace UnityGLTF
 
 	    static readonly int cullPropId = Shader.PropertyToID("_Cull");
 	    static readonly int cullModePropId = Shader.PropertyToID("_CullMode");
+	    static readonly int cullModePropIdBuiltin = Shader.PropertyToID("_BUILTIN_CullMode");
 	    static readonly int k_AlphaClip = Shader.PropertyToID("_AlphaClip");
 	    static readonly int k_AlphaClipBuiltin = Shader.PropertyToID("_BUILTIN_AlphaClip");
 	    static readonly int k_Surface = Shader.PropertyToID("_Surface");
@@ -167,14 +172,13 @@ namespace UnityGLTF
 
 	    public virtual bool DoubleSided
 	    {
-		    get { return _material.GetInt("_Cull") == (int)CullMode.Off; }
-		    set
-		    {
-			    if (value)
-				    _material.SetInt("_Cull", (int)CullMode.Off);
-			    else
-				    _material.SetInt("_Cull", (int)CullMode.Back);
-		    }
+		    get { return
+#if UNITY_2019_3_OR_NEWER
+			    !GraphicsSettings.currentRenderPipeline ?
+			    _material.GetInt(cullModePropIdBuiltin) == (int)CullMode.Off :
+#endif
+				_material.GetInt(cullPropId) == (int)CullMode.Off; }
+		    set { SetDoubleSided(_material, value); }
 	    }
 
 	    public virtual bool VertexColorsEnabled
