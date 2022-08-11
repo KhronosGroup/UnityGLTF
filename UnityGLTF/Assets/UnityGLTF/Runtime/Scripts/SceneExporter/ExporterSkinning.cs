@@ -119,7 +119,7 @@ namespace UnityGLTF
 			SkinnedMeshRenderer skinMesh = gameObject.GetComponent<SkinnedMeshRenderer>();
 			if (skinMesh)
 			{
-				if (!ExportAnimations && BakeSkinnedMeshes)
+				if (!ExportAnimations && settings.BakeSkinnedMeshes)
 				{
 					if (!_bakedMeshes.ContainsKey(skinMesh))
 					{

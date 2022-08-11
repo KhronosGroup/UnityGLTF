@@ -9,39 +9,30 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
-using GLTF.Schema.KHR_lights_punctual;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
-using CameraType = GLTF.Schema.CameraType;
-using LightType = UnityEngine.LightType;
 using WrapMode = GLTF.Schema.WrapMode;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace UnityGLTF
 {
 	public class ExportOptions
 	{
-		public bool ExportInactivePrimitives = true;
 		public bool TreatEmptyRootAsScene = false;
 		public bool MergeClipsWithMatchingNames = false;
 		public LayerMask ExportLayers = -1;
 		public ILogger logger;
+		internal readonly GLTFSettings settings;
 
-		public ExportOptions()
+		public ExportOptions(GLTFSettings settings = null)
 		{
-			var settings = GLTFSettings.GetOrCreateSettings();
+			if (!settings) settings = GLTFSettings.GetOrCreateSettings();
 			if (settings.UseMainCameraVisibility)
 				ExportLayers = Camera.main ? Camera.main.cullingMask : -1;
+			this.settings = settings;
 		}
 
 		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
@@ -169,55 +160,11 @@ namespace UnityGLTF
 		#region Settings
 
 		// Settings
-		static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
-
-		public static bool ExportNames {
-			get { return settings.ExportNames; }
-			set { settings.ExportNames = value; }
-		}
-		public static bool ExportFullPath
-		{
-			get { return settings.ExportFullPath; }
-			set { settings.ExportFullPath = value; }
-		}
-		public static bool RequireExtensions
-		{
-			get { return settings.RequireExtensions; }
-			set { settings.RequireExtensions = value; }
-		}
-		public static bool TryExportTexturesFromDisk
-		{
-			get { return settings.TryExportTexturesFromDisk; }
-			set { settings.TryExportTexturesFromDisk = value; }
-		}
-		public static bool ExportAnimations
-		{
-			get { return settings.ExportAnimations; }
-			set { settings.ExportAnimations = value; }
-		}
-		public static bool UniqueAnimationNames
-		{
-			get { return settings.UniqueAnimationNames; }
-			set { settings.UniqueAnimationNames = value; }
-		}
-		public static bool BakeSkinnedMeshes
-		{
-			get { return settings.BakeSkinnedMeshes; }
-			set { settings.BakeSkinnedMeshes = value; }
-		}
-		public static bool ExportDisabledGameObjects
-		{
-			get { return settings.ExportDisabledGameObjects; }
-			set { settings.ExportDisabledGameObjects = value; }
-		}
-
-#if UNITY_EDITOR
-		public static string SaveFolderPath
-		{
-			get { return settings.SaveFolderPath; }
-			set { settings.SaveFolderPath = value; }
-		}
-#endif
+		// private static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
+		private GLTFSettings settings => _exportOptions.settings;
+		private bool ExportNames => settings.ExportNames;
+		private bool RequireExtensions => settings.RequireExtensions;
+		private bool ExportAnimations => settings.ExportAnimations;
 
 		#endregion
 
@@ -802,7 +749,7 @@ namespace UnityGLTF
 			var nonPrims = new List<GameObject>(childCount);
 
 			// add another primitive if the root object also has a mesh
-			if (transform.gameObject.activeSelf || ExportDisabledGameObjects)
+			if (transform.gameObject.activeSelf || settings.ExportDisabledGameObjects)
 			{
 				if (ContainsValidRenderer(transform.gameObject))
 				{

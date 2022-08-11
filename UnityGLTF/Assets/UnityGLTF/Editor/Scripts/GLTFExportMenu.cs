@@ -107,19 +107,20 @@ namespace UnityGLTF
 
 		private static void Export(Transform[] transforms, bool binary, string sceneName)
 		{
+			var settings = GLTFSettings.GetOrCreateSettings();
 			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(transforms, exportOptions);
 
 			var invokedByShortcut = Event.current?.type == EventType.KeyDown;
-			var path = GLTFSceneExporter.SaveFolderPath;
+			var path = settings.SaveFolderPath;
 			if (!invokedByShortcut || !Directory.Exists(path))
-				path = EditorUtility.SaveFolderPanel("glTF Export Path", GLTFSceneExporter.SaveFolderPath, "");
+				path = EditorUtility.SaveFolderPanel("glTF Export Path", settings.SaveFolderPath, "");
 
 			if (!string.IsNullOrEmpty(path))
 			{
 				var ext = binary ? ".glb" : ".gltf";
 				var resultFile = GLTFSceneExporter.GetFileName(path, sceneName, ext);
-				GLTFSceneExporter.SaveFolderPath = path;
+				settings.SaveFolderPath = path;
 				if(binary)
 					exporter.SaveGLB(path, sceneName);
 				else

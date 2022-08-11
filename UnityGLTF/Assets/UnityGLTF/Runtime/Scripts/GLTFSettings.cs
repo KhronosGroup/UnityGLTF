@@ -114,184 +114,21 @@ namespace UnityGLTF
 	    [Tooltip("If off, vertex colors are not exported. Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
 		private bool exportVertexColors = true;
 
-		public bool ExportNames { get => exportNames;
-			set {
-				if(exportNames != value) {
-					exportNames = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool ExportFullPath
-		{ get => exportFullPath;
-			set {
-				if(exportFullPath != value) {
-					exportFullPath = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool UseMainCameraVisibility
-		{ get => useMainCameraVisibility;
-			set {
-				if(useMainCameraVisibility != value) {
-					useMainCameraVisibility = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool RequireExtensions
-		{ get => requireExtensions;
-			set {
-				if(requireExtensions != value) {
-					requireExtensions = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool TryExportTexturesFromDisk
-		{ get => tryExportTexturesFromDisk;
-			set {
-				if(tryExportTexturesFromDisk != value) {
-					tryExportTexturesFromDisk = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool UseTextureFileTypeHeuristic
-		{ get => useTextureFileTypeHeuristic;
-			set {
-				if(useTextureFileTypeHeuristic != value) {
-					useTextureFileTypeHeuristic = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool ExportVertexColors
-		{ get => exportVertexColors;
-			set {
-				if(exportVertexColors != value) {
-					exportVertexColors = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public int DefaultJpegQuality
-		{ get => defaultJpegQuality;
-			set {
-				if(defaultJpegQuality != value) {
-					defaultJpegQuality = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool ExportDisabledGameObjects
-		{ get => exportDisabledGameObjects;
-			set {
-				if(exportDisabledGameObjects != value) {
-					exportDisabledGameObjects = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool ExportAnimations
-		{ get => exportAnimations;
-			set {
-				if(exportAnimations != value) {
-					exportAnimations = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool UseAnimationPointer
-		{ get => useAnimationPointer;
-			set {
-				if(useAnimationPointer != value) {
-					useAnimationPointer = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool UniqueAnimationNames
-		{ get => uniqueAnimationNames;
-			set {
-				if(uniqueAnimationNames != value) {
-					uniqueAnimationNames = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool BlendShapeExportSparseAccessors
-		{ get => blendShapeExportSparseAccessors;
-			set {
-				if (blendShapeExportSparseAccessors != value) {
-					blendShapeExportSparseAccessors = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public BlendShapeExportPropertyFlags BlendShapeExportProperties
-		{ get => blendShapeExportProperties;
-			set {
-				if(blendShapeExportProperties != value) {
-					blendShapeExportProperties = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
-
-		public bool BakeSkinnedMeshes
-		{ get => bakeSkinnedMeshes;
-			set {
-				if(bakeSkinnedMeshes != value) {
-					bakeSkinnedMeshes = value;
-#if UNITY_EDITOR
-					EditorUtility.SetDirty(this);
-#endif
-				}
-			}
-		}
+		public bool ExportNames { get => exportNames; set  => exportNames = value; }
+		public bool ExportFullPath { get => exportFullPath; set => exportFullPath = value; }
+		public bool UseMainCameraVisibility { get => useMainCameraVisibility; set => useMainCameraVisibility = value; }
+		public bool RequireExtensions { get => requireExtensions; set => requireExtensions = value; }
+		public bool TryExportTexturesFromDisk { get => tryExportTexturesFromDisk; set => tryExportTexturesFromDisk = value; }
+		public bool UseTextureFileTypeHeuristic { get => useTextureFileTypeHeuristic; set => useTextureFileTypeHeuristic = value; }
+		public bool ExportVertexColors { get => exportVertexColors; set => exportVertexColors = value; }
+		public int DefaultJpegQuality { get => defaultJpegQuality; set => defaultJpegQuality = value; }
+		public bool ExportDisabledGameObjects { get => exportDisabledGameObjects; set => exportDisabledGameObjects = value; }
+		public bool ExportAnimations { get => exportAnimations; set => exportAnimations = value; }
+		public bool UseAnimationPointer { get => useAnimationPointer; set => useAnimationPointer = value; }
+		public bool UniqueAnimationNames { get => uniqueAnimationNames; set => uniqueAnimationNames = value; }
+		public bool BlendShapeExportSparseAccessors { get => blendShapeExportSparseAccessors; set => blendShapeExportSparseAccessors = value; }
+		public BlendShapeExportPropertyFlags BlendShapeExportProperties { get => blendShapeExportProperties; set => blendShapeExportProperties = value; }
+		public bool BakeSkinnedMeshes { get => bakeSkinnedMeshes; set => bakeSkinnedMeshes = value; }
 
 #if UNITY_EDITOR
 		private const string SaveFolderPathPref = k_PreferencesPrefix + "SaveFolderPath";

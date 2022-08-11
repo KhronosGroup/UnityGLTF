@@ -91,7 +91,7 @@ namespace UnityGLTF
 			// if not, create new mesh and return its id
 			var mesh = new GLTFMesh();
 
-			if (ExportNames)
+			if (settings.ExportNames)
 			{
 				mesh.Name = name;
 			}

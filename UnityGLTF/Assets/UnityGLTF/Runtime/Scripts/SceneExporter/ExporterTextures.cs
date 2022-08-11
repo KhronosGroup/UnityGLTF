@@ -146,7 +146,7 @@ namespace UnityGLTF
 				textureObj.name = (_root.Textures.Count + 1).ToString();
 			}
 
-			if (ExportNames)
+			if (settings.ExportNames)
 			{
 				texture.Name = textureObj.name;
 			}
@@ -192,7 +192,7 @@ namespace UnityGLTF
 			ableToExportFromDisk = false;
 			bool textureHasAlpha = true;
 
-			if (TryExportTexturesFromDisk && CanGetTextureDataFromDisk(textureMapType, texture, out string path))
+			if (settings.TryExportTexturesFromDisk && CanGetTextureDataFromDisk(textureMapType, texture, out string path))
 			{
 				if (IsPng(path) || IsJpeg(path))
 				{
@@ -222,7 +222,7 @@ namespace UnityGLTF
 			var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
 			var desiredExtension = canExportAsJpeg ? ".jpg" : ".png";
 
-			if (!ExportFullPath)
+			if (!settings.ExportFullPath)
 			{
 				imagePath = Path.GetFileName(imagePath);
 			}
@@ -439,7 +439,7 @@ namespace UnityGLTF
 			bool wasAbleToExportFromDisk = false;
 			bool textureHasAlpha = true;
 
-			if (TryExportTexturesFromDisk && CanGetTextureDataFromDisk(textureMapType, texture, out string path))
+			if (settings.TryExportTexturesFromDisk && CanGetTextureDataFromDisk(textureMapType, texture, out string path))
 			{
 				if (IsPng(path))
 				{

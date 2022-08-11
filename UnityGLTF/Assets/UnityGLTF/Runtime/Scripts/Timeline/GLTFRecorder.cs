@@ -308,16 +308,14 @@ namespace UnityGLTF.Timeline
 			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.keys.Count));
 #endif
 
-			var previousExportDisabledState = GLTFSceneExporter.ExportDisabledGameObjects;
-			var previousExportAnimationState = GLTFSceneExporter.ExportAnimations;
-			GLTFSceneExporter.ExportDisabledGameObjects = true;
-			GLTFSceneExporter.ExportAnimations = false;
+			var adjustedSettings = Object.Instantiate(GLTFSettings.GetOrCreateSettings());
+			adjustedSettings.ExportDisabledGameObjects = true;
+			adjustedSettings.ExportAnimations = false;
 
 			var logHandler = new StringBuilderLogHandler();
 
 			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions()
 			{
-				ExportInactivePrimitives = true,
 				AfterSceneExport = PostExport,
 				logger = new Logger(logHandler),
 			});
@@ -325,9 +323,6 @@ namespace UnityGLTF.Timeline
 			exporter.SaveGLBToStream(stream, sceneName);
 
 			logHandler.LogAndClear();
-
-			GLTFSceneExporter.ExportDisabledGameObjects = previousExportDisabledState;
-			GLTFSceneExporter.ExportAnimations = previousExportAnimationState;
 		}
 
 		private void PostExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
