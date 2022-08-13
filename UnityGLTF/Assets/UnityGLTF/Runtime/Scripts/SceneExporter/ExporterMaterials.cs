@@ -112,7 +112,10 @@ namespace UnityGLTF
 							material.AlphaCutoff = materialObj.GetFloat("_Cutoff");
 						material.AlphaMode = AlphaMode.MASK;
 					}
-					material.AlphaMode = AlphaMode.OPAQUE;
+					else
+					{
+						material.AlphaMode = AlphaMode.OPAQUE;
+					}
 					break;
 			}
 

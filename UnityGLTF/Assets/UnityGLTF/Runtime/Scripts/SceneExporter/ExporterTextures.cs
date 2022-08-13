@@ -611,8 +611,17 @@ namespace UnityGLTF
 			}
 			else
 			{
-				sampler.MinFilter = MinFilterMode.None;
-				sampler.MagFilter = MagFilterMode.None;
+				switch (texture.filterMode)
+				{
+					case FilterMode.Point:
+						sampler.MinFilter = MinFilterMode.Nearest;
+						sampler.MagFilter = MagFilterMode.Nearest;
+						break;
+					default:
+						sampler.MinFilter = MinFilterMode.Linear;
+						sampler.MagFilter = MagFilterMode.Linear;
+						break;
+				}
 			}
 
 			samplerId = new SamplerId
