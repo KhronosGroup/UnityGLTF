@@ -237,7 +237,7 @@ namespace UnityGLTF
 				haveDrawnSomething = true;
 			}
 
-			if (targetMaterial.GetFloat("_Surface") == 0 && targetMaterial.GetColor("baseColorFactor").a != 1)
+			if (targetMaterial.HasProperty("_Surface") && targetMaterial.GetFloat("_Surface") == 0 && targetMaterial.GetColor("baseColorFactor").a != 1)
 			{
 				DrawFixMeBox("Material is opaque but baseColorFactor has an alpha value != 1. This object might render unexpectedly in some viewers that blend results (e.g. AR, Babylon, Stager).", MessageType.Warning, () =>
 				{

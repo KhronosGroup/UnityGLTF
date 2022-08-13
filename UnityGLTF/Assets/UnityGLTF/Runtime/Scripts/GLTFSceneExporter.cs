@@ -27,7 +27,9 @@ namespace UnityGLTF
 		public ILogger logger;
 		internal readonly GLTFSettings settings;
 
-		public ExportOptions(GLTFSettings settings = null)
+		public ExportOptions() : this(GLTFSettings.GetOrCreateSettings()) { }
+		
+		public ExportOptions(GLTFSettings settings)
 		{
 			if (!settings) settings = GLTFSettings.GetOrCreateSettings();
 			if (settings.UseMainCameraVisibility)
