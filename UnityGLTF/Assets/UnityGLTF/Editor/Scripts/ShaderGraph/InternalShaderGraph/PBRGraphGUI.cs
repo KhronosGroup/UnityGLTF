@@ -170,7 +170,7 @@ namespace UnityGLTF
 
 						if (!string.IsNullOrEmpty(msg))
 						{
-							CoreEditorUtils.DrawFixMeBox(msg, msgType, () =>
+							DrawFixMeBox(msg, msgType, () =>
 							{
 								if (currentMaterialInfo.hasColor)
 								{
@@ -205,7 +205,7 @@ namespace UnityGLTF
 						var texCoord =  Mathf.RoundToInt(targetMaterial.GetFloat("occlusionTextureTexCoord"));
 						if (texCoord != 1)
 						{
-							CoreEditorUtils.DrawFixMeBox("This mesh has an Occlusion Texture and UV1 vertex data.\nWhen exporting to three.js, UV1 will be used independent of TexCoord setting.", MessageType.Warning, () =>
+							DrawFixMeBox("This mesh has an Occlusion Texture and UV1 vertex data.\nWhen exporting to three.js, UV1 will be used independent of TexCoord setting.", MessageType.Warning, () =>
 							{
 								Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 1");
 								targetMaterial.SetFloat("occlusionTextureTexCoord", 1);
@@ -218,7 +218,7 @@ namespace UnityGLTF
 					{
 						if (currentMaterialInfo.baseColorTextureTexCoord > 0)
 						{
-							CoreEditorUtils.DrawFixMeBox("This mesh does not have UV1 vertex data but Base Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning, () =>
+							DrawFixMeBox("This mesh does not have UV1 vertex data but Base Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning, () =>
 							{
 								Undo.RegisterCompleteObjectUndo(targetMaterial, "Set baseColorTextureTexCoord to 0");
 								targetMaterial.SetFloat("baseColorTextureTexCoord", 0);
@@ -226,7 +226,7 @@ namespace UnityGLTF
 						}
 						if (currentMaterialInfo.occlusionTextureTexCoord > 0)
 						{
-							CoreEditorUtils.DrawFixMeBox("This mesh does not have UV1 vertex data but Occlusion Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning, () =>
+							DrawFixMeBox("This mesh does not have UV1 vertex data but Occlusion Texture is set to use UV1. This will lead to unexpected results.", MessageType.Warning, () =>
 							{
 								Undo.RegisterCompleteObjectUndo(targetMaterial, "Set occlusionTextureTexCoord to 0");
 								targetMaterial.SetFloat("occlusionTextureTexCoord", 0);
@@ -239,7 +239,7 @@ namespace UnityGLTF
 
 			if (targetMaterial.GetFloat("_Surface") == 0 && targetMaterial.GetColor("baseColorFactor").a != 1)
 			{
-				CoreEditorUtils.DrawFixMeBox("Material is opaque but baseColorFactor has an alpha value != 1. This object might render unexpectedly in some viewers that blend results (e.g. AR, Babylon, Stager).", MessageType.Warning, () =>
+				DrawFixMeBox("Material is opaque but baseColorFactor has an alpha value != 1. This object might render unexpectedly in some viewers that blend results (e.g. AR, Babylon, Stager).", MessageType.Warning, () =>
 				{
 					Undo.RegisterCompleteObjectUndo(materialEditor.targets, "Set baseColorFactor.a to 1");
 					foreach (var t in materialEditor.targets)
@@ -258,6 +258,16 @@ namespace UnityGLTF
 			{
 				EditorGUILayout.HelpBox("Select a Renderer to see additional info", MessageType.None);
 			}
+		}
+
+		private static void DrawFixMeBox(string msg, MessageType msgType, Action action)
+		{
+#if HAVE_BUILTIN_SHADERGRAPH && false
+			CoreEditorUtils.DrawFixMeBox(msg, msgType, action);
+#else
+			EditorGUILayout.HelpBox(msg, msgType);
+			if (GUILayout.Button("Fix")) action();
+#endif
 		}
 
 #if HAVE_CATEGORIES
