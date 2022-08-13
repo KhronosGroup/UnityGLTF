@@ -102,7 +102,7 @@ namespace UnityGLTF
 					material.AlphaMode = AlphaMode.BLEND;
 					break;
 				default:
-					if (materialObj.IsKeywordEnabled("_ALPHATEST_ON"))
+					if (materialObj.IsKeywordEnabled("_ALPHATEST_ON") || materialObj.renderQueue == 2450)
 					{
 						if (materialObj.HasProperty("alphaCutoff"))
 							material.AlphaCutoff = materialObj.GetFloat("alphaCutoff");
