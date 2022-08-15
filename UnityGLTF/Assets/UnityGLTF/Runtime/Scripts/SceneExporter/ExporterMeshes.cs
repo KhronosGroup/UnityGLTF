@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using GLTF.Schema;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
+
+#if UNITY_EDITOR // required for in-editor access to non-readable meshes
+using UnityEditor;
+#endif
 
 namespace UnityGLTF
 {
@@ -28,50 +31,118 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
 
-		private void RegisterPrimitivesWithNode(Node node, IEnumerable<GameObject> primitives)
+		private void RegisterPrimitivesWithNode(Node node, List<UniquePrimitive> uniquePrimitives)
 		{
 			// associate unity meshes with gltf mesh id
-			foreach (var prim in primitives)
+			foreach (var primKey in uniquePrimitives)
 			{
-				var smr = prim.GetComponent<SkinnedMeshRenderer>();
-				if (smr != null)
-				{
-					_primOwner[new PrimKey { Mesh = smr.sharedMesh, Materials = smr.sharedMaterials }] = node.Mesh;
-				}
-				else
-				{
-					var filter = prim.GetComponent<MeshFilter>();
-					var renderer = prim.GetComponent<MeshRenderer>();
-					_primOwner[new PrimKey { Mesh = filter.sharedMesh, Materials = renderer.sharedMaterials }] = node.Mesh;
-				}
+				_primOwner[primKey] = node.Mesh;
 			}
 		}
 
-		public MeshId ExportMesh(string name, GameObject[] primitives)
+		private static List<UniquePrimitive> GetUniquePrimitivesFromGameObjects(IEnumerable<GameObject> primitives)
+		{
+			var primKeys = new List<UniquePrimitive>();
+
+			foreach (var prim in primitives)
+			{
+				Mesh meshObj = null;
+				SkinnedMeshRenderer smr = null;
+				var filter = prim.GetComponent<MeshFilter>();
+				if (filter)
+				{
+					meshObj = filter.sharedMesh;
+				}
+				else
+				{
+					smr = prim.GetComponent<SkinnedMeshRenderer>();
+					if (smr)
+					{
+						meshObj = smr.sharedMesh;
+					}
+				}
+
+				if (!meshObj)
+				{
+					Debug.LogWarning($"MeshFilter.sharedMesh on GameObject:{prim.name} is missing, skipping", prim);
+					exportPrimitiveMarker.End();
+					return null;
+				}
+
+
+#if UNITY_EDITOR
+				if (!MeshIsReadable(meshObj) && EditorUtility.IsPersistent(meshObj))
+				{
+#if UNITY_2019_3_OR_NEWER
+					var assetPath = AssetDatabase.GetAssetPath(meshObj);
+					if(assetPath?.Length > 30) assetPath = "..." + assetPath.Substring(assetPath.Length - 30);
+					if(EditorUtility.DisplayDialog("Exporting mesh but mesh is not readable",
+							$"The mesh {meshObj.name} is not readable. Do you want to change its import settings and make it readable now?\n\n" + assetPath,
+							"Make it readable", "No, skip mesh",
+							DialogOptOutDecisionType.ForThisSession, MakeMeshReadableDialogueDecisionKey))
+#endif
+					{
+						var path = AssetDatabase.GetAssetPath(meshObj);
+						var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+						if (importer)
+						{
+							importer.isReadable = true;
+							importer.SaveAndReimport();
+						}
+					}
+#if UNITY_2019_3_OR_NEWER
+					else
+					{
+						Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
+						exportPrimitiveMarker.End();
+						return null;
+					}
+#endif
+				}
+#endif
+
+				if (Application.isPlaying && !MeshIsReadable(meshObj))
+				{
+					Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
+					exportPrimitiveMarker.End();
+					return null;
+				}
+
+				var renderer = prim.GetComponent<MeshRenderer>();
+				if (!renderer) smr = prim.GetComponent<SkinnedMeshRenderer>();
+
+				if(!renderer && !smr)
+				{
+					Debug.LogWarning("GameObject does have neither renderer nor SkinnedMeshRenderer! " + prim.name, prim);
+					exportPrimitiveMarker.End();
+					return null;
+				}
+
+				var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
+
+				var primKey = new UniquePrimitive();
+				primKey.Mesh = meshObj;
+				primKey.Materials = materialsObj;
+				primKey.SkinnedMeshRenderer = smr;
+
+				primKeys.Add(primKey);
+			}
+
+			return primKeys;
+		}
+
+		public MeshId ExportMesh(string name, List<UniquePrimitive> uniquePrimitives)
 		{
 			exportMeshMarker.Begin();
 
 			// check if this set of primitives is already a mesh
 			MeshId existingMeshId = null;
-			var key = new PrimKey();
-			foreach (var prim in primitives)
+
+			foreach (var prim in uniquePrimitives)
 			{
-				var smr = prim.GetComponent<SkinnedMeshRenderer>();
-				if (smr != null)
-				{
-					key.Mesh = smr.sharedMesh;
-					key.Materials = smr.sharedMaterials;
-				}
-				else
-				{
-					var filter = prim.GetComponent<MeshFilter>();
-					var renderer = prim.GetComponent<MeshRenderer>();
-					key.Mesh = filter.sharedMesh;
-					key.Materials = renderer.sharedMaterials;
-				}
 
 				MeshId tempMeshId;
-				if (_primOwner.TryGetValue(key, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
+				if (_primOwner.TryGetValue(prim, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
 				{
 					existingMeshId = tempMeshId;
 				}
@@ -96,10 +167,10 @@ namespace UnityGLTF
 				mesh.Name = name;
 			}
 
-			mesh.Primitives = new List<MeshPrimitive>(primitives.Length);
-			foreach (var prim in primitives)
+			mesh.Primitives = new List<MeshPrimitive>(uniquePrimitives.Count);
+			foreach (var primKey in uniquePrimitives)
 			{
-				MeshPrimitive[] meshPrimitives = ExportPrimitive(prim, mesh);
+				MeshPrimitive[] meshPrimitives = ExportPrimitive(primKey, mesh);
 				if (meshPrimitives != null)
 				{
 					mesh.Primitives.AddRange(meshPrimitives);
@@ -124,87 +195,19 @@ namespace UnityGLTF
 		}
 
 		// a mesh *might* decode to multiple prims if there are submeshes
-		private MeshPrimitive[] ExportPrimitive(GameObject gameObject, GLTFMesh mesh)
+		private MeshPrimitive[] ExportPrimitive(UniquePrimitive primKey, GLTFMesh mesh)
 		{
 			exportPrimitiveMarker.Begin();
 
-			Mesh meshObj = null;
-			SkinnedMeshRenderer smr = null;
-			var filter = gameObject.GetComponent<MeshFilter>();
-			if (filter)
-			{
-				meshObj = filter.sharedMesh;
-			}
-			else
-			{
-				smr = gameObject.GetComponent<SkinnedMeshRenderer>();
-				if (smr)
-				{
-					meshObj = smr.sharedMesh;
-				}
-			}
-			if (!meshObj)
-			{
-				Debug.LogWarning($"MeshFilter.sharedMesh on GameObject:{gameObject.name} is missing, skipping", gameObject);
-				exportPrimitiveMarker.End();
-				return null;
-			}
-
-#if UNITY_EDITOR
-			if (!MeshIsReadable(meshObj) && EditorUtility.IsPersistent(meshObj))
-			{
-#if UNITY_2019_3_OR_NEWER
-				var assetPath = AssetDatabase.GetAssetPath(meshObj);
-				if(assetPath?.Length > 30) assetPath = "..." + assetPath.Substring(assetPath.Length - 30);
-				if(EditorUtility.DisplayDialog("Exporting mesh but mesh is not readable",
-					   $"The mesh {meshObj.name} is not readable. Do you want to change its import settings and make it readable now?\n\n" + assetPath,
-					   "Make it readable", "No, skip mesh",
-					   DialogOptOutDecisionType.ForThisSession, MakeMeshReadableDialogueDecisionKey))
-#endif
-				{
-					var path = AssetDatabase.GetAssetPath(meshObj);
-					var importer = AssetImporter.GetAtPath(path) as ModelImporter;
-					if (importer)
-					{
-						importer.isReadable = true;
-						importer.SaveAndReimport();
-					}
-				}
-#if UNITY_2019_3_OR_NEWER
-				else
-				{
-					Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
-					exportPrimitiveMarker.End();
-					return null;
-				}
-#endif
-			}
-#endif
-
-			if (Application.isPlaying && !MeshIsReadable(meshObj))
-			{
-				Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
-				exportPrimitiveMarker.End();
-				return null;
-			}
-
-			var renderer = gameObject.GetComponent<MeshRenderer>();
-			if (!renderer) smr = gameObject.GetComponent<SkinnedMeshRenderer>();
-
-			if(!renderer && !smr)
-			{
-				Debug.LogWarning("GameObject does have neither renderer nor SkinnedMeshRenderer! " + gameObject.name, gameObject);
-				exportPrimitiveMarker.End();
-				return null;
-			}
-			var materialsObj = renderer ? renderer.sharedMaterials : smr.sharedMaterials;
+			Mesh meshObj = primKey.Mesh;
+			Material[] materialsObj = primKey.Materials;
 
 			var prims = new MeshPrimitive[meshObj.subMeshCount];
 			List<MeshPrimitive> nonEmptyPrims = null;
 			var vertices = meshObj.vertices;
 			if (vertices.Length < 1)
 			{
-				Debug.LogWarning("MeshFilter does not contain any vertices, won't export: " + gameObject.name, gameObject);
+				Debug.LogWarning("MeshFilter does not contain any vertices, won't export: " + meshObj.name, meshObj);
 				exportPrimitiveMarker.End();
 				return null;
 			}
@@ -285,7 +288,7 @@ namespace UnityGLTF
 
 					primitive.Material = null;
 
-					ExportBlendShapes(smr, meshObj, submesh, primitive, mesh);
+					ExportBlendShapes(primKey.SkinnedMeshRenderer, meshObj, submesh, primitive, mesh);
 
 					accessors.subMeshPrimitives.Add(submesh, primitive);
 				}

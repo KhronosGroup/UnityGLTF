@@ -13,7 +13,7 @@ namespace UnityGLTF
 		{
 			exportSkinFromNodeMarker.Begin();
 
-			PrimKey key = new PrimKey();
+			UniquePrimitive key = new UniquePrimitive();
 			UnityEngine.Mesh mesh = GetMeshFromGameObject(transform.gameObject);
 			key.Mesh = mesh;
 			key.Materials = GetMaterialsFromGameObject(transform.gameObject);

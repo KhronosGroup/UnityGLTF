@@ -168,3 +168,6 @@ TestProjects/*/UserSettings
 TestProjects/*/.vsconfig
 TestProjects/*/Builds
 TestProjects/*/Assets/WSATestCertificate.pfx*
+
+# MacOS Metadata
+.DS_Store

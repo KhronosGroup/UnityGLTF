@@ -28,7 +28,7 @@ namespace UnityGLTF
 		internal readonly GLTFSettings settings;
 
 		public ExportOptions() : this(GLTFSettings.GetOrCreateSettings()) { }
-		
+
 		public ExportOptions(GLTFSettings settings)
 		{
 			if (!settings) settings = GLTFSettings.GetOrCreateSettings();
@@ -116,10 +116,15 @@ namespace UnityGLTF
 		private const int GLTFHeaderSize = 12;
 		private const int SectionHeaderSize = 8;
 
-		protected struct PrimKey
+		/// <summary>
+		/// A Primitive is a combination of Mesh + Material(s). It also contains a reference to the original SkinnedMeshRenderer,
+		/// if any, since that's the only way to get the actual current weights to export a blend shape primitive.
+		/// </summary>
+		public struct UniquePrimitive
 		{
-			public bool Equals(PrimKey other)
+			public bool Equals(UniquePrimitive other)
 			{
+				if (!Equals(SkinnedMeshRenderer, other.SkinnedMeshRenderer)) return false;
 				if (!Equals(Mesh, other.Mesh)) return false;
 				if (Materials == null && other.Materials == null) return true;
 				if (!(Materials != null && other.Materials != null)) return false;
@@ -134,7 +139,7 @@ namespace UnityGLTF
 
 			public override bool Equals(object obj)
 			{
-				return obj is PrimKey other && Equals(other);
+				return obj is UniquePrimitive other && Equals(other);
 			}
 
 			public override int GetHashCode()
@@ -155,9 +160,10 @@ namespace UnityGLTF
 
 			public Mesh Mesh;
 			public Material[] Materials;
+			public SkinnedMeshRenderer SkinnedMeshRenderer; // needed for BlendShape export, since Unity stores the actually used blend shape weights on the renderer. see ExporterMeshes.ExportBlendShapes
 		}
 
-		private readonly Dictionary<PrimKey, MeshId> _primOwner = new Dictionary<PrimKey, MeshId>();
+		private readonly Dictionary<UniquePrimitive, MeshId> _primOwner = new Dictionary<UniquePrimitive, MeshId>();
 
 		#region Settings
 
@@ -700,12 +706,12 @@ namespace UnityGLTF
 			_root.Nodes.Add(node);
 
 			// children that are primitives get put in a mesh
-			GameObject[] primitives, nonPrimitives;
-			FilterPrimitives(nodeTransform, out primitives, out nonPrimitives);
+			FilterPrimitives(nodeTransform, out GameObject[] primitives, out GameObject[] nonPrimitives);
 			if (primitives.Length > 0)
 			{
-				node.Mesh = ExportMesh(nodeTransform.name, primitives);
-				RegisterPrimitivesWithNode(node, primitives);
+				var uniquePrimitives = GetUniquePrimitivesFromGameObjects(primitives);
+				node.Mesh = ExportMesh(nodeTransform.name, uniquePrimitives);
+				RegisterPrimitivesWithNode(node, uniquePrimitives);
 			}
 
 			exportNodeMarker.End();
