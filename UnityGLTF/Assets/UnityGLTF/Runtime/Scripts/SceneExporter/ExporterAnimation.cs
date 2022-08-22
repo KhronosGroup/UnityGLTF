@@ -397,7 +397,7 @@ namespace UnityGLTF
 									var obj = animationPointer.animatedObject;
 									if (obj is Component c)
 										obj = c.transform;
-									if (obj is Transform transform && transform == alreadyExportedTransform)
+									if (obj is Transform tr2 && tr2 == alreadyExportedTransform)
 										return true;
 								}
 								return false;
