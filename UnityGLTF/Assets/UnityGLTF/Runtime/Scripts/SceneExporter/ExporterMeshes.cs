@@ -140,7 +140,6 @@ namespace UnityGLTF
 
 			foreach (var prim in uniquePrimitives)
 			{
-
 				MeshId tempMeshId;
 				if (_primOwner.TryGetValue(prim, out tempMeshId) && (existingMeshId == null || tempMeshId == existingMeshId))
 				{
