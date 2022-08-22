@@ -5,15 +5,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [1.12.0-pre] - 2022-08-12
-- remove: public settings API on GLTFSceneExporter is now gone. Pass in custom settings via ExportOptions if needed.
 - fix: emissive color alpha was set to 1 in some roundtrip cases when it should have been 0
-- fix: nullref when glTF had null textures (against the spec but other viewers tolerate it)
+- fix: nullref in import when glTF had null textures (against the spec, but other viewers tolerate it)
 - fix: unlit double sided was incorrectly imported in BiRP
 - fix: PBRGraphUI didn't properly draw infos for SkinnedMeshRenderer
 - fix: added safeguards against Shader.Find not working in first imports (fixes #51)
+- fix: textures without mipmaps should export closer to intended now
 - fix: missing pbrMetallicRoughness property was treated incorrectly
+- fix: BeforeSceneExport was missing from gltf+bin exports
 - feat: warn in PBRGraphGUI when UV0 isn't present (fixes #52)
 - feat: texture channel swizzling on URP/Lit > PBRGraph material conversion in 2022.1+
+- feat: expose ExportMesh API using UniquePrimitive array to export arbitrary meshes from extensions (#55, thanks @robertlong)
+- feat: GLTFSettings can now be passed into GLTFSceneExporter directly, falls back to project settings if none are provided
+- remove: public settings API on GLTFSceneExporter is now gone. Pass in custom settings via ExportOptions if needed.
 
 ## [1.11.0-pre] - 2022-07-27
 - fix: converting PBRGraph and UnlitGraph to each other shouldn't warn
