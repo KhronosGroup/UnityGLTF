@@ -4,7 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.12.0-pre] - 2022-08-12
+## [1.12.1-pre] - 2022-08-23
+- fix: nullref in export of missing mesh
+
+## [1.12.0-pre] - 2022-08-23
 - fix: emissive color alpha was set to 1 in some roundtrip cases when it should have been 0
 - fix: nullref in import when glTF had null textures (against the spec, but other viewers tolerate it)
 - fix: unlit double sided was incorrectly imported in BiRP
