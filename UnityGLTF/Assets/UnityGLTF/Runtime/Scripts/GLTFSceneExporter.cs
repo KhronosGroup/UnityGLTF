@@ -714,8 +714,11 @@ namespace UnityGLTF
 			if (primitives.Length > 0)
 			{
 				var uniquePrimitives = GetUniquePrimitivesFromGameObjects(primitives);
-				node.Mesh = ExportMesh(nodeTransform.name, uniquePrimitives);
-				RegisterPrimitivesWithNode(node, uniquePrimitives);
+				if (uniquePrimitives != null)
+				{
+					node.Mesh = ExportMesh(nodeTransform.name, uniquePrimitives);
+					RegisterPrimitivesWithNode(node, uniquePrimitives);
+				}
 			}
 
 			exportNodeMarker.End();
