@@ -315,15 +315,25 @@ namespace UnityGLTF
 						}
 						else
 						{
-							var member = binding.type
-								.GetMember(prop.propertyName, BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-								.FirstOrDefault();
+							var member = FindMemberOnTypeIncludingBaseTypes(binding.type, prop.propertyName);
 							if (member is FieldInfo field) prop.propertyType = field.FieldType;
 							else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
-							Debug.LogWarning($"No property conversion found: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
+							if(prop.propertyType == null)
+								Debug.LogWarning($"Member {prop.propertyName} not found on {binding.type}: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
 						}
 					}
 				}
+			}
+
+			private static MemberInfo FindMemberOnTypeIncludingBaseTypes(Type type, string memberName)
+			{
+				while (type != null)
+				{
+					var member = type.GetMember(memberName, BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					if (member.Length > 0) return member[0];
+					type = type.BaseType;
+				}
+				return null;
 			}
 
 			public void Init()
