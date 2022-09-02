@@ -13,7 +13,7 @@ namespace UnityGLTF.Loader
 		{
 			this.dir = dir;
 		}
-
+#if UNITY_WEBREQUEST
 		public async Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
 			var path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
@@ -41,6 +41,13 @@ namespace UnityGLTF.Loader
 			var stream = new MemoryStream(results, 0, results.Length, false, true);
 			return stream;
 		}
+#else
+		public async Task<Stream> LoadStreamAsync(string relativeFilePath)
+		{
+			await Task.CompletedTask;
+			throw new System.ApplicationException("The module com.unity.modules.unitywebrequest is required for this functionality. Please install it in your project.");
+		}
+#endif
 
 		// TODO: figure out how to do this correctly in a streaming fashion.
 		// private class DownloadStreamHandler : DownloadHandlerScript

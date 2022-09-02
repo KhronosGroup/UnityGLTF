@@ -24,7 +24,7 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneExporter
 	{
-#if ANIMATION_EXPORT_SUPPORTED
+#if ANIMATION_SUPPORTED
 		private readonly Dictionary<(AnimationClip clip, float speed), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, float), GLTFAnimation>();
 #endif
 #if ANIMATION_SUPPORTED
@@ -66,7 +66,7 @@ namespace UnityGLTF
 			exportAnimationFromNodeMarker.End();
 		}
 
-#if ANIMATION_EXPORT_SUPPORTED
+#if ANIMATION_SUPPORTED
 		private IEnumerable<AnimatorState> GetAnimatorStateParametersForClip(AnimationClip clip, AnimatorController animatorController)
 		{
 			if (!clip)
