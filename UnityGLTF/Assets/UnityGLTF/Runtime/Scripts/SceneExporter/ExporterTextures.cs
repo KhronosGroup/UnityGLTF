@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using GLTF.Schema;
 using UnityEngine;
+using UnityGLTF.Extensions;
 using Object = UnityEngine.Object;
 using WrapMode = GLTF.Schema.WrapMode;
 
@@ -171,6 +173,15 @@ namespace UnityGLTF
 
 			_root.Textures.Add(texture);
 
+			// HACK we should properly check if the above texture was exported as EXR and then treat it differently;
+			// this here assumes the texture is already readable / was read back
+			if (textureMapType == TextureMapType.Custom_HDR)
+			{
+				if (texture.Extensions == null) texture.Extensions = new Dictionary<string, IExtension>();
+				texture.Extensions.Add(EXT_texture_exr.EXTENSION_NAME, new EXT_texture_exr(texture.Source));
+				DeclareExtensionUsage(EXT_texture_exr.EXTENSION_NAME);
+			}
+
 			return id;
 		}
 
@@ -221,6 +232,8 @@ namespace UnityGLTF
 
 			var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
 			var desiredExtension = canExportAsJpeg ? ".jpg" : ".png";
+			if (textureMapType == TextureMapType.Custom_HDR)
+				desiredExtension = ".exr";
 
 			if (!settings.ExportFullPath)
 			{
@@ -436,7 +449,7 @@ namespace UnityGLTF
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
 
-			bool wasAbleToExportFromDisk = false;
+			bool wasAbleToExport = false;
 			bool textureHasAlpha = true;
 
 			if (settings.TryExportTexturesFromDisk && CanGetTextureDataFromDisk(textureMapType, texture, out string path))
@@ -446,14 +459,14 @@ namespace UnityGLTF
 					image.MimeType = PNGMimeType;
 					var imageBytes = GetTextureDataFromDisk(texture);
 					_bufferWriter.Write(imageBytes);
-					wasAbleToExportFromDisk = true;
+					wasAbleToExport = true;
 				}
 				else if (IsJpeg(path))
 				{
 					image.MimeType = JPEGMimeType;
 					var imageBytes = GetTextureDataFromDisk(texture);
 					_bufferWriter.Write(imageBytes);
-					wasAbleToExportFromDisk = true;
+					wasAbleToExport = true;
 				}
 				else
 				{
@@ -461,7 +474,17 @@ namespace UnityGLTF
 				}
 			}
 
-			if (!wasAbleToExportFromDisk)
+			// export in-memory floating point textures as EXR
+			// TODO add readback when not readable
+			if (!wasAbleToExport && textureMapType == TextureMapType.Custom_HDR && texture.isReadable && texture is Texture2D texture2D)
+			{
+				var exrImageData = texture2D.EncodeToEXR();
+				image.MimeType = "image/exr";
+				_bufferWriter.Write(exrImageData);
+				wasAbleToExport = true;
+			}
+
+			if (!wasAbleToExport)
 		    {
 				var sRGB = true;
 
@@ -503,6 +526,11 @@ namespace UnityGLTF
 						// GL.sRGBWrite = false; // TODO check what we should do here. Needs tests!
 						Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
 						textureHasAlpha = false;
+						break;
+					case TextureMapType.Custom_HDR:
+						Debug.LogWarning("HDR Texture Export from non-readable textures isn't supported yet", texture);
+						Graphics.Blit(texture, destRenderTexture);
+						textureHasAlpha = true;
 						break;
 					default:
 						Graphics.Blit(texture, destRenderTexture);

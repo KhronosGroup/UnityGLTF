@@ -78,7 +78,8 @@ namespace UnityGLTF
 			Light,
 			Occlusion,
 			MetallicGloss_DontConvert,
-			Custom_Unknown
+			Custom_Unknown,
+			Custom_HDR,
 		}
 
 		private struct ImageInfo
