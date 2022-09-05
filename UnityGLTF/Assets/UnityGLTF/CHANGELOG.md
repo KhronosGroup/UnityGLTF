@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.13.0-pre] - 2022-09-05
+- add: preliminary HDR texture export in EXT_texture_exr extension
+- fix: Unity Editor module related issues
+- fix: wrongly exporting two keyframes for animations with only one keyframe
+- fix: children of lights and cameras were inverted
+
 ## [1.12.2-pre] - 2022-08-29
 - fix: KHR_animation_pointer export where member is declared on base type
 
