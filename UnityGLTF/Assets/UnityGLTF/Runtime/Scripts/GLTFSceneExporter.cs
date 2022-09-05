@@ -694,7 +694,8 @@ namespace UnityGLTF
 				node.Light = ExportLight(unityLight);
 			}
 
-            if (unityLight != null || unityCamera != null)
+			var needsInvertedLookDirection = unityLight || unityCamera;
+            if (needsInvertedLookDirection)
             {
                 node.SetUnityTransform(nodeTransform, true);
             }
@@ -731,11 +732,40 @@ namespace UnityGLTF
 			// children that are not primitives get added as child nodes
 			if (nonPrimitives.Length > 0)
 			{
-				node.Children = new List<NodeId>(nonPrimitives.Length);
+				var parentOfChilds = node;
+
+				// when we're exporting a light or camera, we add an implicit node as first child of the camera/light node.
+				// this ensures that child objects and animations etc. "just work".
+				if (needsInvertedLookDirection)
+				{
+					var inbetween = new Node();
+
+					if (ExportNames)
+					{
+						inbetween.Name = nodeTransform.name + "-flipped";
+					}
+
+					inbetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
+
+					var inbetweenId = new NodeId
+					{
+						Id = _root.Nodes.Count,
+						Root = _root
+					};
+
+					_root.Nodes.Add(inbetween);
+
+					node.Children = new List<NodeId>(1);
+					node.Children.Add(inbetweenId);
+
+					parentOfChilds = inbetween;
+				}
+
+				parentOfChilds.Children = new List<NodeId>(nonPrimitives.Length);
 				foreach (var child in nonPrimitives)
 				{
 					if(!ShouldExportTransform(child.transform)) continue;
-					node.Children.Add(ExportNode(child.transform));
+					parentOfChilds.Children.Add(ExportNode(child.transform));
 				}
 			}
 

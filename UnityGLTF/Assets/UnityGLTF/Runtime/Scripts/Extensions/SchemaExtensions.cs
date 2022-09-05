@@ -55,6 +55,8 @@ namespace UnityGLTF.Extensions
 			}
 		}
 
+		internal static readonly Quaternion InvertDirection = new Quaternion(0, -1, 0, 0);
+
 		/// <summary>
 		/// Set a gltf node's converted translation, rotation, and scale from a unity transform
 		/// </summary>
@@ -64,7 +66,7 @@ namespace UnityGLTF.Extensions
 		public static void SetUnityTransform(this Node node, Transform transform, bool invertLookDirection)
 		{
 			node.Translation = transform.localPosition.ToGltfVector3Convert();
-			node.Rotation = (transform.localRotation * (invertLookDirection ? new Quaternion(0, -1, 0, 0) : Quaternion.identity)).ToGltfQuaternionConvert();
+			node.Rotation = (transform.localRotation * (invertLookDirection ? InvertDirection : Quaternion.identity)).ToGltfQuaternionConvert();
 			node.Scale = transform.localScale.ToGltfVector3Raw();
 		}
 

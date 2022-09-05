@@ -58,5 +58,19 @@ namespace GLTF.Math
 		{
 			return !left.Equals(right);
 		}
+
+		/// First quaternion.
+		/// Second quaternion.
+		/// Result of multiplication.
+		public static Quaternion operator *(Quaternion left, Quaternion right)
+		{
+			float x = left.W * right.X + left.X * right.W + left.Y * right.Z - left.Z * right.Y;
+			float y = left.W * right.Y + left.Y * right.W + left.Z * right.X - left.X * right.Z;
+			float z = left.W * right.Z + left.Z * right.W + left.X * right.Y - left.Y * right.X;
+			float w = left.W * right.W - left.X * right.X - left.Y * right.Y - left.Z * right.Z;
+			Quaternion result = new Quaternion(x, y, z, w);
+			return result;
+
+		}
 	}
 }
