@@ -73,6 +73,11 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
 		{
+			if (!texture)
+			{
+				UnityEngine.Debug.LogError("Can not export missing texture: " + outputPath);
+				return;
+			}
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			if (swapMetalGlossChannels)
 				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
@@ -296,9 +301,11 @@ namespace UnityGLTF
 				Uri.EscapeDataString(Path.GetFileName(filenamePath))
 			).Replace("\\","/");
 
+			// TODO: handle cubemap export
+			var imageInfoTexture = texture as Texture2D;
             _imageInfos.Add(new ImageInfo
 			{
-				texture = texture as Texture2D,
+				texture = imageInfoTexture,
 				textureMapType = textureMapType,
 				outputPath = filenamePath,
 				canBeExportedFromDisk = canBeExportedFromDisk,
