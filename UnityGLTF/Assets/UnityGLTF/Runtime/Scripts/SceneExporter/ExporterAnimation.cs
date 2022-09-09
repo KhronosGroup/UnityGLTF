@@ -315,14 +315,34 @@ namespace UnityGLTF
 						}
 						else
 						{
-							var member = FindMemberOnTypeIncludingBaseTypes(binding.type, prop.propertyName);
-							if (member is FieldInfo field) prop.propertyType = field.FieldType;
-							else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
-							if(prop.propertyType == null)
-								Debug.LogWarning($"Member {prop.propertyName} not found on {binding.type}: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
+							TryFindMemberBinding(binding, prop, prop.propertyName);
+							// var member = FindMemberOnTypeIncludingBaseTypes(binding.type, prop.propertyName);
+							// if (member is FieldInfo field) prop.propertyType = field.FieldType;
+							// else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
+							// if(prop.propertyType == null)
+							// 	Debug.LogWarning($"Member {prop.propertyName} not found on {binding.type}: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
 						}
 					}
 				}
+			}
+
+			private static bool TryFindMemberBinding(EditorCurveBinding binding, PropertyCurve prop, string memberName, int iteration = 0)
+			{
+				var member = FindMemberOnTypeIncludingBaseTypes(binding.type, memberName);
+				if (member is FieldInfo field) prop.propertyType = field.FieldType;
+				else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
+				if (member != null) return true;
+				if (iteration == 0)
+				{
+					// some members start with m_, for example m_AnchoredPosition in RectTransform but the field/property name is actually anchoredPosition
+					if (memberName.StartsWith("m_"))
+					{
+						memberName = char.ToLowerInvariant(memberName[2]) + memberName.Substring(3);
+						return TryFindMemberBinding(binding, prop, memberName, ++iteration);
+					}
+				}
+				Debug.LogWarning($"Member {prop.propertyName} not found on {binding.type}: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
+				return false;
 			}
 
 			private static MemberInfo FindMemberOnTypeIncludingBaseTypes(Type type, string memberName)
