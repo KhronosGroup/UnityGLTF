@@ -97,10 +97,10 @@ namespace UnityGLTF
 						case "_BaseMap_ST":
 						case "_BaseColorTexture_ST":
 						case "baseColorTexture_ST":
-							if (!(material.HasProperty("_MainTex") && material.GetTexture(_MainTex)) &&
-							    !(material.HasProperty("_BaseMap") && material.GetTexture(_BaseMap)) &&
-							    !(material.HasProperty("_BaseColorTexture") && material.GetTexture(_BaseColorTexture)) &&
-							    !(material.HasProperty("baseColorTexture") && material.GetTexture(baseColorTexture))) return;
+							if (!(material.HasProperty(_MainTex) && material.GetTexture(_MainTex)) &&
+							    !(material.HasProperty(_BaseMap) && material.GetTexture(_BaseMap)) &&
+							    !(material.HasProperty(_BaseColorTexture) && material.GetTexture(_BaseColorTexture)) &&
+							    !(material.HasProperty(baseColorTexture) && material.GetTexture(baseColorTexture))) return;
 							propertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
@@ -117,9 +117,9 @@ namespace UnityGLTF
 						case "_EmissionMap_ST":
 						case "_EmissiveTexture_ST":
 						case "emissiveTexture_ST":
-							if (!(material.HasProperty("_EmissionMap") && material.GetTexture(_EmissionMap)) &&
-							    !(material.HasProperty("_EmissiveTexture") && material.GetTexture(_EmissiveTexture)) &&
-							    !(material.HasProperty("emissiveTexture") && material.GetTexture(emissiveTexture))) return;
+							if (!(material.HasProperty(_EmissionMap) && material.GetTexture(_EmissionMap)) &&
+							    !(material.HasProperty(_EmissiveTexture) && material.GetTexture(_EmissiveTexture)) &&
+							    !(material.HasProperty(emissiveTexture) && material.GetTexture(emissiveTexture))) return;
 							propertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
@@ -139,9 +139,9 @@ namespace UnityGLTF
 						case "_BumpMap_ST":
 						case "_NormalTexture_ST":
 						case "normalTexture_ST":
-							if (!(material.HasProperty("_BumpMap") && material.GetTexture(_BumpMap)) &&
-							    !(material.HasProperty("_NormalTexture") && material.GetTexture(_NormalTexture)) &&
-							    !(material.HasProperty("normalTexture") && material.GetTexture(normalTexture))) return;
+							if (!(material.HasProperty(_BumpMap) && material.GetTexture(_BumpMap)) &&
+							    !(material.HasProperty(_NormalTexture) && material.GetTexture(_NormalTexture)) &&
+							    !(material.HasProperty(normalTexture) && material.GetTexture(normalTexture))) return;
 							propertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
@@ -155,9 +155,9 @@ namespace UnityGLTF
 						case "_OcclusionMap_ST":
 						case "_OcclusionTexture_ST":
 						case "occlusionTexture_ST":
-							if (!(material.HasProperty("_OcclusionMap") && material.GetTexture(_OcclusionMap)) &&
-							    !(material.HasProperty("_OcclusionTexture") && material.GetTexture(_OcclusionTexture)) &&
-							    !(material.HasProperty("occlusionTexture") && material.GetTexture(occlusionTexture))) return;
+							if (!(material.HasProperty(_OcclusionMap) && material.GetTexture(_OcclusionMap)) &&
+							    !(material.HasProperty(_OcclusionTexture) && material.GetTexture(_OcclusionTexture)) &&
+							    !(material.HasProperty(occlusionTexture) && material.GetTexture(occlusionTexture))) return;
 							propertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
 							secondPropertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
 							isTextureTransform = true;
