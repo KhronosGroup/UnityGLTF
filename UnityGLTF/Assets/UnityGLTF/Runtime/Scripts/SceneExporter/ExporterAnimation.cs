@@ -231,6 +231,8 @@ namespace UnityGLTF
 				{
 					var prop = new PropertyCurve(animatedObject, binding);
 					prop.curve.Add(curve);
+					if (animatedObject is GameObject || animatedObject is Component)
+						TryFindMemberBinding(binding, prop, prop.propertyName);
 					propertyCurves.Add(binding.propertyName, prop);
 				}
 				else
@@ -288,7 +290,6 @@ namespace UnityGLTF
 											break;
 										case ShaderUtil.ShaderPropertyType.Float:
 											prop.propertyType = typeof(float);
-											prop.propertyType = typeof(float);
 											break;
 										case ShaderUtil.ShaderPropertyType.TexEnv:
 											prop.propertyType = typeof(Texture);
@@ -328,10 +329,22 @@ namespace UnityGLTF
 
 			private static bool TryFindMemberBinding(EditorCurveBinding binding, PropertyCurve prop, string memberName, int iteration = 0)
 			{
+				if (memberName == "m_IsActive")
+				{
+					prop.propertyType = typeof(float);
+					prop.propertyName = "activeSelf";
+					return true;
+				}
+
 				var member = FindMemberOnTypeIncludingBaseTypes(binding.type, memberName);
 				if (member is FieldInfo field) prop.propertyType = field.FieldType;
 				else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
-				if (member != null) return true;
+				if (member != null)
+				{
+					prop.propertyName = member.Name;
+					return true;
+				}
+
 				if (iteration == 0)
 				{
 					// some members start with m_, for example m_AnchoredPosition in RectTransform but the field/property name is actually anchoredPosition
@@ -341,6 +354,7 @@ namespace UnityGLTF
 						return TryFindMemberBinding(binding, prop, memberName, ++iteration);
 					}
 				}
+
 				Debug.LogWarning($"Member {prop.propertyName} not found on {binding.type}: implicitly handling animated property {prop.propertyName} ({prop.propertyType}) on target {prop.target}", prop.target);
 				return false;
 			}
@@ -866,6 +880,7 @@ namespace UnityGLTF
 				case Light l: return GetLightIndex(l);
 				case Camera c: return GetCameraIndex(c);
 				case Transform t: return GetTransformIndex(t);
+				case GameObject g: return GetTransformIndex(g.transform);
 				case Component k: return GetTransformIndex(k.transform);
 			}
 

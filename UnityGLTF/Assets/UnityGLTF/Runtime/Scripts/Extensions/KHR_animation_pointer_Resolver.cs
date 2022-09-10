@@ -48,12 +48,19 @@ namespace UnityGLTF.Extensions
 						reg.path = "/cameras/" + id + "/" + reg.propertyBinding;
 						break;
 					case Component comp:
+					case GameObject g:
 						reg.path = "/nodes/" + id + "/" + reg.propertyBinding;
 						var componentPath = reg.path;
 						foreach (var res in exporter.pointerResolvers)
 						{
 							if (res.TryResolve(reg.animatedObject, ref componentPath))
+							{
 								reg.path = componentPath;
+							}
+							else
+							{
+								Debug.LogWarning("Wasn't able to resolve animation pointer for " + reg.animatedObject + " at " + componentPath + ". You can attach custom resolvers to animate properties in extensions.");
+							}
 						}
 						break;
 					case Material mat:
