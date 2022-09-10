@@ -314,6 +314,10 @@ namespace UnityGLTF
 									break;
 							}
 						}
+						else if (animatedObject is Camera)
+						{
+							// types match, names are explicitly handled in ExporterAnimationPointer.cs
+						}
 						else
 						{
 							TryFindMemberBinding(binding, prop, prop.propertyName);
@@ -329,6 +333,10 @@ namespace UnityGLTF
 
 			private static bool TryFindMemberBinding(EditorCurveBinding binding, PropertyCurve prop, string memberName, int iteration = 0)
 			{
+				// explicitly handled
+				if(binding.type == typeof(Camera) || binding.type == typeof(Light))
+					return true;
+
 				if (memberName == "m_IsActive")
 				{
 					prop.propertyType = typeof(float);

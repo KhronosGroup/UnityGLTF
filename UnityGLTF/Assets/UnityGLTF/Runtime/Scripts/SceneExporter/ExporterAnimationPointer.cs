@@ -257,6 +257,9 @@ namespace UnityGLTF
 						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenRoughnessFactor)}";
 						//	extensionName = KHR_materials_sheen_Factory.EXTENSION_NAME;
 						// 	break;
+						default:
+							Debug.Log(LogType.Warning, "Unknown property name on Material " + material + ": " + propertyName);
+							break;
 					}
 					break;
 				case Light light:
@@ -284,6 +287,7 @@ namespace UnityGLTF
 							break;
 						default:
 							extensionName = null;
+							Debug.Log(LogType.Warning, "Unknown property name on Light " + light + ": " + propertyName);
 							break;
 					}
 					break;
@@ -303,6 +307,9 @@ namespace UnityGLTF
 							case "far clip plane":
 								propertyName = "orthographic/zfar";
 								break;
+							default:
+								Debug.Log(LogType.Warning, "Unknown property name on Camera " + camera + ": " + propertyName);
+								break;
 						}
 					}
 					else
@@ -319,6 +326,9 @@ namespace UnityGLTF
 								break;
 							case "far clip plane":
 								propertyName = "perspective/zfar";
+								break;
+							default:
+								Debug.Log(LogType.Warning, "Unknown property name on Camera " + camera + ": " + propertyName);
 								break;
 						}
 					}
