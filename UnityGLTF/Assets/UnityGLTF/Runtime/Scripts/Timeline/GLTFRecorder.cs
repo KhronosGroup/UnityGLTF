@@ -285,6 +285,15 @@ namespace UnityGLTF.Timeline
 			lastRecordedTime = time;
 		}
 
+		internal void EndRecording(out Dictionary<Transform, AnimationData> param)
+		{
+			param = null;
+			if (!isRecording) return;
+
+			isRecording = false;
+			param = data;
+		}
+
 		public void EndRecording(string filename, string sceneName = "scene")
 		{
 			if (!isRecording) return;

@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityGLTF.Extensions;
 using Object = UnityEngine.Object;
 
@@ -210,7 +211,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private struct TargetCurveSet
+		internal struct TargetCurveSet
 		{
 			#pragma warning disable 0649
 			public AnimationCurve[] translationCurves;
@@ -587,6 +588,12 @@ namespace UnityGLTF
 		{
 #if UNITY_EDITOR
 
+			if (clip.humanMotion)
+			{
+				CollectClipCurvesForHumanoid(root, clip, targetCurves);
+				return;
+			}
+
 			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
 			{
 				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
@@ -598,7 +605,11 @@ namespace UnityGLTF
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
 				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
 
-				if (!containsCompatibleData && !settings.UseAnimationPointer) continue;
+				if (!containsCompatibleData && !settings.UseAnimationPointer)
+				{
+					Debug.LogWarning("No compatible data found in clip binding: " + binding.propertyName, clip);
+					continue;
+				}
 
 				if (!targetCurves.ContainsKey(binding.path))
 				{
