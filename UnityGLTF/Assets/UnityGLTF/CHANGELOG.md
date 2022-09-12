@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.15.0-pre] - 2022-09-13
+- fix: workaround for ShaderGraph bug on 2021.2+ that breaks defining baseColorTexture_ST manually
+- fix: workaround for Unity regression in 2022.1+ where checking material properties returns wrong results in some cases
+- feat: allow exporting of Humanoid animation clips (get baked to generic)
+- change: texture aniso values >= 1 now result in LinearMipmapLinear filtering to match visual result in Unity better
+
 ## [1.14-0-pre] - 2022-09-11
 - fix: log error instead of exception for missing textures on export
 - feat: allow referencing GameObjects for `KHR_animation_pointer`
