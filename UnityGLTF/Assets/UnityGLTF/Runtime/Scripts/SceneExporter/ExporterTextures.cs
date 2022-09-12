@@ -616,8 +616,10 @@ namespace UnityGLTF
 			}
 
 			var mipmapCount = 1;
+			var aniso = 1;
 #if UNITY_2019_2_OR_NEWER
 			mipmapCount = texture.mipmapCount;
+			aniso = texture.anisoLevel;
 #else
 			if (texture is Texture2D tex2D) mipmapCount = tex2D.mipmapCount;
 #endif
@@ -630,7 +632,8 @@ namespace UnityGLTF
 						sampler.MagFilter = MagFilterMode.Nearest;
 						break;
 					case FilterMode.Bilinear:
-						sampler.MinFilter = MinFilterMode.LinearMipmapNearest;
+						// not technically correct but matches result in Unity much better. When any aniso is on, the expectation is a smooth texture transition.
+						sampler.MinFilter = aniso < 1 ? MinFilterMode.LinearMipmapNearest : MinFilterMode.LinearMipmapLinear;
 						sampler.MagFilter = MagFilterMode.Linear;
 						break;
 					case FilterMode.Trilinear:
