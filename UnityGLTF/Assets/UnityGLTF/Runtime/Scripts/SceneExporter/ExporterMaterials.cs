@@ -4,6 +4,9 @@ using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnityGLTF
 {
@@ -348,7 +351,35 @@ namespace UnityGLTF
 
 			if (offset == Vector2.zero && scale == Vector2.one && rotation == 0)
 			{
-				if(mat.HasProperty("_MainTex_ST") || mat.HasProperty("_BaseMap_ST") || mat.HasProperty("_BaseColorMap_ST") || mat.HasProperty("_BaseColorTexture_ST") || mat.HasProperty("baseColorTexture_ST"))
+				var checkForName = texName + "_ST";
+				// Debug.Log("Checking for property: " + checkForName + " : " + mat.HasProperty(checkForName) + " == " + (mat.HasProperty(checkForName) ? mat.GetVector(checkForName) : "null"));
+				var textureHasST = mat.HasProperty(checkForName);
+#if UNITY_EDITOR
+				if (textureHasST)
+				{
+					var c = ShaderUtil.GetPropertyCount(mat.shader);
+					var actuallyFoundST = false;
+					for (int i = 0; i < c; i++)
+					{
+						if (ShaderUtil.GetPropertyName(mat.shader, i) == checkForName)
+						{
+							actuallyFoundST = true;
+							break;
+						}
+					}
+
+					if (!actuallyFoundST)
+					{
+						// Debug.Log("mat.HasProperty(" + checkForName + ") returned true, but turns out it doesn't have that property...");
+						textureHasST = false;
+					}
+				}
+#endif
+				if (textureHasST)
+				{
+					// ignore, texture has explicit _ST property
+				}
+				else if(mat.HasProperty("_MainTex_ST") || mat.HasProperty("_BaseMap_ST") || mat.HasProperty("_BaseColorMap_ST") || mat.HasProperty("_BaseColorTexture_ST") || mat.HasProperty("baseColorTexture_ST"))
 				{
 					// difficult choice here: some shaders might support texture transform per-texture, others use the main transform.
 					if (mat.HasProperty("baseColorTexture"))
