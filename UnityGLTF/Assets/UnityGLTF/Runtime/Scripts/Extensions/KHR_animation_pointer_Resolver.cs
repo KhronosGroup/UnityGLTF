@@ -34,7 +34,6 @@ namespace UnityGLTF.Extensions
 
 		public void Resolve(GLTFSceneExporter exporter)
 		{
-			var toRemove = new List<KHR_animation_pointer>();
 			foreach (var reg in registered)
 			{
 				animationPointerResolverMarker.Begin();
@@ -59,7 +58,7 @@ namespace UnityGLTF.Extensions
 							}
 							else
 							{
-								Debug.LogWarning("Wasn't able to resolve animation pointer for " + reg.animatedObject + " at " + componentPath + ". You can attach custom resolvers to animate properties in extensions.");
+								Debug.LogWarning("Wasn't able to resolve animation pointer for " + reg.animatedObject + " at " + componentPath + ". You can attach custom resolvers to animate properties in extensions.", reg.animatedObject as Object);
 							}
 						}
 						break;
