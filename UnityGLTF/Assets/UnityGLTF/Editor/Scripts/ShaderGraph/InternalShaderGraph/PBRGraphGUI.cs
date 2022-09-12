@@ -308,6 +308,12 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal) || x.name.EndsWith("Rotation", StringComparison.Ordinal));
 			}
+			// want to remove the _ST properties since they are drawn inline already on 2021.2+
+			#if UNITY_2021_2_OR_NEWER
+			{
+				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal));
+			}
+			#endif
 			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("thickness", StringComparison.Ordinal) || x.name.StartsWith("attenuation", StringComparison.Ordinal) || x.name.StartsWith("transmission", StringComparison.Ordinal));
