@@ -141,7 +141,7 @@ namespace UnityGLTF
 		{
 			var uniqueTexture = new UniqueTexture(textureObj);
 
-			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture);
+			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture, textureMapType);
 
 			TextureId id = GetTextureId(_root, uniqueTexture);
 			if (id != null)
