@@ -43,6 +43,8 @@ namespace UnityGLTF
 		public GLTFSceneExporter.AfterNodeExportDelegate AfterNodeExport;
 		public GLTFSceneExporter.BeforeMaterialExportDelegate BeforeMaterialExport;
 		public GLTFSceneExporter.AfterMaterialExportDelegate AfterMaterialExport;
+		public GLTFSceneExporter.BeforeTextureExportDelegate BeforeTextureExport;
+		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
 	}
 
 	public partial class GLTFSceneExporter
@@ -54,6 +56,8 @@ namespace UnityGLTF
 		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
+		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture);
+		public delegate void AfterTextureExportDelegate(GLTFSceneExporter exporter, UniqueTexture texture, int index, GLTFTexture tex);
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
@@ -97,7 +101,7 @@ namespace UnityGLTF
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
 		private List<ImageInfo> _imageInfos;
-		private List<Texture> _textures;
+		private List<UniqueTexture> _textures;
 		private Dictionary<int, int> _exportedMaterials;
 #if ANIMATION_SUPPORTED
 		private List<(Transform tr, AnimationClip clip)> _animationClips;
@@ -118,6 +122,39 @@ namespace UnityGLTF
 		private const uint MagicBin = 0x004E4942;
 		private const int GLTFHeaderSize = 12;
 		private const int SectionHeaderSize = 8;
+
+		public struct UniqueTexture : IEquatable<UniqueTexture>
+		{
+			public Texture Texture;
+			public int MaxSize;
+
+			public int GetWidth() => Mathf.Min(MaxSize, Texture.width);
+			public int GetHeight() => Mathf.Min(MaxSize, Texture.height);
+
+			public UniqueTexture(Texture tex)
+			{
+				this.Texture = tex;
+				MaxSize = Mathf.Max(tex.width, tex.height);
+			}
+
+			public bool Equals(UniqueTexture other)
+			{
+				return Equals(Texture, other.Texture) && MaxSize == other.MaxSize;
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is UniqueTexture other && Equals(other);
+			}
+
+			public override int GetHashCode()
+			{
+				unchecked
+				{
+					return ((Texture != null ? Texture.GetHashCode() : 0) * 397) ^ MaxSize;
+				}
+			}
+		}
 
 		/// <summary>
 		/// A Primitive is a combination of Mesh + Material(s). It also contains a reference to the original SkinnedMeshRenderer,
@@ -301,7 +338,7 @@ namespace UnityGLTF
 
 			_imageInfos = new List<ImageInfo>();
 			_exportedMaterials = new Dictionary<int, int>();
-			_textures = new List<Texture>();
+			_textures = new List<UniqueTexture>();
 #if ANIMATION_SUPPORTED
 			_animationClips = new List<(Transform, AnimationClip)>();
 #endif
@@ -877,7 +914,7 @@ namespace UnityGLTF
 		{
 			for (var i = 0; i < _textures.Count; i++)
 			{
-				if (_textures[i] == textureObj)
+				if (_textures[i].Texture == textureObj)
 				{
 					return new TextureId
 					{
@@ -886,7 +923,22 @@ namespace UnityGLTF
 					};
 				}
 			}
+			return null;
+		}
 
+		public TextureId GetTextureId(GLTFRoot root, UniqueTexture textureObj)
+		{
+			for (var i = 0; i < _textures.Count; i++)
+			{
+				if (_textures[i].Equals(textureObj))
+				{
+					return new TextureId
+					{
+						Id = i,
+						Root = root
+					};
+				}
+			}
 			return null;
 		}
 
@@ -938,8 +990,8 @@ namespace UnityGLTF
 			return null;
 		}
 
-		public Texture GetTexture(int id) => _textures[id];
+		public Texture GetTexture(int id) => _textures[id].Texture;
 
-#endregion
+		#endregion
 	}
 }

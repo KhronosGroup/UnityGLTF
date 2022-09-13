@@ -29,7 +29,7 @@ namespace UnityGLTF
 
 				var dir = Path.GetDirectoryName(fileOutputPath);
 				if (!Directory.Exists(dir))
-					Directory.CreateDirectory(dir);
+					Directory.CreateDirectory(dir!);
 
 				bool wasAbleToExportTexture = false;
 				if (canBeExportedFromDisk)
@@ -139,7 +139,11 @@ namespace UnityGLTF
 
 		public TextureId ExportTexture(Texture textureObj, TextureMapType textureMapType)
 		{
-			TextureId id = GetTextureId(_root, textureObj);
+			var uniqueTexture = new UniqueTexture(textureObj);
+
+			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture);
+
+			TextureId id = GetTextureId(_root, uniqueTexture);
 			if (id != null)
 			{
 				return id;
@@ -160,15 +164,15 @@ namespace UnityGLTF
 
 			if (_shouldUseInternalBufferForImages)
 		    {
-				texture.Source = ExportImageInternalBuffer(textureObj, textureMapType);
+				texture.Source = ExportImageInternalBuffer(uniqueTexture, textureMapType);
 		    }
 		    else
 		    {
-				texture.Source = ExportImage(textureObj, textureMapType);
+				texture.Source = ExportImage(uniqueTexture, textureMapType);
 		    }
 			texture.Sampler = ExportSampler(textureObj);
 
-			_textures.Add(textureObj);
+			_textures.Add(uniqueTexture);
 
 			id = new TextureId
 			{
@@ -186,6 +190,8 @@ namespace UnityGLTF
 				texture.Extensions.Add(EXT_texture_exr.EXTENSION_NAME, new EXT_texture_exr(texture.Source));
 				DeclareExtensionUsage(EXT_texture_exr.EXTENSION_NAME);
 			}
+
+			_exportOptions.AfterTextureExport?.Invoke(this, uniqueTexture, id.Id, texture);
 
 			return id;
 		}
@@ -253,8 +259,12 @@ namespace UnityGLTF
 			return imagePath;
 		}
 
-		private ImageId ExportImage(Texture texture, TextureMapType textureMapType)
+		private ImageId ExportImage(UniqueTexture uniqueTexture, TextureMapType textureMapType)
 		{
+			var texture = uniqueTexture.Texture;
+			var width = uniqueTexture.GetWidth();
+			var height = uniqueTexture.GetHeight();
+
 			ImageId id = GetImageId(_root, texture);
 			if (id != null)
 			{
@@ -270,11 +280,11 @@ namespace UnityGLTF
 
             if (texture.GetType() == typeof(RenderTexture))
             {
-                Texture2D tempTexture = new Texture2D(texture.width, texture.height);
+                Texture2D tempTexture = new Texture2D(width, height);
                 tempTexture.name = texture.name;
 
                 RenderTexture.active = texture as RenderTexture;
-                tempTexture.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
+                tempTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                 tempTexture.Apply();
                 texture = tempTexture;
             }
@@ -282,11 +292,11 @@ namespace UnityGLTF
 #if UNITY_2017_1_OR_NEWER
             if (texture.GetType() == typeof(CustomRenderTexture))
             {
-                Texture2D tempTexture = new Texture2D(texture.width, texture.height);
+                Texture2D tempTexture = new Texture2D(width, height);
                 tempTexture.name = texture.name;
 
                 RenderTexture.active = texture as CustomRenderTexture;
-                tempTexture.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
+                tempTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                 tempTexture.Apply();
                 texture = tempTexture;
             }
@@ -440,8 +450,10 @@ namespace UnityGLTF
 		}
 #endif
 
-		private ImageId ExportImageInternalBuffer(UnityEngine.Texture texture, TextureMapType textureMapType)
+		private ImageId ExportImageInternalBuffer(UniqueTexture uniqueTexture, TextureMapType textureMapType)
 		{
+			var texture = uniqueTexture.Texture;
+
 			const string PNGMimeType = "image/png";
 			const string JPEGMimeType = "image/jpeg";
 
@@ -493,7 +505,7 @@ namespace UnityGLTF
 
 			if (!wasAbleToExport)
 		    {
-				var sRGB = true;
+			    var sRGB = true;
 
 #if UNITY_EDITOR
 				if (textureMapType == TextureMapType.Custom_Unknown)
@@ -512,8 +524,11 @@ namespace UnityGLTF
 
 				var format = sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear;
 
+				var width = uniqueTexture.GetWidth();
+				var height = uniqueTexture.GetHeight();
+
 				// TODO we could make sure texture size is power-of-two here
-				var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 24, RenderTextureFormat.ARGB32, format);
+				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, format);
 				GL.sRGBWrite = sRGB;
 
 				switch (textureMapType)
@@ -545,7 +560,7 @@ namespace UnityGLTF
 						break;
 				}
 
-				var exportTexture = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
+				var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false);
 				exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 				exportTexture.Apply();
 
