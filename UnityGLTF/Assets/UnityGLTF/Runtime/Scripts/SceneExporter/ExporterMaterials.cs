@@ -329,7 +329,6 @@ namespace UnityGLTF
 	               material.HasProperty("_LightFactor");
         }
 
-
 		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
 		{
 			// early out if texture transform is explicitly disabled
@@ -353,29 +352,31 @@ namespace UnityGLTF
 			{
 				var checkForName = texName + "_ST";
 				// Debug.Log("Checking for property: " + checkForName + " : " + mat.HasProperty(checkForName) + " == " + (mat.HasProperty(checkForName) ? mat.GetVector(checkForName) : "null"));
-				var textureHasST = mat.HasProperty(checkForName);
-#if UNITY_EDITOR
-				if (textureHasST)
+				var textureHasTilingOffset = mat.HasProperty(checkForName);
+
+				// turns out we have to check extra hard if that property actually exists
+				// the material ALWAYS says true for mat.HasProperty(someTex_ST) when someTex is defined and doesn't have [NoTextureScale] attribute
+				if (textureHasTilingOffset)
 				{
-					var c = ShaderUtil.GetPropertyCount(mat.shader);
-					var actuallyFoundST = false;
-					for (int i = 0; i < c; i++)
+					var shader = mat.shader;
+					var c = shader.GetPropertyCount();
+					var actuallyFoundTilingOffset = false;
+					for (var i = 0; i < c; i++)
 					{
-						if (ShaderUtil.GetPropertyName(mat.shader, i) == checkForName)
+						if (shader.GetPropertyName(i) == checkForName)
 						{
-							actuallyFoundST = true;
+							actuallyFoundTilingOffset = true;
 							break;
 						}
 					}
 
-					if (!actuallyFoundST)
+					if (!actuallyFoundTilingOffset)
 					{
-						// Debug.Log("mat.HasProperty(" + checkForName + ") returned true, but turns out it doesn't have that property...");
-						textureHasST = false;
+						textureHasTilingOffset = false;
 					}
 				}
-#endif
-				if (textureHasST)
+
+				if (textureHasTilingOffset)
 				{
 					// ignore, texture has explicit _ST property
 				}
