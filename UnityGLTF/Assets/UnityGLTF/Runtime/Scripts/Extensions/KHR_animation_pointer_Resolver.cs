@@ -50,23 +50,29 @@ namespace UnityGLTF.Extensions
 					case GameObject g:
 						reg.path = "/nodes/" + id + "/" + reg.propertyBinding;
 						var componentPath = reg.path;
+
+						var anyOtherResolverWasAbleToResolve = false;
 						foreach (var res in exporter.pointerResolvers)
 						{
 							if (res.TryResolve(reg.animatedObject, ref componentPath))
 							{
 								reg.path = componentPath;
+								anyOtherResolverWasAbleToResolve = true;
+								break;
 							}
-							else
-							{
+						}
+						if (exporter.pointerResolvers.Count > 0 && !anyOtherResolverWasAbleToResolve)
+						{
+							// we don't need to warn for regular transforms that are not RectTransforms,
+							// but we want to warn for everything else that may be animated.
+							if (!(reg.animatedObject is Transform && !(reg.animatedObject is RectTransform)))
 								Debug.LogWarning("Wasn't able to resolve animation pointer for " + reg.animatedObject + " at " + componentPath + ". You can attach custom resolvers to animate properties in extensions.", reg.animatedObject as Object);
-							}
 						}
 						break;
 					case Material mat:
 						reg.path = "/materials/" + id + "/" + reg.propertyBinding;
 						break;
 				}
-
 				animationPointerResolverMarker.End();
 			}
 		}
