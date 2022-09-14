@@ -113,6 +113,9 @@
         },
         {
             "m_Id": "d4bf44ad812142cf81dd4619dbce963f"
+        },
+        {
+            "m_Id": "b3bf6e9825a34fe5ab67bdb85f17df32"
         }
     ],
     "m_Keywords": [
@@ -144,10 +147,10 @@
             "m_Id": "318b5ae978fa4468abc6503de868db1a"
         },
         {
-            "m_Id": "6d9d970e9d054130ba8a65bc95d897ed"
+            "m_Id": "609285c40dd646329176a8c4d3cb8c4c"
         },
         {
-            "m_Id": "609285c40dd646329176a8c4d3cb8c4c"
+            "m_Id": "6d9d970e9d054130ba8a65bc95d897ed"
         },
         {
             "m_Id": "597e8aa92a6c43209a247f71fd2fe72f"
@@ -6820,10 +6823,10 @@
     "m_Guid": {
         "m_GuidSerialized": "5b68bec3-f5ba-42d8-a542-6cb4184b3974"
     },
-    "m_Name": "Enable Volume/Transmission",
+    "m_Name": "Enable Transmission",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Enable Volume/Transmission",
-    "m_DefaultReferenceName": "_ENABLE_VOLUME_TRANSMISSION",
+    "m_RefNameGeneratedByDisplayName": "Enable Transmission",
+    "m_DefaultReferenceName": "_ENABLE_TRANSMISSION",
     "m_OverrideReferenceName": "_VOLUME_TRANSMISSION_ON",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -7043,6 +7046,9 @@
         },
         {
             "m_Id": "302d94653f844799b5f7e93c4d06ed3d"
+        },
+        {
+            "m_Id": "b3bf6e9825a34fe5ab67bdb85f17df32"
         }
     ]
 }
@@ -7134,7 +7140,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "Enable Volume/Transmission",
+    "m_Name": "Enable Transmission",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -16562,6 +16568,28 @@
     "m_CustomColors": {
         "m_SerializableColors": []
     }
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.BooleanShaderProperty",
+    "m_ObjectId": "b3bf6e9825a34fe5ab67bdb85f17df32",
+    "m_Guid": {
+        "m_GuidSerialized": "8afa82b2-e899-4d34-be69-8af563228705"
+    },
+    "m_Name": "Enable Volume",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Enable Volume",
+    "m_DefaultReferenceName": "_Enable_Volume",
+    "m_OverrideReferenceName": "_VOLUME_ON",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": false
 }
 
 {

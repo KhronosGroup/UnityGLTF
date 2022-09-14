@@ -44,7 +44,6 @@ namespace UnityGLTF
 
 			if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
 			{
-				exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
 				exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
 				exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
 
@@ -52,14 +51,9 @@ namespace UnityGLTF
 					materialnode.Extensions = new Dictionary<string, IExtension>();
 
 				// if the material already has an extension, we should get and modify that
-				var ve = new KHR_materials_volume();
 				var vi = new KHR_materials_ior();
 				var vt = new KHR_materials_transmission();
 
-				if (materialnode.Extensions.TryGetValue(KHR_materials_volume_Factory.EXTENSION_NAME, out var vv0))
-					ve = (KHR_materials_volume)vv0;
-				else
-					materialnode.Extensions.Add(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
 
 				if (materialnode.Extensions.TryGetValue(KHR_materials_ior_Factory.EXTENSION_NAME, out var vv1))
 					vi = (KHR_materials_ior) vv1;
@@ -71,6 +65,30 @@ namespace UnityGLTF
 				else
 					materialnode.Extensions.Add(KHR_materials_transmission_Factory.EXTENSION_NAME, vt);
 
+				if (material.HasProperty(ior))
+					vi.ior = material.GetFloat(ior);
+
+				if (material.HasProperty(transmissionFactor))
+					vt.transmissionFactor = material.GetFloat(transmissionFactor);
+				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
+					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(transmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
+			}
+
+			if (material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f)
+			{
+				exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
+
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
+				// if the material already has an extension, we should get and modify that
+				var ve = new KHR_materials_volume();
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_volume_Factory.EXTENSION_NAME, out var vv0))
+					ve = (KHR_materials_volume)vv0;
+				else
+					materialnode.Extensions.Add(KHR_materials_volume_Factory.EXTENSION_NAME, ve);
+
 				if (material.HasProperty(thicknessFactor))
 					ve.thicknessFactor = material.GetFloat(thicknessFactor);
 				if (material.HasProperty(thicknessTexture) && material.GetTexture(thicknessTexture))
@@ -79,14 +97,6 @@ namespace UnityGLTF
 					ve.attenuationDistance = material.GetFloat(attenuationDistance);
 				if (material.HasProperty(attenuationColor))
 					ve.attenuationColor = material.GetColor(attenuationColor).ToNumericsColorRaw();
-
-				if (material.HasProperty(ior))
-					vi.ior = material.GetFloat(ior);
-
-				if (material.HasProperty(transmissionFactor))
-					vt.transmissionFactor = material.GetFloat(transmissionFactor);
-				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
-					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(transmissionTexture), GLTFSceneExporter.TextureMapType.Custom_Unknown);
 			}
 
 			if (material.IsKeywordEnabled("_IRIDESCENCE_ON"))

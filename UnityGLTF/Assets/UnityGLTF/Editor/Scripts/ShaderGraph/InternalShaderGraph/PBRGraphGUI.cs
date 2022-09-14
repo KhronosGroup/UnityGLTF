@@ -297,7 +297,11 @@ namespace UnityGLTF
 
 		private static bool HasPropertyButNoTex(Material targetMaterial, string name)
 		{
-			return targetMaterial.HasProperty(name) && !targetMaterial.GetTexture(name);
+			return targetMaterial.HasProperty(name) &&
+			       #if UNITY_2021_2_OR_NEWER
+			       targetMaterial.HasTexture(name) &&
+			       #endif
+			       !targetMaterial.GetTexture(name);
 		}
 
 		private void DrawProperties(Material targetMaterial, MaterialProperty[] properties)
@@ -316,7 +320,11 @@ namespace UnityGLTF
 			#endif
 			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
 			{
-				propertyList.RemoveAll(x => x.name.StartsWith("thickness", StringComparison.Ordinal) || x.name.StartsWith("attenuation", StringComparison.Ordinal) || x.name.StartsWith("transmission", StringComparison.Ordinal));
+				propertyList.RemoveAll(x => x.name.StartsWith("transmission", StringComparison.Ordinal));
+			}
+			if (!targetMaterial.HasProperty("_VOLUME_ON") || !(targetMaterial.GetFloat("_VOLUME_ON") > 0.5f))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("thickness", StringComparison.Ordinal) || x.name.StartsWith("attenuation", StringComparison.Ordinal));
 			}
 			if (!targetMaterial.IsKeywordEnabled("_IRIDESCENCE_ON"))
 			{
