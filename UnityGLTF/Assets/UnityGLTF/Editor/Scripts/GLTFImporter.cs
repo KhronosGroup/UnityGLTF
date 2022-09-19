@@ -334,7 +334,9 @@ namespace UnityGLTF
                         }
                     }
 
+#if !UNITY_2022_1_OR_NEWER
 					AssetDatabase.Refresh();
+#endif
 
                     // Save materials as separate assets and rewrite refs
                     if (materials.Length > 0)
@@ -345,8 +347,10 @@ namespace UnityGLTF
                         }
                     }
 
-					AssetDatabase.SaveAssets();
+#if !UNITY_2022_1_OR_NEWER
+			        AssetDatabase.SaveAssets();
 					AssetDatabase.Refresh();
+#endif
 				}
                 else
                 {

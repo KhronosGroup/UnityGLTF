@@ -65,7 +65,11 @@ namespace UnityGLTF
 					serializedObject.ApplyModifiedProperties();
 					try
 					{
+#if UNITY_2022_2_OR_NEWER
+						SaveChanges();
+#else
 						ApplyAndImport();
+#endif
 						GUIUtility.ExitGUI();
 					}
 					catch

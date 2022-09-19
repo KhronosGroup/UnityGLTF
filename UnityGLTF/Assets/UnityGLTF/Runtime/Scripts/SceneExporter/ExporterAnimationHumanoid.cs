@@ -28,7 +28,7 @@ namespace UnityGLTF
 					animatedTransforms.Add(tr, null);
 			}
 
-			Debug.Log("Animated:\n" + string.Join("\n", animatedTransforms.Keys.Select(x => x.name)));
+			// Debug.Log("Animated:\n" + string.Join("\n", animatedTransforms.Keys.Select(x => x.name)));
 
 			var recorder = new GLTFRecorder(root.transform, false, false, false);
 
@@ -48,8 +48,12 @@ namespace UnityGLTF
 			var length = clip.length;
 			var time = 0f;
 
+#if UNITY_2020_1_OR_NEWER
 			var driver = ScriptableObject.CreateInstance<AnimationModeDriver>();
 			AnimationMode.StartAnimationMode(driver);
+#else
+			AnimationMode.StartAnimationMode();
+#endif
 			AnimationMode.BeginSampling();
 
 			root.transform.position = Vector3.zero;
@@ -72,14 +76,16 @@ namespace UnityGLTF
 			recorder.UpdateRecording(time);
 
 			AnimationMode.EndSampling();
+#if UNITY_2020_1_OR_NEWER
 			AnimationMode.StopAnimationMode(driver);
-
-			// playableGraph.Destroy();
+#else
+			AnimationMode.StopAnimationMode();
+#endif
 
 			recorder.EndRecording(out var data);
 			if (data == null || !data.Any()) return;
 
-			static string CalculatePath(Transform child, Transform parent)
+			string CalculatePath(Transform child, Transform parent)
 			{
 				if (child == parent) return "";
 				if (child.parent == null) return "";
@@ -119,7 +125,7 @@ namespace UnityGLTF
 				targetCurves[calculatedPath] = curveSet;
 			}
 
-			Debug.Log("Recorded Transforms:\n" + string.Join("\n", targetCurves.Keys));
+			// Debug.Log("Recorded Transforms:\n" + string.Join("\n", targetCurves.Keys));
 		}
 	}
 }
