@@ -71,6 +71,7 @@ namespace UnityGLTF
         [SerializeField] private bool _swapUvs = false;
         [SerializeField] private bool _generateLightmapUVs = false;
         [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
+        [SerializeField] private GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] private AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] private bool _importMaterials = true;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
@@ -203,15 +204,22 @@ namespace UnityGLTF
                         if(uv.Length > 0)
 							mesh.uv2 = uv;
                     }
+
                     if (_importNormals == GLTFImporterNormals.None)
-                    {
                         mesh.normals = new Vector3[0];
-                    }
-                    if (_importNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
-                    {
+                    else if (_importNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
                         mesh.RecalculateNormals();
-                    }
-                    mesh.UploadMeshData(!_readWriteEnabled);
+                    else if (_importNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0)
+	                    mesh.RecalculateNormals();
+
+					if (_importTangents == GLTFImporterNormals.None)
+						mesh.tangents = new Vector4[0];
+					else if (_importTangents == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
+						mesh.RecalculateTangents();
+					else if (_importTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0)
+						mesh.RecalculateTangents();
+
+					mesh.UploadMeshData(!_readWriteEnabled);
 
                     if (_generateColliders)
                     {

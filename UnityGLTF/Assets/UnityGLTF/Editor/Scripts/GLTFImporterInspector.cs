@@ -43,13 +43,20 @@ namespace UnityGLTF
 			EditorGUILayout.LabelField("Animations", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importAnimations"), new GUIContent("Animations"));
 			EditorGUILayout.Separator();
-			EditorGUILayout.LabelField("Normals", EditorStyles.boldLabel);
+			EditorGUILayout.LabelField("Mesh Data", EditorStyles.boldLabel);
 			EditorGUI.BeginChangeCheck();
 			var importNormalsProp = serializedObject.FindProperty("_importNormals");
 			var importNormals = EditorGUILayout.Popup(importNormalsProp.displayName, importNormalsProp.intValue, _importNormalsNames);
 			if (EditorGUI.EndChangeCheck())
 			{
 				importNormalsProp.intValue = importNormals;
+			}
+			EditorGUI.BeginChangeCheck();
+			var importTangentsProp = serializedObject.FindProperty("_importTangents");
+			var importTangents = EditorGUILayout.Popup(importTangentsProp.displayName, importTangentsProp.intValue, _importNormalsNames);
+			if (EditorGUI.EndChangeCheck())
+			{
+				importTangentsProp.intValue = importTangents;
 			}
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
