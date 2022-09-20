@@ -133,7 +133,9 @@ namespace UnityGLTF
                         gltfScene.GetComponents<Component>().Length == 1)
                     {
                         var parent = gltfScene;
+                        var importName = parent.name;
                         gltfScene = gltfScene.transform.GetChild(0).gameObject;
+                        gltfScene.name = importName; // root name is always name of the file anyways
                         t = gltfScene.transform;
                         t.parent = null; // To keep transform information in the new parent
                         DestroyImmediate(parent); // Get rid of the parent
@@ -389,8 +391,10 @@ namespace UnityGLTF
 	        }
 	        else
 	        {
-		        // This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
-		        ctx.AddObjectToAsset($"scenes/{gltfScene.name}", gltfScene);
+		        // This is a breaking change, but aligned to the import naming from glTFast -
+		        // allows switching back and forth between importers.
+		        var mainIdentifier = $"scenes/{gltfScene.name}";
+		        ctx.AddObjectToAsset(mainIdentifier, gltfScene);
 	        }
 
 	        // Add meshes
