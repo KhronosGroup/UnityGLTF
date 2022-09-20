@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.16.0-pre] - 2022-09-21
+- fix: checking materials for _ST shader properties was failing on specific Unity versions
+- fix: AnimationPointerResolver was warning in cases that are allowed / no warning needed
+- fix: build compilation issues on 2022+
+- fix: default scene name differed from glTFast, which broke switching importers. Both use "Scene" now
+- fix: import warnings for metallicRoughness texture swizzling only print when a metallicRoughness texture is actually used
+- feat: tangents are recalculated on import now
+- feat: TMPro meshes export with baked texture now instead of SDF texture
+- feat: added AfterTextureExportDelegate/BeforeTextureExportDelegate and UniqueTexture hash for modifying textures on export
+- change: explicit bool option to turn KHR_materials_volume export on and off
+- change: removed outdated samples from package
+- change: if a mesh in the glTF doesn't specify a name it will import without name now instead of using a default name
+
 ## [1.15.0-pre] - 2022-09-13
 - fix: workaround for ShaderGraph bug on 2021.2+ that breaks defining baseColorTexture_ST manually
 - fix: workaround for Unity regression in 2022.1+ where checking material properties returns wrong results in some cases
