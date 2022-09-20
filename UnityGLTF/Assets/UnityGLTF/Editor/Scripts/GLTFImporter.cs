@@ -227,9 +227,6 @@ namespace UnityGLTF
                         collider.sharedMesh = mesh;
                     }
 
-	                var meshName = string.IsNullOrEmpty(mesh.name) ? mf.gameObject.name : mesh.name;
-	                mesh.name = meshName;
-
                     return mesh;
                 }).Where(x => x).ToArray();
 
