@@ -1,16 +1,27 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+#define ANIMATION_EXPORT_SUPPORTED
+#endif
+
+#if ANIMATION_EXPORT_SUPPORTED && (UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER)
+#define ANIMATION_SUPPORTED
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UnityGLTF.Timeline;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnityGLTF
 {
 	public partial class GLTFSceneExporter
 	{
+#if ANIMATION_SUPPORTED
 		internal void CollectClipCurvesForHumanoid(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 			if (!clip.humanMotion) return;
@@ -127,5 +138,6 @@ namespace UnityGLTF
 
 			// Debug.Log("Recorded Transforms:\n" + string.Join("\n", targetCurves.Keys));
 		}
+#endif
 	}
 }
