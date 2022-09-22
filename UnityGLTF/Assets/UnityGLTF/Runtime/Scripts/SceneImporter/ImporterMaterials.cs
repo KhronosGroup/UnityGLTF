@@ -31,7 +31,7 @@ namespace UnityGLTF
 			{
 				if (!string.IsNullOrEmpty(CustomShaderName))
 				{
-					mapper = new UnlitMap(CustomShaderName, MaximumLod);
+					mapper = new UnlitMap(CustomShaderName, null, MaximumLod);
 				}
 				else
 				{

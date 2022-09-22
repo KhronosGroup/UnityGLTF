@@ -6,8 +6,8 @@ namespace UnityGLTF
 	{
 		private Vector2 baseColorOffset = new Vector2(0, 0);
 
-		public MetalRough2StandardMap(int MaxLOD = 1000) : base("Standard", MaxLOD) { }
-		protected MetalRough2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		public MetalRough2StandardMap(int MaxLOD = 1000) : base("Standard", null, MaxLOD) { }
+		protected MetalRough2StandardMap(string shaderName, string shaderGuid, int MaxLOD = 1000) : base(shaderName, shaderGuid, MaxLOD) { }
 		protected MetalRough2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public virtual Texture BaseColorTexture

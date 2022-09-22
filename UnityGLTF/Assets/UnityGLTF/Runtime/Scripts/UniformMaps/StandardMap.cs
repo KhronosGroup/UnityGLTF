@@ -1,5 +1,4 @@
-﻿using System;
-using GLTF.Schema;
+﻿using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Material = UnityEngine.Material;
@@ -17,9 +16,14 @@ namespace UnityGLTF
 		private Vector2 occlusionOffset = new Vector2(0, 0);
 		private Vector2 emissiveOffset = new Vector2(0, 0);
 
-		protected StandardMap(string shaderName, int MaxLOD = 1000)
+		protected StandardMap(string shaderName, string fallbackGuid, int MaxLOD = 1000)
 		{
 			var s = Shader.Find(shaderName);
+#if UNITY_EDITOR
+			// workaround for first-import issues with Shader.Find and import order
+			if (!s && fallbackGuid != null)
+				s = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(UnityEditor.AssetDatabase.GUIDToAssetPath(fallbackGuid));
+#endif
 			if (s == null)
 			{
 				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build?");

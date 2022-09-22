@@ -1,7 +1,4 @@
-﻿using System;
-using GLTF.Schema;
-using UnityEngine;
-using UnityEngine.Rendering;
+﻿using UnityEngine;
 using Material = UnityEngine.Material;
 using Texture = UnityEngine.Texture;
 
@@ -11,8 +8,8 @@ namespace UnityGLTF
 	{
 		private Vector2 baseColorOffset = new Vector2(0, 0);
 
-		public UnlitMap(int MaxLOD = 1000) : base("GLTF/Unlit", MaxLOD) { }
-		public UnlitMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		public UnlitMap(int MaxLOD = 1000) : base("GLTF/Unlit", "4d20effaf200f604db8b73f8e6a2e386", MaxLOD) { }
+		public UnlitMap(string shaderName, string shaderGuid, int MaxLOD = 1000) : base(shaderName, shaderGuid, MaxLOD) { }
 		public UnlitMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public Texture BaseColorTexture

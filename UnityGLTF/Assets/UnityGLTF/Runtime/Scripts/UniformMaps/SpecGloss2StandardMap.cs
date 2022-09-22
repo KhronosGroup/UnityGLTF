@@ -7,8 +7,8 @@ namespace UnityGLTF
 		private Vector2 diffuseOffset = new Vector2(0, 0);
 		private Vector2 specGlossOffset = new Vector2(0, 0);
 
-		public SpecGloss2StandardMap(int MaxLOD = 1000) : base("Standard (Specular setup)", MaxLOD) { }
-		protected SpecGloss2StandardMap(string shaderName, int MaxLOD = 1000) : base(shaderName, MaxLOD) { }
+		public SpecGloss2StandardMap(int MaxLOD = 1000) : base("Standard (Specular setup)", null, MaxLOD) { }
+		protected SpecGloss2StandardMap(string shaderName, string shaderGuid, int MaxLOD = 1000) : base(shaderName, shaderGuid, MaxLOD) { }
 		protected SpecGloss2StandardMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public virtual Texture DiffuseTexture
