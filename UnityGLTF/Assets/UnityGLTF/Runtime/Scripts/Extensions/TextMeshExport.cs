@@ -40,6 +40,8 @@ namespace UnityGLTF
 				if (!rtCache.ContainsKey(existingTex))
 				{
 					var rt = new RenderTexture(existingTex.width, existingTex.height, 0, RenderTextureFormat.ARGB32);
+					if (material.HasProperty("_OutlineSoftness"))
+						material.SetFloat("_OutlineSoftness", 0);
 					Graphics.Blit(existingTex, rt, material);
 					rtCache[existingTex] = rt;
 					rt.anisoLevel = 9;
