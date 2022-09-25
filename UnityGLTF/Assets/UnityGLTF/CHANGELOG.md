@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.16.1-pre] - 2022-09-25
+- fix: first-time import was failing to find shaders on 2020.x in some cases
+- fix: TMPro texture conversion one export was blurry at the bottom of the texture
+- fix: transmission/volume mat was incorrectly imported
+- fix: transparency was incorrectly imported on 2020.x
+- fix: material validation on 2021.x wasn't properly turning transparency on for some imports
+- fix: no compilation errors on 2018.4 + 2019.4
+
 ## [1.16.0-pre] - 2022-09-21
 - fix: checking materials for _ST shader properties was failing on specific Unity versions
 - fix: AnimationPointerResolver was warning in cases that are allowed / no warning needed
