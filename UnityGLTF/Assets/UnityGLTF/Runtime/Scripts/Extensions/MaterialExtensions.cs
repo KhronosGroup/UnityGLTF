@@ -54,7 +54,6 @@ namespace UnityGLTF
 				var vi = new KHR_materials_ior();
 				var vt = new KHR_materials_transmission();
 
-
 				if (materialnode.Extensions.TryGetValue(KHR_materials_ior_Factory.EXTENSION_NAME, out var vv1))
 					vi = (KHR_materials_ior) vv1;
 				else

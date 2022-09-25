@@ -223,6 +223,7 @@ namespace UnityGLTF
 
 					mapper.Material.renderQueue = 3000;
 					mapper.Material.SetKeyword("_VOLUME_TRANSMISSION", true);
+					mapper.Material.SetFloat("_VOLUME_TRANSMISSION_ON", 1f);
 				}
 			}
 
@@ -239,7 +240,7 @@ namespace UnityGLTF
 					volumeMapper.ThicknessTexture = td.Texture;
 
 					mapper.Material.renderQueue = 3000;
-					mapper.Material.SetKeyword("_VOLUME_TRANSMISSION", true);
+					mapper.Material.SetFloat("_VOLUME_ON", 1f);
 				}
 			}
 
