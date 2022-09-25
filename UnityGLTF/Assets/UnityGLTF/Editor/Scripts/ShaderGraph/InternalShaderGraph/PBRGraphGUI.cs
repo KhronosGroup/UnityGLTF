@@ -25,7 +25,11 @@ namespace UnityGLTF
 #endif
 	{
 #if UNITY_2021_1_OR_NEWER
-		public override void ValidateMaterial(Material material) => ShaderGraphHelpers.ValidateMaterialKeywords(material);
+		public override void ValidateMaterial(Material material)
+		{
+			base.ValidateMaterial(material);
+			ShaderGraphHelpers.ValidateMaterialKeywords(material);
+		}
 #endif
 
 		protected MaterialEditor materialEditor;
