@@ -28,8 +28,8 @@ namespace UnityGLTF
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
 				var dir = Path.GetDirectoryName(fileOutputPath);
-				if (!Directory.Exists(dir))
-					Directory.CreateDirectory(dir!);
+				if (!Directory.Exists(dir) && dir != null)
+					Directory.CreateDirectory(dir);
 
 				bool wasAbleToExportTexture = false;
 				if (canBeExportedFromDisk)

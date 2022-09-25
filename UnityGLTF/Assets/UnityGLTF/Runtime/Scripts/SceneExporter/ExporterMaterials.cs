@@ -354,6 +354,7 @@ namespace UnityGLTF
 				// Debug.Log("Checking for property: " + checkForName + " : " + mat.HasProperty(checkForName) + " == " + (mat.HasProperty(checkForName) ? mat.GetVector(checkForName) : "null"));
 				var textureHasTilingOffset = mat.HasProperty(checkForName);
 
+#if UNITY_2019_1_OR_NEWER
 				// turns out we have to check extra hard if that property actually exists
 				// the material ALWAYS says true for mat.HasProperty(someTex_ST) when someTex is defined and doesn't have [NoTextureScale] attribute
 				if (textureHasTilingOffset)
@@ -375,6 +376,7 @@ namespace UnityGLTF
 						textureHasTilingOffset = false;
 					}
 				}
+#endif
 
 				if (textureHasTilingOffset)
 				{

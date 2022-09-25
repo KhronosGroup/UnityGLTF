@@ -1,4 +1,4 @@
-#if !NO_INTERNALS_ACCESS
+#if !NO_INTERNALS_ACCESS && UNITY_2020_1_OR_NEWER
 
 using System.IO;
 using UnityEditor.ShaderGraph;
