@@ -63,19 +63,19 @@ namespace UnityGLTF
 	    }
 
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
-        [SerializeField] private bool _removeEmptyRootObjects = true;
-        [SerializeField] private float _scaleFactor = 1.0f;
-        [SerializeField] private int _maximumLod = 300;
-        [SerializeField] private bool _readWriteEnabled = true;
-        [SerializeField] private bool _generateColliders = false;
-        [SerializeField] private bool _swapUvs = false;
-        [SerializeField] private bool _generateLightmapUVs = false;
-        [SerializeField] private GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
-        [SerializeField] private GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
-        [SerializeField] private AnimationMethod _importAnimations = AnimationMethod.Mecanim;
-        [SerializeField] private bool _importMaterials = true;
+        [SerializeField] internal bool _removeEmptyRootObjects = true;
+        [SerializeField] internal float _scaleFactor = 1.0f;
+        [SerializeField] internal int _maximumLod = 300;
+        [SerializeField] internal bool _readWriteEnabled = true;
+        [SerializeField] internal bool _generateColliders = false;
+        [SerializeField] internal bool _swapUvs = false;
+        [SerializeField] internal bool _generateLightmapUVs = false;
+        [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
+        [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
+        [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
+        [SerializeField] internal bool _importMaterials = true;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
-        [SerializeField] private bool _useSceneNameIdentifier = false;
+        [SerializeField] internal bool _useSceneNameIdentifier = false;
 
         [Serializable]
         internal class ExtensionInfo
@@ -98,8 +98,10 @@ namespace UnityGLTF
 #endif
 
         // Import messages (extensions, warnings, errors, ...)
-        [NonReorderable] [SerializeField] private List<ExtensionInfo> _extensions;
+        [NonReorderable] [SerializeField] internal List<ExtensionInfo> _extensions;
         [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
+        [SerializeField] internal string _mainAssetIdentifier;
+
         internal List<TextureInfo> Textures => _textures;
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -392,14 +394,14 @@ namespace UnityGLTF
 	        if (!_useSceneNameIdentifier)
 	        {
 		        // Set main asset
-		        ctx.AddObjectToAsset("main asset", gltfScene);
+		        _mainAssetIdentifier = "main asset";
+		        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
 	        }
 	        else
 	        {
-		        // This is a breaking change, but aligned to the import naming from glTFast -
-		        // allows switching back and forth between importers.
-		        var mainIdentifier = $"scenes/{gltfScene.name}";
-		        ctx.AddObjectToAsset(mainIdentifier, gltfScene);
+		        // This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
+		        _mainAssetIdentifier = $"scenes/{gltfScene.name}";
+		        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
 	        }
 
 	        // Add meshes

@@ -32,27 +32,27 @@ namespace UnityGLTF
 					.ToArray();
 			}
 			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_removeEmptyRootObjects"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_scaleFactor"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_maximumLod"), new GUIContent("Maximum LOD"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_readWriteEnabled"), new GUIContent("Read/Write Enabled"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_generateColliders"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_swapUvs"), new GUIContent("Swap UVs"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_generateLightmapUVs"), new GUIContent("Generate Lightmap UVs"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._removeEmptyRootObjects)));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum LOD"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write Enabled"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._swapUvs)), new GUIContent("Swap UVs"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateLightmapUVs)), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Animations", EditorStyles.boldLabel);
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importAnimations"), new GUIContent("Animations"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importAnimations)), new GUIContent("Animations"));
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Mesh Data", EditorStyles.boldLabel);
 			EditorGUI.BeginChangeCheck();
-			var importNormalsProp = serializedObject.FindProperty("_importNormals");
+			var importNormalsProp = serializedObject.FindProperty(nameof(GLTFImporter._importNormals));
 			var importNormals = EditorGUILayout.Popup(importNormalsProp.displayName, importNormalsProp.intValue, _importNormalsNames);
 			if (EditorGUI.EndChangeCheck())
 			{
 				importNormalsProp.intValue = importNormals;
 			}
 			EditorGUI.BeginChangeCheck();
-			var importTangentsProp = serializedObject.FindProperty("_importTangents");
+			var importTangentsProp = serializedObject.FindProperty(nameof(GLTFImporter._importTangents));
 			var importTangents = EditorGUILayout.Popup(importTangentsProp.displayName, importTangentsProp.intValue, _importNormalsNames);
 			if (EditorGUI.EndChangeCheck())
 			{
@@ -60,9 +60,10 @@ namespace UnityGLTF
 			}
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_importMaterials"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
 			EditorGUILayout.Separator();
-			var identifierProp = serializedObject.FindProperty("_useSceneNameIdentifier");
+
+			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));
 			if (!identifierProp.boolValue)
 			{
 				EditorGUILayout.HelpBox("This asset uses the old main asset identifier. Upgrade to the new one if you want to seamlessly switch between glTFast and UnityGLTF on import.\nNOTE: This will break existing scene references.", MessageType.Info);
@@ -106,9 +107,11 @@ namespace UnityGLTF
 				}
 			}
 			EditorGUI.BeginDisabledGroup(true);
+			var mainAssetIdentifierProp = serializedObject.FindProperty(nameof(GLTFImporter._mainAssetIdentifier));
+			EditorGUILayout.PropertyField(mainAssetIdentifierProp);
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_textures"), new GUIContent("Textures"));
 			EditorGUILayout.Separator();
-			EditorGUILayout.PropertyField(serializedObject.FindProperty("_extensions"), new GUIContent("Extensions"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions"));
 			EditorGUI.EndDisabledGroup();
 
 			serializedObject.ApplyModifiedProperties();
