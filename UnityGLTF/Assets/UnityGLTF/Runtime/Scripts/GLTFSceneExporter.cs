@@ -284,6 +284,10 @@ namespace UnityGLTF
 		{
 		}
 
+		public GLTFSceneExporter(Transform rootTransform, ExportOptions options) : this(new [] { rootTransform }, options)
+		{
+		}
+
 		/// <summary>
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
