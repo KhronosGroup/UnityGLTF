@@ -39,7 +39,7 @@ namespace UnityGLTF
 					mapper = new UnlitGraphMap();
 #elif UNITY_2019_1_OR_NEWER
 					if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline)
-						mapper = new UnlitGraphMap(def.AlphaMode == AlphaMode.BLEND);
+						mapper = new UnlitGraphMap(def.AlphaMode == AlphaMode.BLEND, def.DoubleSided);
 					else
 						mapper = new UnlitMap(MaximumLod);
 #else
@@ -60,7 +60,7 @@ namespace UnityGLTF
 					mapper = new PBRGraphMap();
 #elif UNITY_2019_1_OR_NEWER
 					if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline)
-						mapper = new PBRGraphMap(def.AlphaMode == AlphaMode.BLEND);
+						mapper = new PBRGraphMap(def.AlphaMode == AlphaMode.BLEND, def.DoubleSided);
 					else
 						mapper = new MetalRoughMap(MaximumLod);
 #else
