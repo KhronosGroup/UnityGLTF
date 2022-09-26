@@ -11,11 +11,12 @@ using UnityEditor.Experimental.AssetImporters;
 
 namespace UnityEditor
 {
-	[ScriptedImporter(0, ".override-graph")]
+	[ScriptedImporter(0, ".override-graph", -500)]
 	class ShaderGraphOverrideImporter : ShaderGraphImporter
 	{
 		public Shader sourceShader;
 		public bool forceTransparent = true;
+		public bool forceDoublesided = false;
 
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
@@ -26,8 +27,8 @@ namespace UnityEditor
 			// we don't need this on 2021.1+, as Shader Graph allows overriding the material properties there.
 			return;
 #else
-
-			var current = File.ReadAllText(ctx.assetPath);
+			// cache write time, we want to reset the file again afterwards
+			var lastWriteTimeUtc = File.GetLastWriteTimeUtc(ctx.assetPath);
 
 			var path = AssetDatabase.GetAssetPath(sourceShader);
 			ctx.DependsOnArtifact(AssetDatabase.GUIDFromAssetPath(path));
@@ -38,16 +39,28 @@ namespace UnityEditor
 			if (forceTransparent)
 				graphData = graphData.Replace("\"m_SurfaceType\": 0", "\"m_SurfaceType\": 1");
 
-			// write back
-			if (current != graphData)
-				File.WriteAllText(ctx.assetPath, graphData);
+			// for 2021+
+			// if (forceDoublesided)
+			//     graphData = graphData
+			//	       .Replace("\"m_RenderFace\": 2", "\"m_RenderFace\": 0")
+			//         .Replace("\"m_RenderFace\": 1", "\"m_RenderFace\": 0");
+
+			// for 2020+
+			 if (forceDoublesided && !graphData.Contains("m_TwoSided"))
+			     graphData = graphData
+					.Replace("\"m_SurfaceType\": 0", "\"m_SurfaceType\": 0" + ",\n" + "\"m_TwoSided\": true")
+					.Replace("\"m_SurfaceType\": 1", "\"m_SurfaceType\": 1" + ",\n" + "\"m_TwoSided\": true");
+
+			File.WriteAllText(ctx.assetPath, graphData);
 
 			// run import on the modified shader
 			base.OnImportAsset(ctx);
 
-			// TODO would be great if we could clear out the data here,
-			// but seems if we write the file again the AssetDB will trigger another import,
-			// leading to a cycle. So we keep the changed data on disk.
+			// clean the file on disk again
+			File.WriteAllText(ctx.assetPath, "");
+
+			// reset write time to what it was before - avoids AssetDB reload
+			File.SetLastWriteTimeUtc(ctx.assetPath, lastWriteTimeUtc);
 #endif
 		}
 	}
