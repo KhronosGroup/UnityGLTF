@@ -448,6 +448,9 @@ namespace GLTF
 						case "rotation":
 							attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
 							break;
+						case "weights":
+							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache, offset);
+							break;
 					}
 
 					attributeAccessor.AccessorContent = resultArray;

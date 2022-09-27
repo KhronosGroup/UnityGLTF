@@ -301,16 +301,24 @@ namespace UnityGLTF
 					case GLTFAnimationChannelPath.weights:
 						// TODO: add support for blend shapes/morph targets
 
-						// var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
-						// var targetCount = primitives[0].Targets.Count;
-						// for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
-						// {
-						// 	for (int targetIndex = 0; targetIndex < targetCount; targetIndex++)
-						// 	{
-						//
-						// 		//clip.SetCurve(primitiveObjPath, typeof(SkinnedMeshRenderer), "blendShape." + targetIndex, curves[targetIndex]);
-						// 	}
-						// }
+						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+						var targetCount = primitives[0].Targets.Count;
+						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+						{
+							// see SceneImporter:156
+							// blend shapes are always called "Morphtarget" and always have frame weight 100 on import
+
+							propertyNames = new string[targetCount];
+							for (var i = 0; i < targetCount; i++)
+								propertyNames[i] = "blendShape.Morphtarget" + i;
+							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+								samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
+								(data, frame) =>
+								{
+									var scale = data.AsFloats[frame];
+									return new float[] { scale * 100.0f };
+								});
+						}
 						break;
 
 					default:
