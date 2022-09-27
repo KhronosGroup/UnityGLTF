@@ -17,8 +17,10 @@ ScriptedImporter:
   _swapUvs: 0
   _generateLightmapUVs: 0
   _importNormals: 0
+  _importTangents: 0
   _importAnimations: 2
-  _importMaterials: 2
-  _useSceneNameIdentifier: 0
+  _importMaterials: 1
+  _useSceneNameIdentifier: 1
   _extensions: []
   _textures: []
+  _mainAssetIdentifier: scenes/SimpleAnimation

@@ -308,15 +308,23 @@ namespace UnityGLTF
 							// see SceneImporter:156
 							// blend shapes are always called "Morphtarget" and always have frame weight 100 on import
 
+							var prim = primitives[primitiveIndex];
+							var targetNames = prim.TargetNames;
 							propertyNames = new string[targetCount];
 							for (var i = 0; i < targetCount; i++)
-								propertyNames[i] = "blendShape.Morphtarget" + i;
+								propertyNames[i] = "blendShape." + (targetNames != null ? targetNames[i] : ("Morphtarget" + i));
+
+							var frameFloats = new float[targetCount];
+
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 								samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
 								(data, frame) =>
 								{
-									var scale = data.AsFloats[frame];
-									return new float[] { scale * 100.0f };
+									var allValues = data.AsFloats;
+									for (var k = 0; k < targetCount; k++)
+										frameFloats[k] = allValues[frame * targetCount + k] * 100f;
+
+									return frameFloats;
 								});
 						}
 						break;
