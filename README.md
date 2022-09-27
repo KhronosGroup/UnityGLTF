@@ -80,6 +80,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - Linear and Gamma colorspace support
 - Vertex Colors
 - Cameras
+- URP and Built-In Render Pipeline [Learn More](#material-and-shader-export-compatibility)
 - KHR_lights_punctual (Point, Spot, Directional Lights)
 - KHR_texture_transform (limitation: not full flexibility for transforms per texture)
 - KHR_materials_unlit
@@ -94,14 +95,11 @@ The lists below are non-conclusive and in no particular order. Note that there a
 
 ### Export only
 
+- KHR_animation_pointer
 - Sparse accessors for Blend Shapes
 - Timeline recorder track for exporting animations at runtime
 - Lossless keyframe optimization on export (animation is baked but redundant keyframes are removed)
 - All 2D textures can be exported, no matter if readable or not, RenderTextures included
-- KHR_materials_emissive_strength
-- URP materials
-- (partial) HDRP materials
-- glTFast materials
 
 ### Import only
 
@@ -176,11 +174,38 @@ These extensions and shaders worked in the past but are not actively supported a
   - ShaderGraphs/glTF-pbrSpecularGlossiness (legacy shader from glTFast)
   - glTF/PbrSpecularGlossiness (legacy shader from glTFast)
 
-## Extensibility
+## Exporting glTF Files
 
-There's lots of attachment points for exporting and importing glTF files with UnityGLTF. These allow modifying node structures, extension data, materials and more as part of the regular export and import process both in the Editor and at runtime.  
+To quickly export an object from a scene or your project,
+1. Select the object  
+2. Use the menu items under `Assets > UnityGLTF > Export selected as GLB` / `Export selected as glTF` to export
 
-> 🏗️ Under construction. You can take a look at MaterialExtensions.cs for an example in the meantime.  
+> **Tip:** You can set shortcuts for quick export in Unity's Shortcut Manager.  
+  <kbd>Ctrl + Space</kbd> for GLB export and <kbd>Ctrl + Shift + Space</kbd> for glTF export allow for super quick iteration.  
+
+### Testing, debugging, compatibility
+
+The various glTF viewers in existance have varying feature sets. Only a select few have full coverage of the glTF spec, most only support a subset. 
+Notable features with limited support:
+
+- setting `textureCoord` per texture. For example, three.js and thus model-viewer ignore texCoord and always use UV0 for all textures besides occlusion, which always uses UV1.  
+- setting `textureRotation`. Many viewers simply ignore it.
+- sparse accessors. Some viewers support sparse accessors only for blendshapes, others don't support it at all.
+
+To test your files, here's a number of other viewers you can use:
+| Name | Notes |
+| - | - |
+| [gltf.report](https://gltf.report)<br/>(based on three.js) | Great for inspecting file size, meshes, textures | 
+| [model-viewer](https://modelviewer.dev/editor)<br/>(based on three.js) | Support for KHR_materials_variants with custom code |
+| [Gestaltor]() | Full glTF Spec Compliance<br/>Support for KHR_animation_pointer<br/>Support for KHR_audio<br/>Support for KHR_materials_variants | 
+| [Babylon.js Sandbox](https://sandbox.babylonjs.com/) | Support for KHR_animation_pointer |
+| UnityGLTF<br/>(this project!) | Simply drop the exported glb file back into Unity.<br/>With a few minor exceptions, you should get back exactly what you exported. |
+| [glTFast](https://github.com/atteneder/glTFast) | Add the glTFast package to your project.<br/>You can switch the used importer on glTF files between glTFast and UnityGLTF.
+
+To further process files after exporting them with UnityGLTF, you can use
+| Name | Notes | 
+| - | - |
+| [gltf-transform](https://gltf-transform.donmccurdy.com/) | Compress meshes with draco or meshopt<br/>Compress textures to ktx2 |
 
 ## Animation Export
 
@@ -212,12 +237,13 @@ Timelines or sections of them can be recorded with a
 
 Animation components and their legacy clips can also be exported.  
 
-## Animation Import
+### KHR_animation_pointer
 
-Animations can be imported both in the Editor and at runtime.  
-On the importer, you can choose between "Legacy" or "Mecanim" clips.  
+UnityGLTF supports exporting animations with the KHR_animation_pointer extension. The core glTF spec only allows animation node transforms and blendshape weights, while this extension allows animating arbitrary properties in the glTF file – including material properties, and even in custom extensions.  
 
-At runtime, if you're importing "Mecanim" clips, you need to make sure to add them to a playable graph (e.g. Animator Controller or Timeline) to play them back.  
+Exporting with KHR_animation_pointer can be turned on in `Project Settings > UnityGLTF > Use Animation Pointer`.  
+
+> **Note:** The exported files can be viewed with Gestaltor, Babylon Sandbox, and Needle Engine, but currently not with three.js / model-viewer. See https://github.com/mrdoob/three.js/pull/24108. They can also not be reimported into UnityGLTF at this point. 
 
 ## Blendshape Export
 
@@ -225,6 +251,19 @@ Morph Targets / Blend Shapes are supported, including animations.
 To create smaller files for complex blendshape animations (e.g. faces with dozens of shapes), you can export with "Sparse Accessors" on.  
 
 > **Note**: While exporting with sparse accessors works, importing blend shapes with sparse accessors is currently not supported.  
+
+## Animation Import
+
+Animations can be imported both in the Editor and at runtime.  
+On the importer, you can choose between "Legacy" or "Mecanim" clips.  
+
+At runtime, if you're importing "Mecanim" clips, you need to make sure to add them to a playable graph (e.g. Animator Controller or Timeline) to play them back.  
+
+## Extensibility
+
+There's lots of attachment points for exporting and importing glTF files with UnityGLTF. These allow modifying node structures, extension data, materials and more as part of the regular export and import process both in the Editor and at runtime.  
+
+> 🏗️ Under construction. You can take a look at MaterialExtensions.cs for an example in the meantime.  
 
 ## Known Issues
 
