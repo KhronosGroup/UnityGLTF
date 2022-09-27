@@ -1,15 +1,38 @@
 # UnityGLTF
 
-Unity3D library for importing and exporting [GLTF 2.0](https://github.com/KhronosGroup/glTF/) assets.
+![Good coverage of glTF 2.0 with some exceptions (e.g. arbitrary texCoords are not well supported)](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
+![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2020.3%E2%80%932021.3%2B-brightgreen)
+![Support for 2018.4–2019.4 is not actively maintained](https://img.shields.io/badge/Unity-2018.4%E2%80%932019.4-yellow)
 
-The goal of this library is to support the full glTF 2.0 specification and enable the following scenarios:  
-- Run-time import
-- Run-time export
-- Design-time import
-- Design-time export  
-- Export and import of custom extensions  
+![URP supported](https://img.shields.io/badge/Render%20Pipeline-URP-brightgreen)
+![BiRP supported with better support on 2021.3+](https://img.shields.io/badge/Render%20Pipeline-Built--in-brightgreen)
+![HDRP support is not actively maintained](https://img.shields.io/badge/Render%20Pipeline-HDRP-yellow)
 
-The library is designed to be easy to extend with additional extensions to the glTF specification.  
+Unity3D library for importing and exporting [glTF 2.0](https://github.com/KhronosGroup/glTF/) assets.
+
+| | Editor | Runtime |
+|-|-|-|
+| Import | ✅ | ✅ |
+| Export | ✅ | ✅ |
+
+UnityGLTF doesn't have any native dependencies (pure C#) and should thus work on all platforms that Unity supports. This includes WebGL import and export. 
+
+The library is designed to be easy to extend with additional extensions to the glTF specification. Both import and export allow attaching custom callbacks and can be heavily modified to fit into specific pipelines.  
+
+## Contents
+- [Installation](#installation)  
+- [Unity Version and Render Pipeline Compatibility](#unity-version-and-render-pipeline-compatibility)  
+- [UnityGLTF and glTFast](#UnityGLTF-and-glTFast)  
+- [Supported Features and Extensions](#Supported-Features-and-Extensions)  
+- [glTF Materials](#glTF-Materials)  
+- [Exporting glTF Files](#Exporting-glTF-Files)  
+- [Animation Export](#Animation-Export)  
+- [Animation Import](#Animation-Import)  
+- [BlendShape Export](#BlendShape-Export)  
+- [Extensibility](#Extensibility)  
+- [Known Issues](#Known-Issues)  
+- [Contributing](#Contributing)  
+- [Samples](#Samples)  
 
 ## Installation
 
@@ -30,7 +53,7 @@ The package comes with a number of samples that you can import to learn more:
 2. Select `UnityGLTF`
 3. Select `Samples` and import the desired ones.
 
-## Compatibility
+## Unity Version and Render Pipeline Compatibility
 
 The best results for import and export workflows with material extensions can be achieved on Unity 2021.3.8f1+ with URP.  
 
@@ -51,7 +74,7 @@ These configurations have been working in the past. They will not be updated wit
 
 > **Note:** Issues on non-LTS Unity versions (not on 2020.3, 2021.3, 2022.3, ...) will most likely not be addressed. Please use LTS (Long-Term Support) versions where possible.  
 
-## Current Status
+## UnityGLTF and glTFast
 
 UnityGLTF hasn't received official support since early 2020. However, a number of forks have fixed issues and improved several key areas, especially animation support,export workflows, color spaces and extendibility. These forks have now been merged back into main so that everyone can benefit from then, and to enable further work.  
 
