@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteAlways, ImageEffectAllowedInSceneView]
-public class CopyColorBuiltin : MonoBehaviour
+public class RoughRefraction : MonoBehaviour
 {
 	public Renderer tempOutput;
 	private MaterialPropertyBlock tempBlock;

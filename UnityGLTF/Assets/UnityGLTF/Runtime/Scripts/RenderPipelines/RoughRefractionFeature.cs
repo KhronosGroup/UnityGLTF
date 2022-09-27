@@ -10,9 +10,10 @@ namespace UnityGLTF
 #if HAVE_URP_12_OR_NEWER
 	[DisallowMultipleRendererFeature("Opaque Texture (Rough Refractions)")]
 #endif
-	public class CopyColorWithMipmaps : ScriptableRendererFeature
+	public class RoughRefractionFeature : ScriptableRendererFeature
 	{
 	    public Downsampling downsampling = Downsampling.None;
+
 	    class CustomRenderPass : CopyColorPass
 	    {
 	        public Downsampling m_DownsamplingMethod;

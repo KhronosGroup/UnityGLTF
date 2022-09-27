@@ -71,7 +71,7 @@ Key differences of glTFast include:
 > - glTFast has better general import support (compressed meshes and textures, HDRP support).  
 > - If you're using custom extensions, UnityGLTF might still be the right choice for import for its extensibility.    
 
-## Supported Features
+## Supported Features and Extensions
 The lists below are non-conclusive and in no particular order. Note that there are gaps where features could easily be supported for im- and export but currently aren't. PRs welcome!
 
 ### Import and Export
@@ -107,24 +107,10 @@ The lists below are non-conclusive and in no particular order. Note that there a
 
 - MSFT_LODExtension
 
-## Material Extension Worfklows
+## glTF Materials
 
 To leverage the extended material model of glTF in Unity, use the `UnityGLTF/PBRGraph` material.  
 It allows the use of various glTF material extensions for import, export, and inside Unity.
-
-### Configure for Refractive Materials (Transmission and Volume)
-
-### URP
-To see transmissive and volume materials correctly in Unity, 
-1. Select your URP Renderer Asset
-2. Under the "Renderer Features" section, add a "Opaque Texture (Rough Refraction)" feature
-3. On a PBRGraph material, check "Enable Transmission" and optionally "Enable Volume"
-4. Change the Transmission,  Thickness, Index of Refraction and Attenuation values as desired.
-
-### Built-In
-To see transmissive and volume materials correctly in Unity, 
-1. Make sure you have the PostProcessing v2 installed (can be installed via Package Manager).
-2. 
 
 ### Material Conversions
 
@@ -141,7 +127,24 @@ When you switch such a shader to PBRGraph the next time, your conversion script 
 
 > **Note:** Currently, conversion scripts aren't used automatically on glTF export. Convert materials at edit time for best results. 
 
-## Material and Shader Export Compatibility
+### Configure for Refractive Materials (Transmission and Volume)
+
+Transmission and Volume allow rendering materials like glass, that are fully transparent but still show reflections, as well as volume attenuation (e.g. colored jelly) and rough refraction (e.g. brushed glass).  
+
+#### Material Setup
+1. On a PBRGraph material, check "Enable Transmission" and optionally "Enable Volume"
+2. Change the Transmission,  Thickness, Index of Refraction and Attenuation values as desired.
+
+#### URP
+To see transmissive and volume materials correctly in Unity, 
+1. Select your URP Renderer Asset
+2. Under the "Renderer Features" section, add a "Opaque Texture (Rough Refraction)" feature
+
+#### Built-In
+To see transmissive and volume materials correctly in Unity, 
+1. Add the "RoughRefraction" component to your Main Camera.
+
+### Material and Shader Export Compatibility
 
 If you want to design for glTF export, it's recommended to use Unity 2021.3+ with URP and the **UnityGLTF/PBRGraph** material. It comes with support for modern material extensions like refraction and iridescence, and allows for perfect roundtrips. Great for building glTF pipelines in and out of Unity.  
 
