@@ -330,6 +330,21 @@ namespace UnityGLTF
 	               material.HasProperty("_LightFactor");
         }
 
+        private static bool CheckForPropertyInShader(Shader shader, string name, ShaderPropertyType type)
+        {
+	        var c = shader.GetPropertyCount();
+	        var foundProperty = false;
+	        for (var i = 0; i < c; i++)
+	        {
+		        if (shader.GetPropertyName(i) == name && shader.GetPropertyType(i) == type)
+		        {
+			        foundProperty = true;
+			        break;
+		        }
+	        }
+	        return foundProperty;
+        }
+
 		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
 		{
 			// early out if texture transform is explicitly disabled
@@ -345,7 +360,7 @@ namespace UnityGLTF
 #if UNITY_2021_1_OR_NEWER
 			if (mat.HasFloat(rotProp))
 #else
-			if (mat.HasProperty(rotProp))
+			if (mat.HasProperty(rotProp) && CheckForPropertyInShader(mat.shader, rotProp, ShaderPropertyType.Float))
 #endif
 				rotation = mat.GetFloat(rotProp);
 
@@ -360,22 +375,8 @@ namespace UnityGLTF
 				// the material ALWAYS says true for mat.HasProperty(someTex_ST) when someTex is defined and doesn't have [NoTextureScale] attribute
 				if (textureHasTilingOffset)
 				{
-					var shader = mat.shader;
-					var c = shader.GetPropertyCount();
-					var actuallyFoundTilingOffset = false;
-					for (var i = 0; i < c; i++)
-					{
-						if (shader.GetPropertyName(i) == checkForName)
-						{
-							actuallyFoundTilingOffset = true;
-							break;
-						}
-					}
-
-					if (!actuallyFoundTilingOffset)
-					{
+					if (!CheckForPropertyInShader(mat.shader, checkForName, ShaderPropertyType.Vector))
 						textureHasTilingOffset = false;
-					}
 				}
 #endif
 

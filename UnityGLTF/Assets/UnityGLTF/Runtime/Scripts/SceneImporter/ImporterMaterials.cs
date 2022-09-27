@@ -191,7 +191,9 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(pbr.BaseColorTexture);
 					if (ext != null)
 					{
-						unlitMapper.BaseColorXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						unlitMapper.BaseColorXOffset = offset;
 						unlitMapper.BaseColorXRotation = ext.Rotation;
 						unlitMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 						unlitMapper.BaseColorXTexCoord = ext.TexCoord;

@@ -48,6 +48,8 @@ namespace UnityGLTF
 				    _material.SetInt("_BUILTIN_DstBlend", (int)BlendMode.Zero);
 				    _material.SetInt("_ZWrite", 1);
 				    _material.SetInt("_BUILTIN_ZWrite", 1);
+				    _material.SetInt("_AlphaClip", 1);
+				    _material.SetInt("_BUILTIN_AlphaClip", 1);
 				    _material.EnableKeyword("_ALPHATEST_ON");
 				    _material.EnableKeyword("_BUILTIN_ALPHATEST_ON");
 				    _material.DisableKeyword("_ALPHABLEND_ON");
@@ -56,9 +58,9 @@ namespace UnityGLTF
 				    _material.DisableKeyword("_BUILTIN_ALPHAPREMULTIPLY_ON");
 				    _material.renderQueue = (int)RenderQueue.AlphaTest;
 				    if (_material.HasProperty("_Cutoff"))
-				    {
 					    _material.SetFloat("_Cutoff", (float)AlphaCutoff);
-				    }
+				    if (_material.HasProperty("alphaCutoff"))
+					    _material.SetFloat("alphaCutoff", (float)AlphaCutoff);
 
 				    SetAlphaModeMask(_material, true);
 			    }
@@ -72,6 +74,8 @@ namespace UnityGLTF
 				    _material.SetInt("_BUILTIN_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
 				    _material.SetInt("_ZWrite", 0);
 				    _material.SetInt("_BUILTIN_ZWrite", 0);
+				    _material.SetInt("_AlphaClip", 0);
+				    _material.SetInt("_BUILTIN_AlphaClip", 0);
 				    _material.DisableKeyword("_ALPHATEST_ON");
 				    _material.DisableKeyword("_BUILTIN_ALPHATEST_ON");
 				    _material.EnableKeyword("_ALPHABLEND_ON");
@@ -94,6 +98,8 @@ namespace UnityGLTF
 				    _material.SetInt("_BUILTIN_DstBlend", (int)BlendMode.Zero);
 				    _material.SetInt("_ZWrite", 1);
 				    _material.SetInt("_BUILTIN_ZWrite", 1);
+				    _material.SetInt("_AlphaClip", 0);
+				    _material.SetInt("_BUILTIN_AlphaClip", 0);
 				    _material.DisableKeyword("_ALPHATEST_ON");
 				    _material.DisableKeyword("_ALPHABLEND_ON");
 				    _material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
@@ -187,7 +193,15 @@ namespace UnityGLTF
 	    public double AlphaCutoff
 	    {
 		    get => _material.GetFloat("alphaCutoff");
-		    set => _material.SetFloat("alphaCutoff", (float) value);
+		    set
+		    {
+				_material.SetFloat("alphaCutoff", (float) value);
+#if !UNITY_2021_2_OR_NEWER
+			    // PBRGraph/UnlitGraph always have alphaCutoff on 2020.x, so we need to set it to 0 for non-masked modes
+				if (_alphaMode != AlphaMode.MASK)
+				    _material.SetFloat("alphaCutoff", 0f);
+#endif
+		    }
 	    }
 
 	    public virtual bool DoubleSided
