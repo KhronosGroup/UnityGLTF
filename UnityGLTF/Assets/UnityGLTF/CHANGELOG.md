@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] - 2022-09-27
-- feat: import blend shapes and blend shape animations
+- feat: import blend shapes and blend shape animations (note: sparse accessor import not working yet)
 - feat: allow doublesided and transparent import on 2020.3 URP with PBRGraph
 - fix: UnlitGraph used wrong texture transform in some cases
 - fix: BiRP texture import on legacy shaders in < 2020.3 had flipped texture transforms
