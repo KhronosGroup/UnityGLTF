@@ -144,6 +144,9 @@ To see transmissive and volume materials correctly in Unity,
 To see transmissive and volume materials correctly in Unity, 
 1. Add the "RoughRefraction" component to your Main Camera.
 
+#### HDRP
+HDRP has its own rough refraction support. There's currently no automatic import / export support to convert to that. Use glTFast if you need this! 
+
 ### Material and Shader Export Compatibility
 
 If you want to design for glTF export, it's recommended to use Unity 2021.3+ with URP and the **UnityGLTF/PBRGraph** material. It comes with support for modern material extensions like refraction and iridescence, and allows for perfect roundtrips. Great for building glTF pipelines in and out of Unity.  
