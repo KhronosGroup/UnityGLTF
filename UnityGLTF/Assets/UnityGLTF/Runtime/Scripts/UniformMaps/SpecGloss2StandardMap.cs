@@ -30,8 +30,7 @@ namespace UnityGLTF
 			set
 			{
 				diffuseOffset = value;
-				var unitySpaceVec = new Vector2(diffuseOffset.x, 1 - DiffuseXScale.y - diffuseOffset.y);
-				_material.SetTextureOffset("_MainTex", unitySpaceVec);
+				_material.SetTextureOffset("_MainTex", value);
 			}
 		}
 
@@ -87,8 +86,7 @@ namespace UnityGLTF
 			set
 			{
 				specGlossOffset = value;
-				var unitySpaceVec = new Vector2(specGlossOffset.x, 1 - SpecularGlossinessXScale.y - specGlossOffset.y);
-				_material.SetTextureOffset("_SpecGlossMap", unitySpaceVec);
+				_material.SetTextureOffset("_SpecGlossMap", value);
 			}
 		}
 

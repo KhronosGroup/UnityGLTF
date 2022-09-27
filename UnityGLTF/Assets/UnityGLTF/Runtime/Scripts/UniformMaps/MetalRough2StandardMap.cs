@@ -28,8 +28,7 @@ namespace UnityGLTF
 			get { return baseColorOffset; }
 			set {
 				baseColorOffset = value;
-				var unitySpaceVec = new Vector2(baseColorOffset.x, 1 - BaseColorXScale.y - baseColorOffset.y);
-				_material.SetTextureOffset("_MainTex", unitySpaceVec);
+				_material.SetTextureOffset("_MainTex", value);
 			}
 		}
 

@@ -56,8 +56,7 @@ namespace UnityGLTF
 			set
 			{
 				metalRoughOffset = value;
-				var unitySpaceVec = new Vector2(metalRoughOffset.x, 1 - MetallicRoughnessXScale.y - metalRoughOffset.y);
-				_material.SetTextureOffset("_MetallicGlossMap", unitySpaceVec);
+				_material.SetTextureOffset("_MetallicGlossMap", value);
 			}
 		}
 

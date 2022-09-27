@@ -90,8 +90,7 @@ namespace UnityGLTF
 			set
 			{
 				normalOffset = value;
-				var unitySpaceVec = new Vector2(normalOffset.x, 1 - NormalXScale.y - normalOffset.y);
-				_material.SetTextureOffset("_BumpMap", unitySpaceVec);
+				_material.SetTextureOffset("_BumpMap", value);
 			}
 		}
 
@@ -161,8 +160,7 @@ namespace UnityGLTF
 			set
 			{
 				occlusionOffset = value;
-				var unitySpaceVec = new Vector2(occlusionOffset.x, 1 - OcclusionXScale.y - occlusionOffset.y);
-				_material.SetTextureOffset("_OcclusionMap", unitySpaceVec);
+				_material.SetTextureOffset("_OcclusionMap", value);
 			}
 		}
 
@@ -233,8 +231,7 @@ namespace UnityGLTF
 			set
 			{
 				emissiveOffset = value;
-				var unitySpaceVec = new Vector2(emissiveOffset.x, 1 - EmissiveXScale.y - emissiveOffset.y);
-				_material.SetTextureOffset("_EmissionMap", unitySpaceVec);
+				_material.SetTextureOffset("_EmissionMap", value);
 			}
 		}
 
