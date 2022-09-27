@@ -117,7 +117,9 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(pbr.MetallicRoughnessTexture);
 					if (ext != null)
 					{
-						mrMapper.MetallicRoughnessXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						mrMapper.MetallicRoughnessXOffset = offset;
 						mrMapper.MetallicRoughnessXRotation = ext.Rotation;
 						mrMapper.MetallicRoughnessXScale = ext.Scale.ToUnityVector2Raw();
 						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
@@ -148,7 +150,9 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(specGloss.DiffuseTexture);
 					if (ext != null)
 					{
-						sgMapper.DiffuseXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						sgMapper.DiffuseXOffset = offset;
 						sgMapper.DiffuseXRotation = ext.Rotation;
 						sgMapper.DiffuseXScale = ext.Scale.ToUnityVector2Raw();
 						sgMapper.DiffuseXTexCoord = ext.TexCoord;
@@ -167,7 +171,9 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(specGloss.SpecularGlossinessTexture);
 					if (ext != null)
 					{
-						sgMapper.SpecularGlossinessXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						sgMapper.SpecularGlossinessXOffset = offset;
 						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
 						sgMapper.SpecularGlossinessXScale = ext.Scale.ToUnityVector2Raw();
 						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
@@ -296,7 +302,9 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(def.NormalTexture);
 					if (ext != null)
 					{
-						uniformMapper.NormalXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						uniformMapper.NormalXOffset = offset;
 						uniformMapper.NormalXRotation = ext.Rotation;
 						uniformMapper.NormalXScale = ext.Scale.ToUnityVector2Raw();
 						uniformMapper.NormalXTexCoord = ext.TexCoord;
@@ -336,7 +344,9 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(def.EmissiveTexture);
 					if (ext != null)
 					{
-						uniformMapper.EmissiveXOffset = ext.Offset.ToUnityVector2Raw();
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						uniformMapper.EmissiveXOffset = offset;
 						uniformMapper.EmissiveXRotation = ext.Rotation;
 						uniformMapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
 						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
