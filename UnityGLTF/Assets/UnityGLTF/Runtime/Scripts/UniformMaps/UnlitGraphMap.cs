@@ -9,7 +9,12 @@ namespace UnityGLTF
 
 #if !UNITY_2021_1_OR_NEWER
 		private const string UnlitGraphTransparentGuid = "83f2caca07949794fb997734c4b0520f";
-		public UnlitGraphMap(bool transparent) : base(transparent ? "UnityGLTF/UnlitGraph-Transparent" : "UnityGLTF/UnlitGraph", transparent ? UnlitGraphTransparentGuid : UnlitGraphGuid) { }
+		private const string UnlitGraphTransparentDoubleGuid = "8a8841b4fb2f63644896f4e2b36bc06d";
+		private const string UnlitGraphDoubleGuid = "33ee70a7f505ddb4e80d235c3d70766d";
+
+		public UnlitGraphMap(bool transparent, bool doubleSided) : base(
+			"UnityGLTF/UnlitGraph" + (transparent ? "-Transparent" : "") + (doubleSided ? "-Double" : ""),
+			(transparent && doubleSided ? UnlitGraphTransparentDoubleGuid : transparent ? UnlitGraphTransparentGuid : doubleSided ? UnlitGraphDoubleGuid : UnlitGraphGuid)) { }
 #endif
 
 		protected UnlitGraphMap(string shaderName) : base(shaderName, UnlitGraphGuid) { }

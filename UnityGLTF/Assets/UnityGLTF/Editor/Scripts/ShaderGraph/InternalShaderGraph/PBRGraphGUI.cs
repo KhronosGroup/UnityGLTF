@@ -5,6 +5,7 @@
 #endif
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -83,6 +84,9 @@ namespace UnityGLTF
 			Material targetMat = materialEditor.target as Material;
 
 			DrawGameObjectInfo(targetMat);
+#if !UNITY_2021_1_OR_NEWER
+			DrawSurfaceOptions(targetMat);
+#endif
 			_DrawSurfaceInputs(targetMat);
 		}
 #endif
@@ -109,6 +113,55 @@ namespace UnityGLTF
 			}
 			return false;
 		}
+
+#if !UNITY_2021_1_OR_NEWER
+		private static readonly Dictionary<string, string> ShaderNameToGuid = new Dictionary<string, string>()
+		{
+			{ "UnityGLTF/PBRGraph", "478ce3626be7a5f4ea58d6b13f05a2e4" },
+			{ "UnityGLTF/PBRGraph-Transparent", "0a931320a74ca574b91d2d7d4557dcf1" },
+			{ "UnityGLTF/PBRGraph-Transparent-Double", "54352a53405971b41a6587615f947085" },
+			{ "UnityGLTF/PBRGraph-Double", "8bc739b14fe811644abb82057b363ba8" },
+
+			{ "UnityGLTF/UnlitGraph", "59541e6caf586ca4f96ccf48a4813a51" },
+			{ "UnityGLTF/UnlitGraph-Transparent", "83f2caca07949794fb997734c4b0520f" },
+			{ "UnityGLTF/UnlitGraph-Transparent-Double", "8a8841b4fb2f63644896f4e2b36bc06d" },
+			{ "UnityGLTF/UnlitGraph-Double", "33ee70a7f505ddb4e80d235c3d70766d" },
+		};
+
+		private void DrawSurfaceOptions(Material targetMaterial)
+		{
+			EditorGUILayout.Space();
+
+			var shaderName = targetMaterial.shader.name.Replace("Hidden/", "");
+			var isTransparent = shaderName.Contains("-Transparent");
+			var isDoubleSided = shaderName.Contains("-Double");
+			var indexOfDash = shaderName.IndexOf("-", StringComparison.Ordinal);
+			var baseShaderName = indexOfDash < 0 ? shaderName : shaderName.Substring(0, indexOfDash);
+			// EditorGUILayout.LabelField("Shader Name", baseShaderName);
+
+			void SetShader()
+			{
+				var newName = baseShaderName + (isTransparent ? "-Transparent" : "") + (isDoubleSided ? "-Double" : "");
+				Undo.RegisterCompleteObjectUndo(targetMaterial, "Set Material Options");
+				targetMaterial.shader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(ShaderNameToGuid[newName]));
+			}
+
+			var newT = EditorGUILayout.Toggle("Transparent", isTransparent);
+			if (newT != isTransparent)
+			{
+				isTransparent = newT;
+				SetShader();
+			}
+			var newD = EditorGUILayout.Toggle("Double Sided", isDoubleSided);
+			if (newD != isDoubleSided)
+			{
+				isDoubleSided = newD;
+				SetShader();
+			}
+
+			EditorGUILayout.Space();
+		}
+#endif
 
 		private void DrawGameObjectInfo(Material targetMaterial)
 		{
