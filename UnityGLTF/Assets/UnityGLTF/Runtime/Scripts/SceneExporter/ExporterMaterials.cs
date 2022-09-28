@@ -330,8 +330,11 @@ namespace UnityGLTF
 	               material.HasProperty("_LightFactor");
         }
 
+#if UNITY_2019_1_OR_NEWER
         private static bool CheckForPropertyInShader(Shader shader, string name, ShaderPropertyType type)
         {
+	        // TODO result can be cached, we might do many similar checks for one export
+
 	        var c = shader.GetPropertyCount();
 	        var foundProperty = false;
 	        for (var i = 0; i < c; i++)
@@ -344,6 +347,7 @@ namespace UnityGLTF
 	        }
 	        return foundProperty;
         }
+#endif
 
 		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
 		{
@@ -360,7 +364,11 @@ namespace UnityGLTF
 #if UNITY_2021_1_OR_NEWER
 			if (mat.HasFloat(rotProp))
 #else
-			if (mat.HasProperty(rotProp) && CheckForPropertyInShader(mat.shader, rotProp, ShaderPropertyType.Float))
+			if (mat.HasProperty(rotProp)
+#if UNITY_2019_1_OR_NEWER
+				&& CheckForPropertyInShader(mat.shader, rotProp, ShaderPropertyType.Float)
+#endif
+			)
 #endif
 				rotation = mat.GetFloat(rotProp);
 
