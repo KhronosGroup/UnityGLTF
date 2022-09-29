@@ -31,7 +31,7 @@ namespace UnityGLTF
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
 
-		private void RegisterPrimitivesWithNode(Node node, List<UniquePrimitive> uniquePrimitives)
+		public void RegisterPrimitivesWithNode(Node node, List<UniquePrimitive> uniquePrimitives)
 		{
 			// associate unity meshes with gltf mesh id
 			foreach (var primKey in uniquePrimitives)
