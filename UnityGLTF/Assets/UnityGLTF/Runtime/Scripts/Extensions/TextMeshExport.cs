@@ -72,7 +72,7 @@ namespace UnityGLTF
 				materialNode.AlphaMode = AlphaMode.BLEND;
 
 				material.shader = s;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_2019_3_OR_NEWER
 				UnityEditor.EditorUtility.ClearDirty(material);
 #endif
 
