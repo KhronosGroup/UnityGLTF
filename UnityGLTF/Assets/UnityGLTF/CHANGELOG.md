@@ -5,9 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [1.16.2-pre] - 2022-09-30
-- feat: import blend shapes and blend shape animations (note: sparse accessor import not working yet)
-- feat: allow doublesided and transparent import on 2020.3 URP with PBRGraph
-- feat: make RegisterPrimitivesWithNode API public
+- fix: blend shapes and blend shape animations were not imported (note: sparse accessor import not working yet)
+- fix: allow doublesided and transparent import on 2020.3 URP with PBRGraph
+- fix: make RegisterPrimitivesWithNode API public, belongs to ExportMesh
 - fix: UnlitGraph used wrong texture transform in some cases
 - fix: BiRP texture import on legacy shaders in < 2020.3 had flipped texture transforms
 - fix: ExporterMaterials compilation issue on 2018.x
