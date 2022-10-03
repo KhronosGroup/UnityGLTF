@@ -152,6 +152,8 @@ When you switch such a shader to PBRGraph the next time, your conversion script 
 
 Transmission and Volume allow rendering materials like glass, that are fully transparent but still show reflections, as well as volume attenuation (e.g. colored jelly) and rough refraction (e.g. brushed glass).  
 
+> **Note**: Fully metallic materials are never transparent.  See [the KHR_materials_transmission spec](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_transmission/README.md#transparent-metals) for more info.  
+
 #### Material Setup
 1. On a PBRGraph material, check "Enable Transmission" and optionally "Enable Volume"
 2. Change the Transmission,  Thickness, Index of Refraction and Attenuation values as desired.
