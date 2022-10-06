@@ -478,7 +478,11 @@ namespace UnityGLTF
 							if (existingTarget.Extensions != null && existingTarget.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out var ext) && ext is KHR_animation_pointer animationPointer)
 							{
 								// Debug.Log($"export? {!targetTrShouldNotBeExported} - {nameof(existingTarget)}: {L(existingTarget)}, {nameof(animationPointer)}: {L(animationPointer.animatedObject)}, {nameof(alreadyExportedTransform)}: {L(alreadyExportedTransform)}, {nameof(targetTr)}: {L(targetTr)}");
-								if (animationPointer.animatedObject is Component c && c.transform == alreadyExportedTransform)
+								var obj = animationPointer.animatedObject;
+								Transform animatedTransform = default;
+								if (obj is Component comp) animatedTransform = comp.transform;
+								else if (obj is GameObject go) animatedTransform = go.transform;
+								if (animatedTransform == alreadyExportedTransform)
 								{
 										if (targetTrShouldNotBeExported)
 										{
@@ -486,13 +490,22 @@ namespace UnityGLTF
 										}
 										else
 										{
-											var targetType = animationPointer.animatedObject.GetType();
-											var newTarget = targetTr.GetComponent(targetType);
-											if (newTarget)
+											if (animationPointer.animatedObject is GameObject)
 											{
-												animationPointer.animatedObject = newTarget;
+												animationPointer.animatedObject = targetTr.gameObject;
 												animationPointer.channel = existingTarget;
 												animationPointerResolver.Add(animationPointer);
+											}
+											else if(animationPointer.animatedObject is Component)
+											{
+												var targetType = animationPointer.animatedObject.GetType();
+												var newTarget = targetTr.GetComponent(targetType);
+												if (newTarget)
+												{
+													animationPointer.animatedObject = newTarget;
+													animationPointer.channel = existingTarget;
+													animationPointerResolver.Add(animationPointer);
+												}
 											}
 										}
 								}
