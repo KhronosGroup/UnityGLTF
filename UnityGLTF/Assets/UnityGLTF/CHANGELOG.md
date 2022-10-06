@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.16.3-pre] - 2022-10-06
+- fix: KHR_animation_pointer bug with re-used animations targeting properties on nodes
+
 ## [1.16.2-pre] - 2022-09-30
 - fix: blend shapes and blend shape animations were not imported (note: sparse accessor import not working yet)
 - fix: allow doublesided and transparent import on 2020.3 URP with PBRGraph
