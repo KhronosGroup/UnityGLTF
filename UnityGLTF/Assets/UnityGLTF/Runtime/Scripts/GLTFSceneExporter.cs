@@ -61,29 +61,91 @@ namespace UnityGLTF
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
-		private enum IMAGETYPE
+		public class TextureMapType
 		{
-			RGB,
-			RGBA,
-			R,
-			G,
-			B,
-			A,
-			G_INVERT
+			// does the texture need a channel conversion when exporting
+			public Conversion conversion;
+			// do we know something about the alpha channel of this texture
+			public AlphaMode alphaMode;
+			// is the texture linear or sRGB
+			public bool linear;
+
+			public enum Conversion
+			{
+				None,
+				MetalGlossChannelSwap,
+				NormalChannel,
+				ChannelConversion,
+			}
+
+			public enum AlphaMode
+			{
+				Never = 0,
+				Always = 1,
+				Heuristic = 2,
+			}
+
+			public static TextureMapType Main = new () { alphaMode = AlphaMode.Heuristic };
+			public static TextureMapType Emission = new () { alphaMode = AlphaMode.Heuristic };
+
+			public static TextureMapType Bump = new () { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
+			public static TextureMapType MetallicGloss = new () { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap };
+			public static TextureMapType Linear = new () { linear = true, alphaMode = AlphaMode.Never };
+
+			public static TextureMapType SpecGloss = MetallicGloss;
+			public static TextureMapType Light = Linear;
+			public static TextureMapType Occlusion = Linear;
+			public static TextureMapType MetallicGloss_DontConvert = Linear;
+
+			public static TextureMapType Custom_Unknown = new () { alphaMode = AlphaMode.Always };
+			public static TextureMapType Custom_HDR = new () { alphaMode = AlphaMode.Always };
+
+			public static bool operator ==(TextureMapType lhs, TextureMapType rhs)
+			{
+				if (ReferenceEquals(lhs, rhs))
+					return true;
+				if (ReferenceEquals(lhs, null))
+					return false;
+				if (ReferenceEquals(rhs, null))
+					return false;
+				return lhs.Equals(rhs);
+			}
+
+			public static bool operator !=(TextureMapType lhs, TextureMapType rhs)
+			{
+				return !(lhs == rhs);
+			}
+
+			public bool Equals(TextureMapType other)
+			{
+				return
+					conversion == other.conversion &&
+				    alphaMode == other.alphaMode &&
+				    linear == other.linear;
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is TextureMapType other && Equals(other);
+			}
+
+			public override int GetHashCode()
+			{
+				return HashCode.Combine((int)conversion, (int)alphaMode, linear);
+			}
 		}
 
-		public enum TextureMapType
+		private Material GetConversionMaterial(TextureMapType textureMapType)
 		{
-			Main,
-			Bump,
-			SpecGloss,
-			Emission,
-			MetallicGloss,
-			Light,
-			Occlusion,
-			MetallicGloss_DontConvert,
-			Custom_Unknown,
-			Custom_HDR,
+			switch (textureMapType.conversion)
+			{
+				case TextureMapType.Conversion.NormalChannel:
+					return _normalChannelMaterial;
+				case TextureMapType.Conversion.MetalGlossChannelSwap:
+					return _metalGlossChannelSwapMaterial;
+				default:
+					return null;
+			}
 		}
 
 		private struct ImageInfo
@@ -115,6 +177,7 @@ namespace UnityGLTF
 
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _normalChannelMaterial;
+		private Material _channelConversionMaterial;
 
 		private const uint MagicGLTF = 0x46546C67;
 		private const uint Version = 2;
@@ -154,7 +217,7 @@ namespace UnityGLTF
 				unchecked
 				{
 					var hashCode = Texture != null ? Texture.GetHashCode() : 0;
-					hashCode = (hashCode * 397) ^ (int)TextureMapType;
+					hashCode = (hashCode * 397) ^ TextureMapType.GetHashCode();
 					hashCode = (hashCode * 397) ^ MaxSize;
 					return hashCode;
 				}
@@ -216,8 +279,6 @@ namespace UnityGLTF
 
 		#region Settings
 
-		// Settings
-		// private static GLTFSettings settings => GLTFSettings.GetOrCreateSettings();
 		private GLTFSettings settings => _exportOptions.settings;
 		private bool ExportNames => settings.ExportNames;
 		private bool RequireExtensions => settings.RequireExtensions;
@@ -226,7 +287,7 @@ namespace UnityGLTF
 		#endregion
 
 #region Profiler Markers
-
+		// ReSharper disable InconsistentNaming
 		private static ProfilerMarker exportGltfMarker = new ProfilerMarker("Export glTF");
 		private static ProfilerMarker gltfSerializationMarker = new ProfilerMarker("Serialize exported data");
 		private static ProfilerMarker exportMeshMarker = new ProfilerMarker("Export Mesh");
@@ -276,7 +337,7 @@ namespace UnityGLTF
 		private static ProfilerMarker removeAnimationUnneededKeyframesCheckIdenticalMarker = new ProfilerMarker("Check Identical");
 		private static ProfilerMarker removeAnimationUnneededKeyframesCheckIdenticalKeepMarker = new ProfilerMarker("Keep Keyframe");
 		private static ProfilerMarker removeAnimationUnneededKeyframesFinalizeMarker = new ProfilerMarker("Finalize");
-
+		// ReSharper restore InconsistentNaming
 #endregion
 
 		/// <summary>
@@ -313,6 +374,9 @@ namespace UnityGLTF
 
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
+
+			var channelConversionShader = Resources.Load("ChannelConversion", typeof(Shader)) as Shader;
+			_channelConversionMaterial = new Material(channelConversionShader);
 
 			_rootTransforms = rootTransforms;
 

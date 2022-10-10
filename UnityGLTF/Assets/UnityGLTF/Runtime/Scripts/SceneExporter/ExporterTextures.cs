@@ -41,21 +41,20 @@ namespace UnityGLTF
 
 				if (!wasAbleToExportTexture)
 				{
-					switch (textureMapType)
+					switch (textureMapType.conversion)
 					{
-						case TextureMapType.MetallicGloss:
-							ExportMetallicGlossTexture(image, fileOutputPath, true);
+						case TextureMapType.Conversion.MetalGlossChannelSwap:
+							ExportLinearTexture(image, fileOutputPath, true);
 							break;
-						case TextureMapType.MetallicGloss_DontConvert:
-						case TextureMapType.Custom_Unknown:
-						case TextureMapType.Occlusion:
-							ExportMetallicGlossTexture(image, fileOutputPath, false);
+						case TextureMapType.Conversion.None:
+							if (textureMapType.linear)
+								ExportLinearTexture(image, fileOutputPath, false);
+							else
+								ExportTexture(image, fileOutputPath);
 							break;
-						case TextureMapType.Bump:
+						case TextureMapType.Conversion.NormalChannel:
 							ExportNormalTexture(image, fileOutputPath);
 							break;
-						case TextureMapType.Main:
-						case TextureMapType.Emission:
 						default:
 							ExportTexture(image, fileOutputPath);
 							break;
@@ -73,7 +72,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="texture">Unity's metallic-gloss texture to be exported</param>
 		/// <param name="outputPath">The location to export the texture</param>
-		private void ExportMetallicGlossTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
+		private void ExportLinearTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
 		{
 			if (!texture)
 			{
@@ -225,20 +224,12 @@ namespace UnityGLTF
 				}
 			}
 
-			switch (textureMapType)
+			switch (textureMapType.alphaMode)
 			{
-				case TextureMapType.MetallicGloss:
+				case TextureMapType.AlphaMode.Never:
 					textureHasAlpha = false;
 					break;
-				case TextureMapType.MetallicGloss_DontConvert:
-				case TextureMapType.Light:
-				case TextureMapType.Occlusion:
-					textureHasAlpha = false;
-					break;
-				case TextureMapType.Bump:
-					textureHasAlpha = false;
-					break;
-				default:
+				case TextureMapType.AlphaMode.Heuristic:
 					textureHasAlpha = TextureHasAlphaChannel(texture);
 					break;
 			}
@@ -346,16 +337,15 @@ namespace UnityGLTF
 				if (importer?.textureShape != TextureImporterShape.Texture2D)
 					return false;
 
-				switch (textureMapType)
+				switch (textureMapType.conversion)
 				{
 					// if this is a normal map generated from greyscale, we shouldn't attempt to export from disk
-					case TextureMapType.Bump:
+					case TextureMapType.Conversion.NormalChannel:
 						if (importer && importer.textureType == TextureImporterType.NormalMap && importer.convertToNormalmap)
 							return false;
 						break;
 					// check if the texture contains an alpha channel; if yes, we shouldn't attempt to export from disk but instead convert.
-					case TextureMapType.MetallicGloss:
-					case TextureMapType.SpecGloss:
+					case TextureMapType.Conversion.MetalGlossChannelSwap:
 						if (importer && importer.DoesSourceTextureHaveAlpha())
 							return false;
 						break;
@@ -533,33 +523,29 @@ namespace UnityGLTF
 				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, format);
 				GL.sRGBWrite = sRGB;
 
-				switch (textureMapType)
+				if (textureMapType.linear)
+					GL.sRGBWrite = false;
+				var shader = GetConversionMaterial(textureMapType);
+				if (shader)
+					Graphics.Blit(texture, destRenderTexture, shader);
+				else
+					Graphics.Blit(texture, destRenderTexture);
+				switch (textureMapType.alphaMode)
 				{
-					case TextureMapType.MetallicGloss:
-						Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+					case TextureMapType.AlphaMode.Never:
 						textureHasAlpha = false;
 						break;
-					case TextureMapType.MetallicGloss_DontConvert:
-					case TextureMapType.Light:
-					case TextureMapType.Occlusion:
-						GL.sRGBWrite = false; // seems we need to convert here, otherwise color space is wrong
-						Graphics.Blit(texture, destRenderTexture);
-						textureHasAlpha = false;
-						break;
-					case TextureMapType.Bump:
-						// GL.sRGBWrite = false; // TODO check what we should do here. Needs tests!
-						Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
-						textureHasAlpha = false;
-						break;
-					case TextureMapType.Custom_HDR:
-						Debug.LogWarning("HDR Texture Export from non-readable textures isn't supported yet", texture);
-						Graphics.Blit(texture, destRenderTexture);
+					case TextureMapType.AlphaMode.Always:
 						textureHasAlpha = true;
 						break;
-					default:
-						Graphics.Blit(texture, destRenderTexture);
+					case TextureMapType.AlphaMode.Heuristic:
 						textureHasAlpha = TextureHasAlphaChannel(texture);
 						break;
+				}
+
+				if (textureMapType.Equals(TextureMapType.Custom_HDR))
+				{
+					Debug.LogWarning("HDR Texture Export from non-readable textures isn't supported yet", texture);
 				}
 
 				var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false);
