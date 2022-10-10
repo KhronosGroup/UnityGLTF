@@ -126,20 +126,22 @@ namespace UnityGLTF
 		public struct UniqueTexture : IEquatable<UniqueTexture>
 		{
 			public Texture Texture;
+			public TextureMapType TextureMapType;
 			public int MaxSize;
 
 			public int GetWidth() => Mathf.Min(MaxSize, Texture.width);
 			public int GetHeight() => Mathf.Min(MaxSize, Texture.height);
 
-			public UniqueTexture(Texture tex)
+			public UniqueTexture(Texture tex, TextureMapType textureMapType)
 			{
-				this.Texture = tex;
+				Texture = tex;
+				TextureMapType = textureMapType;
 				MaxSize = Mathf.Max(tex.width, tex.height);
 			}
 
 			public bool Equals(UniqueTexture other)
 			{
-				return Equals(Texture, other.Texture) && MaxSize == other.MaxSize;
+				return Equals(Texture, other.Texture) && MaxSize == other.MaxSize && TextureMapType == other.TextureMapType;
 			}
 
 			public override bool Equals(object obj)
@@ -151,7 +153,10 @@ namespace UnityGLTF
 			{
 				unchecked
 				{
-					return ((Texture != null ? Texture.GetHashCode() : 0) * 397) ^ MaxSize;
+					var hashCode = Texture != null ? Texture.GetHashCode() : 0;
+					hashCode = (hashCode * 397) ^ (int)TextureMapType;
+					hashCode = (hashCode * 397) ^ MaxSize;
+					return hashCode;
 				}
 			}
 		}
@@ -946,11 +951,11 @@ namespace UnityGLTF
 			return null;
 		}
 
-		public ImageId GetImageId(GLTFRoot root, Texture imageObj)
+		public ImageId GetImageId(GLTFRoot root, Texture imageObj, TextureMapType textureMapType)
 		{
 			for (var i = 0; i < _imageInfos.Count; i++)
 			{
-				if (_imageInfos[i].texture == imageObj)
+				if (_imageInfos[i].texture == imageObj && _imageInfos[i].textureMapType == textureMapType)
 				{
 					return new ImageId
 					{

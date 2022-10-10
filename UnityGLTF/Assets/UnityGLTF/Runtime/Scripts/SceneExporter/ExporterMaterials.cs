@@ -572,7 +572,7 @@ namespace UnityGLTF
 				}
 			}
 
-            var ignoreMetallicFactor = material.IsKeywordEnabled("_METALLICGLOSSMAP") && !isGltfPbrMetallicRoughnessShader && !isGlTFastShader;
+            var ignoreMetallicFactor = (material.IsKeywordEnabled("_METALLICGLOSSMAP") || material.IsKeywordEnabled("_METALLICSPECGLOSSMAP")) && !isGltfPbrMetallicRoughnessShader && !isGlTFastShader;
             if (material.HasProperty("metallicFactor") && !ignoreMetallicFactor)
             {
 	            pbr.MetallicFactor = material.GetFloat("metallicFactor");

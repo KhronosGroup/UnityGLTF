@@ -17,13 +17,15 @@ namespace UnityGLTF
 	{
 		private void ExportImages(string outputPath)
 		{
+			var allPaths = new string[_imageInfos.Count];
 			for (int t = 0; t < _imageInfos.Count; ++t)
 			{
 				writeImageToDiskMarker.Begin();
 
 				var image = _imageInfos[t].texture;
 				var textureMapType = _imageInfos[t].textureMapType;
-				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
+				var fileOutputPath = Path.Combine(outputPath, ObjectNames.GetUniqueName(allPaths, _imageInfos[t].outputPath));
+				allPaths[t] = fileOutputPath;
 
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
@@ -139,7 +141,7 @@ namespace UnityGLTF
 
 		public TextureId ExportTexture(Texture textureObj, TextureMapType textureMapType)
 		{
-			var uniqueTexture = new UniqueTexture(textureObj);
+			var uniqueTexture = new UniqueTexture(textureObj, textureMapType);
 
 			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture, textureMapType);
 
@@ -265,7 +267,7 @@ namespace UnityGLTF
 			var width = uniqueTexture.GetWidth();
 			var height = uniqueTexture.GetHeight();
 
-			ImageId id = GetImageId(_root, texture);
+			ImageId id = GetImageId(_root, texture, textureMapType);
 			if (id != null)
 			{
 				return id;
