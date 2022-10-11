@@ -662,7 +662,7 @@ namespace UnityGLTF
 						conversion = new TextureExportSettings(conversion);
 						conversion.smoothnessMultiplier = 1 - roughnessMultiplier;
 					}
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);
 					// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
 					// that's not true for the gltf shaders though, so we keep the value there.
 					if (ignoreMetallicFactor)

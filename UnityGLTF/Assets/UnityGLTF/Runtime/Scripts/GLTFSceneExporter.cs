@@ -70,7 +70,7 @@ namespace UnityGLTF
 
 			public const string Normal = "normalTexture";
 			[Obsolete("Use Normal instead")] public const string Bump = Normal;
-			public const string MetallicGloss = MetallicRoughness; // TODO this feels weird, we want to convert this texture
+			public const string MetallicGloss = "metallicGloss";
 			public const string MetallicRoughness = "metallicRoughnessTexture";
 			public const string SpecGloss = "specularGlossinessTexture"; // not really supported anymore
 			public const string Light = Linear;
@@ -183,6 +183,10 @@ namespace UnityGLTF
 					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
 					exportSettings.conversion = TextureExportSettings.Conversion.MetalGlossChannelSwap;
 					return exportSettings;
+				case TextureMapType.MetallicRoughness:
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+					break;
 
 				case TextureMapType.SpecGloss: // SpecGloss = MetallicGloss; // not really supported anymore
 					exportSettings.linear = true;
