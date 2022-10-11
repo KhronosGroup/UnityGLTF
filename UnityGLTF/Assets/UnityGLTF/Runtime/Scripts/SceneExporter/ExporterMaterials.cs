@@ -88,6 +88,7 @@ namespace UnityGLTF
 			}
 
 			exportMaterialMarker.Begin();
+			var isBirp = !GraphicsSettings.currentRenderPipeline;
 
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
@@ -105,7 +106,9 @@ namespace UnityGLTF
 					material.AlphaMode = AlphaMode.BLEND;
 					break;
 				default:
-					if (materialObj.IsKeywordEnabled("_ALPHATEST_ON") || materialObj.renderQueue == 2450)
+					if ((!isBirp && materialObj.IsKeywordEnabled("_ALPHATEST_ON")) ||
+					    (isBirp && materialObj.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON")) ||
+					    materialObj.renderQueue == 2450)
 					{
 						if (materialObj.HasProperty("alphaCutoff"))
 							material.AlphaCutoff = materialObj.GetFloat("alphaCutoff");

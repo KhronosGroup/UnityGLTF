@@ -410,12 +410,18 @@ namespace UnityGLTF
 			}
 			if (!currentMaterialInfo.hasUV0 && !currentMaterialInfo.hasUV1)
 			{
-				// hide all texture properties?
+				// hide all texture properties if no UVs
 				propertyList.RemoveAll(x => x.name.Contains("texture"));
 			}
 			if (!currentMaterialInfo.hasUV1 && currentMaterialInfo.occlusionTextureTexCoord == 0 && currentMaterialInfo.baseColorTextureTexCoord == 0)
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("TextureTexCoord", StringComparison.Ordinal));
+			}
+			var isBirp = !GraphicsSettings.currentRenderPipeline;
+			if ((isBirp && !targetMaterial.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON")) ||
+			    (!isBirp && !targetMaterial.IsKeywordEnabled("_ALPHATEST_ON")))
+			{
+				propertyList.RemoveAll(x => x.name == "alphaCutoff");
 			}
 
 			// TODO we probably want full manual control, all this internal access is horrible...

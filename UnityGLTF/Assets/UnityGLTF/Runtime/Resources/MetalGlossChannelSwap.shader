@@ -3,6 +3,7 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
+		_SmoothnessMultiplier ("Smoothness Multiplier", float) = 1
 	}
 	SubShader
 	{

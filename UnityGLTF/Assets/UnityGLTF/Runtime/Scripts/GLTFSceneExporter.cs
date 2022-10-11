@@ -187,7 +187,6 @@ namespace UnityGLTF
 
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _normalChannelMaterial;
-		private Material _channelConversionMaterial;
 
 		private const uint MagicGLTF = 0x46546C67;
 		private const uint Version = 2;
@@ -384,9 +383,6 @@ namespace UnityGLTF
 
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
-
-			var channelConversionShader = Resources.Load("ChannelConversion", typeof(Shader)) as Shader;
-			_channelConversionMaterial = new Material(channelConversionShader);
 
 			_rootTransforms = rootTransforms;
 
