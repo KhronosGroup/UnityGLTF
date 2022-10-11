@@ -212,7 +212,7 @@ namespace UnityGLTF
 				{
 					if(occTex is Texture2D)
 					{
-						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
+						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Linear, materialObj);
 						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
 						material.OcclusionTexture.TexCoord = materialObj.HasProperty("occlusionTextureTexCoord") ?
 							Mathf.RoundToInt(materialObj.GetFloat("occlusionTextureTexCoord")) :
@@ -879,7 +879,7 @@ namespace UnityGLTF
 
 				if (lmTex)
 				{
-					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Light);
+					constant.LightmapTexture = ExportTextureInfo(lmTex, TextureMapType.Linear);
 					ExportTextureTransform(constant.LightmapTexture, materialObj, "_LightMap");
 				}
 

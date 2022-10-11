@@ -101,7 +101,7 @@ namespace UnityGLTF
 			public static readonly TextureMapType MetallicGloss = new () { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap, smoothnessMultiplier = 1f};
 			public static readonly TextureMapType Linear = new () { linear = true, alphaMode = AlphaMode.Never };
 
-			[Obsolete] public static readonly TextureMapType SpecGloss = MetallicGloss;
+			public static readonly TextureMapType SpecGloss = MetallicGloss; // not really supported anymore
 			[Obsolete] public static readonly TextureMapType Light = Linear;
 			[Obsolete] public static readonly TextureMapType Occlusion = Linear;
 			[Obsolete] public static readonly TextureMapType MetallicGloss_DontConvert = Linear;

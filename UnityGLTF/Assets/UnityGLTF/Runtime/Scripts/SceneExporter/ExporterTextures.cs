@@ -15,17 +15,26 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneExporter
 	{
+		private string GetUniqueName(HashSet<string> existingNames, string name)
+		{
+			if (!existingNames.Contains(name)) return name;
+			var i = 1;
+			while (existingNames.Contains(name + "-" + i))
+				i++;
+			return name + "-" + i;
+		}
+
 		private void ExportImages(string outputPath)
 		{
-			var allPaths = new string[_imageInfos.Count];
+			var allPaths = new HashSet<string>();
 			for (int t = 0; t < _imageInfos.Count; ++t)
 			{
 				writeImageToDiskMarker.Begin();
 
 				var image = _imageInfos[t].texture;
 				var textureMapType = _imageInfos[t].textureMapType;
-				var fileOutputPath = Path.Combine(outputPath, ObjectNames.GetUniqueName(allPaths, _imageInfos[t].outputPath));
-				allPaths[t] = fileOutputPath;
+				var fileOutputPath = Path.Combine(outputPath, GetUniqueName(allPaths, _imageInfos[t].outputPath));
+				allPaths.Add(fileOutputPath);
 
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
