@@ -620,9 +620,9 @@ namespace UnityGLTF
 					smoothness = material.GetFloat("_GlossMapScale");
 
 				var hasMetallicRoughnessMap =
-					material.HasProperty("metallicRoughnessTexture") ||
-					material.HasProperty("_MetallicRoughnessTexture") ||
-					material.HasProperty("_MetallicGlossMap");
+					(material.HasProperty("metallicRoughnessTexture") && material.GetTexture("metallicRoughnessTexture")) ||
+					(material.HasProperty("_MetallicRoughnessTexture") && material.GetTexture("_MetallicRoughnessTexture")) ||
+					(material.HasProperty("_MetallicGlossMap") && material.GetTexture("_MetallicGlossMap"));
 
 				if (!hasMetallicRoughnessMap)
 					pbr.RoughnessFactor = 1 - smoothness;
