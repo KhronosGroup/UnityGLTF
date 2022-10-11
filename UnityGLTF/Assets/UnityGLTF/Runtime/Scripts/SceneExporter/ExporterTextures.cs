@@ -525,7 +525,11 @@ namespace UnityGLTF
 
 				if (textureMapType.linear)
 					GL.sRGBWrite = false;
+
 				var shader = GetConversionMaterial(textureMapType);
+				if (shader && shader.HasProperty("_SmoothnessMultiplier"))
+					shader.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
+
 				if (shader)
 					Graphics.Blit(texture, destRenderTexture, shader);
 				else

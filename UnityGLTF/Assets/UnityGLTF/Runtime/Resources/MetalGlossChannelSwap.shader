@@ -38,6 +38,7 @@
 			}
 			
 			sampler2D _MainTex;
+			float _SmoothnessMultiplier;
 
 			float4 frag (v2f i) : SV_Target
 			{
@@ -53,7 +54,7 @@
 				// Conversion Summary
 				// Unity R channel goes into B channel
 				// Unity A channel goes into G channel, then inverted
-				float4 result = float4(0, 1 - col.a, col.r, 1);
+				float4 result = float4(0, 1 - (col.a * _SmoothnessMultiplier), col.r, 1);
 				#ifdef UNITY_COLORSPACE_GAMMA
 				#else
 				// hack for linear color space, need to figure out

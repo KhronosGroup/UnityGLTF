@@ -61,7 +61,7 @@ namespace UnityGLTF
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
-		public class TextureMapType
+		public struct TextureMapType
 		{
 			// does the texture need a channel conversion when exporting
 			public Conversion conversion;
@@ -69,13 +69,22 @@ namespace UnityGLTF
 			public AlphaMode alphaMode;
 			// is the texture linear or sRGB
 			public bool linear;
+			// required for metallic-smoothness conversion
+			public float smoothnessMultiplier;
+
+			public TextureMapType(TextureMapType source)
+			{
+				conversion = source.conversion;
+				alphaMode = source.alphaMode;
+				linear = source.linear;
+				smoothnessMultiplier = source.smoothnessMultiplier;
+			}
 
 			public enum Conversion
 			{
 				None,
 				MetalGlossChannelSwap,
 				NormalChannel,
-				ChannelConversion,
 			}
 
 			public enum AlphaMode
@@ -85,20 +94,20 @@ namespace UnityGLTF
 				Heuristic = 2,
 			}
 
-			public static TextureMapType Main = new () { alphaMode = AlphaMode.Heuristic };
-			public static TextureMapType Emission = new () { alphaMode = AlphaMode.Heuristic };
+			public static readonly TextureMapType Main = new () { alphaMode = AlphaMode.Heuristic };
+			public static readonly TextureMapType Emission = new () { alphaMode = AlphaMode.Heuristic };
 
-			public static TextureMapType Bump = new () { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
-			public static TextureMapType MetallicGloss = new () { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap };
-			public static TextureMapType Linear = new () { linear = true, alphaMode = AlphaMode.Never };
+			public static readonly TextureMapType Bump = new () { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
+			public static readonly TextureMapType MetallicGloss = new () { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap, smoothnessMultiplier = 1f};
+			public static readonly TextureMapType Linear = new () { linear = true, alphaMode = AlphaMode.Never };
 
-			public static TextureMapType SpecGloss = MetallicGloss;
-			public static TextureMapType Light = Linear;
-			public static TextureMapType Occlusion = Linear;
-			public static TextureMapType MetallicGloss_DontConvert = Linear;
+			[Obsolete] public static readonly TextureMapType SpecGloss = MetallicGloss;
+			[Obsolete] public static readonly TextureMapType Light = Linear;
+			[Obsolete] public static readonly TextureMapType Occlusion = Linear;
+			[Obsolete] public static readonly TextureMapType MetallicGloss_DontConvert = Linear;
 
-			public static TextureMapType Custom_Unknown = new () { alphaMode = AlphaMode.Always };
-			public static TextureMapType Custom_HDR = new () { alphaMode = AlphaMode.Always };
+			public static readonly TextureMapType Custom_Unknown = new () { linear = true, alphaMode = AlphaMode.Always };
+			public static readonly TextureMapType Custom_HDR = new () { alphaMode = AlphaMode.Always };
 
 			public static bool operator ==(TextureMapType lhs, TextureMapType rhs)
 			{
@@ -121,7 +130,8 @@ namespace UnityGLTF
 				return
 					conversion == other.conversion &&
 				    alphaMode == other.alphaMode &&
-				    linear == other.linear;
+				    linear == other.linear &&
+					Mathf.Approximately(smoothnessMultiplier, other.smoothnessMultiplier);
 			}
 
 			public override bool Equals(object obj)
@@ -131,7 +141,7 @@ namespace UnityGLTF
 
 			public override int GetHashCode()
 			{
-				return HashCode.Combine((int)conversion, (int)alphaMode, linear);
+				return HashCode.Combine((int)conversion, (int)alphaMode, linear, smoothnessMultiplier);
 			}
 		}
 
