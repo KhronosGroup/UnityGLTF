@@ -417,7 +417,9 @@ namespace UnityGLTF
 				}
 			}
 
+#if UNITY_2020_2_OR_NEWER
 			ctx.DependsOnCustomDependency(ColorSpaceDependency);
+#endif
 			ctx.SetMainObject(gltfScene);
 #else
             // Set main asset
@@ -437,16 +439,13 @@ namespace UnityGLTF
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
 
+#if UNITY_2020_2_OR_NEWER
         [InitializeOnLoadMethod]
         private static void UpdateColorSpace()
         {
-	        #if !UNITY_2020_2_OR_NEWER
-	        AssetDatabaseExperimental.
-			#else
-	        AssetDatabase.
-	        #endif
-					RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
+	        AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
         }
+#endif
 
 		private GameObject CreateGLTFScene(string projectFilePath)
         {
