@@ -52,16 +52,16 @@ namespace UnityGLTF
 				{
 					switch (textureMapType.conversion)
 					{
-						case TextureMapType.Conversion.MetalGlossChannelSwap:
+						case TextureExportSettings.Conversion.MetalGlossChannelSwap:
 							ExportLinearTexture(image, fileOutputPath, true);
 							break;
-						case TextureMapType.Conversion.None:
+						case TextureExportSettings.Conversion.None:
 							if (textureMapType.linear)
 								ExportLinearTexture(image, fileOutputPath, false);
 							else
 								ExportTexture(image, fileOutputPath);
 							break;
-						case TextureMapType.Conversion.NormalChannel:
+						case TextureExportSettings.Conversion.NormalChannel:
 							ExportNormalTexture(image, fileOutputPath);
 							break;
 						default:
@@ -138,20 +138,22 @@ namespace UnityGLTF
 		}
 
 
-		public TextureInfo ExportTextureInfo(Texture texture, TextureMapType textureMapType)
+		public TextureInfo ExportTextureInfo(Texture texture, string textureSlot, TextureExportSettings exportSettings = default)
 		{
 			var info = new TextureInfo();
 
-			info.Index = ExportTexture(texture, textureMapType);
+			info.Index = ExportTexture(texture, textureSlot, exportSettings);
 
 			return info;
 		}
 
-		public TextureId ExportTexture(Texture textureObj, TextureMapType textureMapType)
+		public TextureId ExportTexture(Texture textureObj, string textureSlot, TextureExportSettings exportSettings = default)
 		{
-			var uniqueTexture = new UniqueTexture(textureObj, textureMapType);
+			var uniqueTexture = exportSettings.isValid ?
+				new UniqueTexture(textureObj, exportSettings) :
+				new UniqueTexture(textureObj, textureSlot, this);
 
-			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture, textureMapType);
+			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture, textureSlot);
 
 			TextureId id = GetTextureId(_root, uniqueTexture);
 			if (id != null)
@@ -174,11 +176,11 @@ namespace UnityGLTF
 
 			if (_shouldUseInternalBufferForImages)
 		    {
-				texture.Source = ExportImageInternalBuffer(uniqueTexture, textureMapType);
+				texture.Source = ExportImageInternalBuffer(uniqueTexture, textureSlot);
 		    }
 		    else
 		    {
-				texture.Source = ExportImage(uniqueTexture, textureMapType);
+				texture.Source = ExportImage(uniqueTexture, textureSlot);
 		    }
 			texture.Sampler = ExportSampler(textureObj);
 
@@ -194,7 +196,7 @@ namespace UnityGLTF
 
 			// HACK we should properly check if the above texture was exported as EXR and then treat it differently;
 			// this here assumes the texture is already readable / was read back
-			if (textureMapType == TextureMapType.Custom_HDR)
+			if (textureSlot == TextureMapType.Custom_HDR)
 			{
 				if (texture.Extensions == null) texture.Extensions = new Dictionary<string, IExtension>();
 				texture.Extensions.Add(EXT_texture_exr.EXTENSION_NAME, new EXT_texture_exr(texture.Source));
@@ -213,7 +215,7 @@ namespace UnityGLTF
 		/// The actual export happens in ExportImages.
 		/// </summary>
 		/// <returns>The relative texture output path on disk, including extension</returns>
-		private string GetImageOutputPath(Texture texture, TextureMapType textureMapType, out bool ableToExportFromDisk)
+		private string GetImageOutputPath(Texture texture, TextureExportSettings textureMapType, string textureSlot, out bool ableToExportFromDisk)
 		{
 			var imagePath = _exportOptions.TexturePathRetriever(texture);
 			if (string.IsNullOrEmpty(imagePath))
@@ -235,17 +237,17 @@ namespace UnityGLTF
 
 			switch (textureMapType.alphaMode)
 			{
-				case TextureMapType.AlphaMode.Never:
+				case TextureExportSettings.AlphaMode.Never:
 					textureHasAlpha = false;
 					break;
-				case TextureMapType.AlphaMode.Heuristic:
+				case TextureExportSettings.AlphaMode.Heuristic:
 					textureHasAlpha = TextureHasAlphaChannel(texture);
 					break;
 			}
 
 			var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
 			var desiredExtension = canExportAsJpeg ? ".jpg" : ".png";
-			if (textureMapType == TextureMapType.Custom_HDR)
+			if (textureSlot == TextureMapType.Custom_HDR)
 				desiredExtension = ".exr";
 
 			if (!settings.ExportFullPath)
@@ -261,13 +263,13 @@ namespace UnityGLTF
 			return imagePath;
 		}
 
-		private ImageId ExportImage(UniqueTexture uniqueTexture, TextureMapType textureMapType)
+		private ImageId ExportImage(UniqueTexture uniqueTexture, string textureSlot)
 		{
 			var texture = uniqueTexture.Texture;
 			var width = uniqueTexture.GetWidth();
 			var height = uniqueTexture.GetHeight();
 
-			ImageId id = GetImageId(_root, texture, textureMapType);
+			ImageId id = GetImageId(_root, texture, uniqueTexture.ExportSettings);
 			if (id != null)
 			{
 				return id;
@@ -304,7 +306,7 @@ namespace UnityGLTF
             }
 #endif
 
-			var filenamePath = GetImageOutputPath(texture, textureMapType, out var canBeExportedFromDisk);
+			var filenamePath = GetImageOutputPath(texture, uniqueTexture.ExportSettings, textureSlot, out var canBeExportedFromDisk);
 
 			// some characters such as # are allowed as part of an URI and are thus not escaped
 			// by EscapeUriString. They need to be escaped if they're part of the filename though.
@@ -318,7 +320,7 @@ namespace UnityGLTF
             _imageInfos.Add(new ImageInfo
 			{
 				texture = imageInfoTexture,
-				textureMapType = textureMapType,
+				textureMapType = uniqueTexture.ExportSettings,
 				outputPath = filenamePath,
 				canBeExportedFromDisk = canBeExportedFromDisk,
 			});
@@ -334,7 +336,7 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private bool CanGetTextureDataFromDisk(TextureMapType textureMapType, Texture texture, out string path)
+		private bool CanGetTextureDataFromDisk(TextureExportSettings textureMapType, Texture texture, out string path)
 		{
 			path = null;
 
@@ -349,12 +351,12 @@ namespace UnityGLTF
 				switch (textureMapType.conversion)
 				{
 					// if this is a normal map generated from greyscale, we shouldn't attempt to export from disk
-					case TextureMapType.Conversion.NormalChannel:
+					case TextureExportSettings.Conversion.NormalChannel:
 						if (importer && importer.textureType == TextureImporterType.NormalMap && importer.convertToNormalmap)
 							return false;
 						break;
 					// check if the texture contains an alpha channel; if yes, we shouldn't attempt to export from disk but instead convert.
-					case TextureMapType.Conversion.MetalGlossChannelSwap:
+					case TextureExportSettings.Conversion.MetalGlossChannelSwap:
 						if (importer && importer.DoesSourceTextureHaveAlpha())
 							return false;
 						break;
@@ -451,9 +453,10 @@ namespace UnityGLTF
 		}
 #endif
 
-		private ImageId ExportImageInternalBuffer(UniqueTexture uniqueTexture, TextureMapType textureMapType)
+		private ImageId ExportImageInternalBuffer(UniqueTexture uniqueTexture, string textureSlot)
 		{
 			var texture = uniqueTexture.Texture;
+			var exportSettings = uniqueTexture.ExportSettings;
 
 			const string PNGMimeType = "image/png";
 			const string JPEGMimeType = "image/jpeg";
@@ -472,7 +475,7 @@ namespace UnityGLTF
 			bool wasAbleToExport = false;
 			bool textureHasAlpha = true;
 
-			if (settings.TryExportTexturesFromDisk && CanGetTextureDataFromDisk(textureMapType, texture, out string path))
+			if (settings.TryExportTexturesFromDisk && CanGetTextureDataFromDisk(exportSettings, texture, out string path))
 			{
 				if (IsPng(path))
 				{
@@ -496,7 +499,7 @@ namespace UnityGLTF
 
 			// export in-memory floating point textures as EXR
 			// TODO add readback when not readable
-			if (!wasAbleToExport && textureMapType == TextureMapType.Custom_HDR && texture.isReadable && texture is Texture2D texture2D)
+			if (!wasAbleToExport && textureSlot == TextureMapType.Custom_HDR && texture.isReadable && texture is Texture2D texture2D)
 			{
 				var exrImageData = texture2D.EncodeToEXR();
 				image.MimeType = "image/exr";
@@ -509,7 +512,7 @@ namespace UnityGLTF
 			    var sRGB = true;
 
 #if UNITY_EDITOR
-				if (textureMapType == TextureMapType.Custom_Unknown)
+				if (textureSlot == TextureMapType.Custom_Unknown)
 				{
 #if UNITY_EDITOR
 					if (TryGetImporter<TextureImporter>(texture, out var importer))
@@ -532,31 +535,31 @@ namespace UnityGLTF
 				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, format);
 				GL.sRGBWrite = sRGB;
 
-				if (textureMapType.linear)
+				if (exportSettings.linear)
 					GL.sRGBWrite = false;
 
-				var shader = GetConversionMaterial(textureMapType);
+				var shader = GetConversionMaterial(exportSettings);
 				if (shader && shader.HasProperty("_SmoothnessMultiplier"))
-					shader.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
+					shader.SetFloat("_SmoothnessMultiplier", exportSettings.smoothnessMultiplier);
 
 				if (shader)
 					Graphics.Blit(texture, destRenderTexture, shader);
 				else
 					Graphics.Blit(texture, destRenderTexture);
-				switch (textureMapType.alphaMode)
+				switch (exportSettings.alphaMode)
 				{
-					case TextureMapType.AlphaMode.Never:
+					case TextureExportSettings.AlphaMode.Never:
 						textureHasAlpha = false;
 						break;
-					case TextureMapType.AlphaMode.Always:
+					case TextureExportSettings.AlphaMode.Always:
 						textureHasAlpha = true;
 						break;
-					case TextureMapType.AlphaMode.Heuristic:
+					case TextureExportSettings.AlphaMode.Heuristic:
 						textureHasAlpha = TextureHasAlphaChannel(texture);
 						break;
 				}
 
-				if (textureMapType.Equals(TextureMapType.Custom_HDR))
+				if (textureSlot == TextureMapType.Custom_HDR)
 				{
 					Debug.LogWarning("HDR Texture Export from non-readable textures isn't supported yet", texture);
 				}

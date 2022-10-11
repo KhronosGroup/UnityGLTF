@@ -478,12 +478,12 @@ namespace UnityGLTF
 
 		public NormalTextureInfo ExportNormalTextureInfo(
 			Texture texture,
-			TextureMapType textureMapType,
+			string textureSlot,
 			Material material)
 		{
 			var info = new NormalTextureInfo();
 
-			info.Index = ExportTexture(texture, textureMapType);
+			info.Index = ExportTexture(texture, textureSlot);
 
 			if (material.HasProperty("normalScale"))
 			{
@@ -504,12 +504,12 @@ namespace UnityGLTF
 
 		private OcclusionTextureInfo ExportOcclusionTextureInfo(
 			Texture texture,
-			TextureMapType textureMapType,
+			string textureSlot,
 			Material material)
 		{
 			var info = new OcclusionTextureInfo();
 
-			info.Index = ExportTexture(texture, textureMapType);
+			info.Index = ExportTexture(texture, textureSlot);
 
 			if (material.HasProperty("occlusionStrength"))
 			{
@@ -656,13 +656,13 @@ namespace UnityGLTF
 
 				if (mrTex)
 				{
-					var conversion = (isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.Linear : TextureMapType.MetallicGloss;
+					var conversion = GetExportSettingsForSlot((isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.Linear : TextureMapType.MetallicGloss);
 					if (needToBakeRoughnessIntoTexture)
 					{
-						conversion = new TextureMapType(conversion);
+						conversion = new TextureExportSettings(conversion);
 						conversion.smoothnessMultiplier = 1 - roughnessMultiplier;
 					}
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, conversion);
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicGloss);
 					// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
 					// that's not true for the gltf shaders though, so we keep the value there.
 					if (ignoreMetallicFactor)

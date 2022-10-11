@@ -56,13 +56,37 @@ namespace UnityGLTF
 		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
-		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture, TextureMapType type);
+		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture, string textureSlot);
 		public delegate void AfterTextureExportDelegate(GLTFSceneExporter exporter, UniqueTexture texture, int index, GLTFTexture tex);
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
 		public struct TextureMapType
 		{
+			public const string Main = "baseColorTexture";
+			public const string BaseColor = Main;
+			public const string Emission = "emissiveTexture";
+
+			public const string Bump = "normalTexture";
+			public const string Normal = Bump;
+			public const string MetallicGloss = MetallicRoughness; // TODO this feels weird, we want to convert this texture
+			public const string MetallicRoughness = "metallicRoughnessTexture";
+			public const string Linear = "linear";
+			public const string sRGB = "sRGB";
+
+			public const string SpecGloss = "specularGlossinessTexture"; // not really supported anymore
+			public const string Light = Linear;
+			public const string Occlusion = "occlusionTexture";
+			[Obsolete] public const string MetallicGloss_DontConvert = Linear;
+
+			public const string Custom_Unknown = "linearWithAlpha";
+			public const string Custom_HDR = "hdr";
+		}
+
+		public struct TextureExportSettings
+		{
+			public bool isValid;
+
 			// does the texture need a channel conversion when exporting
 			public Conversion conversion;
 			// do we know something about the alpha channel of this texture
@@ -72,12 +96,13 @@ namespace UnityGLTF
 			// required for metallic-smoothness conversion
 			public float smoothnessMultiplier;
 
-			public TextureMapType(TextureMapType source)
+			public TextureExportSettings(TextureExportSettings source)
 			{
 				conversion = source.conversion;
 				alphaMode = source.alphaMode;
 				linear = source.linear;
 				smoothnessMultiplier = source.smoothnessMultiplier;
+				isValid = true;
 			}
 
 			public enum Conversion
@@ -94,38 +119,17 @@ namespace UnityGLTF
 				Heuristic = 2,
 			}
 
-			public static readonly TextureMapType Main = new TextureMapType() { alphaMode = AlphaMode.Heuristic };
-			public static readonly TextureMapType Emission = new TextureMapType() { alphaMode = AlphaMode.Heuristic };
-
-			public static readonly TextureMapType Bump = new TextureMapType() { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
-			public static readonly TextureMapType MetallicGloss = new TextureMapType() { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap, smoothnessMultiplier = 1f};
-			public static readonly TextureMapType Linear = new TextureMapType() { linear = true, alphaMode = AlphaMode.Never };
-
-			public static readonly TextureMapType SpecGloss = MetallicGloss; // not really supported anymore
-			public static readonly TextureMapType Light = Linear;
-			public static readonly TextureMapType Occlusion = Linear;
-			[Obsolete] public static readonly TextureMapType MetallicGloss_DontConvert = Linear;
-
-			public static readonly TextureMapType Custom_Unknown = new TextureMapType() { linear = true, alphaMode = AlphaMode.Always };
-			public static readonly TextureMapType Custom_HDR = new TextureMapType() { alphaMode = AlphaMode.Always };
-
-			public static bool operator ==(TextureMapType lhs, TextureMapType rhs)
+			public static bool operator ==(TextureExportSettings lhs, TextureExportSettings rhs)
 			{
-				if (ReferenceEquals(lhs, rhs))
-					return true;
-				if (ReferenceEquals(lhs, null))
-					return false;
-				if (ReferenceEquals(rhs, null))
-					return false;
 				return lhs.Equals(rhs);
 			}
 
-			public static bool operator !=(TextureMapType lhs, TextureMapType rhs)
+			public static bool operator !=(TextureExportSettings lhs, TextureExportSettings rhs)
 			{
 				return !(lhs == rhs);
 			}
 
-			public bool Equals(TextureMapType other)
+			public bool Equals(TextureExportSettings other)
 			{
 				return
 					conversion == other.conversion &&
@@ -136,7 +140,7 @@ namespace UnityGLTF
 
 			public override bool Equals(object obj)
 			{
-				return obj is TextureMapType other && Equals(other);
+				return obj is TextureExportSettings other && Equals(other);
 			}
 
 			public override int GetHashCode()
@@ -152,13 +156,75 @@ namespace UnityGLTF
 			}
 		}
 
-		private Material GetConversionMaterial(TextureMapType textureMapType)
+		public TextureExportSettings GetExportSettingsForSlot(string textureSlot)
+		{
+			var exportSettings = new TextureExportSettings();
+			exportSettings.isValid = true;
+
+			switch (textureSlot)
+			{
+				case TextureMapType.Main: // Main = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
+					exportSettings.linear = false;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Heuristic;
+					return exportSettings;
+				case TextureMapType.Emission: // Emission = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
+					exportSettings.linear = false;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+					return exportSettings;
+				case TextureMapType.Bump: // Bump = new TextureExportSettings() { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+					exportSettings.conversion = TextureExportSettings.Conversion.NormalChannel;
+					return exportSettings;
+				case TextureMapType.MetallicGloss: // MetallicGloss = new TextureExportSettings() { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap, smoothnessMultiplier = 1f};
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+					exportSettings.conversion = TextureExportSettings.Conversion.MetalGlossChannelSwap;
+					return exportSettings;
+
+				case TextureMapType.SpecGloss: // SpecGloss = MetallicGloss; // not really supported anymore
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+					exportSettings.conversion = TextureExportSettings.Conversion.MetalGlossChannelSwap;
+					return exportSettings;
+				case TextureMapType.Occlusion: // Occlusion = Linear;
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+					return exportSettings;
+
+				// custom slot types that allow us to export more arbitrary textures
+				case TextureMapType.Linear: // MetallicGloss_DontConvert = Linear;
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Heuristic;
+					return exportSettings;
+				case TextureMapType.sRGB: // MetallicGloss_DontConvert = Linear;
+					exportSettings.linear = false;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Heuristic;
+					return exportSettings;
+				case TextureMapType.Custom_Unknown:
+				case "rgbm": // Custom_Unknown = new TextureExportSettings() { linear = true, alphaMode = AlphaMode.Always };
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Always;
+					return exportSettings;
+				case TextureMapType.Custom_HDR: // Custom_HDR = new TextureExportSettings() { alphaMode = AlphaMode.Always };
+					exportSettings.linear = true;
+					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Always;
+					return exportSettings;
+			}
+
+			// assume unknown linear
+			exportSettings.linear = true;
+			exportSettings.alphaMode = TextureExportSettings.AlphaMode.Heuristic;
+			return exportSettings;
+		}
+
+		private Material GetConversionMaterial(TextureExportSettings textureMapType)
 		{
 			switch (textureMapType.conversion)
 			{
-				case TextureMapType.Conversion.NormalChannel:
+				case TextureExportSettings.Conversion.NormalChannel:
 					return _normalChannelMaterial;
-				case TextureMapType.Conversion.MetalGlossChannelSwap:
+				case TextureExportSettings.Conversion.MetalGlossChannelSwap:
 					return _metalGlossChannelSwapMaterial;
 				default:
 					return null;
@@ -168,7 +234,7 @@ namespace UnityGLTF
 		private struct ImageInfo
 		{
 			public Texture2D texture;
-			public TextureMapType textureMapType;
+			public TextureExportSettings textureMapType;
 			public string outputPath;
 			public bool canBeExportedFromDisk;
 		}
@@ -205,22 +271,30 @@ namespace UnityGLTF
 		public struct UniqueTexture : IEquatable<UniqueTexture>
 		{
 			public Texture Texture;
-			public TextureMapType TextureMapType;
 			public int MaxSize;
+			// additional settings that make exporting a texture unique
+			public TextureExportSettings ExportSettings;
 
 			public int GetWidth() => Mathf.Min(MaxSize, Texture.width);
 			public int GetHeight() => Mathf.Min(MaxSize, Texture.height);
 
-			public UniqueTexture(Texture tex, TextureMapType textureMapType)
+			public UniqueTexture(Texture tex, string textureSlot, GLTFSceneExporter exporter)
 			{
 				Texture = tex;
-				TextureMapType = textureMapType;
+				ExportSettings = exporter.GetExportSettingsForSlot(textureSlot);
+				MaxSize = Mathf.Max(tex.width, tex.height);
+			}
+
+			public UniqueTexture(Texture tex, TextureExportSettings exportSettings)
+			{
+				Texture = tex;
+				ExportSettings = exportSettings;
 				MaxSize = Mathf.Max(tex.width, tex.height);
 			}
 
 			public bool Equals(UniqueTexture other)
 			{
-				return Equals(Texture, other.Texture) && MaxSize == other.MaxSize && TextureMapType == other.TextureMapType;
+				return Equals(Texture, other.Texture) && MaxSize == other.MaxSize && ExportSettings == other.ExportSettings;
 			}
 
 			public override bool Equals(object obj)
@@ -233,7 +307,7 @@ namespace UnityGLTF
 				unchecked
 				{
 					var hashCode = Texture != null ? Texture.GetHashCode() : 0;
-					hashCode = (hashCode * 397) ^ TextureMapType.GetHashCode();
+					hashCode = (hashCode * 397) ^ ExportSettings.GetHashCode();
 					hashCode = (hashCode * 397) ^ MaxSize;
 					return hashCode;
 				}
@@ -1028,7 +1102,7 @@ namespace UnityGLTF
 			return null;
 		}
 
-		public ImageId GetImageId(GLTFRoot root, Texture imageObj, TextureMapType textureMapType)
+		public ImageId GetImageId(GLTFRoot root, Texture imageObj, TextureExportSettings textureMapType)
 		{
 			for (var i = 0; i < _imageInfos.Count; i++)
 			{
