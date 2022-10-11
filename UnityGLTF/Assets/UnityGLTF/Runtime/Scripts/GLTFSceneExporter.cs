@@ -94,20 +94,20 @@ namespace UnityGLTF
 				Heuristic = 2,
 			}
 
-			public static readonly TextureMapType Main = new () { alphaMode = AlphaMode.Heuristic };
-			public static readonly TextureMapType Emission = new () { alphaMode = AlphaMode.Heuristic };
+			public static readonly TextureMapType Main = new TextureMapType() { alphaMode = AlphaMode.Heuristic };
+			public static readonly TextureMapType Emission = new TextureMapType() { alphaMode = AlphaMode.Heuristic };
 
-			public static readonly TextureMapType Bump = new () { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
-			public static readonly TextureMapType MetallicGloss = new () { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap, smoothnessMultiplier = 1f};
-			public static readonly TextureMapType Linear = new () { linear = true, alphaMode = AlphaMode.Never };
+			public static readonly TextureMapType Bump = new TextureMapType() { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
+			public static readonly TextureMapType MetallicGloss = new TextureMapType() { alphaMode = AlphaMode.Never, conversion = Conversion.MetalGlossChannelSwap, smoothnessMultiplier = 1f};
+			public static readonly TextureMapType Linear = new TextureMapType() { linear = true, alphaMode = AlphaMode.Never };
 
 			public static readonly TextureMapType SpecGloss = MetallicGloss; // not really supported anymore
 			[Obsolete] public static readonly TextureMapType Light = Linear;
 			[Obsolete] public static readonly TextureMapType Occlusion = Linear;
 			[Obsolete] public static readonly TextureMapType MetallicGloss_DontConvert = Linear;
 
-			public static readonly TextureMapType Custom_Unknown = new () { linear = true, alphaMode = AlphaMode.Always };
-			public static readonly TextureMapType Custom_HDR = new () { alphaMode = AlphaMode.Always };
+			public static readonly TextureMapType Custom_Unknown = new TextureMapType() { linear = true, alphaMode = AlphaMode.Always };
+			public static readonly TextureMapType Custom_HDR = new TextureMapType() { alphaMode = AlphaMode.Always };
 
 			public static bool operator ==(TextureMapType lhs, TextureMapType rhs)
 			{
@@ -141,7 +141,14 @@ namespace UnityGLTF
 
 			public override int GetHashCode()
 			{
-				return HashCode.Combine((int)conversion, (int)alphaMode, linear, smoothnessMultiplier);
+				unchecked
+				{
+					var hashCode = (int)conversion;
+					hashCode = (hashCode * 397) ^ (int)alphaMode;
+					hashCode = (hashCode * 397) ^ linear.GetHashCode();
+					hashCode = (hashCode * 397) ^ smoothnessMultiplier.GetHashCode();
+					return hashCode;
+				}
 			}
 		}
 
