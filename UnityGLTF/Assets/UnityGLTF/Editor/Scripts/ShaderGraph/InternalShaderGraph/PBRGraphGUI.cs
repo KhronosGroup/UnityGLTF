@@ -135,6 +135,7 @@ namespace UnityGLTF
 			var shaderName = targetMaterial.shader.name.Replace("Hidden/", "");
 			var isTransparent = shaderName.Contains("-Transparent");
 			var isDoubleSided = shaderName.Contains("-Double");
+			var isCutout = targetMaterial.GetFloat("alphaCutoff") >= 0;
 			var indexOfDash = shaderName.IndexOf("-", StringComparison.Ordinal);
 			var baseShaderName = indexOfDash < 0 ? shaderName : shaderName.Substring(0, indexOfDash);
 			// EditorGUILayout.LabelField("Shader Name", baseShaderName);
@@ -144,6 +145,9 @@ namespace UnityGLTF
 				var newName = baseShaderName + (isTransparent ? "-Transparent" : "") + (isDoubleSided ? "-Double" : "");
 				Undo.RegisterCompleteObjectUndo(targetMaterial, "Set Material Options");
 				targetMaterial.shader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(ShaderNameToGuid[newName]));
+				var currentCutoff = targetMaterial.GetFloat("alphaCutoff");
+				if (!isCutout && currentCutoff == 0) currentCutoff = -0.0001f; // Hack to ensure we can actually switch states here
+				targetMaterial.SetFloat("alphaCutoff", Mathf.Abs(currentCutoff) * (isCutout ? 1 : -1));
 			}
 
 			var newT = EditorGUILayout.Toggle("Transparent", isTransparent);
@@ -156,6 +160,12 @@ namespace UnityGLTF
 			if (newD != isDoubleSided)
 			{
 				isDoubleSided = newD;
+				SetShader();
+			}
+			var newA = EditorGUILayout.Toggle("Cutout", isCutout);
+			if (newA != isCutout)
+			{
+				isCutout = newA;
 				SetShader();
 			}
 
@@ -419,13 +429,16 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("TextureTexCoord", StringComparison.Ordinal));
 			}
+#if UNITY_2021_1_OR_NEWER
 			var isBirp = !GraphicsSettings.currentRenderPipeline;
 			if ((isBirp && !targetMaterial.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON")) ||
 			    (!isBirp && !targetMaterial.IsKeywordEnabled("_ALPHATEST_ON")))
+#else
+			if (targetMaterial.GetFloat("alphaCutoff") < 0)
+#endif
 			{
 				propertyList.RemoveAll(x => x.name == "alphaCutoff");
 			}
-
 			// TODO we probably want full manual control, all this internal access is horrible...
 			// E.g. impossible to render inline texture properties...
 			ShaderGraphHelpers.DrawShaderGraphGUI(materialEditor, propertyList);
