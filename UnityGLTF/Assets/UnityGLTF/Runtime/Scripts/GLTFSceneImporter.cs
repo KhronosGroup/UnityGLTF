@@ -36,6 +36,8 @@ namespace UnityGLTF
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
 		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
+		public bool AnimationLoopTime = true;
+		public bool AnimationLoopPose = false;
 
 		[NonSerialized]
 		public ILogger logger;
@@ -907,6 +909,12 @@ namespace UnityGLTF
 							AnimationClip clip = await ConstructClip(sceneObj.transform, i, cancellationToken);
 
 							clip.wrapMode = WrapMode.Loop;
+#if UNITY_EDITOR
+							var settings = UnityEditor.AnimationUtility.GetAnimationClipSettings(clip);
+							settings.loopTime = _options.AnimationLoopTime;
+							settings.loopBlend = _options.AnimationLoopPose;
+							UnityEditor.AnimationUtility.SetAnimationClipSettings(clip, settings);
+#endif
 							constructedClips.Add(clip);
 						}
 

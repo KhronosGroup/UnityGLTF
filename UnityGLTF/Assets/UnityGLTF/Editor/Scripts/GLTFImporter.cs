@@ -73,6 +73,8 @@ namespace UnityGLTF
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
+        [SerializeField] internal bool _animationLoopTime = true;
+        [SerializeField] internal bool _animationLoopPose = false;
         [SerializeField] internal bool _importMaterials = true;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
         [SerializeField] internal bool _useSceneNameIdentifier = false;
@@ -452,6 +454,8 @@ namespace UnityGLTF
 			{
 				DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
 				AnimationMethod = _importAnimations,
+				AnimationLoopTime = _animationLoopTime,
+				AnimationLoopPose = _animationLoopPose,
 			};
 			using (var stream = File.OpenRead(projectFilePath))
 			{

@@ -41,7 +41,19 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateLightmapUVs)), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Animations", EditorStyles.boldLabel);
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importAnimations)), new GUIContent("Animations"));
+			var anim = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
+			EditorGUILayout.PropertyField(anim, new GUIContent("Animations"));
+			if (anim.boolValue)
+			{
+				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
+				EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
+				if (loopTime.boolValue)
+				{
+					EditorGUI.indentLevel++;
+					EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._animationLoopPose)), new GUIContent("Loop Pose"));
+					EditorGUI.indentLevel--;
+				}
+			}
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Mesh Data", EditorStyles.boldLabel);
 			EditorGUI.BeginChangeCheck();

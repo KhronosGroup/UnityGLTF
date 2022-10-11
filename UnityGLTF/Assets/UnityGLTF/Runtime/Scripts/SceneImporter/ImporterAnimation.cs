@@ -231,7 +231,7 @@ namespace UnityGLTF
 			// init clip
 			AnimationClip clip = new AnimationClip
 			{
-				name = animation.Name ?? string.Format("animation:{0}", animationId)
+				name = animation.Name ?? $"animation:{animationId}",
 			};
 			_assetCache.AnimationCache[animationId].LoadedAnimationClip = clip;
 
@@ -299,8 +299,6 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.weights:
-						// TODO: add support for blend shapes/morph targets
-
 						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
 						var targetCount = primitives[0].Targets.Count;
 						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
