@@ -63,24 +63,26 @@ namespace UnityGLTF
 
 		public struct TextureMapType
 		{
-			public const string Main = "baseColorTexture";
-			public const string BaseColor = Main;
-			public const string Emission = "emissiveTexture";
+			public const string BaseColor = "baseColorTexture";
+			[Obsolete("Use BaseColor instead")] public const string Main = BaseColor;
+			public const string Emissive = "emissiveTexture";
+			[Obsolete("Use Emissive instead")] public const string Emission = Emissive;
 
-			public const string Bump = "normalTexture";
-			public const string Normal = Bump;
+			public const string Normal = "normalTexture";
+			[Obsolete("Use Normal instead")] public const string Bump = Normal;
 			public const string MetallicGloss = MetallicRoughness; // TODO this feels weird, we want to convert this texture
 			public const string MetallicRoughness = "metallicRoughnessTexture";
-			public const string Linear = "linear";
-			public const string sRGB = "sRGB";
-
 			public const string SpecGloss = "specularGlossinessTexture"; // not really supported anymore
 			public const string Light = Linear;
 			public const string Occlusion = "occlusionTexture";
-			[Obsolete] public const string MetallicGloss_DontConvert = Linear;
 
+			public const string Linear = "linear";
+			public const string sRGB = "sRGB";
 			public const string Custom_Unknown = "linearWithAlpha";
 			public const string Custom_HDR = "hdr";
+
+			[Obsolete("Use Linear or the right texture slot instead")] public const string MetallicGloss_DontConvert = Linear;
+
 		}
 
 		public struct TextureExportSettings
@@ -163,15 +165,15 @@ namespace UnityGLTF
 
 			switch (textureSlot)
 			{
-				case TextureMapType.Main: // Main = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
+				case TextureMapType.BaseColor: // Main = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
 					exportSettings.linear = false;
 					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Heuristic;
 					return exportSettings;
-				case TextureMapType.Emission: // Emission = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
+				case TextureMapType.Emissive: // Emission = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
 					exportSettings.linear = false;
 					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
 					return exportSettings;
-				case TextureMapType.Bump: // Bump = new TextureExportSettings() { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
+				case TextureMapType.Normal: // Bump = new TextureExportSettings() { alphaMode = AlphaMode.Never, conversion = Conversion.NormalChannel };
 					exportSettings.linear = true;
 					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
 					exportSettings.conversion = TextureExportSettings.Conversion.NormalChannel;
