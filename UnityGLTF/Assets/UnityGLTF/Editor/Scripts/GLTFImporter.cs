@@ -36,15 +36,17 @@ namespace UnityGLTF
 {
 #if UNITY_2020_2_OR_NEWER
 #if ENABLE_DEFAULT_GLB_IMPORTER
-    [ScriptedImporter(5, new[] { "glb", "gltf" })]
+    [ScriptedImporter(ImporterVersion, new[] { "glb", "gltf" })]
 #else
-    [ScriptedImporter(5, null, overrideExts: new[] { "glb", "gltf" })]
+    [ScriptedImporter(ImporterVersion, null, overrideExts: new[] { "glb", "gltf" })]
 #endif
 #else
-	[ScriptedImporter(5, new[] { "glb" })]
+	[ScriptedImporter(ImporterVersion, new[] { "glb" })]
 #endif
     public class GLTFImporter : ScriptedImporter
     {
+	    private const int ImporterVersion = 6;
+
 	    private static void EnsureShadersAreLoaded()
 	    {
 		    const string PackagePrefix = "Packages/org.khronos.unitygltf/";
