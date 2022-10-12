@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.17.0-pre] - 2022-10-12
+- add: import options for animation loop and re-enable by default for Mecanim
+- fix: reimport assets when colorspace changes
+- fix: texture map type needs to be passed into UniqueTexture, otherwise textures used for different things don't get exported correctly
+- fix: bake smoothness values into roughness map if there's no good conversion
+- fix: alpha cutout export on BiRP
+- fix: base color warning should only be shown for transparent objects
+- fix: improve alpha cutout inspector for 2020.3
+- fix: smoothness was inverted / removed even if no smoothness map existed
+- change: refactor TextureMapType to contain options for conversion to clean up export and introduce ability to convert smoothness
+- change: refactor textureSlots, usage of textureSlot names and how they should be called
+
 ## [1.16.3-pre] - 2022-10-06
 - fix: KHR_animation_pointer bug with re-used animations targeting properties on nodes
 
