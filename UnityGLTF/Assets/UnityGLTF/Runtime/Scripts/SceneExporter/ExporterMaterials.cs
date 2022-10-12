@@ -88,7 +88,12 @@ namespace UnityGLTF
 			}
 
 			exportMaterialMarker.Begin();
-			var isBirp = !GraphicsSettings.currentRenderPipeline;
+			var isBirp =
+#if UNITY_2019_3_OR_NEWER
+				!GraphicsSettings.currentRenderPipeline;
+#else
+				true;
+#endif
 
 			switch (materialObj.GetTag("RenderType", false, ""))
 			{
