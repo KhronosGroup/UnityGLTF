@@ -893,10 +893,43 @@ namespace UnityGLTF
 
 			RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
 
+			MoveAnimationTimesThatHaveOneKeyframeDifferenceToSameTime(times, bakingFramerate);
+
 			return true;
 		}
 
 #endif
+
+		/// <summary>
+		/// When keyframes are 1 frame apart we want to avoid visible interpolation between them caused by interpolator set to Linear
+		/// We do that by making the time difference between those keyframes very small
+		/// </summary>
+		private static void MoveAnimationTimesThatHaveOneKeyframeDifferenceToSameTime(float[] times, float bakingFramerate)
+		{
+			var lastTime = 0f;
+			var oneFrameDuration = 1 / bakingFramerate;
+			var isExactlyOneFrame = false;
+			var timeDifferenceThreshold = oneFrameDuration * .9f;
+			for (var i = 0; i < times.Length; i++)
+			{
+				var currentTime = times[i];
+				// check if the previous keyframe time is just one frame apart in the animation
+				// in that case we want have discrete interpolation
+				if (lastTime >= 0)
+				{
+					var timeDifference = currentTime - lastTime;
+					isExactlyOneFrame = (timeDifference - oneFrameDuration) < timeDifferenceThreshold;
+				}
+				var prev = lastTime;
+				lastTime = currentTime;
+				if (isExactlyOneFrame && i > 0)
+				{
+					// move the keyframe to the previous time with a slight offset
+					currentTime = prev + Mathf.Epsilon;
+				}
+				times[i] = currentTime;
+			}
+		}
 
 		[Obsolete("Please use " + nameof(GetTransformIndex), false)]
 		public int GetNodeIdFromTransform(Transform transform)
