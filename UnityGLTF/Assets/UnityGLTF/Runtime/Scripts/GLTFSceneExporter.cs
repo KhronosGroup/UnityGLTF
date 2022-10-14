@@ -582,7 +582,7 @@ namespace UnityGLTF
 
 			_bufferWriter = new BinaryWriterWithLessAllocations(binStream);
 
-			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.ASCII);
+			TextWriter jsonWriter = new StreamWriter(jsonStream, Encoding.UTF8);
 			exportGltfInitMarker.End();
 
 			beforeSceneExportMarker.Begin();
