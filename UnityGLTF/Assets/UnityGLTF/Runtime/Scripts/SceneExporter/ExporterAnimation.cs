@@ -857,6 +857,7 @@ namespace UnityGLTF
 				weights = new float[nbSamples * weightCount];
 
 			// Assuming all the curves exist now
+			var weightCurves = haveWeightKeys ? curveSet.weightCurves.Values.ToArray() : Array.Empty<AnimationCurve>();
 			for (int i = 0; i < nbSamples; ++i)
 			{
 				float currentTime = i * deltaTime;
@@ -883,10 +884,9 @@ namespace UnityGLTF
 
 				if (haveWeightKeys)
 				{
-					var curveArray = curveSet.weightCurves.Values.ToArray();
 					for(int j = 0; j < weightCount; j++)
 					{
-						weights[i * weightCount + j] = curveArray[j].Evaluate(times[i]);
+						weights[i * weightCount + j] = weightCurves[j].Evaluate(times[i]);
 					}
 				}
 			}
