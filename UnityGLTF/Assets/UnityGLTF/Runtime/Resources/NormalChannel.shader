@@ -14,7 +14,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			
+
 			#include "UnityCG.cginc"
 
 			struct appdata
@@ -36,7 +36,7 @@
 				o.uv = v.uv;
 				return o;
 			}
-			
+
 			sampler2D _MainTex;
 
 			// fixed4 frag (v2f i) : SV_Target
@@ -49,7 +49,6 @@
 			// 	// the values are stored in the A and G channel.
 			// 	return res;
 			// }
-
 			
 			float4 frag (v2f i) : SV_Target
 			{
@@ -57,14 +56,7 @@
 				// If a texture is marked as a normal map
 				// the values are stored in the A and G channel.
 				float3 unpacked = UnpackNormal(col);
-				// unpacked.xyz = LinearToGammaSpace(unpacked.xyz);
 				float4 result = float4(unpacked * 0.5f + 0.5f, 1);
-				#ifdef UNITY_COLORSPACE_GAMMA
-				#else
-				// hack for linear color space, need to figure out
-				// right way to sample textures.
-				result.xyz = GammaToLinearSpace(result.xyz);
-				#endif
 				return result;
 			}
 

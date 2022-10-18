@@ -564,7 +564,7 @@ namespace UnityGLTF
 					Debug.LogWarning("HDR Texture Export from non-readable textures isn't supported yet", texture);
 				}
 
-				var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false);
+				var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
 				exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 				exportTexture.Apply();
 
