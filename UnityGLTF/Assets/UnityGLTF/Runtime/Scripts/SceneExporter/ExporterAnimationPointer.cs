@@ -44,11 +44,15 @@ namespace UnityGLTF
 		{
 			if (!animatedObject) return;
 
-			if (!settings.UseAnimationPointer)
-			{
-				Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer", animatedObject);
-				return;
-			}
+			// TODO should skip property switches that are not supported without KHR_animation_pointer
+			// TODO should probably start with the transform check below and stop afterwards if KHR_animation_pointer is off
+			
+			// if (!settings.UseAnimationPointer)
+			// {
+			// 	Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer", animatedObject);
+			// 	return;
+			// }
+
 			if (values.Length <= 0) return;
 
 			var channelTargetId = GetIndex(animatedObject);
@@ -339,10 +343,16 @@ namespace UnityGLTF
 					break;
 			}
 
+			var Node = new NodeId
+			{
+				Id = channelTargetId,
+				Root = _root
+			};
+
 			AccessorId timeAccessor = ExportAccessor(times);
 
 			AnimationChannel Tchannel = new AnimationChannel();
-			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
+			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget() { Path = propertyName, Node = Node };
 			Tchannel.Target = TchannelTarget;
 
 			AnimationSampler Tsampler = new AnimationSampler();
@@ -352,7 +362,7 @@ namespace UnityGLTF
 			// example: emissiveFactor * emissiveStrength
 			// TODO not needed when secondPropertyName==null
 			AnimationChannel Tchannel2 = new AnimationChannel();
-			AnimationChannelTarget TchannelTarget2 = new AnimationChannelTarget();
+			AnimationChannelTarget TchannelTarget2 = new AnimationChannelTarget() { Path = secondPropertyName, Node = Node  };
 			Tchannel2.Target = TchannelTarget2;
 			AnimationSampler Tsampler2 = new AnimationSampler();
 			Tsampler2.Input = timeAccessor;
@@ -406,6 +416,11 @@ namespace UnityGLTF
 						Tsampler2.Output = ExportAccessor(offsets);
 					}
 					break;
+				case Quaternion _:
+					var animatedNode = _root.Nodes[channelTargetId];
+					var needsFlippedLookDirection = animatedNode.Light != null || animatedNode.Camera != null;
+					Tsampler.Output = ExportAccessorSwitchHandedness(Array.ConvertAll(values, e => (Quaternion)e), needsFlippedLookDirection); // Vec4 for rotations
+					break;
 				case Color _:
 					if (propertyName == "emissiveFactor" && secondPropertyName != null)
 					{
@@ -439,7 +454,8 @@ namespace UnityGLTF
 			animation.Samplers.Add(Tsampler);
 			animation.Channels.Add(Tchannel);
 
-			ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
+			if (settings.UseAnimationPointer)
+				ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
 
 			// in some cases, extensions aren't required even when we think they might, e.g. for emission color animation.
 			// if all animated values are below 1, we don't need a separate channel for emissive_intensity.
@@ -475,7 +491,8 @@ namespace UnityGLTF
 				animation.Samplers.Add(Tsampler2);
 				animation.Channels.Add(Tchannel2);
 
-				ConvertToAnimationPointer(animatedObject, secondPropertyName, TchannelTarget2);
+				if (settings.UseAnimationPointer)
+					ConvertToAnimationPointer(animatedObject, secondPropertyName, TchannelTarget2);
 			}
 		}
 

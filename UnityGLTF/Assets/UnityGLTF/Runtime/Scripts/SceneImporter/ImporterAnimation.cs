@@ -203,9 +203,13 @@ namespace UnityGLTF
 			var valueDelta = keyframes[keyframeIndex].value - keyframes[keyframeIndex - 1].value;
 			var timeDelta = keyframes[keyframeIndex].time - keyframes[keyframeIndex - 1].time;
 
-			if (timeDelta <= 0) {
+			if (timeDelta <= 0)
+			{
+				var k = keyframes[keyframeIndex];
+				k.time = keyframes[keyframeIndex - 1].time + Mathf.Epsilon + 1 / 100f;
+				keyframes[keyframeIndex] = k;
 				Debug.Log(LogType.Warning, "Time of subsequent animation keyframes is not increasing (glTF-Validator error ACCESSOR_ANIMATION_INPUT_NON_INCREASING)");
-				return 0;
+				return float.PositiveInfinity;
 			}
 			return valueDelta / timeDelta;
 		}

@@ -1,5 +1,5 @@
-// #define USE_ANIMATION_POINTER
-#define USE_REGULAR_ANIMATION
+#define USE_ANIMATION_POINTER
+// #define USE_REGULAR_ANIMATION
 
 using System;
 using System.Collections.Generic;
@@ -361,12 +361,12 @@ namespace UnityGLTF.Timeline
 				{
 					foreach (var tr in kvp.Value.tracks)
 					{
-						if(tr.times.Length == 0) continue;
-						// TODO add RemoveUnneededKeyframes
-						gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, tr.times, tr.values);
+						if (tr.times.Length == 0) continue;
+						var times = tr.times;
+						var values = tr.values;
+						gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref values);
+						gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, times, values);
 					}
-
-					continue;
 				}
 #endif
 
@@ -390,11 +390,11 @@ namespace UnityGLTF.Timeline
 					weightCount = values.First().weights.Length;
 				}
 
-				gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
+				// gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
 
 				// no need to add single-keyframe tracks, that's recorded as base data anyways
-				if (times.Length > 1)
-					gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
+				// if (times.Length > 1)
+				// 	gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
 
 				processAnimationMarker.End();
 #endif

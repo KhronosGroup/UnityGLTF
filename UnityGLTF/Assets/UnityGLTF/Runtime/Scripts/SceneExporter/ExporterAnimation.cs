@@ -188,10 +188,10 @@ namespace UnityGLTF
 			public List<AnimationCurve> curve;
 			public Object target;
 
-			public PropertyCurve(Object target, EditorCurveBinding binding)
+			public PropertyCurve(Object target, string propertyName)
 			{
 				this.target = target;
-				this.propertyName = binding.propertyName;
+				this.propertyName = propertyName;
 				curve = new List<AnimationCurve>();
 			}
 
@@ -217,7 +217,6 @@ namespace UnityGLTF
 			public AnimationCurve[] translationCurves;
 			public AnimationCurve[] rotationCurves;
 			public AnimationCurve[] scaleCurves;
-			public AnimationKeyRotationType rotationType;
 			public Dictionary<string, AnimationCurve> weightCurves;
 			public PropertyCurve propertyCurve;
 			#pragma warning restore
@@ -230,7 +229,7 @@ namespace UnityGLTF
 				if (propertyCurves == null) propertyCurves = new Dictionary<string, PropertyCurve>();
 				if (!binding.propertyName.Contains("."))
 				{
-					var prop = new PropertyCurve(animatedObject, binding);
+					var prop = new PropertyCurve(animatedObject, binding.propertyName);
 					prop.curve.Add(curve);
 					if (animatedObject is GameObject || animatedObject is Component)
 						TryFindMemberBinding(binding, prop, prop.propertyName);
@@ -253,7 +252,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						var prop = new PropertyCurve(animatedObject, binding);
+						var prop = new PropertyCurve(animatedObject, binding.propertyName);
 						prop.propertyName = memberName;
 						prop.curve.Add(curve);
 						propertyCurves.Add(memberName, prop);
@@ -552,10 +551,6 @@ namespace UnityGLTF
 					// Initialize data
 					// Bake and populate animation data
 					float[] times = null;
-					Vector3[] positions = null;
-					Quaternion[] rotations = null;
-					Vector3[] scales = null;
-					float[] weights = null;
 
 					// arbitrary properties require the KHR_animation_pointer extension
 					bool sampledAnimationData = false;
@@ -564,7 +559,6 @@ namespace UnityGLTF
 						var curves = curve.propertyCurves;
 						foreach (KeyValuePair<string, PropertyCurve> c in curves)
 						{
-							var propertyName = c.Key;
 							var prop = c.Value;
 							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
 							{
@@ -574,18 +568,84 @@ namespace UnityGLTF
 						}
 					}
 
-					if (BakeCurveSet(curve, clip.length, AnimationBakingFramerate, speedMultiplier, ref times, ref positions, ref rotations, ref scales, ref weights))
+					// TODO these should be moved into curve.propertyCurves as well
+					// TODO should filter by possible propertyCurve string names at that point to avoid
+					// moving KHR_animation_pointer data into regular animations
+					if (curve.translationCurves.Any(x => x != null))
 					{
-						bool haveAnimation = positions != null || rotations != null || scales != null || weights != null;
-						if(haveAnimation)
+						var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
+						trp2.curve.AddRange(curve.translationCurves);
+						if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
 						{
-							AddAnimationData(targetTr, animation, times, positions, rotations, scales, weights);
+							AddAnimationData(targetTr, trp2.propertyName, animation, times, values2);
 							sampledAnimationData = true;
 						}
-						continue;
 					}
 
-					if(!sampledAnimationData)
+					if (curve.rotationCurves.Any(x => x != null))
+					{
+						var trp3 = new PropertyCurve(targetTr, "rotation") { propertyType = typeof(Quaternion) };
+						trp3.curve.AddRange(curve.rotationCurves.Where(x => x != null));
+						if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3))
+						{
+							AddAnimationData(targetTr, trp3.propertyName, animation, times, values3);
+							sampledAnimationData = true;
+						}
+
+					}
+
+					if (curve.scaleCurves.Any(x => x != null))
+					{
+						var trp4 = new PropertyCurve(targetTr, "scale") { propertyType = typeof(Vector3) };
+						trp4.curve.AddRange(curve.scaleCurves);
+						if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4))
+						{
+							AddAnimationData(targetTr, trp4.propertyName, animation, times, values4);
+							sampledAnimationData = true;
+						}
+					}
+
+					if (curve.weightCurves.Any(x => x.Value != null))
+					{
+						var trp5 = new PropertyCurve(targetTr, "weights") { propertyType = typeof(float) };
+						trp5.curve.AddRange(curve.weightCurves.Values);
+						if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5))
+						{
+							// scale weights correctly if there are any
+							var skinnedMesh = targetTr.GetComponent<SkinnedMeshRenderer>();
+							if (skinnedMesh)
+							{
+								// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
+								// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
+								var minBlendShapeFrameWeight = 0.0f;
+								var maxBlendShapeFrameWeight = 0.0f;
+
+								var sharedMesh = skinnedMesh.sharedMesh;
+								var shapeCount = sharedMesh.blendShapeCount;
+								for (int index = 0; index < shapeCount; ++index)
+								{
+									var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
+									for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
+									{
+										var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
+										minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
+										maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
+									}
+								}
+
+								// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
+								if (maxBlendShapeFrameWeight > 0)
+								{
+									for (var i = 0; i < values5.Length; i++)
+										values5[i] = (float) values5[i] * 1 / maxBlendShapeFrameWeight;
+								}
+							}
+							AddAnimationData(targetTr, trp5.propertyName, animation, times, values5);
+							sampledAnimationData = true;
+						}
+					}
+
+					if (!sampledAnimationData)
 						Debug.LogWarning("Warning: empty animation curves for " + target + " in " + clip + " from " + transform, transform);
 				}
 			}
@@ -653,7 +713,6 @@ namespace UnityGLTF
 				}
 				else if (containsRotation)
 				{
-					current.rotationType = AnimationKeyRotationType.Quaternion;
 					if (binding.propertyName.Contains(".x"))
 						current.rotationCurves[0] = curve;
 					else if (binding.propertyName.Contains(".y"))
@@ -666,7 +725,6 @@ namespace UnityGLTF
 				// Takes into account 'localEuler', 'localEulerAnglesBaked' and 'localEulerAnglesRaw'
 				else if (containsEuler)
 				{
-					current.rotationType = AnimationKeyRotationType.Euler;
 					if (binding.propertyName.Contains(".x"))
 						current.rotationCurves[0] = curve;
 					else if (binding.propertyName.Contains(".y"))
@@ -749,187 +807,117 @@ namespace UnityGLTF
 			var nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
 			var deltaTime = length / nbSamples;
 
-			times = new float[nbSamples];
-			values = new object[nbSamples];
+			var _times = new List<float>(nbSamples * 2);
+			var _values = new List<object>(nbSamples * 2);
+
+			var curveCount = prop.curve.Count;
+			var keyframes = prop.curve.Select(x => x.keys).ToArray();
+			var keyframeIndex = new int[curveCount];
+
+			var vector3Scale = SchemaExtensions.CoordinateSpaceConversionScale.ToUnityVector3Raw();
 
 			// Assuming all the curves exist now
-			for (int i = 0; i < nbSamples; ++i)
+			for (var i = 0; i < nbSamples; ++i)
 			{
-				float t = i * deltaTime;
-				times[i] = t / speedMultiplier;
-				if (prop.curve.Count == 1)
+				var t = i * deltaTime;
+				if (i == nbSamples - 1) t = length;
+
+				for (var k = 0; k < curveCount; k++)
+					while (keyframes[k][keyframeIndex[k]].time < t)
+						keyframeIndex[k]++;
+
+				var isConstant = false;
+				for (var k = 0; k < curveCount; k++)
+					isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
+
+				if (isConstant && _times.Count > 0)
 				{
-					values[i] = prop.curve[0].Evaluate(t);
+					var lastTime = _times[_times.Count - 1];
+					var t0 = lastTime + 0.0001f;
+					if (i != nbSamples - 1)
+						t += deltaTime * 0.999f;
+					_times.Add(t0 / speedMultiplier);
+					_times.Add(t / speedMultiplier);
+					var success = AddValue(t);
+					success &= AddValue(t);
+					if (!success) return false;
 				}
 				else
 				{
-					var type = prop.propertyType;
+					var t0 = t / speedMultiplier;
+					_times.Add(t0);
+					if (!AddValue(t0)) return false;
+				}
 
-					if (typeof(Vector2) == type)
+				bool AddValue(float t)
+				{
+					if (prop.curve.Count == 1)
 					{
-						values[i] = new Vector2(prop.Evaluate(t, 0), prop.Evaluate(t, 1));
-					}
-					else if (typeof(Vector3) == type)
-					{
-						values[i] = new Vector3(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2));
-					}
-					else if (typeof(Vector4) == type)
-					{
-						values[i] = new Vector4(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3));
-					}
-					else if (typeof(Color) == type)
-					{
-						// TODO should actually access r,g,b,a separately since any of these can have curves assigned.
-						values[i] = new Color(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3));
+						_values.Add(prop.curve[0].Evaluate(t));
 					}
 					else
 					{
-						Debug.LogWarning("Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.", null);
-						return false;
+						var type = prop.propertyType;
+
+						if (typeof(Vector2) == type)
+						{
+							_values.Add(new Vector2(prop.Evaluate(t, 0), prop.Evaluate(t, 1)));
+						}
+						else if (typeof(Vector3) == type)
+						{
+							var vec = new Vector3(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2));
+							vec.Scale(vector3Scale);
+							_values.Add(vec);
+						}
+						else if (typeof(Vector4) == type)
+						{
+							_values.Add(new Vector4(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3)));
+						}
+						else if (typeof(Color) == type)
+						{
+							// TODO should actually access r,g,b,a separately since any of these can have curves assigned.
+							_values.Add(new Color(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3)));
+						}
+						else if (typeof(Quaternion) == type)
+						{
+							if (prop.curve.Count == 3)
+							{
+								Quaternion eulerToQuat = Quaternion.Euler(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2));
+								_values.Add(new Quaternion(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w));
+							}
+							else if (prop.curve.Count == 4)
+							{
+								_values.Add(new Quaternion(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3)));
+							}
+							else
+							{
+								Debug.LogError("Unknown number of quaternion components, won't continue", null);
+							}
+						}
+						else if (typeof(float) == type)
+						{
+							foreach (var val in prop.curve)
+								_values.Add(val.Evaluate(t));
+						}
+						else
+						{
+							Debug.LogWarning("Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.", null);
+							return false;
+						}
 					}
+
+					return true;
 				}
 			}
+
+			times = _times.ToArray();
+			values = _values.ToArray();
+
+			RemoveUnneededKeyframes(ref times, ref values);
 
 			return true;
 		}
-
-		private bool BakeCurveSet(TargetCurveSet curveSet, float length, float bakingFramerate, float speedMultiplier, ref float[] times, ref Vector3[] positions, ref Quaternion[] rotations, ref Vector3[] scales, ref float[] weights)
-		{
-			int nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
-			float deltaTime = length / nbSamples;
-			if(nbSamples > 1)
-				nbSamples += 1;
-			var weightCount = curveSet.weightCurves?.Count ?? 0;
-
-			bool haveTranslationKeys = curveSet.translationCurves != null && curveSet.translationCurves.Length > 0 && curveSet.translationCurves[0] != null;
-			bool haveRotationKeys = curveSet.rotationCurves != null && curveSet.rotationCurves.Length > 0 && curveSet.rotationCurves[0] != null;
-			bool haveScaleKeys = curveSet.scaleCurves != null && curveSet.scaleCurves.Length > 0 && curveSet.scaleCurves[0] != null;
-			bool haveWeightKeys = curveSet.weightCurves != null && curveSet.weightCurves.Count > 0;
-
-			if(haveScaleKeys)
-			{
-				if(curveSet.scaleCurves.Length < 3)
-				{
-					Debug.LogError("Have Scale Animation, but not all properties are animated. Ignoring for now", null);
-					return false;
-				}
-				bool anyIsNull = false;
-				foreach (var sc in curveSet.scaleCurves)
-					anyIsNull |= sc == null;
-
-				if (anyIsNull)
-				{
-					Debug.LogWarning("A scale curve has at least one null property curve! Ignoring", null);
-					haveScaleKeys = false;
-				}
-			}
-
-			if(haveRotationKeys)
-			{
-				bool anyIsNull = false;
-				int checkRotationKeyCount = curveSet.rotationType == AnimationKeyRotationType.Euler ? 3 : 4;
-				for (int i = 0; i < checkRotationKeyCount; i++)
-				{
-					anyIsNull |= curveSet.rotationCurves.Length - 1 < i || curveSet.rotationCurves[i] == null;
-				}
-
-				if (anyIsNull)
-				{
-					Debug.LogWarning("A rotation curve has at least one null property curve! Ignoring", null);
-					haveRotationKeys = false;
-				}
-			}
-
-			if(!haveTranslationKeys && !haveRotationKeys && !haveScaleKeys && !haveWeightKeys)
-			{
-				return false;
-			}
-
-			// Initialize Arrays
-			times = new float[nbSamples];
-			if(haveTranslationKeys)
-				positions = new Vector3[nbSamples];
-			if(haveScaleKeys)
-				scales = new Vector3[nbSamples];
-			if(haveRotationKeys)
-				rotations = new Quaternion[nbSamples];
-			if (haveWeightKeys)
-				weights = new float[nbSamples * weightCount];
-
-			// Assuming all the curves exist now
-			var weightCurves = haveWeightKeys ? curveSet.weightCurves.Values.ToArray() : Array.Empty<AnimationCurve>();
-			for (int i = 0; i < nbSamples; ++i)
-			{
-				float currentTime = i * deltaTime;
-				times[i] = currentTime / speedMultiplier;
-
-				if(haveTranslationKeys)
-					positions[i] = new Vector3(curveSet.translationCurves[0].Evaluate(currentTime), curveSet.translationCurves[1].Evaluate(currentTime), curveSet.translationCurves[2].Evaluate(currentTime));
-
-				if(haveScaleKeys)
-					scales[i] = new Vector3(curveSet.scaleCurves[0].Evaluate(currentTime), curveSet.scaleCurves[1].Evaluate(currentTime), curveSet.scaleCurves[2].Evaluate(currentTime));
-
-				if(haveRotationKeys)
-				{
-					if (curveSet.rotationType == AnimationKeyRotationType.Euler)
-					{
-						Quaternion eulerToQuat = Quaternion.Euler(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime));
-						rotations[i] = new Quaternion(eulerToQuat.x, eulerToQuat.y, eulerToQuat.z, eulerToQuat.w);
-					}
-					else
-					{
-						rotations[i] = new Quaternion(curveSet.rotationCurves[0].Evaluate(currentTime), curveSet.rotationCurves[1].Evaluate(currentTime), curveSet.rotationCurves[2].Evaluate(currentTime), curveSet.rotationCurves[3].Evaluate(currentTime));
-					}
-				}
-
-				if (haveWeightKeys)
-				{
-					for(int j = 0; j < weightCount; j++)
-					{
-						weights[i * weightCount + j] = weightCurves[j].Evaluate(times[i]);
-					}
-				}
-			}
-
-			RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
-
-			MoveAnimationTimesThatHaveOneKeyframeDifferenceToSameTime(times, bakingFramerate);
-
-			return true;
-		}
-
 #endif
-
-		/// <summary>
-		/// When keyframes are 1 frame apart we want to avoid visible interpolation between them caused by interpolator set to Linear
-		/// We do that by making the time difference between those keyframes very small
-		/// </summary>
-		private static void MoveAnimationTimesThatHaveOneKeyframeDifferenceToSameTime(float[] times, float bakingFramerate)
-		{
-			var lastTime = 0f;
-			var oneFrameDuration = 1 / bakingFramerate;
-			var isExactlyOneFrame = false;
-			var timeDifferenceThreshold = oneFrameDuration * .9f;
-			for (var i = 0; i < times.Length; i++)
-			{
-				var currentTime = times[i];
-				// check if the previous keyframe time is just one frame apart in the animation
-				// in that case we want have discrete interpolation
-				if (lastTime >= 0)
-				{
-					var timeDifference = currentTime - lastTime;
-					isExactlyOneFrame = (timeDifference - oneFrameDuration) < timeDifferenceThreshold;
-				}
-				var prev = lastTime;
-				lastTime = currentTime;
-				if (isExactlyOneFrame && i > 0)
-				{
-					// move the keyframe to the previous time with a slight offset
-					currentTime = prev + Mathf.Epsilon;
-				}
-				times[i] = currentTime;
-			}
-		}
 
 		[Obsolete("Please use " + nameof(GetTransformIndex), false)]
 		public int GetNodeIdFromTransform(Transform transform)
@@ -985,214 +973,6 @@ namespace UnityGLTF
 			}
 		}
 
-		public void AddAnimationData(
-			Transform target,
-			GLTF.Schema.GLTFAnimation animation,
-			float[] times = null,
-			Vector3[] positions = null,
-			Quaternion[] rotations = null,
-			Vector3[] scales = null,
-			float[] weights = null)
-		{
-			if (!target)
-			{
-				UnityEngine.Debug.LogWarning("Can not add animation data: missing target transform. " +  animation?.Name);
-				return;
-			}
-
-			addAnimationDataMarker.Begin();
-
-			int channelTargetId = GetTransformIndex(target);
-			if (channelTargetId < 0)
-			{
-				Debug.LogWarning($"An animated transform seems to be {(settings.ExportDisabledGameObjects ? "missing" : "missing or disabled")}: {target.name} (InstanceID: {target.GetInstanceID()})", target);
-				addAnimationDataMarker.End();
-				return;
-			}
-
-			var animatedNode = _root.Nodes[channelTargetId];
-			var needsFlippedLookDirection = animatedNode.Light != null || animatedNode.Camera != null;
-
-			AccessorId timeAccessor = ExportAccessor(times);
-			timeAccessor.Value.BufferView.Value.ByteStride = 0;
-
-			// Translation
-			if(positions != null && positions.Length > 0)
-			{
-				exportPositionAnimationDataMarker.Begin();
-
-				AnimationChannel Tchannel = new AnimationChannel();
-				AnimationChannelTarget TchannelTarget = new AnimationChannelTarget();
-				TchannelTarget.Path = GLTFAnimationChannelPath.translation.ToString();
-				TchannelTarget.Node = new NodeId
-				{
-					Id = channelTargetId,
-					Root = _root
-				};
-
-				Tchannel.Target = TchannelTarget;
-
-				AnimationSampler Tsampler = new AnimationSampler();
-				Tsampler.Input = timeAccessor;
-				Tsampler.Output = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(positions, SchemaExtensions.CoordinateSpaceConversionScale));
-				Tsampler.Output.Value.BufferView.Value.ByteStride = 0;
-				Tchannel.Sampler = new AnimationSamplerId
-				{
-					Id = animation.Samplers.Count,
-					GLTFAnimation = animation,
-					Root = _root
-				};
-
-				animation.Samplers.Add(Tsampler);
-				animation.Channels.Add(Tchannel);
-
-				if (settings.UseAnimationPointer)
-					ConvertToAnimationPointer(target, "translation", TchannelTarget);
-
-				exportPositionAnimationDataMarker.End();
-			}
-
-			// Rotation
-			if(rotations != null && rotations.Length > 0)
-			{
-				exportRotationAnimationDataMarker.Begin();
-
-				AnimationChannel Rchannel = new AnimationChannel();
-				AnimationChannelTarget RchannelTarget = new AnimationChannelTarget();
-				RchannelTarget.Path = GLTFAnimationChannelPath.rotation.ToString();
-				RchannelTarget.Node = new NodeId
-				{
-					Id = channelTargetId,
-					Root = _root
-				};
-
-				Rchannel.Target = RchannelTarget;
-
-				AnimationSampler Rsampler = new AnimationSampler();
-				Rsampler.Input = timeAccessor; // Float, for time
-				Rsampler.Output = ExportAccessorSwitchHandedness(rotations, needsFlippedLookDirection); // Vec4 for rotations
-				Rsampler.Output.Value.BufferView.Value.ByteStride = 0;
-				Rchannel.Sampler = new AnimationSamplerId
-				{
-					Id = animation.Samplers.Count,
-					GLTFAnimation = animation,
-					Root = _root
-				};
-
-				animation.Samplers.Add(Rsampler);
-				animation.Channels.Add(Rchannel);
-
-				if (settings.UseAnimationPointer)
-					ConvertToAnimationPointer(target, "rotation", RchannelTarget);
-
-				exportRotationAnimationDataMarker.End();
-			}
-
-			// Scale
-			if(scales != null && scales.Length > 0)
-			{
-				exportScaleAnimationDataMarker.Begin();
-
-				AnimationChannel Schannel = new AnimationChannel();
-				AnimationChannelTarget SchannelTarget = new AnimationChannelTarget();
-				SchannelTarget.Path = GLTFAnimationChannelPath.scale.ToString();
-				SchannelTarget.Node = new NodeId
-				{
-					Id = channelTargetId,
-					Root = _root
-				};
-
-				Schannel.Target = SchannelTarget;
-
-				AnimationSampler Ssampler = new AnimationSampler();
-				Ssampler.Input = timeAccessor; // Float, for time
-				Ssampler.Output = ExportAccessor(scales); // Vec3 for scale
-				Ssampler.Output.Value.BufferView.Value.ByteStride = 0;
-				Schannel.Sampler = new AnimationSamplerId
-				{
-					Id = animation.Samplers.Count,
-					GLTFAnimation = animation,
-					Root = _root
-				};
-
-				animation.Samplers.Add(Ssampler);
-				animation.Channels.Add(Schannel);
-
-				if (settings.UseAnimationPointer)
-					ConvertToAnimationPointer(target, "scale", SchannelTarget);
-
-				exportScaleAnimationDataMarker.End();
-			}
-
-			if (weights != null && weights.Length > 0)
-			{
-				exportWeightsAnimationDataMarker.Begin();
-
-				// scale weights correctly if there are any
-				var skinnedMesh = target.GetComponent<SkinnedMeshRenderer>();
-				if (skinnedMesh)
-				{
-					// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
-					// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
-					var minBlendShapeFrameWeight = 0.0f;
-					var maxBlendShapeFrameWeight = 0.0f;
-
-					var sharedMesh = skinnedMesh.sharedMesh;
-					var shapeCount = sharedMesh.blendShapeCount;
-					for (int index = 0; index < shapeCount; ++index)
-					{
-						var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
-						for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
-						{
-							var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
-							minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
-							maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
-						}
-					}
-
-					// Debug.Log($"min: {minBlendShapeFrameWeight}, max: {maxBlendShapeFrameWeight}");
-					// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
-					if (maxBlendShapeFrameWeight > 0)
-					{
-						for (int i = 0; i < weights.Length; i++)
-							weights[i] *= 1 / maxBlendShapeFrameWeight;
-					}
-				}
-
-				AnimationChannel Wchannel = new AnimationChannel();
-				AnimationChannelTarget WchannelTarget = new AnimationChannelTarget();
-				WchannelTarget.Path = GLTFAnimationChannelPath.weights.ToString();
-				WchannelTarget.Node = new NodeId()
-				{
-					Id = channelTargetId,
-					Root = _root
-				};
-
-				Wchannel.Target = WchannelTarget;
-
-				AnimationSampler Wsampler = new AnimationSampler();
-				Wsampler.Input = timeAccessor;
-				Wsampler.Output = ExportAccessor(weights);
-				Wsampler.Output.Value.BufferView.Value.ByteStride = 0;
-				Wchannel.Sampler = new AnimationSamplerId()
-				{
-					Id = animation.Samplers.Count,
-					GLTFAnimation = animation,
-					Root = _root
-				};
-
-				animation.Samplers.Add(Wsampler);
-				animation.Channels.Add(Wchannel);
-
-				if (settings.UseAnimationPointer)
-					ConvertToAnimationPointer(target, "weights", WchannelTarget);
-
-				exportWeightsAnimationDataMarker.End();
-			}
-
-			addAnimationDataMarker.End();
-		}
-
 		private static void DecomposeEmissionColor(Color input, out Color output, out float intensity)
 		{
 			var emissiveAmount = input.linear;
@@ -1218,111 +998,81 @@ namespace UnityGLTF
 			offset = new Vector2(input.z, 1 - input.w - input.y);
 		}
 
-		private bool ArrayRangeEquals(float[] array, int sectionLength, int lastExportedSectionStart, int prevSectionStart, int sectionStart, int nextSectionStart)
+		private bool ArrayRangeEquals(object[] array, int sectionLength, int lastExportedSectionStart, int prevSectionStart, int sectionStart, int nextSectionStart)
 		{
 			var equals = true;
 			for (int i = 0; i < sectionLength; i++)
 			{
-				equals &= (lastExportedSectionStart >= prevSectionStart || array[lastExportedSectionStart + i] == array[sectionStart + i]) &&
-				          array[prevSectionStart + i] == array[sectionStart + i] &&
-				          array[sectionStart + i] == array[nextSectionStart + i];
+				equals &= (lastExportedSectionStart >= prevSectionStart || array[lastExportedSectionStart + i].Equals(array[sectionStart + i])) &&
+				          array[prevSectionStart + i].Equals(array[sectionStart + i]) &&
+				          array[sectionStart + i].Equals(array[nextSectionStart + i]);
 				if (!equals) return false;
 			}
 
 			return true;
 		}
 
-		public void RemoveUnneededKeyframes(ref float[] times, ref Vector3[] positions, ref Quaternion[] rotations, ref Vector3[] scales, ref float[] weights, ref int weightCount)
+		public void RemoveUnneededKeyframes(ref float[] times, ref object[] values)
 		{
 			removeAnimationUnneededKeyframesMarker.Begin();
-			removeAnimationUnneededKeyframesInitMarker.Begin();
 
-			var haveTranslationKeys = positions?.Any() ?? false;
-			var haveRotationKeys = rotations?.Any() ?? false;
-			var haveScaleKeys = scales?.Any() ?? false;
-			var haveWeightKeys = weights?.Any() ?? false;
+			var t2 = new List<float>(times.Length);
+			var v2 = new List<object>(values.Length);
 
-			// remove keys again where prev/next keyframe are identical
-			List<float> t2 = new List<float>(times.Length);
-			List<Vector3> p2 = new List<Vector3>(times.Length);
-			List<Vector3> s2 = new List<Vector3>(times.Length);
-			List<Quaternion> r2 = new List<Quaternion>(times.Length);
-			List<float> w2 = new List<float>(times.Length);
-			var singleFrameWeights = new float[weightCount];
+			var arraySize = values.Length / times.Length;
 
-			t2.Add(times[0]);
-			if (haveTranslationKeys) p2.Add(positions[0]);
-			if (haveRotationKeys) r2.Add(rotations[0]);
-			if (haveScaleKeys) s2.Add(scales[0]);
-			if (haveWeightKeys)
+			if (arraySize == 1)
 			{
-				Array.Copy(weights, 0, singleFrameWeights, 0, weightCount);
-				w2.AddRange(singleFrameWeights);
-			}
+				t2.Add(times[0]);
+				v2.Add(values[0]);
 
-			removeAnimationUnneededKeyframesInitMarker.End();
-
-			int lastExportedIndex = 0;
-			for (int i = 1; i < times.Length - 1; i++)
-			{
-				removeAnimationUnneededKeyframesCheckIdenticalMarker.Begin();
-				// check identical
-				bool isIdentical = true;
-				if (haveTranslationKeys)
-					isIdentical &= (lastExportedIndex >= i - 1 || positions[lastExportedIndex] == positions[i]) && positions[i - 1] == positions[i] && positions[i] == positions[i + 1];
-				if (isIdentical && haveRotationKeys)
-					isIdentical &= (lastExportedIndex >= i - 1 || rotations[lastExportedIndex] == rotations[i]) && rotations[i - 1] == rotations[i] && rotations[i] == rotations[i + 1];
-				if (isIdentical && haveScaleKeys)
-					isIdentical &= (lastExportedIndex >= i - 1 || scales[lastExportedIndex] == scales[i]) && scales[i - 1] == scales[i] && scales[i] == scales[i + 1];
-				exportWeightsAnimationDataMarker.Begin();
-				if (isIdentical && haveWeightKeys)
-					isIdentical &= ArrayRangeEquals(weights, weightCount, lastExportedIndex * weightCount, (i - 1) * weightCount, i * weightCount, (i + 1) * weightCount);
-
-				exportWeightsAnimationDataMarker.End();
-
-				if (!isIdentical)
+				int lastExportedIndex = 0;
+				for (int i = 1; i < times.Length - 1; i++)
 				{
-					removeAnimationUnneededKeyframesCheckIdenticalKeepMarker.Begin();
-					lastExportedIndex = i;
-					t2.Add(times[i]);
-					if (haveTranslationKeys) p2.Add(positions[i]);
-					if (haveRotationKeys) r2.Add(rotations[i]);
-					if (haveScaleKeys) s2.Add(scales[i]);
-					exportWeightsAnimationDataMarker.Begin();
-					if (haveWeightKeys)
+					removeAnimationUnneededKeyframesCheckIdenticalMarker.Begin();
+					var isIdentical = (lastExportedIndex >= i - 1 || values[lastExportedIndex].Equals(values[i])) && values[i - 1].Equals(values[i]) && values[i].Equals(values[i + 1]);
+					if (!isIdentical)
 					{
-						Array.Copy(weights, (i - 1) * weightCount, singleFrameWeights, 0, weightCount);
-						w2.AddRange(singleFrameWeights);
+						lastExportedIndex = i;
+						t2.Add(times[i]);
+						v2.Add(values[i]);
 					}
-					exportWeightsAnimationDataMarker.End();
-					removeAnimationUnneededKeyframesCheckIdenticalKeepMarker.End();
+					removeAnimationUnneededKeyframesCheckIdenticalMarker.End();
 				}
-				removeAnimationUnneededKeyframesCheckIdenticalMarker.End();
+
+				var max = times.Length - 1;
+				t2.Add(times[max]);
+				v2.Add(values[max]);
 			}
-
-			removeAnimationUnneededKeyframesFinalizeMarker.Begin();
-
-			var max = times.Length - 1;
-
-			t2.Add(times[max]);
-			if (haveTranslationKeys) p2.Add(positions[max]);
-			if (haveRotationKeys) r2.Add(rotations[max]);
-			if (haveScaleKeys) s2.Add(scales[max]);
-			if (haveWeightKeys)
+			else
 			{
-				var skipped = weights.Skip((max - 1) * weightCount).ToArray();
-				w2.AddRange(skipped.Take(weightCount));
-			}
+				t2.Add(times[0]);
+				var singleFrameWeights = new object[arraySize];
+				Array.Copy(values, 0, singleFrameWeights, 0, arraySize);
+				v2.AddRange(singleFrameWeights);
 
-			// Debug.Log("Keyframes before compression: " + times.Length + "; " + "Keyframes after compression: " + t2.Count);
+				int lastExportedIndex = 0;
+				for (int i = 1; i < times.Length - 1; i++)
+				{
+					removeAnimationUnneededKeyframesCheckIdenticalMarker.Begin();
+					var isIdentical = ArrayRangeEquals(values, arraySize, lastExportedIndex * arraySize, (i - 1) * arraySize, i * arraySize, (i + 1) * arraySize);
+					if (!isIdentical)
+					{
+						Array.Copy(values, (i - 1) * arraySize, singleFrameWeights, 0, arraySize);
+						v2.AddRange(singleFrameWeights);
+					}
+
+					removeAnimationUnneededKeyframesCheckIdenticalMarker.End();
+				}
+
+				var max = times.Length - 1;
+				t2.Add(times[max]);
+				var skipped = values.Skip((max - 1) * arraySize).ToArray();
+				v2.AddRange(skipped.Take(arraySize));
+			}
 
 			times = t2.ToArray();
-			if (haveTranslationKeys) positions = p2.ToArray();
-			if (haveRotationKeys) rotations = r2.ToArray();
-			if (haveScaleKeys) scales = s2.ToArray();
-			if (haveWeightKeys) weights = w2.ToArray();
-
-			removeAnimationUnneededKeyframesFinalizeMarker.End();
+			values = v2.ToArray();
 
 			removeAnimationUnneededKeyframesMarker.End();
 		}
