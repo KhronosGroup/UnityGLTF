@@ -509,7 +509,7 @@ namespace UnityGLTF
 
 			if (!wasAbleToExport)
 		    {
-			    var sRGB = true;
+			    var sRGB = !exportSettings.linear;
 
 #if UNITY_EDITOR
 				if (textureSlot == TextureMapType.Custom_Unknown)
@@ -532,11 +532,10 @@ namespace UnityGLTF
 				var height = uniqueTexture.GetHeight();
 
 				// TODO we could make sure texture size is power-of-two here
-				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32, format);
-				GL.sRGBWrite = sRGB;
 
-				if (exportSettings.linear)
-					GL.sRGBWrite = false;
+				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.Default, format);
+				// var previousSRGBState = GL.sRGBWrite;
+				// GL.sRGBWrite = sRGB;
 
 				var shader = GetConversionMaterial(exportSettings);
 				if (shader && shader.HasProperty("_SmoothnessMultiplier"))
@@ -575,7 +574,7 @@ namespace UnityGLTF
 
 				RenderTexture.ReleaseTemporary(destRenderTexture);
 
-				GL.sRGBWrite = false;
+				// GL.sRGBWrite = previousSRGBState;
 				if (Application.isEditor)
 				{
 					UnityEngine.Object.DestroyImmediate(exportTexture);
