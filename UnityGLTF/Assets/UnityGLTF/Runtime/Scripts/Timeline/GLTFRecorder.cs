@@ -198,14 +198,9 @@ namespace UnityGLTF.Timeline
 			public void Update(double time)
 			{
 #if USE_ANIMATION_POINTER
-				if(recordAnimationPointer)
+				foreach (var track in tracks)
 				{
-					foreach (var track in tracks)
-					{
-						track.SampleIfChanged(time);
-					}
-
-					return;
+					track.SampleIfChanged(time);
 				}
 #endif
 

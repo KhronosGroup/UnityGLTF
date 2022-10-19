@@ -445,6 +445,9 @@ namespace UnityGLTF
 					break;
 			}
 
+			if (Tsampler.Output  != null) Tsampler.Output.Value.BufferView.Value.ByteStride  = 0;
+			if (Tsampler2.Output != null) Tsampler2.Output.Value.BufferView.Value.ByteStride = 0;
+
 			Tchannel.Sampler = new AnimationSamplerId
 			{
 				Id = animation.Samplers.Count,
