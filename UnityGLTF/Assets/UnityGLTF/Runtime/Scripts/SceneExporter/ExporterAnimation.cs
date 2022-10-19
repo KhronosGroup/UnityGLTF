@@ -185,6 +185,7 @@ namespace UnityGLTF
 		{
 			public string propertyName;
 			public Type propertyType;
+			public bool needsCoordinateConversion = false;
 			public List<AnimationCurve> curve;
 			public Object target;
 
@@ -573,7 +574,7 @@ namespace UnityGLTF
 					// moving KHR_animation_pointer data into regular animations
 					if (curve.translationCurves.Any(x => x != null))
 					{
-						var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
+						var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3), needsCoordinateConversion = true };
 						trp2.curve.AddRange(curve.translationCurves);
 						if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
 						{
@@ -866,7 +867,8 @@ namespace UnityGLTF
 						else if (typeof(Vector3) == type)
 						{
 							var vec = new Vector3(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2));
-							vec.Scale(vector3Scale);
+							if (prop.needsCoordinateConversion)
+								vec.Scale(vector3Scale);
 							_values.Add(vec);
 						}
 						else if (typeof(Vector4) == type)
