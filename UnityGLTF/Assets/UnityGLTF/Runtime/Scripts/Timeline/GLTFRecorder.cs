@@ -100,7 +100,7 @@ namespace UnityGLTF.Timeline
 					exportPlans.Add(new ExportPlan("rotation", typeof(Quaternion), x => x, (tr, _) =>
 					{
 						var q = tr.localRotation;
-						return new Vector4(q.x, q.y, q.z, q.w);
+						return new Quaternion(q.x, q.y, q.z, q.w);
 					}));
 					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr, _) => tr.localScale));
 

@@ -823,7 +823,7 @@ namespace UnityGLTF
 				if (i == nbSamples - 1) t = length;
 
 				for (var k = 0; k < curveCount; k++)
-					while (keyframes[k][keyframeIndex[k]].time < t)
+					while (keyframeIndex[k] < keyframes[k].Length - 1 && keyframes[k][keyframeIndex[k]].time < t)
 						keyframeIndex[k]++;
 
 				var isConstant = false;

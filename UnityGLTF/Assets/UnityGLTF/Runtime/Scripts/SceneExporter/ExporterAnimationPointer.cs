@@ -46,7 +46,7 @@ namespace UnityGLTF
 
 			// TODO should skip property switches that are not supported without KHR_animation_pointer
 			// TODO should probably start with the transform check below and stop afterwards if KHR_animation_pointer is off
-			
+
 			// if (!settings.UseAnimationPointer)
 			// {
 			// 	Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer", animatedObject);
