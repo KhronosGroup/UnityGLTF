@@ -534,8 +534,8 @@ namespace UnityGLTF
 				// TODO we could make sure texture size is power-of-two here
 
 				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.Default, format);
-				// var previousSRGBState = GL.sRGBWrite;
-				// GL.sRGBWrite = sRGB;
+				var previousSRGBState = GL.sRGBWrite;
+				GL.sRGBWrite = sRGB;
 
 				var shader = GetConversionMaterial(exportSettings);
 				if (shader && shader.HasProperty("_SmoothnessMultiplier"))
@@ -574,7 +574,7 @@ namespace UnityGLTF
 
 				RenderTexture.ReleaseTemporary(destRenderTexture);
 
-				// GL.sRGBWrite = previousSRGBState;
+				GL.sRGBWrite = previousSRGBState;
 				if (Application.isEditor)
 				{
 					UnityEngine.Object.DestroyImmediate(exportTexture);
