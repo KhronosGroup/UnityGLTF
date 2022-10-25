@@ -26,7 +26,6 @@ namespace UnityGLTF
 
         public MaterialId ExportMaterial(Material materialObj)
 		{
-            //TODO if material is null
 			MaterialId id = GetMaterialId(_root, materialObj);
 			if (id != null)
 			{
@@ -39,8 +38,11 @@ namespace UnityGLTF
             {
                 if (ExportNames)
                 {
-                    material.Name = "null";
+                    material.Name = "default";
                 }
+
+                // create default material
+                // TODO check why we need to do anything here
                 material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
                 return CreateAndAddMaterialId(materialObj, material);
             }
@@ -295,7 +297,7 @@ namespace UnityGLTF
 
         private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
         {
-	        _exportedMaterials.Add(materialObj.GetInstanceID(), _exportedMaterials.Count);
+	        _exportedMaterials.Add(materialObj ? materialObj.GetInstanceID() : 0, _exportedMaterials.Count);
 
 	        var id = new MaterialId
 	        {
@@ -306,8 +308,11 @@ namespace UnityGLTF
 
 	        // after material export
 	        afterMaterialExportMarker.Begin();
-	        _exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
-	        AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+	        if (materialObj)
+	        {
+		        _exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+		        AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+	        }
 	        afterMaterialExportMarker.End();
 
 	        return id;

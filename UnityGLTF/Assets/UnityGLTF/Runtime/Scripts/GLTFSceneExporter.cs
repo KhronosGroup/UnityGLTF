@@ -1064,7 +1064,7 @@ namespace UnityGLTF
 
 		public MaterialId GetMaterialId(GLTFRoot root, Material materialObj)
 		{
-			if (_exportedMaterials.TryGetValue(materialObj.GetInstanceID(), out var id))
+			if (_exportedMaterials.TryGetValue(materialObj ? materialObj.GetInstanceID() : 0, out var id))
 			{
 				return new MaterialId
 				{

@@ -131,6 +131,23 @@ namespace UnityGLTF
 			return primKeys;
 		}
 
+		/// <summary>
+		/// Convenience wrapper around ExportMesh(string, List<UniquePrimitive>)
+		/// </summary>
+		public MeshId ExportMesh(Mesh mesh)
+		{
+			var uniquePrimitives = new List<UniquePrimitive>
+			{
+				new UniquePrimitive()
+				{
+					Mesh = mesh,
+					SkinnedMeshRenderer = null,
+					Materials = new [] { default(Material) },
+				}
+			};
+			return ExportMesh(mesh.name, uniquePrimitives);
+		}
+
 		public MeshId ExportMesh(string name, List<UniquePrimitive> uniquePrimitives)
 		{
 			exportMeshMarker.Begin();
