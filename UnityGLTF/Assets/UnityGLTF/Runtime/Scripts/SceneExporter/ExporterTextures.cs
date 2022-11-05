@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityGLTF.Extensions;
 using Object = UnityEngine.Object;
 using WrapMode = GLTF.Schema.WrapMode;
@@ -499,12 +500,34 @@ namespace UnityGLTF
 
 			// export in-memory floating point textures as EXR
 			// TODO add readback when not readable
-			if (!wasAbleToExport && textureSlot == TextureMapType.Custom_HDR && texture.isReadable && texture is Texture2D texture2D)
+			if (!wasAbleToExport && textureSlot == TextureMapType.Custom_HDR)
 			{
-				var exrImageData = texture2D.EncodeToEXR();
-				image.MimeType = "image/exr";
-				_bufferWriter.Write(exrImageData);
-				wasAbleToExport = true;
+				byte[] exrImageData = default;
+
+				if (texture.isReadable)
+				{
+					if (texture is Texture2D texture2D)
+					{
+						exrImageData = texture2D.EncodeToEXR();
+					}
+					else if (texture is RenderTexture rt)
+					{
+						var prev = RenderTexture.active;
+						RenderTexture.active = rt;
+						var temp = new Texture2D(rt.width, rt.height, TextureFormat.RGBAFloat, false, true);
+						temp.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+						temp.Apply();
+						RenderTexture.active = prev;
+						exrImageData = temp.EncodeToEXR();
+					}
+				}
+
+				if (exrImageData != null)
+				{
+					image.MimeType = "image/exr";
+					_bufferWriter.Write(exrImageData);
+					wasAbleToExport = true;
+				}
 			}
 
 			if (!wasAbleToExport)
