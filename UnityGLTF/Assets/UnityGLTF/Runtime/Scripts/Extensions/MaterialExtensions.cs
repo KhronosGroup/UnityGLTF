@@ -42,30 +42,40 @@ namespace UnityGLTF
 		{
 			if (!material) return;
 
-			if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
-			{
-				exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
-				exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
+			var usesTransmission = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON");
+			var usesVolume = material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f;
+			var hasIor = material.HasProperty(ior);
 
+			if (hasIor || usesTransmission || usesVolume)
+			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
 
-				// if the material already has an extension, we should get and modify that
 				var vi = new KHR_materials_ior();
-				var vt = new KHR_materials_transmission();
-
 				if (materialnode.Extensions.TryGetValue(KHR_materials_ior_Factory.EXTENSION_NAME, out var vv1))
 					vi = (KHR_materials_ior) vv1;
 				else
 					materialnode.Extensions.Add(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
 
+				if (material.HasProperty(ior))
+					vi.ior = material.GetFloat(ior);
+			}
+
+			if (usesTransmission)
+			{
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
+				exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
+				exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
+
+				// if the material already has an extension, we should get and modify that
+				var vt = new KHR_materials_transmission();
+
 				if (materialnode.Extensions.TryGetValue(KHR_materials_transmission_Factory.EXTENSION_NAME, out var vv2))
 					vt = (KHR_materials_transmission) vv2;
 				else
 					materialnode.Extensions.Add(KHR_materials_transmission_Factory.EXTENSION_NAME, vt);
-
-				if (material.HasProperty(ior))
-					vi.ior = material.GetFloat(ior);
 
 				if (material.HasProperty(transmissionFactor))
 					vt.transmissionFactor = material.GetFloat(transmissionFactor);
@@ -73,8 +83,11 @@ namespace UnityGLTF
 					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(transmissionTexture), nameof(transmissionTexture));
 			}
 
-			if (material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f)
+			if (usesVolume)
 			{
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
 				exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
 
 				if (materialnode.Extensions == null)

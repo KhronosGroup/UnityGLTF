@@ -39,13 +39,12 @@ namespace GLTF.Schema
 			if (extensionToken != null)
 			{
 				JToken strength = extensionToken.Value[nameof(KHR_materials_ior.ior)];
-
+				var extension = new KHR_materials_ior();
 				if (strength != null)
 				{
-					var extension = new KHR_materials_ior();
 					extension.ior = strength.Value<float>();
-					return extension;
 				}
+				return extension;
 			}
 
 			return null;
