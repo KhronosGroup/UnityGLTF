@@ -1048,9 +1048,9 @@ namespace UnityGLTF
 			}
 			else
 			{
-				t2.Add(times[0]);
 				var singleFrameWeights = new object[arraySize];
 				Array.Copy(values, 0, singleFrameWeights, 0, arraySize);
+				t2.Add(times[0]);
 				v2.AddRange(singleFrameWeights);
 
 				int lastExportedIndex = 0;
@@ -1062,6 +1062,7 @@ namespace UnityGLTF
 					{
 						Array.Copy(values, (i - 1) * arraySize, singleFrameWeights, 0, arraySize);
 						v2.AddRange(singleFrameWeights);
+						t2.Add(times[i]);
 					}
 
 					removeAnimationUnneededKeyframesCheckIdenticalMarker.End();
