@@ -820,11 +820,11 @@ namespace UnityGLTF
 			// Assuming all the curves exist now
 			for (var i = 0; i < nbSamples; ++i)
 			{
-				var t = i * deltaTime;
-				if (i == nbSamples - 1) t = length;
+				var time = i * deltaTime;
+				if (i == nbSamples - 1) time = length;
 
 				for (var k = 0; k < curveCount; k++)
-					while (keyframeIndex[k] < keyframes[k].Length - 1 && keyframes[k][keyframeIndex[k]].time < t)
+					while (keyframeIndex[k] < keyframes[k].Length - 1 && keyframes[k][keyframeIndex[k]].time < time)
 						keyframeIndex[k]++;
 
 				var isConstant = false;
@@ -836,16 +836,16 @@ namespace UnityGLTF
 					var lastTime = _times[_times.Count - 1];
 					var t0 = lastTime + 0.0001f;
 					if (i != nbSamples - 1)
-						t += deltaTime * 0.999f;
+						time += deltaTime * 0.999f;
 					_times.Add(t0 / speedMultiplier);
-					_times.Add(t / speedMultiplier);
-					var success = AddValue(t);
-					success &= AddValue(t);
+					_times.Add(time / speedMultiplier);
+					var success = AddValue(time);
+					success &= AddValue(time);
 					if (!success) return false;
 				}
 				else
 				{
-					var t0 = t / speedMultiplier;
+					var t0 = time / speedMultiplier;
 					_times.Add(t0);
 					if (!AddValue(t0)) return false;
 				}

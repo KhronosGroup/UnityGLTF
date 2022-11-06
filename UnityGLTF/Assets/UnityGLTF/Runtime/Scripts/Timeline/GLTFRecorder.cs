@@ -96,15 +96,15 @@ namespace UnityGLTF.Timeline
 				if (exportPlans == null)
 				{
 					exportPlans = new List<ExportPlan>();
-					exportPlans.Add(new ExportPlan("translation", typeof(Vector3), x => x, (tr, _) => tr.localPosition));
-					exportPlans.Add(new ExportPlan("rotation", typeof(Quaternion), x => x, (tr, _) =>
+					exportPlans.Add(new ExportPlan("translation", typeof(Vector3), x => x, (tr0, _) => tr0.localPosition));
+					exportPlans.Add(new ExportPlan("rotation", typeof(Quaternion), x => x, (tr0, _) =>
 					{
-						var q = tr.localRotation;
+						var q = tr0.localRotation;
 						return new Quaternion(q.x, q.y, q.z, q.w);
 					}));
-					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr, _) => tr.localScale));
+					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr0, _) => tr0.localScale));
 
-					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr, x) =>
+					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr0, x) =>
 					{
 						if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh)
 						{
@@ -120,9 +120,9 @@ namespace UnityGLTF.Timeline
 
 					if(recordAnimationPointer)
 					{
-						exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr, mat) =>
+						exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr0, mat) =>
 						{
-							var r = tr.GetComponent<Renderer>();
+							var r = tr0.GetComponent<Renderer>();
 
 							if (r.HasPropertyBlock())
 							{
