@@ -70,19 +70,36 @@ namespace UnityEditor
 
 			if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
 			{
-				// enforce Opaque
-				if (material.HasProperty("_BUILTIN_Surface")) material.SetFloat("_BUILTIN_Surface", 0);
-				if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 0);
-				material.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
-				material.DisableKeyword("_BUILTIN_SURFACE_TYPE_TRANSPARENT");
+				// // approximation when transmission is on but roughness == 0
+				// // (no opaque pass required)
+				// TODO does weird things with transparency but still rendering into the Opaque Texture for some reason
+				// if (material.HasProperty("roughnessFactor") && material.GetFloat("roughnessFactor") == 0)
+				// {
+				// 	// enforce transparent
+				// 	if (material.HasProperty("_QueueControl")) material.SetFloat("_QueueControl", 0);
+				// 	if (material.HasProperty("_BUILTIN_QueueControl")) material.SetFloat("_BUILTIN_QueueControl", 0);
+				// 	if (material.HasProperty("_BUILTIN_Surface")) material.SetFloat("_BUILTIN_Surface", 1);
+				// 	if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1);
+				// 	material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+				// 	material.EnableKeyword("_BUILTIN_SURFACE_TYPE_TRANSPARENT");
+				// 	material.renderQueue = -1;
+				// }
+				// else
+				{
+					// enforce Opaque
+					if (material.HasProperty("_BUILTIN_Surface")) material.SetFloat("_BUILTIN_Surface", 0);
+					if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 0);
+					material.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+					material.DisableKeyword("_BUILTIN_SURFACE_TYPE_TRANSPARENT");
 
-				// enforce queue control and render queue 3000
-				if (material.HasProperty("_QueueControl")) material.SetFloat("_QueueControl", 1);
-				if (material.HasProperty("_BUILTIN_QueueControl")) material.SetFloat("_BUILTIN_QueueControl", 1);
+					// enforce queue control and render queue 3000
+					if (material.HasProperty("_QueueControl")) material.SetFloat("_QueueControl", 1);
+					if (material.HasProperty("_BUILTIN_QueueControl")) material.SetFloat("_BUILTIN_QueueControl", 1);
 
-				// not a great choice: using 2999 as magic value for "we automatically set the queue for you"
-				// so the change can be reverted if someone toggles transmission on and then off again.
-				material.renderQueue = 2999;
+					// not a great choice: using 2999 as magic value for "we automatically set the queue for you"
+					// so the change can be reverted if someone toggles transmission on and then off again.
+					material.renderQueue = 2999;
+				}
 			}
 			else
 			{

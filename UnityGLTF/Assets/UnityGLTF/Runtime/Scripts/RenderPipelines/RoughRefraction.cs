@@ -1,23 +1,19 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteAlways, ImageEffectAllowedInSceneView]
 public class RoughRefraction : MonoBehaviour
 {
-	public Renderer tempOutput;
-	private MaterialPropertyBlock tempBlock;
-
-	private RenderTexture opaqueTexture;
-	private Dictionary<Camera, RenderTexture> temp = new Dictionary<Camera, RenderTexture>();
+	private readonly Dictionary<Camera, RenderTexture> renderTextureCache = new Dictionary<Camera, RenderTexture>();
+	private static readonly int CameraOpaqueTexture = Shader.PropertyToID("_CameraOpaqueTexture");
 
 	private void OnDisable()
 	{
-		if (temp != null) {
-			foreach(var kvp in temp)
+		if (renderTextureCache != null) {
+			foreach(var kvp in renderTextureCache)
 				RenderTexture.ReleaseTemporary(kvp.Value);
 		}
-		temp.Clear();
+		renderTextureCache?.Clear();
 	}
 
 	private void OnPreRender()
@@ -28,20 +24,13 @@ public class RoughRefraction : MonoBehaviour
 	private void SetTexture()
 	{
 		var current = Camera.current;
-		if (!temp.ContainsKey(current))
+		if (!renderTextureCache.ContainsKey(current))
 		{
-			Shader.SetGlobalTexture("_CameraOpaqueTexture", Texture2D.blackTexture);
+			Shader.SetGlobalTexture(CameraOpaqueTexture, Texture2D.blackTexture);
 			return;
 		}
 
-		Shader.SetGlobalTexture("_CameraOpaqueTexture", temp[current]);
-
-		if (tempOutput)
-		{
-			if (tempBlock == null) tempBlock = new MaterialPropertyBlock();
-			tempBlock.SetTexture("_MainTex", temp[current]);
-			tempOutput.SetPropertyBlock(tempBlock);
-		}
+		Shader.SetGlobalTexture(CameraOpaqueTexture, renderTextureCache[current]);
 	}
 
 	[ImageEffectOpaque]
@@ -55,17 +44,17 @@ public class RoughRefraction : MonoBehaviour
 		dsc.height = Mathf.ClosestPowerOfTwo(dsc.height);
 
 		var current = Camera.current;
-		if (!temp.ContainsKey(current))
-			temp.Add(current, null);
-		if(temp[current])
-			RenderTexture.ReleaseTemporary(temp[current]);
+		if (!renderTextureCache.ContainsKey(current))
+			renderTextureCache.Add(current, null);
+		if(renderTextureCache[current])
+			RenderTexture.ReleaseTemporary(renderTextureCache[current]);
 
-		temp[current] = RenderTexture.GetTemporary(dsc);
-		temp[current].filterMode = FilterMode.Trilinear;
+		renderTextureCache[current] = RenderTexture.GetTemporary(dsc);
+		renderTextureCache[current].filterMode = FilterMode.Trilinear;
 		// temp[current].useMipMap = true;
 
-		Graphics.Blit(src, temp[current]);
-		temp[current].GenerateMips();
+		Graphics.Blit(src, renderTextureCache[current]);
+		renderTextureCache[current].GenerateMips();
 		Graphics.Blit(src, dest);
 
 		SetTexture();

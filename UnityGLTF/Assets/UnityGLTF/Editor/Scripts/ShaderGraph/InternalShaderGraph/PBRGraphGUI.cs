@@ -300,6 +300,25 @@ namespace UnityGLTF
 							});
 						}
 					}
+
+					// check if this uses transmission
+					// TODO we need to expose some kind of interface so that other scripts (e.g. the rough refraction components)
+					// can attach to this inspector here.
+					/*
+					if (targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
+					{
+						// requires extra setup for BiRP / URP to render properly
+						if (!GraphicsSettings.currentRenderPipeline && !Camera.main.gameObject.GetComponent<RoughRefraction>())
+						{
+							// warn
+						}
+						else
+						{
+							// check if assigned renderer has the rough refraction feature, offer to add it otherwise
+							Camera.main.gameObject.GetComponent<UniversalAdditionalCameraData>()
+						}
+					}
+					*/
 				}
 				haveDrawnSomething = true;
 			}

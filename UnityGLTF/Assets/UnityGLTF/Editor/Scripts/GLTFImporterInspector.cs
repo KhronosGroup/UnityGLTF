@@ -73,17 +73,17 @@ namespace UnityGLTF
 				importTangentsProp.intValue = importTangents;
 			}
 			EditorGUILayout.Separator();
+
 			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
 			var mats = serializedObject.FindProperty("m_Materials");
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
-
 			EditorGUILayout.Separator();
+
 			const string key = nameof(GLTFImporterInspector) + "_RemapMaterials";
 			var newVal = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(key, false), "Remap Materials");
 			SessionState.SetBool(key, newVal);
-			// EditorGUILayout.LabelField("Remap Materials", EditorStyles.boldLabel);
 			// extract and remap materials
-			if (newVal)
+			if (newVal && mats != null && mats.serializedObject != null)
 			{
 				EditorGUI.indentLevel++;
 				var externalObjectMap = t.GetExternalObjectMap();
@@ -92,7 +92,7 @@ namespace UnityGLTF
 				{
 					if (!subAsset) return;
 					var destinationPath = Path.GetDirectoryName(t.assetPath) + "/" + subAsset.name + ".mat";
-					string assetPath = AssetDatabase.GetAssetPath(subAsset);
+					var assetPath = AssetDatabase.GetAssetPath(subAsset);
 
 					var clone = Instantiate(subAsset);
 					AssetDatabase.CreateAsset(clone, destinationPath);
@@ -125,13 +125,17 @@ namespace UnityGLTF
 					if (!remap)
 					{
 						if (GUILayout.Button("Extract", GUILayout.Width(60)))
+						{
 							ExtractMaterial(mat);
+							GUIUtility.ExitGUI();
+						}
 					}
 					else
 					{
 						if (GUILayout.Button("Restore", GUILayout.Width(60))) {
 							t.RemoveRemap(id);
 							ApplyAndImport();
+							GUIUtility.ExitGUI();
 						}
 					}
 

@@ -90,9 +90,6 @@ namespace UnityGLTF
 
 				exporter.DeclareExtensionUsage(KHR_materials_volume_Factory.EXTENSION_NAME, false);
 
-				if (materialnode.Extensions == null)
-					materialnode.Extensions = new Dictionary<string, IExtension>();
-
 				// if the material already has an extension, we should get and modify that
 				var ve = new KHR_materials_volume();
 
