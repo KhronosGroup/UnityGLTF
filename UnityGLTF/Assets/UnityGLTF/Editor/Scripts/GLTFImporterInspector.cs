@@ -1,10 +1,12 @@
 #if UNITY_2017_1_OR_NEWER
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 
 using UnityEngine;
+using Object = UnityEngine.Object;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -72,7 +74,96 @@ namespace UnityGLTF
 			}
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
+			var mats = serializedObject.FindProperty("m_Materials");
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
+
+			EditorGUILayout.Separator();
+			const string key = nameof(GLTFImporterInspector) + "_RemapMaterials";
+			var newVal = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(key, false), "Remap Materials");
+			SessionState.SetBool(key, newVal);
+			// EditorGUILayout.LabelField("Remap Materials", EditorStyles.boldLabel);
+			// extract and remap materials
+			if (newVal)
+			{
+				EditorGUI.indentLevel++;
+				var externalObjectMap = t.GetExternalObjectMap();
+
+				void ExtractMaterial(Material subAsset)
+				{
+					if (!subAsset) return;
+					var destinationPath = Path.GetDirectoryName(t.assetPath) + "/" + subAsset.name + ".mat";
+					string assetPath = AssetDatabase.GetAssetPath(subAsset);
+
+					var clone = Instantiate(subAsset);
+					AssetDatabase.CreateAsset(clone, destinationPath);
+
+					var assetImporter = AssetImporter.GetAtPath(assetPath);
+					assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
+
+					AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+					AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+				}
+
+				for (var i = 0; i < mats.arraySize; i++)
+				{
+					var mat = mats.GetArrayElementAtIndex(i).objectReferenceValue as Material;
+					if (!mat) continue;
+					var id = new AssetImporter.SourceAssetIdentifier(mat);
+					externalObjectMap.TryGetValue(id, out var remap);
+					EditorGUILayout.BeginHorizontal();
+					// EditorGUILayout.ObjectField(/*mat.name,*/ mat, typeof(Material), false);
+					EditorGUI.BeginChangeCheck();
+					var newObj = EditorGUILayout.ObjectField(mat.name, remap, typeof(Material), false);
+					if (EditorGUI.EndChangeCheck())
+					{
+						if (newObj)
+							t.AddRemap(id, newObj);
+						else
+							t.RemoveRemap(id);
+					}
+
+					if (!remap)
+					{
+						if (GUILayout.Button("Extract", GUILayout.Width(60)))
+							ExtractMaterial(mat);
+					}
+					else
+					{
+						if (GUILayout.Button("Restore", GUILayout.Width(60))) {
+							t.RemoveRemap(id);
+							ApplyAndImport();
+						}
+					}
+
+					EditorGUILayout.EndHorizontal();
+				}
+
+				EditorGUILayout.BeginHorizontal();
+				EditorGUILayout.PrefixLabel(" ");
+				if (GUILayout.Button("Restore Materials"))
+				{
+					for (var i = 0; i < mats.arraySize; i++)
+					{
+						var mat = mats.GetArrayElementAtIndex(i).objectReferenceValue as Material;
+						if (!mat) continue;
+						t.RemoveRemap(new AssetImporter.SourceAssetIdentifier(mat));
+					}
+				}
+
+				if (GUILayout.Button("Extract Materials"))
+				{
+					for (var i = 0; i < mats.arraySize; i++)
+					{
+						ExtractMaterial(mats.GetArrayElementAtIndex(i).objectReferenceValue as Material);
+					}
+				}
+
+				EditorGUILayout.EndHorizontal();
+				EditorGUI.indentLevel--;
+			}
+
+			EditorGUILayout.EndFoldoutHeaderGroup();
+
 			EditorGUILayout.Separator();
 
 			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));

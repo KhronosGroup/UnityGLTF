@@ -81,6 +81,9 @@ namespace UnityGLTF
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
         [SerializeField] internal bool _useSceneNameIdentifier = false;
 
+        // material remapping
+        [SerializeField] private Material[] m_Materials = new Material[0];
+
         [Serializable]
         internal class ExtensionInfo
         {
@@ -264,6 +267,7 @@ namespace UnityGLTF
                 if (_importMaterials)
                 {
                     // Get materials
+                    var map = GetExternalObjectMap();
                     var materialHash = new HashSet<UnityEngine.Material>();
                     var materials = renderers.SelectMany(r =>
                     {
@@ -282,6 +286,20 @@ namespace UnityGLTF
                             return mat;
                         });
                     }).Distinct().ToArray();
+
+                    // apply material remap
+                    foreach(var r in renderers)
+                    {
+	                    // remap materials to external objects
+	                    var m = r.sharedMaterials;
+	                    for (var i = 0; i < m.Length; i++)
+	                    {
+		                    var si = new SourceAssetIdentifier(m[i]);
+		                    if (map.ContainsKey(si))
+			                    m[i] = map[si] as Material;
+	                    }
+	                    r.sharedMaterials = m;
+                    };
 
                     // Get textures
                     var textureHash = new HashSet<Texture2D>();
@@ -356,9 +374,16 @@ namespace UnityGLTF
                     {
                         foreach (var mat in materials)
                         {
-                            ctx.AddObjectToAsset(GetUniqueName(mat.name), mat);
+	                        // ensure materials that are overriden aren't shown in the hierarchy.
+	                        var si = new SourceAssetIdentifier(mat);
+	                        if (map.ContainsKey(si))
+		                        mat.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+
+	                        ctx.AddObjectToAsset(GetUniqueName(mat.name), mat);
                         }
                     }
+
+                    m_Materials = materials;
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
@@ -520,6 +545,13 @@ namespace UnityGLTF
                 Property = property;
                 IsNormalMap = isNormalMap;
             }
+        }
+
+        public override bool SupportsRemappedAssetType(Type type)
+        {
+	        if (type == typeof(Material))
+		        return true;
+	        return base.SupportsRemappedAssetType(type);
         }
     }
 }
