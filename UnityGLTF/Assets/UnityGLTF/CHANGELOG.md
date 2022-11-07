@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.18.0-pre] - 2022-11-07
+- fix: blend shape weight animation wasn't properly exported in some cases
+- fix: IOR extension may end up as null when IOR was animated
+- fix: rough refracton LOD access is now affected by alpha blending
+- feat: HDR render textures can be exported now
+- feat: add ExportMesh(Mesh) API as convenience helper
+- feat: add material remapping to glTF/GLB importer
+- chore: code cleanup for rough refraction and material inspector
+- change: animation export code paths have been consolidated, less differences between KHR_animation_pointer and regular export
+- change: bumped min Unity version to 2019.4
+
 ## [1.17.2-pre] - 2022-10-21
 - fix: set linear export setting before accessing texture exporter settings for unknown textures
 
