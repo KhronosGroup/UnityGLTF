@@ -25,7 +25,15 @@ namespace UnityGLTF
 		public static event AfterMaterialExportDelegate AfterMaterialExport;
 
 		// mock for Default material
-		public static readonly Material DefaultMaterial = new Material(Shader.Find("Unlit/Texture"));
+		private static Material _defaultMaterial = null;
+		public static Material DefaultMaterial
+		{
+			get
+			{
+				if(!_defaultMaterial) _defaultMaterial = new Material(Shader.Find("Unlit/Texture"));
+				return _defaultMaterial;
+			}
+		}
 
         public MaterialId ExportMaterial(Material materialObj)
 		{
