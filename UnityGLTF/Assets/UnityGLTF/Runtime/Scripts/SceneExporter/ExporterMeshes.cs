@@ -142,7 +142,7 @@ namespace UnityGLTF
 				{
 					Mesh = mesh,
 					SkinnedMeshRenderer = null,
-					Materials = new [] { default(Material) },
+					Materials = new [] { DefaultMaterial },
 				}
 			};
 			return ExportMesh(mesh.name, uniquePrimitives);
