@@ -308,7 +308,11 @@ namespace UnityGLTF
 
         private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
         {
-	        _exportedMaterials.Add(materialObj ? materialObj.GetInstanceID() : 0, _exportedMaterials.Count);
+	        var key = materialObj ? materialObj.GetInstanceID() : 0;
+	        if(!_exportedMaterials.ContainsKey(key))
+				_exportedMaterials.Add(key, _exportedMaterials.Count);
+	        else
+		        _exportedMaterials[key] = _exportedMaterials.Count; // should the count be incremented here?
 
 	        var id = new MaterialId
 	        {
