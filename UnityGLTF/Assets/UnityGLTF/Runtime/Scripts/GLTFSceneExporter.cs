@@ -879,7 +879,7 @@ namespace UnityGLTF
 				_animatedNodes.Add(nodeTransform);
 			}
 #endif
-			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject))
+			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject, settings.ExportDisabledGameObjects))
 			{
 				_skinnedNodes.Add(nodeTransform);
 			}
@@ -981,18 +981,18 @@ namespace UnityGLTF
 			return id;
 		}
 
-		private static bool ContainsValidRenderer(GameObject gameObject)
+		private static bool ContainsValidRenderer(GameObject gameObject, bool exportDisabledGameObjects)
 		{
-			if(!gameObject) return false;
+			if (!gameObject) return false;
 			var meshRenderer = gameObject.GetComponent<MeshRenderer>();
 			var meshFilter = gameObject.GetComponent<MeshFilter>();
 			var skinnedMeshRender = gameObject.GetComponent<SkinnedMeshRenderer>();
 			var materials = meshRenderer ? meshRenderer.sharedMaterials : skinnedMeshRender ? skinnedMeshRender.sharedMaterials : null;
 			var anyMaterialIsNonNull = false;
-			if(materials != null)
+			if (materials != null)
 				for (int i = 0; i < materials.Length; i++)
 					anyMaterialIsNonNull |= materials[i];
-			return (meshFilter && meshRenderer && meshRenderer.enabled) || (skinnedMeshRender && skinnedMeshRender.enabled) && anyMaterialIsNonNull;
+			return (meshFilter && meshRenderer && (meshRenderer.enabled || exportDisabledGameObjects)) || (skinnedMeshRender && (skinnedMeshRender.enabled || exportDisabledGameObjects)) && anyMaterialIsNonNull;
 		}
 
         private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
@@ -1004,7 +1004,7 @@ namespace UnityGLTF
 			// add another primitive if the root object also has a mesh
 			if (transform.gameObject.activeSelf || settings.ExportDisabledGameObjects)
 			{
-				if (ContainsValidRenderer(transform.gameObject))
+				if (ContainsValidRenderer(transform.gameObject, settings.ExportDisabledGameObjects))
 				{
 					prims.Add(transform.gameObject);
 				}
@@ -1024,20 +1024,21 @@ namespace UnityGLTF
 			nonPrimitives = nonPrims.ToArray();
 		}
 
-		private static bool IsPrimitive(GameObject gameObject)
-		{
-			/*
-			 * Primitives have the following properties:
-			 * - have no children
-			 * - have no non-default local transform properties
-			 * - have MeshFilter and MeshRenderer components OR has SkinnedMeshRenderer component
-			 */
-			return gameObject.transform.childCount == 0
-				&& gameObject.transform.localPosition == Vector3.zero
-				&& gameObject.transform.localRotation == Quaternion.identity
-				&& gameObject.transform.localScale == Vector3.one
-				&& ContainsValidRenderer(gameObject);
-		}
+        // This seems to be a performance optimization but results in transforms that are detected as "primitives" not being animated
+		// private static bool IsPrimitive(GameObject gameObject)
+		// {
+		// 	/*
+		// 	 * Primitives have the following properties:
+		// 	 * - have no children
+		// 	 * - have no non-default local transform properties
+		// 	 * - have MeshFilter and MeshRenderer components OR has SkinnedMeshRenderer component
+		// 	 */
+		// 	return gameObject.transform.childCount == 0
+		// 		&& gameObject.transform.localPosition == Vector3.zero
+		// 		&& gameObject.transform.localRotation == Quaternion.identity
+		// 		&& gameObject.transform.localScale == Vector3.one
+		// 		&& ContainsValidRenderer(gameObject);
+		// }
 
 		private void ExportAnimation()
 		{
