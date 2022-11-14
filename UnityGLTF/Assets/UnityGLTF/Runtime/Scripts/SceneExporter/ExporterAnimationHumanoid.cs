@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -67,8 +68,13 @@ namespace UnityGLTF
 #endif
 			AnimationMode.BeginSampling();
 
-			root.transform.position = Vector3.zero;
-			root.transform.rotation = Quaternion.identity;
+			// add the root since we need to shift it around -
+			// it will be reset when exiting AnimationMode again and will not be dirty.
+			AnimationMode_AddTransformTRS(root);
+
+			root.transform.localPosition = Vector3.zero;
+			root.transform.localRotation = Quaternion.identity;
+			// root.transform.localScale = Vector3.one;
 
 			// first frame
 			AnimationMode.SampleAnimationClip(root, clip, time);
@@ -150,8 +156,14 @@ namespace UnityGLTF
 				var calculatedPath = CalculatePath(kvp.Key, root.transform);
 				targetCurves[calculatedPath] = curveSet;
 			}
+		}
 
-			// Debug.Log("Recorded Transforms:\n" + string.Join("\n", targetCurves.Keys));
+		private static MethodInfo _AddTransformTRS;
+		private static void AnimationMode_AddTransformTRS(GameObject gameObject)
+		{
+			if (!gameObject) return;
+			if (_AddTransformTRS == null) _AddTransformTRS = typeof(AnimationMode).GetMethod("AddTransformTRS", (BindingFlags)(-1));
+			_AddTransformTRS?.Invoke(null, new object[] { gameObject, "" });
 		}
 #endif
 	}
