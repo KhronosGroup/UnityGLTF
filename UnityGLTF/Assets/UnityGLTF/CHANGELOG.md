@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.18.3-pre] - 2022-11-14
+- fix: disabled MeshRenderers and SkinnedMeshRenderers were not exported despite ExportDisabledGameObjects being on
+- fix: sample root transform as well in Humanoid export to prevent shifting it around when recording
+
 ## [1.18.2-pre] - 2022-11-10
 - fix: exception thrown when trying to add a material instance id twice 
 
