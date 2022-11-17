@@ -205,7 +205,7 @@ namespace UnityGLTF
 				var mesh = default(Mesh);
 				if (renderer is SkinnedMeshRenderer smr)
 					mesh = smr.sharedMesh;
-				else if (renderer is MeshRenderer mr)
+				else if (renderer is MeshRenderer mr && mr.GetComponent<MeshFilter>())
 					mesh = mr.GetComponent<MeshFilter>()?.sharedMesh;
 
 				if (mesh)
