@@ -106,7 +106,7 @@ namespace UnityGLTF.Timeline
 
 					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr0, x) =>
 					{
-						if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh)
+						if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh.sharedMesh)
 						{
 							var mesh = skinnedMesh.sharedMesh;
 							var blendShapeCount = mesh.blendShapeCount;
@@ -153,8 +153,9 @@ namespace UnityGLTF.Timeline
 
 				foreach (var plan in exportPlans)
 				{
-					if (plan.GetTarget(tr))
+					if (plan.GetTarget(tr)) {
 						tracks.Add(new Track(tr, plan, time));
+					}
 				}
 #endif
 			}
@@ -186,6 +187,8 @@ namespace UnityGLTF.Timeline
 				public void SampleIfChanged(double time)
 				{
 					var value = plan.Sample(tr);
+					if (value == null || (value is Object o && !o))
+						return;
 					if (!value.Equals(lastSample))
 					{
 						samples[time] = value;
