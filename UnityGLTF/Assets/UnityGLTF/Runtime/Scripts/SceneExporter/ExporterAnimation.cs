@@ -726,6 +726,42 @@ namespace UnityGLTF
 
 				targetCurves[binding.path] = current;
 			}
+
+			// sprite animation
+			if (settings.UseAnimationPointer)
+			{
+				var objectBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
+				foreach (var binding in objectBindings)
+				{
+					var obj = AnimationUtility.GetAnimatedObject(root, binding);
+					if (obj && obj is SpriteRenderer)
+					{
+						var path = "spritesheet_index";
+						if (!targetCurves.ContainsKey(binding.path))
+						{
+							TargetCurveSet curveSet = new TargetCurveSet();
+							curveSet.Init();
+							targetCurves.Add(path, curveSet);
+						}
+
+						TargetCurveSet current = targetCurves[path];
+						var objectKeys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
+						var curve = new AnimationCurve();
+						var keyframes = new List<Keyframe>();
+						// TODO: need to ensure keys are discrete!
+						for (var index = 0; index < objectKeys.Length; index++)
+						{
+							var kf = objectKeys[index];
+							// TODO: need to get actual index in spritesheet
+							keyframes.Add(new Keyframe(kf.time, index));
+						}
+						curve.keys = keyframes.ToArray();
+						current.AddPropertyCurves(obj, curve, binding);
+						targetCurves[path] = current;
+					}
+				}
+			}
+
 #endif
 		}
 
