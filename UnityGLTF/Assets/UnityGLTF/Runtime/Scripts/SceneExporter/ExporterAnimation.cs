@@ -185,7 +185,6 @@ namespace UnityGLTF
 		{
 			public string propertyName;
 			public Type propertyType;
-			public bool needsCoordinateConversion = false;
 			public List<AnimationCurve> curve;
 			public Object target;
 
@@ -231,6 +230,8 @@ namespace UnityGLTF
 				if (!binding.propertyName.Contains("."))
 				{
 					var prop = new PropertyCurve(animatedObject, binding.propertyName);
+					// if (binding.propertyName == "translation")
+					// 	prop.needsCoordinateConversion = true;
 					prop.curve.Add(curve);
 					if (animatedObject is GameObject || animatedObject is Component)
 						TryFindMemberBinding(binding, prop, prop.propertyName);
@@ -484,30 +485,30 @@ namespace UnityGLTF
 								else if (obj is GameObject go) animatedTransform = go.transform;
 								if (animatedTransform == alreadyExportedTransform)
 								{
-										if (targetTrShouldNotBeExported)
+									if (targetTrShouldNotBeExported)
+									{
+										// Debug.LogWarning("Need to remove this", null);
+									}
+									else
+									{
+										if (animationPointer.animatedObject is GameObject)
 										{
-											// Debug.LogWarning("Need to remove this", null);
+											animationPointer.animatedObject = targetTr.gameObject;
+											animationPointer.channel = existingTarget;
+											animationPointerResolver.Add(animationPointer);
 										}
-										else
+										else if(animationPointer.animatedObject is Component)
 										{
-											if (animationPointer.animatedObject is GameObject)
+											var targetType = animationPointer.animatedObject.GetType();
+											var newTarget = targetTr.GetComponent(targetType);
+											if (newTarget)
 											{
-												animationPointer.animatedObject = targetTr.gameObject;
+												animationPointer.animatedObject = newTarget;
 												animationPointer.channel = existingTarget;
 												animationPointerResolver.Add(animationPointer);
 											}
-											else if(animationPointer.animatedObject is Component)
-											{
-												var targetType = animationPointer.animatedObject.GetType();
-												var newTarget = targetTr.GetComponent(targetType);
-												if (newTarget)
-												{
-													animationPointer.animatedObject = newTarget;
-													animationPointer.channel = existingTarget;
-													animationPointerResolver.Add(animationPointer);
-												}
-											}
 										}
+									}
 								}
 								else if (animationPointer.animatedObject is Material m)
 								{
@@ -574,7 +575,7 @@ namespace UnityGLTF
 					// moving KHR_animation_pointer data into regular animations
 					if (curve.translationCurves.Any(x => x != null))
 					{
-						var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3), needsCoordinateConversion = true };
+						var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
 						trp2.curve.AddRange(curve.translationCurves);
 						if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
 						{
@@ -612,36 +613,8 @@ namespace UnityGLTF
 						trp5.curve.AddRange(curve.weightCurves.Values);
 						if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5))
 						{
-							// scale weights correctly if there are any
-							var skinnedMesh = targetTr.GetComponent<SkinnedMeshRenderer>();
-							if (skinnedMesh)
-							{
-								// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
-								// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
-								var minBlendShapeFrameWeight = 0.0f;
-								var maxBlendShapeFrameWeight = 0.0f;
-
-								var sharedMesh = skinnedMesh.sharedMesh;
-								var shapeCount = sharedMesh.blendShapeCount;
-								for (int index = 0; index < shapeCount; ++index)
-								{
-									var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
-									for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
-									{
-										var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
-										minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
-										maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
-									}
-								}
-
-								// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
-								if (maxBlendShapeFrameWeight > 0)
-								{
-									for (var i = 0; i < values5.Length; i++)
-										values5[i] = (float) values5[i] * 1 / maxBlendShapeFrameWeight;
-								}
-							}
-							AddAnimationData(targetTr, trp5.propertyName, animation, times, values5);
+							var targetComponent = targetTr.GetComponent<SkinnedMeshRenderer>();
+							AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5);
 							sampledAnimationData = true;
 						}
 					}
@@ -867,8 +840,6 @@ namespace UnityGLTF
 						else if (typeof(Vector3) == type)
 						{
 							var vec = new Vector3(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2));
-							if (prop.needsCoordinateConversion)
-								vec.Scale(vector3Scale);
 							_values.Add(vec);
 						}
 						else if (typeof(Vector4) == type)

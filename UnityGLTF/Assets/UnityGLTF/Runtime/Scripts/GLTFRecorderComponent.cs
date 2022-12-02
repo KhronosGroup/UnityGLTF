@@ -17,7 +17,8 @@ namespace UnityGLTF
 	    public string outputFile = "Assets/Recordings/Recorded_<Timestamp>.glb";
 	    public Transform exportRoot;
 	    public bool recordBlendShapes = true;
-	    public bool recordAnimationPointer = true;
+	    public bool recordRootInWorldSpace = true;
+	    public bool recordAnimationPointer = false;
 
 #if NEW_INPUT
 		public InputAction recordingKey = new InputAction(binding: "<Keyboard>/F11");
@@ -58,7 +59,7 @@ namespace UnityGLTF
 				shouldUseAnimationPointer = false;
 			}
 
-			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes, shouldUseAnimationPointer);
+			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes, recordRootInWorldSpace, shouldUseAnimationPointer);
 			recorder.StartRecording(CurrentTime);
 			recordingStarted?.Invoke();
 

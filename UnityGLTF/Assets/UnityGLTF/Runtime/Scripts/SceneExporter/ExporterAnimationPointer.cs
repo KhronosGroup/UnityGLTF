@@ -47,13 +47,14 @@ namespace UnityGLTF
 			// TODO should skip property switches that are not supported without KHR_animation_pointer
 			// TODO should probably start with the transform check below and stop afterwards if KHR_animation_pointer is off
 
-			// if (!settings.UseAnimationPointer)
-			// {
-			// 	Debug.LogWarning("Trying to export arbitrary animation (" + propertyName + ") - this requires KHR_animation_pointer", animatedObject);
-			// 	return;
-			// }
-
 			if (values.Length <= 0) return;
+			for (var i = 0; i < values.Length; i++)
+			{
+				if (values[i] != null) continue;
+
+				Debug.LogError($"GLTFExporter error: value {i} in animated property \"{propertyName}\" is null. Skipping", animatedObject);
+				return;
+			}
 
 			var channelTargetId = GetIndex(animatedObject);
 			if (channelTargetId < 0)
@@ -337,6 +338,35 @@ namespace UnityGLTF
 						}
 					}
 					break;
+				case SkinnedMeshRenderer skinnedMesh:
+					// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
+					// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
+					var minBlendShapeFrameWeight = 0.0f;
+					var maxBlendShapeFrameWeight = 0.0f;
+
+					var sharedMesh = skinnedMesh.sharedMesh;
+					if (!sharedMesh)
+					{
+						Debug.Log(LogType.Error, "No mesh on SkinnedMeshRenderer " + skinnedMesh + ", skipping animation");
+						return;
+					}
+
+					var shapeCount = sharedMesh.blendShapeCount;
+					for (int index = 0; index < shapeCount; ++index)
+					{
+						var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
+						for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
+						{
+							var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
+							minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
+							maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
+						}
+					}
+
+					if (maxBlendShapeFrameWeight != 0)
+						valueMultiplier = 1.0f / maxBlendShapeFrameWeight;
+
+					break;
 				default:
 					// propertyName is exported as-is
 					// Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
@@ -391,11 +421,46 @@ namespace UnityGLTF
 						}
 					}
 					break;
+				case float[] _:
+					// check that all entries have the same length using a for loop
+					var firstLength = ((float[])values[0]).Length;
+					for (var i = 1; i < values.Length; i++)
+					{
+						if (((float[])values[i]).Length == firstLength) continue;
+
+						Debug.Log(LogType.Error, "When animating float arrays, all array entries must have the same length. Skipping");
+						return;
+					}
+
+					// construct a float array of all the float arrays together
+					var floatArray = new float[values.Length * firstLength];
+
+					// copy the individual arrays into the float array using Array.Copy
+					for (int i = 0; i < values.Length; i++)
+						Array.Copy((float[])values[i], 0, floatArray, i * firstLength, firstLength);
+
+					// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
+					if (valueMultiplier.HasValue)
+					{
+						for (var i = 0; i < floatArray.Length; i++)
+							floatArray[i] *= valueMultiplier.Value;
+					}
+
+					Tsampler.Output = ExportAccessor(floatArray);
+					break;
 				case Vector2 _:
 					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector2)e));
 					break;
 				case Vector3 _:
-					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector3)e));
+					if (propertyName == "translation")
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e =>
+						{
+							var v = (Vector3)e;
+							v.Scale(new Vector3(-1, 1, 1));
+							return v;
+						}));
+					else
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector3)e));
 					break;
 				case Vector4 _:
 					if (!isTextureTransform)
@@ -447,6 +512,12 @@ namespace UnityGLTF
 
 			if (Tsampler.Output  != null) Tsampler.Output.Value.BufferView.Value.ByteStride  = 0;
 			if (Tsampler2.Output != null) Tsampler2.Output.Value.BufferView.Value.ByteStride = 0;
+
+			if (Tsampler.Output == null)
+			{
+				Debug.LogError($"GLTFExporter: Something went wrong, empty sampler output for \"{propertyName}\" in {animatedObject}", animatedObject);
+				return;
+			}
 
 			Tchannel.Sampler = new AnimationSamplerId
 			{

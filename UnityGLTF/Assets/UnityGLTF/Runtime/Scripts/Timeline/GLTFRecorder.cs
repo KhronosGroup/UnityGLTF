@@ -120,6 +120,8 @@ namespace UnityGLTF.Timeline
 
 					if(recordAnimationPointer)
 					{
+						// TODO add other animation pointer export plans
+
 						exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr0, mat) =>
 						{
 							var r = tr0.GetComponent<Renderer>();
@@ -178,10 +180,8 @@ namespace UnityGLTF.Timeline
 				{
 					this.tr = tr;
 					this.plan = plan;
-					var value = this.plan.Sample(tr);
 					samples = new Dictionary<double, object>();
-					samples.Add(time, value);
-					lastSample = value;
+					SampleIfChanged(time);
 				}
 
 				public void SampleIfChanged(double time)
@@ -355,16 +355,13 @@ namespace UnityGLTF.Timeline
 			{
 				processAnimationMarker.Begin();
 #if USE_ANIMATION_POINTER
-				if (recordAnimationPointer)
+				foreach (var tr in kvp.Value.tracks)
 				{
-					foreach (var tr in kvp.Value.tracks)
-					{
-						if (tr.times.Length == 0) continue;
-						var times = tr.times;
-						var values = tr.values;
-						gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref values);
-						gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, times, values);
-					}
+					if (tr.times.Length == 0) continue;
+					var times = tr.times;
+					var values = tr.values;
+					gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref values);
+					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, times, values);
 				}
 #endif
 
@@ -393,9 +390,8 @@ namespace UnityGLTF.Timeline
 				// no need to add single-keyframe tracks, that's recorded as base data anyways
 				// if (times.Length > 1)
 				// 	gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
-
-				processAnimationMarker.End();
 #endif
+				processAnimationMarker.End();
 			}
 		}
 
@@ -482,18 +478,55 @@ namespace UnityGLTF.Timeline
 		private class StringBuilderLogHandler : ILogHandler
 		{
 			private readonly StringBuilder sb = new StringBuilder();
+			private LogType highestLogType = LogType.Log;
 
-			public void LogFormat(LogType logType, Object context, string format, params object[] args) => sb.AppendLine($"[{logType}] {string.Format(format, args)}");
-			public void LogException(Exception exception, Object context) => sb.AppendLine($"[Exception] {exception}");
+			private string LogTypeToLog(LogType logType)
+			{
+#if UNITY_EDITOR
+				// create strings with <color> tags
+				switch (logType)
+				{
+					case LogType.Error:
+						return "<color=red>[" + logType + "]</color>";
+					case LogType.Assert:
+						return "<color=red>[" + logType + "]</color>";
+					case LogType.Warning:
+						return "<color=yellow>[" + logType + "]</color>";
+					case LogType.Log:
+						return "[" + logType + "]";
+					case LogType.Exception:
+						return "<color=red>[" + logType + "]</color>";
+					default:
+						return "[" + logType + "]";
+				}
+#else
+				return "[" + logType + "]";
+#endif
+			}
+
+			public void LogFormat(LogType logType, Object context, string format, params object[] args) => sb.AppendLine($"{LogTypeToLog(logType)} {string.Format(format, args)} [Context: {context}]");
+			public void LogException(Exception exception, Object context) => sb.AppendLine($"{LogTypeToLog(LogType.Exception)} {exception} [Context: {context}]");
 
 			public void LogAndClear()
 			{
 				if(sb.Length > 0)
+				{
+					var str = sb.ToString();
 #if UNITY_2019_1_OR_NEWER
-					Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "Export Messages:\n{0}", sb.ToString());
-#else
-					Debug.Log(string.Format("Export Messages:\n{0}", sb.ToString()));
+					var logType = LogType.Log;
+#if UNITY_EDITOR
+					if (str.IndexOf("[Error]", StringComparison.Ordinal) > -1 ||
+					    str.IndexOf("[Exception]", StringComparison.Ordinal) > -1 ||
+					    str.IndexOf("[Assert]", StringComparison.Ordinal) > -1)
+						logType = LogType.Error;
+					else if (str.IndexOf("[Warning]", StringComparison.Ordinal) > -1)
+						logType = LogType.Warning;
 #endif
+					Debug.LogFormat(logType, LogOption.NoStacktrace, null, "Export Messages:" + "\n{0}", sb.ToString());
+#else
+					Debug.Log(string.Format("Export Messages:" + "\n{0}", str));
+#endif
+				}
 				sb.Clear();
 			}
 		}
