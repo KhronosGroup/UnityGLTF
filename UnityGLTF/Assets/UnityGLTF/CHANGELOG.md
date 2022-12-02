@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.18.5-pre] - 2022-12-02
+- fix: default material was missing in build
+
 ## [1.18.4-pre] - 2022-12-02
 - fix: GLTFRecorder didn't properly record with animation pointer off anymore
 - fix: unified access to SkinnedMeshRenderer weights on export

@@ -30,7 +30,21 @@ namespace UnityGLTF
 		{
 			get
 			{
-				if(!_defaultMaterial) _defaultMaterial = new Material(Shader.Find("Unlit/Texture"));
+				if (_defaultMaterial) return _defaultMaterial;
+
+#if UNITY_2019_3_OR_NEWER
+				var pipelineAsset = GraphicsSettings.currentRenderPipeline;
+				if (pipelineAsset)
+				{
+					_defaultMaterial = pipelineAsset.defaultMaterial;
+				}
+				else
+#endif
+				{
+					var shader = Shader.Find("Legacy Shaders/Diffuse"); // by default in the always included shaders list
+					if (shader)
+						_defaultMaterial = new Material(shader);
+				}
 				return _defaultMaterial;
 			}
 		}
