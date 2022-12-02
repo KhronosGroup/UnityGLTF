@@ -292,7 +292,7 @@ namespace UnityGLTF.Timeline
 			param = data;
 		}
 
-		public void EndRecording(string filename, string sceneName = "scene")
+		public void EndRecording(string filename, string sceneName = "scene", GLTFSettings settings = null)
 		{
 			if (!isRecording) return;
 
@@ -300,11 +300,11 @@ namespace UnityGLTF.Timeline
 			if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
 			using (var filestream = new FileStream(filename, FileMode.Create, FileAccess.Write))
 			{
-				EndRecording(filestream, sceneName);
+				EndRecording(filestream, sceneName, settings);
 			}
 		}
 
-		public void EndRecording(Stream stream, string sceneName = "scene")
+		public void EndRecording(Stream stream, string sceneName = "scene", GLTFSettings settings = null)
 		{
 			if (!isRecording) return;
 			isRecording = false;
@@ -315,13 +315,17 @@ namespace UnityGLTF.Timeline
 			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.keys.Count));
 #endif
 
-			var adjustedSettings = Object.Instantiate(GLTFSettings.GetOrCreateSettings());
-			adjustedSettings.ExportDisabledGameObjects = true;
-			adjustedSettings.ExportAnimations = false;
+			if (!settings)
+			{
+				var adjustedSettings = Object.Instantiate(GLTFSettings.GetOrCreateSettings());
+				adjustedSettings.ExportDisabledGameObjects = true;
+				adjustedSettings.ExportAnimations = false;
+				settings = adjustedSettings;
+			}
 
 			var logHandler = new StringBuilderLogHandler();
 
-			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions()
+			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions(settings)
 			{
 				AfterSceneExport = PostExport,
 				logger = new Logger(logHandler),
