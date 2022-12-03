@@ -734,26 +734,38 @@ namespace UnityGLTF
 				foreach (var binding in objectBindings)
 				{
 					var obj = AnimationUtility.GetAnimatedObject(root, binding);
-					if (obj && obj is SpriteRenderer)
+					if (obj && obj is SpriteRenderer spriteRenderer && spriteRenderer.sprite && binding.propertyName == "m_Sprite")
 					{
-						var path = "spritesheet_index";
-						if (!targetCurves.ContainsKey(binding.path))
+						var spriteSheet = spriteRenderer.sprite;
+						var spriteSheetPath = AssetDatabase.GetAssetPath(spriteSheet);
+						var path = binding.propertyName;
+						if (!targetCurves.ContainsKey(path))
 						{
-							TargetCurveSet curveSet = new TargetCurveSet();
+							var curveSet = new TargetCurveSet();
 							curveSet.Init();
 							targetCurves.Add(path, curveSet);
 						}
 
 						TargetCurveSet current = targetCurves[path];
 						var objectKeys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
+						var sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(spriteSheetPath);
 						var curve = new AnimationCurve();
 						var keyframes = new List<Keyframe>();
-						// TODO: need to ensure keys are discrete!
+
+						var lastKeyframe = default(Keyframe);
 						for (var index = 0; index < objectKeys.Length; index++)
 						{
-							var kf = objectKeys[index];
-							// TODO: need to get actual index in spritesheet
-							keyframes.Add(new Keyframe(kf.time, index));
+							var objectKey = objectKeys[index];
+							var spriteIndex = objectKeys[index].value ? Array.IndexOf(sprites, objectKeys[index].value) : 0;
+							var kf = new Keyframe(objectKey.time, spriteIndex);
+							// create intermediate keyframe to make sure we dont have interpolation between sprites
+							if ((int)lastKeyframe.value != (int)kf.value)
+							{
+								var intermediate = new Keyframe(kf.time - 0.0001f, lastKeyframe.value);
+								keyframes.Add(intermediate);
+							}
+							keyframes.Add(kf);
+							lastKeyframe = kf;
 						}
 						curve.keys = keyframes.ToArray();
 						current.AddPropertyCurves(obj, curve, binding);

@@ -12,7 +12,7 @@ namespace UnityGLTF
 	public partial class GLTFSceneExporter
 	{
 		internal readonly List<IJsonPointerResolver> pointerResolvers = new List<IJsonPointerResolver>();
-		private KHR_animation_pointer_Resolver animationPointerResolver = new KHR_animation_pointer_Resolver();
+		private readonly KHR_animation_pointer_Resolver animationPointerResolver = new KHR_animation_pointer_Resolver();
 
 #region Shader Property Names
 		// ReSharper disable InconsistentNaming
