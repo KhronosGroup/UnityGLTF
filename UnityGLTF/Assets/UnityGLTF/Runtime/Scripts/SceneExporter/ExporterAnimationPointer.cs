@@ -373,6 +373,32 @@ namespace UnityGLTF
 					break;
 			}
 
+			if (settings.UseAnimationPointer)
+			{
+				switch (animatedObject)
+				{
+					case Transform _:
+						break;
+					case Component _:
+						// filter out objects that rely on khr pointers but cant be resolved
+						var couldResolve = false;
+						var prop = $"/nodes/{channelTargetId}/{propertyName}";
+						foreach (var res in pointerResolvers)
+						{
+							// TODO: ideally we have a new method here to just ask the resolver if it supports that type
+							if (res.TryResolve(animatedObject, ref prop))
+							{
+								couldResolve = true;
+							}
+						}
+						if (!couldResolve)
+						{
+							return;
+						}
+						break;
+				}
+			}
+
 			var Node = new NodeId
 			{
 				Id = channelTargetId,
