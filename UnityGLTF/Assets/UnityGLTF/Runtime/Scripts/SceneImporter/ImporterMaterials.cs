@@ -308,6 +308,43 @@ namespace UnityGLTF
 						uniformMapper.NormalXRotation = ext.Rotation;
 						uniformMapper.NormalXScale = ext.Scale.ToUnityVector2Raw();
 						uniformMapper.NormalXTexCoord = ext.TexCoord;
+
+						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
+
+						// workaround for PBRGraph not supporting per-texture transforms right now
+						if (mapper is IMetalRoughUniformMap map && !map.BaseColorTexture)
+						{
+							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+							map.BaseColorXOffset = offset;
+						}
+					}
+				}
+
+				if (def.EmissiveTexture != null)
+				{
+					TextureId textureId = def.EmissiveTexture.Index;
+					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
+					uniformMapper.EmissiveTexture = _assetCache.TextureCache[textureId.Id].Texture;
+					uniformMapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
+
+					var ext = GetTextureTransform(def.EmissiveTexture);
+					if (ext != null)
+					{
+						var offset = ext.Offset.ToUnityVector2Raw();
+						offset.y = 1 - ext.Scale.Y - offset.y;
+						uniformMapper.EmissiveXOffset = offset;
+						uniformMapper.EmissiveXRotation = ext.Rotation;
+						uniformMapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
+						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
+
+						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
+
+						// workaround for PBRGraph not supporting per-texture transforms right now
+						if (mapper is IMetalRoughUniformMap map && !map.BaseColorTexture && !map.NormalTexture)
+						{
+							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+							map.BaseColorXOffset = offset;
+						}
 					}
 				}
 
@@ -331,25 +368,13 @@ namespace UnityGLTF
 						// mapper.OcclusionXTexCoord = ext.TexCoord;
 
 						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
-					}
-				}
 
-				if (def.EmissiveTexture != null)
-				{
-					TextureId textureId = def.EmissiveTexture.Index;
-					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
-					uniformMapper.EmissiveTexture = _assetCache.TextureCache[textureId.Id].Texture;
-					uniformMapper.EmissiveTexCoord = def.EmissiveTexture.TexCoord;
-
-					var ext = GetTextureTransform(def.EmissiveTexture);
-					if (ext != null)
-					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
-						uniformMapper.EmissiveXOffset = offset;
-						uniformMapper.EmissiveXRotation = ext.Rotation;
-						uniformMapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
-						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
+						// workaround for PBRGraph not supporting per-texture transforms right now
+						if (mapper is IMetalRoughUniformMap map && !map.BaseColorTexture && !map.NormalTexture && !map.EmissiveTexture)
+						{
+							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+							map.BaseColorXOffset = offset;
+						}
 					}
 				}
 
