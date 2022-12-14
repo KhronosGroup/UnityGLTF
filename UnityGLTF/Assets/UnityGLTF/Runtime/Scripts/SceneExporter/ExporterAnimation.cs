@@ -727,49 +727,59 @@ namespace UnityGLTF
 				targetCurves[binding.path] = current;
 			}
 
-			// sprite animation
+			// object reference curves - in some cases animated data can be contained in here, e.g. for SpriteRenderers.
+			// this only makes sense when AnimationPointer is on, and someone needs to resolve the data to something in the glTF later via KHR_animation_pointer_Resolver
 			if (settings.UseAnimationPointer)
 			{
 				var objectBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
 				foreach (var binding in objectBindings)
 				{
 					var obj = AnimationUtility.GetAnimatedObject(root, binding);
-					if (obj && obj is SpriteRenderer spriteRenderer && spriteRenderer.sprite && binding.propertyName == "m_Sprite")
+					switch (obj)
 					{
-						var spriteSheet = spriteRenderer.sprite;
-						var spriteSheetPath = AssetDatabase.GetAssetPath(spriteSheet);
-						var path = binding.propertyName;
-						if (!targetCurves.ContainsKey(path))
-						{
-							var curveSet = new TargetCurveSet();
-							curveSet.Init();
-							targetCurves.Add(path, curveSet);
-						}
+						case SpriteRenderer spriteRenderer:
+							if (!spriteRenderer.sprite) continue;
+							if (binding.propertyName != "m_Sprite") continue;
 
-						TargetCurveSet current = targetCurves[path];
-						var objectKeys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
-						var sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(spriteSheetPath);
-						var curve = new AnimationCurve();
-						var keyframes = new List<Keyframe>();
+							var spriteSheet = spriteRenderer.sprite;
+							var spriteSheetPath = AssetDatabase.GetAssetPath(spriteSheet);
+							// will only work with all sprites from the same spritesheet right now
+							var sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(spriteSheetPath);
 
-						var lastKeyframe = default(Keyframe);
-						for (var index = 0; index < objectKeys.Length; index++)
-						{
-							var objectKey = objectKeys[index];
-							var spriteIndex = objectKeys[index].value ? Array.IndexOf(sprites, objectKeys[index].value) : 0;
-							var kf = new Keyframe(objectKey.time, spriteIndex);
-							// create intermediate keyframe to make sure we dont have interpolation between sprites
-							if ((int)lastKeyframe.value != (int)kf.value)
+							var path = binding.propertyName;
+							if (!targetCurves.ContainsKey(path))
 							{
-								var intermediate = new Keyframe(kf.time - 0.0001f, lastKeyframe.value);
-								keyframes.Add(intermediate);
+								var curveSet = new TargetCurveSet();
+								curveSet.Init();
+								targetCurves.Add(path, curveSet);
 							}
-							keyframes.Add(kf);
-							lastKeyframe = kf;
-						}
-						curve.keys = keyframes.ToArray();
-						current.AddPropertyCurves(obj, curve, binding);
-						targetCurves[path] = current;
+
+							TargetCurveSet current = targetCurves[path];
+							var objectKeys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
+							var curve = new AnimationCurve();
+							var keyframes = new List<Keyframe>();
+							var lastKeyframe = default(Keyframe);
+							for (var index = 0; index < objectKeys.Length; index++)
+							{
+								var objectKey = objectKeys[index];
+								var spriteIndex = objectKeys[index].value ? Array.IndexOf(sprites, objectKeys[index].value) : 0;
+								var kf = new Keyframe(objectKey.time, spriteIndex);
+
+								// create intermediate keyframe to make sure we dont have interpolation between sprites
+								// TODO better would be to allow configuring a constant track
+								if ((int)lastKeyframe.value != (int)kf.value)
+								{
+									var intermediate = new Keyframe(kf.time - 0.0001f, lastKeyframe.value);
+									keyframes.Add(intermediate);
+								}
+								keyframes.Add(kf);
+								lastKeyframe = kf;
+							}
+							curve.keys = keyframes.ToArray();
+							current.AddPropertyCurves(obj, curve, binding);
+							targetCurves[path] = current;
+
+							break;
 					}
 				}
 			}

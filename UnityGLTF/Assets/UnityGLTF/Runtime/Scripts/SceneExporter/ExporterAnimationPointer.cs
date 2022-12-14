@@ -367,20 +367,16 @@ namespace UnityGLTF
 						valueMultiplier = 1.0f / maxBlendShapeFrameWeight;
 
 					break;
+				case Transform _:
+					// generally allowed and already in the right format
+					break;
 				default:
 					// propertyName is exported as-is
 					// Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
-					break;
-			}
 
-			if (settings.UseAnimationPointer)
-			{
-				switch (animatedObject)
-				{
-					case Transform _:
-						break;
-					case Component _:
-						// filter out objects that rely on khr pointers but cant be resolved
+					// filtering for what to include / what not to include based on whether its target can be resolved
+					if (settings.UseAnimationPointer && animatedObject is Component _)
+					{
 						var couldResolve = false;
 						var prop = $"/nodes/{channelTargetId}/{propertyName}";
 						foreach (var res in pointerResolvers)
@@ -395,8 +391,8 @@ namespace UnityGLTF
 						{
 							return;
 						}
-						break;
-				}
+					}
+					break;
 			}
 
 			var Node = new NodeId
