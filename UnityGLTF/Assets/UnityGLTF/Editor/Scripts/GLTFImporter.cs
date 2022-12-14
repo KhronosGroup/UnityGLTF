@@ -45,7 +45,7 @@ namespace UnityGLTF
 #endif
     public class GLTFImporter : ScriptedImporter
     {
-	    private const int ImporterVersion = 6;
+	    private const int ImporterVersion = 7;
 
 	    private static void EnsureShadersAreLoaded()
 	    {
