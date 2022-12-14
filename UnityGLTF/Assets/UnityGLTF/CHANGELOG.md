@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.19.0-pre] - 2022-12-14
+- add: spritesheet keyframe animation export
+- change: print warning when animation pointer cant be resolved and add filtering of objects that cant be resolved before building animation data
+- fix: index discrepancy between _exportedMaterials and _root.Materials lead to wrong texture indices being returned in some cases
+- fix: don't write and declare IOR when it's at the default value
+- fix: importing textures with names resulted in those names not being used (only image names were used)
+- fix: importing files without baseMap but using texture transforms for normal or emissive would result in texture transforms not being used
+
 ## [1.18.5-pre] - 2022-12-02
 - fix: default material was missing in build
 
