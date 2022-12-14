@@ -7,15 +7,15 @@ namespace GLTF.Schema
 	[Serializable]
 	public class KHR_materials_ior : IExtension
 	{
+		public const float DefaultIor = 1.5f;
 		public float ior = 1.5f;
 
 		public JProperty Serialize()
 		{
-			JProperty jProperty = new JProperty(KHR_materials_ior_Factory.EXTENSION_NAME,
-				new JObject(
-					new JProperty(nameof(ior), ior)
-				)
-			);
+			var obj = new JObject();
+			if (System.Math.Abs(ior - DefaultIor) > 0.00001f)
+				obj.Add(new JProperty(nameof(ior), ior));
+			JProperty jProperty = new JProperty(KHR_materials_ior_Factory.EXTENSION_NAME, obj);
 			return jProperty;
 		}
 

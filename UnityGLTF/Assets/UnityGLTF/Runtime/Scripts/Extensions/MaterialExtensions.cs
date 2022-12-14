@@ -44,9 +44,9 @@ namespace UnityGLTF
 
 			var usesTransmission = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON");
 			var usesVolume = material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f;
-			var hasIor = material.HasProperty(ior);
+			var hasIor = material.HasProperty(ior) && !Mathf.Approximately(material.GetFloat(ior), KHR_materials_ior.DefaultIor);
 
-			if (hasIor || usesTransmission || usesVolume)
+			if (hasIor)
 			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
@@ -57,6 +57,8 @@ namespace UnityGLTF
 				else
 					materialnode.Extensions.Add(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
 
+				exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
+
 				if (material.HasProperty(ior))
 					vi.ior = material.GetFloat(ior);
 			}
@@ -66,7 +68,6 @@ namespace UnityGLTF
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
 
-				exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
 				exporter.DeclareExtensionUsage(KHR_materials_transmission_Factory.EXTENSION_NAME, false);
 
 				// if the material already has an extension, we should get and modify that
