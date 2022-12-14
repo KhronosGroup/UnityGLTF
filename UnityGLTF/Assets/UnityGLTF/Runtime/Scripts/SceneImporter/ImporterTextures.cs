@@ -348,7 +348,11 @@ namespace UnityGLTF
 #endif
 				{
 					var unityTexture = Object.Instantiate(source);
-					unityTexture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
+					unityTexture.name = string.IsNullOrEmpty(image.Name) ?
+						string.IsNullOrEmpty(texture.Name) ?
+							Path.GetFileNameWithoutExtension(image.Uri) :
+							texture.Name :
+						image.Name;
 					unityTexture.filterMode = desiredFilterMode;
 					unityTexture.wrapModeU = desiredWrapModeS;
 					unityTexture.wrapModeV = desiredWrapModeT;

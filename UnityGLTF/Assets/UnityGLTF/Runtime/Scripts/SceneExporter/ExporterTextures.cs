@@ -617,6 +617,11 @@ namespace UnityGLTF
 			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
 			image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
 
+			if (ExportNames)
+			{
+				image.Name = texture.name;
+			}
+
 		    var id = new ImageId
 		    {
 				Id = _root.Images.Count,
