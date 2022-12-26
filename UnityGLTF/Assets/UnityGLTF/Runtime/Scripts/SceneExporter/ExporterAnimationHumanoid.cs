@@ -119,7 +119,7 @@ namespace UnityGLTF
 				var curveSet = new TargetCurveSet();
 				curveSet.Init();
 
-				var positionTrack = kvp.Value.tracks.FirstOrDefault(x => x.propertyName == "position");
+				var positionTrack = kvp.Value.tracks.FirstOrDefault(x => x.propertyName == "translation");
 				if (positionTrack != null)
 				{
 					var t0 = positionTrack.times;
