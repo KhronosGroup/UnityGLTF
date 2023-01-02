@@ -317,14 +317,21 @@ namespace UnityGLTF
 				accessors.subMeshPrimitives[submesh] = prims[submesh];
 			}
 
-			//remove any prims that have empty triangles
-            nonEmptyPrims = new List<MeshPrimitive>(prims);
-            nonEmptyPrims.RemoveAll(EmptyPrimitive);
+            nonEmptyPrims = new List<MeshPrimitive>(prims.Length);
+            for (var i = 0; i < prims.Length; i++)
+            {
+	            var prim = prims[i];
+	            // remove any prims that have empty triangles
+	            if (EmptyPrimitive(prim)) continue;
+	            // invoke pre export event
+	            _exportOptions.AfterPrimitiveExport?.Invoke(this, meshObj, prim, i);
+	            nonEmptyPrims.Add(prim);
+            }
             prims = nonEmptyPrims.ToArray();
-
+            
             exportPrimitiveMarker.End();
 
-			return prims;
+            return prims;
 		}
 
 		// Blend Shapes / Morph Targets

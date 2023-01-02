@@ -45,6 +45,8 @@ namespace UnityGLTF
 		public GLTFSceneExporter.AfterMaterialExportDelegate AfterMaterialExport;
 		public GLTFSceneExporter.BeforeTextureExportDelegate BeforeTextureExport;
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
+		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
+
 	}
 
 	public partial class GLTFSceneExporter
@@ -58,6 +60,7 @@ namespace UnityGLTF
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
 		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture, string textureSlot);
 		public delegate void AfterTextureExportDelegate(GLTFSceneExporter exporter, UniqueTexture texture, int index, GLTFTexture tex);
+		public delegate void AfterPrimitiveExportDelegate(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index);
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
