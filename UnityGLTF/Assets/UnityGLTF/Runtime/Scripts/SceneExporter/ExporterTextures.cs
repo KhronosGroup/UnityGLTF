@@ -4,6 +4,7 @@ using System.IO;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using Object = UnityEngine.Object;
 using WrapMode = GLTF.Schema.WrapMode;
@@ -137,7 +138,6 @@ namespace UnityGLTF
 			else
 				Object.Destroy(exportTexture);
 		}
-
 
 		public TextureInfo ExportTextureInfo(Texture texture, string textureSlot, TextureExportSettings exportSettings = default)
 		{
@@ -591,7 +591,7 @@ namespace UnityGLTF
 				exportTexture.Apply();
 
 				var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
-				var imageData = canExportAsJpeg ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();
+				var imageData = GetImageData(exportTexture, canExportAsJpeg);
 				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
 				_bufferWriter.Write(imageData);
 
@@ -630,6 +630,16 @@ namespace UnityGLTF
 		    _root.Images.Add(image);
 
 		    return id;
+		}
+
+		private byte[] GetImageData(Texture2D texture, bool exportAsJpg)
+		{
+			var seed = texture.imageContentsHash.ToString();
+			if(ExportCache.TryGetBytes(texture, seed, out var bytes))
+				return bytes;
+			bytes = exportAsJpg ? texture.EncodeToJPG(settings.DefaultJpegQuality) : texture.EncodeToPNG();
+			ExportCache.AddBytes(texture, seed, bytes);
+			return bytes;
 		}
 
 		private SamplerId ExportSampler(Texture texture)
