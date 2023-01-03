@@ -6,6 +6,15 @@ namespace UnityGLTF.Cache
 {
 	internal static class ExportCache
 	{
+
+#if UNITY_EDITOR
+		[InitializeOnLoadMethod]
+		private static void Init()
+		{
+			EditorApplication.quitting += Clear;
+		}
+#endif
+
 		public static string CacheDirectory
 		{
 			get
