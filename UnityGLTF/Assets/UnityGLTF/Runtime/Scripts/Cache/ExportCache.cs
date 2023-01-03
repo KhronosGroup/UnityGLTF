@@ -6,7 +6,7 @@ namespace UnityGLTF.Cache
 {
 	internal static class ExportCache
 	{
-		private static string CacheDirectory
+		public static string CacheDirectory
 		{
 			get
 			{

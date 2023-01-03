@@ -556,18 +556,6 @@ namespace UnityGLTF
 
 				// TODO we could make sure texture size is power-of-two here
 
-				var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.Default, format);
-				var previousSRGBState = GL.sRGBWrite;
-				GL.sRGBWrite = sRGB;
-
-				var shader = GetConversionMaterial(exportSettings);
-				if (shader && shader.HasProperty("_SmoothnessMultiplier"))
-					shader.SetFloat("_SmoothnessMultiplier", exportSettings.smoothnessMultiplier);
-
-				if (shader)
-					Graphics.Blit(texture, destRenderTexture, shader);
-				else
-					Graphics.Blit(texture, destRenderTexture);
 				switch (exportSettings.alphaMode)
 				{
 					case TextureExportSettings.AlphaMode.Never:
@@ -586,26 +574,53 @@ namespace UnityGLTF
 					Debug.LogWarning("HDR Texture Export from non-readable textures isn't supported yet", texture);
 				}
 
-				var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
-				exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
-				exportTexture.Apply();
 
 				var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
-				var imageData = GetImageData(exportTexture, canExportAsJpeg);
 				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
-				_bufferWriter.Write(imageData);
 
-				RenderTexture.ReleaseTemporary(destRenderTexture);
-
-				GL.sRGBWrite = previousSRGBState;
-				if (Application.isEditor)
+				var cacheKey = uniqueTexture.GetHashCode().ToString();
+				if (ExportCache.TryGetBytes(texture, cacheKey, out var bytes))
 				{
-					UnityEngine.Object.DestroyImmediate(exportTexture);
+					_bufferWriter.Write(bytes);
 				}
 				else
 				{
-					UnityEngine.Object.Destroy(exportTexture);
+					var destRenderTexture = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.Default, format);
+					var previousSRGBState = GL.sRGBWrite;
+					GL.sRGBWrite = sRGB;
+
+					var shader = GetConversionMaterial(exportSettings);
+					if (shader && shader.HasProperty("_SmoothnessMultiplier"))
+						shader.SetFloat("_SmoothnessMultiplier", exportSettings.smoothnessMultiplier);
+
+					if (shader)
+						Graphics.Blit(texture, destRenderTexture, shader);
+					else
+						Graphics.Blit(texture, destRenderTexture);
+
+					var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
+					exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
+					exportTexture.Apply();
+
+					var imageData = canExportAsJpeg ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();
+					_bufferWriter.Write(imageData);
+					ExportCache.AddBytes(texture, cacheKey, imageData);
+
+					GL.sRGBWrite = previousSRGBState;
+
+					RenderTexture.ReleaseTemporary(destRenderTexture);
+
+					if (Application.isEditor)
+					{
+						UnityEngine.Object.DestroyImmediate(exportTexture);
+					}
+					else
+					{
+						UnityEngine.Object.Destroy(exportTexture);
+					}
 				}
+
+
 		    }
 
 			// // Check for potential warnings in GLTF validation
@@ -630,16 +645,6 @@ namespace UnityGLTF
 		    _root.Images.Add(image);
 
 		    return id;
-		}
-
-		private byte[] GetImageData(Texture2D texture, bool exportAsJpg)
-		{
-			var seed = texture.imageContentsHash.ToString();
-			if(ExportCache.TryGetBytes(texture, seed, out var bytes))
-				return bytes;
-			bytes = exportAsJpg ? texture.EncodeToJPG(settings.DefaultJpegQuality) : texture.EncodeToPNG();
-			ExportCache.AddBytes(texture, seed, bytes);
-			return bytes;
 		}
 
 		private SamplerId ExportSampler(Texture texture)
