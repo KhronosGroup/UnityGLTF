@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -6,12 +8,12 @@ namespace UnityGLTF.Cache
 {
 	internal static class ExportCache
 	{
-
 #if UNITY_EDITOR
 		[InitializeOnLoadMethod]
 		private static void Init()
 		{
-			EditorApplication.quitting += Clear;
+			// Keep some files in cache that were last exported
+			EditorApplication.quitting += () => Shrink(200);
 		}
 #endif
 
@@ -21,15 +23,6 @@ namespace UnityGLTF.Cache
 			{
 				var tempDirectory = Path.Combine(Application.temporaryCachePath, "UnityGLTF");
 				return tempDirectory;
-			}
-		}
-
-		public static void Clear()
-		{
-			var dir = CacheDirectory;
-			if (Directory.Exists(dir))
-			{
-				Directory.Delete(dir, true);
 			}
 		}
 
@@ -54,9 +47,56 @@ namespace UnityGLTF.Cache
 			var dir = CacheDirectory;
 			Directory.CreateDirectory(dir);
 			var path = dir + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed;
-			Debug.Log("Writing to cache: " + path);
+			Debug.Log($"Writing {bytes.Length} bytes to cache: {path}");
 			File.WriteAllBytes(path, bytes);
 #endif
+		}
+
+		public static void Clear()
+		{
+			var dir = CacheDirectory;
+			if (Directory.Exists(dir))
+			{
+				Directory.Delete(dir, true);
+			}
+		}
+
+		public static void Shrink(int maxCacheSizeInMB = 200)
+		{
+			if (maxCacheSizeInMB <= 0)
+			{
+				Clear();
+				return;
+			}
+
+			var maxCacheSize = maxCacheSizeInMB * 1024 * 1024;
+			var files = new List<FileInfo>();
+			var currentSize = CalculateCacheSize(files);
+			if(currentSize <= maxCacheSizeInMB)
+				return;
+			var filesSortedByLastAccess = files.OrderBy(f => f.LastAccessTimeUtc).ToList();
+			foreach (var file in filesSortedByLastAccess)
+			{
+				file.Delete();
+				currentSize -= (int)file.Length;
+				if (currentSize <= maxCacheSize)
+					break;
+			}
+		}
+
+		private static int CalculateCacheSize(ICollection<FileInfo> files = null)
+		{
+			var dir = CacheDirectory;
+			if (!Directory.Exists(dir)) return 0;
+			var filePaths = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
+			var size = 0;
+			foreach (var file in filePaths)
+			{
+				var info = new FileInfo(file);
+				files?.Add(info);
+				size += (int)info.Length;
+			}
+			return size;
 		}
 	}
 }
