@@ -113,6 +113,9 @@ namespace UnityGLTF
 		[SerializeField]
 	    [Tooltip("If off, vertex colors are not exported. Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
 		private bool exportVertexColors = true;
+		[Header("Cache")]
+		[Tooltip("When enabled textures will be cached to disc for faster export times (the cache size is reduced to stay below 200 MB when quit)")]
+		public bool UseCaching = true;
 
 		public bool ExportNames { get => exportNames; set  => exportNames = value; }
 		public bool ExportFullPath { get => exportFullPath; set => exportFullPath = value; }
@@ -129,6 +132,7 @@ namespace UnityGLTF
 		public bool BlendShapeExportSparseAccessors { get => blendShapeExportSparseAccessors; set => blendShapeExportSparseAccessors = value; }
 		public BlendShapeExportPropertyFlags BlendShapeExportProperties { get => blendShapeExportProperties; set => blendShapeExportProperties = value; }
 		public bool BakeSkinnedMeshes { get => bakeSkinnedMeshes; set => bakeSkinnedMeshes = value; }
+
 
 #if UNITY_EDITOR
 		private const string SaveFolderPathPref = k_PreferencesPrefix + "SaveFolderPath";

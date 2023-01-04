@@ -579,7 +579,7 @@ namespace UnityGLTF
 				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
 
 				var cacheKey = uniqueTexture.GetHashCode().ToString();
-				if (ExportCache.TryGetBytes(texture, cacheKey, out var bytes))
+				if (settings.UseCaching && ExportCache.TryGetBytes(texture, cacheKey, out var bytes))
 				{
 					_bufferWriter.Write(bytes);
 				}
@@ -604,7 +604,9 @@ namespace UnityGLTF
 
 					var imageData = canExportAsJpeg ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();
 					_bufferWriter.Write(imageData);
-					ExportCache.AddBytes(texture, cacheKey, imageData);
+
+					if(settings.UseCaching)
+						ExportCache.AddBytes(texture, cacheKey, imageData);
 
 					GL.sRGBWrite = previousSRGBState;
 

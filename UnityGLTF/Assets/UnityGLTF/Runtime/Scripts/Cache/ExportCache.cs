@@ -15,6 +15,14 @@ namespace UnityGLTF.Cache
 			// Keep some files in cache that were last exported
 			EditorApplication.quitting += () => Shrink(200);
 		}
+
+		[MenuItem("Edit/UnityGLTF/Open Cache Directory")]
+		private static void OpenCacheDirectory()
+		{
+			var dir = CacheDirectory;
+			if(Directory.Exists(dir)) EditorUtility.RevealInFinder(dir);
+			else Debug.LogWarning($"Cache directory does not exist: {dir}");
+		}
 #endif
 
 		public static string CacheDirectory
