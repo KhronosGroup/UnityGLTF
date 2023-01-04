@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.20.0-pre] - 2022-01-04
+- add: caching of texture bytes on disc for faster export (can be disabled in UnityGLTFSettings)
+
 ## [1.19.1-pre] - 2022-01-03
 - add: AfterPrimitiveExport event
 
@@ -29,7 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: sample root transform as well in Humanoid export to prevent shifting it around when recording
 
 ## [1.18.2-pre] - 2022-11-10
-- fix: exception thrown when trying to add a material instance id twice 
+- fix: exception thrown when trying to add a material instance id twice
 
 ## [1.18.1-pre] - 2022-11-09
 - fix: ExportMeshes was not exporting new meshes since the internal material check didn't let it through
@@ -442,7 +445,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [1.0.4-pfc.4] - 2020-07-12
 - fix meta files for Tests folder
- 
+
 ## [1.0.4-pfc.2] - 2020-07-07
 - fix build errors preventing builds
 - fix PBR texture roundtrip with incorrect red channel
