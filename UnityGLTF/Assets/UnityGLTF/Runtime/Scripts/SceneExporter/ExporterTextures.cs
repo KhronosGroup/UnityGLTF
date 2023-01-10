@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using GLTF.Schema;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using UnityGLTF.Cache;
-using UnityGLTF.Extensions;
 using Object = UnityEngine.Object;
 using WrapMode = GLTF.Schema.WrapMode;
 

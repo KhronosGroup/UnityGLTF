@@ -99,7 +99,6 @@ namespace GLTF.Extensions
 				// Broken on il2cpp. Don't ship debug DLLs there.
 				System.Diagnostics.Debug.WriteLine("textureObject is " + textureObject.Type + " with a value of: " + textureObject[TextureInfo.INDEX].Type + " " + textureObject.ToString());
 #endif
-
 				int indexVal = textureObject[TextureInfo.INDEX].DeserializeAsInt();
 				textureInfo = new TextureInfo()
 				{
@@ -109,9 +108,31 @@ namespace GLTF.Extensions
 						Root = root
 					}
 				};
+				if (textureObject.ContainsKey(TextureInfo.TEXCOORD))
+				{
+					textureInfo.TexCoord = textureObject[TextureInfo.TEXCOORD].DeserializeAsInt();
+				}
 			}
 
 			return textureInfo;
+		}
+
+		public static NormalTextureInfo DeserializeAsNormalTexture(this JToken token, GLTFRoot root)
+		{
+			var tex = DeserializeAsTexture(token, root);
+			if (tex != null)
+			{
+				var normalTex = new NormalTextureInfo() { Index = tex.Index, TexCoord = tex.TexCoord };
+				JObject textureObject = token as JObject;
+				if (textureObject.ContainsKey(NormalTextureInfo.SCALE))
+				{
+					normalTex.Scale = textureObject[NormalTextureInfo.SCALE].DeserializeAsDouble();
+				}
+
+				return normalTex;
+			}
+
+			return null;
 		}
 
 		public static int DeserializeAsInt(this JToken token)
