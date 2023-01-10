@@ -46,8 +46,16 @@ namespace UnityGLTF.Extensions
 					case Camera camera:
 						reg.path = "/cameras/" + id + "/" + reg.propertyBinding;
 						break;
+					case SkinnedMeshRenderer smr:
+						if (smr && reg.propertyBinding == "weights")
+						{
+							reg.path = "/nodes/" + id + "/" + reg.propertyBinding;
+							break;
+						}
+						goto ResolveComponent;
 					case Component comp:
 					case GameObject g:
+					ResolveComponent:
 						reg.path = "/nodes/" + id + "/" + reg.propertyBinding;
 						var componentPath = reg.path;
 
