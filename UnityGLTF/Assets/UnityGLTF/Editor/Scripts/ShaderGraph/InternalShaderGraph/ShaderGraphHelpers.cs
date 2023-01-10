@@ -113,6 +113,25 @@ namespace UnityEditor
 
 			if (material.HasProperty("emissiveFactor"))
 				material.globalIlluminationFlags = MaterialEditor.FixupEmissiveFlag(material.GetColor("emissiveFactor"), material.globalIlluminationFlags);
+
+			if (!material.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
+			{
+				if (material.mainTextureScale != Vector2.one || material.mainTextureOffset != Vector2.zero)
+				{
+					material.SetKeyword("_TEXTURE_TRANSFORM", true);
+				}
+			}
+		}
+
+		internal static void SetKeyword(this Material material, string keyword, bool state)
+		{
+			if (state)
+				material.EnableKeyword(keyword + "_ON");
+			else
+				material.DisableKeyword(keyword + "_ON");
+
+			if (material.HasProperty(keyword))
+				material.SetFloat(keyword, state ? 1 : 0);
 		}
 	}
 }

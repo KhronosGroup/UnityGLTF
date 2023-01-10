@@ -68,6 +68,8 @@ namespace UnityGLTF
 			var emissionColor = material.GetColor(_EmissionColor);
 			var cutoff = material.GetFloat(_Cutoff);
 
+			var isCutoff = material.IsKeywordEnabled("_ALPHATEST_ON") || material.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON");
+
 			material.shader = newShader;
 
 			material.SetColor(baseColorFactor, color);
@@ -75,7 +77,7 @@ namespace UnityGLTF
 			material.SetTextureOffset(baseColorTexture, albedoOffset);
 			material.SetTextureScale(baseColorTexture, albedoTiling);
 			if (albedoOffset != Vector2.zero || albedoTiling != Vector2.one)
-				material.SetKeyword("_TRANSMISSION_VOLUME", true);
+				material.SetKeyword("_TEXTURE_TRANSFORM", true);
 
 			material.SetFloat(metallicFactor, metallic);
 			material.SetFloat(roughnessFactor, 1 - smoothness);
@@ -114,6 +116,12 @@ namespace UnityGLTF
 			material.SetFloat(occlusionStrength1, occlusionStrength);
 			material.SetTexture(emissiveTexture, emission);
 			material.SetFloat(alphaCutoff, cutoff);
+			if (isCutoff)
+			{
+				material.SetKeyword("_ALPHATEST", true);
+				material.SetKeyword("_BUILTIN_ALPHATEST", true);
+				material.EnableKeyword("_BUILTIN_AlphaClip");
+			}
 
 			material.SetColor(emissiveFactor, needsEmissiveColorSpaceConversion ? emissionColor.linear : emissionColor);
 
