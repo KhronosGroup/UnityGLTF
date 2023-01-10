@@ -122,6 +122,15 @@ namespace UnityGLTF
 		double GlossinessFactor { get; set; }
 	}
 
+	public interface IClearcoatMap : IMetalRoughUniformMap
+	{
+		double ClearcoatFactor { get; set; }
+		Texture ClearcoatTexture { get; set; }
+		double ClearcoatRoughnessFactor { get; set; }
+		Texture ClearcoatRoughnessTexture { get; set; }
+		Texture ClearcoatNormalTexture { get; set; }
+	}
+
 	public interface IUnlitUniformMap : IUniformMap
 	{
 		Texture BaseColorTexture { get; set; }

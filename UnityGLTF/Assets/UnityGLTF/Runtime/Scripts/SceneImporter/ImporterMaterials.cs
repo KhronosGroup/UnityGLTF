@@ -288,6 +288,25 @@ namespace UnityGLTF
 				}
 			}
 
+			var clearcoatMapper = mapper as IClearcoatMap;
+			if (clearcoatMapper != null)
+			{
+				var clearcoat = GetClearcoat(def);
+				if (clearcoat != null)
+				{
+					clearcoatMapper.ClearcoatFactor = clearcoat.clearcoatFactor;
+					clearcoatMapper.ClearcoatRoughnessFactor = clearcoat.clearcoatRoughnessFactor;
+					var td = await FromTextureInfo(clearcoat.clearcoatTexture);
+					clearcoatMapper.ClearcoatTexture = td.Texture;
+					var td2 = await FromTextureInfo(clearcoat.clearcoatRoughnessTexture);
+					clearcoatMapper.ClearcoatRoughnessTexture = td2.Texture;
+					var td3 = await FromTextureInfo(clearcoat.clearcoatNormalTexture);
+					clearcoatMapper.ClearcoatNormalTexture = td3.Texture;
+
+					mapper.Material.SetKeyword("_CLEARCOAT", true);
+				}
+			}
+
 			var uniformMapper = mapper as ILitMap;
 			if (uniformMapper != null)
 			{
@@ -609,5 +628,14 @@ namespace UnityGLTF
 			return null;
 		}
 
+		protected virtual KHR_materials_clearcoat GetClearcoat(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_clearcoat_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_clearcoat_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_clearcoat) extension;
+			}
+			return null;
+		}
 	}
 }

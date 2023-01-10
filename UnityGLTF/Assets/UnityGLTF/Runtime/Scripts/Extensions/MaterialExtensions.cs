@@ -33,10 +33,18 @@ namespace UnityGLTF
 		private static readonly int iridescenceThicknessMaximum = Shader.PropertyToID("iridescenceThicknessMaximum");
 		private static readonly int iridescenceTexture = Shader.PropertyToID("iridescenceTexture");
 		private static readonly int iridescenceThicknessTexture = Shader.PropertyToID("iridescenceThicknessTexture");
+
 		private static readonly int specularFactor = Shader.PropertyToID("specularFactor");
 		private static readonly int specularColorFactor = Shader.PropertyToID("specularColorFactor");
 		private static readonly int specularTexture = Shader.PropertyToID("specularTexture");
 		private static readonly int specularColorTexture = Shader.PropertyToID("specularColorTexture");
+
+		private static readonly int clearcoatFactor = Shader.PropertyToID("clearcoatFactor");
+		private static readonly int clearcoatTexture = Shader.PropertyToID("clearcoatTexture");
+		private static readonly int clearcoatRoughnessFactor = Shader.PropertyToID("clearcoatRoughnessFactor");
+		private static readonly int clearcoatRoughnessTexture = Shader.PropertyToID("clearcoatRoughnessTexture");
+		private static readonly int clearcoatNormalTexture = Shader.PropertyToID("clearcoatNormalTexture");
+
 
 		private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{
@@ -159,6 +167,34 @@ namespace UnityGLTF
 					vir.specularTexture = exporter.ExportTextureInfo(material.GetTexture(specularTexture), nameof(specularTexture));
 				if (material.HasProperty(specularColorTexture) && material.GetTexture(specularColorTexture))
 					vir.specularColorTexture = exporter.ExportTextureInfo(material.GetTexture(specularColorTexture), nameof(specularColorTexture));
+			}
+
+			if (material.IsKeywordEnabled("_CLEARCOAT_ON"))
+			{
+				exporter.DeclareExtensionUsage(KHR_materials_clearcoat_Factory.EXTENSION_NAME, false);
+
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
+				var cc = new KHR_materials_clearcoat();
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_clearcoat_Factory.EXTENSION_NAME, out var vv0))
+					cc = (KHR_materials_clearcoat) vv0;
+				else
+					materialnode.Extensions.Add(KHR_materials_clearcoat_Factory.EXTENSION_NAME, cc);
+
+				if (material.HasProperty(clearcoatFactor))
+					cc.clearcoatFactor = material.GetFloat(clearcoatFactor);
+				if (material.HasProperty(clearcoatTexture))
+					cc.clearcoatTexture = exporter.ExportTextureInfo(material.GetTexture(clearcoatTexture), nameof(clearcoatTexture));
+				if (material.HasProperty(clearcoatRoughnessFactor))
+					cc.clearcoatRoughnessFactor = material.GetFloat(clearcoatRoughnessFactor);
+				if (material.HasProperty(clearcoatRoughnessTexture))
+					cc.clearcoatRoughnessTexture = exporter.ExportTextureInfo(material.GetTexture(clearcoatRoughnessTexture), nameof(clearcoatRoughnessTexture));
+				if (material.HasProperty(clearcoatNormalTexture))
+					cc.clearcoatNormalTexture = exporter.ExportTextureInfo(material.GetTexture(clearcoatNormalTexture), nameof(clearcoatNormalTexture));
+
+
 			}
 		}
 	}

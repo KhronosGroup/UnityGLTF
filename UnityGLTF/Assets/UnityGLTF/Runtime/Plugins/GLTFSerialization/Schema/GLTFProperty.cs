@@ -20,6 +20,7 @@ namespace GLTF.Schema
 			{ KHR_materials_ior_Factory.EXTENSION_NAME, new KHR_materials_ior_Factory() },
 			{ KHR_materials_iridescence_Factory.EXTENSION_NAME, new KHR_materials_iridescence_Factory() },
 			{ KHR_materials_specular_Factory.EXTENSION_NAME, new KHR_materials_specular_Factory() },
+			{ KHR_materials_clearcoat_Factory.EXTENSION_NAME, new KHR_materials_clearcoat_Factory() },
       		{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() }
 		};
 

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-	public class PBRGraphMap : BaseGraphMap, IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap, ISpecularMap
+	public class PBRGraphMap : BaseGraphMap, IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap, ISpecularMap, IClearcoatMap
 	{
 		private const string PBRGraphGuid = "478ce3626be7a5f4ea58d6b13f05a2e4";
 
@@ -315,6 +315,36 @@ namespace UnityGLTF
 		    {
 			    _material.SetTexture("specularColorTexture", value);
 		    }
+	    }
+
+	    public double ClearcoatFactor
+	    {
+		    get => _material.GetFloat("clearcoatFactor");
+		    set => _material.SetFloat("clearcoatFactor", (float) value);
+	    }
+
+	    public Texture ClearcoatTexture
+	    {
+		    get => _material.GetTexture("clearcoatTexture");
+		    set => _material.SetTexture("clearcoatTexture", value);
+	    }
+
+	    public double ClearcoatRoughnessFactor
+	    {
+		    get => _material.GetFloat("clearcoatRoughnessFactor");
+		    set => _material.SetFloat("clearcoatRoughnessFactor", (float) value);
+	    }
+
+	    public Texture ClearcoatRoughnessTexture
+	    {
+		    get => _material.GetTexture("clearcoatRoughnessTexture");
+		    set => _material.SetTexture("clearcoatRoughnessTexture", value);
+	    }
+
+	    public Texture ClearcoatNormalTexture
+	    {
+		    get => _material.GetTexture("clearcoatNormalTexture");
+		    set => _material.SetTexture("clearcoatNormalTexture", value);
 	    }
 	}
 }
