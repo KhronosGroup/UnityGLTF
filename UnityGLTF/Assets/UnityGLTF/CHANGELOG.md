@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.20.1-pre] - 2022-01-10
+- fix: issue with exporting shared texture samplers in some cases
+- fix: weights on skinned meshes shouldn't be resolved by custom KHR_animation_pointer resolvers as they're part of the core spec
+- change: remove logs when caching data
+- change: move cache clear button into settings
+- add: KHR_materials_clearcoat roundtrip support (no in-editor visualization yet)
+
 ## [1.20.0-pre] - 2022-01-04
 - add: caching of texture bytes on disc for faster export (can be disabled in UnityGLTFSettings)
 
