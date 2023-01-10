@@ -5,6 +5,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using UnityEngine.UIElements;
+using UnityGLTF.Cache;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -34,6 +36,19 @@ namespace UnityGLTF
 	            do
 	            {
 			        EditorGUILayout.PropertyField(prop, true);
+			        switch (prop.name)
+			        {
+				        case nameof(GLTFSettings.UseCaching):
+					        EditorGUILayout.BeginHorizontal();
+					        if (GUILayout.Button($"Clear Cache ({(exportCacheByteLength / (1024f * 1024f)):F2} MB)")) {
+						        ExportCache.Clear();
+						        CalculateCacheStats();
+					        }
+					        if (GUILayout.Button("Open Cache Directory ↗"))
+						        ExportCache.OpenCacheDirectory();
+					        EditorGUILayout.EndHorizontal();
+					        break;
+			        }
 	            }
 	            while (prop.NextVisible(false));
             }
@@ -41,6 +56,19 @@ namespace UnityGLTF
             if(m_SerializedObject.hasModifiedProperties) {
                 m_SerializedObject.ApplyModifiedProperties();
             }
+        }
+
+        public override void OnActivate(string searchContext, VisualElement rootElement)
+        {
+	        base.OnActivate(searchContext, rootElement);
+	        CalculateCacheStats();
+        }
+
+        private long exportCacheByteLength = 0;
+        private void CalculateCacheStats()
+        {
+	        var files = new List<FileInfo>();
+	        exportCacheByteLength = ExportCache.CalculateCacheSize(files);
         }
 
         [SettingsProvider]
@@ -78,6 +106,7 @@ namespace UnityGLTF
 		private bool exportFullPath = false;
 		[SerializeField]
 		private bool requireExtensions = false;
+
 		[Header("Export Visibility")]
 		[SerializeField]
 		[Tooltip("Uses Camera.main layer settings to filter which objects are exported")]
@@ -85,6 +114,7 @@ namespace UnityGLTF
 		[SerializeField]
 		[Tooltip("glTF does not support visibility state. If this setting is true, disabled GameObjects will still be exported and be visible in the glTF file.")]
 		private bool exportDisabledGameObjects = false;
+
 		[Header("Export Textures")]
 		[SerializeField]
 		[Tooltip("(Experimental) Exports PNG/JPEG directly from disk instead of re-encoding from Unity's import result. No channel repacking will happen for these textures. Textures in other formats (PSD, TGA etc) not supported by glTF and in-memory textures (e.g. RenderTextures) are always re-encoded.")]
@@ -93,6 +123,7 @@ namespace UnityGLTF
 		private bool useTextureFileTypeHeuristic = true;
 		[SerializeField] [Tooltip("Quality setting for exported JPEG files.")]
 		private int defaultJpegQuality = 90;
+
 		[Header("Export Animation")]
 		[SerializeField]
 		private bool exportAnimations = true;
@@ -104,6 +135,7 @@ namespace UnityGLTF
 		private bool uniqueAnimationNames = false;
 		[SerializeField]
 		private bool bakeSkinnedMeshes = false;
+
 		[Header("Export Mesh Data")]
 		[SerializeField]
 		private BlendShapeExportPropertyFlags blendShapeExportProperties = BlendShapeExportPropertyFlags.All;
@@ -113,8 +145,9 @@ namespace UnityGLTF
 		[SerializeField]
 	    [Tooltip("If off, vertex colors are not exported. Vertex Colors aren't supported in some viewers (e.g. Google's SceneViewer).")]
 		private bool exportVertexColors = true;
-		[Header("Cache")]
-		[Tooltip("When enabled textures will be cached to disc for faster export times (the cache size is reduced to stay below 200 MB when quit)")]
+
+		[Header("Export Cache")]
+		[Tooltip("When enabled textures will be cached to disc for faster export times.\n(The cache size is reduced to stay below 1024 MB when the Editor quits)")]
 		public bool UseCaching = true;
 
 		public bool ExportNames { get => exportNames; set  => exportNames = value; }

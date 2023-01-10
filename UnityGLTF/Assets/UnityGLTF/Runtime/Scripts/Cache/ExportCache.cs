@@ -8,16 +8,16 @@ namespace UnityGLTF.Cache
 {
 	internal static class ExportCache
 	{
+		public const int DefaultCacheSize = 1024;
 #if UNITY_EDITOR
 		[InitializeOnLoadMethod]
 		private static void Init()
 		{
 			// Keep some files in cache that were last exported
-			EditorApplication.quitting += () => Shrink(200);
+			EditorApplication.quitting += () => Shrink(DefaultCacheSize);
 		}
 
-		[MenuItem("Edit/UnityGLTF/Open Cache Directory")]
-		private static void OpenCacheDirectory()
+		public static void OpenCacheDirectory()
 		{
 			var dir = CacheDirectory;
 			if(Directory.Exists(dir)) EditorUtility.RevealInFinder(dir);
@@ -55,7 +55,7 @@ namespace UnityGLTF.Cache
 			var dir = CacheDirectory;
 			Directory.CreateDirectory(dir);
 			var path = dir + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed;
-			Debug.Log($"Writing {bytes.Length} bytes to cache: {path}");
+			// Debug.Log($"Writing {bytes.Length} bytes to cache: {path}");
 			File.WriteAllBytes(path, bytes);
 #endif
 		}
@@ -69,7 +69,7 @@ namespace UnityGLTF.Cache
 			}
 		}
 
-		public static void Shrink(int maxCacheSizeInMB = 200)
+		public static void Shrink(int maxCacheSizeInMB)
 		{
 			if (maxCacheSizeInMB <= 0)
 			{
@@ -92,17 +92,17 @@ namespace UnityGLTF.Cache
 			}
 		}
 
-		private static int CalculateCacheSize(ICollection<FileInfo> files = null)
+		public static long CalculateCacheSize(ICollection<FileInfo> files = null)
 		{
 			var dir = CacheDirectory;
 			if (!Directory.Exists(dir)) return 0;
 			var filePaths = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
-			var size = 0;
+			long size = 0;
 			foreach (var file in filePaths)
 			{
 				var info = new FileInfo(file);
 				files?.Add(info);
-				size += (int)info.Length;
+				size += (long) info.Length;
 			}
 			return size;
 		}

@@ -603,7 +603,7 @@ namespace UnityGLTF
 					var imageData = canExportAsJpeg ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();
 					_bufferWriter.Write(imageData);
 
-					if(settings.UseCaching)
+					if (settings.UseCaching)
 						ExportCache.AddBytes(texture, cacheKey, imageData);
 
 					GL.sRGBWrite = previousSRGBState;
