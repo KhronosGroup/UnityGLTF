@@ -1138,30 +1138,13 @@ namespace UnityGLTF
 
 		public SamplerId GetSamplerId(GLTFRoot root, Texture textureObj)
 		{
-			for (var i = 0; i < root.Samplers.Count; i++)
+			if (_textureSettingsToSamplerIndices.TryGetValue(new SamplerRelevantTextureData(textureObj), out var samplerId))
 			{
-				bool filterIsNearest = root.Samplers[i].MinFilter == MinFilterMode.Nearest
-					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapNearest
-					|| root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapNearest;
-
-				bool filterIsLinear = root.Samplers[i].MinFilter == MinFilterMode.Linear
-					|| root.Samplers[i].MinFilter == MinFilterMode.NearestMipmapLinear;
-
-				bool filterMatched = textureObj.filterMode == FilterMode.Point && filterIsNearest
-					|| textureObj.filterMode == FilterMode.Bilinear && filterIsLinear
-					|| textureObj.filterMode == FilterMode.Trilinear && root.Samplers[i].MinFilter == MinFilterMode.LinearMipmapLinear;
-
-				bool wrapMatched = textureObj.wrapMode == TextureWrapMode.Clamp && root.Samplers[i].WrapS == WrapMode.ClampToEdge
-					|| textureObj.wrapMode == TextureWrapMode.Repeat && root.Samplers[i].WrapS != WrapMode.ClampToEdge;
-
-				if (filterMatched && wrapMatched)
+				return new SamplerId
 				{
-					return new SamplerId
-					{
-						Id = i,
-						Root = root
-					};
-				}
+					Id = samplerId,
+					Root = root
+				};
 			}
 
 			return null;

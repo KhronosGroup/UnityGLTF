@@ -649,11 +649,68 @@ namespace UnityGLTF
 		    return id;
 		}
 
+		private struct SamplerRelevantTextureData : IEquatable<SamplerRelevantTextureData>
+		{
+			private readonly TextureWrapMode wrapMode;
+			private readonly FilterMode filterMode;
+			private readonly bool hasMipmaps;
+			private readonly bool hasAniso;
+			public bool HasMipmaps => hasMipmaps;
+			public bool HasAniso => hasAniso;
+
+			public SamplerRelevantTextureData(Texture texture)
+			{
+				var mipmapCount = 1;
+				var aniso = 1;
+#if UNITY_2019_2_OR_NEWER
+				mipmapCount = texture.mipmapCount;
+				aniso = texture.anisoLevel;
+#else
+			if (texture is Texture2D tex2D) mipmapCount = tex2D.mipmapCount;
+#endif
+				wrapMode = texture.wrapMode;
+				filterMode = texture.filterMode;
+				hasMipmaps = mipmapCount > 1;
+				hasAniso = aniso > 0;
+			}
+
+			public bool Equals(SamplerRelevantTextureData other)
+			{
+				return wrapMode == other.wrapMode && filterMode == other.filterMode && hasMipmaps == other.hasMipmaps && hasAniso == other.hasAniso;
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is SamplerRelevantTextureData other && Equals(other);
+			}
+
+			public override int GetHashCode()
+			{
+				unchecked
+				{
+					var hashCode = (int)wrapMode;
+					hashCode = (hashCode * 397) ^ (int)filterMode;
+					hashCode = (hashCode * 397) ^ hasMipmaps.GetHashCode();
+					hashCode = (hashCode * 397) ^ hasAniso.GetHashCode();
+					return hashCode;
+				}
+			}
+		}
+
+		private Dictionary<SamplerRelevantTextureData, int> _textureSettingsToSamplerIndices =
+			new Dictionary<SamplerRelevantTextureData, int>();
 		private SamplerId ExportSampler(Texture texture)
 		{
-			var samplerId = GetSamplerId(_root, texture);
-			if (samplerId != null)
-				return samplerId;
+			var dataForTexture = new SamplerRelevantTextureData(texture);
+
+			if (_textureSettingsToSamplerIndices.TryGetValue(dataForTexture, out var existingSamplerIndex))
+			{
+				return new SamplerId
+				{
+					Id = existingSamplerIndex,
+					Root = _root
+				};
+			}
 
 			var sampler = new Sampler();
 
@@ -678,15 +735,7 @@ namespace UnityGLTF
 					break;
 			}
 
-			var mipmapCount = 1;
-			var aniso = 1;
-#if UNITY_2019_2_OR_NEWER
-			mipmapCount = texture.mipmapCount;
-			aniso = texture.anisoLevel;
-#else
-			if (texture is Texture2D tex2D) mipmapCount = tex2D.mipmapCount;
-#endif
-			if(mipmapCount > 1)
+			if(dataForTexture.HasMipmaps)
 			{
 				switch (texture.filterMode)
 				{
@@ -696,7 +745,7 @@ namespace UnityGLTF
 						break;
 					case FilterMode.Bilinear:
 						// not technically correct but matches result in Unity much better. When any aniso is on, the expectation is a smooth texture transition.
-						sampler.MinFilter = aniso < 1 ? MinFilterMode.LinearMipmapNearest : MinFilterMode.LinearMipmapLinear;
+						sampler.MinFilter = dataForTexture.HasAniso ? MinFilterMode.LinearMipmapLinear : MinFilterMode.LinearMipmapNearest;
 						sampler.MagFilter = MagFilterMode.Linear;
 						break;
 					case FilterMode.Trilinear:
@@ -725,13 +774,14 @@ namespace UnityGLTF
 				}
 			}
 
-			samplerId = new SamplerId
+			var samplerId = new SamplerId
 			{
 				Id = _root.Samplers.Count,
 				Root = _root
 			};
 
 			_root.Samplers.Add(sampler);
+			_textureSettingsToSamplerIndices.Add(dataForTexture, samplerId.Id);
 
 			return samplerId;
 		}
