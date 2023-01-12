@@ -277,7 +277,7 @@ namespace UnityGLTF
 				_tempList2.AddRange(curveName);
 			}
 
-			private int FindIndex(Predicate<string> test)
+			public int FindIndex(Predicate<string> test)
 			{
 				for(var i = 0; i < curveName.Count; i++)
 				{
@@ -897,7 +897,89 @@ namespace UnityGLTF
 					current.weightCurves = newWeights;
 				}
 
+				if (current.propertyCurves.Count > 0)
+				{
+					foreach (var kvp in current.propertyCurves)
+					{
+						var prop = kvp.Value;
+						if (prop.propertyType == typeof(Color))
+						{
+							var memberName = prop.propertyName;
+							if (TryGetCurrentValue(prop.target, memberName, out var value))
+							{
+								// Generate missing color channels (so an animated color has always keyframes for all 4 channels)
+								
+								var col = (Color)value;
+
+								var hasRedChannel = prop.FindIndex(v => v.EndsWith(".r")) >= 0;
+								var hasGreenChannel = prop.FindIndex(v => v.EndsWith(".g")) >= 0;
+								var hasBlueChannel = prop.FindIndex(v => v.EndsWith(".b")) >= 0;
+								var hasAlphaChannel = prop.FindIndex(v => v.EndsWith(".a")) >= 0;
+
+								if (!hasRedChannel) AddMissingCurve(memberName + ".r", col.r);
+								if (!hasGreenChannel) AddMissingCurve(memberName + ".g", col.g);
+								if (!hasBlueChannel) AddMissingCurve(memberName + ".b", col.b);
+								if (!hasAlphaChannel) AddMissingCurve(memberName + ".a", col.a);
+
+								void AddMissingCurve(string curveName, float constantValue)
+								{
+									var curve = CreateConstantCurve(constantValue, endTime);
+									prop.curve.Add(curve);
+									prop.curveName.Add(curveName);
+								}
+							}
+						}
+					}
+				}
+
 				targetCurvesBinding[target] = current;
+			}
+		}
+
+		private static readonly Dictionary<(Type type, string name), MemberInfo> memberCache = new Dictionary<(Type type, string name), MemberInfo>();
+		private static bool TryGetCurrentValue(object instance, string memberName, out object value)
+		{
+			if (instance == null || memberName == null)
+			{
+				value = null;
+				return false;
+			}
+
+			var key = (instance.GetType(), memberName);
+			if (!memberCache.TryGetValue(key, out var member))
+			{
+				var type = instance.GetType();
+				while (type != null)
+				{
+					member = type
+						.GetMember(memberName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+						.FirstOrDefault();
+					if (member != null)
+					{
+						memberCache.Add(key, member);
+						break;
+					}
+					type = type.BaseType;
+				}
+			}
+
+			if (member == null)
+			{
+				value = null;
+				return false;
+			}
+
+			switch (member)
+			{
+				case FieldInfo field:
+					value = field.GetValue(instance);
+					return true;
+				case PropertyInfo property:
+					value = property.GetValue(instance);
+					return true;
+				default:
+					value = null;
+					return false;
 			}
 		}
 
