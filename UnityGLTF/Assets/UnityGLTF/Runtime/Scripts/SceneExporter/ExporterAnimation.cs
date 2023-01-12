@@ -897,7 +897,7 @@ namespace UnityGLTF
 					current.weightCurves = newWeights;
 				}
 
-				if (current.propertyCurves.Count > 0)
+				if (current.propertyCurves?.Count > 0)
 				{
 					foreach (var kvp in current.propertyCurves)
 					{
