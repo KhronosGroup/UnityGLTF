@@ -186,6 +186,7 @@ namespace UnityGLTF
 			public string propertyName;
 			public Type propertyType;
 			public List<AnimationCurve> curve;
+			public List<string> curveName;
 			public Object target;
 
 			public PropertyCurve(Object target, string propertyName)
@@ -193,6 +194,13 @@ namespace UnityGLTF
 				this.target = target;
 				this.propertyName = propertyName;
 				curve = new List<AnimationCurve>();
+				curveName = new List<string>();
+			}
+
+			public void AddCurve(AnimationCurve animCurve, string name)
+			{
+				this.curve.Add(animCurve);
+				this.curveName.Add(name);
 			}
 
 			public float Evaluate(float time, int index)
@@ -209,6 +217,62 @@ namespace UnityGLTF
 
 				return curve[index].Evaluate(time);
 			}
+
+			/// <summary>
+			/// Call this method once before beginning to evaluate curves
+			/// </summary>
+			internal void SortCurves()
+			{
+				// If we animate a color property in Unity and start by creating keys for green then the green curve will be at index 0
+				// This method ensures that the curves are in a known order e.g. rgba (instead of green red blue alpha)
+				if (curve?.Count > 0 && curveName.Count > 0)
+				{
+					if (propertyType == typeof(Color))
+					{
+						FillTempLists();
+						var indexOfR = FindIndex(name => name.EndsWith(".r"));
+						var indexOfG = FindIndex(name => name.EndsWith(".g"));
+						var indexOfB = FindIndex(name => name.EndsWith(".b"));
+						var indexOfA = FindIndex(name => name.EndsWith(".a"));
+						for(var i = 0; i < curve.Count; i++)
+						{
+							var curveIndex = i;
+							if (i == 0) curveIndex = indexOfR;
+							else if (i == 1) curveIndex = indexOfG;
+							else if (i == 2) curveIndex = indexOfB;
+							else if (i == 3) curveIndex = indexOfA;
+							if (curveIndex >= 0 && curveIndex != i)
+							{
+								this.curve[i] = _tempList1[curveIndex];;
+								this.curveName[i] = _tempList2[curveIndex];;
+							}
+						}
+					}
+				}
+			}
+
+			private static readonly List<AnimationCurve> _tempList1 = new List<AnimationCurve>();
+			private static readonly List<string> _tempList2 = new List<string>();
+
+			private void FillTempLists()
+			{
+				_tempList1.Clear();
+				_tempList2.Clear();
+				_tempList1.AddRange(curve);
+				_tempList2.AddRange(curveName);
+			}
+
+			private int FindIndex(Predicate<string> test)
+			{
+				for(var i = 0; i < curveName.Count; i++)
+				{
+					if (test(curveName[i]))
+						return i;
+				}
+				return -1;
+			}
+
+
 		}
 
 		internal struct TargetCurveSet
@@ -232,7 +296,7 @@ namespace UnityGLTF
 					var prop = new PropertyCurve(animatedObject, binding.propertyName);
 					// if (binding.propertyName == "translation")
 					// 	prop.needsCoordinateConversion = true;
-					prop.curve.Add(curve);
+					prop.AddCurve(curve, binding.propertyName);
 					if (animatedObject is GameObject || animatedObject is Component)
 						TryFindMemberBinding(binding, prop, prop.propertyName);
 					propertyCurves.Add(binding.propertyName, prop);
@@ -250,13 +314,13 @@ namespace UnityGLTF
 
 					if (propertyCurves.TryGetValue(memberName, out var existing))
 					{
-						existing.curve.Add(curve);
+						existing.AddCurve(curve, binding.propertyName);
 					}
 					else
 					{
 						var prop = new PropertyCurve(animatedObject, binding.propertyName);
 						prop.propertyName = memberName;
-						prop.curve.Add(curve);
+						prop.AddCurve(curve, binding.propertyName);
 						propertyCurves.Add(memberName, prop);
 						if (memberName.StartsWith("material.") && animatedObject is Renderer rend)
 						{
@@ -846,6 +910,8 @@ namespace UnityGLTF
 			var keyframes = prop.curve.Select(x => x.keys).ToArray();
 			var keyframeIndex = new int[curveCount];
 
+			prop.SortCurves();
+
 			var vector3Scale = SchemaExtensions.CoordinateSpaceConversionScale.ToUnityVector3Raw();
 
 			// Assuming all the curves exist now
@@ -885,7 +951,8 @@ namespace UnityGLTF
 				{
 					if (prop.curve.Count == 1)
 					{
-						_values.Add(prop.curve[0].Evaluate(t));
+						var value = prop.curve[0].Evaluate(t);
+						_values.Add(value);
 					}
 					else
 					{
@@ -907,7 +974,11 @@ namespace UnityGLTF
 						else if (typeof(Color) == type)
 						{
 							// TODO should actually access r,g,b,a separately since any of these can have curves assigned.
-							_values.Add(new Color(prop.Evaluate(t, 0), prop.Evaluate(t, 1), prop.Evaluate(t, 2), prop.Evaluate(t, 3)));
+							var r = prop.Evaluate(t, 0);
+							var g = prop.Evaluate(t, 1);
+							var b = prop.Evaluate(t, 2);
+							var a = prop.Evaluate(t, 3);
+							_values.Add(new Color(r, g, b, a));
 						}
 						else if (typeof(Quaternion) == type)
 						{
