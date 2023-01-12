@@ -218,6 +218,21 @@ namespace UnityGLTF
 				return curve[index].Evaluate(time);
 			}
 
+			internal bool Validate()
+			{
+				if (propertyType == typeof(Color))
+				{
+					var hasEnoughCurves = curve.Count == 4;
+					if (!hasEnoughCurves)
+					{
+						UnityEngine.Debug.LogWarning("Animating single channels for colors is not supported. Please add at least one keyframe for all channels (RGBA): " + propertyName, target);
+						return false;
+					}
+				}
+
+				return true;
+			}
+
 			/// <summary>
 			/// Call this method once before beginning to evaluate curves
 			/// </summary>
@@ -899,6 +914,8 @@ namespace UnityGLTF
 		{
 			times = null;
 			values = null;
+
+			if (!prop.Validate()) return false;
 
 			var nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
 			var deltaTime = length / nbSamples;
