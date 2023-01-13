@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.20.3-pre] - 2022-01-13
+- fix: wrong texture name in Texture Transform check
+- fix: better check if a texture is a normal map and needs the right import settings
+- fix: uris with escaped characters didn't correctly import in the editor
+
 ## [1.20.2-pre] - 2022-01-12
 - fix: export of color animations where only one channel is animated
 - fix: order of animationcurve properties when exporing animated colors in component where e.g. a user started by animating a single channel first (e.g. alpha) and later added keyframes for other channels
