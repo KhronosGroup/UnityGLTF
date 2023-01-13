@@ -336,7 +336,7 @@ namespace UnityGLTF
                                         texMaterialMap.Add(tex, materialMaps);
                                     }
 
-                                    materialMaps.Add(new TexMaterialMap(mat, propertyName, propertyName == "_BumpMap"));
+                                    materialMaps.Add(new TexMaterialMap(mat, propertyName, propertyName == "_BumpMap" || propertyName == "normalTexture" || propertyName.EndsWith("NormalTexture")));
                                 }
                             }
                         }
