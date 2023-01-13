@@ -17,6 +17,12 @@ namespace UnityGLTF.Loader
 		{
 #if UNITY_EDITOR
 			string path = Path.Combine(_rootDirectoryPath, relativeFilePath).Replace("\\", "/");
+
+			if (!File.Exists(path))
+			{
+				path = Path.Combine(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");;
+			}
+
 			if (UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(UnityEngine.Texture2D))
 			{
 				var stream = new GLTFSceneImporter.AssetDatabaseStream(path);
