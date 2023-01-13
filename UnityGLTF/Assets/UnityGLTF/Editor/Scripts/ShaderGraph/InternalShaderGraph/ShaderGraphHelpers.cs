@@ -116,7 +116,7 @@ namespace UnityEditor
 
 			if (!material.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
 			{
-				if (material.mainTextureScale != Vector2.one || material.mainTextureOffset != Vector2.zero)
+				if (material.GetTextureScale("baseColorTexture") != Vector2.one || material.GetTextureOffset("baseColorTexture") != Vector2.zero)
 				{
 					material.SetKeyword("_TEXTURE_TRANSFORM", true);
 				}
