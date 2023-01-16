@@ -75,10 +75,11 @@ namespace UnityGLTF
 				{
 #if UNITY_2019_3_OR_NEWER
 					var assetPath = AssetDatabase.GetAssetPath(meshObj);
-					if(assetPath?.Length > 30) assetPath = "..." + assetPath.Substring(assetPath.Length - 30);
+					if (assetPath?.Length > 30) assetPath = "..." + assetPath.Substring(assetPath.Length - 30);
+					var otherOption = Application.isPlaying ? "No, skip mesh" : "Cancel export";
 					if(EditorUtility.DisplayDialog("Exporting mesh but mesh is not readable",
 							$"The mesh {meshObj.name} is not readable. Do you want to change its import settings and make it readable now?\n\n" + assetPath,
-							"Make it readable", "No, skip mesh",
+							"Make it readable", otherOption,
 							DialogOptOutDecisionType.ForThisSession, MakeMeshReadableDialogueDecisionKey))
 #endif
 					{
@@ -93,8 +94,17 @@ namespace UnityGLTF
 #if UNITY_2019_3_OR_NEWER
 					else
 					{
-						Debug.LogWarning($"The mesh {meshObj.name} is not readable. Skipping", null);
-						exportPrimitiveMarker.End();
+						if (Application.isPlaying)
+						{
+							Debug.LogWarning(null, $"The mesh {meshObj.name} is not readable. Skipping", meshObj);
+							exportPrimitiveMarker.End();
+						}
+						else
+						{
+							Debug.LogError(null, $"The mesh {meshObj.name} is not readable and you decided to cancel the export. Canceling", meshObj);
+							exportPrimitiveMarker.End();
+							throw new OperationCanceledException($"Canceled export because a mesh ({meshObj}) is not readable.");
+						}
 						return null;
 					}
 #endif
@@ -223,7 +233,7 @@ namespace UnityGLTF
 			var vertices = meshObj.vertices;
 			if (vertices.Length < 1)
 			{
-				Debug.LogWarning("MeshFilter does not contain any vertices, won't export: " + meshObj.name, meshObj);
+				Debug.LogWarning(null, "MeshFilter does not contain any vertices or they can't be accessed, won't export: " + meshObj.name, meshObj);
 				exportPrimitiveMarker.End();
 				return null;
 			}
@@ -328,7 +338,7 @@ namespace UnityGLTF
 	            nonEmptyPrims.Add(prim);
             }
             prims = nonEmptyPrims.ToArray();
-            
+
             exportPrimitiveMarker.End();
 
             return prims;

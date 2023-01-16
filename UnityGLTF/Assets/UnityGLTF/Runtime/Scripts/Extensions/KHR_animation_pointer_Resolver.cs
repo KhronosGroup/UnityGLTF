@@ -78,8 +78,10 @@ namespace UnityGLTF.Extensions
 						}
 						else if (!anyOtherResolverWasAbleToResolve)
 						{
-							// we should not reach this point because we filter out unknown types in ExportAnimationPointer.AddAnimationData
-							Debug.LogWarning("Exporting unresolved animation pointer: " + reg.animatedObject, reg.animatedObject as Object);
+							// we don't need to warn for regular transforms that are not RectTransforms,
+							// but we want to warn for everything else that may be animated.
+							if (!(reg.animatedObject is Transform && !(reg.animatedObject is RectTransform)))
+								Debug.LogWarning("Wasn't able to resolve animation pointer for " + reg.animatedObject + " at " + componentPath + ". You can attach custom resolvers to animate properties in extensions.", reg.animatedObject as Object);
 						}
 						break;
 					case Material mat:

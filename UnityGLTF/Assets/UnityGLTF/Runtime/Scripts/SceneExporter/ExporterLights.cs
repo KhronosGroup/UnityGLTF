@@ -12,15 +12,12 @@ namespace UnityGLTF
 
 		private LightId ExportLight(Light unityLight)
         {
-	        DeclareExtensionUsage(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, false);
-
-            GLTFLight light;
+            GLTFLight light = null;
 
             if (unityLight.type == LightType.Spot)
             {
 	            // TODO URP/HDRP can distinguish here, no need to guess innerConeAngle there
                 light = new GLTFSpotLight() { innerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad * 0.8f, outerConeAngle = unityLight.spotAngle / 2 * Mathf.Deg2Rad };
-                //name
                 light.Name = unityLight.name;
 
                 light.type = unityLight.type.ToString().ToLower();
@@ -31,7 +28,6 @@ namespace UnityGLTF
             else if (unityLight.type == LightType.Directional)
             {
                 light = new GLTFDirectionalLight();
-                //name
                 light.Name = unityLight.name;
 
                 light.type = unityLight.type.ToString().ToLower();
@@ -41,7 +37,6 @@ namespace UnityGLTF
             else if (unityLight.type == LightType.Point)
             {
                 light = new GLTFPointLight();
-                //name
                 light.Name = unityLight.name;
 
                 light.type = unityLight.type.ToString().ToLower();
@@ -51,12 +46,22 @@ namespace UnityGLTF
             }
             else
             {
-                light = new GLTFLight();
-                //name
-                light.Name = unityLight.name;
+	            // unknown light type, we shouldn't export this
 
-                light.type = unityLight.type.ToString().ToLower();
-                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+	            // light = new GLTFLight();
+                // light.Name = unityLight.name;
+                // light.type = unityLight.type.ToString().ToLower();
+                // light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+            }
+
+            if (light != null)
+            {
+	            DeclareExtensionUsage(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, false);
+            }
+            else
+            {
+	            Debug.LogWarning(null, $"Light couldn't be exported: {unityLight.name}. The type may be unsupported in glTF ({unityLight.type})", unityLight.gameObject);
+	            return null;
             }
 
             if (_root.Lights == null)
