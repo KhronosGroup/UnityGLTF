@@ -26,6 +26,12 @@ namespace UnityGLTF.Timeline
 			this.recordAnimationPointer = recordAnimationPointer;
 		}
 
+		/// <summary>
+		/// Optionally assign a list of transforms to be recorded, other transforms will be ignored
+		/// </summary>
+		internal ICollection<Transform> recordingList = null;
+		private bool AllowRecordingTransform(Transform tr) => recordingList == null || recordingList.Contains(tr);
+
 		private Transform root;
 		private Dictionary<Transform, AnimationData> data = new Dictionary<Transform, AnimationData>(64);
 		private double startTime;
@@ -246,7 +252,10 @@ namespace UnityGLTF.Timeline
 			data.Clear();
 
 			foreach (var tr in trs)
+			{
+				if (!AllowRecordingTransform(tr)) continue;
 				data.Add(tr, new AnimationData(tr, 0, !tr.gameObject.activeSelf, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
+			}
 
 			isRecording = true;
 		}
@@ -268,6 +277,7 @@ namespace UnityGLTF.Timeline
 			var trs = root.GetComponentsInChildren<Transform>(true);
 			foreach (var tr in trs)
 			{
+				if (!AllowRecordingTransform(tr)) continue;
 				if (!data.ContainsKey(tr))
 				{
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame

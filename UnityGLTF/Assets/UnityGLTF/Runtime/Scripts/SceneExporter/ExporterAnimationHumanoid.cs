@@ -27,21 +27,6 @@ namespace UnityGLTF
 		{
 			if (!clip.humanMotion) return;
 
-			// collect which bones we want
-			var animator = root.GetComponent<Animator>();
-			Dictionary<Transform, Transform> animatedTransforms = new Dictionary<Transform, Transform>();
-			foreach (HumanBodyBones val in Enum.GetValues(typeof(HumanBodyBones)))
-			{
-				// index must be between 0 and LastBone
-				if((int) val <= 0 || (int) val >= (int) HumanBodyBones.LastBone) continue;
-
-				var tr = animator.GetBoneTransform(val);
-				if (tr)
-					animatedTransforms.Add(tr, null);
-			}
-
-			// Debug.Log("Animated:\n" + string.Join("\n", animatedTransforms.Keys.Select(x => x.name)));
-
 			var recorder = new GLTFRecorder(root.transform, false, false, false);
 
 			// var playableGraph = PlayableGraph.Create();
@@ -119,7 +104,7 @@ namespace UnityGLTF
 				var curveSet = new TargetCurveSet();
 				curveSet.Init();
 
-				var positionTrack = kvp.Value.tracks.FirstOrDefault(x => x.propertyName == "position");
+				var positionTrack = kvp.Value.tracks.FirstOrDefault(x => x.propertyName == "translation");
 				if (positionTrack != null)
 				{
 					var t0 = positionTrack.times;
