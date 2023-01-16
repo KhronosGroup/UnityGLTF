@@ -908,7 +908,7 @@ namespace UnityGLTF
 							if (TryGetCurrentValue(prop.target, memberName, out var value))
 							{
 								// Generate missing color channels (so an animated color has always keyframes for all 4 channels)
-								
+
 								var col = (Color)value;
 
 								var hasRedChannel = prop.FindIndex(v => v.EndsWith(".r")) >= 0;
@@ -1092,7 +1092,7 @@ namespace UnityGLTF
 							}
 							else
 							{
-								Debug.LogError("Unknown number of quaternion components, won't continue", null);
+								Debug.LogError(null, "Unknown number of quaternion components, won't continue");
 							}
 						}
 						else if (typeof(float) == type)
@@ -1102,7 +1102,7 @@ namespace UnityGLTF
 						}
 						else
 						{
-							Debug.LogWarning("Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.", null);
+							Debug.LogWarning(null, "Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.");
 							return false;
 						}
 					}
