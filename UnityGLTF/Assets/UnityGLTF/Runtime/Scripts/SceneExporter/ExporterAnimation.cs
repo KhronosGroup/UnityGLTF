@@ -645,7 +645,9 @@ namespace UnityGLTF
 					}
 
 					// add to cache: this is the first time we're exporting that particular binding.
-					_clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
+					if (targetTr)
+						_clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
+
 					var curve = targetCurvesBinding[target];
 					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
 
