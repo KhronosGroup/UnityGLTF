@@ -480,6 +480,8 @@ namespace UnityGLTF
 			return obj.ToString();
 		}
 
+		private Dictionary<(Avatar avatar, AnimationClip clip, float speed), AnimationClip> _humanoidClipInstanceCache = new Dictionary<(Avatar, AnimationClip, float), AnimationClip>();
+
 		private void ConvertClipToGLTFAnimation(AnimationClip clip, Transform transform, GLTFAnimation animation, float speed)
 		{
 			convertClipToGLTFAnimationMarker.Begin();
@@ -487,6 +489,24 @@ namespace UnityGLTF
 			// Generate GLTF.Schema.AnimationChannel and GLTF.Schema.AnimationSampler
 			// 1 channel per node T/R/S, one sampler per node T/R/S
 			// Need to keep a list of nodes to convert to indexes
+
+			// Special case for animated humanoids: we also need to cache transform-to-humanoid and make sure that individual clips are used there.
+			// since we're baking humanoids, we'd otherwise end up with the same clip being applied to different rigs;
+			// in the future, we may want to support a system like VRM or EXT_skin_humanoid (https://github.com/takahirox/EXT_skin_humanoid) and support runtime retargeting of animations.
+			if (clip.isHumanMotion)
+			{
+				var avatar = transform.GetComponent<Animator>().avatar;
+				if (!avatar)
+				{
+					Debug.LogWarning(null, $"No avatar found on animated humanoid, skipping humanoid animation export on {transform.name}", transform);
+					convertClipToGLTFAnimationMarker.End();
+					return;
+				}
+				var key = (avatar, clip, speed);
+				if(!_humanoidClipInstanceCache.ContainsKey(key))
+					_humanoidClipInstanceCache.Add(key, Object.Instantiate(clip));
+				clip = _humanoidClipInstanceCache[key];
+			}
 
 			// 1. browse clip, collect all curves and create a TargetCurveSet for each target
 			Dictionary<string, TargetCurveSet> targetCurvesBinding = new Dictionary<string, TargetCurveSet>();
