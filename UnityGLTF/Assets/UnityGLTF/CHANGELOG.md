@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.21.0-pre] - 2022-01-14
+- feat: allow aborting export when not in Play Mode and meshes are not readable - seems to be a random Unity synchronization context issue
+- fix: don't export unsupported light types (e.g. area light has type "rectangle" which is not supported in glTF)
+- fix: Export human motion translation
+- fix: prevent exporting the same baked humanoid clip for different avatars, needs individual clips since we're baking them (not retargeting at runtime)
+- fix: reusing animation clips between objects with different hierarchies caused some targets to be missing, depending on export order
+- change: remove warning for KHR_animation_pointer resolving when the unresolved object is a transform, that's part of core
+
 ## [1.20.3-pre] - 2022-01-13
 - fix: wrong texture name in Texture Transform check
 - fix: better check if a texture is a normal map and needs the right import settings
