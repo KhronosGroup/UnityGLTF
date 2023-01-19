@@ -46,6 +46,9 @@ namespace UnityGLTF
 			var time = 0f;
 
 #if UNITY_2020_1_OR_NEWER
+			// This seems to not properly cleanup when exporting animation from inside a prefab asset
+			// e.g. when exporting animator with humanoid animation the animator is left disabled after this
+			// the animator is disabled after the first call to `SampleAnimationClip`
 			var driver = ScriptableObject.CreateInstance<AnimationModeDriver>();
 			AnimationMode.StartAnimationMode(driver);
 #else

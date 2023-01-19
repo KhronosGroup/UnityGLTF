@@ -128,6 +128,10 @@ namespace UnityGLTF
 			if (animatorController)
 			{
 				if (!animator) throw new ArgumentNullException("Missing " + nameof(animator));
+				// When sampling animation using AnimationMode the animator might be disabled afterwards when the animation is exported from a prefab (e.g. Prefab -> object with humanoid animation -> export from referenced prefab -> animator is disabled)
+				// Here we ensure that the animator is enabled again after export
+				// See ExportAnimationHumanoid with StartAnimationMode
+				var animatorEnabled = animator.enabled;
 				for (int i = 0; i < clips.Count; i++)
 				{
 					if (!clips[i]) continue;
@@ -141,6 +145,7 @@ namespace UnityGLTF
 						ExportAnimationClip(clips[i], name, nodeTransform, speed);
 					}
 				}
+				animator.enabled = animatorEnabled;
 			}
 			else
 			{
