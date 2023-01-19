@@ -430,6 +430,15 @@ namespace UnityGLTF
 					return true;
 				}
 
+				if (binding.type == typeof(Animator))
+				{
+					// These seem to be magic names when exporting humanoid animation (?)
+					if (memberName == "MotionT" || memberName == "MotionQ")
+					{
+						return false;
+					}
+				}
+
 				var member = FindMemberOnTypeIncludingBaseTypes(binding.type, memberName);
 				if (member is FieldInfo field) prop.propertyType = field.FieldType;
 				else if (member is PropertyInfo p) prop.propertyType = p.PropertyType;
@@ -1129,7 +1138,17 @@ namespace UnityGLTF
 						}
 						else
 						{
-							Debug.LogWarning(null, "Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.");
+							switch (prop.propertyName)
+							{
+								case "MotionT":
+								case "MotionQ":
+									// Ignore
+									break;
+								default:
+									Debug.LogWarning(null, "Property is animated but can't be exported - Name: " + prop.propertyName + ", Type: " + prop.propertyType + ". Does its target exist? You can enable KHR_animation_pointer export in the Project Settings to export more animated properties.");
+									break;
+
+							}
 							return false;
 						}
 					}
