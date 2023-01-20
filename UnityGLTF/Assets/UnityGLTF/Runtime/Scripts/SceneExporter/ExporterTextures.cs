@@ -504,9 +504,11 @@ namespace UnityGLTF
 
 				if (texture.isReadable)
 				{
+					const Texture2D.EXRFlags EXR_Flags = Texture2D.EXRFlags.CompressZIP;
+
 					if (texture is Texture2D texture2D)
 					{
-						exrImageData = texture2D.EncodeToEXR();
+						exrImageData = texture2D.EncodeToEXR(EXR_Flags);
 					}
 					else if (texture is RenderTexture rt)
 					{
@@ -516,7 +518,7 @@ namespace UnityGLTF
 						temp.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
 						temp.Apply();
 						RenderTexture.active = prev;
-						exrImageData = temp.EncodeToEXR();
+						exrImageData = temp.EncodeToEXR(EXR_Flags);
 					}
 				}
 
