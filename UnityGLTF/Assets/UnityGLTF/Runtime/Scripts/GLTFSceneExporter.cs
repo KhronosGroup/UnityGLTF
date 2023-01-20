@@ -316,7 +316,11 @@ namespace UnityGLTF
 				unchecked
 				{
 					// We dont want to use GetHashCode() for the texture here since it will change the hash after restarting the editor
+					#if UNITY_EDITOR
 					var hashCode = Texture ? Texture.imageContentsHash.GetHashCode() : 0;
+					#else
+					var hashCode = Texture ? Texture.GetHashCode() : 0;
+					#endif
 					hashCode = (hashCode * 397) ^ ExportSettings.GetHashCode();
 					hashCode = (hashCode * 397) ^ MaxSize;
 					return hashCode;
