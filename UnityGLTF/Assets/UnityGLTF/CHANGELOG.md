@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.21.1-pre] - 2022-01-20
+fix: animator being disabled after exporting humanoid animationclip
+fix: ignore MotionT and MotionQ on animator, can't be resolved for KHR_animation, seems to be a magic unity name
+fix: build error by accessing imageContentHash
+change: export HDR textures with zip compression by default
+
 ## [1.21.0-pre] - 2022-01-14
 - feat: allow aborting export when not in Play Mode and meshes are not readable - seems to be a random Unity synchronization context issue
 - fix: don't export unsupported light types (e.g. area light has type "rectangle" which is not supported in glTF)
