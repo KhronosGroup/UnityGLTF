@@ -124,14 +124,15 @@ namespace UnityGLTF
 		// Creates GLTFAnimation for each clip and adds it to the _root
 		public void ExportAnimationClips(Transform nodeTransform, IList<AnimationClip> clips, Animator animator = null, AnimatorController animatorController = null)
 		{
+			// When sampling animation using AnimationMode the animator might be disabled afterwards when the animation is exported from a prefab (e.g. Prefab -> object with humanoid animation -> export from referenced prefab -> animator is disabled)
+			// Here we ensure that the animator is enabled again after export
+			// See ExportAnimationHumanoid with StartAnimationMode
+			var animatorEnabled = animator?.enabled ?? true;
+
 			// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
 			if (animatorController)
 			{
 				if (!animator) throw new ArgumentNullException("Missing " + nameof(animator));
-				// When sampling animation using AnimationMode the animator might be disabled afterwards when the animation is exported from a prefab (e.g. Prefab -> object with humanoid animation -> export from referenced prefab -> animator is disabled)
-				// Here we ensure that the animator is enabled again after export
-				// See ExportAnimationHumanoid with StartAnimationMode
-				var animatorEnabled = animator.enabled;
 				for (int i = 0; i < clips.Count; i++)
 				{
 					if (!clips[i]) continue;
@@ -145,7 +146,6 @@ namespace UnityGLTF
 						ExportAnimationClip(clips[i], name, nodeTransform, speed);
 					}
 				}
-				animator.enabled = animatorEnabled;
 			}
 			else
 			{
@@ -156,6 +156,9 @@ namespace UnityGLTF
 					ExportAnimationClip(clips[i], clips[i].name, nodeTransform, speed);
 				}
 			}
+
+			if(animator)
+				animator.enabled = animatorEnabled;
 		}
 
 		public GLTFAnimation ExportAnimationClip(AnimationClip clip, string name, Transform node, float speed)
