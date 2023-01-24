@@ -492,7 +492,6 @@ namespace UnityGLTF.Timeline
 		private class StringBuilderLogHandler : ILogHandler
 		{
 			private readonly StringBuilder sb = new StringBuilder();
-			private LogType highestLogType = LogType.Log;
 
 			private string LogTypeToLog(LogType logType)
 			{
