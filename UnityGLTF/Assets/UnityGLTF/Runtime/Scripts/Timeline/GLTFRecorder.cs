@@ -15,7 +15,7 @@ namespace UnityGLTF.Timeline
 {
 	public class GLTFRecorder
 	{
-		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordRootInWorldSpace = false, bool recordAnimationPointer = false)
+		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordRootInWorldSpace = false, bool recordAnimationPointer = false, bool addBoundsMarkerNodes = false)
 		{
 			if (!root)
 				throw new ArgumentNullException(nameof(root), "Please provide a root transform to record.");
@@ -24,6 +24,7 @@ namespace UnityGLTF.Timeline
 			this.recordBlendShapes = recordBlendShapes;
 			this.recordRootInWorldSpace = recordRootInWorldSpace;
 			this.recordAnimationPointer = recordAnimationPointer;
+			this.addBoundsMarkerNodes = addBoundsMarkerNodes;
 		}
 
 		/// <summary>
@@ -37,9 +38,11 @@ namespace UnityGLTF.Timeline
 		private double startTime;
 		private double lastRecordedTime;
 		private bool isRecording;
+
 		private readonly bool recordBlendShapes;
 		private readonly bool recordRootInWorldSpace;
 		private readonly bool recordAnimationPointer;
+		private readonly bool addBoundsMarkerNodes;
 
 		public bool IsRecording => isRecording;
 		public double LastRecordedTime => lastRecordedTime;
@@ -69,9 +72,9 @@ namespace UnityGLTF.Timeline
 				public string propertyName;
 				public Type dataType;
 				public Func<Transform, Object> GetTarget;
-				public Func<Transform, Object, object> GetData;
+				public Func<Transform, Object, AnimationData, object> GetData;
 
-				public ExportPlan(string propertyName, Type dataType, Func<Transform, Object> GetTarget, Func<Transform, Object, object> GetData)
+				public ExportPlan(string propertyName, Type dataType, Func<Transform, Object> GetTarget, Func<Transform, Object, AnimationData, object> GetData)
 				{
 					this.propertyName = propertyName;
 					this.dataType = dataType;
@@ -79,10 +82,10 @@ namespace UnityGLTF.Timeline
 					this.GetData = GetData;
 				}
 
-				public object Sample(Transform tr)
+				public object Sample(AnimationData data)
 				{
-					var target = GetTarget(tr);
-					return GetData(tr, target);
+					var target = GetTarget(data.tr);
+					return GetData(data.tr, target, data);
 				}
 			}
 #endif
@@ -102,15 +105,15 @@ namespace UnityGLTF.Timeline
 				if (exportPlans == null)
 				{
 					exportPlans = new List<ExportPlan>();
-					exportPlans.Add(new ExportPlan("translation", typeof(Vector3), x => x, (tr0, _) => tr0.localPosition));
-					exportPlans.Add(new ExportPlan("rotation", typeof(Quaternion), x => x, (tr0, _) =>
+					exportPlans.Add(new ExportPlan("translation", typeof(Vector3), x => x, (tr0, _, options) => options.inWorldSpace ? tr0.position : tr0.localPosition));
+					exportPlans.Add(new ExportPlan("rotation", typeof(Quaternion), x => x, (tr0, _, options) =>
 					{
-						var q = tr0.localRotation;
+						var q = options.inWorldSpace ? tr0.rotation : tr0.localRotation;
 						return new Quaternion(q.x, q.y, q.z, q.w);
 					}));
-					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr0, _) => tr0.localScale));
+					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr0, _, options) => options.inWorldSpace ? tr0.lossyScale : tr0.localScale));
 
-					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr0, x) =>
+					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr0, x, options) =>
 					{
 						if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh.sharedMesh)
 						{
@@ -128,7 +131,7 @@ namespace UnityGLTF.Timeline
 					{
 						// TODO add other animation pointer export plans
 
-						exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr0, mat) =>
+						exportPlans.Add(new ExportPlan("baseColorFactor", typeof(Color), x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null, (tr0, mat, options) =>
 						{
 							var r = tr0.GetComponent<Renderer>();
 
@@ -162,7 +165,7 @@ namespace UnityGLTF.Timeline
 				foreach (var plan in exportPlans)
 				{
 					if (plan.GetTarget(tr)) {
-						tracks.Add(new Track(tr, plan, time));
+						tracks.Add(new Track(this, plan, time));
 					}
 				}
 #endif
@@ -171,18 +174,18 @@ namespace UnityGLTF.Timeline
 #if USE_ANIMATION_POINTER
 			internal class Track
 			{
-				public Object animatedObject => plan.GetTarget(tr);
+				public Object animatedObject => plan.GetTarget(tr.tr);
 				public string propertyName => plan.propertyName;
 				// TODO sample as floats?
 				public float[] times => samples.Keys.Select(x => (float) x).ToArray();
 				public object[] values => samples.Values.ToArray();
 
-				private Transform tr;
+				private AnimationData tr;
 				private ExportPlan plan;
 				private Dictionary<double, object> samples;
 				private object lastSample;
 
-				public Track(Transform tr, ExportPlan plan, double time)
+				public Track(AnimationData tr, ExportPlan plan, double time)
 				{
 					this.tr = tr;
 					this.plan = plan;
@@ -354,17 +357,75 @@ namespace UnityGLTF.Timeline
 			GLTFAnimation anim = new GLTFAnimation();
 			anim.Name = "Recording";
 
-			CollectAndProcessAnimation(exporter, anim);
+			CollectAndProcessAnimation(exporter, anim, addBoundsMarkerNodes, out Bounds translationBounds);
+
+			if (addBoundsMarkerNodes)
+			{
+				Debug.Log("Animation bounds: " + translationBounds.center + " => " + translationBounds.size);
+
+				// create Cube primitive
+				var cube = GameObject.CreatePrimitive(PrimitiveType.Quad);
+				cube.transform.localScale = Vector3.one * 0.0001f;
+				cube.hideFlags = HideFlags.HideAndDontSave;
+
+				var collider = cube.GetComponent<MeshCollider>();
+				SafeDestroy(collider);
+
+				var boundsRoot = new GameObject("AnimationBounds");
+				boundsRoot.hideFlags = HideFlags.HideAndDontSave;
+				boundsRoot.transform.position = translationBounds.center;
+
+				var extremePointsOnBounds = new Vector3[6];
+				extremePointsOnBounds[0] = translationBounds.center + new Vector3(+translationBounds.extents.x, 0, 0);
+				extremePointsOnBounds[1] = translationBounds.center + new Vector3(-translationBounds.extents.x, 0, 0);
+				extremePointsOnBounds[2] = translationBounds.center + new Vector3(0, +translationBounds.extents.y, 0);
+				extremePointsOnBounds[3] = translationBounds.center + new Vector3(0, -translationBounds.extents.y, 0);
+				extremePointsOnBounds[4] = translationBounds.center + new Vector3(0, 0, +translationBounds.extents.z);
+				extremePointsOnBounds[5] = translationBounds.center + new Vector3(0, 0, -translationBounds.extents.z);
+
+				foreach (var point in extremePointsOnBounds)
+				{
+					var cubeInstance = Object.Instantiate(cube);
+					cubeInstance.name = "AnimationBounds";
+					cubeInstance.transform.position = point;
+					cubeInstance.transform.parent = boundsRoot.transform;
+				}
+
+				// export and add explicitly to the scene list, otherwise these nodes at the root level will be ignored
+				var nodeId = exporter.ExportNode(boundsRoot);
+				gltfRoot.Scenes[0].Nodes.Add(nodeId);
+
+				// move skinned meshes to the center of the bounds –
+				// they will be moved by their bones anyways, but this prevents wrong bounds calculations from them.
+				foreach (var skinnedMeshRenderer in root.GetComponentsInChildren<SkinnedMeshRenderer>())
+					skinnedMeshRenderer.transform.position = translationBounds.center;
+
+				SafeDestroy(boundsRoot);
+				SafeDestroy(cube);
+			}
+
+			// check if the root node is outside these bounds, move it to the center if necessary
 
 			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
 				gltfRoot.Animations.Add(anim);
 		}
 
+		private static void SafeDestroy(Object obj)
+		{
+			if (Application.isEditor)
+				Object.DestroyImmediate(obj);
+			else
+				Object.Destroy(obj);
+		}
+
 		private static ProfilerMarker processAnimationMarker = new ProfilerMarker("Process Animation");
 		private static ProfilerMarker simplifyKeyframesMarker = new ProfilerMarker("Simplify Keyframes");
 		private static ProfilerMarker convertValuesMarker = new ProfilerMarker("Convert Values to Arrays");
-		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, GLTFAnimation anim)
+		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, GLTFAnimation anim, bool calculateTranslationBounds, out Bounds translationBounds)
 		{
+			var gotFirstValue = false;
+			translationBounds = new Bounds();
+
 			foreach (var kvp in data)
 			{
 				processAnimationMarker.Begin();
@@ -374,6 +435,24 @@ namespace UnityGLTF.Timeline
 					if (tr.times.Length == 0) continue;
 					var times = tr.times;
 					var values = tr.values;
+
+					if (calculateTranslationBounds && tr.propertyName == "translation")
+					{
+						for (var i = 0; i < values.Length; i++)
+						{
+							var vec = (Vector3) values[i];
+							if (!gotFirstValue)
+							{
+								translationBounds = new Bounds(vec, Vector3.zero);
+								gotFirstValue = true;
+							}
+							else
+							{
+								translationBounds.Encapsulate(vec);
+							}
+						}
+					}
+
 					gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref values);
 					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, times, values);
 				}
