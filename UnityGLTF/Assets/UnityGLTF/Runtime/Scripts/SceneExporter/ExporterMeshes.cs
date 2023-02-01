@@ -141,6 +141,8 @@ namespace UnityGLTF
 			return primKeys;
 		}
 
+		public NodeId ExportNode(GameObject gameObject) => ExportNode(gameObject.transform);
+
 		/// <summary>
 		/// Convenience wrapper around ExportMesh(string, List<UniquePrimitive>)
 		/// </summary>
