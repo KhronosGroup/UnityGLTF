@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.22.0-pre] - 2022-02-01
+- feat: expose ExportNode API
+- feat: optionally calculate and place bounds markers in GltfRecorder for viewers that don't caclulate bounds from animated skinned meshes properly
+
 ## [1.21.1-pre] - 2022-01-20
 fix: animator being disabled after exporting humanoid animationclip
 fix: ignore MotionT and MotionQ on animator, can't be resolved for KHR_animation, seems to be a magic unity name
