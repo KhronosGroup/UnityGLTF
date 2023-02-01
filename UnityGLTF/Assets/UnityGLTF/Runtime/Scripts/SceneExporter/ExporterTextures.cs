@@ -104,9 +104,9 @@ namespace UnityGLTF
 		/// <param name="outputPath">The location to export the texture</param>
 		private void ExportNormalTexture(Texture2D texture, string outputPath)
 		{
-			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			var wr = GL.sRGBWrite;
-			GL.sRGBWrite = true;
+			GL.sRGBWrite = false;
 			Graphics.Blit(texture, destRenderTexture, _normalChannelMaterial);
 			WriteRenderTextureToDiskAndRelease(destRenderTexture, outputPath, true);
 			GL.sRGBWrite = wr;
@@ -244,7 +244,8 @@ namespace UnityGLTF
 					break;
 			}
 
-			var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
+			var canExportAsJpeg =
+				!textureHasAlpha && settings.UseTextureFileTypeHeuristic && textureSlot != TextureMapType.Normal;
 			var desiredExtension = canExportAsJpeg ? ".jpg" : ".png";
 			if (textureSlot == TextureMapType.Custom_HDR)
 				desiredExtension = ".exr";
