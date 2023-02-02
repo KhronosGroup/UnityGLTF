@@ -6,6 +6,7 @@ using GLTF.Utilities;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
+using UnityGLTF.Loader;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF
@@ -161,7 +162,12 @@ namespace UnityGLTF
 			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
-			if (stream is MemoryStream)
+			if (stream == FileLoader.InvalidStream)
+			{
+				// ignore
+				texture = null;
+			}
+			else if (stream is MemoryStream)
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
@@ -185,8 +191,11 @@ namespace UnityGLTF
 			}
 
 			if (_assetCache.ImageCache[imageCacheIndex] != null) Debug.Log(LogType.Assert, "ImageCache should not be loaded multiple times");
-			progressStatus.TextureLoaded++;
-			progress?.Report(progressStatus);
+			if (texture)
+			{
+				progressStatus.TextureLoaded++;
+				progress?.Report(progressStatus);
+			}
 			_assetCache.ImageCache[imageCacheIndex] = texture;
 		}
 
@@ -279,6 +288,8 @@ namespace UnityGLTF
 				await ConstructImage(image, sourceId, markGpuOnly, isLinear);
 
 				var source = _assetCache.ImageCache[sourceId];
+				if (!source) return;
+
 				FilterMode desiredFilterMode;
 				TextureWrapMode desiredWrapModeS, desiredWrapModeT;
 

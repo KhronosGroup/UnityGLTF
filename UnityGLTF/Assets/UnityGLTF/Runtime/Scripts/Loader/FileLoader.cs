@@ -20,7 +20,7 @@ namespace UnityGLTF.Loader
 
 			if (!File.Exists(path))
 			{
-				path = Path.Combine(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");;
+				path = Path.Combine(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");
 			}
 
 			if (UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(UnityEngine.Texture2D))
@@ -58,10 +58,16 @@ namespace UnityGLTF.Loader
 
 			if (!File.Exists(pathToLoad))
 			{
-				throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad, relativeFilePath);
+				if (relativeFilePath.ToLowerInvariant().EndsWith(".bin"))
+					throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad, relativeFilePath);
+				
+				UnityEngine.Debug.LogError("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad);
+				return InvalidStream;
 			}
 
 			return File.OpenRead(pathToLoad);
 		}
+
+		internal static readonly Stream InvalidStream = new MemoryStream();
 	}
 }
