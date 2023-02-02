@@ -24,7 +24,8 @@ WrappedVertexOutput vert_vcol(appdata_full v)
     o.color = v.color;
 
     // Forward this call to the default vertBase
-    VertexInput vi;
+    VertexInput vi
+    UNITY_TRANSFER_INSTANCE_ID(v, vi);
     vi.vertex = v.vertex;
     vi.normal = v.normal;
     vi.uv0 = v.texcoord;
