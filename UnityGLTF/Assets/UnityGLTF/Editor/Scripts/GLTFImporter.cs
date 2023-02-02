@@ -111,6 +111,37 @@ namespace UnityGLTF
 
         internal List<TextureInfo> Textures => _textures;
 
+        private static string[] GatherDependenciesFromSourceFile(string path)
+        {
+	        // only supported glTF for now - would be harder to check for external references in glb assets.
+	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return Array.Empty<string>();
+
+	        var dependencies = new List<string>();
+
+	        // read minimal JSON, check if there's a bin buffer, and load that.
+	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
+	        // since it's too common as a file type.
+	        var gltf = GLTFRoot.Deserialize(new StreamReader(path));
+	        var externalBuffers = gltf?.Buffers?.Where(b => b?.Uri != null && b.Uri.ToLowerInvariant().EndsWith(".bin"));
+	        if (externalBuffers != null)
+	        {
+		        var dir = Path.GetDirectoryName(path);
+		        foreach (var buffer in externalBuffers)
+		        {
+			        var uri = buffer.Uri;
+			        if (!File.Exists(Path.Combine(dir, uri)))
+				        uri = Uri.UnescapeDataString(uri);
+			        if (File.Exists(Path.Combine(dir, uri)))
+						dependencies.Add(Path.Combine(dir, uri));
+			        // TODO check if inside the project/any package, could be an absolute path
+			        else if (File.Exists(uri))
+				        dependencies.Add(uri);
+		        }
+	        }
+
+	        return dependencies.ToArray();
+        }
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             string sceneName = null;
