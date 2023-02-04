@@ -244,8 +244,7 @@ namespace UnityGLTF
 					break;
 			}
 
-			var canExportAsJpeg =
-				!textureHasAlpha && settings.UseTextureFileTypeHeuristic && textureSlot != TextureMapType.Normal;
+			var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
 			var desiredExtension = canExportAsJpeg ? ".jpg" : ".png";
 			if (textureSlot == TextureMapType.Custom_HDR)
 				desiredExtension = ".exr";
