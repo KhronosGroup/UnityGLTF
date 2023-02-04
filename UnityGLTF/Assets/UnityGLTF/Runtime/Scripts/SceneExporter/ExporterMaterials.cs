@@ -244,7 +244,7 @@ namespace UnityGLTF
 				{
 					if(occTex is Texture2D)
 					{
-						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Linear, materialObj);
+						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
 						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
 						material.OcclusionTexture.TexCoord = materialObj.HasProperty("occlusionTextureTexCoord") ?
 							Mathf.RoundToInt(materialObj.GetFloat("occlusionTextureTexCoord")) :
@@ -676,7 +676,7 @@ namespace UnityGLTF
 				var mrTex = material.GetTexture("metallicRoughnessTexture");
 				if (mrTex)
 				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.Linear);
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness);
 				}
 			}
 			else if (material.HasProperty("_MetallicRoughnessTexture"))
@@ -684,7 +684,7 @@ namespace UnityGLTF
 				var mrTex = material.GetTexture("_MetallicRoughnessTexture");
 				if (mrTex)
 				{
-					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.Linear);
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness);
 				}
 			}
 			else if (material.HasProperty("_MetallicGlossMap"))

@@ -189,7 +189,7 @@ namespace UnityGLTF
 				case TextureMapType.MetallicRoughness:
 					exportSettings.linear = true;
 					exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
-					break;
+					return exportSettings;
 
 				case TextureMapType.SpecGloss: // SpecGloss = MetallicGloss; // not really supported anymore
 					exportSettings.linear = true;
