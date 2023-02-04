@@ -24,6 +24,8 @@ namespace GLTF.Schema
 		/// </summary>
 		public List<double> Weights;
 
+		public List<string> TargetNames;
+
 		public GLTFMesh()
 		{
 		}
@@ -68,6 +70,39 @@ namespace GLTF.Schema
 					default:
 						mesh.DefaultPropertyDeserializer(root, reader);
 						break;
+				}
+			}
+			
+			// GLTF does not support morph target names, serialize in extras for now
+			// https://github.com/KhronosGroup/glTF/issues/1036
+			if (mesh.Extras != null)
+			{
+				var extrasReader = mesh.Extras.CreateReader();
+				extrasReader.Read();
+
+				while (extrasReader.Read() && extrasReader.TokenType == JsonToken.PropertyName)
+				{
+					var extraProperty = extrasReader.Value.ToString();
+					switch (extraProperty)
+					{
+						case "targetNames":
+							mesh.TargetNames = extrasReader.ReadStringList();
+							break;
+						default:
+							extrasReader.Skip();
+							break;
+					}
+				}
+
+				extrasReader.Close();
+
+				if (mesh.Primitives != null && mesh.TargetNames != null && mesh.TargetNames.Count > 0)
+				{
+					foreach (MeshPrimitive mp in mesh.Primitives)
+					{
+						if (mp == null) continue;
+						mp.TargetNames = mesh.TargetNames;
+					}
 				}
 			}
 
