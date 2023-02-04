@@ -4,13 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.22.2-pre] - 2022-02-04
+- fix: set morph target names from mesh extras on import (#70, thanks @emperorofmars)
+
 ## [1.22.1-pre] - 2022-02-04
 - fix: broken texture references prevented files from loading entirely
 - fix: .bin file was not properly registered as dependency for the imported .gltf asset
 - fix: shader issue with instance ID transfer on 2021.x (#71, thanks @Jerem-35)
 - fix: normal map colorspace was wrong on Mac in some cases (#74, thanks @robertlong)
 - fix: ORM maps were exported with empty/unneeded alpha channel (#77, thanks @robertlong)
-- fix: set morph target names from mesh extras on import (#70, thanks @emperorofmars)
 
 ## [1.22.0-pre] - 2022-02-01
 - feat: expose ExportNode API
