@@ -4,15 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.22.1-pre] - 2022-02-04
+- fix: broken texture references prevented files from loading entirely
+- fix: .bin file was not properly registered as dependency for the imported .gltf asset
+- fix: shader issue with instance ID transfer on 2021.x (#71, thanks @Jerem-35)
+- fix: normal map colorspace was wrong on Mac in some cases (#74, thanks @robertlong)
+- fix: ORM maps were exported with empty/unneeded alpha channel (#77, thanks @robertlong)
+- fix: set morph target names from mesh extras on import (#70, thanks @emperorofmars)
+
 ## [1.22.0-pre] - 2022-02-01
 - feat: expose ExportNode API
-- feat: optionally calculate and place bounds markers in GltfRecorder for viewers that don't caclulate bounds from animated skinned meshes properly
+- feat: optionally calculate and place bounds markers in GltfRecorder for viewers that don't caclulate bounds from animated skinned meshes properly (experimental)
 
 ## [1.21.1-pre] - 2022-01-20
-fix: animator being disabled after exporting humanoid animationclip
-fix: ignore MotionT and MotionQ on animator, can't be resolved for KHR_animation, seems to be a magic unity name
-fix: build error by accessing imageContentHash
-change: export HDR textures with zip compression by default
+- fix: animator being disabled after exporting humanoid animationclip
+- fix: ignore MotionT and MotionQ on animator, can't be resolved for KHR_animation, seems to be a magic unity name
+- fix: build error by accessing imageContentHash
+- change: export HDR textures with zip compression by default
 
 ## [1.21.0-pre] - 2022-01-14
 - feat: allow aborting export when not in Play Mode and meshes are not readable - seems to be a random Unity synchronization context issue
