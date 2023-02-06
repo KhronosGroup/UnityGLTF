@@ -68,7 +68,7 @@ namespace GLTF.Schema
 			if (extensionToken != null)
 			{
 				var extension = new KHR_materials_specular();
-				extension.specularFactor       = extensionToken.Value[nameof(KHR_materials_specular.specularFactor)]?.Value<float>() ?? 0;
+				extension.specularFactor       = extensionToken.Value[nameof(KHR_materials_specular.specularFactor)]?.Value<float>() ?? 1;
 				extension.specularColorFactor  = extensionToken.Value[nameof(KHR_materials_specular.specularColorFactor)]?.DeserializeAsColor() ?? Color.White;
 				extension.specularTexture      = extensionToken.Value[nameof(KHR_materials_specular.specularTexture)]?.DeserializeAsTexture(root);
 				extension.specularColorTexture = extensionToken.Value[nameof(KHR_materials_specular.specularColorTexture)]?.DeserializeAsTexture(root);
