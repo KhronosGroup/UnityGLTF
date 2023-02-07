@@ -210,7 +210,7 @@ namespace UnityGLTF
 		public bool GenerateMipMapsForTextures = true;
 
 		/// <summary>
-		/// When screen coverage is above threashold and no LOD mesh cull the object
+		/// When screen coverage is above threshold and no LOD mesh, cull the object
 		/// </summary>
 		public bool CullFarLOD = false;
 
@@ -586,11 +586,11 @@ namespace UnityGLTF
 			return _assetCache.BufferCache[bufferId.Id];
 		}
 
-		private float GetLodCoverage(List<double> lodcoverageExtras, int lodIndex)
+		private float GetLodCoverage(List<double> lodCoverageExtras, int lodIndex)
 		{
-			if (lodcoverageExtras != null && lodIndex < lodcoverageExtras.Count)
+			if (lodCoverageExtras != null && lodIndex < lodCoverageExtras.Count)
 			{
-				return (float)lodcoverageExtras[lodIndex];
+				return (float)lodCoverageExtras[lodIndex];
 			}
 			else
 			{
@@ -676,55 +676,6 @@ namespace UnityGLTF
 				}
 			}
 
-			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
-			MSFT_LODExtension lodsextension = null;
-			if (_gltfRoot.ExtensionsUsed != null
-				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
-				&& node.Extensions != null
-				&& node.Extensions.ContainsKey(msft_LODExtName))
-			{
-				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
-				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
-				{
-					int lodCount = lodsextension.MeshIds.Count + 1;
-					if (!CullFarLOD)
-					{
-						//create a final lod with the mesh as the last LOD in file
-						lodCount += 1;
-					}
-					LOD[] lods = new LOD[lodsextension.MeshIds.Count + 2];
-					List<double> lodCoverage = lodsextension.GetLODCoverage(node);
-
-					var lodGroupNodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode_LODGroup" + nodeIndex) : node.Name);
-					lodGroupNodeObj.SetActive(false);
-					nodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
-					MeshRenderer[] childRenders = nodeObj.GetComponentsInChildren<MeshRenderer>();
-					lods[0] = new LOD(GetLodCoverage(lodCoverage, 0), childRenders);
-
-					LODGroup lodGroup = lodGroupNodeObj.AddComponent<LODGroup>();
-					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
-					{
-						int lodNodeId = lodsextension.MeshIds[i];
-						var lodNodeObj = await GetNode(lodNodeId, cancellationToken);
-						lodNodeObj.transform.SetParent(lodGroupNodeObj.transform, false);
-						childRenders = lodNodeObj.GetComponentsInChildren<MeshRenderer>();
-						int lodIndex = i + 1;
-						lods[lodIndex] = new LOD(GetLodCoverage(lodCoverage, lodIndex), childRenders);
-					}
-
-					if (!CullFarLOD)
-					{
-						//use the last mesh as the LOD
-						lods[lodsextension.MeshIds.Count + 1] = new LOD(0, childRenders);
-					}
-
-					lodGroup.SetLODs(lods);
-					lodGroup.RecalculateBounds();
-					lodGroupNodeObj.SetActive(true);
-					_assetCache.NodeCache[nodeIndex] = lodGroupNodeObj;
-				}
-			}
-
 			if (node.Mesh != null)
 			{
 				var mesh = node.Mesh.Value;
@@ -787,6 +738,9 @@ namespace UnityGLTF
 				}
 #endif
 			}
+
+			await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
+
 			/* TODO: implement camera (probably a flag to disable for VR as well)
 			if (camera != null)
 			{
