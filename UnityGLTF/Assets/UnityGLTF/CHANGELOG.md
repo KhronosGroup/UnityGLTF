@@ -4,27 +4,33 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.22.2-pre] - 2022-02-04
+## [1.22.3-pre] - 2023-02-09
+- fix: specular extension factor roundtrip was incorrect
+- fix: MSFT_lods import created the wrong hierarchy and the culling option wasn't working
+- fix: edge case in node/mesh imports in extensions that could lead to a stack overflow
+- fix: calling `GLTFImporterInspector.FixTextureImportSettings` could result in an infite loop when called from an AssetPostprocessor
+
+## [1.22.2-pre] - 2023-02-04
 - fix: set morph target names from mesh extras on import (#70, thanks @emperorofmars)
 
-## [1.22.1-pre] - 2022-02-04
+## [1.22.1-pre] - 2023-02-04
 - fix: broken texture references prevented files from loading entirely
 - fix: .bin file was not properly registered as dependency for the imported .gltf asset
 - fix: shader issue with instance ID transfer on 2021.x (#71, thanks @Jerem-35)
 - fix: normal map colorspace was wrong on Mac in some cases (#74, thanks @robertlong)
 - fix: ORM maps were exported with empty/unneeded alpha channel (#77, thanks @robertlong)
 
-## [1.22.0-pre] - 2022-02-01
+## [1.22.0-pre] - 2023-02-01
 - feat: expose ExportNode API
 - feat: optionally calculate and place bounds markers in GltfRecorder for viewers that don't caclulate bounds from animated skinned meshes properly (experimental)
 
-## [1.21.1-pre] - 2022-01-20
+## [1.21.1-pre] - 2023-01-20
 - fix: animator being disabled after exporting humanoid animationclip
 - fix: ignore MotionT and MotionQ on animator, can't be resolved for KHR_animation, seems to be a magic unity name
 - fix: build error by accessing imageContentHash
 - change: export HDR textures with zip compression by default
 
-## [1.21.0-pre] - 2022-01-14
+## [1.21.0-pre] - 2023-01-14
 - feat: allow aborting export when not in Play Mode and meshes are not readable - seems to be a random Unity synchronization context issue
 - fix: don't export unsupported light types (e.g. area light has type "rectangle" which is not supported in glTF)
 - fix: Export human motion translation
@@ -32,26 +38,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: reusing animation clips between objects with different hierarchies caused some targets to be missing, depending on export order
 - change: remove warning for KHR_animation_pointer resolving when the unresolved object is a transform, that's part of core
 
-## [1.20.3-pre] - 2022-01-13
+## [1.20.3-pre] - 2023-01-13
 - fix: wrong texture name in Texture Transform check
 - fix: better check if a texture is a normal map and needs the right import settings
 - fix: uris with escaped characters didn't correctly import in the editor
 
-## [1.20.2-pre] - 2022-01-12
+## [1.20.2-pre] - 2023-01-12
 - fix: export of color animations where only one channel is animated
 - fix: order of animationcurve properties when exporing animated colors in component where e.g. a user started by animating a single channel first (e.g. alpha) and later added keyframes for other channels
 
-## [1.20.1-pre] - 2022-01-10
+## [1.20.1-pre] - 2023-01-10
 - fix: issue with exporting shared texture samplers in some cases
 - fix: weights on skinned meshes shouldn't be resolved by custom KHR_animation_pointer resolvers as they're part of the core spec
 - change: remove logs when caching data
 - change: move cache clear button into settings
 - add: KHR_materials_clearcoat roundtrip support (no in-editor visualization yet)
 
-## [1.20.0-pre] - 2022-01-04
+## [1.20.0-pre] - 2023-01-04
 - add: caching of texture bytes on disc for faster export (can be disabled in UnityGLTFSettings)
 
-## [1.19.1-pre] - 2022-01-03
+## [1.19.1-pre] - 2023-01-03
 - add: AfterPrimitiveExport event
 
 ## [1.19.0-pre] - 2022-12-14
