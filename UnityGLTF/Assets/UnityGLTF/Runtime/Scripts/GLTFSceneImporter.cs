@@ -622,6 +622,24 @@ namespace UnityGLTF
 					}
 
 					await ConstructNode(node, nodeId, cancellationToken);
+
+					// HACK belongs in an extension, but we don't have Importer callbacks yet
+					const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
+					if (_gltfRoot.ExtensionsUsed != null
+					    && _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
+					    && node.Extensions != null
+					    && node.Extensions.ContainsKey(msft_LODExtName))
+					{
+						var lodsExtension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
+						if (lodsExtension != null && lodsExtension.NodeIds.Count > 0)
+						{
+							for (int i = 0; i < lodsExtension.NodeIds.Count; i++)
+							{
+								int lodNodeId = lodsExtension.NodeIds[i];
+								await GetNode(lodNodeId, cancellationToken);
+							}
+						}
+					}
 				}
 
 				return _assetCache.NodeCache[nodeId];
@@ -775,24 +793,6 @@ namespace UnityGLTF
 				foreach (NodeId child in node.Children)
 				{
 					await ConstructBufferData(child.Value, cancellationToken);
-				}
-			}
-
-			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
-			MSFT_LODExtension lodsextension = null;
-			if (_gltfRoot.ExtensionsUsed != null
-				&& _gltfRoot.ExtensionsUsed.Contains(msft_LODExtName)
-				&& node.Extensions != null
-				&& node.Extensions.ContainsKey(msft_LODExtName))
-			{
-				lodsextension = node.Extensions[msft_LODExtName] as MSFT_LODExtension;
-				if (lodsextension != null && lodsextension.MeshIds.Count > 0)
-				{
-					for (int i = 0; i < lodsextension.MeshIds.Count; i++)
-					{
-						int lodNodeId = lodsextension.MeshIds[i];
-						await ConstructBufferData(_gltfRoot.Nodes[lodNodeId], cancellationToken);
-					}
 				}
 			}
 		}

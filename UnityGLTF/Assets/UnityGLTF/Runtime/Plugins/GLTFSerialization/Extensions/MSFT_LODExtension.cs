@@ -10,20 +10,20 @@ namespace GLTF.Schema
 	public class MSFT_LODExtension : IExtension
 	{
 
-		public List<int> MeshIds { get; set; }
-		public MSFT_LODExtension(List<int> meshIds)
+		public List<int> NodeIds { get; set; }
+		public MSFT_LODExtension(List<int> nodeIds)
 		{
-			MeshIds = meshIds;
+			NodeIds = nodeIds;
 		}
 		public IExtension Clone(GLTFRoot gltfRoot)
 		{
-			return new MSFT_LODExtension(MeshIds);
+			return new MSFT_LODExtension(NodeIds);
 		}
 		public JProperty Serialize()
 		{
 			JProperty jProperty = new JProperty(MSFT_LODExtensionFactory.EXTENSION_NAME,
 				new JObject(
-					new JProperty(MSFT_LODExtensionFactory.IDS, new JArray(MeshIds))
+					new JProperty(MSFT_LODExtensionFactory.IDS, new JArray(NodeIds))
 					)
 				);
 			return jProperty;
@@ -40,6 +40,7 @@ namespace GLTF.Schema
 					lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
 				}
 			}
+
 			return lodCoverage;
         }
     }

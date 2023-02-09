@@ -872,6 +872,9 @@ namespace UnityGLTF
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
+			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
+				return new NodeId() { Id = existingNodeId, Root = _root };
+
 			exportNodeMarker.Begin();
 
 			var node = new Node();
