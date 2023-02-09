@@ -196,16 +196,8 @@ namespace UnityGLTF
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_useJpgTextures"), new GUIContent("Use JPG Textures"));
 
 			EditorGUILayout.Separator();
-			var texturesHaveCorrectImportSettings = t.Textures.All(x =>
-			{
-				if (AssetDatabase.Contains(x.texture) && AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)
-				{
-					return textureImporter.sRGBTexture == !x.shouldBeLinear;
-				}
-				return true;
-			});
 
-			if (!texturesHaveCorrectImportSettings)
+			if (!TextureImportSettingsAreCorrect(t))
 			{
 				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
 				if (GUILayout.Button("Fix All"))
@@ -213,6 +205,7 @@ namespace UnityGLTF
 					FixTextureImportSettings(t);
 				}
 			}
+
 			EditorGUI.BeginDisabledGroup(true);
 			var mainAssetIdentifierProp = serializedObject.FindProperty(nameof(GLTFImporter._mainAssetIdentifier));
 			EditorGUILayout.PropertyField(mainAssetIdentifierProp);
@@ -225,17 +218,41 @@ namespace UnityGLTF
 			ApplyRevertGUI();
 		}
 
+		public static bool TextureImportSettingsAreCorrect(GLTFImporter importer)
+		{
+			return importer.Textures.All(x =>
+			{
+				if (AssetDatabase.Contains(x.texture) && AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)
+				{
+					return textureImporter.sRGBTexture == !x.shouldBeLinear;
+				}
+				return true;
+			});
+		}
+
 		public static void FixTextureImportSettings(GLTFImporter importer)
 		{
-			AssetDatabase.StartAssetEditing();
+			var haveStartedAssetEditing = false;
 			foreach (var x in importer.Textures)
 			{
 				if (!AssetDatabase.Contains(x.texture) || !(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)) continue;
 
+				// skip if already correct
+				if (textureImporter.sRGBTexture == !x.shouldBeLinear)
+					continue;
+
+				if (!haveStartedAssetEditing)
+				{
+					haveStartedAssetEditing = true;
+					AssetDatabase.StartAssetEditing();
+				}
+
 				textureImporter.sRGBTexture = !x.shouldBeLinear;
 				textureImporter.SaveAndReimport();
 			}
-			AssetDatabase.StopAssetEditing();
+
+			if (haveStartedAssetEditing)
+				AssetDatabase.StopAssetEditing();
 		}
 	}
 }
