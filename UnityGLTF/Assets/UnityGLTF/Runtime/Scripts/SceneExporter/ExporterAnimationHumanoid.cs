@@ -56,6 +56,11 @@ namespace UnityGLTF
 #endif
 			AnimationMode.BeginSampling();
 
+			// if this is a Prefab, we need to collect property modifications here to work around
+			// limitations of AnimationMode - otherwise prefab modifications will persist...
+			var isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(root);
+			var prefabModifications = isPrefabAsset ? PrefabUtility.GetPropertyModifications(root) : default;
+
 			// add the root since we need to shift it around -
 			// it will be reset when exiting AnimationMode again and will not be dirty.
 			AnimationMode_AddTransformTRS(root);
@@ -86,6 +91,11 @@ namespace UnityGLTF
 #else
 			AnimationMode.StopAnimationMode();
 #endif
+
+			// reset prefab modifications if this was a prefab asset
+			if (isPrefabAsset) {
+				PrefabUtility.SetPropertyModifications(root, prefabModifications);
+			}
 
 			recorder.EndRecording(out var data);
 			if (data == null || !data.Any()) return;
