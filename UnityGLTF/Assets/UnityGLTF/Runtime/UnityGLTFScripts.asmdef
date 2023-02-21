@@ -6,7 +6,8 @@
         "Unity.Timeline",
         "Ktx",
         "UnityGLTF.Helpers",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Animation.Rigging"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -55,6 +56,11 @@
             "name": "com.unity.inputsystem",
             "expression": "1.0.0",
             "define": "HAVE_INPUTSYSTEM"
+        },
+        {
+            "name": "com.unity.animation.rigging",
+            "expression": "1.0.0",
+            "define": "HAVE_ANIMATIONRIGGING"
         }
     ],
     "noEngineReferences": false

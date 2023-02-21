@@ -6,7 +6,6 @@
 #define ANIMATION_SUPPORTED
 #endif
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,8 +13,13 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UnityGLTF.Timeline;
+
 #if UNITY_EDITOR
 using UnityEditor;
+#endif
+
+#if HAVE_ANIMATIONRIGGING
+using UnityEngine.Animations.Rigging;
 #endif
 
 namespace UnityGLTF
@@ -23,23 +27,26 @@ namespace UnityGLTF
 	public partial class GLTFSceneExporter
 	{
 #if ANIMATION_SUPPORTED
-		internal void CollectClipCurvesForHumanoid(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
+		internal void CollectClipCurvesBySampling(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
-			if (!clip.humanMotion) return;
-
 			var recorder = new GLTFRecorder(root.transform, false, false, false);
 
-			// var playableGraph = PlayableGraph.Create();
-			// var playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
+			var playableGraph = PlayableGraph.Create();
+			var animationClipPlayable = (Playable) AnimationClipPlayable.Create(playableGraph, clip);
 
-			// Wrap the clip in a playable
-			// var animationClipPlayable = AnimationClipPlayable.Create(playableGraph, clip);
+#if HAVE_ANIMATIONRIGGING
+			var rig = root.GetComponent<RigBuilder>();
+			if (rig)
+			{
+				rig.StopPreview(); // seems to be needed in some cases because the Rig isn't properly marked as non-initialized by Unity
+				rig.Clear();
+				animationClipPlayable = rig.BuildPreviewGraph(playableGraph, animationClipPlayable); // modifies the playable to include Animation Rigging data
+			}
+#endif
 
-			// Connect the Playable to an output
-			// playableOutput.SetSourcePlayable(animationClipPlayable);
-
-			// Plays the Graph.
-			// playableGraph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
+			var playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", root.GetComponent<Animator>());
+			playableOutput.SetSourcePlayable(animationClipPlayable);
+			playableGraph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
 
 			var timeStep = 1.0f / 30.0f;
 			var length = clip.length;
@@ -65,18 +72,28 @@ namespace UnityGLTF
 			// it will be reset when exiting AnimationMode again and will not be dirty.
 			AnimationMode_AddTransformTRS(root);
 
-			root.transform.localPosition = Vector3.zero;
-			root.transform.localRotation = Quaternion.identity;
-			// root.transform.localScale = Vector3.one;
+			// TODO not entirely sure if only checking for humanMotion here is correct
+			if (clip.isHumanMotion)
+			{
+				root.transform.localPosition = Vector3.zero;
+				root.transform.localRotation = Quaternion.identity;
+				// root.transform.localScale = Vector3.one;
+			}
 
 			// first frame
-			AnimationMode.SampleAnimationClip(root, clip, time);
+			AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
+#if HAVE_ANIMATIONRIGGING
+			rig.UpdatePreviewGraph(playableGraph);
+#endif
 			recorder.StartRecording(time);
 
 			while (time + timeStep < length)
 			{
 				time += timeStep;
-				AnimationMode.SampleAnimationClip(root, clip, time);
+				AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
+#if HAVE_ANIMATIONRIGGING
+				rig.UpdatePreviewGraph(playableGraph);
+#endif
 				recorder.UpdateRecording(time);
 			}
 
@@ -90,6 +107,14 @@ namespace UnityGLTF
 			AnimationMode.StopAnimationMode(driver);
 #else
 			AnimationMode.StopAnimationMode();
+#endif
+
+#if HAVE_ANIMATIONRIGGING
+			if (rig)
+			{
+				rig.StopPreview();
+				rig.Clear();
+			}
 #endif
 
 			// reset prefab modifications if this was a prefab asset

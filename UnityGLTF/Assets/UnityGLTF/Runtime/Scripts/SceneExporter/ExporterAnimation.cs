@@ -12,13 +12,16 @@ using System.Linq;
 using System.Reflection;
 using GLTF.Schema;
 using UnityEngine;
-using UnityEngine.Playables;
 using UnityGLTF.Extensions;
 using Object = UnityEngine.Object;
 
 #if ANIMATION_EXPORT_SUPPORTED
 using UnityEditor;
 using UnityEditor.Animations;
+#endif
+
+#if HAVE_ANIMATIONRIGGING
+using UnityEngine.Animations.Rigging;
 #endif
 
 namespace UnityGLTF
@@ -127,7 +130,7 @@ namespace UnityGLTF
 			// When sampling animation using AnimationMode the animator might be disabled afterwards when the animation is exported from a prefab (e.g. Prefab -> object with humanoid animation -> export from referenced prefab -> animator is disabled)
 			// Here we ensure that the animator is enabled again after export
 			// See ExportAnimationHumanoid with StartAnimationMode
-			var animatorEnabled = animator?.enabled ?? true;
+			var animatorEnabled = !animator || animator.enabled;
 
 			// Debug.Log("exporting clips from " + nodeTransform + " with " + animatorController);
 			if (animatorController)
@@ -497,7 +500,20 @@ namespace UnityGLTF
 			return obj.ToString();
 		}
 
-		private Dictionary<(Avatar avatar, AnimationClip clip, float speed), AnimationClip> _humanoidClipInstanceCache = new Dictionary<(Avatar, AnimationClip, float), AnimationClip>();
+		private Dictionary<(Object key, AnimationClip clip, float speed), AnimationClip> _sampledClipInstanceCache = new Dictionary<(Object, AnimationClip, float), AnimationClip>();
+
+		private bool ClipRequiresSampling(AnimationClip clip, Transform transform)
+		{
+			var clipRequiresSampling = clip.isHumanMotion;
+
+#if HAVE_ANIMATIONRIGGING
+			// we also need to bake if this Animator uses animation rigging for dynamic motion
+			var rig = transform.GetComponent<RigBuilder>();
+			if (rig && rig.enabled) clipRequiresSampling = true;
+#endif
+
+			return clipRequiresSampling;
+		}
 
 		private void ConvertClipToGLTFAnimation(AnimationClip clip, Transform transform, GLTFAnimation animation, float speed)
 		{
@@ -510,19 +526,25 @@ namespace UnityGLTF
 			// Special case for animated humanoids: we also need to cache transform-to-humanoid and make sure that individual clips are used there.
 			// since we're baking humanoids, we'd otherwise end up with the same clip being applied to different rigs;
 			// in the future, we may want to support a system like VRM or EXT_skin_humanoid (https://github.com/takahirox/EXT_skin_humanoid) and support runtime retargeting of animations.
-			if (clip.isHumanMotion)
+			if (ClipRequiresSampling(clip, transform))
 			{
-				var avatar = transform.GetComponent<Animator>().avatar;
-				if (!avatar)
+				var animator = transform.GetComponent<Animator>();
+				var avatar = animator.avatar;
+				Object instanceCacheKey = avatar;
+#if HAVE_ANIMATIONRIGGING
+				var rig = transform.GetComponent<RigBuilder>();
+				if (rig) instanceCacheKey = rig;
+#endif
+				if (clip.isHumanMotion && !avatar)
 				{
 					Debug.LogWarning(null, $"No avatar found on animated humanoid, skipping humanoid animation export on {transform.name}", transform);
 					convertClipToGLTFAnimationMarker.End();
 					return;
 				}
-				var key = (avatar, clip, speed);
-				if(!_humanoidClipInstanceCache.ContainsKey(key))
-					_humanoidClipInstanceCache.Add(key, Object.Instantiate(clip));
-				clip = _humanoidClipInstanceCache[key];
+				var key = (instanceCacheKey, clip, speed);
+				if(!_sampledClipInstanceCache.ContainsKey(key))
+					_sampledClipInstanceCache.Add(key, Object.Instantiate(clip));
+				clip = _sampledClipInstanceCache[key];
 			}
 
 			// 1. browse clip, collect all curves and create a TargetCurveSet for each target
@@ -752,10 +774,9 @@ namespace UnityGLTF
 		private void CollectClipCurves(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 #if UNITY_EDITOR
-
-			if (clip.humanMotion)
+			if (ClipRequiresSampling(clip, root.transform))
 			{
-				CollectClipCurvesForHumanoid(root, clip, targetCurves);
+				CollectClipCurvesBySampling(root, clip, targetCurves);
 				return;
 			}
 
@@ -1266,7 +1287,7 @@ namespace UnityGLTF
 		{
 			if (times.Length == 1)
 				return;
-			
+
 			removeAnimationUnneededKeyframesMarker.Begin();
 
 			var t2 = new List<float>(times.Length);
