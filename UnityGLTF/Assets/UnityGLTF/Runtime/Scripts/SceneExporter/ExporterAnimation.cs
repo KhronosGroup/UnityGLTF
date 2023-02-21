@@ -1264,6 +1264,9 @@ namespace UnityGLTF
 
 		public void RemoveUnneededKeyframes(ref float[] times, ref object[] values)
 		{
+			if (times.Length == 1)
+				return;
+			
 			removeAnimationUnneededKeyframesMarker.Begin();
 
 			var t2 = new List<float>(times.Length);
