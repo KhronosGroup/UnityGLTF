@@ -20,7 +20,7 @@ namespace UnityGLTF
 			(transparent && doubleSided ? PBRGraphTransparentDoubleGuid : transparent ? PBRGraphTransparentGuid : doubleSided ? PBRGraphDoubleGuid : PBRGraphGuid)) { }
 #endif
 
-		protected PBRGraphMap(Material mat) : base(mat) { }
+		public PBRGraphMap(Material mat) : base(mat) { }
 
 		public override IUniformMap Clone()
 		{

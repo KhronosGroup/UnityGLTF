@@ -178,17 +178,6 @@ namespace UnityGLTF
 #endif
 		}
 
-		private static void SetKeyword(this Material material, string keyword, bool state)
-		{
-			if (state)
-				material.EnableKeyword(keyword + "_ON");
-			else
-				material.DisableKeyword(keyword + "_ON");
-
-			if (material.HasProperty(keyword))
-				material.SetFloat(keyword, state ? 1 : 0);
-		}
-
 		// ReSharper disable InconsistentNaming
 		private const string StandardShader = "Standard";
 		private const string URPLitShader = "Universal Render Pipeline/Lit";

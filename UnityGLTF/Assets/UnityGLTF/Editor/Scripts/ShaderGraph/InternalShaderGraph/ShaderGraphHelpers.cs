@@ -7,13 +7,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEditor;
 #if HAVE_CATEGORIES
 using UnityEditor.ShaderGraph.Drawing;
 #endif
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace UnityEditor
+namespace UnityGLTF
 {
 	public static class ShaderGraphHelpers
 	{
