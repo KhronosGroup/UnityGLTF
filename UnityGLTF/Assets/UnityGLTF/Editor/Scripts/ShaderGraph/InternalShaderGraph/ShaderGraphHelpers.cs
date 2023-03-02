@@ -124,7 +124,7 @@ namespace UnityGLTF
 			}
 		}
 
-		internal static void SetKeyword(this Material material, string keyword, bool state)
+		public static void SetKeyword(this Material material, string keyword, bool state)
 		{
 			if (state)
 				material.EnableKeyword(keyword + "_ON");
