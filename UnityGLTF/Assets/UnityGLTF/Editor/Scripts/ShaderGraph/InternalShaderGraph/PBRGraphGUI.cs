@@ -48,6 +48,7 @@ namespace UnityGLTF
 			this.properties = properties;
 
 			Material targetMat = materialEditor.target as Material;
+			if (!targetMat || !targetMat.shader) return;
 
 			if (m_FirstTimeApply)
 			{
@@ -63,17 +64,25 @@ namespace UnityGLTF
 			m_MaterialEditor.SetValue(this, materialEditor);
 			m_Properties.SetValue(this, properties);
 
-			var isMutable = System.IO.Path.GetFullPath(AssetDatabase.GetAssetPath())
+			var fullPath = System.IO.Path.GetFullPath(AssetDatabase.GetAssetPath(targetMat));
+			var isMutable = !fullPath.Contains("Library/PackageCache") && !fullPath.Contains("Library\\PackageCache");
 			if (targetMat && targetMat.shader.name.StartsWith("Hidden/UnityGLTF"))
 			{
-				DrawFixMeBox("This is a legacy shader. Please click \"Fix\" to upgrade to PBRGraph/UnlitGraph.", MessageType.Warning, () =>
+				if (isMutable)
 				{
-					var isUnlit = targetMat.shader.name.Contains("Unlit");
-					var newShaderGuid = isUnlit ? "59541e6caf586ca4f96ccf48a4813a51" : "478ce3626be7a5f4ea58d6b13f05a2e4";
-					var newShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(newShaderGuid));
-					Undo.RegisterCompleteObjectUndo(targetMat, "Convert to UnityGltf shader");
-					GLTFMaterialHelper.ConvertMaterialToGLTF(targetMat, targetMat.shader, newShader);
-				});
+					DrawFixMeBox("This is a legacy shader. Please click \"Fix\" to upgrade to PBRGraph/UnlitGraph.", MessageType.Warning,  () =>
+					{
+						var isUnlit = targetMat.shader.name.Contains("Unlit");
+						var newShaderGuid = isUnlit ? "59541e6caf586ca4f96ccf48a4813a51" : "478ce3626be7a5f4ea58d6b13f05a2e4";
+						var newShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(newShaderGuid));
+						Undo.RegisterCompleteObjectUndo(targetMat, "Convert to UnityGltf shader");
+						GLTFMaterialHelper.ConvertMaterialToGLTF(targetMat, targetMat.shader, newShader);
+					});
+				}
+				else
+				{
+					DrawFixMeBox("This is a legacy shader. Upgrade to PBRGraph/UnlitGraph for more options.", MessageType.Warning, null);
+				}
 			}
 
 			m_MaterialScopeList.DrawHeaders(materialEditor, targetMat);
@@ -368,7 +377,7 @@ namespace UnityGLTF
 			CoreEditorUtils.DrawFixMeBox(msg, msgType, action);
 #else
 			EditorGUILayout.HelpBox(msg, msgType);
-			if (GUILayout.Button("Fix")) action();
+			if (action != null && GUILayout.Button("Fix")) action();
 #endif
 		}
 
