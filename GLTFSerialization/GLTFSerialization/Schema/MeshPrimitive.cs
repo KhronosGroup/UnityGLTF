@@ -65,7 +65,7 @@ namespace GLTF.Schema
 					Attributes[attributeKeyValuePair.Key] = new AccessorId(attributeKeyValuePair.Value, gltfRoot);
 				}
 			}
-			
+
 			if (meshPrimitive.Indices != null)
 			{
 				Indices = new AccessorId(meshPrimitive.Indices, gltfRoot);
@@ -217,7 +217,7 @@ namespace GLTF.Schema
 							skipStartObjectRead: true);
 						});
 						break;
-					case "extras":
+/*					case "extras":
 						// GLTF does not support morph target names, serialize in extras for now
 						// https://github.com/KhronosGroup/glTF/issues/1036
 						if (reader.Read() && reader.TokenType == JsonToken.StartObject)
@@ -232,12 +232,12 @@ namespace GLTF.Schema
 										break;
 
 								}
-				
+
 							}
 
 						}
 
-						break;
+						break;*/
 					default:
 						primitive.DefaultPropertyDeserializer(root, reader);
 						break;
