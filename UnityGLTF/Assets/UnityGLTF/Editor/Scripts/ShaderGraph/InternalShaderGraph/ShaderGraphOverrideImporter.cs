@@ -1,6 +1,7 @@
 #if !NO_INTERNALS_ACCESS && UNITY_2020_1_OR_NEWER
 
 using System.IO;
+using UnityEditor;
 using UnityEditor.ShaderGraph;
 using UnityEngine;
 #if UNITY_2020_2_OR_NEWER
@@ -9,34 +10,50 @@ using UnityEditor.AssetImporters;
 using UnityEditor.Experimental.AssetImporters;
 #endif
 
-namespace UnityEditor
+namespace UnityGLTF
 {
 	[ScriptedImporter(0, ".override-graph", -500)]
-	class ShaderGraphOverrideImporter : ShaderGraphImporter
+	internal class ShaderGraphOverrideImporter : ShaderGraphImporter, IUnityGltfShaderUpgradeMeta
 	{
 		[HideInInspector]
 		public Shader sourceShader;
 
-#if !UNITY_2021_1_OR_NEWER
+		[HideInInspector]
+		public Shader upgradeShader;
+
 		public bool forceTransparent = true;
 		public bool forceDoublesided = false;
 		public bool hideShader = true;
-#endif
+
+		public Shader SourceShader => sourceShader;
+		public bool IsTransparent => forceTransparent;
+		public bool IsDoublesided => forceDoublesided;
+		public bool IsUnlit => sourceShader.name.Contains("Unlit");
 
 		public override void OnImportAsset(AssetImportContext ctx)
 		{
 			if (!sourceShader)
 				return;
 
-#if UNITY_2021_1_OR_NEWER
-			// we don't need this on 2021.1+, as Shader Graph allows overriding the material properties there.
+#if UNITY_2021_1_OR_NEWER && false
+			// we don't need extra shaders on 2021.1+,
+			// as Shader Graph allows overriding the material properties there.
+			// but we do want to allow upgrading the materials, so we need to import something and allow upgrading through ShaderGraphUpdater
 
-			// Experiment: emit the same asset again.
-			// Works! But unfortunately looks like the shader is then registered multiple times...
-			// ctx.AddObjectToAsset("MainAsset", sourceShader);
-			// ctx.SetMainObject(sourceShader);
+			var meta = ScriptableObject.CreateInstance<UnityGltfShaderUpgradeMeta>();
+			meta.name = "Shader Upgrade Meta";
+			meta.hideFlags = HideFlags.HideInInspector;
+			meta.sourceShader = sourceShader;
+			meta.isTransparent = forceTransparent;
+			meta.isDoublesided = forceDoublesided;
 
-			return;
+			const string shaderName = "Hidden/UnityGltf/UpgradeShader";
+			var shaderText = File.ReadAllText(AssetDatabase.GetAssetPath(upgradeShader))
+				.Replace(shaderName, shaderName + meta.GenerateNameString());
+			var shader = ShaderUtil.CreateShaderAsset(ctx, shaderText, true);
+			ctx.AddObjectToAsset("MainAsset", shader);
+			ctx.AddObjectToAsset("UpgradeMeta", meta);
+			ctx.SetMainObject(shader);
 #else
 			// cache write time, we want to reset the file again afterwards
 			var lastWriteTimeUtc = File.GetLastWriteTimeUtc(ctx.assetPath);
@@ -44,6 +61,11 @@ namespace UnityEditor
 			var path = AssetDatabase.GetAssetPath(sourceShader);
 			ctx.DependsOnArtifact(AssetDatabase.GUIDFromAssetPath(path));
 			var graphData = File.ReadAllText(path);
+
+#if UNITY_2021_1_OR_NEWER
+			// disable material overrides on 2021.1+ - we want people to use the proper shader for that
+			graphData = graphData.Replace("\"m_AllowMaterialOverride\": true", "\"m_AllowMaterialOverride\": false");
+#endif
 
 			// modify:
 			// switch to transparent
@@ -77,6 +99,14 @@ namespace UnityEditor
 			File.SetLastWriteTimeUtc(ctx.assetPath, lastWriteTimeUtc);
 #endif
 		}
+	}
+
+	public interface IUnityGltfShaderUpgradeMeta
+	{
+		Shader SourceShader { get; }
+		bool IsUnlit { get; }
+		bool IsTransparent { get; }
+		bool IsDoublesided { get; }
 	}
 }
 

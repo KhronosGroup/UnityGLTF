@@ -19,7 +19,7 @@ namespace UnityGLTF
 
 		protected UnlitGraphMap(string shaderName) : base(shaderName, UnlitGraphGuid) { }
 
-		protected UnlitGraphMap(Material mat) : base(mat) { }
+		public UnlitGraphMap(Material mat) : base(mat) { }
 
 		public override IUniformMap Clone()
 		{

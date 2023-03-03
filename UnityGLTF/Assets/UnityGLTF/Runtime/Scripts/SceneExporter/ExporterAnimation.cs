@@ -1155,7 +1155,7 @@ namespace UnityGLTF
 							}
 							else
 							{
-								Debug.LogError(null, $"Rotation animation has {prop.curve.Count} curves, expected Euler Angles (3 curves) or Quaternions (4 curves). This is not supported, make sure to animate all components of rotations.");
+								Debug.LogError(null, $"Rotation animation has {prop.curve.Count} curves, expected Euler Angles (3 curves) or Quaternions (4 curves). This is not supported, make sure to animate all components of rotations. Animated object {prop.target}", prop.target);
 							}
 						}
 						else if (typeof(float) == type)
