@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.23.0-pre] - 2023-03-03
+- fix: revert other possible modifications when recording animations
+- fix: exporting animation curves failed for blendshape animations on missing targets
+- fix: better info for which object has missing curves on animation export
+- feat: transparent/double-sided materials can now be upgraded from 2020.x to 2021.x+
+
 ## [1.22.4-pre] - 2023-02-25
 - fix: revert prefab modifications when recording humanoid animation from prefab assets to work around AnimationMode limitations
 - fix: creation of duplicated keyframe when there is only one keyframe
