@@ -710,6 +710,8 @@ namespace UnityGLTF
 						}
 					}
 
+					if (targetTr)
+					{
 					// TODO these should be moved into curve.propertyCurves as well
 					// TODO should filter by possible propertyCurve string names at that point to avoid
 					// moving KHR_animation_pointer data into regular animations
@@ -757,6 +759,7 @@ namespace UnityGLTF
 							AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5);
 							sampledAnimationData = true;
 						}
+					}
 					}
 
 					if (!sampledAnimationData)
