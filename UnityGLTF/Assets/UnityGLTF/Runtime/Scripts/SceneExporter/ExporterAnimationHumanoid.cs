@@ -18,10 +18,6 @@ using UnityGLTF.Timeline;
 using UnityEditor;
 #endif
 
-#if HAVE_ANIMATIONRIGGING
-using UnityEngine.Animations.Rigging;
-#endif
-
 namespace UnityGLTF
 {
 	public partial class GLTFSceneExporter
@@ -34,15 +30,20 @@ namespace UnityGLTF
 			var playableGraph = PlayableGraph.Create();
 			var animationClipPlayable = (Playable) AnimationClipPlayable.Create(playableGraph, clip);
 
-#if HAVE_ANIMATIONRIGGING
-			var rig = root.GetComponent<RigBuilder>();
-			if (rig)
+			var rigs = root.GetComponents<IAnimationWindowPreview>();
+			if (rigs != null)
 			{
-				rig.StopPreview(); // seems to be needed in some cases because the Rig isn't properly marked as non-initialized by Unity
-				rig.Clear();
-				animationClipPlayable = rig.BuildPreviewGraph(playableGraph, animationClipPlayable); // modifies the playable to include Animation Rigging data
+				foreach (var rig in rigs)
+				{
+					rig.StopPreview(); // seems to be needed in some cases because the Rig isn't properly marked as non-initialized by Unity
+					rig.StartPreview();
+					animationClipPlayable = rig.BuildPreviewGraph(playableGraph, animationClipPlayable); // modifies the playable to include Animation Rigging data
+				}
 			}
-#endif
+			else
+			{
+				rigs = System.Array.Empty<IAnimationWindowPreview>();
+			}
 
 			var playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", root.GetComponent<Animator>());
 			playableOutput.SetSourcePlayable(animationClipPlayable);
@@ -67,6 +68,7 @@ namespace UnityGLTF
 			// limitations of AnimationMode - otherwise prefab modifications will persist...
 			var isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(root);
 			var prefabModifications = isPrefabAsset ? PrefabUtility.GetPropertyModifications(root) : default;
+			Undo.RegisterFullObjectHierarchyUndo(root, "Animation Sampling");
 
 			// add the root since we need to shift it around -
 			// it will be reset when exiting AnimationMode again and will not be dirty.
@@ -81,26 +83,41 @@ namespace UnityGLTF
 			}
 
 			// first frame
+			foreach (var rig in rigs) rig.UpdatePreviewGraph(playableGraph);
 			AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
-#if HAVE_ANIMATIONRIGGING
-			rig.UpdatePreviewGraph(playableGraph);
-#endif
+
+			// for Animation Rigging its often desired to have one complete loop first, so we need to prewarm to have a nice exportable animation
+			var prewarm = rigs.Length > 0 && clip.isLooping;
+			if (prewarm)
+			{
+				while (time + timeStep < length)
+				{
+					time += timeStep;
+					foreach (var rig in rigs) rig.UpdatePreviewGraph(playableGraph);
+					AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
+				}
+
+				// reset time to the start
+				time = 0;
+			}
+
 			recorder.StartRecording(time);
 
 			while (time + timeStep < length)
 			{
 				time += timeStep;
+				foreach (var rig in rigs) rig.UpdatePreviewGraph(playableGraph);
 				AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
-#if HAVE_ANIMATIONRIGGING
-				rig.UpdatePreviewGraph(playableGraph);
-#endif
 				recorder.UpdateRecording(time);
 			}
 
 			// last frame
 			time = length;
-			AnimationMode.SampleAnimationClip(root, clip, time);
+			foreach (var rig in rigs) rig.UpdatePreviewGraph(playableGraph);
+			AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
 			recorder.UpdateRecording(time);
+
+			foreach (var rig in rigs) rig.StopPreview();
 
 			AnimationMode.EndSampling();
 #if UNITY_2020_1_OR_NEWER
@@ -109,18 +126,15 @@ namespace UnityGLTF
 			AnimationMode.StopAnimationMode();
 #endif
 
-#if HAVE_ANIMATIONRIGGING
-			if (rig)
-			{
-				rig.StopPreview();
-				rig.Clear();
-			}
-#endif
-
 			// reset prefab modifications if this was a prefab asset
 			if (isPrefabAsset) {
 				PrefabUtility.SetPropertyModifications(root, prefabModifications);
 			}
+
+			// seems to be necessary because the animation sampling API doesn't fully work;
+			// sometimes samples still "leak" into property modifications
+			Undo.FlushUndoRecordObjects();
+			Undo.PerformUndo();
 
 			recorder.EndRecording(out var data);
 			if (data == null || !data.Any()) return;
