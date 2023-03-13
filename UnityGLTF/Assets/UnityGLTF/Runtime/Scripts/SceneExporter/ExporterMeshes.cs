@@ -184,6 +184,7 @@ namespace UnityGLTF
 			// if so, return that mesh id
 			if (existingMeshId != null)
 			{
+				exportMeshMarker.End();
 				return existingMeshId;
 			}
 
