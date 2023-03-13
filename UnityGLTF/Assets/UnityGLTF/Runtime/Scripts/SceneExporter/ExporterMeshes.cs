@@ -285,8 +285,8 @@ namespace UnityGLTF
 			// walk submeshes and export the ones with non-null meshes
 			for (int submesh = 0; submesh < meshObj.subMeshCount; submesh++)
 			{
-				if (submesh >= materialsObj.Length) continue;
-				if (!materialsObj[submesh]) continue;
+				var mat = materialsObj[submesh % materialsObj.Length];
+				if (!mat) continue;
 
 				if (!accessors.subMeshPrimitives.ContainsKey(submesh))
 				{
@@ -324,7 +324,7 @@ namespace UnityGLTF
 				var submeshPrimitive = accessors.subMeshPrimitives[submesh];
 				prims[submesh] = new MeshPrimitive(submeshPrimitive, _root)
 				{
-					Material = ExportMaterial(materialsObj[submesh]),
+					Material = ExportMaterial(mat),
 				};
 				accessors.subMeshPrimitives[submesh] = prims[submesh];
 			}
