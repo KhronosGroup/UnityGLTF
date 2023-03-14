@@ -47,7 +47,8 @@ namespace UnityGLTF
 	{
 		None,
 		Legacy,
-		Mecanim
+		Mecanim,
+		MecanimHumanoid,
 	}
 
 	public class UnityMeshData
@@ -885,7 +886,7 @@ namespace UnityGLTF
 								}
 							}
 						}
-						else if (_options.AnimationMethod == AnimationMethod.Mecanim)
+						else if (_options.AnimationMethod == AnimationMethod.Mecanim || _options.AnimationMethod == AnimationMethod.MecanimHumanoid)
 						{
 							Animator animator = sceneObj.AddComponent<Animator>();
 #if UNITY_EDITOR
@@ -908,6 +909,12 @@ namespace UnityGLTF
 						Debug.Log(LogType.Warning, "glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
 #endif
 					}
+				}
+
+				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid)
+				{
+					if (!sceneObj.GetComponent<Animator>())
+						sceneObj.AddComponent<Animator>();
 				}
 
 				CreatedObject = sceneObj;

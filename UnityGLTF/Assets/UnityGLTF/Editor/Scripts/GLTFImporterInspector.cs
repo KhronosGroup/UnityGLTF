@@ -18,11 +18,11 @@ namespace UnityGLTF
 {
 	[CustomEditor(typeof(GLTFImporter))]
 	[CanEditMultipleObjects]
-	public class GLTFImporterInspector : AssetImporterEditor
+	internal class GLTFImporterInspector : UnityGLTFTabbedEditor
 	{
 		private string[] _importNormalsNames;
 
-		public override void OnInspectorGUI()
+		public override void TabInspectorGUI()
 		{
 			var t = target as GLTFImporter;
 			if (!t) return;

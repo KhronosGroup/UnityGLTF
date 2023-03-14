@@ -75,11 +75,17 @@ namespace UnityGLTF
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
+        [SerializeField] internal bool _addAnimatorComponent = false;
+        [SerializeField] internal bool _humanoid = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
         [SerializeField] internal bool _importMaterials = true;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
         [SerializeField] internal bool _useSceneNameIdentifier = false;
+
+        // for humanoid importer
+        [SerializeField] internal bool m_OptimizeGameObjects = false;
+        [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
 
         // material remapping
         [SerializeField] private Material[] m_Materials = new Material[0];
@@ -182,6 +188,12 @@ namespace UnityGLTF
                 if (_removeEmptyRootObjects)
                 {
                     var t = gltfScene.transform;
+                    var existingAnimator = t.GetComponent<Animator>();
+                    var hadAnimator = (bool)existingAnimator;
+                    var existingAvatar = existingAnimator ? existingAnimator.avatar : default;
+                    if (existingAnimator)
+	                    DestroyImmediate(existingAnimator);
+
                     while (
                         gltfScene.transform.childCount == 1 &&
                         gltfScene.GetComponents<Component>().Length == 1)
@@ -194,6 +206,13 @@ namespace UnityGLTF
                         t.parent = null; // To keep transform information in the new parent
                         DestroyImmediate(parent); // Get rid of the parent
                     }
+
+                    // Re-add animator if it was removed
+                    if (hadAnimator)
+					{
+	                    var newAnimator = gltfScene.AddComponent<Animator>();
+	                    newAnimator.avatar = existingAvatar;
+					}
                 }
 
                 // Ensure there are no hide flags present (will cause problems when saving)
@@ -310,6 +329,9 @@ namespace UnityGLTF
 		        //         ctx.AddObjectToAsset(GetUniqueName(layer.name + "-state"), layer.stateMachine);
 	            //     }
                 // }
+
+                // add avatar
+                ctx.AddObjectToAsset("avatar", HumanoidSetup.AddAvatarToGameObject(gltfScene));
 
                 var renderers = gltfScene.GetComponentsInChildren<Renderer>();
 
