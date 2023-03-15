@@ -631,7 +631,14 @@ namespace UnityGLTF
 
 					await ConstructNode(node, nodeId, cancellationToken);
 
-					AfterImportedNode?.Invoke(this, node, _assetCache.NodeCache[nodeId]);
+					try
+					{
+						AfterImportedNode?.Invoke(this, node, _assetCache.NodeCache[nodeId]);
+					}
+					catch (Exception ex)
+					{
+						Debug.LogException(ex);
+					}
 
 					// HACK belongs in an extension, but we don't have Importer callbacks yet
 					const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
