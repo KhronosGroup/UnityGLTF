@@ -12,6 +12,7 @@ using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
+using Matrix4x4 = System.Numerics.Matrix4x4;
 using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -120,7 +121,11 @@ namespace UnityGLTF
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
-		public static event Action<GLTFSceneImporter, Node, GameObject> AfterImportedNode;
+		public static event Action<GLTFSceneImporter, GLTFScene> BeforeImportScene;
+		public static event Action<GLTFSceneImporter, GLTFScene, int, GameObject> AfterImportedScene;
+		public static event Action<GLTFSceneImporter, Node, int, GameObject> AfterImportedNode;
+		public static event Action<GLTFSceneImporter, GLTFMaterial, int, Material> AfterImportedMaterial;
+		public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
 
 		public enum ColliderType
 		{
@@ -195,6 +200,7 @@ namespace UnityGLTF
 		}
 
 		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
+		public MaterialCacheData[] MaterialCache => _assetCache.MaterialCache;
 
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
@@ -221,6 +227,8 @@ namespace UnityGLTF
 		/// When screen coverage is above threshold and no LOD mesh, cull the object
 		/// </summary>
 		public bool CullFarLOD = false;
+
+		public bool IsRunning => _isRunning;
 
 		/// <summary>
 		/// Statistics from the scene
@@ -533,6 +541,15 @@ namespace UnityGLTF
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
 
+			try
+			{
+				BeforeImportScene?.Invoke(this, scene);
+			}
+			catch(Exception e)
+			{
+				Debug.LogException(e);
+			}
+
 			GetGtlfContentTotals(scene);
 
 			await ConstructScene(scene, showSceneObj, cancellationToken);
@@ -543,6 +560,15 @@ namespace UnityGLTF
 			}
 
 			_lastLoadedScene = CreatedObject;
+
+			try
+			{
+				AfterImportedScene?.Invoke(this, scene, sceneIndex, CreatedObject);
+			}
+			catch(Exception e)
+			{
+				Debug.LogException(e);
+			}
 		}
 
 		private void GetGtlfContentTotals(GLTFScene scene)
@@ -633,7 +659,7 @@ namespace UnityGLTF
 
 					try
 					{
-						AfterImportedNode?.Invoke(this, node, _assetCache.NodeCache[nodeId]);
+						AfterImportedNode?.Invoke(this, node, nodeId, _assetCache.NodeCache[nodeId]);
 					}
 					catch (Exception ex)
 					{
