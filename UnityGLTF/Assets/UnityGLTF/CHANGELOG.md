@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.23.1-pre] - 2023-03-15
+- fix: ExportMesh not exporting submeshes in some cases
+- fix: missing export mesh marker
+
 ## [1.23.0-pre] - 2023-03-03
 - fix: revert other possible modifications when recording animations
 - fix: exporting animation curves failed for blendshape animations on missing targets
