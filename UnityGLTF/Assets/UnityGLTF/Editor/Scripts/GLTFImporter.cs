@@ -147,7 +147,7 @@ namespace UnityGLTF
 	        return dependencies.ToArray();
         }
 
-        public static event Action<AssetImportContext> AfterImported;
+        public static event Action<AssetImportContext> AfterAssetImported;
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
@@ -309,8 +309,11 @@ namespace UnityGLTF
                     return mesh;
                 }).Where(x => x).ToArray();
 
+                var addedClips = new List<AnimationClip>();
                 foreach (var clip in animations)
                 {
+	                if (addedClips.Contains(clip)) continue;
+	                addedClips.Add(clip);
 	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
                 }
 
@@ -522,7 +525,7 @@ namespace UnityGLTF
             }
 #endif
 
-	        AfterImported?.Invoke(ctx);
+	        AfterAssetImported?.Invoke(ctx);
 		}
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);

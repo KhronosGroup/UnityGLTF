@@ -130,10 +130,6 @@ namespace UnityGLTF
 		public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
 		public static event Action<GLTFSceneImporter, GLTFRoot, GameObject> AfterImported;
 
-		public void AddSubAsset(string name, UnityEngine.Object asset)
-		{
-		}
-
 		public enum ColliderType
 		{
 			None,
