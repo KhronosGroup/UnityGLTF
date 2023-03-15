@@ -120,6 +120,8 @@ namespace UnityGLTF
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
+		public static event Action<GLTFSceneImporter, Node, GameObject> AfterImportedNode;
+
 		public enum ColliderType
 		{
 			None,
@@ -628,6 +630,8 @@ namespace UnityGLTF
 					}
 
 					await ConstructNode(node, nodeId, cancellationToken);
+
+					AfterImportedNode?.Invoke(this, node, _assetCache.NodeCache[nodeId]);
 
 					// HACK belongs in an extension, but we don't have Importer callbacks yet
 					const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
