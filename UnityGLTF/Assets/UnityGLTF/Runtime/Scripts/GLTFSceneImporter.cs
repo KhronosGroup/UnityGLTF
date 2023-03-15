@@ -13,6 +13,7 @@ using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using Matrix4x4 = System.Numerics.Matrix4x4;
+using Object = UnityEngine.Object;
 using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -121,11 +122,17 @@ namespace UnityGLTF
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
+		public static event Action<GLTFSceneImporter, GLTFRoot> BeforeImport;
 		public static event Action<GLTFSceneImporter, GLTFScene> BeforeImportScene;
 		public static event Action<GLTFSceneImporter, GLTFScene, int, GameObject> AfterImportedScene;
 		public static event Action<GLTFSceneImporter, Node, int, GameObject> AfterImportedNode;
 		public static event Action<GLTFSceneImporter, GLTFMaterial, int, Material> AfterImportedMaterial;
 		public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
+		public static event Action<GLTFSceneImporter, GLTFRoot, GameObject> AfterImported;
+
+		public void AddSubAsset(string name, UnityEngine.Object asset)
+		{
+		}
 
 		public enum ColliderType
 		{
@@ -169,6 +176,8 @@ namespace UnityGLTF
 			}
 		}
 
+		public GLTFRoot Root => _gltfRoot;
+
 		/// <summary>
 		/// The parent transform for the created GameObject
 		/// </summary>
@@ -201,6 +210,7 @@ namespace UnityGLTF
 
 		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
 		public MaterialCacheData[] MaterialCache => _assetCache.MaterialCache;
+		public AnimationCacheData[] AnimationCache => _assetCache.AnimationCache;
 
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
@@ -323,6 +333,16 @@ namespace UnityGLTF
 		public void Dispose()
 		{
 			Cleanup();
+		}
+
+		internal void OnBeforeImport()
+		{
+			BeforeImport?.Invoke(this, _gltfRoot);
+		}
+
+		internal void OnAfterImport(GameObject gameObject)
+		{
+			AfterImported?.Invoke(this, _gltfRoot, gameObject);
 		}
 
 		/// <summary>

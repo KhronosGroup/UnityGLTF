@@ -147,6 +147,8 @@ namespace UnityGLTF
 	        return dependencies.ToArray();
         }
 
+        public static event Action<AssetImportContext> AfterImported;
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             string sceneName = null;
@@ -519,6 +521,8 @@ namespace UnityGLTF
 				}
             }
 #endif
+
+	        AfterImported?.Invoke(ctx);
 		}
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
@@ -549,6 +553,7 @@ namespace UnityGLTF
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
+				loader.OnBeforeImport();
 				loader.LoadSceneAsync().Wait();
 
 				if (gLTFRoot.ExtensionsUsed != null)
@@ -573,6 +578,8 @@ namespace UnityGLTF
 					.Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
 					.ToList();
 
+				loader.OnAfterImport(loader.LastLoadedScene);
+				
 				scene = loader.LastLoadedScene;
 				animationClips = loader.CreatedAnimationClips;
 			}
