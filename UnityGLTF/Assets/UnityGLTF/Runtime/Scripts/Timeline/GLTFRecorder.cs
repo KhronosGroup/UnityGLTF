@@ -1,5 +1,4 @@
 #define USE_ANIMATION_POINTER
-// #define USE_REGULAR_ANIMATION
 
 using System;
 using System.Collections.Generic;
@@ -55,13 +54,6 @@ namespace UnityGLTF.Timeline
 			private bool inWorldSpace = false;
 			private bool recordAnimationPointer;
 
-#if USE_REGULAR_ANIMATION
-			public FrameData lastData;
-			public Dictionary<double, FrameData> keys = new Dictionary<double, FrameData>(1024);
-			private bool skippedLastFrame = false;
-			private double skippedTime;
-#endif
-
 #if USE_ANIMATION_POINTER
 			private static List<ExportPlan> exportPlans;
 			private static MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
@@ -97,11 +89,7 @@ namespace UnityGLTF.Timeline
 				this.recordBlendShapes = recordBlendShapes;
 				this.inWorldSpace = inWorldSpace;
 				this.recordAnimationPointer = recordAnimationPointer;
-#if USE_REGULAR_ANIMATION
-				keys.Add(time, new FrameData(tr, smr, zeroScale, this.recordBlendShapes, this.inWorldSpace));
-#endif
 
-#if USE_ANIMATION_POINTER
 				if (exportPlans == null)
 				{
 					exportPlans = new List<ExportPlan>();
@@ -128,7 +116,7 @@ namespace UnityGLTF.Timeline
 						return null;
 					}));
 
-					if(recordAnimationPointer)
+					if (recordAnimationPointer)
 					{
 						// TODO add other animation pointer export plans
 
@@ -169,10 +157,8 @@ namespace UnityGLTF.Timeline
 						tracks.Add(new Track(this, plan, time));
 					}
 				}
-#endif
 			}
 
-#if USE_ANIMATION_POINTER
 			internal class Track
 			{
 				public Object animatedObject => plan.GetTarget(tr.tr);
@@ -206,45 +192,13 @@ namespace UnityGLTF.Timeline
 					}
 				}
 			}
-#endif
 
 			public void Update(double time)
 			{
-#if USE_ANIMATION_POINTER
 				foreach (var track in tracks)
 				{
 					track.SampleIfChanged(time);
 				}
-#endif
-
-#if USE_REGULAR_ANIMATION
-				var newTr = new FrameData(tr, smr, !tr.gameObject.activeSelf, recordBlendShapes, inWorldSpace);
-				if (newTr.Equals(lastData))
-				{
-					skippedLastFrame = true;
-					skippedTime = time;
-					return;
-				}
-
-				if (skippedLastFrame)
-				{
-					keys[skippedTime] = lastData;
-				}
-
-				skippedLastFrame = false;
-
-				lastData = newTr;
-
-				// first keyframe could be different to initialization, so we want to override this
-				if (keys.ContainsKey(time))
-				{
-					keys[time] = newTr;
-				}
-				else
-				{
-					keys.Add(time, newTr);
-				}
-#endif
 			}
 		}
 
@@ -323,11 +277,7 @@ namespace UnityGLTF.Timeline
 			if (!isRecording) return;
 			isRecording = false;
 
-#if USE_ANIMATION_POINTER
 			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.tracks.Sum(y => y.values.Count())));
-#elif USE_REGULAR_ANIMATION
-			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.keys.Count));
-#endif
 
 			if (!settings)
 			{
@@ -430,7 +380,6 @@ namespace UnityGLTF.Timeline
 			foreach (var kvp in data)
 			{
 				processAnimationMarker.Begin();
-#if USE_ANIMATION_POINTER
 				foreach (var tr in kvp.Value.tracks)
 				{
 					if (tr.times.Length == 0) continue;
@@ -457,117 +406,9 @@ namespace UnityGLTF.Timeline
 					gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref values);
 					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, times, values);
 				}
-#endif
-
-#if USE_REGULAR_ANIMATION
-				if (kvp.Value.keys.Count < 1)
-				{
-					processAnimationMarker.End();
-					continue;
-				}
-
-				var times = kvp.Value.keys.Keys.Select(x => (float)x).ToArray();
-				var values = kvp.Value.keys.Values.ToArray();
-				var positions = values.Select(x => x.position).ToArray();
-				var rotations = values.Select(x => x.rotation).ToArray();
-				var scales = values.Select(x => x.scale).ToArray();
-				float[] weights = null;
-				int weightCount = 0;
-				if (values.All(x => x.weights != null))
-				{
-					weights = values.SelectMany(x => x.weights).ToArray();
-					weightCount = values.First().weights.Length;
-				}
-
-				// gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref positions, ref rotations, ref scales, ref weights, ref weightCount);
-
-				// no need to add single-keyframe tracks, that's recorded as base data anyways
-				// if (times.Length > 1)
-				// 	gltfSceneExporter.AddAnimationData(kvp.Key, anim, times, positions, rotations, scales, weights);
-#endif
 				processAnimationMarker.End();
 			}
 		}
-
-#if USE_REGULAR_ANIMATION
-		// TODO deprecate this once the ExportPlan approach is fully tested.
-		internal readonly struct FrameData
-		{
-			public readonly Vector3 position;
-			public readonly Quaternion rotation;
-			public readonly Vector3 scale;
-			public readonly float[] weights;
-
-			public FrameData(Transform tr, SkinnedMeshRenderer smr, bool zeroScale, bool recordBlendShapes, bool inWorldSpace)
-			{
-				if (!inWorldSpace)
-				{
-					position = tr.localPosition;
-					rotation = tr.localRotation;
-					scale = zeroScale ? Vector3.zero : tr.localScale;
-				}
-				else
-				{
-					position = tr.position;
-					rotation = tr.rotation;
-					scale = zeroScale ? Vector3.zero : tr.lossyScale;
-				}
-
-				if (recordBlendShapes)
-				{
-					if (smr && smr.sharedMesh && smr.sharedMesh.blendShapeCount > 0)
-					{
-						var mesh = smr.sharedMesh;
-						var blendShapeCount = mesh.blendShapeCount;
-						weights = new float[blendShapeCount];
-						for (var i = 0; i < blendShapeCount; i++)
-							weights[i] = smr.GetBlendShapeWeight(i);
-					}
-					else
-					{
-						weights = null;
-					}
-				}
-				else
-				{
-					weights = null;
-				}
-			}
-
-			public bool Equals(FrameData other)
-			{
-				return position.Equals(other.position) && rotation.Equals(other.rotation) && scale.Equals(other.scale) && ((weights == null && other.weights == null) || (weights != null && other.weights != null && weights.SequenceEqual(other.weights)));
-			}
-
-			public override bool Equals(object obj)
-			{
-				return obj is FrameData other && Equals(other);
-			}
-
-			public override int GetHashCode()
-			{
-				unchecked
-				{
-					var hashCode = position.GetHashCode();
-					hashCode = (hashCode * 397) ^ rotation.GetHashCode();
-					hashCode = (hashCode * 397) ^ scale.GetHashCode();
-					if (weights != null)
-						hashCode = (hashCode * 397) ^ weights.GetHashCode();
-					return hashCode;
-				}
-			}
-
-			public static bool operator ==(FrameData left, FrameData right)
-			{
-				return left.Equals(right);
-			}
-
-			public static bool operator !=(FrameData left, FrameData right)
-			{
-				return !left.Equals(right);
-			}
-		}
-#endif
 
 		private class StringBuilderLogHandler : ILogHandler
 		{
