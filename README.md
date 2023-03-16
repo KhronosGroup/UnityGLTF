@@ -1,4 +1,4 @@
-# UnityGLTF
+# UnityGLTF <!-- omit from toc -->
 
 ![Good coverage of glTF 2.0 with some exceptions (e.g. arbitrary texCoords are not well supported)](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
 ![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2020.3%E2%80%932021.3%2B-brightgreen)
@@ -19,20 +19,43 @@ UnityGLTF doesn't have any native dependencies (pure C#) and should thus work on
 
 The library is designed to be easy to extend with additional extensions to the glTF specification. Both import and export allow attaching custom callbacks and can be heavily modified to fit into specific pipelines.  
 
-## Contents
-- [Installation](#installation)  
-- [Unity Version and Render Pipeline Compatibility](#unity-version-and-render-pipeline-compatibility)  
-- [UnityGLTF and glTFast](#UnityGLTF-and-glTFast)  
-- [Supported Features and Extensions](#Supported-Features-and-Extensions)  
-- [glTF Materials](#glTF-Materials)  
-- [Exporting glTF Files](#Exporting-glTF-Files)  
-- [Animation Export](#Animation-Export)  
-- [Animation Import](#Animation-Import)  
-- [BlendShape Export](#BlendShape-Export)  
-- [Extensibility](#Extensibility)  
-- [Known Issues](#Known-Issues)  
-- [Contributing](#Contributing)  
-- [Samples](#Samples)  
+## Contents <!-- omit from toc -->
+- [Installation](#installation)
+- [Unity Version and Render Pipeline Compatibility](#unity-version-and-render-pipeline-compatibility)
+- [UnityGLTF and glTFast](#unitygltf-and-gltfast)
+- [Supported Features and Extensions](#supported-features-and-extensions)
+  - [Import and Export](#import-and-export)
+  - [Export only](#export-only)
+  - [Import only](#import-only)
+- [glTF Materials](#gltf-materials)
+  - [Material Conversions](#material-conversions)
+  - [Configure for Refractive Materials (Transmission and Volume)](#configure-for-refractive-materials-transmission-and-volume)
+    - [Material Setup](#material-setup)
+    - [URP](#urp)
+    - [Built-In](#built-in)
+    - [HDRP](#hdrp)
+  - [Material and Shader Export Compatibility](#material-and-shader-export-compatibility)
+  - [Legacy](#legacy)
+- [Exporting glTF Files](#exporting-gltf-files)
+  - [Testing, debugging, compatibility](#testing-debugging-compatibility)
+- [Animation Export](#animation-export)
+  - [Animator Controller](#animator-controller)
+  - [GLTFRecorder](#gltfrecorder)
+  - [Timeline Recorder](#timeline-recorder)
+  - [Legacy: Animation Component](#legacy-animation-component)
+  - [KHR\_animation\_pointer](#khr_animation_pointer)
+- [Blendshape Export](#blendshape-export)
+- [Importing glTF files](#importing-gltf-files)
+  - [Editor Import](#editor-import)
+  - [Default Importer Selection](#default-importer-selection)
+- [Animation Import](#animation-import)
+- [Extensibility](#extensibility)
+- [Known Issues](#known-issues)
+- [Contributing](#contributing)
+  - [GLTFSerializer](#gltfserializer)
+  - [The Unity Project](#the-unity-project)
+  - [Tests](#tests)
+- [Samples](#samples)
 
 ## Installation
 
@@ -276,6 +299,30 @@ Morph Targets / Blend Shapes are supported, including animations.
 To create smaller files for complex blendshape animations (e.g. faces with dozens of shapes), you can export with "Sparse Accessors" on.  
 
 > **Note**: While exporting with sparse accessors works, importing blend shapes with sparse accessors is currently not supported.  
+
+## Importing glTF files
+
+### Editor Import
+
+For importing `.gltf` or `.glb` files in the editor, place them in your Asset Database as usual. Make sure to bring bin/textures along for `.gltf`; `.glb` is usually self-contained.  
+
+When moving `.gltf` files inside Unity, make sure to move their bin/texture files as well, to not break the path references between them.  
+
+### Default Importer Selection
+
+UnityGLTF uses Unity's `ScriptedImporter` interface. For any given file format (file extension) there has to be one default importer and there can be additional, alternative importers.  
+
+UnityGLTF will register itself as the default importer for the .gltf and .glb extensions.  
+If the [glTFast package](https://github.com/atteneder/glTFast) is also present in a project, **glTFast gets precedence** and UnityGLTF is available as Importer Override, which can be selected from a dropdown on each glTF asset.  
+
+You can make UnityGLTF the default importer and de-prioritize glTFast by adding the following settings to your project's scripting defines:  
+
+```
+GLTFAST_FORCE_DEFAULT_IMPORTER_OFF
+UNITYGLTF_FORCE_DEFAULT_IMPORTER_ON
+```
+
+Care has been taken to align glTFast's and UnityGLTF's importers, so that in most cases you can switch between them without breaking prefab references. That being said, switching between importers can change material references, mesh references etc., so some manual adjustments may be needed after switching.  
 
 ## Animation Import
 
