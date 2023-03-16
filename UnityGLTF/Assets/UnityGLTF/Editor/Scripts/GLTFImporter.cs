@@ -254,14 +254,14 @@ namespace UnityGLTF
                         mesh.normals = new Vector3[0];
                     else if (_importNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
                         mesh.RecalculateNormals();
-                    else if (_importNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0)
+                    else if (_importNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
 	                    mesh.RecalculateNormals();
 
 					if (_importTangents == GLTFImporterNormals.None)
 						mesh.tangents = new Vector4[0];
 					else if (_importTangents == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
 						mesh.RecalculateTangents();
-					else if (_importTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0)
+					else if (_importTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
 						mesh.RecalculateTangents();
 
 					mesh.UploadMeshData(!_readWriteEnabled);
