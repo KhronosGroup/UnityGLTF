@@ -57,7 +57,8 @@ public class HumanoidSetup : MonoBehaviour
 	    avatar.name = "Avatar";
 	    Debug.Log(avatar);
 
-	    gameObject.GetComponent<Animator>().avatar = avatar;
+	    var animator = gameObject.GetComponent<Animator>();
+	    if (animator) animator.avatar = avatar;
 	    return avatar;
     }
 

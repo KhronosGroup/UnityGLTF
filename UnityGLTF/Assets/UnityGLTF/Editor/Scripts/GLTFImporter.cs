@@ -331,7 +331,8 @@ namespace UnityGLTF
                 // }
 
                 // add avatar
-                ctx.AddObjectToAsset("avatar", HumanoidSetup.AddAvatarToGameObject(gltfScene));
+                if (_importAnimations == AnimationMethod.MecanimHumanoid)
+					ctx.AddObjectToAsset("avatar", HumanoidSetup.AddAvatarToGameObject(gltfScene));
 
                 var renderers = gltfScene.GetComponentsInChildren<Renderer>();
 
