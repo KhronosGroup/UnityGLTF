@@ -226,14 +226,19 @@ namespace UnityGLTF
                     if (_generateLightmapUVs)
                     {
 	                    var uv2 = mesh.uv2;
-	                    if(uv2 == null || uv2.Length < 1)
+	                    if (uv2 == null || uv2.Length < 1)
 	                    {
+		                    var hasTriangleTopology = true;
+		                    for (var i = 0; i < mesh.subMeshCount; i++)
+								hasTriangleTopology &= mesh.GetTopology(i) == MeshTopology.Triangles;
+
 		                    // uv2 = Unwrapping.GeneratePerTriangleUV(mesh);
 		                    // mesh.SetUVs(1, uv2);
 
 		                    // There seems to be a bug in Unity's splitting code:
 		                    // for some meshes, the result is broken after splitting.
-		                    Unwrapping.GenerateSecondaryUVSet(mesh);
+		                    if (hasTriangleTopology)
+								Unwrapping.GenerateSecondaryUVSet(mesh);
 	                    }
                     }
                     if (_swapUvs)
