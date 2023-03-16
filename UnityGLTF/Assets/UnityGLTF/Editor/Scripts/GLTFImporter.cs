@@ -158,6 +158,19 @@ namespace UnityGLTF
 	            return uniqueName;
             }
 
+#if UNITY_2017_3_OR_NEWER
+            // We explicitly turn the new identifier on for new imports, that is, when no meta file existed before this import.
+            // We do this early, so that when imports fail, we still get the new identifier. Unity already sets import settings on failed imports.
+            if (!_useSceneNameIdentifier)
+            {
+	            var importer = GetAtPath(ctx.assetPath);
+	            if (importer.importSettingsMissing)
+	            {
+		            _useSceneNameIdentifier = true;
+	            }
+            }
+#endif
+
             try
             {
                 sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
@@ -446,16 +459,6 @@ namespace UnityGLTF
             }
 
 #if UNITY_2017_3_OR_NEWER
-	        // We explicitly turn the new identifier on for new imports, that is, when no meta file existed before this import.
-	        if (!_useSceneNameIdentifier)
-	        {
-		        var importer = GetAtPath(ctx.assetPath);
-		        if (importer.importSettingsMissing)
-		        {
-			        _useSceneNameIdentifier = true;
-		        }
-	        }
-
 	        if (!_useSceneNameIdentifier)
 	        {
 		        // Set main asset
