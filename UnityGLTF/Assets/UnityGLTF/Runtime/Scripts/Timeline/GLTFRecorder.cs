@@ -119,6 +119,7 @@ namespace UnityGLTF.Timeline
 						{
 							var mesh = skinnedMesh.sharedMesh;
 							var blendShapeCount = mesh.blendShapeCount;
+							if (blendShapeCount == 0) return null;
 							var weights = new float[blendShapeCount];
 							for (var i = 0; i < blendShapeCount; i++)
 								weights[i] = skinnedMesh.GetBlendShapeWeight(i);
