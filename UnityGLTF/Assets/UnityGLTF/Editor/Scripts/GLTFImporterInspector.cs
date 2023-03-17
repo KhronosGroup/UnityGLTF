@@ -34,16 +34,35 @@ namespace UnityGLTF
 					.Select(n => ObjectNames.NicifyVariableName(n))
 					.ToArray();
 			}
-			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
+			EditorGUILayout.LabelField("Scene", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._removeEmptyRootObjects)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum LOD"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write Enabled"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum Shader LOD"));
+			EditorGUILayout.Separator();
+			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
+			EditorGUILayout.Separator();
+			EditorGUILayout.LabelField("Geometry", EditorStyles.boldLabel);
+			EditorGUI.BeginChangeCheck();
+			var importNormalsProp = serializedObject.FindProperty(nameof(GLTFImporter._importNormals));
+			var importNormals = EditorGUILayout.Popup("Normals", importNormalsProp.intValue, _importNormalsNames);
+			if (EditorGUI.EndChangeCheck())
+			{
+				importNormalsProp.intValue = importNormals;
+			}
+			EditorGUI.BeginChangeCheck();
+			var importTangentsProp = serializedObject.FindProperty(nameof(GLTFImporter._importTangents));
+			var importTangents = EditorGUILayout.Popup("Tangents", importTangentsProp.intValue, _importNormalsNames);
+			if (EditorGUI.EndChangeCheck())
+			{
+				importTangentsProp.intValue = importTangents;
+			}
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._swapUvs)), new GUIContent("Swap UVs"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateLightmapUVs)), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
-			EditorGUILayout.LabelField("Animations", EditorStyles.boldLabel);
+
+			EditorGUILayout.LabelField("Animation", EditorStyles.boldLabel);
 			var anim = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
 			EditorGUILayout.PropertyField(anim, new GUIContent("Animations"));
 			if (anim.boolValue)
@@ -56,22 +75,6 @@ namespace UnityGLTF
 					EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._animationLoopPose)), new GUIContent("Loop Pose"));
 					EditorGUI.indentLevel--;
 				}
-			}
-			EditorGUILayout.Separator();
-			EditorGUILayout.LabelField("Mesh Data", EditorStyles.boldLabel);
-			EditorGUI.BeginChangeCheck();
-			var importNormalsProp = serializedObject.FindProperty(nameof(GLTFImporter._importNormals));
-			var importNormals = EditorGUILayout.Popup(importNormalsProp.displayName, importNormalsProp.intValue, _importNormalsNames);
-			if (EditorGUI.EndChangeCheck())
-			{
-				importNormalsProp.intValue = importNormals;
-			}
-			EditorGUI.BeginChangeCheck();
-			var importTangentsProp = serializedObject.FindProperty(nameof(GLTFImporter._importTangents));
-			var importTangents = EditorGUILayout.Popup(importTangentsProp.displayName, importTangentsProp.intValue, _importNormalsNames);
-			if (EditorGUI.EndChangeCheck())
-			{
-				importTangentsProp.intValue = importTangents;
 			}
 			EditorGUILayout.Separator();
 
@@ -226,7 +229,7 @@ namespace UnityGLTF
 			EditorGUI.EndDisabledGroup();
 
 			serializedObject.ApplyModifiedProperties();
-			ApplyRevertGUI();
+			// ApplyRevertGUI();
 		}
 
 		public static bool TextureImportSettingsAreCorrect(GLTFImporter importer)

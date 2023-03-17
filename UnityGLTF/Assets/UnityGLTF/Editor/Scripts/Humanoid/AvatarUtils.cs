@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace BKUnity
+namespace UnityGLTF
 {
 	public class AvatarUtils
 	{
-		//A static dictionary containing the mapping from joint/bones names in the model
-		//to the names Unity uses for them internally.
-		//In this case they match the naming from the included Mixamo model on the left
-		//and the Unity equivalent name on the right.
-		//This does not need to be hard-coded.
+		// A static dictionary containing the mapping from joint/bones names in the model
+		// to the names Unity uses for them internally.
+		// In this case they match the naming from the included Mixamo model on the left
+		// and the Unity equivalent name on the right.
+		// This does not need to be hard-coded.
 		public static Dictionary<string, string> HumanSkeletonNames = new Dictionary<string, string>()
 		{
 			{"mixamorig:Spine1", "Chest"},
@@ -65,6 +65,7 @@ namespace BKUnity
 			{"mixamorig:Spine", "Spine" },
 			{"mixamorig:Spine2", "UpperChest" },
 
+			// Other common Avatar formats can also be added here
 			// { "root", "" },
 			{ "hips", "Hips" },
 			{ "spine", "Spine" },

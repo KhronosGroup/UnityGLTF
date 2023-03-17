@@ -4,65 +4,62 @@ using UnityEditor.AssetImporters;
 
 [assembly: InternalsVisibleTo("UnityGLTFEditor")]
 
-internal class UnityGLTFTabbedEditor : AssetImporterTabbedEditor
+namespace UnityGLTF
 {
-	public override void OnEnable()
+	internal class UnityGLTFTabbedEditor : AssetImporterTabbedEditor
 	{
-		if (this.tabs == null)
+		public override void OnEnable()
 		{
-			this.tabs = new BaseAssetImporterTabUI[]
+			if (this.tabs == null)
 			{
-				// (BaseAssetImporterTabUI) new ModelImporterModelEditor((AssetImporterEditor) this),
-				// (BaseAssetImporterTabUI) new ModelImporterRigEditor((AssetImporterEditor) this),
-				// (BaseAssetImporterTabUI) new ModelImporterClipEditor((AssetImporterEditor) this),
-				// (BaseAssetImporterTabUI) new ModelImporterMaterialEditor((AssetImporterEditor) this)
-				new TestTab(this, "Settings", this),
-				new TestTab(this, "Hello"),
-				new TestTab(this, "World"),
-			};
-			this.m_TabNames = new string[]
-			{
-				// "Model",
-				// "Rig",
-				// "Animation",
-				// "Materials"
-				"Settings",
-				"Hello",
-				"World",
-			};
+				this.tabs = new BaseAssetImporterTabUI[]
+				{
+					// (BaseAssetImporterTabUI) new ModelImporterModelEditor((AssetImporterEditor) this),
+					// (BaseAssetImporterTabUI) new ModelImporterRigEditor((AssetImporterEditor) this),
+					// (BaseAssetImporterTabUI) new ModelImporterClipEditor((AssetImporterEditor) this),
+					// (BaseAssetImporterTabUI) new ModelImporterMaterialEditor((AssetImporterEditor) this)
+					new AssetImporterTab(this, "Model", this),
+					new AssetImporterTab(this, "Rig"),
+					new AssetImporterTab(this, "Animation"),
+					new AssetImporterTab(this, "Materials"),
+				};
+				this.m_TabNames = new string[]
+				{
+					"Model",
+					"Rig",
+					"Animation",
+					"Materials",
+				};
+			}
+
+			base.OnEnable();
 		}
-		base.OnEnable();
+
+		public virtual void TabInspectorGUI()
+		{
+
+		}
 	}
 
-	public override void OnInspectorGUI()
+	internal class AssetImporterTab : BaseAssetImporterTabUI
 	{
-		base.OnInspectorGUI();
-	}
+		private string label;
+		private UnityGLTFTabbedEditor parent;
 
-	public virtual void TabInspectorGUI()
-	{
+		public AssetImporterTab(AssetImporterEditor panelContainer, string label, UnityGLTFTabbedEditor parent = null) : base(panelContainer)
+		{
+			this.label = label;
+			this.parent = parent;
+		}
 
-	}
-}
+		internal override void OnEnable()
+		{
+		}
 
-internal class TestTab : BaseAssetImporterTabUI
-{
-	private string label;
-	private UnityGLTFTabbedEditor parent;
-
-	public TestTab(AssetImporterEditor panelContainer, string label, UnityGLTFTabbedEditor parent = null) : base(panelContainer)
-	{
-		this.label = label;
-		this.parent = parent;
-	}
-
-	internal override void OnEnable()
-	{
-	}
-
-	public override void OnInspectorGUI()
-	{
-		if (this.parent) this.parent.TabInspectorGUI();
-		else EditorGUILayout.LabelField("Name", label);
+		public override void OnInspectorGUI()
+		{
+			if (parent) parent.TabInspectorGUI();
+			else EditorGUILayout.LabelField("Name", label);
+		}
 	}
 }
