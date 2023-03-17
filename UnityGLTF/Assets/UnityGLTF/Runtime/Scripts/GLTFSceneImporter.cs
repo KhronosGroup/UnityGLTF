@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEditor.AssetImporters;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -235,6 +236,12 @@ namespace UnityGLTF
 		public bool CullFarLOD = false;
 
 		public bool IsRunning => _isRunning;
+
+		#if UNITY_EDITOR
+		// TODO: This should probably be part of an import context
+		public string FilePath { get; internal set; }
+		public AssetImportContext ImportContext { get; internal set; }
+		#endif
 
 		/// <summary>
 		/// Statistics from the scene

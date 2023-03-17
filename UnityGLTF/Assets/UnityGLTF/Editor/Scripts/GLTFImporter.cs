@@ -182,7 +182,7 @@ namespace UnityGLTF
             try
             {
                 sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
-                CreateGLTFScene(ctx.assetPath, out gltfScene, out animations);
+                CreateGLTFScene(ctx.assetPath, ctx, out gltfScene, out animations);
                 var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
                 if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
 
@@ -538,7 +538,7 @@ namespace UnityGLTF
         }
 #endif
 
-		private void CreateGLTFScene(string projectFilePath, out GameObject scene, out AnimationClip[] animationClips)
+		private void CreateGLTFScene(string projectFilePath, AssetImportContext ctx, out GameObject scene, out AnimationClip[] animationClips)
         {
 			var importOptions = new ImportOptions
 			{
@@ -553,6 +553,8 @@ namespace UnityGLTF
 				GLTFParser.ParseJson(stream, out gLTFRoot);
 				stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
 				var loader = new GLTFSceneImporter(gLTFRoot, stream, importOptions);
+				loader.FilePath = projectFilePath;
+				loader.ImportContext = ctx;
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
