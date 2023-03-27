@@ -173,6 +173,11 @@ namespace UnityGLTF
 		public GameObject CreatedObject { get; private set; }
 
 		/// <summary>
+		/// All created animation clips
+		/// </summary>
+		public AnimationClip[] CreatedAnimationClips { get; private set; }
+
+		/// <summary>
 		/// Adds colliders to primitive objects when created
 		/// </summary>
 		public ColliderType Collider { get; set; }
@@ -908,6 +913,7 @@ namespace UnityGLTF
 #else
 						Debug.Log(LogType.Warning, "glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
 #endif
+						CreatedAnimationClips = constructedClips.ToArray();
 					}
 				}
 

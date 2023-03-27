@@ -152,7 +152,8 @@ namespace UnityGLTF
         {
             string sceneName = null;
             GameObject gltfScene = null;
-            UnityEngine.Mesh[] meshes = null;
+            AnimationClip[] animations = null;
+            Mesh[] meshes = null;
 
             var uniqueNames = new List<string>() { "main asset" };
             EnsureShadersAreLoaded();
@@ -180,7 +181,7 @@ namespace UnityGLTF
             try
             {
                 sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
-                gltfScene = CreateGLTFScene(ctx.assetPath);
+                CreateGLTFScene(ctx.assetPath, out gltfScene, out animations);
                 var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
                 if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
 
@@ -307,19 +308,11 @@ namespace UnityGLTF
                     return mesh;
                 }).Where(x => x).ToArray();
 
-                var animations = gltfScene.GetComponentsInChildren<Animation>();
-                var clips = animations.SelectMany(x => AnimationUtility.GetAnimationClips(x.gameObject));
-                foreach (var clip in clips)
+                foreach (var clip in animations)
                 {
 	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
                 }
 
-                var animators = gltfScene.GetComponentsInChildren<Animator>();
-                var clips2 = animators.SelectMany(x => AnimationUtility.GetAnimationClips(x.gameObject));
-                foreach (var clip in clips2)
-                {
-	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
-                }
                 // we can't add the Animators as subassets here, since they require their state machines to be direct subassets themselves.
                 // foreach (var anim in animators)
                 // {
@@ -536,7 +529,7 @@ namespace UnityGLTF
         }
 #endif
 
-		private GameObject CreateGLTFScene(string projectFilePath)
+		private void CreateGLTFScene(string projectFilePath, out GameObject scene, out AnimationClip[] animationClips)
         {
 			var importOptions = new ImportOptions
 			{
@@ -578,7 +571,8 @@ namespace UnityGLTF
 					.Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
 					.ToList();
 
-				return loader.LastLoadedScene;
+				scene = loader.LastLoadedScene;
+				animationClips = loader.CreatedAnimationClips;
 			}
         }
 
