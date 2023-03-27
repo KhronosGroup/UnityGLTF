@@ -189,7 +189,11 @@ namespace UnityGLTF
 							if (GUILayout.Button("Restore", GUILayout.Width(60)))
 							{
 								t.RemoveRemap(id);
+#if UNITY_2022_2_OR_NEWER
+								SaveChanges();
+#else
 								ApplyAndImport();
+#endif
 								GUIUtility.ExitGUI();
 							}
 						}

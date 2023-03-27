@@ -135,12 +135,12 @@ namespace UnityGLTF
 			{
 				if (material.GetTextureScale("baseColorTexture") != Vector2.one || material.GetTextureOffset("baseColorTexture") != Vector2.zero)
 				{
-					material.SetKeyword("_TEXTURE_TRANSFORM", true);
+					SetKeyword(material, "_TEXTURE_TRANSFORM", true);
 				}
 			}
 		}
 
-		public static void SetKeyword(this Material material, string keyword, bool state)
+		public static void SetKeyword(Material material, string keyword, bool state)
 		{
 			if (state)
 				material.EnableKeyword(keyword + "_ON");

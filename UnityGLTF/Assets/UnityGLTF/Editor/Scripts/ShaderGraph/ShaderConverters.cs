@@ -90,7 +90,7 @@ namespace UnityGLTF
 			material.SetTextureOffset(baseColorTexture, albedoOffset);
 			material.SetTextureScale(baseColorTexture, albedoTiling);
 			if (albedoOffset != Vector2.zero || albedoTiling != Vector2.one)
-				material.SetKeyword("_TEXTURE_TRANSFORM", true);
+				GLTFMaterialHelper.SetKeyword(material, "_TEXTURE_TRANSFORM", true);
 
 			material.SetFloat(metallicFactor, metallic);
 			material.SetFloat(roughnessFactor, 1 - smoothness);
@@ -131,8 +131,8 @@ namespace UnityGLTF
 			material.SetFloat(alphaCutoff, cutoff);
 			if (isCutoff)
 			{
-				material.SetKeyword("_ALPHATEST", true);
-				material.SetKeyword("_BUILTIN_ALPHATEST", true);
+				GLTFMaterialHelper.SetKeyword(material, "_ALPHATEST", true);
+				GLTFMaterialHelper.SetKeyword(material, "_BUILTIN_ALPHATEST", true);
 				material.EnableKeyword("_BUILTIN_AlphaClip");
 			}
 
