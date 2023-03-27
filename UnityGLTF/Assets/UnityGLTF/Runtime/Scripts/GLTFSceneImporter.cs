@@ -13,8 +13,6 @@ using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
-using Matrix4x4 = System.Numerics.Matrix4x4;
-using Object = UnityEngine.Object;
 using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
