@@ -428,9 +428,9 @@ namespace UnityGLTF
 #endif
 	}
 
-	internal static class MatExt
+	internal static class MatHelper
 	{
-		internal static void SetKeyword(this Material material, string keyword, bool state)
+		internal static void SetKeyword(Material material, string keyword, bool state)
 		{
 			if (state)
 				material.EnableKeyword(keyword + "_ON");

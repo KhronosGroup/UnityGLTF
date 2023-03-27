@@ -100,7 +100,7 @@ namespace UnityGLTF
 						mrMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 						mrMapper.BaseColorXTexCoord = ext.TexCoord;
 
-						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
+						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
 					}
 				}
 

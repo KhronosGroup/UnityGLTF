@@ -29,7 +29,7 @@ namespace UnityGLTF
 		public override void ValidateMaterial(Material material)
 		{
 			base.ValidateMaterial(material);
-			ShaderGraphHelpers.ValidateMaterialKeywords(material);
+			GLTFMaterialHelper.ValidateMaterialKeywords(material);
 		}
 #endif
 
@@ -401,7 +401,7 @@ namespace UnityGLTF
 				foreach (var t in materialEditor.targets)
 				{
 					if (t is Material material)
-						ShaderGraphHelpers.ValidateMaterialKeywords(material);
+						GLTFMaterialHelper.ValidateMaterialKeywords(material);
 				}
 			}
 		}

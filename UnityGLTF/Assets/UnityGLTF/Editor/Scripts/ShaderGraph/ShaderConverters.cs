@@ -143,7 +143,7 @@ namespace UnityGLTF
 				material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
 
 			// ensure keywords are correctly set after conversion
-			ShaderGraphHelpers.ValidateMaterialKeywords(material);
+			GLTFMaterialHelper.ValidateMaterialKeywords(material);
 
 			return true;
 		}

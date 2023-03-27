@@ -100,14 +100,6 @@ namespace UnityGLTF
 #endif
 		}
 	}
-
-	public interface IUnityGltfShaderUpgradeMeta
-	{
-		Shader SourceShader { get; }
-		bool IsUnlit { get; }
-		bool IsTransparent { get; }
-		bool IsDoublesided { get; }
-	}
 }
 
 #endif

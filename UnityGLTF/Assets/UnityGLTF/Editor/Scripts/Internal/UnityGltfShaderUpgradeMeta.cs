@@ -2,6 +2,14 @@
 
 namespace UnityGLTF
 {
+	public interface IUnityGltfShaderUpgradeMeta
+	{
+		Shader SourceShader { get; }
+		bool IsUnlit { get; }
+		bool IsTransparent { get; }
+		bool IsDoublesided { get; }
+	}
+
 	public class UnityGltfShaderUpgradeMeta : ScriptableObject
 	{
 		public Shader sourceShader;

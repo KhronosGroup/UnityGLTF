@@ -124,18 +124,20 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
 			EditorGUILayout.Separator();
 
-			const string key = nameof(GLTFImporterInspector) + "_RemapMaterials";
 			// extract and remap materials
 			if (mats != null && mats.serializedObject != null)
 			{
 				EditorGUI.indentLevel++;
 				var externalObjectMap = t.GetExternalObjectMap();
 
-				void ExtractMaterial(Material subAsset)
+				void ExtractMaterial(Material subAsset, bool importImmediately)
 				{
 					if (!subAsset) return;
 					var filename = SanitizePath(subAsset.name);
-					var destinationPath = Path.GetDirectoryName(t.assetPath) + "/" + filename + ".mat";
+					var dirName = Path.GetDirectoryName(t.assetPath) + "/Materials";
+					if (!Directory.Exists(dirName))
+						Directory.CreateDirectory(dirName);
+					var destinationPath = dirName + "/" + filename + ".mat";
 					var assetPath = AssetDatabase.GetAssetPath(subAsset);
 
 					var clone = Instantiate(subAsset);
@@ -144,12 +146,15 @@ namespace UnityGLTF
 					var assetImporter = AssetImporter.GetAtPath(assetPath);
 					assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
 
-					AssetDatabase.WriteImportSettingsIfDirty(assetPath);
-					AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+					if (importImmediately)
+					{
+						AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+						AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+					}
 				}
 
 				const string key2 = nameof(GLTFImporterInspector) + "_RemapMaterials_List";
-				var newVal2 = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(key2, false), "Imported Materials (" + mats.arraySize + ")");
+				var newVal2 = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(key2, false), "Remap Materials (" + mats.arraySize + ")");
 				SessionState.SetBool(key2, newVal2);
 				if (newVal2)
 				{
@@ -165,7 +170,7 @@ namespace UnityGLTF
 						var newObj = EditorGUILayout.ObjectField(mat.name, remap, typeof(Material), false);
 						if (EditorGUI.EndChangeCheck())
 						{
-							if (newObj)
+							if (newObj && newObj != mat)
 								t.AddRemap(id, newObj);
 							else
 								t.RemoveRemap(id);
@@ -175,7 +180,7 @@ namespace UnityGLTF
 						{
 							if (GUILayout.Button("Extract", GUILayout.Width(60)))
 							{
-								ExtractMaterial(mat);
+								ExtractMaterial(mat, true);
 								GUIUtility.ExitGUI();
 							}
 						}
@@ -210,8 +215,11 @@ namespace UnityGLTF
 					for (var i = 0; i < mats.arraySize; i++)
 					{
 						AssetDatabase.StartAssetEditing();
-						ExtractMaterial(mats.GetArrayElementAtIndex(i).objectReferenceValue as Material);
+						ExtractMaterial(mats.GetArrayElementAtIndex(i).objectReferenceValue as Material, false);
 						AssetDatabase.StopAssetEditing();
+						var assetPath = AssetDatabase.GetAssetPath(target);
+						AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+						AssetDatabase.Refresh();
 					}
 				}
 
