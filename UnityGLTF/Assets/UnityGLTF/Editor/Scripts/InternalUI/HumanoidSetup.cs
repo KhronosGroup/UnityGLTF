@@ -6,10 +6,52 @@ using Object = UnityEngine.Object;
 
 namespace UnityGLTF
 {
-	public static class HumanoidSetup
+	internal static class HumanoidSetup
 	{
-	    // Start is called before the first frame update
 	    private static MethodInfo _SetupHumanSkeleton;
+
+	    internal static Avatar AddAvatarToGameObject(GameObject gameObject)
+	    {
+		    HumanDescription description = AvatarUtils.CreateHumanDescription(gameObject);
+		    var bones = description.human;
+		    SetupHumanSkeleton(gameObject, ref bones, out var skeletonBones, out var hasTranslationDoF);
+		    description.human = bones;
+		    description.skeleton = skeletonBones;
+		    description.hasTranslationDoF = hasTranslationDoF;
+
+		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
+		    avatar.name = "Avatar";
+
+		    if (!avatar.isValid)
+		    {
+			    Object.DestroyImmediate(avatar);
+			    return null;
+		    }
+
+		    var animator = gameObject.GetComponent<Animator>();
+		    if (animator) animator.avatar = avatar;
+		    return avatar;
+	    }
+
+	    private static void SetupHumanSkeleton(
+		    GameObject modelPrefab,
+		    ref HumanBone[] humanBoneMappingArray,
+		    out SkeletonBone[] skeletonBones,
+		    out bool hasTranslationDoF)
+	    {
+		    _SetupHumanSkeleton = typeof(AvatarSetupTool).GetMethod(nameof(SetupHumanSkeleton), (BindingFlags)(-1));
+		    skeletonBones = Array.Empty<SkeletonBone>();
+		    hasTranslationDoF = false;
+
+		    _SetupHumanSkeleton?.Invoke(null, new object[]
+		    {
+			    modelPrefab,
+			    humanBoneMappingArray,
+			    skeletonBones,
+			    hasTranslationDoF
+		    });
+	    }
+
 
 	    // AvatarSetupTools
 	    // AvatarBuilder.BuildHumanAvatar
@@ -56,47 +98,5 @@ namespace UnityGLTF
 		    e.SwitchToEditMode();
 	    }
 #endif
-
-	    internal static Avatar AddAvatarToGameObject(GameObject gameObject)
-	    {
-		    HumanDescription description = AvatarUtils.CreateHumanDescription(gameObject);
-		    var bones = description.human;
-		    SetupHumanSkeleton(gameObject, ref bones, out var skeletonBones, out var hasTranslationDoF);
-		    description.human = bones;
-		    description.skeleton = skeletonBones;
-		    description.hasTranslationDoF = hasTranslationDoF;
-
-		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
-		    avatar.name = "Avatar";
-
-		    if (!avatar.isValid)
-		    {
-			    Object.DestroyImmediate(avatar);
-			    return null;
-		    }
-
-		    var animator = gameObject.GetComponent<Animator>();
-		    if (animator) animator.avatar = avatar;
-		    return avatar;
-	    }
-
-	    private static void SetupHumanSkeleton(
-		    GameObject modelPrefab,
-		    ref HumanBone[] humanBoneMappingArray,
-		    out SkeletonBone[] skeletonBones,
-		    out bool hasTranslationDoF)
-	    {
-		    _SetupHumanSkeleton = typeof(AvatarSetupTool).GetMethod(nameof(SetupHumanSkeleton), (BindingFlags)(-1));
-		    skeletonBones = Array.Empty<SkeletonBone>();
-		    hasTranslationDoF = false;
-
-		    _SetupHumanSkeleton?.Invoke(null, new object[]
-		    {
-			    modelPrefab,
-			    humanBoneMappingArray,
-			    skeletonBones,
-			    hasTranslationDoF
-		    });
-	    }
 	}
 }

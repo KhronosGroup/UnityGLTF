@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-	public class AvatarUtils
+	internal class AvatarUtils
 	{
 		// A static dictionary containing the mapping from joint/bones names in the model
 		// to the names Unity uses for them internally.

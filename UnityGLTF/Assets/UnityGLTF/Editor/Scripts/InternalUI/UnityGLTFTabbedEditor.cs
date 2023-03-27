@@ -12,14 +12,13 @@ namespace UnityGLTF
 {
 	internal class UnityGLTFTabbedEditor : AssetImporterTabbedEditor
 	{
-		private List<GltfAssetImporterTab> _tabs;
+		private readonly List<GltfAssetImporterTab> _tabs = new List<GltfAssetImporterTab>();
 
-		public void AddTab(GltfAssetImporterTab tab)
+		protected void AddTab(GltfAssetImporterTab tab)
 		{
-			if (_tabs == null) _tabs = new List<GltfAssetImporterTab>();
 			if (!_tabs.Contains(tab)) _tabs.Add(tab);
 			tabs = _tabs.Select(x => (BaseAssetImporterTabUI) x).ToArray();
-			m_TabNames = _tabs.Select(t => t.label).ToArray();
+			m_TabNames = _tabs.Select(t => t.Label).ToArray();
 		}
 
 		public GltfAssetImporterTab GetTab(int index)
@@ -30,32 +29,21 @@ namespace UnityGLTF
 			return _tabs[index];
 		}
 
-		public override void OnEnable()
-		{
-			Debug.Log("Enabling Active Tabs");
-			base.OnEnable();
-		}
+		public override void OnEnable() => base.OnEnable();
 	}
 
 	internal class GltfAssetImporterTab : BaseAssetImporterTabUI
 	{
-		internal string label;
-		private Action tabGui;
+		internal readonly string Label;
+		private readonly Action _tabGui;
 
 		public GltfAssetImporterTab(AssetImporterEditor panelContainer, string label, Action tabGui) : base(panelContainer)
 		{
-			this.label = label;
-			this.tabGui = tabGui;
+			this.Label = label;
+			this._tabGui = tabGui;
 		}
 
-		internal override void OnEnable()
-		{
-		}
-
-		public override void OnInspectorGUI()
-		{
-			if (tabGui != null) tabGui();
-			else EditorGUILayout.LabelField("Name", label);
-		}
+		internal override void OnEnable() { }
+		public override void OnInspectorGUI() => _tabGui?.Invoke();
 	}
 }
