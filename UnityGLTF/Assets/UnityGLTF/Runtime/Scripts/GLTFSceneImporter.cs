@@ -724,8 +724,8 @@ namespace UnityGLTF
 					{
 						for (int i = 0; i < weights.Count; ++i)
 						{
-							// GLTF weights are [0, 1] range but Unity weights are [0, 100] range
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * 100));
+							// GLTF weights are [0, 1] range; Unity weights must match the frame weight
+							renderer.SetBlendShapeWeight(i, (float)(weights[i] * 1f));
 						}
 					}
 				}

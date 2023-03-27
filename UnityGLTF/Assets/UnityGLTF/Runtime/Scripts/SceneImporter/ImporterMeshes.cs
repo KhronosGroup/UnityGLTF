@@ -154,7 +154,7 @@ namespace UnityGLTF
 				for (int i = 0; i < firstPrim.Targets.Count; i++)
 				{
 					var targetName = firstPrim.TargetNames != null ? firstPrim.TargetNames[i] : $"Morphtarget{i}";
-					mesh.AddBlendShapeFrame(targetName, 100,
+					mesh.AddBlendShapeFrame(targetName, 1f,
 						unityMeshData.MorphTargetVertices[i],
 						unityMeshData.MorphTargetNormals != null ? unityMeshData.MorphTargetNormals[i] : null,
 						unityMeshData.MorphTargetTangents != null ? unityMeshData.MorphTargetTangents[i] : null

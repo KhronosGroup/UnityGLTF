@@ -324,7 +324,7 @@ namespace UnityGLTF
 								{
 									var allValues = data.AsFloats;
 									for (var k = 0; k < targetCount; k++)
-										frameFloats[k] = allValues[frame * targetCount + k] * 100f;
+										frameFloats[k] = allValues[frame * targetCount + k];
 
 									return frameFloats;
 								});
