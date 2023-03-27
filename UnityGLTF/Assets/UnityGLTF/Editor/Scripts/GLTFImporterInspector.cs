@@ -1,13 +1,11 @@
 #if UNITY_2017_1_OR_NEWER
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEditor;
 
 using UnityEngine;
-using Object = UnityEngine.Object;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -22,12 +20,37 @@ namespace UnityGLTF
 	{
 		private string[] _importNormalsNames;
 
-		public override void TabInspectorGUI()
+		public override void OnEnable()
+		{
+			AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
+			AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
+			AddTab(new GltfAssetImporterTab(this, "Materials", MaterialInspectorGUI));
+			AddTab(new GltfAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
+
+			base.OnEnable();
+		}
+
+		private void TextureWarningsGUI(GLTFImporter t)
+		{
+			if (!t)	return;
+			if (!TextureImportSettingsAreCorrect(t))
+			{
+				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
+				if (GUILayout.Button("Fix All"))
+				{
+					FixTextureImportSettings(t);
+				}
+			}
+		}
+
+		private void ModelInspectorGUI()
 		{
 			var t = target as GLTFImporter;
+			if (!t) EditorGUILayout.LabelField("NOOOO");
+
 			if (!t) return;
 
-			serializedObject.Update();
+			// serializedObject.Update();
 			if (_importNormalsNames == null)
 			{
 				_importNormalsNames = Enum.GetNames(typeof(GLTFImporterNormals))
@@ -37,7 +60,7 @@ namespace UnityGLTF
 			EditorGUILayout.LabelField("Scene", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._removeEmptyRootObjects)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum Shader LOD"));
+			// EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum Shader LOD"));
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
@@ -62,10 +85,17 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateLightmapUVs)), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
 
-			EditorGUILayout.LabelField("Animation", EditorStyles.boldLabel);
+			TextureWarningsGUI(t);
+		}
+
+		private void AnimationInspectorGUI()
+		{
+			var t = target as GLTFImporter;
+			if (!t) return;
+
 			var anim = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
-			EditorGUILayout.PropertyField(anim, new GUIContent("Animations"));
-			if (anim.boolValue)
+			EditorGUILayout.PropertyField(anim, new GUIContent("Animation Type"));
+			if (anim.enumValueIndex > 0)
 			{
 				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
 				EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
@@ -76,18 +106,27 @@ namespace UnityGLTF
 					EditorGUI.indentLevel--;
 				}
 			}
-			EditorGUILayout.Separator();
 
-			EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
+			// warn if Humanoid rig import has failed
+			if (!HasModified() && anim.enumValueIndex == (int) AnimationMethod.MecanimHumanoid && !AssetDatabase.LoadAssetAtPath<Avatar>(t.assetPath))
+			{
+				EditorGUILayout.Separator();
+				EditorGUILayout.HelpBox("The model doesn't contain a valid Humanoid rig. See the console for more information.", MessageType.Error);
+			}
+		}
+
+		private void MaterialInspectorGUI()
+		{
+			var t = target as GLTFImporter;
+			if (!t) return;
+
 			var mats = serializedObject.FindProperty("m_Materials");
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
 			EditorGUILayout.Separator();
 
 			const string key = nameof(GLTFImporterInspector) + "_RemapMaterials";
-			var newVal = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(key, false), "Remap Materials");
-			SessionState.SetBool(key, newVal);
 			// extract and remap materials
-			if (newVal && mats != null && mats.serializedObject != null)
+			if (mats != null && mats.serializedObject != null)
 			{
 				EditorGUI.indentLevel++;
 				var externalObjectMap = t.GetExternalObjectMap();
@@ -110,7 +149,7 @@ namespace UnityGLTF
 				}
 
 				const string key2 = nameof(GLTFImporterInspector) + "_RemapMaterials_List";
-				var newVal2 = EditorGUILayout.Foldout(SessionState.GetBool(key2, false), "All Materials (" + mats.arraySize + ")");
+				var newVal2 = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(key2, false), "Imported Materials (" + mats.arraySize + ")");
 				SessionState.SetBool(key2, newVal2);
 				if (newVal2)
 				{
@@ -211,25 +250,20 @@ namespace UnityGLTF
 
 			EditorGUILayout.Separator();
 
-			if (!TextureImportSettingsAreCorrect(t))
-			{
-				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
-				if (GUILayout.Button("Fix All"))
-				{
-					FixTextureImportSettings(t);
-				}
-			}
+			TextureWarningsGUI(t);
+		}
+
+		private void ExtensionInspectorGUI()
+		{
+			var t = target as GLTFImporter;
+			if (!t) return;
 
 			EditorGUI.BeginDisabledGroup(true);
 			var mainAssetIdentifierProp = serializedObject.FindProperty(nameof(GLTFImporter._mainAssetIdentifier));
 			EditorGUILayout.PropertyField(mainAssetIdentifierProp);
-			// EditorGUILayout.PropertyField(serializedObject.FindProperty("_textures"), new GUIContent("Textures"));
-			EditorGUILayout.Separator();
+
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions"));
 			EditorGUI.EndDisabledGroup();
-
-			serializedObject.ApplyModifiedProperties();
-			// ApplyRevertGUI();
 		}
 
 		public static bool TextureImportSettingsAreCorrect(GLTFImporter importer)

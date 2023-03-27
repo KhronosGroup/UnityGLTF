@@ -1,9 +1,8 @@
-// #define TESTING
-
 using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityGLTF
 {
@@ -69,6 +68,12 @@ namespace UnityGLTF
 
 		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
 		    avatar.name = "Avatar";
+
+		    if (!avatar.isValid)
+		    {
+			    Object.DestroyImmediate(avatar);
+			    return null;
+		    }
 
 		    var animator = gameObject.GetComponent<Animator>();
 		    if (animator) animator.avatar = avatar;

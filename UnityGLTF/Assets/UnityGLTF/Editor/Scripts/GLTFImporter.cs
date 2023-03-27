@@ -76,7 +76,6 @@ namespace UnityGLTF
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _addAnimatorComponent = false;
-        [SerializeField] internal bool _humanoid = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
         [SerializeField] internal bool _importMaterials = true;
@@ -323,9 +322,12 @@ namespace UnityGLTF
 	            //     }
                 // }
 
-                // add avatar
                 if (_importAnimations == AnimationMethod.MecanimHumanoid)
-					ctx.AddObjectToAsset("avatar", HumanoidSetup.AddAvatarToGameObject(gltfScene));
+                {
+	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene);
+	                if (avatar && avatar.isValid)
+						ctx.AddObjectToAsset("avatar", avatar);
+                }
 
                 var renderers = gltfScene.GetComponentsInChildren<Renderer>();
 

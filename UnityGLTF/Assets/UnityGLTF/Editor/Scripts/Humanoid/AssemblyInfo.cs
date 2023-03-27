@@ -1,6 +1,10 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.AssetImporters;
+using UnityEngine;
 
 [assembly: InternalsVisibleTo("UnityGLTFEditor")]
 
@@ -8,48 +12,40 @@ namespace UnityGLTF
 {
 	internal class UnityGLTFTabbedEditor : AssetImporterTabbedEditor
 	{
-		public override void OnEnable()
-		{
-			if (this.tabs == null)
-			{
-				this.tabs = new BaseAssetImporterTabUI[]
-				{
-					// (BaseAssetImporterTabUI) new ModelImporterModelEditor((AssetImporterEditor) this),
-					// (BaseAssetImporterTabUI) new ModelImporterRigEditor((AssetImporterEditor) this),
-					// (BaseAssetImporterTabUI) new ModelImporterClipEditor((AssetImporterEditor) this),
-					// (BaseAssetImporterTabUI) new ModelImporterMaterialEditor((AssetImporterEditor) this)
-					new AssetImporterTab(this, "Model", this),
-					new AssetImporterTab(this, "Rig"),
-					new AssetImporterTab(this, "Animation"),
-					new AssetImporterTab(this, "Materials"),
-				};
-				this.m_TabNames = new string[]
-				{
-					"Model",
-					"Rig",
-					"Animation",
-					"Materials",
-				};
-			}
+		private List<GltfAssetImporterTab> _tabs;
 
-			base.OnEnable();
+		public void AddTab(GltfAssetImporterTab tab)
+		{
+			if (_tabs == null) _tabs = new List<GltfAssetImporterTab>();
+			if (!_tabs.Contains(tab)) _tabs.Add(tab);
+			tabs = _tabs.Select(x => (BaseAssetImporterTabUI) x).ToArray();
+			m_TabNames = _tabs.Select(t => t.label).ToArray();
 		}
 
-		public virtual void TabInspectorGUI()
+		public GltfAssetImporterTab GetTab(int index)
 		{
+			if (_tabs == null || _tabs.Count < 1) return null;
+			if (index < 0) index = 0;
+			if (index >= _tabs.Count) index = _tabs.Count - 1;
+			return _tabs[index];
+		}
 
+		public override void OnEnable()
+		{
+			Debug.Log("Enabling Active Tabs");
+			base.OnEnable();
 		}
 	}
 
-	internal class AssetImporterTab : BaseAssetImporterTabUI
+	internal class GltfAssetImporterTab : BaseAssetImporterTabUI
 	{
-		private string label;
-		private UnityGLTFTabbedEditor parent;
+		internal string label;
+		private Action tabGui;
 
-		public AssetImporterTab(AssetImporterEditor panelContainer, string label, UnityGLTFTabbedEditor parent = null) : base(panelContainer)
+		public GltfAssetImporterTab(AssetImporterEditor panelContainer, string label, Action tabGui) : base(panelContainer)
 		{
 			this.label = label;
-			this.parent = parent;
+			this.tabGui = tabGui;
 		}
 
 		internal override void OnEnable()
@@ -58,7 +54,7 @@ namespace UnityGLTF
 
 		public override void OnInspectorGUI()
 		{
-			if (parent) parent.TabInspectorGUI();
+			if (tabGui != null) tabGui();
 			else EditorGUILayout.LabelField("Name", label);
 		}
 	}
