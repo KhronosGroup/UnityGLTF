@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.24.0-pre] - 2023-03-27
+- feat: allow Mecanim Humanoid import in Editor with Avatar creation
+- feat: better structure for glTF importer with tabs
+- fix: don't try to generate UV coordinates for non-triangle meshes
+- fix: don't attempt to recalculate normals/tangents for non-triangle meshes
+- fix: wrap material extraction in StartEditing/StopEditing calls (fixes #81)
+- fix: imports that failed on first try (e.g. missing textures, other errors) would keep using the old asset identifier instead of defaulting to the new one
+- fix: runtime recording of SkinnedMeshRenderers without blend shapes was failing in some cases (fixes #80)
+- fix: disabling Volume from PBRGraph would still use volume values
+- fix: imported animation blendshape frame weights were not roundtripping well
+- fix: some animations not imported in Mecanim mode
+- fix: compilation issues with ShaderGraph package not present
+
 ## [1.23.1-pre] - 2023-03-15
 - fix: ExportMesh not exporting submeshes in some cases
 - fix: missing export mesh marker
