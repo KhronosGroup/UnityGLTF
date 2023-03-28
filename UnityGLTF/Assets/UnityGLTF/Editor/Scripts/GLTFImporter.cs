@@ -307,9 +307,12 @@ namespace UnityGLTF
                     return mesh;
                 }).Where(x => x).ToArray();
 
-                foreach (var clip in animations)
+                if (animations != null)
                 {
-	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
+	                foreach (var clip in animations)
+	                {
+		                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
+	                }
                 }
 
                 // we can't add the Animators as subassets here, since they require their state machines to be direct subassets themselves.
