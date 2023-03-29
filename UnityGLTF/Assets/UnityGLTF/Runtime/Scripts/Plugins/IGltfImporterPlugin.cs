@@ -28,8 +28,16 @@ namespace UnityGLTF.Plugins
 
 		}
 
-		public virtual void OnImportRoot()
+		public virtual void OnBeforeImportRoot()
 		{
+		}
+
+		/// <summary>
+		/// Called when the GltfRoot has been deserialized
+		/// </summary>
+		public virtual void OnAfterImportRoot(GLTFRoot gltfRoot)
+		{
+
 		}
 
 		public virtual void OnBeforeImportScene(GLTFScene scene)
@@ -40,19 +48,11 @@ namespace UnityGLTF.Plugins
 		{
 		}
 
-		public virtual void OnAfterImportMaterial(GLTFMaterial material,
-			int materialIndex,
-			Material materialObject)
+		public virtual void OnAfterImportMaterial(GLTFMaterial material, int materialIndex, Material materialObject)
 		{
 		}
 
-		public virtual void OnAfterImportTexture(GLTFTexture texture,
-			int textureIndex,
-			Texture textureObject)
-		{
-		}
-
-		public virtual void OnImportRootFinished(GLTFRoot root, GameObject rootObject)
+		public virtual void OnAfterImportTexture(GLTFTexture texture, int textureIndex, Texture textureObject)
 		{
 		}
 

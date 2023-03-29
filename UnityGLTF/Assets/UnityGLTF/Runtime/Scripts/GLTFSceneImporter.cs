@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -236,12 +237,6 @@ namespace UnityGLTF
 
 		public bool IsRunning => _isRunning;
 
-#if UNITY_EDITOR
-		// TODO: This should probably be part of an import context
-		public string FilePath { get; internal set; }
-		public UnityEditor.AssetImporters.AssetImportContext ImportContext { get; internal set; }
-#endif
-
 		/// <summary>
 		/// Statistics from the scene
 		/// </summary>
@@ -269,6 +264,7 @@ namespace UnityGLTF
 
 		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
 		{
+			options.ImportContext.SceneImporter = this;
 			_gltfFileName = gltfFileName;
 			_options = options;
 
@@ -285,6 +281,7 @@ namespace UnityGLTF
 
 		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
 		{
+			options.ImportContext.SceneImporter = this;
 			_gltfRoot = rootNode;
 
 			if (gltfStream != null)
@@ -374,9 +371,13 @@ namespace UnityGLTF
 
 				if (_gltfRoot == null)
 				{
+					foreach (var plugin in Context.Plugins)
+						plugin.OnBeforeImportRoot();
 					await LoadJson(_gltfFileName);
 					progressStatus.IsDownloaded = true;
 				}
+				foreach (var plugin in Context.Plugins)
+					plugin.OnAfterImportRoot(_gltfRoot);
 
 				cancellationToken.ThrowIfCancellationRequested();
 

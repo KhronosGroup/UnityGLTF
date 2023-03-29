@@ -8,6 +8,7 @@ namespace UnityGLTF.Plugins
 	{
 #if UNITY_EDITOR
 		public readonly AssetImportContext AssetContext;
+		public string FilePath => AssetContext.assetPath;
 #endif
 
 		public readonly IReadOnlyList<GltfImportPluginContext> Plugins;
