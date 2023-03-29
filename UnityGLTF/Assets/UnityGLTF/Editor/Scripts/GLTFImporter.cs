@@ -155,7 +155,7 @@ namespace UnityGLTF
 	        var settings = GLTFSettings.GetOrCreateSettings();
 	        foreach (var plugin in settings.ImportPlugins)
 	        {
-		        if (plugin.Enabled)
+		        if (plugin != null && plugin.Enabled)
 		        {
 			        var instance = plugin.CreateInstance(context);
 			        if(instance != null) plugins.Add(instance);

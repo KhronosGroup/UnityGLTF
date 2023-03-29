@@ -96,6 +96,7 @@ namespace UnityGLTF
 	        EditorGUILayout.LabelField("Import Plugins", EditorStyles.boldLabel);
 	        foreach (var plugin in settings.ImportPlugins)
 	        {
+		        if (!plugin) continue;
 		        if (string.IsNullOrEmpty(plugin.name))
 			        plugin.name = ObjectNames.NicifyVariableName(plugin.GetType().Name);
 		        using (new GUILayout.HorizontalScope())
@@ -283,7 +284,8 @@ namespace UnityGLTF
 		    {
 			    if (pluginType.IsAbstract) continue;
 			    // If the plugin already exists we dont want to add it again
-			    if (settings.ImportPlugins.Any(p => p.GetType() == pluginType)) continue;
+			    if (settings.ImportPlugins.Any(p => p != null && p.GetType() == pluginType))
+				    continue;
 			    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
 			    {
 					var newInstance = ScriptableObject.CreateInstance(pluginType) as GltfImportPlugin;
