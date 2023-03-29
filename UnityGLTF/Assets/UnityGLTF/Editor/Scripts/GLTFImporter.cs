@@ -147,8 +147,6 @@ namespace UnityGLTF
 	        return dependencies.ToArray();
         }
 
-        public static event Action<AssetImportContext> AfterAssetImported;
-
         public override void OnImportAsset(AssetImportContext ctx)
         {
             string sceneName = null;
@@ -182,7 +180,7 @@ namespace UnityGLTF
             try
             {
                 sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
-                CreateGLTFScene(ctx.assetPath, ctx, out gltfScene, out animations);
+                CreateGLTFScene(ctx.assetPath, out gltfScene, out animations);
                 var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
                 if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
 
@@ -309,12 +307,12 @@ namespace UnityGLTF
                     return mesh;
                 }).Where(x => x).ToArray();
 
-                var addedClips = new List<AnimationClip>();
-                foreach (var clip in animations)
+                if (animations != null)
                 {
-	                if (addedClips.Contains(clip)) continue;
-	                addedClips.Add(clip);
-	                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
+	                foreach (var clip in animations)
+	                {
+		                ctx.AddObjectToAsset(GetUniqueName(clip.name), clip);
+	                }
                 }
 
                 // we can't add the Animators as subassets here, since they require their state machines to be direct subassets themselves.
@@ -524,8 +522,6 @@ namespace UnityGLTF
 				}
             }
 #endif
-
-	        AfterAssetImported?.Invoke(ctx);
 		}
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
@@ -538,7 +534,7 @@ namespace UnityGLTF
         }
 #endif
 
-		private void CreateGLTFScene(string projectFilePath, AssetImportContext ctx, out GameObject scene, out AnimationClip[] animationClips)
+		private void CreateGLTFScene(string projectFilePath, out GameObject scene, out AnimationClip[] animationClips)
         {
 			var importOptions = new ImportOptions
 			{
@@ -553,12 +549,9 @@ namespace UnityGLTF
 				GLTFParser.ParseJson(stream, out gLTFRoot);
 				stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
 				var loader = new GLTFSceneImporter(gLTFRoot, stream, importOptions);
-				loader.FilePath = projectFilePath;
-				loader.ImportContext = ctx;
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
-				loader.OnBeforeImport();
 				loader.LoadSceneAsync().Wait();
 
 				if (gLTFRoot.ExtensionsUsed != null)
@@ -583,8 +576,6 @@ namespace UnityGLTF
 					.Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
 					.ToList();
 
-				loader.OnAfterImport(loader.LastLoadedScene);
-				
 				scene = loader.LastLoadedScene;
 				animationClips = loader.CreatedAnimationClips;
 			}
