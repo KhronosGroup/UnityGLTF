@@ -12,6 +12,7 @@ using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
+using UnityGLTF.Plugins;
 using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -38,6 +39,7 @@ namespace UnityGLTF
 		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
+		public GLTFImportContext ImportContext = null;
 
 		[NonSerialized]
 		public ILogger logger;
@@ -120,13 +122,13 @@ namespace UnityGLTF
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
-		public static event Action<GLTFSceneImporter, GLTFRoot> BeforeImport;
-		public static event Action<GLTFSceneImporter, GLTFScene> BeforeImportScene;
-		public static event Action<GLTFSceneImporter, GLTFScene, int, GameObject> AfterImportedScene;
-		public static event Action<GLTFSceneImporter, Node, int, GameObject> AfterImportedNode;
-		public static event Action<GLTFSceneImporter, GLTFMaterial, int, Material> AfterImportedMaterial;
-		public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
-		public static event Action<GLTFSceneImporter, GLTFRoot, GameObject> AfterImported;
+		// public static event Action<GLTFSceneImporter, GLTFRoot> BeforeImport;
+		// public static event Action<GLTFSceneImporter, GLTFScene> BeforeImportScene;
+		// public static event Action<GLTFSceneImporter, GLTFScene, int, GameObject> AfterImportedScene;
+		// public static event Action<GLTFSceneImporter, Node, int, GameObject> AfterImportedNode;
+		// public static event Action<GLTFSceneImporter, GLTFMaterial, int, Material> AfterImportedMaterial;
+		// public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
+		// public static event Action<GLTFSceneImporter, GLTFRoot, GameObject> AfterImported;
 
 		public enum ColliderType
 		{
@@ -245,6 +247,8 @@ namespace UnityGLTF
 		/// </summary>
 		public ImportStatistics Statistics;
 
+		protected GLTFImportContext Context => _options.ImportContext;
+
 		protected ImportOptions _options;
 		protected MemoryChecker _memoryChecker;
 
@@ -333,16 +337,6 @@ namespace UnityGLTF
 		public void Dispose()
 		{
 			Cleanup();
-		}
-
-		internal void OnBeforeImport()
-		{
-			BeforeImport?.Invoke(this, _gltfRoot);
-		}
-
-		internal void OnAfterImport(GameObject gameObject)
-		{
-			AfterImported?.Invoke(this, _gltfRoot, gameObject);
 		}
 
 		/// <summary>
@@ -563,7 +557,8 @@ namespace UnityGLTF
 
 			try
 			{
-				BeforeImportScene?.Invoke(this, scene);
+				foreach (var plugin in Context.Plugins)
+					plugin.OnBeforeImportScene(scene);
 			}
 			catch(Exception e)
 			{
@@ -583,7 +578,8 @@ namespace UnityGLTF
 
 			try
 			{
-				AfterImportedScene?.Invoke(this, scene, sceneIndex, CreatedObject);
+				foreach (var plugin in Context.Plugins)
+					plugin.OnAfterImportScene(scene, sceneIndex, CreatedObject);
 			}
 			catch(Exception e)
 			{
@@ -679,7 +675,8 @@ namespace UnityGLTF
 
 					try
 					{
-						AfterImportedNode?.Invoke(this, node, nodeId, _assetCache.NodeCache[nodeId]);
+						foreach (var plugin in Context.Plugins)
+							plugin.OnAfterImportNode(node, nodeId, _assetCache.NodeCache[nodeId]);
 					}
 					catch (Exception ex)
 					{

@@ -387,7 +387,11 @@ namespace UnityGLTF
 			try
 			{
 				var tex = _assetCache.TextureCache[textureIndex].Texture;
-				if(tex) AfterImportedTexture?.Invoke(this, texture, textureIndex, tex);
+
+				foreach (var plugin in Context.Plugins)
+				{
+					plugin.OnAfterImportTexture(texture, textureIndex, tex);
+				}
 			}
 			catch (Exception ex)
 			{

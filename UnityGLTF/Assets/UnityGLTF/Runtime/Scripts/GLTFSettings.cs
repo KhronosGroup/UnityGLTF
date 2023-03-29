@@ -2,11 +2,14 @@
 #define SHOW_SETTINGS_EDITOR
 #endif
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Linq;
 using UnityEngine.UIElements;
 using UnityGLTF.Cache;
+using UnityGLTF.Plugins;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -16,25 +19,57 @@ namespace UnityGLTF
 #if SHOW_SETTINGS_EDITOR
     internal class GltfSettingsProvider : SettingsProvider
     {
-	    private GLTFSettings settings;
-        private SerializedObject m_SerializedObject;
+	    internal static Action<GLTFSettings> OnAfterGUI;
         private SerializedProperty showDefaultReferenceNameWarning, showNamingRecommendationHint;
 
         public override void OnGUI(string searchContext)
         {
+	        DrawGLTFSettingsGUI();
+        }
+
+        public override void OnActivate(string searchContext, VisualElement rootElement)
+        {
+	        base.OnActivate(searchContext, rootElement);
+	        CalculateCacheStats();
+        }
+
+
+        [SettingsProvider]
+        public static SettingsProvider CreateGltfSettingsProvider()
+        {
+	        GLTFSettings.GetOrCreateSettings();
+            return new GltfSettingsProvider("Project/UnityGLTF", SettingsScope.Project);;
+        }
+
+        public GltfSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null) : base(path, scopes, keywords) { }
+
+
+        private static long exportCacheByteLength = 0;
+        private static void CalculateCacheStats()
+        {
+	        var files = new List<FileInfo>();
+	        exportCacheByteLength = ExportCache.CalculateCacheSize(files);
+        }
+
+
+        private static GLTFSettings settings;
+        private static SerializedObject m_SerializedObject;
+
+        internal static void DrawGLTFSettingsGUI()
+        {
 	        EditorGUIUtility.labelWidth = 200;
-	        if (m_SerializedObject == null)
+	        if (settings == null)
 	        {
 		        if (!settings) settings = GLTFSettings.GetOrCreateSettings();
-	            m_SerializedObject = new SerializedObject(settings);
-            }
+		        m_SerializedObject = new SerializedObject(settings);
+	        }
 
-            SerializedProperty prop = m_SerializedObject.GetIterator();
-            prop.NextVisible(true);
-            if (prop.NextVisible(true))
-            {
-	            do
-	            {
+	        var prop = m_SerializedObject.GetIterator();
+	        prop.NextVisible(true);
+	        if (prop.NextVisible(true))
+	        {
+		        do
+		        {
 			        EditorGUILayout.PropertyField(prop, true);
 			        switch (prop.name)
 			        {
@@ -49,37 +84,48 @@ namespace UnityGLTF
 					        EditorGUILayout.EndHorizontal();
 					        break;
 			        }
-	            }
-	            while (prop.NextVisible(false));
-            }
+		        }
+		        while (prop.NextVisible(false));
+	        }
 
-            if(m_SerializedObject.hasModifiedProperties) {
-                m_SerializedObject.ApplyModifiedProperties();
-            }
+	        if(m_SerializedObject.hasModifiedProperties) {
+		        m_SerializedObject.ApplyModifiedProperties();
+	        }
+
+	        GUILayout.Space(10);
+	        EditorGUILayout.LabelField("Import Plugins", EditorStyles.boldLabel);
+	        foreach (var plugin in settings.ImportPlugins)
+	        {
+		        if (string.IsNullOrEmpty(plugin.name))
+			        plugin.name = ObjectNames.NicifyVariableName(plugin.GetType().Name);
+		        using (new GUILayout.HorizontalScope())
+		        {
+			        var label = new GUIContent(plugin.name);
+			        plugin.Expanded = EditorGUILayout.BeginFoldoutHeaderGroup(plugin.Expanded, label);
+			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(20));
+		        }
+		        if (plugin.Expanded)
+		        {
+			        EditorGUI.indentLevel += 1;
+			        plugin.OnGUI();
+			        EditorGUI.indentLevel -= 1;
+		        }
+		        EditorGUILayout.EndFoldoutHeaderGroup();
+	        }
+
+	        OnAfterGUI?.Invoke(settings);
         }
-
-        public override void OnActivate(string searchContext, VisualElement rootElement)
-        {
-	        base.OnActivate(searchContext, rootElement);
-	        CalculateCacheStats();
-        }
-
-        private long exportCacheByteLength = 0;
-        private void CalculateCacheStats()
-        {
-	        var files = new List<FileInfo>();
-	        exportCacheByteLength = ExportCache.CalculateCacheSize(files);
-        }
-
-        [SettingsProvider]
-        public static SettingsProvider CreateGltfSettingsProvider()
-        {
-	        GLTFSettings.GetOrCreateSettings();
-            return new GltfSettingsProvider("Project/UnityGLTF", SettingsScope.Project);
-        }
-
-        public GltfSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null) : base(path, scopes, keywords) { }
     }
+
+    [CustomEditor(typeof(GLTFSettings))]
+    internal class GLTFSettingsEditor : Editor
+    {
+	    public override void OnInspectorGUI()
+	    {
+		    GltfSettingsProvider.DrawGLTFSettingsGUI();
+	    }
+    }
+
 #endif
 
     public class GLTFSettings : ScriptableObject
@@ -97,6 +143,9 @@ namespace UnityGLTF
 		    Tangent = 4,
 		    All = ~0
 	    }
+
+	    [SerializeField, HideInInspector]
+	    public List<GltfImportPlugin> ImportPlugins;
 
 	    [Header("Export Settings")]
 		[SerializeField]
@@ -185,7 +234,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 			    settings = ScriptableObject.CreateInstance<GLTFSettings>();
 			    var dir = Path.GetDirectoryName(k_RuntimeAndEditorSettingsPath);
-			    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+			    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir!);
 			    AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
 			    AssetDatabase.SaveAssets();
 #else
@@ -218,10 +267,30 @@ namespace UnityGLTF
 			    }
 		    }
 		    cachedSettings = settings;
+		    RegisterPlugins(settings);
 		    return settings;
 #else
 			return settings;
 #endif
 	    }
+
+#if UNITY_EDITOR
+	    private static void RegisterPlugins(GLTFSettings settings)
+	    {
+		    if(settings.ImportPlugins == null) settings.ImportPlugins = new List<GltfImportPlugin>();
+
+		    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<GltfImportPlugin>())
+		    {
+			    if (pluginType.IsAbstract) continue;
+			    // If the plugin already exists we dont want to add it again
+			    if (settings.ImportPlugins.Any(p => p.GetType() == pluginType)) continue;
+			    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
+			    {
+					var newInstance = ScriptableObject.CreateInstance(pluginType) as GltfImportPlugin;
+				    settings.ImportPlugins.Add(newInstance);
+			    }
+		    }
+	    }
+#endif
     }
 }
