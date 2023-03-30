@@ -50,6 +50,9 @@ namespace UnityGLTF
 			if (!c) c = target.GetComponent<SkinnedMeshRenderer>();
 			return c;
 		}
+
+		[Obsolete("Use GLTFMaterialHelper.ValidateMaterialKeywords instead. (UnityUpgradeable) -> UnityGLTF.GLTFMaterialHelper.ValidateMaterialKeywords", false)]
+		public static void ValidateMaterialKeywords(Material material) {}
 	}
 }
 
