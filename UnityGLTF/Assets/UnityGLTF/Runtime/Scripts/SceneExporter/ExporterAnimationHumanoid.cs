@@ -30,6 +30,7 @@ namespace UnityGLTF
 			var playableGraph = PlayableGraph.Create();
 			var animationClipPlayable = (Playable) AnimationClipPlayable.Create(playableGraph, clip);
 
+#if UNITY_2020_2_OR_NEWER
 			var rigs = root.GetComponents<IAnimationWindowPreview>();
 			if (rigs != null)
 			{
@@ -44,6 +45,7 @@ namespace UnityGLTF
 			{
 				rigs = System.Array.Empty<IAnimationWindowPreview>();
 			}
+#endif
 
 			var playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", root.GetComponent<Animator>());
 			playableOutput.SetSourcePlayable(animationClipPlayable);
@@ -113,11 +115,15 @@ namespace UnityGLTF
 
 			// last frame
 			time = length;
+#if UNITY_2020_2_OR_NEWER
 			foreach (var rig in rigs) rig.UpdatePreviewGraph(playableGraph);
+#endif
 			AnimationMode.SamplePlayableGraph(playableGraph, 0, time);
 			recorder.UpdateRecording(time);
 
+#if UNITY_2020_2_OR_NEWER
 			foreach (var rig in rigs) rig.StopPreview();
+#endif
 
 			AnimationMode.EndSampling();
 #if UNITY_2020_1_OR_NEWER
