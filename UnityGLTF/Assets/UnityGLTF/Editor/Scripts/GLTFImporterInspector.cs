@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using UnityEditor;
 
 using UnityEngine;
@@ -33,12 +34,12 @@ namespace UnityGLTF
 		private void TextureWarningsGUI(GLTFImporter t)
 		{
 			if (!t)	return;
-			if (!TextureImportSettingsAreCorrect(t))
+			if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(t))
 			{
 				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
 				if (GUILayout.Button("Fix All"))
 				{
-					FixTextureImportSettings(t);
+					GLTFImporterHelper.FixTextureImportSettings(t);
 				}
 			}
 		}
@@ -278,6 +279,26 @@ namespace UnityGLTF
 			EditorGUI.EndDisabledGroup();
 		}
 
+
+
+		private static string SanitizePath(string subAssetName)
+		{
+			// make filename safe without using Regex
+			var invalidChars = Path.GetInvalidFileNameChars();
+			var sb = new StringBuilder(subAssetName);
+			for (int i = 0; i < sb.Length; i++)
+			{
+				if (invalidChars.Contains(sb[i]))
+				{
+					sb[i] = '_';
+				}
+			}
+			return sb.ToString();
+		}
+	}
+
+	public static class GLTFImporterHelper
+	{
 		public static bool TextureImportSettingsAreCorrect(GLTFImporter importer)
 		{
 			return importer.Textures.All(x =>
@@ -313,21 +334,6 @@ namespace UnityGLTF
 
 			if (haveStartedAssetEditing)
 				AssetDatabase.StopAssetEditing();
-		}
-
-		private static string SanitizePath(string subAssetName)
-		{
-			// make filename safe without using Regex
-			var invalidChars = Path.GetInvalidFileNameChars();
-			var sb = new StringBuilder(subAssetName);
-			for (int i = 0; i < sb.Length; i++)
-			{
-				if (invalidChars.Contains(sb[i]))
-				{
-					sb[i] = '_';
-				}
-			}
-			return sb.ToString();
 		}
 	}
 }
