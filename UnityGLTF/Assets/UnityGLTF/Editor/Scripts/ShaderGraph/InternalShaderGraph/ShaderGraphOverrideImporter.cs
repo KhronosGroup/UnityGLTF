@@ -79,10 +79,13 @@ namespace UnityGLTF
 			//         .Replace("\"m_RenderFace\": 1", "\"m_RenderFace\": 0");
 
 			// for 2020+
-			if (forceDoublesided && !graphData.Contains("m_TwoSided"))
-			     graphData = graphData
-					.Replace("\"m_SurfaceType\": 0", "\"m_SurfaceType\": 0" + ",\n" + "\"m_TwoSided\": true")
-					.Replace("\"m_SurfaceType\": 1", "\"m_SurfaceType\": 1" + ",\n" + "\"m_TwoSided\": true");
+			if (forceDoublesided)
+				if (!graphData.Contains("m_TwoSided"))
+					graphData = graphData
+						.Replace("\"m_SurfaceType\": 0", "\"m_SurfaceType\": 0" + ",\n" + "\"m_TwoSided\": true")
+						.Replace("\"m_SurfaceType\": 1", "\"m_SurfaceType\": 1" + ",\n" + "\"m_TwoSided\": true");
+				else
+					graphData = graphData.Replace("\"m_TwoSided\": false", "\"m_TwoSided\": true");
 
 			if (hideShader)
 				graphData = graphData.Replace("\"m_Path\": \"", "\"m_Path\": \"Hidden/");
