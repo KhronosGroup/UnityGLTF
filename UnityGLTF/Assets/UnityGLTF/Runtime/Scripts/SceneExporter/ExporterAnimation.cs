@@ -144,7 +144,11 @@ namespace UnityGLTF
 					// if we want to handle this here, we need to find all states that match this clip
 					foreach(var state in GetAnimatorStateParametersForClip(clips[i], animatorController))
 					{
-						var speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
+						var speed = 1f;
+						if (settings.BakeAnimationSpeed)
+						{
+							speed = state.speed * (state.speedParameterActive ? animator.GetFloat(state.speedParameter) : 1f);
+						}
 						var name = clips[i].name;
 						ExportAnimationClip(clips[i], name, nodeTransform, speed);
 					}
