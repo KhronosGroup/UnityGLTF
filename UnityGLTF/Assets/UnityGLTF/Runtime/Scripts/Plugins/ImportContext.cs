@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using GLTF.Schema;
+
+#if UNITY_EDITOR
 using UnityEditor.AssetImporters;
+#endif
 
 namespace UnityGLTF.Plugins
 {
