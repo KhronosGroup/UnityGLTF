@@ -428,6 +428,11 @@ namespace UnityGLTF
 			{
 				_defaultLoadedMaterial = materialWrapper;
 			}
+
+			foreach (var plugin in Context.Plugins)
+			{
+				plugin.OnAfterImportMaterial(def, materialIndex, mapper.Material);
+			}
 		}
 
 		protected virtual Task ConstructMaterialImageBuffers(GLTFMaterial def)

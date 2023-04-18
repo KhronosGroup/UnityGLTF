@@ -383,6 +383,20 @@ namespace UnityGLTF
 			}
 
 			_assetCache.TextureCache[textureIndex].IsLinear = isLinear;
+
+			try
+			{
+				var tex = _assetCache.TextureCache[textureIndex].Texture;
+
+				foreach (var plugin in Context.Plugins)
+				{
+					plugin.OnAfterImportTexture(texture, textureIndex, tex);
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.LogException(ex);
+			}
 		}
 
 		protected virtual void ConstructImageFromGLB(GLTFImage image, int imageCacheIndex)

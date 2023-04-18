@@ -26,6 +26,7 @@ using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
 using Unity.Collections;
+using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 #else
@@ -149,6 +150,23 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
+	        var plugins = new List<GltfImportPluginContext>();
+	        var context = new GLTFImportContext(ctx, plugins);
+	        var settings = GLTFSettings.GetOrCreateSettings();
+	        foreach (var plugin in settings.ImportPlugins)
+	        {
+		        if (plugin != null && plugin.Enabled)
+		        {
+			        var instance = plugin.CreateInstance(context);
+			        if(instance != null) plugins.Add(instance);
+		        }
+	        }
+
+	        foreach (var plugin in plugins)
+	        {
+		        plugin.OnBeforeImport();
+	        }
+
             string sceneName = null;
             GameObject gltfScene = null;
             AnimationClip[] animations = null;
@@ -179,8 +197,7 @@ namespace UnityGLTF
 
             try
             {
-                sceneName = Path.GetFileNameWithoutExtension(ctx.assetPath);
-                CreateGLTFScene(ctx.assetPath, out gltfScene, out animations);
+                CreateGLTFScene(context, out gltfScene, out animations);
                 var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
                 if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
 
@@ -522,6 +539,9 @@ namespace UnityGLTF
 				}
             }
 #endif
+
+	        foreach(var plugin in context.Plugins)
+		        plugin.OnAfterImport();
 		}
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
@@ -534,14 +554,17 @@ namespace UnityGLTF
         }
 #endif
 
-		private void CreateGLTFScene(string projectFilePath, out GameObject scene, out AnimationClip[] animationClips)
-        {
+		private void CreateGLTFScene(GLTFImportContext context, out GameObject scene, out AnimationClip[] animationClips)
+		{
+			var projectFilePath = context.AssetContext.assetPath;
+			// TODO: replace with GltFImportContext
 			var importOptions = new ImportOptions
 			{
 				DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
 				AnimationMethod = _importAnimations,
 				AnimationLoopTime = _animationLoopTime,
 				AnimationLoopPose = _animationLoopPose,
+				ImportContext = context
 			};
 			using (var stream = File.OpenRead(projectFilePath))
 			{

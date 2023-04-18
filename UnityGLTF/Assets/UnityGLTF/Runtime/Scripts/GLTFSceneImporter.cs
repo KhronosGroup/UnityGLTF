@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
+using UnityGLTF.Plugins;
 using Quaternion = UnityEngine.Quaternion;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -38,6 +40,7 @@ namespace UnityGLTF
 		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
+		public GLTFImportContext ImportContext = null;
 
 		[NonSerialized]
 		public ILogger logger;
@@ -120,6 +123,14 @@ namespace UnityGLTF
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
+		// public static event Action<GLTFSceneImporter, GLTFRoot> BeforeImport;
+		// public static event Action<GLTFSceneImporter, GLTFScene> BeforeImportScene;
+		// public static event Action<GLTFSceneImporter, GLTFScene, int, GameObject> AfterImportedScene;
+		// public static event Action<GLTFSceneImporter, Node, int, GameObject> AfterImportedNode;
+		// public static event Action<GLTFSceneImporter, GLTFMaterial, int, Material> AfterImportedMaterial;
+		// public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
+		// public static event Action<GLTFSceneImporter, GLTFRoot, GameObject> AfterImported;
+
 		public enum ColliderType
 		{
 			None,
@@ -162,6 +173,8 @@ namespace UnityGLTF
 			}
 		}
 
+		public GLTFRoot Root => _gltfRoot;
+
 		/// <summary>
 		/// The parent transform for the created GameObject
 		/// </summary>
@@ -193,6 +206,8 @@ namespace UnityGLTF
 		}
 
 		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
+		public MaterialCacheData[] MaterialCache => _assetCache.MaterialCache;
+		public AnimationCacheData[] AnimationCache => _assetCache.AnimationCache;
 
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
@@ -220,10 +235,14 @@ namespace UnityGLTF
 		/// </summary>
 		public bool CullFarLOD = false;
 
+		public bool IsRunning => _isRunning;
+
 		/// <summary>
 		/// Statistics from the scene
 		/// </summary>
 		public ImportStatistics Statistics;
+
+		protected GLTFImportContext Context => _options.ImportContext;
 
 		protected ImportOptions _options;
 		protected MemoryChecker _memoryChecker;
@@ -245,6 +264,7 @@ namespace UnityGLTF
 
 		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
 		{
+			options.ImportContext.SceneImporter = this;
 			_gltfFileName = gltfFileName;
 			_options = options;
 
@@ -261,6 +281,7 @@ namespace UnityGLTF
 
 		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
 		{
+			options.ImportContext.SceneImporter = this;
 			_gltfRoot = rootNode;
 
 			if (gltfStream != null)
@@ -350,9 +371,13 @@ namespace UnityGLTF
 
 				if (_gltfRoot == null)
 				{
+					foreach (var plugin in Context.Plugins)
+						plugin.OnBeforeImportRoot();
 					await LoadJson(_gltfFileName);
 					progressStatus.IsDownloaded = true;
 				}
+				foreach (var plugin in Context.Plugins)
+					plugin.OnAfterImportRoot(_gltfRoot);
 
 				cancellationToken.ThrowIfCancellationRequested();
 
@@ -531,6 +556,16 @@ namespace UnityGLTF
 				throw new GLTFLoadException("No default scene in gltf file.");
 			}
 
+			try
+			{
+				foreach (var plugin in Context.Plugins)
+					plugin.OnBeforeImportScene(scene);
+			}
+			catch(Exception e)
+			{
+				Debug.LogException(e);
+			}
+
 			GetGtlfContentTotals(scene);
 
 			await ConstructScene(scene, showSceneObj, cancellationToken);
@@ -541,6 +576,16 @@ namespace UnityGLTF
 			}
 
 			_lastLoadedScene = CreatedObject;
+
+			try
+			{
+				foreach (var plugin in Context.Plugins)
+					plugin.OnAfterImportScene(scene, sceneIndex, CreatedObject);
+			}
+			catch(Exception e)
+			{
+				Debug.LogException(e);
+			}
 		}
 
 		private void GetGtlfContentTotals(GLTFScene scene)
@@ -628,6 +673,16 @@ namespace UnityGLTF
 					}
 
 					await ConstructNode(node, nodeId, cancellationToken);
+
+					try
+					{
+						foreach (var plugin in Context.Plugins)
+							plugin.OnAfterImportNode(node, nodeId, _assetCache.NodeCache[nodeId]);
+					}
+					catch (Exception ex)
+					{
+						Debug.LogException(ex);
+					}
 
 					// HACK belongs in an extension, but we don't have Importer callbacks yet
 					const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
