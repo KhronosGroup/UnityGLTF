@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-exp] - 2023-04-18
+- add: ImportPlugin API with ``GltfImportPlugin`` and ``GltfImportPluginContext`` for receiving callbacks during import
+
 ## [1.24.1-pre] - 2023-04-17
 - add: option to disable baking of AnimatorState speed value into animationclip
 - fix: doublesided import when shader already had that set explicitly to false
