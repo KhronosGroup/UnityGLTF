@@ -94,14 +94,21 @@ namespace UnityGLTF
 
 	        GUILayout.Space(10);
 	        EditorGUILayout.LabelField("Import Plugins", EditorStyles.boldLabel);
+	        OnPluginsGUI();
+	        OnAfterGUI?.Invoke(settings);
+        }
+
+        internal static void OnPluginsGUI()
+        {
 	        foreach (var plugin in settings.ImportPlugins)
 	        {
 		        if (!plugin) continue;
-		        if (string.IsNullOrEmpty(plugin.name))
-			        plugin.name = ObjectNames.NicifyVariableName(plugin.GetType().Name);
+		        var displayName = plugin.DisplayName ?? plugin.name;
+		        if (string.IsNullOrEmpty(displayName))
+			        displayName = ObjectNames.NicifyVariableName(plugin.GetType().Name);
 		        using (new GUILayout.HorizontalScope())
 		        {
-			        var label = new GUIContent(plugin.name);
+			        var label = new GUIContent(displayName);
 			        plugin.Expanded = EditorGUILayout.BeginFoldoutHeaderGroup(plugin.Expanded, label);
 			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(20));
 		        }
@@ -113,9 +120,8 @@ namespace UnityGLTF
 		        }
 		        EditorGUILayout.EndFoldoutHeaderGroup();
 	        }
-
-	        OnAfterGUI?.Invoke(settings);
         }
+
     }
 
     [CustomEditor(typeof(GLTFSettings))]

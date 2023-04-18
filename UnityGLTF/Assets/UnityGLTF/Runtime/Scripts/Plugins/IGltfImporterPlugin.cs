@@ -7,6 +7,7 @@ namespace UnityGLTF.Plugins
 	public abstract class GltfImportPlugin : ScriptableObject
 	{
 		internal bool Expanded = true;
+		public abstract string DisplayName { get; }
 		public bool Enabled { get; set; } = true;
 		public abstract void OnGUI();
 		/// <summary>
