@@ -343,7 +343,7 @@ namespace UnityGLTF
                     {
                         return r.sharedMaterials.Select(mat =>
                         {
-                            if (materialHash.Add(mat))
+                            if (mat && materialHash.Add(mat))
                             {
                                 var matName = string.IsNullOrEmpty(mat.name) ? mat.shader.name : mat.name;
                                 if (matName == mat.shader.name)
@@ -364,9 +364,13 @@ namespace UnityGLTF
 	                    var m = r.sharedMaterials;
 	                    for (var i = 0; i < m.Length; i++)
 	                    {
-		                    var si = new SourceAssetIdentifier(m[i]);
-		                    if (map.ContainsKey(si))
-			                    m[i] = map[si] as Material;
+		                    var mat = m[i];
+		                    if (mat)
+		                    {
+			                    var si = new SourceAssetIdentifier(mat);
+			                    if (map.ContainsKey(si))
+				                    m[i] = map[si] as Material;
+		                    }
 	                    }
 	                    r.sharedMaterials = m;
                     };
@@ -376,6 +380,7 @@ namespace UnityGLTF
                     var texMaterialMap = new Dictionary<Texture2D, List<TexMaterialMap>>();
                     var textures = materials.SelectMany(mat =>
                     {
+	                    if (!mat) return Enumerable.Empty<Texture2D>();
                         var shader = mat.shader;
                         if (!shader) return Enumerable.Empty<Texture2D>();
 
@@ -444,6 +449,7 @@ namespace UnityGLTF
                     {
                         foreach (var mat in materials)
                         {
+	                        if (!mat) continue;
 	                        // ensure materials that are overriden aren't shown in the hierarchy.
 	                        var si = new SourceAssetIdentifier(mat);
 	                        if (map.ContainsKey(si))
@@ -473,8 +479,9 @@ namespace UnityGLTF
                     }
                 }
             }
-            catch
+            catch(Exception e)
             {
+	            Debug.LogException(e);
                 if (gltfScene) DestroyImmediate(gltfScene);
                 throw;
             }
