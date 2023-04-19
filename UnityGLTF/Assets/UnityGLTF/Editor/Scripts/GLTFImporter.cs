@@ -167,7 +167,6 @@ namespace UnityGLTF
 		        plugin.OnBeforeImport();
 	        }
 
-            string sceneName = null;
             GameObject gltfScene = null;
             AnimationClip[] animations = null;
             Mesh[] meshes = null;
