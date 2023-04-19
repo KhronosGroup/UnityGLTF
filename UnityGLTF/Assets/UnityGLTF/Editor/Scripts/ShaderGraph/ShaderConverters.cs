@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -53,35 +55,64 @@ namespace UnityGLTF
 
 		private static bool ConvertStandardAndURPLit(Material material, Shader oldShader, Shader newShader)
 		{
-			// Conversion time!
-			// convert from
-			// - "Standard"
-			// - "URP/Lit"
+			var allowedConversions = new[] {
+				StandardShader,
+				UnlitColorShader,
+				UnlitTextureShader,
+				UnlitTransparentShader,
+				UnlitTransparentCutoutShader,
+				URPLitShader,
+				URPUnlitShader,
+			};
 
-			if (oldShader.name != StandardShader && oldShader.name != URPLitShader) return false;
+			var unlitSources = new[] {
+				UnlitColorShader,
+				UnlitTextureShader,
+				URPUnlitShader,
+				UnlitTransparentShader,
+				UnlitTransparentCutoutShader,
+			};
 
-			var isStandard = oldShader.name == StandardShader;
-			var needsEmissiveColorSpaceConversion = isStandard && QualitySettings.activeColorSpace == ColorSpace.Linear;
-			var colorProp = oldShader.name == StandardShader ? _Color : _BaseColor;
-			var colorTexProp = oldShader.name == StandardShader ? _MainTex : _BaseMap;
+			var birpShaders = new[] {
+				StandardShader,
+				UnlitColorShader,
+				UnlitTextureShader,
+				UnlitTransparentShader,
+				UnlitTransparentCutoutShader,
+			};
 
-			var color = material.GetColor(colorProp);
-			var albedo = material.GetTexture(colorTexProp);
-			var albedoOffset = material.GetTextureOffset(colorTexProp);
-			var albedoTiling = material.GetTextureScale(colorTexProp);
+			if (!allowedConversions.Contains(oldShader.name)) return false;
 
-			var metallic = material.GetFloat(_Metallic);
-			var smoothness = material.HasProperty(_Smoothness) ? material.GetFloat(_Smoothness) : material.GetFloat(_Glossiness);
-			var metallicGloss = material.GetTexture(_MetallicGlossMap);
-			var normal = material.GetTexture(_BumpMap);
-			var normalStrength = material.GetFloat(_BumpScale);
-			var occlusion = material.GetTexture(_OcclusionMap);
-			var occlusionStrength = material.GetFloat(_Strength);
-			var emission = material.GetTexture(_EmissionMap);
-			var emissionColor = material.GetColor(_EmissionColor);
-			var cutoff = material.GetFloat(_Cutoff);
+			var sourceIsUnlit = unlitSources.Contains(oldShader.name);
+			var targetIsUnlit = newShader.name == URPUnlitShader;
+			var sourceIsTransparent = oldShader.name == UnlitTransparentShader || oldShader.name == UnlitTransparentCutoutShader;
 
-			var isCutoff = material.IsKeywordEnabled("_ALPHATEST_ON") || material.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON");
+			var sourceIsBirp = birpShaders.Contains(oldShader.name);
+			var needsEmissiveColorSpaceConversion = sourceIsBirp && QualitySettings.activeColorSpace == ColorSpace.Linear;
+			var colorProp = sourceIsBirp ? _Color : _BaseColor;
+			var colorTexProp = sourceIsBirp ? _MainTex : _BaseMap;
+
+			var color = material.GetColor(colorProp, Color.white);
+			var albedo = material.GetTexture(colorTexProp, null);
+			var albedoOffset = material.GetTextureOffset(colorTexProp, Vector2.zero);
+			var albedoTiling = material.GetTextureScale(colorTexProp, Vector2.one);
+			var isTransparent = material.GetTag("RenderType", false) == "Transparent" || sourceIsTransparent;
+
+			var metallic = material.GetFloat(_Metallic, 0);
+			var smoothness = material.HasProperty(_Smoothness) ? material.GetFloat(_Smoothness, 0) : material.GetFloat(_Glossiness, 0);
+			var metallicGloss = material.GetTexture(_MetallicGlossMap, null);
+			var normal = material.GetTexture(_BumpMap, null);
+			var normalStrength = material.GetFloat(_BumpScale, 1);
+			var occlusion = material.GetTexture(_OcclusionMap, null);
+			var occlusionStrength = material.GetFloat(_Strength, 1);
+			var emission = material.GetTexture(_EmissionMap, null);
+			var emissionColor = material.GetColor(_EmissionColor, Color.black);
+			var cutoff = material.GetFloat(_Cutoff, 0.5f);
+
+			var isCutoff = material.IsKeywordEnabled("_ALPHATEST_ON") ||
+			               material.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON") ||
+			               material.IsKeywordEnabled("_BUILTIN_AlphaClip") ||
+			               oldShader.name == UnlitTransparentCutoutShader;
 
 			material.shader = newShader;
 
@@ -129,12 +160,9 @@ namespace UnityGLTF
 			material.SetFloat(occlusionStrength1, occlusionStrength);
 			material.SetTexture(emissiveTexture, emission);
 			material.SetFloat(alphaCutoff, cutoff);
-			if (isCutoff)
-			{
-				GLTFMaterialHelper.SetKeyword(material, "_ALPHATEST", true);
-				GLTFMaterialHelper.SetKeyword(material, "_BUILTIN_ALPHATEST", true);
-				material.EnableKeyword("_BUILTIN_AlphaClip");
-			}
+
+			var map = new PBRGraphMap(material);
+			map.AlphaMode = isCutoff ? AlphaMode.MASK : (isTransparent ? AlphaMode.BLEND : AlphaMode.OPAQUE);
 
 			material.SetColor(emissiveFactor, needsEmissiveColorSpaceConversion ? emissionColor.linear : emissionColor);
 
@@ -150,7 +178,12 @@ namespace UnityGLTF
 
 		// ReSharper disable InconsistentNaming
 		private const string StandardShader = "Standard";
+		private const string UnlitColorShader = "Unlit/Color";
+		private const string UnlitTextureShader = "Unlit/Texture";
+		private const string UnlitTransparentShader = "Unlit/Transparent";
+		private const string UnlitTransparentCutoutShader = "Unlit/Transparent Cutout";
 		private const string URPLitShader = "Universal Render Pipeline/Lit";
+		private const string URPUnlitShader = "Universal Render Pipeline/Unlit";
 
 		// Standard and URP-Lit property names
 		private static readonly int _Color = Shader.PropertyToID("_Color");
@@ -235,6 +268,44 @@ namespace UnityGLTF
 			}
 
 			return false;
+		}
+	}
+
+	static class MaterialHelper
+	{
+		public static float GetFloat(this Material material, int propertyIdx, float fallback)
+		{
+			if (material.HasProperty(propertyIdx))
+				return material.GetFloat(propertyIdx);
+			return fallback;
+		}
+
+		public static Color GetColor(this Material material, int propertyIdx, Color fallback)
+		{
+			if (material.HasProperty(propertyIdx))
+				return material.GetColor(propertyIdx);
+			return fallback;
+		}
+
+		public static Texture GetTexture(this Material material, int propertyIdx, Texture fallback)
+		{
+			if (material.HasProperty(propertyIdx))
+				return material.GetTexture(propertyIdx);
+			return fallback;
+		}
+
+		public static Vector2 GetTextureScale(this Material material, int propertyIdx, Vector2 fallback)
+		{
+			if (material.HasProperty(propertyIdx))
+				return material.GetTextureScale(propertyIdx);
+			return fallback;
+		}
+
+		public static Vector2 GetTextureOffset(this Material material, int propertyIdx, Vector2 fallback)
+		{
+			if (material.HasProperty(propertyIdx))
+				return material.GetTextureOffset(propertyIdx);
+			return fallback;
 		}
 	}
 }
