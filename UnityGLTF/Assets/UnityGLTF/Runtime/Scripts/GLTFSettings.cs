@@ -251,7 +251,9 @@ namespace UnityGLTF
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
 #endif
 		    }
+#if UNITY_EDITOR
 		    RegisterPlugins(settings);
+#endif
 		    cachedSettings = settings;
 		    return settings;
 	    }
