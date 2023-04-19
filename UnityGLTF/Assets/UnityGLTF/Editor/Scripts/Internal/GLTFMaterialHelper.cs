@@ -131,7 +131,7 @@ namespace UnityGLTF
 			if (material.HasProperty("emissiveFactor"))
 				material.globalIlluminationFlags = MaterialEditor.FixupEmissiveFlag(material.GetColor("emissiveFactor"), material.globalIlluminationFlags);
 
-			if (!material.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
+			if (!material.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON") && material.HasProperty("baseColorTexture"))
 			{
 				if (material.GetTextureScale("baseColorTexture") != Vector2.one || material.GetTextureOffset("baseColorTexture") != Vector2.zero)
 				{
@@ -143,9 +143,15 @@ namespace UnityGLTF
 		public static void SetKeyword(Material material, string keyword, bool state)
 		{
 			if (state)
+			{
 				material.EnableKeyword(keyword + "_ON");
+				material.EnableKeyword(keyword);
+			}
 			else
+			{
 				material.DisableKeyword(keyword + "_ON");
+				material.DisableKeyword(keyword);
+			}
 
 			if (material.HasProperty(keyword))
 				material.SetFloat(keyword, state ? 1 : 0);

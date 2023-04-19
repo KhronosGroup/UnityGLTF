@@ -408,11 +408,12 @@ namespace UnityGLTF
 
 		private static bool HasPropertyButNoTex(Material targetMaterial, string name)
 		{
-			return targetMaterial.HasProperty(name) &&
-			       #if UNITY_2021_2_OR_NEWER
-			       targetMaterial.HasTexture(name) &&
-			       #endif
-			       !targetMaterial.GetTexture(name);
+			// turns out HasProperty can return true when someone sets the property on a material - but the shader doesn't actually have that property
+			var hasProperty = targetMaterial.shader.FindPropertyIndex(name) > -1;
+#if UNITY_2021_2_OR_NEWER
+			hasProperty &= targetMaterial.HasTexture(name);
+#endif
+			return hasProperty && !targetMaterial.GetTexture(name);
 		}
 
 		private void DrawProperties(Material targetMaterial, MaterialProperty[] properties)
