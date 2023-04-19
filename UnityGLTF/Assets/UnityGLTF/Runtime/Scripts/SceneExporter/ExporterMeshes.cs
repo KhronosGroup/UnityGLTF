@@ -457,8 +457,9 @@ namespace UnityGLTF
 					// to the values in this frame) and then any weight between 50-100 would be relevant to the weights in
 					// the second frame.  See Post 20 for more info:
 					// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
+					var frameWeight = meshObj.GetBlendShapeFrameWeight(blendShapeIndex, 0);
 					if(exportTargets.Any())
-						weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / 100);
+						weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / frameWeight);
 
 					exportBlendShapeMarker.End();
 				}
