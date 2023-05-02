@@ -920,6 +920,14 @@ public partial class GLTFSceneExporter
 			accessor.Count = count;
 			accessor.Type = GLTFAccessorAttributeType.VEC4;
 
+			// sanitize tangents: in some cases Unity's importer produces NaN values for calculated tangents.
+			for (uint i = 0; i < arr.Length; i++)
+			{
+				var v = arr[i];
+				if (float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) || float.IsNaN(v.w))
+					arr[i].Set(0,0,1,1);
+			}
+
 			float minX = arr[0].x;
 			float minY = arr[0].y;
 			float minZ = arr[0].z;
