@@ -217,10 +217,15 @@ namespace UnityGLTF
 
 				if (GUILayout.Button("Extract Materials"))
 				{
+					var materials = new Material[mats.arraySize];
 					for (var i = 0; i < mats.arraySize; i++)
+						materials[i] = mats.GetArrayElementAtIndex(i).objectReferenceValue as Material;
+
+					for (var i = 0; i < materials.Length; i++)
 					{
+						if (!materials[i]) continue;
 						AssetDatabase.StartAssetEditing();
-						ExtractMaterial(mats.GetArrayElementAtIndex(i).objectReferenceValue as Material, false);
+						ExtractMaterial(materials[i], false);
 						AssetDatabase.StopAssetEditing();
 						var assetPath = AssetDatabase.GetAssetPath(target);
 						AssetDatabase.WriteImportSettingsIfDirty(assetPath);
