@@ -233,14 +233,22 @@ namespace UnityGLTF
 				return curve[index].Evaluate(time);
 			}
 
+			private static readonly Dictionary<Type, int> requiredCurveCount = new Dictionary<Type, int>()
+			{
+				{typeof(Color), 4},
+				{typeof(Vector2), 2},
+				{typeof(Vector3), 3},
+				{typeof(Vector4), 4},
+			};
+
 			internal bool Validate()
 			{
-				if (propertyType == typeof(Color))
+				if (requiredCurveCount.TryGetValue(propertyType, out var requiredCount))
 				{
-					var hasEnoughCurves = curve.Count == 4;
+					var hasEnoughCurves = curve.Count == requiredCount;
 					if (!hasEnoughCurves)
 					{
-						UnityEngine.Debug.LogWarning("Animating single channels for colors is not supported. Please add at least one keyframe for all channels (RGBA): " + propertyName, target);
+						UnityEngine.Debug.LogWarning("<b>Can not export animation, please animate all channels for \"" + propertyName + "\"</b>, expected channel count is " + requiredCount + " but got only " + curve.Count, target);
 						return false;
 					}
 				}
@@ -277,6 +285,47 @@ namespace UnityGLTF
 								this.curveName[i] = _tempList2[curveIndex];;
 							}
 						}
+					}
+					else if (propertyType == typeof(Vector2))
+					{
+						FillTempLists();
+						var index1 = FindIndex(name => name.EndsWith(".x"));
+						var index2 = FindIndex(name => name.EndsWith(".y"));
+						SortCurves(index1, index2);
+					}
+					else if (propertyType == typeof(Vector3))
+					{
+						FillTempLists();
+						var index1 = FindIndex(name => name.EndsWith(".x"));
+						var index2 = FindIndex(name => name.EndsWith(".y"));
+						var index3 = FindIndex(name => name.EndsWith(".z"));
+						SortCurves(index1, index2, index3);
+					}
+					else if (propertyType == typeof(Vector4))
+					{
+						FillTempLists();
+						var index1 = FindIndex(name => name.EndsWith(".x"));
+						var index2 = FindIndex(name => name.EndsWith(".y"));
+						var index3 = FindIndex(name => name.EndsWith(".z"));
+						var index4 = FindIndex(name => name.EndsWith(".w"));
+						SortCurves(index1, index2, index3, index4);
+					}
+				}
+			}
+
+			private void SortCurves(int i0, int i1, int i2 = -1, int i3 = -1)
+			{
+				for(var i = 0; i < curve.Count; i++)
+				{
+					var curveIndex = i;
+					if (i == 0) curveIndex = i0;
+					else if (i == 1) curveIndex = i1;
+					else if(i == 2 && i2 >= 0) curveIndex = i2;
+					else if(i == 3 && i3 >= 0) curveIndex = i3;
+					if (curveIndex >= 0 && curveIndex != i)
+					{
+						this.curve[i] = _tempList1[curveIndex];;
+						this.curveName[i] = _tempList2[curveIndex];;
 					}
 				}
 			}
