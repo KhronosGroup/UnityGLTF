@@ -53,6 +53,27 @@ namespace UnityGLTF
 #if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = AnimationUtility.GetAnimationClips(transform.gameObject);
                 var animatorController = animator.runtimeAnimatorController as AnimatorController;
+
+                // make sure the default state is the first clip
+                if (animatorController && animatorController.layers.Length > 0)
+                {
+	                var defaultState = animatorController.layers[0].stateMachine.defaultState;
+	                if (defaultState) {
+						var defaultMotion = defaultState.motion;
+						if (defaultMotion is AnimationClip clip && clip)
+						{
+							// make sure this is the first clip in the clips array
+							var index = Array.IndexOf(clips, clip);
+							if (index > 0)
+							{
+								var temp = clips[0];
+								clips[0] = clip;
+								clips[index] = temp;
+							}
+						}
+	                }
+                }
+
 				// Debug.Log("animator: " + animator + "=> " + animatorController);
                 ExportAnimationClips(transform, clips, animator, animatorController);
 #endif
@@ -63,6 +84,16 @@ namespace UnityGLTF
 			{
 #if ANIMATION_EXPORT_SUPPORTED
                 AnimationClip[] clips = UnityEditor.AnimationUtility.GetAnimationClips(transform.gameObject);
+
+                // make sure the default state is the first clip
+                if (animation.clip) {
+					var index = Array.IndexOf(clips, animation.clip);
+					if (index > 0) {
+						var temp = clips[0];
+						clips[0] = animation.clip;
+						clips[index] = temp;
+					}
+                }
                 ExportAnimationClips(transform, clips);
 #endif
 			}
