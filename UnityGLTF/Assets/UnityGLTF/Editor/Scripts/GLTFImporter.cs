@@ -210,6 +210,7 @@ namespace UnityGLTF
                     if (existingAnimator)
 	                    DestroyImmediate(existingAnimator);
 
+                    var animationPathPrefix = "";
                     while (
                         gltfScene.transform.childCount == 1 &&
                         gltfScene.GetComponents<Component>().Length == 1)
@@ -221,6 +222,7 @@ namespace UnityGLTF
                         t = gltfScene.transform;
                         t.parent = null; // To keep transform information in the new parent
                         DestroyImmediate(parent); // Get rid of the parent
+                        animationPathPrefix += "/" + importName;
                     }
 
                     // Re-add animator if it was removed
@@ -228,6 +230,33 @@ namespace UnityGLTF
 					{
 	                    var newAnimator = gltfScene.AddComponent<Animator>();
 	                    newAnimator.avatar = existingAvatar;
+					}
+
+                    // Re-target animation clips - when we strip the root, all animations also change and have a different path now.
+                    if (animations != null)
+					{
+						foreach (var clip in animations)
+						{
+							if (clip == null) continue;
+
+							// change all animation clip targets
+							var bindings = AnimationUtility.GetCurveBindings(clip);
+							var curves = new AnimationCurve[bindings.Length];
+							var newBindings = new EditorCurveBinding[bindings.Length];
+							for (var index = 0; index < bindings.Length; index++)
+							{
+								var binding = bindings[index];
+								curves[index] = AnimationUtility.GetEditorCurve(clip, binding);
+
+								var newBinding = bindings[index];
+								newBinding.path = binding.path.Substring(animationPathPrefix.Length);
+								newBindings[index] = newBinding;
+							}
+
+							var emptyCurves = new AnimationCurve[curves.Length];
+							AnimationUtility.SetEditorCurves(clip, bindings, emptyCurves);
+							AnimationUtility.SetEditorCurves(clip, newBindings, curves);
+						}
 					}
                 }
 
