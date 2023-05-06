@@ -11,6 +11,7 @@ namespace UnityGLTF.Timeline
 	{
 	    public ExposedReference<Transform> m_exportRoot;
 	    public string m_File = "Assets/Recording.glb";
+	    public string m_AnimationName = "Recording";
 	    public int m_CaptureFrameRate = 60;
 	    public bool m_RecordBlendShapes = true;
 	    public bool m_RecordAnimationPointer = false;

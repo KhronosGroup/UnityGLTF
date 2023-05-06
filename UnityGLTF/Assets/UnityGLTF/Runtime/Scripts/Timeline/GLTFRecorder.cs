@@ -45,6 +45,7 @@ namespace UnityGLTF.Timeline
 
 		public bool IsRecording => isRecording;
 		public double LastRecordedTime => lastRecordedTime;
+		public string AnimationName = "Recording";
 
 		internal class AnimationData
 		{
@@ -306,7 +307,7 @@ namespace UnityGLTF.Timeline
 			// exporter.ExportAnimationFromNode(ref root);
 
 			GLTFAnimation anim = new GLTFAnimation();
-			anim.Name = "Recording";
+			anim.Name = AnimationName;
 
 			CollectAndProcessAnimation(exporter, anim, addBoundsMarkerNodes, out Bounds translationBounds);
 
@@ -372,6 +373,7 @@ namespace UnityGLTF.Timeline
 		private static ProfilerMarker processAnimationMarker = new ProfilerMarker("Process Animation");
 		private static ProfilerMarker simplifyKeyframesMarker = new ProfilerMarker("Simplify Keyframes");
 		private static ProfilerMarker convertValuesMarker = new ProfilerMarker("Convert Values to Arrays");
+
 		private void CollectAndProcessAnimation(GLTFSceneExporter gltfSceneExporter, GLTFAnimation anim, bool calculateTranslationBounds, out Bounds translationBounds)
 		{
 			var gotFirstValue = false;

@@ -37,6 +37,7 @@ namespace UnityGLTF.Timeline
 		    if (recorder == null)
 		    {
 			    recorder = new GLTFRecorder(getExportRoot, Clip.m_RecordBlendShapes, Clip.m_RecordAnimationPointer);
+			    recorder.AnimationName = Clip.m_AnimationName;
 			    recorder.StartRecording(getTime);
 		    }
 		    else if (getTime > recorder.LastRecordedTime)
@@ -53,46 +54,34 @@ namespace UnityGLTF.Timeline
 	#if UNITY_EDITOR
 	        return EditorApplication.isPlaying;
 	#else
-	            return true;
+	        return true;
 	#endif
 	    }
 
 	    public override void OnPlayableDestroy(Playable playable)
 	    {
-	        if (!IsPlaying())
-	        {
-	            return;
-	        }
+		    if (!IsPlaying()) return;
 
 	        StopRecording(playable.GetTime());
 	    }
 
 	    public override void OnGraphStart(Playable playable)
 	    {
-	        if (!IsPlaying())
-	        {
-	            return;
-	        }
+		    if (!IsPlaying()) return;
 
 	        BeginRecording(playable.GetTime(), Clip.GetExportRoot(playable.GetGraph()));
 	    }
 
 	    public override void OnGraphStop(Playable playable)
 	    {
-	        if (!IsPlaying())
-	        {
-	            return;
-	        }
+		    if (!IsPlaying()) return;
 
 	        StopRecording(playable.GetTime());
 	    }
 
 	    public override void ProcessFrame(Playable playable, FrameData info, object playerData)
 	    {
-	        if (!IsPlaying())
-	        {
-	            return;
-	        }
+		    if (!IsPlaying()) return;
 
 	        double time = playable.GetTime();
 	        GLTFRecorderHelper.Add(() => OnFrameEnd(time, playable, info, playerData));
@@ -110,16 +99,9 @@ namespace UnityGLTF.Timeline
 
 	    public void OnFrameEnd(double time, Playable playable, FrameData info, object playerData)
 	    {
-	        if (!playable.IsValid())
-	        {
-	            return;
-	        }
-
-	        var root = Clip.GetExportRoot(playable.GetGraph());
-	        if (!root || m_isPaused)
-	        {
-	            return;
-	        }
+		    if (!playable.IsValid()) return;
+		    var root = Clip.GetExportRoot(playable.GetGraph());
+	        if (!root || m_isPaused) return;
 
 	        ProcessRecording(time, root);
 	    }
