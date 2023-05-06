@@ -174,7 +174,8 @@ namespace UnityGLTF
             var uniqueNames = new List<string>() { "main asset" };
             EnsureShadersAreLoaded();
 
-#if UNITY_2020_2_OR_NEWER
+#if UNITY_2020_2_OR_NEWER && !UNITY_2021_3_OR_NEWER
+	        // We don't need this custom dependency in 2021.3 and later, because there we always use ShaderGraph.
             ctx.DependsOnCustomDependency($"{nameof(GraphicsSettings)}.{nameof(GraphicsSettings.currentRenderPipeline)}");
 #endif
 
@@ -678,7 +679,7 @@ namespace UnityGLTF
         }
     }
 
-#if UNITY_2020_2_OR_NEWER
+#if UNITY_2020_2_OR_NEWER && !UNITY_2021_3_OR_NEWER
     class RenderPipelineWatcher
     {
 	    [InitializeOnLoadMethod]
