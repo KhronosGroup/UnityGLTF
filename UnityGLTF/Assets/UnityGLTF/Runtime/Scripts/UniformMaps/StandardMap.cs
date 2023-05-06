@@ -266,10 +266,6 @@ namespace UnityGLTF
 					_material.SetColor("_EmissionColor", value);
 					_material.EnableKeyword("_EMISSION");
 				}
-				else
-				{
-					Debug.LogWarning("Tried to set an emission factor to a material that does not support it.");
-				}
 			}
 		}
 

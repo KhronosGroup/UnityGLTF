@@ -25,10 +25,10 @@ using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
-using Unity.Collections;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
+using UnityEngine.Rendering;
 #else
 using UnityEditor.Experimental.AssetImporters;
 #endif
@@ -173,6 +173,10 @@ namespace UnityGLTF
 
             var uniqueNames = new List<string>() { "main asset" };
             EnsureShadersAreLoaded();
+
+#if UNITY_2020_2_OR_NEWER
+            ctx.DependsOnCustomDependency($"{nameof(GraphicsSettings)}.{nameof(GraphicsSettings.currentRenderPipeline)}");
+#endif
 
             string GetUniqueName(string desiredName)
             {
@@ -673,5 +677,36 @@ namespace UnityGLTF
 	        return base.SupportsRemappedAssetType(type);
         }
     }
+
+#if UNITY_2020_2_OR_NEWER
+    class RenderPipelineWatcher
+    {
+	    [InitializeOnLoadMethod]
+	    static void RegisterForRenderPipelineChanges()
+	    {
+#if UNITY_2021_2_OR_NEWER
+		    RenderPipelineManager.activeRenderPipelineTypeChanged += OnRenderPipelineTypeChanged;
+#else
+		    var lastPipeline = GraphicsSettings.currentRenderPipeline;
+		    EditorApplication.update += () =>
+		    {
+			    if (GraphicsSettings.currentRenderPipeline != lastPipeline)
+			    {
+				    lastPipeline = GraphicsSettings.currentRenderPipeline;
+				    OnRenderPipelineTypeChanged();
+			    }
+		    };
+#endif
+	    }
+
+	    static void OnRenderPipelineTypeChanged()
+	    {
+		    var pipelineName = GraphicsSettings.currentRenderPipeline ? GraphicsSettings.currentRenderPipeline.GetType().Name : "BuiltIn";
+			AssetDatabase.RegisterCustomDependency($"{nameof(GraphicsSettings)}.{nameof(GraphicsSettings.currentRenderPipeline)}", Hash128.Compute(pipelineName));
+			AssetDatabase.Refresh();
+	    }
+    }
+#endif
+
 }
 #endif
