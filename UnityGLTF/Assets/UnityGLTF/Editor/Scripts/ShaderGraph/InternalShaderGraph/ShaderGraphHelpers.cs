@@ -12,17 +12,43 @@ using UnityEditor;
 using UnityEditor.ShaderGraph.Drawing;
 #endif
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF
 {
 	public static class ShaderGraphHelpers
 	{
-		public static void DrawShaderGraphGUI(MaterialEditor materialEditor, IEnumerable<MaterialProperty> properties)
+		private static FieldInfo m_Flags;
+		public static void DrawShaderGraphGUI(MaterialEditor materialEditor, List<MaterialProperty> properties)
 		{
 #if HAVE_CATEGORIES
 			ShaderGraphPropertyDrawers.DrawShaderGraphGUI(materialEditor, properties);
 #else
+			if (m_Flags == null)
+				m_Flags = typeof(MaterialProperty).GetField("m_Flags", (BindingFlags)(-1));
+
+			// This is a workaround for serialization bug IN-16486
+			// Changes made to texture with a specific a _ST property marked as [NoScaleOffset] in the Inspector are shown but not saved
+			// We're explicitly removing the _ST property from the list of properties to be drawn,
+			// and we mark all textures that actually have _ST properties so that they're rendering inline properties again.
+			if (m_Flags != null)
+			{
+				var names = properties.Select(x => x.name).ToList();
+				var removals = new List<MaterialProperty>();
+				foreach (var p in properties)
+				{
+					if (p.flags.HasFlag(MaterialProperty.PropFlags.NoScaleOffset) && names.Contains(p.name + "_ST"))
+						m_Flags.SetValue(p, (ShaderPropertyFlags) m_Flags.GetValue(p) & ~ShaderPropertyFlags.NoScaleOffset);
+
+					if (p.name.EndsWith("_ST", StringComparison.Ordinal) && p.type == MaterialProperty.PropType.Vector)
+						removals.Add(p);
+				}
+
+				foreach (var r in removals)
+					properties.Remove(r);
+			}
+
 			materialEditor.PropertiesDefaultGUI(properties.ToArray());
 #endif
 		}
