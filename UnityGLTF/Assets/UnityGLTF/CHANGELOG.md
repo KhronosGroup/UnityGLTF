@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.2-exp] - 2023-05-08
+- remove: unnecessary forced texture transform setting
+- fix: make sure default animation state is first in clip list on export
+- fix: regarget animation clip paths when stripping empty hierarchy nodes
+- fix: watch current render pipeline for changes so that we can trigger reimports
+- fix: texture_ST properties aren't properly saved since ShaderGraph marks the textures as [NoScaleOffset} (IN-16486)
+- fix: ArgumentException when animated property doesnt exist anymore on assigned shader where the PropertyType can not be resolved then
+
 ## [2.0.1-exp] - 2023-05-05
 - add: sorting of animation clips
 - change: dont export animation if expected channel count is not met (e.g. Vector2 has only one channel)
