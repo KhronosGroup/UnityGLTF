@@ -274,6 +274,11 @@ namespace UnityGLTF
 
 			internal bool Validate()
 			{
+				if (propertyType == null)
+				{
+					UnityEngine.Debug.LogError("PropertyCurve has no type, can not validate " + propertyName, target);
+					return false;
+				}
 				if (requiredCurveCount.TryGetValue(propertyType, out var requiredCount))
 				{
 					var hasEnoughCurves = curve.Count == requiredCount;
@@ -472,6 +477,20 @@ namespace UnityGLTF
 											break;
 									}
 								}
+							}
+							// The type can still be missing if the animated property doesnt exist on the shader anymore
+							if (prop.propertyType == null)
+							{
+								foreach (var name in prop.curveName)
+								{
+									if (prop.propertyType != null) break;
+									// we can only really resolve a color here by the name
+									if (name.EndsWith(".r") || name.EndsWith(".g") || name.EndsWith(".b") ||
+									    name.EndsWith(".a"))
+										prop.propertyType = typeof(Color);
+								}
+								if(prop.propertyType == null)
+									Debug.LogWarning("Animated property is missing/unknown: " + binding.propertyName, animatedObject);
 							}
 						}
 						else if (animatedObject is Light)
