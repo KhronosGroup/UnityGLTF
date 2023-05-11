@@ -107,7 +107,7 @@ namespace UnityGLTF
 				return;
 			}
 #else
-			throw NotSupportedException("Can't import model! Draco extension is needed. Please add com.atteneder.draco package to your project!");
+			throw new NotSupportedException("Can't import model! Draco extension is needed. Please add com.atteneder.draco package to your project!");
 #endif
 			cancellationToken.ThrowIfCancellationRequested();
 
