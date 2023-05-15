@@ -19,8 +19,14 @@ ScriptedImporter:
   _importNormals: 0
   _importTangents: 0
   _importAnimations: 2
+  _addAnimatorComponent: 0
+  _animationLoopTime: 1
+  _animationLoopPose: 0
   _importMaterials: 1
   _useSceneNameIdentifier: 1
+  optimizeGameObjects: 0
+  materials:
+  - {instanceID: 0}
   _extensions: []
   _textures: []
   _mainAssetIdentifier: scenes/SimpleAnimation

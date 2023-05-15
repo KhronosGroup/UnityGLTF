@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [2.0.3-exp] - 2023-05-15
 - fix: import path retargeting exception in some cases
 - fix: Range shader property type was missing from propery validation
+- feat: allow changing GLTFRecorderClip animation output name
 
 ## [2.0.2-exp] - 2023-05-08
 - remove: unnecessary forced texture transform setting

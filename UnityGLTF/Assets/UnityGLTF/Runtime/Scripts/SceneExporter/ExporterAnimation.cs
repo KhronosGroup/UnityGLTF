@@ -483,9 +483,11 @@ namespace UnityGLTF
 										case ShaderUtil.ShaderPropertyType.TexEnv:
 											prop.propertyType = typeof(Texture);
 											break;
+#if UNITY_2021_1_OR_NEWER
 										case ShaderUtil.ShaderPropertyType.Int:
 											prop.propertyType = typeof(int);
 											break;
+#endif
 										default:
 											Debug.LogWarning(null, "Looks like there's a new shader property type - please report a bug!");
 											break;
