@@ -254,7 +254,8 @@ namespace UnityGLTF
 								curves[index] = AnimationUtility.GetEditorCurve(clip, binding);
 
 								var newBinding = bindings[index];
-								newBinding.path = binding.path.Substring(animationPathPrefix.Length);
+								if (binding.path.StartsWith(animationPathPrefix, StringComparison.Ordinal))
+									newBinding.path = binding.path.Substring(animationPathPrefix.Length);
 								newBindings[index] = newBinding;
 							}
 
