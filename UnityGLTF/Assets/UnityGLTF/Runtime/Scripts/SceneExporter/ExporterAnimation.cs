@@ -304,46 +304,34 @@ namespace UnityGLTF
 					if (propertyType == typeof(Color))
 					{
 						FillTempLists();
-						var indexOfR = FindIndex(name => name.EndsWith(".r"));
-						var indexOfG = FindIndex(name => name.EndsWith(".g"));
-						var indexOfB = FindIndex(name => name.EndsWith(".b"));
-						var indexOfA = FindIndex(name => name.EndsWith(".a"));
-						for(var i = 0; i < curve.Count; i++)
-						{
-							var curveIndex = i;
-							if (i == 0) curveIndex = indexOfR;
-							else if (i == 1) curveIndex = indexOfG;
-							else if (i == 2) curveIndex = indexOfB;
-							else if (i == 3) curveIndex = indexOfA;
-							if (curveIndex >= 0 && curveIndex != i)
-							{
-								this.curve[i] = _tempList1[curveIndex];;
-								this.curveName[i] = _tempList2[curveIndex];;
-							}
-						}
+						var index1 = FindIndex(name => name.EndsWith(".r", StringComparison.Ordinal));
+						var index2 = FindIndex(name => name.EndsWith(".g", StringComparison.Ordinal));
+						var index3 = FindIndex(name => name.EndsWith(".b", StringComparison.Ordinal));
+						var index4 = FindIndex(name => name.EndsWith(".a", StringComparison.Ordinal));
+						SortCurves(index1, index2, index3, index4);
 					}
 					else if (propertyType == typeof(Vector2))
 					{
 						FillTempLists();
-						var index1 = FindIndex(name => name.EndsWith(".x"));
-						var index2 = FindIndex(name => name.EndsWith(".y"));
+						var index1 = FindIndex(name => name.EndsWith(".x", StringComparison.Ordinal));
+						var index2 = FindIndex(name => name.EndsWith(".y", StringComparison.Ordinal));
 						SortCurves(index1, index2);
 					}
 					else if (propertyType == typeof(Vector3))
 					{
 						FillTempLists();
-						var index1 = FindIndex(name => name.EndsWith(".x"));
-						var index2 = FindIndex(name => name.EndsWith(".y"));
-						var index3 = FindIndex(name => name.EndsWith(".z"));
+						var index1 = FindIndex(name => name.EndsWith(".x", StringComparison.Ordinal));
+						var index2 = FindIndex(name => name.EndsWith(".y", StringComparison.Ordinal));
+						var index3 = FindIndex(name => name.EndsWith(".z", StringComparison.Ordinal));
 						SortCurves(index1, index2, index3);
 					}
 					else if (propertyType == typeof(Vector4))
 					{
 						FillTempLists();
-						var index1 = FindIndex(name => name.EndsWith(".x"));
-						var index2 = FindIndex(name => name.EndsWith(".y"));
-						var index3 = FindIndex(name => name.EndsWith(".z"));
-						var index4 = FindIndex(name => name.EndsWith(".w"));
+						var index1 = FindIndex(name => name.EndsWith(".x", StringComparison.Ordinal) || name.EndsWith(".r", StringComparison.Ordinal));
+						var index2 = FindIndex(name => name.EndsWith(".y", StringComparison.Ordinal) || name.EndsWith(".g", StringComparison.Ordinal));
+						var index3 = FindIndex(name => name.EndsWith(".z", StringComparison.Ordinal) || name.EndsWith(".b", StringComparison.Ordinal));
+						var index4 = FindIndex(name => name.EndsWith(".w", StringComparison.Ordinal) || name.EndsWith(".a", StringComparison.Ordinal));
 						SortCurves(index1, index2, index3, index4);
 					}
 				}
@@ -406,20 +394,36 @@ namespace UnityGLTF
 			public void AddPropertyCurves(Object animatedObject, AnimationCurve curve, EditorCurveBinding binding)
 			{
 				if (propertyCurves == null) propertyCurves = new Dictionary<string, PropertyCurve>();
-				if (!binding.propertyName.Contains("."))
+				var memberName = binding.propertyName;
+				if (!memberName.Contains("."))
 				{
-					var prop = new PropertyCurve(animatedObject, binding.propertyName);
-					// if (binding.propertyName == "translation")
-					// 	prop.needsCoordinateConversion = true;
-					prop.AddCurve(curve, binding.propertyName);
-					if (animatedObject is GameObject || animatedObject is Component)
+					var prop = new PropertyCurve(animatedObject, memberName);
+					prop.AddCurve(curve, memberName);
+					if (animatedObject is Light)
+					{
+						switch (memberName)
+						{
+							case "m_Color":
+								prop.propertyType = typeof(Color);
+								break;
+							case "m_Intensity":
+								prop.propertyType = typeof(float);
+								break;
+							case "m_SpotAngle":
+							case "m_InnerSpotAngle":
+								prop.propertyType = typeof(float);
+								break;
+						}
+					}
+					else if (animatedObject is GameObject || animatedObject is Component)
+					{
 						TryFindMemberBinding(binding, prop, prop.propertyName);
-					propertyCurves.Add(binding.propertyName, prop);
+					}
+
+					propertyCurves.Add(memberName, prop);
 				}
 				else
 				{
-					var memberName = binding.propertyName;
-
 					// Color is animated as a Color/Vector4
 					if (memberName.EndsWith(".r", StringComparison.Ordinal) || memberName.EndsWith(".g", StringComparison.Ordinal) ||
 					    memberName.EndsWith(".b", StringComparison.Ordinal) || memberName.EndsWith(".a", StringComparison.Ordinal) ||
@@ -454,11 +458,14 @@ namespace UnityGLTF
 							else
 							{
 								var found = false;
-								for (var i = 0; i < ShaderUtil.GetPropertyCount(mat.shader); i++)
+								var shaderPropertyCount = ShaderUtil.GetPropertyCount(mat.shader);
+								// var shaderPropertyNames = Enumerable.Range(0, shaderPropertyCount).Select(x => ShaderUtil.GetPropertyName(mat.shader, x));
+
+								for (var i = 0; i < shaderPropertyCount; i++)
 								{
 									if (found) break;
 									var name = ShaderUtil.GetPropertyName(mat.shader, i);
-									if (!memberName.EndsWith(name)) continue;
+									if (!memberName.EndsWith(name, StringComparison.Ordinal)) continue;
 									found = true;
 									var materialProperty = ShaderUtil.GetPropertyType(mat.shader, i);
 									switch (materialProperty)
@@ -470,10 +477,17 @@ namespace UnityGLTF
 											prop.propertyType = typeof(Vector4);
 											break;
 										case ShaderUtil.ShaderPropertyType.Float:
+										case ShaderUtil.ShaderPropertyType.Range:
 											prop.propertyType = typeof(float);
 											break;
 										case ShaderUtil.ShaderPropertyType.TexEnv:
 											prop.propertyType = typeof(Texture);
+											break;
+										case ShaderUtil.ShaderPropertyType.Int:
+											prop.propertyType = typeof(int);
+											break;
+										default:
+											Debug.LogWarning(null, "Looks like there's a new shader property type - please report a bug!");
 											break;
 									}
 								}
@@ -485,11 +499,10 @@ namespace UnityGLTF
 								{
 									if (prop.propertyType != null) break;
 									// we can only really resolve a color here by the name
-									if (name.EndsWith(".r") || name.EndsWith(".g") || name.EndsWith(".b") ||
-									    name.EndsWith(".a"))
+									if (name.EndsWith(".r") || name.EndsWith(".g") || name.EndsWith(".b") || name.EndsWith(".a"))
 										prop.propertyType = typeof(Color);
 								}
-								if(prop.propertyType == null)
+								if (prop.propertyType == null)
 									Debug.LogWarning("Animated property is missing/unknown: " + binding.propertyName, animatedObject);
 							}
 						}
