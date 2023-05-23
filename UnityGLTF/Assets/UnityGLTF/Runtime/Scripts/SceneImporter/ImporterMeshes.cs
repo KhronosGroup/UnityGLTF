@@ -107,7 +107,10 @@ namespace UnityGLTF
 				return;
 			}
 #else
-			throw new NotSupportedException("Can't import model! Draco extension is needed. Please add com.atteneder.draco package to your project!");
+			if (mesh.Primitives.Any(p => p.Extensions != null && p.Extensions.ContainsKey("KHR_draco_mesh_compression")))
+			{
+				throw new NotSupportedException("Can't import model! Draco extension is needed. Please add com.atteneder.draco package to your project!");
+			}
 #endif
 			cancellationToken.ThrowIfCancellationRequested();
 
