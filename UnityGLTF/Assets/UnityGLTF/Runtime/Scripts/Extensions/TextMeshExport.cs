@@ -35,7 +35,7 @@ namespace UnityGLTF
 			{
 				var s = material.shader;
 				// TODO figure out how to properly use the non-mobile shaders
-				var newS = Shader.Find("TestMeshPro/Mobile/Distance Field");
+				var newS = Shader.Find("TextMeshPro/Mobile/Distance Field");
 #if UNITY_EDITOR
 				if (!newS)
 				{
