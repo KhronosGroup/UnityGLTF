@@ -107,6 +107,14 @@ namespace UnityGLTF
 			var occlusionStrength = material.GetFloat(_Strength, 1);
 			var emission = material.GetTexture(_EmissionMap, null);
 			var emissionColor = material.GetColor(_EmissionColor, Color.black);
+
+			// if emission is OFF we don't want to set it to ON during conversion
+			if ((oldShader.name == StandardShader || oldShader.name == URPLitShader) && !material.IsKeywordEnabled("_EMISSION"))
+			{
+				emission = null;
+				emissionColor = Color.black;
+			}
+
 			var cutoff = material.GetFloat(_Cutoff, 0.5f);
 
 			var isCutoff = material.IsKeywordEnabled("_ALPHATEST_ON") ||
