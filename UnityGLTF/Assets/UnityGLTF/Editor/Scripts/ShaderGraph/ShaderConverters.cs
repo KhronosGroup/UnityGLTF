@@ -167,7 +167,7 @@ namespace UnityGLTF
 			material.SetTexture(occlusionTexture, occlusion);
 			material.SetFloat(occlusionStrength1, occlusionStrength);
 			material.SetTexture(emissiveTexture, emission);
-			material.SetFloat(alphaCutoff, cutoff);
+			material.SetFloat(alphaCutoff, isCutoff ? cutoff : -cutoff); // bit hacky, but that avoids an additional keyword for determining alpha cutoff right now
 
 			var map = new PBRGraphMap(material);
 			map.AlphaMode = isCutoff ? AlphaMode.MASK : (isTransparent ? AlphaMode.BLEND : AlphaMode.OPAQUE);
