@@ -272,19 +272,56 @@ namespace UnityGLTF
 				{typeof(Vector4), 4},
 			};
 
+			private static readonly string[] colorPropertiesWithoutAlphaChannel = new[]
+			{
+				"_EmissionColor",
+				"_EmissiveFactor",
+				"emissiveFactor",
+				"_AttenuationColor",
+				"attenuationColor",
+				"_SpecularColorFactor",
+				"specularColorFactor",
+				"_SheenColorFactor",
+				"sheenColorFactor",
+			};
+
 			internal bool Validate()
 			{
 				if (propertyType == null)
 				{
-					UnityEngine.Debug.LogError("PropertyCurve has no type, can not validate " + propertyName, target);
+					if (target is Material mat)
+						UnityEngine.Debug.LogWarning($"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
+					else
+						UnityEngine.Debug.LogError($"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
 					return false;
 				}
+
 				if (requiredCurveCount.TryGetValue(propertyType, out var requiredCount))
 				{
 					var hasEnoughCurves = curve.Count == requiredCount;
+
+					// Special case for colors, which can have either 3 (rgb) or 4 (rgba) components when animated.
+					// When they have 3 components, we also need to check that these are r,g,b - theoretically someone can animate r,g,a and then we get wrong data.
+					if (propertyType == typeof(Color) && (
+						    (target is Material && colorPropertiesWithoutAlphaChannel.Contains(propertyName)) ||
+						    (target is Light && propertyName == "m_Color")))
+					{
+						requiredCount = 3;
+						hasEnoughCurves = curve.Count == requiredCount
+						                  && curveName[0].EndsWith(".r", StringComparison.Ordinal)
+						                  && curveName[1].EndsWith(".g", StringComparison.Ordinal)
+						                  && curveName[2].EndsWith(".b", StringComparison.Ordinal);
+
+						if (!hasEnoughCurves)
+						{
+							UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
+							return false;
+						}
+					}
+
 					if (!hasEnoughCurves)
 					{
-						UnityEngine.Debug.LogWarning("<b>Can not export animation, please animate all channels for \"" + propertyName + "\"</b>, expected channel count is " + requiredCount + " but got only " + curve.Count, target);
+						UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
 						return false;
 					}
 				}
@@ -407,13 +444,16 @@ namespace UnityGLTF
 								prop.propertyType = typeof(Color);
 								break;
 							case "m_Intensity":
-								prop.propertyType = typeof(float);
-								break;
+							case "m_Range":
 							case "m_SpotAngle":
 							case "m_InnerSpotAngle":
 								prop.propertyType = typeof(float);
 								break;
 						}
+					}
+					else if (animatedObject is Camera)
+					{
+						prop.propertyType = typeof(float);
 					}
 					else if (animatedObject is GameObject || animatedObject is Component)
 					{
@@ -505,7 +545,7 @@ namespace UnityGLTF
 										prop.propertyType = typeof(Color);
 								}
 								if (prop.propertyType == null)
-									Debug.LogWarning("Animated property is missing/unknown: " + binding.propertyName, animatedObject);
+									Debug.LogWarning(null, "Animated property is missing/unknown: " + binding.propertyName, animatedObject);
 							}
 						}
 						else if (animatedObject is Light)
@@ -516,8 +556,7 @@ namespace UnityGLTF
 									prop.propertyType = typeof(Color);
 									break;
 								case "m_Intensity":
-									prop.propertyType = typeof(float);
-									break;
+								case "m_Range":
 								case "m_SpotAngle":
 								case "m_InnerSpotAngle":
 									prop.propertyType = typeof(float);

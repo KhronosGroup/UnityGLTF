@@ -52,14 +52,14 @@ namespace UnityGLTF
 			{
 				if (values[i] != null) continue;
 
-				Debug.LogError($"GLTFExporter error: value {i} in animated property \"{propertyName}\" is null. Skipping", animatedObject);
+				Debug.LogError(null, $"GLTFExporter error: value {i} in animated property \"{propertyName}\" is null. Skipping", animatedObject);
 				return;
 			}
 
 			var channelTargetId = GetIndex(animatedObject);
 			if (channelTargetId < 0)
 			{
-				Debug.LogWarning($"An animated {animatedObject.GetType()} has not been exported, is the object disabled? {animatedObject.name} (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
 				return;
 			}
 
