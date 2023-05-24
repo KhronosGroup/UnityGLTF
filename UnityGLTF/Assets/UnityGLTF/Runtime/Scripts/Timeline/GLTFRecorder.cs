@@ -102,20 +102,25 @@ namespace UnityGLTF.Timeline
 					}));
 					exportPlans.Add(new ExportPlan("scale", typeof(Vector3), x => x, (tr0, _, options) => options.inWorldSpace ? tr0.lossyScale : tr0.localScale));
 
-					exportPlans.Add(new ExportPlan("weights", typeof(float[]), x => x.GetComponent<SkinnedMeshRenderer>(), (tr0, x, options) =>
+					if (recordBlendShapes)
 					{
-						if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh.sharedMesh)
-						{
-							var mesh = skinnedMesh.sharedMesh;
-							var blendShapeCount = mesh.blendShapeCount;
-							if (blendShapeCount == 0) return null;
-							var weights = new float[blendShapeCount];
-							for (var i = 0; i < blendShapeCount; i++)
-								weights[i] = skinnedMesh.GetBlendShapeWeight(i);
-							return weights;
-						}
-						return null;
-					}));
+						exportPlans.Add(new ExportPlan("weights", typeof(float[]),
+							x => x.GetComponent<SkinnedMeshRenderer>(), (tr0, x, options) =>
+							{
+								if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh.sharedMesh)
+								{
+									var mesh = skinnedMesh.sharedMesh;
+									var blendShapeCount = mesh.blendShapeCount;
+									if (blendShapeCount == 0) return null;
+									var weights = new float[blendShapeCount];
+									for (var i = 0; i < blendShapeCount; i++)
+										weights[i] = skinnedMesh.GetBlendShapeWeight(i);
+									return weights;
+								}
+
+								return null;
+							}));
+					}
 
 					if (recordAnimationPointer)
 					{
@@ -287,6 +292,9 @@ namespace UnityGLTF.Timeline
 				adjustedSettings.ExportAnimations = false;
 				settings = adjustedSettings;
 			}
+
+			if (!recordBlendShapes)
+					settings.BlendShapeExportProperties = GLTFSettings.BlendShapeExportPropertyFlags.None;
 
 			var logHandler = new StringBuilderLogHandler();
 
