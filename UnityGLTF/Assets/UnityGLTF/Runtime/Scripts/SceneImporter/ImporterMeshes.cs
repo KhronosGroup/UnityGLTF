@@ -378,6 +378,11 @@ namespace UnityGLTF
 					}
 					else
 					{
+						// When using Draco, it's possible the BufferView is null
+						if (primitive.Attributes[targetAttribute.Key].Value.BufferView == null)
+						{
+							continue;
+						}
 						bufferIdPair = primitive.Attributes[targetAttribute.Key].Value.BufferView.Value.Buffer;
 						targetAttribute.Value.Value.BufferView = primitive.Attributes[targetAttribute.Key].Value.BufferView;
 					}
