@@ -29,7 +29,7 @@ namespace UnityGLTF
 	public partial class GLTFSceneExporter
 	{
 #if ANIMATION_SUPPORTED
-		private readonly Dictionary<(AnimationClip clip, float speed), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, float), GLTFAnimation>();
+		private readonly Dictionary<(AnimationClip clip, float speed, Avatar avatar), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, float, Avatar), GLTFAnimation>();
 #endif
 #if ANIMATION_SUPPORTED
 		private readonly Dictionary<(AnimationClip clip, float speed, string targetPath), Transform> _clipAndSpeedAndPathToExportedTransform = new Dictionary<(AnimationClip, float, string), Transform>();
@@ -123,7 +123,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private GLTFAnimation GetOrCreateAnimation(AnimationClip clip, string searchForDuplicateName, float speed)
+		private GLTFAnimation GetOrCreateAnimation(AnimationClip clip, string searchForDuplicateName, float speed, Transform node)
 		{
 			var existingAnim = default(GLTFAnimation);
 			if (_exportOptions.MergeClipsWithMatchingNames)
@@ -136,10 +136,12 @@ namespace UnityGLTF
 			// TODO when multiple AnimationClips are exported, we're currently not properly merging those;
 			// we should only export the GLTFAnimation once but then apply that to all nodes that require it (duplicating the animation but not the accessors)
 			// instead of naively writing over the GLTFAnimation with the same data.
-			var animationClipAndSpeed = (clip, speed);
+			var animator = node.GetComponent<Animator>();
+			var avatar = animator ? animator.avatar : null;
+			var animationClipAndSpeedAndAvatar = (clip, speed, avatar);
 			if (existingAnim == null)
 			{
-				if(_clipToAnimation.TryGetValue(animationClipAndSpeed, out existingAnim))
+				if(_clipToAnimation.TryGetValue(animationClipAndSpeedAndAvatar, out existingAnim))
 				{
 					// we duplicate the clip it was exported before so we can retarget to another transform.
 					existingAnim = new GLTFAnimation(existingAnim, _root);
@@ -149,8 +151,8 @@ namespace UnityGLTF
 			GLTFAnimation anim = existingAnim != null ? existingAnim : new GLTFAnimation();
 
 			// add to set of already exported clip-state pairs
-			if (!_clipToAnimation.ContainsKey(animationClipAndSpeed))
-				_clipToAnimation.Add(animationClipAndSpeed, anim);
+			if (!_clipToAnimation.ContainsKey(animationClipAndSpeedAndAvatar))
+				_clipToAnimation.Add(animationClipAndSpeedAndAvatar, anim);
 
 			return anim;
 		}
@@ -202,7 +204,7 @@ namespace UnityGLTF
 		public GLTFAnimation ExportAnimationClip(AnimationClip clip, string name, Transform node, float speed)
 		{
 			if (!clip) return null;
-			GLTFAnimation anim = GetOrCreateAnimation(clip, name, speed);
+			GLTFAnimation anim = GetOrCreateAnimation(clip, name, speed, node);
 
 			anim.Name = name;
 			if(settings.UniqueAnimationNames)
@@ -700,8 +702,13 @@ namespace UnityGLTF
 					return;
 				}
 				var key = (instanceCacheKey, clip, speed);
-				if(!_sampledClipInstanceCache.ContainsKey(key))
-					_sampledClipInstanceCache.Add(key, Object.Instantiate(clip));
+				if (!_sampledClipInstanceCache.ContainsKey(key))
+				{
+					var clonedClip = Object.Instantiate(clip);
+					clonedClip.name = clip.name;
+					_sampledClipInstanceCache.Add(key, clonedClip);
+				}
+
 				clip = _sampledClipInstanceCache[key];
 			}
 
