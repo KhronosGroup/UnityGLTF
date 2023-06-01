@@ -199,7 +199,30 @@ namespace UnityGLTF
 #endif
 			};
 
-			Mesh.ApplyAndDisposeWritableMeshData(meshes,mesh);
+			Mesh[] subMeshes = new Mesh[meshes.Length];
+			for (int i = 0; i < subMeshes.Length; i++)
+				subMeshes[i] = new Mesh();
+
+			Mesh.ApplyAndDisposeWritableMeshData(meshes, subMeshes);
+
+			CombineInstance[] combineInstances = new CombineInstance[subMeshes.Length];
+			for (int i = 0; i < combineInstances.Length; i++)
+			{
+				combineInstances[i] = new CombineInstance();
+				combineInstances[i].mesh = subMeshes[i];
+			}
+			mesh.CombineMeshes(combineInstances, false, false);
+
+			foreach (var m in subMeshes)
+			{
+#if UNITY_EDITOR
+				GameObject.DestroyImmediate(m);
+#else
+				GameObject.Destroy(m);
+#endif
+			}
+
+			//Mesh.ApplyAndDisposeWritableMeshData(meshes,mesh);
 			foreach (var d in decodeResults)
 			{
 				if (d.boneWeightData != null)
