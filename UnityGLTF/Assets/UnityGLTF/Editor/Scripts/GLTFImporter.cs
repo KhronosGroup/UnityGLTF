@@ -21,6 +21,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Threading.Tasks;
 using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF.Schema;
@@ -616,7 +617,8 @@ namespace UnityGLTF
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
-				loader.LoadSceneAsync().Wait();
+				// Need to call with RunSync, otherwise the draco loader will freeze the editor
+				AsyncHelpers.RunSync( () => loader.LoadSceneAsync());
 
 				if (gLTFRoot.ExtensionsUsed != null)
 				{
