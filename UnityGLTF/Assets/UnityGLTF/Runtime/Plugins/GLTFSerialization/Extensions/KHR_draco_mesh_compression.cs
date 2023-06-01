@@ -42,7 +42,7 @@ namespace GLTF.Schema
 				if (attributeToken != null)
 				{
 					var reader = attributeToken.CreateReader();
-					reader.ReadAsDictionary(() => reader.ReadAsInt32().Value);
+					extension.attributes = reader.ReadAsDictionary(() => reader.ReadAsInt32().Value);
 				}
 
 				var bufferViewToken = extensionToken.Value[nameof(KHR_draco_mesh_compression.bufferView)];

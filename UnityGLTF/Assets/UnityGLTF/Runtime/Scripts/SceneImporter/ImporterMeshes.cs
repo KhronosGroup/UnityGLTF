@@ -51,9 +51,10 @@ namespace UnityGLTF
 			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
 
 #if UNITY_DRACO
-			var draco = new DracoMeshLoader();
 			var anyHadDraco = false;
 			Mesh[] meshes = new Mesh[mesh.Primitives.Count];
+			var meshDataArray = Mesh.AllocateWritableMeshData(mesh.Primitives.Count);
+			var dracoDecodeResults = new DracoMeshLoader.DecodeResult[mesh.Primitives.Count];
 			for (int i = 0; i < mesh.Primitives.Count; i++)
 			{
 				var primitive = mesh.Primitives[i];
@@ -87,15 +88,14 @@ namespace UnityGLTF
 					bool needsNormals = true;
 					bool needsTangents = true;
 
-					var dracoMesh =  await draco.ConvertDracoMeshToUnity(bufferViewData, needsNormals, needsTangents,
-						weightsAttributeId, jointsAttributeId,  firstPrim.Targets != null, sync:true); // sync false will cause a crash... ?
+					var draco = new DracoMeshLoader();
 
-					meshes[i] = dracoMesh;
+					dracoDecodeResults[i] =  await draco.ConvertDracoMeshToUnity(meshDataArray[i], bufferViewData, needsNormals, needsTangents,
+						weightsAttributeId, jointsAttributeId,  firstPrim.Targets != null);
 
-					Statistics.VertexCount += dracoMesh.vertexCount;
+					Statistics.VertexCount += meshDataArray[i].vertexCount;
 
 					await CreateMaterials(primitive);
-
 				}
 			}
 
@@ -103,7 +103,8 @@ namespace UnityGLTF
 			if (anyHadDraco)
 			{
 				// Combine sub meshes
-				await ConstructUnityMesh(mesh, meshes, meshIndex, mesh.Name);
+				await ConstructUnityMesh(mesh, dracoDecodeResults, meshDataArray, meshIndex, mesh.Name, true);
+
 				return;
 			}
 #else
@@ -175,16 +176,12 @@ namespace UnityGLTF
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from Draco generated SubMeshes
 		/// </summary>
-		/// <param name="gltfMesh"></param>
-		/// <param name="meshes">SubMeshes</param>
-		/// <param name="meshIndex"></param>
-		/// <param name="meshName"></param>
 		/// <returns></returns>
-		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh, Mesh[] meshes, int meshIndex, string meshName)
+		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh,DracoMeshLoader.DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName, bool requireTangents)
 		{
 			uint verticesLength = 0;
-			foreach (var m in meshes)
-				verticesLength+= (uint)m.vertexCount;
+			for (int i = 0; i < meshes.Length; i++)
+				verticesLength+= (uint)meshes[i].vertexCount;
 
 			Mesh mesh = new Mesh
 			{
@@ -194,18 +191,25 @@ namespace UnityGLTF
 #endif
 			};
 
-			CombineInstance[] combine = new CombineInstance[meshes.Length];
-
-			for (int i = 0; i < meshes.Length; i++)
+			Mesh.ApplyAndDisposeWritableMeshData(meshes,mesh);
+			foreach (var d in decodeResults)
 			{
-				combine[i] = new CombineInstance();
-				combine[i].mesh = meshes[i];
-				combine[i].transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+				if (d.boneWeightData != null)
+				{
+					d.boneWeightData.ApplyOnMesh(mesh);
+					d.boneWeightData.Dispose();
+				}
 			}
 
-			mesh.CombineMeshes(combine,false,true);
-			foreach (var m in meshes)
-				UnityEngine.Object.DestroyImmediate(m);
+			if (decodeResults[0].calculateNormals)
+			{
+				mesh.RecalculateNormals();
+			}
+
+			if (requireTangents)
+			{
+				mesh.RecalculateTangents();
+			}
 
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
@@ -228,6 +232,10 @@ namespace UnityGLTF
 
 			int vertOffset = 0;
 			var meshCache = _assetCache.MeshCache[meshIndex];
+
+			unityMeshData.BoneWeights = mesh.boneWeights;
+			var b = mesh.bindposes;
+
 			for (int i = 0; i < gltfMesh.Primitives.Count; i++)
 			{
 				var primCache = meshCache.Primitives[i];
@@ -239,7 +247,6 @@ namespace UnityGLTF
 				{
 					ConvertAttributeAccessorsToUnityTypes(primCache, unityMeshData, vertOffset, i);
 				}
-
 				vertOffset += mesh.GetSubMesh(i).vertexCount;
 			}
 
@@ -272,7 +279,6 @@ namespace UnityGLTF
 
 			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
 		}
-
 
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from preloaded and preprocessed buffer data
