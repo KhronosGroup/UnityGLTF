@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.4-exp] - 2023-06-02
+- fix: sampled animations need individual GLTFAnimations since sampling another avatar is not transferrable
+- fix: switching from URP/Lit or Standard to PBRGraph should set cutoff correctly so it matches the UI / shader expectations (#68)
+- fix: conversion with _EMISSION keyword off was still setting emissive values (#86)
+- fix: typo in TMPro shader (#83)
+- fix: animated property validation was incorrect for 3-component color values and camera properties
+
 ## [2.0.3-exp] - 2023-05-15
 - fix: import path retargeting exception in some cases
 - fix: Range shader property type was missing from propery validation
