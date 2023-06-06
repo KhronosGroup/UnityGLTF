@@ -21,7 +21,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using System;
-using System.Threading.Tasks;
 using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF.Schema;
