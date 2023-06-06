@@ -206,7 +206,20 @@ namespace UnityGLTF
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
+			if (texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
+			{
+				return (texture.Extensions[KHR_texture_basisu.EXTENSION_NAME] as KHR_texture_basisu).source.Id;
+			}
 			return texture.Source?.Id ?? 0;
+		}
+
+		protected virtual bool IsTextureFlipped(GLTFTexture texture)
+		{
+			if (texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
+			{
+				return true;
+			}
+			return false;
 		}
 
 		/// <summary>
@@ -362,8 +375,15 @@ namespace UnityGLTF
 				if (!UnityEditor.AssetDatabase.Contains(source))
 #endif
 				{
-					//var unityTexture = Object.Instantiate(source);
-					var unityTexture = Texture2D.Instantiate(source);
+					Texture2D unityTexture;
+					if (!source.isReadable)
+					{
+						unityTexture = new Texture2D(source.width, source.height, source.format, source.mipmapCount, isLinear);
+						Graphics.CopyTexture(source, unityTexture);
+					}
+					else
+						unityTexture = Object.Instantiate(source);
+
 					unityTexture.name = string.IsNullOrEmpty(image.Name) ?
 						string.IsNullOrEmpty(texture.Name) ?
 							Path.GetFileNameWithoutExtension(image.Uri) :

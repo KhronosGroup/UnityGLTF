@@ -102,6 +102,10 @@ namespace UnityGLTF
 
 						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
 					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						mrMapper.BaseColorXScale *= new Vector2(1f,-1f);
+					}
 				}
 
 				mrMapper.MetallicFactor = pbr.MetallicFactor;
@@ -123,6 +127,10 @@ namespace UnityGLTF
 						mrMapper.MetallicRoughnessXRotation = ext.Rotation;
 						mrMapper.MetallicRoughnessXScale = ext.Scale.ToUnityVector2Raw();
 						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
+					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						mrMapper.MetallicRoughnessXScale *= new Vector2(1f,-1f);
 					}
 				}
 			}
@@ -157,6 +165,10 @@ namespace UnityGLTF
 						sgMapper.DiffuseXScale = ext.Scale.ToUnityVector2Raw();
 						sgMapper.DiffuseXTexCoord = ext.TexCoord;
 					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						sgMapper.DiffuseXScale *= new Vector2(1f,-1f);
+					}
 				}
 
 				sgMapper.SpecularFactor = specGloss.SpecularFactor.ToUnityVector3Raw();
@@ -177,6 +189,10 @@ namespace UnityGLTF
 						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
 						sgMapper.SpecularGlossinessXScale = ext.Scale.ToUnityVector2Raw();
 						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
+					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						sgMapper.SpecularGlossinessXScale *= new Vector2(1f,-1f);
 					}
 				}
 			}
@@ -205,6 +221,10 @@ namespace UnityGLTF
 						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
 
 						unlitMapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
+					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						unlitMapper.BaseColorXScale *= new Vector2(1f,-1f);
 					}
 				}
 			}
@@ -335,7 +355,15 @@ namespace UnityGLTF
 						{
 							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 							map.BaseColorXOffset = offset;
+							if (IsTextureFlipped(textureId.Value))
+							{
+								map.BaseColorXScale *= new Vector2(1f,-1f);
+							}
 						}
+					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						uniformMapper.NormalXScale *= new Vector2(1f,-1f);
 					}
 				}
 
@@ -363,7 +391,15 @@ namespace UnityGLTF
 						{
 							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 							map.BaseColorXOffset = offset;
+							if (IsTextureFlipped(textureId.Value))
+							{
+								map.BaseColorXScale *= new Vector2(1f,-1f);
+							}
 						}
+					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						uniformMapper.EmissiveXScale *= new Vector2(1f,-1f);
 					}
 				}
 
@@ -393,7 +429,15 @@ namespace UnityGLTF
 						{
 							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
 							map.BaseColorXOffset = offset;
+							if (IsTextureFlipped(textureId.Value))
+							{
+								map.BaseColorXScale *= new Vector2(1f,-1f);
+							}
 						}
+					}
+					if (IsTextureFlipped(textureId.Value))
+					{
+						uniformMapper.OcclusionXScale *= new Vector2(1f,-1f);
 					}
 				}
 
