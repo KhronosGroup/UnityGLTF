@@ -206,7 +206,7 @@ namespace UnityGLTF
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
-			if (texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
 			{
 				return (texture.Extensions[KHR_texture_basisu.EXTENSION_NAME] as KHR_texture_basisu).source.Id;
 			}
@@ -215,7 +215,7 @@ namespace UnityGLTF
 
 		protected virtual bool IsTextureFlipped(GLTFTexture texture)
 		{
-			if (texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
 			{
 				return true;
 			}
