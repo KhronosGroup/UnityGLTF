@@ -125,6 +125,7 @@ namespace UnityGLTF
 					texture.LoadImage(data, markGpuOnly);
 					break;
 				case "image/ktx2":
+					string textureName = texture.name;
 #if HAVE_KTX
 #if UNITY_EDITOR
 					Texture.DestroyImmediate(texture);
@@ -136,9 +137,8 @@ namespace UnityGLTF
 					using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
 					{
 						var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
-						var tmp = texture;
 						texture = resultTextureData.texture;
-						texture.name = tmp.name;
+						texture.name = textureName;
 					}
 
 					ktxTexture.Dispose();
