@@ -35,7 +35,7 @@
         {
             "name": "com.atteneder.draco",
             "expression": "1.0.0",
-            "define": "UNITY_DRACO"
+            "define": "HAVE_DRACO"
         }
     ],
     "noEngineReferences": false
