@@ -18,12 +18,13 @@ namespace GLTF.Schema
 
 		public IExtension Clone(GLTFRoot root)
 		{
-			return new KHR_draco_mesh_compression()
+			return new KHR_draco_mesh_compression
 			{
-				attributes = new Dictionary<string, int>(attributes),
+				attributes = new Dictionary<string, int>(attributes)
 			};
 		}
 	}
+
 	public class KHR_draco_mesh_compression_Factory : ExtensionFactory
 	{
 		public const string EXTENSION_NAME = "KHR_draco_mesh_compression";
