@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
-#if UNITY_DRACO
+#if HAVE_DRACO
 using Draco;
 #endif
 
@@ -50,7 +50,7 @@ namespace UnityGLTF
 
 			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
 
-#if UNITY_DRACO
+#if HAVE_DRACO
 			var anyHadDraco = false;
 			Mesh[] meshes = new Mesh[mesh.Primitives.Count];
 			var meshDataArray = Mesh.AllocateWritableMeshData(mesh.Primitives.Count);
@@ -181,6 +181,7 @@ namespace UnityGLTF
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
 		}
 
+#if HAVE_DRACO
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from Draco generated SubMeshes
 		/// </summary>
@@ -310,7 +311,7 @@ namespace UnityGLTF
 
 			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
 		}
-
+#endif
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from preloaded and preprocessed buffer data
 		/// </summary>
