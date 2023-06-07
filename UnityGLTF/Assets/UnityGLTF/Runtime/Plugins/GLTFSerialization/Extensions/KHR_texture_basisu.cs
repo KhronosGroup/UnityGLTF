@@ -42,6 +42,9 @@ namespace GLTF.Schema
 		{
 			if (extensionToken != null)
 			{
+				if (extensionToken.Value["source"] == null)
+					throw new Exception("KHR_texture_basisu extension must contain a source property.");
+
 				var reader = extensionToken.Value["source"].CreateReader();
 				var extension = new KHR_texture_basisu(ImageId.Deserialize(root, reader));
 				return extension;
