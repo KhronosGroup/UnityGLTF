@@ -114,6 +114,7 @@ namespace UnityGLTF
 			}
 		}
 
+		// With using KTX, we need to return a new Texture2D instance at the moment. Unity KTX package does not support loading into existing one
 		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, byte[] data, bool markGpuOnly)
 		{
 			switch (image.MimeType)
@@ -125,10 +126,14 @@ namespace UnityGLTF
 					break;
 				case "image/ktx2":
 #if HAVE_KTX
+#if UNITY_EDITOR
+					Texture.DestroyImmediate(texture);
+#else
+					Texture.Destroy(texture);
+#endif
 					var ktxTexture = new KtxUnity.KtxTexture();
 
-					using (var alloc =
-					       new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
+					using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
 					{
 						var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
 						var tmp = texture;
