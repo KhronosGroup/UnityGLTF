@@ -67,6 +67,10 @@ namespace UnityGLTF
 	{
 		double ThicknessFactor { get; set; }
 		Texture ThicknessTexture { get; set; }
+		Vector2 ThicknessTextureOffset { get; set; }
+		double ThicknessTextureRotation { get; set; }
+		Vector2 ThicknessTextureScale { get; set; }
+		int ThicknessTextureTexCoord { get; set; }
 		double AttenuationDistance { get; set; }
 		Color AttenuationColor { get; set; }
 	}
@@ -75,6 +79,10 @@ namespace UnityGLTF
 	{
 		double TransmissionFactor { get; set; }
 		Texture TransmissionTexture { get; set; }
+		Vector2 TransmissionTextureOffset { get; set; }
+		double TransmissionTextureRotation { get; set; }
+		Vector2 TransmissionTextureScale { get; set; }
+		int TransmissionTextureTexCoord { get; set; }
 	}
 
 	public interface IIORMap : IMetalRoughUniformMap
@@ -86,8 +94,16 @@ namespace UnityGLTF
 	{
 		double SpecularFactor { get; set; }
 		Texture SpecularTexture { get; set; }
+		Vector2 SpecularTextureOffset { get; set; }
+		double SpecularTextureRotation { get; set; }
+		Vector2 SpecularTextureScale { get; set; }
+		int SpecularTextureTexCoord { get; set; }
 		Color SpecularColorFactor { get; set; }
 		Texture SpecularColorTexture { get; set; }
+		Vector2 SpecularColorTextureOffset { get; set; }
+		double SpecularColorTextureRotation { get; set; }
+		Vector2 SpecularColorTextureScale { get; set; }
+		int SpecularColorTextureTexCoord { get; set; }
 	}
 
 	public interface IIridescenceMap : IMetalRoughUniformMap
@@ -97,7 +113,16 @@ namespace UnityGLTF
 		double IridescenceThicknessMinimum { get; set; }
 		double IridescenceThicknessMaximum { get; set; }
 		Texture IridescenceTexture { get; set; }
+		Vector2 IridescenceTextureOffset { get; set; }
+		double IridescenceTextureRotation { get; set; }
+		Vector2 IridescenceTextureScale { get; set; }
+		int IridescenceTextureTexCoord { get; set; }
+
 		Texture IridescenceThicknessTexture { get; set; }
+		Vector2 IridescenceThicknessTextureOffset { get; set; }
+		double IridescenceThicknessTextureRotation { get; set; }
+		Vector2 IridescenceThicknessTextureScale { get; set; }
+		int IridescenceThicknessTextureTexCoord { get; set; }
 	}
 
 	public interface ISpecGlossUniformMap : ILitMap
@@ -126,6 +151,10 @@ namespace UnityGLTF
 	{
 		double ClearcoatFactor { get; set; }
 		Texture ClearcoatTexture { get; set; }
+		Vector2 ClearcoatTextureOffset { get; set; }
+		double ClearcoatTextureRotation { get; set; }
+		Vector2 ClearcoatTextureScale { get; set; }
+		int ClearcoatTextureTexCoord { get; set; }
 		double ClearcoatRoughnessFactor { get; set; }
 		Texture ClearcoatRoughnessTexture { get; set; }
 		Texture ClearcoatNormalTexture { get; set; }
