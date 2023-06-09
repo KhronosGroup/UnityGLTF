@@ -40,7 +40,7 @@ namespace UnityGLTF
 		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
-		public GLTFImportContext ImportContext = null;
+		public GLTFImportContext ImportContext = new GLTFImportContext(null, new List<GltfImportPluginContext>());
 
 		[NonSerialized]
 		public ILogger logger;
@@ -264,7 +264,11 @@ namespace UnityGLTF
 
 		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
 		{
-			options.ImportContext.SceneImporter = this;
+			if (options.ImportContext != null)
+			{
+				options.ImportContext.SceneImporter = this;
+			}
+
 			_gltfFileName = gltfFileName;
 			_options = options;
 
@@ -281,7 +285,11 @@ namespace UnityGLTF
 
 		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
 		{
-			options.ImportContext.SceneImporter = this;
+			if (options.ImportContext != null)
+			{
+				options.ImportContext.SceneImporter = this;
+			}
+
 			_gltfRoot = rootNode;
 
 			if (gltfStream != null)
@@ -376,8 +384,11 @@ namespace UnityGLTF
 					await LoadJson(_gltfFileName);
 					progressStatus.IsDownloaded = true;
 				}
+
 				foreach (var plugin in Context.Plugins)
+				{
 					plugin.OnAfterImportRoot(_gltfRoot);
+				}
 
 				cancellationToken.ThrowIfCancellationRequested();
 
