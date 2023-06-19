@@ -40,7 +40,11 @@ namespace UnityGLTF
 		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
+#if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, new List<GltfImportPluginContext>());
+#else
+		public GLTFImportContext ImportContext;
+#endif
 
 		[NonSerialized]
 		public ILogger logger;
