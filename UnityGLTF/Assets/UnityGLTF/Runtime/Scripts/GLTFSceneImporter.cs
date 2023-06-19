@@ -392,9 +392,6 @@ namespace UnityGLTF
 
 				cancellationToken.ThrowIfCancellationRequested();
 
-				if (_gltfRoot.ExtensionsRequired != null && _gltfRoot.ExtensionsRequired.Contains("KHR_draco_mesh_compression"))
-					throw new NotSupportedException("Draco compression (using KHR_draco_mesh_compression) isn't currently supported. Use glTFast instead for loading meshes that use Draco compression.");
-
 				if (_assetCache == null)
 				{
 					_assetCache = new AssetCache(_gltfRoot);

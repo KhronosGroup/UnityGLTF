@@ -616,7 +616,8 @@ namespace UnityGLTF
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
-				loader.LoadSceneAsync().Wait();
+				// Need to call with RunSync, otherwise the draco loader will freeze the editor
+				AsyncHelpers.RunSync( () => loader.LoadSceneAsync());
 
 				if (gLTFRoot.ExtensionsUsed != null)
 				{

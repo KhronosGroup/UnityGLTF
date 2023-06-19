@@ -114,7 +114,8 @@ namespace UnityGLTF
 			}
 		}
 
-		async Task CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, byte[] data, bool markGpuOnly)
+		// With using KTX, we need to return a new Texture2D instance at the moment. Unity KTX package does not support loading into existing one
+		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, byte[] data, bool markGpuOnly)
 		{
 			switch (image.MimeType)
 			{
@@ -124,18 +125,25 @@ namespace UnityGLTF
 					texture.LoadImage(data, markGpuOnly);
 					break;
 				case "image/ktx2":
+					string textureName = texture.name;
 #if HAVE_KTX
-						// TODO doesn't work yet, blocks?
-						// var ktxTexture = new KtxUnity.KtxTexture();
-						// using(var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
-						// {
-						// 	var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
-						// 	var tmp = texture;
-						// 	texture = resultTextureData.texture;
-						// 	texture.name = tmp.name;
-						// }
+#if UNITY_EDITOR
+					Texture.DestroyImmediate(texture);
 #else
-					Debug.Log(LogType.Warning, "The KTX2 Texture Format (KHR_texture_basisu) isn't supported right now. The texture " + texture.name + " won't load and will be black. Try using glTFast instead.");
+					Texture.Destroy(texture);
+#endif
+					var ktxTexture = new KtxUnity.KtxTexture();
+
+					using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
+					{
+						var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
+						texture = resultTextureData.texture;
+						texture.name = textureName;
+					}
+
+					ktxTexture.Dispose();
+#else
+					Debug.Log(LogType.Warning, "The com.atteneder.ktx Package is required to load KTX2 textures! The texture " + texture.name + " won't load and will be black.");
 					await Task.CompletedTask;
 #endif
 					break;
@@ -145,6 +153,7 @@ namespace UnityGLTF
 			}
 
 			await Task.CompletedTask;
+			return texture;
 		}
 
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
@@ -172,7 +181,7 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					await CheckMimeTypeAndLoadImage(image, texture, memoryStream.ToArray(), markGpuOnly);
+					texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStream.ToArray(), markGpuOnly);
 				}
 			}
 			else
@@ -187,7 +196,7 @@ namespace UnityGLTF
 				stream.Read(buffer, 0, (int)stream.Length);
 
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
+				texture = await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
 			}
 
 			if (_assetCache.ImageCache[imageCacheIndex] != null) Debug.Log(LogType.Assert, "ImageCache should not be loaded multiple times");
@@ -202,7 +211,20 @@ namespace UnityGLTF
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
+			{
+				return (texture.Extensions[KHR_texture_basisu.EXTENSION_NAME] as KHR_texture_basisu).source.Id;
+			}
 			return texture.Source?.Id ?? 0;
+		}
+
+		protected virtual bool IsTextureFlipped(GLTFTexture texture)
+		{
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
+			{
+				return true;
+			}
+			return false;
 		}
 
 		/// <summary>
@@ -358,7 +380,15 @@ namespace UnityGLTF
 				if (!UnityEditor.AssetDatabase.Contains(source))
 #endif
 				{
-					var unityTexture = Object.Instantiate(source);
+					Texture2D unityTexture;
+					if (!source.isReadable)
+					{
+						unityTexture = new Texture2D(source.width, source.height, source.format, source.mipmapCount, isLinear);
+						Graphics.CopyTexture(source, unityTexture);
+					}
+					else
+						unityTexture = Object.Instantiate(source);
+
 					unityTexture.name = string.IsNullOrEmpty(image.Name) ?
 						string.IsNullOrEmpty(texture.Name) ?
 							Path.GetFileNameWithoutExtension(image.Uri) :

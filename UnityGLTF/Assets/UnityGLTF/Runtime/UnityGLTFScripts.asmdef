@@ -7,7 +7,8 @@
         "Ktx",
         "UnityGLTF.Helpers",
         "Unity.InputSystem",
-        "Unity.Animation.Rigging"
+        "Unity.Animation.Rigging",
+        "Draco"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -56,6 +57,11 @@
             "name": "com.unity.inputsystem",
             "expression": "1.0.0",
             "define": "HAVE_INPUTSYSTEM"
+        },
+        {
+            "name": "com.atteneder.draco",
+            "expression": "1.0.0",
+            "define": "HAVE_DRACO"
         }
     ],
     "noEngineReferences": false

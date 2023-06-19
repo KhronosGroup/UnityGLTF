@@ -304,7 +304,7 @@ namespace UnityGLTF
 
 					case GLTFAnimationChannelPath.weights:
 						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
-						if (primitives[0].Targets == null) continue;
+						if (primitives[0].Targets == null) break;
 						var targetCount = primitives[0].Targets.Count;
 						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
 						{

@@ -69,6 +69,22 @@ namespace UnityGLTF
 				}
 			}
 
+			void CalculateYOffsetAndScale(TextureId textureId, ExtTextureTransformExtension ext, out Vector2 scale, out Vector2 offset)
+			{
+				offset = ext.Offset.ToUnityVector2Raw();
+				scale = ext.Scale.ToUnityVector2Raw();
+
+				if (IsTextureFlipped(textureId.Value))
+				{
+					offset.y =  scale.y + offset.y;
+					scale.y *= -1f;
+				}
+				else
+				{
+					offset.y = 1 - scale.y - offset.y;
+				}
+			}
+
 			mapper.Material.name = def.Name;
 			mapper.AlphaMode = def.AlphaMode;
 			mapper.AlphaCutoff = def.AlphaCutoff;
@@ -93,14 +109,18 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(pbr.BaseColorTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						mrMapper.BaseColorXOffset = offset;
 						mrMapper.BaseColorXRotation = ext.Rotation;
-						mrMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+						mrMapper.BaseColorXScale = scale;
 						mrMapper.BaseColorXTexCoord = ext.TexCoord;
 
 						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						mrMapper.BaseColorXScale *= new Vector2(1f,-1f);
 					}
 				}
 
@@ -117,12 +137,16 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(pbr.MetallicRoughnessTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						mrMapper.MetallicRoughnessXOffset = offset;
 						mrMapper.MetallicRoughnessXRotation = ext.Rotation;
-						mrMapper.MetallicRoughnessXScale = ext.Scale.ToUnityVector2Raw();
+						mrMapper.MetallicRoughnessXScale = scale;
 						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						mrMapper.MetallicRoughnessXScale *= new Vector2(1f,-1f);
 					}
 				}
 			}
@@ -150,12 +174,16 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(specGloss.DiffuseTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						sgMapper.DiffuseXOffset = offset;
 						sgMapper.DiffuseXRotation = ext.Rotation;
-						sgMapper.DiffuseXScale = ext.Scale.ToUnityVector2Raw();
+						sgMapper.DiffuseXScale = scale;
 						sgMapper.DiffuseXTexCoord = ext.TexCoord;
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						sgMapper.DiffuseXScale *= new Vector2(1f,-1f);
 					}
 				}
 
@@ -171,12 +199,16 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(specGloss.SpecularGlossinessTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						sgMapper.SpecularGlossinessXOffset = offset;
 						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
-						sgMapper.SpecularGlossinessXScale = ext.Scale.ToUnityVector2Raw();
+						sgMapper.SpecularGlossinessXScale = scale;
 						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						sgMapper.SpecularGlossinessXScale *= new Vector2(1f,-1f);
 					}
 				}
 			}
@@ -197,14 +229,18 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(pbr.BaseColorTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						unlitMapper.BaseColorXOffset = offset;
 						unlitMapper.BaseColorXRotation = ext.Rotation;
-						unlitMapper.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+						unlitMapper.BaseColorXScale = scale;
 						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
 
 						unlitMapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						unlitMapper.BaseColorXScale *= new Vector2(1f,-1f);
 					}
 				}
 			}
@@ -321,11 +357,10 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(def.NormalTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						uniformMapper.NormalXOffset = offset;
 						uniformMapper.NormalXRotation = ext.Rotation;
-						uniformMapper.NormalXScale = ext.Scale.ToUnityVector2Raw();
+						uniformMapper.NormalXScale = scale;
 						uniformMapper.NormalXTexCoord = ext.TexCoord;
 
 						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
@@ -333,9 +368,14 @@ namespace UnityGLTF
 						// workaround for PBRGraph not supporting per-texture transforms right now
 						if (mapper is IMetalRoughUniformMap map && !map.BaseColorTexture)
 						{
-							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+							map.BaseColorXScale = scale;
 							map.BaseColorXOffset = offset;
 						}
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						uniformMapper.NormalXScale *= new Vector2(1f,-1f);
 					}
 				}
 
@@ -349,11 +389,10 @@ namespace UnityGLTF
 					var ext = GetTextureTransform(def.EmissiveTexture);
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						uniformMapper.EmissiveXOffset = offset;
 						uniformMapper.EmissiveXRotation = ext.Rotation;
-						uniformMapper.EmissiveXScale = ext.Scale.ToUnityVector2Raw();
+						uniformMapper.EmissiveXScale = scale;
 						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
 
 						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
@@ -361,9 +400,14 @@ namespace UnityGLTF
 						// workaround for PBRGraph not supporting per-texture transforms right now
 						if (mapper is IMetalRoughUniformMap map && !map.BaseColorTexture && !map.NormalTexture)
 						{
-							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+							map.BaseColorXScale = scale;
 							map.BaseColorXOffset = offset;
 						}
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						uniformMapper.EmissiveXScale *= new Vector2(1f,-1f);
 					}
 				}
 
@@ -379,11 +423,10 @@ namespace UnityGLTF
 
 					if (ext != null)
 					{
-						var offset = ext.Offset.ToUnityVector2Raw();
-						offset.y = 1 - ext.Scale.Y - offset.y;
+						CalculateYOffsetAndScale(textureId, ext, out var scale, out var offset);
 						uniformMapper.OcclusionXOffset = offset;
 						uniformMapper.OcclusionXRotation = ext.Rotation;
-						uniformMapper.OcclusionXScale = ext.Scale.ToUnityVector2Raw();
+						uniformMapper.OcclusionXScale = scale;
 						// mapper.OcclusionXTexCoord = ext.TexCoord;
 
 						mapper.Material.SetKeyword("_TEXTURE_TRANSFORM", true);
@@ -391,9 +434,14 @@ namespace UnityGLTF
 						// workaround for PBRGraph not supporting per-texture transforms right now
 						if (mapper is IMetalRoughUniformMap map && !map.BaseColorTexture && !map.NormalTexture && !map.EmissiveTexture)
 						{
-							map.BaseColorXScale = ext.Scale.ToUnityVector2Raw();
+							map.BaseColorXScale = scale;
 							map.BaseColorXOffset = offset;
 						}
+					}
+					else
+					if (IsTextureFlipped(textureId.Value))
+					{
+						uniformMapper.OcclusionXScale *= new Vector2(1f,-1f);
 					}
 				}
 
