@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0-exp] - 2023-06-19
+- add: draco import support
+- add: KTX2 import support
+
 ## [2.0.4-exp] - 2023-06-02
 - fix: sampled animations need individual GLTFAnimations since sampling another avatar is not transferrable
 - fix: switching from URP/Lit or Standard to PBRGraph should set cutoff correctly so it matches the UI / shader expectations (#68)
