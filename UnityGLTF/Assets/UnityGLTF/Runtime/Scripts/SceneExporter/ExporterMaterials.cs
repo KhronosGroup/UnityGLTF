@@ -165,7 +165,27 @@ namespace UnityGLTF
 			{
 				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor"))
 				{
-					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") : materialObj.GetColor("_EmissiveFactor");
+					// Default Emission to Black (Off)
+					Color c = Color.black;
+
+					// Check if 'emissiveFactor' exists first (because it could be a re-export of a GLTF File.
+					if (materialObj.HasProperty("emissiveFactor"))
+					{
+						// Use GLTF Shader's Emissive Factor
+						c = materialObj.GetColor("emissiveFactor");
+					}
+					// Check if more commonly '_EmissionColor' is being used.
+					else if (materialObj.HasProperty("_EmissionColor"))
+					{
+						// Use common Emission Color.
+						c = materialObj.GetColor("_EmissionColor");
+					}
+					// If all else fails, try grabbing uncommonly used '_EmissiveFactor'.
+					else if(materialObj.HasProperty("_EmissiveFactor"))
+					{
+						c = materialObj.GetColor("_EmissiveFactor");
+					}
+
 					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
 					material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 
