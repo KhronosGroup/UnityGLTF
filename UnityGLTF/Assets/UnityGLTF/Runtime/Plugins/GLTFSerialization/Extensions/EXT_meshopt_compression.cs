@@ -58,30 +58,25 @@ using Newtonsoft.Json.Linq;namespace GLTF.Schema
 
 				extension.isFallbackBuffer = extensionToken.Value["fallback"]?.Value<bool>() ?? false;
 
-				// var readerFallback = extensionToken.CreateReader();
-				// readerFallback.ReadAsDictionary()
-				//
-				// if (extensionToken.First. () ("fallback") extension.attributes.ContainsKey("fallback"))
-				// {
-				// 	extension.isFallbackBuffer = extension.attributes["fallback"].ToString() == "true";
-				// }
-
-				// var attributeToken = extensionToken.Value[nameof(EXT_meshopt_compression.attributes)];
-				// if (attributeToken != null)
-				// {
-				// 	var reader = attributeToken.CreateReader();
-				// 	extension.attributes = reader.ReadAsDictionary(() => reader.ReadAsInt32().Value);
-				//
-				// }
-
-
 #if HAVE_MESHOPT_DECOMPRESS
-				extension.mode = (Mode)System.Enum.Parse(typeof(Mode), extensionToken.Value["mode"]?.Value<string>() ?? "Undefined", true); ;
-				extension.filter = (Filter)System.Enum.Parse(typeof(Filter), extensionToken.Value["filter"]?.Value<string>() ?? "Undefined", true); ;
+				extension.mode = (Mode)System.Enum.Parse(typeof(Mode), extensionToken.Value["mode"]?.Value<string>() ?? "Undefined", true);
+				extension.filter = (Filter)System.Enum.Parse(typeof(Filter), extensionToken.Value["filter"]?.Value<string>() ?? "Undefined", true);
+				extension.count = extensionToken.Value["count"]?.Value<int>() ?? 0;
+
 				if (extensionToken.Value["buffer"] != null)
 				{
+					extension.bufferView = new BufferView();
+					extension.bufferView.Buffer  =  new BufferId
+					{
+						Id = extensionToken.Value["buffer"]?.Value<int>() ?? -1,
+						Root = root
+					};
+					extension.bufferView.ByteOffset =  (uint)System.Math.Round(extensionToken.Value["byteOffset"]?.Value<double>() ?? 0);
+					extension.bufferView.ByteLength =  (uint)System.Math.Round(extensionToken.Value["byteLength"]?.Value<double>() ?? 0);
+					extension.bufferView.ByteStride =  (uint)System.Math.Round(extensionToken.Value["byteStride"]?.Value<double>() ?? 0);
 
-				extension.bufferView = BufferView.Deserialize(root, extensionToken.Value["buffer"].CreateReader());
+
+					//extension.bufferView = BufferView.Deserialize(root, extensionToken.Value[0].CreateReader());
 				}
 #endif
 
