@@ -201,7 +201,7 @@ namespace UnityGLTF
 
             try
             {
-                CreateGLTFScene(context, out gltfScene, out animations);
+                CreateGLTFScene(context, out gltfScene, out animations, out var gltfRoot);
                 var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
                 if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
 
@@ -408,6 +408,12 @@ namespace UnityGLTF
                         });
                     }).Distinct().ToArray();
 
+                    if (renderers.Length == 0)
+                    {
+	                    // add materials directly from glTF
+	                    // materials = gltfRoot.Materials
+                    }
+
                     // apply material remap
                     foreach(var r in renderers)
                     {
@@ -595,10 +601,11 @@ namespace UnityGLTF
         }
 #endif
 
-		private void CreateGLTFScene(GLTFImportContext context, out GameObject scene, out AnimationClip[] animationClips)
+		private void CreateGLTFScene(GLTFImportContext context, out GameObject scene, out AnimationClip[] animationClips, out GLTFRoot root)
 		{
 			var projectFilePath = context.AssetContext.assetPath;
-			// TODO: replace with GltFImportContext
+
+			// TODO: replace with GltfImportContext
 			var importOptions = new ImportOptions
 			{
 				DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
@@ -607,27 +614,27 @@ namespace UnityGLTF
 				AnimationLoopPose = _animationLoopPose,
 				ImportContext = context
 			};
+
 			using (var stream = File.OpenRead(projectFilePath))
 			{
-				GLTFRoot gLTFRoot;
-				GLTFParser.ParseJson(stream, out gLTFRoot);
+				GLTFParser.ParseJson(stream, out var gltfRoot);
 				stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
-				var loader = new GLTFSceneImporter(gLTFRoot, stream, importOptions);
+				var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
 				loader.MaximumLod = _maximumLod;
 				loader.IsMultithreaded = true;
 
 				// Need to call with RunSync, otherwise the draco loader will freeze the editor
 				AsyncHelpers.RunSync( () => loader.LoadSceneAsync());
 
-				if (gLTFRoot.ExtensionsUsed != null)
+				if (gltfRoot.ExtensionsUsed != null)
 				{
-					_extensions = gLTFRoot.ExtensionsUsed
+					_extensions = gltfRoot.ExtensionsUsed
 						.Select(x => new ExtensionInfo()
 						{
 							name = x,
 							supported = true,
 							used = true,
-							required = gLTFRoot.ExtensionsRequired?.Contains(x) ?? false,
+							required = gltfRoot.ExtensionsRequired?.Contains(x) ?? false,
 						})
 						.ToList();
 				}
@@ -643,6 +650,7 @@ namespace UnityGLTF
 
 				scene = loader.LastLoadedScene;
 				animationClips = loader.CreatedAnimationClips;
+				root = gltfRoot;
 			}
         }
 

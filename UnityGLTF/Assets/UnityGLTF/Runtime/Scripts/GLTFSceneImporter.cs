@@ -545,6 +545,8 @@ namespace UnityGLTF
 			);
 		}
 
+		private GameObject NoSceneRoot;
+
 		/// <summary>
 		/// Creates a scene based off loaded JSON. Includes loading in binary and image data to construct the meshes required.
 		/// </summary>
@@ -565,7 +567,7 @@ namespace UnityGLTF
 
 			if (scene == null)
 			{
-				throw new GLTFLoadException("No default scene in gltf file.");
+				// throw new GLTFLoadException("No default scene in gltf file.");
 			}
 
 			try
@@ -578,7 +580,7 @@ namespace UnityGLTF
 				Debug.LogException(e);
 			}
 
-			GetGtlfContentTotals(scene);
+			GetGltfContentTotals(scene);
 
 			await ConstructScene(scene, showSceneObj, cancellationToken);
 
@@ -600,13 +602,13 @@ namespace UnityGLTF
 			}
 		}
 
-		private void GetGtlfContentTotals(GLTFScene scene)
+		private void GetGltfContentTotals(GLTFScene scene)
 		{
 			// Count Nodes
 			Queue<NodeId> nodeQueue = new Queue<NodeId>();
 
 			// Add scene nodes
-			if (scene.Nodes != null)
+			if (scene != null && scene.Nodes != null)
 			{
 				for (int i = 0; i < scene.Nodes.Count; ++i)
 				{
@@ -909,6 +911,13 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructScene(GLTFScene scene, bool showSceneObj, CancellationToken cancellationToken)
 		{
+			if (scene == null)
+			{
+				if (!NoSceneRoot) NoSceneRoot = new GameObject("__NoSceneRoot");
+				CreatedObject = NoSceneRoot;
+				return;
+			}
+
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("Scene") : scene.Name);
 
 			try
