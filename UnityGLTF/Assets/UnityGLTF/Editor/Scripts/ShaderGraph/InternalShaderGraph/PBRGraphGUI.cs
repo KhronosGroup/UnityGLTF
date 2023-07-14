@@ -42,6 +42,8 @@ namespace UnityGLTF
 		private const int ExpandableMeshProperties = 1 << 8;
 		private static readonly GUIContent MeshProperties = new GUIContent("Mesh Properties");
 
+		private bool immutableMaterialCanBeModified = false;
+
 		public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
 		{
 			this.materialEditor = materialEditor;
@@ -53,14 +55,30 @@ namespace UnityGLTF
 			if (m_FirstTimeApply)
 			{
 				OnOpenGUI(targetMat, materialEditor, properties);
+
+				if (MaterialModificationTracker.CanEdit(materialEditor.target as Material))
+					immutableMaterialCanBeModified = true;
+
 				m_FirstTimeApply = false;
 			}
 
-			// need to set these via reflection...
+			// Force GUI changes to be allowed, despite being in an immutable context.
+			// We can store the changes back to .glTF when saving.
+			if (immutableMaterialCanBeModified)
+				GUI.enabled = true;
+
+				// Need to set these via reflection...
 			// m_MaterialEditor = materialEditor;
 			// m_Properties = properties;
 			if (m_MaterialEditor == null) m_MaterialEditor = typeof(BuiltInBaseShaderGUI).GetField(nameof(m_MaterialEditor), BindingFlags.Instance | BindingFlags.NonPublic);
 			if (m_Properties == null) m_Properties = typeof(BuiltInBaseShaderGUI).GetField(nameof(m_Properties), BindingFlags.Instance | BindingFlags.NonPublic);
+
+			if (m_MaterialEditor == null || m_Properties == null)
+			{
+				Debug.LogError("Internal fields \"m_MaterialEditor\" and/or \"m_Properties\" not found on type BuiltInBaseShaderGUI. Please report this error to the UnityGLTF developers along with the Unity version you're using, there has probably been a Unity API change.");
+				return;
+			}
+
 			m_MaterialEditor.SetValue(this, materialEditor);
 			m_Properties.SetValue(this, properties);
 
@@ -403,6 +421,13 @@ namespace UnityGLTF
 					if (t is Material material)
 						GLTFMaterialHelper.ValidateMaterialKeywords(material);
 				}
+
+				// We only need to do this for non-editable materials, so we can flush the changes back out to disk.
+				// These can be sub-assets of a ScriptedImporter or the main asset.
+				// We probably only want to allow storing material changes back to .gltf; to be discussed.
+				// TODO if textures are assigned, we need to think about how to handle that, as they should be externally referenced and not written to disk
+				if (targetMaterial.hideFlags.HasFlag(HideFlags.NotEditable))
+					MaterialModificationTracker.MarkDirty(targetMaterial);
 			}
 		}
 
@@ -490,6 +515,46 @@ namespace UnityGLTF
 		public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
 		{
 			GLTFMaterialHelper.ConvertMaterialToGLTF(material, oldShader, newShader);
+		}
+	}
+
+	// TODO check if we can lose in-flight changes on domain reload this way
+	internal class MaterialModificationTracker : AssetModificationProcessor
+	{
+		private static readonly List<UnityEngine.Object> ObjectsToSave = new List<UnityEngine.Object>();
+
+		internal static void MarkDirty(UnityEngine.Object obj)
+		{
+			if (!ObjectsToSave.Contains(obj))
+				ObjectsToSave.Add(obj);
+		}
+
+		private static string[] OnWillSaveAssets(string[] paths)
+		{
+			// we don't really care about the assets, we just want to flush changes for changed glTF materials
+			foreach (var obj in ObjectsToSave)
+			{
+				if (obj is Material material)
+				{
+					Debug.Log("TODO save material " + material.name + " back to " + AssetDatabase.GetAssetPath(material));
+					// Tell the AssetImporter (?) that there are changes, or write the file directly?
+				}
+			}
+			ObjectsToSave.Clear();
+
+			return paths;
+		}
+
+		private static Dictionary<Material, bool> _canEditCache = new Dictionary<Material, bool>();
+		internal static bool CanEdit(Material materialEditorTarget)
+		{
+			if (_canEditCache.TryGetValue(materialEditorTarget, out var canEdit))
+				return canEdit;
+
+			// we can only edit this material if it's from a .gltf file right now. We're caching this here to avoid having to re-parse the file
+			canEdit = AssetDatabase.GetAssetPath(materialEditorTarget).EndsWith(".gltf", StringComparison.OrdinalIgnoreCase);
+			_canEditCache.Add(materialEditorTarget, canEdit);
+			return canEdit;
 		}
 	}
 }

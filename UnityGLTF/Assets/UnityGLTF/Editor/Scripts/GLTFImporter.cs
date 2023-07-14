@@ -201,12 +201,16 @@ namespace UnityGLTF
 
             try
             {
-                CreateGLTFScene(context, out gltfScene, out animations, out var gltfRoot);
-                var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
-                if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
+                CreateGLTFScene(context, out gltfScene, out animations, out var importer);
+
+                if (gltfScene)
+                {
+	                var rootGltfComponent = gltfScene.GetComponent<InstantiatedGLTFObject>();
+	                if (rootGltfComponent) DestroyImmediate(rootGltfComponent);
+                }
 
                 // Remove empty roots
-                if (_removeEmptyRootObjects)
+                if (gltfScene && _removeEmptyRootObjects)
                 {
                     var t = gltfScene.transform;
                     var existingAnimator = t.GetComponent<Animator>();
@@ -266,15 +270,18 @@ namespace UnityGLTF
 					}
                 }
 
-                // Ensure there are no hide flags present (will cause problems when saving)
-                gltfScene.hideFlags &= ~(HideFlags.HideAndDontSave);
-                foreach (Transform child in gltfScene.transform)
+                if (gltfScene)
                 {
-                    child.gameObject.hideFlags &= ~(HideFlags.HideAndDontSave);
+	                // Ensure there are no hide flags present (will cause problems when saving)
+	                gltfScene.hideFlags &= ~(HideFlags.HideAndDontSave);
+	                foreach (Transform child in gltfScene.transform)
+	                {
+	                    child.gameObject.hideFlags &= ~(HideFlags.HideAndDontSave);
+	                }
                 }
 
                 // scale all localPosition values if necessary
-                if (!Mathf.Approximately(_scaleFactor, 1))
+                if (gltfScene && !Mathf.Approximately(_scaleFactor, 1))
                 {
 	                var transforms = gltfScene.GetComponentsInChildren<Transform>();
 	                foreach (var tr in transforms)
@@ -284,9 +291,14 @@ namespace UnityGLTF
                 }
 
                 // Get meshes
-                var meshHash = new HashSet<UnityEngine.Mesh>();
-                var meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
-                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>().Select(x => (x.gameObject, x.sharedMesh)));
+                var meshHash = new HashSet<Mesh>();
+                var meshFilters = new List<(GameObject gameObject, Mesh sharedMesh)>();
+                if (gltfScene)
+                {
+		            meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
+	                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>().Select(x => (x.gameObject, x.sharedMesh)));
+                }
+
                 var vertexBuffer = new List<Vector3>();
                 meshes = meshFilters.Select(mf =>
                 {
@@ -376,14 +388,14 @@ namespace UnityGLTF
 	            //     }
                 // }
 
-                if (_importAnimations == AnimationMethod.MecanimHumanoid)
+                if (gltfScene && _importAnimations == AnimationMethod.MecanimHumanoid)
                 {
 	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene);
 	                if (avatar && avatar.isValid)
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
 
-                var renderers = gltfScene.GetComponentsInChildren<Renderer>();
+                var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>() : Array.Empty<Renderer>();
 
                 if (_importMaterials)
                 {
@@ -392,26 +404,35 @@ namespace UnityGLTF
                     var materialHash = new HashSet<UnityEngine.Material>();
                     var materials = renderers.SelectMany(r =>
                     {
-                        return r.sharedMaterials.Select(mat =>
-                        {
-                            if (mat && materialHash.Add(mat))
-                            {
-                                var matName = string.IsNullOrEmpty(mat.name) ? mat.shader.name : mat.name;
-                                if (matName == mat.shader.name)
-                                {
-                                    matName = matName.Substring(Mathf.Min(matName.LastIndexOf("/", StringComparison.Ordinal) + 1, matName.Length - 1));
-                                }
-                                mat.name = matName;
-                            }
+	                    return r.sharedMaterials.Select(mat =>
+	                    {
+		                    if (mat && materialHash.Add(mat))
+		                    {
+			                    var matName = string.IsNullOrEmpty(mat.name) ? mat.shader.name : mat.name;
+			                    if (matName == mat.shader.name)
+			                    {
+				                    matName = matName.Substring(Mathf.Min(
+					                    matName.LastIndexOf("/", StringComparison.Ordinal) + 1, matName.Length - 1));
+			                    }
 
-                            return mat;
-                        });
-                    }).Distinct().ToArray();
+			                    mat.name = matName;
+		                    }
 
+		                    return mat;
+	                    });
+                    }).Distinct().ToList();
+
+                    // TODO check if we really only want to do this for files that don't have scenes/nodes
                     if (renderers.Length == 0)
                     {
 	                    // add materials directly from glTF
-	                    // materials = gltfRoot.Materials
+	                    foreach (var entry in importer.MaterialCache)
+	                    {
+		                    if (!materials.Contains(entry.UnityMaterial))
+		                    {
+			                    materials.Add(entry.UnityMaterial);
+		                    }
+	                    }
                     }
 
                     // apply material remap
@@ -502,7 +523,7 @@ namespace UnityGLTF
 #endif
 
                     // Save materials as separate assets and rewrite refs
-                    if (materials.Length > 0)
+                    if (materials.Count > 0)
                     {
                         foreach (var mat in materials)
                         {
@@ -516,7 +537,7 @@ namespace UnityGLTF
                         }
                     }
 
-                    m_Materials = materials;
+                    m_Materials = materials.ToArray();
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
@@ -525,6 +546,7 @@ namespace UnityGLTF
 				}
                 else
                 {
+	                // Workaround to get the default primitive material for the current render pipeline
                     var temp = GameObject.CreatePrimitive(PrimitiveType.Plane);
                     temp.SetActive(false);
                     var defaultMat = new[] { temp.GetComponent<Renderer>().sharedMaterial };
@@ -536,7 +558,7 @@ namespace UnityGLTF
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
 	            Debug.LogException(e);
                 if (gltfScene) DestroyImmediate(gltfScene);
@@ -544,17 +566,20 @@ namespace UnityGLTF
             }
 
 #if UNITY_2017_3_OR_NEWER
-	        if (!_useSceneNameIdentifier)
+	        if (gltfScene)
 	        {
-		        // Set main asset
-		        _mainAssetIdentifier = "main asset";
-		        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
-	        }
-	        else
-	        {
-		        // This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
-		        _mainAssetIdentifier = $"scenes/{gltfScene.name}";
-		        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
+		        if (!_useSceneNameIdentifier)
+		        {
+			        // Set main asset
+			        _mainAssetIdentifier = "main asset";
+			        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
+		        }
+		        else
+		        {
+			        // This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
+			        _mainAssetIdentifier = $"scenes/{gltfScene.name}";
+			        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
+		        }
 	        }
 
 	        // Add meshes
@@ -571,7 +596,17 @@ namespace UnityGLTF
 #if UNITY_2020_2_OR_NEWER
 			ctx.DependsOnCustomDependency(ColorSpaceDependency);
 #endif
-			ctx.SetMainObject(gltfScene);
+	        if (gltfScene)
+	        {
+				ctx.SetMainObject(gltfScene);
+	        }
+	        else if (m_Materials.Length > 0)
+	        {
+		        if (m_Materials.Length == 1)
+		        {
+			        ctx.SetMainObject(m_Materials[0]);
+		        }
+	        }
 #else
             // Set main asset
             ctx.SetMainAsset("main asset", gltfScene);
@@ -601,7 +636,7 @@ namespace UnityGLTF
         }
 #endif
 
-		private void CreateGLTFScene(GLTFImportContext context, out GameObject scene, out AnimationClip[] animationClips, out GLTFRoot root)
+		private void CreateGLTFScene(GLTFImportContext context, out GameObject scene, out AnimationClip[] animationClips, out GLTFSceneImporter importer)
 		{
 			var projectFilePath = context.AssetContext.assetPath;
 
@@ -650,7 +685,11 @@ namespace UnityGLTF
 
 				scene = loader.LastLoadedScene;
 				animationClips = loader.CreatedAnimationClips;
-				root = gltfRoot;
+
+				// for Editor import, we also want to load unreferenced assets that wouldn't be loaded at runtime
+				AsyncHelpers.RunSync(() => loader.LoadUnreferencedAssetsAsync());
+
+				importer = loader;
 			}
         }
 

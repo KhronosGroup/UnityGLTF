@@ -424,6 +424,20 @@ namespace UnityGLTF
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
+		public async Task LoadUnreferencedAssetsAsync()
+		{
+			// var extraMaterials = 0;
+			// check which additional materials are in the root, but not yet in the MaterialCache
+			for (var index = 0; index < MaterialCache.Length; index++)
+			{
+				var entry = MaterialCache[index];
+				if (entry != null) continue;
+
+				await LoadMaterialAsync(index);
+				// extraMaterials++;
+			}
+		}
+
 		public IEnumerator LoadScene(int sceneIndex = -1, bool showSceneObj = true, Action<GameObject, ExceptionDispatchInfo> onLoadComplete = null)
 		{
 			return LoadSceneAsync(sceneIndex, showSceneObj, onLoadComplete).AsCoroutine();
@@ -913,8 +927,6 @@ namespace UnityGLTF
 		{
 			if (scene == null)
 			{
-				if (!NoSceneRoot) NoSceneRoot = new GameObject("__NoSceneRoot");
-				CreatedObject = NoSceneRoot;
 				return;
 			}
 
