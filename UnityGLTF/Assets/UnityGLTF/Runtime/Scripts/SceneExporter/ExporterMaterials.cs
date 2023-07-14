@@ -929,5 +929,12 @@ namespace UnityGLTF
 
 			return constant;
 		}
+
+		// TODO make internal
+		public Texture GetSourceTextureForExportedTexture(GLTFTexture exported)
+		{
+			var textureIndex = _root.Textures.FindIndex(x => x == exported);
+			return _textures[textureIndex].Texture;
+		}
 	}
 }

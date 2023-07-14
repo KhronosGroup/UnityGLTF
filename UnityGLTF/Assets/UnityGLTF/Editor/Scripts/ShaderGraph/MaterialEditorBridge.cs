@@ -48,6 +48,36 @@ namespace UnityGLTF
 			exporter.SaveGLTFandBin(path, name);
 			AssetDatabase.ImportAsset(path);
 
+			// add texture remaps, so that the textures we just exported with stay valid.
+			// We want to always have default paths in the file, and remapping is done on the Unity side to a project specific path,
+			// to avoid breaking references all the time when paths change.
+			var exportedTextures = exporter.GetRoot().Textures;
+			var importedTextures = importer.ImportedTextures;
+			// If these don't match, we could only try by name... not ideal.
+			// They may not match due to different sampler settings etc.
+			if (exportedTextures.Count == importedTextures.Length)
+			{
+				for (int i = 0; i < exportedTextures.Count; i++)
+				{
+					var exported = exportedTextures[i];
+					var imported = importedTextures[i];
+					// TODO could we also use the imported texture definitions instead of the actual imported textures?
+					// Then we wouldn't need to create mock textures on import for all missing/remapped ones.
+					if (exported.Name != imported.name)
+					{
+						Debug.LogWarning($"Texture name mismatch: {exported.Name} != {imported.name}");
+					}
+
+					var sourceTextureForExportedTexture = exporter.GetSourceTextureForExportedTexture(exported);
+
+					// we should not remap if that is actually the same texture
+					if (imported == sourceTextureForExportedTexture) continue;
+
+					importer.AddRemap(new AssetImporter.SourceAssetIdentifier(imported), sourceTextureForExportedTexture);
+				}
+				importer.SaveAndReimport();
+			}
+
 			// TODO we should get rid of this, but without it currently the inspector doesn't repaint
 			// after importing a changed material, which can be confusing. Could be caching inside PBRGraphGUI
 			AssetDatabase.Refresh();

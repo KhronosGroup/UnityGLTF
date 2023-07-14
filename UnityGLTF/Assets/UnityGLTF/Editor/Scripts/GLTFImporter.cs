@@ -94,6 +94,7 @@ namespace UnityGLTF
 
         // TODO make internal and allow access for relevant assemblies
         public Material[] ImportedMaterials => m_Materials;
+        public Texture[] ImportedTextures => m_Textures;
 
         [Serializable]
         internal class ExtensionInfo
@@ -502,7 +503,7 @@ namespace UnityGLTF
                         }
                         return matTextures;
                     }).Distinct().ToArray();
-                    
+
                     // texture asset remapping
                     foreach (var entry in texMaterialMap)
                     {

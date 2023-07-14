@@ -60,7 +60,9 @@ namespace UnityGLTF.Loader
 			{
 				if (relativeFilePath.ToLowerInvariant().EndsWith(".bin"))
 					throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad, relativeFilePath);
-				
+
+				// One exception here: we don't want to log an error if we're already knowing that the texture
+				// has been remapped on import - that's fine! A missing texture can be remapped to a valid one.
 				UnityEngine.Debug.LogError("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad);
 				return InvalidStream;
 			}

@@ -168,13 +168,13 @@ namespace UnityGLTF
 				return;
 			}
 #endif
-			Texture2D texture = new Texture2D(0, 0, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
+			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
 			if (stream == FileLoader.InvalidStream)
 			{
-				// ignore
-				texture = null;
+				// ignore - we still need a valid texture so that we can properly remap
+				// texture = null;
 			}
 			else if (stream is MemoryStream)
 			{
