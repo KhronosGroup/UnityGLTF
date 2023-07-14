@@ -90,6 +90,9 @@ namespace UnityGLTF
         // material remapping
         [SerializeField] private Material[] m_Materials = new Material[0];
 
+        // TODO make internal and allow access for relevant assemblies
+        public Material[] ImportedMaterials => m_Materials;
+
         [Serializable]
         internal class ExtensionInfo
         {

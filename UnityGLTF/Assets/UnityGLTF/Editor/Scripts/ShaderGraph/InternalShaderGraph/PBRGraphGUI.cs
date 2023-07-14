@@ -548,7 +548,8 @@ namespace UnityGLTF
 		private static string[] OnWillSaveAssets(string[] paths)
 		{
 			// we don't really care about the assets, we just want to flush changes for changed glTF materials
-			foreach (var obj in ObjectsToSave)
+			var copy = new List<UnityEngine.Object>(ObjectsToSave);
+			foreach (var obj in copy)
 			{
 				if (obj is Material material)
 				{
@@ -556,6 +557,7 @@ namespace UnityGLTF
 					PBRGraphGUI.InvokeMaterialChangedEvent(material);
 				}
 			}
+			copy.Clear();
 			ObjectsToSave.Clear();
 			return paths;
 		}
