@@ -516,12 +516,28 @@ namespace UnityGLTF
 		{
 			GLTFMaterialHelper.ConvertMaterialToGLTF(material, oldShader, newShader);
 		}
+
+		public delegate void OnImmutableMaterialChanged(Material material);
+		public static event OnImmutableMaterialChanged ImmutableMaterialChanged;
+
+		internal static void InvokeMaterialChangedEvent(Material material)
+		{
+			try
+			{
+				ImmutableMaterialChanged?.Invoke(material);
+			}
+			catch (Exception e)
+			{
+				Debug.LogException(e);
+			}
+		}
 	}
 
 	// TODO check if we can lose in-flight changes on domain reload this way
 	internal class MaterialModificationTracker : AssetModificationProcessor
 	{
 		private static readonly List<UnityEngine.Object> ObjectsToSave = new List<UnityEngine.Object>();
+		private static readonly Dictionary<Material, bool> CanEditCache = new Dictionary<Material, bool>();
 
 		internal static void MarkDirty(UnityEngine.Object obj)
 		{
@@ -536,24 +552,22 @@ namespace UnityGLTF
 			{
 				if (obj is Material material)
 				{
-					Debug.Log("TODO save material " + material.name + " back to " + AssetDatabase.GetAssetPath(material));
 					// Tell the AssetImporter (?) that there are changes, or write the file directly?
+					PBRGraphGUI.InvokeMaterialChangedEvent(material);
 				}
 			}
 			ObjectsToSave.Clear();
-
 			return paths;
 		}
 
-		private static Dictionary<Material, bool> _canEditCache = new Dictionary<Material, bool>();
 		internal static bool CanEdit(Material materialEditorTarget)
 		{
-			if (_canEditCache.TryGetValue(materialEditorTarget, out var canEdit))
+			if (CanEditCache.TryGetValue(materialEditorTarget, out var canEdit))
 				return canEdit;
 
 			// we can only edit this material if it's from a .gltf file right now. We're caching this here to avoid having to re-parse the file
 			canEdit = AssetDatabase.GetAssetPath(materialEditorTarget).EndsWith(".gltf", StringComparison.OrdinalIgnoreCase);
-			_canEditCache.Add(materialEditorTarget, canEdit);
+			CanEditCache.Add(materialEditorTarget, canEdit);
 			return canEdit;
 		}
 	}

@@ -127,24 +127,26 @@ namespace UnityGLTF
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
 	        // since it's too common as a file type.
-	        var gltf = GLTFRoot.Deserialize(new StreamReader(path));
-	        var externalBuffers = gltf?.Buffers?.Where(b => b?.Uri != null && b.Uri.ToLowerInvariant().EndsWith(".bin"));
-	        if (externalBuffers != null)
+	        using (var reader = new StreamReader(path))
 	        {
-		        var dir = Path.GetDirectoryName(path);
-		        foreach (var buffer in externalBuffers)
+		        var gltf = GLTFRoot.Deserialize(reader);
+		        var externalBuffers = gltf?.Buffers?.Where(b => b?.Uri != null && b.Uri.ToLowerInvariant().EndsWith(".bin"));
+		        if (externalBuffers != null)
 		        {
-			        var uri = buffer.Uri;
-			        if (!File.Exists(Path.Combine(dir, uri)))
-				        uri = Uri.UnescapeDataString(uri);
-			        if (File.Exists(Path.Combine(dir, uri)))
-						dependencies.Add(Path.Combine(dir, uri));
-			        // TODO check if inside the project/any package, could be an absolute path
-			        else if (File.Exists(uri))
-				        dependencies.Add(uri);
+			        var dir = Path.GetDirectoryName(path);
+			        foreach (var buffer in externalBuffers)
+			        {
+				        var uri = buffer.Uri;
+				        if (!File.Exists(Path.Combine(dir, uri)))
+					        uri = Uri.UnescapeDataString(uri);
+				        if (File.Exists(Path.Combine(dir, uri)))
+							dependencies.Add(Path.Combine(dir, uri));
+				        // TODO check if inside the project/any package, could be an absolute path
+				        else if (File.Exists(uri))
+					        dependencies.Add(uri);
+			        }
 		        }
 	        }
-
 	        return dependencies.ToArray();
         }
 
@@ -636,64 +638,65 @@ namespace UnityGLTF
         }
 #endif
 
-		private void CreateGLTFScene(GLTFImportContext context, out GameObject scene, out AnimationClip[] animationClips, out GLTFSceneImporter importer)
-		{
-			var projectFilePath = context.AssetContext.assetPath;
+	    private void CreateGLTFScene(GLTFImportContext context, out GameObject scene,
+		    out AnimationClip[] animationClips, out GLTFSceneImporter importer)
+	    {
+		    var projectFilePath = context.AssetContext.assetPath;
 
-			// TODO: replace with GltfImportContext
-			var importOptions = new ImportOptions
-			{
-				DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
-				AnimationMethod = _importAnimations,
-				AnimationLoopTime = _animationLoopTime,
-				AnimationLoopPose = _animationLoopPose,
-				ImportContext = context
-			};
+		    // TODO: replace with GltfImportContext
+		    var importOptions = new ImportOptions
+		    {
+			    DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
+			    AnimationMethod = _importAnimations,
+			    AnimationLoopTime = _animationLoopTime,
+			    AnimationLoopPose = _animationLoopPose,
+			    ImportContext = context
+		    };
 
-			using (var stream = File.OpenRead(projectFilePath))
-			{
-				GLTFParser.ParseJson(stream, out var gltfRoot);
-				stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
-				var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
-				loader.MaximumLod = _maximumLod;
-				loader.IsMultithreaded = true;
+		    using (var stream = File.OpenRead(projectFilePath))
+		    {
+			    GLTFParser.ParseJson(stream, out var gltfRoot);
+			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
+			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
+			    loader.MaximumLod = _maximumLod;
+			    loader.IsMultithreaded = true;
 
-				// Need to call with RunSync, otherwise the draco loader will freeze the editor
-				AsyncHelpers.RunSync( () => loader.LoadSceneAsync());
+			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
+			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
 
-				if (gltfRoot.ExtensionsUsed != null)
-				{
-					_extensions = gltfRoot.ExtensionsUsed
-						.Select(x => new ExtensionInfo()
-						{
-							name = x,
-							supported = true,
-							used = true,
-							required = gltfRoot.ExtensionsRequired?.Contains(x) ?? false,
-						})
-						.ToList();
-				}
-				else
-				{
-					_extensions = new List<ExtensionInfo>();
-				}
+			    if (gltfRoot.ExtensionsUsed != null)
+			    {
+				    _extensions = gltfRoot.ExtensionsUsed
+					    .Select(x => new ExtensionInfo()
+					    {
+						    name = x,
+						    supported = true,
+						    used = true,
+						    required = gltfRoot.ExtensionsRequired?.Contains(x) ?? false,
+					    })
+					    .ToList();
+			    }
+			    else
+			    {
+				    _extensions = new List<ExtensionInfo>();
+			    }
 
-				_textures = loader.TextureCache
-					.Where(x => x != null)
-					.Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
-					.ToList();
+			    _textures = loader.TextureCache
+				    .Where(x => x != null)
+				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
+				    .ToList();
 
-				scene = loader.LastLoadedScene;
-				animationClips = loader.CreatedAnimationClips;
+			    scene = loader.LastLoadedScene;
+			    animationClips = loader.CreatedAnimationClips;
 
-				// for Editor import, we also want to load unreferenced assets that wouldn't be loaded at runtime
-				AsyncHelpers.RunSync(() => loader.LoadUnreferencedAssetsAsync());
+			    // for Editor import, we also want to load unreferenced assets that wouldn't be loaded at runtime
+			    AsyncHelpers.RunSync(() => loader.LoadUnreferencedAssetsAsync());
 
-				importer = loader;
-			}
-        }
+			    importer = loader;
+		    }
+	    }
 
-        private void CopyOrNew<T>(T asset, string assetPath, Action<T> replaceReferences) where T : Object
+	    private void CopyOrNew<T>(T asset, string assetPath, Action<T> replaceReferences) where T : Object
         {
             var existingAsset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
             if (existingAsset)

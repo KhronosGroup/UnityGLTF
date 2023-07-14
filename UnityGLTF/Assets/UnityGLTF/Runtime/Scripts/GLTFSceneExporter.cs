@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
@@ -702,7 +703,8 @@ namespace UnityGLTF
 			BeforeSceneExport?.Invoke(this, _root);
 			beforeSceneExportMarker.End();
 
-			_root.Scene = ExportScene(fileName, _rootTransforms);
+			if (_rootTransforms != null)
+				_root.Scene = ExportScene(fileName, _rootTransforms);
 
 			if (ExportAnimations)
 			{
@@ -728,9 +730,19 @@ namespace UnityGLTF
 
 			animationPointerResolver?.Resolve(this);
 
-			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			_buffer.Uri = fileName + ".bin";
-			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+			// we don't need to create a .bin file if there's no buffer at all
+			var anyDataInBinFile = _bufferWriter.BaseStream.Length > 0;
+			if (anyDataInBinFile)
+			{
+				AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+				_buffer.Uri = fileName + ".bin";
+				_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+			}
+			else
+			{
+				_buffer = null;
+				_root.Buffers.Clear();
+			}
 
 			var gltfFile = File.CreateText(Path.ChangeExtension(fullPath, ".gltf"));
 			gltfSerializationMarker.Begin();
@@ -738,6 +750,9 @@ namespace UnityGLTF
 			gltfSerializationMarker.End();
 
 			gltfWriteOutMarker.Begin();
+
+			_bufferWriter.Close();
+
 #if WINDOWS_UWP
 			gltfFile.Dispose();
 			binFile.Dispose();
@@ -745,6 +760,11 @@ namespace UnityGLTF
 			gltfFile.Close();
 			binFile.Close();
 #endif
+			if (!anyDataInBinFile)
+			{
+				File.Delete(fullPath);
+			}
+
 			ExportImages(path);
 			gltfWriteOutMarker.End();
 

@@ -541,6 +541,8 @@ namespace UnityGLTF
 			{
 				GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
 			}
+
+			_gltfStream.Stream.Close();
 		}
 
 		/// <summary>
@@ -589,7 +591,7 @@ namespace UnityGLTF
 				foreach (var plugin in Context.Plugins)
 					plugin.OnBeforeImportScene(scene);
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				Debug.LogException(e);
 			}
@@ -610,7 +612,7 @@ namespace UnityGLTF
 				foreach (var plugin in Context.Plugins)
 					plugin.OnAfterImportScene(scene, sceneIndex, CreatedObject);
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				Debug.LogException(e);
 			}
@@ -936,13 +938,16 @@ namespace UnityGLTF
 			{
 				sceneObj.SetActive(showSceneObj);
 
-				Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
-				for (int i = 0; i < scene.Nodes.Count; ++i)
+				if (scene.Nodes != null)
 				{
-					NodeId node = scene.Nodes[i];
-					GameObject nodeObj = await GetNode(node.Id, cancellationToken);
-					nodeObj.transform.SetParent(sceneObj.transform, false);
-					nodeTransforms[i] = nodeObj.transform;
+					Transform[] nodeTransforms = new Transform[scene.Nodes.Count];
+					for (int i = 0; i < scene.Nodes.Count; ++i)
+					{
+						NodeId node = scene.Nodes[i];
+						GameObject nodeObj = await GetNode(node.Id, cancellationToken);
+						nodeObj.transform.SetParent(sceneObj.transform, false);
+						nodeTransforms[i] = nodeObj.transform;
+					}
 				}
 
 				if (_options.AnimationMethod != AnimationMethod.None)
@@ -1017,7 +1022,7 @@ namespace UnityGLTF
 			catch (Exception ex)
 			{
 				// If some failure occured during loading, clean up the scene
-				GameObject.DestroyImmediate(sceneObj);
+				UnityEngine.Object.DestroyImmediate(sceneObj);
 				CreatedObject = null;
 
 				if (ex is OutOfMemoryException)
