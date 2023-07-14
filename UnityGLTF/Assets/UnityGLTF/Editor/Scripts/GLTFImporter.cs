@@ -502,7 +502,7 @@ namespace UnityGLTF
                             }
                         }
                         return matTextures;
-                    }).Distinct().ToArray();
+                    }).Distinct().ToList();
 
                     // texture asset remapping
                     foreach (var entry in texMaterialMap)
@@ -515,13 +515,20 @@ namespace UnityGLTF
 		                    if (map.TryGetValue(si, out var value))
 		                    {
 			                    propertyEntry.Material.SetTexture(propertyEntry.Property, value as Texture);
+			                    tex.hideFlags = HideFlags.HideInHierarchy;
+		                    }
+		                    else if (tex.hideFlags == HideFlags.HideInInspector)
+		                    {
+			                    // clean up mock textures we only generated on import for remapping
+			                    propertyEntry.Material.SetTexture(propertyEntry.Property, null);
+			                    textures.Remove(tex);
 		                    }
 	                    }
                     }
 
                     // Save textures as separate assets and rewrite refs
                     // TODO: Support for other texture types
-                    if (textures.Length > 0)
+                    if (textures.Count > 0)
                     {
                         foreach (var tex in textures)
                         {

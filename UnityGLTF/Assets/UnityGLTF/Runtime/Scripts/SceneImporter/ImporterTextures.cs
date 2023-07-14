@@ -175,6 +175,18 @@ namespace UnityGLTF
 			{
 				// ignore - we still need a valid texture so that we can properly remap
 				// texture = null;
+				// We need some way to track these mock textures, so that we can get rid of them again after import
+				// TODO we should still set it to null here, and save the importer definition names for remapping instead.
+				// This way here we'll get into weird code for Runtime import, as we would still import mock textures...
+				// Or we add another option to avoid that.
+#if UNITY_EDITOR
+				if (Context.AssetContext != null)
+					texture.hideFlags = HideFlags.HideInInspector;
+				else
+					texture = null;
+#else
+				texture = null;
+#endif
 			}
 			else if (stream is MemoryStream)
 			{
