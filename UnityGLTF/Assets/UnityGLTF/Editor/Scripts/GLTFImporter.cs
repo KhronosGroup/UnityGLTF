@@ -87,8 +87,10 @@ namespace UnityGLTF
         [SerializeField] internal bool m_OptimizeGameObjects = false;
         [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
 
-        // material remapping
+        // asset remapping
         [SerializeField] private Material[] m_Materials = new Material[0];
+        [SerializeField] private Texture[] m_Textures = new Texture[0];
+
 
         // TODO make internal and allow access for relevant assemblies
         public Material[] ImportedMaterials => m_Materials;
@@ -451,8 +453,8 @@ namespace UnityGLTF
 		                    if (mat)
 		                    {
 			                    var si = new SourceAssetIdentifier(mat);
-			                    if (map.ContainsKey(si))
-				                    m[i] = map[si] as Material;
+			                    if (map.TryGetValue(si, out var value))
+				                    m[i] = value as Material;
 		                    }
 	                    }
 	                    r.sharedMaterials = m;
@@ -500,6 +502,21 @@ namespace UnityGLTF
                         }
                         return matTextures;
                     }).Distinct().ToArray();
+                    
+                    // texture asset remapping
+                    foreach (var entry in texMaterialMap)
+                    {
+	                    var tex = entry.Key;
+	                    var texPropertyList = entry.Value;
+	                    foreach (var propertyEntry in texPropertyList)
+	                    {
+		                    var si = new SourceAssetIdentifier(tex);
+		                    if (map.TryGetValue(si, out var value))
+		                    {
+			                    propertyEntry.Material.SetTexture(propertyEntry.Property, value as Texture);
+		                    }
+	                    }
+                    }
 
                     // Save textures as separate assets and rewrite refs
                     // TODO: Support for other texture types
@@ -543,6 +560,7 @@ namespace UnityGLTF
                     }
 
                     m_Materials = materials.ToArray();
+                    m_Textures = textures.ToArray();
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
