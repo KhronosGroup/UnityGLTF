@@ -65,28 +65,28 @@ namespace UnityGLTF
 
 				if (primitive.Extensions.TryGetValue("KHR_draco_mesh_compression", out var extension))
 				{
-
 					var dracoExtension = (KHR_draco_mesh_compression) extension;
 					if (_assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id] == null)
 						await ConstructBuffer(dracoExtension.bufferView.Value.Buffer.Value, dracoExtension.bufferView.Value.Buffer.Id);
 
 					BufferCacheData bufferContents = _assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id];
 
-
 					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkOffset,
 						bufferContents.Stream, out byte[] bufferViewData);
 
 					int weightsAttributeId = -1;
-					if (dracoExtension.attributes.ContainsKey("WEIGHTS_0"))
-						weightsAttributeId = (int) dracoExtension.attributes["WEIGHTS_0"];
+					if (dracoExtension.attributes.TryGetValue("WEIGHTS_0", out var attribute))
+						weightsAttributeId = (int) attribute;
 
 					int jointsAttributeId = -1;
-					if (dracoExtension.attributes.ContainsKey("JOINTS_0"))
-						jointsAttributeId = (int) dracoExtension.attributes["JOINTS_0"];
+					if (dracoExtension.attributes.TryGetValue("JOINTS_0", out var extensionAttribute))
+						jointsAttributeId = (int) extensionAttribute;
 
 					// TODO: check if normals and tangents are needed
+					#pragma warning disable 0219
 					bool needsNormals = true;
 					bool needsTangents = true;
+					#pragma warning restore 0219
 
 					var draco = new DracoMeshLoader();
 
