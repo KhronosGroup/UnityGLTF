@@ -710,7 +710,7 @@ namespace UnityGLTF
 			{
 				return (ExtTextureTransformExtension)extension;
 			}
-			else return null;
+			return null;
 		}
 
 		protected virtual KHR_materials_emissive_strength GetEmissiveStrength(GLTFMaterial def)
@@ -720,7 +720,7 @@ namespace UnityGLTF
 			{
 				return (KHR_materials_emissive_strength) extension;
 			}
-			else return null;
+			return null;
 		}
 
 		protected virtual KHR_materials_transmission GetTransmission(GLTFMaterial def)
