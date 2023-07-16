@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -21,7 +20,8 @@ namespace UnityGLTF
 			var assetPath = AssetDatabase.GetAssetPath(material);
 
 			// TODO handle case where mainAsset is a GameObject; we can still write materials back in that case
-			var mainAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
+			// var mainAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
+
 			// Transform[] rootTransforms = null;
 			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportOptions());
 			// load all materials from mainAsset
@@ -29,7 +29,7 @@ namespace UnityGLTF
 			if (!importer) return;
 
 			// var allObjects = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-			foreach (var obj in importer.ImportedMaterials)
+			foreach (var obj in importer.m_Materials)
 			{
 				if (!(obj is Material mat))
 				{
@@ -51,7 +51,7 @@ namespace UnityGLTF
 			// We want to always have default paths in the file, and remapping is done on the Unity side to a project specific path,
 			// to avoid breaking references all the time when paths change.
 			var exportedTextures = exporter.GetRoot().Textures;
-			var importedTextures = importer.ImportedTextures;
+			var importedTextures = importer.m_Textures;
 			// If these don't match, we could only try by name... not ideal.
 			// They may not match due to different sampler settings etc.
 			if (exportedTextures.Count == importedTextures.Length)

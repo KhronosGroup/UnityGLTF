@@ -23,16 +23,16 @@ namespace UnityGLTF
 
 		public override void OnEnable()
 		{
-			var m_HasSceneData = serializedObject.FindProperty("m_HasSceneData");
+			var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
 			if (m_HasSceneData.boolValue)
 				AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
 
-			var m_HasAnimationData = serializedObject.FindProperty("m_HasAnimationData");
+			var m_HasAnimationData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasAnimationData));
 			if (m_HasAnimationData.boolValue)
 				AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
 
-			var m_HasMaterialData = serializedObject.FindProperty("m_HasMaterialData");
-			var m_HasTextureData = serializedObject.FindProperty("m_HasTextureData");
+			var m_HasMaterialData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasMaterialData));
+			var m_HasTextureData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasTextureData));
 			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
 				AddTab(new GltfAssetImporterTab(this, "Materials and Textures", MaterialInspectorGUI));
 

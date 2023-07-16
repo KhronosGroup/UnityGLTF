@@ -33,6 +33,8 @@ using UnityEngine.Rendering;
 using UnityEditor.Experimental.AssetImporters;
 #endif
 
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnityGLTF.ShaderGraph")]
+
 namespace UnityGLTF
 {
 #if UNITY_2020_2_OR_NEWER
@@ -88,12 +90,12 @@ namespace UnityGLTF
         [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
 
         // asset remapping
-        [SerializeField] private Material[] m_Materials = new Material[0];
-        [SerializeField] private Texture[] m_Textures = new Texture[0];
-        [SerializeField] private bool m_HasSceneData = true;
-        [SerializeField] private bool m_HasAnimationData = true;
-        [SerializeField] private bool m_HasMaterialData = true;
-        [SerializeField] private bool m_HasTextureData = true;
+        [SerializeField] internal Material[] m_Materials = new Material[0];
+        [SerializeField] internal Texture[] m_Textures = new Texture[0];
+        [SerializeField] internal bool m_HasSceneData = true;
+        [SerializeField] internal bool m_HasAnimationData = true;
+        [SerializeField] internal bool m_HasMaterialData = true;
+        [SerializeField] internal bool m_HasTextureData = true;
         [SerializeField] [NonReorderable] private AnimationClipImportInfo[] m_Animations = new AnimationClipImportInfo[0];
 
 		// Import messages (extensions, warnings, errors, ...)
@@ -102,8 +104,6 @@ namespace UnityGLTF
         [SerializeField] internal string _mainAssetIdentifier;
 
         // TODO make internal and allow access for relevant assemblies
-        public Material[] ImportedMaterials => m_Materials;
-        public Texture[] ImportedTextures => m_Textures;
         internal List<TextureInfo> Textures => _textures;
 
         [Serializable]
