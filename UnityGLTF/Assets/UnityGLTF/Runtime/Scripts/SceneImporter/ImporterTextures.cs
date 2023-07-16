@@ -147,8 +147,9 @@ namespace UnityGLTF
 
 					ktxTexture.Dispose();
 #else
-					Debug.Log(LogType.Warning, "The com.atteneder.ktx Package is required to load KTX2 textures! The texture " + texture.name + " won't load and will be black.");
+					Debug.Log(LogType.Warning, "The com.atteneder.ktx Package is required to load KTX2 textures! The texture " + texture.name + " won't be imported.");
 					await Task.CompletedTask;
+					texture = null;
 #endif
 					break;
 				default:
