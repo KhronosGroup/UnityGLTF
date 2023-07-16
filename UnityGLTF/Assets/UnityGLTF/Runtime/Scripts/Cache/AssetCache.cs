@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using GLTF.Schema;
@@ -20,6 +19,12 @@ namespace UnityGLTF.Cache
 		/// Loaded raw texture data
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
+
+		/// <summary>
+		/// Invalid/missing textures. These are cached since we can still remap them after import, but don't
+		/// want to apply them to materials.
+		/// </summary>
+		public Texture2D[] InvalidImageCache { get; private set; }
 
 		/// <summary>
 		/// Textures to be used for assets. Textures from image cache with samplers applied
@@ -60,6 +65,7 @@ namespace UnityGLTF.Cache
 		public AssetCache(GLTFRoot root)
 		{
 			ImageCache = new Texture2D[root.Images?.Count ?? 0];
+			InvalidImageCache = new Texture2D[ImageCache.Length];
 			ImageStreamCache = new Stream[ImageCache.Length];
 			TextureCache = new TextureCacheData[root.Textures?.Count ?? 0];
 			MaterialCache = new MaterialCacheData[root.Materials?.Count ?? 0];

@@ -26,7 +26,7 @@ namespace UnityGLTF.Loader
 			if (UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(UnityEngine.Texture2D))
 			{
 				var stream = new GLTFSceneImporter.AssetDatabaseStream(path);
-				return Task.FromResult((Stream) stream);
+				return Task.FromResult((Stream)stream);
 			}
 #endif
 
@@ -63,13 +63,24 @@ namespace UnityGLTF.Loader
 
 				// One exception here: we don't want to log an error if we're already knowing that the texture
 				// has been remapped on import - that's fine! A missing texture can be remapped to a valid one.
-				UnityEngine.Debug.LogError("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad);
-				return InvalidStream;
+				return new InvalidStream(relativeFilePath, _rootDirectoryPath, pathToLoad);
 			}
 
 			return File.OpenRead(pathToLoad);
 		}
 
-		internal static readonly Stream InvalidStream = new MemoryStream();
+		internal class InvalidStream: MemoryStream
+		{
+			public readonly string RelativeFilePath;
+			public readonly string RootDirectory;
+			public readonly string AbsoluteFilePath;
+
+			public InvalidStream(string relativeFilePath, string rootDirectory, string pathToLoad)
+			{
+				RelativeFilePath = relativeFilePath;
+				RootDirectory = rootDirectory;
+				AbsoluteFilePath = pathToLoad;
+			}
+		}
 	}
 }

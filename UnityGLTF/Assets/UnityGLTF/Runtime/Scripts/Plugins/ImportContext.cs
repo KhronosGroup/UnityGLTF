@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GLTF.Schema;
+using UnityEditor;
 
 #if UNITY_EDITOR
 using UnityEditor.AssetImporters;
@@ -12,6 +13,7 @@ namespace UnityGLTF.Plugins
 #if UNITY_EDITOR
 		public readonly AssetImportContext AssetContext;
 		public string FilePath => AssetContext.assetPath;
+		public readonly AssetImporter SourceImporter;
 #endif
 
 		public readonly IReadOnlyList<GltfImportPluginContext> Plugins;
@@ -24,7 +26,14 @@ namespace UnityGLTF.Plugins
 		{
 			AssetContext = assetImportContext;
 			Plugins = plugins;
+			if (assetImportContext != null)
+				SourceImporter = AssetImporter.GetAtPath(assetImportContext.assetPath);
 		}
 #endif
+	}
+
+	public interface IGLTFImportRemap
+	{
+
 	}
 }

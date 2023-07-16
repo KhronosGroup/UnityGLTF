@@ -44,9 +44,9 @@ namespace UnityGLTF
 #else
 	[ScriptedImporter(ImporterVersion, new[] { "glb" })]
 #endif
-    public class GLTFImporter : ScriptedImporter
+    public class GLTFImporter : ScriptedImporter, IGLTFImportRemap
     {
-	    private const int ImporterVersion = 7;
+	    private const int ImporterVersion = 8;
 
 	    private static void EnsureShadersAreLoaded()
 	    {
@@ -90,11 +90,21 @@ namespace UnityGLTF
         // asset remapping
         [SerializeField] private Material[] m_Materials = new Material[0];
         [SerializeField] private Texture[] m_Textures = new Texture[0];
+        [SerializeField] private bool m_HasSceneData = true;
+        [SerializeField] private bool m_HasAnimationData = true;
+        [SerializeField] private bool m_HasMaterialData = true;
+        [SerializeField] private bool m_HasTextureData = true;
+        [SerializeField] private AnimationClipImportInfo[] m_Animations = new AnimationClipImportInfo[0];
 
+		// Import messages (extensions, warnings, errors, ...)
+        [NonReorderable] [SerializeField] internal List<ExtensionInfo> _extensions;
+        [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
+        [SerializeField] internal string _mainAssetIdentifier;
 
         // TODO make internal and allow access for relevant assemblies
         public Material[] ImportedMaterials => m_Materials;
         public Texture[] ImportedTextures => m_Textures;
+        internal List<TextureInfo> Textures => _textures;
 
         [Serializable]
         internal class ExtensionInfo
@@ -112,16 +122,19 @@ namespace UnityGLTF
 	        public bool shouldBeLinear;
         }
 
+        [Serializable]
+        public class AnimationClipImportInfo
+        {
+	        public string name;
+	        public AnimationClip sourceClip;
+	        public bool loopTime;
+	        public float startTime;
+	        public float endTime;
+		}
+
 #if !UNIYT_2020_2_OR_NEWER
 	    private class NonReorderableAttribute : Attribute {}
 #endif
-
-        // Import messages (extensions, warnings, errors, ...)
-        [NonReorderable] [SerializeField] internal List<ExtensionInfo> _extensions;
-        [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
-        [SerializeField] internal string _mainAssetIdentifier;
-
-        internal List<TextureInfo> Textures => _textures;
 
         private static string[] GatherDependenciesFromSourceFile(string path)
         {
@@ -461,7 +474,8 @@ namespace UnityGLTF
 	                    r.sharedMaterials = m;
                     };
 
-                    // Get textures
+                    // Get textures - only the ones actually referenced by imported materials
+                    /*
                     var textureHash = new HashSet<Texture2D>();
                     var texMaterialMap = new Dictionary<Texture2D, List<TexMaterialMap>>();
                     var textures = materials.SelectMany(mat =>
@@ -503,7 +517,28 @@ namespace UnityGLTF
                         }
                         return matTextures;
                     }).Distinct().ToList();
+					*/
 
+                    // all imported textures - the ones that are directly referenced and
+                    // the ones that are invalid (missing files with temp generated data)
+                    var invalidTextures = importer.InvalidImageCache
+						.Select(x => x)
+						.Where(x => x)
+						.ToList();
+	                var textures = importer.TextureCache
+		                .Select(x => x.Texture)
+		                .Where(x => x)
+		                .Union(invalidTextures).ToList();
+
+	                // if we're not importing materials or textures, we can clear the lists
+	                // so that no assets are actually created.
+	                if (!_importMaterials)
+	                {
+		                materials.Clear();
+		                textures.Clear();
+	                }
+
+                    /*
                     // texture asset remapping
                     foreach (var entry in texMaterialMap)
                     {
@@ -525,6 +560,7 @@ namespace UnityGLTF
 		                    }
 	                    }
                     }
+                    */
 
                     // Save textures as separate assets and rewrite refs
                     // TODO: Support for other texture types
@@ -544,6 +580,8 @@ namespace UnityGLTF
 	                        else
 	                        {
 		                        ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
+		                        if (invalidTextures.Contains(tex))
+			                        tex.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 	                        }
                         }
                     }
@@ -569,12 +607,16 @@ namespace UnityGLTF
 
                     m_Materials = materials.ToArray();
                     m_Textures = textures.ToArray();
+                    m_HasSceneData = gltfScene;
+                    m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
+                    m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
+                    m_HasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
 					AssetDatabase.Refresh();
 #endif
-				}
+                }
                 else
                 {
 	                // Workaround to get the default primitive material for the current render pipeline

@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using GLTF.Schema;
 using GLTF.Utilities;
+using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -53,6 +54,9 @@ namespace UnityGLTF
 
 		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear)
 		{
+			if (_assetCache.InvalidImageCache[imageCacheIndex])
+				return;
+
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
 				Stream stream = null;
@@ -171,7 +175,28 @@ namespace UnityGLTF
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 
-			if (stream == FileLoader.InvalidStream)
+#if UNITY_EDITOR
+			var haveRemappedTexture = false;
+			if (Context.SourceImporter != null)
+			{
+				// check for remapping, we don't even need to attempt loading the texture in that case.
+				var externalObjects = Context.SourceImporter.GetExternalObjectMap();
+				var sourceIdentifier = new AssetImporter.SourceAssetIdentifier(texture);
+				externalObjects.TryGetValue(sourceIdentifier, out var o);
+				if (o is Texture2D remappedTexture)
+				{
+					texture = remappedTexture;
+					haveRemappedTexture = true;
+				}
+			}
+
+			if (haveRemappedTexture)
+			{
+				// nothing to do here, the texture has already been remapped
+			}
+			else
+#endif
+			if (stream is FileLoader.InvalidStream invalidStream)
 			{
 				// ignore - we still need a valid texture so that we can properly remap
 				// texture = null;
@@ -179,14 +204,12 @@ namespace UnityGLTF
 				// TODO we should still set it to null here, and save the importer definition names for remapping instead.
 				// This way here we'll get into weird code for Runtime import, as we would still import mock textures...
 				// Or we add another option to avoid that.
-#if UNITY_EDITOR
-				if (Context.AssetContext != null)
-					texture.hideFlags = HideFlags.HideInInspector;
-				else
-					texture = null;
-#else
+
+				_assetCache.InvalidImageCache[imageCacheIndex] = texture;
 				texture = null;
-#endif
+
+				UnityEngine.Debug.LogError("Buffer file " + invalidStream.RelativeFilePath + " not found in " + invalidStream.RootDirectory + ", complete path: " + invalidStream.AbsoluteFilePath);
+
 			}
 			else if (stream is MemoryStream)
 			{

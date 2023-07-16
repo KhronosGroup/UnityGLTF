@@ -46,6 +46,7 @@ namespace UnityGLTF
 				if (canBeExportedFromDisk)
 				{
 					File.WriteAllBytes(fileOutputPath, GetTextureDataFromDisk(image));
+					wasAbleToExportTexture = true;
 				}
 
 				if (!wasAbleToExportTexture)

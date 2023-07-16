@@ -23,9 +23,19 @@ namespace UnityGLTF
 
 		public override void OnEnable()
 		{
-			AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
-			AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
-			AddTab(new GltfAssetImporterTab(this, "Materials", MaterialInspectorGUI));
+			var m_HasSceneData = serializedObject.FindProperty("m_HasSceneData");
+			if (m_HasSceneData.boolValue)
+				AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
+
+			var m_HasAnimationData = serializedObject.FindProperty("m_HasAnimationData");
+			if (m_HasAnimationData.boolValue)
+				AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
+
+			var m_HasMaterialData = serializedObject.FindProperty("m_HasMaterialData");
+			var m_HasTextureData = serializedObject.FindProperty("m_HasTextureData");
+			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
+				AddTab(new GltfAssetImporterTab(this, "Materials and Textures", MaterialInspectorGUI));
+
 			AddTab(new GltfAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
 
 			base.OnEnable();
@@ -218,7 +228,7 @@ namespace UnityGLTF
 
 				EditorGUILayout.BeginHorizontal();
 				EditorGUILayout.PrefixLabel(" ");
-				if (GUILayout.Button("Restore Materials"))
+				if (GUILayout.Button("Restore " + subDirectoryName))
 				{
 					for (var i = 0; i < importedData.arraySize; i++)
 					{
@@ -294,9 +304,9 @@ namespace UnityGLTF
 
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions"));
 			EditorGUI.EndDisabledGroup();
+
+			// TODO add list of supported extensions and links to docs
 		}
-
-
 
 		private static string SanitizePath(string subAssetName)
 		{

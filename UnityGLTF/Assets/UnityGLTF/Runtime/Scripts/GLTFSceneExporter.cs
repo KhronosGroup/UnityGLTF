@@ -675,7 +675,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the GLTF and binary files</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLTFandBin(string path, string fileName)
+		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true)
 		{
 			exportGltfMarker.Begin();
 
@@ -707,23 +707,18 @@ namespace UnityGLTF
 				_root.Scene = ExportScene(fileName, _rootTransforms);
 
 			if (ExportAnimations)
-			{
 				ExportAnimation();
-			}
 
 			// Export skins
 			for (int i = 0; i < _skinnedNodes.Count; ++i)
 			{
 				Transform t = _skinnedNodes[i];
 				ExportSkinFromNode(t);
-
-				// updateProgress(EXPORT_STEP.SKINNING, i, _skinnedNodes.Count);
 			}
 
 			afterSceneExportMarker.Begin();
 			if (_exportOptions.AfterSceneExport != null)
 				_exportOptions.AfterSceneExport(this, _root);
-
 			if (AfterSceneExport != null)
 				AfterSceneExport.Invoke(this, _root);
 			afterSceneExportMarker.End();
@@ -761,13 +756,12 @@ namespace UnityGLTF
 			binFile.Close();
 #endif
 			if (!anyDataInBinFile)
-			{
 				File.Delete(fullPath);
-			}
 
-			ExportImages(path);
+			if (exportTextures)
+				ExportImages(path);
+
 			gltfWriteOutMarker.End();
-
 			exportGltfMarker.End();
 		}
 

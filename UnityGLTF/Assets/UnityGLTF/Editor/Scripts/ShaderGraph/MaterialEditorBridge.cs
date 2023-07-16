@@ -24,7 +24,6 @@ namespace UnityGLTF
 			var mainAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
 			// Transform[] rootTransforms = null;
 			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportOptions());
-
 			// load all materials from mainAsset
 			var importer = AssetImporter.GetAtPath(assetPath) as GLTFImporter;
 			if (!importer) return;
@@ -45,7 +44,7 @@ namespace UnityGLTF
 			var name = Path.GetFileName(assetPath);
 
 			// Save file and make sure we reimport it
-			exporter.SaveGLTFandBin(path, name);
+			exporter.SaveGLTFandBin(path, name, false);
 			AssetDatabase.ImportAsset(path);
 
 			// add texture remaps, so that the textures we just exported with stay valid.

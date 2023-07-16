@@ -210,6 +210,7 @@ namespace UnityGLTF
 		}
 
 		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
+		public Texture2D[] InvalidImageCache => _assetCache.InvalidImageCache;
 		public MaterialCacheData[] MaterialCache => _assetCache.MaterialCache;
 		public AnimationCacheData[] AnimationCache => _assetCache.AnimationCache;
 
