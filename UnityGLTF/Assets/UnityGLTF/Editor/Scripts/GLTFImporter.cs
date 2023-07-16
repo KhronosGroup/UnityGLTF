@@ -94,7 +94,7 @@ namespace UnityGLTF
         [SerializeField] private bool m_HasAnimationData = true;
         [SerializeField] private bool m_HasMaterialData = true;
         [SerializeField] private bool m_HasTextureData = true;
-        [SerializeField] private AnimationClipImportInfo[] m_Animations = new AnimationClipImportInfo[0];
+        [SerializeField] [NonReorderable] private AnimationClipImportInfo[] m_Animations = new AnimationClipImportInfo[0];
 
 		// Import messages (extensions, warnings, errors, ...)
         [NonReorderable] [SerializeField] internal List<ExtensionInfo> _extensions;
@@ -125,11 +125,14 @@ namespace UnityGLTF
         [Serializable]
         public class AnimationClipImportInfo
         {
+	        [HideInInspector]
 	        public string name;
-	        public AnimationClip sourceClip;
-	        public bool loopTime;
-	        public float startTime;
-	        public float endTime;
+
+	        // TODO cutting ain't trivial. One would need to create new keyframes by linear interpolation so that the result is still the same
+	        // public AnimationClip sourceClip;
+	        // public bool loopTime;
+	        // public float startTime;
+	        // public float endTime;
 		}
 
 #if !UNIYT_2020_2_OR_NEWER
@@ -611,6 +614,29 @@ namespace UnityGLTF
                     m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
                     m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
                     m_HasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
+                    var newAnimations = new AnimationClipImportInfo[animations.Length];
+                    for (var i = 0; i < animations.Length; ++i)
+					{
+						// get previous import info if it exists
+						// TODO won't work if there are multiple animations with the same name in the source
+						// We need to find the source instance index (e.g. 3rd time a clip is named "DoSomething")
+						// And then find the matching name index (also the 3rd occurrence of "DoSomething" in m_Animations)
+						var prev = Array.Find(m_Animations, x => x.name == animations[i].name);
+						if (prev != null)
+						{
+							newAnimations[i] = prev;
+						}
+						else
+						{
+							var newClipInfo = new AnimationClipImportInfo();
+							newClipInfo.name = animations[i].name;
+							// newClipInfo.startTime = 0;
+							// newClipInfo.endTime = animations[i].length;
+							// newClipInfo.loopTime = true;
+							newAnimations[i] = newClipInfo;
+						}
+					}
+                    m_Animations = newAnimations;
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();

@@ -118,6 +118,14 @@ namespace UnityGLTF
 				}
 			}
 
+			// show animations for clip import editing
+			var animations = serializedObject.FindProperty("m_Animations");
+			if (animations.arraySize > 0)
+			{
+				EditorGUILayout.Space();
+				EditorGUILayout.PropertyField(animations, new GUIContent("Animations"), true);
+			}
+
 			// warn if Humanoid rig import has failed
 			if (!HasModified() && anim.enumValueIndex == (int) AnimationMethod.MecanimHumanoid && !AssetDatabase.LoadAssetAtPath<Avatar>(t.assetPath))
 			{
@@ -178,7 +186,7 @@ namespace UnityGLTF
 				}
 
 				string remapFoldoutKey = nameof(GLTFImporterInspector) + "_Remap_" + subDirectoryName + "_Foldout";
-				var remapFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(remapFoldoutKey, false), "Remap " + subDirectoryName + " (" + importedData.arraySize + ")");
+				var remapFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(remapFoldoutKey, false), "Remapped " + subDirectoryName + " (" + importedData.arraySize + ")");
 				SessionState.SetBool(remapFoldoutKey, remapFoldout);
 				if (remapFoldout)
 				{
