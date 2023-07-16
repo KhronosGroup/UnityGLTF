@@ -174,6 +174,7 @@ namespace UnityGLTF
 #endif
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
+			var newTextureObject = texture;
 
 #if UNITY_EDITOR
 			var haveRemappedTexture = false;
@@ -185,8 +186,15 @@ namespace UnityGLTF
 				externalObjects.TryGetValue(sourceIdentifier, out var o);
 				if (o is Texture2D remappedTexture)
 				{
-					texture = remappedTexture;
-					haveRemappedTexture = true;
+					if (remappedTexture)
+					{
+						texture = remappedTexture;
+						haveRemappedTexture = true;
+					}
+					else
+					{
+						Context.SourceImporter.RemoveRemap(sourceIdentifier);
+					}
 				}
 			}
 
@@ -204,11 +212,8 @@ namespace UnityGLTF
 				// TODO we should still set it to null here, and save the importer definition names for remapping instead.
 				// This way here we'll get into weird code for Runtime import, as we would still import mock textures...
 				// Or we add another option to avoid that.
-
-				_assetCache.InvalidImageCache[imageCacheIndex] = texture;
 				texture = null;
-
-				UnityEngine.Debug.LogError("Buffer file " + invalidStream.RelativeFilePath + " not found in " + invalidStream.RootDirectory + ", complete path: " + invalidStream.AbsoluteFilePath);
+				UnityEngine.Debug.LogError("Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath);
 
 			}
 			else if (stream is MemoryStream)
@@ -233,6 +238,9 @@ namespace UnityGLTF
 				await YieldOnTimeoutAndThrowOnLowMemory();
 				texture = await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
 			}
+
+			if (!texture)
+				_assetCache.InvalidImageCache[imageCacheIndex] = newTextureObject;
 
 			if (_assetCache.ImageCache[imageCacheIndex] != null) Debug.Log(LogType.Assert, "ImageCache should not be loaded multiple times");
 			if (texture)

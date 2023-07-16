@@ -614,28 +614,31 @@ namespace UnityGLTF
                     m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
                     m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
                     m_HasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
-                    var newAnimations = new AnimationClipImportInfo[animations.Length];
-                    for (var i = 0; i < animations.Length; ++i)
-					{
-						// get previous import info if it exists
-						// TODO won't work if there are multiple animations with the same name in the source
-						// We need to find the source instance index (e.g. 3rd time a clip is named "DoSomething")
-						// And then find the matching name index (also the 3rd occurrence of "DoSomething" in m_Animations)
-						var prev = Array.Find(m_Animations, x => x.name == animations[i].name);
-						if (prev != null)
-						{
-							newAnimations[i] = prev;
-						}
-						else
-						{
-							var newClipInfo = new AnimationClipImportInfo();
-							newClipInfo.name = animations[i].name;
-							// newClipInfo.startTime = 0;
-							// newClipInfo.endTime = animations[i].length;
-							// newClipInfo.loopTime = true;
-							newAnimations[i] = newClipInfo;
-						}
-					}
+                    var newAnimations = new AnimationClipImportInfo[animations != null ? animations.Length : 0];
+                    if (animations != null)
+                    {
+	                    for (var i = 0; i < animations.Length; ++i)
+	                    {
+		                    // get previous import info if it exists
+		                    // TODO won't work if there are multiple animations with the same name in the source
+		                    // We need to find the source instance index (e.g. 3rd time a clip is named "DoSomething")
+		                    // And then find the matching name index (also the 3rd occurrence of "DoSomething" in m_Animations)
+		                    var prev = Array.Find(m_Animations, x => x.name == animations[i].name);
+		                    if (prev != null)
+		                    {
+			                    newAnimations[i] = prev;
+		                    }
+		                    else
+		                    {
+			                    var newClipInfo = new AnimationClipImportInfo();
+			                    newClipInfo.name = animations[i].name;
+			                    // newClipInfo.startTime = 0;
+			                    // newClipInfo.endTime = animations[i].length;
+			                    // newClipInfo.loopTime = true;
+			                    newAnimations[i] = newClipInfo;
+		                    }
+	                    }
+                    }
                     m_Animations = newAnimations;
 
 #if !UNITY_2022_1_OR_NEWER
@@ -823,6 +826,8 @@ namespace UnityGLTF
         public override bool SupportsRemappedAssetType(Type type)
         {
 	        if (type == typeof(Material))
+		        return true;
+	        if (type == typeof(Texture))
 		        return true;
 	        return base.SupportsRemappedAssetType(type);
         }
