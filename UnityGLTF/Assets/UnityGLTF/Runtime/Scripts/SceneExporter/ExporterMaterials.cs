@@ -312,6 +312,13 @@ namespace UnityGLTF
 
                     material.PbrMetallicRoughness.BaseColorFactor = materialObj.GetColor("_TintColor").ToNumericsColorLinear();
                 }
+                else if (materialObj.HasProperty("_Color"))
+                {
+	                if (material.PbrMetallicRoughness == null)
+		                material.PbrMetallicRoughness = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
+
+	                material.PbrMetallicRoughness.BaseColorFactor = materialObj.GetColor("_Color").ToNumericsColorLinear();
+                }
                 material.DoubleSided = true;
             }
 
@@ -355,7 +362,7 @@ namespace UnityGLTF
 
         private bool IsUnlit(Material material)
         {
-	        return material.shader.name.ToLowerInvariant().Contains("unlit");
+	        return material.shader.name.ToLowerInvariant().Contains("unlit") || material.shader.name == "Sprites/Default";
         }
 
         private bool IsPBRSpecularGlossiness(Material material)
