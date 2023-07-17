@@ -23,6 +23,8 @@ namespace UnityGLTF
 
 		public override void OnEnable()
 		{
+			if (!this) return;
+
 			var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
 			if (m_HasSceneData.boolValue)
 				AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
@@ -149,9 +151,37 @@ namespace UnityGLTF
 			var importedTextures = serializedObject.FindProperty("m_Textures");
 			if (importedTextures.arraySize > 0)
 			{
-				EditorGUILayout.Space();
 				RemappingUI<Texture>(t, importedTextures, "Textures");
 			}
+
+			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));
+			if (!identifierProp.boolValue)
+			{
+				EditorGUILayout.Space();
+				EditorGUILayout.HelpBox("This asset uses the old main asset identifier. Upgrade to the new one if you want to seamlessly switch between glTFast and UnityGLTF on import.\nNOTE: This will break existing scene references.", MessageType.Info);
+				if (GUILayout.Button("Update Asset Identifier"))
+				{
+					identifierProp.boolValue = true;
+					serializedObject.ApplyModifiedProperties();
+					try
+					{
+#if UNITY_2022_2_OR_NEWER
+						SaveChanges();
+#else
+						ApplyAndImport();
+#endif
+						GUIUtility.ExitGUI();
+					}
+					catch
+					{
+						// ignore - seems in some cases the GameObjectInspector will throw
+					}
+				}
+			}
+
+			EditorGUILayout.Separator();
+
+			TextureWarningsGUI(t);
 		}
 
 		private void RemappingUI<T>(GLTFImporter t, SerializedProperty importedData, string subDirectoryName) where T: UnityEngine.Object
@@ -160,7 +190,10 @@ namespace UnityGLTF
 			if (importedData != null && importedData.serializedObject != null)
 			{
 				EditorGUI.indentLevel++;
+
 				var externalObjectMap = t.GetExternalObjectMap();
+				// TODO this also counts old remaps that are not used anymore
+				var remapCount = externalObjectMap.Values.Count(x => x is T);
 
 				void ExtractAsset(T subAsset, bool importImmediately)
 				{
@@ -186,10 +219,52 @@ namespace UnityGLTF
 				}
 
 				string remapFoldoutKey = nameof(GLTFImporterInspector) + "_Remap_" + subDirectoryName + "_Foldout";
-				var remapFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(remapFoldoutKey, false), "Remapped " + subDirectoryName + " (" + importedData.arraySize + ")");
+				var remapFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(remapFoldoutKey, false), "Remapped " + subDirectoryName + " (" + remapCount + " / " + importedData.arraySize + ")");
 				SessionState.SetBool(remapFoldoutKey, remapFoldout);
 				if (remapFoldout)
 				{
+					if (remapCount > 0)
+					{
+						EditorGUILayout.BeginHorizontal();
+
+						if (GUILayout.Button("Restore all " + subDirectoryName))
+						{
+							for (var i = 0; i < importedData.arraySize; i++)
+							{
+								var mat = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
+								if (!mat) continue;
+								t.RemoveRemap(new AssetImporter.SourceAssetIdentifier(mat));
+							}
+
+							// also remove all old remaps
+							var oldRemaps = externalObjectMap.Where(x => x.Value is T).ToList();
+							foreach (var oldRemap in oldRemaps)
+							{
+								t.RemoveRemap(oldRemap.Key);
+							}
+						}
+
+						if (typeof(T) == typeof(Material) && GUILayout.Button("Extract all " + subDirectoryName))
+						{
+							var materials = new T[importedData.arraySize];
+							for (var i = 0; i < importedData.arraySize; i++)
+								materials[i] = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
+
+							for (var i = 0; i < materials.Length; i++)
+							{
+								if (!materials[i]) continue;
+								AssetDatabase.StartAssetEditing();
+								ExtractAsset(materials[i], false);
+								AssetDatabase.StopAssetEditing();
+								var assetPath = AssetDatabase.GetAssetPath(target);
+								AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+								AssetDatabase.Refresh();
+							}
+						}
+
+						EditorGUILayout.EndHorizontal();
+					}
+
 					for (var i = 0; i < importedData.arraySize; i++)
 					{
 						var mat = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
@@ -232,73 +307,13 @@ namespace UnityGLTF
 
 						EditorGUILayout.EndHorizontal();
 					}
+
+					EditorGUILayout.Space();
+					EditorGUI.indentLevel--;
 				}
-
-				EditorGUILayout.BeginHorizontal();
-				EditorGUILayout.PrefixLabel(" ");
-				if (GUILayout.Button("Restore " + subDirectoryName))
-				{
-					for (var i = 0; i < importedData.arraySize; i++)
-					{
-						var mat = importedData.GetArrayElementAtIndex(i).objectReferenceValue as Material;
-						if (!mat) continue;
-						t.RemoveRemap(new AssetImporter.SourceAssetIdentifier(mat));
-					}
-				}
-
-				if (GUILayout.Button("Extract " + subDirectoryName))
-				{
-					var materials = new T[importedData.arraySize];
-					for (var i = 0; i < importedData.arraySize; i++)
-						materials[i] = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
-
-					for (var i = 0; i < materials.Length; i++)
-					{
-						if (!materials[i]) continue;
-						AssetDatabase.StartAssetEditing();
-						ExtractAsset(materials[i], false);
-						AssetDatabase.StopAssetEditing();
-						var assetPath = AssetDatabase.GetAssetPath(target);
-						AssetDatabase.WriteImportSettingsIfDirty(assetPath);
-						AssetDatabase.Refresh();
-					}
-				}
-
-				EditorGUILayout.EndHorizontal();
-				EditorGUI.indentLevel--;
 			}
 
 			EditorGUILayout.EndFoldoutHeaderGroup();
-
-			EditorGUILayout.Separator();
-
-			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));
-			if (!identifierProp.boolValue)
-			{
-				EditorGUILayout.HelpBox("This asset uses the old main asset identifier. Upgrade to the new one if you want to seamlessly switch between glTFast and UnityGLTF on import.\nNOTE: This will break existing scene references.", MessageType.Info);
-				if (GUILayout.Button("Update Asset Identifier"))
-				{
-					identifierProp.boolValue = true;
-					serializedObject.ApplyModifiedProperties();
-					try
-					{
-#if UNITY_2022_2_OR_NEWER
-						SaveChanges();
-#else
-						ApplyAndImport();
-#endif
-						GUIUtility.ExitGUI();
-					}
-					catch
-					{
-						// ignore - seems in some cases the GameObjectInspector will throw
-					}
-				}
-			}
-
-			EditorGUILayout.Separator();
-
-			TextureWarningsGUI(t);
 		}
 
 		private void ExtensionInspectorGUI()

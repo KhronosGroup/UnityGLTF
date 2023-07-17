@@ -13,9 +13,12 @@ namespace UnityGLTF
 	internal class UnityGLTFTabbedEditor : AssetImporterTabbedEditor
 	{
 		private readonly List<GltfAssetImporterTab> _tabs = new List<GltfAssetImporterTab>();
+		internal int TabCount => _tabs.Count;
+		internal BaseAssetImporterTabUI __ActiveTab => activeTab;
 
 		protected void AddTab(GltfAssetImporterTab tab)
 		{
+			if (tab == null) return;
 			if (!_tabs.Contains(tab)) _tabs.Add(tab);
 			tabs = _tabs.Select(x => (BaseAssetImporterTabUI) x).ToArray();
 			m_TabNames = _tabs.Select(t => t.Label).ToArray();
@@ -29,7 +32,19 @@ namespace UnityGLTF
 			return _tabs[index];
 		}
 
-		public override void OnEnable() => base.OnEnable();
+		public override void OnEnable()
+		{
+			// sanitize tab index
+			// from AssetImporterTabbedEditor.cs
+			if (activeTab == null)
+			{
+				var key = GetType().Name + "ActiveEditorIndex";
+				var expectedTab = EditorPrefs.GetInt(key, 0);
+				if (tabs.Length <= expectedTab)
+					EditorPrefs.SetInt(key, 0);
+			}
+			base.OnEnable();
+		}
 	}
 
 	internal class GltfAssetImporterTab : BaseAssetImporterTabUI
