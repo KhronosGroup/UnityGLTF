@@ -309,10 +309,12 @@ namespace UnityGLTF
 						    (target is Light && propertyName == "m_Color")))
 					{
 						requiredCount = 3;
-						hasEnoughCurves = curve.Count == requiredCount
+						hasEnoughCurves = curve.Count >= requiredCount
 						                  && curveName[0].EndsWith(".r", StringComparison.Ordinal)
 						                  && curveName[1].EndsWith(".g", StringComparison.Ordinal)
 						                  && curveName[2].EndsWith(".b", StringComparison.Ordinal);
+										  // doesn't hurt if there's an extra alpha channel;
+										  // seems that happens sometimes when animating, sometimes not
 
 						if (!hasEnoughCurves)
 						{
@@ -961,7 +963,7 @@ namespace UnityGLTF
 
 				if (!containsCompatibleData && !settings.UseAnimationPointer)
 				{
-					Debug.LogWarning("No compatible data found in clip binding: " + binding.propertyName, clip);
+					Debug.LogWarning("No compatible animation data found in clip binding: " + binding.propertyName + ". You may want to turn KHR_animation_pointer export on.", clip);
 					continue;
 				}
 
