@@ -92,6 +92,11 @@ namespace UnityGLTF
 			mapper.Material.SetFloat("_BUILTIN_QueueControl", -1);
 			mapper.Material.SetFloat("_QueueControl", -1);
 
+			void SetTransformKeyword()
+			{
+				MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+			}
+
 			var mrMapper = mapper as IMetalRoughUniformMap;
 			if (def.PbrMetallicRoughness != null && mrMapper != null)
 			{
@@ -115,12 +120,13 @@ namespace UnityGLTF
 						mrMapper.BaseColorXScale = scale;
 						mrMapper.BaseColorXTexCoord = ext.TexCoord;
 
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						mrMapper.BaseColorXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 
@@ -142,12 +148,13 @@ namespace UnityGLTF
 						mrMapper.MetallicRoughnessXRotation = ext.Rotation;
 						mrMapper.MetallicRoughnessXScale = scale;
 						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						mrMapper.MetallicRoughnessXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 			}
@@ -181,11 +188,13 @@ namespace UnityGLTF
 						sgMapper.DiffuseXScale = scale;
 						sgMapper.DiffuseXTexCoord = ext.TexCoord;
 						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						sgMapper.DiffuseXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 
@@ -206,12 +215,13 @@ namespace UnityGLTF
 						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
 						sgMapper.SpecularGlossinessXScale = scale;
 						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						sgMapper.SpecularGlossinessXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 			}
@@ -237,12 +247,13 @@ namespace UnityGLTF
 						unlitMapper.BaseColorXRotation = ext.Rotation;
 						unlitMapper.BaseColorXScale = scale;
 						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						unlitMapper.BaseColorXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 			}
@@ -275,12 +286,13 @@ namespace UnityGLTF
 						transmissionMapper.TransmissionTextureScale = scale;
 						transmissionMapper.TransmissionTextureRotation = td.Rotation;
 						transmissionMapper.TransmissionTextureTexCoord = td.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (transmission.transmissionTexture != null && IsTextureFlipped(transmission.transmissionTexture.Index.Value))
 					{
 						transmissionMapper.TransmissionTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 
 					mapper.Material.renderQueue = 3000;
@@ -309,12 +321,13 @@ namespace UnityGLTF
 						volumeMapper.ThicknessTextureScale = scale;
 						volumeMapper.ThicknessTextureRotation = td.Rotation;
 						volumeMapper.ThicknessTextureTexCoord = td.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (volume.thicknessTexture != null && IsTextureFlipped(volume.thicknessTexture.Index.Value))
 					{
 						volumeMapper.ThicknessTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 
 					mapper.Material.renderQueue = 3000;
@@ -343,12 +356,13 @@ namespace UnityGLTF
 						iridescenceMapper.IridescenceTextureScale = scale;
 						iridescenceMapper.IridescenceTextureRotation = td.Rotation;
 						iridescenceMapper.IridescenceTextureTexCoord = td.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (iridescence.iridescenceTexture != null && IsTextureFlipped(iridescence.iridescenceTexture.Index.Value))
 					{
 						iridescenceMapper.IridescenceTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 
 					var td2 = await FromTextureInfo(iridescence.iridescenceThicknessTexture);
@@ -362,12 +376,13 @@ namespace UnityGLTF
 						iridescenceMapper.IridescenceThicknessTextureScale = scale;
 						iridescenceMapper.IridescenceThicknessTextureRotation = td2.Rotation;
 						iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (iridescence.iridescenceThicknessTexture != null && IsTextureFlipped(iridescence.iridescenceThicknessTexture.Index.Value))
 					{
 						iridescenceMapper.IridescenceThicknessTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 
 					mapper.Material.SetKeyword("_IRIDESCENCE", true);
@@ -393,12 +408,13 @@ namespace UnityGLTF
 						specularMapper.SpecularTextureScale = scale;
 						specularMapper.SpecularTextureRotation = td.Rotation;
 						specularMapper.SpecularTextureTexCoord = td.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (specular.specularTexture != null && IsTextureFlipped(specular.specularTexture.Index.Value))
 					{
 						specularMapper.SpecularTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 
 					var td2 = await FromTextureInfo(specular.specularColorTexture);
@@ -412,12 +428,13 @@ namespace UnityGLTF
 						specularMapper.SpecularColorTextureScale = scale;
 						specularMapper.SpecularColorTextureRotation = td2.Rotation;
 						specularMapper.SpecularColorTextureTexCoord = td2.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (specular.specularColorTexture != null && IsTextureFlipped(specular.specularColorTexture.Index.Value))
 					{
 						specularMapper.SpecularColorTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 
 					mapper.Material.SetKeyword("_SPECULAR", true);
@@ -443,12 +460,13 @@ namespace UnityGLTF
 						clearcoatMapper.ClearcoatTextureScale = scale;
 						clearcoatMapper.ClearcoatTextureRotation = td.Rotation;
 						clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoordExtra;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (clearcoat.clearcoatTexture != null && IsTextureFlipped(clearcoat.clearcoatTexture.Index.Value))
 					{
 						clearcoatMapper.ClearcoatTextureScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 					var td2 = await FromTextureInfo(clearcoat.clearcoatRoughnessTexture);
 					clearcoatMapper.ClearcoatRoughnessTexture = td2.Texture;
@@ -478,12 +496,13 @@ namespace UnityGLTF
 						uniformMapper.NormalXRotation = ext.Rotation;
 						uniformMapper.NormalXScale = scale;
 						uniformMapper.NormalXTexCoord = ext.TexCoord;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						uniformMapper.NormalXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 
@@ -502,12 +521,13 @@ namespace UnityGLTF
 						uniformMapper.EmissiveXRotation = ext.Rotation;
 						uniformMapper.EmissiveXScale = scale;
 						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						uniformMapper.EmissiveXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 
@@ -528,12 +548,13 @@ namespace UnityGLTF
 						uniformMapper.OcclusionXRotation = ext.Rotation;
 						uniformMapper.OcclusionXScale = scale;
 						uniformMapper.OcclusionXTexCoord = ext.TexCoord;
-						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
+						SetTransformKeyword();
 					}
 					else
 					if (IsTextureFlipped(textureId.Value))
 					{
 						uniformMapper.OcclusionXScale *= new Vector2(1f,-1f);
+						SetTransformKeyword();
 					}
 				}
 
