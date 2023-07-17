@@ -471,7 +471,10 @@ namespace UnityGLTF
 		                    {
 			                    var si = new SourceAssetIdentifier(mat);
 			                    if (map.TryGetValue(si, out var value))
-				                    m[i] = value as Material;
+			                    {
+				                    if (!value) map.Remove(si);
+				                    else m[i] = value as Material;
+			                    }
 		                    }
 	                    }
 	                    r.sharedMaterials = m;
@@ -601,7 +604,7 @@ namespace UnityGLTF
 	                        if (!mat) continue;
 	                        // ensure materials that are overriden aren't shown in the hierarchy.
 	                        var si = new SourceAssetIdentifier(mat);
-	                        if (map.ContainsKey(si))
+	                        if (map.TryGetValue(si, out var remappedMaterial) && remappedMaterial)
 		                        mat.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 
 	                        ctx.AddObjectToAsset(GetUniqueName(mat.name), mat);
