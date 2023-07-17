@@ -243,10 +243,22 @@ namespace UnityGLTF
 		    {
 #if UNITY_EDITOR
 			    settings = ScriptableObject.CreateInstance<GLTFSettings>();
+			    settings.name = Path.GetFileNameWithoutExtension(k_RuntimeAndEditorSettingsPath);
 			    var dir = Path.GetDirectoryName(k_RuntimeAndEditorSettingsPath);
 			    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir!);
-			    AssetDatabase.CreateAsset(settings, k_RuntimeAndEditorSettingsPath);
-			    AssetDatabase.SaveAssets();
+
+			    // we can save it here, but we can't call AssetDatabase.CreateAsset as the importer will complain
+			    UnityEditorInternal.InternalEditorUtility.SaveToSerializedFileAndForget(new UnityEngine.Object[] { settings }, k_RuntimeAndEditorSettingsPath, true);
+
+			    // so after import, we have to connect the cachedSettings again
+			    EditorApplication.delayCall += () =>
+			    {
+				    // Debug.Log("Deferred settings connection");
+				    AssetDatabase.Refresh();
+				    cachedSettings = null;
+				    TryGetSettings(out var newSettings);
+				    cachedSettings = newSettings;
+			    };
 #else
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
 #endif
