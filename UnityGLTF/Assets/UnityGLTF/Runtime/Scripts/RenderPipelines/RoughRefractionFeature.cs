@@ -76,7 +76,13 @@ namespace UnityGLTF
 	        {
 	            m_ScriptablePass = new CustomRenderPass(RenderPassEvent.AfterRenderingSkybox);
 	        }
+
+#if UNITY_2022_1_OR_NEWER
+		    var identifier = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
+		    m_ScriptablePass.Setup(identifier, m_OpaqueColor, downsampling);
+#else
 	        m_ScriptablePass.Setup(renderer.cameraColorTarget, m_OpaqueColor, downsampling);
+#endif
 
 	        renderer.EnqueuePass(m_ScriptablePass);
 	    }
