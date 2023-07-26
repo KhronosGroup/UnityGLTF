@@ -37,8 +37,8 @@ namespace UnityGLTF
 
 		public int NormalTexCoord
 		{
-			get => 0;
-			set {}
+			get => (int) _material.GetFloat("normalTextureTexCoord");
+			set => _material.SetFloat("normalTextureTexCoord", Mathf.RoundToInt(value));
 		}
 
 		public double NormalTexScale
@@ -53,7 +53,11 @@ namespace UnityGLTF
 		    set => _material.SetTextureOffset("normalTexture", value);
 	    }
 
-	    public double NormalXRotation { get; set; }
+	    public double NormalXRotation
+	    {
+		    get => _material.GetFloat("normalTextureRotation");
+		    set => _material.SetFloat("normalTextureRotation", (float) value);
+	    }
 
 	    public Vector2 NormalXScale
 	    {
@@ -63,8 +67,8 @@ namespace UnityGLTF
 
 	    public int NormalXTexCoord
 	    {
-		    get => 0;
-		    set {}
+		    get => (int) _material.GetFloat("normalTextureTexCoord");
+		    set => _material.SetFloat("normalTextureTexCoord", Mathf.RoundToInt(value));
 	    }
 
 	    public Texture OcclusionTexture
@@ -117,8 +121,8 @@ namespace UnityGLTF
 
 	    public int EmissiveTexCoord
 	    {
-		    get => 0;
-		    set {}
+		    get =>  (int)_material.GetFloat("emissiveTextureTexCoord");
+		    set => _material.SetFloat("emissiveTextureTexCoord", (float) value);
 	    }
 
 	    public Color EmissiveFactor
@@ -133,7 +137,11 @@ namespace UnityGLTF
 		    set => _material.SetTextureOffset("emissiveTexture", value);
 	    }
 
-	    public double EmissiveXRotation { get; set; }
+	    public double EmissiveXRotation
+	    {
+		    get => _material.GetFloat("emissiveTextureRotation");
+		    set => _material.SetFloat("emissiveTextureRotation", (float) value);
+	    }
 
 	    public Vector2 EmissiveXScale
 	    {
@@ -143,8 +151,8 @@ namespace UnityGLTF
 
 	    public int EmissiveXTexCoord
 	    {
-		    get => 0;
-		    set {}
+		    get =>  (int)_material.GetFloat("emissiveTextureRotation");
+		    set => _material.SetFloat("emissiveTextureRotation", (float) value);
 	    }
 
 	    public Texture MetallicRoughnessTexture
@@ -155,8 +163,8 @@ namespace UnityGLTF
 
 	    public int MetallicRoughnessTexCoord
 	    {
-		    get => 0;
-		    set {}
+		    get =>  (int)_material.GetFloat("metallicRoughnessTextureTexCoord");
+		    set => _material.SetFloat("metallicRoughnessTextureTexCoord", (float) value);
 	    }
 
 	    public Vector2 MetallicRoughnessXOffset
@@ -165,18 +173,22 @@ namespace UnityGLTF
 		    set => _material.SetTextureOffset("metallicRoughnessTexture", value);
 	    }
 
-	    public double MetallicRoughnessXRotation { get; set; }
+	    public double MetallicRoughnessXRotation
+	    {
+		    get => _material.GetFloat("metallicRoughnessTextureRotation");
+		    set => _material.SetFloat("metallicRoughnessTextureRotation", (float) value);
+	    }
 
 	    public Vector2 MetallicRoughnessXScale
 	    {
-		    get => _material.GetTextureOffset("metallicRoughnessTexture");
-		    set => _material.SetTextureOffset("metallicRoughnessTexture", value);
+		    get => _material.GetTextureScale("metallicRoughnessTexture");
+		    set => _material.SetTextureScale("metallicRoughnessTexture", value);
 	    }
 
 	    public int MetallicRoughnessXTexCoord
 	    {
-		    get => 0;
-		    set {}
+		    get =>  (int)_material.GetFloat("metallicRoughnessTextureTexCoord");
+		    set => _material.SetFloat("metallicRoughnessTextureTexCoord", (float) value);
 	    }
 
 	    public double MetallicFactor
@@ -194,19 +206,37 @@ namespace UnityGLTF
 	    public double ThicknessFactor
 	    {
 		    get => _material.GetFloat("thicknessFactor");
-		    set
-		    {
-			    _material.SetFloat("thicknessFactor", (float) value);
-		    }
+		    set => _material.SetFloat("thicknessFactor", (float) value);
 	    }
 
 	    public Texture ThicknessTexture
 	    {
 		    get => _material.GetTexture("thicknessTexture");
-		    set
-		    {
-			    _material.SetTexture("thicknessTexture", value);
-		    }
+		    set => _material.SetTexture("thicknessTexture", value);
+	    }
+
+	    public double ThicknessTextureRotation
+	    {
+		    get => _material.GetFloat("thicknessTextureRotation");
+		    set => _material.SetFloat("thicknessTextureRotation", (float) value);
+	    }
+
+	    public Vector2 ThicknessTextureOffset
+	    {
+		    get => _material.GetTextureOffset("thicknessTexture");
+		    set => _material.SetTextureOffset("thicknessTexture", value);
+	    }
+
+	    public Vector2 ThicknessTextureScale
+	    {
+		    get => _material.GetTextureScale("thicknessTexture");
+		    set => _material.SetTextureScale("thicknessTexture", value);
+	    }
+
+	    public int ThicknessTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("thicknessTextureTexCoord");
+		    set => _material.SetFloat("thicknessTextureTexCoord", (float) value);
 	    }
 
 	    public double AttenuationDistance
@@ -224,19 +254,37 @@ namespace UnityGLTF
 	    public double TransmissionFactor
 	    {
 		    get => _material.GetFloat("transmissionFactor");
-		    set
-		    {
-			    _material.SetFloat("transmissionFactor", (float) value);
-		    }
+		    set => _material.SetFloat("transmissionFactor", (float) value);
 	    }
 
 	    public Texture TransmissionTexture
 	    {
 		    get => _material.GetTexture("transmissionTexture");
-		    set
-		    {
-			    _material.SetTexture("transmissionTexture", value);
-		    }
+		    set => _material.SetTexture("transmissionTexture", value);
+	    }
+
+	    public double TransmissionTextureRotation
+	    {
+		    get => _material.GetFloat("transmissionTextureRotation");
+		    set => _material.SetFloat("transmissionTextureRotation", (float) value);
+	    }
+
+	    public Vector2 TransmissionTextureOffset
+	    {
+		    get => _material.GetTextureOffset("transmissionTexture");
+		    set => _material.SetTextureOffset("transmissionTexture", value);
+	    }
+
+	    public Vector2 TransmissionTextureScale
+	    {
+		    get => _material.GetTextureScale("transmissionTexture");
+		    set => _material.SetTextureScale("transmissionTexture", value);
+	    }
+
+	    public int TransmissionTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("transmissionTextureTexCoord");
+		    set => _material.SetFloat("transmissionTextureTexCoord", (float) value);
 	    }
 
 	    public double IOR
@@ -272,19 +320,61 @@ namespace UnityGLTF
 	    public Texture IridescenceTexture
 	    {
 		    get => _material.GetTexture("iridescenceTexture");
-		    set
-		    {
-			    _material.SetTexture("iridescenceTexture", value);
-		    }
+		    set => _material.SetTexture("iridescenceTexture", value);
+	    }
+
+	    public double IridescenceTextureRotation
+	    {
+		    get => _material.GetFloat("iridescenceTextureRotation");
+		    set => _material.SetFloat("iridescenceTextureRotation", (float) value);
+	    }
+
+	    public Vector2 IridescenceTextureOffset
+	    {
+		    get => _material.GetTextureOffset("iridescenceTexture");
+		    set => _material.SetTextureOffset("iridescenceTexture", value);
+	    }
+
+	    public Vector2 IridescenceTextureScale
+	    {
+		    get => _material.GetTextureScale("iridescenceTexture");
+		    set => _material.SetTextureScale("iridescenceTexture", value);
+	    }
+
+	    public int IridescenceTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("iridescenceTextureTexCoord");
+		    set => _material.SetFloat("iridescenceTextureTexCoord", (float) value);
 	    }
 
 	    public Texture IridescenceThicknessTexture
 	    {
 		    get => _material.GetTexture("iridescenceThicknessTexture");
-		    set
-		    {
-			    _material.SetTexture("iridescenceThicknessTexture", value);
-		    }
+		    set => _material.SetTexture("iridescenceThicknessTexture", value);
+	    }
+
+	    public double IridescenceThicknessTextureRotation
+	    {
+		    get => _material.GetFloat("iridescenceThicknessTextureRotation");
+		    set => _material.SetFloat("iridescenceThicknessTextureRotation", (float) value);
+	    }
+
+	    public Vector2 IridescenceThicknessTextureOffset
+	    {
+		    get => _material.GetTextureOffset("iridescenceThicknessTexture");
+		    set => _material.SetTextureOffset("iridescenceThicknessTexture", value);
+	    }
+
+	    public Vector2 IridescenceThicknessTextureScale
+	    {
+		    get => _material.GetTextureScale("iridescenceThicknessTexture");
+		    set => _material.SetTextureScale("iridescenceThicknessTexture", value);
+	    }
+
+	    public int IridescenceThicknessTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("iridescenceThicknessTextureTexCoord");
+		    set => _material.SetFloat("iridescenceThicknessTextureTexCoord", (float) value);
 	    }
 
 	    public double SpecularFactor
@@ -296,10 +386,31 @@ namespace UnityGLTF
 	    public Texture SpecularTexture
 	    {
 		    get => _material.GetTexture("specularTexture");
-		    set
-		    {
-			    _material.SetTexture("specularTexture", value);
-		    }
+		    set=> _material.SetTexture("specularTexture", value);
+	    }
+
+	    public double SpecularTextureRotation
+	    {
+		    get => _material.GetFloat("specularTextureRotation");
+		    set => _material.SetFloat("specularTextureRotation", (float) value);
+	    }
+
+	    public Vector2 SpecularTextureOffset
+	    {
+		    get => _material.GetTextureOffset("specularTexture");
+		    set => _material.SetTextureOffset("specularTexture", value);
+	    }
+
+	    public Vector2 SpecularTextureScale
+	    {
+		    get => _material.GetTextureScale("specularTexture");
+		    set => _material.SetTextureScale("specularTexture", value);
+	    }
+
+	    public int SpecularTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("specularTextureTexCoord");
+		    set => _material.SetFloat("specularTextureTexCoord", (float) value);
 	    }
 
 	    public Color SpecularColorFactor
@@ -311,10 +422,31 @@ namespace UnityGLTF
 	    public Texture SpecularColorTexture
 	    {
 		    get => _material.GetTexture("specularColorTexture");
-		    set
-		    {
-			    _material.SetTexture("specularColorTexture", value);
-		    }
+		    set => _material.SetTexture("specularColorTexture", value);
+	    }
+
+	    public double SpecularColorTextureRotation
+	    {
+		    get => _material.GetFloat("specularColorTextureRotation");
+		    set => _material.SetFloat("specularColorTextureRotation", (float) value);
+	    }
+
+	    public Vector2 SpecularColorTextureOffset
+	    {
+		    get => _material.GetTextureOffset("specularColorTexture");
+		    set => _material.SetTextureOffset("specularColorTexture", value);
+	    }
+
+	    public Vector2 SpecularColorTextureScale
+	    {
+		    get => _material.GetTextureScale("specularColorTexture");
+		    set => _material.SetTextureScale("specularColorTexture", value);
+	    }
+
+	    public int SpecularColorTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("specularColorTextureTexCoord");
+		    set => _material.SetFloat("specularColorTextureTexCoord", (float) value);
 	    }
 
 	    public double ClearcoatFactor
@@ -327,6 +459,30 @@ namespace UnityGLTF
 	    {
 		    get => _material.GetTexture("clearcoatTexture");
 		    set => _material.SetTexture("clearcoatTexture", value);
+	    }
+
+	    public double ClearcoatTextureRotation
+	    {
+		    get => _material.GetFloat("clearcoatTextureRotation");
+		    set => _material.SetFloat("clearcoatTextureRotation", (float) value);
+	    }
+
+	    public Vector2 ClearcoatTextureOffset
+	    {
+		    get => _material.GetTextureOffset("clearcoatTexture");
+		    set => _material.SetTextureOffset("clearcoatTexture", value);
+	    }
+
+	    public Vector2 ClearcoatTextureScale
+	    {
+		    get => _material.GetTextureScale("clearcoatTexture");
+		    set => _material.SetTextureScale("clearcoatTexture", value);
+	    }
+
+	    public int ClearcoatTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("clearcoatTextureTexCoord");
+		    set => _material.SetFloat("clearcoatTextureTexCoord", (float) value);
 	    }
 
 	    public double ClearcoatRoughnessFactor

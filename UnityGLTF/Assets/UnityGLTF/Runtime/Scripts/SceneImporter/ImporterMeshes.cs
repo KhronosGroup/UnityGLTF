@@ -233,16 +233,6 @@ namespace UnityGLTF
 				}
 			}
 
-			if (decodeResults[0].calculateNormals)
-			{
-				mesh.RecalculateNormals();
-			}
-
-			if (requireTangents)
-			{
-				mesh.RecalculateTangents();
-			}
-
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
 			verticesLength = (uint) mesh.vertexCount;
@@ -299,9 +289,14 @@ namespace UnityGLTF
 			}
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
-			if (mesh.normals != null && mesh.normals.Length > 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
+			if (decodeResults[0].calculateNormals && mesh.normals != null && mesh.normals.Length > 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
 			{
 				mesh.RecalculateNormals();
+			}
+
+			if (requireTangents)
+			{
+				mesh.RecalculateTangents();
 			}
 
 			if (!KeepCPUCopyOfMesh)
