@@ -402,9 +402,9 @@ namespace UnityGLTF
 				NumericArray[] sparsePositions = null;
 				NumericArray[] sparseTangents = null;
 
-				const string NormalKey = "NORMALS";
-				const string PositionKey = "POSITIONS";
-				const string TangentKey = "TANGENTS";
+				const string NormalKey = "NORMAL";
+				const string PositionKey = "POSITION";
+				const string TangentKey = "TANGENT";
 
 				// normals, positions, tangents
 				foreach (var targetAttribute in target)
