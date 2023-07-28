@@ -492,7 +492,6 @@ namespace UnityGLTF
 					var current = att[NormalKey].AccessorContent;
 					NumericArray before = new NumericArray();
 					before.AsVec3s = new GLTF.Math.Vector3[current.AsVec3s.Length];
-					Array.Copy(current.AsVec3s, before.AsVec3s, before.AsVec3s.Length);
 					for (int j = 0; j < sparseNormals[1].AsUInts.Length; j++)
 					{
 						before.AsVec3s[sparseNormals[1].AsUInts[j]] = sparseNormals[0].AsVec3s[j];
@@ -505,7 +504,6 @@ namespace UnityGLTF
 					var current = att[PositionKey].AccessorContent;
 					NumericArray before = new NumericArray();
 					before.AsVec3s = new GLTF.Math.Vector3[current.AsVec3s.Length];
-					Array.Copy(current.AsVec3s, before.AsVec3s, before.AsVec3s.Length);
 					for (int j = 0; j < sparsePositions[1].AsUInts.Length; j++)
 					{
 						before.AsVec3s[sparsePositions[1].AsUInts[j]] = sparsePositions[0].AsVec3s[j];
@@ -518,7 +516,6 @@ namespace UnityGLTF
 					var current = att[TangentKey].AccessorContent;
 					NumericArray before = new NumericArray();
 					before.AsVec3s = new GLTF.Math.Vector3[current.AsVec3s.Length];
-					Array.Copy(current.AsVec3s, before.AsVec3s, before.AsVec3s.Length);
 					for (int j = 0; j < sparseTangents[1].AsUInts.Length; j++)
 					{
 						before.AsVec3s[sparseTangents[1].AsUInts[j]] = sparseTangents[0].AsVec3s[j];
