@@ -283,6 +283,7 @@ namespace UnityGLTF
 						: Color.white).ToNumericsColorLinear(),
 					BaseColorTexture = mainTex ? ExportTextureInfo(mainTex, TextureMapType.BaseColor) : null
 				};
+				ExportTextureTransform(material.PbrMetallicRoughness.BaseColorTexture, materialObj, "_BaseMap");
 			}
 			else if (materialObj.HasProperty("_ColorTexture"))
 			{
@@ -294,6 +295,7 @@ namespace UnityGLTF
 						: Color.white).ToNumericsColorLinear(),
 					BaseColorTexture = mainTex ? ExportTextureInfo(mainTex, TextureMapType.BaseColor) : null
 				};
+				ExportTextureTransform(material.PbrMetallicRoughness.BaseColorTexture, materialObj, "_ColorTexture");
 			}
             else if (materialObj.HasProperty("_MainTex")) //else export main texture
             {
@@ -391,6 +393,8 @@ namespace UnityGLTF
 
 		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
 		{
+			if (def == null) return;
+
 			// early out if texture transform is explicitly disabled
 			if (mat.HasProperty("_TEXTURE_TRANSFORM") && !mat.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
 				return;
@@ -677,6 +681,7 @@ namespace UnityGLTF
 				if (mrTex)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "metallicRoughnessTexture");
 				}
 			}
 			else if (material.HasProperty("_MetallicRoughnessTexture"))
@@ -685,6 +690,7 @@ namespace UnityGLTF
 				if (mrTex)
 				{
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness);
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicRoughnessTexture");
 				}
 			}
 			else if (material.HasProperty("_MetallicGlossMap"))
