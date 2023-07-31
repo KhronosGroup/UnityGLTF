@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.1-exp] - 2023-07-31
+- fix: export texture transform for metallicRoughness
+
 ## [2.1.0-exp] - 2023-06-19
 - add: draco import support
 - add: KTX2 import support
