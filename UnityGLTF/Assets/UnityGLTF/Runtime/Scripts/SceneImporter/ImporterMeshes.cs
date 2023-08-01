@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Cache;
@@ -180,6 +182,81 @@ namespace UnityGLTF
 			Statistics.VertexCount += vertOffset;
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
 		}
+
+#if HAVE_MESHOPT_DECOMPRESS
+
+		private async Task MeshOptDecodeBuffer(GLTFRoot root)
+		{
+			if (root.BufferViews == null)
+				return;
+
+			int index = 0;
+			var jobHandlesList = new List<JobHandle>(root.BufferViews.Count);
+			var meshoptBufferViews = new Dictionary<int, NativeArray<byte>>();
+			var meshoptReturnValues = new NativeArray<int>( root.BufferViews.Count, Allocator.TempJob);
+			var meshOptInput = new List<NativeArray<byte>>();
+
+			foreach (var bView in root.BufferViews)
+			{
+				if (bView.Extensions != null &&  bView.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
+				{
+					var meshOpt = bView.Extensions[EXT_meshopt_compression_Factory.EXTENSION_NAME] as EXT_meshopt_compression;
+
+					var arr = new NativeArray<byte>((int)(meshOpt.count * meshOpt.bufferView.ByteStride), Allocator.Persistent);
+
+					if (_assetCache.BufferCache[meshOpt.bufferView.Buffer.Id] == null)
+						await ConstructBuffer(meshOpt.bufferView.Buffer.Value, meshOpt.bufferView.Buffer.Id);
+
+					BufferCacheData bufferContents = _assetCache.BufferCache[ meshOpt.bufferView.Buffer.Id];
+
+					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkOffset, bufferContents.Stream, out byte[] bufferViewData);
+					var origBufferView = new NativeArray<byte>(bufferViewData, Allocator.Persistent);
+					meshOptInput.Add(origBufferView);
+
+					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(
+						new NativeSlice<int>(meshoptReturnValues,index,1),
+							arr,
+							meshOpt.count,
+							(int)meshOpt.bufferView.ByteStride,
+							origBufferView,
+							meshOpt.mode,
+							meshOpt.filter
+						);
+					jobHandlesList.Add(jobHandle);
+					meshoptBufferViews[index] = arr;
+				}
+
+				index++;
+			}
+
+			if (jobHandlesList != null)
+			{
+				JobHandle meshoptJobHandle;
+				using (var jobHandles = new NativeArray<JobHandle>(jobHandlesList.ToArray(), Allocator.Temp)) {
+					 meshoptJobHandle = JobHandle.CombineDependencies(jobHandles);
+				}
+				while (!meshoptJobHandle.IsCompleted) {
+					await Task.Yield();
+				}
+				meshoptJobHandle.Complete();
+
+				foreach (var m in meshoptBufferViews)
+				{
+					var bufferView = root.BufferViews[m.Key];
+					var bufferData = await GetBufferData(bufferView.Buffer);
+					bufferData.Stream.Seek(bufferView.ByteOffset, System.IO.SeekOrigin.Begin);
+					bufferData.Stream.Write(m.Value.ToArray());
+					m.Value.Dispose();
+				}
+
+				foreach (var m in meshOptInput)
+					m.Dispose();
+			}
+
+			meshoptReturnValues.Dispose();
+		}
+#endif
+
 
 #if HAVE_DRACO
 		/// <summary>

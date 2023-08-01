@@ -402,6 +402,9 @@ namespace UnityGLTF
 					_assetCache = new AssetCache(_gltfRoot);
 				}
 
+#if HAVE_MESHOPT_DECOMPRESS
+				await MeshOptDecodeBuffer(_gltfRoot);
+#endif
 				await _LoadScene(sceneIndex, showSceneObj, cancellationToken);
 			}
 			catch (Exception ex)
@@ -891,6 +894,25 @@ namespace UnityGLTF
 
 		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
 		{
+#if HAVE_MESHOPT_DECOMPRESS
+			if (buffer.Extensions != null && buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
+			{
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
+
+				var meshOptBufferMemoryStream = new MemoryStream((int)buffer.ByteLength);
+				meshOptBufferMemoryStream.SetLength((int)buffer.ByteLength);
+
+				var bufferCacheDate = new BufferCacheData
+				{
+					Stream = meshOptBufferMemoryStream,
+					ChunkOffset = 0
+				};
+
+				_assetCache.BufferCache[bufferIndex] = bufferCacheDate;
+				return;
+			}
+#endif
+
 			if (buffer.Uri == null)
 			{
 				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
