@@ -254,7 +254,7 @@ namespace GLTF.Schema
 
 		private static sbyte GetByteElement(byte[] buffer, uint byteOffset)
 		{
-			return Convert.ToSByte(GetUByteElement(buffer, byteOffset));
+			return (sbyte) GetUByteElement(buffer, byteOffset);
 		}
 
 		private static byte GetUByteElement(byte[] buffer, uint byteOffset)
@@ -482,7 +482,7 @@ namespace GLTF.Schema
 			GetTypeDetails(ComponentType, out componentSize, out maxValue);
 
 			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 2;
-			if (normalizeIntValues) maxValue = 1;
+			if (!normalizeIntValues) maxValue = 1;
 
 			for (uint idx = 0; idx < Count; idx++)
 			{
@@ -522,7 +522,7 @@ namespace GLTF.Schema
 			GetTypeDetails(ComponentType, out componentSize, out maxValue);
 
 			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 3;
-			if (normalizeIntValues) maxValue = 1;
+			if (!normalizeIntValues) maxValue = 1;
 
 			for (uint idx = 0; idx < Count; idx++)
 			{
@@ -569,7 +569,7 @@ namespace GLTF.Schema
 			GetTypeDetails(ComponentType, out componentSize, out maxValue);
 
 			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 4;
-			if (normalizeIntValues) maxValue = 1;
+			if (!normalizeIntValues) maxValue = 1;
 
 			for (uint idx = 0; idx < Count; idx++)
 			{
@@ -727,10 +727,7 @@ namespace GLTF.Schema
 			float maxValue;
 			GetTypeDetails(ComponentType, out componentSize, out maxValue);
 
-			if (normalizeIntValues)
-			{
-				maxValue = 1;
-			}
+			if (!normalizeIntValues) maxValue = 1;
 
 			uint stride = (uint)(BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 16);
 
