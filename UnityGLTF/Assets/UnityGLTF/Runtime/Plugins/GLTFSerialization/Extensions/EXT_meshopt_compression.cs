@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using GLTF.Extensions;
 #if HAVE_MESHOPT_DECOMPRESS
 using Meshoptimizer;
 #endif
+using Newtonsoft.Json.Linq;
 
-using Newtonsoft.Json.Linq;namespace GLTF.Schema
+namespace GLTF.Schema
 {
 
 	[Serializable]
@@ -74,12 +73,8 @@ using Newtonsoft.Json.Linq;namespace GLTF.Schema
 					extension.bufferView.ByteOffset =  (uint)System.Math.Round(extensionToken.Value["byteOffset"]?.Value<double>() ?? 0);
 					extension.bufferView.ByteLength =  (uint)System.Math.Round(extensionToken.Value["byteLength"]?.Value<double>() ?? 0);
 					extension.bufferView.ByteStride =  (uint)System.Math.Round(extensionToken.Value["byteStride"]?.Value<double>() ?? 0);
-
-
-					//extension.bufferView = BufferView.Deserialize(root, extensionToken.Value[0].CreateReader());
 				}
 #endif
-
 
 				return extension;
 			}
