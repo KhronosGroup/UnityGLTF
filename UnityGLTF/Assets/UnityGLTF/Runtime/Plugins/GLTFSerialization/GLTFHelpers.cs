@@ -225,13 +225,13 @@ namespace GLTF
 			var sparseArrays = new NumericArray[2];
 
 			// Values
-			uint offset1 = LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value, sparseValues.Offset, sparseValues.Stream, out byte[] bufferViewCache1);
+			LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value, sparseValues.Offset, sparseValues.Stream, out byte[] bufferViewCache1);
 
 			// Indices
-			uint offset2 = LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.Stream, out byte[] bufferViewCache2);
+			LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.Stream, out byte[] bufferViewCache2);
 
-			Accessor.AsSparseVector3Array(attributeAccessor.AccessorId.Value, ref sparseArrays[0], bufferViewCache1, offset1);
-			Accessor.AsSparseUIntArray(attributeAccessor.AccessorId.Value, ref sparseArrays[1], bufferViewCache2, offset2);
+			Accessor.AsSparseVector3Array(attributeAccessor.AccessorId.Value, ref sparseArrays[0], bufferViewCache1, 0);
+			Accessor.AsSparseUIntArray(attributeAccessor.AccessorId.Value, ref sparseArrays[1], bufferViewCache2, 0);
 
 			var before = new NumericArray();
 			before.AsVec3s = new GLTF.Math.Vector3[resultArray.AsVec3s.Length];
@@ -257,8 +257,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.POSITION];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache);
 
 				if (sparseAccessors.TryGetValue(SemanticProperties.POSITION, out var sparseData))
 					ApplySparseAccessorsVec3(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -269,16 +269,16 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.INDICES];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTriangles(ref resultArray, bufferViewCache);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.NORMAL))
 			{
 				var attributeAccessor = attributes[SemanticProperties.NORMAL];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsNormalArray(ref resultArray, bufferViewCache);
 
 				if (sparseAccessors.TryGetValue(SemanticProperties.NORMAL, out var sparseData))
 					ApplySparseAccessorsVec3(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -289,8 +289,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.TexCoord[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache);
 
 				// if (sparseAccessors.TryGetValue(SemanticProperties.TexCoord[0], out var sparseData))
 				// 	ApplySparseAccessorsTexCoord(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -301,8 +301,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.TexCoord[1]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache);
 
 				// if (sparseAccessors.TryGetValue(SemanticProperties.TexCoord[1], out var sparseData))
 				// 	ApplySparseAccessorsTexCoord(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -313,8 +313,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.TexCoord[2]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache);
 
 				// if (sparseAccessors.TryGetValue(SemanticProperties.TexCoord[2], out var sparseData))
 				// 	ApplySparseAccessorsTexCoord(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -325,8 +325,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.TexCoord[3]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTexcoordArray(ref resultArray, bufferViewCache);
 
 				// if (sparseAccessors.TryGetValue(SemanticProperties.TexCoord[3], out var sparseData))
 				// 	ApplySparseAccessorsTexCoord(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -337,8 +337,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.Color[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsColorArray(ref resultArray, bufferViewCache);
 
 				// if (sparseAccessors.TryGetValue(SemanticProperties.Color[0], out var sparseData))
 				// 	ApplySparseAccessorsColor(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -349,8 +349,8 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.TANGENT];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsTangentArray(ref resultArray, bufferViewCache);
 
 				// if (sparseAccessors.TryGetValue(SemanticProperties.TANGENT, out var sparseData))
 				// 	ApplySparseAccessorsTangent(ref resultArray, attributeAccessor, sparseData.sparseValues, sparseData.sparseIndices);
@@ -361,32 +361,32 @@ namespace GLTF
 			{
 				var attributeAccessor = attributes[SemanticProperties.Weight[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.Weight[1]))
 			{
 				var attributeAccessor = attributes[SemanticProperties.Weight[1]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.Joint[0]))
 			{
 				var attributeAccessor = attributes[SemanticProperties.Joint[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.Joint[1]))
 			{
 				var attributeAccessor = attributes[SemanticProperties.Joint[1]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
-				uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 		}
@@ -398,14 +398,14 @@ namespace GLTF
 				var attributeAccessor = kvp.Value;
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				byte[] bufferViewCache;
-				uint offset = LoadBufferView(attributeAccessor, out bufferViewCache);
+				LoadBufferView(attributeAccessor, out bufferViewCache);
 
 				switch (kvp.Key)
 				{
 					case SemanticProperties.POSITION:
 					case SemanticProperties.NORMAL:
 					case SemanticProperties.TANGENT:
-						attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+						attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache);
 						break;
 					default:
 						throw new System.Exception($"Unrecognized morph target attribute {kvp.Key}");
@@ -418,8 +418,8 @@ namespace GLTF
 		public static void BuildBindPoseSamplers(ref AttributeAccessor attributeAccessor)
 		{
 			NumericArray resultArray = attributeAccessor.AccessorContent;
-			uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache, offset);
+			LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache);
 			attributeAccessor.AccessorContent = resultArray;
 		}
 
@@ -434,22 +434,22 @@ namespace GLTF
 				foreach (var attributeAccessor in samplerSet.Value)
 				{
 					NumericArray resultArray = attributeAccessor.AccessorContent;
-					uint offset = LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
+					LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
 
 					switch (samplerSet.Key)
 					{
 						case "time":
-							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache, offset);
+							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache);
 							break;
 						case "translation":
 						case "scale":
-							attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache, offset);
+							attributeAccessor.AccessorId.Value.AsVector3Array(ref resultArray, bufferViewCache);
 							break;
 						case "rotation":
-							attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, offset);
+							attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
 							break;
 						case "weights":
-							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache, offset);
+							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache);
 							break;
 					}
 
@@ -528,31 +528,15 @@ namespace GLTF
 			return regex.Match(uri).Success;
 		}
 
-		private static uint LoadBufferView(AttributeAccessor attributeAccessor, out byte[] bufferViewCache)
+		private static void LoadBufferView(AttributeAccessor attributeAccessor, out byte[] bufferViewCache)
 		{
-			return LoadBufferView(attributeAccessor.AccessorId.Value.BufferView.Value, attributeAccessor.Offset, attributeAccessor.Stream, out bufferViewCache);
+			LoadBufferView(attributeAccessor.AccessorId.Value.BufferView.Value, attributeAccessor.Offset, attributeAccessor.Stream, out bufferViewCache);
 		}
 
-		internal static uint LoadBufferView(BufferView bufferView, uint Offset, Stream Stream, out byte[] bufferViewCache)
+		internal static void LoadBufferView(BufferView bufferView, uint Offset, Stream Stream, out byte[] bufferViewCache)
 		{
 			uint totalOffset = bufferView.ByteOffset + Offset;
 
-#if !NETFX_CORE
-			if (Stream is System.IO.MemoryStream)
-			{
-				MemoryStream memoryStream = (MemoryStream)Stream;
-#if NETFX_CORE || NETSTANDARD1_3
-				if (memoryStream.TryGetBuffer(out System.ArraySegment<byte> arraySegment))
-				{
-					bufferViewCache = arraySegment.Array;
-					return totalOffset;
-				}
-#else
-				bufferViewCache = memoryStream.GetBuffer();
-				return totalOffset;
-#endif
-			}
-#endif
 			Stream.Position = totalOffset;
 			bufferViewCache = new byte[bufferView.ByteLength];
 
@@ -564,7 +548,6 @@ namespace GLTF
 				sizeToLoad = Stream.Read(bufferViewCache, (int)(bufferView.ByteLength - remainingSize), sizeToLoad);
 				remainingSize -= (uint)sizeToLoad;
 			}
-			return 0;
 		}
 
 		private static void MergeExtensions(GLTFRoot mergeToRoot, GLTFRoot mergeFromRoot)

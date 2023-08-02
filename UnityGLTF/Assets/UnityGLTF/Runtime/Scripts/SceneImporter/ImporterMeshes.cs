@@ -523,7 +523,7 @@ namespace UnityGLTF
 						Stream = bufferData.Stream,
 						Offset = (uint)bufferData.ChunkOffset
 					};
-					uint offset1 = GLTFHelpers.LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value, sparseValues.Offset, sparseValues.Stream, out byte[] bufferViewCache1);
+					GLTFHelpers.LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value, sparseValues.Offset, sparseValues.Stream, out byte[] bufferViewCache1);
 
 					// Indices
 					bufferId = targetAttribute.Value.Value.Sparse.Indices.BufferView.Value.Buffer;
@@ -534,24 +534,24 @@ namespace UnityGLTF
 						Stream = bufferData.Stream,
 						Offset = (uint)bufferData.ChunkOffset
 					};
-					uint offset2 = GLTFHelpers.LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.Stream, out byte[] bufferViewCache2);
+					GLTFHelpers.LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.Stream, out byte[] bufferViewCache2);
 
 					switch (targetAttribute.Key)
 					{
 						case NormalKey:
 							sparseNormals = new NumericArray[2];
-							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNormals[0], bufferViewCache1, offset1);
-							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNormals[1], bufferViewCache2, offset2);
+							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNormals[0], bufferViewCache1);
+							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNormals[1], bufferViewCache2);
 							break;
 						case PositionKey:
 							sparsePositions = new NumericArray[2];
-							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePositions[0], bufferViewCache1, offset1);
-							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePositions[1], bufferViewCache2, offset2);
+							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePositions[0], bufferViewCache1);
+							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePositions[1], bufferViewCache2);
 							break;
 						case TangentKey:
 							sparseTangents = new NumericArray[2];
-							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTangents[0], bufferViewCache1, offset1);
-							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTangents[1], bufferViewCache2, offset2);
+							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTangents[0], bufferViewCache1);
+							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTangents[1], bufferViewCache2);
 							break;
 					}
 				}

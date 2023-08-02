@@ -294,7 +294,7 @@ namespace GLTF.Schema
 			}
 		}
 
-		public static GLTF.Math.Vector3[] AsSparseVector3Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
+		public static GLTF.Math.Vector3[] AsSparseVector3Array(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset = 0, bool normalizeIntValues = true)
 		{
 			var Count = paraAccessor.Sparse.Count;
 			var ComponentType = paraAccessor.ComponentType;
@@ -327,7 +327,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public static uint[] AsSparseUIntArray(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public static uint[] AsSparseUIntArray(Accessor paraAccessor, ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			var arr = new uint[paraAccessor.Sparse.Count];
 			var totalByteOffset = paraAccessor.Sparse.Indices.ByteOffset + offset;
@@ -391,7 +391,7 @@ namespace GLTF.Schema
 			}
 		}
 
-		public uint[] AsUIntArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public uint[] AsUIntArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsUInts != null)
 			{
@@ -424,7 +424,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public float[] AsFloatArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public float[] AsFloatArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsUInts != null)
 			{
@@ -457,7 +457,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector2[] AsVector2Array(ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
+		public Vector2[] AsVector2Array(ref NumericArray contents, byte[] bufferViewData, uint offset = 0, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec2s != null)
 			{
@@ -502,7 +502,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector3[] AsVector3Array(ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
+		public Vector3[] AsVector3Array(ref NumericArray contents, byte[] bufferViewData, uint offset = 0, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec3s != null)
 			{
@@ -544,7 +544,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector4[] AsVector4Array(ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
+		public Vector4[] AsVector4Array(ref NumericArray contents, byte[] bufferViewData, uint offset = 0, bool normalizeIntValues = true)
 		{
 			if (contents.AsVec4s != null)
 			{
@@ -593,7 +593,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Color[] AsColorArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public Color[] AsColorArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsColors != null)
 			{
@@ -648,7 +648,7 @@ namespace GLTF.Schema
 			return arr;
 		}
 
-		public Vector2[] AsTexcoordArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public Vector2[] AsTexcoordArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsTexcoords != null)
 			{
@@ -660,7 +660,7 @@ namespace GLTF.Schema
 			return contents.AsTexcoords;
 		}
 
-		public Vector3[] AsVertexArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public Vector3[] AsVertexArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsVertices != null)
 			{
@@ -672,7 +672,7 @@ namespace GLTF.Schema
 			return contents.AsVertices;
 		}
 
-		public Vector3[] AsNormalArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public Vector3[] AsNormalArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsNormals != null)
 			{
@@ -684,7 +684,7 @@ namespace GLTF.Schema
 			return contents.AsNormals;
 		}
 
-		public Vector4[] AsTangentArray(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public Vector4[] AsTangentArray(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsTangents != null)
 			{
@@ -696,7 +696,7 @@ namespace GLTF.Schema
 			return contents.AsTangents;
 		}
 
-		public uint[] AsTriangles(ref NumericArray contents, byte[] bufferViewData, uint offset)
+		public uint[] AsTriangles(ref NumericArray contents, byte[] bufferViewData, uint offset = 0)
 		{
 			if (contents.AsTriangles != null)
 			{
@@ -708,7 +708,7 @@ namespace GLTF.Schema
 			return contents.AsTriangles;
 		}
 
-		public Matrix4x4[] AsMatrix4x4Array(ref NumericArray contents, byte[] bufferViewData, uint offset, bool normalizeIntValues = true)
+		public Matrix4x4[] AsMatrix4x4Array(ref NumericArray contents, byte[] bufferViewData, uint offset = 0, bool normalizeIntValues = true)
 		{
 			if (contents.AsMatrix4x4s != null)
 			{
