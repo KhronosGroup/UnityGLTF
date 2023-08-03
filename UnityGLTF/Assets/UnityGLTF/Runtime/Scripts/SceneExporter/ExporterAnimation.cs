@@ -942,20 +942,30 @@ namespace UnityGLTF
 		private void CollectClipCurves(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 #if UNITY_EDITOR
+			// The clip sampling only gets transform data
+			// but if we have both transform and blend shape animations
+			// then we need to continue to sample the blend shape curves
+			var didSampleCurves = false;
 			if (ClipRequiresSampling(clip, root.transform))
 			{
+				didSampleCurves = true;
 				CollectClipCurvesBySampling(root, clip, targetCurves);
-				return;
 			}
 
 			foreach (var binding in UnityEditor.AnimationUtility.GetCurveBindings(clip))
 			{
-				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
-
 				var containsPosition = binding.propertyName.Contains("m_LocalPosition");
 				var containsScale = binding.propertyName.Contains("m_LocalScale");
 				var containsRotation = binding.propertyName.ToLowerInvariant().Contains("localrotation");
 				var containsEuler = binding.propertyName.ToLowerInvariant().Contains("localeuler");
+
+				// If the animation was already collected by sampling the transform we don't care for any transform data anymore
+				if (didSampleCurves)
+				{
+					if(containsPosition || containsScale || containsRotation || containsEuler)
+						continue;
+				}
+
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
 				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
 
@@ -964,6 +974,8 @@ namespace UnityGLTF
 					Debug.LogWarning("No compatible data found in clip binding: " + binding.propertyName, clip);
 					continue;
 				}
+
+				AnimationCurve curve = UnityEditor.AnimationUtility.GetEditorCurve(clip, binding);
 
 				if (!targetCurves.ContainsKey(binding.path))
 				{
