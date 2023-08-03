@@ -879,54 +879,54 @@ namespace UnityGLTF
 
 					if (targetTr)
 					{
-					// TODO these should be moved into curve.propertyCurves as well
-					// TODO should filter by possible propertyCurve string names at that point to avoid
-					// moving KHR_animation_pointer data into regular animations
-					if (curve.translationCurves.Any(x => x != null))
-					{
-						var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
-						trp2.curve.AddRange(curve.translationCurves);
-						if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
+						// TODO these should be moved into curve.propertyCurves as well
+						// TODO should filter by possible propertyCurve string names at that point to avoid
+						// moving KHR_animation_pointer data into regular animations
+						if (curve.translationCurves.Any(x => x != null))
 						{
-							AddAnimationData(targetTr, trp2.propertyName, animation, times, values2);
-							sampledAnimationData = true;
-						}
-					}
-
-					if (curve.rotationCurves.Any(x => x != null))
-					{
-						var trp3 = new PropertyCurve(targetTr, "rotation") { propertyType = typeof(Quaternion) };
-						trp3.curve.AddRange(curve.rotationCurves.Where(x => x != null));
-						if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3))
-						{
-							AddAnimationData(targetTr, trp3.propertyName, animation, times, values3);
-							sampledAnimationData = true;
+							var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
+							trp2.curve.AddRange(curve.translationCurves);
+							if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
+							{
+								AddAnimationData(targetTr, trp2.propertyName, animation, times, values2);
+								sampledAnimationData = true;
+							}
 						}
 
-					}
-
-					if (curve.scaleCurves.Any(x => x != null))
-					{
-						var trp4 = new PropertyCurve(targetTr, "scale") { propertyType = typeof(Vector3) };
-						trp4.curve.AddRange(curve.scaleCurves);
-						if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4))
+						if (curve.rotationCurves.Any(x => x != null))
 						{
-							AddAnimationData(targetTr, trp4.propertyName, animation, times, values4);
-							sampledAnimationData = true;
-						}
-					}
+							var trp3 = new PropertyCurve(targetTr, "rotation") { propertyType = typeof(Quaternion) };
+							trp3.curve.AddRange(curve.rotationCurves.Where(x => x != null));
+							if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3))
+							{
+								AddAnimationData(targetTr, trp3.propertyName, animation, times, values3);
+								sampledAnimationData = true;
+							}
 
-					if (curve.weightCurves.Any(x => x.Value != null))
-					{
-						var trp5 = new PropertyCurve(targetTr, "weights") { propertyType = typeof(float) };
-						trp5.curve.AddRange(curve.weightCurves.Values);
-						if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5))
-						{
-							var targetComponent = targetTr.GetComponent<SkinnedMeshRenderer>();
-							AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5);
-							sampledAnimationData = true;
 						}
-					}
+
+						if (curve.scaleCurves.Any(x => x != null))
+						{
+							var trp4 = new PropertyCurve(targetTr, "scale") { propertyType = typeof(Vector3) };
+							trp4.curve.AddRange(curve.scaleCurves);
+							if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4))
+							{
+								AddAnimationData(targetTr, trp4.propertyName, animation, times, values4);
+								sampledAnimationData = true;
+							}
+						}
+
+						if (curve.weightCurves.Any(x => x.Value != null))
+						{
+							var trp5 = new PropertyCurve(targetTr, "weights") { propertyType = typeof(float) };
+							trp5.curve.AddRange(curve.weightCurves.Values);
+							if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5))
+							{
+								var targetComponent = targetTr.GetComponent<SkinnedMeshRenderer>();
+								AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5);
+								sampledAnimationData = true;
+							}
+						}
 					}
 
 					if (!sampledAnimationData)
