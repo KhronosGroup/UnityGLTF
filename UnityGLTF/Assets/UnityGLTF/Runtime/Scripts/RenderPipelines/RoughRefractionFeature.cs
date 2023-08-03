@@ -12,7 +12,11 @@ namespace UnityGLTF
 #endif
 	public class RoughRefractionFeature : ScriptableRendererFeature
 	{
+#if UNITY_2023_1_OR_NEWER
+	    private Downsampling downsampling = Downsampling.None;
+#else
 	    public Downsampling downsampling = Downsampling.None;
+#endif
 
 	    class CustomRenderPass : CopyColorPass
 	    {
@@ -88,8 +92,6 @@ namespace UnityGLTF
 			        TextureWrapMode.Clamp, name: "_CameraOpaqueTexture");
 		        base.Setup(m_source, m_destination, this.m_DownsamplingMethod);
 		        cmd.SetGlobalTexture(m_destination.name, m_destination.nameID);
-
-
 #else
 	            cmd.GetTemporaryRT(destination.id, descriptor, FilterMode.Trilinear);
 #endif
