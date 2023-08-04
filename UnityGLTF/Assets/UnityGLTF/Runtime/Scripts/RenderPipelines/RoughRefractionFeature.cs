@@ -12,27 +12,27 @@ namespace UnityGLTF
 #endif
 	public class RoughRefractionFeature : ScriptableRendererFeature
 	{
-#if UNITY_2023_1_OR_NEWER
-	    private Downsampling downsampling = Downsampling.None;
-#else
-	    public Downsampling downsampling = Downsampling.None;
+		private const string CAMERA_OPAQUE_TEXTURENAME = "_CameraOpaqueTexture ";
+
+#if !UNITY_2023_1_OR_NEWER
+	    [SerializeField]
 #endif
+		private Downsampling downsampling = Downsampling.None;
 
 	    class CustomRenderPass : CopyColorPass
 	    {
 	        public Downsampling m_DownsamplingMethod;
 #if UNITY_2023_1_OR_NEWER
-		    public RTHandle m_destination;
-		    public RTHandle m_source;
+			public RTHandle m_destination;
+			public RTHandle m_source;
 
 #else
 	        public RenderTargetHandle destination;
 #endif
-
-	        public CustomRenderPass(RenderPassEvent evt) : base(evt,
-	            CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/Universal Render Pipeline/Sampling")),
+		    public CustomRenderPass(RenderPassEvent evt) : base(evt,
+			    CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/Universal Render Pipeline/Sampling")),
 	            CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/Universal Render Pipeline/Blit")))
-	        { }
+			{ }
 
 #if UNITY_2023_1_OR_NEWER
 		    public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -44,20 +44,9 @@ namespace UnityGLTF
 
 		    public void Setup(RTHandle source, Downsampling downsampling)
 		    {
-#if UNITY_2023_1_OR_NEWER
 			    this.m_source = source;
-#else
-
-			    base.Setup(source, destination, downsampling);
-			   // this.destination = destinationColor;
-#endif
 			    this.m_DownsamplingMethod = downsampling;
 		    }
-
-		    public override void OnCameraCleanup(CommandBuffer cmd)
-		    {
-		    }
-
 
 		    public void Dispose()
 		    {
@@ -95,8 +84,7 @@ namespace UnityGLTF
 	                descriptor.height /= 4;
 	            }
 #if UNITY_2023_1_OR_NEWER
-		        RenderingUtils.ReAllocateIfNeeded(ref m_destination, descriptor, FilterMode.Trilinear,
-			        TextureWrapMode.Clamp, name: "_CameraOpaqueTexture");
+		        RenderingUtils.ReAllocateIfNeeded(ref m_destination, descriptor, FilterMode.Trilinear, TextureWrapMode.Clamp, name: CAMERA_OPAQUE_TEXTURENAME);
 		        base.Setup(m_source, m_destination, this.m_DownsamplingMethod);
 		        cmd.SetGlobalTexture(m_destination.name, m_destination.nameID);
 #else
@@ -107,8 +95,7 @@ namespace UnityGLTF
 
 	    CustomRenderPass m_ScriptablePass;
 
-#if UNITY_2023_1_OR_NEWER
-#else
+#if !UNITY_2023_1_OR_NEWER
 	    RenderTargetHandle m_OpaqueColor;
 #endif
 
@@ -121,7 +108,7 @@ namespace UnityGLTF
 			    m_ScriptablePass = new CustomRenderPass(RenderPassEvent.AfterRenderingSkybox);
 		    }
 #else
-	        m_OpaqueColor.Init("_CameraOpaqueTexture");
+	        m_OpaqueColor.Init(CAMERA_OPAQUE_TEXTURENAME);
 #endif
 	    }
 
