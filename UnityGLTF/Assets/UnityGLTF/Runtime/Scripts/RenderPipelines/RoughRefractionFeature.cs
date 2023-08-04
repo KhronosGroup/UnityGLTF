@@ -12,7 +12,7 @@ namespace UnityGLTF
 #endif
 	public class RoughRefractionFeature : ScriptableRendererFeature
 	{
-		private const string CAMERA_OPAQUE_TEXTURENAME = "_CameraOpaqueTexture ";
+		private const string CAMERA_OPAQUE_TEXTURENAME = "_CameraOpaqueTexture";
 
 #if !UNITY_2023_1_OR_NEWER
 	    [SerializeField]
