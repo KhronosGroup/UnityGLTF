@@ -35,6 +35,13 @@ namespace UnityGLTF
 	        { }
 
 #if UNITY_2023_1_OR_NEWER
+		    public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+		    {
+			    if (renderingData.cameraData.isPreviewCamera)
+				    return;
+			    base.Execute(context, ref renderingData);
+		    }
+
 		    public void Setup(RTHandle source, Downsampling downsampling)
 		    {
 #if UNITY_2023_1_OR_NEWER
