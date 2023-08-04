@@ -19,6 +19,17 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneImporter
 	{
+		private async Task CreateMaterials(MeshPrimitive primitive)
+		{
+			bool shouldUseDefaultMaterial = primitive.Material == null;
+			GLTFMaterial materialToLoad = shouldUseDefaultMaterial ? DefaultMaterial : primitive.Material.Value;
+			if ((shouldUseDefaultMaterial && _defaultLoadedMaterial == null) ||
+			    (!shouldUseDefaultMaterial && _assetCache.MaterialCache[primitive.Material.Id] == null))
+			{
+				await ConstructMaterial(materialToLoad, shouldUseDefaultMaterial ? -1 : primitive.Material.Id);
+			}
+		}
+
 		/// <summary>
 		/// Triggers loading, converting, and constructing of a UnityEngine.Mesh, and stores it in the asset cache
 		/// </summary>
@@ -28,17 +39,6 @@ namespace UnityGLTF
 		/// <returns>A task that completes when the mesh is attached to the given GameObject</returns>
 		protected virtual async Task ConstructMesh(GLTFMesh mesh, int meshIndex, CancellationToken cancellationToken)
 		{
-			async Task CreateMaterials(MeshPrimitive primitive)
-			{
-				bool shouldUseDefaultMaterial = primitive.Material == null;
-				GLTFMaterial materialToLoad = shouldUseDefaultMaterial ? DefaultMaterial : primitive.Material.Value;
-				if ((shouldUseDefaultMaterial && _defaultLoadedMaterial == null) ||
-				    (!shouldUseDefaultMaterial && _assetCache.MaterialCache[primitive.Material.Id] == null))
-				{
-					await ConstructMaterial(materialToLoad, shouldUseDefaultMaterial ? -1 : primitive.Material.Id);
-				}
-			}
-
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (_assetCache.MeshCache[meshIndex] == null)
@@ -50,79 +50,22 @@ namespace UnityGLTF
 				return;
 			}
 
-			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
-
+			var anyHadDraco = mesh.Primitives.Any(p => p.Extensions != null && p.Extensions.ContainsKey(KHR_draco_mesh_compression_Factory.EXTENSION_NAME));
 #if HAVE_DRACO
-			var anyHadDraco = false;
-			Mesh[] meshes = new Mesh[mesh.Primitives.Count];
-			var meshDataArray = Mesh.AllocateWritableMeshData(mesh.Primitives.Count);
-			var dracoDecodeResults = new DracoMeshLoader.DecodeResult[mesh.Primitives.Count];
-			for (int i = 0; i < mesh.Primitives.Count; i++)
-			{
-				var primitive = mesh.Primitives[i];
-				if (primitive.Extensions == null || !primitive.Extensions.ContainsKey("KHR_draco_mesh_compression"))
-					continue;
-
-				anyHadDraco = true;
-
-				if (primitive.Extensions.TryGetValue("KHR_draco_mesh_compression", out var extension))
-				{
-					var dracoExtension = (KHR_draco_mesh_compression) extension;
-					if (_assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id] == null)
-						await ConstructBuffer(dracoExtension.bufferView.Value.Buffer.Value, dracoExtension.bufferView.Value.Buffer.Id);
-
-					BufferCacheData bufferContents = _assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id];
-
-					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkOffset,
-						bufferContents.Stream, out byte[] bufferViewData);
-
-					int weightsAttributeId = -1;
-					if (dracoExtension.attributes.TryGetValue("WEIGHTS_0", out var attribute))
-						weightsAttributeId = (int) attribute;
-
-					int jointsAttributeId = -1;
-					if (dracoExtension.attributes.TryGetValue("JOINTS_0", out var extensionAttribute))
-						jointsAttributeId = (int) extensionAttribute;
-
-					// TODO: check if normals and tangents are needed
-					#pragma warning disable 0219
-					bool needsNormals = true;
-					bool needsTangents = true;
-					#pragma warning restore 0219
-
-					var draco = new DracoMeshLoader();
-
-#if UNITY_EDITOR
-					dracoDecodeResults[i] =  await draco.ConvertDracoMeshToUnity(meshDataArray[i], bufferViewData, needsNormals, needsTangents,
-						weightsAttributeId, jointsAttributeId,  firstPrim.Targets != null);
-#endif
-
-					if (!dracoDecodeResults[i].success)
-					{
-						Debug.LogError("Error decoding draco mesh", this);
-						meshDataArray.Dispose();
-						return;
-					}
-
-					Statistics.VertexCount += meshDataArray[i].vertexCount;
-
-					await CreateMaterials(primitive);
-				}
-			}
 
 			if (anyHadDraco)
 			{
-				// Combine sub meshes
-				await ConstructUnityMesh(mesh, dracoDecodeResults, meshDataArray, meshIndex, mesh.Name, true);
-
+				await ConstructDracoMesh(mesh, meshIndex, cancellationToken);
 				return;
 			}
 #else
-			if (mesh.Primitives.Any(p => p.Extensions != null && p.Extensions.ContainsKey("KHR_draco_mesh_compression")))
+			if (anyHadDraco)
 			{
 				throw new NotSupportedException("Can't import model! Draco extension is needed. Please add com.atteneder.draco package to your project!");
 			}
 #endif
+
+			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
 			cancellationToken.ThrowIfCancellationRequested();
 
 			var totalVertCount = mesh.Primitives.Aggregate((uint)0, (sum, p) => sum + p.Attributes[SemanticProperties.POSITION].Value.Count);
@@ -183,6 +126,73 @@ namespace UnityGLTF
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
 		}
 
+#if HAVE_DRACO
+		protected virtual async Task ConstructDracoMesh(GLTFMesh mesh, int meshIndex, CancellationToken cancellationToken)
+		{
+			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
+			Mesh[] meshes = new Mesh[mesh.Primitives.Count];
+			Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(mesh.Primitives.Count);
+			var dracoDecodeResults = new DracoMeshLoader.DecodeResult[mesh.Primitives.Count];
+			for (int i = 0; i < mesh.Primitives.Count; i++)
+			{
+				var primitive = mesh.Primitives[i];
+				if (primitive.Extensions == null || !primitive.Extensions.ContainsKey("KHR_draco_mesh_compression"))
+					continue;
+
+
+				if (primitive.Extensions.TryGetValue("KHR_draco_mesh_compression", out var extension))
+				{
+					var dracoExtension = (KHR_draco_mesh_compression)extension;
+					if (_assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id] == null)
+						await ConstructBuffer(dracoExtension.bufferView.Value.Buffer.Value,
+							dracoExtension.bufferView.Value.Buffer.Id);
+
+					BufferCacheData bufferContents =
+						_assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id];
+
+					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkOffset,
+						bufferContents.Stream, out byte[] bufferViewData);
+
+					int weightsAttributeId = -1;
+					if (dracoExtension.attributes.TryGetValue("WEIGHTS_0", out var attribute))
+						weightsAttributeId = (int)attribute;
+
+					int jointsAttributeId = -1;
+					if (dracoExtension.attributes.TryGetValue("JOINTS_0", out var extensionAttribute))
+						jointsAttributeId = (int)extensionAttribute;
+
+					// TODO: check if normals and tangents are needed
+#pragma warning disable 0219
+					bool needsNormals = true;
+					bool needsTangents = true;
+#pragma warning restore 0219
+
+					var draco = new DracoMeshLoader();
+
+#if UNITY_EDITOR
+					dracoDecodeResults[i] = await draco.ConvertDracoMeshToUnity(meshDataArray[i], bufferViewData,
+						needsNormals, needsTangents,
+						weightsAttributeId, jointsAttributeId, firstPrim.Targets != null);
+#endif
+
+					if (!dracoDecodeResults[i].success)
+					{
+						Debug.LogError("Error decoding draco mesh", this);
+						meshDataArray.Dispose();
+						return;
+					}
+
+					Statistics.VertexCount += meshDataArray[i].vertexCount;
+
+					await CreateMaterials(primitive);
+				}
+			}
+
+			// Combine sub meshes
+			await ConstructUnityMesh(mesh, dracoDecodeResults, meshDataArray, meshIndex, mesh.Name, true);
+		}
+#endif
+
 #if HAVE_MESHOPT_DECOMPRESS
 
 		private async Task MeshOptDecodeBuffer(GLTFRoot root)
@@ -190,19 +200,19 @@ namespace UnityGLTF
 			if (root.BufferViews == null)
 				return;
 
-			int index = 0;
+			int bufferViewIndex = 0;
 			var jobHandlesList = new List<JobHandle>(root.BufferViews.Count);
 			var meshoptBufferViews = new Dictionary<int, NativeArray<byte>>();
 			var meshoptReturnValues = new NativeArray<int>( root.BufferViews.Count, Allocator.TempJob);
-			var meshOptInput = new List<NativeArray<byte>>();
+			var meshOptInputBuffers = new List<NativeArray<byte>>();
 
 			foreach (var bView in root.BufferViews)
 			{
-				if (bView.Extensions != null &&  bView.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
+				if (bView.Extensions != null && bView.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 				{
 					var meshOpt = bView.Extensions[EXT_meshopt_compression_Factory.EXTENSION_NAME] as EXT_meshopt_compression;
 
-					var arr = new NativeArray<byte>((int)(meshOpt.count * meshOpt.bufferView.ByteStride), Allocator.Persistent);
+					var arr = new NativeArray<byte>((int)(meshOpt.count * meshOpt.bufferView.ByteStride), Allocator.TempJob);
 
 					if (_assetCache.BufferCache[meshOpt.bufferView.Buffer.Id] == null)
 						await ConstructBuffer(meshOpt.bufferView.Buffer.Value, meshOpt.bufferView.Buffer.Id);
@@ -210,11 +220,11 @@ namespace UnityGLTF
 					BufferCacheData bufferContents = _assetCache.BufferCache[ meshOpt.bufferView.Buffer.Id];
 
 					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkOffset, bufferContents.Stream, out byte[] bufferViewData);
-					var origBufferView = new NativeArray<byte>(bufferViewData, Allocator.Persistent);
-					meshOptInput.Add(origBufferView);
+					var origBufferView = new NativeArray<byte>(bufferViewData, Allocator.TempJob );
+					meshOptInputBuffers.Add(origBufferView);
 
 					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(
-						new NativeSlice<int>(meshoptReturnValues,index,1),
+						new NativeSlice<int>(meshoptReturnValues,bufferViewIndex,1),
 							arr,
 							meshOpt.count,
 							(int)meshOpt.bufferView.ByteStride,
@@ -222,36 +232,38 @@ namespace UnityGLTF
 							meshOpt.mode,
 							meshOpt.filter
 						);
+
 					jobHandlesList.Add(jobHandle);
-					meshoptBufferViews[index] = arr;
+					meshoptBufferViews[bufferViewIndex] = arr;
 				}
 
-				index++;
+				bufferViewIndex++;
 			}
 
-			if (jobHandlesList != null)
+			if (jobHandlesList.Count > 0)
 			{
 				JobHandle meshoptJobHandle;
-				using (var jobHandles = new NativeArray<JobHandle>(jobHandlesList.ToArray(), Allocator.Temp)) {
+				using (var jobHandles = new NativeArray<JobHandle>(jobHandlesList.ToArray(), Allocator.TempJob)) {
 					 meshoptJobHandle = JobHandle.CombineDependencies(jobHandles);
 				}
 				while (!meshoptJobHandle.IsCompleted) {
 					await Task.Yield();
 				}
 				meshoptJobHandle.Complete();
-
-				foreach (var m in meshoptBufferViews)
-				{
-					var bufferView = root.BufferViews[m.Key];
-					var bufferData = await GetBufferData(bufferView.Buffer);
-					bufferData.Stream.Seek(bufferView.ByteOffset, System.IO.SeekOrigin.Begin);
-					bufferData.Stream.Write(m.Value.ToArray());
-					m.Value.Dispose();
-				}
-
-				foreach (var m in meshOptInput)
-					m.Dispose();
 			}
+
+			foreach (var m in meshoptBufferViews)
+			{
+				var bufferView = root.BufferViews[m.Key];
+				var bufferData = await GetBufferData(bufferView.Buffer);
+				bufferData.Stream.Seek(bufferView.ByteOffset, System.IO.SeekOrigin.Begin);
+				bufferData.Stream.Write(m.Value.ToArray());
+				m.Value.Dispose();
+			}
+
+			foreach (var m in meshOptInputBuffers)
+				m.Dispose();
+
 
 			meshoptReturnValues.Dispose();
 		}
