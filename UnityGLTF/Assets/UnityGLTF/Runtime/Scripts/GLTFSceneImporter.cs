@@ -911,6 +911,13 @@ namespace UnityGLTF
 				_assetCache.BufferCache[bufferIndex] = bufferCacheDate;
 				return;
 			}
+#else
+			if (buffer.Extensions != null &&
+			    buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
+			{
+				//TODO: check for fallback URI or Buffer... ?
+				throw new Exception("glTF file uses EXT_meshopt_compression, but MeshOptimizer is not enabled in this build. Please add MeshOptimizer in your Package Manager!");
+			}
 #endif
 
 			if (buffer.Uri == null)
