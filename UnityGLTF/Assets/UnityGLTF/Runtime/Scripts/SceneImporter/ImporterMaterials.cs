@@ -275,24 +275,28 @@ namespace UnityGLTF
 				if (transmission != null)
 				{
 					transmissionMapper.TransmissionFactor = transmission.transmissionFactor;
-					var td = await FromTextureInfo(transmission.transmissionTexture);
-					transmissionMapper.TransmissionTexture = td.Texture;
-					transmissionMapper.TransmissionTextureTexCoord = td.TexCoord;
-					var ext = GetTextureTransform(transmission.transmissionTexture);
-					if (ext != null)
+
+					if (transmission.transmissionTexture != null)
 					{
-						CalculateYOffsetAndScale(transmission.transmissionTexture.Index, ext, out var scale, out var offset);
-						transmissionMapper.TransmissionTextureOffset = offset;
-						transmissionMapper.TransmissionTextureScale = scale;
-						transmissionMapper.TransmissionTextureRotation = td.Rotation;
-						transmissionMapper.TransmissionTextureTexCoord = td.TexCoordExtra;
-						SetTransformKeyword();
-					}
-					else
-					if (transmission.transmissionTexture != null && IsTextureFlipped(transmission.transmissionTexture.Index.Value))
-					{
-						transmissionMapper.TransmissionTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td = await FromTextureInfo(transmission.transmissionTexture);
+						transmissionMapper.TransmissionTexture = td.Texture;
+						transmissionMapper.TransmissionTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(transmission.transmissionTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(transmission.transmissionTexture.Index, ext, out var scale, out var offset);
+							transmissionMapper.TransmissionTextureOffset = offset;
+							transmissionMapper.TransmissionTextureScale = scale;
+							transmissionMapper.TransmissionTextureRotation = td.Rotation;
+							transmissionMapper.TransmissionTextureTexCoord = td.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(transmission.transmissionTexture.Index.Value))
+						{
+							transmissionMapper.TransmissionTextureScale *= new Vector2(1f,-1f);
+							SetTransformKeyword();
+						}
 					}
 
 					mapper.Material.renderQueue = 3000;
@@ -310,24 +314,27 @@ namespace UnityGLTF
 					volumeMapper.AttenuationColor = QualitySettings.activeColorSpace == ColorSpace.Linear ? volume.attenuationColor.ToUnityColorLinear() : volume.attenuationColor.ToUnityColorRaw();
 					volumeMapper.AttenuationDistance = volume.attenuationDistance;
 					volumeMapper.ThicknessFactor = volume.thicknessFactor;
-					var td = await FromTextureInfo(volume.thicknessTexture);
-					volumeMapper.ThicknessTexture = td.Texture;
-					volumeMapper.ThicknessTextureTexCoord = td.TexCoord;
-					var ext = GetTextureTransform(volume.thicknessTexture);
-					if (ext != null)
+					if (volume.thicknessTexture != null)
 					{
-						CalculateYOffsetAndScale(volume.thicknessTexture.Index, ext, out var scale, out var offset);
-						volumeMapper.ThicknessTextureOffset = offset;
-						volumeMapper.ThicknessTextureScale = scale;
-						volumeMapper.ThicknessTextureRotation = td.Rotation;
-						volumeMapper.ThicknessTextureTexCoord = td.TexCoordExtra;
-						SetTransformKeyword();
-					}
-					else
-					if (volume.thicknessTexture != null && IsTextureFlipped(volume.thicknessTexture.Index.Value))
-					{
-						volumeMapper.ThicknessTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td = await FromTextureInfo(volume.thicknessTexture);
+						volumeMapper.ThicknessTexture = td.Texture;
+						volumeMapper.ThicknessTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(volume.thicknessTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(volume.thicknessTexture.Index, ext, out var scale, out var offset);
+							volumeMapper.ThicknessTextureOffset = offset;
+							volumeMapper.ThicknessTextureScale = scale;
+							volumeMapper.ThicknessTextureRotation = td.Rotation;
+							volumeMapper.ThicknessTextureTexCoord = td.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(volume.thicknessTexture.Index.Value))
+						{
+							volumeMapper.ThicknessTextureScale *= new Vector2(1f,-1f);
+							SetTransformKeyword();
+						}
 					}
 
 					mapper.Material.renderQueue = 3000;
@@ -345,44 +352,51 @@ namespace UnityGLTF
 					iridescenceMapper.IridescenceIor = iridescence.iridescenceIor;
 					iridescenceMapper.IridescenceThicknessMinimum = iridescence.iridescenceThicknessMinimum;
 					iridescenceMapper.IridescenceThicknessMaximum = iridescence.iridescenceThicknessMaximum;
-					var td = await FromTextureInfo(iridescence.iridescenceTexture);
-					iridescenceMapper.IridescenceTexture = td.Texture;
-					iridescenceMapper.IridescenceTextureTexCoord = td.TexCoord;
-					var ext = GetTextureTransform(iridescence.iridescenceTexture);
-					if (ext != null)
+					if (iridescence.iridescenceTexture != null)
 					{
-						CalculateYOffsetAndScale(iridescence.iridescenceTexture.Index, ext, out var scale, out var offset);
-						iridescenceMapper.IridescenceTextureOffset = offset;
-						iridescenceMapper.IridescenceTextureScale = scale;
-						iridescenceMapper.IridescenceTextureRotation = td.Rotation;
-						iridescenceMapper.IridescenceTextureTexCoord = td.TexCoordExtra;
-						SetTransformKeyword();
-					}
-					else
-					if (iridescence.iridescenceTexture != null && IsTextureFlipped(iridescence.iridescenceTexture.Index.Value))
-					{
-						iridescenceMapper.IridescenceTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td = await FromTextureInfo(iridescence.iridescenceTexture);
+						iridescenceMapper.IridescenceTexture = td.Texture;
+						iridescenceMapper.IridescenceTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(iridescence.iridescenceTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(iridescence.iridescenceTexture.Index, ext, out var scale, out var offset);
+							iridescenceMapper.IridescenceTextureOffset = offset;
+							iridescenceMapper.IridescenceTextureScale = scale;
+							iridescenceMapper.IridescenceTextureRotation = td.Rotation;
+							iridescenceMapper.IridescenceTextureTexCoord = td.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(iridescence.iridescenceTexture.Index.Value))
+						{
+							iridescenceMapper.IridescenceTextureScale *= new Vector2(1f,-1f);
+							SetTransformKeyword();
+						}
 					}
 
-					var td2 = await FromTextureInfo(iridescence.iridescenceThicknessTexture);
-					iridescenceMapper.IridescenceThicknessTexture = td2.Texture;
-					iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoord;
-					var ext2 = GetTextureTransform(iridescence.iridescenceThicknessTexture);
-					if (ext2 != null)
+					if (iridescence.iridescenceThicknessTexture != null)
 					{
-						CalculateYOffsetAndScale(iridescence.iridescenceThicknessTexture.Index, ext2, out var scale, out var offset);
-						iridescenceMapper.IridescenceThicknessTextureOffset = offset;
-						iridescenceMapper.IridescenceThicknessTextureScale = scale;
-						iridescenceMapper.IridescenceThicknessTextureRotation = td2.Rotation;
-						iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoordExtra;
-						SetTransformKeyword();
-					}
-					else
-					if (iridescence.iridescenceThicknessTexture != null && IsTextureFlipped(iridescence.iridescenceThicknessTexture.Index.Value))
-					{
-						iridescenceMapper.IridescenceThicknessTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td2 = await FromTextureInfo(iridescence.iridescenceThicknessTexture);
+						iridescenceMapper.IridescenceThicknessTexture = td2.Texture;
+						iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoord;
+						var ext2 = GetTextureTransform(iridescence.iridescenceThicknessTexture);
+						if (ext2 != null)
+						{
+							CalculateYOffsetAndScale(iridescence.iridescenceThicknessTexture.Index, ext2, out var scale,
+								out var offset);
+							iridescenceMapper.IridescenceThicknessTextureOffset = offset;
+							iridescenceMapper.IridescenceThicknessTextureScale = scale;
+							iridescenceMapper.IridescenceThicknessTextureRotation = td2.Rotation;
+							iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(iridescence.iridescenceThicknessTexture.Index.Value))
+						{
+							iridescenceMapper.IridescenceThicknessTextureScale *= new Vector2(1f, -1f);
+							SetTransformKeyword();
+						}
 					}
 
 					mapper.Material.SetKeyword("_IRIDESCENCE", true);
@@ -397,44 +411,52 @@ namespace UnityGLTF
 				{
 					specularMapper.SpecularFactor = specular.specularFactor;
 					specularMapper.SpecularColorFactor = specular.specularColorFactor.ToUnityColorLinear();
-					var td = await FromTextureInfo(specular.specularTexture);
-					specularMapper.SpecularTexture = td.Texture;
-					specularMapper.SpecularTextureTexCoord = td.TexCoord;
-					var ext = GetTextureTransform(specular.specularTexture);
-					if (ext != null)
+					if (specular.specularTexture != null)
 					{
-						CalculateYOffsetAndScale(specular.specularTexture.Index, ext, out var scale, out var offset);
-						specularMapper.SpecularTextureOffset = offset;
-						specularMapper.SpecularTextureScale = scale;
-						specularMapper.SpecularTextureRotation = td.Rotation;
-						specularMapper.SpecularTextureTexCoord = td.TexCoordExtra;
-						SetTransformKeyword();
-					}
-					else
-					if (specular.specularTexture != null && IsTextureFlipped(specular.specularTexture.Index.Value))
-					{
-						specularMapper.SpecularTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td = await FromTextureInfo(specular.specularTexture);
+						specularMapper.SpecularTexture = td.Texture;
+						specularMapper.SpecularTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(specular.specularTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(specular.specularTexture.Index, ext, out var scale,
+								out var offset);
+							specularMapper.SpecularTextureOffset = offset;
+							specularMapper.SpecularTextureScale = scale;
+							specularMapper.SpecularTextureRotation = td.Rotation;
+							specularMapper.SpecularTextureTexCoord = td.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(specular.specularTexture.Index.Value))
+						{
+							specularMapper.SpecularTextureScale *= new Vector2(1f, -1f);
+							SetTransformKeyword();
+						}
 					}
 
-					var td2 = await FromTextureInfo(specular.specularColorTexture);
-					specularMapper.SpecularColorTexture = td2.Texture;
-					specularMapper.SpecularColorTextureTexCoord = td2.TexCoord;
-					var ext2 = GetTextureTransform(specular.specularColorTexture);
-					if (ext2 != null)
+					if (specular.specularColorTexture != null)
 					{
-						CalculateYOffsetAndScale(specular.specularColorTexture.Index, ext2, out var scale, out var offset);
-						specularMapper.SpecularColorTextureOffset = offset;
-						specularMapper.SpecularColorTextureScale = scale;
-						specularMapper.SpecularColorTextureRotation = td2.Rotation;
-						specularMapper.SpecularColorTextureTexCoord = td2.TexCoordExtra;
-						SetTransformKeyword();
-					}
-					else
-					if (specular.specularColorTexture != null && IsTextureFlipped(specular.specularColorTexture.Index.Value))
-					{
-						specularMapper.SpecularColorTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td2 = await FromTextureInfo(specular.specularColorTexture);
+						specularMapper.SpecularColorTexture = td2.Texture;
+						specularMapper.SpecularColorTextureTexCoord = td2.TexCoord;
+						var ext2 = GetTextureTransform(specular.specularColorTexture);
+						if (ext2 != null)
+						{
+							CalculateYOffsetAndScale(specular.specularColorTexture.Index, ext2, out var scale,
+								out var offset);
+							specularMapper.SpecularColorTextureOffset = offset;
+							specularMapper.SpecularColorTextureScale = scale;
+							specularMapper.SpecularColorTextureRotation = td2.Rotation;
+							specularMapper.SpecularColorTextureTexCoord = td2.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(specular.specularColorTexture.Index.Value))
+						{
+							specularMapper.SpecularColorTextureScale *= new Vector2(1f, -1f);
+							SetTransformKeyword();
+						}
 					}
 
 					mapper.Material.SetKeyword("_SPECULAR", true);
@@ -449,29 +471,41 @@ namespace UnityGLTF
 				{
 					clearcoatMapper.ClearcoatFactor = clearcoat.clearcoatFactor;
 					clearcoatMapper.ClearcoatRoughnessFactor = clearcoat.clearcoatRoughnessFactor;
-					var td = await FromTextureInfo(clearcoat.clearcoatTexture);
-					clearcoatMapper.ClearcoatTexture = td.Texture;
-					clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoord;
-					var ext = GetTextureTransform(clearcoat.clearcoatTexture);
-					if (ext != null)
+					if (clearcoat.clearcoatTexture != null)
 					{
-						CalculateYOffsetAndScale(clearcoat.clearcoatTexture.Index, ext, out var scale, out var offset);
-						clearcoatMapper.ClearcoatTextureOffset = offset;
-						clearcoatMapper.ClearcoatTextureScale = scale;
-						clearcoatMapper.ClearcoatTextureRotation = td.Rotation;
-						clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoordExtra;
-						SetTransformKeyword();
+						var td = await FromTextureInfo(clearcoat.clearcoatTexture);
+						clearcoatMapper.ClearcoatTexture = td.Texture;
+						clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(clearcoat.clearcoatTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(clearcoat.clearcoatTexture.Index, ext, out var scale,
+								out var offset);
+							clearcoatMapper.ClearcoatTextureOffset = offset;
+							clearcoatMapper.ClearcoatTextureScale = scale;
+							clearcoatMapper.ClearcoatTextureRotation = td.Rotation;
+							clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoordExtra;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(clearcoat.clearcoatTexture.Index.Value))
+						{
+							clearcoatMapper.ClearcoatTextureScale *= new Vector2(1f, -1f);
+							SetTransformKeyword();
+						}
 					}
-					else
-					if (clearcoat.clearcoatTexture != null && IsTextureFlipped(clearcoat.clearcoatTexture.Index.Value))
+
+					if (clearcoat.clearcoatRoughnessTexture != null)
 					{
-						clearcoatMapper.ClearcoatTextureScale *= new Vector2(1f,-1f);
-						SetTransformKeyword();
+						var td2 = await FromTextureInfo(clearcoat.clearcoatRoughnessTexture);
+						clearcoatMapper.ClearcoatRoughnessTexture = td2.Texture;
 					}
-					var td2 = await FromTextureInfo(clearcoat.clearcoatRoughnessTexture);
-					clearcoatMapper.ClearcoatRoughnessTexture = td2.Texture;
-					var td3 = await FromTextureInfo(clearcoat.clearcoatNormalTexture);
-					clearcoatMapper.ClearcoatNormalTexture = td3.Texture;
+
+					if (clearcoat.clearcoatNormalTexture != null)
+					{
+						var td3 = await FromTextureInfo(clearcoat.clearcoatNormalTexture);
+						clearcoatMapper.ClearcoatNormalTexture = td3.Texture;
+					}
 
 					mapper.Material.SetKeyword("_CLEARCOAT", true);
 				}
