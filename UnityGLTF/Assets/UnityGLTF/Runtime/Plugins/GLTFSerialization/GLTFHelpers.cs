@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
@@ -378,7 +379,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.Joint[0]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache,0, false);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 			if (attributes.ContainsKey(SemanticProperties.Joint[1]))
@@ -386,7 +387,7 @@ namespace GLTF
 				var attributeAccessor = attributes[SemanticProperties.Joint[1]];
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				LoadBufferView(attributeAccessor, out byte[] bufferViewCache);
-				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache);
+				attributeAccessor.AccessorId.Value.AsVector4Array(ref resultArray, bufferViewCache, 0, false);
 				attributeAccessor.AccessorContent = resultArray;
 			}
 		}
@@ -547,6 +548,11 @@ namespace GLTF
 				int sizeToLoad = (int)System.Math.Min(remainingSize, int.MaxValue);
 				sizeToLoad = Stream.Read(bufferViewCache, (int)(bufferView.ByteLength - remainingSize), sizeToLoad);
 				remainingSize -= (uint)sizeToLoad;
+
+				if (sizeToLoad == 0 && remainingSize > 0)
+				{
+					throw new Exception("Unexpected end of stream while loading buffer view");
+				}
 			}
 		}
 
