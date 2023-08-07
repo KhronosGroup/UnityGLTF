@@ -88,7 +88,16 @@ namespace GLTF
 				};
 			}
 
-			throw new GLTFHeaderInvalidException("File length does not match chunk header.");
+
+			// Be aware that File length does not match header when MeshOpt compression is used!
+			//throw new GLTFHeaderInvalidException("File length does not match chunk header.");
+
+			return new ChunkInfo
+			{
+				StartPosition = stream.Position - CHUNK_HEADER_SIZE,
+				Length = chunkLength,
+				Type = ChunkFormat.BIN
+			};
 		}
 
 		public static GLBHeader ParseGLBHeader(Stream stream)

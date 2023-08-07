@@ -1,7 +1,9 @@
 {
     "name": "GLTFSerialization",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:84ca1e7ada6c144debb2e417c8dbe9a5"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
@@ -11,6 +13,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.meshopt.decompress",
+            "expression": "",
+            "define": "HAVE_MESHOPT_DECOMPRESS"
+        }
+    ],
     "noEngineReferences": true
 }

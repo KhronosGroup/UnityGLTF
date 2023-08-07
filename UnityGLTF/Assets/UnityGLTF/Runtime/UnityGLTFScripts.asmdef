@@ -8,7 +8,8 @@
         "UnityGLTF.Helpers",
         "Unity.InputSystem",
         "Unity.Animation.Rigging",
-        "Draco"
+        "Draco",
+        "Unity.Meshopt.Decompress"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -62,6 +63,11 @@
             "name": "com.atteneder.draco",
             "expression": "1.0.0",
             "define": "HAVE_DRACO"
+        },
+        {
+            "name": "com.unity.meshopt.decompress",
+            "expression": "",
+            "define": "HAVE_MESHOPT_DECOMPRESS"
         }
     ],
     "noEngineReferences": false
