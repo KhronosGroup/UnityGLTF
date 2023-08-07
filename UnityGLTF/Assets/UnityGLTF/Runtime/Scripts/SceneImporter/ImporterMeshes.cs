@@ -458,6 +458,11 @@ namespace UnityGLTF
 			}
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
+			if (unityMeshData.Tangents == null && unityMeshData.Topology[0] == MeshTopology.Triangles)
+			{
+				mesh.RecalculateTangents();
+			}
+
 			if (unityMeshData.Normals == null && unityMeshData.Topology[0] == MeshTopology.Triangles)
 			{
 				mesh.RecalculateNormals();
