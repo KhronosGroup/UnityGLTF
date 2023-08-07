@@ -752,6 +752,27 @@ namespace UnityGLTF
 				}
 			}
 
+
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_clearcoat_Factory.EXTENSION_NAME))
+			{
+				var clearCoatDef = (KHR_materials_clearcoat) def.Extensions[KHR_materials_clearcoat_Factory.EXTENSION_NAME];
+				if (clearCoatDef.clearcoatTexture != null)
+				{
+					var textureId = clearCoatDef.clearcoatTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+				if (clearCoatDef.clearcoatNormalTexture != null)
+				{
+					var textureId = clearCoatDef.clearcoatNormalTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+				if (clearCoatDef.clearcoatRoughnessTexture != null)
+				{
+					var textureId = clearCoatDef.clearcoatRoughnessTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
+
 			return Task.WhenAll(tasks);
 		}
 
