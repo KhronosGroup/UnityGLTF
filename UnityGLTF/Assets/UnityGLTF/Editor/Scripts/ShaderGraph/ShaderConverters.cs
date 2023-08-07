@@ -99,7 +99,8 @@ namespace UnityGLTF
 			var isTransparent = material.GetTag("RenderType", false) == "Transparent" || sourceIsTransparent;
 
 			var metallic = material.GetFloat(_Metallic, 0);
-			var smoothness = material.HasProperty(_Smoothness) ? material.GetFloat(_Smoothness, 0) : material.GetFloat(_Glossiness, 0);
+			var smoothness = material.HasProperty(_Smoothness) ? material.GetFloat(_Smoothness, 0) :
+				material.HasProperty(_Glossiness) ? material.GetFloat(_Glossiness, 0) : 0.5f;
 			var metallicGloss = material.GetTexture(_MetallicGlossMap, null);
 			var normal = material.GetTexture(_BumpMap, null);
 			var normalStrength = material.GetFloat(_BumpScale, 1);
