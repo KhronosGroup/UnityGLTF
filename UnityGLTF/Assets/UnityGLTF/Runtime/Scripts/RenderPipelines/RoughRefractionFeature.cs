@@ -14,7 +14,7 @@ namespace UnityGLTF
 	{
 		private const string CAMERA_OPAQUE_TEXTURENAME = "_CameraOpaqueTexture";
 
-#if !UNITY_2023_1_OR_NEWER
+#if !UNITY_2022_3_OR_NEWER
 	    [SerializeField]
 #endif
 		private Downsampling downsampling = Downsampling.None;
@@ -22,7 +22,7 @@ namespace UnityGLTF
 	    class CustomRenderPass : CopyColorPass
 	    {
 	        public Downsampling m_DownsamplingMethod;
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 			public RTHandle m_destination;
 			public RTHandle m_source;
 
@@ -34,7 +34,7 @@ namespace UnityGLTF
 	            CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/Universal Render Pipeline/Blit")))
 			{ }
 
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 		    public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
 		    {
 			    if (renderingData.cameraData.isPreviewCamera)
@@ -83,7 +83,7 @@ namespace UnityGLTF
 	                descriptor.width /= 4;
 	                descriptor.height /= 4;
 	            }
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 		        RenderingUtils.ReAllocateIfNeeded(ref m_destination, descriptor, FilterMode.Trilinear, TextureWrapMode.Clamp, name: CAMERA_OPAQUE_TEXTURENAME);
 		        base.Setup(m_source, m_destination, this.m_DownsamplingMethod);
 		        cmd.SetGlobalTexture(m_destination.name, m_destination.nameID);
@@ -95,14 +95,14 @@ namespace UnityGLTF
 
 	    CustomRenderPass m_ScriptablePass;
 
-#if !UNITY_2023_1_OR_NEWER
+#if !UNITY_2022_3_OR_NEWER
 	    RenderTargetHandle m_OpaqueColor;
 #endif
 
 	    /// <inheritdoc/>
 	    public override void Create()
 	    {
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 		    if (m_ScriptablePass == null)
 		    {
 			    m_ScriptablePass = new CustomRenderPass(RenderPassEvent.AfterRenderingSkybox);
@@ -117,7 +117,7 @@ namespace UnityGLTF
 	    public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
 	    {
 
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 			renderer.EnqueuePass(m_ScriptablePass);
 #else
 	        if (m_ScriptablePass == null)
@@ -125,7 +125,7 @@ namespace UnityGLTF
 	            m_ScriptablePass = new CustomRenderPass(RenderPassEvent.AfterRenderingSkybox);
 	        }
 
-#if UNITY_2022_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 		    var identifier = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
 		    m_ScriptablePass.Setup(identifier, m_OpaqueColor, downsampling);
 #else
@@ -135,7 +135,7 @@ namespace UnityGLTF
 #endif
 	    }
 
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_3_OR_NEWER
 		public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
 		{
 			m_ScriptablePass.Setup(renderer.cameraColorTargetHandle, downsampling);
