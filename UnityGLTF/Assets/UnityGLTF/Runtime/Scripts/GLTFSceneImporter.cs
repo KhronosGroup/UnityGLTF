@@ -421,6 +421,7 @@ namespace UnityGLTF
 					_isRunning = false;
 				}
 			}
+			_gltfStream.Stream.Close();
 
 			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
 			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
@@ -546,7 +547,6 @@ namespace UnityGLTF
 				GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
 			}
 
-			_gltfStream.Stream.Close();
 		}
 
 		/// <summary>
@@ -923,7 +923,7 @@ namespace UnityGLTF
 			if (buffer.Uri == null)
 			{
 				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
-				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
+				 _assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 
 				progressStatus.BuffersLoaded++;
 				progress?.Report(progressStatus);
@@ -1154,6 +1154,8 @@ namespace UnityGLTF
 				{
 					_isRunning = false;
 				}
+				_gltfStream.Stream.Close();
+
 			}
 		}
 

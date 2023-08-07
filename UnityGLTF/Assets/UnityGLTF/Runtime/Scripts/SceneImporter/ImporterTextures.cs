@@ -317,6 +317,7 @@ namespace UnityGLTF
 				{
 					_isRunning = false;
 				}
+				_gltfStream.Stream.Close();
 			}
 		}
 
