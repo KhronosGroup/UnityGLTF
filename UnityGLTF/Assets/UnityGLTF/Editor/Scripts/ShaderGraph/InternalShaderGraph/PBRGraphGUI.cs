@@ -82,8 +82,9 @@ namespace UnityGLTF
 			m_MaterialEditor.SetValue(this, materialEditor);
 			m_Properties.SetValue(this, properties);
 
-			var fullPath = System.IO.Path.GetFullPath(AssetDatabase.GetAssetPath(targetMat));
-			var isMutable = !fullPath.Contains("Library/PackageCache") && !fullPath.Contains("Library\\PackageCache");
+			var assetPath = AssetDatabase.GetAssetPath(targetMat);
+			var fullPath = string.IsNullOrEmpty(assetPath) ? "" : System.IO.Path.GetFullPath(assetPath);
+			var isMutable = string.IsNullOrEmpty(assetPath) && !fullPath.Contains("Library/PackageCache") && !fullPath.Contains("Library\\PackageCache");
 			if (targetMat && targetMat.shader.name.StartsWith("Hidden/UnityGLTF"))
 			{
 				if (isMutable)
