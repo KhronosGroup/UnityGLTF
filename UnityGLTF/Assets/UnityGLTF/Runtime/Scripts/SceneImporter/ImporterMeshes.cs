@@ -130,7 +130,6 @@ namespace UnityGLTF
 		protected virtual async Task ConstructDracoMesh(GLTFMesh mesh, int meshIndex, CancellationToken cancellationToken)
 		{
 			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
-			Mesh[] meshes = new Mesh[mesh.Primitives.Count];
 			Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(mesh.Primitives.Count);
 			var dracoDecodeResults = new DracoMeshLoader.DecodeResult[mesh.Primitives.Count];
 			for (int i = 0; i < mesh.Primitives.Count; i++)
@@ -202,8 +201,8 @@ namespace UnityGLTF
 
 			int bufferViewIndex = 0;
 			var jobHandlesList = new List<JobHandle>(root.BufferViews.Count);
-			var meshoptBufferViews = new Dictionary<int, NativeArray<byte>>();
-			var meshoptReturnValues = new NativeArray<int>( root.BufferViews.Count, Allocator.TempJob);
+			var meshOptBufferViews = new Dictionary<int, NativeArray<byte>>();
+			var meshOptReturnValues = new NativeArray<int>( root.BufferViews.Count, Allocator.TempJob);
 			var meshOptInputBuffers = new List<NativeArray<byte>>();
 
 			foreach (var bView in root.BufferViews)
@@ -224,7 +223,7 @@ namespace UnityGLTF
 					meshOptInputBuffers.Add(origBufferView);
 
 					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(
-						new NativeSlice<int>(meshoptReturnValues,bufferViewIndex,1),
+						new NativeSlice<int>(meshOptReturnValues,bufferViewIndex,1),
 							arr,
 							meshOpt.count,
 							(int)meshOpt.bufferView.ByteStride,
@@ -234,7 +233,7 @@ namespace UnityGLTF
 						);
 
 					jobHandlesList.Add(jobHandle);
-					meshoptBufferViews[bufferViewIndex] = arr;
+					meshOptBufferViews[bufferViewIndex] = arr;
 				}
 
 				bufferViewIndex++;
@@ -252,7 +251,7 @@ namespace UnityGLTF
 				meshoptJobHandle.Complete();
 			}
 
-			foreach (var m in meshoptBufferViews)
+			foreach (var m in meshOptBufferViews)
 			{
 				var bufferView = root.BufferViews[m.Key];
 				var bufferData = await GetBufferData(bufferView.Buffer);
@@ -265,7 +264,7 @@ namespace UnityGLTF
 				m.Dispose();
 
 
-			meshoptReturnValues.Dispose();
+			meshOptReturnValues.Dispose();
 		}
 #endif
 
