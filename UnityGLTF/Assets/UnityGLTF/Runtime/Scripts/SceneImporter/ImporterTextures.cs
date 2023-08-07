@@ -175,6 +175,9 @@ namespace UnityGLTF
 #endif
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
+			if (string.IsNullOrEmpty(texture.name))
+				texture.name = "Texture_"+imageCacheIndex.ToString();
+
 			var newTextureObject = texture;
 
 #if UNITY_EDITOR
@@ -439,6 +442,10 @@ namespace UnityGLTF
 							Path.GetFileNameWithoutExtension(image.Uri) :
 							texture.Name :
 						image.Name;
+
+					if (string.IsNullOrEmpty(unityTexture.name))
+						unityTexture.name = "Texture_"+textureIndex.ToString();
+
 					unityTexture.filterMode = desiredFilterMode;
 					unityTexture.wrapModeU = desiredWrapModeS;
 					unityTexture.wrapModeV = desiredWrapModeT;
