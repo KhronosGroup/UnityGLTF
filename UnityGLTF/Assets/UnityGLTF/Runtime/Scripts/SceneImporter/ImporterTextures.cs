@@ -22,7 +22,7 @@ namespace UnityGLTF
 			public Vector2 Offset = Vector2.zero;
 			public double Rotation = 0;
 			public Vector2 Scale = Vector2.one;
-			public int TexCoordExtra = 0;
+			public Nullable<int> TexCoordExtra = 0;
 		}
 
 		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo)

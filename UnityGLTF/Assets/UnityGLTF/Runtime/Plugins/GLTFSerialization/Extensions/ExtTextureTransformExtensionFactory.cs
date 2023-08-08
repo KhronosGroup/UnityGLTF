@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System;
+using Newtonsoft.Json.Linq;
 using GLTF.Extensions;
 using GLTF.Math;
 
@@ -22,7 +23,7 @@ namespace GLTF.Schema
 			Vector2 offset = new Vector2(ExtTextureTransformExtension.OFFSET_DEFAULT);
 			double rotation = 0;
 			Vector2 scale = new Vector2(ExtTextureTransformExtension.SCALE_DEFAULT);
-			int texCoord = ExtTextureTransformExtension.TEXCOORD_DEFAULT;
+			Nullable<int> texCoord = null;
 
 			if (extensionToken != null)
 			{

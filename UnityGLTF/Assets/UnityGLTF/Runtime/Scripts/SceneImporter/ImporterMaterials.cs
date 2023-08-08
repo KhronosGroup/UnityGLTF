@@ -71,7 +71,7 @@ namespace UnityGLTF
 
 			void CalculateYOffsetAndScale(TextureId textureId, ExtTextureTransformExtension ext, out Vector2 scale, out Vector2 offset)
 			{
-				offset = ext.Offset.ToUnityVector2Raw();
+				offset =  ext.Offset.ToUnityVector2Raw();
 				scale = ext.Scale.ToUnityVector2Raw();
 
 				if (IsTextureFlipped(textureId.Value))
@@ -118,7 +118,7 @@ namespace UnityGLTF
 						mrMapper.BaseColorXOffset = offset;
 						mrMapper.BaseColorXRotation = ext.Rotation;
 						mrMapper.BaseColorXScale = scale;
-						mrMapper.BaseColorXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) mrMapper.BaseColorXTexCoord = ext.TexCoord.Value;
 
 						SetTransformKeyword();
 					}
@@ -147,7 +147,7 @@ namespace UnityGLTF
 						mrMapper.MetallicRoughnessXOffset = offset;
 						mrMapper.MetallicRoughnessXRotation = ext.Rotation;
 						mrMapper.MetallicRoughnessXScale = scale;
-						mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) mrMapper.MetallicRoughnessXTexCoord = ext.TexCoord.Value;
 						SetTransformKeyword();
 					}
 					else
@@ -186,7 +186,7 @@ namespace UnityGLTF
 						sgMapper.DiffuseXOffset = offset;
 						sgMapper.DiffuseXRotation = ext.Rotation;
 						sgMapper.DiffuseXScale = scale;
-						sgMapper.DiffuseXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) sgMapper.DiffuseXTexCoord = ext.TexCoord.Value;
 						MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
 						SetTransformKeyword();
 					}
@@ -215,7 +215,7 @@ namespace UnityGLTF
 						sgMapper.SpecularGlossinessXOffset = offset;
 						sgMapper.SpecularGlossinessXRotation = ext.Rotation;
 						sgMapper.SpecularGlossinessXScale = scale;
-						sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) sgMapper.SpecularGlossinessXTexCoord = ext.TexCoord.Value;
 						SetTransformKeyword();
 					}
 					else
@@ -247,7 +247,7 @@ namespace UnityGLTF
 						unlitMapper.BaseColorXOffset = offset;
 						unlitMapper.BaseColorXRotation = ext.Rotation;
 						unlitMapper.BaseColorXScale = scale;
-						unlitMapper.BaseColorXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) unlitMapper.BaseColorXTexCoord = ext.TexCoord.Value;
 						SetTransformKeyword();
 					}
 					else
@@ -289,7 +289,7 @@ namespace UnityGLTF
 							transmissionMapper.TransmissionTextureOffset = offset;
 							transmissionMapper.TransmissionTextureScale = scale;
 							transmissionMapper.TransmissionTextureRotation = td.Rotation;
-							transmissionMapper.TransmissionTextureTexCoord = td.TexCoordExtra;
+							if (td.TexCoordExtra != null) transmissionMapper.TransmissionTextureTexCoord = td.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -327,7 +327,7 @@ namespace UnityGLTF
 							volumeMapper.ThicknessTextureOffset = offset;
 							volumeMapper.ThicknessTextureScale = scale;
 							volumeMapper.ThicknessTextureRotation = td.Rotation;
-							volumeMapper.ThicknessTextureTexCoord = td.TexCoordExtra;
+							if (td.TexCoordExtra != null) volumeMapper.ThicknessTextureTexCoord = td.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -365,7 +365,7 @@ namespace UnityGLTF
 							iridescenceMapper.IridescenceTextureOffset = offset;
 							iridescenceMapper.IridescenceTextureScale = scale;
 							iridescenceMapper.IridescenceTextureRotation = td.Rotation;
-							iridescenceMapper.IridescenceTextureTexCoord = td.TexCoordExtra;
+							if (td.TexCoordExtra != null) iridescenceMapper.IridescenceTextureTexCoord = td.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -389,7 +389,7 @@ namespace UnityGLTF
 							iridescenceMapper.IridescenceThicknessTextureOffset = offset;
 							iridescenceMapper.IridescenceThicknessTextureScale = scale;
 							iridescenceMapper.IridescenceThicknessTextureRotation = td2.Rotation;
-							iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoordExtra;
+							if (td2.TexCoordExtra != null) iridescenceMapper.IridescenceThicknessTextureTexCoord = td2.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -425,7 +425,7 @@ namespace UnityGLTF
 							specularMapper.SpecularTextureOffset = offset;
 							specularMapper.SpecularTextureScale = scale;
 							specularMapper.SpecularTextureRotation = td.Rotation;
-							specularMapper.SpecularTextureTexCoord = td.TexCoordExtra;
+							if (td.TexCoordExtra != null) specularMapper.SpecularTextureTexCoord = td.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -449,7 +449,7 @@ namespace UnityGLTF
 							specularMapper.SpecularColorTextureOffset = offset;
 							specularMapper.SpecularColorTextureScale = scale;
 							specularMapper.SpecularColorTextureRotation = td2.Rotation;
-							specularMapper.SpecularColorTextureTexCoord = td2.TexCoordExtra;
+							if (td2.TexCoordExtra != null) specularMapper.SpecularColorTextureTexCoord = td2.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -485,7 +485,7 @@ namespace UnityGLTF
 							clearcoatMapper.ClearcoatTextureOffset = offset;
 							clearcoatMapper.ClearcoatTextureScale = scale;
 							clearcoatMapper.ClearcoatTextureRotation = td.Rotation;
-							clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoordExtra;
+							if (td.TexCoordExtra != null) clearcoatMapper.ClearcoatTextureTexCoord = td.TexCoordExtra.Value;
 							SetTransformKeyword();
 						}
 						else
@@ -530,7 +530,7 @@ namespace UnityGLTF
 						uniformMapper.NormalXOffset = offset;
 						uniformMapper.NormalXRotation = ext.Rotation;
 						uniformMapper.NormalXScale = scale;
-						uniformMapper.NormalXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) uniformMapper.NormalXTexCoord = ext.TexCoord.Value;
 						SetTransformKeyword();
 					}
 					else
@@ -555,7 +555,7 @@ namespace UnityGLTF
 						uniformMapper.EmissiveXOffset = offset;
 						uniformMapper.EmissiveXRotation = ext.Rotation;
 						uniformMapper.EmissiveXScale = scale;
-						uniformMapper.EmissiveXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) uniformMapper.EmissiveXTexCoord = ext.TexCoord.Value;
 						SetTransformKeyword();
 					}
 					else
@@ -582,7 +582,7 @@ namespace UnityGLTF
 						uniformMapper.OcclusionXOffset = offset;
 						uniformMapper.OcclusionXRotation = ext.Rotation;
 						uniformMapper.OcclusionXScale = scale;
-						uniformMapper.OcclusionXTexCoord = ext.TexCoord;
+						if (ext.TexCoord != null) uniformMapper.OcclusionXTexCoord = ext.TexCoord.Value;
 						SetTransformKeyword();
 					}
 					else

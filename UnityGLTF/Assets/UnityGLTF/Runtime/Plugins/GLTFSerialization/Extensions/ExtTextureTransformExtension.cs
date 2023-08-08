@@ -30,10 +30,10 @@ namespace GLTF.Schema
 		/// <summary>
 		/// Overrides the textureInfo texCoord value if this extension is supported.
 		/// </summary>
-		public int TexCoord = 0;
+		public Nullable<int> TexCoord = null;
 		public static readonly int TEXCOORD_DEFAULT = 0;
 
-		public ExtTextureTransformExtension(Vector2 offset, double rotation, Vector2 scale, int texCoord)
+		public ExtTextureTransformExtension(Vector2 offset, double rotation, Vector2 scale, Nullable<int> texCoord)
 		{
 			Offset = offset;
 			Rotation = rotation;
@@ -74,7 +74,7 @@ namespace GLTF.Schema
 				));
 			}
 
-			if (TexCoord != TEXCOORD_DEFAULT)
+			if (TexCoord != null)
 			{
 				ext.Add(new JProperty(
 					ExtTextureTransformExtensionFactory.TEXCOORD,
