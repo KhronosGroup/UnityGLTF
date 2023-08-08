@@ -99,8 +99,9 @@ namespace UnityGLTF
 			NumericArray output,
 			InterpolationType mode,
 			Type curveType,
-			ValuesConvertion getConvertedValues)
+			ValuesConvertion getConvertedValues, bool isRotation = false)
 		{
+
 
 			var channelCount = propertyNames.Length;
 			var frameCount = input.AsFloats.Length;
@@ -112,6 +113,7 @@ namespace UnityGLTF
 				keyframes[ci] = new Keyframe[frameCount];
 			}
 
+			Quaternion prevQuat = Quaternion.identity;
 			for (var i = 0; i < frameCount; ++i)
 			{
 				var time = input.AsFloats[i];
@@ -133,6 +135,22 @@ namespace UnityGLTF
 				{
 					// For other interpolation types, the output will only contain one value per keyframe
 					values = getConvertedValues(output, i);
+				}
+
+				if (isRotation && channelCount == 4)
+				{
+					// Ensure shortest path rotation ( see https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#interpolation-slerp )
+					Quaternion currentQuat = new Quaternion(values[0], values[1], values[2], values[3]);
+					if (i == 0)
+						prevQuat = currentQuat;
+					if (Quaternion.Dot(prevQuat, currentQuat) < 0)
+					{
+						for (int iV = 0; iV < 3; iV++)
+						{
+							values[iV] = -values[iV];
+						}
+					}
+					prevQuat = currentQuat;
 				}
 
 				for (var ci = 0; ci < channelCount; ++ci)
@@ -162,6 +180,7 @@ namespace UnityGLTF
 						SetTangentMode(curve, keyframes[ci], i, mode);
 					}
 				}
+
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
@@ -188,8 +207,7 @@ namespace UnityGLTF
 				default:
 					throw new NotImplementedException();
 			}
-
-			if(curve.length < keyframeIndex)
+			if (keyframeIndex < keyframes.Length)
 				curve.MoveKey(keyframeIndex, key);
 		}
 
@@ -286,7 +304,7 @@ namespace UnityGLTF
 											  var rotation = data.AsVec4s[frame];
 											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
-										  });
+										  }, true);
 
 						break;
 
@@ -338,9 +356,17 @@ namespace UnityGLTF
 				} // switch target type
 			} // foreach channel
 
-			clip.EnsureQuaternionContinuity();
+			// EnsureQuaternionContinuity results in unwanted tangents on the first and last keyframes > custom Solution in SetAnimationCurve
+			//clip.EnsureQuaternionContinuity();
 			return clip;
 		}
+
+		private static void CustomEnsureQuaternionContinuity(AnimationClip clip)
+		{
+
+			//foreach (var )
+		}
+
 #endif
 
 	}
