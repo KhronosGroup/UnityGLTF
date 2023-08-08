@@ -206,6 +206,7 @@ namespace UnityGLTF
 					TextureId textureId = specGloss.SpecularGlossinessTexture.Index;
 					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, false);
 					sgMapper.SpecularGlossinessTexture = _assetCache.TextureCache[textureId.Id].Texture;
+					sgMapper.SpecularGlossinessTexCoord = specGloss.SpecularGlossinessTexture.TexCoord;
 
 					var ext = GetTextureTransform(specGloss.SpecularGlossinessTexture);
 					if (ext != null)
