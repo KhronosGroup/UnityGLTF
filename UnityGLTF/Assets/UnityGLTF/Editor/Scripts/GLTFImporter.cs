@@ -365,28 +365,6 @@ namespace UnityGLTF
 								Unwrapping.GenerateSecondaryUVSet(mesh);
 	                    }
                     }
-                    if (_swapUvs)
-                    {
-                        var uv = mesh.uv;
-                        var uv2 = mesh.uv2;
-                        mesh.uv = uv2;
-                        if(uv.Length > 0)
-							mesh.uv2 = uv;
-                    }
-
-                    if (_importNormals == GLTFImporterNormals.None)
-                        mesh.normals = new Vector3[0];
-                    else if (_importNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
-                        mesh.RecalculateNormals();
-                    else if (_importNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
-	                    mesh.RecalculateNormals();
-
-					if (_importTangents == GLTFImporterNormals.None)
-						mesh.tangents = new Vector4[0];
-					else if (_importTangents == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
-						mesh.RecalculateTangents();
-					else if (_importTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
-						mesh.RecalculateTangents();
 
 					mesh.UploadMeshData(!_readWriteEnabled);
 
@@ -758,7 +736,10 @@ namespace UnityGLTF
 			    AnimationMethod = _importAnimations,
 			    AnimationLoopTime = _animationLoopTime,
 			    AnimationLoopPose = _animationLoopPose,
-			    ImportContext = context
+			    ImportContext = context,
+			    SwapUVs = _swapUvs,
+			    ImportNormals = _importNormals,
+			    ImportTangents = _importTangents
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))

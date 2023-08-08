@@ -93,6 +93,8 @@ namespace UnityGLTF
 				Topology = new MeshTopology[mesh.Primitives.Count],
 				Indices = new int[mesh.Primitives.Count][]
 			};
+			var unityMeshData = CreateUnityMeshData(mesh, firstPrim, totalVertCount);
+
 
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
@@ -162,8 +164,8 @@ namespace UnityGLTF
 
 					// TODO: check if normals and tangents are needed
 #pragma warning disable 0219
-					bool needsNormals = true;
-					bool needsTangents = true;
+					bool needsNormals = _options.ImportNormals != GLTFImporterNormals.None;
+					bool needsTangents = _options.ImportTangents != GLTFImporterNormals.None;
 #pragma warning restore 0219
 
 					var draco = new DracoMeshLoader();
@@ -188,7 +190,7 @@ namespace UnityGLTF
 			}
 
 			// Combine sub meshes
-			await ConstructUnityMesh(mesh, dracoDecodeResults, meshDataArray, meshIndex, mesh.Name, true);
+			await ConstructUnityMesh(mesh, dracoDecodeResults, meshDataArray, meshIndex, mesh.Name);
 		}
 #endif
 
@@ -269,12 +271,38 @@ namespace UnityGLTF
 #endif
 
 
+		protected void ApplyImportOptionsOnMesh(Mesh mesh)
+		{
+			if (_options.ImportNormals == GLTFImporterNormals.None)
+				mesh.normals = new Vector3[0];
+			else if (_options.ImportNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
+				mesh.RecalculateNormals();
+			else if (_options.ImportNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
+				mesh.RecalculateNormals();
+
+			if (_options.ImportTangents == GLTFImporterNormals.None)
+				mesh.tangents = new Vector4[0];
+			else if (_options.ImportTangents == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
+				mesh.RecalculateTangents();
+			else if (_options.ImportTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
+				mesh.RecalculateTangents();
+
+			if (_options.SwapUVs)
+			{
+				var uv = mesh.uv;
+				var uv2 = mesh.uv2;
+				mesh.uv = uv2;
+				if(uv.Length > 0)
+					mesh.uv2 = uv;
+			}
+		}
+
 #if HAVE_DRACO
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from Draco generated SubMeshes
 		/// </summary>
 		/// <returns></returns>
-		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh,DracoMeshLoader.DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName, bool requireTangents)
+		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh,DracoMeshLoader.DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName)
 		{
 			uint verticesLength = 0;
 			for (int i = 0; i < meshes.Length; i++)
@@ -326,19 +354,7 @@ namespace UnityGLTF
 			verticesLength = (uint) mesh.vertexCount;
 
 			var firstPrim = gltfMesh.Primitives[0];
-			UnityMeshData unityMeshData = new UnityMeshData()
-			{
-
-				MorphTargetVertices = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.POSITION) ?
-					Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength) : null,
-				MorphTargetNormals = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.NORMAL) ?
-					Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength) : null,
-				MorphTargetTangents = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.TANGENT) ?
-					Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength) : null,
-
-				Topology = new MeshTopology[gltfMesh.Primitives.Count],
-				Indices = new int[gltfMesh.Primitives.Count][]
-			};
+			var unityMeshData = CreateUnityMeshData(gltfMesh, firstPrim, verticesLength,true);
 
 			int vertOffset = 0;
 			var meshCache = _assetCache.MeshCache[meshIndex];
@@ -363,29 +379,10 @@ namespace UnityGLTF
 			mesh.RecalculateBounds();
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
-			if (unityMeshData.MorphTargetVertices != null)
-			{
-				for (int i = 0; i < firstPrim.Targets.Count; i++)
-				{
-					var targetName = firstPrim.TargetNames != null ? firstPrim.TargetNames[i] : $"Morphtarget{i}";
-					mesh.AddBlendShapeFrame(targetName, 1f,
-						unityMeshData.MorphTargetVertices[i],
-						unityMeshData.MorphTargetNormals != null ? unityMeshData.MorphTargetNormals[i] : null,
-						unityMeshData.MorphTargetTangents != null ? unityMeshData.MorphTargetTangents[i] : null
-					);
-				}
-			}
+			AddBlendShapesToMesh(unityMeshData, meshIndex, mesh);
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
-			if (decodeResults[0].calculateNormals && mesh.normals != null && mesh.normals.Length > 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
-			{
-				mesh.RecalculateNormals();
-			}
-
-			if (requireTangents)
-			{
-				mesh.RecalculateTangents();
-			}
+			ApplyImportOptionsOnMesh(mesh);
 
 			if (!KeepCPUCopyOfMesh)
 			{
@@ -393,6 +390,55 @@ namespace UnityGLTF
 			}
 
 			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
+		}
+
+		private static UnityMeshData CreateUnityMeshData(GLTFMesh gltfMesh, MeshPrimitive firstPrim, uint verticesLength, bool onlyMorphTargets = false)
+		{
+			UnityMeshData unityMeshData = new UnityMeshData()
+			{
+				MorphTargetVertices = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.POSITION)
+					? Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength)
+					: null,
+				MorphTargetNormals = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.NORMAL)
+					? Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength)
+					: null,
+				MorphTargetTangents = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.TANGENT)
+					? Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength)
+					: null,
+
+				Topology = new MeshTopology[gltfMesh.Primitives.Count],
+				Indices = new int[gltfMesh.Primitives.Count][]
+			};
+			if (!onlyMorphTargets)
+			{
+				unityMeshData.Vertices = new Vector3[verticesLength];
+				unityMeshData.Normals = firstPrim.Attributes.ContainsKey(SemanticProperties.NORMAL)
+					? new Vector3[verticesLength]
+					: null;
+				unityMeshData.Tangents = firstPrim.Attributes.ContainsKey(SemanticProperties.TANGENT)
+					? new Vector4[verticesLength]
+					: null;
+				unityMeshData.Uv1 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_0)
+					? new Vector2[verticesLength]
+					: null;
+				unityMeshData.Uv2 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_1)
+					? new Vector2[verticesLength]
+					: null;
+				unityMeshData.Uv3 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_2)
+					? new Vector2[verticesLength]
+					: null;
+				unityMeshData.Uv4 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_3)
+					? new Vector2[verticesLength]
+					: null;
+				unityMeshData.Colors = firstPrim.Attributes.ContainsKey(SemanticProperties.COLOR_0)
+					? new Color[verticesLength]
+					: null;
+				unityMeshData.BoneWeights = firstPrim.Attributes.ContainsKey(SemanticProperties.WEIGHTS_0)
+					? new BoneWeight[verticesLength]
+					: null;
+			}
+
+			return unityMeshData;
 		}
 #endif
 		/// <summary>
@@ -443,6 +489,21 @@ namespace UnityGLTF
 			mesh.RecalculateBounds();
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
+			AddBlendShapesToMesh(unityMeshData, meshIndex, mesh);
+			await YieldOnTimeoutAndThrowOnLowMemory();
+
+			ApplyImportOptionsOnMesh(mesh);
+
+			if (!KeepCPUCopyOfMesh)
+			{
+				mesh.UploadMeshData(true);
+			}
+
+			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
+		}
+
+		private void AddBlendShapesToMesh(UnityMeshData unityMeshData, int meshIndex, Mesh mesh)
+		{
 			if (unityMeshData.MorphTargetVertices != null)
 			{
 				var firstPrim = _gltfRoot.Meshes[meshIndex].Primitives[0];
@@ -456,24 +517,6 @@ namespace UnityGLTF
 					);
 				}
 			}
-			await YieldOnTimeoutAndThrowOnLowMemory();
-
-			if (unityMeshData.Tangents == null && unityMeshData.Topology[0] == MeshTopology.Triangles)
-			{
-				mesh.RecalculateTangents();
-			}
-
-			if (unityMeshData.Normals == null && unityMeshData.Topology[0] == MeshTopology.Triangles)
-			{
-				mesh.RecalculateNormals();
-			}
-
-			if (!KeepCPUCopyOfMesh)
-			{
-				mesh.UploadMeshData(true);
-			}
-
-			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
 		}
 
 		protected virtual async Task ConstructMeshTargets(MeshPrimitive primitive, int meshIndex, int primitiveIndex)

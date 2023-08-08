@@ -44,6 +44,11 @@ namespace UnityGLTF
 		[SerializeField]
 		private Shader shaderOverride = null;
 
+		[Header("Import Settings")]
+		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
+		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
+		public bool SwapUVs = false;
+
 		private async void Start()
 		{
 			if (!loadOnStart) return;
@@ -71,7 +76,10 @@ namespace UnityGLTF
 		{
 			var importOptions = new ImportOptions
 			{
-				AsyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>()
+				AsyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>(),
+				ImportNormals = ImportNormals,
+				ImportTangents = ImportTangents,
+				SwapUVs = SwapUVs
 			};
 
 			GLTFSceneImporter sceneImporter = null;
