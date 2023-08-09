@@ -176,7 +176,7 @@ namespace UnityGLTF
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 			if (string.IsNullOrEmpty(texture.name))
-				texture.name = "Texture_"+imageCacheIndex.ToString();
+				texture.name = "Texture_" + imageCacheIndex.ToString();
 
 			var newTextureObject = texture;
 
