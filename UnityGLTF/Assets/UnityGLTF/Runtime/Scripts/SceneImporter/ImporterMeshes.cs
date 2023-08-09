@@ -392,6 +392,8 @@ namespace UnityGLTF
 			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
 		}
 
+#endif
+
 		private static UnityMeshData CreateUnityMeshData(GLTFMesh gltfMesh, MeshPrimitive firstPrim, uint verticesLength, bool onlyMorphTargets = false)
 		{
 			UnityMeshData unityMeshData = new UnityMeshData()
@@ -440,7 +442,7 @@ namespace UnityGLTF
 
 			return unityMeshData;
 		}
-#endif
+
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from preloaded and preprocessed buffer data
 		/// </summary>
