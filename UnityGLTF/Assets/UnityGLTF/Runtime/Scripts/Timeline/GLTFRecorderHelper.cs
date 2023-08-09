@@ -20,7 +20,11 @@ namespace UnityGLTF.Timeline
         static GLTFRecorderHelper GetInstance()
         {
 	        if (instance != null) return instance;
+#if UNITY_2023_1_OR_NEWER
+	        instance = FindFirstObjectByType<GLTFRecorderHelper>();
+ #else
 	        instance = FindObjectOfType<GLTFRecorderHelper>();
+#endif
 	        if (instance != null) return instance;
 
 	        var go = new GameObject

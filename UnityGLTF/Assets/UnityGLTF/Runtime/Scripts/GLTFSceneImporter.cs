@@ -756,6 +756,9 @@ namespace UnityGLTF
 
 				if (ex is OutOfMemoryException)
 				{
+#if UNITY_2023_1_OR_NEWER
+					await
+#endif
 					Resources.UnloadUnusedAssets();
 				}
 
@@ -1062,6 +1065,9 @@ namespace UnityGLTF
 
 				if (ex is OutOfMemoryException)
 				{
+#if UNITY_2023_1_OR_NEWER
+					await
+#endif
 					Resources.UnloadUnusedAssets();
 				}
 
