@@ -181,9 +181,8 @@ namespace UnityGLTF
 					break;
 				case InterpolationType.STEP:
 					key.inTangent = float.PositiveInfinity;
-					key.outTangent = 0;//float.PositiveInfinity;
+					key.outTangent = 0;
 					break;
-
 				default:
 					throw new NotImplementedException();
 			}

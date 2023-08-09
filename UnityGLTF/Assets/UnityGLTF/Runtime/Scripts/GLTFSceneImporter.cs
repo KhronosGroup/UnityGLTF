@@ -931,7 +931,7 @@ namespace UnityGLTF
 			if (buffer.Uri == null)
 			{
 				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
-				 _assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
+				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 
 				progressStatus.BuffersLoaded++;
 				progress?.Report(progressStatus);

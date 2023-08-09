@@ -71,7 +71,7 @@ namespace UnityGLTF
 
 			void CalculateYOffsetAndScale(TextureId textureId, ExtTextureTransformExtension ext, out Vector2 scale, out Vector2 offset)
 			{
-				offset =  ext.Offset.ToUnityVector2Raw();
+				offset = ext.Offset.ToUnityVector2Raw();
 				scale = ext.Scale.ToUnityVector2Raw();
 
 				if (IsTextureFlipped(textureId.Value))
