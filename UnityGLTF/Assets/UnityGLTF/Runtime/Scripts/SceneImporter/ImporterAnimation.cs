@@ -99,10 +99,8 @@ namespace UnityGLTF
 			NumericArray output,
 			InterpolationType mode,
 			Type curveType,
-			ValuesConvertion getConvertedValues, bool isRotation = false)
+			ValuesConvertion getConvertedValues)
 		{
-
-
 			var channelCount = propertyNames.Length;
 			var frameCount = input.AsFloats.Length;
 
@@ -113,7 +111,6 @@ namespace UnityGLTF
 				keyframes[ci] = new Keyframe[frameCount];
 			}
 
-			Quaternion prevQuat = Quaternion.identity;
 			for (var i = 0; i < frameCount; ++i)
 			{
 				var time = input.AsFloats[i];
@@ -137,22 +134,6 @@ namespace UnityGLTF
 					values = getConvertedValues(output, i);
 				}
 
-				if (isRotation && channelCount == 4)
-				{
-					// Ensure shortest path rotation ( see https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#interpolation-slerp )
-					Quaternion currentQuat = new Quaternion(values[0], values[1], values[2], values[3]);
-					if (i == 0)
-						prevQuat = currentQuat;
-					if (Quaternion.Dot(prevQuat, currentQuat) < 0)
-					{
-						for (int iV = 0; iV < 3; iV++)
-						{
-							values[iV] = -values[iV];
-						}
-					}
-					prevQuat = currentQuat;
-				}
-
 				for (var ci = 0; ci < channelCount; ++ci)
 				{
 					if (mode == InterpolationType.CUBICSPLINE)
@@ -168,24 +149,23 @@ namespace UnityGLTF
 
 			for (var ci = 0; ci < channelCount; ++ci)
 			{
-				// copy all key frames data to animation curve and add it to the clip
-				AnimationCurve curve = new AnimationCurve(keyframes[ci]);
-
-				// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
-				// For the rest, set them appropriately.
 				if (mode != InterpolationType.CUBICSPLINE)
 				{
+					// For cubic spline interpolation, the inTangents and outTangents are already explicitly defined.
+					// For the rest, set them appropriately.
 					for (var i = 0; i < keyframes[ci].Length; i++)
 					{
-						SetTangentMode(curve, keyframes[ci], i, mode);
+						SetTangentMode(keyframes[ci], i, mode);
 					}
 				}
 
+				// copy all key frames data to animation curve and add it to the clip
+				AnimationCurve curve = new AnimationCurve(keyframes[ci]);
 				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
 
-		private static void SetTangentMode(AnimationCurve curve, Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
+		private static void SetTangentMode(Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
 		{
 			var key = keyframes[keyframeIndex];
 
@@ -201,14 +181,13 @@ namespace UnityGLTF
 					break;
 				case InterpolationType.STEP:
 					key.inTangent = float.PositiveInfinity;
-					key.outTangent = float.PositiveInfinity;
+					key.outTangent = 0;//float.PositiveInfinity;
 					break;
 
 				default:
 					throw new NotImplementedException();
 			}
-			if (keyframeIndex < keyframes.Length)
-				curve.MoveKey(keyframeIndex, key);
+			keyframes[keyframeIndex] = key;
 		}
 
 		private static float GetCurveKeyframeLeftLinearSlope(Keyframe[] keyframes, int keyframeIndex)
@@ -304,7 +283,7 @@ namespace UnityGLTF
 											  var rotation = data.AsVec4s[frame];
 											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
-										  }, true);
+										  });
 
 						break;
 
@@ -359,12 +338,6 @@ namespace UnityGLTF
 			// EnsureQuaternionContinuity results in unwanted tangents on the first and last keyframes > custom Solution in SetAnimationCurve
 			//clip.EnsureQuaternionContinuity();
 			return clip;
-		}
-
-		private static void CustomEnsureQuaternionContinuity(AnimationClip clip)
-		{
-
-			//foreach (var )
 		}
 
 #endif
