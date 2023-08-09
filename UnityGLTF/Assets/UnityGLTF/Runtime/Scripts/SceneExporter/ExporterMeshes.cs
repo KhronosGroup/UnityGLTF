@@ -288,6 +288,7 @@ namespace UnityGLTF
 			{
 				var mat = materialsObj[submesh % materialsObj.Length];
 				if (!mat) continue;
+				if (meshObj.GetIndexCount(submesh) <= 0) continue;
 
 				if (!accessors.subMeshPrimitives.ContainsKey(submesh))
 				{
