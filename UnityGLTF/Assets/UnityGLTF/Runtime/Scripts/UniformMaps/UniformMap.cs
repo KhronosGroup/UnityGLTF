@@ -150,14 +150,29 @@ namespace UnityGLTF
 	public interface IClearcoatMap : IMetalRoughUniformMap
 	{
 		double ClearcoatFactor { get; set; }
+
 		Texture ClearcoatTexture { get; set; }
 		Vector2 ClearcoatTextureOffset { get; set; }
 		double ClearcoatTextureRotation { get; set; }
 		Vector2 ClearcoatTextureScale { get; set; }
 		int ClearcoatTextureTexCoord { get; set; }
+
 		double ClearcoatRoughnessFactor { get; set; }
+
 		Texture ClearcoatRoughnessTexture { get; set; }
+		Vector2 ClearcoatRoughnessTextureOffset { get; set; }
+		double ClearcoatRoughnessTextureRotation { get; set; }
+		Vector2 ClearcoatRoughnessTextureScale { get; set; }
+		int ClearcoatRoughnessTextureTexCoord { get; set; }
+	}
+
+	public interface IClearcoatNormalMap
+	{
 		Texture ClearcoatNormalTexture { get; set; }
+		Vector2 ClearcoatNormalTextureOffset { get; set; }
+		double ClearcoatNormalTextureRotation { get; set; }
+		Vector2 ClearcoatNormalTextureScale { get; set; }
+		int ClearcoatNormalTextureTexCoord { get; set; }
 	}
 
 	public interface IUnlitUniformMap : IUniformMap

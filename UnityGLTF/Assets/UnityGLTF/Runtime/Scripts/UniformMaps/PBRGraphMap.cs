@@ -497,10 +497,60 @@ namespace UnityGLTF
 		    set => _material.SetTexture("clearcoatRoughnessTexture", value);
 	    }
 
+	    public double ClearcoatRoughnessTextureRotation
+	    {
+		    get => _material.GetFloat("clearcoatRoughnessTextureRotation");
+		    set => _material.SetFloat("clearcoatRoughnessTextureRotation", (float) value);
+	    }
+
+	    public Vector2 ClearcoatRoughnessTextureOffset
+	    {
+		    get => _material.GetTextureOffset("clearcoatRoughnessTexture");
+		    set => _material.SetTextureOffset("clearcoatRoughnessTexture", value);
+	    }
+
+	    public Vector2 ClearcoatRoughnessTextureScale
+	    {
+		    get => _material.GetTextureScale("clearcoatRoughnessTexture");
+		    set => _material.SetTextureScale("clearcoatRoughnessTexture", value);
+	    }
+
+	    public int ClearcoatRoughnessTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("clearcoatRoughnessTextureTexCoord");
+		    set => _material.SetFloat("clearcoatRoughnessTextureTexCoord", (float) value);
+	    }
+
+	    /* Clearcoat Normal Texture currently not supported
 	    public Texture ClearcoatNormalTexture
 	    {
 		    get => _material.GetTexture("clearcoatNormalTexture");
 		    set => _material.SetTexture("clearcoatNormalTexture", value);
 	    }
+
+	    public double ClearcoatNormalTextureRotation
+	    {
+		    get => _material.GetFloat("clearcoatNormalTextureRotation");
+		    set => _material.SetFloat("clearcoatNormalTextureRotation", (float) value);
+	    }
+
+	    public Vector2 ClearcoatNormalTextureOffset
+	    {
+		    get => _material.GetTextureOffset("clearcoatNormalTexture");
+		    set => _material.SetTextureOffset("clearcoatNormalTexture", value);
+	    }
+
+	    public Vector2 ClearcoatNormalTextureScale
+	    {
+		    get => _material.GetTextureScale("clearcoatNormalTexture");
+		    set =>  _material.SetTextureScale("clearcoatNormalTexture", value);
+	    }
+
+	    public int ClearcoatNormalTextureTexCoord
+	    {
+		    get =>  (int)_material.GetFloat("clearcoatNormalTextureTexCoord");
+		    set =>  _material.SetFloat("clearcoatNormalTextureTexCoord", (float) value);
+	    }
+	    */
 	}
 }

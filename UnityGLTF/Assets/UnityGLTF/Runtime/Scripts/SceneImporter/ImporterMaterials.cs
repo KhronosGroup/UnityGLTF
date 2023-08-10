@@ -498,14 +498,55 @@ namespace UnityGLTF
 
 					if (clearcoat.clearcoatRoughnessTexture != null)
 					{
-						var td2 = await FromTextureInfo(clearcoat.clearcoatRoughnessTexture);
-						clearcoatMapper.ClearcoatRoughnessTexture = td2.Texture;
+						var td = await FromTextureInfo(clearcoat.clearcoatRoughnessTexture);
+						clearcoatMapper.ClearcoatRoughnessTexture = td.Texture;
+						clearcoatMapper.ClearcoatRoughnessTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(clearcoat.clearcoatRoughnessTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(clearcoat.clearcoatRoughnessTexture.Index, ext, out var scale,
+								out var offset);
+							clearcoatMapper.ClearcoatRoughnessTextureOffset = offset;
+							clearcoatMapper.ClearcoatRoughnessTextureScale = scale;
+							clearcoatMapper.ClearcoatRoughnessTextureRotation = td.Rotation;
+							if (td.TexCoordExtra != null) clearcoatMapper.ClearcoatRoughnessTextureTexCoord = td.TexCoordExtra.Value;
+							SetTransformKeyword();
+						}
+						else
+						if (IsTextureFlipped(clearcoat.clearcoatRoughnessTexture.Index.Value))
+						{
+							clearcoatMapper.ClearcoatRoughnessTextureScale *= new Vector2(1f, -1f);
+							SetTransformKeyword();
+						}
+
 					}
 
-					if (clearcoat.clearcoatNormalTexture != null)
+					var clearcoatNormalMapper = mapper as IClearcoatNormalMap;
+					if (clearcoatNormalMapper != null)
 					{
-						var td3 = await FromTextureInfo(clearcoat.clearcoatNormalTexture);
-						clearcoatMapper.ClearcoatNormalTexture = td3.Texture;
+						if (clearcoat.clearcoatNormalTexture != null)
+						{
+							var td = await FromTextureInfo(clearcoat.clearcoatNormalTexture);
+							clearcoatNormalMapper.ClearcoatNormalTexture = td.Texture;
+							clearcoatNormalMapper.ClearcoatNormalTextureTexCoord = td.TexCoord;
+							var ext = GetTextureTransform(clearcoat.clearcoatNormalTexture);
+							if (ext != null)
+							{
+								CalculateYOffsetAndScale(clearcoat.clearcoatNormalTexture.Index, ext, out var scale,
+									out var offset);
+								clearcoatNormalMapper.ClearcoatNormalTextureOffset = offset;
+								clearcoatNormalMapper.ClearcoatNormalTextureScale = scale;
+								clearcoatNormalMapper.ClearcoatNormalTextureRotation = td.Rotation;
+								if (td.TexCoordExtra != null)
+									clearcoatNormalMapper.ClearcoatNormalTextureTexCoord = td.TexCoordExtra.Value;
+								SetTransformKeyword();
+							}
+							else if (IsTextureFlipped(clearcoat.clearcoatNormalTexture.Index.Value))
+							{
+								clearcoatNormalMapper.ClearcoatNormalTextureScale *= new Vector2(1f, -1f);
+								SetTransformKeyword();
+							}
+						}
 					}
 
 					mapper.Material.SetKeyword("_CLEARCOAT", true);
