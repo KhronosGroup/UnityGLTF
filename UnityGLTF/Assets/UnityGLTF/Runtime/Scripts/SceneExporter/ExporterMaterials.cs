@@ -411,7 +411,10 @@ namespace UnityGLTF
 			//var rotationMatrix = mat.GetVector(texName + "Rotation");
 			//var rotation = -Mathf.Atan2(offset.y, rotationMatrix.x);
 			var rotProp = texName + "Rotation";
+			var uvProp = texName + "TexCoord";
 			var rotation = 0f;
+			var uvChannel = 0f;
+
 #if UNITY_2021_1_OR_NEWER
 			if (mat.HasFloat(rotProp))
 #else
@@ -422,6 +425,19 @@ namespace UnityGLTF
 			)
 #endif
 				rotation = mat.GetFloat(rotProp);
+
+#if UNITY_2021_1_OR_NEWER
+			if (mat.HasFloat(uvProp))
+#else
+			if (mat.HasProperty(uvProp)
+#if UNITY_2019_1_OR_NEWER
+				&& CheckForPropertyInShader(mat.shader, uvProp, ShaderPropertyType.Float)
+#endif
+			)
+#endif
+				uvChannel = mat.GetFloat(uvProp);
+
+
 
 			if (offset == Vector2.zero && scale == Vector2.one && rotation == 0)
 			{
@@ -520,7 +536,7 @@ namespace UnityGLTF
 				new GLTF.Math.Vector2(offset.x, 1 - offset.y - scale.y),
 				rotation,
 				new GLTF.Math.Vector2(scale.x, scale.y),
-				0 // TODO: support UV channels
+				 (int)uvChannel
 			);
 		}
 
