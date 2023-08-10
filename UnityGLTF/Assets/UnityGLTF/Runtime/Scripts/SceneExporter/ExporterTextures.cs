@@ -331,6 +331,9 @@ namespace UnityGLTF
 				Root = _root
 			};
 
+            if (image.Name == GLTFSceneImporter.EMPTY_TEXTURE_NAME)
+	            image.Name = "";
+
 			_root.Images.Add(image);
 
 			return id;
@@ -639,6 +642,9 @@ namespace UnityGLTF
 			{
 				image.Name = texture.name;
 			}
+
+			if (image.Name == GLTFSceneImporter.EMPTY_TEXTURE_NAME)
+				image.Name = "";
 
 		    var id = new ImageId
 		    {

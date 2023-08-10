@@ -14,6 +14,8 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneImporter
 	{
+		internal const string EMPTY_TEXTURE_NAME = " \0";
+
 		private class TextureData
 		{
 			public Texture Texture = null;
@@ -176,7 +178,7 @@ namespace UnityGLTF
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
 			if (string.IsNullOrEmpty(texture.name))
-				texture.name = "Texture_" + imageCacheIndex.ToString();
+				texture.name = EMPTY_TEXTURE_NAME;
 
 			var newTextureObject = texture;
 
@@ -444,7 +446,7 @@ namespace UnityGLTF
 						image.Name;
 
 					if (string.IsNullOrEmpty(unityTexture.name))
-						unityTexture.name = "Texture_"+textureIndex.ToString();
+						unityTexture.name = EMPTY_TEXTURE_NAME;
 
 					unityTexture.filterMode = desiredFilterMode;
 					unityTexture.wrapModeU = desiredWrapModeS;
