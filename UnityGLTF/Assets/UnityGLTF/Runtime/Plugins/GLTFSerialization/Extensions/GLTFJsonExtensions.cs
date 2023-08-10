@@ -112,6 +112,12 @@ namespace GLTF.Extensions
 				{
 					textureInfo.TexCoord = textureObject[TextureInfo.TEXCOORD].DeserializeAsInt();
 				}
+
+				if (textureObject.ContainsKey("extensions"))
+				{
+					textureInfo.Extensions = GLTFProperty.DeserializeExtensions(root, textureObject["extensions"].CreateReader());
+				}
+
 			}
 
 			return textureInfo;

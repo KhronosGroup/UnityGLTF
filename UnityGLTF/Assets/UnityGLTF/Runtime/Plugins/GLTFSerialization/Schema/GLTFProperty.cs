@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Schema.KHR_lights_punctual;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -182,7 +183,7 @@ namespace GLTF.Schema
 			}
 		}
 
-		private Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
+		internal static Dictionary<string, IExtension> DeserializeExtensions(GLTFRoot root, JsonReader reader)
 		{
 			if (reader.Read() && reader.TokenType != JsonToken.StartObject)
 			{
@@ -214,6 +215,7 @@ namespace GLTF.Schema
 						extensionsCollection.Add(extensionName, _defaultExtensionFactory.Deserialize(root, childAsJProperty));
 					}
 				}
+
 			}
 
 			return extensionsCollection;
