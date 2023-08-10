@@ -140,6 +140,8 @@ namespace UnityGLTF
 
 		public TextureInfo ExportTextureInfo(Texture texture, string textureSlot, TextureExportSettings exportSettings = default)
 		{
+			if (!texture) return null;
+
 			var info = new TextureInfo();
 
 			info.Index = ExportTexture(texture, textureSlot, exportSettings);
