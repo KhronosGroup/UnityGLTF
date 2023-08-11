@@ -247,6 +247,8 @@ namespace UnityGLTF
 
 		public bool IsRunning => _isRunning;
 
+		public bool LoadUnreferencedImagesAndMaterials = false;
+
 		/// <summary>
 		/// Statistics from the scene
 		/// </summary>
@@ -411,6 +413,12 @@ namespace UnityGLTF
 				await MeshOptDecodeBuffer(_gltfRoot);
 #endif
 				await _LoadScene(sceneIndex, showSceneObj, cancellationToken);
+
+				// for Editor import, we also want to load unreferenced assets that wouldn't be loaded at runtime
+
+				if (LoadUnreferencedImagesAndMaterials)
+					await LoadUnreferencedAssetsAsync();
+
 			}
 			catch (Exception ex)
 			{
@@ -434,17 +442,25 @@ namespace UnityGLTF
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
-		public async Task LoadUnreferencedAssetsAsync()
+		private async Task LoadUnreferencedAssetsAsync()
 		{
-			// var extraMaterials = 0;
+			for (int i = 0; i < TextureCache.Length; i++)
+			{
+				if (TextureCache[i] == null)
+				{
+					await CreateNotReferencedTexture(i);
+				}
+			}
+
 			// check which additional materials are in the root, but not yet in the MaterialCache
 			for (var index = 0; index < MaterialCache.Length; index++)
 			{
-				var entry = MaterialCache[index];
-				if (entry != null) continue;
-
-				await LoadMaterialAsync(index);
-				// extraMaterials++;
+				if (_assetCache.MaterialCache[index] == null)
+				{
+					var def = _gltfRoot.Materials[index];
+					await ConstructMaterialImageBuffers(def);
+					await ConstructMaterial(def, index);
+				}
 			}
 		}
 

@@ -48,7 +48,7 @@ namespace UnityGLTF
 #endif
     public class GLTFImporter : ScriptedImporter, IGLTFImportRemap
     {
-	    private const int ImporterVersion = 8;
+	    private const int ImporterVersion = 9;
 
 	    private static void EnsureShadersAreLoaded()
 	    {
@@ -408,42 +408,27 @@ namespace UnityGLTF
                 {
                     // Get materials
                     var map = GetExternalObjectMap();
-                    var materialHash = new HashSet<UnityEngine.Material>();
-                    var materials = renderers.SelectMany(r =>
-                    {
-	                    return r.sharedMaterials.Select(mat =>
-	                    {
-		                    if (mat && materialHash.Add(mat))
-		                    {
-			                    var matName = string.IsNullOrEmpty(mat.name) ? mat.shader.name : mat.name;
-			                    if (matName == mat.shader.name)
-			                    {
-				                    matName = matName.Substring(Mathf.Min(
-					                    matName.LastIndexOf("/", StringComparison.Ordinal) + 1, matName.Length - 1));
-			                    }
+                    var materials = new List<UnityEngine.Material>();
 
-			                    mat.name = matName;
+                    foreach (var entry in importer.MaterialCache)
+                    {
+	                    if (entry != null && entry.UnityMaterialWithVertexColor)
+	                    {
+		                    var mat = entry.UnityMaterialWithVertexColor;
+		                    var matName = string.IsNullOrEmpty(mat.name) ? mat.shader.name : mat.name;
+		                    if (matName == mat.shader.name)
+		                    {
+			                    matName = matName.Substring(Mathf.Min(
+				                    matName.LastIndexOf("/", StringComparison.Ordinal) + 1, matName.Length - 1));
 		                    }
 
-		                    return mat;
-	                    });
-                    }).Distinct().ToList();
-
-                    // TODO check if we really only want to do this for files that don't have scenes/nodes
-                    if (renderers.Length == 0)
-                    {
-	                    // add materials directly from glTF
-	                    foreach (var entry in importer.MaterialCache)
-	                    {
-		                    if (!materials.Contains(entry.UnityMaterial))
-		                    {
-			                    materials.Add(entry.UnityMaterial);
-		                    }
+		                    mat.name = matName;
+		                    materials.Add(mat);
 	                    }
                     }
 
                     // apply material remap
-                    foreach(var r in renderers)
+                    foreach (var r in renderers)
                     {
 	                    // remap materials to external objects
 	                    var m = r.sharedMaterials;
@@ -457,6 +442,10 @@ namespace UnityGLTF
 			                    {
 				                    if (!value) map.Remove(si);
 				                    else m[i] = value as Material;
+			                    }
+			                    else
+			                    {
+				                    map.Add(si, mat);
 			                    }
 		                    }
 	                    }
@@ -514,7 +503,9 @@ namespace UnityGLTF
 						.Select(x => x)
 						.Where(x => x)
 						.ToList();
+
 	                var textures = importer.TextureCache
+		                .Where(x => x != null)
 		                .Select(x => x.Texture)
 		                .Where(x => x)
 		                .Union(invalidTextures).ToList();
@@ -747,6 +738,7 @@ namespace UnityGLTF
 			    GLTFParser.ParseJson(stream, out var gltfRoot);
 			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
 			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
+			    loader.LoadUnreferencedImagesAndMaterials = true;
 			    loader.MaximumLod = _maximumLod;
 			    loader.IsMultithreaded = true;
 
@@ -778,8 +770,6 @@ namespace UnityGLTF
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
 
-			    // for Editor import, we also want to load unreferenced assets that wouldn't be loaded at runtime
-			    AsyncHelpers.RunSync(() => loader.LoadUnreferencedAssetsAsync());
 
 			    importer = loader;
 		    }

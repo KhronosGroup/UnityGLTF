@@ -27,6 +27,12 @@ namespace UnityGLTF
 			public Nullable<int> TexCoordExtra = 0;
 		}
 
+		private async Task CreateNotReferencedTexture(int index)
+		{
+			await ConstructImageBuffer(Root.Textures[index], index);
+			await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true);
+		}
+
 		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo)
 		{
 			var result = new TextureData();
