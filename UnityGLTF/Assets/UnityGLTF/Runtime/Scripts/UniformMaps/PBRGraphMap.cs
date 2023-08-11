@@ -151,8 +151,8 @@ namespace UnityGLTF
 
 	    public int EmissiveXTexCoord
 	    {
-		    get =>  (int)_material.GetFloat("emissiveTextureRotation");
-		    set => _material.SetFloat("emissiveTextureRotation", (float) value);
+		    get =>  (int)_material.GetFloat("emissiveTextureTexCoord");
+		    set => _material.SetFloat("emissiveTextureTexCoord", (float) value);
 	    }
 
 	    public Texture MetallicRoughnessTexture
