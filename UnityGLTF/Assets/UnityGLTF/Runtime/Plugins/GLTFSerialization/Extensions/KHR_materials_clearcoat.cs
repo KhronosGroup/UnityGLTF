@@ -24,36 +24,17 @@ namespace GLTF.Schema
 
 			if (clearcoatFactor != 0)
 				jo.Add(new JProperty(nameof(clearcoatFactor), clearcoatFactor));
-			if (clearcoatTexture != null) {
-				jo.Add(new JProperty(nameof(clearcoatTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, clearcoatTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, clearcoatTexture.TexCoord)
-						)
-					)
-				);
-			}
+			if (clearcoatTexture != null)
+				jo.WriteTexture(nameof(clearcoatTexture), clearcoatTexture);
+
 			if (clearcoatRoughnessFactor != 0)
 				jo.Add(new JProperty(nameof(clearcoatRoughnessFactor), clearcoatRoughnessFactor));
-			if (clearcoatRoughnessTexture != null) {
-				jo.Add(new JProperty(nameof(clearcoatRoughnessTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, clearcoatRoughnessTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, clearcoatRoughnessTexture.TexCoord)
-						)
-					)
-				);
-			}
-			if (clearcoatNormalTexture != null) {
-				jo.Add(new JProperty(nameof(clearcoatNormalTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, clearcoatNormalTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, clearcoatNormalTexture.TexCoord)
-							// new JProperty(NormalTextureInfo.SCALE, clearcoatNormalTexture.Scale) // TODO needs better normal scale export, uses only the base normal right now
-						)
-					)
-				);
-			}
+			if (clearcoatRoughnessTexture != null)
+				jo.WriteTexture(nameof(clearcoatRoughnessTexture), clearcoatRoughnessTexture);
+
+			if (clearcoatNormalTexture != null)
+				jo.WriteTexture(nameof(clearcoatNormalTexture), clearcoatNormalTexture);
+
 			return jProperty;
 		}
 

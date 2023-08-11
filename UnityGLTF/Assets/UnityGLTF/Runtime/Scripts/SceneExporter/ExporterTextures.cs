@@ -149,6 +149,15 @@ namespace UnityGLTF
 			return info;
 		}
 
+		public TextureInfo ExportTextureInfoWithTextureTransform(Material mat, Texture texture, string textureSlot,
+			TextureExportSettings exportSettings = default)
+		{
+			var tInfo = ExportTextureInfo(texture, textureSlot, exportSettings);
+			if (texture != null)
+				ExportTextureTransform(tInfo, mat, textureSlot);
+			return tInfo;
+		}
+
 		public TextureId ExportTexture(Texture textureObj, string textureSlot, TextureExportSettings exportSettings = default)
 		{
 			var uniqueTexture = exportSettings.isValid ?

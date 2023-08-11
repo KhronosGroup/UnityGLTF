@@ -7,6 +7,17 @@ using GLTF.Schema;
 
 namespace GLTF.Extensions
 {
+
+	public static class JsonWriterExtensions
+	{
+		public static void WriteTexture(this JObject token, string name, TextureInfo texture)
+		{
+			var jsonWriter = token.CreateWriter();
+			jsonWriter.WritePropertyName(name);
+			texture.Serialize(jsonWriter);
+		}
+	}
+
 	public static class JsonReaderExtensions
 	{
 		public static List<string> ReadStringList(this JsonReader reader)

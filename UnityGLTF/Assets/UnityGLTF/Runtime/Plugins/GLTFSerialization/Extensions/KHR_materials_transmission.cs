@@ -16,13 +16,8 @@ namespace GLTF.Schema
 			var jo = new JObject();
 			if (transmissionFactor != 0) jo.Add(new JProperty(nameof(transmissionFactor), transmissionFactor));
 			if (transmissionTexture != null)
-				jo.Add(new JProperty(nameof(transmissionTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, transmissionTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, transmissionTexture.TexCoord) // TODO don't write if default
-						)
-					)
-				);
+				jo.WriteTexture(nameof(transmissionTexture), transmissionTexture);
+
 			JProperty jProperty = new JProperty(KHR_materials_transmission_Factory.EXTENSION_NAME, jo);
 			return jProperty;
 		}

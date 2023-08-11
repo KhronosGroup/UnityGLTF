@@ -23,24 +23,12 @@ namespace GLTF.Schema
 
 			if (specularFactor != 1) jo.Add(new JProperty(nameof(specularFactor), specularFactor));
 			if (specularColorFactor != COLOR_DEFAULT) jo.Add(new JProperty(nameof(specularColorFactor), new JArray(specularColorFactor.R, specularColorFactor.G, specularColorFactor.B)));
-			if (specularTexture != null) {
-				jo.Add(new JProperty(nameof(specularTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, specularTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, specularTexture.TexCoord)
-						)
-					)
-				);
-			}
-			if (specularColorTexture != null) {
-				jo.Add(new JProperty(nameof(specularColorTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, specularColorTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, specularColorTexture.TexCoord)
-						)
-					)
-				);
-			}
+			if (specularTexture != null)
+				jo.WriteTexture(nameof(specularTexture), specularTexture);
+
+			if (specularColorTexture != null)
+				jo.WriteTexture(nameof(specularColorTexture), specularColorTexture);
+
 			return jProperty;
 		}
 

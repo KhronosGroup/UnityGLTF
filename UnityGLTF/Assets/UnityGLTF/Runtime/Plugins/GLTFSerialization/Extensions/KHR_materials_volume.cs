@@ -31,15 +31,9 @@ namespace GLTF.Schema
 				jo.Add(new JProperty(nameof(attenuationDistance), attenuationDistance));
 			}
 			if (attenuationColor != COLOR_DEFAULT) jo.Add(new JProperty(nameof(attenuationColor), new JArray(attenuationColor.R, attenuationColor.G, attenuationColor.B)));
-			if (thicknessTexture != null) {
-				jo.Add(new JProperty(nameof(thicknessTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, thicknessTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, thicknessTexture.TexCoord) // TODO don't write if default
-						)
-					)
-				);
-			}
+			if (thicknessTexture != null)
+				jo.WriteTexture(nameof(thicknessTexture), thicknessTexture);
+
 			return jProperty;
 		}
 

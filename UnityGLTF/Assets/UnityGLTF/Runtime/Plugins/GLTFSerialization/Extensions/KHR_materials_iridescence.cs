@@ -27,24 +27,12 @@ namespace GLTF.Schema
 			if (iridescenceIor != 1.3f) jo.Add(new JProperty(nameof(iridescenceIor), iridescenceIor));
 			if (iridescenceThicknessMinimum != 100.0f) jo.Add(new JProperty(nameof(iridescenceThicknessMinimum), iridescenceThicknessMinimum));
 			if (iridescenceThicknessMaximum != 400.0f) jo.Add(new JProperty(nameof(iridescenceThicknessMaximum), iridescenceThicknessMaximum));
-			if (iridescenceTexture != null) {
-				jo.Add(new JProperty(nameof(iridescenceTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, iridescenceTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, iridescenceTexture.TexCoord)
-						)
-					)
-				);
-			}
-			if (iridescenceThicknessTexture != null) {
-				jo.Add(new JProperty(nameof(iridescenceThicknessTexture),
-						new JObject(
-							new JProperty(TextureInfo.INDEX, iridescenceThicknessTexture.Index.Id),
-							new JProperty(TextureInfo.TEXCOORD, iridescenceThicknessTexture.TexCoord)
-						)
-					)
-				);
-			}
+			if (iridescenceTexture != null)
+				jo.WriteTexture(nameof(iridescenceTexture), iridescenceTexture);
+
+			if (iridescenceThicknessTexture != null)
+				jo.WriteTexture(nameof(iridescenceThicknessTexture), iridescenceThicknessTexture);
+
 			return jProperty;
 		}
 

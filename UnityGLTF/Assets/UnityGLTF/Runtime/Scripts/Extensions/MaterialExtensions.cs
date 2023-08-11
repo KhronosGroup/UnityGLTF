@@ -89,7 +89,7 @@ namespace UnityGLTF
 				if (material.HasProperty(transmissionFactor))
 					vt.transmissionFactor = material.GetFloat(transmissionFactor);
 				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
-					vt.transmissionTexture = exporter.ExportTextureInfo(material.GetTexture(transmissionTexture), nameof(transmissionTexture));
+					vt.transmissionTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(transmissionTexture), nameof(transmissionTexture));
 			}
 
 			if (usesVolume)
@@ -110,7 +110,7 @@ namespace UnityGLTF
 				if (material.HasProperty(thicknessFactor))
 					ve.thicknessFactor = material.GetFloat(thicknessFactor);
 				if (material.HasProperty(thicknessTexture) && material.GetTexture(thicknessTexture))
-					ve.thicknessTexture = exporter.ExportTextureInfo(material.GetTexture(thicknessTexture), nameof(thicknessTexture));
+					ve.thicknessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(thicknessTexture), nameof(thicknessTexture));
 				if (material.HasProperty(attenuationDistance))
 					ve.attenuationDistance = material.GetFloat(attenuationDistance);
 				if (material.HasProperty(attenuationColor))
@@ -140,9 +140,9 @@ namespace UnityGLTF
 				if (material.HasProperty(iridescenceThicknessMaximum))
 					vir.iridescenceThicknessMaximum = material.GetFloat(iridescenceThicknessMaximum);
 				if (material.HasProperty(iridescenceTexture) && material.GetTexture(iridescenceTexture))
-					vir.iridescenceTexture = exporter.ExportTextureInfo(material.GetTexture(iridescenceTexture), nameof(iridescenceTexture));
+					vir.iridescenceTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(iridescenceTexture), nameof(iridescenceTexture));
 				if (material.HasProperty(iridescenceThicknessTexture) && material.GetTexture(iridescenceThicknessTexture))
-					vir.iridescenceThicknessTexture = exporter.ExportTextureInfo(material.GetTexture(iridescenceThicknessTexture), nameof(iridescenceThicknessTexture));
+					vir.iridescenceThicknessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(iridescenceThicknessTexture), nameof(iridescenceThicknessTexture));
 			}
 
 			if (material.IsKeywordEnabled("_SPECULAR_ON"))
@@ -164,9 +164,9 @@ namespace UnityGLTF
 				if (material.HasProperty(specularColorFactor))
 					vir.specularColorFactor = material.GetColor(specularColorFactor).ToNumericsColorRaw();
 				if (material.HasProperty(specularTexture) && material.GetTexture(specularTexture))
-					vir.specularTexture = exporter.ExportTextureInfo(material.GetTexture(specularTexture), nameof(specularTexture));
+					vir.specularTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(specularTexture), nameof(specularTexture));
 				if (material.HasProperty(specularColorTexture) && material.GetTexture(specularColorTexture))
-					vir.specularColorTexture = exporter.ExportTextureInfo(material.GetTexture(specularColorTexture), nameof(specularColorTexture));
+					vir.specularColorTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(specularColorTexture), nameof(specularColorTexture));
 			}
 
 			if (material.IsKeywordEnabled("_CLEARCOAT_ON"))
@@ -186,13 +186,13 @@ namespace UnityGLTF
 				if (material.HasProperty(clearcoatFactor))
 					cc.clearcoatFactor = material.GetFloat(clearcoatFactor);
 				if (material.HasProperty(clearcoatTexture))
-					cc.clearcoatTexture = exporter.ExportTextureInfo(material.GetTexture(clearcoatTexture), nameof(clearcoatTexture));
+					cc.clearcoatTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatTexture), nameof(clearcoatTexture));
 				if (material.HasProperty(clearcoatRoughnessFactor))
 					cc.clearcoatRoughnessFactor = material.GetFloat(clearcoatRoughnessFactor);
 				if (material.HasProperty(clearcoatRoughnessTexture))
-					cc.clearcoatRoughnessTexture = exporter.ExportTextureInfo(material.GetTexture(clearcoatRoughnessTexture), nameof(clearcoatRoughnessTexture));
+					cc.clearcoatRoughnessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatRoughnessTexture), nameof(clearcoatRoughnessTexture));
 				if (material.HasProperty(clearcoatNormalTexture))
-					cc.clearcoatNormalTexture = exporter.ExportTextureInfo(material.GetTexture(clearcoatNormalTexture), nameof(clearcoatNormalTexture));
+					cc.clearcoatNormalTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatNormalTexture), nameof(clearcoatNormalTexture));
 
 
 			}
