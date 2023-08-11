@@ -130,6 +130,9 @@ namespace UnityGLTF
 					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 					texture.LoadImage(data, markGpuOnly);
 					break;
+				case "image/exr":
+					Debug.LogError("EXR images are not supported", image);
+					break;
 				case "image/ktx2":
 					string textureName = texture.name;
 #if HAVE_KTX
