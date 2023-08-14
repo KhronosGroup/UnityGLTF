@@ -29,8 +29,14 @@ namespace UnityGLTF
 
 		private async Task CreateNotReferencedTexture(int index)
 		{
-			await ConstructImageBuffer(Root.Textures[index], index);
-			await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true);
+			if (Root.Textures[index].Source != null
+			    && Root.Images.Count > 0
+			    && Root.Images.Count > Root.Textures[index].Source.Id
+			    && string.IsNullOrEmpty(Root.Textures[index].Source.Value.Uri))
+			{
+				await ConstructImageBuffer(Root.Textures[index], index);
+				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true);
+			}
 		}
 
 		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo)
