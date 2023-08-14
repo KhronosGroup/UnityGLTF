@@ -443,10 +443,6 @@ namespace UnityGLTF
 				                    if (!value) map.Remove(si);
 				                    else m[i] = value as Material;
 			                    }
-			                    else
-			                    {
-				                    map.Add(si, mat);
-			                    }
 		                    }
 	                    }
 	                    r.sharedMaterials = m;
