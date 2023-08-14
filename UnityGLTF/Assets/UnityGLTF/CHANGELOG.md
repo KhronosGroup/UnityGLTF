@@ -5,23 +5,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [2.2.0-exp] - 2023-08-14
-- change: add external images to import dependencies (was conflicting with the ktx2 importer)
-- change: import non referenced materials and textures
-- add: log error when trying to load exr textures (not supported)
-- fix: load/save ExtTextureTransform for textures in material extensions
 - add: uv channel support for export
 - add: textures without names on import get a temp. name (will get removed on export again)
 - add clearcoat support (Normals are still not supported in pbrgraph shader)
-- fix: compiler warnings in unity 2023.1
-- change: don't export submeshes with 0 vertices
-- fix: animation interpolation on import
-- add: new options in Gltf loading at runtime: Normals, Tangents, SwapUVs
-- add: meshOpt import support
-- fix: blendshapes with sparse accessors on import 
+- add: log error when trying to load exr textures (not supported)
+- add: per texture transforms in pbrgraph (uv, rotation, scale/offset)
 - add: stream length check in LoadBufferView, to prevent infinite loop when trying to read more data
-- fix: quantize decoding
-- add: per texture transforms in pbrgraph
-- change: RoughRefractionFeature to support 2023.1
+- add: new import options in Gltf loading at runtime: Normals, Tangents, SwapUVs (see ImportOptions)
+- add: meshOpt import support (requires package: com.unity.meshopt.decompress)
+- change: add external images to import dependencies (was conflicting with the ktx2 importer)
+- change: import non referenced materials and textures (Use GLTFSceneImporter.LoadUnreferencedImagesAndMaterials to enable it) - In editor import: default is true, runtime: false
+- change: don't export submeshes with 0 vertices
+- change: RoughRefractionFeature (RenderFeature) to support 2023.1
+- fix: serialize/deserialize ExtTextureTransform for textures in material extensions
+- fix: compiler warnings in unity 2023.1
+- fix: animation interpolation on import (unwanted smoothing of animation curves)
+- fix: blendshapes with sparse accessors on import (results in distorted meshes)
+- fix: quantize decoding (wrong data type conversion)
 
 ## [2.1.2-exp] - 2023-08-03
 - fix: export of humanoid animations where both transforms as well as blendshapes are animated
@@ -30,8 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: export texture transform for metallicRoughness
 
 ## [2.1.0-exp] - 2023-06-19
-- add: draco import support
-- add: KTX2 import support
+- add: draco import support (requires package: com.atteneder.draco)
+- add: KTX2 import support (requires package: com.atteneder.ktx)
 
 ## [2.0.4-exp] - 2023-06-02
 - fix: sampled animations need individual GLTFAnimations since sampling another avatar is not transferrable
