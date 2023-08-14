@@ -149,23 +149,39 @@ namespace UnityGLTF
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
 	        // since it's too common as a file type.
+
+	        var dir = Path.GetDirectoryName(path);
+
+	        void CheckAndAddDependency(string uri)
+	        {
+		        if (!File.Exists(Path.Combine(dir, uri)))
+			        uri = Uri.UnescapeDataString(uri);
+		        if (File.Exists(Path.Combine(dir, uri)))
+					dependencies.Add(Path.Combine(dir, uri));
+		        // TODO check if inside the project/any package, could be an absolute path
+		        else if (File.Exists(uri))
+			        dependencies.Add(uri);
+	        }
+
 	        using (var reader = new StreamReader(path))
 	        {
 		        var gltf = GLTFRoot.Deserialize(reader);
 		        var externalBuffers = gltf?.Buffers?.Where(b => b?.Uri != null && b.Uri.ToLowerInvariant().EndsWith(".bin"));
+		        var externalImages = gltf?.Images?.Where(b => b?.Uri != null);
+
 		        if (externalBuffers != null)
 		        {
-			        var dir = Path.GetDirectoryName(path);
 			        foreach (var buffer in externalBuffers)
 			        {
-				        var uri = buffer.Uri;
-				        if (!File.Exists(Path.Combine(dir, uri)))
-					        uri = Uri.UnescapeDataString(uri);
-				        if (File.Exists(Path.Combine(dir, uri)))
-							dependencies.Add(Path.Combine(dir, uri));
-				        // TODO check if inside the project/any package, could be an absolute path
-				        else if (File.Exists(uri))
-					        dependencies.Add(uri);
+				        CheckAndAddDependency(buffer.Uri);
+			        }
+		        }
+
+		        if (externalImages != null)
+		        {
+			        foreach (var image in externalImages)
+			        {
+				        CheckAndAddDependency(image.Uri);
 			        }
 		        }
 	        }
