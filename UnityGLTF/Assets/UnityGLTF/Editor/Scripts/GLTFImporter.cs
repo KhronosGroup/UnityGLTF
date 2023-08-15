@@ -425,6 +425,11 @@ namespace UnityGLTF
                     // Get materials
                     var map = GetExternalObjectMap();
                     var materials = new List<UnityEngine.Material>();
+                    if (importer._defaultLoadedMaterial != null)
+                    {
+	                    importer._defaultLoadedMaterial.UnityMaterialWithVertexColor.name = "Default";
+						materials.Add(importer._defaultLoadedMaterial.UnityMaterialWithVertexColor);
+                    }
 
                     foreach (var entry in importer.MaterialCache)
                     {

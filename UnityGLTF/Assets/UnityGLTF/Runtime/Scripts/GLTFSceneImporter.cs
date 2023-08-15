@@ -261,7 +261,7 @@ namespace UnityGLTF
 
 		protected GameObject _lastLoadedScene;
 		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();
-		protected MaterialCacheData _defaultLoadedMaterial = null;
+		internal MaterialCacheData _defaultLoadedMaterial = null;
 
 		protected string _gltfFileName;
 		protected GLBStream _gltfStream;
