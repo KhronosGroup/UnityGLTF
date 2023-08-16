@@ -434,6 +434,7 @@ namespace UnityGLTF
 			// for KHR_animation_pointer
 			public void AddPropertyCurves(Object animatedObject, AnimationCurve curve, EditorCurveBinding binding)
 			{
+				// Debug.Log("Adding property curve " + binding.propertyName + " to " + animatedObject);
 				if (propertyCurves == null) propertyCurves = new Dictionary<string, PropertyCurve>();
 				var memberName = binding.propertyName;
 				if (!memberName.Contains("."))
@@ -941,6 +942,8 @@ namespace UnityGLTF
 			convertClipToGLTFAnimationMarker.End();
 		}
 
+		private static readonly string[] _humanoidMotionPropertyNames = new string[] { "x", "y", "z", "w" };
+		private static string[] _humanoidMuscleNames = null;
 		private void CollectClipCurves(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 #if UNITY_EDITOR
@@ -961,11 +964,35 @@ namespace UnityGLTF
 				var containsRotation = binding.propertyName.ToLowerInvariant().Contains("localrotation");
 				var containsEuler = binding.propertyName.ToLowerInvariant().Contains("localeuler");
 
-				// If the animation was already collected by sampling the transform we don't care for any transform data anymore
 				if (didSampleCurves)
 				{
-					if(containsPosition || containsScale || containsRotation || containsEuler)
+					// If the animation was already collected by sampling the transform we don't care for any transform data anymore, otherwise we have it twice
+					if (containsPosition || containsScale || containsRotation || containsEuler)
 						continue;
+
+					// There's also a bunch of properties from humanoid animation that we want to skip if this is a humanoid animation
+					if (clip.isHumanMotion)
+					{
+						var parts = binding.propertyName.Split('.');
+
+						// IK Targets and Root Motion
+						if (parts.Length == 2)
+						{
+							var extraNames = new[] { "MotionT", "MotionQ", "RootT", "RootQ", "LeftFootT", "LeftFootQ", "RightFootT", "RightFootQ", "LeftHandT", "LeftHandQ", "RightHandT", "RightHandQ" };
+							if (extraNames.Contains(parts[0]) && _humanoidMotionPropertyNames.Contains(parts[1]))
+								continue;
+						}
+						// Muscle Animation
+						if (_humanoidMuscleNames == null)
+						{
+							var list = new MuscleHandle[MuscleHandle.muscleHandleCount];
+							MuscleHandle.GetMuscleHandles(list);
+							_humanoidMuscleNames = list.Select(x => x.name).ToArray();
+						}
+
+						if (_humanoidMuscleNames.Contains(binding.propertyName))
+							continue;
+					}
 				}
 
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
