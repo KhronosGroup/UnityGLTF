@@ -244,10 +244,12 @@ namespace UnityGLTF
 			if (jobHandlesList.Count > 0)
 			{
 				JobHandle meshoptJobHandle;
-				using (var jobHandles = new NativeArray<JobHandle>(jobHandlesList.ToArray(), Allocator.TempJob)) {
+				using (var jobHandles = new NativeArray<JobHandle>(jobHandlesList.ToArray(), Allocator.TempJob))
+				{
 					 meshoptJobHandle = JobHandle.CombineDependencies(jobHandles);
 				}
-				while (!meshoptJobHandle.IsCompleted) {
+				while (!meshoptJobHandle.IsCompleted)
+				{
 					await Task.Yield();
 				}
 				meshoptJobHandle.Complete();
@@ -258,13 +260,15 @@ namespace UnityGLTF
 				var bufferView = root.BufferViews[m.Key];
 				var bufferData = await GetBufferData(bufferView.Buffer);
 				bufferData.Stream.Seek(bufferView.ByteOffset, System.IO.SeekOrigin.Begin);
-				bufferData.Stream.Write(m.Value.ToArray());
+				var bufferContent = m.Value.ToArray();
+				bufferData.Stream.Write(bufferContent, 0, bufferContent.Length);
 				m.Value.Dispose();
 			}
 
 			foreach (var m in meshOptInputBuffers)
+			{
 				m.Dispose();
-
+			}
 
 			meshOptReturnValues.Dispose();
 		}
@@ -333,20 +337,18 @@ namespace UnityGLTF
 			foreach (var m in subMeshes)
 			{
 #if UNITY_EDITOR
-				GameObject.DestroyImmediate(m);
+				UnityEngine.Object.DestroyImmediate(m);
 #else
-				GameObject.Destroy(m);
+				UnityEngine.Object.Destroy(m);
 #endif
 			}
 
 			//Mesh.ApplyAndDisposeWritableMeshData(meshes,mesh);
 			foreach (var d in decodeResults)
 			{
-				if (d.boneWeightData != null)
-				{
-					d.boneWeightData.ApplyOnMesh(mesh);
-					d.boneWeightData.Dispose();
-				}
+				if (d.boneWeightData == null) continue;
+				d.boneWeightData.ApplyOnMesh(mesh);
+				d.boneWeightData.Dispose();
 			}
 
 			await YieldOnTimeoutAndThrowOnLowMemory();
@@ -360,7 +362,6 @@ namespace UnityGLTF
 			var meshCache = _assetCache.MeshCache[meshIndex];
 
 			unityMeshData.BoneWeights = mesh.boneWeights;
-			var b = mesh.bindposes;
 
 			for (int i = 0; i < gltfMesh.Primitives.Count; i++)
 			{
@@ -446,10 +447,9 @@ namespace UnityGLTF
 		/// <summary>
 		/// Populate a UnityEngine.Mesh from preloaded and preprocessed buffer data
 		/// </summary>
-		/// <param name="meshConstructionData"></param>
-		/// <param name="meshId"></param>
-		/// <param name="primitiveIndex"></param>
 		/// <param name="unityMeshData"></param>
+		/// <param name="meshIndex"></param>
+		/// <param name="meshName"></param>
 		/// <returns></returns>
 		protected async Task ConstructUnityMesh(UnityMeshData unityMeshData, int meshIndex, string meshName)
 		{
