@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace UnityGLTF.Loader
 {
@@ -13,14 +14,59 @@ namespace UnityGLTF.Loader
 			_rootDirectoryPath = rootDirectoryPath;
 		}
 
+		public static string CombinePaths(string basePath, string relativePath)
+		{
+			basePath = basePath.Replace("\\", "/");
+			relativePath = relativePath.Replace("\\", "/");
+
+			string[] baseParts = basePath.Split('/');
+			string[] relativeParts = relativePath.Split('/');
+			if (relativeParts.Length == 0)
+			{
+				return Path.Combine(basePath, relativePath);
+			}
+
+			int baseIndex = baseParts.Length - 1;
+			int relativeIndex = 0;
+
+			while (relativeIndex < relativeParts.Length)
+			{
+				if (relativeParts[relativeIndex] == "..")
+				{
+					if (baseIndex > 0)
+					{
+						baseIndex--;
+					}
+					else
+					{
+						relativeIndex++;
+						return string.Join("/", relativeParts, relativeIndex, relativeParts.Length - relativeIndex);
+					}
+				}
+				else
+				{
+					baseIndex++;
+					if (baseIndex > baseParts.Length - 1)
+					{
+						Array.Resize(ref baseParts, baseParts.Length + 1);
+					}
+					baseParts[baseIndex] = relativeParts[relativeIndex];
+				}
+
+				relativeIndex++;
+			}
+
+			return string.Join("/", baseParts, 0, Mathf.Min(  baseParts.Length,baseIndex+1));
+		}
 		public Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
 #if UNITY_EDITOR
-			string path = Path.Combine(_rootDirectoryPath, relativeFilePath).Replace("\\", "/");
+			string path = CombinePaths(_rootDirectoryPath, relativeFilePath);
 
 			if (!File.Exists(path))
 			{
-				path = Path.Combine(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");
+				// Manual combine path with relativeFilePath
+				path = CombinePaths(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");
 			}
 
 			if (UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(UnityEngine.Texture2D))

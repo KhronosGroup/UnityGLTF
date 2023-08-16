@@ -154,10 +154,11 @@ namespace UnityGLTF
 
 	        void CheckAndAddDependency(string uri)
 	        {
+		        var combinedPath = FileLoader.CombinePaths(dir, uri);
 		        if (!File.Exists(Path.Combine(dir, uri)))
 			        uri = Uri.UnescapeDataString(uri);
-		        if (File.Exists(Path.Combine(dir, uri)))
-					dependencies.Add(Path.Combine(dir, uri));
+		        if (File.Exists(combinedPath))
+					dependencies.Add(combinedPath);
 		        // TODO check if inside the project/any package, could be an absolute path
 		        else if (File.Exists(uri))
 			        dependencies.Add(uri);
