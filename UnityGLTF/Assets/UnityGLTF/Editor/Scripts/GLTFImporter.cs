@@ -186,7 +186,7 @@ namespace UnityGLTF
 			        }
 		        }
 	        }
-	        return dependencies.ToArray();
+	        return dependencies.Distinct().ToArray();
         }
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -526,7 +526,7 @@ namespace UnityGLTF
 		                .Where(x => x != null)
 		                .Select(x => x.Texture)
 		                .Where(x => x)
-		                .Union(invalidTextures).ToList();
+		                .Union(invalidTextures).Distinct().ToList();
 
 	                // if we're not importing materials or textures, we can clear the lists
 	                // so that no assets are actually created.
