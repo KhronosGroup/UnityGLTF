@@ -145,13 +145,13 @@ namespace UnityGLTF
 			var importedMaterials = serializedObject.FindProperty("m_Materials");
 			if (importedMaterials.arraySize > 0)
 			{
-				RemappingUI<Material>(t, importedMaterials, "Materials");
+				RemappingUI<Material>(t, importedMaterials, "Materials", ".mat");
 			}
 
 			var importedTextures = serializedObject.FindProperty("m_Textures");
 			if (importedTextures.arraySize > 0)
 			{
-				RemappingUI<Texture>(t, importedTextures, "Textures");
+				RemappingUI<Texture>(t, importedTextures, "Textures", ".asset");
 			}
 
 			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));
@@ -184,7 +184,7 @@ namespace UnityGLTF
 			TextureWarningsGUI(t);
 		}
 
-		private void RemappingUI<T>(GLTFImporter t, SerializedProperty importedData, string subDirectoryName) where T: UnityEngine.Object
+		private void RemappingUI<T>(GLTFImporter t, SerializedProperty importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
 		{
 			// extract and remap materials
 			if (importedData != null && importedData.serializedObject != null)
@@ -202,7 +202,7 @@ namespace UnityGLTF
 					var dirName = Path.GetDirectoryName(t.assetPath) + "/" + subDirectoryName;
 					if (!Directory.Exists(dirName))
 						Directory.CreateDirectory(dirName);
-					var destinationPath = dirName + "/" + filename + ".mat";
+					var destinationPath = dirName + "/" + filename + fileExtension;
 					var assetPath = AssetDatabase.GetAssetPath(subAsset);
 
 					var clone = Instantiate(subAsset);
