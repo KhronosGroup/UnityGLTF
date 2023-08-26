@@ -26,7 +26,13 @@ ScriptedImporter:
   _useSceneNameIdentifier: 1
   optimizeGameObjects: 0
   materials:
-  - {instanceID: 0}
+  - {fileID: 3297912226980038121, guid: 941ea53b9d7aafa4886b8bdd2c0f2963, type: 3}
+  textures: []
+  hasSceneData: 1
+  hasAnimationData: 1
+  hasMaterialData: 1
+  hasTextureData: 0
+  animations: []
   _extensions: []
   _textures: []
   _mainAssetIdentifier: scenes/SimpleAnimation

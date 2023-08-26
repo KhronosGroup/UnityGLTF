@@ -1,5 +1,8 @@
-﻿// todo blgross port to base layer
-#if false
+﻿using System.IO;
+using System.Text;
+using GLTF;
+using NUnit.Framework;
+
 public class GLTFRootTest {
 
 	[Test]
@@ -13,9 +16,9 @@ public class GLTFRootTest {
 			}
 		";
 
-		var testRoot = GLTFParser.ParseString(testStr);
+		var stream = new MemoryStream(Encoding.UTF8.GetBytes(testStr));
+		GLTFParser.ParseJson(stream, out var testRoot);
 
 		Assert.AreEqual(testRoot.Asset.Version, "2.0");
 	}
 }
-#endif
