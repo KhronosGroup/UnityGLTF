@@ -940,13 +940,13 @@ namespace UnityGLTF
 			    buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
 				//TODO: check for fallback URI or Buffer... ?
-				throw new Exception("glTF file uses EXT_meshopt_compression, but MeshOptimizer is not enabled in this build. Please add MeshOptimizer in your Package Manager!");
+				throw new NotSupportedException("Can't import model because it uses the EXT_meshopt_compression extension. Please add the package \"com.unity.meshopt.decompress\" to your project to import this file.");
 			}
 #endif
 
 			if (buffer.Uri == null)
 			{
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "Error: _assetCache.BufferCache[bufferIndex] != null. Please report a bug.");
 				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 
 				progressStatus.BuffersLoaded++;

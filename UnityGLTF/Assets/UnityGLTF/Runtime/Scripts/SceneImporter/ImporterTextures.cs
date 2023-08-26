@@ -143,7 +143,7 @@ namespace UnityGLTF
 					texture.LoadImage(data, markGpuOnly);
 					break;
 				case "image/exr":
-					Debug.Log(LogType.Warning, "EXR images are not supported. The texture " + texture.name + " won't be imported. GLTF Filename: "+_gltfFileName);
+					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. glTF filename: {_gltfFileName}");
 					break;
 				case "image/ktx2":
 					string textureName = texture.name;
@@ -164,7 +164,7 @@ namespace UnityGLTF
 
 					ktxTexture.Dispose();
 #else
-					Debug.Log(LogType.Warning, "The com.atteneder.ktx package v1.3+ is required to load KTX2 textures! The texture " + texture.name + " won't be imported. GLTF Filename: "+_gltfFileName);
+					Debug.Log(LogType.Warning, $"Can't import texture {image.Name} from {_gltfFileName} because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
 					await Task.CompletedTask;
 					texture = null;
 #endif
