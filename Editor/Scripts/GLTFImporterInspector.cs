@@ -36,7 +36,7 @@ namespace UnityGLTF
 			var m_HasMaterialData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasMaterialData));
 			var m_HasTextureData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasTextureData));
 			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
-				AddTab(new GltfAssetImporterTab(this, "Materials and Textures", MaterialInspectorGUI));
+				AddTab(new GltfAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
 			AddTab(new GltfAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
 
@@ -101,6 +101,14 @@ namespace UnityGLTF
 			TextureWarningsGUI(t);
 		}
 
+		private const string TextureRemappingKey = nameof(GLTFImporterInspector) + "_TextureRemapping";
+		private bool EnableTextureRemapping
+		{
+			get => SessionState.GetBool(TextureRemappingKey + target.GetInstanceID(), false);
+			set => SessionState.SetBool(TextureRemappingKey + target.GetInstanceID(), value);
+		}
+		private static readonly GUIContent RemapTexturesToggleContent = new GUIContent("Experimental", "(experimental) Remap textures inside the glTF to textures that are already in your project.");
+
 		private void AnimationInspectorGUI()
 		{
 			var t = target as GLTFImporter;
@@ -148,8 +156,13 @@ namespace UnityGLTF
 				RemappingUI<Material>(t, importedMaterials, "Materials", ".mat");
 			}
 
+			// There's a bunch of known edge cases with texture remapping that can go wrong,
+			// So it's disabled for now.
+			var current = EnableTextureRemapping;
+			var val = EditorGUILayout.Toggle(RemapTexturesToggleContent, EnableTextureRemapping);
+			if (val != current) EnableTextureRemapping = val;
 			var importedTextures = serializedObject.FindProperty("m_Textures");
-			if (importedTextures.arraySize > 0)
+			if (EnableTextureRemapping && importedTextures.arraySize > 0)
 			{
 				RemappingUI<Texture>(t, importedTextures, "Textures", ".asset");
 			}
