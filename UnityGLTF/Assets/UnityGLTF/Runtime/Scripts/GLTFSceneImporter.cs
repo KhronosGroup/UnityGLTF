@@ -354,6 +354,17 @@ namespace UnityGLTF
 				Statistics = new ImportStatistics();
 				progress?.Report(progressStatus);
 
+#if UNITY_EDITOR
+				// When loading from a buffer, this is not set; sanitizing that here
+				// so we can log proper file names later on
+				if (_gltfFileName == null)
+				{
+					var importSource = _options?.ImportContext?.AssetContext?.assetPath;
+					if (importSource != null)
+						_gltfFileName = importSource;
+				}
+#endif
+
 				if (_gltfRoot == null)
 				{
 					foreach (var plugin in Context.Plugins)
