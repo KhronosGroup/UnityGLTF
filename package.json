@@ -14,13 +14,6 @@
     "loader"
   ],
   "author": "Khronos Group",
-  "samples": [
-    {
-      "displayName": "Sample Scenes",
-      "description": "Various scenes showing GLTF functionality.",
-      "path": "Samples~/Sample Scenes"
-    }
-  ],
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "2.0.0",
     "com.unity.modules.imageconversion": "1.0.0",
