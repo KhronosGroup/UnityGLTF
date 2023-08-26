@@ -316,41 +316,6 @@ namespace UnityGLTF
 			}
 		}
 
-		/// <summary>
-		/// Creates a GLTFSceneBuilder object which will be able to construct a scene based off a url
-		/// </summary>
-		/// <param name="gltfFileName">glTF file relative to data loader path</param>
-		/// <param name="externalDataLoader">Loader to load external data references</param>
-		/// <param name="asyncCoroutineHelper">Helper to load coroutines on a seperate thread</param>
-		[Obsolete("Please switch to GLTFSceneImporter(string gltfFileName, ImportOptions options).  This constructor is deprecated and will be removed in a future release.")]
-		public GLTFSceneImporter(string gltfFileName, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
-			: this(externalDataLoader, asyncCoroutineHelper)
-		{
-			_gltfFileName = gltfFileName;
-		}
-
-		[Obsolete("Please switch to GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options).  This constructor is deprecated and will be removed in a future release.")]
-		public GLTFSceneImporter(GLTFRoot rootNode, ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper, Stream gltfStream = null)
-			: this(externalDataLoader, asyncCoroutineHelper)
-		{
-			_gltfRoot = rootNode;
-
-			if (gltfStream != null)
-			{
-				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
-			}
-		}
-
-		[Obsolete("Only called by obsolete public constructors.  This will be removed when those obsolete constructors are removed.")]
-		private GLTFSceneImporter(ILoader externalDataLoader, AsyncCoroutineHelper asyncCoroutineHelper)
-		{
-			_options = new ImportOptions
-			{
-				DataLoader = LegacyLoaderWrapper.Wrap(externalDataLoader),
-				AsyncCoroutineHelper = asyncCoroutineHelper
-			};
-		}
-
 		public void Dispose()
 		{
 			Cleanup();
