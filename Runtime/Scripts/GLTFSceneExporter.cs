@@ -836,7 +836,19 @@ namespace UnityGLTF
 
 		private bool ShouldExportTransform(Transform transform)
 		{
-			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf) return false;
+			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf)
+			{
+#if UNITY_EDITOR
+				// check if this is a root prefab asset - then we want to export it even if it's disabled.
+				if (UnityEditor.AssetDatabase.Contains(transform))
+				{
+					var go = transform.gameObject;
+					if (UnityEditor.AssetDatabase.LoadMainAssetAtPath(UnityEditor.AssetDatabase.GetAssetPath(go)) == go)
+						return true;
+				}
+#endif
+				return false;
+			}
 			if (settings.UseMainCameraVisibility && (_exportLayerMask >= 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
 			if (transform.CompareTag("EditorOnly")) return false;
 			return true;
@@ -869,7 +881,7 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
-				// if(!ShouldExportTransform(transform)) continue;
+				if (!ShouldExportTransform(transform)) continue;
 				scene.Nodes.Add(ExportNode(transform));
 			}
 
@@ -992,7 +1004,7 @@ namespace UnityGLTF
 				parentOfChilds.Children = new List<NodeId>(nonPrimitives.Length);
 				foreach (var child in nonPrimitives)
 				{
-					if(!ShouldExportTransform(child.transform)) continue;
+					if (!ShouldExportTransform(child.transform)) continue;
 					parentOfChilds.Children.Add(ExportNode(child.transform));
 				}
 			}
@@ -1027,13 +1039,14 @@ namespace UnityGLTF
 			var nonPrims = new List<GameObject>(childCount);
 
 			// add another primitive if the root object also has a mesh
-			if (transform.gameObject.activeSelf || settings.ExportDisabledGameObjects)
+			if (ShouldExportTransform(transform))
 			{
 				if (ContainsValidRenderer(transform.gameObject, settings.ExportDisabledGameObjects))
 				{
 					prims.Add(transform.gameObject);
 				}
 			}
+			
 			for (var i = 0; i < childCount; i++)
 			{
 				var go = transform.GetChild(i).gameObject;
