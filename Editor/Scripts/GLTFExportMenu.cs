@@ -131,4 +131,26 @@ namespace UnityGLTF
 			}
 		}
 	}
+
+	internal static class GLTFCreateMenu
+	{
+		[MenuItem("Assets/Create/UnityGLTF/Material", false)]
+		private static void CreateNewAsset()
+		{
+			ProjectWindowUtil.CreateAssetWithContent("New glTF Material.gltf", @"{
+	""asset"": {
+		""generator"": ""UnityGLTF"",
+		""version"": ""2.0""
+	},
+	""materials"": [
+		{
+			""name"": ""Material"",
+			""pbrMetallicRoughness"": {
+				""metallicFactor"": 0.0
+			}
+		}
+	]
+}");
+		}
+	}
 }

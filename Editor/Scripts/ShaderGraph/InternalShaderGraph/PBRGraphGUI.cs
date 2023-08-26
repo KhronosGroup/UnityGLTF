@@ -65,9 +65,12 @@ namespace UnityGLTF
 			// Force GUI changes to be allowed, despite being in an immutable context.
 			// We can store the changes back to .glTF when saving.
 			if (immutableMaterialCanBeModified)
+			{
 				GUI.enabled = true;
+				EditorGUILayout.HelpBox("(Experimental) This material is part of a glTF asset. Changes will be stored back to the .glTF file when saving.", MessageType.Warning);
+			}
 
-				// Need to set these via reflection...
+			// Need to set these via reflection...
 			// m_MaterialEditor = materialEditor;
 			// m_Properties = properties;
 			if (m_MaterialEditor == null) m_MaterialEditor = typeof(BuiltInBaseShaderGUI).GetField(nameof(m_MaterialEditor), BindingFlags.Instance | BindingFlags.NonPublic);
