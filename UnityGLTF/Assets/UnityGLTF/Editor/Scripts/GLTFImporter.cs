@@ -166,24 +166,32 @@ namespace UnityGLTF
 
 	        using (var reader = new StreamReader(path))
 	        {
-		        var gltf = GLTFRoot.Deserialize(reader);
-		        var externalBuffers = gltf?.Buffers?.Where(b => b?.Uri != null && b.Uri.ToLowerInvariant().EndsWith(".bin"));
-		        var externalImages = gltf?.Images?.Where(b => b?.Uri != null);
-
-		        if (externalBuffers != null)
+		        try
 		        {
-			        foreach (var buffer in externalBuffers)
+			        GLTFParser.ParseJson(reader.BaseStream, out var gltf);
+			        var externalBuffers = gltf?.Buffers?.Where(b => b?.Uri != null && b.Uri.ToLowerInvariant().EndsWith(".bin"));
+			        var externalImages = gltf?.Images?.Where(b => b?.Uri != null);
+
+			        if (externalBuffers != null)
 			        {
-				        CheckAndAddDependency(buffer.Uri);
+				        foreach (var buffer in externalBuffers)
+				        {
+					        CheckAndAddDependency(buffer.Uri);
+				        }
+			        }
+
+			        if (externalImages != null)
+			        {
+				        foreach (var image in externalImages)
+				        {
+					        CheckAndAddDependency(image.Uri);
+				        }
 			        }
 		        }
-
-		        if (externalImages != null)
+		        catch (Exception e)
 		        {
-			        foreach (var image in externalImages)
-			        {
-				        CheckAndAddDependency(image.Uri);
-			        }
+			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e);
+			        throw;
 		        }
 	        }
 	        return dependencies.Distinct().ToArray();
