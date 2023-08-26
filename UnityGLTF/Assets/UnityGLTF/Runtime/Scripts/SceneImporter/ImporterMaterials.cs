@@ -18,13 +18,20 @@ namespace UnityGLTF
 
 			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName) && def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
 			{
+				Debug.Log(LogType.Warning, $"KHR_materials_pbrSpecularGlossiness has been deprecated, material {def.Name} may not look correct. Use `gltf-transform metalrough` or other tools to convert to PBR.");
+
 				if (!string.IsNullOrEmpty(CustomShaderName))
 				{
 					mapper = new SpecGlossMap(CustomShaderName, MaximumLod);
 				}
 				else
 				{
+#if UNITY_2021_3_OR_NEWER
+					// This isn't fully supported. KHR_materials_pbrSpecularGlossiness is deprecated though, so we're warning here.
+					mapper = new PBRGraphMap();
+#else
 					mapper = new SpecGlossMap(MaximumLod);
+#endif
 				}
 			}
 			else if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(unlitExtName) && def.Extensions != null && def.Extensions.ContainsKey(unlitExtName))
