@@ -85,7 +85,7 @@ namespace UnityGLTF
 			GLTFSceneImporter sceneImporter = null;
 			try
 			{
-                Factory = Factory ?? ScriptableObject.CreateInstance<DefaultImporterFactory>();
+				if (!Factory) Factory = ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
                 // UseStream is currently not supported...
                 string fullPath;

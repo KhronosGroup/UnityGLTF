@@ -164,7 +164,7 @@ namespace UnityGLTF
 
 					ktxTexture.Dispose();
 #else
-					Debug.Log(LogType.Warning, $"Can't import texture {image.Name} from {_gltfFileName} because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
+					Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
 					await Task.CompletedTask;
 					texture = null;
 #endif
@@ -286,7 +286,7 @@ namespace UnityGLTF
 		{
 			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
 			{
-				return (texture.Extensions[KHR_texture_basisu.EXTENSION_NAME] as KHR_texture_basisu).source.Id;
+				return ((KHR_texture_basisu)texture.Extensions[KHR_texture_basisu.EXTENSION_NAME]).source.Id;
 			}
 			return texture.Source?.Id ?? 0;
 		}
