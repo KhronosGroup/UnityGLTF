@@ -174,10 +174,14 @@ namespace UnityGLTF
 					break;
 			}
 
-			texture.wrapMode = TextureWrapMode.Repeat;
-			texture.wrapModeV = TextureWrapMode.Repeat;
-			texture.wrapModeU = TextureWrapMode.Repeat;
-			texture.filterMode = FilterMode.Trilinear;
+			// assign default values
+			if (texture)
+			{
+				texture.wrapMode = TextureWrapMode.Repeat;
+				texture.wrapModeV = TextureWrapMode.Repeat;
+				texture.wrapModeU = TextureWrapMode.Repeat;
+				texture.filterMode = FilterMode.Bilinear;
+			}
 
 			await Task.CompletedTask;
 			return texture;
