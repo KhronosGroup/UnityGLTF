@@ -1,8 +1,2 @@
 Tests/**
 Tests.meta
-Runtime\Plugins\GLTFSerialization\bin~\**
-Runtime\Plugins\GLTFSerialization\obj~\**
-Runtime\Plugins\GLTFSerialization\GLTFSerialization.csproj
-Runtime\Plugins\GLTFSerialization\GLTFSerialization.csproj.meta
-Runtime\Plugins\GLTFSerialization\packages.config
-Runtime\Plugins\GLTFSerialization\packages.config.meta
