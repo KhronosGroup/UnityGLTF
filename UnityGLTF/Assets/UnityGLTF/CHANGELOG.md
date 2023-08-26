@@ -4,11 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.2] - 2023-08-25
-- fix: removed smoothness value from pbr shader
+## [2.2.1-exp] - 2023-08-25
+- fix: removed incorrect smoothness property from PBRGraph
 - fix: wrong file extension when extracting textures (was ".mat", now ".asset")
-- add: default gltf sampling settings on loaded textures (in case there is no sampling information in the gltf)
-- add: gltf filename log output, when a texture can't be imported
+- fix: ensure default glTF sampling settings on loaded textures (in case there is no sampling information in the gltf)
+- change: warn when importing legacy KHR_materials_pbrSpecularGlossiness extension
+- change: remove obsolete GLTFSceneImporter constructors
+- add: gltf filename log output when textures or extensions can't be imported
 
 ## [2.2.0-exp] - 2023-08-16
 - fix: serialize/deserialize ExtTextureTransform for textures in material extensions
