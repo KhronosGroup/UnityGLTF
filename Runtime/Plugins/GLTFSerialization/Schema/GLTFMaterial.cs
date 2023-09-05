@@ -219,7 +219,8 @@ namespace GLTF.Schema
 			if (AlphaCutoff != 0.5)
 			{
 				writer.WritePropertyName("alphaCutoff");
-				writer.WriteValue(AlphaCutoff);
+				var sanitizedCutoff = AlphaCutoff < 0.0 ? 0.0 : AlphaCutoff > 1.0 ? 1.0 : AlphaCutoff;
+				writer.WriteValue(sanitizedCutoff);
 			}
 
 			if (DoubleSided)
