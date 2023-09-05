@@ -163,11 +163,24 @@ namespace UnityGLTF
 
 			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture"))
 			{
+				// In Gamma space, some materials treat their emissive color inputs differently than in Linear space.
+				// This is super confusing when converting materials, but we also need to handle it correctly here.
+				var isUnityMaterialWithWeirdColorspaceHandling = QualitySettings.activeColorSpace == ColorSpace.Gamma &&
+					(materialObj.shader.name == "Standard" || materialObj.shader.name == "Standard (Specular setup)" ||
+					materialObj.shader.name == "Standard (Roughness setup)" ||
+					materialObj.shader.name == "Universal Render Pipeline/Lit" ||
+					materialObj.shader.name == "Universal Render Pipeline/Simple Lit" ||
+					materialObj.shader.name == "Universal Render Pipeline/Unlit");
+				                                             
 				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor"))
 				{
 					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") : materialObj.GetColor("_EmissiveFactor");
 					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
-					material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
+					
+					if (isUnityMaterialWithWeirdColorspaceHandling)
+						material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
+					else
+						material.EmissiveFactor = emissiveAmount.ToNumericsColorGamma();
 
 					if(maxEmissiveAmount > 1)
 					{
