@@ -1,6 +1,7 @@
 ﻿using GLTF.Schema;
 using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
+using UnityGLTF.Extensions;
 using LightType = UnityEngine.LightType;
 
 namespace UnityGLTF
@@ -35,7 +36,7 @@ namespace UnityGLTF
 
 				newLight.name = light.Name;
 				newLight.intensity = (float) light.Intensity / Mathf.PI;
-				newLight.color = new Color(light.Color.R, light.Color.G, light.Color.B, light.Color.A);
+				newLight.color = light.Color.ToUnityColorRaw();
 				newLight.range = (float) light.Range;
 				if (light.Spot != null)
 				{
