@@ -24,6 +24,7 @@ namespace UnityGLTF
 				switch (light.Type)
 				{
 					case GLTF.Schema.KHR_lights_punctual.LightType.spot:
+						newLight.intensity = (float) light.Intensity / Mathf.PI;
 						newLight.type = LightType.Spot;
 						break;
 					case GLTF.Schema.KHR_lights_punctual.LightType.directional:
@@ -31,11 +32,11 @@ namespace UnityGLTF
 						break;
 					case GLTF.Schema.KHR_lights_punctual.LightType.point:
 						newLight.type = LightType.Point;
+						newLight.intensity = (float) light.Intensity * Mathf.PI;
 						break;
 				}
 
 				newLight.name = light.Name;
-				newLight.intensity = (float) light.Intensity / Mathf.PI;
 				newLight.color = light.Color.ToUnityColorRaw();
 				newLight.range = (float) light.Range;
 				if (light.Spot != null)
