@@ -2,6 +2,8 @@
 using GLTF.Schema;
 using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityGLTF.Extensions;
 using LightType = UnityEngine.LightType;
 
 namespace UnityGLTF
@@ -21,9 +23,12 @@ namespace UnityGLTF
                 light.Name = unityLight.name;
 
                 light.type = unityLight.type.ToString().ToLower();
-                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+                light.color = unityLight.color.ToNumericsColorLinear();
                 light.range = unityLight.range;
-                light.intensity = unityLight.intensity * Mathf.PI;
+                light.intensity = GraphicsSettings.lightsUseLinearIntensity ? 
+                    (unityLight.intensity * Mathf.PI) :
+                    // heuristically derived. Not sure why this matches expected light values / what Unity does when lightsUseLinearIntensity is false
+                    (unityLight.intensity * Mathf.PI) * (unityLight.intensity * Mathf.PI) / 4 * Mathf.Sqrt(2);
             }
             else if (unityLight.type == LightType.Directional)
             {
@@ -31,8 +36,11 @@ namespace UnityGLTF
                 light.Name = unityLight.name;
 
                 light.type = unityLight.type.ToString().ToLower();
-                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+                light.color = unityLight.color.ToNumericsColorLinear();
                 light.intensity = unityLight.intensity * Mathf.PI;
+                if (!GraphicsSettings.lightsUseLinearIntensity)
+                    light.intensity *= unityLight.intensity;
+                
             }
             else if (unityLight.type == LightType.Point)
             {
@@ -40,9 +48,11 @@ namespace UnityGLTF
                 light.Name = unityLight.name;
 
                 light.type = unityLight.type.ToString().ToLower();
-                light.color = new GLTF.Math.Color(unityLight.color.r, unityLight.color.g, unityLight.color.b, 1);
+                light.color = unityLight.color.ToNumericsColorLinear();
                 light.range = unityLight.range;
-                light.intensity = unityLight.intensity * Mathf.PI;
+                light.intensity = unityLight.intensity / Mathf.PI;
+                if (!GraphicsSettings.lightsUseLinearIntensity)
+                    light.intensity *= unityLight.intensity;
             }
             else
             {
