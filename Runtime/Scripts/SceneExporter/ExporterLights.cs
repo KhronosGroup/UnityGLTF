@@ -50,7 +50,7 @@ namespace UnityGLTF
                 light.type = unityLight.type.ToString().ToLower();
                 light.color = unityLight.color.ToNumericsColorLinear();
                 light.range = unityLight.range;
-                light.intensity = unityLight.intensity / Mathf.PI;
+                light.intensity = unityLight.intensity * Mathf.PI;
                 if (!GraphicsSettings.lightsUseLinearIntensity)
                     light.intensity *= unityLight.intensity;
             }
