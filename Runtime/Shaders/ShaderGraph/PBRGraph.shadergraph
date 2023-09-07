@@ -221,6 +221,9 @@
         },
         {
             "m_Id": "14ec0a08cca146a98862d31183f587f4"
+        },
+        {
+            "m_Id": "5959c998527d4aaf8a3653895a8d1279"
         }
     ],
     "m_Keywords": [
@@ -12834,6 +12837,33 @@
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
     "m_Labels": []
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "5959c998527d4aaf8a3653895a8d1279",
+    "m_Guid": {
+        "m_GuidSerialized": "dab1ea9d-9855-4409-ae49-b4a26815c9f9"
+    },
+    "m_Name": "Auto Surface and Queue",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Auto Surface and Queue",
+    "m_DefaultReferenceName": "_Auto_Surface_and_Queue",
+    "m_OverrideReferenceName": "_AutoSurfaceMode",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 2,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 2,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    }
 }
 
 {
@@ -28892,6 +28922,9 @@
         },
         {
             "m_Id": "14eb9f49890e4fdf8e6c058bfe728c2c"
+        },
+        {
+            "m_Id": "5959c998527d4aaf8a3653895a8d1279"
         }
     ]
 }

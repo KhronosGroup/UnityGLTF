@@ -84,25 +84,23 @@ namespace UnityGLTF
 			//
 			// var needsSpecular = material.HasProperty(specularFactor) && material.GetFloat(specularFactor) > 0;
 			// material.SetKeyword("_SPECULAR", needsSpecular);
-
-			if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
+			var isImplicitBlendMode = true;
+			const string blendModeProp = "_AutoSurfaceMode";
+			if (material.HasInt(blendModeProp))
 			{
-				// // approximation when transmission is on but roughness == 0
-				// // (no opaque pass required)
-				// TODO does weird things with transparency but still rendering into the Opaque Texture for some reason
-				// if (material.HasProperty("roughnessFactor") && material.GetFloat("roughnessFactor") == 0)
-				// {
-				// 	// enforce transparent
-				// 	if (material.HasProperty("_QueueControl")) material.SetFloat("_QueueControl", 0);
-				// 	if (material.HasProperty("_BUILTIN_QueueControl")) material.SetFloat("_BUILTIN_QueueControl", 0);
-				// 	if (material.HasProperty("_BUILTIN_Surface")) material.SetFloat("_BUILTIN_Surface", 1);
-				// 	if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1);
-				// 	material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-				// 	material.EnableKeyword("_BUILTIN_SURFACE_TYPE_TRANSPARENT");
-				// 	material.renderQueue = -1;
-				// }
-				// else
+				var blendMode = material.GetInt(blendModeProp);
+				isImplicitBlendMode = blendMode == 0;
+			}
+
+			if (isImplicitBlendMode)
+			{
+				if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
 				{
+					// We want to enforce opaque rendering if
+					// - Transmission is enabled
+					// - Roughness is > 0
+					// - The material isn't set to explicitly render as transparent
+					
 					// enforce Opaque
 					if (material.HasProperty("_BUILTIN_Surface")) material.SetFloat("_BUILTIN_Surface", 0);
 					if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 0);
@@ -117,14 +115,14 @@ namespace UnityGLTF
 					// so the change can be reverted if someone toggles transmission on and then off again.
 					material.renderQueue = 2999;
 				}
-			}
-			else
-			{
-				if (material.renderQueue == 2999)
+				else
 				{
-					if (material.HasProperty("_QueueControl")) material.SetFloat("_QueueControl", 0);
-					if (material.HasProperty("_BUILTIN_QueueControl")) material.SetFloat("_BUILTIN_QueueControl", 0);
-					material.renderQueue = -1;
+					if (material.renderQueue == 2999)
+					{
+						if (material.HasProperty("_QueueControl")) material.SetFloat("_QueueControl", 0);
+						if (material.HasProperty("_BUILTIN_QueueControl")) material.SetFloat("_BUILTIN_QueueControl", 0);
+						material.renderQueue = -1;
+					}
 				}
 			}
 
