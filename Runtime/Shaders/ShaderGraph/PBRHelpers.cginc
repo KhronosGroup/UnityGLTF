@@ -22,6 +22,7 @@ void SampleSceneColor2_half(half2 uv, half lod, out half3 color)
 
 #if defined(USE_CAMERA_OPAQUE)
 float4 _CameraOpaqueTexture_TexelSize;
+// float _CameraOpaqueSampling_BlurShift;
 TEXTURE2D_X(_CameraOpaqueTexture);
 SAMPLER(sampler_CameraOpaqueTexture);
 #endif
@@ -33,12 +34,28 @@ SAMPLER(sampler_CameraOpaqueTexture);
 //     return roughness * clamp( ior * 2.0 - 2.0, 0.0, 1.0 );
 // }
 
+/*
+float3 Sample4Tap(float2 uv, float lod)
+{
+	// bilinear GPU filtering doesn't look good enough;
+	// here we're doing 4 taps and blending them.
+	float3 c0 = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
+	float3 c1 = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv + float2(_CameraOpaqueTexture_TexelSize.x * _CameraOpaqueSampling_BlurShift, 0)), 0).rgb;
+	float3 c2 = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv + float2(0, _CameraOpaqueTexture_TexelSize.y * _CameraOpaqueSampling_BlurShift)), 0).rgb;
+	float3 c3 = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv + float2(-_CameraOpaqueTexture_TexelSize.x * _CameraOpaqueSampling_BlurShift, 0)), 0).rgb;
+	float3 c4 = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv + float2(0, -_CameraOpaqueTexture_TexelSize.y * _CameraOpaqueSampling_BlurShift)), 0).rgb;
+	
+	return (c0 + c1 + c2 + c3 + c4) / 5.0;
+}
+*/
+
 void SampleSceneColor_float(float2 uv, float lod, out float3 color)
 {
 	#define REQUIRE_OPAQUE_TEXTURE // seems we need to define this ourselves? HDSceneColorNode does that as well
 
 #if defined(USE_CAMERA_OPAQUE)
 	color = SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(uv), lod).rgb;
+	// color = Sample4Tap(uv, lod); // TODO higher quality refraction
 #else
 	// For HDRP, from HDSceneColorNode
 	#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
