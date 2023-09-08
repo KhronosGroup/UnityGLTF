@@ -67,6 +67,7 @@ namespace UnityGLTF
 			float? valueMultiplier = null;
 			bool isTextureTransform = false;
 			bool keepColorAlpha = true;
+			bool convertToLinearColor = false;
 			string secondPropertyName = null;
 			string extensionName = null;
 
@@ -82,6 +83,7 @@ namespace UnityGLTF
 						case "_BaseColorFactor":
 						case "baseColorFactor":
 							propertyName = "pbrMetallicRoughness/baseColorFactor";
+							convertToLinearColor = true;
 							break;
 						case "_Smoothness":
 						case "_Glossiness":
@@ -118,6 +120,7 @@ namespace UnityGLTF
 							secondPropertyName = $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}";
 							extensionName = KHR_materials_emissive_strength_Factory.EXTENSION_NAME;
 							keepColorAlpha = false;
+							convertToLinearColor = true;
 							break;
 						case "_EmissionMap_ST":
 						case "_EmissiveTexture_ST":
@@ -274,6 +277,7 @@ namespace UnityGLTF
 						case "m_Color":
 							propertyName = $"color";
 							keepColorAlpha = false;
+							convertToLinearColor = true;
 							break;
 						case "m_Intensity":
 							valueMultiplier = Mathf.PI; // matches ExportLight
@@ -527,7 +531,13 @@ namespace UnityGLTF
 					}
 					else
 					{
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Color)e), keepColorAlpha);
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e =>
+						{
+							var c = (Color) e;
+							if (convertToLinearColor)
+								c = c.linear;
+							return c;
+						}), keepColorAlpha);
 					}
 					break;
 			}
