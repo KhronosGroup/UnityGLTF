@@ -134,8 +134,9 @@ namespace UnityGLTF.Timeline
 							{
 								r.GetPropertyBlock(materialPropertyBlock);
 	#if UNITY_2021_1_OR_NEWER
-								if (materialPropertyBlock.HasColor("_BaseColor")) return materialPropertyBlock.GetColor("_BaseColor");
-								if (materialPropertyBlock.HasColor("_Color")) return materialPropertyBlock.GetColor("_Color");
+								if (materialPropertyBlock.HasColor("_BaseColor")) return materialPropertyBlock.GetColor("_BaseColor").linear;
+								if (materialPropertyBlock.HasColor("_Color")) return materialPropertyBlock.GetColor("_Color").linear;
+								if (materialPropertyBlock.HasColor("baseColorFactor")) return materialPropertyBlock.GetColor("baseColorFactor").linear;
 	#else
 								var c = materialPropertyBlock.GetColor("_BaseColor");
 								if (c.r != 0 || c.g != 0 || c.b != 0 || c.a != 0) return c;
@@ -148,8 +149,9 @@ namespace UnityGLTF.Timeline
 
 							if (mat is Material m && m)
 							{
-								if (m.HasProperty("_BaseColor")) return m.GetColor("_BaseColor");
-								if (m.HasProperty("_Color")) return m.GetColor("_Color");
+								if (m.HasProperty("_BaseColor")) return m.GetColor("_BaseColor").linear;
+								if (m.HasProperty("_Color")) return m.GetColor("_Color").linear;
+								if (m.HasProperty("baseColorFactor")) return m.GetColor("baseColorFactor").linear;
 							}
 
 							return null;
