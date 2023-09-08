@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.4.0-exp] - 2023-09-08
+- fix: improvements to light color and value export
+- fix: light import color space
+- fix: sanitize alpha cutoff value before writing
+- fix: convert light and material color spaces when exporting for animation
+- add: allow choice between implicit and explicit queue and surface type control (experimental)
+
 ## [2.3.1-exp] - 2023-08-26
 - fix: restore ShouldExportTransform functionality on latest dev branch
 
