@@ -588,6 +588,17 @@ namespace UnityGLTF
 		                        ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
 		                        if (invalidTextures.Contains(tex))
 			                        tex.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+		                        
+		                        // platform-dependant texture compression
+		                        var buildTargetName = BuildPipeline.GetBuildTargetName(ctx.selectedBuildTarget);
+		                        var format = TextureImporterHelper.GetAutomaticFormat(tex, buildTargetName);
+		                        var convertedFormat = (TextureFormat) (int) format;
+		                        if ((int) convertedFormat > -1)
+		                        {
+			                        // Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
+			                        EditorUtility.CompressTexture(tex, convertedFormat, TextureCompressionQuality.Best);
+			                        // Debug.Log("Mips now: " + tex.mipmapCount); // TODO figure out why mipmaps disappear here
+		                        }
 	                        }
                         }
                     }
