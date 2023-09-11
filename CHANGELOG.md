@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.4.1-exp] - 2023-09-11
+- fix: GPU Instancing option was missing in 2021.x
+- fix: Prevent ArgumentException when animating same property name on multiple components on the same GameObject
+- change: Make glTF material editing opt-in per material
+- add: glb textures can now be compressed to platform-default settings at import
+
 ## [2.4.0-exp] - 2023-09-08
 - fix: improvements to light color and value export
 - fix: light import color space

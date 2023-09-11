@@ -53,6 +53,9 @@ namespace UnityGLTF
 	    private static void EnsureShadersAreLoaded()
 	    {
 		    const string PackagePrefix = "Packages/org.khronos.unitygltf/";
+		    
+		    // We want to ensure shaders are already imported when they may
+		    // be needed by the importer.
 		    var shaders = new string[] {
 			    PackagePrefix + "Runtime/Shaders/ShaderGraph/PBRGraph.shadergraph",
 			    PackagePrefix + "Runtime/Shaders/ShaderGraph/UnlitGraph.shadergraph",
@@ -60,10 +63,21 @@ namespace UnityGLTF
 			    PackagePrefix + "Runtime/Shaders/PbrSpecularGlossiness.shader",
 			    PackagePrefix + "Runtime/Shaders/Unlit.shader",
 		    };
+		    
+		    // Some TextureImporter settings are only available on a concrete TextureImporter
+		    // instance, so we have to keep a texture around to ensure we can access those methods...
+		    var textures = new string[]
+		    {
+				PackagePrefix + "Editor/Scripts/Internal/DefaultImportSettings/DefaultTexture.png",
+		    };
 
 		    foreach (var shaderPath in shaders)
 		    {
 			    AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
+		    }
+		    foreach (var file in textures)
+		    {
+			    AssetDatabase.LoadAssetAtPath<Texture2D>(file);
 		    }
 	    }
 
@@ -152,11 +166,12 @@ namespace UnityGLTF
 
         private static string[] GatherDependenciesFromSourceFile(string path)
         {
-	        // only supported glTF for now - would be harder to check for external references in glb assets.
-	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return Array.Empty<string>();
-
 	        var dependencies = new List<string>();
 
+	        // only supported glTF for now - would be harder to check for external references in glb assets.
+	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
+		        return dependencies.ToArray();
+	        
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
 	        // since it's too common as a file type.
