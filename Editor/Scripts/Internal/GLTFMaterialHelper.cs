@@ -86,7 +86,7 @@ namespace UnityGLTF
 			// material.SetKeyword("_SPECULAR", needsSpecular);
 			var isImplicitBlendMode = true;
 			const string blendModeProp = "_AutoSurfaceMode";
-			if (material.HasInt(blendModeProp))
+			if (material.HasProperty(blendModeProp))
 			{
 				var blendMode = material.GetInt(blendModeProp);
 				isImplicitBlendMode = blendMode == 0;
