@@ -322,8 +322,8 @@ namespace UnityGLTF
 					}
 
 					EditorGUILayout.Space();
-					EditorGUI.indentLevel--;
 				}
+				EditorGUI.indentLevel--;
 			}
 
 			EditorGUILayout.EndFoldoutHeaderGroup();
