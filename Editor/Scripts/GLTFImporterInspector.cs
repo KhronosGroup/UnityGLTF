@@ -59,8 +59,6 @@ namespace UnityGLTF
 		private void ModelInspectorGUI()
 		{
 			var t = target as GLTFImporter;
-			if (!t) EditorGUILayout.LabelField("NOOOO");
-
 			if (!t) return;
 
 			// serializedObject.Update();
@@ -75,10 +73,12 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum Shader LOD"));
 			EditorGUILayout.Separator();
+			
 			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
 			EditorGUILayout.Separator();
+			
 			EditorGUILayout.LabelField("Geometry", EditorStyles.boldLabel);
 			EditorGUI.BeginChangeCheck();
 			var importNormalsProp = serializedObject.FindProperty(nameof(GLTFImporter._importNormals));
@@ -98,6 +98,8 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateLightmapUVs)), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
 
+			EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._textureCompression)));
 			TextureWarningsGUI(t);
 		}
 

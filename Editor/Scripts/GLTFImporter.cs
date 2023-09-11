@@ -84,7 +84,8 @@ namespace UnityGLTF
         [SerializeField] internal bool _importMaterials = true;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
         [SerializeField] internal bool _useSceneNameIdentifier = false;
-
+        [SerializeField] internal GLTFImporterTextureCompressionQuality _textureCompression = GLTFImporterTextureCompressionQuality.Best;
+        
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;
         [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
@@ -114,6 +115,15 @@ namespace UnityGLTF
 	        public bool used;
 	        public bool required;
         }
+        
+        // Matches TextureCompressionQuality and adds "None" as option
+        internal enum GLTFImporterTextureCompressionQuality
+		{
+			None = -50,
+	        Fast = 0,
+	        Normal = 50,
+	        Best = 100
+		}
 
         [Serializable]
         public class TextureInfo
@@ -585,20 +595,24 @@ namespace UnityGLTF
 	                        }
 	                        else
 	                        {
-		                        ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
 		                        if (invalidTextures.Contains(tex))
-			                        tex.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+		                            tex.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 		                        
-		                        // platform-dependant texture compression
-		                        var buildTargetName = BuildPipeline.GetBuildTargetName(ctx.selectedBuildTarget);
-		                        var format = TextureImporterHelper.GetAutomaticFormat(tex, buildTargetName);
-		                        var convertedFormat = (TextureFormat) (int) format;
-		                        if ((int) convertedFormat > -1)
+		                        if (_textureCompression != GLTFImporterTextureCompressionQuality.None)
 		                        {
-			                        // Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
-			                        EditorUtility.CompressTexture(tex, convertedFormat, TextureCompressionQuality.Best);
-			                        // Debug.Log("Mips now: " + tex.mipmapCount); // TODO figure out why mipmaps disappear here
+			                        // platform-dependant texture compression
+			                        var buildTargetName = BuildPipeline.GetBuildTargetName(ctx.selectedBuildTarget);
+			                        var format = TextureImporterHelper.GetAutomaticFormat(tex, buildTargetName);
+			                        var convertedFormat = (TextureFormat)(int)format;
+			                        if ((int)convertedFormat > -1)
+			                        {
+				                        // Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
+				                        EditorUtility.CompressTexture(tex, convertedFormat, (TextureCompressionQuality) (int) _textureCompression);
+				                        // Debug.Log("Mips now: " + tex.mipmapCount); // TODO figure out why mipmaps disappear here
+			                        }
 		                        }
+
+		                        ctx.AddObjectToAsset(GetUniqueName(tex.name), tex);
 	                        }
                         }
                     }
