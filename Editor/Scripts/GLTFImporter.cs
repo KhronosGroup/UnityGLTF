@@ -84,7 +84,8 @@ namespace UnityGLTF
         [SerializeField] internal bool _importMaterials = true;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
         [SerializeField] internal bool _useSceneNameIdentifier = false;
-        [SerializeField] internal GLTFImporterTextureCompressionQuality _textureCompression = GLTFImporterTextureCompressionQuality.Best;
+        [Tooltip("Compress textures after import using the platform default settings. If you need more control, use a .gltf file instead.")]
+        [SerializeField] internal GLTFImporterTextureCompressionQuality _textureCompression = GLTFImporterTextureCompressionQuality.None;
         
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;

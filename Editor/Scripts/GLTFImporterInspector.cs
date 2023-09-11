@@ -98,8 +98,13 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateLightmapUVs)), new GUIContent("Generate Lightmap UVs"));
 			EditorGUILayout.Separator();
 
-			EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._textureCompression)));
+			// Show texture compression UI if there are any imported textures 
+			var importedTextures = serializedObject.FindProperty("m_Textures");
+			if (importedTextures.arraySize > 0)
+			{
+				EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._textureCompression)));
+			}
 			TextureWarningsGUI(t);
 		}
 
