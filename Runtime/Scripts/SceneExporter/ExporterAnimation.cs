@@ -465,7 +465,12 @@ namespace UnityGLTF
 						TryFindMemberBinding(binding, prop, prop.propertyName);
 					}
 
-					propertyCurves.Add(memberName, prop);
+					if (propertyCurves.ContainsKey(memberName))
+					{
+						Debug.LogError("Animating the same property on multiple components is currently not supported: " + memberName, animatedObject);
+					}
+					else
+						propertyCurves.Add(memberName, prop);
 				}
 				else
 				{
