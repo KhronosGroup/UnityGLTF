@@ -67,7 +67,19 @@ namespace UnityGLTF
 			if (immutableMaterialCanBeModified)
 			{
 				GUI.enabled = true;
-				EditorGUILayout.HelpBox("(Experimental) This material is part of a glTF asset. Changes will be stored back to the .glTF file when saving.", MessageType.Warning);
+				EditorGUILayout.HelpBox("This material is part of a glTF asset. If you enable editing (experimental), changes will be stored back to the .glTF file when saving.", MessageType.None);
+			
+				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + targetMat.GetInstanceID();
+				var isAllowed = SessionState.GetBool(materialEditingKey, false);
+				var allowMaterialEditing = EditorGUILayout.Toggle("Allow Editing", isAllowed);
+				if (allowMaterialEditing != isAllowed)
+					SessionState.SetBool(materialEditingKey, allowMaterialEditing);
+				
+				if (allowMaterialEditing)
+					EditorGUILayout.HelpBox("glTF editing is enabled. This is highly experimental. Make sure you have a backup!", MessageType.Warning);
+				
+				GUI.enabled = allowMaterialEditing;
+				EditorGUILayout.Space();
 			}
 
 			// Need to set these via reflection...
