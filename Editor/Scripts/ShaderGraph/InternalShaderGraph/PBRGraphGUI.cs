@@ -132,6 +132,12 @@ namespace UnityGLTF
 			m_MaterialScopeList.RegisterHeaderScope(Styles.SurfaceInputs, (uint)Expandable.SurfaceInputs, DrawSurfaceInputs);
 			m_MaterialScopeList.RegisterHeaderScope(Styles.AdvancedLabel, (uint)Expandable.Advanced, DrawAdvancedOptions);
 		}
+
+		protected override void DrawAdvancedOptions(Material material)
+		{
+			base.DrawAdvancedOptions(material);
+			materialEditor.EnableInstancingField();
+		}
 #else
 		public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
 		{
