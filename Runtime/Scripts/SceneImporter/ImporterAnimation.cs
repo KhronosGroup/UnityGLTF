@@ -311,7 +311,7 @@ namespace UnityGLTF
 							var targetNames = prim.TargetNames;
 							propertyNames = new string[targetCount];
 							for (var i = 0; i < targetCount; i++)
-								propertyNames[i] = "blendShape." + (targetNames != null ? targetNames[i] : ("Morphtarget" + i));
+								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + (targetNames != null ? targetNames[i] : ("Morphtarget" + i))) : i.ToString();
 
 							var frameFloats = new float[targetCount];
 
