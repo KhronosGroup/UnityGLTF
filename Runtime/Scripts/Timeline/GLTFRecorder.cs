@@ -49,12 +49,14 @@ namespace UnityGLTF.Timeline
 
 		public string AnimationName = "Recording";
 
-		public delegate void OnBeforeAddAnimationDataDelegate(AnimationDataArgs animationData);
+		public delegate void OnBeforeAddAnimationDataDelegate(PostAnimationData animationData);
 		public delegate void OnPostExportDelegate(PostExportArgs animationData);
 		
 		/// <summary>
 		/// Callback to modify the animation data before it is added to the animation.
-		/// Is called once for each track after the recording has ended. 
+		/// Is called once for each track after the recording has ended. This is a non destructive callback,
+		/// so the original recorded data is not modified. Every time you call EndRecording to the save the gltf/glb,
+		/// you can modify the data again. 
 		/// </summary>
 		public OnBeforeAddAnimationDataDelegate OnBeforeAddAnimationData;
 		
@@ -79,21 +81,20 @@ namespace UnityGLTF.Timeline
 			}
 		}
 
-		public class AnimationDataArgs
+		public class PostAnimationData
 		{
-			public Object AnimatedObject => plan.GetTarget(tr.tr);
-			public string PropertyName => plan.propertyName;
-
-			private AnimationData tr;
-			private AnimationData.ExportPlan plan;
+			internal AnimationData.Track animationTrack;
+			public float[] Times;
+			public object[] Values;
 			
-			public readonly Dictionary<double, object> Samples;
+			public Object AnimatedObject => animationTrack.animatedObject;
+			public string PropertyName => animationTrack.propertyName;
 			
-			internal AnimationDataArgs( AnimationData.ExportPlan plan, AnimationData tr, Dictionary<double, object> samples)
+			internal PostAnimationData(AnimationData.Track tr, float[] times, object[] values)
 			{
-				this.plan = plan;
-				this.tr = tr;
-				this.Samples = samples;
+				this.animationTrack = tr;
+				this.Times = times;
+				this.Values = values;
 			}
 		}
 		
@@ -229,11 +230,6 @@ namespace UnityGLTF.Timeline
 				private ExportPlan plan;
 				private Dictionary<double, object> samples;
 				private object lastSample;
-
-				internal AnimationDataArgs GetAnimationDataArgs()
-				{
-					return new AnimationDataArgs(plan, tr, samples);
-				} 
 				
 				public Track(AnimationData tr, ExportPlan plan, double time)
 				{
@@ -404,17 +400,15 @@ namespace UnityGLTF.Timeline
 				foreach (var tr in kvp.Value.tracks)
 				{
 					if (tr.times.Length == 0) continue;
-
-					OnBeforeAddAnimationData?.Invoke(tr.GetAnimationDataArgs());
 					
-					float[] times = tr.times;
-					object[] values = tr.values;
+					var postAnimation = new PostAnimationData(tr, tr.times, tr.values);
+					OnBeforeAddAnimationData?.Invoke(postAnimation);
 
 					if (calculateTranslationBounds && tr.propertyName == "translation")
 					{
-						for (var i = 0; i < values.Length; i++)
+						for (var i = 0; i < postAnimation.Values.Length; i++)
 						{
-							var vec = (Vector3) values[i];
+							var vec = (Vector3) postAnimation.Values[i];
 							if (!gotFirstValue)
 							{
 								translationBounds = new Bounds(vec, Vector3.zero);
@@ -427,8 +421,8 @@ namespace UnityGLTF.Timeline
 						}
 					}
 
-					gltfSceneExporter.RemoveUnneededKeyframes(ref times, ref values);
-					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, times, values);
+					gltfSceneExporter.RemoveUnneededKeyframes(ref postAnimation.Times, ref postAnimation.Values);
+					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, postAnimation.Times, postAnimation.Values);
 				}
 				processAnimationMarker.End();
 			}
