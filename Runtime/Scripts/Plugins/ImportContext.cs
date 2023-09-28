@@ -30,6 +30,10 @@ namespace UnityGLTF.Plugins
 				SourceImporter = AssetImporter.GetAtPath(assetImportContext.assetPath);
 		}
 #endif
+		internal GLTFImportContext(IReadOnlyList<GltfImportPluginContext> plugins)
+		{
+			Plugins = plugins;
+		}
 	}
 
 	public interface IGLTFImportRemap

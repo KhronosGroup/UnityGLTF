@@ -48,7 +48,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, new List<GltfImportPluginContext>());
 #else
-		public GLTFImportContext ImportContext;
+		public GLTFImportContext ImportContext = new GLTFImportContext(new List<GltfImportPluginContext>());
 #endif
 
 		[NonSerialized]
