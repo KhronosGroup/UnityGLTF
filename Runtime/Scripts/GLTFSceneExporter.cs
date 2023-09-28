@@ -836,17 +836,12 @@ namespace UnityGLTF
 
 		private bool ShouldExportTransform(Transform transform)
 		{
+			// Root transforms should *always* be exported since this is a deliberate decision by the user calling - it should override any other setting that would prevent the export (e.g. if a user calls Export with disabled or hidden objects the exporter should never prevent this)
+			var isRoot = _rootTransforms.Contains(transform);
+			if (isRoot) return true;
+			
 			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf)
 			{
-#if UNITY_EDITOR
-				// check if this is a root prefab asset - then we want to export it even if it's disabled.
-				if (UnityEditor.AssetDatabase.Contains(transform))
-				{
-					var go = transform.gameObject;
-					if (UnityEditor.AssetDatabase.LoadMainAssetAtPath(UnityEditor.AssetDatabase.GetAssetPath(go)) == go)
-						return true;
-				}
-#endif
 				return false;
 			}
 			if (settings.UseMainCameraVisibility && (_exportLayerMask >= 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
@@ -881,7 +876,6 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
-				if (!ShouldExportTransform(transform)) continue;
 				scene.Nodes.Add(ExportNode(transform));
 			}
 
