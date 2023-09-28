@@ -37,7 +37,7 @@ namespace UnityGLTF
 		public IDataLoader DataLoader = null;
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
-		public AnimationMethod AnimationMethod = AnimationMethod.Mecanim;
+		public AnimationMethod AnimationMethod = AnimationMethod.Legacy;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
 

@@ -161,7 +161,12 @@ namespace UnityGLTF
 
 				// copy all key frames data to animation curve and add it to the clip
 				AnimationCurve curve = new AnimationCurve(keyframes[ci]);
-				clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
+				
+#if !UNITY_EDITOR
+				// Only in editor SetCurve works with non-legacy clips
+				if (clip.legacy)
+#endif 
+					clip.SetCurve(relativePath, curveType, propertyNames[ci], curve);
 			}
 		}
 
