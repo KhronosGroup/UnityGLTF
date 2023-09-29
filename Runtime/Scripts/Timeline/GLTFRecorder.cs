@@ -345,12 +345,14 @@ namespace UnityGLTF.Timeline
 				extremePointsOnBounds[4] = translationBounds.center + new Vector3(0, 0, +translationBounds.extents.z);
 				extremePointsOnBounds[5] = translationBounds.center + new Vector3(0, 0, -translationBounds.extents.z);
 
+				int index = 0;
 				foreach (var point in extremePointsOnBounds)
 				{
 					var cubeInstance = Object.Instantiate(cube);
-					cubeInstance.name = "AnimationBounds";
+					cubeInstance.name = $"AnimationBounds {index.ToString()}";
 					cubeInstance.transform.position = point;
 					cubeInstance.transform.parent = boundsRoot.transform;
+					index++;
 				}
 
 				// export and add explicitly to the scene list, otherwise these nodes at the root level will be ignored
