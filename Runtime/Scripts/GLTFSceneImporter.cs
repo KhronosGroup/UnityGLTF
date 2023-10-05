@@ -291,7 +291,13 @@ namespace UnityGLTF
 
 			if (_options.DataLoader == null)
 			{
-				_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
+				if (_options.ExternalDataLoader == null)
+				{
+					_options.DataLoader = new UnityWebRequestLoader(URIHelper.GetDirectoryName(gltfFileName));
+					_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
+				}
+				else
+					_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
 			}
 		}
 
