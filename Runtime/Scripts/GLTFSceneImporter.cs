@@ -289,16 +289,7 @@ namespace UnityGLTF
 			else
 				Debug = UnityEngine.Debug.unityLogger;
 
-			if (_options.DataLoader == null)
-			{
-				if (_options.ExternalDataLoader == null)
-				{
-					_options.DataLoader = new UnityWebRequestLoader(URIHelper.GetDirectoryName(gltfFileName));
-					_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
-				}
-				else
-					_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
-			}
+			VerifyDataLoader();
 		}
 
 		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
@@ -316,9 +307,20 @@ namespace UnityGLTF
 			}
 
 			_options = options;
+			VerifyDataLoader();
+		}
+
+		private void VerifyDataLoader()
+		{
 			if (_options.DataLoader == null)
 			{
-				_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
+				if (_options.ExternalDataLoader == null)
+				{
+					_options.DataLoader = new UnityWebRequestLoader(URIHelper.GetDirectoryName(_gltfFileName));
+					_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
+				}
+				else
+					_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
 			}
 		}
 
