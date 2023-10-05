@@ -170,11 +170,9 @@ namespace UnityGLTF
 
 					var draco = new DracoMeshLoader();
 
-#if UNITY_EDITOR
 					dracoDecodeResults[i] = await draco.ConvertDracoMeshToUnity(meshDataArray[i], bufferViewData,
 						needsNormals, needsTangents,
 						weightsAttributeId, jointsAttributeId, firstPrim.Targets != null);
-#endif
 
 					if (!dracoDecodeResults[i].success)
 					{
