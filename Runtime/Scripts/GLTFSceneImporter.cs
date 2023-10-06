@@ -44,6 +44,7 @@ namespace UnityGLTF
 		public bool SwapUVs = false;
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
+		public bool ImportBlendShapeNames = true;
 
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, new List<GltfImportPluginContext>());

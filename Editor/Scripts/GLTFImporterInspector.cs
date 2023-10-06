@@ -77,6 +77,8 @@ namespace UnityGLTF
 			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importBlendShapeNames)));
+			
 			EditorGUILayout.Separator();
 			
 			EditorGUILayout.LabelField("Geometry", EditorStyles.boldLabel);
