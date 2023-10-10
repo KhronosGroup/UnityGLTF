@@ -333,7 +333,55 @@ public partial class GLTFSceneExporter
 			return id;
 		}
 
-		private AccessorId ExportAccessor(byte[] arr)
+		/// <summary>
+		/// Manually export an accessor of an arbitrary type. You need to manage conversion of your data to byte[] yourself.
+		/// </summary>
+		/// <returns>
+		/// The accessor id.You can get the actual accessor via val.Root.Accessors[val.Id].
+		/// </returns>
+		public AccessorId ExportAccessor(byte[] data, uint count, GLTFAccessorAttributeType type, GLTFComponentType componentType, List<double> min, List<double> max)
+		{
+			exportAccessorMarker.Begin();
+			exportAccessorByteArrayMarker.Begin();
+			
+			if (count == 0)
+			{
+				throw new Exception("Accessors can not have a count of 0.");
+			}
+			
+			var accessor = new Accessor();
+			accessor.Count = count;
+			accessor.Type = type;
+			accessor.ComponentType = componentType;
+			
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			
+			foreach (var v in data)
+			{
+				_bufferWriter.Write((byte)v);
+			}
+			
+			accessor.Min = min;
+			accessor.Max = max;
+			
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
+			
+			var id = new AccessorId
+			{
+				Id = _root.Accessors.Count,
+				Root = _root
+			};
+			_root.Accessors.Add(accessor);
+			
+			exportAccessorByteArrayMarker.End();
+			exportAccessorMarker.End();
+
+			return id;
+		}
+		
+		public AccessorId ExportAccessor(byte[] arr)
 		{
 			exportAccessorMarker.Begin();
 			exportAccessorByteArrayMarker.Begin();
