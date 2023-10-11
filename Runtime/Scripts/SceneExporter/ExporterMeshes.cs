@@ -231,7 +231,9 @@ namespace UnityGLTF
 			Mesh meshObj = primKey.Mesh;
 			Material[] materialsObj = primKey.Materials;
 
-			var prims = new MeshPrimitive[meshObj.subMeshCount];
+			var maxOfSubMeshesAndMaterials = Math.Max(meshObj.subMeshCount, materialsObj.Length);
+			var prims = new MeshPrimitive[maxOfSubMeshesAndMaterials];
+			
 			List<MeshPrimitive> nonEmptyPrims = null;
 			var vertices = meshObj.vertices;
 			if (vertices.Length < 1)
@@ -284,9 +286,11 @@ namespace UnityGLTF
 			var accessors = _meshToPrims[meshObj];
 
 			// walk submeshes and export the ones with non-null meshes
-			for (int submesh = 0; submesh < meshObj.subMeshCount; submesh++)
+			for (int id = 0; id < maxOfSubMeshesAndMaterials; id++)
 			{
-				var mat = materialsObj[submesh % materialsObj.Length];
+				var mat = materialsObj[id % materialsObj.Length];
+				var submesh = id % meshObj.subMeshCount;
+				
 				if (!mat) continue;
 				if (meshObj.GetIndexCount(submesh) <= 0) continue;
 
@@ -324,10 +328,11 @@ namespace UnityGLTF
 				}
 
 				var submeshPrimitive = accessors.subMeshPrimitives[submesh];
-				prims[submesh] = new MeshPrimitive(submeshPrimitive, _root)
+				prims[id] = new MeshPrimitive(submeshPrimitive, _root)
 				{
 					Material = ExportMaterial(mat),
 				};
+				// this will contain only the last one
 				accessors.subMeshPrimitives[submesh] = prims[submesh];
 			}
 
