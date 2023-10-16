@@ -14,7 +14,7 @@ namespace UnityGLTF.Timeline
 {
 	public class GLTFRecorder
 	{
-		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordRootInWorldSpace = false, bool recordAnimationPointer = false, bool addBoundsMarkerNodes = false)
+		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordRootInWorldSpace = false, bool recordAnimationPointer = false)
 		{
 			if (!root)
 				throw new ArgumentNullException(nameof(root), "Please provide a root transform to record.");
@@ -23,7 +23,6 @@ namespace UnityGLTF.Timeline
 			this.recordBlendShapes = recordBlendShapes;
 			this.recordRootInWorldSpace = recordRootInWorldSpace;
 			this.recordAnimationPointer = recordAnimationPointer;
-			this.addBoundsMarkerNodes = addBoundsMarkerNodes;
 		}
 
 		/// <summary>
@@ -36,20 +35,71 @@ namespace UnityGLTF.Timeline
 		private Dictionary<Transform, AnimationData> data = new Dictionary<Transform, AnimationData>(64);
 		private double startTime;
 		private double lastRecordedTime;
+		private bool hasRecording;
 		private bool isRecording;
-
+		
 		private readonly bool recordBlendShapes;
 		private readonly bool recordRootInWorldSpace;
 		private readonly bool recordAnimationPointer;
-		private readonly bool addBoundsMarkerNodes;
 
+		public bool HasRecording => hasRecording;
 		public bool IsRecording => isRecording;
+
 		public double LastRecordedTime => lastRecordedTime;
+
 		public string AnimationName = "Recording";
 
+		public delegate void OnBeforeAddAnimationDataDelegate(AnimationDataArgs animationData);
+		public delegate void OnPostExportDelegate(PostExportArgs animationData);
+		
+		/// <summary>
+		/// Callback to modify the animation data before it is added to the animation.
+		/// Is called once for each track after the recording has ended. 
+		/// </summary>
+		public OnBeforeAddAnimationDataDelegate OnBeforeAddAnimationData;
+		
+		/// <summary>
+		/// Callback to modify or add additional data to the gltf root after the recording has ended and animation
+		/// data is added to the animation.
+		/// </summary>
+		public OnPostExportDelegate OnPostExport;
+
+
+		public class PostExportArgs
+		{
+			public Bounds AnimationTranslationBounds { get; private set; }
+			public GLTFSceneExporter Exporter { get; private set; }
+			public GLTFRoot GltfRoot { get; private set; }		
+			
+			internal PostExportArgs(Bounds animationTranslationBounds, GLTFSceneExporter exporter, GLTFRoot gltfRoot)
+			{
+				this.AnimationTranslationBounds = animationTranslationBounds;
+				this.Exporter = exporter;
+				this.GltfRoot = gltfRoot;
+			}
+		}
+
+		public class AnimationDataArgs
+		{
+			public Object AnimatedObject => plan.GetTarget(tr.tr);
+			public string PropertyName => plan.propertyName;
+
+			private AnimationData tr;
+			private AnimationData.ExportPlan plan;
+			
+			public readonly Dictionary<double, object> Samples;
+			
+			internal AnimationDataArgs( AnimationData.ExportPlan plan, AnimationData tr, Dictionary<double, object> samples)
+			{
+				this.plan = plan;
+				this.tr = tr;
+				this.Samples = samples;
+			}
+		}
+		
 		internal class AnimationData
 		{
-			private Transform tr;
+			internal Transform tr;
 			private SkinnedMeshRenderer smr;
 			private bool recordBlendShapes;
 			private bool inWorldSpace = false;
@@ -180,6 +230,11 @@ namespace UnityGLTF.Timeline
 				private Dictionary<double, object> samples;
 				private object lastSample;
 
+				internal AnimationDataArgs GetAnimationDataArgs()
+				{
+					return new AnimationDataArgs(plan, tr, samples);
+				} 
+				
 				public Track(AnimationData tr, ExportPlan plan, double time)
 				{
 					this.tr = tr;
@@ -199,6 +254,7 @@ namespace UnityGLTF.Timeline
 						lastSample = value;
 					}
 				}
+				
 			}
 
 			public void Update(double time)
@@ -224,6 +280,7 @@ namespace UnityGLTF.Timeline
 			}
 
 			isRecording = true;
+			hasRecording = true;
 		}
 
 		public void UpdateRecording(double time)
@@ -258,19 +315,17 @@ namespace UnityGLTF.Timeline
 
 			lastRecordedTime = time;
 		}
-
+		
 		internal void EndRecording(out Dictionary<Transform, AnimationData> param)
 		{
 			param = null;
-			if (!isRecording) return;
-
-			isRecording = false;
+			if (!hasRecording) return;
 			param = data;
 		}
 
 		public void EndRecording(string filename, string sceneName = "scene", GLTFSettings settings = null)
 		{
-			if (!isRecording) return;
+			if (!hasRecording) return;
 
 			var dir = Path.GetDirectoryName(filename);
 			if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
@@ -282,9 +337,8 @@ namespace UnityGLTF.Timeline
 
 		public void EndRecording(Stream stream, string sceneName = "scene", GLTFSettings settings = null)
 		{
-			if (!isRecording) return;
+			if (!hasRecording) return;
 			isRecording = false;
-
 			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.tracks.Sum(y => y.values.Count())));
 
 			if (!settings)
@@ -319,59 +373,12 @@ namespace UnityGLTF.Timeline
 			GLTFAnimation anim = new GLTFAnimation();
 			anim.Name = AnimationName;
 
-			CollectAndProcessAnimation(exporter, anim, addBoundsMarkerNodes, out Bounds translationBounds);
-
-			if (addBoundsMarkerNodes)
-			{
-				Debug.Log("Animation bounds: " + translationBounds.center + " => " + translationBounds.size);
-
-				// create Cube primitive
-				var cube = GameObject.CreatePrimitive(PrimitiveType.Quad);
-				cube.transform.localScale = Vector3.one * 0.0001f;
-				cube.hideFlags = HideFlags.HideAndDontSave;
-
-				var collider = cube.GetComponent<MeshCollider>();
-				SafeDestroy(collider);
-
-				var boundsRoot = new GameObject("AnimationBounds");
-				boundsRoot.hideFlags = HideFlags.HideAndDontSave;
-				boundsRoot.transform.position = translationBounds.center;
-
-				var extremePointsOnBounds = new Vector3[6];
-				extremePointsOnBounds[0] = translationBounds.center + new Vector3(+translationBounds.extents.x, 0, 0);
-				extremePointsOnBounds[1] = translationBounds.center + new Vector3(-translationBounds.extents.x, 0, 0);
-				extremePointsOnBounds[2] = translationBounds.center + new Vector3(0, +translationBounds.extents.y, 0);
-				extremePointsOnBounds[3] = translationBounds.center + new Vector3(0, -translationBounds.extents.y, 0);
-				extremePointsOnBounds[4] = translationBounds.center + new Vector3(0, 0, +translationBounds.extents.z);
-				extremePointsOnBounds[5] = translationBounds.center + new Vector3(0, 0, -translationBounds.extents.z);
-
-				int index = 0;
-				foreach (var point in extremePointsOnBounds)
-				{
-					var cubeInstance = Object.Instantiate(cube);
-					cubeInstance.name = $"AnimationBounds {index.ToString()}";
-					cubeInstance.transform.position = point;
-					cubeInstance.transform.parent = boundsRoot.transform;
-					index++;
-				}
-
-				// export and add explicitly to the scene list, otherwise these nodes at the root level will be ignored
-				var nodeId = exporter.ExportNode(boundsRoot);
-				gltfRoot.Scenes[0].Nodes.Add(nodeId);
-
-				// move skinned meshes to the center of the bounds –
-				// they will be moved by their bones anyways, but this prevents wrong bounds calculations from them.
-				foreach (var skinnedMeshRenderer in root.GetComponentsInChildren<SkinnedMeshRenderer>())
-					skinnedMeshRenderer.transform.position = translationBounds.center;
-
-				SafeDestroy(boundsRoot);
-				SafeDestroy(cube);
-			}
-
-			// check if the root node is outside these bounds, move it to the center if necessary
+			CollectAndProcessAnimation(exporter, anim, true, out Bounds translationBounds);
 
 			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0)
 				gltfRoot.Animations.Add(anim);
+			
+			OnPostExport?.Invoke( new PostExportArgs(translationBounds, exporter, gltfRoot));
 		}
 
 		private static void SafeDestroy(Object obj)
@@ -397,8 +404,11 @@ namespace UnityGLTF.Timeline
 				foreach (var tr in kvp.Value.tracks)
 				{
 					if (tr.times.Length == 0) continue;
-					var times = tr.times;
-					var values = tr.values;
+
+					OnBeforeAddAnimationData?.Invoke(tr.GetAnimationDataArgs());
+					
+					float[] times = tr.times;
+					object[] values = tr.values;
 
 					if (calculateTranslationBounds && tr.propertyName == "translation")
 					{
