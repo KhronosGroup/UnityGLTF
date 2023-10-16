@@ -694,14 +694,7 @@ namespace UnityGLTF
 			if (ClipRequiresSampling(clip, transform))
 			{
 				var animator = transform.GetComponent<Animator>();
-				var avatar = animator.avatar;
-				Object instanceCacheKey = avatar;
-
-				// TODO fully correct would be to use all enabled components as key here
-#if UNITY_2020_2_OR_NEWER
-				var rig = transform.GetComponent<IAnimationWindowPreview>() as Behaviour;
-				if (rig && rig.enabled) instanceCacheKey = rig;
-#endif
+				var avatar = animator ? animator.avatar : null;
 
 				if (clip.isHumanMotion && !avatar)
 				{
@@ -709,6 +702,15 @@ namespace UnityGLTF
 					convertClipToGLTFAnimationMarker.End();
 					return;
 				}
+				
+				Object instanceCacheKey = avatar;
+
+				// TODO fully correct would be to use all enabled components as key here
+#if UNITY_2020_2_OR_NEWER
+				var rig = transform.GetComponent<IAnimationWindowPreview>() as Behaviour;
+				if (rig && rig.enabled) instanceCacheKey = rig;
+#endif
+				
 				var key = (instanceCacheKey, clip, speed);
 				if (!_sampledClipInstanceCache.ContainsKey(key))
 				{
