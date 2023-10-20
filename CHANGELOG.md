@@ -4,8 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.0-exp] - 2023-10-20
+- fix: default dataloader is now UnityWebRequestLoader
+- fix: importing animations at runtime did not work in specific settings combinations
+- fix: create default import context when importing files at runtime
+- fix: meshes without submeshes but multiple materials behave the same as in Unity now (results in multiple draw calls)
+- change: remove animation bounds nodes from GLTFRecorder again, can be added back via callbacks if needed
+- feat: add option to import blend shape names or defaults
+- feat: add OnBeforeAddAnimationData callback to GLTFRecorder
+- feat: expose ExportAccessor(byte[]) and configurable overload for easier arbitrary data export
+
 ## [2.4.2-exp] - 2023-09-28
-- change: always export root level objects / objects explictly requested to be exported
+- change: always export root level objects / objects explicitly requested to be exported
 
 ## [2.4.1-exp] - 2023-09-11
 - fix: GPU Instancing option was missing in 2021.x
