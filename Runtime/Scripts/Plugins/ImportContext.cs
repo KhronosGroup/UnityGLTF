@@ -19,7 +19,7 @@ namespace UnityGLTF.Plugins
 		public readonly IReadOnlyList<GltfImportPluginContext> Plugins;
 
 		public GLTFSceneImporter SceneImporter;
-		public GLTFRoot Root;
+		public GLTFRoot Root => SceneImporter?.Root;
 
 #if UNITY_EDITOR
 		internal GLTFImportContext(AssetImportContext assetImportContext, IReadOnlyList<GltfImportPluginContext> plugins)
