@@ -81,6 +81,9 @@ namespace UnityGLTF
 			Vector4[] bones = boneWeightToBoneVec4(mesh.boneWeights);
 			Vector4[] weights = boneWeightToWeightVec4(mesh.boneWeights);
 
+			AccessorId sharedBones = null;
+			AccessorId sharedWeights = null;
+			
 			if(val != null)
 			{
 				GLTF.Schema.GLTFMesh gltfMesh = _root.Meshes[val.Id];
@@ -90,16 +93,28 @@ namespace UnityGLTF
 					{
 						if (!prim.Attributes.ContainsKey("JOINTS_0"))
 						{
-							var jointsAccessor = ExportAccessorUint(bones);
-							jointsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
-							prim.Attributes.Add("JOINTS_0", jointsAccessor);
+							if (sharedBones != null)
+								prim.Attributes.Add("JOINTS_0", sharedBones);
+							else
+							{
+								var jointsAccessor = ExportAccessorUint(bones);
+								jointsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+								prim.Attributes.Add("JOINTS_0", jointsAccessor);
+								sharedBones = jointsAccessor;
+							}
 						}
 
 						if (!prim.Attributes.ContainsKey("WEIGHTS_0"))
 						{
-							var weightsAccessor = ExportAccessor(weights);
-							weightsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
-							prim.Attributes.Add("WEIGHTS_0", weightsAccessor);
+							if (sharedWeights != null)
+								prim.Attributes.Add("WEIGHTS_0", sharedWeights);
+							else
+							{
+								var weightsAccessor = ExportAccessor(weights);
+								weightsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
+								prim.Attributes.Add("WEIGHTS_0", weightsAccessor);
+								sharedWeights = weightsAccessor;
+							}
 						}
 					}
 				}
