@@ -82,6 +82,9 @@ namespace UnityGLTF
 
 		public MeshTopology[] Topology;
 		public int[][] Indices;
+		
+		public HashSet<int> alreadyAddedAccessors = new HashSet<int>();
+		public uint[] subMeshVertexOffset;
 	}
 
 	public struct ImportProgress

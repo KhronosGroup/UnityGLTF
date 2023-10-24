@@ -68,34 +68,32 @@ namespace UnityGLTF
 			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
 			cancellationToken.ThrowIfCancellationRequested();
 
-			var totalVertCount = mesh.Primitives.Aggregate((uint)0, (sum, p) => sum + p.Attributes[SemanticProperties.POSITION].Value.Count);
-			var vertOffset = 0;
-			var meshCache = _assetCache.MeshCache[meshIndex];
-			UnityMeshData unityData = new UnityMeshData()
+			Dictionary<int, AccessorId> accessorIds = new Dictionary<int, AccessorId>();
+			uint vOffset = 0;
+			int primIndex = 0;
+			uint[] vertOffsetBySubMesh = new uint[mesh.Primitives.Count];
+			uint totalVertCount = 0;
+			uint lastVertOffset = 0;
+			foreach (var p in mesh.Primitives)
 			{
-				Vertices = new Vector3[totalVertCount],
-				Normals = firstPrim.Attributes.ContainsKey(SemanticProperties.NORMAL) ? new Vector3[totalVertCount] : null,
-				Tangents = firstPrim.Attributes.ContainsKey(SemanticProperties.TANGENT) ? new Vector4[totalVertCount] : null,
-				Uv1 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_0) ? new Vector2[totalVertCount] : null,
-				Uv2 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_1) ? new Vector2[totalVertCount] : null,
-				Uv3 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_2) ? new Vector2[totalVertCount] : null,
-				Uv4 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_3) ? new Vector2[totalVertCount] : null,
-				Colors = firstPrim.Attributes.ContainsKey(SemanticProperties.COLOR_0) ? new Color[totalVertCount] : null,
-				BoneWeights = firstPrim.Attributes.ContainsKey(SemanticProperties.WEIGHTS_0) ? new BoneWeight[totalVertCount] : null,
+				
+				var acc = p.Attributes[SemanticProperties.POSITION];
+				if (accessorIds.TryAdd(acc.Id, acc))
+				{
+					totalVertCount += acc.Value.Count;
+					vOffset = lastVertOffset;
+					lastVertOffset += acc.Value.Count;
+				}
+				vertOffsetBySubMesh[primIndex] = vOffset;
 
-				MorphTargetVertices = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.POSITION) ?
-					Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, totalVertCount) : null,
-				MorphTargetNormals = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.NORMAL) ?
-					Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, totalVertCount) : null,
-				MorphTargetTangents = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.TANGENT) ?
-					Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, totalVertCount) : null,
+				primIndex++;
+			}
+			
+			var meshCache = _assetCache.MeshCache[meshIndex];
 
-				Topology = new MeshTopology[mesh.Primitives.Count],
-				Indices = new int[mesh.Primitives.Count][]
-			};
-			var unityMeshData = CreateUnityMeshData(mesh, firstPrim, totalVertCount);
-
-
+			var unityData = CreateUnityMeshData(mesh, firstPrim, totalVertCount);
+			unityData.subMeshVertexOffset = vertOffsetBySubMesh;
+			
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
 				var primitive = mesh.Primitives[i];
@@ -104,27 +102,24 @@ namespace UnityGLTF
 
 				if (IsMultithreaded)
 				{
-					await Task.Run(() => ConvertAttributeAccessorsToUnityTypes(primCache, unityData, vertOffset, i));
+					await Task.Run(() => ConvertAttributeAccessorsToUnityTypes(primCache, unityData, unityData.subMeshVertexOffset[i], i));
 				}
 				else
 				{
-					ConvertAttributeAccessorsToUnityTypes(primCache, unityData, vertOffset, i);
+					ConvertAttributeAccessorsToUnityTypes(primCache, unityData, unityData.subMeshVertexOffset[i], i);
 				}
 
 				await CreateMaterials(primitive);
 
 				cancellationToken.ThrowIfCancellationRequested();
-
-				var vertCount = primitive.Attributes[SemanticProperties.POSITION].Value.Count;
-				vertOffset += (int)vertCount;
-
+				
 				if (unityData.Topology[i] == MeshTopology.Triangles && primitive.Indices != null && primitive.Indices.Value != null)
 				{
 					Statistics.TriangleCount += primitive.Indices.Value.Count / 3;
 				}
 			}
 
-			Statistics.VertexCount += vertOffset;
+			Statistics.VertexCount += unityData.Vertices.Length;
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
 		}
 
@@ -408,7 +403,8 @@ namespace UnityGLTF
 					: null,
 
 				Topology = new MeshTopology[gltfMesh.Primitives.Count],
-				Indices = new int[gltfMesh.Primitives.Count][]
+				Indices = new int[gltfMesh.Primitives.Count][],
+				subMeshVertexOffset = new uint[gltfMesh.Primitives.Count]
 			};
 			if (!onlyMorphTargets)
 			{
@@ -480,11 +476,10 @@ namespace UnityGLTF
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
 			mesh.subMeshCount = unityMeshData.Indices.Length;
-			uint baseVertex = 0;
 			for (int i = 0; i < unityMeshData.Indices.Length; i++)
 			{
-				mesh.SetIndices(unityMeshData.Indices[i], unityMeshData.Topology[i], i, false, (int)baseVertex);
-				baseVertex += _assetCache.MeshCache[meshIndex].Primitives[i].Attributes[SemanticProperties.POSITION].AccessorId.Value.Count;
+				mesh.SetIndices(unityMeshData.Indices[i], unityMeshData.Topology[i], i, false,
+					(int)unityMeshData.subMeshVertexOffset[i]);
 			}
 			mesh.RecalculateBounds();
 			await YieldOnTimeoutAndThrowOnLowMemory();
@@ -759,26 +754,39 @@ namespace UnityGLTF
 		protected void ConvertAttributeAccessorsToUnityTypes(
 			MeshCacheData.PrimitiveCacheData primData,
 			UnityMeshData unityData,
-			int vertOffset,
+			uint vertOffset,
 			int indexOffset)
 		{
+			
 			// todo optimize: There are multiple copies being performed to turn the buffer data into mesh data. Look into reducing them
 			var meshAttributes = primData.Attributes;
-			int vertexCount = 0;
-			if (meshAttributes.ContainsKey(SemanticProperties.POSITION))
+			uint vertexCount = 0;
+			if (meshAttributes.TryGetValue(SemanticProperties.POSITION, out var attribute))
 			{
-				vertexCount = (int)meshAttributes[SemanticProperties.POSITION].AccessorId.Value.Count;
+				vertexCount = attribute.AccessorId.Value.Count;
 			}
 
-			var indices = meshAttributes.ContainsKey(SemanticProperties.INDICES)
-				? meshAttributes[SemanticProperties.INDICES].AccessorContent.AsUInts.ToIntArrayRaw()
-				: MeshPrimitive.GenerateTriangles(vertexCount);
-			if (unityData.Topology[indexOffset] == MeshTopology.Triangles)
-				SchemaExtensions.FlipTriangleFaces(indices);
+			int[] indices;
+
+			if (meshAttributes.TryGetValue(SemanticProperties.INDICES, out var indicesAccessor))
+			{
+				indices = indicesAccessor.AccessorContent.AsUInts.ToIntArrayRaw();
+				if (unityData.Topology[indexOffset] == MeshTopology.Triangles)
+					SchemaExtensions.FlipTriangleFaces(indices);
+			}
+			else
+			{
+				indices = MeshPrimitive.GenerateTriangles((int)vertexCount);
+			}
+
 			unityData.Indices[indexOffset] = indices;
 
-			if (meshAttributes.ContainsKey(SemanticProperties.Weight[0]) && meshAttributes.ContainsKey(SemanticProperties.Joint[0]))
+			// Only add weight/joint data when it's not already added to the unity mesh data !
+			if (meshAttributes.ContainsKey(SemanticProperties.Weight[0]) && meshAttributes.ContainsKey(SemanticProperties.Joint[0])
+			    && !unityData.alreadyAddedAccessors.Contains(meshAttributes[SemanticProperties.Weight[0]].AccessorId.Id))
 			{
+				unityData.alreadyAddedAccessors.Add(meshAttributes[SemanticProperties.Weight[0]].AccessorId.Id);
+				
 				CreateBoneWeightArray(
 					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
 					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsVec4s.ToUnityVector4Raw(),
@@ -786,58 +794,67 @@ namespace UnityGLTF
 					vertOffset);
 			}
 
-			if (meshAttributes.ContainsKey(SemanticProperties.POSITION))
+			// Only add vertex data when it's not already added to the unity mesh data !
+			if (!unityData.alreadyAddedAccessors.Contains(meshAttributes[SemanticProperties.POSITION].AccessorId.Id))
 			{
-				meshAttributes[SemanticProperties.POSITION].AccessorContent.AsVertices.ToUnityVector3Raw(unityData.Vertices, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.NORMAL))
-			{
-				meshAttributes[SemanticProperties.NORMAL].AccessorContent.AsNormals.ToUnityVector3Raw(unityData.Normals, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TANGENT))
-			{
-				meshAttributes[SemanticProperties.TANGENT].AccessorContent.AsTangents.ToUnityVector4Raw(unityData.Tangents, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[0]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[0]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv1, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[1]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[1]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv2, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[2]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[2]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv3, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.TexCoord[3]))
-			{
-				meshAttributes[SemanticProperties.TexCoord[3]].AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv4, vertOffset);
-			}
-			if (meshAttributes.ContainsKey(SemanticProperties.Color[0]))
-			{
-				if (QualitySettings.activeColorSpace == ColorSpace.Gamma)
-					meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorRaw(unityData.Colors, vertOffset);
-				else
-					meshAttributes[SemanticProperties.Color[0]].AccessorContent.AsColors.ToUnityColorLinear(unityData.Colors, vertOffset);
-			}
+				
+				if (meshAttributes.TryGetValue(SemanticProperties.POSITION, out var attrPos))
+				{
+					unityData.alreadyAddedAccessors.Add(attrPos.AccessorId.Id);
+					attrPos.AccessorContent.AsVertices.ToUnityVector3Raw(unityData.Vertices, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.NORMAL, out var attrNorm))
+				{
+					attrNorm.AccessorContent.AsNormals.ToUnityVector3Raw(unityData.Normals, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.TANGENT, out var attrTang))
+				{
+					attrTang.AccessorContent.AsTangents.ToUnityVector4Raw(unityData.Tangents, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[0], out var attrTex0))
+				{
+					attrTex0.AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv1, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[1], out var attrTex1))
+				{
+					attrTex1.AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv2, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[2], out var attrTex2))
+				{
+					attrTex2.AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv3, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[3], out var attrTex3))
+				{
+					attrTex3.AccessorContent.AsTexcoords.ToUnityVector2Raw(unityData.Uv4, (int)vertOffset);
+				}
+				if (meshAttributes.TryGetValue(SemanticProperties.Color[0], out var attrColor))
+				{
+					if (QualitySettings.activeColorSpace == ColorSpace.Gamma)
+						attrColor.AccessorContent.AsColors.ToUnityColorRaw(unityData.Colors, (int)vertOffset);
+					else
+						attrColor.AccessorContent.AsColors.ToUnityColorLinear(unityData.Colors, (int)vertOffset);
+				}
 
+			}
 			var targets = primData.Targets;
 			if (targets != null)
 			{
 				for (int i = 0; i < targets.Count; ++i)
 				{
-					if (targets[i].ContainsKey(SemanticProperties.POSITION))
+					if (targets[i].TryGetValue(SemanticProperties.POSITION, out var tarAttrPos) && !unityData.alreadyAddedAccessors.Contains(tarAttrPos.AccessorId.Id))
 					{
-						targets[i][SemanticProperties.POSITION].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], vertOffset);
+						unityData.alreadyAddedAccessors.Add(tarAttrPos.AccessorId.Id);
+						tarAttrPos.AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], (int)vertOffset);
 					}
-					if (targets[i].ContainsKey(SemanticProperties.NORMAL))
+					if (targets[i].TryGetValue(SemanticProperties.NORMAL, out var tarAttrNorm) && !unityData.alreadyAddedAccessors.Contains(tarAttrNorm.AccessorId.Id))
 					{
-						targets[i][SemanticProperties.NORMAL].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetNormals[i], vertOffset);
+						unityData.alreadyAddedAccessors.Add(tarAttrNorm.AccessorId.Id);
+						tarAttrNorm.AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetNormals[i], (int)vertOffset);
 					}
-					if (targets[i].ContainsKey(SemanticProperties.TANGENT))
+					if (targets[i].TryGetValue(SemanticProperties.TANGENT, out var tarAttrTang) && !unityData.alreadyAddedAccessors.Contains(tarAttrTang.AccessorId.Id))
 					{
-						targets[i][SemanticProperties.TANGENT].AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetTangents[i], vertOffset);
+						unityData.alreadyAddedAccessors.Add(tarAttrTang.AccessorId.Id);
+						tarAttrTang.AccessorContent.AsVec3s.ToUnityVector3Raw(unityData.MorphTargetTangents[i], (int)vertOffset);
 					}
 				}
 			}
