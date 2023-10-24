@@ -351,7 +351,7 @@ namespace UnityGLTF
 			var firstPrim = gltfMesh.Primitives[0];
 			var unityMeshData = CreateUnityMeshData(gltfMesh, firstPrim, verticesLength,true);
 
-			int vertOffset = 0;
+			uint vertOffset = 0;
 			var meshCache = _assetCache.MeshCache[meshIndex];
 
 			unityMeshData.BoneWeights = mesh.boneWeights;
@@ -367,7 +367,7 @@ namespace UnityGLTF
 				{
 					ConvertAttributeAccessorsToUnityTypes(primCache, unityMeshData, vertOffset, i);
 				}
-				vertOffset += mesh.GetSubMesh(i).vertexCount;
+				vertOffset += (uint)mesh.GetSubMesh(i).vertexCount;
 			}
 
 			mesh.RecalculateBounds();
@@ -795,7 +795,7 @@ namespace UnityGLTF
 			}
 
 			// Only add vertex data when it's not already added to the unity mesh data !
-			if (!unityData.alreadyAddedAccessors.Contains(meshAttributes[SemanticProperties.POSITION].AccessorId.Id))
+			if (meshAttributes.ContainsKey(SemanticProperties.POSITION) && !unityData.alreadyAddedAccessors.Contains(meshAttributes[SemanticProperties.POSITION].AccessorId.Id))
 			{
 				
 				if (meshAttributes.TryGetValue(SemanticProperties.POSITION, out var attrPos))
