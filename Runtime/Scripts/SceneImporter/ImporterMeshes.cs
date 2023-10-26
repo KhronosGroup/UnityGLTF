@@ -159,10 +159,10 @@ namespace UnityGLTF
 
 					// TODO: check if normals and tangents are needed
 #pragma warning disable 0219
-					bool needsNormals = _options.ImportNormals != GLTFImporterNormals.None;
-					bool needsTangents = _options.ImportTangents != GLTFImporterNormals.None;
+					bool needsTangents = _options.ImportTangents != GLTFImporterNormals.None ;
+					bool needsNormals = _options.ImportNormals != GLTFImporterNormals.None || needsTangents;
 #pragma warning restore 0219
-
+					
 					var draco = new DracoMeshLoader();
 
 					dracoDecodeResults[i] = await draco.ConvertDracoMeshToUnity(meshDataArray[i], bufferViewData,
@@ -275,6 +275,8 @@ namespace UnityGLTF
 			else if (_options.ImportNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
 				mesh.RecalculateNormals();
 			else if (_options.ImportNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
+				mesh.RecalculateNormals();
+			else if (_options.ImportTangents != GLTFImporterNormals.None && mesh.normals.Length == 0)
 				mesh.RecalculateNormals();
 
 			if (_options.ImportTangents == GLTFImporterNormals.None)
