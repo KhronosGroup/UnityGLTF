@@ -223,6 +223,7 @@ namespace UnityGLTF
 		public MaterialCacheData[] MaterialCache => _assetCache.MaterialCache;
 		public AnimationCacheData[] AnimationCache => _assetCache.AnimationCache;
 		public GameObject[] NodeCache => _assetCache.NodeCache;
+		public MeshCacheData[] MeshCache => _assetCache.MeshCache;
 
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
