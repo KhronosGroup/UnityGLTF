@@ -66,7 +66,7 @@ namespace UnityGLTF
 			renderer.bones = bones;
 		}
 
-		private void CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, ref BoneWeight[] destArr, int offset = 0)
+		private void CreateBoneWeightArray(Vector4[] joints, Vector4[] weights, ref BoneWeight[] destArr, uint offset = 0)
 		{
 			// normalize weights (built-in normalize function only normalizes three components)
 			for (int i = 0; i < weights.Length; i++)

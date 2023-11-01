@@ -1146,6 +1146,20 @@ namespace UnityGLTF
 			}
 			return null;
 		}
+		
+		public MeshId GetMeshId(Mesh meshObj)
+		{
+			foreach (var primOwner in _primOwner)
+			{
+				// Not sure if this is entirely accurate – we're returning the first instance here.
+				if (primOwner.Key.Mesh == meshObj)
+				{
+					return primOwner.Value;
+				}
+			}
+
+			return null;
+		}
 
 		public ImageId GetImageId(GLTFRoot root, Texture imageObj, TextureExportSettings textureMapType)
 		{
