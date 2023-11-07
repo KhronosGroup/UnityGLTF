@@ -212,10 +212,11 @@ namespace UnityGLTF
 
 			ConvertClipToGLTFAnimation(clip, node, anim, speed);
 
-			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
+			var clipsKey = (node, clip);
+			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim) && !_animationClips.Contains(clipsKey))
 			{
 				_root.Animations.Add(anim);
-				_animationClips.Add((node, clip));
+				_animationClips.Add(clipsKey);
 			}
 			return anim;
 		}
