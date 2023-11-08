@@ -258,9 +258,6 @@ namespace UnityGLTF
 		private List<ImageInfo> _imageInfos;
 		private List<UniqueTexture> _textures;
 		private Dictionary<int, int> _exportedMaterials;
-#if ANIMATION_SUPPORTED
-		private List<(Transform tr, AnimationClip clip)> _animationClips;
-#endif
 		private bool _shouldUseInternalBufferForImages;
 		private Dictionary<int, int> _exportedTransforms;
 		private List<Transform> _animatedNodes;
@@ -514,9 +511,6 @@ namespace UnityGLTF
 			_imageInfos = new List<ImageInfo>();
 			_exportedMaterials = new Dictionary<int, int>();
 			_textures = new List<UniqueTexture>();
-#if ANIMATION_SUPPORTED
-			_animationClips = new List<(Transform, AnimationClip)>();
-#endif
 
 			_buffer = new GLTFBuffer();
 			_bufferId = new BufferId
@@ -1084,12 +1078,11 @@ namespace UnityGLTF
 #region Public API
 #if ANIMATION_SUPPORTED
 
-		public int GetAnimationId(AnimationClip clip, Transform transform)
+		public int GetAnimationId(AnimationClip clip, Transform transform, float speed = 1)
 		{
-			for (var i = 0; i < _animationClips.Count; i++)
+			if (_clipAndSpeedAndNodeToAnimation.TryGetValue((clip, speed, transform), out var id))
 			{
-				var entry = _animationClips[i];
-				if (entry.tr == transform && entry.clip == clip) return i;
+				return _root.Animations.IndexOf(id);
 			}
 			return -1;
 		}
