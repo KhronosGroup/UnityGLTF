@@ -489,6 +489,7 @@ namespace UnityGLTF
 
 			const string PNGMimeType = "image/png";
 			const string JPEGMimeType = "image/jpeg";
+			const string EXRMimeType = "image/exr";
 
 			if (texture == null)
 		    {
@@ -554,7 +555,7 @@ namespace UnityGLTF
 
 				if (exrImageData != null)
 				{
-					image.MimeType = "image/exr";
+					image.MimeType = EXRMimeType;
 					_bufferWriter.Write(exrImageData);
 					wasAbleToExport = true;
 				}
