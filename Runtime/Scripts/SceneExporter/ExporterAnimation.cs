@@ -30,12 +30,9 @@ namespace UnityGLTF
 	{
 #if ANIMATION_SUPPORTED
 		private readonly Dictionary<(AnimationClip clip, float speed, Avatar avatar), GLTFAnimation> _clipToAnimation = new Dictionary<(AnimationClip, float, Avatar), GLTFAnimation>();
-#endif
-#if ANIMATION_SUPPORTED
 		private readonly Dictionary<(AnimationClip clip, float speed, string targetPath), Transform> _clipAndSpeedAndPathToExportedTransform = new Dictionary<(AnimationClip, float, string), Transform>();
-#endif
+		private readonly Dictionary<(AnimationClip clip, float speed, Transform transform), GLTFAnimation> _clipAndSpeedAndNodeToAnimation = new Dictionary<(AnimationClip, float, Transform), GLTFAnimation>();
 
-#if ANIMATION_SUPPORTED
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
 #endif
@@ -126,6 +123,18 @@ namespace UnityGLTF
 		private GLTFAnimation GetOrCreateAnimation(AnimationClip clip, string searchForDuplicateName, float speed, Transform node)
 		{
 			var existingAnim = default(GLTFAnimation);
+			
+			// Check if there's an existing animation for this clip, speed and node -
+			// In that case we don't want to duplicate/retarget anything and just return the existing animation.
+			// There's also no need to add more data to it since the full state has already been processed.
+			// This can happen when e.g. the GetOrCreateAnimation API is called multiple times for the same node and clip –
+			// it doesn't happen internally in UnityGLTF
+			var animationClipAndSpeedAndNode = (clip, speed, node);
+			if (_clipAndSpeedAndNodeToAnimation.TryGetValue(animationClipAndSpeedAndNode, out existingAnim))
+			{
+				return existingAnim;
+			}
+			
 			if (_exportOptions.MergeClipsWithMatchingNames)
 			{
 				// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
@@ -153,6 +162,10 @@ namespace UnityGLTF
 			// add to set of already exported clip-state pairs
 			if (!_clipToAnimation.ContainsKey(animationClipAndSpeedAndAvatar))
 				_clipToAnimation.Add(animationClipAndSpeedAndAvatar, anim);
+			
+			// add to set of already exported clip-node pairs
+			if (!_clipAndSpeedAndNodeToAnimation.ContainsKey(animationClipAndSpeedAndNode))
+				_clipAndSpeedAndNodeToAnimation.Add(animationClipAndSpeedAndNode, anim);
 
 			return anim;
 		}
@@ -205,18 +218,18 @@ namespace UnityGLTF
 		{
 			if (!clip) return null;
 			GLTFAnimation anim = GetOrCreateAnimation(clip, name, speed, node);
+			// early out if this is exactly an animation that has already been exported. Not retargeted or changed otherwise.
+			if (_root.Animations.Contains(anim)) return anim;
 
 			anim.Name = name;
 			if(settings.UniqueAnimationNames)
 				anim.Name = ObjectNames.GetUniqueName(_root.Animations.Select(x => x.Name).ToArray(), anim.Name);
 
 			ConvertClipToGLTFAnimation(clip, node, anim, speed);
-
-			var sameNodeAndClipKey = (node, clip);
-			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim) && !_animationClips.Contains(sameNodeAndClipKey))
+			
+			if (anim.Channels.Count > 0 && anim.Samplers.Count > 0 && !_root.Animations.Contains(anim))
 			{
 				_root.Animations.Add(anim);
-				_animationClips.Add(sameNodeAndClipKey);
 			}
 			return anim;
 		}
