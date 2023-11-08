@@ -29,9 +29,7 @@ namespace UnityGLTF
 			if (m_HasSceneData.boolValue)
 				AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
 
-			var m_HasAnimationData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasAnimationData));
-			if (m_HasAnimationData.boolValue)
-				AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
+			AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
 
 			var m_HasMaterialData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasMaterialData));
 			var m_HasTextureData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasTextureData));
@@ -123,9 +121,16 @@ namespace UnityGLTF
 			var t = target as GLTFImporter;
 			if (!t) return;
 
+			var hasAnimationData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasAnimationData)).boolValue;
+
+			if (!hasAnimationData)
+			{
+				EditorGUILayout.HelpBox("File doesn't contain animation data.", MessageType.None);
+			}
+			
 			var anim = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
 			EditorGUILayout.PropertyField(anim, new GUIContent("Animation Type"));
-			if (anim.enumValueIndex > 0)
+			if (hasAnimationData && anim.enumValueIndex > 0)
 			{
 				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
 				EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
@@ -136,7 +141,7 @@ namespace UnityGLTF
 					EditorGUI.indentLevel--;
 				}
 			}
-
+			
 			// show animations for clip import editing
 			var animations = serializedObject.FindProperty("m_Animations");
 			if (animations.arraySize > 0)
