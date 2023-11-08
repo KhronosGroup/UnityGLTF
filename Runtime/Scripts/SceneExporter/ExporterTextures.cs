@@ -124,11 +124,26 @@ namespace UnityGLTF
 		{
 			RenderTexture.active = destRenderTexture;
 
-			var exportTexture = new Texture2D(destRenderTexture.width, destRenderTexture.height, TextureFormat.ARGB32, false, linear);
+			TextureFormat format = TextureFormat.ARGB32;
+			if (outputPath.EndsWith(".exr")) format = TextureFormat.RGBAFloat;
+			
+			var exportTexture = new Texture2D(destRenderTexture.width, destRenderTexture.height, format, false, linear);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 			exportTexture.Apply();
 
-			var binaryData = outputPath.EndsWith(".jpg") ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();
+			byte[] binaryData;
+			if(outputPath.EndsWith(".jpg")) 
+				binaryData = exportTexture.EncodeToJPG(settings.DefaultJpegQuality);
+			else if(outputPath.EndsWith(".png"))
+				binaryData = exportTexture.EncodeToPNG();
+			else if (outputPath.EndsWith(".exr"))
+				binaryData = exportTexture.EncodeToEXR(Texture2D.EXRFlags.CompressZIP);
+			else
+			{
+				Debug.LogError("Unsupported file extension: " + outputPath, destRenderTexture);
+				binaryData = exportTexture.EncodeToPNG();
+			}
+			
 			File.WriteAllBytes(outputPath, binaryData);
 
 			RenderTexture.ReleaseTemporary(destRenderTexture);
