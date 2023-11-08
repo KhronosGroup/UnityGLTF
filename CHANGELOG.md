@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.1-exp] - 2023-11-08
+- fix: issue where importer context root object was not set
+- fix: wrong flipped triangles when it's required to generate them ("Fox"-Test model) + fixed wrong imported vertex data on submeshes
+- fix: draco ifdef compiler error
+- fix: import reuse joints and weights for submeshes
+- fix: import normals when tangents are required
+- fix: humanoid importer inspector not being shown when model doesn't have animation data
+- fix: animation export for identical clip+node
+- fix: exporting glTF with external EXR texture falsely being encoded as PNG
+- change: importer exposes node- and mesh-cache
+
 ## [2.5.0-exp] - 2023-10-20
 - fix: default dataloader is now UnityWebRequestLoader
 - fix: importing animations at runtime did not work in specific settings combinations
