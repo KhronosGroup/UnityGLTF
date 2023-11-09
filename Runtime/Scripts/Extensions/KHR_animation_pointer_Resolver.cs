@@ -44,6 +44,8 @@ namespace UnityGLTF.Extensions
 						reg.path = "/extensions/KHR_lights_punctual/lights/" + id + "/" + reg.propertyBinding;
 						break;
 					case Camera camera:
+						if(reg.propertyBinding == "backgroundColor")
+							goto ResolveComponent;
 						reg.path = "/cameras/" + id + "/" + reg.propertyBinding;
 						break;
 					case SkinnedMeshRenderer smr:

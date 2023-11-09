@@ -336,6 +336,8 @@ namespace UnityGLTF
 							case "far clip plane":
 								propertyName = "perspective/zfar";
 								break;
+							case "backgroundColor":
+								break;
 							default:
 								Debug.Log(LogType.Warning, "Unknown property name on Camera " + camera + ": " + propertyName);
 								break;

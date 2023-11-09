@@ -320,7 +320,8 @@ namespace UnityGLTF
 					// When they have 3 components, we also need to check that these are r,g,b - theoretically someone can animate r,g,a and then we get wrong data.
 					if (propertyType == typeof(Color) && (
 						    (target is Material && colorPropertiesWithoutAlphaChannel.Contains(propertyName)) ||
-						    (target is Light && propertyName == "m_Color")))
+						    (target is Light && propertyName == "m_Color") ||
+						    (target is Camera)))
 					{
 						requiredCount = 3;
 						hasEnoughCurves = curve.Count >= requiredCount
@@ -590,6 +591,12 @@ namespace UnityGLTF
 						else if (animatedObject is Camera)
 						{
 							// types match, names are explicitly handled in ExporterAnimationPointer.cs
+							var lowercaseName = prop.propertyName.ToLowerInvariant();
+							if (lowercaseName.Contains("m_backgroundcolor"))
+							{
+								prop.propertyType = typeof(Color);
+								prop.propertyName = "backgroundColor";
+							}
 						}
 						else
 						{
