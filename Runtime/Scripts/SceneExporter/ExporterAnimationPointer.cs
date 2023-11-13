@@ -70,6 +70,7 @@ namespace UnityGLTF
 			bool convertToLinearColor = false;
 			string secondPropertyName = null;
 			string extensionName = null;
+			var propertyType = values[0]?.GetType();
 
 			switch (animatedObject)
 			{
@@ -337,6 +338,7 @@ namespace UnityGLTF
 								propertyName = "perspective/zfar";
 								break;
 							case "backgroundColor":
+								convertToLinearColor = true;
 								break;
 							default:
 								Debug.Log(LogType.Warning, "Unknown property name on Camera " + camera + ": " + propertyName);
@@ -397,6 +399,11 @@ namespace UnityGLTF
 						{
 							return;
 						}
+						
+						// If the animated property is a color, we need to convert to linear –
+						// we're doing the same on regular non-animated property export.
+						if (propertyType == typeof(Color))
+							convertToLinearColor = true;
 					}
 					break;
 			}
