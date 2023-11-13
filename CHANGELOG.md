@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.2-exp] - 2023-11-13
+- add: support to animate camera background color
+- fix: animation curve sorting running before validation 
+
 ## [2.5.1-exp] - 2023-11-08
 - fix: issue where importer context root object was not set
 - fix: wrong flipped triangles when it's required to generate them ("Fox"-Test model) + fixed wrong imported vertex data on submeshes
