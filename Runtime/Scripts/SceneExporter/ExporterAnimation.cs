@@ -1294,6 +1294,7 @@ namespace UnityGLTF
 			times = null;
 			values = null;
 
+			prop.SortCurves();
 			if (!prop.Validate()) return false;
 
 			var nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
@@ -1305,11 +1306,7 @@ namespace UnityGLTF
 			var curveCount = prop.curve.Count;
 			var keyframes = prop.curve.Select(x => x.keys).ToArray();
 			var keyframeIndex = new int[curveCount];
-
-			prop.SortCurves();
-
-			var vector3Scale = SchemaExtensions.CoordinateSpaceConversionScale.ToUnityVector3Raw();
-
+			
 			// Assuming all the curves exist now
 			for (var i = 0; i < nbSamples; ++i)
 			{
@@ -1369,7 +1366,6 @@ namespace UnityGLTF
 						}
 						else if (typeof(Color) == type)
 						{
-							// TODO should actually access r,g,b,a separately since any of these can have curves assigned.
 							var r = prop.Evaluate(t, 0);
 							var g = prop.Evaluate(t, 1);
 							var b = prop.Evaluate(t, 2);
