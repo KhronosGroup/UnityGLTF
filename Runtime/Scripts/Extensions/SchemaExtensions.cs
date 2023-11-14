@@ -528,6 +528,27 @@ namespace UnityGLTF.Extensions
 
 			return returnArray;
 		}
+		
+		/// <summary>
+		/// Converts and copies based on the specified coordinate scale. Also verify the tangent.w component to be -1 or 1
+		/// </summary>
+		/// <param name="array">The array to convert and copy</param>
+		/// <param name="coordinateSpaceCoordinateScale">The specified coordinate space</param>
+		/// <returns>The copied and converted coordinate space</returns>
+		public static Vector4[] ConvertTangentCoordinateSpaceAndCopy(Vector4[] array, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
+		{
+			var returnArray = new Vector4[array.Length];
+			var coordinateScale = coordinateSpaceCoordinateScale.ToUnityVector4Raw();
+
+			for (var i = 0; i < array.Length; i++)
+			{
+				returnArray[i] = array[i];
+				returnArray[i].w = Mathf.Sign(returnArray[i].w);
+				returnArray[i].Scale(coordinateScale);
+			}
+
+			return returnArray;
+		}		
 
 		/// <summary>
 		/// Rewinds the indicies into Unity coordinate space from glTF space
