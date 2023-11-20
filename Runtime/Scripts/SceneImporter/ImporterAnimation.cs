@@ -164,10 +164,11 @@ namespace UnityGLTF
 						keyframes[2][i].value = q.z;
 						keyframes[3][i].value = q.w;
 					}
+					prev = q;
 				}
 			}
 			
-			for (var ci = 0; ci < channelCount; ++ci)
+			for (var ci = 0; ci < channelCount; ci++)
 			{
 				if (mode != InterpolationType.CUBICSPLINE)
 				{
