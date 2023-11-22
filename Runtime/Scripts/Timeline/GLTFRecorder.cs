@@ -236,19 +236,16 @@ namespace UnityGLTF.Timeline
 					this.tr = tr;
 					this.plan = plan;
 					samples = new Dictionary<double, object>();
-					SampleIfChanged(time);
+					SampleTrack(time);
 				}
 
-				public void SampleIfChanged(double time)
+				public void SampleTrack(double time)
 				{
 					var value = plan.Sample(tr);
 					if (value == null || (value is Object o && !o))
 						return;
-					if (!value.Equals(lastSample))
-					{
-						samples[time] = value;
-						lastSample = value;
-					}
+					samples[time] = value;
+					lastSample = value;
 				}
 				
 			}
@@ -257,7 +254,7 @@ namespace UnityGLTF.Timeline
 			{
 				foreach (var track in tracks)
 				{
-					track.SampleIfChanged(time);
+					track.SampleTrack(time);
 				}
 			}
 		}
