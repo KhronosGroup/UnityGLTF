@@ -229,23 +229,43 @@ namespace UnityGLTF.Timeline
 				private AnimationData tr;
 				private ExportPlan plan;
 				private Dictionary<double, object> samples;
-				private object lastSample;
+				private Tuple<double, object> lastSample = null;
+				private Tuple<double, object> secondToLastSample = null;
 				
 				public Track(AnimationData tr, ExportPlan plan, double time)
 				{
 					this.tr = tr;
 					this.plan = plan;
 					samples = new Dictionary<double, object>();
-					SampleTrack(time);
+					SampleIfChanged(time);
 				}
 
-				public void SampleTrack(double time)
+				public void SampleIfChanged(double time)
 				{
 					var value = plan.Sample(tr);
 					if (value == null || (value is Object o && !o))
 						return;
+					// We cannot skip samples altogether when they are identical to the previous one - otherwise cases like this break:
+					// - First Set something "visible" by updating its scale from (0,0,0) to (1,1,1) at some point in time
+					// - an arbitrary time later set its visibility back to (0,0,0)
+					// - if we simply skipped identical samples, instead of instantaneous
+					// visibility/scale changes we get a linearly interpolated scale change for both "set visible" and "set invisible" 
+					//
+					// But as a memory optimization we may want to be able to skip identical samples.
+					// How do we achieve both?
+					// Strategy is to always sample first and then on adding the next sample we check
+					// if the *last two* samples were identical to the current sample.
+					// If that is the case we can remove/overwrite the middle sample with the new value
+					if (lastSample != null
+						&& secondToLastSample != null
+						&& lastSample.Item2.Equals(secondToLastSample.Item2)
+						&& lastSample.Item2.Equals(value)) {
+						
+						samples.Remove(lastSample.Item1); 
+					}
 					samples[time] = value;
-					lastSample = value;
+					secondToLastSample = lastSample;
+					lastSample = new Tuple<double, object>(time, value);
 				}
 				
 			}
@@ -254,7 +274,7 @@ namespace UnityGLTF.Timeline
 			{
 				foreach (var track in tracks)
 				{
-					track.SampleTrack(time);
+					track.SampleIfChanged(time);
 				}
 			}
 		}
