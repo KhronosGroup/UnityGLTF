@@ -418,7 +418,7 @@ namespace UnityGLTF.Timeline
 						}
 					}
 
-					gltfSceneExporter.RemoveUnneededKeyframes(ref postAnimation.Times, ref postAnimation.Values);
+					GLTFSceneExporter.RemoveUnneededKeyframes(ref postAnimation.Times, ref postAnimation.Values);
 					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, postAnimation.Times, postAnimation.Values);
 				}
 				processAnimationMarker.End();
