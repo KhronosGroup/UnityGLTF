@@ -1499,7 +1499,7 @@ namespace UnityGLTF
 			offset = new Vector2(input.z, 1 - input.w - input.y);
 		}
 
-		private bool ArrayRangeEquals(object[] array, int sectionLength, int lastExportedSectionStart, int prevSectionStart, int sectionStart, int nextSectionStart)
+		private static bool ArrayRangeEquals(object[] array, int sectionLength, int lastExportedSectionStart, int prevSectionStart, int sectionStart, int nextSectionStart)
 		{
 			var equals = true;
 			for (int i = 0; i < sectionLength; i++)
@@ -1513,7 +1513,7 @@ namespace UnityGLTF
 			return true;
 		}
 
-		public void RemoveUnneededKeyframes(ref float[] times, ref object[] values)
+		internal static void RemoveUnneededKeyframes(ref float[] times, ref object[] values)
 		{
 			if (times.Length <= 1)
 				return;
