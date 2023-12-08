@@ -80,16 +80,16 @@ namespace UnityGLTF.Timeline
 
 		public class PostAnimationData
 		{
-			internal Track animationTrack;
+			internal AnimationTrack _animationAnimationTrack;
 			public float[] Times;
 			public object[] Values;
 			
-			public Object AnimatedObject => animationTrack.animatedObject;
-			public string PropertyName => animationTrack.propertyName;
+			public Object AnimatedObject => _animationAnimationTrack.animatedObject;
+			public string PropertyName => _animationAnimationTrack.propertyName;
 			
-			internal PostAnimationData(Track tr, float[] times, object[] values)
+			internal PostAnimationData(AnimationTrack tr, float[] times, object[] values)
 			{
-				this.animationTrack = tr;
+				this._animationAnimationTrack = tr;
 				this.Times = times;
 				this.Values = values;
 			}
@@ -234,7 +234,7 @@ namespace UnityGLTF.Timeline
 				{
 					if (tr.times.Length == 0) continue;
 					
-					var postAnimation = new PostAnimationData(tr, tr.times, tr.values);
+					var postAnimation = new PostAnimationData(tr, tr.times.Select(dbl => (float)dbl).ToArray(), tr.values);
 					OnBeforeAddAnimationData?.Invoke(postAnimation);
 
 					if (calculateTranslationBounds && tr.propertyName == "translation")

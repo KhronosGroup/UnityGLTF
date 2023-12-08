@@ -5,59 +5,46 @@ using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Timeline
 {
-    internal class ExportPlan
+    internal interface AnimationSampler
     {
-        private static List<ExportPlan> exportPlans;
+        private static List<AnimationSampler> animationSamplers;
         private static MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
+
+        public string propertyName { get; }
         
-        public string propertyName;
-        public Type dataType;
-        public Func<Transform, Object> GetTarget;
-        public Func<Transform, Object, AnimationData, object> GetData;
+        public Func<Transform, Object> GetTarget { get; }
 
-        private ExportPlan(
-            string propertyName,
-            Type dataType,
-            Func<Transform, Object> GetTarget,
-            Func<Transform, Object, AnimationData, object> GetData
-        ) {
-            this.propertyName = propertyName;
-            this.dataType = dataType;
-            this.GetTarget = GetTarget;
-            this.GetData = GetData;
-        }
+        object Sample(AnimationData data);
 
-        internal static IReadOnlyList<ExportPlan> getExportPlans(bool recordBlendShapes, bool recordAnimationPointer) {
-            if (exportPlans == null) {
-                exportPlans = new List<ExportPlan> {
-                    new(
+        public abstract AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time);
+        
+        internal static IReadOnlyList<AnimationSampler> getAllAnimationSamplers(bool recordBlendShapes, bool recordAnimationPointer) {
+            if (animationSamplers == null) {
+                animationSamplers = new List<AnimationSampler> {
+                    new AnimationSampler<Vector3>(
                         "translation",
-                        typeof(Vector3),
                         x => x,
                         (tr0, _, options) => options.inWorldSpace ? tr0.position : tr0.localPosition
                     ),
-                    new(
+                    new AnimationSampler<Quaternion>(
                         "rotation",
-                        typeof(Quaternion),
                         x => x,
                         (tr0, _, options) => {
                             var q = options.inWorldSpace ? tr0.rotation : tr0.localRotation;
                             return new Quaternion(q.x, q.y, q.z, q.w);
                         }
                     ),
-                    new(
+                    new AnimationSampler<Vector3>(
                         "scale",
-                        typeof(Vector3),
                         x => x,
                         (tr0, _, options) => options.inWorldSpace ? tr0.lossyScale : tr0.localScale
                     )
                 };
 
                 if (recordBlendShapes) {
-                    exportPlans.Add(
-                        new ExportPlan(
+                    animationSamplers.Add(
+                        new AnimationSampler<float[]>(
                             "weights",
-                            typeof(float[]),
                             x => x.GetComponent<SkinnedMeshRenderer>(),
                             (tr0, x, options) => {
                                 if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh.sharedMesh) {
@@ -79,10 +66,9 @@ namespace UnityGLTF.Timeline
                 if (recordAnimationPointer) {
                     // TODO add other animation pointer export plans
 
-                    exportPlans.Add(
-                        new ExportPlan(
+                    animationSamplers.Add(
+                        new AnimationSampler<Color?>(
                             "baseColorFactor",
-                            typeof(Color),
                             x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null,
                             (tr0, mat, options) => {
                                 var r = tr0.GetComponent<Renderer>();
@@ -118,12 +104,35 @@ namespace UnityGLTF.Timeline
                     );
                 }
             }
-            return exportPlans;
+            return animationSamplers;
         }
+    }
+
+    internal class AnimationSampler<T> : AnimationSampler
+    {
         
-        public object Sample(AnimationData data) {
-            var target = GetTarget(data.tr);
-            return GetData(data.tr, target, data);
+        public string propertyName { get; }
+        public Type dataType => typeof(T);
+        public Func<Transform, Object> GetTarget { get; }
+        public Func<Transform, Object, AnimationData, T> GetData;
+
+        internal AnimationSampler(
+            string propertyName,
+            Func<Transform, Object> GetTarget,
+            Func<Transform, Object, AnimationData, T> GetData
+        ) {
+            this.propertyName = propertyName;
+            this.GetTarget = GetTarget;
+            this.GetData = GetData;
+        }
+
+        public object Sample(AnimationData data) => sample(data);
+        public AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) => 
+            new AnimationTrack<T>( data, this, time);
+
+        internal T sample(AnimationData data) {
+            var target = GetTarget(data.transform);
+            return GetData(data.transform, target, data);
         }
     }
 

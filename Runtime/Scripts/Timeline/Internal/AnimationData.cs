@@ -5,31 +5,33 @@ namespace UnityGLTF.Timeline
 {
     internal class AnimationData
     {
-        internal Transform tr;
+        internal Transform transform;
         private SkinnedMeshRenderer smr;
         
         internal readonly bool recordBlendShapes;
         internal readonly bool inWorldSpace = false;
         internal readonly bool recordAnimationPointer;
 
-        internal List<Track> tracks = new List<Track>();
+        internal List<AnimationTrack> tracks = new List<AnimationTrack>();
         
         public AnimationData(
-            Transform tr,
+            Transform transform,
             double time,
             bool zeroScale = false,
             bool recordBlendShapes = true,
             bool inWorldSpace = false,
             bool recordAnimationPointer = false
         ) {
-            this.tr = tr;
-            this.smr = tr.GetComponent<SkinnedMeshRenderer>();
+            this.transform = transform;
+            this.smr = transform.GetComponent<SkinnedMeshRenderer>();
             this.recordBlendShapes = recordBlendShapes;
             this.inWorldSpace = inWorldSpace;
             this.recordAnimationPointer = recordAnimationPointer;
             
-            foreach (var plan in ExportPlan.getExportPlans(recordBlendShapes, recordAnimationPointer)) {
-                if (plan.GetTarget(tr)) { tracks.Add(new Track(this, plan, time)); }
+            foreach (var plan in AnimationSampler.getAllAnimationSamplers(recordBlendShapes, recordAnimationPointer)) {
+                if (plan.GetTarget(transform)) {
+                    tracks.Add(plan.StartNewAnimationTrackFor(this, time));
+                }
             }
         }
 
