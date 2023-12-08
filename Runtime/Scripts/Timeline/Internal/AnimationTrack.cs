@@ -14,15 +14,15 @@ namespace UnityGLTF.Timeline
         void SampleIfChanged(double time);
     }
 
-    internal abstract class BaseAnimationTrack<T> : AnimationTrack
+    internal abstract class BaseAnimationTrack<TObject, TData> : AnimationTrack where TObject : Object
     {
-        private readonly Dictionary<double, T> samples;
+        private readonly Dictionary<double, TData> samples;
         
         
         private AnimationData animationData;
-        private AnimationSampler<T> sampler;
-        private Tuple<double, T> lastSample = null;
-        private Tuple<double, T> secondToLastSample = null;
+        private AnimationSampler<TObject, TData> sampler;
+        private Tuple<double, TData> lastSample = null;
+        private Tuple<double, TData> secondToLastSample = null;
 
         public Object animatedObject => sampler.GetTarget(animationData.transform);
         public abstract string propertyName { get; }
@@ -30,10 +30,10 @@ namespace UnityGLTF.Timeline
         
         public object[] values => samples.Values.Cast<object>().ToArray();
         
-        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<T> plan, double time) {
+        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) {
             this.animationData = tr;
             this.sampler = plan;
-            samples = new Dictionary<double, T>();
+            samples = new Dictionary<double, TData>();
             SampleIfChanged(time);
         }
         
@@ -65,12 +65,12 @@ namespace UnityGLTF.Timeline
 
             samples[time] = value;
             secondToLastSample = lastSample;
-            lastSample = new Tuple<double, T>(time, value); }
+            lastSample = new Tuple<double, TData>(time, value); }
     }
 
-    internal class AnimationTrack<T> : BaseAnimationTrack<T>
+    internal class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
     {
-        public AnimationTrack(AnimationData tr, AnimationSampler<T> plan, double time) : base(tr, plan, time) { }
+        public AnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) : base(tr, plan, time) { }
         public override string propertyName => "temp";
     }
     

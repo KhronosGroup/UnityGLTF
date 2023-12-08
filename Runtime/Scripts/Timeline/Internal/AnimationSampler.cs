@@ -8,25 +8,25 @@ namespace UnityGLTF.Timeline
     internal interface AnimationSampler
     {
         private static List<AnimationSampler> animationSamplers;
-        private static MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
+        private static readonly MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
 
         public string propertyName { get; }
         
-        public Func<Transform, Object> GetTarget { get; }
-
         object Sample(AnimationData data);
 
         public abstract AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time);
+
+        public abstract Object GetTarget(Transform transform);
         
         internal static IReadOnlyList<AnimationSampler> getAllAnimationSamplers(bool recordBlendShapes, bool recordAnimationPointer) {
             if (animationSamplers == null) {
                 animationSamplers = new List<AnimationSampler> {
-                    new AnimationSampler<Vector3>(
+                    new AnimationSamplerImpl<Transform, Vector3>(
                         "translation",
                         x => x,
                         (tr0, _, options) => options.inWorldSpace ? tr0.position : tr0.localPosition
                     ),
-                    new AnimationSampler<Quaternion>(
+                    new AnimationSamplerImpl<Transform,Quaternion>(
                         "rotation",
                         x => x,
                         (tr0, _, options) => {
@@ -34,7 +34,7 @@ namespace UnityGLTF.Timeline
                             return new Quaternion(q.x, q.y, q.z, q.w);
                         }
                     ),
-                    new AnimationSampler<Vector3>(
+                    new AnimationSamplerImpl<Transform,Vector3>(
                         "scale",
                         x => x,
                         (tr0, _, options) => options.inWorldSpace ? tr0.lossyScale : tr0.localScale
@@ -43,17 +43,17 @@ namespace UnityGLTF.Timeline
 
                 if (recordBlendShapes) {
                     animationSamplers.Add(
-                        new AnimationSampler<float[]>(
+                        new AnimationSamplerImpl<SkinnedMeshRenderer, float[]>(
                             "weights",
                             x => x.GetComponent<SkinnedMeshRenderer>(),
                             (tr0, x, options) => {
-                                if (x is SkinnedMeshRenderer skinnedMesh && skinnedMesh.sharedMesh) {
-                                    var mesh = skinnedMesh.sharedMesh;
+                                if (x.sharedMesh) {
+                                    var mesh = x.sharedMesh;
                                     var blendShapeCount = mesh.blendShapeCount;
                                     if (blendShapeCount == 0) return null;
                                     var weights = new float[blendShapeCount];
                                     for (var i = 0; i < blendShapeCount; i++)
-                                        weights[i] = skinnedMesh.GetBlendShapeWeight(i);
+                                        weights[i] = x.GetBlendShapeWeight(i);
                                     return weights;
                                 }
 
@@ -67,7 +67,7 @@ namespace UnityGLTF.Timeline
                     // TODO add other animation pointer export plans
 
                     animationSamplers.Add(
-                        new AnimationSampler<Color?>(
+                        new AnimationSamplerImpl<Material, Color?>(
                             "baseColorFactor",
                             x => x.GetComponent<MeshRenderer>() ? x.GetComponent<MeshRenderer>().sharedMaterial : null,
                             (tr0, mat, options) => {
@@ -92,10 +92,10 @@ namespace UnityGLTF.Timeline
                                     #endif
                                 }
 
-                                if (mat is Material m && m) {
-                                    if (m.HasProperty("_BaseColor")) return m.GetColor("_BaseColor").linear;
-                                    if (m.HasProperty("_Color")) return m.GetColor("_Color").linear;
-                                    if (m.HasProperty("baseColorFactor")) return m.GetColor("baseColorFactor").linear;
+                                if (mat) {
+                                    if (mat.HasProperty("_BaseColor")) return mat.GetColor("_BaseColor").linear;
+                                    if (mat.HasProperty("_Color")) return mat.GetColor("_Color").linear;
+                                    if (mat.HasProperty("baseColorFactor")) return mat.GetColor("baseColorFactor").linear;
                                 }
 
                                 return null;
@@ -108,32 +108,52 @@ namespace UnityGLTF.Timeline
         }
     }
 
-    internal class AnimationSampler<T> : AnimationSampler
+    internal abstract class AnimationSampler<TObject, TData> : AnimationSampler
+        where TObject : UnityEngine.Object
     {
-        
         public string propertyName { get; }
-        public Type dataType => typeof(T);
-        public Func<Transform, Object> GetTarget { get; }
-        public Func<Transform, Object, AnimationData, T> GetData;
+        public Type dataType => typeof(TData);
 
         internal AnimationSampler(
-            string propertyName,
-            Func<Transform, Object> GetTarget,
-            Func<Transform, Object, AnimationData, T> GetData
+            string propertyName
         ) {
             this.propertyName = propertyName;
-            this.GetTarget = GetTarget;
-            this.GetData = GetData;
         }
 
         public object Sample(AnimationData data) => sample(data);
-        public AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) => 
-            new AnimationTrack<T>( data, this, time);
+        public abstract AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time);
 
-        internal T sample(AnimationData data) {
-            var target = GetTarget(data.transform);
-            return GetData(data.transform, target, data);
+        public Object GetTarget(Transform transform) => getTarget(transform);
+        protected abstract TObject getTarget(Transform transform);
+        protected abstract TData getValue(Transform transform, TObject target, AnimationData data);
+
+        internal TData sample(AnimationData data) {
+            var target = getTarget(data.transform);
+            return getValue(data.transform, target, data);
         }
+    }
+    
+    internal class AnimationSamplerImpl<TObject, TData> : AnimationSampler<TObject, TData> where TObject : Object
+    {
+        public Func<Transform, TObject> GetTargetFunc { get; }
+        public Func<Transform, TObject, AnimationData, TData> GetDataFunc { get; }
+     
+        internal AnimationSamplerImpl(
+            string propertyName,
+            Func<Transform, TObject> GetTarget,
+            Func<Transform, TObject, AnimationData, TData> GetData
+        ) : base(propertyName) {
+            this.GetTargetFunc = GetTarget;
+            this.GetDataFunc = GetData;
+        }
+
+        public override AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) => 
+            new AnimationTrack<TObject, TData>( data, this, time);
+        
+        protected override TObject getTarget(Transform transform) => GetTargetFunc(transform);
+
+        protected override TData getValue(Transform transform, TObject target, AnimationData data) =>
+            GetDataFunc(transform, target, data);
     }
 
 }
