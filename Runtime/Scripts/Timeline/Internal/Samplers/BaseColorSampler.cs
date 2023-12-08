@@ -7,7 +7,7 @@ namespace UnityGLTF.Timeline.Samplers
         private static readonly MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
         
         public override string propertyName => "weights";
-        public override AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) =>
+        public override AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
             new AnimationTrack<Material, Color?>(data, this, time);
         
         protected override Material getTarget(Transform transform) => transform.GetComponent<MeshRenderer>()?.sharedMaterial;

@@ -73,9 +73,4 @@ namespace UnityGLTF.Timeline
         public AnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) : base(tr, plan, time) { }
         public override string propertyName => "temp";
     }
-    
-    // internal class VisibilityTrack : AnimationData
-    // {
-    //     
-    // }
 }

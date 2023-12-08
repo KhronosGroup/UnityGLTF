@@ -5,16 +5,15 @@ namespace UnityGLTF.Timeline.Samplers
     internal class VisibilitySampler : AnimationSampler<GameObject, bool>
     {
         public override string propertyName => "visibility";
-        public override AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) => new VisibilityTrack(data, this, time);
+        public override AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) => 
+            new AnimationTrack<GameObject, bool>(data, this, time);
+        internal AnimationTrack<GameObject, bool> startNewAnimationTrackAt(AnimationData data, double time) => 
+            new AnimationTrack<GameObject, bool>(data, this, time);
+        
+        
         protected override GameObject getTarget(Transform transform) => transform.gameObject;
 
         protected override bool getValue(Transform transform, GameObject target, AnimationData data) =>
             target.activeSelf;
-    }
-
-    // TODO: this feels kinda redundant now
-    internal class VisibilityTrack : AnimationTrack<GameObject, bool>
-    {
-        public VisibilityTrack(AnimationData tr, AnimationSampler<GameObject, bool> plan, double time) : base(tr, plan, time) { }
     }
 }

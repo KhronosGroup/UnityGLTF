@@ -5,7 +5,7 @@ namespace UnityGLTF.Timeline.Samplers
     internal class BlendWeightSampler : AnimationSampler<SkinnedMeshRenderer, float[]>
     {
         public override string propertyName => "weights";
-        public override AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) =>
+        public override AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
             new AnimationTrack<SkinnedMeshRenderer, float[]>(data, this, time);
         
         protected override SkinnedMeshRenderer getTarget(Transform transform) => transform.GetComponent<SkinnedMeshRenderer>();

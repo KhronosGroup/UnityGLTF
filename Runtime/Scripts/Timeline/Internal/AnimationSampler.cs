@@ -16,7 +16,7 @@ namespace UnityGLTF.Timeline
         
         object Sample(AnimationData data);
 
-        public abstract AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time);
+        public abstract AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
 
         public abstract Object GetTarget(Transform transform);
         
@@ -47,7 +47,7 @@ namespace UnityGLTF.Timeline
         public Type dataType => typeof(TData);
 
         public object Sample(AnimationData data) => sample(data);
-        public abstract AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time);
+        public abstract AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
 
         public Object GetTarget(Transform transform) => getTarget(transform);
         protected abstract TObject getTarget(Transform transform);
@@ -58,31 +58,4 @@ namespace UnityGLTF.Timeline
             return getValue(data.transform, target, data);
         }
     }
-    
-    internal class AnimationSamplerImpl<TObject, TData> : AnimationSampler<TObject, TData> where TObject : Object
-    {
-        public override string propertyName { get; }
-        
-        public Func<Transform, TObject> GetTargetFunc { get; }
-        public Func<Transform, TObject, AnimationData, TData> GetDataFunc { get; }
-     
-        internal AnimationSamplerImpl(
-            string propertyName,
-            Func<Transform, TObject> GetTarget,
-            Func<Transform, TObject, AnimationData, TData> GetData
-        ) {
-            this.propertyName = propertyName;
-            this.GetTargetFunc = GetTarget;
-            this.GetDataFunc = GetData;
-        }
-
-        public override AnimationTrack StartNewAnimationTrackFor(AnimationData data, double time) => 
-            new AnimationTrack<TObject, TData>( data, this, time);
-        
-        protected override TObject getTarget(Transform transform) => GetTargetFunc(transform);
-
-        protected override TData getValue(Transform transform, TObject target, AnimationData data) =>
-            GetDataFunc(transform, target, data);
-    }
-
 }
