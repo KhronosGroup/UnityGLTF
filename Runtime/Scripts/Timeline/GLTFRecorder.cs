@@ -30,9 +30,9 @@ namespace UnityGLTF.Timeline
 		private bool AllowRecordingTransform(Transform tr) => recordingList == null || recordingList.Contains(tr);
 
 		private Transform root;
-		private Dictionary<Transform, AnimationData> data = new Dictionary<Transform, AnimationData>(64);
+		private Dictionary<Transform, AnimationData> recordingAnimatedTransforms = new Dictionary<Transform, AnimationData>(64);
 		private double startTime;
-		private double lastRecordedTime;
+		private double lastSampleTimeSinceStart;
 		private bool hasRecording;
 		private bool isRecording;
 		
@@ -43,7 +43,7 @@ namespace UnityGLTF.Timeline
 		public bool HasRecording => hasRecording;
 		public bool IsRecording => isRecording;
 
-		public double LastRecordedTime => lastRecordedTime;
+		public double LastSampleTimeSinceStart => lastSampleTimeSinceStart;
 
 		public string AnimationName = "Recording";
 
@@ -98,14 +98,14 @@ namespace UnityGLTF.Timeline
 		public void StartRecording(double time)
 		{
 			startTime = time;
-			lastRecordedTime = time;
+			lastSampleTimeSinceStart = 0;
 			var trs = root.GetComponentsInChildren<Transform>(true);
-			data.Clear();
+			recordingAnimatedTransforms.Clear();
 
 			foreach (var tr in trs)
 			{
 				if (!AllowRecordingTransform(tr)) continue;
-				data.Add(tr, new AnimationData(tr, 0, !tr.gameObject.activeSelf, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
+				recordingAnimatedTransforms.Add(tr, new AnimationData(tr, lastSampleTimeSinceStart, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
 			}
 
 			isRecording = true;
@@ -119,37 +119,35 @@ namespace UnityGLTF.Timeline
 				throw new InvalidOperationException($"{nameof(GLTFRecorder)} isn't recording, but {nameof(UpdateRecording)} was called. This is invalid.");
 			}
 
-			if (time <= lastRecordedTime)
+			if (time <= lastSampleTimeSinceStart)
 			{
 				Debug.LogWarning("Can't record backwards in time, please avoid this.");
 				return;
 			}
 
-			var currentTime = time - startTime;
+			var timeSinceStart = time - startTime;
 			var trs = root.GetComponentsInChildren<Transform>(true);
 			foreach (var tr in trs)
 			{
 				if (!AllowRecordingTransform(tr)) continue;
-				if (!data.ContainsKey(tr))
+				if (!recordingAnimatedTransforms.ContainsKey(tr))
 				{
+					
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame
-					var emptyData = new AnimationData(tr, lastRecordedTime, true, recordBlendShapes, recordAnimationPointer);
-					data.Add(tr, emptyData);
-					// insert actual keyframe
-					data[tr].Update(currentTime);
+					var emptyData = new AnimationData(tr, lastSampleTimeSinceStart, true, recordBlendShapes, recordAnimationPointer);
+					recordingAnimatedTransforms.Add(tr, emptyData);
 				}
-				else
-					data[tr].Update(currentTime);
+				recordingAnimatedTransforms[tr].Update(timeSinceStart);
 			}
 
-			lastRecordedTime = time;
+			lastSampleTimeSinceStart = time;
 		}
 		
 		internal void EndRecording(out Dictionary<Transform, AnimationData> param)
 		{
 			param = null;
 			if (!hasRecording) return;
-			param = data;
+			param = recordingAnimatedTransforms;
 		}
 
 		public void EndRecording(string filename, string sceneName = "scene", GLTFSettings settings = null)
@@ -168,7 +166,7 @@ namespace UnityGLTF.Timeline
 		{
 			if (!hasRecording) return;
 			isRecording = false;
-			Debug.Log("Gltf Recording saved. Tracks: " + data.Count + ", Total Keyframes: " + data.Sum(x => x.Value.tracks.Sum(y => y.values.Count())));
+			Debug.Log("Gltf Recording saved. Tracks: " + recordingAnimatedTransforms.Count + ", Total Keyframes: " + recordingAnimatedTransforms.Sum(x => x.Value.tracks.Sum(y => y.values.Count())));
 
 			if (!settings)
 			{
@@ -227,7 +225,7 @@ namespace UnityGLTF.Timeline
 			var gotFirstValue = false;
 			translationBounds = new Bounds();
 
-			foreach (var kvp in data)
+			foreach (var kvp in recordingAnimatedTransforms)
 			{
 				processAnimationMarker.Begin();
 				foreach (var tr in kvp.Value.tracks)
