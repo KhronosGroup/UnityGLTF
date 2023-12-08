@@ -64,7 +64,6 @@ namespace UnityGLTF.Timeline
 		/// </summary>
 		public OnPostExportDelegate OnPostExport;
 
-
 		public class PostExportArgs
 		{
 			public Bounds AnimationTranslationBounds { get; private set; }
@@ -81,14 +80,14 @@ namespace UnityGLTF.Timeline
 
 		public class PostAnimationData
 		{
-			internal AnimationData.Track animationTrack;
+			internal Track animationTrack;
 			public float[] Times;
 			public object[] Values;
 			
 			public Object AnimatedObject => animationTrack.animatedObject;
 			public string PropertyName => animationTrack.propertyName;
 			
-			internal PostAnimationData(AnimationData.Track tr, float[] times, object[] values)
+			internal PostAnimationData(Track tr, float[] times, object[] values)
 			{
 				this.animationTrack = tr;
 				this.Times = times;
