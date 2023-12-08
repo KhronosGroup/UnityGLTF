@@ -6,6 +6,7 @@ using System.Text;
 using GLTF.Schema;
 using Unity.Profiling;
 using UnityEngine;
+using UnityGLTF.Timeline.Samplers;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Timeline
@@ -80,16 +81,15 @@ namespace UnityGLTF.Timeline
 
 		public class PostAnimationData
 		{
-			internal AnimationTrack _animationAnimationTrack;
 			public float[] Times;
 			public object[] Values;
 			
-			public Object AnimatedObject => _animationAnimationTrack.animatedObject;
-			public string PropertyName => _animationAnimationTrack.propertyName;
+			public Object AnimatedObject { get; }
+			public string PropertyName { get; }
 			
-			internal PostAnimationData(AnimationTrack tr, float[] times, object[] values)
-			{
-				this._animationAnimationTrack = tr;
+			internal PostAnimationData(Object animatedObject, string propertyName, float[] times, object[] values) {
+				this.AnimatedObject = animatedObject;
+				this.PropertyName = propertyName;
 				this.Times = times;
 				this.Values = values;
 			}
@@ -132,7 +132,6 @@ namespace UnityGLTF.Timeline
 				if (!AllowRecordingTransform(tr)) continue;
 				if (!recordingAnimatedTransforms.ContainsKey(tr))
 				{
-					
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame
 					var emptyData = new AnimationData(tr, lastSampleTimeSinceStart, true, recordBlendShapes, recordAnimationPointer);
 					recordingAnimatedTransforms.Add(tr, emptyData);
@@ -166,7 +165,7 @@ namespace UnityGLTF.Timeline
 		{
 			if (!hasRecording) return;
 			isRecording = false;
-			Debug.Log("Gltf Recording saved. Tracks: " + recordingAnimatedTransforms.Count + ", Total Keyframes: " + recordingAnimatedTransforms.Sum(x => x.Value.tracks.Sum(y => y.values.Count())));
+			Debug.Log("Gltf Recording saved. Tracks: " + recordingAnimatedTransforms.Count + ", Total Keyframes: " + recordingAnimatedTransforms.Sum(x => x.Value.tracks.Sum(y => y.Values.Count())));
 
 			if (!settings)
 			{
@@ -230,12 +229,19 @@ namespace UnityGLTF.Timeline
 				processAnimationMarker.Begin();
 				foreach (var tr in kvp.Value.tracks)
 				{
-					if (tr.times.Length == 0) continue;
-					
-					var postAnimation = new PostAnimationData(tr, tr.times.Select(dbl => (float)dbl).ToArray(), tr.values);
+					if (tr.Times.Length == 0) continue;
+
+					PostAnimationData postAnimation = null;
+					if (tr.PropertyName == "scale" && tr is AnimationTrack<Transform, Vector3> scaleTrack) {
+						var (mergedTimes, mergedScales) = mergeVisibilityAndScaleTracks(kvp.Value.visibilityTrack, scaleTrack);
+						postAnimation = new PostAnimationData(tr.AnimatedObject, tr.PropertyName, mergedTimes.Select(dbl => (float)dbl).ToArray(), mergedScales.Cast<object>().ToArray());	
+					}
+					else {
+						postAnimation = new PostAnimationData(tr.AnimatedObject, tr.PropertyName, tr.Times.Select(dbl => (float)dbl).ToArray(), tr.Values);	
+					}
 					OnBeforeAddAnimationData?.Invoke(postAnimation);
 
-					if (calculateTranslationBounds && tr.propertyName == "translation")
+					if (calculateTranslationBounds && tr.PropertyName == "translation")
 					{
 						for (var i = 0; i < postAnimation.Values.Length; i++)
 						{
@@ -253,12 +259,64 @@ namespace UnityGLTF.Timeline
 					}
 
 					GLTFSceneExporter.RemoveUnneededKeyframes(ref postAnimation.Times, ref postAnimation.Values);
-					gltfSceneExporter.AddAnimationData(tr.animatedObject, tr.propertyName, anim, postAnimation.Times, postAnimation.Values);
+					gltfSceneExporter.AddAnimationData(tr.AnimatedObject, tr.PropertyName, anim, postAnimation.Times, postAnimation.Values);
 				}
 				processAnimationMarker.End();
 			}
 		}
 
+		private static (double[], Vector3[]) mergeVisibilityAndScaleTracks(
+			VisibilityTrack visibilityTrack,
+			AnimationTrack<Transform, Vector3> scaleTrack
+		) {
+			if (visibilityTrack == null && scaleTrack == null) return (null, null);
+			if (visibilityTrack == null) return (scaleTrack.Times, scaleTrack.values);
+			var visTimes = visibilityTrack.Times;
+			var visValues = visibilityTrack.values;
+			var visScaleValues = visValues.Select(vis => vis ? Vector3.one : Vector3.zero).ToArray();
+			if (scaleTrack == null)
+				return (visTimes, visScaleValues);
+			// both tracks are present, need to merge, but visibility always takes precedence
+
+			var mergedLinkedList = new LinkedList<(double, bool, Vector3)>();
+
+			for (int visibleIndex = 0; visibleIndex < visValues.Length; visibleIndex++) {
+				var vis = visValues[visibleIndex];
+				mergedLinkedList.AddLast(
+					new LinkedListNode<(double, bool, Vector3)>(
+						new(visTimes[visibleIndex], vis, vis ? Vector3.one : Vector3.zero)
+					)
+				);
+			}
+			var scaleTimes = scaleTrack.Times;
+			var scaleValues = scaleTrack.values;
+			
+			LinkedListNode<(double, bool, Vector3)> nextNode = mergedLinkedList.First;
+			
+			for (int scaleIndex = 0; scaleIndex < scaleTimes.Length; scaleIndex++) {
+				var scaleTime = scaleTimes[scaleIndex];
+				var scale = scaleValues[scaleIndex];
+				
+				// prev visibility is "visible" & scale change happens before next vis change
+				if ((nextNode.Previous?.Value.Item2 ?? false) && scaleTime < nextNode.Value.Item1)
+					mergedLinkedList.AddBefore(
+						nextNode,
+						new LinkedListNode<(double, bool, Vector3)>(new(scaleTime, true, scale))
+					);
+			}
+
+			var mergedTimes = new double[mergedLinkedList.Count];
+			var mergedScales = new Vector3[mergedLinkedList.Count];
+
+			var ind = 0;
+			foreach (var (time, _, scale) in mergedLinkedList) {
+				mergedTimes[ind] = time;
+				mergedScales[ind] = scale;
+				ind++;
+			}
+			return (mergedTimes, mergedScales);
+		}
+		
 		private class StringBuilderLogHandler : ILogHandler
 		{
 			private readonly StringBuilder sb = new StringBuilder();

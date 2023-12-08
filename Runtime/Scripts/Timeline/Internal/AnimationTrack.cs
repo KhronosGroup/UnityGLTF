@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,10 +8,14 @@ namespace UnityGLTF.Timeline
 {
     internal interface AnimationTrack
     {
-        Object animatedObject { get; }
-        string propertyName { get; }
-        double[] times { get; }
-        object[] values { get; }
+        Object AnimatedObject { get; }
+        string PropertyName { get; }
+        double[] Times { get; }
+        object[] Values { get; }
+        
+        double? LastTime { get; }
+        object? LastValue { get; }
+        
         void SampleIfChanged(double time);
     }
 
@@ -21,24 +26,31 @@ namespace UnityGLTF.Timeline
         
         private AnimationData animationData;
         private AnimationSampler<TObject, TData> sampler;
-        private Tuple<double, TData> lastSample = null;
-        private Tuple<double, TData> secondToLastSample = null;
+        private Tuple<double, TData>? lastSample = null;
+        private Tuple<double, TData>? secondToLastSample = null;
 
-        public Object animatedObject => sampler.GetTarget(animationData.transform);
-        public abstract string propertyName { get; }
-        public double[] times => samples.Keys.ToArray();
+        public Object AnimatedObject => sampler.GetTarget(animationData.transform);
+        public string PropertyName => sampler.propertyName;
+        public double[] Times => samples.Keys.ToArray();
         
-        public object[] values => samples.Values.Cast<object>().ToArray();
+        public object[] Values => samples.Values.Cast<object>().ToArray();
+        internal TData[] values => samples.Values.ToArray();
+
+        public double? LastTime => lastSample?.Item1;
+        public object? LastValue => lastSample != null ? lastSample.Item2 : null;
+        public TData? lastValue => lastSample != null ? lastSample.Item2 : default;
         
-        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) {
+        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, TData? forceValue = default) {
             this.animationData = tr;
             this.sampler = plan;
             samples = new Dictionary<double, TData>();
-            SampleIfChanged(time);
+            sampleIfChanged(time, forceValue);
         }
+
+        public void SampleIfChanged(double time) => sampleIfChanged(time);
         
-        public void SampleIfChanged(double time) { 
-            var value = sampler.sample(animationData);
+        private void sampleIfChanged(double time, TData? forceValue = default) {
+            var value = forceValue != null ? forceValue : sampler.sample(animationData);
             if (value == null || (value is Object o && !o)) return;
             // As a memory optimization we want to be able to skip identical samples.
             // But, we cannot always skip samples when they are identical to the previous one - otherwise cases like this break:
@@ -60,17 +72,16 @@ namespace UnityGLTF.Timeline
             // If that is the case we can remove/overwrite the middle sample with the new value.
             if (lastSample != null
                 && secondToLastSample != null
-                && lastSample.Item2.Equals(secondToLastSample.Item2)
-                && lastSample.Item2.Equals(value)) { samples.Remove(lastSample.Item1); }
+                && lastSample!.Item2!.Equals(secondToLastSample.Item2)
+                && lastSample!.Item2!.Equals(value)) { samples.Remove(lastSample.Item1); }
 
             samples[time] = value;
             secondToLastSample = lastSample;
             lastSample = new Tuple<double, TData>(time, value); }
     }
 
-    internal class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
+    internal sealed class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
     {
         public AnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) : base(tr, plan, time) { }
-        public override string propertyName => "temp";
     }
 }
