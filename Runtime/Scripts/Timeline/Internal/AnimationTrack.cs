@@ -37,20 +37,26 @@ namespace UnityGLTF.Timeline
         internal TData[] values => samples.Values.ToArray();
 
         public double? LastTime => lastSample?.Item1;
-        public object? LastValue => lastSample != null ? lastSample.Item2 : null;
-        public TData? lastValue => lastSample != null ? lastSample.Item2 : default;
+        public object? LastValue => lastValue;
+        internal TData? lastValue => lastSample != null ? lastSample.Item2 : default;
         
-        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, TData? forceValue = default) {
+        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) {
             this.animationData = tr;
             this.sampler = plan;
             samples = new Dictionary<double, TData>();
-            sampleIfChanged(time, forceValue);
+            SampleIfChanged(time);
         }
 
-        public void SampleIfChanged(double time) => sampleIfChanged(time);
+        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, TData forceValue) {
+            this.animationData = tr;
+            this.sampler = plan;
+            samples = new Dictionary<double, TData>();
+            recordSampleIfChanged(time, forceValue);
+        }
         
-        private void sampleIfChanged(double time, TData? forceValue = default) {
-            var value = forceValue != null ? forceValue : sampler.sample(animationData);
+        public void SampleIfChanged(double time) => recordSampleIfChanged(time, sampler.sample(animationData));
+        
+        private void recordSampleIfChanged(double time, TData value) {
             if (value == null || (value is Object o && !o)) return;
             // As a memory optimization we want to be able to skip identical samples.
             // But, we cannot always skip samples when they are identical to the previous one - otherwise cases like this break:

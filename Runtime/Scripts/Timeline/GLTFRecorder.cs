@@ -265,56 +265,118 @@ namespace UnityGLTF.Timeline
 			}
 		}
 
+		private abstract record Change;
+
+		private sealed record VisChange : Change
+		{
+			public VisChange(bool NewVis) => this.NewVis = NewVis;
+			public bool NewVis { get; }
+		}
+
+		private sealed record ScaleChange : Change
+		{
+			public ScaleChange(Vector3 NewScale) => this.NewScale = NewScale;
+			public Vector3 NewScale { get; }
+		}
+
 		private static (double[], Vector3[]) mergeVisibilityAndScaleTracks(
 			VisibilityTrack visibilityTrack,
-			AnimationTrack<Transform, Vector3> scaleTrack
+			AnimationTrack<Transform, Vector3> scaleTrack,
+			double epsilon = Double.Epsilon
 		) {
 			if (visibilityTrack == null && scaleTrack == null) return (null, null);
 			if (visibilityTrack == null) return (scaleTrack.Times, scaleTrack.values);
 			var visTimes = visibilityTrack.Times;
 			var visValues = visibilityTrack.values;
-			var visScaleValues = visValues.Select(vis => vis ? Vector3.one : Vector3.zero).ToArray();
-			if (scaleTrack == null)
+			
+			if (scaleTrack == null) {
+				var visScaleValues = visValues.Select(vis => vis ? Vector3.one : Vector3.zero).ToArray();
 				return (visTimes, visScaleValues);
-			// both tracks are present, need to merge, but visibility always takes precedence
-
-			var mergedLinkedList = new LinkedList<(double, bool, Vector3)>();
-
-			for (int visibleIndex = 0; visibleIndex < visValues.Length; visibleIndex++) {
-				var vis = visValues[visibleIndex];
-				mergedLinkedList.AddLast(
-					new LinkedListNode<(double, bool, Vector3)>(
-						new(visTimes[visibleIndex], vis, vis ? Vector3.one : Vector3.zero)
-					)
-				);
 			}
+			// both tracks are present, need to merge, but visibility always takes precedence
+			
 			var scaleTimes = scaleTrack.Times;
 			var scaleValues = scaleTrack.values;
+
+			var mergedTimes = new List<double>(visTimes.Length + scaleTimes.Length);
+			var mergedScales = new List<Vector3>(visValues.Length + scaleValues.Length);
+
+			var visIndex = 0;
+			var scaleIndex = 0;
+
+			// should default be true or false - influences what is assumed to be the default visibility state before it is set
+			var lastVisible = false;
+			var lastScale = Vector3.zero;
 			
-			LinkedListNode<(double, bool, Vector3)> nextNode = mergedLinkedList.First;
-			
-			for (int scaleIndex = 0; scaleIndex < scaleTimes.Length; scaleIndex++) {
+			// process both
+			while (visIndex < visTimes.Length && scaleIndex < scaleTimes.Length) {
+				var visTime = visTimes[visIndex];
 				var scaleTime = scaleTimes[scaleIndex];
+				var visible = visValues[visIndex];
 				var scale = scaleValues[scaleIndex];
 				
-				// prev visibility is "visible" & scale change happens before next vis change
-				if ((nextNode.Previous?.Value.Item2 ?? false) && scaleTime < nextNode.Value.Item1)
-					mergedLinkedList.AddBefore(
-						nextNode,
-						new LinkedListNode<(double, bool, Vector3)>(new(scaleTime, true, scale))
-					);
-			}
+				if (visTime.nearlyEqual(scaleTime)) {
+					// time: -> time
+					// res: visible -> scale : 0
+					record(visTime, visible ? scale : Vector3.zero);
+					visIndex++;
+					scaleIndex++;
+					
+				} else if (visTime < scaleTime) {
+					
+					// next vis change is sooner than next scale change
+					// time: -> visTime
+					// res: visible -> lastScale : 0
+					record(visTime, visible ? lastScale : Vector3.zero);
+					visIndex++;
+				}
+				else if (scaleTime < visTime) {
+					
+					// next scale change occurs sooner than vis change
+					// last visible -> 
+					//   time: -> scaleTime
+					//   res: -> scale
+					// last invisible ->
+                    //   ignore
 
-			var mergedTimes = new double[mergedLinkedList.Count];
-			var mergedScales = new Vector3[mergedLinkedList.Count];
+                    if (lastVisible) {
+	                    record(scaleTime, scale);
+                    }
+                    scaleIndex++;
+				}
 
-			var ind = 0;
-			foreach (var (time, _, scale) in mergedLinkedList) {
-				mergedTimes[ind] = time;
-				mergedScales[ind] = scale;
-				ind++;
+				lastScale = scale;
+				lastVisible = visible;
 			}
-			return (mergedTimes, mergedScales);
+			
+			// process vis rest - this will only enter if scale end was reached first
+			while (visIndex < visTimes.Length) {
+				var visTime = visTimes[visIndex];
+				var visible = visValues[visIndex];
+					
+				// next vis change is sooner than next scale change
+				// time: -> visTime
+				// res: visible -> lastScale : 0
+				record(visTime, visible ? lastScale : Vector3.zero);
+				visIndex++;
+				
+				lastVisible = visible;
+			}
+			
+			// process scale rest - this will only enter if vis end was reached first -
+			// if last visible was invisible then there is no point in adding these
+			while (lastVisible && scaleIndex < scaleTimes.Length) {
+				var scaleTime = scaleTimes[scaleIndex];
+				var scale = scaleValues[scaleIndex];
+				record(scaleTime, scale);
+			}
+			
+			return (mergedTimes.ToArray(), mergedScales.ToArray());
+
+			void record(double time, Vector3 scale) {
+				mergedTimes.Add(time);
+				mergedScales.Add(scale);
+			}
 		}
 		
 		private class StringBuilderLogHandler : ILogHandler
@@ -371,5 +433,9 @@ namespace UnityGLTF.Timeline
 				sb.Clear();
 			}
 		}
+	}
+	
+	internal static class DoubleExtensions {
+		internal static bool nearlyEqual(this double a, double b, double epsilon = double.Epsilon) => Math.Abs(a - b) < epsilon;
 	}
 }
