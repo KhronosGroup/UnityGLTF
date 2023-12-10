@@ -28,7 +28,7 @@ namespace UnityGLTF.Timeline
             this.inWorldSpace = inWorldSpace;
             this.recordAnimationPointer = recordAnimationPointer;
             
-            visibilityTrack = AnimationSampler.visibilitySampler.startNewAnimationTrackAtStartOfTime(this, time <= 0);
+            visibilityTrack = AnimationSampler.visibilitySampler.startNewAnimationTrackAtStartOfTime(this, time);
             if (time > 0) {
                 // if we are not at the start of time, add another visibility sample to the current time, where the object started to exist
                 visibilityTrack.SampleIfChanged(time);

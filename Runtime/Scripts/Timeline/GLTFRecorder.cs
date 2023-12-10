@@ -281,8 +281,7 @@ namespace UnityGLTF.Timeline
 
 		private static (double[], Vector3[]) mergeVisibilityAndScaleTracks(
 			VisibilityTrack visibilityTrack,
-			AnimationTrack<Transform, Vector3> scaleTrack,
-			double epsilon = Double.Epsilon
+			AnimationTrack<Transform, Vector3> scaleTrack
 		) {
 			if (visibilityTrack == null && scaleTrack == null) return (null, null);
 			if (visibilityTrack == null) return (scaleTrack.Times, scaleTrack.values);
@@ -318,6 +317,8 @@ namespace UnityGLTF.Timeline
 				if (visTime.nearlyEqual(scaleTime)) {
 					// time: -> time
 					// res: visible -> scale : 0
+					if(!lastVisible && visTime > 0)
+						record(visTime - double.Epsilon, Vector3.zero);
 					record(visTime, visible ? scale : Vector3.zero);
 					visIndex++;
 					scaleIndex++;
@@ -327,6 +328,8 @@ namespace UnityGLTF.Timeline
 					// next vis change is sooner than next scale change
 					// time: -> visTime
 					// res: visible -> lastScale : 0
+					if(!lastVisible && visTime > 0)
+						record(visTime - double.Epsilon, Vector3.zero);
 					record(visTime, visible ? lastScale : Vector3.zero);
 					visIndex++;
 				}

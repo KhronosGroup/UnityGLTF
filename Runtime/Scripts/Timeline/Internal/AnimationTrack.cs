@@ -47,11 +47,11 @@ namespace UnityGLTF.Timeline
             SampleIfChanged(time);
         }
 
-        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, TData forceValue) {
+        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, Func<TData, TData> overrideInitialValueFunc) {
             this.animationData = tr;
             this.sampler = plan;
             samples = new Dictionary<double, TData>();
-            recordSampleIfChanged(time, forceValue);
+            recordSampleIfChanged(time, overrideInitialValueFunc(sampler.sample(animationData)));
         }
         
         public void SampleIfChanged(double time) => recordSampleIfChanged(time, sampler.sample(animationData));
