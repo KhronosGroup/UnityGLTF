@@ -238,6 +238,7 @@ namespace UnityGLTF.Timeline
 						// So to simulate support for that, merge the visibility track with the scale track
 						// forcing the scale to (0,0,0) whenever the model is invisible
 						var (mergedTimes, mergedScales) = mergeVisibilityAndScaleTracks(kvp.Value.visibilityTrack, scaleTrack);
+						if (mergedTimes == null || mergedScales == null) continue;
 						postAnimation = new PostAnimationData(tr.AnimatedObject, tr.PropertyName, mergedTimes.Select(dbl => (float)dbl).ToArray(), mergedScales.Cast<object>().ToArray());	
 					}
 					else {
@@ -292,8 +293,7 @@ namespace UnityGLTF.Timeline
 
 			var visIndex = 0;
 			var scaleIndex = 0;
-
-			// should default be true or false - influences what is assumed to be the default visibility state before it is set
+            
 			var lastVisible = false;
 			var lastScale = Vector3.zero;
 			
