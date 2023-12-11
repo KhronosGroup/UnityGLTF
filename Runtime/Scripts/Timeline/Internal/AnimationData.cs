@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityGLTF.Timeline.Samplers;
 
 namespace UnityGLTF.Timeline
 {
-    internal class AnimationData
+    internal sealed class AnimationData
     {
         internal readonly Transform transform;
         
@@ -28,13 +29,14 @@ namespace UnityGLTF.Timeline
             this.inWorldSpace = inWorldSpace;
             this.recordAnimationPointer = recordAnimationPointer;
             
-            visibilityTrack = AnimationSampler.visibilitySampler.startNewAnimationTrackAtStartOfTime(this, time);
+            // the visibility track always starts at time = 0, inserting additional invisible samples at the start of the time if required
+            visibilityTrack = AnimationSamplers.visibilitySampler.startNewAnimationTrackAtStartOfTime(this, time);
             if (time > 0) {
                 // if we are not at the start of time, add another visibility sample to the current time, where the object started to exist
                 visibilityTrack.SampleIfChanged(time);
             }
 
-            foreach (var plan in AnimationSampler.getAllAnimationSamplers(recordBlendShapes, recordAnimationPointer)) {
+            foreach (var plan in AnimationSamplers.getAllAnimationSamplers(recordBlendShapes, recordAnimationPointer)) {
                 if (plan.GetTarget(transform)) {
                     tracks.Add(plan.StartNewAnimationTrackAt(this, time));
                 }
@@ -43,7 +45,7 @@ namespace UnityGLTF.Timeline
 
         public void Update(double time) {
             visibilityTrack.SampleIfChanged(time);
-            // the object is visible, sample the other tracks
+            // the object is currently visible, sample the other tracks
             if (visibilityTrack.lastValue) {
                 foreach (var track in tracks) {
                     track.SampleIfChanged(time);

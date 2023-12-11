@@ -232,7 +232,11 @@ namespace UnityGLTF.Timeline
 					if (tr.Times.Length == 0) continue;
 
 					PostAnimationData postAnimation = null;
+					// AnimationData always has a visibility track, and if there is also a scale track, merge them
 					if (tr.PropertyName == "scale" && tr is AnimationTrack<Transform, Vector3> scaleTrack) {
+						// GLTF does not internally support a visibility state (animation).
+						// So to simulate support for that, merge the visibility track with the scale track
+						// forcing the scale to (0,0,0) whenever the model is invisible
 						var (mergedTimes, mergedScales) = mergeVisibilityAndScaleTracks(kvp.Value.visibilityTrack, scaleTrack);
 						postAnimation = new PostAnimationData(tr.AnimatedObject, tr.PropertyName, mergedTimes.Select(dbl => (float)dbl).ToArray(), mergedScales.Cast<object>().ToArray());	
 					}
@@ -263,20 +267,6 @@ namespace UnityGLTF.Timeline
 				}
 				processAnimationMarker.End();
 			}
-		}
-
-		private abstract record Change;
-
-		private sealed record VisChange : Change
-		{
-			public VisChange(bool NewVis) => this.NewVis = NewVis;
-			public bool NewVis { get; }
-		}
-
-		private sealed record ScaleChange : Change
-		{
-			public ScaleChange(Vector3 NewScale) => this.NewScale = NewScale;
-			public Vector3 NewScale { get; }
 		}
 
 		private static (double[], Vector3[]) mergeVisibilityAndScaleTracks(
@@ -315,33 +305,21 @@ namespace UnityGLTF.Timeline
 				var scale = scaleValues[scaleIndex];
 				
 				if (visTime.nearlyEqual(scaleTime)) {
-					// time: -> time
-					// res: visible -> scale : 0
-					if(!lastVisible && visTime > 0)
-						record(visTime - double.Epsilon, Vector3.zero);
+					// both samples have the same timestamp
+					// choose output value depending on visibility, but use scale value if visible
 					record(visTime, visible ? scale : Vector3.zero);
 					visIndex++;
 					scaleIndex++;
 					
 				} else if (visTime < scaleTime) {
-					
-					// next vis change is sooner than next scale change
-					// time: -> visTime
-					// res: visible -> lastScale : 0
-					if(!lastVisible && visTime > 0)
-						record(visTime - double.Epsilon, Vector3.zero);
+					// the next visibility change occurs sooner than the next scale change
+					// record a change using visibility state and (if visible) previous scale value
 					record(visTime, visible ? lastScale : Vector3.zero);
 					visIndex++;
 				}
 				else if (scaleTime < visTime) {
-					
-					// next scale change occurs sooner than vis change
-					// last visible -> 
-					//   time: -> scaleTime
-					//   res: -> scale
-					// last invisible ->
-                    //   ignore
-
+					// the next scale change occurs sooner than the next visibility change
+					// However, if the model is currently invisible, be simply dont care
                     if (lastVisible) {
 	                    record(scaleTime, scale);
                     }
@@ -352,7 +330,7 @@ namespace UnityGLTF.Timeline
 				lastVisible = visible;
 			}
 			
-			// process vis rest - this will only enter if scale end was reached first
+			// process remaining visibility changes - this will only enter if scale end was reached first
 			while (visIndex < visTimes.Length) {
 				var visTime = visTimes[visIndex];
 				var visible = visValues[visIndex];
@@ -366,7 +344,7 @@ namespace UnityGLTF.Timeline
 				lastVisible = visible;
 			}
 			
-			// process scale rest - this will only enter if vis end was reached first -
+			// process remaining scale changes - this will only enter if vis end was reached first -
 			// if last visible was invisible then there is no point in adding these
 			while (lastVisible && scaleIndex < scaleTimes.Length) {
 				var scaleTime = scaleTimes[scaleIndex];

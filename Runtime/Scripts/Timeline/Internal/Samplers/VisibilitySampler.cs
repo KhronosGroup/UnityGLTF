@@ -2,11 +2,11 @@ using UnityEngine;
 
 namespace UnityGLTF.Timeline.Samplers
 {
-    internal class VisibilitySampler : AnimationSampler<GameObject, bool>
+    internal sealed class VisibilitySampler : AnimationSampler<GameObject, bool>
     {
-        public override string propertyName => "visibility";
+        public override string PropertyName => "visibility";
 
-        public override AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
+        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
             new AnimationTrack<GameObject, bool>(data, this, time);
 
         internal VisibilityTrack startNewAnimationTrackAtStartOfTime(AnimationData data, double time) =>
@@ -20,10 +20,10 @@ namespace UnityGLTF.Timeline.Samplers
 
     internal sealed class VisibilityTrack : BaseAnimationTrack<GameObject, bool>
     {
-        public VisibilityTrack(AnimationData tr, AnimationSampler<GameObject, bool> plan, double time) :
-            base(tr, plan, time, actualVisibility => {
-                var res = time <= 0 && actualVisibility;
-                return res;
+        public VisibilityTrack(AnimationData tr, VisibilitySampler plan, double time) :
+            base(tr, plan, time, objectVisibility => {
+                var overridenVisibility = time <= 0 && objectVisibility;
+                return overridenVisibility;
             }) { }
     }
 }

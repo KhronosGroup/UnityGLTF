@@ -6,48 +6,58 @@ using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Timeline
 {
+    
     internal interface AnimationSampler
     {
-        internal static readonly VisibilitySampler visibilitySampler = new VisibilitySampler();
-
-        private static List<AnimationSampler> animationSamplers;
-
-        public string propertyName { get; }
+        public string PropertyName { get; }
         
         object Sample(AnimationData data);
 
-        public abstract AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
+        public Object GetTarget(Transform transform);
+    }
+    
+    internal interface SimpleAnimationSampler : AnimationSampler
+    {
+        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
+    }
 
-        public abstract Object GetTarget(Transform transform);
+    internal static class AnimationSamplers
+    {
+        /// GLTF internally does not support animated visibility state, but recording this explicitly makes a lot of things easier.
+        /// The resulting animation track will be merged with the "scale" track of any animation, forcing the scale to (0,0,0) when
+        /// object is invisible.
+        internal static readonly VisibilitySampler visibilitySampler = new VisibilitySampler();
         
-        internal static IReadOnlyList<AnimationSampler> getAllAnimationSamplers(bool recordBlendShapes, bool recordAnimationPointer) {
-            if (animationSamplers == null) {
-                animationSamplers = new List<AnimationSampler> {
+        /// all animation samplers that do not require special treatment - so currently all others, except visibility 
+        private static List<SimpleAnimationSampler> _animationSamplers;
+        
+        internal static IReadOnlyList<SimpleAnimationSampler> getAllAnimationSamplers(bool recordBlendShapes, bool recordAnimationPointer) {
+            if (_animationSamplers == null) {
+                _animationSamplers = new List<SimpleAnimationSampler> {
                     new TranslationSampler(),
                     new RotationSampler(),
                     new ScaleSampler()
                 };
                 if (recordBlendShapes) {
-                    animationSamplers.Add(new BlendWeightSampler());
+                    _animationSamplers.Add(new BlendWeightSampler());
                 }
 
                 if (recordAnimationPointer) {
                     // TODO add other animation pointer export plans
-                    animationSamplers.Add(new BaseColorSampler());
+                    _animationSamplers.Add(new BaseColorSampler());
                 }
             }
-            return animationSamplers;
+            return _animationSamplers;
         }
     }
-
+    
     internal abstract class AnimationSampler<TObject, TData> : AnimationSampler
         where TObject : UnityEngine.Object
     {
-        public abstract string propertyName { get; }
+        public abstract string PropertyName { get; }
         public Type dataType => typeof(TData);
 
         public object Sample(AnimationData data) => sample(data);
-        public abstract AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
 
         public Object GetTarget(Transform transform) => getTarget(transform);
         protected abstract TObject getTarget(Transform transform);

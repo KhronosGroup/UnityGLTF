@@ -2,12 +2,12 @@ using UnityEngine;
 
 namespace UnityGLTF.Timeline.Samplers
 {
-    internal class BaseColorSampler : AnimationSampler<Material, Color?>
+    internal sealed class BaseColorSampler : AnimationSampler<Material, Color?>, SimpleAnimationSampler
     {
         private static readonly MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
         
-        public override string propertyName => "weights";
-        public override AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
+        public override string PropertyName => "weights";
+        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
             new AnimationTrack<Material, Color?>(data, this, time);
         
         protected override Material getTarget(Transform transform) => transform.GetComponent<MeshRenderer>()?.sharedMaterial;

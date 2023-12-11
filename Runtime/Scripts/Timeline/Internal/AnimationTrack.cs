@@ -23,14 +23,13 @@ namespace UnityGLTF.Timeline
     {
         private readonly Dictionary<double, TData> samples;
         
-        
-        private AnimationData animationData;
-        private AnimationSampler<TObject, TData> sampler;
+        private readonly AnimationData animationData;
+        private readonly AnimationSampler<TObject, TData> sampler;
         private Tuple<double, TData>? lastSample = null;
         private Tuple<double, TData>? secondToLastSample = null;
 
         public Object AnimatedObject => sampler.GetTarget(animationData.transform);
-        public string PropertyName => sampler.propertyName;
+        public string PropertyName => sampler.PropertyName;
         public double[] Times => samples.Keys.ToArray();
         
         public object[] Values => samples.Values.Cast<object>().ToArray();
@@ -56,7 +55,7 @@ namespace UnityGLTF.Timeline
         
         public void SampleIfChanged(double time) => recordSampleIfChanged(time, sampler.sample(animationData));
         
-        private void recordSampleIfChanged(double time, TData value) {
+        protected void recordSampleIfChanged(double time, TData value) {
             if (value == null || (value is Object o && !o)) return;
             // As a memory optimization we want to be able to skip identical samples.
             // But, we cannot always skip samples when they are identical to the previous one - otherwise cases like this break:
