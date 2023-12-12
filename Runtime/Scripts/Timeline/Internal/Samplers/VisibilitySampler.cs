@@ -25,5 +25,7 @@ namespace UnityGLTF.Timeline.Samplers
                 var overridenVisibility = time <= 0 && objectVisibility;
                 return overridenVisibility;
             }) { }
+
+        internal void recordVisibilityAt(double time, bool visible) => recordSampleIfChanged(time, visible);
     }
 }

@@ -270,7 +270,7 @@ namespace UnityGLTF.Timeline
 			}
 		}
 
-		private static (double[], Vector3[]) mergeVisibilityAndScaleTracks(
+		private static (double[] times, Vector3[] mergedScales) mergeVisibilityAndScaleTracks(
 			VisibilityTrack visibilityTrack,
 			AnimationTrack<Transform, Vector3> scaleTrack
 		) {

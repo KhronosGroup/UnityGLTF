@@ -13,6 +13,12 @@ namespace UnityGLTF.Timeline
         internal readonly bool inWorldSpace = false;
         internal readonly bool recordAnimationPointer;
 
+        /// GLTF natively does not support animated visibility - as a result it has to be merged with the scale track later on
+        /// in the export process.
+        /// At the same time visibility has a higher priority than the other tracks, since
+        /// there is no point in animating properties of an invisible object.
+        /// These requirements / constraints are easier to fulfill when we store the visibility track explicitly
+        /// instead of putting it in the <see cref="tracks"/> field alongside the other tracks. 
         internal readonly VisibilityTrack visibilityTrack;
         
         internal readonly List<AnimationTrack> tracks = new List<AnimationTrack>();
@@ -32,6 +38,8 @@ namespace UnityGLTF.Timeline
             // the visibility track always starts at time = 0, inserting additional invisible samples at the start of the time if required
             visibilityTrack = AnimationSamplers.visibilitySampler.startNewAnimationTrackAtStartOfTime(this, time);
             if (time > 0) {
+                // make sure to insert another sample right before the change so that the linear interpolation is very short, not from the start of time
+                visibilityTrack.recordVisibilityAt(time-Double.Epsilon, visibilityTrack.lastValue);
                 // if we are not at the start of time, add another visibility sample to the current time, where the object started to exist
                 visibilityTrack.SampleIfChanged(time);
             }
