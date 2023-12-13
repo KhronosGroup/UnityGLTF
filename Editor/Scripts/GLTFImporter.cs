@@ -420,6 +420,7 @@ namespace UnityGLTF
                     }
 
 					mesh.UploadMeshData(!_readWriteEnabled);
+					mesh.RecalculateBounds(MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers);
 
                     if (_generateColliders)
                     {
