@@ -4,9 +4,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.6.0-exp] - 2023-12-13
+- fix: verify tangent.w component on animation export (should be exactly -1 or 1)
+- fix: recalculate mesh bounds when changing import scale
+- fix: ensure correct quaternion continuity on animation import
+- fix: sanitize Animator state names on import
+- add: allow enabling GPU Instancing for materials on editor import
+- add: ability to export files and buffer views, useful for e.g. KHR_audio
+
 ## [2.5.2-exp] - 2023-11-13
+- fix: animation curve sorting running before validation
 - add: support to animate camera background color
-- fix: animation curve sorting running before validation 
 
 ## [2.5.1-exp] - 2023-11-08
 - fix: issue where importer context root object was not set
