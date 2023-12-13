@@ -163,7 +163,14 @@ namespace UnityGLTF
 			var t = target as GLTFImporter;
 			if (!t) return;
 
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
+			var importMaterialsProp = serializedObject.FindProperty(nameof(GLTFImporter._importMaterials));
+			EditorGUILayout.PropertyField(importMaterialsProp);
+			if (importMaterialsProp.boolValue)
+			{
+				EditorGUI.indentLevel++;
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._enableGpuInstancing)), new GUIContent("GPU Instancing"));
+				EditorGUI.indentLevel--;
+			}
 			var importedMaterials = serializedObject.FindProperty("m_Materials");
 			if (importedMaterials.arraySize > 0)
 			{
