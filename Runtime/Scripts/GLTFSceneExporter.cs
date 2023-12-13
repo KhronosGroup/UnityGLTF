@@ -249,6 +249,19 @@ namespace UnityGLTF
 			public bool canBeExportedFromDisk;
 		}
 
+		private struct FileInfo
+		{
+			public Stream stream;
+			public string uniqueFileName;
+		}
+
+		public struct ExportFileResult
+		{
+			public string uri;
+			public string mimeType;
+			public BufferViewId bufferView;
+		}
+
 		public IReadOnlyList<Transform> RootTransforms => _rootTransforms;
 
 		private Transform[] _rootTransforms;
@@ -256,6 +269,8 @@ namespace UnityGLTF
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
 		private List<ImageInfo> _imageInfos;
+		private List<FileInfo> _fileInfos;
+		private HashSet<string> _fileNames;
 		private List<UniqueTexture> _textures;
 		private Dictionary<int, int> _exportedMaterials;
 		private bool _shouldUseInternalBufferForImages;
@@ -509,6 +524,8 @@ namespace UnityGLTF
 			};
 
 			_imageInfos = new List<ImageInfo>();
+			_fileInfos = new List<FileInfo>();
+			_fileNames = new HashSet<string>();
 			_exportedMaterials = new Dictionary<int, int>();
 			_textures = new List<UniqueTexture>();
 
@@ -551,6 +568,7 @@ namespace UnityGLTF
 			if (!_shouldUseInternalBufferForImages)
 			{
 				ExportImages(path);
+				ExportFiles(path);
 			}
 		}
 
@@ -754,6 +772,8 @@ namespace UnityGLTF
 
 			if (exportTextures)
 				ExportImages(path);
+				
+			ExportFiles(path);
 
 			gltfWriteOutMarker.End();
 			exportGltfMarker.End();
@@ -1065,6 +1085,53 @@ namespace UnityGLTF
 		// 		&& gameObject.transform.localScale == Vector3.one
 		// 		&& ContainsValidRenderer(gameObject);
 		// }
+
+		public ExportFileResult ExportFile(string fileName, string mimeType, Stream stream) {
+			if (_shouldUseInternalBufferForImages) {
+				byte[] data = new byte[stream.Length];
+				stream.Read(data, 0, (int)stream.Length);
+				stream.Close();
+
+				return new ExportFileResult {
+					bufferView = this.ExportBufferView(data),
+					mimeType = mimeType,
+				};
+			} else {
+				var uniqueFileName = GetUniqueName(_fileNames, fileName);
+
+				_fileNames.Add(uniqueFileName);
+
+				_fileInfos.Add(
+					new FileInfo {
+						stream = stream,
+						uniqueFileName = uniqueFileName,
+					}
+				);
+
+				return new ExportFileResult {
+					uri = uniqueFileName,
+				};
+			}
+		}
+
+		private void ExportFiles(string outputPath)
+		{
+			for (int i = 0; i < _fileInfos.Count; ++i)
+			{
+				var fileInfo = _fileInfos[i];
+
+				var fileOutputPath = Path.Combine(outputPath, fileInfo.uniqueFileName);
+
+				var dir = Path.GetDirectoryName(fileOutputPath);
+				if (!Directory.Exists(dir) && dir != null)
+					Directory.CreateDirectory(dir);
+
+				var outputStream = File.Create(fileOutputPath);
+				fileInfo.stream.Seek(0, SeekOrigin.Begin);
+				fileInfo.stream.CopyTo(outputStream);
+				outputStream.Close();
+			}
+		}
 
 		private void ExportAnimation()
 		{
