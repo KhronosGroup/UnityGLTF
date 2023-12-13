@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GLTF;
@@ -147,7 +148,27 @@ namespace UnityGLTF
 				}
 			}
 
-			for (var ci = 0; ci < channelCount; ++ci)
+			if (mode == InterpolationType.LINEAR && channelCount == 4 && propertyNames.All(p => p == "localRotation.x" || p == "localRotation.y" || p == "localRotation.z" || p == "localRotation.w"))
+			{
+				Quaternion prev = Quaternion.identity;
+				for (int i = 0; i < keyframes[0].Length; i++)
+				{
+					Quaternion q = new Quaternion(keyframes[0][i].value, keyframes[1][i].value, keyframes[2][i].value, keyframes[3][i].value);
+					if (i > 0)
+					{
+						if (Quaternion.Dot(prev, q) < 0)
+							q = new Quaternion(-q.x, -q.y, -q.z, -q.w);
+						
+						keyframes[0][i].value = q.x;
+						keyframes[1][i].value = q.y;
+						keyframes[2][i].value = q.z;
+						keyframes[3][i].value = q.w;
+					}
+					prev = q;
+				}
+			}
+			
+			for (var ci = 0; ci < channelCount; ci++)
 			{
 				if (mode != InterpolationType.CUBICSPLINE)
 				{
