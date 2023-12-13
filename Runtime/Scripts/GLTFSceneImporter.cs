@@ -1039,7 +1039,9 @@ namespace UnityGLTF
 							var baseLayer = controller.layers[0];
 							for (int i = 0; i < constructedClips.Count; i++)
 							{
-								var state = baseLayer.stateMachine.AddState(constructedClips[i].name);
+								var name = constructedClips[i].name;
+								if (string.IsNullOrWhiteSpace(name)) name = "clip " + i;
+								var state = baseLayer.stateMachine.AddState(name);
 								state.motion = constructedClips[i];
 							}
 							animator.runtimeAnimatorController = controller;
