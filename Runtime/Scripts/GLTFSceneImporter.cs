@@ -275,6 +275,10 @@ namespace UnityGLTF
 		protected AssetCache _assetCache;
 		protected bool _isRunning = false;
 
+#if UNITY_EDITOR
+		internal float _importScaleFactor = 1f;
+#endif
+		
 		protected ImportProgress progressStatus = default(ImportProgress);
 		protected IProgress<ImportProgress> progress = null;
 
