@@ -400,6 +400,19 @@ namespace UnityGLTF
 	                        vertexBuffer[i] *= _scaleFactor;
 	                    }
 	                    mesh.SetVertices(vertexBuffer);
+
+	                    if (mesh.bindposes != null && mesh.bindposes.Length > 0)
+	                    {
+		                    var bindPoses = mesh.bindposes;
+		                    for (var i = 0; i < bindPoses.Length; ++i)
+		                    {
+			                    bindPoses[i].GetTRSProperties(out var p, out var q, out var s);
+			                    bindPoses[i].SetTRS(p * _scaleFactor, q, s);
+		                    }
+
+		                    mesh.bindposes = bindPoses;
+	                    }
+	     
                     }
                     if (_generateLightmapUVs)
                     {
