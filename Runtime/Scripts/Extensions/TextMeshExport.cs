@@ -8,7 +8,7 @@ namespace UnityGLTF
 {
 	public class TextMeshExport : GltfExportPlugin
 	{
-		public override string DisplayName => "TextMeshPro Export as Mesh";
+		public override string DisplayName => "TextMeshPro GameObjects: Bake to Mesh";
 		public override string Description => "Bakes 3D TextMeshPro objects (not UI/Canvas) into meshes and attempts to faithfully apply their shader settings to generate the font texture.";
 		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{

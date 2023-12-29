@@ -1,23 +1,24 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using GLTF.Schema;
-using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
-	public class MSFT_lods_Extension
+	public class MSFT_lods : GltfExportPlugin
 	{
-#if UNITY_EDITOR
-		[InitializeOnLoadMethod]
-#endif
-		[RuntimeInitializeOnLoadMethod]
-		static void InitExt()
+		public override string DisplayName => "MSFT_lods";
+		public override string Description => "Exports LODGroup components as MSFT_lods extension.";
+		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
-			GLTFSceneExporter.AfterNodeExport += AfterNodeExport;
+			return new MSFT_lods_Extension();
 		}
-
-		private static void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Transform transform, Node node)
+	}
+	
+	public class MSFT_lods_Extension: GltfExportPluginContext
+	{
+		public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Transform transform, Node node)
 		{
 			if (!transform) return;
 
