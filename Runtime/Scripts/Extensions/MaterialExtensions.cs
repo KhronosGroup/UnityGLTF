@@ -49,6 +49,7 @@ namespace UnityGLTF
 		}
 
 		public override string DisplayName => "Material Extensions";
+		public override string Description => "Exports various glTF PBR Material model extensions.";
 	}
 	
 	public class MaterialExtensions: GltfExportPluginContext

@@ -124,23 +124,24 @@ namespace UnityGLTF
 		        var expanded = SessionState.GetBool(key, false);
 		        using (new GUILayout.HorizontalScope())
 		        {
-			        var label = new GUIContent(displayName);
+			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
+			        var label = new GUIContent(displayName, plugin.Description);
 			        var expanded2 = EditorGUILayout.Foldout(expanded, label);
 			        if (expanded2 != expanded)
 			        {
 				        expanded = expanded2;
 				        SessionState.SetBool(key, expanded2);
 			        }
-			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(20));
 		        }
 		        if (expanded)
 		        {
-			        EditorGUI.indentLevel++;
+			        EditorGUI.indentLevel += 2;
+			        EditorGUILayout.HelpBox(plugin.Description, MessageType.None);
 			        editorCache.TryGetValue(plugin.GetType(), out var editor);
 			        Editor.CreateCachedEditor(plugin, null, ref editor);
 			        editorCache[plugin.GetType()] = editor;
 			        editor.OnInspectorGUI();
-			        EditorGUI.indentLevel--;
+			        EditorGUI.indentLevel -= 2;
 		        }
 		        EditorGUILayout.EndFoldoutHeaderGroup();
 	        }
