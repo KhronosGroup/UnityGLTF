@@ -180,7 +180,7 @@ namespace UnityGLTF
 				new UniqueTexture(textureObj, textureSlot, this);
 
 			foreach (var plugin in _plugins)
-				plugin.BeforeTextureExport(this, ref uniqueTexture, textureSlot);
+				plugin?.BeforeTextureExport(this, ref uniqueTexture, textureSlot);
 
 			TextureId id = GetTextureId(_root, uniqueTexture);
 			if (id != null)
@@ -231,7 +231,7 @@ namespace UnityGLTF
 			}
 
 			foreach (var plugin in _plugins)
-				plugin.AfterTextureExport(this, uniqueTexture, id.Id, texture);
+				plugin?.AfterTextureExport(this, uniqueTexture, id.Id, texture);
 
 			return id;
 		}

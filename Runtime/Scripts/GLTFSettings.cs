@@ -135,13 +135,15 @@ namespace UnityGLTF
 		        }
 		        if (expanded)
 		        {
-			        EditorGUI.indentLevel += 2;
+			        EditorGUI.indentLevel += 1;
 			        EditorGUILayout.HelpBox(plugin.Description, MessageType.None);
+			        EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 			        editorCache.TryGetValue(plugin.GetType(), out var editor);
 			        Editor.CreateCachedEditor(plugin, null, ref editor);
 			        editorCache[plugin.GetType()] = editor;
 			        editor.OnInspectorGUI();
-			        EditorGUI.indentLevel -= 2;
+			        EditorGUI.EndDisabledGroup();
+			        EditorGUI.indentLevel -= 1;
 		        }
 		        EditorGUILayout.EndFoldoutHeaderGroup();
 	        }

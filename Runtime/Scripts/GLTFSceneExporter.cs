@@ -703,7 +703,7 @@ namespace UnityGLTF
 
 			beforeSceneExportMarker.Begin();
 			foreach (var plugin in _plugins)
-				plugin.BeforeSceneExport(this, _root);
+				plugin?.BeforeSceneExport(this, _root);
 			beforeSceneExportMarker.End();
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
@@ -722,7 +722,7 @@ namespace UnityGLTF
 
 			afterSceneExportMarker.Begin();
 			foreach (var plugin in _plugins)
-				plugin.AfterSceneExport(this, _root);
+				plugin?.AfterSceneExport(this, _root);
 			afterSceneExportMarker.End();
 
 			animationPointerResolver?.Resolve(this);
@@ -804,7 +804,7 @@ namespace UnityGLTF
 
 			beforeSceneExportMarker.Begin();
 			foreach (var plugin in _plugins)
-				plugin.BeforeSceneExport(this, _root);
+				plugin?.BeforeSceneExport(this, _root);
 			beforeSceneExportMarker.End();
 
 			if (_rootTransforms != null)
@@ -822,7 +822,7 @@ namespace UnityGLTF
 
 			afterSceneExportMarker.Begin();
 			foreach (var plugin in _plugins)
-				plugin.AfterSceneExport(this, _root);
+				plugin?.AfterSceneExport(this, _root);
 			afterSceneExportMarker.End();
 
 			animationPointerResolver?.Resolve(this);
@@ -1110,7 +1110,7 @@ namespace UnityGLTF
 			// node export callback
 			afterNodeExportMarker.Begin();
 			foreach (var plugin in _plugins)
-				plugin.AfterNodeExport(this, _root, nodeTransform, node);
+				plugin?.AfterNodeExport(this, _root, nodeTransform, node);
 			afterNodeExportMarker.End();
 
 			return id;

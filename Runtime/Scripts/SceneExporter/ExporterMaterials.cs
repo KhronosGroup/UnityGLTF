@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -80,6 +82,7 @@ namespace UnityGLTF
 
 			foreach (var plugin in _plugins)
 			{
+				if (plugin == null) continue;
 				beforeMaterialExportMarker.Begin();
 				if (plugin.BeforeMaterialExport(this, _root, materialObj, material))
 				{
@@ -160,10 +163,15 @@ namespace UnityGLTF
 					else
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorGamma();
 
-					if(maxEmissiveAmount > 1)
+					if (maxEmissiveAmount > 1)
 					{
-						material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
-						DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
+						var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensions) as MaterialExtensions)?.settings;
+						var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
+						if (emissiveStrengthSupported)
+						{
+							material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
+							DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
+						}
 					}
 				}
 
@@ -338,7 +346,7 @@ namespace UnityGLTF
 	        {
 		        afterMaterialExportMarker.Begin();
 		        foreach (var plugin in _plugins)
-			        plugin.AfterMaterialExport(this, _root, materialObj, material);
+			        plugin?.AfterMaterialExport(this, _root, materialObj, material);
 		        afterMaterialExportMarker.End();
 	        }
 

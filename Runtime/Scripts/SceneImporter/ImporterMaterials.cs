@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
@@ -171,9 +173,22 @@ namespace UnityGLTF
 				mrMapper.MetallicFactor = 1;
 				mrMapper.RoughnessFactor = 1;
 			}
-
+			
+			// get MaterialImportPluginContext and check which options are enabled
+			// ReSharper disable InconsistentNaming IdentifierTypo
+			var settings = (Context.Plugins.FirstOrDefault(x => x is MaterialImportPluginContext) as MaterialImportPluginContext)?.settings;
+			var KHR_materials_ior = settings && settings.KHR_materials_ior;
+			var KHR_materials_transmission = settings && settings.KHR_materials_transmission;
+			var KHR_materials_volume = settings && settings.KHR_materials_volume;
+			var KHR_materials_iridescence = settings && settings.KHR_materials_iridescence;
+			var KHR_materials_specular = settings && settings.KHR_materials_specular;
+			var KHR_materials_clearcoat = settings && settings.KHR_materials_clearcoat;
+			var KHR_materials_pbrSpecularGlossiness = settings && settings.KHR_materials_pbrSpecularGlossiness;
+			var KHR_materials_emissive_strength = settings && settings.KHR_materials_emissive_strength;
+			// ReSharper restore InconsistentNaming
+			
 			var sgMapper = mapper as ISpecGlossUniformMap;
-			if (sgMapper != null)
+			if (sgMapper != null && KHR_materials_pbrSpecularGlossiness)
 			{
 				var specGloss = def.Extensions[specGlossExtName] as KHR_materials_pbrSpecularGlossinessExtension;
 
@@ -267,7 +282,7 @@ namespace UnityGLTF
 			}
 
 			var iorMapper = mapper as IIORMap;
-			if (iorMapper != null)
+			if (iorMapper != null && KHR_materials_ior)
 			{
 				var ior = GetIOR(def);
 				if (ior != null)
@@ -277,7 +292,7 @@ namespace UnityGLTF
 			}
 
 			var transmissionMapper = mapper as ITransmissionMap;
-			if (transmissionMapper != null)
+			if (transmissionMapper != null && KHR_materials_transmission)
 			{
 				var transmission = GetTransmission(def);
 				if (transmission != null)
@@ -314,7 +329,7 @@ namespace UnityGLTF
 			}
 
 			var volumeMapper = mapper as IVolumeMap;
-			if (volumeMapper != null)
+			if (volumeMapper != null && KHR_materials_volume)
 			{
 				var volume = GetVolume(def);
 				if (volume != null)
@@ -351,7 +366,7 @@ namespace UnityGLTF
 			}
 
 			var iridescenceMapper = mapper as IIridescenceMap;
-			if (iridescenceMapper != null)
+			if (iridescenceMapper != null && KHR_materials_iridescence)
 			{
 				var iridescence = GetIridescence(def);
 				if (iridescence != null)
@@ -412,7 +427,7 @@ namespace UnityGLTF
 			}
 
 			var specularMapper = mapper as ISpecularMap;
-			if (specularMapper != null)
+			if (specularMapper != null && KHR_materials_specular)
 			{
 				var specular = GetSpecular(def);
 				if (specular != null)
@@ -472,7 +487,7 @@ namespace UnityGLTF
 			}
 
 			var clearcoatMapper = mapper as IClearcoatMap;
-			if (clearcoatMapper != null)
+			if (clearcoatMapper != null && KHR_materials_clearcoat)
 			{
 				var clearcoat = GetClearcoat(def);
 				if (clearcoat != null)
@@ -644,7 +659,7 @@ namespace UnityGLTF
 				uniformMapper.EmissiveFactor = QualitySettings.activeColorSpace == ColorSpace.Linear ? def.EmissiveFactor.ToUnityColorLinear() : def.EmissiveFactor.ToUnityColorLinear();
 
 				var emissiveExt = GetEmissiveStrength(def);
-				if (emissiveExt != null)
+				if (emissiveExt != null && KHR_materials_emissive_strength)
 				{
 					uniformMapper.EmissiveFactor = uniformMapper.EmissiveFactor * emissiveExt.emissiveStrength;
 				}

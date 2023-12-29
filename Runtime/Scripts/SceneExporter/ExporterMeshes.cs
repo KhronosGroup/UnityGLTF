@@ -344,7 +344,7 @@ namespace UnityGLTF
 	            if (EmptyPrimitive(prim)) continue;
 	            // invoke pre export event
 	            foreach (var plugin in _plugins)
-		            plugin.AfterPrimitiveExport(this, meshObj, prim, i);
+		            plugin?.AfterPrimitiveExport(this, meshObj, prim, i);
 	            nonEmptyPrims.Add(prim);
             }
             prims = nonEmptyPrims.ToArray();

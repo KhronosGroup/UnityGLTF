@@ -6,10 +6,10 @@ using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
-	public class MSFT_lods : GltfExportPlugin
+	public class LodsExport : GltfExportPlugin
 	{
-		public override string DisplayName => "MSFT_lods";
-		public override string Description => "Exports LODGroup components as MSFT_lods extension.";
+		public override string DisplayName => "MSFT_lod";
+		public override string Description => "Exports LODGroup components as MSFT_lod extension.";
 		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
 			return new MSFT_lods_Extension();
