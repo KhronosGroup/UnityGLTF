@@ -4,12 +4,8 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-	public abstract class GltfImportPlugin : ScriptableObject
+	public abstract class GltfImportPlugin : GltfPlugin
 	{
-		internal bool Expanded = true;
-		public abstract string DisplayName { get; }
-		public bool Enabled { get; set; } = true;
-		public abstract void OnGUI();
 		/// <summary>
 		/// Return the Plugin Instance that receives the import callbacks
 		/// </summary>

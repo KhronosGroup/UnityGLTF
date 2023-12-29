@@ -343,7 +343,8 @@ namespace UnityGLTF
 	            // remove any prims that have empty triangles
 	            if (EmptyPrimitive(prim)) continue;
 	            // invoke pre export event
-	            _exportOptions.AfterPrimitiveExport?.Invoke(this, meshObj, prim, i);
+	            foreach (var plugin in _plugins)
+		            plugin.AfterPrimitiveExport(this, meshObj, prim, i);
 	            nonEmptyPrims.Add(prim);
             }
             prims = nonEmptyPrims.ToArray();

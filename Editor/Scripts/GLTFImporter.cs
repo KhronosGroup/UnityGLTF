@@ -46,7 +46,7 @@ namespace UnityGLTF
 #else
 	[ScriptedImporter(ImporterVersion, new[] { "glb" })]
 #endif
-    public class GLTFImporter : ScriptedImporter, IGLTFImportRemap
+    public class GLTFImporter : ScriptedImporter
     {
 	    private const int ImporterVersion = 9;
 
@@ -236,7 +236,7 @@ namespace UnityGLTF
 		        if (plugin != null && plugin.Enabled)
 		        {
 			        var instance = plugin.CreateInstance(context);
-			        if(instance != null) plugins.Add(instance);
+			        if (instance != null) plugins.Add(instance);
 		        }
 	        }
 

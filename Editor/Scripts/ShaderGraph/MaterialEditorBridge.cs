@@ -23,7 +23,7 @@ namespace UnityGLTF
 			// var mainAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
 
 			// Transform[] rootTransforms = null;
-			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportOptions());
+			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportContext());
 			// load all materials from mainAsset
 			var importer = AssetImporter.GetAtPath(assetPath) as GLTFImporter;
 			if (!importer) return;

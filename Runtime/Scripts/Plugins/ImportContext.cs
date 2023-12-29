@@ -35,9 +35,4 @@ namespace UnityGLTF.Plugins
 			Plugins = plugins;
 		}
 	}
-
-	public interface IGLTFImportRemap
-	{
-
-	}
 }

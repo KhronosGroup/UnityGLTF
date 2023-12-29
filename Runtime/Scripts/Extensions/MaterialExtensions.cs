@@ -2,23 +2,57 @@ using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace UnityGLTF
 {
-	public static class MaterialExtensions
+	// When a plugin is registered with the default settings (the scriptable object in the project),
+	// it will be active "by default" when someone uses those default settings.
+	// e.g. it's used when someone uses the built-in editor methods for exporting objects.
+	// When using the API, one needs to manually register wanted plugins and configure them
+	// (can get the default settings and modify them).
+	
+	// Plugins can contain any number of extensions, but are encouraged to specify in the description
+	// which extensions are imported/exported with that plugin.
+	// Theoretically there could be multiple plugins operating on the same extension in different ways, in
+	// which case we currently can't warn about conflicts; they would all run.
+	// If plugins were required to list the extensions they operate on, we could warn about conflicts.
+	
+	// Plugins are ScriptableObjects which are added to the default GLTFSettings scriptable object.
+	// Their public serialized fields are exposed in the inspector, and they can be enabled/disabled.
+	// Plugins replace both GLTFSceneExporter.* static callbacks and GLTFSceneExporter.ExportOptions callbacks
+	// to allow for more control.
+	
+	// Example cases where separate plugins operate on the same data:
+	// - exporting UI as custom extension vs. baking UI to mesh
+	// - exporting Audio in a custom extension vs. using KHR_audio
+	// - exporting LODs as custom extension vs. using MSFT_lod
+	// - exporting particle systems as custom extension vs. baking to mesh
+	
+	// Plugins can either be added manually to ExportOptions.plugins / ImportContext.plugins
+	// or advertise themselves via a static callback which allows configuring their settings in the inspector.
+	// For each new instance of GLTFSceneExporter, new instances of plugins are created.
+	// For each new instance of GLTFSceneImporter, new instances of plugins are created.
+	
+	public class MaterialExtensionsPlugin: GltfExportPlugin
 	{
-#if UNITY_EDITOR
-		[InitializeOnLoadMethod]
-#endif
-		[RuntimeInitializeOnLoadMethod]
-		static void InitExt()
+		public bool KHR_materials_ior = true;
+		public bool KHR_materials_transmission = true;
+		public bool KHR_materials_volume = true;
+
+		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
-			GLTFSceneExporter.AfterMaterialExport += GLTFSceneExporterOnAfterMaterialExport;
+			return new MaterialExtensions();
 		}
 
+		public override string DisplayName => "Material Extensions";
+	}
+	
+	public class MaterialExtensions: GltfExportPluginContext
+	{
 		private static readonly int thicknessTexture = Shader.PropertyToID("thicknessTexture");
 		private static readonly int thicknessFactor = Shader.PropertyToID("thicknessFactor");
 		private static readonly int attenuationDistance = Shader.PropertyToID("attenuationDistance");
@@ -45,8 +79,7 @@ namespace UnityGLTF
 		private static readonly int clearcoatRoughnessTexture = Shader.PropertyToID("clearcoatRoughnessTexture");
 		private static readonly int clearcoatNormalTexture = Shader.PropertyToID("clearcoatNormalTexture");
 
-
-		private static void GLTFSceneExporterOnAfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
+		public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{
 			if (!material) return;
 
@@ -193,8 +226,6 @@ namespace UnityGLTF
 					cc.clearcoatRoughnessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatRoughnessTexture), nameof(clearcoatRoughnessTexture));
 				if (material.HasProperty(clearcoatNormalTexture))
 					cc.clearcoatNormalTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatNormalTexture), nameof(clearcoatNormalTexture));
-
-
 			}
 		}
 	}

@@ -135,7 +135,7 @@ namespace UnityGLTF
 				return existingAnim;
 			}
 			
-			if (_exportOptions.MergeClipsWithMatchingNames)
+			if (_exportContext.MergeClipsWithMatchingNames)
 			{
 				// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
 				// This allows to merge multiple animations into one if required (e.g. a character and an instrument that should play at the same time but have individual clips).

@@ -33,8 +33,7 @@ namespace UnityGLTF
 	        base.OnActivate(searchContext, rootElement);
 	        CalculateCacheStats();
         }
-
-
+        
         [SettingsProvider]
         public static SettingsProvider CreateGltfSettingsProvider()
         {
@@ -51,8 +50,7 @@ namespace UnityGLTF
 	        var files = new List<FileInfo>();
 	        exportCacheByteLength = ExportCache.CalculateCacheSize(files);
         }
-
-
+        
         private static GLTFSettings settings;
         private static SerializedObject m_SerializedObject;
 
@@ -94,33 +92,12 @@ namespace UnityGLTF
 	        }
 
 	        GUILayout.Space(10);
+	        
 	        EditorGUILayout.LabelField("Import Plugins", EditorStyles.boldLabel);
-	        OnPluginsGUI();
-	        OnAfterGUI?.Invoke(settings);
-        }
-
-        internal static void OnPluginsGUI()
-        {
-	        foreach (var plugin in settings.ImportPlugins)
-	        {
-		        if (!plugin) continue;
-		        var displayName = plugin.DisplayName ?? plugin.name;
-		        if (string.IsNullOrEmpty(displayName))
-			        displayName = ObjectNames.NicifyVariableName(plugin.GetType().Name);
-		        using (new GUILayout.HorizontalScope())
-		        {
-			        var label = new GUIContent(displayName);
-			        plugin.Expanded = EditorGUILayout.BeginFoldoutHeaderGroup(plugin.Expanded, label);
-			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(20));
-		        }
-		        if (plugin.Expanded)
-		        {
-			        EditorGUI.indentLevel += 1;
-			        plugin.OnGUI();
-			        EditorGUI.indentLevel -= 1;
-		        }
-		        EditorGUILayout.EndFoldoutHeaderGroup();
-	        }
+	        OnPluginsGUI(settings.ImportPlugins);
+	        
+	        EditorGUILayout.LabelField("Export Plugins", EditorStyles.boldLabel);
+	        OnPluginsGUI(settings.ExportPlugins);
 	        
 	        EditorGUILayout.LabelField("Supported Extensions (Import)", EditorStyles.boldLabel);
 	        // All plugins in the extension factory are supported for import.
@@ -130,6 +107,45 @@ namespace UnityGLTF
 	        {
 		        EditorGUILayout.ToggleLeft(ext, true);
 	        }
+	        OnAfterGUI?.Invoke(settings);
+        }
+
+        private static Dictionary<Type, Editor> editorCache = new Dictionary<Type, Editor>();
+        internal static void OnPluginsGUI(IEnumerable<GltfPlugin> plugins)
+        {
+	        EditorGUI.indentLevel++;
+	        foreach (var plugin in plugins)
+	        {
+		        if (!plugin) continue;
+		        var displayName = plugin.DisplayName ?? plugin.name;
+		        if (string.IsNullOrEmpty(displayName))
+			        displayName = ObjectNames.NicifyVariableName(plugin.GetType().Name);
+		        var key = plugin.GetType().FullName + "_SettingsExpanded";
+		        var expanded = SessionState.GetBool(key, false);
+		        using (new GUILayout.HorizontalScope())
+		        {
+			        var label = new GUIContent(displayName);
+			        var expanded2 = EditorGUILayout.Foldout(expanded, label);
+			        if (expanded2 != expanded)
+			        {
+				        expanded = expanded2;
+				        SessionState.SetBool(key, expanded2);
+			        }
+			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(20));
+		        }
+		        if (expanded)
+		        {
+			        EditorGUI.indentLevel++;
+			        editorCache.TryGetValue(plugin.GetType(), out var editor);
+			        Editor.CreateCachedEditor(plugin, null, ref editor);
+			        editorCache[plugin.GetType()] = editor;
+			        editor.OnInspectorGUI();
+			        EditorGUI.indentLevel--;
+		        }
+		        EditorGUILayout.EndFoldoutHeaderGroup();
+	        }
+
+	        EditorGUI.indentLevel--;
         }
 
     }
@@ -161,9 +177,13 @@ namespace UnityGLTF
 		    All = ~0
 	    }
 
+	    // Plugins
 	    [SerializeField, HideInInspector]
 	    public List<GltfImportPlugin> ImportPlugins;
-
+	    
+	    [SerializeField, HideInInspector]
+	    public List<GltfExportPlugin> ExportPlugins;
+	    
 	    [Header("Export Settings")]
 		[SerializeField]
 		private bool exportNames = true;
@@ -273,6 +293,7 @@ namespace UnityGLTF
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
 #endif
 		    }
+		    
 #if UNITY_EDITOR
 		    RegisterPlugins(settings);
 #endif
@@ -312,20 +333,29 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 	    private static void RegisterPlugins(GLTFSettings settings)
 	    {
-		    if(settings.ImportPlugins == null) settings.ImportPlugins = new List<GltfImportPlugin>();
+		    if (settings.ImportPlugins == null) settings.ImportPlugins = new List<GltfImportPlugin>();
+		    if (settings.ExportPlugins == null) settings.ExportPlugins = new List<GltfExportPlugin>();
 
-		    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<GltfImportPlugin>())
+		    void FindAndRegisterPlugins<T>(List<T> plugins) where T : GltfPlugin
 		    {
-			    if (pluginType.IsAbstract) continue;
-			    // If the plugin already exists we dont want to add it again
-			    if (settings.ImportPlugins.Any(p => p != null && p.GetType() == pluginType))
-				    continue;
-			    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
+			    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<T>())
 			    {
-					var newInstance = ScriptableObject.CreateInstance(pluginType) as GltfImportPlugin;
-				    settings.ImportPlugins.Add(newInstance);
+				    if (pluginType.IsAbstract) continue;
+				    if (plugins.Any(p => p != null && p.GetType() == pluginType))
+					    continue;
+				    
+				    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
+				    {
+					    var newInstance = CreateInstance(pluginType) as T;
+					    plugins.Add(newInstance);
+					    Debug.Log("added plugin " + newInstance);
+					    EditorUtility.SetDirty(settings);
+				    }
 			    }
 		    }
+		    
+		    FindAndRegisterPlugins(settings.ImportPlugins);
+		    FindAndRegisterPlugins(settings.ExportPlugins);
 	    }
 #endif
     }
