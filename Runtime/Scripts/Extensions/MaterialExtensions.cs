@@ -3,9 +3,6 @@ using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace UnityGLTF
 {
@@ -42,18 +39,28 @@ namespace UnityGLTF
 		public bool KHR_materials_ior = true;
 		public bool KHR_materials_transmission = true;
 		public bool KHR_materials_volume = true;
+		public bool KHR_materials_iridescence = true;
+		public bool KHR_materials_specular = true;
+		public bool KHR_materials_clearcoat = true;
 
 		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
-			return new MaterialExtensions();
+			return new MaterialExtensions(this);
 		}
 
-		public override string DisplayName => "Material Extensions";
+		public override string DisplayName => "PBR Next Material Extensions";
 		public override string Description => "Exports various glTF PBR Material model extensions.";
 	}
 	
 	public class MaterialExtensions: GltfExportPluginContext
 	{
+		private MaterialExtensionsPlugin settings;
+		
+		public MaterialExtensions(MaterialExtensionsPlugin settings)
+		{
+			this.settings = settings;
+		}
+		
 		private static readonly int thicknessTexture = Shader.PropertyToID("thicknessTexture");
 		private static readonly int thicknessFactor = Shader.PropertyToID("thicknessFactor");
 		private static readonly int attenuationDistance = Shader.PropertyToID("attenuationDistance");
@@ -80,15 +87,19 @@ namespace UnityGLTF
 		private static readonly int clearcoatRoughnessTexture = Shader.PropertyToID("clearcoatRoughnessTexture");
 		private static readonly int clearcoatNormalTexture = Shader.PropertyToID("clearcoatNormalTexture");
 
+
 		public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{
 			if (!material) return;
 
 			var usesTransmission = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON");
 			var usesVolume = material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f;
-			var hasIor = material.HasProperty(ior) && !Mathf.Approximately(material.GetFloat(ior), KHR_materials_ior.DefaultIor);
-
-			if (hasIor)
+			var hasNonDefaultIor = material.HasProperty(ior) && !Mathf.Approximately(material.GetFloat(ior), KHR_materials_ior.DefaultIor);
+			var usesIridescence = material.IsKeywordEnabled("_IRIDESCENCE_ON");
+			var usesSpecular = material.IsKeywordEnabled("_SPECULAR_ON");
+			var usesClearcoat = material.IsKeywordEnabled("_CLEARCOAT_ON");
+			
+			if (hasNonDefaultIor && settings.KHR_materials_ior)
 			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
@@ -105,7 +116,7 @@ namespace UnityGLTF
 					vi.ior = material.GetFloat(ior);
 			}
 
-			if (usesTransmission)
+			if (usesTransmission && settings.KHR_materials_transmission)
 			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
@@ -126,7 +137,7 @@ namespace UnityGLTF
 					vt.transmissionTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(transmissionTexture), nameof(transmissionTexture));
 			}
 
-			if (usesVolume)
+			if (usesVolume && settings.KHR_materials_volume)
 			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
@@ -151,7 +162,7 @@ namespace UnityGLTF
 					ve.attenuationColor = material.GetColor(attenuationColor).ToNumericsColorRaw();
 			}
 
-			if (material.IsKeywordEnabled("_IRIDESCENCE_ON"))
+			if (usesIridescence && settings.KHR_materials_iridescence)
 			{
 				exporter.DeclareExtensionUsage(KHR_materials_iridescence_Factory.EXTENSION_NAME, false);
 
@@ -179,7 +190,7 @@ namespace UnityGLTF
 					vir.iridescenceThicknessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(iridescenceThicknessTexture), nameof(iridescenceThicknessTexture));
 			}
 
-			if (material.IsKeywordEnabled("_SPECULAR_ON"))
+			if (usesSpecular && settings.KHR_materials_specular)
 			{
 				exporter.DeclareExtensionUsage(KHR_materials_specular_Factory.EXTENSION_NAME, false);
 
@@ -203,7 +214,7 @@ namespace UnityGLTF
 					vir.specularColorTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(specularColorTexture), nameof(specularColorTexture));
 			}
 
-			if (material.IsKeywordEnabled("_CLEARCOAT_ON"))
+			if (usesClearcoat && settings.KHR_materials_clearcoat)
 			{
 				exporter.DeclareExtensionUsage(KHR_materials_clearcoat_Factory.EXTENSION_NAME, false);
 

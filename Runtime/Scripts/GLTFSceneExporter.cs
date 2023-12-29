@@ -40,34 +40,27 @@ namespace UnityGLTF
 
 		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
 		
-		[Obsolete("Register export plugins with GLTFSettings instead")]
+		// TODO Should we make all the callbacks on ExportContext obsolete?
+		// Pro: We can remove them from the API
+		// Con: No direct way to "just add callbacks" right now, always needs a plugin.
+		// See GLTFSceneExporter for a case here we "just want callbacks" instead of a new class/context
 		public GLTFSceneExporter.AfterSceneExportDelegate AfterSceneExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.BeforeSceneExportDelegate BeforeSceneExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.AfterNodeExportDelegate AfterNodeExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.BeforeMaterialExportDelegate BeforeMaterialExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.AfterMaterialExportDelegate AfterMaterialExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.BeforeTextureExportDelegate BeforeTextureExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
-		[Obsolete("Register export plugins with GLTFSettings instead")]
 		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
 		
-		internal GltfExportPluginContext GetImplicitPlugin()
-		{
-			return new ImplicitPlugin(this);
-		}
+		internal GltfExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
 
 #pragma warning disable CS0618 // Type or member is obsolete
-		internal class ImplicitPlugin : GltfExportPluginContext
+		internal class ExportContextCallbacks : GltfExportPluginContext
 		{
 			private readonly ExportContext _exportContext;
 
-			internal ImplicitPlugin(ExportContext context)
+			internal ExportContextCallbacks(ExportContext context)
 			{
 				_exportContext = context;
 			}
@@ -574,7 +567,7 @@ namespace UnityGLTF
 			// legacy: implicit plugin for all the static methods on GLTFSceneExporter
 			_plugins.Add(new LegacyCallbacksPlugin());
 			// legacy: implicit plugin for all the methods on ExportContext
-			_plugins.Add(context.GetImplicitPlugin());
+			_plugins.Add(context.GetExportContextCallbacks());
 			
 			// create export plugin instances
 			foreach (var plugin in settings.ExportPlugins)
