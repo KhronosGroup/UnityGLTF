@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using GLTF.Schema;
 using UnityEngine.UIElements;
 using UnityGLTF.Cache;
 using UnityGLTF.Plugins;
@@ -119,6 +120,15 @@ namespace UnityGLTF
 			        EditorGUI.indentLevel -= 1;
 		        }
 		        EditorGUILayout.EndFoldoutHeaderGroup();
+	        }
+	        
+	        EditorGUILayout.LabelField("Supported Extensions (Import)", EditorStyles.boldLabel);
+	        // All plugins in the extension factory are supported for import.
+	        // TODO Some of them have extra package requirements (e.g. meshopt/draco), could be shown here
+	        // TODO help buttons and docs/tooltip would be great
+	        foreach (var ext in GLTFProperty.RegisteredExtensions)
+	        {
+		        EditorGUILayout.ToggleLeft(ext, true);
 	        }
         }
 

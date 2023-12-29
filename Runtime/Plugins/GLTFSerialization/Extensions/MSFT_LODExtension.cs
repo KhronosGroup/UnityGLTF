@@ -9,7 +9,6 @@ namespace GLTF.Schema
 	/// </summary>
 	public class MSFT_LODExtension : IExtension
 	{
-
 		public List<int> NodeIds { get; set; }
 		public MSFT_LODExtension(List<int> nodeIds)
 		{
