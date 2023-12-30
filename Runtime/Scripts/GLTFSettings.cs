@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
-using GLTF.Schema;
 using UnityEngine.UIElements;
 using UnityGLTF.Cache;
 using UnityGLTF.Plugins;
@@ -92,7 +91,7 @@ namespace UnityGLTF
 	        }
 
 	        EditorGUILayout.Space();
-	        EditorGUILayout.LabelField("Export Extensions and Plugins", EditorStyles.boldLabel);
+	        EditorGUILayout.LabelField("Default Export Extensions and Plugins", EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ExportPlugins);
 	        
 	        EditorGUILayout.Space();
@@ -270,7 +269,28 @@ namespace UnityGLTF
 		public bool ExportDisabledGameObjects { get => exportDisabledGameObjects; set => exportDisabledGameObjects = value; }
 		public bool ExportAnimations { get => exportAnimations; set => exportAnimations = value; }
 		public bool BakeAnimationSpeed { get => bakeAnimationSpeed; set => bakeAnimationSpeed = value; }
-		// public bool UseAnimationPointer => ExportPlugins.Any(p => p is AnimationPointerPlugin && p.Enabled);
+
+		[Obsolete("Add/remove \"AnimationPointerPlugin\" from ExportPlugins instead.")]
+		public bool UseAnimationPointer
+		{
+			get
+			{
+				return ExportPlugins?.Any(x => x is AnimationPointerPlugin && x.Enabled) ?? false;
+			}
+			set
+			{
+				var plugin = ExportPlugins?.FirstOrDefault(x => x is AnimationPointerPlugin);
+				if (plugin != null)
+					plugin.Enabled = value;
+				if (!value || plugin != null) return;
+				
+				if (ExportPlugins == null) ExportPlugins = new List<GltfExportPlugin>();
+				ExportPlugins.Add(CreateInstance<AnimationPointerPlugin>());
+#if UNITY_EDITOR
+				EditorUtility.SetDirty(this);
+#endif
+			}
+		}
 		public bool UniqueAnimationNames { get => uniqueAnimationNames; set => uniqueAnimationNames = value; }
 		public bool BlendShapeExportSparseAccessors { get => blendShapeExportSparseAccessors; set => blendShapeExportSparseAccessors = value; }
 		public BlendShapeExportPropertyFlags BlendShapeExportProperties { get => blendShapeExportProperties; set => blendShapeExportProperties = value; }
@@ -354,9 +374,14 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 	    private static void RegisterPlugins(GLTFSettings settings)
 	    {
+		    // Initialize
 		    if (settings.ImportPlugins == null) settings.ImportPlugins = new List<GltfImportPlugin>();
 		    if (settings.ExportPlugins == null) settings.ExportPlugins = new List<GltfExportPlugin>();
 
+		    // Cleanup
+		    settings.ImportPlugins.RemoveAll(x => x == null);
+		    settings.ExportPlugins.RemoveAll(x => x == null);
+		    
 		    void FindAndRegisterPlugins<T>(List<T> plugins) where T : GltfPlugin
 		    {
 			    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<T>())
@@ -375,6 +400,7 @@ namespace UnityGLTF
 			    }
 		    }
 		    
+		    // Register with TypeCache
 		    FindAndRegisterPlugins(settings.ImportPlugins);
 		    FindAndRegisterPlugins(settings.ExportPlugins);
 	    }
