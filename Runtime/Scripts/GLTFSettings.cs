@@ -66,7 +66,7 @@ namespace UnityGLTF
 	        EditorGUILayout.LabelField("Importing glTF", EditorStyles.largeLabel);
 	        EditorGUILayout.LabelField(new GUIContent(
 		        "Import Extensions and Plugins",
-		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime. Make sure to reimport affected assets after changing these options."
+		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime.\nFor assets imported in the editor, make sure to reimport affected assets after changing these options."
 	        ), EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ImportPlugins);
 
