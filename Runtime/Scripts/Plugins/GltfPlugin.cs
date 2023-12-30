@@ -6,7 +6,8 @@ namespace UnityGLTF.Plugins
     {
         public abstract string DisplayName { get; }
         public abstract string Description { get; }
-        public virtual string HelpUrl => "";
+        public virtual string HelpUrl => null;
         public bool Enabled { get; set; } = true;
+        public virtual string Warning => null;
     }
 }

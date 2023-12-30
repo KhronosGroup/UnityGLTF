@@ -10,6 +10,10 @@ namespace Scripts.Extensions
         {
             return new DracoImportContext();
         }
+        
+#if !HAVE_DRACO
+        public override string Warning => "Please add the package \"com.atteneder.draco\" to your project for Draco mesh compression support.";
+#endif
     }
     
     public class DracoImportContext: GltfImportPluginContext

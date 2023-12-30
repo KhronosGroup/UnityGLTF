@@ -10,6 +10,10 @@ namespace Scripts.Extensions
         {
             return new Ktx2ImportContext();
         }
+        
+#if !HAVE_KTX
+        public override string Warning => "Please add the package \"com.atteneder.ktx\" version v1.3+ to your project for KTX2 texture support.";
+#endif
     }
     
     public class Ktx2ImportContext: GltfImportPluginContext

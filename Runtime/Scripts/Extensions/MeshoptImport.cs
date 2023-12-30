@@ -10,6 +10,10 @@ namespace a
         {
             return new MeshoptImportContext();
         }
+                
+#if !HAVE_MESHOPT_DECOMPRESS
+        public override string Warning => "Please add the package \"com.unity.meshopt.decompress\" to your project for Meshopt compression support.";
+#endif
     }
     
     public class MeshoptImportContext: GltfImportPluginContext

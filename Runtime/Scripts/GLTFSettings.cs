@@ -129,7 +129,22 @@ namespace UnityGLTF
 		        {
 			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
 			        var label = new GUIContent(displayName, plugin.Description);
+			        EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 			        var expanded2 = EditorGUILayout.Foldout(expanded, label);
+			        
+			        if (plugin.Enabled && !string.IsNullOrEmpty(plugin.Warning))
+			        {
+				        // calculate space that the label needed
+				        var labelSize = EditorStyles.foldout.CalcSize(label);
+				        var warningIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
+				        warningIcon.tooltip = plugin.Warning;
+				        // show warning if needed
+				        var lastRect = GUILayoutUtility.GetLastRect();
+				        var warningRect = new Rect(lastRect.x + labelSize.x + 4, lastRect.y, 32, 16);
+				        EditorGUI.LabelField(warningRect, warningIcon);
+			        }
+			        
+			        EditorGUI.EndDisabledGroup();
 			        if (expanded2 != expanded)
 			        {
 				        expanded = expanded2;
@@ -140,6 +155,8 @@ namespace UnityGLTF
 		        {
 			        EditorGUI.indentLevel += 1;
 			        EditorGUILayout.HelpBox(plugin.Description, MessageType.None);
+			        if (!string.IsNullOrEmpty(plugin.Warning))
+				        EditorGUILayout.HelpBox(plugin.Warning, MessageType.Warning);
 			        EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 			        editorCache.TryGetValue(plugin.GetType(), out var editor);
 			        Editor.CreateCachedEditor(plugin, null, ref editor);
