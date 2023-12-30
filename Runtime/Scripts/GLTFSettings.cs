@@ -402,8 +402,10 @@ namespace UnityGLTF
 				    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
 				    {
 					    var newInstance = CreateInstance(pluginType) as T;
+					    if (!newInstance) continue;
+					    
+					    newInstance.Enabled = newInstance.EnabledByDefault;
 					    plugins.Add(newInstance);
-					    Debug.Log("added plugin " + newInstance);
 					    EditorUtility.SetDirty(settings);
 				    }
 			    }
