@@ -8,6 +8,7 @@ namespace UnityGLTF.Plugins
         public abstract string Description { get; }
         public virtual string HelpUrl => null;
         public bool Enabled { get; set; } = true;
+        public virtual bool EnabledByDefault => true;
         public virtual string Warning => null;
     }
 }

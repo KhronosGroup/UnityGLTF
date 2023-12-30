@@ -228,22 +228,8 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-	        var plugins = new List<GltfImportPluginContext>();
-	        var context = new GLTFImportContext(ctx, plugins);
 	        var settings = GLTFSettings.GetOrCreateSettings();
-	        foreach (var plugin in settings.ImportPlugins)
-	        {
-		        if (plugin != null && plugin.Enabled)
-		        {
-			        var instance = plugin.CreateInstance(context);
-			        if (instance != null) plugins.Add(instance);
-		        }
-	        }
-
-	        foreach (var plugin in plugins)
-	        {
-		        plugin.OnBeforeImport();
-	        }
+	        var context = new GLTFImportContext(ctx, settings);
 
             GameObject gltfScene = null;
             AnimationClip[] animations = null;

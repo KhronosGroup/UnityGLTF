@@ -47,9 +47,9 @@ namespace UnityGLTF
 		public bool ImportBlendShapeNames = true;
 
 #if UNITY_EDITOR
-		public GLTFImportContext ImportContext = new GLTFImportContext(null, new List<GltfImportPluginContext>());
+		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
 #else
-		public GLTFImportContext ImportContext = new GLTFImportContext(new List<GltfImportPluginContext>());
+		public GLTFImportContext ImportContext = new GLTFImportContext(GLTFSettings.GetOrCreateSettings());
 #endif
 
 		[NonSerialized]
@@ -355,6 +355,12 @@ namespace UnityGLTF
 					}
 
 					_isRunning = true;
+				}
+				
+				// TODO check where the right place is to call OnBeforeImport as early as possible
+				foreach (var plugin in Context.Plugins)
+				{
+					plugin.OnBeforeImport();
 				}
 
 				if (_options.ThrowOnLowMemory)

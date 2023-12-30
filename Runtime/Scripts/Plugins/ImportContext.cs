@@ -21,18 +21,34 @@ namespace UnityGLTF.Plugins
 		public GLTFSceneImporter SceneImporter;
 		public GLTFRoot Root => SceneImporter?.Root;
 
+		private List<GltfImportPluginContext> InitializePlugins(GLTFSettings settings)
+		{
+			var plugins = new List<GltfImportPluginContext>();
+			foreach (var plugin in settings.ImportPlugins)
+			{
+				if (plugin != null && plugin.Enabled)
+				{
+					var instance = plugin.CreateInstance(this);
+					if (instance != null) plugins.Add(instance);
+				}
+			}
+
+			return plugins;
+		}
+		
 #if UNITY_EDITOR
-		internal GLTFImportContext(AssetImportContext assetImportContext, IReadOnlyList<GltfImportPluginContext> plugins)
+		internal GLTFImportContext(AssetImportContext assetImportContext, GLTFSettings settings)
 		{
 			AssetContext = assetImportContext;
-			Plugins = plugins;
 			if (assetImportContext != null)
 				SourceImporter = AssetImporter.GetAtPath(assetImportContext.assetPath);
+			
+			Plugins = InitializePlugins(settings);
 		}
 #endif
-		internal GLTFImportContext(IReadOnlyList<GltfImportPluginContext> plugins)
+		internal GLTFImportContext(GLTFSettings settings)
 		{
-			Plugins = plugins;
+			Plugins = InitializePlugins(settings);
 		}
 
 		public bool TryGetPlugin<T>(out GltfImportPluginContext o) where T: GltfImportPluginContext

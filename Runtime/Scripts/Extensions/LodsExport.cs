@@ -4,7 +4,7 @@ using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Plugins;
 
-namespace UnityGLTF
+namespace UnityGLTF.Extensions
 {
 	public class LodsExport : GltfExportPlugin
 	{

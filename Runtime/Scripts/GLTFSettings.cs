@@ -73,12 +73,15 @@ namespace UnityGLTF
 			        {
 				        case nameof(GLTFSettings.UseCaching):
 					        EditorGUILayout.BeginHorizontal();
+					        EditorGUILayout.PrefixLabel(new GUIContent(" "));
+					        EditorGUILayout.BeginVertical();
 					        if (GUILayout.Button($"Clear Cache ({(exportCacheByteLength / (1024f * 1024f)):F2} MB)")) {
 						        ExportCache.Clear();
 						        CalculateCacheStats();
 					        }
 					        if (GUILayout.Button("Open Cache Directory ↗"))
 						        ExportCache.OpenCacheDirectory();
+					        EditorGUILayout.EndVertical();
 					        EditorGUILayout.EndHorizontal();
 					        break;
 			        }
@@ -91,11 +94,17 @@ namespace UnityGLTF
 	        }
 
 	        EditorGUILayout.Space();
-	        EditorGUILayout.LabelField("Default Export Extensions and Plugins", EditorStyles.boldLabel);
+	        EditorGUILayout.LabelField(new GUIContent(
+		        "Default Export Extensions and Plugins",
+		        "These plugins are enabled by default when exporting a glTF file. When using the export API, you can override which plugins are used."
+				), EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ExportPlugins);
 	        
 	        EditorGUILayout.Space();
-	        EditorGUILayout.LabelField("Import Extensions and Plugins", EditorStyles.boldLabel);
+	        EditorGUILayout.LabelField(new GUIContent(
+		        "Default Import Extensions and Plugins",
+		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime. Each imported asset can override these settings."
+		        ), EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ImportPlugins);
 	        
 	        // Only for testing - all extension registry items should also show up via Plugins above
