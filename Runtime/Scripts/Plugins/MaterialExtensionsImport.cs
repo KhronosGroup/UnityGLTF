@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace UnityGLTF.Plugins
 {
     public class MaterialExtensionsImport: GltfImportPlugin
@@ -8,6 +10,7 @@ namespace UnityGLTF.Plugins
         public bool KHR_materials_iridescence = true;
         public bool KHR_materials_specular = true;
         public bool KHR_materials_clearcoat = true;
+        [HideInInspector] // legacy
         public bool KHR_materials_pbrSpecularGlossiness = true;
         public bool KHR_materials_emissive_strength = true;
         

@@ -66,7 +66,7 @@ namespace UnityGLTF
 	        EditorGUILayout.LabelField("Importing glTF", EditorStyles.largeLabel);
 	        EditorGUILayout.LabelField(new GUIContent(
 		        "Import Extensions and Plugins",
-		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime. Each imported asset can override these settings."
+		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime. Make sure to reimport affected assets after changing these options."
 	        ), EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ImportPlugins);
 
@@ -124,7 +124,7 @@ namespace UnityGLTF
         }
 
         private static Dictionary<Type, Editor> editorCache = new Dictionary<Type, Editor>();
-        internal static void OnPluginsGUI(IEnumerable<GltfPlugin> plugins)
+        internal static void OnPluginsGUI(IEnumerable<GltfPlugin> plugins, bool allowDisabling = true)
         {
 	        EditorGUI.indentLevel++;
 	        foreach (var plugin in plugins.OrderBy(x => x ? x.DisplayName : "ZZZ"))
@@ -137,17 +137,20 @@ namespace UnityGLTF
 		        var expanded = SessionState.GetBool(key, false);
 		        using (new GUILayout.HorizontalScope())
 		        {
-			        if (plugin.AlwaysEnabled)
+			        if (plugin.AlwaysEnabled || !allowDisabling)
 			        {
 				        plugin.Enabled = true;
-				        EditorGUI.BeginDisabledGroup(true);
-				        GUILayout.Toggle(true, new GUIContent("", "Always enabled, can't be turned off."), GUILayout.Width(12));
-				        EditorGUI.EndDisabledGroup();
+				        // EditorGUI.BeginDisabledGroup(true);
+				        // GUILayout.Toggle(true, new GUIContent("", "Always enabled."), GUILayout.Width(12));
+				        // EditorGUI.EndDisabledGroup();
+				        if (allowDisabling)
+							GUILayout.Label(GUIContent.none, GUILayout.Width(12));
 			        }
 			        else
 			        {
 						plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
 			        }
+				        
 			        var label = new GUIContent(displayName, plugin.Description);
 			        EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 			        var expanded2 = EditorGUILayout.Foldout(expanded, label);
