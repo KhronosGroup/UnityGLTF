@@ -2,9 +2,8 @@ using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
-using UnityGLTF.Plugins;
 
-namespace UnityGLTF
+namespace UnityGLTF.Plugins
 {
 	public class TextMeshExport : GltfExportPlugin
 	{

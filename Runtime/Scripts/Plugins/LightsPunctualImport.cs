@@ -1,14 +1,11 @@
-using UnityGLTF.Plugins;
-
-namespace UnityGLTF.Extensions
+namespace UnityGLTF.Plugins
 {
-    public class LightsPunctualPlugin: GltfImportPlugin
+    public class LightsPunctualImport: GltfImportPlugin
     {
         public override string DisplayName => "KHR_lights_punctual";
         public override string Description => "Imports punctual lights (directional, point, spot).";
         public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
         {
-            // always enabled
             return new LightsPunctualImportContext();
         }
     }

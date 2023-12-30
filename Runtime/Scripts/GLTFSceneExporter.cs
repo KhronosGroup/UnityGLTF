@@ -1030,8 +1030,9 @@ namespace UnityGLTF
 				node.Camera = ExportCamera(unityCamera);
 			}
 
+			var lightPluginEnabled = _plugins.FirstOrDefault(x => x is LightsPunctualExportContext) != null;
 			Light unityLight = nodeTransform.GetComponent<Light>();
-			if (unityLight != null && unityLight.enabled)
+			if (unityLight != null && unityLight.enabled && lightPluginEnabled)
 			{
 				node.Light = ExportLight(unityLight);
 			}

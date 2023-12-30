@@ -2,9 +2,8 @@
 using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
-using UnityGLTF.Plugins;
 
-namespace UnityGLTF.Extensions
+namespace UnityGLTF.Plugins
 {
 	public class LodsExport : GltfExportPlugin
 	{

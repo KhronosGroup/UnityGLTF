@@ -2,9 +2,8 @@ using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
-using UnityGLTF.Plugins;
 
-namespace UnityGLTF
+namespace UnityGLTF.Plugins
 {
 	// When a plugin is registered with the default settings (the scriptable object in the project),
 	// it will be active "by default" when someone uses those default settings.

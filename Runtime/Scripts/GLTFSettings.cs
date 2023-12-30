@@ -55,13 +55,24 @@ namespace UnityGLTF
 
         internal static void DrawGLTFSettingsGUI()
         {
-	        EditorGUIUtility.labelWidth = 200;
+	        EditorGUIUtility.labelWidth = 220;
 	        if (settings == null)
 	        {
 		        if (!settings) settings = GLTFSettings.GetOrCreateSettings();
 		        m_SerializedObject = new SerializedObject(settings);
 	        }
+	        
+	        EditorGUILayout.Space();
+	        EditorGUILayout.LabelField("Importing glTF", EditorStyles.largeLabel);
+	        EditorGUILayout.LabelField(new GUIContent(
+		        "Import Extensions and Plugins",
+		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime. Each imported asset can override these settings."
+	        ), EditorStyles.boldLabel);
+	        OnPluginsGUI(settings.ImportPlugins);
 
+	        EditorGUILayout.Space();
+	        EditorGUILayout.Space();
+	        EditorGUILayout.LabelField("Exporting glTF", EditorStyles.largeLabel);
 	        var prop = m_SerializedObject.GetIterator();
 	        prop.NextVisible(true);
 	        if (prop.NextVisible(true))
@@ -95,17 +106,10 @@ namespace UnityGLTF
 
 	        EditorGUILayout.Space();
 	        EditorGUILayout.LabelField(new GUIContent(
-		        "Default Export Extensions and Plugins",
+		        "Export Extensions and Plugins",
 		        "These plugins are enabled by default when exporting a glTF file. When using the export API, you can override which plugins are used."
 				), EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ExportPlugins);
-	        
-	        EditorGUILayout.Space();
-	        EditorGUILayout.LabelField(new GUIContent(
-		        "Default Import Extensions and Plugins",
-		        "These plugins are enabled by default when importing a glTF file in the editor or at runtime. Each imported asset can override these settings."
-		        ), EditorStyles.boldLabel);
-	        OnPluginsGUI(settings.ImportPlugins);
 	        
 	        // Only for testing - all extension registry items should also show up via Plugins above
 	        /*
@@ -133,7 +137,15 @@ namespace UnityGLTF
 		        var expanded = SessionState.GetBool(key, false);
 		        using (new GUILayout.HorizontalScope())
 		        {
-			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
+			        if (plugin.AlwaysEnabled)
+			        {
+				        plugin.Enabled = true;
+				        GUILayout.Space(15);
+			        }
+			        else
+			        {
+						plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
+			        }
 			        var label = new GUIContent(displayName, plugin.Description);
 			        EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 			        var expanded2 = EditorGUILayout.Foldout(expanded, label);
