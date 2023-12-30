@@ -55,7 +55,7 @@ namespace UnityGLTF
 			}
 
 			var shouldUseAnimationPointer = recordAnimationPointer;
-			var animationPointerIsEnabled = settings.ExportPlugins?.Any(x => x is AnimationPointerPlugin && x.Enabled) ?? false;
+			var animationPointerIsEnabled = settings.ExportPlugins?.Any(x => x is AnimationPointerExport && x.Enabled) ?? false;
 			if (animationPointerIsEnabled && recordAnimationPointer)
 			{
 				Debug.LogWarning("Attempting to record KHR_animation_pointer but that is disabled in ProjectSettings/UnityGLTF. Please enable it.");

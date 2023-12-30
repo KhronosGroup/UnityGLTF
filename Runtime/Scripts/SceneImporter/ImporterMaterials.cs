@@ -176,7 +176,7 @@ namespace UnityGLTF
 			
 			// get MaterialImportPluginContext and check which options are enabled
 			// ReSharper disable InconsistentNaming IdentifierTypo
-			var settings = (Context.Plugins.FirstOrDefault(x => x is MaterialImportPluginContext) as MaterialImportPluginContext)?.settings;
+			var settings = (Context.Plugins.FirstOrDefault(x => x is MaterialExtensionsImportContext) as MaterialExtensionsImportContext)?.settings;
 			var KHR_materials_ior = settings && settings.KHR_materials_ior;
 			var KHR_materials_transmission = settings && settings.KHR_materials_transmission;
 			var KHR_materials_volume = settings && settings.KHR_materials_volume;

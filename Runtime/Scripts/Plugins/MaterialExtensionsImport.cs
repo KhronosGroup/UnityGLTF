@@ -1,6 +1,6 @@
 namespace UnityGLTF.Plugins
 {
-    public class MaterialImportPlugin: GltfImportPlugin
+    public class MaterialExtensionsImport: GltfImportPlugin
     {
         public bool KHR_materials_ior = true;
         public bool KHR_materials_transmission = true;
@@ -15,17 +15,17 @@ namespace UnityGLTF.Plugins
         public override string Description => "Import support for various glTF material extensions.";
         public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
         {
-            return new MaterialImportPluginContext(this);
+            return new MaterialExtensionsImportContext(this);
         }
     }
 
-    public class MaterialImportPluginContext : GltfImportPluginContext
+    public class MaterialExtensionsImportContext : GltfImportPluginContext
     {
-        internal readonly MaterialImportPlugin settings;
+        internal readonly MaterialExtensionsImport settings;
         
-        public MaterialImportPluginContext(MaterialImportPlugin materialImportPlugin)
+        public MaterialExtensionsImportContext(MaterialExtensionsImport materialExtensionsImport)
         {
-            settings = materialImportPlugin;
+            settings = materialExtensionsImport;
         }
     }
 }

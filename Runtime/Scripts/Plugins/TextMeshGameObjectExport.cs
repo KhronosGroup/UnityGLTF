@@ -5,7 +5,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF.Plugins
 {
-	public class TextMeshExport : GltfExportPlugin
+	public class TextMeshGameObjectExport : GltfExportPlugin
 	{
 		public override string DisplayName => "Bake to Mesh: TextMeshPro GameObjects";
 		public override string Description => "Bakes 3D TextMeshPro objects (not UI/Canvas) into meshes and attempts to faithfully apply their shader settings to generate the font texture.";

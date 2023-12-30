@@ -140,7 +140,9 @@ namespace UnityGLTF
 			        if (plugin.AlwaysEnabled)
 			        {
 				        plugin.Enabled = true;
-				        GUILayout.Space(15);
+				        EditorGUI.BeginDisabledGroup(true);
+				        GUILayout.Toggle(true, new GUIContent("", "Always enabled, can't be turned off."), GUILayout.Width(12));
+				        EditorGUI.EndDisabledGroup();
 			        }
 			        else
 			        {
@@ -296,17 +298,17 @@ namespace UnityGLTF
 		{
 			get
 			{
-				return ExportPlugins?.Any(x => x is AnimationPointerPlugin && x.Enabled) ?? false;
+				return ExportPlugins?.Any(x => x is AnimationPointerExport && x.Enabled) ?? false;
 			}
 			set
 			{
-				var plugin = ExportPlugins?.FirstOrDefault(x => x is AnimationPointerPlugin);
+				var plugin = ExportPlugins?.FirstOrDefault(x => x is AnimationPointerExport);
 				if (plugin != null)
 					plugin.Enabled = value;
 				if (!value || plugin != null) return;
 				
 				if (ExportPlugins == null) ExportPlugins = new List<GltfExportPlugin>();
-				ExportPlugins.Add(CreateInstance<AnimationPointerPlugin>());
+				ExportPlugins.Add(CreateInstance<AnimationPointerExport>());
 #if UNITY_EDITOR
 				EditorUtility.SetDirty(this);
 #endif

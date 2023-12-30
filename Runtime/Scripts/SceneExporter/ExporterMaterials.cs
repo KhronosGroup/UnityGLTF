@@ -165,7 +165,7 @@ namespace UnityGLTF
 
 					if (maxEmissiveAmount > 1)
 					{
-						var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensions) as MaterialExtensions)?.settings;
+						var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
 						var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
 						if (emissiveStrengthSupported)
 						{

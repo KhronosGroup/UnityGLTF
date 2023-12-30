@@ -529,7 +529,7 @@ namespace UnityGLTF
 						var colors = new Color[values.Length];
 						var strengths = new float[values.Length];
 						actuallyNeedSecondSampler = false;
-						var pluginSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensions) as MaterialExtensions)?.settings;
+						var pluginSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
 						var emissiveStrengthSupported = pluginSettings != null && pluginSettings.KHR_materials_emissive_strength;
 						if (emissiveStrengthSupported)
 						{

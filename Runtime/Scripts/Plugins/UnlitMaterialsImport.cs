@@ -7,6 +7,7 @@ namespace UnityGLTF.Plugins
         public override bool AlwaysEnabled => true;
         public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
         {
+            // always enabled
             return null;
         }
     }

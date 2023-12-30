@@ -33,7 +33,7 @@ namespace UnityGLTF.Plugins
 	// For each new instance of GLTFSceneExporter, new instances of plugins are created.
 	// For each new instance of GLTFSceneImporter, new instances of plugins are created.
 	
-	public class MaterialExtensionsPlugin: GltfExportPlugin
+	public class MaterialExtensionsExport: GltfExportPlugin
 	{
 		public bool KHR_materials_ior = true;
 		public bool KHR_materials_transmission = true;
@@ -45,18 +45,18 @@ namespace UnityGLTF.Plugins
 
 		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
-			return new MaterialExtensions(this);
+			return new MaterialExtensionsExportContext(this);
 		}
 
 		public override string DisplayName => "KHR_materials_* PBR Next Extensions";
 		public override string Description => "Exports various glTF PBR Material model extensions.";
 	}
 	
-	public class MaterialExtensions: GltfExportPluginContext
+	public class MaterialExtensionsExportContext: GltfExportPluginContext
 	{
-		internal readonly MaterialExtensionsPlugin settings;
+		internal readonly MaterialExtensionsExport settings;
 		
-		public MaterialExtensions(MaterialExtensionsPlugin settings)
+		public MaterialExtensionsExportContext(MaterialExtensionsExport settings)
 		{
 			this.settings = settings;
 		}

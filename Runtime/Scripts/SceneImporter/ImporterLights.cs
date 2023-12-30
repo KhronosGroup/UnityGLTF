@@ -2,6 +2,7 @@
 using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 using LightType = UnityEngine.LightType;
 
 namespace UnityGLTF
