@@ -188,7 +188,7 @@ namespace UnityGLTF
 	    private const string k_SettingsFileName = "UnityGLTFSettings.asset";
 	    public const string k_RuntimeAndEditorSettingsPath = "Assets/Resources/" + k_SettingsFileName;
 
-	    [System.Flags]
+	    [Flags]
 	    public enum BlendShapeExportPropertyFlags
 	    {
 		    None = 0,
@@ -200,10 +200,10 @@ namespace UnityGLTF
 
 	    // Plugins
 	    [SerializeField, HideInInspector]
-	    public List<GltfImportPlugin> ImportPlugins;
+	    public List<GltfImportPlugin> ImportPlugins = new List<GltfImportPlugin>();
 	    
 	    [SerializeField, HideInInspector]
-	    public List<GltfExportPlugin> ExportPlugins;
+	    public List<GltfExportPlugin> ExportPlugins = new List<GltfExportPlugin>();
 	    
 	    [Header("Export Settings")]
 		[SerializeField]
@@ -236,9 +236,9 @@ namespace UnityGLTF
 		private bool exportAnimations = true;
 		[SerializeField, Tooltip("When enabled the Animator State speed parameter is baked into the exported glTF animation")]
 		private bool bakeAnimationSpeed = true;
-		[Tooltip("(Experimental) Export animations using KHR_animation_pointer. Requires the viewer to also support this extension.")]
-		[SerializeField]
-		private bool useAnimationPointer = false;
+		// [Tooltip("(Experimental) Export animations using KHR_animation_pointer. Requires the viewer to also support this extension.")]
+		// [SerializeField]
+		// private bool useAnimationPointer = false;
 		[SerializeField]
 		[Tooltip("Some viewers can't distinguish between animation clips that have the same name. This option ensures all exported animation names are unique.")]
 		private bool uniqueAnimationNames = false;
@@ -270,7 +270,7 @@ namespace UnityGLTF
 		public bool ExportDisabledGameObjects { get => exportDisabledGameObjects; set => exportDisabledGameObjects = value; }
 		public bool ExportAnimations { get => exportAnimations; set => exportAnimations = value; }
 		public bool BakeAnimationSpeed { get => bakeAnimationSpeed; set => bakeAnimationSpeed = value; }
-		public bool UseAnimationPointer { get => useAnimationPointer; set => useAnimationPointer = value; }
+		// public bool UseAnimationPointer => ExportPlugins.Any(p => p is AnimationPointerPlugin && p.Enabled);
 		public bool UniqueAnimationNames { get => uniqueAnimationNames; set => uniqueAnimationNames = value; }
 		public bool BlendShapeExportSparseAccessors { get => blendShapeExportSparseAccessors; set => blendShapeExportSparseAccessors = value; }
 		public BlendShapeExportPropertyFlags BlendShapeExportProperties { get => blendShapeExportProperties; set => blendShapeExportProperties = value; }
