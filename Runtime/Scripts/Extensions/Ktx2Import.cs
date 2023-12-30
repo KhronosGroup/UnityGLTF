@@ -1,6 +1,6 @@
 using UnityGLTF.Plugins;
 
-namespace Scripts.Extensions
+namespace UnityGLTF.Extensions
 {
     public class Ktx2Import: GltfImportPlugin
     {

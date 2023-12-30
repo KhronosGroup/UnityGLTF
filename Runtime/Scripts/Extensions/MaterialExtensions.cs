@@ -49,7 +49,7 @@ namespace UnityGLTF
 			return new MaterialExtensions(this);
 		}
 
-		public override string DisplayName => "PBR Next Material Extensions";
+		public override string DisplayName => "KHR_materials_* PBR Next Extensions";
 		public override string Description => "Exports various glTF PBR Material model extensions.";
 	}
 	

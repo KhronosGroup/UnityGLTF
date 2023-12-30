@@ -400,7 +400,10 @@ namespace UnityGLTF
 				}
 
 #if HAVE_MESHOPT_DECOMPRESS
-				await MeshOptDecodeBuffer(_gltfRoot);
+				if (Context.TryGetPlugin<MeshoptImportContext>(out _))
+				{
+					await MeshOptDecodeBuffer(_gltfRoot);
+				}
 #endif
 				await _LoadScene(sceneIndex, showSceneObj, cancellationToken);
 

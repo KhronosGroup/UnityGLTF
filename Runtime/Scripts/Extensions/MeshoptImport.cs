@@ -1,6 +1,6 @@
 using UnityGLTF.Plugins;
 
-namespace a
+namespace UnityGLTF.Extensions
 {
     public class MeshoptImport: GltfImportPlugin
     {

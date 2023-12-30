@@ -34,5 +34,20 @@ namespace UnityGLTF.Plugins
 		{
 			Plugins = plugins;
 		}
+
+		public bool TryGetPlugin<T>(out GltfImportPluginContext o) where T: GltfImportPluginContext
+		{
+			foreach (var plugin in Plugins)
+			{
+				if (plugin is T t)
+				{
+					o = t;
+					return true;
+				}
+			}
+
+			o = null;
+			return false;
+		}
 	}
 }

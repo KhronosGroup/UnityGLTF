@@ -385,7 +385,7 @@ namespace UnityGLTF
 					// Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
 
 					// filtering for what to include / what not to include based on whether its target can be resolved
-					if (settings.UseAnimationPointer && animatedObject is Component _)
+					if (UseAnimationPointer && animatedObject is Component _)
 					{
 						var couldResolve = false;
 						var prop = $"/nodes/{channelTargetId}/{propertyName}";
@@ -590,7 +590,7 @@ namespace UnityGLTF
 			animation.Samplers.Add(Tsampler);
 			animation.Channels.Add(Tchannel);
 
-			if (settings.UseAnimationPointer)
+			if (UseAnimationPointer)
 				ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
 
 			// in some cases, extensions aren't required even when we think they might, e.g. for emission color animation.
@@ -627,7 +627,7 @@ namespace UnityGLTF
 				animation.Samplers.Add(Tsampler2);
 				animation.Channels.Add(Tchannel2);
 
-				if (settings.UseAnimationPointer)
+				if (UseAnimationPointer)
 					ConvertToAnimationPointer(animatedObject, secondPropertyName, TchannelTarget2);
 			}
 		}

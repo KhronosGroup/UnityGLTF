@@ -115,7 +115,7 @@ namespace UnityGLTF
         internal static void OnPluginsGUI(IEnumerable<GltfPlugin> plugins)
         {
 	        EditorGUI.indentLevel++;
-	        foreach (var plugin in plugins)
+	        foreach (var plugin in plugins.OrderBy(x => x ? x.DisplayName : "ZZZ"))
 	        {
 		        if (!plugin) continue;
 		        var displayName = plugin.DisplayName ?? plugin.name;

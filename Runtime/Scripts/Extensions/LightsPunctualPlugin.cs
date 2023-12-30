@@ -1,6 +1,6 @@
 using UnityGLTF.Plugins;
 
-namespace Scripts.Extensions
+namespace UnityGLTF.Extensions
 {
     public class LightsPunctualPlugin: GltfImportPlugin
     {
@@ -9,7 +9,12 @@ namespace Scripts.Extensions
         public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
         {
             // always enabled
-            return null;
+            return new LightsPunctualImportContext();
         }
+    }
+    
+    public class LightsPunctualImportContext: GltfImportPluginContext
+    {
+        
     }
 }
