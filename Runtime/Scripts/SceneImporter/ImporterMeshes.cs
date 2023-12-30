@@ -13,6 +13,7 @@ using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 #if HAVE_DRACO
 using Draco;
+using UnityGLTF.Plugins;
 #endif
 
 namespace UnityGLTF
