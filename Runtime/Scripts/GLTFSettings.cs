@@ -92,19 +92,17 @@ namespace UnityGLTF
 	        }
 
 	        EditorGUILayout.Space();
-	        EditorGUILayout.LabelField("Import Extensions and Plugins", EditorStyles.boldLabel);
-	        OnPluginsGUI(settings.ImportPlugins);
-	        
-	        EditorGUILayout.Space();
 	        EditorGUILayout.LabelField("Export Extensions and Plugins", EditorStyles.boldLabel);
 	        OnPluginsGUI(settings.ExportPlugins);
 	        
+	        EditorGUILayout.Space();
+	        EditorGUILayout.LabelField("Import Extensions and Plugins", EditorStyles.boldLabel);
+	        OnPluginsGUI(settings.ImportPlugins);
+	        
 	        // Only for testing - all extension registry items should also show up via Plugins above
 	        /*
-	        EditorGUILayout.LabelField("Supported Extensions (Import)", EditorStyles.boldLabel);
+	        EditorGUILayout.LabelField("Registered Deserialization Extensions", EditorStyles.boldLabel);
 	        // All plugins in the extension factory are supported for import.
-	        // TODO Some of them have extra package requirements (e.g. meshopt/draco), could be shown here
-	        // TODO help buttons and docs/tooltip would be great
 	        foreach (var ext in GLTFProperty.RegisteredExtensions)
 	        {
 		        EditorGUILayout.ToggleLeft(ext, true);
@@ -165,7 +163,7 @@ namespace UnityGLTF
 			        EditorGUI.EndDisabledGroup();
 			        EditorGUI.indentLevel -= 1;
 		        }
-		        EditorGUILayout.EndFoldoutHeaderGroup();
+		        GUILayout.Space(2);
 	        }
 
 	        EditorGUI.indentLevel--;
