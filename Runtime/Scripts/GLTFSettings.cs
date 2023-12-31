@@ -420,9 +420,14 @@ namespace UnityGLTF
 				    {
 					    var newInstance = CreateInstance(pluginType) as T;
 					    if (!newInstance) continue;
-					    
+
+					    newInstance.name = pluginType.Name;
+						newInstance.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 					    newInstance.Enabled = newInstance.EnabledByDefault;
+					    
 					    plugins.Add(newInstance);
+					    if (AssetDatabase.Contains(settings))
+							AssetDatabase.AddObjectToAsset(newInstance, settings);
 					    EditorUtility.SetDirty(settings);
 				    }
 			    }
