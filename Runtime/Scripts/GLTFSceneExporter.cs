@@ -16,11 +16,11 @@ using GLTF.Schema;
 using Unity.Profiling;
 using UnityEngine;
 using UnityGLTF.Extensions;
-using WrapMode = GLTF.Schema.WrapMode;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
-	public class ExportOptions
+	public class ExportContext
 	{
 		public bool TreatEmptyRootAsScene = false;
 		public bool MergeClipsWithMatchingNames = false;
@@ -28,9 +28,9 @@ namespace UnityGLTF
 		public ILogger logger;
 		internal readonly GLTFSettings settings;
 
-		public ExportOptions() : this(GLTFSettings.GetOrCreateSettings()) { }
+		public ExportContext() : this(GLTFSettings.GetOrCreateSettings()) { }
 
-		public ExportOptions(GLTFSettings settings)
+		public ExportContext(GLTFSettings settings)
 		{
 			if (!settings) settings = GLTFSettings.GetOrCreateSettings();
 			if (settings.UseMainCameraVisibility)
@@ -39,6 +39,11 @@ namespace UnityGLTF
 		}
 
 		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
+		
+		// TODO Should we make all the callbacks on ExportContext obsolete?
+		// Pro: We can remove them from the API
+		// Con: No direct way to "just add callbacks" right now, always needs a plugin.
+		// See GLTFSceneExporter for a case here we "just want callbacks" instead of a new class/context
 		public GLTFSceneExporter.AfterSceneExportDelegate AfterSceneExport;
 		public GLTFSceneExporter.BeforeSceneExportDelegate BeforeSceneExport;
 		public GLTFSceneExporter.AfterNodeExportDelegate AfterNodeExport;
@@ -47,7 +52,54 @@ namespace UnityGLTF
 		public GLTFSceneExporter.BeforeTextureExportDelegate BeforeTextureExport;
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
 		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
+		
+		internal GltfExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
 
+#pragma warning disable CS0618 // Type or member is obsolete
+		internal class ExportContextCallbacks : GltfExportPluginContext
+		{
+			private readonly ExportContext _exportContext;
+
+			internal ExportContextCallbacks(ExportContext context)
+			{
+				_exportContext = context;
+			}
+			
+			public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => _exportContext.BeforeSceneExport?.Invoke(exporter, gltfRoot);
+			public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => _exportContext.AfterSceneExport?.Invoke(exporter, gltfRoot);
+			public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node) => _exportContext.AfterNodeExport?.Invoke(exporter, gltfRoot, transform, node);
+
+			public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
+			{
+				// static callback, run after options callback
+				// we're iterating here because we want to stop calling any once we hit one that can export this material.
+				if (_exportContext.BeforeMaterialExport != null)
+				{
+					var list = _exportContext.BeforeMaterialExport.GetInvocationList();
+					foreach (var entry in list)
+					{
+						var cb = (GLTFSceneExporter.BeforeMaterialExportDelegate) entry;
+						if (cb != null && cb.Invoke(exporter, gltfRoot, material, materialNode))
+						{
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+			public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) => _exportContext.AfterMaterialExport?.Invoke(exporter, gltfRoot, material, materialNode);
+			public override void BeforeTextureExport(GLTFSceneExporter exporter, ref GLTFSceneExporter.UniqueTexture texture, string textureSlot) => _exportContext.BeforeTextureExport?.Invoke(exporter, ref texture, textureSlot);
+			public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex) => _exportContext.AfterTextureExport?.Invoke(exporter, texture, index, tex);
+			public override void AfterPrimitiveExport(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index) => _exportContext.AfterPrimitiveExport?.Invoke(exporter, mesh, primitive, index);
+		}
+#pragma warning restore CS0618 // Type or member is obsolete
+	}
+
+	[Obsolete("Use ExportContext instead")]
+	public class ExportOptions: ExportContext
+	{
+		public ExportOptions(): base() { }
+		public ExportOptions(GLTFSettings settings): base(settings) { }
 	}
 
 	public partial class GLTFSceneExporter
@@ -59,11 +111,43 @@ namespace UnityGLTF
 		public delegate void BeforeSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterSceneExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot);
 		public delegate void AfterNodeExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node);
+		/// <returns>True: material export is complete. False: continue regular export.</returns>
+		public delegate bool BeforeMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
+		public delegate void AfterMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
 		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture, string textureSlot);
 		public delegate void AfterTextureExportDelegate(GLTFSceneExporter exporter, UniqueTexture texture, int index, GLTFTexture tex);
 		public delegate void AfterPrimitiveExportDelegate(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index);
 
+		
+		private class LegacyCallbacksPlugin : GltfExportPluginContext
+		{
+			public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => GLTFSceneExporter.AfterSceneExport?.Invoke(exporter, gltfRoot);
+			public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => GLTFSceneExporter.BeforeSceneExport?.Invoke(exporter, gltfRoot);
+			public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node) => GLTFSceneExporter.AfterNodeExport?.Invoke(exporter, gltfRoot, transform, node);
+
+			public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
+			{
+				// static callback, run after options callback
+				// we're iterating here because we want to stop calling any once we hit one that can export this material.
+				if (GLTFSceneExporter.BeforeMaterialExport != null)
+				{
+					var list = GLTFSceneExporter.BeforeMaterialExport.GetInvocationList();
+					foreach (var entry in list)
+					{
+						var cb = (BeforeMaterialExportDelegate) entry;
+						if (cb != null && cb.Invoke(exporter, gltfRoot, material, materialNode))
+						{
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+			public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) => GLTFSceneExporter.AfterMaterialExport?.Invoke(exporter, gltfRoot, material, materialNode);
+		}
+		
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
+		private List<GltfExportPluginContext> _plugins = new List<GltfExportPluginContext>();
 
 		public struct TextureMapType
 		{
@@ -278,7 +362,7 @@ namespace UnityGLTF
 		private List<Transform> _animatedNodes;
 
 		private int _exportLayerMask;
-		private ExportOptions _exportOptions;
+		private ExportContext _exportContext;
 
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _normalChannelMaterial;
@@ -396,7 +480,7 @@ namespace UnityGLTF
 
 		#region Settings
 
-		private GLTFSettings settings => _exportOptions.settings;
+		private GLTFSettings settings => _exportContext.settings;
 		private bool ExportNames => settings.ExportNames;
 		private bool RequireExtensions => settings.RequireExtensions;
 		private bool ExportAnimations => settings.ExportAnimations;
@@ -412,15 +496,16 @@ namespace UnityGLTF
 		private static ProfilerMarker exportBlendShapeMarker = new ProfilerMarker("Export BlendShape");
 		private static ProfilerMarker exportSkinFromNodeMarker = new ProfilerMarker("Export Skin");
 		private static ProfilerMarker exportSparseAccessorMarker = new ProfilerMarker("Export Sparse Accessor");
+		private static ProfilerMarker beforeNodeExportMarker = new ProfilerMarker("Before Node Export (Callback)");
 		private static ProfilerMarker exportNodeMarker = new ProfilerMarker("Export Node");
 		private static ProfilerMarker afterNodeExportMarker = new ProfilerMarker("After Node Export (Callback)");
 		private static ProfilerMarker exportAnimationFromNodeMarker = new ProfilerMarker("Export Animation from Node");
 		private static ProfilerMarker convertClipToGLTFAnimationMarker = new ProfilerMarker("Convert Clip to GLTF Animation");
 		private static ProfilerMarker beforeSceneExportMarker = new ProfilerMarker("Before Scene Export (Callback)");
 		private static ProfilerMarker exportSceneMarker = new ProfilerMarker("Export Scene");
-		private static ProfilerMarker afterMaterialExportMarker = new ProfilerMarker("After Material Export (Callback)");
-		private static ProfilerMarker exportMaterialMarker = new ProfilerMarker("Export Material");
 		private static ProfilerMarker beforeMaterialExportMarker = new ProfilerMarker("Before Material Export (Callback)");
+		private static ProfilerMarker exportMaterialMarker = new ProfilerMarker("Export Material");
+		private static ProfilerMarker afterMaterialExportMarker = new ProfilerMarker("After Material Export (Callback)");
 		private static ProfilerMarker writeImageToDiskMarker = new ProfilerMarker("Export Image - Write to Disk");
 		private static ProfilerMarker afterSceneExportMarker = new ProfilerMarker("After Scene Export (Callback)");
 
@@ -463,11 +548,11 @@ namespace UnityGLTF
 		/// <param name="rootTransforms">Root transform of object to export</param>
 		[Obsolete("Please switch to GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options).  This constructor is deprecated and will be removed in a future release.")]
 		public GLTFSceneExporter(Transform[] rootTransforms, RetrieveTexturePathDelegate texturePathRetriever)
-			: this(rootTransforms, new ExportOptions { TexturePathRetriever = texturePathRetriever })
+			: this(rootTransforms, new ExportContext { TexturePathRetriever = texturePathRetriever })
 		{
 		}
 
-		public GLTFSceneExporter(Transform rootTransform, ExportOptions options) : this(new [] { rootTransform }, options)
+		public GLTFSceneExporter(Transform rootTransform, ExportContext context) : this(new [] { rootTransform }, context)
 		{
 		}
 
@@ -475,16 +560,31 @@ namespace UnityGLTF
 		/// Create a GLTFExporter that exports out a transform
 		/// </summary>
 		/// <param name="rootTransforms">Root transform of object to export</param>
-		/// <param name="options">Export Settings</param>
-		public GLTFSceneExporter(Transform[] rootTransforms, ExportOptions options)
+		/// <param name="context">Export Settings</param>
+		public GLTFSceneExporter(Transform[] rootTransforms, ExportContext context)
 		{
-			_exportOptions = options;
-			if (options.logger != null)
-				Debug = options.logger;
+			_exportContext = context;
+			if (context.logger != null)
+				Debug = context.logger;
 			else
 				Debug = UnityEngine.Debug.unityLogger;
+			
+			// legacy: implicit plugin for all the static methods on GLTFSceneExporter
+			_plugins.Add(new LegacyCallbacksPlugin());
+			// legacy: implicit plugin for all the methods on ExportContext
+			_plugins.Add(context.GetExportContextCallbacks());
+			
+			// create export plugin instances
+			foreach (var plugin in settings.ExportPlugins)
+			{
+				if (plugin != null && plugin.Enabled)
+				{
+					var instance = plugin.CreateInstance(context);
+					if (instance != null) _plugins.Add(instance);
+				}
+			}
 
-			_exportLayerMask = _exportOptions.ExportLayers;
+			_exportLayerMask = _exportContext.ExportLayers;
 
 			var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
 			_metalGlossChannelSwapMaterial = new Material(metalGlossChannelSwapShader);
@@ -607,8 +707,8 @@ namespace UnityGLTF
 			exportGltfInitMarker.End();
 
 			beforeSceneExportMarker.Begin();
-			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
-			BeforeSceneExport?.Invoke(this, _root);
+			foreach (var plugin in _plugins)
+				plugin?.BeforeSceneExport(this, _root);
 			beforeSceneExportMarker.End();
 
 			_root.Scene = ExportScene(sceneName, _rootTransforms);
@@ -626,11 +726,8 @@ namespace UnityGLTF
 			}
 
 			afterSceneExportMarker.Begin();
-			if (_exportOptions.AfterSceneExport != null)
-				_exportOptions.AfterSceneExport(this, _root);
-
-			if (AfterSceneExport != null)
-				AfterSceneExport.Invoke(this, _root);
+			foreach (var plugin in _plugins)
+				plugin?.AfterSceneExport(this, _root);
 			afterSceneExportMarker.End();
 
 			animationPointerResolver?.Resolve(this);
@@ -711,8 +808,8 @@ namespace UnityGLTF
 			exportGltfInitMarker.End();
 
 			beforeSceneExportMarker.Begin();
-			_exportOptions.BeforeSceneExport?.Invoke(this, _root);
-			BeforeSceneExport?.Invoke(this, _root);
+			foreach (var plugin in _plugins)
+				plugin?.BeforeSceneExport(this, _root);
 			beforeSceneExportMarker.End();
 
 			if (_rootTransforms != null)
@@ -729,10 +826,8 @@ namespace UnityGLTF
 			}
 
 			afterSceneExportMarker.Begin();
-			if (_exportOptions.AfterSceneExport != null)
-				_exportOptions.AfterSceneExport(this, _root);
-			if (AfterSceneExport != null)
-				AfterSceneExport.Invoke(this, _root);
+			foreach (var plugin in _plugins)
+				plugin?.AfterSceneExport(this, _root);
 			afterSceneExportMarker.End();
 
 			animationPointerResolver?.Resolve(this);
@@ -874,7 +969,7 @@ namespace UnityGLTF
 				scene.Name = name;
 			}
 
-			if(_exportOptions.TreatEmptyRootAsScene)
+			if(_exportContext.TreatEmptyRootAsScene)
 			{
 				// if we're exporting with a single object selected, that object can be the scene root, no need for an extra root node.
 				if (rootObjTransforms.Length == 1 && rootObjTransforms[0].GetComponents<Component>().Length == 1) // single root with a single transform
@@ -910,16 +1005,25 @@ namespace UnityGLTF
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
 			exportNodeMarker.Begin();
-
+			
 			var node = new Node();
 
 			if (ExportNames)
 			{
 				node.Name = nodeTransform.name;
 			}
+			
+			// TODO think more about how this callback is used – could e.g. be modifying the hierarchy,
+			// and we would want to prevent exporting children of this node.
+			// Could also be that we want to add a mesh based on some condition
+			// (e.g. merged childs, procedural geometry, etc.)
+			beforeNodeExportMarker.Begin();
+			foreach (var plugin in _plugins)
+				plugin?.BeforeNodeExport(this, _root, nodeTransform, node);
+			beforeNodeExportMarker.End();
 
 #if ANIMATION_SUPPORTED
-			if (nodeTransform.GetComponent<UnityEngine.Animation>() || nodeTransform.GetComponent<UnityEngine.Animator>())
+			if (nodeTransform.GetComponent<Animation>() || nodeTransform.GetComponent<Animator>())
 			{
 				_animatedNodes.Add(nodeTransform);
 			}
@@ -936,8 +1040,9 @@ namespace UnityGLTF
 				node.Camera = ExportCamera(unityCamera);
 			}
 
+			var lightPluginEnabled = _plugins.FirstOrDefault(x => x is LightsPunctualExportContext) != null;
 			Light unityLight = nodeTransform.GetComponent<Light>();
-			if (unityLight != null && unityLight.enabled)
+			if (unityLight != null && unityLight.enabled && lightPluginEnabled)
 			{
 				node.Light = ExportLight(unityLight);
 			}
@@ -1019,8 +1124,8 @@ namespace UnityGLTF
 
 			// node export callback
 			afterNodeExportMarker.Begin();
-			_exportOptions.AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
-			AfterNodeExport?.Invoke(this, _root, nodeTransform, node);
+			foreach (var plugin in _plugins)
+				plugin?.AfterNodeExport(this, _root, nodeTransform, node);
 			afterNodeExportMarker.End();
 
 			return id;

@@ -9,6 +9,17 @@ namespace GLTF.Schema
 {
 	public class GLTFProperty
 	{
+		public static IReadOnlyList<string> RegisteredExtensions
+		{
+			get
+			{
+				lock (_extensionRegistry)
+				{
+					return _extensionRegistry.Keys.ToList();
+				}
+			}
+		}
+		
 		private static Dictionary<string, ExtensionFactory> _extensionRegistry = new Dictionary<string, ExtensionFactory>()
 		{
 			{ ExtTextureTransformExtensionFactory.EXTENSION_NAME, new ExtTextureTransformExtensionFactory() },

@@ -350,7 +350,7 @@ namespace UnityGLTF.Timeline
 
 			var logHandler = new StringBuilderLogHandler();
 
-			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions(settings)
+			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportContext(settings)
 			{
 				AfterSceneExport = PostExport,
 				logger = new Logger(logHandler),

@@ -147,27 +147,34 @@ namespace UnityGLTF
 					break;
 				case "image/ktx2":
 					string textureName = texture.name;
+					
 #if HAVE_KTX
-#if UNITY_EDITOR
-					Texture.DestroyImmediate(texture);
-#else
-					Texture.Destroy(texture);
-#endif
-					var ktxTexture = new KtxUnity.KtxTexture();
-
-					using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
+					if (Context.TryGetPlugin<Ktx2ImportContext>(out _))
 					{
-						var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
-						texture = resultTextureData.texture;
-						texture.name = textureName;
-					}
-
-					ktxTexture.Dispose();
+#if UNITY_EDITOR
+						Texture.DestroyImmediate(texture);
 #else
-					Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
-					await Task.CompletedTask;
-					texture = null;
+						Texture.Destroy(texture);
 #endif
+						var ktxTexture = new KtxUnity.KtxTexture();
+
+						using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
+						{
+							var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
+							texture = resultTextureData.texture;
+							texture.name = textureName;
+						}
+
+						ktxTexture.Dispose();
+
+					}
+					else
+#endif
+					{
+						Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
+						await Task.CompletedTask;
+						texture = null;
+					}
 					break;
 				default:
 					texture.LoadImage(data, markGpuOnly);

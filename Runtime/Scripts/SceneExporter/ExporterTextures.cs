@@ -179,7 +179,8 @@ namespace UnityGLTF
 				new UniqueTexture(textureObj, exportSettings) :
 				new UniqueTexture(textureObj, textureSlot, this);
 
-			_exportOptions.BeforeTextureExport?.Invoke(this, ref uniqueTexture, textureSlot);
+			foreach (var plugin in _plugins)
+				plugin?.BeforeTextureExport(this, ref uniqueTexture, textureSlot);
 
 			TextureId id = GetTextureId(_root, uniqueTexture);
 			if (id != null)
@@ -229,7 +230,8 @@ namespace UnityGLTF
 				DeclareExtensionUsage(EXT_texture_exr.EXTENSION_NAME);
 			}
 
-			_exportOptions.AfterTextureExport?.Invoke(this, uniqueTexture, id.Id, texture);
+			foreach (var plugin in _plugins)
+				plugin?.AfterTextureExport(this, uniqueTexture, id.Id, texture);
 
 			return id;
 		}
@@ -243,7 +245,7 @@ namespace UnityGLTF
 		/// <returns>The relative texture output path on disk, including extension</returns>
 		private string GetImageOutputPath(Texture texture, TextureExportSettings textureMapType, string textureSlot, out bool ableToExportFromDisk)
 		{
-			var imagePath = _exportOptions.TexturePathRetriever(texture);
+			var imagePath = _exportContext.TexturePathRetriever(texture);
 			if (string.IsNullOrEmpty(imagePath))
 			{
 				imagePath = texture.name;

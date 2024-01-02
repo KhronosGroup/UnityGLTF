@@ -108,7 +108,7 @@ namespace UnityGLTF
 		private static void Export(Transform[] transforms, bool binary, string sceneName)
 		{
 			var settings = GLTFSettings.GetOrCreateSettings();
-			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+			var exportOptions = new ExportContext(settings) { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(transforms, exportOptions);
 
 			var invokedByShortcut = Event.current?.type == EventType.KeyDown;

@@ -13,6 +13,7 @@ using System.Reflection;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
 
 #if UNITY_2020_2_OR_NEWER
@@ -36,6 +37,18 @@ namespace UnityGLTF
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
 #endif
+
+		private bool? _useAnimationPointer = null;
+
+		private bool UseAnimationPointer
+		{
+			get
+			{
+				if (_useAnimationPointer == null)
+					_useAnimationPointer = _plugins.Any(x => x is AnimationPointerExportContext);
+				return _useAnimationPointer.Value;
+			}
+		}
 
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
 		// This may need additional work to fully support animatorControllers
@@ -135,7 +148,7 @@ namespace UnityGLTF
 				return existingAnim;
 			}
 			
-			if (_exportOptions.MergeClipsWithMatchingNames)
+			if (_exportContext.MergeClipsWithMatchingNames)
 			{
 				// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
 				// This allows to merge multiple animations into one if required (e.g. a character and an instrument that should play at the same time but have individual clips).
@@ -776,7 +789,7 @@ namespace UnityGLTF
 						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
 						animation.Channels.RemoveAll(x => x.Target.Node != null && x.Target.Node.Id == alreadyExportedChannelTargetId);
 
-						if (settings.UseAnimationPointer)
+						if (UseAnimationPointer)
 						{
 							animation.Channels.RemoveAll(x =>
 							{
@@ -892,7 +905,7 @@ namespace UnityGLTF
 
 					// arbitrary properties require the KHR_animation_pointer extension
 					bool sampledAnimationData = false;
-					if (settings.UseAnimationPointer && curve.propertyCurves != null && curve.propertyCurves.Count > 0)
+					if (UseAnimationPointer && curve.propertyCurves != null && curve.propertyCurves.Count > 0)
 					{
 						var curves = curve.propertyCurves;
 						foreach (KeyValuePair<string, PropertyCurve> c in curves)
@@ -1026,7 +1039,7 @@ namespace UnityGLTF
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
 				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
 
-				if (!containsCompatibleData && !settings.UseAnimationPointer)
+				if (!containsCompatibleData && !UseAnimationPointer)
 				{
 					Debug.LogWarning("No compatible animation data found in clip binding: " + binding.propertyName + ". You may want to turn KHR_animation_pointer export on.", clip);
 					continue;
@@ -1088,7 +1101,7 @@ namespace UnityGLTF
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
 				}
-				else if (settings.UseAnimationPointer)
+				else if (UseAnimationPointer)
 				{
 					var obj = AnimationUtility.GetAnimatedObject(root, binding);
 					if (obj)
@@ -1105,7 +1118,7 @@ namespace UnityGLTF
 
 			// object reference curves - in some cases animated data can be contained in here, e.g. for SpriteRenderers.
 			// this only makes sense when AnimationPointer is on, and someone needs to resolve the data to something in the glTF later via KHR_animation_pointer_Resolver
-			if (settings.UseAnimationPointer)
+			if (UseAnimationPointer)
 			{
 				var objectBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
 				foreach (var binding in objectBindings)

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -12,18 +14,19 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneExporter
 	{
-		/// <returns>True: material export is complete. False: continue regular export.</returns>
-		public delegate bool BeforeMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
-		public delegate void AfterMaterialExportDelegate(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode);
-
 		// Static callbacks
+		[Obsolete("Use ExportPlugins on GLTFSettings instead")]
 		public static event BeforeSceneExportDelegate BeforeSceneExport;
+		[Obsolete("Use ExportPlugins on GLTFSettings instead")]
 		public static event AfterSceneExportDelegate AfterSceneExport;
+		[Obsolete("Use ExportPlugins on GLTFSettings instead")]
 		public static event AfterNodeExportDelegate AfterNodeExport;
 		/// <returns>True: material export is complete. False: continue regular export.</returns>
+		[Obsolete("Use ExportPlugins on GLTFSettings instead")]
 		public static event BeforeMaterialExportDelegate BeforeMaterialExport;
+		[Obsolete("Use ExportPlugins on GLTFSettings instead")]
 		public static event AfterMaterialExportDelegate AfterMaterialExport;
-
+		
 		// mock for Default material
 		private static Material _defaultMaterial = null;
 		public static Material DefaultMaterial
@@ -77,11 +80,11 @@ namespace UnityGLTF
 				material.Name = materialObj.name;
 			}
 
-			// before material export: only continue with regular export if that didn't succeed.
-			if (_exportOptions.BeforeMaterialExport != null)
+			foreach (var plugin in _plugins)
 			{
+				if (plugin == null) continue;
 				beforeMaterialExportMarker.Begin();
-				if (_exportOptions.BeforeMaterialExport.Invoke(this, _root, materialObj, material))
+				if (plugin.BeforeMaterialExport(this, _root, materialObj, material))
 				{
 					beforeMaterialExportMarker.End();
 					return CreateAndAddMaterialId(materialObj, material);
@@ -89,28 +92,6 @@ namespace UnityGLTF
 				else
 				{
 					beforeMaterialExportMarker.End();
-				}
-			}
-
-
-			// static callback, run after options callback
-			// we're iterating here because we want to stop calling any once we hit one that can export this material.
-			if (BeforeMaterialExport != null)
-			{
-				var list = BeforeMaterialExport.GetInvocationList();
-				foreach (var entry in list)
-				{
-					beforeMaterialExportMarker.Begin();
-					var cb = (BeforeMaterialExportDelegate) entry;
-					if (cb != null && cb.Invoke(this, _root, materialObj, material))
-					{
-						beforeMaterialExportMarker.End();
-						return CreateAndAddMaterialId(materialObj, material);
-					}
-					else
-					{
-						beforeMaterialExportMarker.End();
-					}
 				}
 			}
 
@@ -182,10 +163,15 @@ namespace UnityGLTF
 					else
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorGamma();
 
-					if(maxEmissiveAmount > 1)
+					if (maxEmissiveAmount > 1)
 					{
-						material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
-						DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
+						var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
+						var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
+						if (emissiveStrengthSupported)
+						{
+							material.AddExtension(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, new KHR_materials_emissive_strength() { emissiveStrength = maxEmissiveAmount });
+							DeclareExtensionUsage(KHR_materials_emissive_strength_Factory.EXTENSION_NAME, false);
+						}
 					}
 				}
 
@@ -356,13 +342,13 @@ namespace UnityGLTF
 	        _root.Materials.Add(material);
 
 	        // after material export
-	        afterMaterialExportMarker.Begin();
 	        if (materialObj)
 	        {
-		        _exportOptions.AfterMaterialExport?.Invoke(this, _root, materialObj, material);
-		        AfterMaterialExport?.Invoke(this, _root, materialObj, material);
+		        afterMaterialExportMarker.Begin();
+		        foreach (var plugin in _plugins)
+			        plugin?.AfterMaterialExport(this, _root, materialObj, material);
+		        afterMaterialExportMarker.End();
 	        }
-	        afterMaterialExportMarker.End();
 
 	        return id;
         }

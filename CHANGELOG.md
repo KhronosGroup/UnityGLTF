@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.7.0-exp] - 2024-01-02
+- change: refactored import/export plugins for better control of what's enabled and what's not. This allows shipping experimental/optional plugins earlier.
+- change: mark `GLTFSceneExporter.*` static callbacks obsolete. Use plugins instead
+- fix: make sure `GLTFImporter` uses the default plugin import settings
+- add: allow overrides for which editor import plugins are used
+- add: export plugin for `MSFT_lod`
+- add: export plugin for `KHR_materials_variants`. Add the `MaterialVariants` component to your root to configure variants.
+- add: export plugin to bake particle systems to meshes
+- add: export plugin to bake canvas to meshes
+- add: export plugin to bake TMPro GameObjects to meshes
+- add: per-import settings for which plugins are applied
+- add: `BeforeNodeExport` callback for export plugins
+- add: warning icon for plugins that e.g. have missing package dependencies
+
 ## [2.6.0-exp] - 2023-12-13
 - fix: verify tangent.w component on animation export (should be exactly -1 or 1)
 - fix: recalculate mesh bounds when changing import scale

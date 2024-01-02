@@ -3,33 +3,41 @@ using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
 
-namespace UnityGLTF
+namespace UnityGLTF.Plugins
 {
-	public static class TextMeshExport
+	public class TextMeshGameObjectExport : GltfExportPlugin
 	{
-#if UNITY_EDITOR
-		[UnityEditor.InitializeOnLoadMethod]
-#else
-		[RuntimeInitializeOnLoadMethod]
-#endif
-		static void Init()
+		public override string DisplayName => "Bake to Mesh: TextMeshPro GameObjects";
+		public override string Description => "Bakes 3D TextMeshPro objects (not UI/Canvas) into meshes and attempts to faithfully apply their shader settings to generate the font texture.";
+		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
-			GLTFSceneExporter.BeforeMaterialExport += BeforeMaterialExport;
-			GLTFSceneExporter.AfterSceneExport += CleanUpRenderTextureCache;
+#if HAVE_TMPRO
+			return new TextMeshExportContext();
+#else
+			return null;
+#endif
 		}
 
-		private static void CleanUpRenderTextureCache(GLTFSceneExporter _, GLTFRoot __)
+#if !HAVE_TMPRO
+		public override string Warning => "TextMeshPro is not installed. Please install TextMeshPro from the Package Manager to use this plugin.";
+#endif
+	}
+	
+	public class TextMeshExportContext: GltfExportPluginContext
+	{
+		public override void AfterSceneExport(GLTFSceneExporter _, GLTFRoot __)
 		{
+			RenderTexture.active = null;
 			if (rtCache == null) return;
 			foreach (var kvp in rtCache)
 				kvp.Value.Release();
 			rtCache.Clear();
 		}
 
-		private static Material tempMat;
-		private static Dictionary<Texture, RenderTexture> rtCache;
+		private Material tempMat;
+		private Dictionary<Texture, RenderTexture> rtCache;
 
-		private static bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
+		public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
 		{
 			if (material.shader.name.Contains("TextMeshPro")) // seems to only work for TextMeshPro/Mobile/ right now (SDFAA_HINTED?)
 			{

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityGLTF.Loader;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
@@ -81,6 +82,9 @@ namespace UnityGLTF
 				ImportTangents = ImportTangents,
 				SwapUVs = SwapUVs
 			};
+			
+			var settings = GLTFSettings.GetOrCreateSettings();
+			importOptions.ImportContext = new GLTFImportContext(settings);
 
 			GLTFSceneImporter sceneImporter = null;
 			try

@@ -3,8 +3,10 @@
 #endif
 
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityGLTF.Plugins;
 #if NEW_INPUT
 using UnityEngine.InputSystem;
 #endif
@@ -53,7 +55,8 @@ namespace UnityGLTF
 			}
 
 			var shouldUseAnimationPointer = recordAnimationPointer;
-			if (!settings.UseAnimationPointer && recordAnimationPointer)
+			var animationPointerIsEnabled = settings.ExportPlugins?.Any(x => x is AnimationPointerExport && x.Enabled) ?? false;
+			if (animationPointerIsEnabled && recordAnimationPointer)
 			{
 				Debug.LogWarning("Attempting to record KHR_animation_pointer but that is disabled in ProjectSettings/UnityGLTF. Please enable it.");
 				shouldUseAnimationPointer = false;

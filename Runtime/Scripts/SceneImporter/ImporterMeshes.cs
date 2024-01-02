@@ -13,6 +13,7 @@ using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 #if HAVE_DRACO
 using Draco;
+using UnityGLTF.Plugins;
 #endif
 
 namespace UnityGLTF
@@ -52,11 +53,17 @@ namespace UnityGLTF
 
 			var anyHadDraco = mesh.Primitives.Any(p => p.Extensions != null && p.Extensions.ContainsKey(KHR_draco_mesh_compression_Factory.EXTENSION_NAME));
 #if HAVE_DRACO
-
 			if (anyHadDraco)
 			{
-				await ConstructDracoMesh(mesh, meshIndex, cancellationToken);
-				return;
+				if (Context.TryGetPlugin<DracoImportContext>(out _))
+				{
+					await ConstructDracoMesh(mesh, meshIndex, cancellationToken);
+					return;
+				}
+				else
+				{
+					throw new NotSupportedException("Can't import model because it uses the KHR_draco_mesh_compression extension. Please add the package \"com.atteneder.draco\" to your project to import this file.");
+				}
 			}
 #else
 			if (anyHadDraco)
@@ -188,7 +195,6 @@ namespace UnityGLTF
 #endif
 
 #if HAVE_MESHOPT_DECOMPRESS
-
 		private async Task MeshOptDecodeBuffer(GLTFRoot root)
 		{
 			if (root.BufferViews == null)
