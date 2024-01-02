@@ -151,10 +151,27 @@ namespace UnityGLTF
 
 		internal static void OnPluginsGUI(IEnumerable<GltfPlugin> plugins, bool allowDisabling = true)
 		{
-			EditorGUI.indentLevel++;
-			foreach (var plugin in plugins.OrderBy(x => x ? x.DisplayName : "ZZZ"))
+			var lastAssembly = "";
+			foreach (var plugin in plugins
+				         .OrderBy(x =>
+				         {
+					         var displayName = x.GetType().Assembly.GetName().Name;
+					         if (displayName == "UnityGLTFScripts") displayName = "____";
+					         return displayName;
+				         })
+				         .ThenBy(x => x ? x.DisplayName : "ZZZ"))
 			{
 				if (!plugin) continue;
+				var pluginAssembly = plugin.GetType().Assembly.GetName().Name;
+				if (pluginAssembly == "UnityGLTFScripts") pluginAssembly = "UnityGLTF";
+				if (lastAssembly != pluginAssembly)
+				{
+					lastAssembly = pluginAssembly;
+					EditorGUILayout.Space();
+					EditorGUILayout.LabelField(new GUIContent(pluginAssembly), EditorStyles.miniLabel);
+				}
+				
+				EditorGUI.indentLevel++;
 				var displayName = plugin.DisplayName ?? plugin.name;
 				if (string.IsNullOrEmpty(displayName))
 					displayName = ObjectNames.NicifyVariableName(plugin.GetType().Name);
@@ -179,7 +196,32 @@ namespace UnityGLTF
 					var label = new GUIContent(displayName, plugin.Description);
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 					var expanded2 = EditorGUILayout.Foldout(expanded, label);
-
+					var lastFoldoutRect = GUILayoutUtility.GetLastRect();
+					// check for right click so we can show a context menu
+					EditorGUI.EndDisabledGroup();
+					if (Event.current.type == EventType.MouseDown && lastFoldoutRect.Contains(Event.current.mousePosition))
+					{
+						if (Event.current.button == 0)
+						{
+							expanded2 = !expanded2;
+						}
+						else if (Event.current.button == 1)
+						{
+							var menu = new GenericMenu();
+							menu.AddItem(new GUIContent("Ping Script"), false, () => {
+								var script = MonoScript.FromScriptableObject(plugin);
+								EditorGUIUtility.PingObject(script);
+							});
+							menu.AddItem(new GUIContent("Edit Script"), false, () => {
+								var script = MonoScript.FromScriptableObject(plugin);
+								AssetDatabase.OpenAsset(script);
+							});
+							menu.ShowAsContext();
+							Event.current.Use();
+						}
+					}
+					
+					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 					if (plugin.Enabled && !string.IsNullOrEmpty(plugin.Warning))
 					{
 						// calculate space that the label needed
@@ -216,9 +258,9 @@ namespace UnityGLTF
 				}
 
 				GUILayout.Space(2);
-			}
 
-			EditorGUI.indentLevel--;
+				EditorGUI.indentLevel--;
+			}
 		}
 
 	}
