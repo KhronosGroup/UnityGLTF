@@ -333,12 +333,15 @@ namespace UnityGLTF
 #endif
 
 	    internal static GLTFSettings cachedSettings;
+	    internal static GLTFSettings cachedDefaultSettings;
 
 	    public static GLTFSettings GetOrCreateSettings()
 	    {
+		    var hadSettings = true;
 		    if (!TryGetSettings(out var settings))
 		    {
 #if UNITY_EDITOR
+			    hadSettings = false;
 			    settings = ScriptableObject.CreateInstance<GLTFSettings>();
 			    settings.name = Path.GetFileNameWithoutExtension(k_RuntimeAndEditorSettingsPath);
 			    var dir = Path.GetDirectoryName(k_RuntimeAndEditorSettingsPath);
@@ -363,9 +366,21 @@ namespace UnityGLTF
 		    
 #if UNITY_EDITOR
 		    RegisterPlugins(settings);
+		    // save again if needed - the asset was only created in memory
+		    if (!hadSettings && !AssetDatabase.Contains(settings))
+				UnityEditorInternal.InternalEditorUtility.SaveToSerializedFileAndForget(new UnityEngine.Object[] { settings }, k_RuntimeAndEditorSettingsPath, true);
 #endif
 		    cachedSettings = settings;
 		    return settings;
+	    }
+
+	    public static GLTFSettings GetDefaultSettings()
+	    {
+		    if (cachedDefaultSettings) return cachedDefaultSettings;
+		    
+		    cachedDefaultSettings = CreateInstance<GLTFSettings>();
+		    RegisterPlugins(cachedDefaultSettings);
+		    return cachedDefaultSettings;
 	    }
 
 	    public static bool TryGetSettings(out GLTFSettings settings)
@@ -427,8 +442,10 @@ namespace UnityGLTF
 					    
 					    plugins.Add(newInstance);
 					    if (AssetDatabase.Contains(settings))
+					    {
 							AssetDatabase.AddObjectToAsset(newInstance, settings);
-					    EditorUtility.SetDirty(settings);
+							EditorUtility.SetDirty(settings);
+					    }
 				    }
 			    }
 		    }

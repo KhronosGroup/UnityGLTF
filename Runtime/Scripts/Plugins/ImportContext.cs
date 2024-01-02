@@ -16,7 +16,7 @@ namespace UnityGLTF.Plugins
 		public readonly AssetImporter SourceImporter;
 #endif
 
-		public readonly IReadOnlyList<GltfImportPluginContext> Plugins;
+		public readonly List<GltfImportPluginContext> Plugins;
 
 		public GLTFSceneImporter SceneImporter;
 		public GLTFRoot Root => SceneImporter?.Root;

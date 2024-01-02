@@ -228,7 +228,7 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-	        var settings = GLTFSettings.GetOrCreateSettings();
+	        var settings = GLTFSettings.GetDefaultSettings();
 	        var context = new GLTFImportContext(ctx, settings);
 
             GameObject gltfScene = null;
