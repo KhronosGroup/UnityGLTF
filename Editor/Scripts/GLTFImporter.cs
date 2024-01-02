@@ -25,6 +25,7 @@ using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF.Schema;
 using GLTF;
+using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
@@ -400,6 +401,19 @@ namespace UnityGLTF
 	                        vertexBuffer[i] *= _scaleFactor;
 	                    }
 	                    mesh.SetVertices(vertexBuffer);
+
+	                    if (mesh.bindposes != null && mesh.bindposes.Length > 0)
+	                    {
+		                    var bindPoses = mesh.bindposes;
+		                    for (var i = 0; i < bindPoses.Length; ++i)
+		                    {
+			                    bindPoses[i].GetTRSProperties(out var p, out var q, out var s);
+			                    bindPoses[i].SetTRS(p * _scaleFactor, q, s);
+		                    }
+
+		                    mesh.bindposes = bindPoses;
+	                    }
+	     
                     }
                     if (_generateLightmapUVs)
                     {
@@ -814,6 +828,7 @@ namespace UnityGLTF
 			    loader.LoadUnreferencedImagesAndMaterials = true;
 			    loader.MaximumLod = _maximumLod;
 			    loader.IsMultithreaded = true;
+			    loader._importScaleFactor = _scaleFactor;
 
 			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
 			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());

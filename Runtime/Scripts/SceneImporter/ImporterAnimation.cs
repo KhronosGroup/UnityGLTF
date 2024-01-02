@@ -294,7 +294,11 @@ namespace UnityGLTF
 										  (data, frame) =>
 										  {
 											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
+#if UNITY_EDITOR
+											  return new float[] { position.x * _importScaleFactor, position.y * _importScaleFactor, position.z * _importScaleFactor};
+#else
 											  return new float[] { position.x, position.y, position.z };
+#endif
 										  });
 						break;
 
