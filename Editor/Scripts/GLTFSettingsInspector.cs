@@ -228,6 +228,7 @@ namespace UnityGLTF
 	{
 		public override void OnInspectorGUI()
 		{
+			GLTFSettings.GetOrCreateSettings();
 			GltfSettingsProvider.DrawGLTFSettingsGUI(target as GLTFSettings, serializedObject);
 		}
 	}
