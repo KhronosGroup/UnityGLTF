@@ -496,15 +496,16 @@ namespace UnityGLTF
 		private static ProfilerMarker exportBlendShapeMarker = new ProfilerMarker("Export BlendShape");
 		private static ProfilerMarker exportSkinFromNodeMarker = new ProfilerMarker("Export Skin");
 		private static ProfilerMarker exportSparseAccessorMarker = new ProfilerMarker("Export Sparse Accessor");
+		private static ProfilerMarker beforeNodeExportMarker = new ProfilerMarker("Before Node Export (Callback)");
 		private static ProfilerMarker exportNodeMarker = new ProfilerMarker("Export Node");
 		private static ProfilerMarker afterNodeExportMarker = new ProfilerMarker("After Node Export (Callback)");
 		private static ProfilerMarker exportAnimationFromNodeMarker = new ProfilerMarker("Export Animation from Node");
 		private static ProfilerMarker convertClipToGLTFAnimationMarker = new ProfilerMarker("Convert Clip to GLTF Animation");
 		private static ProfilerMarker beforeSceneExportMarker = new ProfilerMarker("Before Scene Export (Callback)");
 		private static ProfilerMarker exportSceneMarker = new ProfilerMarker("Export Scene");
-		private static ProfilerMarker afterMaterialExportMarker = new ProfilerMarker("After Material Export (Callback)");
-		private static ProfilerMarker exportMaterialMarker = new ProfilerMarker("Export Material");
 		private static ProfilerMarker beforeMaterialExportMarker = new ProfilerMarker("Before Material Export (Callback)");
+		private static ProfilerMarker exportMaterialMarker = new ProfilerMarker("Export Material");
+		private static ProfilerMarker afterMaterialExportMarker = new ProfilerMarker("After Material Export (Callback)");
 		private static ProfilerMarker writeImageToDiskMarker = new ProfilerMarker("Export Image - Write to Disk");
 		private static ProfilerMarker afterSceneExportMarker = new ProfilerMarker("After Scene Export (Callback)");
 
@@ -1004,16 +1005,25 @@ namespace UnityGLTF
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
 			exportNodeMarker.Begin();
-
+			
 			var node = new Node();
 
 			if (ExportNames)
 			{
 				node.Name = nodeTransform.name;
 			}
+			
+			// TODO think more about how this callback is used – could e.g. be modifying the hierarchy,
+			// and we would want to prevent exporting children of this node.
+			// Could also be that we want to add a mesh based on some condition
+			// (e.g. merged childs, procedural geometry, etc.)
+			beforeNodeExportMarker.Begin();
+			foreach (var plugin in _plugins)
+				plugin?.BeforeNodeExport(this, _root, nodeTransform, node);
+			beforeNodeExportMarker.End();
 
 #if ANIMATION_SUPPORTED
-			if (nodeTransform.GetComponent<UnityEngine.Animation>() || nodeTransform.GetComponent<UnityEngine.Animator>())
+			if (nodeTransform.GetComponent<Animation>() || nodeTransform.GetComponent<Animator>())
 			{
 				_animatedNodes.Add(nodeTransform);
 			}
