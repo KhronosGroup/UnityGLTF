@@ -83,14 +83,22 @@ namespace UnityGLTF
 
 			if (m_ActiveEditorIndex == 1)
 			{
-				EditorGUILayout.LabelField(new GUIContent(
-					"Import Extensions and Plugins",
-					"These plugins are enabled by default when importing a glTF file in the editor or at runtime.\nFor assets imported in the editor, make sure to reimport affected assets after changing these options."
-				), EditorStyles.boldLabel);
+				var tooltip = "These plugins are enabled by default when importing a glTF file at runtime.\nFor assets imported in the editor, adjust plugin settings on the respective importer.";
+				EditorGUILayout.LabelField(new GUIContent("Import Extensions and Plugins"), EditorStyles.boldLabel);
+				EditorGUILayout.LabelField(tooltip, EditorStyles.wordWrappedLabel);
+				EditorGUILayout.Space();
 				OnPluginsGUI(settings.ImportPlugins);
+				EditorGUILayout.Space();
 			}
 			else if (m_ActiveEditorIndex == 0)
 			{
+				var tooltip = "These plugins are enabled by default when exporting a glTF file. When using the export API, you can override which plugins are used.";
+				EditorGUILayout.LabelField(new GUIContent("Export Extensions and Plugins"), EditorStyles.boldLabel);
+				EditorGUILayout.LabelField(tooltip, EditorStyles.wordWrappedLabel);
+				EditorGUILayout.Space();
+				OnPluginsGUI(settings.ExportPlugins);
+				EditorGUILayout.Space();
+				
 				var prop = m_SerializedObject.GetIterator();
 				prop.NextVisible(true);
 				if (prop.NextVisible(true))
@@ -119,18 +127,12 @@ namespace UnityGLTF
 						}
 					} while (prop.NextVisible(false));
 				}
+				EditorGUILayout.Space();
 
 				if (m_SerializedObject.hasModifiedProperties)
 				{
 					m_SerializedObject.ApplyModifiedProperties();
 				}
-
-				EditorGUILayout.Space();
-				EditorGUILayout.LabelField(new GUIContent(
-					"Export Extensions and Plugins",
-					"These plugins are enabled by default when exporting a glTF file. When using the export API, you can override which plugins are used."
-				), EditorStyles.boldLabel);
-				OnPluginsGUI(settings.ExportPlugins);
 			}
 
 			// Only for testing - all extension registry items should also show up via Plugins above
