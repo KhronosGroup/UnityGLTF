@@ -11,14 +11,23 @@ namespace UnityGLTF.Plugins
 		public override string Description => "Bakes 3D TextMeshPro objects (not UI/Canvas) into meshes and attempts to faithfully apply their shader settings to generate the font texture.";
 		public override GltfExportPluginContext CreateInstance(ExportContext context)
 		{
+#if HAVE_TMPRO
 			return new TextMeshExportContext();
+#else
+			return null;
+#endif
 		}
+
+#if !HAVE_TMPRO
+		public override string Warning => "TextMeshPro is not installed. Please install TextMeshPro from the Package Manager to use this plugin.";
+#endif
 	}
 	
 	public class TextMeshExportContext: GltfExportPluginContext
 	{
 		public override void AfterSceneExport(GLTFSceneExporter _, GLTFRoot __)
 		{
+			RenderTexture.active = null;
 			if (rtCache == null) return;
 			foreach (var kvp in rtCache)
 				kvp.Value.Release();
