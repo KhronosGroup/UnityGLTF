@@ -333,7 +333,6 @@ namespace UnityGLTF
 #endif
 
 	    internal static GLTFSettings cachedSettings;
-	    internal static GLTFSettings cachedDefaultSettings;
 
 	    public static GLTFSettings GetOrCreateSettings()
 	    {
@@ -376,9 +375,7 @@ namespace UnityGLTF
 
 	    public static GLTFSettings GetDefaultSettings()
 	    {
-		    if (cachedDefaultSettings) return cachedDefaultSettings;
-		    
-		    cachedDefaultSettings = CreateInstance<GLTFSettings>();
+			var cachedDefaultSettings = CreateInstance<GLTFSettings>();
 		    RegisterPlugins(cachedDefaultSettings);
 		    return cachedDefaultSettings;
 	    }

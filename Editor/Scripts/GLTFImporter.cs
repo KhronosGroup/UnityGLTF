@@ -23,11 +23,11 @@ using System.Linq;
 using System;
 using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
-using GLTF.Schema;
 using GLTF;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
+using UnityEditorInternal;
 using UnityEngine.Rendering;
 #else
 using UnityEditor.Experimental.AssetImporters;
@@ -122,14 +122,19 @@ namespace UnityGLTF
         [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
         [SerializeField] internal string _mainAssetIdentifier;
 
-        // TODO make internal and allow access for relevant assemblies
         internal List<TextureInfo> Textures => _textures;
 
+        // Import Plugin Overrides
+        [SerializeField] // but we can serialize their YAML representations as string
+        internal List<PluginInfo> _importPlugins = new List<PluginInfo>();
+        
         [Serializable]
         internal class ExtensionInfo
         {
 	        public string name;
+	        [HideInInspector]
 	        public bool supported;
+	        [HideInInspector]
 	        public bool used;
 	        public bool required;
         }
@@ -141,6 +146,15 @@ namespace UnityGLTF
 	        Fast = 0,
 	        Normal = 50,
 	        Best = 100
+		}
+
+		[Serializable]
+		public class PluginInfo
+		{
+			public string typeName;
+			public bool overrideEnabled;
+			public bool enabled;
+			public string jsonSettings;
 		}
 
         [Serializable]
@@ -229,6 +243,18 @@ namespace UnityGLTF
         public override void OnImportAsset(AssetImportContext ctx)
         {
 	        var settings = GLTFSettings.GetDefaultSettings();
+	        
+	        // make a copy, and apply import override settings
+	        foreach (var importPlugin in _importPlugins)
+	        {
+		        if (importPlugin == null || !importPlugin.overrideEnabled) continue;
+		        var existing = settings.ImportPlugins.Find(x => x.GetType().FullName == importPlugin.typeName);
+		        if (existing)
+		        {
+			        existing.Enabled = importPlugin.enabled;
+			        JsonUtility.FromJsonOverwrite(importPlugin.jsonSettings, existing);
+		        }
+	        }
 	        var context = new GLTFImportContext(ctx, settings);
 
             GameObject gltfScene = null;

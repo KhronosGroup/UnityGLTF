@@ -9,6 +9,8 @@ using UnityEditor;
 using UnityEngine;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
+using UnityGLTF.Plugins;
+
 #else
 using UnityEditor.Experimental.AssetImporters;
 #endif
@@ -36,7 +38,7 @@ namespace UnityGLTF
 			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
 				AddTab(new GltfAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
-			AddTab(new GltfAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
+			AddTab(new GltfAssetImporterTab(this, "Used Extensions", ExtensionInspectorGUI));
 
 			base.OnEnable();
 		}
@@ -363,6 +365,68 @@ namespace UnityGLTF
 			EditorGUI.EndDisabledGroup();
 
 			// TODO add list of supported extensions and links to docs
+			// Gather list of all plugins
+			var registeredPlugins = GLTFSettings.GetDefaultSettings().ImportPlugins;
+			var overridePlugins = t._importPlugins;
+
+			EditorGUILayout.LabelField("OVERRIDE", EditorStyles.miniLabel, GUILayout.Width(60));
+			EditorGUILayout.BeginHorizontal();
+			EditorGUILayout.LabelField("", GUILayout.Width(16));
+			EditorGUILayout.LabelField("ENABLED", EditorStyles.miniLabel, GUILayout.Width(60));
+			EditorGUILayout.EndHorizontal();
+			
+			foreach (var plugin in registeredPlugins)
+			{
+				if (plugin.AlwaysEnabled) continue; // no need to show
+				var pluginType = plugin.GetType().FullName;
+				// draw override toggle
+				EditorGUILayout.BeginHorizontal();
+				var overridePlugin = overridePlugins.FirstOrDefault(x => x.typeName == pluginType);
+				var hasOverride = overridePlugin?.overrideEnabled ?? false;
+				var hasOverride2 = EditorGUILayout.ToggleLeft("", hasOverride, GUILayout.Width(16));
+				if (hasOverride2 != hasOverride)
+				{
+					hasOverride = hasOverride2;
+					// add or remove a ScriptableObject with the plugin
+					if (!hasOverride)
+					{
+						if (overridePlugin != null) overridePlugin.overrideEnabled = false;
+					}
+					else
+					{
+						if (overridePlugin != null)
+						{
+							overridePlugin.overrideEnabled = true;
+						}
+						else
+						{
+							var newPlugin = new GLTFImporter.PluginInfo()
+							{
+								typeName = plugin.GetType().FullName,
+								enabled = plugin.EnabledByDefault,
+								overrideEnabled = true,
+							};
+							overridePlugin = newPlugin;
+							t._importPlugins.Add(newPlugin);
+						}
+					}
+					EditorUtility.SetDirty(t);
+				}
+				EditorGUI.BeginDisabledGroup(!hasOverride);
+				var currentlyEnabled = (overridePlugin != null && overridePlugin.overrideEnabled) ? overridePlugin.enabled : plugin.EnabledByDefault;
+				var enabled = EditorGUILayout.ToggleLeft("", currentlyEnabled, GUILayout.Width(16));
+				if (enabled != currentlyEnabled)
+				{
+					currentlyEnabled = enabled;
+					overridePlugin.enabled = enabled;
+					EditorUtility.SetDirty(t);
+				}
+				EditorGUI.EndDisabledGroup();
+				EditorGUI.BeginDisabledGroup(false);
+				EditorGUILayout.LabelField(plugin.DisplayName);
+				EditorGUI.EndDisabledGroup();
+				EditorGUILayout.EndHorizontal();
+			}
 		}
 
 		private static string SanitizePath(string subAssetName)

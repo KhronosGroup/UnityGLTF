@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GLTF.Schema;
 using UnityEngine;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
@@ -11,6 +12,8 @@ namespace UnityGLTF
 	{
 		private async Task ConstructLods(GLTFRoot gltfRoot, GameObject nodeObj, Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
+			if (!Context.TryGetPlugin<LodsImportContext>(out _)) return;
+			
 			const string msft_LODExtName = MSFT_LODExtensionFactory.EXTENSION_NAME;
 			MSFT_LODExtension lodsExtension = null;
 			if (_gltfRoot.ExtensionsUsed != null
