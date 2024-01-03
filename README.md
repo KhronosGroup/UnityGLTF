@@ -10,10 +10,10 @@
 
 Unity3D library for importing and exporting [glTF 2.0](https://github.com/KhronosGroup/glTF/) assets.
 
-|        | Editor | Runtime  |
-|--------|--------|----------|
-| Import | ✅     | ✅       |
-| Export | ✅     | ✅       |
+|        | Editor | Runtime |
+|--------|--------|---------|
+| Import | ✅      | ✅       |
+| Export | ✅      | ✅       |
 
 UnityGLTF doesn't have any native dependencies (pure C#) and thus works on all platforms that Unity supports. This includes WebGL import and export.
 
@@ -35,16 +35,15 @@ The library is designed to be easy to extend with additional extensions to the g
     - [Built-In](#built-in)
     - [HDRP](#hdrp)
   - [Material and Shader Export Compatibility](#material-and-shader-export-compatibility)
-  - [Legacy](#legacy)
 - [Exporting glTF Files](#exporting-gltf-files)
   - [Testing, debugging, compatibility](#testing-debugging-compatibility)
 - [Animation Export](#animation-export)
   - [Animator Controller](#animator-controller)
-  - [GLTFRecorder](#gltfrecorder)
+  - [GLTFRecorder](#gltfrecorder-api)
   - [Timeline Recorder](#timeline-recorder)
   - [Legacy: Animation Component](#legacy-animation-component)
-  - [KHR\_animation\_pointer](#khr-animation-pointer)
-- [Blendshape Export](#blendshape-export)
+  - [KHR\_animation\_pointer](#khr_animation_pointer-support)
+- [Blendshape Export](#blend-shape-export)
 - [Importing glTF files](#importing-gltf-files)
   - [Editor Import](#editor-import)
   - [Default Importer Selection](#default-importer-selection)
@@ -66,7 +65,7 @@ You can install this package from git, compatible with UPM (Unity Package Manage
    ```
    https://github.com/prefrontalcortex/UnityGLTF.git
    ```
-4. Click <kbd>Add</kbd>.
+5. Click <kbd>Add</kbd>.
 
 > **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
 
@@ -326,16 +325,27 @@ At runtime, if you're importing "Mecanim" clips, you need to make sure to add th
 ## Extensibility
 
 UnityGLTF has import and export plugins. These have callbacks for modifying node structures, extension data, materials and more as part of the regular export and import process. They are used both in the Editor and at runtime.
-You can make your own plugins and enable them in the `Project Settings > UnityGLTF` menu. 
+You can make your own plugins and enable them in the `Project Settings > UnityGLTF` menu.  
+Plugins are ScriptableObjects that can have settings; they're serialized as part of the GLTFSettings asset. 
+Plugins create concrete instances of import/export handlers.  
 
-Creating a plugin is simple:
-1. inherit from GltfImportPlugin or GltfExportPlugin
+To create a plugin, follow these steps:
+1. Make a class that inherits from `GLTFImportPlugin` or `GLTFExportPlugin`. This is the ScriptableObject that contains plugin settings.
+2. Also, make a class that inherits from `GLTFImportPluginContext` or `GLTFExportPluginContext`. This class has the actual callbacks.
+3. Implement `CreateInstance` in your plugin to return a new instance of your plugin context.
+4. Override the callbacks you want to use in your plugin context.
+   - See available callbacks
+   - See available callbacks
 
-> 🏗️ Under construction. You can take a look at `MaterialExtensions.cs` for an example in the meantime.
+If your plugin reads/writes custom extension data, you need to also implement `GLTF.Schema.IExtension` for serialization and deserialization.
+
+> 🏗️ Under construction. You can take a look at `MaterialVariantsPlugin.cs` for an example.
 
 ## Known Issues
 
 Known issues reproduce with specific [glTF Sample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0):
+
+> **Note:** This list hasn't been updated in a while. It may not be accurate anymore.
 
 - **khronos-SimpleSparseAccessor**: sparse accessors not supported on import (can be exported though)
 - **khronos-TriangleWithoutIndices**: meshes without indices import with wrong winding order
@@ -353,7 +363,7 @@ This section is dedicated to those who wish to contribute to the project.
 ### [Unity Package](https://github.com/KhronosGroup/UnityGLTF/tree/master/)
 
 - **Unity Version**
-  Be sure that the Unity release you have installed on your local machine is *at least* the version configured for the project (using a newer version is supported). You can download the free version [here](https://unity3d.com/get-unity/download/archive). You can run this project simply by opening the directory as a project on Unity.
+  Be sure that the Unity release you have installed on your local machine is *at least* 2021.3.
 - **Project Components**
   The Unity project offers two main functionalities: importing and exporting GLTF assets. These functionalities are primarily implemented in `GLTFSceneImporter` and `GLTFSceneExporter`.
 
@@ -367,6 +377,8 @@ This section is dedicated to those who wish to contribute to the project.
 
 ### Tests
 
+> 🏗️ Under construction. Tests are currently in a separate (private) repository due to test asset licensing reasons.
+
 To run tests with UnityGLTF as package, you'll have to add UnityGLTF to the "testables" array in manifest.json:
 
 ```
@@ -376,3 +388,7 @@ To run tests with UnityGLTF as package, you'll have to add UnityGLTF to the "tes
 ```
 
 </details>
+
+## Contributors
+
+UnityGLTF is currently maintained by [prefrontal cortex](https://prefrontalcortex.de) and [Needle](https://needle.tools).

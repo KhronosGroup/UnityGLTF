@@ -4,10 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.7.0-exp] - 2024-01-02
+## [2.7.0-exp] - 2024-01-03
+- fix: import scale was not applied to position animation curves
+- fix: make sure `GLTFImporter` uses the default plugin import settings
 - change: refactored import/export plugins for better control of what's enabled and what's not. This allows shipping experimental/optional plugins earlier.
 - change: mark `GLTFSceneExporter.*` static callbacks obsolete. Use plugins instead
-- fix: make sure `GLTFImporter` uses the default plugin import settings
 - add: allow overrides for which editor import plugins are used
 - add: export plugin for `MSFT_lod`
 - add: export plugin for `KHR_materials_variants`. Add the `MaterialVariants` component to your root to configure variants.
