@@ -1041,7 +1041,12 @@ namespace UnityGLTF
 							for (int i = 0; i < constructedClips.Count; i++)
 							{
 								var name = constructedClips[i].name;
+								// can't be empty
 								if (string.IsNullOrWhiteSpace(name)) name = "clip " + i;
+								// can't contain ., / and \
+								name = name.Replace(".", "_");
+								name = name.Replace("/", "_");
+								name = name.Replace("\\", "_");
 								var state = baseLayer.stateMachine.AddState(name);
 								state.motion = constructedClips[i];
 							}
