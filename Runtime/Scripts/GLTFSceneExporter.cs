@@ -95,7 +95,7 @@ namespace UnityGLTF
 #pragma warning restore CS0618 // Type or member is obsolete
 	}
 
-	[Obsolete("Use ExportContext instead")]
+	[Obsolete("Use UnityGLTF.ExportContext instead. (UnityUpgradable) -> UnityGLTF.ExportContext")]
 	public class ExportOptions: ExportContext
 	{
 		public ExportOptions(): base() { }

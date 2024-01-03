@@ -43,4 +43,19 @@ namespace UnityGLTF.Plugins
         [Obsolete("Use a custom Editor for this ScriptableObject instead if you want to override how it looks in the Inspector.")]
         public virtual void OnGUI() { }
     }
+	
+    [Obsolete("Use UnityGLTF.Plugins.GLTFPlugin instead. (UnityUpgradable) -> UnityGLTF.Plugins.GLTFPlugin")]
+    public abstract class GltfPlugin: ScriptableObject {}
+    
+    [Obsolete("Use UnityGLTF.Plugins.GLTFImportPlugin instead. (UnityUpgradable) -> UnityGLTF.Plugins.GLTFImportPlugin")]
+    public abstract class GltfImportPlugin: GltfPlugin {}
+    
+    [Obsolete("Use UnityGLTF.Plugins.GLTFExportPlugin instead. (UnityUpgradable) -> UnityGLTF.Plugins.GLTFExportPlugin")]
+    public abstract class GltfExportPlugin: GltfPlugin {}
+    
+    [Obsolete("Use UnityGLTF.Plugins.GLTFImportPluginContext instead. (UnityUpgradable) -> UnityGLTF.Plugins.GLTFImportPluginContext")]
+    public abstract class GltfImportPluginContext {}
+    
+    [Obsolete("Use UnityGLTF.Plugins.GLTFExportPluginContext instead. (UnityUpgradable) -> UnityGLTF.Plugins.GLTFExportPluginContext")]
+    public abstract class GltfExportPluginContext {}
 }
