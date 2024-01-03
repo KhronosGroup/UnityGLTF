@@ -288,14 +288,18 @@ namespace UnityGLTF
 				{
 					case GLTFAnimationChannelPath.translation:
 						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
-
+#if UNITY_EDITOR
+						// TODO technically this should be postprocessing in the ScriptedImporter instead,
+						// but performance is much better if we do it when constructing the clips
+						var factor = Context?.ImportScaleFactor ?? 1f;
+#endif
 						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
 											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
-											  return new float[] { position.x * _importScaleFactor, position.y * _importScaleFactor, position.z * _importScaleFactor};
+											  return new float[] { position.x * factor, position.y * factor, position.z * factor};
 #else
 											  return new float[] { position.x, position.y, position.z };
 #endif

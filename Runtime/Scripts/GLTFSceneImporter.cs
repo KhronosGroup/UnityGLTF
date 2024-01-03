@@ -136,14 +136,6 @@ namespace UnityGLTF
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
-		// public static event Action<GLTFSceneImporter, GLTFRoot> BeforeImport;
-		// public static event Action<GLTFSceneImporter, GLTFScene> BeforeImportScene;
-		// public static event Action<GLTFSceneImporter, GLTFScene, int, GameObject> AfterImportedScene;
-		// public static event Action<GLTFSceneImporter, Node, int, GameObject> AfterImportedNode;
-		// public static event Action<GLTFSceneImporter, GLTFMaterial, int, Material> AfterImportedMaterial;
-		// public static event Action<GLTFSceneImporter, GLTFTexture, int, Texture> AfterImportedTexture;
-		// public static event Action<GLTFSceneImporter, GLTFRoot, GameObject> AfterImported;
-
 		public enum ColliderType
 		{
 			None,
@@ -274,10 +266,6 @@ namespace UnityGLTF
 		protected GLTFRoot _gltfRoot;
 		protected AssetCache _assetCache;
 		protected bool _isRunning = false;
-
-#if UNITY_EDITOR
-		internal float _importScaleFactor = 1f;
-#endif
 		
 		protected ImportProgress progressStatus = default(ImportProgress);
 		protected IProgress<ImportProgress> progress = null;

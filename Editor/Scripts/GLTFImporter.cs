@@ -256,7 +256,7 @@ namespace UnityGLTF
 			        JsonUtility.FromJsonOverwrite(importPlugin.jsonSettings, existing);
 		        }
 	        }
-	        var context = new GLTFImportContext(ctx, settings);
+	        var context = new GLTFImportContext(ctx, settings) { ImportScaleFactor = _scaleFactor };
 
             GameObject gltfScene = null;
             AnimationClip[] animations = null;
@@ -840,7 +840,6 @@ namespace UnityGLTF
 			    loader.LoadUnreferencedImagesAndMaterials = true;
 			    loader.MaximumLod = _maximumLod;
 			    loader.IsMultithreaded = true;
-			    loader._importScaleFactor = _scaleFactor;
 
 			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
 			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());

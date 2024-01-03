@@ -14,6 +14,7 @@ namespace UnityGLTF.Plugins
 		public readonly AssetImportContext AssetContext;
 		public string FilePath => AssetContext.assetPath;
 		public readonly AssetImporter SourceImporter;
+		public float ImportScaleFactor = 1.0f;
 #endif
 
 		public readonly List<GLTFImportPluginContext> Plugins;
