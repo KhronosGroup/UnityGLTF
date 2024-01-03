@@ -4,6 +4,7 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using UnityGLTF.Plugins;
+using System.Reflection;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -136,12 +137,12 @@ namespace UnityGLTF
 			set => EditorPrefs.SetString(SaveFolderPathPref, value);
 		}
 #endif
-
-	    internal static GLTFSettings cachedSettings;
-
+	    
 	    public static GLTFSettings GetOrCreateSettings()
 	    {
+		    #if UNITY_EDITOR
 		    var hadSettings = true;
+		    #endif
 		    if (!TryGetSettings(out var settings))
 		    {
 #if UNITY_EDITOR
@@ -168,9 +169,10 @@ namespace UnityGLTF
 #endif
 		    }
 		    
-#if UNITY_EDITOR
 		    RegisterPlugins(settings);
-		    // save again if needed - the asset was only created in memory
+		    
+#if UNITY_EDITOR		    
+		    // save again with plugins attached, if needed - the asset was only created in memory
 		    if (!hadSettings && !AssetDatabase.Contains(settings))
 				UnityEditorInternal.InternalEditorUtility.SaveToSerializedFileAndForget(new UnityEngine.Object[] { settings }, k_RuntimeAndEditorSettingsPath, true);
 #endif
@@ -180,9 +182,9 @@ namespace UnityGLTF
 
 	    public static GLTFSettings GetDefaultSettings()
 	    {
-			var cachedDefaultSettings = CreateInstance<GLTFSettings>();
-		    RegisterPlugins(cachedDefaultSettings);
-		    return cachedDefaultSettings;
+			var freshSettings = CreateInstance<GLTFSettings>();
+		    RegisterPlugins(freshSettings);
+		    return freshSettings;
 	    }
 
 	    public static bool TryGetSettings(out GLTFSettings settings)
@@ -214,9 +216,45 @@ namespace UnityGLTF
 #endif
 	    }
 
-#if UNITY_EDITOR
+	    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+	    private static void ClearStatics()
+	    {
+		    cachedSettings = null;
+		    settingsWherePluginsAreRegistered.Clear();
+	    }
+	    
+	    private static GLTFSettings cachedSettings;
+	    private static List<GLTFSettings> settingsWherePluginsAreRegistered = new List<GLTFSettings>();
+	    
 	    private static void RegisterPlugins(GLTFSettings settings)
 	    {
+		    if (settingsWherePluginsAreRegistered.Contains(settings)) return;
+		    
+		    static List<Type> GetTypesDerivedFrom<T>()
+		    {
+#if UNITY_EDITOR
+			    return TypeCache.GetTypesDerivedFrom<T>().ToList();
+#else
+			    var types = new List<Type>();
+			    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+			    {
+				    try
+				    {
+					    types.AddRange(assembly.GetTypes().Where(t => !(t is T) && typeof(T).IsAssignableFrom(t)));
+				    }
+				    catch (ReflectionTypeLoadException e)
+				    {
+					    types.AddRange(e.Types);
+				    }
+				    catch (Exception)
+				    {
+					    // ignored
+				    }
+			    }
+			    return types;
+#endif
+		    }
+		    
 		    // Initialize
 		    if (settings.ImportPlugins == null) settings.ImportPlugins = new List<GLTFImportPlugin>();
 		    if (settings.ExportPlugins == null) settings.ExportPlugins = new List<GLTFExportPlugin>();
@@ -227,7 +265,7 @@ namespace UnityGLTF
 		    
 		    void FindAndRegisterPlugins<T>(List<T> plugins) where T : GLTFPlugin
 		    {
-			    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<T>())
+			    foreach (var pluginType in GetTypesDerivedFrom<T>())
 			    {
 				    if (pluginType.IsAbstract) continue;
 				    if (plugins.Any(p => p != null && p.GetType() == pluginType))
@@ -243,11 +281,13 @@ namespace UnityGLTF
 					    newInstance.Enabled = newInstance.EnabledByDefault;
 					    
 					    plugins.Add(newInstance);
+#if UNITY_EDITOR
 					    if (AssetDatabase.Contains(settings))
 					    {
 							AssetDatabase.AddObjectToAsset(newInstance, settings);
 							EditorUtility.SetDirty(settings);
 					    }
+#endif
 				    }
 			    }
 		    }
@@ -255,7 +295,8 @@ namespace UnityGLTF
 		    // Register with TypeCache
 		    FindAndRegisterPlugins(settings.ImportPlugins);
 		    FindAndRegisterPlugins(settings.ExportPlugins);
+		    
+		    settingsWherePluginsAreRegistered.Add(settings);
 	    }
-#endif
     }
 }
