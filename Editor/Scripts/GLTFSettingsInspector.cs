@@ -149,7 +149,7 @@ namespace UnityGLTF
 
 		private static Dictionary<Type, Editor> editorCache = new Dictionary<Type, Editor>();
 
-		internal static void OnPluginsGUI(IEnumerable<GltfPlugin> plugins, bool allowDisabling = true)
+		internal static void OnPluginsGUI(IEnumerable<GLTFPlugin> plugins, bool allowDisabling = true)
 		{
 			var lastAssembly = "";
 			foreach (var plugin in plugins
@@ -186,7 +186,7 @@ namespace UnityGLTF
 						// GUILayout.Toggle(true, new GUIContent("", "Always enabled."), GUILayout.Width(12));
 						// EditorGUI.EndDisabledGroup();
 						if (allowDisabling)
-							GUILayout.Label(GUIContent.none, GUILayout.Width(12));
+							GUILayout.Label(GUIContent.none, GUILayout.Width(11));
 					}
 					else
 					{

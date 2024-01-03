@@ -8,7 +8,7 @@ namespace UnityGLTF
 {
 	internal static class RegisteredImportPlugins
 	{
-		internal static readonly List<GltfImportPlugin> Plugins = new List<GltfImportPlugin>();
+		internal static readonly List<GLTFImportPlugin> Plugins = new List<GLTFImportPlugin>();
 
 		[InitializeOnLoadMethod]
 		public static void Init()

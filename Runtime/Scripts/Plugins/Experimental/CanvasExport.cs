@@ -7,18 +7,18 @@ using UnityEngine.UI;
 
 namespace UnityGLTF.Plugins
 {
-    public class CanvasExport : GltfExportPlugin
+    public class CanvasExport : GLTFExportPlugin
     {
         public override string DisplayName => "Bake to Mesh: Canvas";
         public override string Description => "Bakes UI Canvas components to meshes and materials. Render order is estimated by slight transform offsets; results might differ in viewers depending on how transparent objects are sorted.";
         public override bool EnabledByDefault => false;
-        public override GltfExportPluginContext CreateInstance(ExportContext context)
+        public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
             return new CanvasExportContext();
         }
     }
     
-    public class CanvasExportContext: GltfExportPluginContext
+    public class CanvasExportContext: GLTFExportPluginContext
     {
         private static Shader shader;
         

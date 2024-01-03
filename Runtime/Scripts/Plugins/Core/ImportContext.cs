@@ -16,14 +16,14 @@ namespace UnityGLTF.Plugins
 		public readonly AssetImporter SourceImporter;
 #endif
 
-		public readonly List<GltfImportPluginContext> Plugins;
+		public readonly List<GLTFImportPluginContext> Plugins;
 
 		public GLTFSceneImporter SceneImporter;
 		public GLTFRoot Root => SceneImporter?.Root;
 
-		private List<GltfImportPluginContext> InitializePlugins(GLTFSettings settings)
+		private List<GLTFImportPluginContext> InitializePlugins(GLTFSettings settings)
 		{
-			var plugins = new List<GltfImportPluginContext>();
+			var plugins = new List<GLTFImportPluginContext>();
 			foreach (var plugin in settings.ImportPlugins)
 			{
 				if (plugin != null && plugin.Enabled)
@@ -51,7 +51,7 @@ namespace UnityGLTF.Plugins
 			Plugins = InitializePlugins(settings);
 		}
 
-		public bool TryGetPlugin<T>(out GltfImportPluginContext o) where T: GltfImportPluginContext
+		public bool TryGetPlugin<T>(out GLTFImportPluginContext o) where T: GLTFImportPluginContext
 		{
 			foreach (var plugin in Plugins)
 			{

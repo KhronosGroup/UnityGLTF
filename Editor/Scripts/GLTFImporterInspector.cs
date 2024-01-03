@@ -29,16 +29,16 @@ namespace UnityGLTF
 
 			var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
 			if (m_HasSceneData.boolValue)
-				AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
+				AddTab(new GLTFAssetImporterTab(this, "Model", ModelInspectorGUI));
 
-			AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
+			AddTab(new GLTFAssetImporterTab(this, "Animation", AnimationInspectorGUI));
 
 			var m_HasMaterialData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasMaterialData));
 			var m_HasTextureData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasTextureData));
 			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
-				AddTab(new GltfAssetImporterTab(this, "Materials", MaterialInspectorGUI));
+				AddTab(new GLTFAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
-			AddTab(new GltfAssetImporterTab(this, "Used Extensions", ExtensionInspectorGUI));
+			AddTab(new GLTFAssetImporterTab(this, "Used Extensions", ExtensionInspectorGUI));
 
 			base.OnEnable();
 		}

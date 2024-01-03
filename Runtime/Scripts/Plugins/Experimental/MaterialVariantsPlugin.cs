@@ -7,17 +7,17 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-    public class MaterialVariantsPlugin: GltfExportPlugin
+    public class MaterialVariantsPlugin: GLTFExportPlugin
     {
         public override string DisplayName => "KHR_materials_variants";
         public override string Description => "Allows exporting multiple material and object variants in one glTF file. Viewers implementing KHR_materials_variants typically allow choosing which variants to display. Disabled objects are emulated with an \"invisible\" material.";
-        public override GltfExportPluginContext CreateInstance(ExportContext context)
+        public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
             return new KHR_materials_variants_context();
         }
     }
 
-    public class KHR_materials_variants_context : GltfExportPluginContext
+    public class KHR_materials_variants_context : GLTFExportPluginContext
     {
         public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfroot)
         {

@@ -3,15 +3,15 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-    public abstract class GltfExportPlugin: GltfPlugin
+    public abstract class GLTFExportPlugin: GLTFPlugin
     {
         /// <summary>
         /// Return the Plugin Instance that receives the import callbacks
         /// </summary>
-        public abstract GltfExportPluginContext CreateInstance(ExportContext context);
+        public abstract GLTFExportPluginContext CreateInstance(ExportContext context);
     }
 
-    public abstract class GltfExportPluginContext
+    public abstract class GLTFExportPluginContext
     {
         public virtual void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) {}
         public virtual void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) {}

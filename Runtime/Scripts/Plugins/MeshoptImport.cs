@@ -1,10 +1,10 @@
 namespace UnityGLTF.Plugins
 {
-    public class MeshoptImport: GltfImportPlugin
+    public class MeshoptImport: GLTFImportPlugin
     {
         public override string DisplayName => "EXT_meshopt_compression";
         public override string Description => "Import Meshopt compressed meshes.";
-        public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
+        public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
         {
             return new MeshoptImportContext();
         }
@@ -14,7 +14,7 @@ namespace UnityGLTF.Plugins
 #endif
     }
     
-    public class MeshoptImportContext: GltfImportPluginContext
+    public class MeshoptImportContext: GLTFImportPluginContext
     {
         
     }

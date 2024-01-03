@@ -1,10 +1,10 @@
 namespace UnityGLTF.Plugins
 {
-    public class Ktx2Import: GltfImportPlugin
+    public class Ktx2Import: GLTFImportPlugin
     {
         public override string DisplayName => "KHR_texture_basisu";
         public override string Description => "Import textures using the KTX2 supercompression format (ETC1S, UASTC).";
-        public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
+        public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
         {
             return new Ktx2ImportContext();
         }
@@ -14,7 +14,7 @@ namespace UnityGLTF.Plugins
 #endif
     }
     
-    public class Ktx2ImportContext: GltfImportPluginContext
+    public class Ktx2ImportContext: GLTFImportPluginContext
     {
         
     }

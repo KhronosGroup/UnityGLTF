@@ -5,7 +5,7 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF.Plugins
 {
-	public class MaterialExtensionsExport: GltfExportPlugin
+	public class MaterialExtensionsExport: GLTFExportPlugin
 	{
 		public bool KHR_materials_ior = true;
 		public bool KHR_materials_transmission = true;
@@ -15,7 +15,7 @@ namespace UnityGLTF.Plugins
 		public bool KHR_materials_clearcoat = true;
 		public bool KHR_materials_emissive_strength = true;
 
-		public override GltfExportPluginContext CreateInstance(ExportContext context)
+		public override GLTFExportPluginContext CreateInstance(ExportContext context)
 		{
 			return new MaterialExtensionsExportContext(this);
 		}
@@ -33,7 +33,7 @@ namespace UnityGLTF.Plugins
 ";
 	}
 	
-	public class MaterialExtensionsExportContext: GltfExportPluginContext
+	public class MaterialExtensionsExportContext: GLTFExportPluginContext
 	{
 		internal readonly MaterialExtensionsExport settings;
 		

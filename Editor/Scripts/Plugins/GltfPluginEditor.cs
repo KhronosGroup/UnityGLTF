@@ -3,7 +3,7 @@ using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
-    [CustomEditor(typeof(GltfPlugin), true)]
+    [CustomEditor(typeof(GLTFPlugin), true)]
     public class GltfPluginEditor: Editor
     {
         // Follows the default implementation of OnInspectorGUI, but skips the script field

@@ -30,10 +30,10 @@ namespace UnityGLTF
 
 	    // Plugins
 	    [SerializeField, HideInInspector]
-	    public List<GltfImportPlugin> ImportPlugins = new List<GltfImportPlugin>();
+	    public List<GLTFImportPlugin> ImportPlugins = new List<GLTFImportPlugin>();
 	    
 	    [SerializeField, HideInInspector]
-	    public List<GltfExportPlugin> ExportPlugins = new List<GltfExportPlugin>();
+	    public List<GLTFExportPlugin> ExportPlugins = new List<GLTFExportPlugin>();
 	    
 	    [Header("Export Settings")]
 		[SerializeField]
@@ -115,7 +115,7 @@ namespace UnityGLTF
 					plugin.Enabled = value;
 				if (!value || plugin != null) return;
 				
-				if (ExportPlugins == null) ExportPlugins = new List<GltfExportPlugin>();
+				if (ExportPlugins == null) ExportPlugins = new List<GLTFExportPlugin>();
 				ExportPlugins.Add(CreateInstance<AnimationPointerExport>());
 #if UNITY_EDITOR
 				EditorUtility.SetDirty(this);
@@ -218,14 +218,14 @@ namespace UnityGLTF
 	    private static void RegisterPlugins(GLTFSettings settings)
 	    {
 		    // Initialize
-		    if (settings.ImportPlugins == null) settings.ImportPlugins = new List<GltfImportPlugin>();
-		    if (settings.ExportPlugins == null) settings.ExportPlugins = new List<GltfExportPlugin>();
+		    if (settings.ImportPlugins == null) settings.ImportPlugins = new List<GLTFImportPlugin>();
+		    if (settings.ExportPlugins == null) settings.ExportPlugins = new List<GLTFExportPlugin>();
 
 		    // Cleanup
 		    settings.ImportPlugins.RemoveAll(x => x == null);
 		    settings.ExportPlugins.RemoveAll(x => x == null);
 		    
-		    void FindAndRegisterPlugins<T>(List<T> plugins) where T : GltfPlugin
+		    void FindAndRegisterPlugins<T>(List<T> plugins) where T : GLTFPlugin
 		    {
 			    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<T>())
 			    {

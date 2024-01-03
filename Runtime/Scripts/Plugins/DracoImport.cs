@@ -1,10 +1,10 @@
 namespace UnityGLTF.Plugins
 {
-    public class DracoImport: GltfImportPlugin
+    public class DracoImport: GLTFImportPlugin
     {
         public override string DisplayName => "KHR_draco_mesh_compression";
         public override string Description => "Import Draco compressed meshes.";
-        public override GltfImportPluginContext CreateInstance(GLTFImportContext context)
+        public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
         {
             return new DracoImportContext();
         }
@@ -14,7 +14,7 @@ namespace UnityGLTF.Plugins
 #endif
     }
     
-    public class DracoImportContext: GltfImportPluginContext
+    public class DracoImportContext: GLTFImportPluginContext
     {
         
     }

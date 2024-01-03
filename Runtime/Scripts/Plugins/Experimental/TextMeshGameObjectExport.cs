@@ -5,11 +5,11 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF.Plugins
 {
-	public class TextMeshGameObjectExport : GltfExportPlugin
+	public class TextMeshGameObjectExport : GLTFExportPlugin
 	{
 		public override string DisplayName => "Bake to Mesh: TextMeshPro GameObjects";
 		public override string Description => "Bakes 3D TextMeshPro objects (not UI/Canvas) into meshes and attempts to faithfully apply their shader settings to generate the font texture.";
-		public override GltfExportPluginContext CreateInstance(ExportContext context)
+		public override GLTFExportPluginContext CreateInstance(ExportContext context)
 		{
 #if HAVE_TMPRO
 			return new TextMeshExportContext();
@@ -23,7 +23,7 @@ namespace UnityGLTF.Plugins
 #endif
 	}
 	
-	public class TextMeshExportContext: GltfExportPluginContext
+	public class TextMeshExportContext: GLTFExportPluginContext
 	{
 		public override void AfterSceneExport(GLTFSceneExporter _, GLTFRoot __)
 		{

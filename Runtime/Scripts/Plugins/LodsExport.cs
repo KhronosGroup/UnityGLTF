@@ -5,17 +5,17 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-	public class LodsExport : GltfExportPlugin
+	public class LodsExport : GLTFExportPlugin
 	{
 		public override string DisplayName => "MSFT_lod";
 		public override string Description => "Exports LODGroup components as MSFT_lod extension.";
-		public override GltfExportPluginContext CreateInstance(ExportContext context)
+		public override GLTFExportPluginContext CreateInstance(ExportContext context)
 		{
 			return new MSFT_lods_Extension();
 		}
 	}
 	
-	public class MSFT_lods_Extension: GltfExportPluginContext
+	public class MSFT_lods_Extension: GLTFExportPluginContext
 	{
 		public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Transform transform, Node node)
 		{

@@ -4,18 +4,18 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-    public class BakeParticleSystem: GltfExportPlugin
+    public class BakeParticleSystem: GLTFExportPlugin
     {
         public override string DisplayName => "Bake to Mesh: Particle Systems";
         public override string Description => "Exports the current frame of all Particle Systems as a static mesh.";
         public override bool EnabledByDefault => false;
-        public override GltfExportPluginContext CreateInstance(ExportContext context)
+        public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
             return new BakeParticleSystemContext();
         }
     }
     
-    public class BakeParticleSystemContext: GltfExportPluginContext
+    public class BakeParticleSystemContext: GLTFExportPluginContext
     {
         private readonly List<Component> _components = new List<Component>();
         private readonly List<Object> _objects = new List<Object>();

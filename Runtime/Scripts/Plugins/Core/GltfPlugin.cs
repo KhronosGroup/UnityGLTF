@@ -31,7 +31,7 @@ namespace UnityGLTF.Plugins
     // For each new instance of GLTFSceneExporter, new instances of plugins are created.
     // For each new instance of GLTFSceneImporter, new instances of plugins are created.
     
-    public abstract class GltfPlugin: ScriptableObject
+    public abstract class GLTFPlugin: ScriptableObject
     {
         public abstract string DisplayName { get; }
         public virtual string Description => null;

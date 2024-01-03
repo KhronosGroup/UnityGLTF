@@ -53,10 +53,10 @@ namespace UnityGLTF
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
 		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
 		
-		internal GltfExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
+		internal GLTFExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
 
 #pragma warning disable CS0618 // Type or member is obsolete
-		internal class ExportContextCallbacks : GltfExportPluginContext
+		internal class ExportContextCallbacks : GLTFExportPluginContext
 		{
 			private readonly ExportContext _exportContext;
 
@@ -119,7 +119,7 @@ namespace UnityGLTF
 		public delegate void AfterPrimitiveExportDelegate(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index);
 
 		
-		private class LegacyCallbacksPlugin : GltfExportPluginContext
+		private class LegacyCallbacksPlugin : GLTFExportPluginContext
 		{
 			public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => GLTFSceneExporter.AfterSceneExport?.Invoke(exporter, gltfRoot);
 			public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => GLTFSceneExporter.BeforeSceneExport?.Invoke(exporter, gltfRoot);
@@ -147,7 +147,7 @@ namespace UnityGLTF
 		}
 		
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
-		private List<GltfExportPluginContext> _plugins = new List<GltfExportPluginContext>();
+		private List<GLTFExportPluginContext> _plugins = new List<GLTFExportPluginContext>();
 
 		public struct TextureMapType
 		{

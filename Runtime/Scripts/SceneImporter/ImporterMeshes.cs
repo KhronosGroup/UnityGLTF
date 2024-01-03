@@ -85,8 +85,9 @@ namespace UnityGLTF
 			{
 				
 				var acc = p.Attributes[SemanticProperties.POSITION];
-				if (accessorIds.TryAdd(acc.Id, acc))
+				if (!accessorIds.ContainsKey(acc.Id))
 				{
+					accessorIds.Add(acc.Id, acc);
 					totalVertCount += acc.Value.Count;
 					vOffset = lastVertOffset;
 					lastVertOffset += acc.Value.Count;
