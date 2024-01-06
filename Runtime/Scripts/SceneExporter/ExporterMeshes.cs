@@ -364,9 +364,9 @@ namespace UnityGLTF
 
 			if (_meshToBlendShapeAccessors.TryGetValue(meshObj, out var data))
 			{
-				mesh.Weights = data.weights;
 				primitive.Targets = data.targets;
-				primitive.TargetNames = data.targetNames;
+				mesh.Weights = data.weights;
+				mesh.TargetNames = data.targetNames;
 				return;
 			}
 
@@ -474,14 +474,14 @@ namespace UnityGLTF
 				if(weights.Any() && targets.Any())
 				{
 					mesh.Weights = weights;
+					mesh.TargetNames = targetNames;
 					primitive.Targets = targets;
-					primitive.TargetNames = targetNames;
 				}
 				else
 				{
 					mesh.Weights = null;
+					mesh.TargetNames = null;
 					primitive.Targets = null;
-					primitive.TargetNames = null;
 				}
 
 				// cache the exported data; we can re-use it between all submeshes of a mesh.

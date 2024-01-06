@@ -510,10 +510,12 @@ namespace UnityGLTF
 		{
 			if (unityMeshData.MorphTargetVertices != null)
 			{
-				var firstPrim = _gltfRoot.Meshes[meshIndex].Primitives[0];
+				var gltfMesh = _gltfRoot.Meshes[meshIndex];
+				var firstPrim = gltfMesh.Primitives[0];
+				// TODO theoretically there could be multiple prims and only one of them has morph targets
 				for (int i = 0; i < firstPrim.Targets.Count; i++)
 				{
-					var targetName = _options.ImportBlendShapeNames ? (firstPrim.TargetNames != null ? firstPrim.TargetNames[i] : $"Morphtarget{i}") : i.ToString();
+					var targetName = _options.ImportBlendShapeNames ? ((gltfMesh.TargetNames != null && gltfMesh.TargetNames.Count > i) ? gltfMesh.TargetNames[i] : $"Morphtarget{i}") : i.ToString();
 					mesh.AddBlendShapeFrame(targetName, 1f,
 						unityMeshData.MorphTargetVertices[i],
 						unityMeshData.MorphTargetNormals != null ? unityMeshData.MorphTargetNormals[i] : null,

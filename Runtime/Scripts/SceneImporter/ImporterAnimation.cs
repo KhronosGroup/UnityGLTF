@@ -333,19 +333,18 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.weights:
-						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+						var mesh = channel.Target.Node.Value.Mesh.Value;
+						var primitives = mesh.Primitives;
 						if (primitives[0].Targets == null) break;
 						var targetCount = primitives[0].Targets.Count;
 						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
 						{
 							// see SceneImporter:156
-							// blend shapes are always called "Morphtarget" and always have frame weight 100 on import
-
-							var prim = primitives[primitiveIndex];
-							var targetNames = prim.TargetNames;
+							// blend shapes are always called "Morphtarget"
+							var targetNames = mesh.TargetNames;
 							propertyNames = new string[targetCount];
 							for (var i = 0; i < targetCount; i++)
-								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + (targetNames != null ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
+								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + ((targetNames != null && targetNames.Count > i) ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
 							var frameFloats = new float[targetCount];
 
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
