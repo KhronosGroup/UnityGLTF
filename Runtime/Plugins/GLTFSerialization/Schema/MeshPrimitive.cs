@@ -161,6 +161,9 @@ namespace GLTF.Schema
 									case "targetNames":
 										primitive.TargetNames = reader.ReadStringList();
 										break;
+									default:
+										primitive.DefaultPropertyDeserializer(root, reader);
+										break;
 								}
 							}
 						}
