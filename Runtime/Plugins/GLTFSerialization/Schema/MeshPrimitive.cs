@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GLTF.Schema
 {
@@ -148,29 +150,18 @@ namespace GLTF.Schema
 							skipStartObjectRead: true);
 						});
 						break;
-					case "extras":
-						// GLTF does not support morph target names, serialize in extras for now
-						// https://github.com/KhronosGroup/glTF/issues/1036
-						if (reader.Read() && reader.TokenType == JsonToken.StartObject)
-						{
-							while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-							{
-								var extraProperty = reader.Value.ToString();
-								switch (extraProperty)
-								{
-									case "targetNames":
-										primitive.TargetNames = reader.ReadStringList();
-										break;
-									default:
-										primitive.DefaultPropertyDeserializer(root, reader);
-										break;
-								}
-							}
-						}
-
-						break;
 					default:
 						primitive.DefaultPropertyDeserializer(root, reader);
+						
+						// GLTF does not support morph target names, serialize/deserialize in extras
+						// https://github.com/KhronosGroup/glTF/issues/1036
+						if (curProp == "extras" && primitive.Extras != null)
+						{
+							if (primitive.Extras is JObject extras  && extras.TryGetValue("targetNames", out var targetNames) && targetNames is JArray)
+							{
+								primitive.TargetNames = targetNames.Values<string>().ToList();
+							}
+						}
 						break;
 				}
 			}
