@@ -12,7 +12,7 @@ namespace UnityGLTF.Plugins
 	{
 #if UNITY_EDITOR
 		public readonly AssetImportContext AssetContext;
-		public string FilePath => AssetContext.assetPath;
+		public string FilePath => AssetContext?.assetPath;
 		public readonly AssetImporter SourceImporter;
 		public float ImportScaleFactor = 1.0f;
 #endif
