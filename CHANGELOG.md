@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.7.1-exp] - 2024-01-08
+- fix: default property deserializer was missing for nested extras objects in MeshPrimitive
+- fix potential ImportContext NullRef
+- change: move blend shape target names to mesh, according to https://github.com/KhronosGroup/glTF/pull/1631
+- add: selection export options are also in the GameObject menu now for right-click > export support
+
 ## [2.7.0-exp] - 2024-01-03
 - fix: import scale was not applied to position animation curves
 - fix: make sure `GLTFImporter` uses the default plugin import settings
