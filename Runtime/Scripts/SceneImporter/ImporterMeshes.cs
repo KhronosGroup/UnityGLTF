@@ -840,7 +840,7 @@ namespace UnityGLTF
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.Color[0], out var attrColor))
 				{
-					if (QualitySettings.activeColorSpace == ColorSpace.Gamma)
+					if (_activeColorSpace == ColorSpace.Gamma)
 						attrColor.AccessorContent.AsColors.ToUnityColorRaw(unityData.Colors, (int)vertOffset);
 					else
 						attrColor.AccessorContent.AsColors.ToUnityColorLinear(unityData.Colors, (int)vertOffset);

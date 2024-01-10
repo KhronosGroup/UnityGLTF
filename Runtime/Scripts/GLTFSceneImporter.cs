@@ -272,6 +272,8 @@ namespace UnityGLTF
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
+		protected ColorSpace _activeColorSpace; 
+		
 		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
 		{
 			if (options.ImportContext != null)
@@ -282,6 +284,8 @@ namespace UnityGLTF
 			_gltfFileName = gltfFileName;
 			_options = options;
 
+			_activeColorSpace = QualitySettings.activeColorSpace; 
+			
 			if (options.logger != null)
 				Debug = options.logger;
 			else
@@ -296,6 +300,8 @@ namespace UnityGLTF
 			{
 				options.ImportContext.SceneImporter = this;
 			}
+
+			_activeColorSpace = QualitySettings.activeColorSpace; 
 
 			_gltfRoot = rootNode;
 
