@@ -170,7 +170,7 @@ namespace UnityGLTF
 		{
 			get
 			{
-				return (Application.isEditor || Application.platform == RuntimePlatform.WebGLPlayer) ? false : _isMultithreaded;
+				return (_options.DataLoader is IMultiThreadingSupported || Application.isEditor || Application.platform == RuntimePlatform.WebGLPlayer) ? false : _isMultithreaded;
 			}
 			set
 			{
