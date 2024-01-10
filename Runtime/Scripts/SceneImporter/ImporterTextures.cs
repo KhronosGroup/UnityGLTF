@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
+using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF
