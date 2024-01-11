@@ -308,7 +308,7 @@ namespace UnityGLTF
 		/// Populate a UnityEngine.Mesh from Draco generated SubMeshes
 		/// </summary>
 		/// <returns></returns>
-		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh,DracoMeshLoader.DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName)
+		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh, DracoMeshLoader.DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName)
 		{
 			uint verticesLength = 0;
 			for (int i = 0; i < meshes.Length; i++)
@@ -334,8 +334,43 @@ namespace UnityGLTF
 				combineInstances[i] = new CombineInstance();
 				combineInstances[i].mesh = subMeshes[i];
 			}
+
+			int boneWeightCount = 0;
+			int bonesPerVertexCount = 0;
+			for (int i = 0; i < subMeshes.Length; i++)
+			{
+				if (decodeResults[i].boneWeightData == null) continue;
+				decodeResults[i].boneWeightData.ApplyOnMesh(subMeshes[i]);
+				decodeResults[i].boneWeightData.Dispose();
+				
+				boneWeightCount += subMeshes[i].GetAllBoneWeights().Length;
+				bonesPerVertexCount += subMeshes[i].GetBonesPerVertex().Length;
+			}
+			
+			// Custom combine all boneweights and bonePerVertex of sub meshes and apply to final combined mesh 
+			// >> Bug(?) in CombineMeshes that does not proper copy bone weights and bones per vertex  
+			NativeArray<BoneWeight1> allBoneWeights = new NativeArray<BoneWeight1>(boneWeightCount, Allocator.TempJob);
+			NativeArray<byte> allBonesPerVertex = new NativeArray<byte>(boneWeightCount, Allocator.TempJob);
+			int currentArrayPositionBoneWeights = 0;
+			int currentArrayPositionBpV = 0;
+			for (int i = 0; i < subMeshes.Length; i++)
+			{
+				var subMeshBoneWeights = subMeshes[i].GetAllBoneWeights();
+				var subMeshBonesPerVertex = subMeshes[i].GetBonesPerVertex();
+				
+				NativeArray<BoneWeight1>.Copy(subMeshBoneWeights, 0, allBoneWeights, currentArrayPositionBoneWeights, subMeshBoneWeights.Length);
+				NativeArray<byte>.Copy(subMeshBonesPerVertex, 0, allBonesPerVertex, currentArrayPositionBpV, subMeshBonesPerVertex.Length);
+				
+				currentArrayPositionBoneWeights += subMeshBoneWeights.Length;
+				currentArrayPositionBpV += subMeshBonesPerVertex.Length;
+			}
+			
 			mesh.CombineMeshes(combineInstances, false, false);
 
+			mesh.SetBoneWeights(allBonesPerVertex, allBoneWeights);
+			allBoneWeights.Dispose();
+			allBonesPerVertex.Dispose();
+			
 			foreach (var m in subMeshes)
 			{
 #if UNITY_EDITOR
@@ -343,14 +378,6 @@ namespace UnityGLTF
 #else
 				UnityEngine.Object.Destroy(m);
 #endif
-			}
-
-			//Mesh.ApplyAndDisposeWritableMeshData(meshes,mesh);
-			foreach (var d in decodeResults)
-			{
-				if (d.boneWeightData == null) continue;
-				d.boneWeightData.ApplyOnMesh(mesh);
-				d.boneWeightData.Dispose();
 			}
 
 			await YieldOnTimeoutAndThrowOnLowMemory();
