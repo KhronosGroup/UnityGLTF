@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace UnityGLTF.Loader
 {
-	public class WebRequestLoader : IDataLoader, IMultiThreadingSupported
+	public class WebRequestLoader : IDataLoader
 	{
 		private readonly HttpClient httpClient = new HttpClient();
 		private readonly Uri baseAddress;

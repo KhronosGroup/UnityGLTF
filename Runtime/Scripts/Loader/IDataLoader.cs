@@ -7,9 +7,4 @@ namespace UnityGLTF.Loader
 	{
 		Task<Stream> LoadStreamAsync(string relativeFilePath);
 	}
-
-	/// <summary>
-	/// Add this Interface to a IDataLoader to indicate that it supports multithreading.
-	/// </summary>
-	public interface IMultiThreadingSupported { }
 }
