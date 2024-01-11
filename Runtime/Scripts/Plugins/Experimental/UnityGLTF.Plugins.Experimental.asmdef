@@ -20,6 +20,11 @@
             "name": "com.unity.textmeshpro",
             "expression": "",
             "define": "HAVE_TMPRO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "HAVE_TMPRO"
         }
     ],
     "noEngineReferences": false
