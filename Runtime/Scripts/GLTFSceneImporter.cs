@@ -715,14 +715,7 @@ namespace UnityGLTF
 					var node = _gltfRoot.Nodes[nodeId];
 
 					cancellationToken.ThrowIfCancellationRequested();
-					if (!IsMultithreaded)
-					{
-						await ConstructBufferData(node, cancellationToken);
-					}
-					else
-					{
-						await Task.Run(() => ConstructBufferData(node, cancellationToken));
-					}
+					await ConstructBufferData(node, cancellationToken);
 
 					await ConstructNode(node, nodeId, cancellationToken);
 
