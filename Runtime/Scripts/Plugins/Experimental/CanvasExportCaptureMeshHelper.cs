@@ -42,12 +42,15 @@ namespace UnityGLTF.Plugins
             mesh = this.mesh;
 
             material = default(Material);
+
+            bool hasTMPro = false;
 #if HAVE_TMPRO
-            var hasTMPro = GetComponent<TextMeshProUGUI>();
+            var tmPro = GetComponent<TextMeshProUGUI>();
+            hasTMPro = tmPro != null;
             if (hasTMPro)
             {
-                mesh = hasTMPro.mesh;
-                material = hasTMPro.fontSharedMaterial;
+                mesh = tmPro.mesh;
+                material = tmPro.fontSharedMaterial;
             }
 #endif
             if (!material) material = new Material(shader);
