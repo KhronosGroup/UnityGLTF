@@ -197,6 +197,7 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, bool isNormal, GLTFImage image, int imageCacheIndex)
 		{
+			bool convertToDxt5nmFormat = false;
 #if UNITY_EDITOR
 			if (stream is AssetDatabaseStream assetDatabaseStream)
 			{
@@ -206,8 +207,7 @@ namespace UnityGLTF
 				_assetCache.ImageCache[imageCacheIndex] = tx;
 				return;
 			}
-			
-			bool convertToDxt5nmFormat = false;
+
 			if (isNormal && Context.SourceImporter != null)
 			{
 				BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
