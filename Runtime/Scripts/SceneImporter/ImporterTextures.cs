@@ -36,17 +36,17 @@ namespace UnityGLTF
 			    && string.IsNullOrEmpty(Root.Textures[index].Source.Value.Uri))
 			{
 				await ConstructImageBuffer(Root.Textures[index], index);
-				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true);
+				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true, false);
 			}
 		}
 
-		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo)
+		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo, bool isNormal)
 		{
 			var result = new TextureData();
 			if (textureInfo?.Index?.Value == null) return result;
 
 			TextureId textureId = textureInfo.Index;
-			await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
+			await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true, isNormal);
 			result.Texture = _assetCache.TextureCache[textureId.Id].Texture;
 			result.TexCoord = textureInfo.TexCoord;
 
@@ -67,7 +67,7 @@ namespace UnityGLTF
 			return result;
 		}
 
-		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear)
+		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
 			if (_assetCache.InvalidImageCache[imageCacheIndex])
 				return;
@@ -101,7 +101,7 @@ namespace UnityGLTF
 				}
 
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
+				await ConstructUnityTexture(stream, markGpuOnly, isLinear, isNormal, image, imageCacheIndex);
 			}
 		}
 
@@ -195,7 +195,7 @@ namespace UnityGLTF
 			return texture;
 		}
 
-		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
+		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, bool isNormal, GLTFImage image, int imageCacheIndex)
 		{
 #if UNITY_EDITOR
 			if (stream is AssetDatabaseStream assetDatabaseStream)
@@ -206,6 +206,17 @@ namespace UnityGLTF
 				_assetCache.ImageCache[imageCacheIndex] = tx;
 				return;
 			}
+			
+			bool convertToDxt5nmFormat = false;
+			if (isNormal && Context.SourceImporter != null)
+			{
+				BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+				if (PlayerSettings.GetNormalMapEncoding(activeTargetGroup) == NormalMapEncoding.DXT5nm)
+				{
+					convertToDxt5nmFormat = true;
+				}
+			}
+
 #endif
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
@@ -277,6 +288,12 @@ namespace UnityGLTF
 				texture = await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
 			}
 
+			if (texture && convertToDxt5nmFormat)
+			{
+				await NormalMapEncodingConverter.ConvertToDxt5nmAsync(texture);
+				texture.Apply();
+			}
+
 			if (!texture)
 				_assetCache.InvalidImageCache[imageCacheIndex] = newTextureObject;
 
@@ -346,7 +363,7 @@ namespace UnityGLTF
 				}
 
 				await ConstructImageBuffer(texture, textureIndex);
-				await ConstructTexture(texture, textureIndex, markGpuOnly, isLinear);
+				await ConstructTexture(texture, textureIndex, markGpuOnly, isLinear, false);
 			}
 			finally
 			{
@@ -383,13 +400,13 @@ namespace UnityGLTF
 			return _assetCache.TextureCache[textureIndex].Texture;
 		}
 
-		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear)
+		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTFImage image = _gltfRoot.Images[sourceId];
-				await ConstructImage(image, sourceId, markGpuOnly, isLinear);
+				await ConstructImage(image, sourceId, markGpuOnly, isLinear, isNormal);
 
 				var source = _assetCache.ImageCache[sourceId];
 				if (!source) return;
