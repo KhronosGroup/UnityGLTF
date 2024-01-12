@@ -516,6 +516,7 @@ namespace UnityGLTF
 			}
 
 			_assetCache.TextureCache[textureIndex].IsLinear = isLinear;
+			_assetCache.TextureCache[textureIndex].IsNormal = isNormal;
 
 			try
 			{
