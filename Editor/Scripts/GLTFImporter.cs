@@ -815,6 +815,7 @@ namespace UnityGLTF
 			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
         }
 
+#if UNITY_2021_3_OR_NEWER
         // This asset postprocessor ensures that dependencies are updated whenever any asset is reimported.
         // So for example if any texture is reimported (because color spaces or texture encoding settings have been changed)
         // then we can update the custom dependencies here and potentially reimport required glTF assets.
@@ -825,6 +826,7 @@ namespace UnityGLTF
 		        UpdateCustomDependencies();
 	        }
         }
+#endif
 #endif
 
 	    private void CreateGLTFScene(GLTFImportContext context, out GameObject scene,
