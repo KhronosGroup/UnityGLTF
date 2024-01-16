@@ -103,6 +103,13 @@ namespace UnityGLTF
 			mapper.Material.SetFloat("_BUILTIN_QueueControl", -1);
 			mapper.Material.SetFloat("_QueueControl", -1);
 
+#if !UNITY_EDITOR
+			mapper.Material.SetFloat("_RuntimeCreatedNormalMap", 1);
+#else
+			if (Context.SourceImporter == null)
+				mapper.Material.SetFloat("_RuntimeCreatedNormalMap", 1);
+#endif
+			
 			void SetTransformKeyword()
 			{
 				MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
