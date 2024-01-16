@@ -809,18 +809,22 @@ namespace UnityGLTF
 
 #if UNITY_2020_2_OR_NEWER
         [InitializeOnLoadMethod]
-        private static void UpdateColorSpace()
+        private static void UpdateCustomDependencies()
         {
 	        AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
-	    }
-        
-        [InitializeOnLoadMethod]
-        private static void UpdateNormalMapEncoding()
-        {
-	        //Debug.Log("Normal map encoding changed: " + PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))+"  "+BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget));
-			AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
+			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
         }
-        
+
+        // This asset postprocessor ensures that dependencies are updated whenever any asset is reimported.
+        // So for example if any texture is reimported (because color spaces or texture encoding settings have been changed)
+        // then we can update the custom dependencies here and potentially reimport required glTF assets.
+        class UpdateCustomDependenciesAfterImport : AssetPostprocessor
+        {
+	        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+	        {
+		        UpdateCustomDependencies();
+	        }
+        }
 #endif
 
 	    private void CreateGLTFScene(GLTFImportContext context, out GameObject scene,
