@@ -25,6 +25,11 @@
             "define": "HAVE_KTX"
         },
         {
+            "name": "com.unity.cloud.ktx",
+            "expression": "1.3.0",
+            "define": "HAVE_KTX"
+        },
+        {
             "name": "com.unity.timeline",
             "expression": "1.0.0",
             "define": "HAVE_TIMELINE"
@@ -62,6 +67,11 @@
         {
             "name": "com.atteneder.draco",
             "expression": "1.0.0",
+            "define": "HAVE_DRACO"
+        },
+        {
+            "name": "com.unity.cloud.draco",
+            "expression": "5.0.0",
             "define": "HAVE_DRACO"
         },
         {

@@ -33,14 +33,19 @@
             "define": "HAVE_GLTFAST"
         },
         {
+            "name": "com.unity.cloud.gltfast",
+            "expression": "1.0.0",
+            "define": "HAVE_GLTFAST"
+        },
+        {
             "name": "com.atteneder.draco",
             "expression": "1.0.0",
             "define": "HAVE_DRACO"
         },
         {
-            "name": "com.unity.cloud.gltfast",
+            "name": "com.unity.cloud.draco",
             "expression": "1.0.0",
-            "define": "HAVE_GLTFAST"
+            "define": "HAVE_DRACO"
         }
     ],
     "noEngineReferences": false
