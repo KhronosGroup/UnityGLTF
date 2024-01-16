@@ -14,6 +14,7 @@ namespace UnityGLTF.Timeline
 	    public string m_AnimationName = "Recording";
 	    public int m_CaptureFrameRate = 60;
 	    public bool m_RecordBlendShapes = true;
+	    [Tooltip("Enable the KHR_animation_pointer extension. This allows recording material and script properties, but is not supported in all viewers.")]
 	    public bool m_RecordAnimationPointer = false;
 
 	    public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)

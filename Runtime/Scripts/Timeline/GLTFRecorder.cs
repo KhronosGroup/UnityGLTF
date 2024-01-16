@@ -8,6 +8,7 @@ using System.Text;
 using GLTF.Schema;
 using Unity.Profiling;
 using UnityEngine;
+using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Timeline
@@ -321,6 +322,7 @@ namespace UnityGLTF.Timeline
 
 		public void EndRecording(string filename, string sceneName = "scene", GLTFSettings settings = null)
 		{
+			if (!isRecording) return;
 			if (!hasRecording) return;
 
 			var dir = Path.GetDirectoryName(filename);
@@ -345,8 +347,15 @@ namespace UnityGLTF.Timeline
 				settings = adjustedSettings;
 			}
 
+			// ensure correct animation pointer plugin settings are used
+			if (!recordAnimationPointer)
+				settings.ExportPlugins.RemoveAll(x => x is AnimationPointerExport);
+			else
+			if (!settings.ExportPlugins.Any(x => x is AnimationPointerExport))
+				settings.ExportPlugins.Add(ScriptableObject.CreateInstance<AnimationPointerExport>());
+
 			if (!recordBlendShapes)
-					settings.BlendShapeExportProperties = GLTFSettings.BlendShapeExportPropertyFlags.None;
+				settings.BlendShapeExportProperties = GLTFSettings.BlendShapeExportPropertyFlags.None;
 
 			var logHandler = new StringBuilderLogHandler();
 
