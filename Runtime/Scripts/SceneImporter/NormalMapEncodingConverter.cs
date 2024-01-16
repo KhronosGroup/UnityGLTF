@@ -5,15 +5,38 @@ namespace UnityGLTF
 {
     public static class NormalMapEncodingConverter
     {
-        public static Texture2D ConvertToDxt5nm(Texture2D source)
+        public static async Task<Texture2D> ConvertToDxt5nmAndCheckTextureFormatAsync(Texture2D source)
         {
-            var dest = new Texture2D(source.width, source.height, TextureFormat.DXT5, false);
+            Texture2D dest = source;
             var pixels = source.GetPixels();
-            for (var i = 0; i < pixels.Length; i++)
+            
+            if (source.format != TextureFormat.RGBA32)
             {
-                var c = pixels[i];
-                pixels[i] = new Color(1, c.g, 1, c.r);
+                dest = new Texture2D(source.width, source.height, TextureFormat.RGBA32, source.mipmapCount > 0, true);
+                dest.wrapMode = source.wrapMode;
+                dest.wrapModeU = source.wrapModeU;
+                dest.wrapModeV = source.wrapModeV;
+                dest.wrapModeW = source.wrapModeW;
+                dest.filterMode = source.filterMode;
+                dest.anisoLevel = source.anisoLevel;
+                dest.mipMapBias = source.mipMapBias;
+                
+                
+#if UNITY_EDITOR
+                Texture.DestroyImmediate(source);
+#else
+                Texture.Destroy(source);
+#endif
             }
+            
+            await Task.Run(() =>
+            {
+                for (var i = 0; i < pixels.Length; i++)
+                {
+                    var c = pixels[i];
+                    pixels[i] = new Color(1, c.g, 1, c.r);
+                }
+            });
 
             dest.SetPixels(pixels);
             return dest;

@@ -290,7 +290,10 @@ namespace UnityGLTF
 
 			if (texture && convertToDxt5nmFormat)
 			{
-				await NormalMapEncodingConverter.ConvertToDxt5nmAsync(texture);
+				texture = await NormalMapEncodingConverter.ConvertToDxt5nmAndCheckTextureFormatAsync(texture);
+				if (texture != newTextureObject)
+					newTextureObject = texture;
+				
 				texture.Apply();
 			}
 
