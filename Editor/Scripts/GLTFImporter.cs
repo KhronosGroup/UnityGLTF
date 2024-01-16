@@ -653,7 +653,7 @@ namespace UnityGLTF
 			                        var convertedFormat = (TextureFormat)(int)format;
 			                        if ((int)convertedFormat > -1)
 			                        {
-				                        // Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
+				                        //Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
 				                        EditorUtility.CompressTexture(tex, convertedFormat, (TextureCompressionQuality) (int) _textureCompression);
 				                        // Debug.Log("Mips now: " + tex.mipmapCount); // TODO figure out why mipmaps disappear here
 			                        }
@@ -772,6 +772,7 @@ namespace UnityGLTF
 
 #if UNITY_2020_2_OR_NEWER
 			ctx.DependsOnCustomDependency(ColorSpaceDependency);
+			ctx.DependsOnCustomDependency(NormalMapEncodingDependency);
 #endif
 	        if (gltfScene)
 	        {
@@ -804,13 +805,22 @@ namespace UnityGLTF
 		}
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
+        private const string NormalMapEncodingDependency = nameof(GLTFImporter) + "_normalMapEncoding";
 
 #if UNITY_2020_2_OR_NEWER
         [InitializeOnLoadMethod]
         private static void UpdateColorSpace()
         {
 	        AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
+	    }
+        
+        [InitializeOnLoadMethod]
+        private static void UpdateNormalMapEncoding()
+        {
+	        //Debug.Log("Normal map encoding changed: " + PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))+"  "+BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget));
+			AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
         }
+        
 #endif
 
 	    private void CreateGLTFScene(GLTFImportContext context, out GameObject scene,
