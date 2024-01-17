@@ -5,19 +5,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [2.7.2-exp] - 2024-01-16
-- fix: bone weights were not properly imported from Draco compressed meshes due to bug in Unity's CombineMeshes
-- fix: data loader was preventing multithreaded imports from working
-- fix: issue when TMPro package is not present
-- fix: TMPro detection when com.unity.ugui@2.0.0 is present which has TMPro embedded
+- fix: bone weights were not properly imported from Draco compressed meshes due to bug in Unity's `CombineMeshes`
+- fix: data loader was preventing multi-threaded imports from working
+- fix: compilation error when `TMPro` package is not present
+- fix: TMPro detection when `com.unity.ugui@2.0.0` is present which has TMPro embedded
 - fix: normal map color space was wrong on non-standalone target platforms when normal import settings is set to DXT5nm, which is default on Unity 2021.3+ on some platforms
 - fix: normal maps were not marked as Normal on editor import which is required for DXT5nm support
+- fix: normal maps imported at runtime now set a `_NormalMapFormatXYZ` flag on their materials to ensure correct display
 - fix: assets were not reimported when normal map setting changed between XYZ and DXT5nm (requires domain reload)
 - fix: prepare for changed package declarations due to draco/ktx packages moving registries
-- fix: GLTFRecorder should respect specified UseAnimationPointer setting
+- fix: GLTFRecorder should respect specified `UseAnimationPointer` setting
+- fix: incorrectly named PBRGraph material option `_AutoSurfaceMode` is now called `_OverrideSurfaceMode`
 
 ## [2.7.1-exp] - 2024-01-08
-- fix: default property deserializer was missing for nested extras objects in MeshPrimitive
-- fix potential ImportContext NullRef
+- fix: default property deserializer was missing for nested extras objects in `MeshPrimitive`
+- fix potential `ImportContext` NullRef
 - change: move blend shape target names to mesh, according to https://github.com/KhronosGroup/glTF/pull/1631
 - add: selection export options are also in the GameObject menu now for right-click > export support
 
