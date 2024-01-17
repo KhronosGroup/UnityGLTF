@@ -545,8 +545,17 @@ namespace UnityGLTF
 			Material material)
 		{
 			var info = new NormalTextureInfo();
+			TextureExportSettings exportSettings = default;
 
-			info.Index = ExportTexture(texture, textureSlot);
+			if (material.HasFloat("_RuntimeCreatedNormalMap"))
+			{
+				exportSettings.linear = true;
+				exportSettings.isValid = true;
+				exportSettings.alphaMode = TextureExportSettings.AlphaMode.Never;
+				exportSettings.conversion = TextureExportSettings.Conversion.None;
+			}
+			
+			info.Index = ExportTexture(texture, textureSlot, exportSettings);
 
 			if (material.HasProperty("normalScale"))
 			{
