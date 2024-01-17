@@ -163,6 +163,7 @@ namespace UnityGLTF
         {
 	        public Texture2D texture;
 	        public bool shouldBeLinear;
+	        public bool shouldBeNormalMap;
         }
 
         [Serializable]
@@ -802,6 +803,11 @@ namespace UnityGLTF
 
 	        foreach(var plugin in context.Plugins)
 		        plugin.OnAfterImport();
+	        
+	        // run texture verification and warn about wrong configuration
+	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(this))
+		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.");
+		        
 		}
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
@@ -879,7 +885,7 @@ namespace UnityGLTF
 
 			    _textures = loader.TextureCache
 				    .Where(x => x != null)
-				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
+				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear, shouldBeNormalMap = x.IsNormal })
 				    .ToList();
 
 			    scene = loader.LastLoadedScene;

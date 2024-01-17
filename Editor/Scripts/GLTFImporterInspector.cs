@@ -43,6 +43,14 @@ namespace UnityGLTF
 			base.OnEnable();
 		}
 
+		public override void OnInspectorGUI()
+		{
+			var t = target as GLTFImporter;
+			TextureWarningsGUI(t);
+			EditorGUILayout.Space();
+			base.OnInspectorGUI();
+		}
+
 		private void TextureWarningsGUI(GLTFImporter t)
 		{
 			if (!t)	return;
@@ -107,7 +115,6 @@ namespace UnityGLTF
 				EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
 				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._textureCompression)));
 			}
-			TextureWarningsGUI(t);
 		}
 
 		private const string TextureRemappingKey = nameof(GLTFImporterInspector) + "_TextureRemapping";
@@ -216,8 +223,6 @@ namespace UnityGLTF
 			}
 
 			EditorGUILayout.Separator();
-
-			TextureWarningsGUI(t);
 		}
 
 		private void RemappingUI<T>(GLTFImporter t, SerializedProperty importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
@@ -453,7 +458,9 @@ namespace UnityGLTF
 			{
 				if (AssetDatabase.Contains(x.texture) && AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)
 				{
-					return textureImporter.sRGBTexture == !x.shouldBeLinear;
+					var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
+					var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
+					return correctLinearSetting && correctNormalSetting;
 				}
 				return true;
 			});
@@ -466,8 +473,11 @@ namespace UnityGLTF
 			{
 				if (!AssetDatabase.Contains(x.texture) || !(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)) continue;
 
+				var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
+				var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
+				
 				// skip if already correct
-				if (textureImporter.sRGBTexture == !x.shouldBeLinear)
+				if (correctLinearSetting && correctNormalSetting)
 					continue;
 
 				if (!haveStartedAssetEditing)
@@ -477,6 +487,7 @@ namespace UnityGLTF
 				}
 
 				textureImporter.sRGBTexture = !x.shouldBeLinear;
+				textureImporter.textureType = x.shouldBeNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
 				textureImporter.SaveAndReimport();
 			}
 

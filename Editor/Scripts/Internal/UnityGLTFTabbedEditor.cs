@@ -45,6 +45,11 @@ namespace UnityGLTF
 			}
 			base.OnEnable();
 		}
+
+		public override void OnInspectorGUI()
+		{
+			base.OnInspectorGUI();
+		}
 	}
 
 	internal class GLTFAssetImporterTab : BaseAssetImporterTabUI
