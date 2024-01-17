@@ -544,10 +544,21 @@ namespace UnityGLTF
 			string textureSlot,
 			Material material)
 		{
+			const string NORMAL_MAP_FORMAT_XYZ_PROPERTY = "_NormalMapFormatXYZ";
+			
 			var info = new NormalTextureInfo();
 			TextureExportSettings exportSettings = default;
 
-			if (material.HasFloat("_NormalMapFormatXYZ") && material.GetFloat("_NormalMapFormatXYZ") == 1)
+#if UNITY_2021_1_OR_NEWER
+			if (material.HasFloat(NORMAL_MAP_FORMAT_XYZ_PROPERTY))
+#else
+			if (material.HasProperty(normalXYZProperty)
+#if UNITY_2019_1_OR_NEWER
+				&& CheckForPropertyInShader(material.shader, normalXYZProperty, ShaderPropertyType.Float)
+#endif
+			)
+#endif			
+			if (material.GetFloat(NORMAL_MAP_FORMAT_XYZ_PROPERTY) == 1)
 			{
 				exportSettings.linear = true;
 				exportSettings.isValid = true;
