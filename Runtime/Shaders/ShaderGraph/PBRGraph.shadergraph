@@ -7596,7 +7596,7 @@
     "m_Type": "UnityEditor.ShaderGraph.BooleanMaterialSlot",
     "m_ObjectId": "2090fe25b14c4580b73042885a983527",
     "m_Id": 0,
-    "m_DisplayName": "NormalMapFormatXYZ",
+    "m_DisplayName": "Override Normal Map is XYZ",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -7640,11 +7640,11 @@
     "m_Guid": {
         "m_GuidSerialized": "8caf300e-d530-4793-835f-30b40abbc6f2"
     },
-    "m_Name": "NormalMapFormatXYZ",
+    "m_Name": "Override Normal Map is XYZ",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "NormalMapFormatXYZ",
-    "m_DefaultReferenceName": "_NormalMapFormatXYZ",
-    "m_OverrideReferenceName": "",
+    "m_RefNameGeneratedByDisplayName": "Override Normal Map is XYZ",
+    "m_DefaultReferenceName": "_Override_Normal_Map_is_XYZ",
+    "m_OverrideReferenceName": "_NormalMapFormatXYZ",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
@@ -12915,16 +12915,16 @@
 
 {
     "m_SGVersion": 1,
-    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_Type": "UnityEditor.ShaderGraph.Internal.BooleanShaderProperty",
     "m_ObjectId": "5959c998527d4aaf8a3653895a8d1279",
     "m_Guid": {
         "m_GuidSerialized": "dab1ea9d-9855-4409-ae49-b4a26815c9f9"
     },
-    "m_Name": "Auto Surface and Queue",
+    "m_Name": "Override Surface Type and Queue",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Auto Surface and Queue",
-    "m_DefaultReferenceName": "_Auto_Surface_and_Queue",
-    "m_OverrideReferenceName": "_AutoSurfaceMode",
+    "m_RefNameGeneratedByDisplayName": "Override Surface Type and Queue",
+    "m_DefaultReferenceName": "_Override_Surface_Type_and_Queue",
+    "m_OverrideReferenceName": "_OverrideSurfaceMode",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
@@ -12932,12 +12932,7 @@
     "overrideHLSLDeclaration": false,
     "hlslDeclarationOverride": 2,
     "m_Hidden": false,
-    "m_Value": 0.0,
-    "m_FloatType": 2,
-    "m_RangeValues": {
-        "x": 0.0,
-        "y": 1.0
-    }
+    "m_Value": false
 }
 
 {

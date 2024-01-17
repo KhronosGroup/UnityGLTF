@@ -529,9 +529,31 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name == "alphaCutoff");
 			}
+			
+			// remove advanced properties that we want to draw a foldout for
+			var overrideSurfaceMode = propertyList.FirstOrDefault(x => x.name == "_OverrideSurfaceMode");
+			var normalMapFormatXYZ = propertyList.FirstOrDefault(x => x.name == "_NormalMapFormatXYZ");
+			if (overrideSurfaceMode != null) propertyList.Remove(overrideSurfaceMode);
+			if (normalMapFormatXYZ != null) propertyList.Remove(normalMapFormatXYZ);
+			
 			// TODO we probably want full manual control, all this internal access is horrible...
 			// E.g. impossible to render inline texture properties...
 			ShaderGraphHelpers.DrawShaderGraphGUI(materialEditor, propertyList);
+			
+			// draw a foldout with the advanced properties
+			const string key = nameof(PBRGraphGUI) + "_AdvancedFoldout";
+			var val = SessionState.GetBool(key, false);
+			var newVal = EditorGUILayout.Foldout(val, "Mode Overrides", true);
+			if (newVal != val) SessionState.SetBool(key, newVal);
+			if (newVal)
+			{
+				EditorGUI.indentLevel++;
+				if (overrideSurfaceMode != null) materialEditor.ShaderProperty(overrideSurfaceMode, 
+					new GUIContent(overrideSurfaceMode.displayName, "When disabled, surface mode and queue are set by default based on material options. For example, transmissive objects will be set to \"transparent\". For some cases, explicit control over the surface mode helps with render order, e.g. nested transparency sorting."));
+				if (normalMapFormatXYZ != null) materialEditor.ShaderProperty(normalMapFormatXYZ,
+					new GUIContent(normalMapFormatXYZ.displayName, "When disabled, normal maps are assumed to be in the specified project format (XYZ or DXT5nm). Normal maps imported at runtime are always in XYZ, so this option is enabled for materials imported at runtime."));
+				EditorGUI.indentLevel--;
+			}
 		}
 
 		public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)

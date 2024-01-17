@@ -85,7 +85,8 @@ namespace UnityGLTF
 			// var needsSpecular = material.HasProperty(specularFactor) && material.GetFloat(specularFactor) > 0;
 			// material.SetKeyword("_SPECULAR", needsSpecular);
 			var isImplicitBlendMode = true;
-			const string blendModeProp = "_AutoSurfaceMode";
+			
+			const string blendModeProp = "_OverrideSurfaceMode";
 			if (material.HasProperty(blendModeProp))
 			{
 				var blendMode = material.GetInt(blendModeProp);
