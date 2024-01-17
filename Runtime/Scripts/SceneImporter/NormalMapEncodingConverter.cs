@@ -8,9 +8,9 @@ namespace UnityGLTF
         public static async Task<Texture2D> ConvertToDxt5nmAndCheckTextureFormatAsync(Texture2D source)
         {
             Texture2D dest = source;
-            var pixels = source.GetPixels();
-            
-            if (source.format != TextureFormat.RGBA32)
+            Color[] pixels;
+
+            void CreateDestinationTexture()
             {
                 dest = new Texture2D(source.width, source.height, TextureFormat.RGBA32, source.mipmapCount > 0, true);
                 dest.wrapMode = source.wrapMode;
@@ -20,13 +20,46 @@ namespace UnityGLTF
                 dest.filterMode = source.filterMode;
                 dest.anisoLevel = source.anisoLevel;
                 dest.mipMapBias = source.mipMapBias;
-                
-                
+            }
+
+            void DestroySourceTexture()
+            {
 #if UNITY_EDITOR
                 Texture.DestroyImmediate(source);
 #else
                 Texture.Destroy(source);
 #endif
+            }
+
+            if (!source.isReadable)
+            {
+                CreateDestinationTexture();
+
+                var destRenderTexture = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
+                var previousSRGBState = GL.sRGBWrite;
+                GL.sRGBWrite = false;
+
+                Graphics.Blit(source, destRenderTexture);
+
+                dest.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
+
+                GL.sRGBWrite = previousSRGBState;
+
+                RenderTexture.ReleaseTemporary(destRenderTexture);                
+
+                pixels = dest.GetPixels();
+
+                DestroySourceTexture();
+            }
+            else
+            {
+                pixels = source.GetPixels();
+                
+                if (source.format != TextureFormat.RGBA32)
+                {
+                    CreateDestinationTexture();
+                    DestroySourceTexture();
+                }
             }
             
             await Task.Run(() =>
