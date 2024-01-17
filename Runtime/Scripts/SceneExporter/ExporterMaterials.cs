@@ -547,7 +547,7 @@ namespace UnityGLTF
 			var info = new NormalTextureInfo();
 			TextureExportSettings exportSettings = default;
 
-			if (material.HasFloat("_RuntimeCreatedNormalMap"))
+			if (material.HasFloat("_NormalMapFormatXYZ") && material.GetFloat("_NormalMapFormatXYZ") == 1)
 			{
 				exportSettings.linear = true;
 				exportSettings.isValid = true;
