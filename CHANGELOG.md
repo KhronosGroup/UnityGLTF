@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.7.2-exp] - 2024-01-16
+## [2.8.0-exp] - 2024-01-17
 - fix: bone weights were not properly imported from Draco compressed meshes due to bug in Unity's `CombineMeshes`
 - fix: data loader was preventing multi-threaded imports from working
 - fix: compilation error when `TMPro` package is not present
@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: assets were not reimported when normal map setting changed between XYZ and DXT5nm (requires domain reload)
 - fix: prepare for changed package declarations due to draco/ktx packages moving registries
 - fix: GLTFRecorder should respect specified `UseAnimationPointer` setting
-- fix: incorrectly named PBRGraph material option `_AutoSurfaceMode` is now called `_OverrideSurfaceMode`
+- fix: warn after editor import when textures on disk have incorrect linear/normal settings
+- change: incorrectly named PBRGraph material option `_AutoSurfaceMode` is now called `_OverrideSurfaceMode`
+- change: display texture settings warning above tabbed inspector for better visibility
 
 ## [2.7.1-exp] - 2024-01-08
 - fix: default property deserializer was missing for nested extras objects in `MeshPrimitive`
