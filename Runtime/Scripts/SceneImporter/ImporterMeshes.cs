@@ -167,7 +167,9 @@ namespace UnityGLTF
 
 					// TODO: check if normals and tangents are needed
 #pragma warning disable 0219
-					bool needsTangents = _options.ImportTangents != GLTFImporterNormals.None ;
+					bool hasTangents = dracoExtension.attributes.ContainsKey(SemanticProperties.TANGENT);
+					
+					bool needsTangents = _options.ImportTangents != GLTFImporterNormals.None && hasTangents;
 					bool needsNormals = _options.ImportNormals != GLTFImporterNormals.None || needsTangents;
 #pragma warning restore 0219
 					
