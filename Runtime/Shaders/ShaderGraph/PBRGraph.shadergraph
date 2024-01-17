@@ -7596,7 +7596,7 @@
     "m_Type": "UnityEditor.ShaderGraph.BooleanMaterialSlot",
     "m_ObjectId": "2090fe25b14c4580b73042885a983527",
     "m_Id": 0,
-    "m_DisplayName": "RuntimeCreatedNormalMap",
+    "m_DisplayName": "NormalMapFormatXYZ",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -7640,10 +7640,10 @@
     "m_Guid": {
         "m_GuidSerialized": "8caf300e-d530-4793-835f-30b40abbc6f2"
     },
-    "m_Name": "RuntimeCreatedNormalMap",
+    "m_Name": "NormalMapFormatXYZ",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "RuntimeCreatedNormalMap",
-    "m_DefaultReferenceName": "_RuntimeCreatedNormalMap",
+    "m_RefNameGeneratedByDisplayName": "NormalMapFormatXYZ",
+    "m_DefaultReferenceName": "_NormalMapFormatXYZ",
     "m_OverrideReferenceName": "",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
