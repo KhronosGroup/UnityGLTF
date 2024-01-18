@@ -65,13 +65,13 @@ namespace UnityGLTF
 				}
 				else
 				{
-					throw new NotSupportedException("Can't import model because it uses the KHR_draco_mesh_compression extension. Please add the package \"com.atteneder.draco\" to your project to import this file.");
+					throw new NotSupportedException("Can't import model because it uses the KHR_draco_mesh_compression extension. Add the package \"com.unity.cloud.draco\" to your project to import this file.");
 				}
 			}
 #else
 			if (anyHadDraco)
 			{
-				throw new NotSupportedException("Can't import model because it uses the KHR_draco_mesh_compression extension. Please add the package \"com.atteneder.draco\" to your project to import this file.");
+				throw new NotSupportedException("Can't import model because it uses the KHR_draco_mesh_compression extension. Add the package \"com.unity.cloud.draco\" to your project to import this file.");
 			}
 #endif
 

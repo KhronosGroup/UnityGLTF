@@ -10,10 +10,10 @@ namespace UnityGLTF.Plugins
         }
         
 #if !HAVE_DRACO
-        public override string Warning => "Please add the package \"com.atteneder.draco\" to your project for Draco mesh compression support.";
+        public override string Warning => "Add the package \"com.unity.cloud.draco\" to your project for Draco mesh compression support.";
 #endif
     }
-    
+
     public class DracoImportContext: GLTFImportPluginContext
     {
         

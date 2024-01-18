@@ -930,7 +930,7 @@ namespace UnityGLTF
 			    buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
 				//TODO: check for fallback URI or Buffer... ?
-				throw new NotSupportedException("Can't import model because it uses the EXT_meshopt_compression extension. Please add the package \"com.unity.meshopt.decompress\" to your project to import this file.");
+				throw new NotSupportedException("Can't import model because it uses the EXT_meshopt_compression extension. Add the package \"com.unity.meshopt.decompress\" to your project to import this file.");
 			}
 #endif
 

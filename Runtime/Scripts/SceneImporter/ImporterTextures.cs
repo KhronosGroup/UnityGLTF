@@ -174,7 +174,7 @@ namespace UnityGLTF
 					else
 #endif
 					{
-						Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
+						Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project to import KTX2 textures.");
 						await Task.CompletedTask;
 						texture = null;
 					}
