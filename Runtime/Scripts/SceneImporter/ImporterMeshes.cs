@@ -15,6 +15,9 @@ using UnityGLTF.Extensions;
 using Draco;
 using UnityGLTF.Plugins;
 #endif
+#if !HAVE_DRACO_VERSION_5
+using DecodeResult = DracoMeshLoader.DecodeResult;
+#endif
 
 namespace UnityGLTF
 {
@@ -136,7 +139,7 @@ namespace UnityGLTF
 		{
 			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
 			Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(mesh.Primitives.Count);
-			var dracoDecodeResults = new DracoMeshLoader.DecodeResult[mesh.Primitives.Count];
+			var dracoDecodeResults = new DecodeResult[mesh.Primitives.Count];
 			for (int i = 0; i < mesh.Primitives.Count; i++)
 			{
 				var primitive = mesh.Primitives[i];
@@ -172,13 +175,25 @@ namespace UnityGLTF
 					bool needsTangents = _options.ImportTangents != GLTFImporterNormals.None && hasTangents;
 					bool needsNormals = _options.ImportNormals != GLTFImporterNormals.None || needsTangents;
 #pragma warning restore 0219
+
+#if HAVE_DRACO_VERSION_5
+					DecodeSettings decodeSettings = DecodeSettings.ConvertSpace;
+					if (needsNormals) 
+						decodeSettings |= DecodeSettings.RequireNormals;
+					if (needsTangents)
+						decodeSettings |= DecodeSettings.RequireTangents;
+					if (firstPrim != null && firstPrim.Targets != null)
+						decodeSettings |= DecodeSettings.ForceUnityVertexLayout;
 					
+					dracoDecodeResults[i] = await DracoDecoder.DecodeMesh(meshDataArray[i], bufferViewData, decodeSettings, DracoDecoder.CreateAttributeIdMap(weightsAttributeId, jointsAttributeId));
+					
+#else
 					var draco = new DracoMeshLoader();
 
 					dracoDecodeResults[i] = await draco.ConvertDracoMeshToUnity(meshDataArray[i], bufferViewData,
 						needsNormals, needsTangents,
 						weightsAttributeId, jointsAttributeId, firstPrim.Targets != null);
-
+#endif
 					if (!dracoDecodeResults[i].success)
 					{
 						Debug.LogError("Error decoding draco mesh", this);
@@ -303,6 +318,7 @@ namespace UnityGLTF
 				if(uv.Length > 0)
 					mesh.uv2 = uv;
 			}
+			
 		}
 
 #if HAVE_DRACO
@@ -310,7 +326,7 @@ namespace UnityGLTF
 		/// Populate a UnityEngine.Mesh from Draco generated SubMeshes
 		/// </summary>
 		/// <returns></returns>
-		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh, DracoMeshLoader.DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName)
+		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh, DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName)
 		{
 			uint verticesLength = 0;
 			for (int i = 0; i < meshes.Length; i++)
