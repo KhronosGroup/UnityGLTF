@@ -127,15 +127,14 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - KHR_materials_emissive_strength (emissive values greater than 1)
 - KHR_materials_iridescence (thin-film interference, like oil on water)
 - KHR_materials_clearcoat (secondary specular layer, like a coat of varnish)
-- KHR_materials_sheen (cloth, partial support)
 - KHR_materials_specular (partial support)
 - MSFT_lods (level of detail)
 
 ### Import only
 
 - KHR_mesh_quantization
-- KHR_draco_mesh_compression (requires com.atteneder.draco)
-- KHR_texture_basisu (requires com.atteneder.ktx)
+- KHR_draco_mesh_compression (requires com.unity.cloud.draco)
+- KHR_texture_basisu (requires com.unity.cloud.ktx)
 - EXT_meshopt_compression (requires com.unity.meshopt.decompress)
 
 ### Export only
@@ -343,15 +342,7 @@ If your plugin reads/writes custom extension data, you need to also implement `G
 
 ## Known Issues
 
-Known issues reproduce with specific [glTF Sample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0):
-
-> **Note:** This list hasn't been updated in a while. It may not be accurate anymore.
-
-- **khronos-SimpleSparseAccessor**: sparse accessors not supported on import (can be exported though)
-- **khronos-TriangleWithoutIndices**: meshes without indices import with wrong winding order
-- **khronos-MultiUVTest**: UV per texture is imported but not supported in the GLTF-Builtin shader
-- **khronos-MorphPrimitivesTest**: isn't correctly importing at runtime (in some cases?)
-- **khronos-NormalTangentTest**: import results don't match expected look
+- BlendShapes with In-between BlendShapes are not supported
 
 ## Contributing
 
