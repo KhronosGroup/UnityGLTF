@@ -152,6 +152,7 @@ namespace UnityGLTF
 #if HAVE_KTX
 					if (Context.TryGetPlugin<Ktx2ImportContext>(out _))
 					{
+						bool isLinear = !texture.isDataSRGB;
 #if UNITY_EDITOR
 						Texture.DestroyImmediate(texture);
 #else
@@ -161,7 +162,8 @@ namespace UnityGLTF
 
 						using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
 						{
-							var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
+							
+							var resultTextureData = await ktxTexture.LoadFromBytes(alloc, isLinear);
 							texture = resultTextureData.texture;
 							texture.name = textureName;
 						}
