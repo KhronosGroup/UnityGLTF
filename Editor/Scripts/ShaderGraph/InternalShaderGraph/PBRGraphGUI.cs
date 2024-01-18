@@ -69,7 +69,9 @@ namespace UnityGLTF
 				GUI.enabled = true;
 				EditorGUILayout.HelpBox("This material is part of a glTF asset. If you enable editing (experimental), changes will be stored back to the .glTF file when saving.", MessageType.None);
 			
-				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + targetMat.GetInstanceID();
+				// looks like GetInstanceID() changes per import; so we use the path instead
+				var path = AssetDatabase.GetAssetPath(targetMat) + "_" + targetMat.name;
+				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + path;
 				var isAllowed = SessionState.GetBool(materialEditingKey, false);
 				var allowMaterialEditing = EditorGUILayout.Toggle("Allow Editing", isAllowed);
 				if (allowMaterialEditing != isAllowed)
@@ -606,7 +608,6 @@ namespace UnityGLTF
 			{
 				if (obj is Material material)
 				{
-					// Tell the AssetImporter (?) that there are changes, or write the file directly?
 					PBRGraphGUI.InvokeMaterialChangedEvent(material);
 				}
 			}

@@ -456,11 +456,15 @@ namespace UnityGLTF
 		{
 			return importer.Textures.All(x =>
 			{
-				if (AssetDatabase.Contains(x.texture) && AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)
+				if (x.texture && AssetDatabase.Contains(x.texture))
 				{
-					var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
-					var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
-					return correctLinearSetting && correctNormalSetting;
+					var path = AssetDatabase.GetAssetPath(x.texture);
+					if (AssetImporter.GetAtPath(path) is TextureImporter textureImporter)
+					{
+						var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
+						var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
+						return correctLinearSetting && correctNormalSetting;
+					}
 				}
 				return true;
 			});
@@ -471,6 +475,7 @@ namespace UnityGLTF
 			var haveStartedAssetEditing = false;
 			foreach (var x in importer.Textures)
 			{
+				if (!x.texture) continue;
 				if (!AssetDatabase.Contains(x.texture) || !(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)) continue;
 
 				var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
