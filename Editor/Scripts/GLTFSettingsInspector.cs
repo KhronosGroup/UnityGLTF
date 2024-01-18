@@ -226,7 +226,7 @@ namespace UnityGLTF
 					{
 						// calculate space that the label needed
 						var labelSize = EditorStyles.foldout.CalcSize(label);
-						var warningIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
+						var warningIcon = EditorGUIUtility.IconContent("console.infoicon.sml");
 						warningIcon.tooltip = plugin.Warning;
 						// show warning if needed
 						var lastRect = GUILayoutUtility.GetLastRect();
@@ -247,7 +247,7 @@ namespace UnityGLTF
 					EditorGUI.indentLevel += 1;
 					EditorGUILayout.HelpBox(plugin.Description, MessageType.None);
 					if (!string.IsNullOrEmpty(plugin.Warning))
-						EditorGUILayout.HelpBox(plugin.Warning, MessageType.Warning);
+						EditorGUILayout.HelpBox(plugin.Warning, MessageType.Info);
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 					editorCache.TryGetValue(plugin.GetType(), out var editor);
 					Editor.CreateCachedEditor(plugin, null, ref editor);
