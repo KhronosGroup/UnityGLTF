@@ -14,9 +14,9 @@ using UnityGLTF.Extensions;
 #if HAVE_DRACO
 using Draco;
 using UnityGLTF.Plugins;
-#endif
 #if !HAVE_DRACO_VERSION_5
-using DecodeResult = DracoMeshLoader.DecodeResult;
+using DecodeResult = Draco.DracoMeshLoader.DecodeResult;
+#endif
 #endif
 
 namespace UnityGLTF
