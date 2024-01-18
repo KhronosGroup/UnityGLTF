@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.8.1-exp] - 2024-01-18
+- fix: tangent recalculation was not working when importing draco meshes without tangents
+- fix: DXT5nm conversion for non-readable textures
+- fix: color space when loading KTX2 normals was incorrect
+- fix: tiling and offset properties were displayed even when TEXTURE_TRANSFORMS was disabled on 2022.3+
+- fix: nullref in texture format validation when texture is missing
+- fix: ifdefs to support Draco package 5.x from Unity Registry (`com.unity.cloud.draco`)
+
 ## [2.8.0-exp] - 2024-01-17
 - fix: bone weights were not properly imported from Draco compressed meshes due to bug in Unity's `CombineMeshes`
 - fix: data loader was preventing multi-threaded imports from working
