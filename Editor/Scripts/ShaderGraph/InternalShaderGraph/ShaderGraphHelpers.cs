@@ -20,13 +20,13 @@ namespace UnityGLTF
 	public static class ShaderGraphHelpers
 	{
 		private static FieldInfo m_Flags;
+		
 		public static void DrawShaderGraphGUI(MaterialEditor materialEditor, List<MaterialProperty> properties)
 		{
 #if HAVE_CATEGORIES
 			ShaderGraphPropertyDrawers.DrawShaderGraphGUI(materialEditor, properties);
 #else
-			if (m_Flags == null)
-				m_Flags = typeof(MaterialProperty).GetField("m_Flags", (BindingFlags)(-1));
+			if (m_Flags == null) m_Flags = typeof(MaterialProperty).GetField("m_Flags", (BindingFlags)(-1));
 
 			// This is a workaround for serialization bug IN-16486
 			// Changes made to texture with a specific a _ST property marked as [NoScaleOffset] in the Inspector are shown but not saved
@@ -79,6 +79,13 @@ namespace UnityGLTF
 
 		[Obsolete("Use GLTFMaterialHelper.ValidateMaterialKeywords instead. (UnityUpgradeable) -> UnityGLTF.GLTFMaterialHelper.ValidateMaterialKeywords", false)]
 		public static void ValidateMaterialKeywords(Material material) {}
+
+		public static void SetNoScaleOffset(MaterialProperty prop)
+		{
+			if (m_Flags == null) m_Flags = typeof(MaterialProperty).GetField("m_Flags", (BindingFlags)(-1));
+			if (m_Flags == null) return;
+			m_Flags.SetValue(prop, (ShaderPropertyFlags) m_Flags.GetValue(prop) | ShaderPropertyFlags.NoScaleOffset);
+		}
 	}
 }
 

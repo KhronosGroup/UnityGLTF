@@ -470,6 +470,14 @@ namespace UnityGLTF
 			if (!targetMaterial.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal) || x.name.EndsWith("Rotation", StringComparison.Ordinal));
+				
+				// Unity draws the tiling & offset properties based on the scale offset flag, so we need to ensure that's off here
+				// so that the property fields are not displayed. Otherwise it's confusing that editing them doesn't do anything.
+				foreach (var prop in propertyList)
+				{
+					if (prop.type == MaterialProperty.PropType.Texture)
+						ShaderGraphHelpers.SetNoScaleOffset(prop);
+				}
 			}
 			// want to remove the _ST properties since they are drawn inline already on 2021.2+
 			#if UNITY_2021_2_OR_NEWER
@@ -519,6 +527,7 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("TextureTexCoord", StringComparison.Ordinal));
 			}
+
 #if UNITY_2021_1_OR_NEWER
 			var isBirp = !GraphicsSettings.currentRenderPipeline;
 			if ((isBirp && !targetMaterial.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON")) ||
