@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UnityGLTF
 {
-    public static class NormalMapEncodingConverter
+    internal static class NormalMapEncodingConverter
     {
         public static async Task<Texture2D> ConvertToDxt5nmAndCheckTextureFormatAsync(Texture2D source)
         {
@@ -20,6 +20,7 @@ namespace UnityGLTF
                 dest.filterMode = source.filterMode;
                 dest.anisoLevel = source.anisoLevel;
                 dest.mipMapBias = source.mipMapBias;
+                dest.name = source.name;
             }
 
             void DestroySourceTexture()
