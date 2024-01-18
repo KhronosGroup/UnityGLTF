@@ -78,6 +78,11 @@
             "name": "com.unity.meshopt.decompress",
             "expression": "",
             "define": "HAVE_MESHOPT_DECOMPRESS"
+        },
+        {
+            "name": "com.unity.cloud.draco",
+            "expression": "5.0.0",
+            "define": "HAVE_DRACO_VERSION_5"
         }
     ],
     "noEngineReferences": false
