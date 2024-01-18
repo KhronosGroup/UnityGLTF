@@ -368,7 +368,7 @@ namespace UnityGLTF
 			// Custom combine all boneweights and bonePerVertex of sub meshes and apply to final combined mesh 
 			// >> Bug(?) in CombineMeshes that does not proper copy bone weights and bones per vertex  
 			NativeArray<BoneWeight1> allBoneWeights = new NativeArray<BoneWeight1>(boneWeightCount, Allocator.TempJob);
-			NativeArray<byte> allBonesPerVertex = new NativeArray<byte>(boneWeightCount, Allocator.TempJob);
+			NativeArray<byte> allBonesPerVertex = new NativeArray<byte>(bonesPerVertexCount, Allocator.TempJob);
 			int currentArrayPositionBoneWeights = 0;
 			int currentArrayPositionBpV = 0;
 			for (int i = 0; i < subMeshes.Length; i++)
