@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: tiling and offset properties were displayed even when TEXTURE_TRANSFORMS was disabled on 2022.3+
 - fix: nullref in texture format validation when texture is missing
 - fix: ifdefs to support Draco package 5.x from Unity Registry (`com.unity.cloud.draco`)
+- add: show UI for adding/removing optional compression packages in GLTFSettings
 
 ## [2.8.0-exp] - 2024-01-17
 - fix: bone weights were not properly imported from Draco compressed meshes due to bug in Unity's `CombineMeshes`
