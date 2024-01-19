@@ -136,7 +136,7 @@ namespace UnityGLTF
 		}
 
 		// With using KTX, we need to return a new Texture2D instance at the moment. Unity KTX package does not support loading into existing one
-		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, NativeArray<byte> data, bool markGpuOnly)
+		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, NativeArray<byte> data, bool markGpuOnly, bool isLinear)
 		{
 			switch (image.MimeType)
 			{
@@ -154,7 +154,6 @@ namespace UnityGLTF
 #if HAVE_KTX
 					if (Context.TryGetPlugin<Ktx2ImportContext>(out _))
 					{
-						bool isLinear = !texture.isDataSRGB;
 #if UNITY_EDITOR
 						Texture.DestroyImmediate(texture);
 #else
@@ -270,7 +269,7 @@ namespace UnityGLTF
 			{
 				var bufferView = await GetBufferData(image.BufferView.Value.Buffer);
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				texture = await CheckMimeTypeAndLoadImage(image, texture, bufferView.bufferData, markGpuOnly);
+				texture = await CheckMimeTypeAndLoadImage(image, texture, bufferView.bufferData, markGpuOnly, isLinear);
 
 			}
 			else if (stream is MemoryStream)
@@ -280,7 +279,7 @@ namespace UnityGLTF
 					await YieldOnTimeoutAndThrowOnLowMemory();
 					using (var memoryStreamData = new NativeArray<byte>(memoryStream.ToArray(), Allocator.TempJob))
 					{
-						texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly);
+						texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly, isLinear);
 					}
 				}
 			}
@@ -298,7 +297,7 @@ namespace UnityGLTF
 				await YieldOnTimeoutAndThrowOnLowMemory();
 				using (NativeArray<byte> bufferNative = new NativeArray<byte>(buffer, Allocator.TempJob))
 				{
-					texture = await CheckMimeTypeAndLoadImage(image, texture, bufferNative, markGpuOnly);
+					texture = await CheckMimeTypeAndLoadImage(image, texture, bufferNative, markGpuOnly, isLinear);
 				}
 			}
 
