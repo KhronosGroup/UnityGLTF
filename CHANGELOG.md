@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.9.0-rc] - 2024-02-23
+### Release Candidate
+UnityGLTF has been maintained in a fork since the end of 2019.  
+Hundreds of fixes have been made, numerous features have been added, and the library has been brought up-to-speed on latest glTF developments,
+modern material extensions, and Unity versions. We're happy to bring these changes back to the main repository so everyone can benefit.  
+
+UnityGLTF has turned into an extremely versatile glTF exporter _and_ importer, which excellent support for data roundtrips and glTF-first workflows in Unity.  
+
+Please [open an issue](https://github.com/KhronosGroup/UnityGLTF/issues) if you find any problems with the release candidate.   
+
+- change: Readme updates with links changed back to KhronosGroup/UnityGLTF
+- change: Mark as release candidate
+
 ## [2.8.1-exp] - 2024-01-18
 - fix: tangent recalculation was not working when importing draco meshes without tangents
 - fix: DXT5nm conversion for non-readable textures
