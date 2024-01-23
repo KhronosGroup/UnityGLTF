@@ -69,7 +69,7 @@ namespace UnityGLTF
 			using (new GUILayout.HorizontalScope(Array.Empty<GUILayoutOption>()))
 			{
 				GUILayout.FlexibleSpace();
-				EditorPrefs.GetInt(key, 0);
+				m_ActiveEditorIndex = EditorPrefs.GetInt(key, 0);
 				using (EditorGUI.ChangeCheckScope changeCheckScope = new EditorGUI.ChangeCheckScope())
 				{
 					m_ActiveEditorIndex = GUILayout.Toolbar(m_ActiveEditorIndex, m_TabNames, (GUIStyle) "LargeButton", GUI.ToolbarButtonSize.FitToContents);
@@ -112,8 +112,7 @@ namespace UnityGLTF
 								EditorGUILayout.BeginHorizontal();
 								EditorGUILayout.PrefixLabel(new GUIContent(" "));
 								EditorGUILayout.BeginVertical();
-								if (GUILayout.Button(
-									    $"Clear Cache ({(exportCacheByteLength / (1024f * 1024f)):F2} MB)"))
+								if (GUILayout.Button($"Clear Cache ({(exportCacheByteLength / (1024f * 1024f)):F2} MB)"))
 								{
 									ExportCache.Clear();
 									CalculateCacheStats();
@@ -125,7 +124,8 @@ namespace UnityGLTF
 								EditorGUILayout.EndHorizontal();
 								break;
 						}
-					} while (prop.NextVisible(false));
+					}
+					while (prop.NextVisible(false));
 				}
 				EditorGUILayout.Space();
 
