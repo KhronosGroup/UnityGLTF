@@ -63,22 +63,23 @@ You can install this package from git, compatible with UPM (Unity Package Manage
 3. Select <kbd>Add Package from git URL</kbd>
 4. Paste
    ```
-   https://github.com/prefrontalcortex/UnityGLTF.git
+   https://github.com/KhronosGroup/UnityGLTF.git
    ```
 5. Click <kbd>Add</kbd>.
 
 > **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
+> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.8.1-exp`.
 
 ## Unity Version and Render Pipeline Compatibility
 
-The best results for import and export workflows with material extensions can be achieved on Unity 2021.3.8f1+ with URP.
+Please use Long-Term Support versions of Unity (2021.3+, 2022.3+, 2023.3+).
 
 **Recommended:**
-- Unity 2021.3+
+- Unity 2021.3+, Unity 2022.3+, Unity 2023.3+
 - Linear colorspace
 - Universal Render Pipeline (URP) and Built-In Render Pipeline (BiRP)
 
-**Supported:**
+**Tested:**
 - Unity 2020.3+
 - Linear colorspace
 - Universal Render Pipeline (URP) and Built-In Render Pipeline (BiRP)
@@ -88,22 +89,25 @@ These configurations have been working in the past. They will not be updated wit
 - Unity 2018.4–2019.4
 - Gamma colorspace
 
+**HDRP**:
+- Currently limited functionality.
+
 > **Note:** Issues on non-LTS Unity versions (not on 2020.3, 2021.3, 2022.3, ...) will most likely not be addressed. Please use LTS (Long-Term Support) versions where possible.
 
 ## UnityGLTF and glTFast
 
-UnityGLTF hasn't received official support since early 2020. However, a number of forks have fixed issues and improved several key areas, especially animation support,export workflows, color spaces and extendibility. These forks have now been merged back into main so that everyone can benefit from then, and to enable further work.
-
-A separate glTF implementation for Unity, [glTFast](https://github.com/atteneder/glTFast), is on its path towards becoming feature complete.  
-At the time of writing they have about the same level of _import support_ and UnityGLTF has better _export support_.
-
-glTFast and UnityGLTF can coexist in the same project; you can for example use glTFast for import and UnityGLTF for export, where each of these shine. For imported assets, you can choose which importer to use with a dropdown. glTFast import has precedence if both are in the same project.
-
-Key differences to glTFast include:
-- glTFast leverages Unity-specific features such as Burst and Jobs and thus can have better performance in some cases
-- glTFast has better HDRP support.
+A separate glTF implementation for Unity, [glTFast](https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@latest), is available from the Unity Registry.  
+glTFast being supported by Unity means, in a nutshell, that it sticks to standards pretty strictly and can't easily ship non-ratified extensions or experimental features that work for the majority, but not all, of users.  
+- UnityGLTF aims to be the more _flexible_ framework, with extensive import/export plugin support and useful plugins out of the box.  
+- glTFast aims to be the more _performant_ framework, with a focus on leveraging Unity-specific features such as Burst and Jobs.  
 - UnityGLTF has a versatile plugin/extension infrastructure. This allows for a lot of flexibility during import/export.
-- UnityGLTF enables using non-ratified extensions such as `KHR_animation_pointer`, `KHR_audio`, and `KHR_materials_variants` to allow testing how they fit into production pipelines.
+- UnityGLTF enables the use of and ships with non-ratified extensions such as `KHR_animation_pointer`, `KHR_audio`, and `KHR_materials_variants`.
+- glTFast leverages Unity-specific features such as Burst and Jobs and thus can have better performance in some cases.
+- glTFast has better HDRP support.
+
+glTFast and UnityGLTF can **coexist in the same project**; you can for example use glTFast for import and UnityGLTF for export.  
+For imported assets, you can choose which importer to use with a dropdown.  
+glTFast import has precedence if both are in the same project. See also [Default Importer Selection](#default-importer-selection).
 
 ## Supported Features and Extensions
 The lists below are non-conclusive and in no particular order. Note that there are gaps where features could easily be supported for im- and export but currently aren't. PRs welcome!
@@ -133,16 +137,21 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ### Import only
 
 - KHR_mesh_quantization
-- KHR_draco_mesh_compression (requires com.unity.cloud.draco)
-- KHR_texture_basisu (requires com.unity.cloud.ktx)
-- EXT_meshopt_compression (requires com.unity.meshopt.decompress)
+- KHR_draco_mesh_compression (requires [`com.unity.cloud.draco`](https://docs.unity3d.com/Packages/com.unity.cloud.draco@latest))
+- KHR_texture_basisu (requires [`com.unity.cloud.ktx`](https://docs.unity3d.com/Packages/com.unity.cloud.ktx@latest))
+- EXT_meshopt_compression (requires [`com.unity.meshopt.decompress`](https://docs.unity3d.com/Packages/com.unity.meshopt.decompress@latest))
 
 ### Export only
 
 - KHR_animation_pointer
-- Timeline recorder track for exporting animations at runtime
-- Lossless keyframe optimization on export (animation is baked but redundant keyframes are removed)
+- KHR_materials_variants
+- Timeline recorder track for exporting animations in the editor and at runtime
+- Lossless keyframe optimization on export
 - All 2D textures can be exported, RenderTextures included – they're baked at export.
+- Optional plugin: bake TMPro 3D objects to meshes on export
+- Optional plugin: bake Particle Systems to meshes on export
+- Optional plugin: bake Canvas to meshes on export
+- Included plugin sample: KHR_audio
 
 ## glTF Materials
 
@@ -226,20 +235,23 @@ Notable features with limited support:
 
 To view your glTF files, here's a number of tools you can use:
 
-| Name                                                                   | Notes                                                                                                                            |
-|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| [gltf.report](https://gltf.report)<br/>(based on three.js)             | Great for inspecting file size, meshes, textures                                                                                 | 
-| [model-viewer](https://modelviewer.dev/editor)<br/>(based on three.js) | Support for KHR_materials_variants with custom code                                                                              |
-| [Gestaltor]()                                                          | Full glTF Spec Compliance<br/>Support for KHR_animation_pointer<br/>Support for KHR_audio<br/>Support for KHR_materials_variants | 
-| [Babylon.js Sandbox](https://sandbox.babylonjs.com/)                   | Support for KHR_animation_pointer                                                                                                |
-| UnityGLTF<br/>(this project!)                                          | Simply drop the exported glb file back into Unity.                                                                               |
-| [glTFast](https://github.com/atteneder/glTFast)                        | Add the glTFast package to your project.<br/>You can switch the used importer on glTF files between glTFast and UnityGLTF.       |
+| Name                                                                                 | Notes                                                                                                                            |
+|--------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| [Khronos glTF Sample Viewer](https://github.khronos.org/glTF-Sample-Viewer-Release/) | Full support for ratified extensions                                                                                             |
+| [gltf.report](https://gltf.report)                           | Inspect file size, meshes, textures                                                                                              | 
+| [model-viewer](https://modelviewer.dev/editor)               | Support for KHR_materials_variants with custom code                                                                              |
+| [Gestaltor](https://gestaltor.com/)                                                  | Full glTF Spec Compliance<br/>Support for KHR_animation_pointer<br/>Support for KHR_audio<br/>Support for KHR_materials_variants | 
+| [Needle Viewer](https://viewer.needle.tools)                 | Support for KHR_animation_pointer<br/>Inspect hierarchy, textures, cameras, lights, warnings                                     |
+| [Babylon.js Sandbox](https://sandbox.babylonjs.com/)                                 | Support for KHR_animation_pointer                                                                                                |
+| UnityGLTF<br/>(this project!)                                                        | Simply drop the exported glb file back into Unity.                                                                               |
+| [glTFast](https://github.com/Unity-Technologies/com.unity.cloud.gltfast)             | Add the glTFast package to your project.<br/>You can switch the used importer on glTF files between glTFast and UnityGLTF.       |
 
 To further process files after exporting them with UnityGLTF, you can use:
 
 | Name                                                     | Notes                                                                                                                     | 
 |----------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | [gltf-transform](https://gltf-transform.donmccurdy.com/) | Compress meshes with draco or meshopt<br/>Compress textures to ktx2<br/>Optimize Files<br/>Convert between .gltf and .glb |
+| [Blender](https://www.blender.org/)                                             | Import/export glTF files with good feature coverage                                                                       |
 
 ## Animation Export
 
@@ -333,8 +345,6 @@ To create a plugin, follow these steps:
 2. Also, make a class that inherits from `GLTFImportPluginContext` or `GLTFExportPluginContext`. This class has the actual callbacks.
 3. Implement `CreateInstance` in your plugin to return a new instance of your plugin context.
 4. Override the callbacks you want to use in your plugin context.
-   - See available callbacks
-   - See available callbacks
 
 If your plugin reads/writes custom extension data, you need to also implement `GLTF.Schema.IExtension` for serialization and deserialization.
 
@@ -342,14 +352,22 @@ If your plugin reads/writes custom extension data, you need to also implement `G
 
 ## Known Issues
 
-- BlendShapes with In-between BlendShapes are not supported
+- Blend shapes with in-betweens are currently not supported. 
+- Support for glTF files with multiple scenes is limited. 
+- Some material options (e.g. MAOS maps) are currently not exported correctly. 
 
 ## Contributing
 
-This section is dedicated to those who wish to contribute to the project.
+UnityGLTF is an open-source project. Well-tested PRs are welcome.  
+
+It is currently maintained by
+- [prefrontal cortex](https://prefrontalcortex.de), member of the Khronos Group and 
+- [Needle](https://needle.tools), member of the Metaverse Standards Forum.
 
 <details>
-<summary>More Details</summary>
+<summary>More Details (legacy)</summary>
+
+> 🏗️ Under construction. Feel free to raise an issue if you have questions.
 
 ### [Unity Package](https://github.com/KhronosGroup/UnityGLTF/tree/master/)
 
@@ -379,7 +397,3 @@ To run tests with UnityGLTF as package, you'll have to add UnityGLTF to the "tes
 ```
 
 </details>
-
-## Contributors
-
-UnityGLTF is currently maintained by [prefrontal cortex](https://prefrontalcortex.de) and [Needle](https://needle.tools).
