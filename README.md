@@ -57,6 +57,11 @@ The library is designed to be easy to extend with additional extensions to the g
 
 ## Installation
 
+You can install this package from the Needle Package Registry with this one-click installer:  
+
+1. Download [UnityGLTF Package Installer](http://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
+2. Drop the downloaded .unitypackage into Unity and follow the steps.
+
 You can install this package from git, compatible with UPM (Unity Package Manager).
 1. Open `Window > Package Manager`
 2. Click <kbd>+</kbd>
@@ -68,7 +73,7 @@ You can install this package from git, compatible with UPM (Unity Package Manage
 5. Click <kbd>Add</kbd>.
 
 > **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
-> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.8.1-exp`.
+> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.9.0-rc`.
 
 ## Unity Version and Render Pipeline Compatibility
 
