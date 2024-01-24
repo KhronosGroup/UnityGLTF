@@ -22,6 +22,8 @@ namespace UnityGLTF
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
+		[Tooltip("Hide the scene object during load, then activate it when complete")]
+		public bool HideSceneObjDuringLoad = false;
         public ImporterFactory Factory = null;
         public UnityAction onLoadComplete;
 
@@ -114,6 +116,7 @@ namespace UnityGLTF
 
 				// for logging progress
 				await sceneImporter.LoadSceneAsync(
+					showSceneObj:!HideSceneObjDuringLoad,
 					onLoadComplete:LoadCompleteAction
 					// ,progress: new Progress<ImportProgress>(
 					// 	p =>
@@ -133,6 +136,9 @@ namespace UnityGLTF
 				}
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
+				
+				if (HideSceneObjDuringLoad)
+					LastLoadedScene.SetActive(true);
 
 #if UNITY_ANIMATION
 				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
