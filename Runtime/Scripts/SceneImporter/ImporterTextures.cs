@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using GLTF.Schema;
 using GLTF.Utilities;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Cache;
@@ -78,11 +79,12 @@ namespace UnityGLTF
 				if (image.Uri == null)
 				{
 					var bufferView = image.BufferView.Value;
-					var data = new byte[bufferView.ByteLength];
-
 					BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-					bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
-					stream = new SubStream(bufferContents.Stream, 0, data.Length);
+					if (bufferContents.bufferData.IsCreated)
+					{
+						bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+						stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
+					}
 				}
 				else
 				{
@@ -134,14 +136,14 @@ namespace UnityGLTF
 		}
 
 		// With using KTX, we need to return a new Texture2D instance at the moment. Unity KTX package does not support loading into existing one
-		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, byte[] data, bool markGpuOnly)
+		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, NativeArray<byte> data, bool markGpuOnly)
 		{
 			switch (image.MimeType)
 			{
 				case "image/png":
 				case "image/jpeg":
 					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-					texture.LoadImage(data, markGpuOnly);
+					texture.LoadImage(data.ToArray(), markGpuOnly);
 					break;
 				case "image/exr":
 					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. glTF filename: {_gltfFileName}");
@@ -159,14 +161,10 @@ namespace UnityGLTF
 						Texture.Destroy(texture);
 #endif
 						var ktxTexture = new KtxUnity.KtxTexture();
-
-						using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
-						{
-							
-							var resultTextureData = await ktxTexture.LoadFromBytes(alloc, isLinear);
-							texture = resultTextureData.texture;
-							texture.name = textureName;
-						}
+						
+						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear);
+						texture = resultTextureData.texture;
+						texture.name = textureName;
 
 						ktxTexture.Dispose();
 
@@ -180,7 +178,7 @@ namespace UnityGLTF
 					}
 					break;
 				default:
-					texture.LoadImage(data, markGpuOnly);
+					texture.LoadImage(data.ToArray(), markGpuOnly);
 					break;
 			}
 
@@ -267,12 +265,23 @@ namespace UnityGLTF
 				UnityEngine.Debug.LogError("Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath);
 
 			}
+			else
+			if (_nativeBuffers.TryGetValue(stream, out var nativeData))
+			{
+				var bufferView = await GetBufferData(image.BufferView.Value.Buffer);
+				await YieldOnTimeoutAndThrowOnLowMemory();
+				texture = await CheckMimeTypeAndLoadImage(image, texture, bufferView.bufferData, markGpuOnly);
+
+			}
 			else if (stream is MemoryStream)
 			{
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStream.ToArray(), markGpuOnly);
+					using (var memoryStreamData = new NativeArray<byte>(memoryStream.ToArray(), Allocator.TempJob))
+					{
+						texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly);
+					}
 				}
 			}
 			else
@@ -284,10 +293,13 @@ namespace UnityGLTF
 				{
 					throw new Exception("Stream is larger than can be copied into byte array");
 				}
+				
 				stream.Read(buffer, 0, (int)stream.Length);
-
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				texture = await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
+				using (NativeArray<byte> bufferNative = new NativeArray<byte>(buffer, Allocator.TempJob))
+				{
+					texture = await CheckMimeTypeAndLoadImage(image, texture, bufferNative, markGpuOnly);
+				}
 			}
 
 			if (texture && convertToDxt5nmFormat)

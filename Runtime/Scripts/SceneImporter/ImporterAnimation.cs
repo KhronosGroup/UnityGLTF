@@ -62,7 +62,7 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
-					Stream = inputBufferCacheData.Stream,
+					bufferData = inputBufferCacheData.bufferData,
 					Offset = inputBufferCacheData.ChunkOffset
 				};
 
@@ -74,7 +74,7 @@ namespace UnityGLTF
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
-					Stream = outputBufferCacheData.Stream,
+					bufferData = outputBufferCacheData.bufferData,
 					Offset = outputBufferCacheData.ChunkOffset
 				};
 
@@ -297,7 +297,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
+											  var position = data.AsFloats3[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
 											  return new float[] { position.x * factor, position.y * factor, position.z * factor};
 #else
@@ -313,8 +313,8 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var rotation = data.AsVec4s[frame];
-											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
+											  var rotation = data.AsFloats4[frame];
+											  var quaternion = rotation.ToUnityQuaternionConvert();
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 										  });
 
@@ -327,7 +327,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var scale = data.AsVec3s[frame].ToUnityVector3Raw();
+											  var scale = data.AsFloats3[frame].ToUnityVector3Raw();
 											  return new float[] { scale.x, scale.y, scale.z };
 										  });
 						break;
