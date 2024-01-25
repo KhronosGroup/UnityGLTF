@@ -46,6 +46,8 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
 
+		public BlendShapeFrameWeightMultiplierSetting BlendShapeFrameWeightMultiplier = new BlendShapeFrameWeightMultiplierSetting(BlendShapeFrameWeightMultiplierSetting.MultiplierOption.Multiplier_1);
+
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
 #else
