@@ -480,7 +480,7 @@ namespace UnityGLTF
                 if (gltfScene && _importAnimations == AnimationMethod.MecanimHumanoid)
                 {
 	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene);
-	                if (avatar && avatar.isValid)
+	                if (avatar)
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
 
