@@ -52,6 +52,9 @@ namespace UnityGLTF
 			}
 		}
 
+		// These occlusion maps are baked into metallic roughness map (channel R)
+		private HashSet<Material> _occlusionBakedTextures = new HashSet<Material>();
+
         public MaterialId ExportMaterial(Material materialObj)
 		{
 			MaterialId id = GetMaterialId(_root, materialObj);
@@ -235,27 +238,6 @@ namespace UnityGLTF
 				}
 			}
 
-			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture"))
-			{
-				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" : materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
-				var occTex = materialObj.GetTexture(propName);
-				if (occTex)
-				{
-					if(occTex is Texture2D)
-					{
-						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj);
-						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
-						material.OcclusionTexture.TexCoord = materialObj.HasProperty("occlusionTextureTexCoord") ?
-							Mathf.RoundToInt(materialObj.GetFloat("occlusionTextureTexCoord")) :
-							materialObj.HasProperty("_OcclusionTextureTexCoord") ?
-								Mathf.RoundToInt(materialObj.GetFloat("_OcclusionTextureTexCoord")) : 0;
-					}
-					else
-					{
-						Debug.LogFormat(LogType.Error, "Can't export a {0} occlusion texture in material {1}", occTex.GetType(), materialObj.name);
-					}
-				}
-			}
 			if (IsUnlit(materialObj))
 			{
 				ExportUnlit( material, materialObj );
@@ -323,6 +305,37 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
+			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture"))
+			{
+				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" : materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
+				var occTex = materialObj.GetTexture(propName);
+				if (occTex)
+				{
+					if(occTex is Texture2D)
+					{
+						TextureId sharedTextureId = null;
+						if (material.PbrMetallicRoughness != null &&
+						    material.PbrMetallicRoughness.MetallicRoughnessTexture != null)
+						{
+							if (_occlusionBakedTextures.Contains(materialObj))
+							{
+								sharedTextureId = material.PbrMetallicRoughness.MetallicRoughnessTexture.Index;
+							}
+						}
+						
+						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj, sharedTextureId);
+						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
+						material.OcclusionTexture.TexCoord = materialObj.HasProperty("occlusionTextureTexCoord") ?
+							Mathf.RoundToInt(materialObj.GetFloat("occlusionTextureTexCoord")) :
+							materialObj.HasProperty("_OcclusionTextureTexCoord") ?
+								Mathf.RoundToInt(materialObj.GetFloat("_OcclusionTextureTexCoord")) : 0;
+					}
+					else
+					{
+						Debug.LogFormat(LogType.Error, "Can't export a {0} occlusion texture in material {1}", occTex.GetType(), materialObj.name);
+					}
+				}
+			}
 			exportMaterialMarker.End();
 
 			return CreateAndAddMaterialId(materialObj, material);
@@ -588,11 +601,14 @@ namespace UnityGLTF
 		private OcclusionTextureInfo ExportOcclusionTextureInfo(
 			Texture texture,
 			string textureSlot,
-			Material material)
+			Material material, TextureId sharedTextureId = null)
 		{
 			var info = new OcclusionTextureInfo();
 
-			info.Index = ExportTexture(texture, textureSlot);
+			if (sharedTextureId != null)
+				info.Index = sharedTextureId;
+			else
+				info.Index = ExportTexture(texture, textureSlot);
 
 			if (material.HasProperty("occlusionStrength"))
 			{
@@ -674,6 +690,7 @@ namespace UnityGLTF
 
             var needToBakeRoughnessIntoTexture = false;
             float roughnessMultiplier = 1f;
+            bool occlusionGetBakedIntoMetallicRoughness = false;
 
             if (material.HasProperty("roughnessFactor"))
             {
@@ -741,12 +758,29 @@ namespace UnityGLTF
 
 				if (mrTex)
 				{
+					Texture occlusionTex;
+					if (material.HasProperty("_OcclusionMap"))
+					{
+						occlusionTex = material.GetTexture("_OcclusionMap");
+						if (occlusionTex != null && occlusionTex == mrTex)
+						{
+							occlusionGetBakedIntoMetallicRoughness = true;
+						}
+					}
+					
 					var conversion = GetExportSettingsForSlot((isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.Linear : TextureMapType.MetallicGloss);
 					if (needToBakeRoughnessIntoTexture)
 					{
 						conversion = new TextureExportSettings(conversion);
 						conversion.smoothnessMultiplier = 1 - roughnessMultiplier;
 					}
+					
+					if (occlusionGetBakedIntoMetallicRoughness)
+					{
+						conversion.conversion = TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap;
+						_occlusionBakedTextures.Add(material);
+					}
+					
 					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);
 					// in the Standard shader, _METALLICGLOSSMAP replaces _Metallic and so we need to set the multiplier to 1;
 					// that's not true for the gltf shaders though, so we keep the value there.

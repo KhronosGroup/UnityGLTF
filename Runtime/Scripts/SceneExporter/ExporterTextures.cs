@@ -54,7 +54,12 @@ namespace UnityGLTF
 					switch (textureMapType.conversion)
 					{
 						case TextureExportSettings.Conversion.MetalGlossChannelSwap:
+							GetConversionMaterial(textureMapType); // Sets paramaters to the material
 							ExportLinearTexture(image, fileOutputPath, true);
+							break;
+						case TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap:
+							GetConversionMaterial(textureMapType); // Sets paramaters to the material
+							ExportLinearTexture(image, fileOutputPath, true, true);
 							break;
 						case TextureExportSettings.Conversion.None:
 							if (textureMapType.linear)
@@ -82,19 +87,29 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="texture">Unity's metallic-gloss texture to be exported</param>
 		/// <param name="outputPath">The location to export the texture</param>
-		private void ExportLinearTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels)
+		private void ExportLinearTexture(Texture2D texture, string outputPath, bool swapMetalGlossChannels, bool includeOcclusionInChannels = false)
 		{
 			if (!texture)
 			{
 				Debug.Log(LogType.Error, "Can not export missing texture: " + outputPath);
 				return;
 			}
+			var previousSRGBState = GL.sRGBWrite;
+			GL.sRGBWrite = false;
+
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			if (swapMetalGlossChannels)
-				Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+			{
+		
+				if (includeOcclusionInChannels)
+					Graphics.Blit(texture, destRenderTexture, _metalGlossOcclusionChannelSwapMaterial);
+				else
+					Graphics.Blit(texture, destRenderTexture, _metalGlossChannelSwapMaterial);
+			}
 			else
 				Graphics.Blit(texture, destRenderTexture);
 			WriteRenderTextureToDiskAndRelease(destRenderTexture, outputPath, true);
+			GL.sRGBWrite = previousSRGBState;
 		}
 
 		/// <summary>
@@ -129,7 +144,7 @@ namespace UnityGLTF
 			
 			var exportTexture = new Texture2D(destRenderTexture.width, destRenderTexture.height, format, false, linear);
 			exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
-			exportTexture.Apply();
+			//exportTexture.Apply();
 
 			byte[] binaryData;
 			if(outputPath.EndsWith(".jpg")) 
@@ -388,6 +403,7 @@ namespace UnityGLTF
 						break;
 					// check if the texture contains an alpha channel; if yes, we shouldn't attempt to export from disk but instead convert.
 					case TextureExportSettings.Conversion.MetalGlossChannelSwap:
+					case TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap:
 						if (importer && importer.DoesSourceTextureHaveAlpha())
 							return false;
 						break;
@@ -623,15 +639,13 @@ namespace UnityGLTF
 					GL.sRGBWrite = sRGB;
 
 					var shader = GetConversionMaterial(exportSettings);
-					if (shader && shader.HasProperty("_SmoothnessMultiplier"))
-						shader.SetFloat("_SmoothnessMultiplier", exportSettings.smoothnessMultiplier);
-
+		
 					if (shader)
 						Graphics.Blit(texture, destRenderTexture, shader);
 					else
 						Graphics.Blit(texture, destRenderTexture);
 
-					var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, false);
+					var exportTexture = new Texture2D(width, height, TextureFormat.ARGB32, false, !sRGB);
 					exportTexture.ReadPixels(new Rect(0, 0, destRenderTexture.width, destRenderTexture.height), 0, 0);
 
 					var imageData = canExportAsJpeg ? exportTexture.EncodeToJPG(settings.DefaultJpegQuality) : exportTexture.EncodeToPNG();

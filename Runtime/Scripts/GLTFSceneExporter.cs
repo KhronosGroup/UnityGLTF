@@ -199,6 +199,7 @@ namespace UnityGLTF
 			{
 				None,
 				MetalGlossChannelSwap,
+				MetalGlossOcclusionChannelSwap,
 				NormalChannel,
 			}
 
@@ -319,7 +320,15 @@ namespace UnityGLTF
 				case TextureExportSettings.Conversion.NormalChannel:
 					return _normalChannelMaterial;
 				case TextureExportSettings.Conversion.MetalGlossChannelSwap:
+					if (_metalGlossChannelSwapMaterial && _metalGlossChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
+						_metalGlossChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
+
 					return _metalGlossChannelSwapMaterial;
+				case TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap:
+					if (_metalGlossOcclusionChannelSwapMaterial && _metalGlossOcclusionChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
+						_metalGlossOcclusionChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
+					
+					return _metalGlossOcclusionChannelSwapMaterial;
 				default:
 					return null;
 			}
@@ -365,6 +374,8 @@ namespace UnityGLTF
 		private ExportContext _exportContext;
 
 		private Material _metalGlossChannelSwapMaterial;
+		private Material _metalGlossOcclusionChannelSwapMaterial;
+		
 		private Material _normalChannelMaterial;
 
 		private const uint MagicGLTF = 0x46546C67;
@@ -589,6 +600,9 @@ namespace UnityGLTF
 			var metalGlossChannelSwapShader = Resources.Load("MetalGlossChannelSwap", typeof(Shader)) as Shader;
 			_metalGlossChannelSwapMaterial = new Material(metalGlossChannelSwapShader);
 
+			var metalGlossOcclusionChannelSwapShader = Resources.Load("MetalGlossOcclusionChannelSwap", typeof(Shader)) as Shader;
+			_metalGlossOcclusionChannelSwapMaterial = new Material(metalGlossOcclusionChannelSwapShader);
+			
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
 
