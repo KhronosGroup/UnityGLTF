@@ -363,6 +363,8 @@ If your plugin reads/writes custom extension data, you need to also implement `G
 
 ## Contributing
 
+> **Note**: As of 20240129 the default branch of this repository has been renamed from `master` to `main`.
+
 UnityGLTF is an open-source project. Well-tested PRs are welcome.  
 
 It is currently maintained by
