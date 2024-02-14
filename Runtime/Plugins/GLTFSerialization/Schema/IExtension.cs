@@ -1,7 +1,25 @@
+using GLTF.Utilities;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace GLTF.Schema
 {
+	public class AnimationPointerData
+	{
+		public string[] unityProperties;
+		public Type animationType;
+		public int nodeId;
+		
+		public delegate float[] ValuesConvertion(NumericArray data, int frame);
+		
+		public ValuesConvertion conversion;
+	}
+	
+	public interface IAnimationPointerRootExtension
+	{
+		bool TryGetAnimationPointerData(GLTFRoot root, AnimationPointerPathHierarchy pointerPath, out AnimationPointerData pointerData);
+	}
+	
 	/// <summary>
 	/// General interface for extensions
 	/// </summary>

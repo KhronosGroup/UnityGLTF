@@ -5,9 +5,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
+using GLTF.Schema.KHR_lights_punctual;
+using GLTF.Utilities;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
@@ -264,10 +267,22 @@ namespace UnityGLTF
 			if (_options.AnimationMethod == AnimationMethod.Legacy)
 				clip.legacy = true;
 
+			int nodeId = -1;
+			
 			foreach (AnimationChannel channel in animation.Channels)
 			{
+				bool usesPointer = false;
+				IExtension pointerExtension = null;
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
-				if (channel.Target.Node == null)
+				if (channel.Target.Extensions != null && channel.Target.Extensions.TryGetValue(
+					    KHR_animation_pointer.EXTENSION_NAME,
+					    out pointerExtension))
+				{
+					if (Context.TryGetPlugin<AnimationPointerImportContext>(out _))
+						usesPointer = true;
+				}
+				
+				if (!usesPointer && channel.Target.Node == null)
 				{
 					// If a channel doesn't have a target node, then just skip it.
 					// This is legal and is present in one of the asset generator models, but means that animation doesn't actually do anything.
@@ -275,17 +290,113 @@ namespace UnityGLTF
 					// Model 08
 					continue;
 				}
-				var node = await GetNode(channel.Target.Node.Id, cancellationToken);
-				string relativePath = RelativePathFrom(node.transform, root);
 
-				NumericArray input = samplerCache.Input.AccessorContent,
-					output = samplerCache.Output.AccessorContent;
-
+				string relativePath = null;
+				AnimationPointerData pointerData = null;
 				string[] propertyNames;
-				var known = Enum.TryParse(channel.Target.Path, out GLTFAnimationChannelPath path);
-				if (!known) continue;
+				GLTFAnimationChannelPath path = GLTFAnimationChannelPath.translation;
+				
+				if (usesPointer && pointerExtension != null)
+				{
+					KHR_animation_pointer pointer = pointerExtension as KHR_animation_pointer;
+					if (pointer == null || pointer.path == null)
+						continue;
+
+					path = GLTFAnimationChannelPath.pointer;
+					relativePath = pointer.path;
+					var pointerHierarchy = AnimationPointerPathHierarchy.CreateHierarchyFromFullPath(relativePath);
+
+					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.Extension)
+					{
+						if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
+							continue;
+						
+						if (hierarchyExtension is IAnimationPointerRootExtension rootExtension)
+						{
+							if (rootExtension.TryGetAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
+								nodeId = pointerData.nodeId;
+							else
+								continue;
+						}
+					}
+					else
+					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.Root)
+					{
+						var rootType = pointerHierarchy.elementName;
+						var rootIndex = pointerHierarchy.FindElement(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
+						if (rootIndex == null)
+							continue;
+						
+						switch (rootType)
+						{
+							case "nodes":
+								var pointerPropertyElement = pointerHierarchy.FindElement(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
+								if (pointerPropertyElement == null)
+									continue;
+								
+								pointerData = new AnimationPointerData();
+								pointerData.nodeId = rootIndex.index;
+								nodeId = rootIndex.index;
+								switch (pointerPropertyElement.elementName)
+								{
+									case "translation":
+										path = GLTFAnimationChannelPath.translation;
+										break;
+									case "rotation":
+										path = GLTFAnimationChannelPath.rotation;
+										break;
+									case "scale":
+										path = GLTFAnimationChannelPath.scale;
+										break;
+									case "weights":
+										path = GLTFAnimationChannelPath.weights;
+										break;
+								}
+
+								break; 
+							//case "materials":
+							//case "cameras":
+								//nodeId = _gltfRoot.Cameras[rootIndex]. pointerHierarchy.index;
+								//break;
+							default:
+								continue;
+								//throw new NotImplementedException();
+						}
+					}
+					else
+						continue;
+				}
+				else
+				{
+					if (channel.Target == null || channel.Target.Node == null)
+						continue;
+					nodeId = channel.Target.Node.Id;
+				}
+				
+				var node = await GetNode(nodeId, cancellationToken);
+				var targetNode = _gltfRoot.Nodes[nodeId];
+				relativePath = RelativePathFrom(node.transform, root);
+				NumericArray input = samplerCache.Input.AccessorContent;
+				NumericArray output = samplerCache.Output.AccessorContent;
+				
+				if (!usesPointer)
+				{
+					var known = Enum.TryParse(channel.Target.Path, out path);
+					if (!known) continue;
+				}
+				
 				switch (path)
 				{
+					case GLTFAnimationChannelPath.pointer:
+						if (pointerData == null)
+							continue;
+						if (pointerData.conversion == null)
+							continue;
+						propertyNames = pointerData.unityProperties;
+						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+										  samplerCache.Interpolation, pointerData.animationType,
+							(data, frame) => pointerData.conversion(data, frame));
+						break;
 					case GLTFAnimationChannelPath.translation:
 						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
 #if UNITY_EDITOR
@@ -308,13 +419,19 @@ namespace UnityGLTF
 
 					case GLTFAnimationChannelPath.rotation:
 						propertyNames = new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
-
+						bool hasLight = (targetNode.Extensions != null &&
+						                 targetNode.Extensions.ContainsKey(KHR_lights_punctualExtensionFactory
+							                 .EXTENSION_NAME) && Context.TryGetPlugin<LightsPunctualImportContext>(out _));
 						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
 											  var rotation = data.AsFloat4s[frame];
 											  var quaternion = rotation.ToUnityQuaternionConvert();
+											  if (hasLight)
+											  {
+												  quaternion *= Quaternion.Euler(0,180, 0);
+											  }
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 										  });
 
@@ -333,7 +450,7 @@ namespace UnityGLTF
 						break;
 
 					case GLTFAnimationChannelPath.weights:
-						var mesh = channel.Target.Node.Value.Mesh.Value;
+						var mesh = targetNode.Mesh.Value;
 						var primitives = mesh.Primitives;
 						if (primitives[0].Targets == null) break;
 						var targetCount = primitives[0].Targets.Count;
