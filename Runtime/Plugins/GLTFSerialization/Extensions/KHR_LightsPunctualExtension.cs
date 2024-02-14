@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using GLTF.Math;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using GLTF.Extensions;
+using GLTF.Utilities;
+using UnityEngine;
+using UnityGLTF.Extensions;
+using Color = GLTF.Math.Color;
 
 namespace GLTF.Schema.KHR_lights_punctual
 {
@@ -287,7 +290,7 @@ namespace GLTF.Schema.KHR_lights_punctual
 		}
 	}
 
-	public class KHR_LightsPunctualExtension : IExtension
+	public class KHR_LightsPunctualExtension : IExtension, IAnimationPointerRootExtension
 	{
 		public List<PunctualLight> Lights;
 
@@ -313,6 +316,84 @@ namespace GLTF.Schema.KHR_lights_punctual
 					new JProperty(KHR_lights_punctualExtensionFactory.PNAME_LIGHTS, new JArray(Lights))
 				)
 			);
+		}
+		
+		private static string[] GltfLightPropertyToUnityPropertyName(string gltfPropertyName)
+		{
+			switch (gltfPropertyName)
+			{
+				case "color":
+					return new string[] { "m_Color.r", "m_Color.g", "m_Color.b"};
+				case "intensity":
+					return new string[] { "m_Intensity"};
+				case "range":
+					return new string[]  {"m_Range"};
+				case "spot/innerConeAngle":
+					return new string[]  {"m_InnerConeAngle"};
+				case "spot/outerConeAngle":
+					return new string[]  {"m_OuterConeAngle"};
+				default:
+					return new string[] {gltfPropertyName};
+			}
+		}
+
+		private static AnimationPointerData.ValuesConvertion GetConversion(string gltfPropertyName)
+		{
+			switch (gltfPropertyName)
+			{
+				case "color":
+					return (NumericArray data, int frame) =>
+					{
+						var col =  data.AsFloats3[frame];
+						return new float[] { col.x, col.y, col.z };
+					};
+				case "intensity":
+					return (data, frame) => new float[1] { data.AsFloats[frame] / Mathf.PI }; 
+				case "range":
+					return (data, frame) => new float[1] { data.AsFloats[frame] };
+				case "spot/innerConeAngle":
+					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / (Mathf.Deg2Rad * 0.8f) }; 
+				case "spot/outerConeAngle":
+					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / Mathf.Deg2Rad };
+				default:
+					return null;
+			}
+		}
+
+		public bool TryGetAnimationPointerData(GLTFRoot root, AnimationPointerPathHierarchy pointerPath, out AnimationPointerData pointerData)
+		{
+			pointerData = new AnimationPointerData();
+			pointerData.nodeId = -1;
+			pointerData.animationType = typeof(UnityEngine.Light);
+			
+			var pointId = pointerPath.FindElement(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
+			if (pointId == null)
+				return false;
+
+			var property = pointerPath.FindElement(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
+			if (property == null)
+				return false;
+			
+			for (int i = 0; i < root.Nodes.Count; i++)
+			{
+				var n = root.Nodes[i];
+				if (n.Extensions != null && n.Extensions.TryGetValue(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, out IExtension extension))
+				{
+					if (extension is KHR_LightsPunctualNodeExtension lightExtension)
+					{
+						if (lightExtension.LightId.Id == pointId.index)
+						{
+							pointerData.nodeId = i;;
+							pointerData.unityProperties = GltfLightPropertyToUnityPropertyName(property.elementName);
+							pointerData.conversion = GetConversion(property.elementName);
+							
+							return true;							
+						}
+					}
+				}
+			}
+
+			return false;
 		}
 	}
 
