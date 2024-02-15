@@ -11,14 +11,19 @@ namespace GLTF.Utilities
 
         public AnimationPointerPathHierarchy next { get; private set; }= null;
 
-        public AnimationPointerPathHierarchy FindElement(ElementTypeOptions elementType)
+        public string GetPath()
+        {
+            return elementName+ (next != null ? "/" + next.GetPath() : "");
+        }
+        
+        public AnimationPointerPathHierarchy FindFirstElement(ElementTypeOptions elementType)
         {
             if (this.elementType == elementType)
                 return this;
             
             if (next == null)
                 return null;
-            return next.FindElement(elementType);
+            return next.FindFirstElement(elementType);
         }
         
         public static AnimationPointerPathHierarchy CreateHierarchyFromFullPath(string fullPath)
@@ -35,6 +40,17 @@ namespace GLTF.Utilities
                     return null;
                 
                 var result = new AnimationPointerPathHierarchy();
+                if (path.GetCurrentAsString() == "extensions")
+                {
+                    if (path.MoveNext())
+                    {
+                        result.elementName = path.GetCurrentAsString();
+                        result.elementType = ElementTypeOptions.Extension;
+                        result.next = TravelHierarchy(path);
+                        return result;
+                    }
+                }
+                
                 if (path.GetCurrentAsInt(out int index))
                 {
                     result.index = index;
