@@ -1171,6 +1171,11 @@ namespace UnityGLTF
 								lastKeyframe = kf;
 							}
 							curve.keys = keyframes.ToArray();
+							// Ensure that the curve is constant for spritesheet animation
+							for (var i = 0; i < curve.keys.Length; i++)
+							{
+								AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
+							}
 							current.AddPropertyCurves(obj, curve, binding);
 							targetCurves[path] = current;
 
