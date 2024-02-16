@@ -306,7 +306,7 @@ namespace UnityGLTF
 					relativePath = pointer.path;
 					var pointerHierarchy = AnimationPointerPathHierarchy.CreateHierarchyFromFullPath(relativePath);
 
-					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.Extension)
+					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.RootExtension)
 					{
 						if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
 							continue;
@@ -323,14 +323,14 @@ namespace UnityGLTF
 					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.Root)
 					{
 						var rootType = pointerHierarchy.elementName;
-						var rootIndex = pointerHierarchy.FindFirstElement(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
+						var rootIndex = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
 						if (rootIndex == null)
 							continue;
 						
 						switch (rootType)
 						{
 							case "nodes":
-								var pointerPropertyElement = pointerHierarchy.FindFirstElement(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
+								var pointerPropertyElement = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
 								if (pointerPropertyElement == null)
 									continue;
 								
@@ -359,47 +359,22 @@ namespace UnityGLTF
 								nodeIds = _gltfRoot.GetAllNodeIdsWithMaterialId(rootIndex.index);
 								if (nodeIds.Length == 0)
 									continue;
-								var materialPath = pointerHierarchy.FindFirstElement(AnimationPointerPathHierarchy.ElementTypeOptions.Index).next;
-								var propertyPath = materialPath.GetPath();
+								var materialPath = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index).next;
 								if (materialPath == null)
 									continue;
-
-								var m = new GLTFSceneExporter.MaterialPointerPropertyRemapper();
-								m.AddDefaults();
-								var mat = _assetCache.MaterialCache[rootIndex.index];
 								
-								if (!m.GetUnityPropertyName(mat.UnityMaterial, propertyPath, out string unityPropertyName))
-									continue;
 								
-								pointerData = new AnimationPointerData();
-								pointerData.unityProperties = new string[] { "material."+unityPropertyName };
-
-
-
-								pointerData.animationType = typeof(MeshRenderer); // TODO: SkinnendMeshRenderer
-								//mat.UnityMaterial.GetType();
-
-								switch (samplerCache.Output.AccessorId.Value.Type)
+								var gltfPropertyPath = materialPath.GetPath();
+								if (gltfPropertyPath.Contains("scale") || gltfPropertyPath.Contains("offset"))
 								{
-									case GLTFAccessorAttributeType.SCALAR:
-										pointerData.conversion = (data, frame) => new float[] { data.AsFloats[frame] };
-										break;
-									case GLTFAccessorAttributeType.VEC2:
-										pointerData.conversion = (data, frame) => new float[] { data.AsFloats2[frame].x, data.AsFloats2[frame].y };
-										break;
-									case GLTFAccessorAttributeType.VEC3:
-										pointerData.conversion = (data, frame) => new float[] { data.AsFloats3[frame].x, data.AsFloats3[frame].y, data.AsFloats3[frame].z };
-										break;
-									case GLTFAccessorAttributeType.VEC4:
-										pointerData.conversion = (data, frame) => new float[] { data.AsFloats4[frame].x, data.AsFloats4[frame].y, data.AsFloats4[frame].z, data.AsFloats4[frame].w };
-										break;
-									default:
-										continue;
+									Debug.Log("");
 								}
 
+								var mat = _assetCache.MaterialCache[rootIndex.index];
+								
+								if (!AnimationPointerHelpers.Prepare(out pointerData, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type))
+									continue;
 
-								
-								
 								break;
 								
 								
