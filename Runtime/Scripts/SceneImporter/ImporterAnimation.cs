@@ -269,6 +269,8 @@ namespace UnityGLTF
 
 			int[] nodeIds = new int[0];
 			
+			AnimationPointerImportContext pointerImportContext = null;
+			
 			foreach (AnimationChannel channel in animation.Channels)
 			{
 				bool usesPointer = false;
@@ -278,7 +280,7 @@ namespace UnityGLTF
 					    KHR_animation_pointer.EXTENSION_NAME,
 					    out pointerExtension))
 				{
-					if (Context.TryGetPlugin<AnimationPointerImportContext>(out _))
+					if (Context.TryGetPlugin(out pointerImportContext))
 						usesPointer = true;
 				}
 				
@@ -304,89 +306,93 @@ namespace UnityGLTF
 
 					path = GLTFAnimationChannelPath.pointer;
 					relativePath = pointer.path;
-					var pointerHierarchy = AnimationPointerPathHierarchy.CreateHierarchyFromFullPath(relativePath);
+					var pointerHierarchy = AnimationPointerPathHierarchy.CreateHierarchyFromPath(relativePath);
 
-					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.RootExtension)
+					switch (pointerHierarchy.elementType)
 					{
-						if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
-							continue;
-						
-						if (hierarchyExtension is IAnimationPointerRootExtension rootExtension)
-						{
-							if (rootExtension.TryGetAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
-								nodeIds = new int[] { pointerData.nodeId};
-							else
+						case AnimationPointerPathHierarchy.ElementTypeOptions.RootExtension:
+							if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
 								continue;
-						}
-					}
-					else
-					if (pointerHierarchy.elementType == AnimationPointerPathHierarchy.ElementTypeOptions.Root)
-					{
-						var rootType = pointerHierarchy.elementName;
-						var rootIndex = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
-						if (rootIndex == null)
-							continue;
-						
-						switch (rootType)
-						{
-							case "nodes":
-								var pointerPropertyElement = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
-								if (pointerPropertyElement == null)
+							
+							if (hierarchyExtension is IAnimationPointerRootExtension rootExtension)
+							{
+								if (rootExtension.TryGetAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
+									nodeIds = new int[] { pointerData.nodeId};
+								else
 									continue;
-								
-								pointerData = new AnimationPointerData();
-								pointerData.nodeId = rootIndex.index;
-								nodeIds = new int[] {rootIndex.index};
-
-								switch (pointerPropertyElement.elementName)
-								{
-									case "translation":
-										path = GLTFAnimationChannelPath.translation;
-										break;
-									case "rotation":
-										path = GLTFAnimationChannelPath.rotation;
-										break;
-									case "scale":
-										path = GLTFAnimationChannelPath.scale;
-										break;
-									case "weights":
-										path = GLTFAnimationChannelPath.weights;
-										break;
-								}
-
-								break; 
-							case "materials":
-								nodeIds = _gltfRoot.GetAllNodeIdsWithMaterialId(rootIndex.index);
-								if (nodeIds.Length == 0)
-									continue;
-								var materialPath = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index).next;
-								if (materialPath == null)
-									continue;
-								
-								
-								var gltfPropertyPath = materialPath.GetPath();
-								if (gltfPropertyPath.Contains("scale") || gltfPropertyPath.Contains("offset"))
-								{
-									Debug.Log("");
-								}
-
-								var mat = _assetCache.MaterialCache[rootIndex.index];
-								
-								if (!AnimationPointerHelpers.Prepare(out pointerData, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type))
-									continue;
-
-								break;
-								
-								
-							//case "cameras":
-								//nodeId = _gltfRoot.Cameras[rootIndex]. pointerHierarchy.index;
-								//break;
-							default:
+							}
+							break;
+						case AnimationPointerPathHierarchy.ElementTypeOptions.Root:
+							var rootType = pointerHierarchy.elementName;
+							var rootIndex = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
+							if (rootIndex == null)
 								continue;
+						
+							switch (rootType)
+							{
+								case "nodes":
+									var pointerPropertyElement = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
+									if (pointerPropertyElement == null)
+										continue;
+								
+									pointerData = new AnimationPointerData();
+									pointerData.nodeId = rootIndex.index;
+									nodeIds = new int[] {rootIndex.index};
+
+									// Convert translate, scale, rotation from pointer path to to GLTFAnimationChannelPath, so we can use the same code as the other channels
+									if (!GLTFAnimationChannelPath.TryParse(pointerPropertyElement.elementName, out path))
+										continue;
+
+									break; 
+								case "materials":
+									nodeIds = _gltfRoot.GetAllNodeIdsWithMaterialId(rootIndex.index);
+									if (nodeIds.Length == 0)
+										continue;
+									var materialPath = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index).next;
+									if (materialPath == null)
+										continue;
+								
+									var gltfPropertyPath = materialPath.ExtractPath();
+									var mat = _assetCache.MaterialCache[rootIndex.index];
+
+									var matPointerData = new MaterialAnimationPointerData();
+									pointerData = matPointerData;
+									
+									if (!AnimationPointerHelpers.BuildMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, matPointerData, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type))
+										continue;
+									if (!string.IsNullOrEmpty(matPointerData.secondaryPath))
+									{
+										// When an property has potentially a second Sampler, we need to find it. e.g. like EmissionFactor and EmissionStrength
+										string secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/{matPointerData.secondaryPath}";
+										foreach (AnimationChannel secondAnimationChannel in animation.Channels)
+										{
+											if (secondAnimationChannel.Target.Extensions == null || !secondAnimationChannel.Target.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out IExtension secondaryExt))
+												continue;
+											if (secondaryExt is KHR_animation_pointer secondaryPointer)
+											{
+												AnimationSamplerCacheData secondarySamplerCache = animationCache.Samplers[secondAnimationChannel.Sampler.Id];
+												if (secondaryPointer.path == secondaryPath)
+												{
+
+													matPointerData.secondaryData = secondarySamplerCache.Output;
+													break;
+												}
+											}
+										}
+									}
+									break;
+								//case "cameras":
+									//nodeId = _gltfRoot.Cameras[rootIndex]. pointerHierarchy.index;
+									//break;
+								default:
+									continue;
 								//throw new NotImplementedException();
-						}
+							}							break;
+						default:
+							continue;
 					}
-					else
+					
+					if (pointerData == null)
 						continue;
 				}
 				else
@@ -396,6 +402,7 @@ namespace UnityGLTF
 					nodeIds = new int[] {channel.Target.Node.Id};
 				}
 
+				// In case an animated material are referenced from many nodes, whe need to create a curve for each node
 				foreach (var nodeId in nodeIds)
 				{
 					var node = await GetNode(nodeId, cancellationToken);
@@ -409,16 +416,20 @@ namespace UnityGLTF
 						var known = Enum.TryParse(channel.Target.Path, out path);
 						if (!known) continue;
 					}
+					else
+					{
+						pointerData.animationType = targetNode.Skin != null ? typeof(SkinnedMeshRenderer) : typeof(MeshRenderer);
+					}
+					
 
 					switch (path)
 					{
 						case GLTFAnimationChannelPath.pointer:
-							if (pointerData == null)
-								continue;
+	
 							if (pointerData.conversion == null)
 								continue;
-							propertyNames = pointerData.unityProperties;
-							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+							
+							SetAnimationCurve(clip, relativePath,  pointerData.unityProperties, input, output,
 								samplerCache.Interpolation, pointerData.animationType,
 								(data, frame) => pointerData.conversion(data, frame));
 							break;

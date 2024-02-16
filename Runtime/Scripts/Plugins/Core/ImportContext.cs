@@ -51,8 +51,8 @@ namespace UnityGLTF.Plugins
 		{
 			Plugins = InitializePlugins(settings);
 		}
-
-		public bool TryGetPlugin<T>(out GLTFImportPluginContext o) where T: GLTFImportPluginContext
+		
+		public bool TryGetPlugin<T>(out T o) where T: GLTFImportPluginContext
 		{
 			foreach (var plugin in Plugins)
 			{

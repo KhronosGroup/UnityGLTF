@@ -4,17 +4,9 @@ using System;
 
 namespace GLTF.Schema
 {
-	public class AnimationPointerData
-	{
-		public string[] unityProperties;
-		public Type animationType;
-		public int nodeId;
-		
-		public delegate float[] ValuesConvertion(NumericArray data, int frame);
-		
-		public ValuesConvertion conversion;
-	}
-	
+	/// <summary>
+	/// Additional interface for Root Extensions to support custom animation pointers
+	/// </summary>
 	public interface IAnimationPointerRootExtension
 	{
 		bool TryGetAnimationPointerData(GLTFRoot root, AnimationPointerPathHierarchy pointerPath, out AnimationPointerData pointerData);

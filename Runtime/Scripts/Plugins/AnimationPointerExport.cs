@@ -13,6 +13,7 @@ namespace UnityGLTF.Plugins
     
     public class AnimationPointerExportContext: GLTFExportPluginContext
     {
+        public MaterialPropertiesRemapper materialPropertiesRemapper = new DefaultMaterialPropertiesRemapper();
         
     }
 }

@@ -12,6 +12,6 @@
 
     public class AnimationPointerImportContext: GLTFImportPluginContext
     {
-        
+        public MaterialPropertiesRemapper materialPropertiesRemapper = new DefaultMaterialPropertiesRemapper();
     }
 }
