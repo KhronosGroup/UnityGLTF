@@ -1134,6 +1134,12 @@ namespace UnityGLTF
 							var spriteSheetPath = AssetDatabase.GetAssetPath(spriteSheet);
 							// will only work with all sprites from the same spritesheet right now
 							var sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(spriteSheetPath);
+							if (sprites.Length == 1)
+							{
+								Debug.LogWarning(
+									$"Spritesheet animation {spriteSheet.name} has only one frame. Exporting sprite animation using multiple image files is currently not supported. If you intent to export animated sprites please provide a spritesheet containing all your frames.",
+									spriteRenderer);
+							}
 
 							var path = binding.propertyName;
 							if (!targetCurves.ContainsKey(path))
