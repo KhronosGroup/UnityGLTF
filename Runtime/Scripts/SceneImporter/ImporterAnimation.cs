@@ -409,11 +409,13 @@ namespace UnityGLTF
 											break;
 										case "orthographic/xmag":
 											continue;
+										case "perspective/znear":
 										case "orthographic/znear":
 											pointerData.unityProperties = new string[] { "near clip plane" };
 											pointerData.conversion = (data, frame) =>
 												new float[] {data.AsFloats[frame]};
 											break;
+										case "perspective/zfar":
 										case "orthographic/zfar":
 											pointerData.unityProperties = new string[] { "far clip plane" };
 											pointerData.conversion = (data, frame) =>
