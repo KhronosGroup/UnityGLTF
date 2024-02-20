@@ -336,8 +336,10 @@ namespace UnityGLTF
 							if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
 								continue;
 							
+							// Check if the extension support animation pointers
 							if (hierarchyExtension is IAnimationPointerRootExtension rootExtension)
 							{
+								// Let the extension handle the pointer data and create the nodeIds and unity properties
 								if (rootExtension.TryGetAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
 									nodeIds = new int[] { pointerData.nodeId};
 								else
@@ -481,7 +483,6 @@ namespace UnityGLTF
 						if (pointerData.animationType == null)
 							pointerData.animationType = targetNode.Skin != null ? typeof(SkinnedMeshRenderer) : typeof(MeshRenderer);
 					}
-					
 
 					switch (path)
 					{

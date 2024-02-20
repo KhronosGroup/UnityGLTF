@@ -106,11 +106,10 @@ namespace UnityGLTF
 					
 					flipValueRange = map.ExportFlipValueRange;
 					valueMultiplier = map.ExportValueMultiplier == 1f ? null : map.ExportValueMultiplier;
-					isTextureTransform = map.IsTextureTransform;
+					isTextureTransform = map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform;
 					keepColorAlpha = map.ExportKeepColorAlpha;
 					convertToLinearColor = map.ExportConvertToLinearColor;
 					
-			
 					break;
 				case Light light:
 					extensionName = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;

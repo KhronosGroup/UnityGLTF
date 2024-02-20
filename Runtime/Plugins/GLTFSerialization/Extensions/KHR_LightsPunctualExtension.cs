@@ -381,16 +381,16 @@ namespace GLTF.Schema.KHR_lights_punctual
 				var n = root.Nodes[i];
 				if (n.Extensions != null && n.Extensions.TryGetValue(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, out IExtension extension))
 				{
-					if (extension is KHR_LightsPunctualNodeExtension lightExtension)
+					if (!(extension is KHR_LightsPunctualNodeExtension lightExtension))
+						continue;
+
+					if (lightExtension.LightId.Id == pointId.index)
 					{
-						if (lightExtension.LightId.Id == pointId.index)
-						{
-							pointerData.nodeId = i;;
-							pointerData.unityProperties = GltfLightPropertyToUnityPropertyName(property.elementName);
-							pointerData.conversion = GetConversion(property.elementName);
-							
-							return true;							
-						}
+						pointerData.nodeId = i;;
+						pointerData.unityProperties = GltfLightPropertyToUnityPropertyName(property.elementName);
+						pointerData.conversion = GetConversion(property.elementName);
+						
+						return true;							
 					}
 				}
 			}
