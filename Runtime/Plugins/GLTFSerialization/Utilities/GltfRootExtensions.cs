@@ -34,5 +34,18 @@ namespace GLTF.Utilities
             return ids.ToArray();
         }
 
+        public static int[] GetAllNodeIdsWithCameraId(this GLTFRoot root, int id)
+        {
+            List<int> ids = new List<int>();
+
+            for (int i = 0; i < root.Nodes.Count; i++)
+            {
+                if (root.Nodes[i].Camera != null && root.Nodes[i].Camera.Id == id)
+                    ids.Add(i);
+            }
+
+            return ids.ToArray();
+        }        
+        
     }
 }

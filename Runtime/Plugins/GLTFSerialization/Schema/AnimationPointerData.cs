@@ -10,10 +10,7 @@ namespace GLTF.Schema
 		
         public delegate float[] ValuesConvertion(NumericArray data, int frame);
         public ValuesConvertion conversion;
-    }
 
-    public class MaterialAnimationPointerData : AnimationPointerData
-    {
         public string secondaryPath = "";
         public AttributeAccessor secondaryData;
     }

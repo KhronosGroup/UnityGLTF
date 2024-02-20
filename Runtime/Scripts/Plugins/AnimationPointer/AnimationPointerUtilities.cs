@@ -7,7 +7,7 @@ namespace UnityGLTF.Plugins
     {
         private static readonly string[] MATERIAL_PROPERTY_COMPONENTS = {"x", "y", "z", "w"};
 
-        internal static bool BuildMaterialAnimationPointerData(MaterialPropertiesRemapper remapper, MaterialAnimationPointerData pointerData, Material material, string gltfProperty, GLTFAccessorAttributeType valueType)
+        internal static bool BuildMaterialAnimationPointerData(MaterialPropertiesRemapper remapper, AnimationPointerData pointerData, Material material, string gltfProperty, GLTFAccessorAttributeType valueType)
         {
             if (!remapper.GetUnityPropertyName(material, gltfProperty, out string unityPropertyName,
                     out MaterialPointerPropertyMap propertyMap, out bool isSecondaryGltfProperty))
@@ -65,7 +65,7 @@ namespace UnityGLTF.Plugins
             return result;
         }
         
-        internal static float[] MaterialValueConversion(NumericArray data, int frame, int componentCount, MaterialPointerPropertyMap map, MaterialAnimationPointerData pointerData)
+        internal static float[] MaterialValueConversion(NumericArray data, int frame, int componentCount, MaterialPointerPropertyMap map, AnimationPointerData pointerData)
         {
             float[] result = new float[componentCount];
 									

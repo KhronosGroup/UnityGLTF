@@ -270,7 +270,29 @@ namespace UnityGLTF
 			int[] nodeIds = new int[0];
 			
 			AnimationPointerImportContext pointerImportContext = null;
-			
+
+			AttributeAccessor FindSecondaryChannel(string animationPointerPath)
+			{
+				foreach (AnimationChannel secondAnimationChannel in animation.Channels)
+				{
+					if (secondAnimationChannel.Target.Extensions == null ||
+					    !secondAnimationChannel.Target.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME,
+						    out IExtension secondaryExt))
+						continue;
+					if (secondaryExt is KHR_animation_pointer secondaryPointer)
+					{
+						AnimationSamplerCacheData secondarySamplerCache =
+							animationCache.Samplers[secondAnimationChannel.Sampler.Id];
+						if (secondaryPointer.path == animationPointerPath)
+						{
+							return secondarySamplerCache.Output;
+						}
+					}
+				}
+
+				return null;
+			}
+
 			foreach (AnimationChannel channel in animation.Channels)
 			{
 				bool usesPointer = false;
@@ -355,35 +377,71 @@ namespace UnityGLTF
 									var gltfPropertyPath = materialPath.ExtractPath();
 									var mat = _assetCache.MaterialCache[rootIndex.index];
 
-									var matPointerData = new MaterialAnimationPointerData();
-									pointerData = matPointerData;
+									pointerData = new AnimationPointerData();
 									
-									if (!AnimationPointerHelpers.BuildMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, matPointerData, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type))
+									if (!AnimationPointerHelpers.BuildMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, pointerData, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type))
 										continue;
-									if (!string.IsNullOrEmpty(matPointerData.secondaryPath))
+									if (!string.IsNullOrEmpty(pointerData.secondaryPath))
 									{
 										// When an property has potentially a second Sampler, we need to find it. e.g. like EmissionFactor and EmissionStrength
-										string secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/{matPointerData.secondaryPath}";
-										foreach (AnimationChannel secondAnimationChannel in animation.Channels)
-										{
-											if (secondAnimationChannel.Target.Extensions == null || !secondAnimationChannel.Target.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME, out IExtension secondaryExt))
-												continue;
-											if (secondaryExt is KHR_animation_pointer secondaryPointer)
-											{
-												AnimationSamplerCacheData secondarySamplerCache = animationCache.Samplers[secondAnimationChannel.Sampler.Id];
-												if (secondaryPointer.path == secondaryPath)
-												{
-
-													matPointerData.secondaryData = secondarySamplerCache.Output;
-													break;
-												}
-											}
-										}
+										string secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/{pointerData.secondaryPath}";
+										pointerData.secondaryData = FindSecondaryChannel(secondaryPath);
 									}
 									break;
-								//case "cameras":
-									//nodeId = _gltfRoot.Cameras[rootIndex]. pointerHierarchy.index;
-									//break;
+								case "cameras":
+									int cameraId = rootIndex.index;
+									pointerData = new AnimationPointerData();
+									pointerData.animationType = typeof(Camera);
+									
+									string gltfCameraPropertyPath = rootIndex.next.ExtractPath();
+									switch (gltfCameraPropertyPath)
+									{
+										case "orthographic/ymag":
+											pointerData.secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/orthographic/xmag";
+											pointerData.unityProperties = new string[] { "orthographic size" };
+											pointerData.secondaryData = FindSecondaryChannel(pointerData.secondaryPath);
+											pointerData.conversion = (data, frame) =>
+											{
+												var xmag = pointerData.secondaryData.AccessorContent.AsFloats[frame];
+												var ymag = data.AsFloats[frame];
+												return new float[] {Mathf.Max(xmag, ymag)};
+											};
+											break;
+										case "orthographic/xmag":
+											continue;
+										case "orthographic/znear":
+											pointerData.unityProperties = new string[] { "near clip plane" };
+											pointerData.conversion = (data, frame) =>
+												new float[] {data.AsFloats[frame]};
+											break;
+										case "orthographic/zfar":
+											pointerData.unityProperties = new string[] { "far clip plane" };
+											pointerData.conversion = (data, frame) =>
+												new float[] {data.AsFloats[frame]};
+											break;
+										case "perspective/yfov":
+											pointerData.unityProperties = new string[] { "field of view" };
+											pointerData.conversion = (data, frame) =>
+											{
+												var fov = data.AsFloats[frame] * Mathf.Rad2Deg;
+												return new float[] {fov};
+											};
+											break;
+										case "backgroundColor":
+											pointerData.unityProperties = new string[] { "background color.r", "background color.g", "background color.b", "background color.a" };
+											pointerData.conversion = (data, frame) =>
+											{
+												var color = data.AsFloats4[frame].ToUnityColorRaw();
+												return new float[] {color.r, color.g, color.b, color.a};
+											};
+											break;
+										default:
+											Debug.Log(LogType.Warning, "Unknown property name on Camera " + cameraId.ToString() + ": " + gltfCameraPropertyPath);
+											break;
+									}
+									
+									nodeIds = _gltfRoot.GetAllNodeIdsWithCameraId(cameraId);
+									break;
 								default:
 									continue;
 								//throw new NotImplementedException();
@@ -418,7 +476,8 @@ namespace UnityGLTF
 					}
 					else
 					{
-						pointerData.animationType = targetNode.Skin != null ? typeof(SkinnedMeshRenderer) : typeof(MeshRenderer);
+						if (pointerData.animationType == null)
+							pointerData.animationType = targetNode.Skin != null ? typeof(SkinnedMeshRenderer) : typeof(MeshRenderer);
 					}
 					
 
