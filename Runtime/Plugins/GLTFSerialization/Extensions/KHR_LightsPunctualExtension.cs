@@ -354,9 +354,9 @@ namespace GLTF.Schema.KHR_lights_punctual
 				case "range":
 					return (data, frame) => new float[1] { data.AsFloats[frame] };
 				case "spot/innerConeAngle":
-					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / (Mathf.Deg2Rad * 0.8f) }; 
+					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / (Mathf.Deg2Rad * 0.8f)}; 
 				case "spot/outerConeAngle":
-					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / Mathf.Deg2Rad };
+					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / Mathf.Deg2Rad};
 				default:
 					return null;
 			}

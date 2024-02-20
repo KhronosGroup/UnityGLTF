@@ -130,7 +130,7 @@ namespace UnityGLTF
 							propertyName = $"spot/outerConeAngle";
 							break;
 						case "m_InnerSpotAngle":
-							valueMultiplier = Mathf.Deg2Rad / 2;
+							valueMultiplier = Mathf.Deg2Rad / 2 * 0.8f;
 							propertyName = $"spot/innerConeAngle";
 							break;
 						case "m_Range":
