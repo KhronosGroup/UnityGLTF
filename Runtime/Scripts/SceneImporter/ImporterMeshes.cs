@@ -350,21 +350,31 @@ namespace UnityGLTF
 
 		protected void ApplyImportOptionsOnMesh(Mesh mesh)
 		{
-			if (_options.ImportNormals == GLTFImporterNormals.None)
-				mesh.normals = new Vector3[0];
-			else if (_options.ImportNormals == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
-				mesh.RecalculateNormals();
-			else if (_options.ImportNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
-				mesh.RecalculateNormals();
-			else if (_options.ImportTangents != GLTFImporterNormals.None && mesh.normals.Length == 0)
-				mesh.RecalculateNormals();
+			bool isTrinagleTopology = mesh.GetTopology(0) == MeshTopology.Triangles;
 
+			if (_options.ImportNormals == GLTFImporterNormals.None)
+				mesh.normals = Array.Empty<Vector3>();
+			else
+			if (isTrinagleTopology)
+			{
+				if (_options.ImportNormals == GLTFImporterNormals.Calculate)
+					mesh.RecalculateNormals();
+				else if (_options.ImportNormals == GLTFImporterNormals.Import && mesh.normals.Length == 0)
+					mesh.RecalculateNormals();
+				else if (_options.ImportTangents != GLTFImporterNormals.None && mesh.normals.Length == 0)
+					mesh.RecalculateNormals();
+			}
+		
 			if (_options.ImportTangents == GLTFImporterNormals.None)
-				mesh.tangents = new Vector4[0];
-			else if (_options.ImportTangents == GLTFImporterNormals.Calculate && mesh.GetTopology(0) == MeshTopology.Triangles)
-				mesh.RecalculateTangents();
-			else if (_options.ImportTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0 && mesh.GetTopology(0) == MeshTopology.Triangles)
-				mesh.RecalculateTangents();
+				mesh.tangents = Array.Empty<Vector4>();
+			else
+			if (isTrinagleTopology)
+			{
+				if (_options.ImportTangents == GLTFImporterNormals.Calculate)
+					mesh.RecalculateTangents();
+				else if (_options.ImportTangents == GLTFImporterNormals.Import && mesh.tangents.Length == 0)
+					mesh.RecalculateTangents();
+			}
 
 			if (_options.SwapUVs)
 			{
