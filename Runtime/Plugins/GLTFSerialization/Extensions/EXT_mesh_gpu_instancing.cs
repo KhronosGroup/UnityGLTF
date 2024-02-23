@@ -14,7 +14,7 @@ namespace GLTF.Schema
 		public const string ATTRIBUTE_ROTATION = "ROTATION";
 		public const string ATTRIBUTE_SCALE = "SCALE";
 		
-		public Dictionary<string, int> attributes = new Dictionary<string, int>();
+		public Dictionary<string, AccessorId> attributes = new Dictionary<string, AccessorId>();
 
 		public JProperty Serialize()
 		{
@@ -25,14 +25,14 @@ namespace GLTF.Schema
 		{
 			return new EXT_mesh_gpu_instancing()
 			{
-				attributes = new Dictionary<string, int>(attributes)
+				attributes = new Dictionary<string, AccessorId>(attributes)
 			};
 		}
 	}
 
 	public class EXT_mesh_gpu_instancing_Factory : ExtensionFactory
 	{
-		public const string EXTENSION_NAME = "EXT_mesh_gpu_instancing ";
+		public const string EXTENSION_NAME = "EXT_mesh_gpu_instancing";
 
 		public EXT_mesh_gpu_instancing_Factory()
 		{
@@ -48,7 +48,11 @@ namespace GLTF.Schema
 				if (attributeToken != null)
 				{
 					var reader = attributeToken.CreateReader();
-					extension.attributes = reader.ReadAsDictionary(() => reader.ReadAsInt32().Value);
+					extension.attributes = reader.ReadAsDictionary(() => new AccessorId
+					{
+						Id = reader.ReadAsInt32().Value,
+						Root = root
+					});
 				}
 				return extension;
 			}
