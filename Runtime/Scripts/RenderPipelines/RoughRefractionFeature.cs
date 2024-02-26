@@ -39,6 +39,10 @@ namespace UnityGLTF
 		    {
 			    if (renderingData.cameraData.isPreviewCamera)
 				    return;
+			    
+			    if (m_source == null || m_destination == null || !m_source.rt || !m_destination.rt)
+				    return;
+				     
 			    base.Execute(context, ref renderingData);
 		    }
 
