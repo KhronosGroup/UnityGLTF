@@ -143,6 +143,16 @@ namespace UnityGLTF
 				}
 #endif
 			}
+			catch (Exception e)
+			{
+				if(importOptions.DataLoader != null)
+				{
+					sceneImporter?.Cleanup(true);
+					sceneImporter = null;
+					importOptions.DataLoader = null;
+				}
+				throw;
+			}
 			finally
 			{
 				if(importOptions.DataLoader != null)

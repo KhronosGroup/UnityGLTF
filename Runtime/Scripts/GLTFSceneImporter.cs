@@ -475,7 +475,7 @@ namespace UnityGLTF
 			}
 			catch (Exception ex)
 			{
-				Cleanup();
+				Cleanup(true);
 				DisposeNativeBuffers();
 
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
@@ -1196,11 +1196,15 @@ namespace UnityGLTF
 		/// <summary>
 		/// Cleans up any undisposed streams after loading a scene or a node.
 		/// </summary>
-		private void Cleanup()
+		public void Cleanup(bool cleanNodes = false)
 		{
 			if (_assetCache != null)
 			{
 				_assetCache.Dispose();
+				if (cleanNodes)
+				{
+					_assetCache.CleanNodes();
+				}
 				_assetCache = null;
 			}
 		}
@@ -1257,7 +1261,7 @@ namespace UnityGLTF
 			}
 			catch
 			{
-				Cleanup();
+				Cleanup(true);
 				throw;
 			}
 			finally
