@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.IO;
 using GLTF.Schema;
+using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Cache
 {
@@ -113,6 +114,17 @@ namespace UnityGLTF.Cache
 #if UNITY_ANIMATION || !UNITY_2019_1_OR_NEWER
 			AnimationCache = null;
 #endif
+		}
+
+		public void CleanNodes()
+		{
+			if (NodeCache == null) return;
+			foreach (GameObject t in NodeCache)
+			{
+				Object.Destroy(t);
+			}
+
+			NodeCache = null;
 		}
 	}
 }
