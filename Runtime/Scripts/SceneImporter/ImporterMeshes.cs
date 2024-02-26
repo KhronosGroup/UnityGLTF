@@ -653,7 +653,7 @@ namespace UnityGLTF
 				for (int i = 0; i < firstPrim.Targets.Count; i++)
 				{
 					var targetName = _options.ImportBlendShapeNames ? ((gltfMesh.TargetNames != null && gltfMesh.TargetNames.Count > i) ? gltfMesh.TargetNames[i] : $"Morphtarget{i}") : i.ToString();
-					mesh.AddBlendShapeFrame(targetName, 1f,
+					mesh.AddBlendShapeFrame(targetName, 1f * _options.BlendShapeFrameWeightMultiplier,
 						unityMeshData.MorphTargetVertices[i],
 						unityMeshData.MorphTargetNormals != null && unityMeshData.MorphTargetNormals[i] != null ? unityMeshData.MorphTargetNormals[i] : null,
 						unityMeshData.MorphTargetTangents != null && unityMeshData.MorphTargetTangents[i] != null ? unityMeshData.MorphTargetTangents[i] : null

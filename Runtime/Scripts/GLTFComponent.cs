@@ -51,6 +51,8 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool SwapUVs = false;
+		[Tooltip("Blend shape frame weight import multiplier. Default is 1. For compatibility with some FBX animations you may need to use 100.")]
+		public BlendShapeFrameWeightMultiplierSetting blendShapeFrameWeightsMultiplier = new BlendShapeFrameWeightMultiplierSetting(BlendShapeFrameWeightMultiplierSetting.MultiplierOption.Multiplier1);
 
 		private async void Start()
 		{
