@@ -230,8 +230,15 @@ namespace UnityGLTF.Timeline
 				private AnimationData tr;
 				private ExportPlan plan;
 				private Dictionary<double, object> samples;
-				private Tuple<double, object> lastSample = null;
-				private Tuple<double, object> secondToLastSample = null;
+
+				class TimeSample
+				{
+					public double time;
+					public object value;
+				}
+				
+				private TimeSample lastSample = null;
+				private TimeSample secondToLastSample = null;
 				
 				public Track(AnimationData tr, ExportPlan plan, double time)
 				{
@@ -266,14 +273,14 @@ namespace UnityGLTF.Timeline
 					// If that is the case we can remove/overwrite the middle sample with the new value.
 					if (lastSample != null
 						&& secondToLastSample != null
-						&& lastSample.Item2.Equals(secondToLastSample.Item2)
-						&& lastSample.Item2.Equals(value)) {
+						&& lastSample.value.Equals(secondToLastSample.value)
+						&& lastSample.value.Equals(value)) {
 						
-						samples.Remove(lastSample.Item1); 
+						samples.Remove(lastSample.time);
 					}
 					samples[time] = value;
 					secondToLastSample = lastSample;
-					lastSample = new Tuple<double, object>(time, value);
+					lastSample = new TimeSample { time = time, value = value};
 				}
 				
 			}
