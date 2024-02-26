@@ -86,7 +86,7 @@ namespace UnityGLTF
 		{
 			if (!texture)
 			{
-				UnityEngine.Debug.LogError("Can not export missing texture: " + outputPath);
+				Debug.Log(LogType.Error, "Can not export missing texture: " + outputPath);
 				return;
 			}
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);

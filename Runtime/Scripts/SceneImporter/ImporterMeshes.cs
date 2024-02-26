@@ -48,7 +48,7 @@ namespace UnityGLTF
 
 			if (_assetCache.MeshCache[meshIndex] == null)
 			{
-				throw new Exception($"Cannot generate mesh before ConstructMeshAttributes is called! (gltf Filename: {_gltfFileName})");
+				throw new Exception($"Cannot generate mesh before ConstructMeshAttributes is called! (File: {_gltfFileName})");
 			}
 			else if (_assetCache.MeshCache[meshIndex].LoadedMesh)
 			{
@@ -73,13 +73,13 @@ namespace UnityGLTF
 				}
 				else
 				{
-					throw new NotSupportedException($"Can't import model because it uses the KHR_draco_mesh_compression extension. Add the package \"com.unity.cloud.draco\" to your project to import this file. (gltf Filename: {_gltfFileName})");
+					throw new NotSupportedException($"Can't import model because it uses the KHR_draco_mesh_compression extension. Add the package \"com.unity.cloud.draco\" to your project to import this file. (File: {_gltfFileName})");
 				}
 			}
 #else
 			if (anyHadDraco)
 			{
-				throw new NotSupportedException($"Can't import model because it uses the KHR_draco_mesh_compression extension. Add the package \"com.unity.cloud.draco\" to your project to import this file. (gltf Filename: {_gltfFileName})");
+				throw new NotSupportedException($"Can't import model because it uses the KHR_draco_mesh_compression extension. Add the package \"com.unity.cloud.draco\" to your project to import this file. (File: {_gltfFileName})");
 			}
 #endif
 
@@ -197,7 +197,7 @@ namespace UnityGLTF
 			
 			if (!_assetCache.MeshCache[meshIndex].DracoMeshDataPrepared)
 			{
-				UnityEngine.Debug.LogError($"Draco Mesh Data is not prepared! Call PrepareDracoMesh first (gltf Filename: {_gltfFileName})");
+				Debug.Log(LogType.Error, $"Draco Mesh Data is not prepared! Call PrepareDracoMesh first (File: {_gltfFileName})");
 				return new (meshIndex, new Task<DecodeResult>[0]);
 			}
 
@@ -268,7 +268,7 @@ namespace UnityGLTF
 		{
 			if (!_assetCache.MeshCache[meshIndex].HasDracoMeshData)
 			{
-				UnityEngine.Debug.LogError($"Draco Mesh Data is not decoded! Call ConstructDracoMesh first (gltf Filename: {_gltfFileName})");
+				Debug.Log(LogType.Error, $"Draco Mesh Data is not decoded! Call ConstructDracoMesh first (File: {_gltfFileName})");
 				return;
 			}
 			
@@ -914,7 +914,7 @@ namespace UnityGLTF
 
 						if (!decodeResult.success)
 						{
-							UnityEngine.Debug.LogError($"Error decoding draco mesh (gltf Filename: {_gltfFileName})");
+							Debug.Log(LogType.Error, $"Error decoding draco mesh (File: {_gltfFileName})", this);
 							_assetCache.MeshCache[meshIndex].DracoMeshData.Dispose();
 						}
 
@@ -1206,7 +1206,7 @@ namespace UnityGLTF
 				case DrawMode.Triangles: return MeshTopology.Triangles;
 			}
 
-			throw new Exception("Unity does not support glTF draw mode: " + mode+ $" (gltf Filename: {_gltfFileName})");
+			throw new Exception("Unity does not support glTF draw mode: " + mode + $" (File: {_gltfFileName})");
 		}
 
 		/// <summary>

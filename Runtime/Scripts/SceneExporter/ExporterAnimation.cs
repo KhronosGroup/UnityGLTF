@@ -319,9 +319,9 @@ namespace UnityGLTF
 				if (propertyType == null)
 				{
 					if (target is Material mat)
-						UnityEngine.Debug.LogWarning($"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
+						Debug.Log(LogType.Warning, (object) $"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
 					else
-						UnityEngine.Debug.LogError($"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
+						Debug.Log(LogType.Error, (object) $"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
 					return false;
 				}
 
@@ -346,14 +346,14 @@ namespace UnityGLTF
 
 						if (!hasEnoughCurves)
 						{
-							UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
+							Debug.Log(LogType.Warning, (object) $"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
 							return false;
 						}
 					}
 
 					if (!hasEnoughCurves)
 					{
-						UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
+						Debug.Log(LogType.Warning, (object) $"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
 						return false;
 					}
 				}

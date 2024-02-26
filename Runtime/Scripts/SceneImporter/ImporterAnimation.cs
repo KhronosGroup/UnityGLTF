@@ -210,7 +210,7 @@ namespace UnityGLTF
 					key.outTangent = 0;
 					break;
 				default:
-					throw new NotImplementedException($"Unknown interpolation type for animation (gltf Filename: {_gltfFileName})");
+					throw new NotImplementedException($"Unknown interpolation type for animation (File: {_gltfFileName})");
 			}
 			keyframes[keyframeIndex] = key;
 		}
@@ -361,7 +361,7 @@ namespace UnityGLTF
 						break;
 
 					default:
-						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (gltf Filename: {_gltfFileName})");
+						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
 						break;
 				} // switch target type
 			} // foreach channel

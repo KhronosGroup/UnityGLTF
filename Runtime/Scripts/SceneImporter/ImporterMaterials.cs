@@ -22,7 +22,7 @@ namespace UnityGLTF
 
 			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(specGlossExtName) && def.Extensions != null && def.Extensions.ContainsKey(specGlossExtName))
 			{
-				Debug.Log(LogType.Warning, $"KHR_materials_pbrSpecularGlossiness has been deprecated, material {def.Name} may not look correct. Use `gltf-transform metalrough` or other tools to convert to PBR. (gltf Filename: {_gltfFileName})");
+				Debug.Log(LogType.Warning, $"KHR_materials_pbrSpecularGlossiness has been deprecated, material {def.Name} may not look correct. Use `gltf-transform metalrough` or other tools to convert to PBR. (File: {_gltfFileName})");
 
 				if (!string.IsNullOrEmpty(CustomShaderName))
 				{
