@@ -436,7 +436,7 @@ namespace GLTF.Schema
 				jsonWriter.WriteEndArray();
 			}
 
-			if (Buffers != null && Buffers.Count > 0)
+			if (Buffers != null && Buffers.Count > 0 && Buffers.Any(x => x.ByteLength > 0))
 			{
 				jsonWriter.WritePropertyName("buffers");
 				jsonWriter.WriteStartArray();
