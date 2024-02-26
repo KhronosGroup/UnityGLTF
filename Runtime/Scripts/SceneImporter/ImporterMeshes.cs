@@ -1170,6 +1170,12 @@ namespace UnityGLTF
 			var targets = primData.Targets;
 			if (targets != null)
 			{
+				float scaleFactor = 0f;
+				bool hasScale = false;
+#if UNITY_EDITOR
+				hasScale = Context != null && !Mathf.Approximately(Context.ImportScaleFactor, 1f);
+				scaleFactor = hasScale ? Context.ImportScaleFactor : 1f;
+#endif
 				for (int i = 0; i < targets.Count; ++i)
 				{
 					if (targets[i].TryGetValue(SemanticProperties.POSITION, out var tarAttrPos) && !unityData.alreadyAddedAccessors.Contains(tarAttrPos.AccessorId.Id))
@@ -1177,8 +1183,9 @@ namespace UnityGLTF
 						unityData.alreadyAddedAccessors.Add(tarAttrPos.AccessorId.Id);
 						var array = unityData.MorphTargetVertices[i];
 						tarAttrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(array, (int)vertOffset);
-						for (int j = 0; j < array.Length; j++)
-							array[j] *= Context.ImportScaleFactor;
+						if (hasScale)
+							for (int j = 0; j < array.Length; j++)
+								array[j] *= scaleFactor;
 					}
 					if (targets[i].TryGetValue(SemanticProperties.NORMAL, out var tarAttrNorm) && !unityData.alreadyAddedAccessors.Contains(tarAttrNorm.AccessorId.Id))
 					{
