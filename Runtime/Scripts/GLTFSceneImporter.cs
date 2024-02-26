@@ -690,7 +690,7 @@ namespace UnityGLTF
 
 			if (SceneParent != null)
 			{
-				CreatedObject.transform.SetParent(SceneParent, false);
+				CreatedObject.transform.SetParent(SceneParent);
 			}
 
 			_lastLoadedScene = CreatedObject;
@@ -1045,6 +1045,7 @@ namespace UnityGLTF
 			}
 
 			var sceneObj = new GameObject(string.IsNullOrEmpty(scene.Name) ? ("Scene") : scene.Name);
+			sceneObj.transform.position = new Vector3(0, -9000f, 0);
 
 			try
 			{
