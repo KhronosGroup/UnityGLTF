@@ -30,7 +30,7 @@ namespace UnityGLTF
 #endif
 
 		[SerializeField]
-		private bool loadOnStart = true;
+		public bool loadOnStart = true;
 
 		[SerializeField] private int RetryCount = 10;
 		[SerializeField] private float RetryTimeout = 2.0f;
