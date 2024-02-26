@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -901,8 +900,7 @@ namespace UnityGLTF
 					{
 						for (int i = 0; i < weights.Count; ++i)
 						{
-							// GLTF weights are [0, 1] range; Unity weights must match the frame weight
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * 1f));
+							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeightMultiplier));
 						}
 					}
 				}

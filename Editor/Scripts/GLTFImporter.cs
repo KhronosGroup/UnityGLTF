@@ -437,7 +437,6 @@ namespace UnityGLTF
 
 		                    mesh.bindposes = bindPoses;
 	                    }
-	     
                     }
                     if (_generateLightmapUVs)
                     {
