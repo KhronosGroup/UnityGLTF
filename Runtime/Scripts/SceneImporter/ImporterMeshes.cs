@@ -502,18 +502,9 @@ namespace UnityGLTF
 				return _assetCache.UnityMeshDataCache[meshIndex];
 			}
 			var vertOffsetBySubMesh = CalculateSubMeshVertexOffset(gltfMesh, out var verticesLength);
-			
+
 			UnityMeshData unityMeshData = new UnityMeshData()
 			{
-				MorphTargetVertices = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.POSITION)
-					? Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength)
-					: null,
-				MorphTargetNormals = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.NORMAL)
-					? Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength)
-					: null,
-				MorphTargetTangents = firstPrim.Targets != null && firstPrim.Targets[0].ContainsKey(SemanticProperties.TANGENT)
-					? Allocate2dArray<Vector3>((uint)firstPrim.Targets.Count, verticesLength)
-					: null,
 
 				Topology = new MeshTopology[gltfMesh.Primitives.Count],
 				Indices = new int[gltfMesh.Primitives.Count][],
@@ -523,6 +514,39 @@ namespace UnityGLTF
 
 			for (int i = 0; i < unityMeshData.subMeshDataCreated.Length; i++)
 				unityMeshData.subMeshDataCreated[i] = false;
+			
+			
+			if (firstPrim.Targets != null)
+			{
+				unityMeshData.MorphTargetVertices = new Vector3[firstPrim.Targets.Count][];
+				unityMeshData.MorphTargetNormals = new Vector3[firstPrim.Targets.Count][];
+				unityMeshData.MorphTargetTangents = new Vector3[firstPrim.Targets.Count][];
+
+				foreach (var prim in gltfMesh.Primitives)
+				{
+					for (int i = 0; i < prim.Targets.Count; i++)
+					{
+						if (unityMeshData.MorphTargetVertices[i] == null && prim.Targets[i].ContainsKey(SemanticProperties.POSITION))
+						{
+							unityMeshData.MorphTargetVertices[i] = new Vector3[verticesLength];
+							Array.Fill(unityMeshData.MorphTargetVertices[i], Vector3.zero);
+						}
+						
+						if (unityMeshData.MorphTargetNormals[i] == null && prim.Targets[i].ContainsKey(SemanticProperties.NORMAL))
+						{
+							unityMeshData.MorphTargetNormals[i] = new Vector3[verticesLength];
+							Array.Fill(unityMeshData.MorphTargetNormals[i], Vector3.zero);
+						}
+						
+						if (unityMeshData.MorphTargetTangents[i] == null && prim.Targets[i].ContainsKey(SemanticProperties.TANGENT))
+						{
+							unityMeshData.MorphTargetTangents[i] = new Vector3[verticesLength];
+							Array.Fill(unityMeshData.MorphTargetTangents[i], Vector3.zero);
+						}
+					}
+				}
+			}
+			
 			_assetCache.UnityMeshDataCache[meshIndex] = unityMeshData;
 
 			if (!onlyMorphTargets)
@@ -631,8 +655,8 @@ namespace UnityGLTF
 					var targetName = _options.ImportBlendShapeNames ? ((gltfMesh.TargetNames != null && gltfMesh.TargetNames.Count > i) ? gltfMesh.TargetNames[i] : $"Morphtarget{i}") : i.ToString();
 					mesh.AddBlendShapeFrame(targetName, 1f,
 						unityMeshData.MorphTargetVertices[i],
-						unityMeshData.MorphTargetNormals != null ? unityMeshData.MorphTargetNormals[i] : null,
-						unityMeshData.MorphTargetTangents != null ? unityMeshData.MorphTargetTangents[i] : null
+						unityMeshData.MorphTargetNormals != null && unityMeshData.MorphTargetNormals[i] != null ? unityMeshData.MorphTargetNormals[i] : null,
+						unityMeshData.MorphTargetTangents != null && unityMeshData.MorphTargetTangents[i] != null ? unityMeshData.MorphTargetTangents[i] : null
 					);
 				}
 			}
