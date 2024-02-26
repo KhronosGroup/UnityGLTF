@@ -1175,7 +1175,10 @@ namespace UnityGLTF
 					if (targets[i].TryGetValue(SemanticProperties.POSITION, out var tarAttrPos) && !unityData.alreadyAddedAccessors.Contains(tarAttrPos.AccessorId.Id))
 					{
 						unityData.alreadyAddedAccessors.Add(tarAttrPos.AccessorId.Id);
-						tarAttrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], (int)vertOffset);
+						var array = unityData.MorphTargetVertices[i];
+						tarAttrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(array, (int)vertOffset);
+						for (int j = 0; j < array.Length; j++)
+							array[j] *= Context.ImportScaleFactor;
 					}
 					if (targets[i].TryGetValue(SemanticProperties.NORMAL, out var tarAttrNorm) && !unityData.alreadyAddedAccessors.Contains(tarAttrNorm.AccessorId.Id))
 					{
