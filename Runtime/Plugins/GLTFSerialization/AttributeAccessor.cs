@@ -1,4 +1,5 @@
 ﻿using GLTF.Schema;
+using Unity.Collections;
 
 namespace GLTF
 {
@@ -6,7 +7,8 @@ namespace GLTF
 	{
 		public AccessorId AccessorId { get; set; }
 		public NumericArray AccessorContent { get; set; }
-		public System.IO.Stream Stream { get; set; }
+		
+		public NativeArray<byte> bufferData { get; set; }
 		public uint Offset { get; set; }
 
 		public AttributeAccessor()

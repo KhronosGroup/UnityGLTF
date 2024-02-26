@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityGLTF.Extensions;
 using Matrix4x4 = GLTF.Math.Matrix4x4;
@@ -19,7 +20,7 @@ namespace UnityGLTF
 			Transform[] bones = new Transform[boneCount];
 
 			// TODO: build bindpose arrays only once per skin, instead of once per node
-			Matrix4x4[] gltfBindPoses = null;
+			float4x4[] gltfBindPoses = null;
 			if (skin.InverseBindMatrices != null)
 			{
 				var bufferId = skin.InverseBindMatrices.Value.BufferView.Value.Buffer;
@@ -27,7 +28,7 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = skin.InverseBindMatrices,
-					Stream = bufferData.Stream,
+					bufferData = bufferData.bufferData,
 					Offset = bufferData.ChunkOffset
 				};
 
