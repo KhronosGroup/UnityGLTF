@@ -358,7 +358,7 @@ namespace UnityGLTF
 
 				if (sizeToLoad == 0 && remainingSize > 0)
 				{
-					throw new Exception("Unexpected end of stream while loading buffer view");
+					throw new Exception($"Unexpected end of stream while loading buffer view (File: {_gltfFileName})");
 				}
 			}			
 			
@@ -405,7 +405,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot call LoadScene while GLTFSceneImporter is already running");
+						throw new GLTFLoadException($"Cannot call LoadScene while GLTFSceneImporter is already running (File: {_gltfFileName})");
 					}
 
 					_isRunning = true;
@@ -479,6 +479,7 @@ namespace UnityGLTF
 				DisposeNativeBuffers();
 
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
+				Debug.Log(LogType.Error, $"Error loading file: {_gltfFileName}");
 				throw;
 			}
 			finally
@@ -490,8 +491,8 @@ namespace UnityGLTF
 			}
 			_gltfStream.Stream.Close();
 			DisposeNativeBuffers();
-			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
-			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
+			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal}) (File: {_gltfFileName})");
+			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal}) (File: {_gltfFileName})");
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
@@ -548,7 +549,7 @@ namespace UnityGLTF
 			{
 				if (materialIndex < 0 || materialIndex >= _gltfRoot.Materials.Count)
 				{
-					throw new ArgumentException($"There is no material for index {materialIndex}");
+					throw new ArgumentException($"There is no material for index {materialIndex} (File: {_gltfFileName})");
 				}
 
 				if (_assetCache.MaterialCache[materialIndex] == null)
@@ -572,7 +573,7 @@ namespace UnityGLTF
 			{
 				if (meshIndex < 0 || meshIndex >= _gltfRoot.Meshes.Count)
 				{
-					throw new ArgumentException($"There is no mesh for index {meshIndex}");
+					throw new ArgumentException($"There is no mesh for index {meshIndex} (File: {_gltfFileName})");
 				}
 
 				if (_assetCache.MeshCache[meshIndex] == null)
@@ -613,7 +614,7 @@ namespace UnityGLTF
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !parseJsonThread.IsAlive)));
 				if (_gltfRoot == null)
 				{
-					throw new GLTFLoadException("Failed to parse glTF");
+					throw new GLTFLoadException($"Failed to parse glTF (File: {_gltfFileName})");
 				}
 			}
 			else
@@ -775,7 +776,7 @@ namespace UnityGLTF
 				{
 					if (nodeId >= _gltfRoot.Nodes.Count)
 					{
-						throw new ArgumentException("nodeIndex is out of range");
+						throw new ArgumentException($"nodeIndex is out of range (File: {_gltfFileName})");
 					}
 
 					var node = _gltfRoot.Nodes[nodeId];
@@ -980,7 +981,7 @@ namespace UnityGLTF
 #if HAVE_MESHOPT_DECOMPRESS
 			if (buffer.Extensions != null && buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"_assetCache.BufferCache[bufferIndex] != null; (File: {_gltfFileName})");
 				
 				var bufferCacheDate = new BufferCacheData
 				{
@@ -997,13 +998,13 @@ namespace UnityGLTF
 			    buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
 				//TODO: check for fallback URI or Buffer... ?
-				throw new NotSupportedException("Can't import model because it uses the EXT_meshopt_compression extension. Add the package \"com.unity.meshopt.decompress\" to your project to import this file.");
+				throw new NotSupportedException($"Can't import model because it uses the EXT_meshopt_compression extension. Add the package \"com.unity.meshopt.decompress\" to your project to import this file. (File: {_gltfFileName})");
 			}
 #endif
 
 			if (buffer.Uri == null)
 			{
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "Error: _assetCache.BufferCache[bufferIndex] != null. Please report a bug.");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"Error: _assetCache.BufferCache[bufferIndex] != null. Please report a bug. (File: {_gltfFileName})");
 				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 
 				progressStatus.BuffersLoaded++;
@@ -1025,7 +1026,7 @@ namespace UnityGLTF
 					bufferDataStream = await _options.DataLoader.LoadStreamAsync(buffer.Uri);
 				}
 
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"_assetCache.BufferCache[bufferIndex] != null; (File: {_gltfFileName})");
 				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
 				{
 					Stream = bufferDataStream,
@@ -1230,7 +1231,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot start a load while GLTFSceneImporter is already running");
+						throw new GLTFLoadException($"Cannot start a load while GLTFSceneImporter is already running (File: {_gltfFileName})");
 					}
 
 					_isRunning = true;
