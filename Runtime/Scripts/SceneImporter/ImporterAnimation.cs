@@ -297,7 +297,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var position = data.AsFloats3[frame].ToUnityVector3Convert();
+											  var position = data.AsFloat3s[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
 											  return new float[] { position.x * factor, position.y * factor, position.z * factor};
 #else
@@ -313,7 +313,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var rotation = data.AsFloats4[frame];
+											  var rotation = data.AsFloat4s[frame];
 											  var quaternion = rotation.ToUnityQuaternionConvert();
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 										  });
@@ -327,7 +327,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var scale = data.AsFloats3[frame].ToUnityVector3Raw();
+											  var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
 											  return new float[] { scale.x, scale.y, scale.z };
 										  });
 						break;

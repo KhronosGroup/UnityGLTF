@@ -567,9 +567,9 @@ namespace UnityGLTF.Extensions
 		/// <param name="attributeAccessor">The attribute accessor to modify</param>
 		public static void FlipTexCoordArrayV(ref AttributeAccessor attributeAccessor)
 		{
-			for (var i = 0; i < attributeAccessor.AccessorContent.AsFloats2.Length; i++)
+			for (var i = 0; i < attributeAccessor.AccessorContent.AsFloat2s.Length; i++)
 			{
-				attributeAccessor.AccessorContent.AsFloats2[i].y = 1.0f - attributeAccessor.AccessorContent.AsFloats2[i].y;
+				attributeAccessor.AccessorContent.AsFloat2s[i].y = 1.0f - attributeAccessor.AccessorContent.AsFloat2s[i].y;
 			}
 		}
 
@@ -598,11 +598,11 @@ namespace UnityGLTF.Extensions
 		/// <param name="coordinateSpaceCoordinateScale">The coordinate space to move into</param>
 		public static void ConvertVector3CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector3 coordinateSpaceCoordinateScale)
 		{
-			for (int i = 0; i < attributeAccessor.AccessorContent.AsFloats3.Length; i++)
+			for (int i = 0; i < attributeAccessor.AccessorContent.AsFloat3s.Length; i++)
 			{
-				attributeAccessor.AccessorContent.AsFloats3[i].x *= coordinateSpaceCoordinateScale.X;
-				attributeAccessor.AccessorContent.AsFloats3[i].y *= coordinateSpaceCoordinateScale.Y;
-				attributeAccessor.AccessorContent.AsFloats3[i].z *= coordinateSpaceCoordinateScale.Z;
+				attributeAccessor.AccessorContent.AsFloat3s[i].x *= coordinateSpaceCoordinateScale.X;
+				attributeAccessor.AccessorContent.AsFloat3s[i].y *= coordinateSpaceCoordinateScale.Y;
+				attributeAccessor.AccessorContent.AsFloat3s[i].z *= coordinateSpaceCoordinateScale.Z;
 			}
 		}
 
@@ -633,12 +633,12 @@ namespace UnityGLTF.Extensions
 		/// <param name="coordinateSpaceCoordinateScale">The coordinate space to move into</param>
 		public static void ConvertVector4CoordinateSpace(ref AttributeAccessor attributeAccessor, GLTF.Math.Vector4 coordinateSpaceCoordinateScale)
 		{
-			for (int i = 0; i < attributeAccessor.AccessorContent.AsFloats4.Length; i++)
+			for (int i = 0; i < attributeAccessor.AccessorContent.AsFloat4s.Length; i++)
 			{
-				attributeAccessor.AccessorContent.AsFloats4[i].x *= coordinateSpaceCoordinateScale.X;
-				attributeAccessor.AccessorContent.AsFloats4[i].y *= coordinateSpaceCoordinateScale.Y;
-				attributeAccessor.AccessorContent.AsFloats4[i].z *= coordinateSpaceCoordinateScale.Z;
-				attributeAccessor.AccessorContent.AsFloats4[i].w *= coordinateSpaceCoordinateScale.W;
+				attributeAccessor.AccessorContent.AsFloat4s[i].x *= coordinateSpaceCoordinateScale.X;
+				attributeAccessor.AccessorContent.AsFloat4s[i].y *= coordinateSpaceCoordinateScale.Y;
+				attributeAccessor.AccessorContent.AsFloat4s[i].z *= coordinateSpaceCoordinateScale.Z;
+				attributeAccessor.AccessorContent.AsFloat4s[i].w *= coordinateSpaceCoordinateScale.W;
 			}
 		}
 

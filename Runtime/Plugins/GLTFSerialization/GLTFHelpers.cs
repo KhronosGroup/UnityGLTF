@@ -237,11 +237,11 @@ namespace GLTF
 			Accessor.AsSparseUIntArray(attributeAccessor.AccessorId.Value, ref sparseArrays[1], bufferViewCache2, 0);
 
 			var before = new NumericArray();
-			before.AsFloats3 = new float3[resultArray.AsFloats3.Length];
-			System.Array.Copy(resultArray.AsFloats3, before.AsFloats3, before.AsFloats3.Length);
+			before.AsFloat3s = new float3[resultArray.AsFloat3s.Length];
+			System.Array.Copy(resultArray.AsFloat3s, before.AsFloat3s, before.AsFloat3s.Length);
 
 			for (int j = 0; j < sparseArrays[1].AsUInts.Length; j++)
-				before.AsFloats3[sparseArrays[1].AsUInts[j]] = sparseArrays[0].AsFloats3[j];
+				before.AsFloat3s[sparseArrays[1].AsUInts[j]] = sparseArrays[0].AsFloat3s[j];
 
 			resultArray = before;
 		}

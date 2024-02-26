@@ -782,10 +782,10 @@ namespace UnityGLTF
 				{
 					var current = att[NormalKey].AccessorContent;
 					NumericArray before = new NumericArray();
-					before.AsFloats3 = new float3[current.AsFloats3.Length];
+					before.AsFloat3s = new float3[current.AsFloat3s.Length];
 					for (int j = 0; j < sparseNormals[1].AsUInts.Length; j++)
 					{
-						before.AsFloats3[sparseNormals[1].AsUInts[j]] = sparseNormals[0].AsFloats3[j];
+						before.AsFloat3s[sparseNormals[1].AsUInts[j]] = sparseNormals[0].AsFloat3s[j];
 					}
 
 					att[NormalKey].AccessorContent = before;
@@ -795,10 +795,10 @@ namespace UnityGLTF
 				{
 					var current = att[PositionKey].AccessorContent;
 					NumericArray before = new NumericArray();
-					before.AsFloats3 = new float3[current.AsFloats3.Length];
+					before.AsFloat3s = new float3[current.AsFloat3s.Length];
 					for (int j = 0; j < sparsePositions[1].AsUInts.Length; j++)
 					{
-						before.AsFloats3[sparsePositions[1].AsUInts[j]] = sparsePositions[0].AsFloats3[j];
+						before.AsFloat3s[sparsePositions[1].AsUInts[j]] = sparsePositions[0].AsFloat3s[j];
 					}
 
 					att[PositionKey].AccessorContent = before;
@@ -808,10 +808,10 @@ namespace UnityGLTF
 				{
 					var current = att[TangentKey].AccessorContent;
 					NumericArray before = new NumericArray();
-					before.AsFloats3 = new float3[current.AsFloats3.Length];
+					before.AsFloat3s = new float3[current.AsFloat3s.Length];
 					for (int j = 0; j < sparseTangents[1].AsUInts.Length; j++)
 					{
-						before.AsFloats3[sparseTangents[1].AsUInts[j]] = sparseTangents[0].AsFloats3[j];
+						before.AsFloat3s[sparseTangents[1].AsUInts[j]] = sparseTangents[0].AsFloat3s[j];
 					}
 
 					att[TangentKey].AccessorContent = before;
@@ -1095,8 +1095,8 @@ namespace UnityGLTF
 				unityData.alreadyAddedAccessors.Add(meshAttributes[SemanticProperties.Weight[0]].AccessorId.Id);
 				
 				CreateBoneWeightArray(
-					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsFloats4.ToUnityVector4Raw(),
-					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsFloats4.ToUnityVector4Raw(),
+					meshAttributes[SemanticProperties.Joint[0]].AccessorContent.AsFloat4s.ToUnityVector4Raw(),
+					meshAttributes[SemanticProperties.Weight[0]].AccessorContent.AsFloat4s.ToUnityVector4Raw(),
 					ref unityData.BoneWeights,
 					vertOffset);
 			}
@@ -1108,38 +1108,38 @@ namespace UnityGLTF
 				if (meshAttributes.TryGetValue(SemanticProperties.POSITION, out var attrPos))
 				{
 					unityData.alreadyAddedAccessors.Add(attrPos.AccessorId.Id);
-					attrPos.AccessorContent.AsFloats3.ToUnityVector3Raw(unityData.Vertices, (int)vertOffset);
+					attrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.Vertices, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.NORMAL, out var attrNorm))
 				{
-					attrNorm.AccessorContent.AsFloats3.ToUnityVector3Raw(unityData.Normals, (int)vertOffset);
+					attrNorm.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.Normals, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.TANGENT, out var attrTang))
 				{
-					attrTang.AccessorContent.AsFloats4.ToUnityVector4Raw(unityData.Tangents, (int)vertOffset);
+					attrTang.AccessorContent.AsFloat4s.ToUnityVector4Raw(unityData.Tangents, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[0], out var attrTex0))
 				{
-					attrTex0.AccessorContent.AsFloats2.ToUnityVector2Raw(unityData.Uv1, (int)vertOffset);
+					attrTex0.AccessorContent.AsFloat2s.ToUnityVector2Raw(unityData.Uv1, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[1], out var attrTex1))
 				{
-					attrTex1.AccessorContent.AsFloats2.ToUnityVector2Raw(unityData.Uv2, (int)vertOffset);
+					attrTex1.AccessorContent.AsFloat2s.ToUnityVector2Raw(unityData.Uv2, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[2], out var attrTex2))
 				{
-					attrTex2.AccessorContent.AsFloats2.ToUnityVector2Raw(unityData.Uv3, (int)vertOffset);
+					attrTex2.AccessorContent.AsFloat2s.ToUnityVector2Raw(unityData.Uv3, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.TexCoord[3], out var attrTex3))
 				{
-					attrTex3.AccessorContent.AsFloats2.ToUnityVector2Raw(unityData.Uv4, (int)vertOffset);
+					attrTex3.AccessorContent.AsFloat2s.ToUnityVector2Raw(unityData.Uv4, (int)vertOffset);
 				}
 				if (meshAttributes.TryGetValue(SemanticProperties.Color[0], out var attrColor))
 				{
 					if (_activeColorSpace == ColorSpace.Gamma)
-						attrColor.AccessorContent.AsFloats4.ToUnityColorRaw(unityData.Colors, (int)vertOffset);
+						attrColor.AccessorContent.AsFloat4s.ToUnityColorRaw(unityData.Colors, (int)vertOffset);
 					else
-						attrColor.AccessorContent.AsFloats4.ToUnityColorLinear(unityData.Colors, (int)vertOffset);
+						attrColor.AccessorContent.AsFloat4s.ToUnityColorLinear(unityData.Colors, (int)vertOffset);
 				}
 
 			}
@@ -1151,17 +1151,17 @@ namespace UnityGLTF
 					if (targets[i].TryGetValue(SemanticProperties.POSITION, out var tarAttrPos) && !unityData.alreadyAddedAccessors.Contains(tarAttrPos.AccessorId.Id))
 					{
 						unityData.alreadyAddedAccessors.Add(tarAttrPos.AccessorId.Id);
-						tarAttrPos.AccessorContent.AsFloats3.ToUnityVector3Raw(unityData.MorphTargetVertices[i], (int)vertOffset);
+						tarAttrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], (int)vertOffset);
 					}
 					if (targets[i].TryGetValue(SemanticProperties.NORMAL, out var tarAttrNorm) && !unityData.alreadyAddedAccessors.Contains(tarAttrNorm.AccessorId.Id))
 					{
 						unityData.alreadyAddedAccessors.Add(tarAttrNorm.AccessorId.Id);
-						tarAttrNorm.AccessorContent.AsFloats3.ToUnityVector3Raw(unityData.MorphTargetNormals[i], (int)vertOffset);
+						tarAttrNorm.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.MorphTargetNormals[i], (int)vertOffset);
 					}
 					if (targets[i].TryGetValue(SemanticProperties.TANGENT, out var tarAttrTang) && !unityData.alreadyAddedAccessors.Contains(tarAttrTang.AccessorId.Id))
 					{
 						unityData.alreadyAddedAccessors.Add(tarAttrTang.AccessorId.Id);
-						tarAttrTang.AccessorContent.AsFloats3.ToUnityVector3Raw(unityData.MorphTargetTangents[i], (int)vertOffset);
+						tarAttrTang.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.MorphTargetTangents[i], (int)vertOffset);
 					}
 				}
 			}
