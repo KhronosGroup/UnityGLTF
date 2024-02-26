@@ -46,7 +46,7 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
 
-		public BlendShapeFrameWeightMultiplierSetting BlendShapeFrameWeightMultiplier = new BlendShapeFrameWeightMultiplierSetting(BlendShapeFrameWeightMultiplierSetting.MultiplierOption.Multiplier1);
+		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
@@ -900,7 +900,7 @@ namespace UnityGLTF
 					{
 						for (int i = 0; i < weights.Count; ++i)
 						{
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeightMultiplier));
+							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
 						}
 					}
 				}

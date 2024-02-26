@@ -347,7 +347,7 @@ namespace UnityGLTF
 								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + ((targetNames != null && targetNames.Count > i) ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
 							var frameFloats = new float[targetCount];
 
-							var blendShapeFrameWeight = _options.BlendShapeFrameWeightMultiplier;
+							var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 								samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
 								(data, frame) =>

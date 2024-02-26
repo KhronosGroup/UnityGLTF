@@ -7,7 +7,7 @@ using UnityEditor;
 namespace UnityGLTF
 {
     [Serializable]
-    public struct BlendShapeFrameWeightMultiplierSetting
+    public struct BlendShapeFrameWeightSetting
     {
         public enum MultiplierOption
         {
@@ -22,13 +22,13 @@ namespace UnityGLTF
         [SerializeField]
         internal float _multiplier;
         
-        public BlendShapeFrameWeightMultiplierSetting(MultiplierOption option)
+        public BlendShapeFrameWeightSetting(MultiplierOption option)
         {
             _option = option;
             _multiplier = 1;
         }
         
-        public BlendShapeFrameWeightMultiplierSetting(float multiplier)
+        public BlendShapeFrameWeightSetting(float multiplier)
         {
             _option = MultiplierOption.Custom;
             _multiplier = multiplier;
@@ -57,21 +57,21 @@ namespace UnityGLTF
             }
         }
         
-        public static implicit operator float(BlendShapeFrameWeightMultiplierSetting weightMultiplierSetting)
+        public static implicit operator float(BlendShapeFrameWeightSetting weightSetting)
         {
-            return weightMultiplierSetting.Multiplier;
+            return weightSetting.Multiplier;
         }
     }
     
 #if UNITY_EDITOR
     
-    [CustomPropertyDrawer(typeof(BlendShapeFrameWeightMultiplierSetting))]
+    [CustomPropertyDrawer(typeof(BlendShapeFrameWeightSetting))]
     public class BlendShapeFrameWeightMultiplierSettingDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var option = property.FindPropertyRelative(nameof(BlendShapeFrameWeightMultiplierSetting._option));
-            var customValue = property.FindPropertyRelative(nameof(BlendShapeFrameWeightMultiplierSetting._multiplier));
+            var option = property.FindPropertyRelative(nameof(BlendShapeFrameWeightSetting._option));
+            var customValue = property.FindPropertyRelative(nameof(BlendShapeFrameWeightSetting._multiplier));
 
             EditorGUI.BeginProperty(position, label, property);
             {
@@ -96,7 +96,7 @@ namespace UnityGLTF
         
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var option = property.FindPropertyRelative(nameof(BlendShapeFrameWeightMultiplierSetting._option));
+            var option = property.FindPropertyRelative(nameof(BlendShapeFrameWeightSetting._option));
             if (option.enumValueIndex == 2)
             {
                 return EditorGUIUtility.singleLineHeight * 2f;
