@@ -263,7 +263,8 @@ namespace UnityGLTF
             AnimationClip[] animations = null;
             Mesh[] meshes = null;
 
-            var uniqueNames = new List<string>() { "main asset" };
+	        var uniqueNames = new Dictionary<int, int>(100);
+	        uniqueNames.Add("main asset".GetHashCode(), 0);
             EnsureShadersAreLoaded();
 
 #if UNITY_2020_2_OR_NEWER && !UNITY_2021_3_OR_NEWER
@@ -273,9 +274,17 @@ namespace UnityGLTF
 
             string GetUniqueName(string desiredName)
             {
-	            var uniqueName = ObjectNames.GetUniqueName(uniqueNames.ToArray(), desiredName);
-	            if (!uniqueNames.Contains(uniqueName)) uniqueNames.Add(uniqueName);
-	            return uniqueName;
+	            var hash = desiredName.GetHashCode();
+	            if (uniqueNames.ContainsKey(hash))
+	            {
+		            uniqueNames[hash]++;
+		            return $"{desiredName} ({uniqueNames[hash]})";
+	            }
+	            else
+	            {
+		            uniqueNames.Add(hash, 0);
+		            return desiredName;
+	            }
             }
 
 #if UNITY_2017_3_OR_NEWER
