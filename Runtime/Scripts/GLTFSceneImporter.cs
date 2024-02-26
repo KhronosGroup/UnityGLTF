@@ -9,6 +9,7 @@ using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Collections;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -66,6 +67,7 @@ namespace UnityGLTF
 
 	public class UnityMeshData
 	{
+		public bool[] subMeshDataCreated;
 		public Vector3[] Vertices;
 		public Vector3[] Normals;
 		public Vector4[] Tangents;
@@ -85,6 +87,25 @@ namespace UnityGLTF
 		
 		public HashSet<int> alreadyAddedAccessors = new HashSet<int>();
 		public uint[] subMeshVertexOffset;
+		
+		public void Clear()
+		{
+			Vertices = null;
+			Normals = null;
+			Tangents = null;
+			Uv1 = null;
+			Uv2 = null;
+			Uv3 = null;
+			Uv4 = null;
+			Colors = null;
+			BoneWeights = null;
+			MorphTargetVertices = null;
+			MorphTargetNormals = null;
+			MorphTargetTangents = null;
+			Topology = null;
+			Indices = null;
+			subMeshVertexOffset = null;
+		}
 	}
 
 	public struct ImportProgress
@@ -217,6 +238,10 @@ namespace UnityGLTF
 		public GameObject[] NodeCache => _assetCache.NodeCache;
 		public MeshCacheData[] MeshCache => _assetCache.MeshCache;
 
+		private Dictionary<Stream, NativeArray<byte>> _nativeBuffers = new Dictionary<Stream, NativeArray<byte>>(); 
+#if HAVE_MESHOPT_DECOMPRESS
+		private List<NativeArray<byte>> meshOptNativeBuffers = new List<NativeArray<byte>>();
+#endif
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the mesh after upload to GPU (for example, in case normals/tangents need recalculation)
 		/// </summary>
@@ -314,6 +339,36 @@ namespace UnityGLTF
 			VerifyDataLoader();
 		}
 
+		private NativeArray<byte> GetOrCreateNativeBuffer(Stream stream)
+		{
+			if (_nativeBuffers.TryGetValue(stream, out var buffer))
+			{
+				return buffer;
+			}
+
+			var buf = new byte[stream.Length];
+
+			stream.Position = 0;
+			long remainingSize = stream.Length;
+			while (remainingSize != 0)
+			{
+				int sizeToLoad = (int)System.Math.Min(remainingSize, int.MaxValue);
+				sizeToLoad = stream.Read(buf, (int)(stream.Length - remainingSize), sizeToLoad);
+				remainingSize -= (uint)sizeToLoad;
+
+				if (sizeToLoad == 0 && remainingSize > 0)
+				{
+					throw new Exception("Unexpected end of stream while loading buffer view");
+				}
+			}			
+			
+			var newNativeBuffer = new NativeArray<byte>(buf, Allocator.Persistent);
+			
+			_nativeBuffers.Add(stream,newNativeBuffer);
+			
+			return newNativeBuffer;
+		}
+
 		private void VerifyDataLoader()
 		{
 			if (_options.DataLoader == null)
@@ -331,6 +386,7 @@ namespace UnityGLTF
 		public void Dispose()
 		{
 			Cleanup();
+			DisposeNativeBuffers();
 		}
 
 		/// <summary>
@@ -420,6 +476,7 @@ namespace UnityGLTF
 			catch (Exception ex)
 			{
 				Cleanup();
+				DisposeNativeBuffers();
 
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
 				throw;
@@ -432,7 +489,7 @@ namespace UnityGLTF
 				}
 			}
 			_gltfStream.Stream.Close();
-
+			DisposeNativeBuffers();
 			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
 			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
 
@@ -620,6 +677,15 @@ namespace UnityGLTF
 
 			GetGltfContentTotals(scene);
 
+			await PreparePrimitiveAttributes();
+			if (IsMultithreaded)
+				await Task.Run(PrepareUnityMeshData, cancellationToken);
+			else
+				PrepareUnityMeshData();
+
+			// Free up some Memory, Accessor contents are no longer needed
+			FreeUpAccessorContents();
+			
 			await ConstructScene(scene, showSceneObj, cancellationToken);
 
 			if (SceneParent != null)
@@ -908,20 +974,21 @@ namespace UnityGLTF
 
 		protected async Task ConstructBuffer(GLTFBuffer buffer, int bufferIndex)
 		{
+			if (_assetCache.BufferCache[bufferIndex] != null)
+				return;
+			
 #if HAVE_MESHOPT_DECOMPRESS
 			if (buffer.Extensions != null && buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
 				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
-
-				var meshOptBufferMemoryStream = new MemoryStream((int)buffer.ByteLength);
-				meshOptBufferMemoryStream.SetLength((int)buffer.ByteLength);
-
+				
 				var bufferCacheDate = new BufferCacheData
 				{
-					Stream = meshOptBufferMemoryStream,
+					bufferData = new NativeArray<byte>((int)buffer.ByteLength, Allocator.Persistent),
 					ChunkOffset = 0
 				};
 
+				meshOptNativeBuffers.Add(bufferCacheDate.bufferData);
 				_assetCache.BufferCache[bufferIndex] = bufferCacheDate;
 				return;
 			}
@@ -961,7 +1028,8 @@ namespace UnityGLTF
 				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
 				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
 				{
-					Stream = bufferDataStream
+					Stream = bufferDataStream,
+					bufferData = GetOrCreateNativeBuffer(bufferDataStream)
 				};
 
 				progressStatus.BuffersLoaded++;
@@ -1094,7 +1162,8 @@ namespace UnityGLTF
 			return new BufferCacheData
 			{
 				Stream = _gltfStream.Stream,
-				ChunkOffset = (uint)_gltfStream.Stream.Position
+				ChunkOffset = (uint)_gltfStream.Stream.Position,
+				bufferData = GetOrCreateNativeBuffer(_gltfStream.Stream),
 			};
 		}
 
@@ -1133,6 +1202,24 @@ namespace UnityGLTF
 				_assetCache.Dispose();
 				_assetCache = null;
 			}
+		}
+
+		private void DisposeNativeBuffers()
+		{
+			foreach (var buffer in _nativeBuffers)
+			{
+				if (buffer.Value.IsCreated)
+					buffer.Value.Dispose();
+			}			
+			_nativeBuffers.Clear();
+			
+#if HAVE_MESHOPT_DECOMPRESS
+			foreach (var meshOptBuffer in meshOptNativeBuffers)
+			{
+				meshOptBuffer.Dispose();
+			}
+			meshOptNativeBuffers.Clear();
+#endif
 		}
 
 		private async Task SetupLoad(Func<Task> callback)
@@ -1179,7 +1266,7 @@ namespace UnityGLTF
 					_isRunning = false;
 				}
 				_gltfStream.Stream.Close();
-
+				DisposeNativeBuffers();
 			}
 		}
 

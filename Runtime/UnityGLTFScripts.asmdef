@@ -9,7 +9,9 @@
         "Unity.InputSystem",
         "Unity.Animation.Rigging",
         "Draco",
-        "Unity.Meshopt.Decompress"
+        "Unity.Meshopt.Decompress",
+        "Unity.Collections",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
