@@ -11,58 +11,49 @@ namespace UnityGLTF
     {
         public enum MultiplierOption
         {
-            Multiplier_1 = 0,
-            Multiplier_100 = 1,
+            Multiplier1 = 0,
+            Multiplier100 = 1,
             Custom = 2
         }
 
-        public MultiplierOption Option;
         [SerializeField]
-        internal float customMultiplier;
+        internal MultiplierOption _option;
+        
+        [SerializeField]
+        internal float _multiplier;
         
         public BlendShapeFrameWeightMultiplierSetting(MultiplierOption option)
         {
-            this.Option = option;
-            this.customMultiplier = 0f;
+            _option = option;
+            _multiplier = 1;
         }
         
-        public BlendShapeFrameWeightMultiplierSetting(float customMultiplier)
+        public BlendShapeFrameWeightMultiplierSetting(float multiplier)
         {
-            this.Option = MultiplierOption.Custom;
-            this.customMultiplier = customMultiplier;
-        }
-		
-        public float CustomMultiplier
-        {
-            get
-            {
-                if (Option == MultiplierOption.Custom)
-                    return customMultiplier;
-                else
-                    return 0f;
-            }
-            set
-            {
-                Option = MultiplierOption.Custom;
-                customMultiplier = value;
-            }
+            _option = MultiplierOption.Custom;
+            _multiplier = multiplier;
         }
         
         public float Multiplier
         {
             get
             {
-                switch (Option)
+                switch (_option)
                 {
-                    case MultiplierOption.Multiplier_1:
+                    case MultiplierOption.Multiplier1:
                         return 1f;
-                    case MultiplierOption.Multiplier_100:
+                    case MultiplierOption.Multiplier100:
                         return 100f;
                     case MultiplierOption.Custom:
-                        return customMultiplier;
+                        return _multiplier;
                     default:
                         throw new NotImplementedException();
                 }
+            }
+            set
+            {
+                _option = MultiplierOption.Custom;
+                _multiplier = value;
             }
         }
         
@@ -79,16 +70,14 @@ namespace UnityGLTF
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var weight = property.FindPropertyRelative("weight");
-
-            var option = property.FindPropertyRelative("Option");
-            var customValue = property.FindPropertyRelative("customMultiplier");
+            var option = property.FindPropertyRelative(nameof(BlendShapeFrameWeightMultiplierSetting._option));
+            var customValue = property.FindPropertyRelative(nameof(BlendShapeFrameWeightMultiplierSetting._multiplier));
 
             EditorGUI.BeginProperty(position, label, property);
             {
                 position.height = EditorGUIUtility.singleLineHeight;
                 
-                var newBlendShapeFrameWeightSettingIndex = EditorGUI.Popup(position, label.text, option.enumValueIndex, new[] {"Multiplier 1x (Default)", "Multiplier x100", "Custom"});
+                var newBlendShapeFrameWeightSettingIndex = EditorGUI.Popup(position, label.text, option.enumValueIndex, new[] {"1", "100", "Custom"});
                 if (newBlendShapeFrameWeightSettingIndex != option.enumValueIndex)
                 {
                     option.enumValueIndex = newBlendShapeFrameWeightSettingIndex;
@@ -98,7 +87,7 @@ namespace UnityGLTF
                 {
                     position.y += EditorGUIUtility.singleLineHeight;
                     EditorGUI.indentLevel++;
-                    customValue.floatValue = EditorGUI.FloatField(position, "Custom", customValue.floatValue);
+                    customValue.floatValue = EditorGUI.FloatField(position, new GUIContent("Custom", "Custom value used as multiplier for Blend Shape frame weights on import."), customValue.floatValue);
                     EditorGUI.indentLevel--;
                 }
             }
@@ -107,8 +96,7 @@ namespace UnityGLTF
         
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var option = property.FindPropertyRelative("Option");
-
+            var option = property.FindPropertyRelative(nameof(BlendShapeFrameWeightMultiplierSetting._option));
             if (option.enumValueIndex == 2)
             {
                 return EditorGUIUtility.singleLineHeight * 2f;

@@ -92,7 +92,8 @@ namespace UnityGLTF
         [SerializeField] internal bool _generateLightmapUVs = false;
 	    [Tooltip("When false, the index of the BlendShape is used as name.")]
         [SerializeField] internal bool _importBlendShapeNames = true;
-	    [SerializeField] internal BlendShapeFrameWeightMultiplierSetting _blendShapeFrameWeightsMultiplier = new BlendShapeFrameWeightMultiplierSetting(BlendShapeFrameWeightMultiplierSetting.MultiplierOption.Multiplier_1);
+	    [Tooltip("Blend shape frame weight import multiplier. Default is 1. For compatibility with some FBX animations you may need to use 100.")]
+	    [SerializeField] internal BlendShapeFrameWeightMultiplierSetting _blendShapeFrameWeightsMultiplier = new BlendShapeFrameWeightMultiplierSetting(BlendShapeFrameWeightMultiplierSetting.MultiplierOption.Multiplier1);
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
