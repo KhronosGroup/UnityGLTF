@@ -24,11 +24,13 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneImporter
 	{
+#if HAVE_DRACO
 		protected class DracoDecodeResult
 		{
 			public int meshIndex;
 			public Task<DecodeResult>[] decodeResults = new Task<DecodeResult>[0];
 		}		
+#endif
 		
 		private async Task CreateMaterials(MeshPrimitive primitive)
 		{
@@ -259,7 +261,7 @@ namespace UnityGLTF
 					if (firstPrim != null && firstPrim.Targets != null)
 						decodeSettings |= DecodeSettings.ForceUnityVertexLayout;
 					
-					taskResult.Item2[i] = DracoDecoder.DecodeMesh( _assetCache.MeshCache[meshIndex].DracoMeshData[i], bufferViewData, decodeSettings, DracoDecoder.CreateAttributeIdMap(weightsAttributeId, jointsAttributeId));
+					decodeResult.decodeResults[i] = DracoDecoder.DecodeMesh( _assetCache.MeshCache[meshIndex].DracoMeshData[i], bufferViewData, decodeSettings, DracoDecoder.CreateAttributeIdMap(weightsAttributeId, jointsAttributeId));
 					
 #else
 					var draco = new DracoMeshLoader();
