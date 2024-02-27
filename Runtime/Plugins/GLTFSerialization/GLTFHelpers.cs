@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace GLTF
 {
@@ -352,8 +353,10 @@ namespace GLTF
 			}
 		}
 
-		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes, float? importScale = null)
+		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes, float importScale = 1f)
 		{
+			var hasScale = !Mathf.Approximately(importScale, 1f);
+			
 			foreach (var kvp in attributes)
 			{
 				var attributeAccessor = kvp.Value;
@@ -364,9 +367,9 @@ namespace GLTF
 				switch (kvp.Key)
 				{
 					case SemanticProperties.POSITION:
-						if (importScale != null)
+						if (hasScale)
 						{
-							float3 conversionScale = new float3(importScale.Value, importScale.Value, importScale.Value);
+							float3 conversionScale = new float3(importScale, importScale, importScale);
 							attributeAccessor.AccessorId.Value.AsFloat3ArrayConversion(ref resultArray, bufferViewCache, conversionScale, 0, normalize);
 						}
 						else
