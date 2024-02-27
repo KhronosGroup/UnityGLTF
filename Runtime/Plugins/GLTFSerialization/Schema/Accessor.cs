@@ -721,12 +721,12 @@ namespace GLTF.Schema
 			if (ComponentType == GLTFComponentType.Float)
 			{
 				for (uint idx = 0; idx < Count; idx++) 
-					arr[idx] = GetFloat2Element(bufferPointer, totalByteOffset + idx * stride + componentSize * 0);
+					arr[idx] = GetFloat2Element(bufferPointer, totalByteOffset + idx * stride);
 			}
 			else
 			{
 				for (uint idx = 0; idx < Count; idx++) 
-					arr[idx] = GetDiscreteFloat2Element(bufferPointer, totalByteOffset + idx * stride + componentSize * 0, ComponentType, maxValue);
+					arr[idx] = GetDiscreteFloat2Element(bufferPointer, totalByteOffset + idx * stride, ComponentType, maxValue);
 			}
 			contents.AsFloat2s = arr;
 			return arr;
@@ -762,7 +762,7 @@ namespace GLTF.Schema
 			{
 				for (uint idx = 0; idx < Count; idx++)
 				{
-					var uv = GetFloat2Element(bufferPointer, totalByteOffset + idx * stride + componentSize * 0);
+					var uv = GetFloat2Element(bufferPointer, totalByteOffset + idx * stride);
 					arr[idx] = new float2(uv.x, 1f - uv.y);
 				}
 			}
@@ -770,7 +770,7 @@ namespace GLTF.Schema
 			{
 				for (uint idx = 0; idx < Count; idx++)
 				{
-					var uv = GetDiscreteFloat2Element(bufferPointer, totalByteOffset + idx * stride + componentSize * 0, ComponentType, maxValue);
+					var uv = GetDiscreteFloat2Element(bufferPointer, totalByteOffset + idx * stride, ComponentType, maxValue);
 					arr[idx] = new float2(uv.x, 1f - uv.y);
 				}
 			}
