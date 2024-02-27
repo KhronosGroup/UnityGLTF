@@ -233,7 +233,7 @@ namespace GLTF
 			// Indices
 			LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value, sparseIndices.Offset, sparseIndices.bufferData, out NativeArray<byte> bufferViewCache2);
 
-			Accessor.AsSparseVector3Array(attributeAccessor.AccessorId.Value, ref sparseArrays[0], bufferViewCache1, 0);
+			Accessor.AsSparseFloat3Array(attributeAccessor.AccessorId.Value, ref sparseArrays[0], bufferViewCache1, 0);
 			Accessor.AsSparseUIntArray(attributeAccessor.AccessorId.Value, ref sparseArrays[1], bufferViewCache2, 0);
 
 			var before = new NumericArray();
@@ -353,7 +353,7 @@ namespace GLTF
 			}
 		}
 
-		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes)
+		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes, float? importScale = null)
 		{
 			foreach (var kvp in attributes)
 			{
@@ -361,12 +361,21 @@ namespace GLTF
 				NumericArray resultArray = attributeAccessor.AccessorContent;
 				LoadBufferView(attributeAccessor, out NativeArray<byte> bufferViewCache);
 
+				bool normalize = attributeAccessor.AccessorId.Value.Normalized;
 				switch (kvp.Key)
 				{
 					case SemanticProperties.POSITION:
+						if (importScale != null)
+						{
+							float3 conversionScale = new float3(importScale.Value, importScale.Value, importScale.Value);
+							attributeAccessor.AccessorId.Value.AsFloat3ArrayConversion(ref resultArray, bufferViewCache, conversionScale, 0, normalize);
+						}
+						else
+							attributeAccessor.AccessorId.Value.AsFloat3Array(ref resultArray, bufferViewCache, 0, normalize);
+						break;
 					case SemanticProperties.NORMAL:
 					case SemanticProperties.TANGENT:
-						attributeAccessor.AccessorId.Value.AsFloat3Array(ref resultArray, bufferViewCache);
+						attributeAccessor.AccessorId.Value.AsFloat3Array(ref resultArray, bufferViewCache, 0, normalize);
 						break;
 					default:
 						throw new System.Exception($"Unrecognized morph target attribute {kvp.Key}");
@@ -380,7 +389,7 @@ namespace GLTF
 		{
 			NumericArray resultArray = attributeAccessor.AccessorContent;
 			LoadBufferView(attributeAccessor, out NativeArray<byte> bufferViewCache);
-			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache);
+			attributeAccessor.AccessorId.Value.AsMatrix4x4Array(ref resultArray, bufferViewCache, 0, attributeAccessor.AccessorId.Value.Normalized);
 			attributeAccessor.AccessorContent = resultArray;
 		}
 

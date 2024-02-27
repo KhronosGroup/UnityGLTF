@@ -721,6 +721,13 @@ namespace UnityGLTF
 
 		protected virtual void ConstructMeshTargets(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
 		{
+			float scaleFactor = 0f;
+			bool hasScale = false;
+#if UNITY_EDITOR
+			hasScale = Context != null && !Mathf.Approximately(Context.ImportScaleFactor, 1f);
+			scaleFactor = hasScale ? Context.ImportScaleFactor : 1f;
+#endif	
+			
 			var newTargets = _assetCache.MeshCache[meshIndex].Primitives[primitiveIndex].Targets;
 			for (int i = 0; i < primitive.Targets.Count; i++)
 			{
@@ -778,29 +785,33 @@ namespace UnityGLTF
 					{
 						case NormalKey:
 							sparseNormals = new NumericArray[2];
-							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseNormals[0],
-								bufferViewCache1);
+							Accessor.AsSparseFloat3Array(targetAttribute.Value.Value, ref sparseNormals[0],
+								bufferViewCache1, 0, targetAttribute.Value.Value.Normalized);
 							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseNormals[1],
 								bufferViewCache2);
 							break;
 						case PositionKey:
 							sparsePositions = new NumericArray[2];
-							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparsePositions[0],
-								bufferViewCache1);
+							if (hasScale)
+								Accessor.AsSparseFloat3ArrayConversion(targetAttribute.Value.Value, ref sparsePositions[0],
+									bufferViewCache1, scaleFactor, 0, targetAttribute.Value.Value.Normalized);
+							else
+								Accessor.AsSparseFloat3Array(targetAttribute.Value.Value, ref sparsePositions[0],
+									bufferViewCache1, 0, targetAttribute.Value.Value.Normalized);
 							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparsePositions[1],
 								bufferViewCache2);
 							break;
 						case TangentKey:
 							sparseTangents = new NumericArray[2];
-							Accessor.AsSparseVector3Array(targetAttribute.Value.Value, ref sparseTangents[0],
-								bufferViewCache1);
+							Accessor.AsSparseFloat3Array(targetAttribute.Value.Value, ref sparseTangents[0],
+								bufferViewCache1, 0, targetAttribute.Value.Value.Normalized);
 							Accessor.AsSparseUIntArray(targetAttribute.Value.Value, ref sparseTangents[1],
 								bufferViewCache2);
 							break;
 					}
 				}
-
-				GLTFHelpers.BuildTargetAttributes(ref att);
+				
+				GLTFHelpers.BuildTargetAttributes(ref att, hasScale ? scaleFactor : null);
 
 				if (sparseNormals != null)
 				{
@@ -1170,22 +1181,12 @@ namespace UnityGLTF
 			var targets = primData.Targets;
 			if (targets != null)
 			{
-				float scaleFactor = 0f;
-				bool hasScale = false;
-#if UNITY_EDITOR
-				hasScale = Context != null && !Mathf.Approximately(Context.ImportScaleFactor, 1f);
-				scaleFactor = hasScale ? Context.ImportScaleFactor : 1f;
-#endif
 				for (int i = 0; i < targets.Count; ++i)
 				{
 					if (targets[i].TryGetValue(SemanticProperties.POSITION, out var tarAttrPos) && !unityData.alreadyAddedAccessors.Contains(tarAttrPos.AccessorId.Id))
 					{
 						unityData.alreadyAddedAccessors.Add(tarAttrPos.AccessorId.Id);
-						var array = unityData.MorphTargetVertices[i];
-						tarAttrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(array, (int)vertOffset);
-						if (hasScale)
-							for (int j = 0; j < array.Length; j++)
-								array[j] *= scaleFactor;
+						tarAttrPos.AccessorContent.AsFloat3s.ToUnityVector3Raw(unityData.MorphTargetVertices[i], (int)vertOffset);
 					}
 					if (targets[i].TryGetValue(SemanticProperties.NORMAL, out var tarAttrNorm) && !unityData.alreadyAddedAccessors.Contains(tarAttrNorm.AccessorId.Id))
 					{
