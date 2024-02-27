@@ -346,8 +346,7 @@ namespace GLTF
 				{
 					NumericArray resultArray = attributeAccessorJoint.AccessorContent;
 					LoadBufferView(attributeAccessorJoint, out NativeArray<byte> bufferViewCache);
-					attributeAccessorJoint.AccessorId.Value.AsFloat4Array(ref resultArray, bufferViewCache, 0,
-						attributeAccessorJoint.AccessorId.Value.Normalized);
+					attributeAccessorJoint.AccessorId.Value.AsFloat4Array(ref resultArray, bufferViewCache, 0, attributeAccessorJoint.AccessorId.Value.Normalized);
 					attributeAccessorJoint.AccessorContent = resultArray;
 				}
 			}

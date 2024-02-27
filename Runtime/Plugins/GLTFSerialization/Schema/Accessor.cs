@@ -506,8 +506,7 @@ namespace GLTF.Schema
 			return new float4(*p, *(p + 1),*(p + 2), alpha);
 		}
 
-		public static unsafe float3[] AsSparseFloat3Array(Accessor paraAccessor, ref NumericArray contents,
-			NativeArray<byte> bufferViewData, uint offset = 0, bool normalizeIntValues = true)
+		public static unsafe float3[] AsSparseFloat3Array(Accessor paraAccessor, ref NumericArray contents, NativeArray<byte> bufferViewData, uint offset = 0, bool normalizeIntValues = true)
 		{
 			var Count = paraAccessor.Sparse.Count;
 			var ComponentType = paraAccessor.ComponentType;
