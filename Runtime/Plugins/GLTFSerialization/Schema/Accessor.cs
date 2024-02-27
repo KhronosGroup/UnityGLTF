@@ -316,7 +316,7 @@ namespace GLTF.Schema
 		
 		private static unsafe float4x4 GetByte4x4Element(void* buffer, uint byteOffset, float maxValue)
 		{
-			var p = (byte*)(((byte*)buffer) + byteOffset);
+			var p = (sbyte*)(((byte*)buffer) + byteOffset);
 			return new float4x4(*p / maxValue, *(p + 1) / maxValue, *(p + 2) / maxValue, *(p + 3) / maxValue,
 				*(p + 4) / maxValue, *(p + 5) / maxValue, *(p + 6) / maxValue, *(p + 7) / maxValue,
 				*(p + 8) / maxValue, *(p + 9) / maxValue, *(p + 10) / maxValue, *(p + 11) / maxValue,
@@ -330,25 +330,25 @@ namespace GLTF.Schema
 
 		private static unsafe float2 GetUByte2Element(void* buffer, uint byteOffset, float maxValue)
 		{
-			var p = (sbyte*)(((byte*)buffer) + byteOffset);
+			var p = (byte*)(((byte*)buffer) + byteOffset);
 			return new float2(*p / maxValue, *(p + 1) / maxValue);
 		}		
 
 		private static unsafe float3 GetUByte3Element(void* buffer, uint byteOffset, float maxValue)
 		{
-			var p = (sbyte*)(((byte*)buffer) + byteOffset);
+			var p = (byte*)(((byte*)buffer) + byteOffset);
 			return new float3(*p / maxValue, *(p + 1) / maxValue, *(p + 2) / maxValue);
 		}		
 
 		private static unsafe float4 GetUByte4Element(void* buffer, uint byteOffset, float maxValue)
 		{
-			var p = (sbyte*)(((byte*)buffer) + byteOffset);
+			var p = (byte*)(((byte*)buffer) + byteOffset);
 			return new float4(*p / maxValue, *(p + 1) / maxValue, *(p + 2) / maxValue, *(p + 3) / maxValue);
 		}		
 		
 		private static unsafe float4x4 GetUByte4x4Element(void* buffer, uint byteOffset, float maxValue)
 		{
-			var p = (sbyte*)(((byte*)buffer) + byteOffset);
+			var p = (byte*)(((byte*)buffer) + byteOffset);
 			return new float4x4(*p / maxValue, *(p + 1) / maxValue, *(p + 2) / maxValue, *(p + 3) / maxValue,
 				*(p + 4) / maxValue, *(p + 5) / maxValue, *(p + 6) / maxValue, *(p + 7) / maxValue,
 				*(p + 8) / maxValue, *(p + 9) / maxValue, *(p + 10) / maxValue, *(p + 11) / maxValue,
