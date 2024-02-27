@@ -350,12 +350,12 @@ namespace UnityGLTF
 
 		protected void ApplyImportOptionsOnMesh(Mesh mesh)
 		{
-			bool isTrinagleTopology = mesh.GetTopology(0) == MeshTopology.Triangles;
+			bool isTriangleTopology = mesh.GetTopology(0) == MeshTopology.Triangles;
 
 			if (_options.ImportNormals == GLTFImporterNormals.None)
 				mesh.normals = Array.Empty<Vector3>();
 			else
-			if (isTrinagleTopology)
+			if (isTriangleTopology)
 			{
 				if (_options.ImportNormals == GLTFImporterNormals.Calculate)
 					mesh.RecalculateNormals();
@@ -368,7 +368,7 @@ namespace UnityGLTF
 			if (_options.ImportTangents == GLTFImporterNormals.None)
 				mesh.tangents = Array.Empty<Vector4>();
 			else
-			if (isTrinagleTopology)
+			if (isTriangleTopology)
 			{
 				if (_options.ImportTangents == GLTFImporterNormals.Calculate)
 					mesh.RecalculateTangents();
