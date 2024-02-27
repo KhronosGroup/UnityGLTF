@@ -237,7 +237,7 @@ namespace UnityGLTF
 		        }
 		        catch (Exception e)
 		        {
-			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e);
+			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e, GetAtPath(path));
 			        throw;
 		        }
 	        }
@@ -748,7 +748,7 @@ namespace UnityGLTF
             }
             catch (Exception e)
             {
-	            Debug.LogException(e);
+	            Debug.LogException(e, this);
                 if (gltfScene) DestroyImmediate(gltfScene);
                 throw;
             }
@@ -816,7 +816,7 @@ namespace UnityGLTF
 	        
 	        // run texture verification and warn about wrong configuration
 	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(this))
-		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.");
+		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.", this);
 
 	        if (context.SceneImporter != null)
 		        context.SceneImporter.Dispose();
