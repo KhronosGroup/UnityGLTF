@@ -7,7 +7,7 @@ namespace UnityGLTF
     {
         public static bool IsKtxOrBasis(AssetImporter importer)
         {
-            return importer.GetType().FullName == "KtxUnity.KtxImporter" || importer.GetType().FullName == "KtxUnity.BasisImporter";
+            return importer && importer.GetType().FullName == "KtxUnity.KtxImporter" || importer.GetType().FullName == "KtxUnity.BasisImporter";
         }
 			
         public static bool TryGetLinear(AssetImporter importer, out bool linear)
@@ -15,6 +15,7 @@ namespace UnityGLTF
             linear = false;
             if (!IsKtxOrBasis(importer))
                 return false;
+            
             var importerType = importer.GetType();
             var linearField = importerType.GetField("linear");
             if (linearField == null)
@@ -26,6 +27,9 @@ namespace UnityGLTF
 
         public static void SetLinear(AssetImporter importer, bool linear)
         {
+            if (!IsKtxOrBasis(importer))
+                return;
+            
             var linearProperty = importer.GetType().GetField("linear");
             if (linearProperty == null)
                 return;
