@@ -96,6 +96,7 @@ namespace UnityGLTF
 				var primitive = mesh.Primitives[i];
 				var primCache = meshCache.Primitives[i];
 				unityData.Topology[i] = GetTopology(primitive.Mode);
+				unityData.DrawModes[i] = primitive.Mode;
 
 				ConvertAttributeAccessorsToUnityTypes(primCache, unityData, unityData.subMeshVertexOffset[i], i);
 
@@ -154,6 +155,7 @@ namespace UnityGLTF
 					var primitive = mesh.Primitives[primIndex];
 					var primCache = meshCache.Primitives[primIndex];
 					unityData.Topology[primIndex] = GetTopology(primitive.Mode);
+					unityData.DrawModes[primIndex] = primitive.Mode;
 
 					ConvertAttributeAccessorsToUnityTypes(primCache, unityData,
 						unityData.subMeshVertexOffset[primIndex], primIndex);
@@ -517,6 +519,7 @@ namespace UnityGLTF
 			{
 
 				Topology = new MeshTopology[gltfMesh.Primitives.Count],
+				DrawModes = new DrawMode[gltfMesh.Primitives.Count],
 				Indices = new int[gltfMesh.Primitives.Count][],
 				subMeshDataCreated = new bool[gltfMesh.Primitives.Count],
 				subMeshVertexOffset = vertOffsetBySubMesh
@@ -1107,20 +1110,63 @@ namespace UnityGLTF
 				vertexCount = attribute.AccessorId.Value.Count;
 			}
 
-			int[] indices;
+			int[] indices = null;
 
 			if (meshAttributes.TryGetValue(SemanticProperties.INDICES, out var indicesAccessor))
 			{
 				indices = indicesAccessor.AccessorContent.AsUInts.ToIntArrayRaw();
-				if (unityData.Topology[indexOffset] == MeshTopology.Triangles)
-					SchemaExtensions.FlipTriangleFaces(indices);
+				switch (unityData.DrawModes[indexOffset])
+				{
+					case DrawMode.LineLoop:
+						if (indices[^1] != indices[0])
+						{
+							Array.Resize(ref indices, indices.Length + 1);
+							indices[^1] = indices[0];
+						}
+						break;
+					case DrawMode.Triangles:
+						SchemaExtensions.FlipTriangleFaces(indices);
+						break;
+					case DrawMode.TriangleStrip:
+						indices = MeshPrimitive.ConvertTriangleStripsToTriangles(indices);
+						SchemaExtensions.FlipTriangleFaces(indices);
+						break;
+					case DrawMode.TriangleFan:
+						indices = MeshPrimitive.ConvertTriangleFanToTriangles(indices);
+						SchemaExtensions.FlipTriangleFaces(indices);
+						break;
+				}				
 			}
 			else
 			{
-				indices = MeshPrimitive.GenerateTriangles((int)vertexCount);
+				switch (unityData.DrawModes[indexOffset])
+				{
+					case DrawMode.Points:
+						indices = MeshPrimitive.GeneratePoints((int)vertexCount);
+						break;
+					case DrawMode.Lines:
+						indices = MeshPrimitive.GenerateLines((int)vertexCount);
+						break;
+					case DrawMode.LineLoop:
+						indices = MeshPrimitive.GenerateLineLoop((int)vertexCount);
+						break;
+					case DrawMode.LineStrip:
+						indices = MeshPrimitive.GenerateLineStrip((int)vertexCount);
+						break;
+					case DrawMode.Triangles:
+						indices = MeshPrimitive.GenerateTriangles((int)vertexCount);
+						break;
+					case DrawMode.TriangleStrip:
+						indices = MeshPrimitive.GenerateTriangleStrips((int)vertexCount);
+						break;
+					case DrawMode.TriangleFan:
+						indices = MeshPrimitive.GenerateTriangleFans((int)vertexCount);
+						break;
+				}
 			}
 
-			unityData.Indices[indexOffset] = indices;
+			if (indices != null)
+				unityData.Indices[indexOffset] = indices;
 
 			// Only add weight/joint data when it's not already added to the unity mesh data !
 			if (meshAttributes.ContainsKey(SemanticProperties.Weight[0]) && meshAttributes.ContainsKey(SemanticProperties.Joint[0])
@@ -1248,6 +1294,9 @@ namespace UnityGLTF
 				case DrawMode.Lines: return MeshTopology.Lines;
 				case DrawMode.LineStrip: return MeshTopology.LineStrip;
 				case DrawMode.Triangles: return MeshTopology.Triangles;
+				case DrawMode.LineLoop: return MeshTopology.LineStrip;
+				case DrawMode.TriangleStrip: return MeshTopology.Triangles;
+				case DrawMode.TriangleFan: return MeshTopology.Triangles;
 			}
 
 			throw new Exception("Unity does not support glTF draw mode: " + mode + $" (File: {_gltfFileName})");

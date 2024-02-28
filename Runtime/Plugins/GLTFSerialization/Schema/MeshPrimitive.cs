@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GLTF.Extensions;
 using Newtonsoft.Json;
@@ -93,17 +94,157 @@ namespace GLTF.Schema
 
 		public static int[] GenerateTriangles(int vertCount)
 		{
-			var arr = new int[vertCount];
-			for (var i = 0; i < vertCount; i+=3)
+			var indices = new int[vertCount];
+			for (var i = 0; i < vertCount-2; i+=3)
 			{
-				arr[i] = i + 2;
-				arr[i + 1] = i + 1;
-				arr[i + 2] = i;
+				indices[i] = i + 2;
+				indices[i + 1] = i + 1;
+				indices[i + 2] = i;
+			}
+
+			return indices;
+		}
+		
+		public static int[] GenerateTriangleStrips(int vertCount)
+		{
+			if (vertCount < 3)
+			{
+				throw new Exception("Vertex count must be at least 3 to generate a triangle strip.");
+			}
+
+			int[] indices = new int[3 * (vertCount - 2)];
+
+			for (int i = 0; i < vertCount - 2; i++)
+			{
+				if (i % 2 == 0)
+				{
+					indices[3 * i] = i;
+					indices[3 * i + 1] = i + 1;
+					indices[3 * i + 2] = i + 2;
+				}
+				else
+				{
+					indices[3 * i] = i + 1;
+					indices[3 * i + 1] = i;
+					indices[3 * i + 2] = i + 2;
+				}
+			}
+
+			return indices;
+		}		
+		
+		public static int[] ConvertTriangleStripsToTriangles(int[] indices)
+		{
+			if (indices.Length < 3)
+			{
+				throw new Exception("Input indices array must contain at least 3 elements.");
+			}
+			
+			List<int> triangles = new List<int>((indices.Length - 3) * 3 + 3);
+
+			for (int i = 2; i < indices.Length; i++)
+			{
+				// Every even-indexed element forms a triangle with the previous two elements
+				if (i % 2 == 0)
+				{
+					triangles.Add(indices[i - 2]);
+					triangles.Add(indices[i - 1]);
+					triangles.Add(indices[i]);
+				}
+				// Every odd-indexed element forms a triangle with the two previous elements but in reverse order
+				else
+				{
+					triangles.Add(indices[i - 1]);
+					triangles.Add(indices[i - 2]);
+					triangles.Add(indices[i]);
+				}
+			}
+
+			return triangles.ToArray();
+		}			
+		
+		public static int[] ConvertTriangleFanToTriangles(int[] indices)
+		{
+			if (indices.Length < 3)
+			{
+				throw new Exception("Input indices array must contain at least 3 elements.");
+			}
+
+			List<int> triangles = new List<int>();
+
+			// Assuming the first vertex is the center of the fan
+			int centerIndex = indices[0];
+
+			for (int i = 1; i < indices.Length - 1; i++)
+			{
+				// Form triangles using the center vertex and the adjacent vertices
+				triangles.Add(centerIndex);
+				triangles.Add(indices[i]);
+				triangles.Add(indices[i + 1]);
+			}
+
+			return triangles.ToArray();
+		}
+		
+		public static int[] GenerateTriangleFans(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount-2; i+=3)
+			{
+				arr[i] = i + 1;
+				arr[i + 1] = i + 2;
+				arr[i + 2] = 0;
+			}
+
+			return arr;
+		}	
+		
+		public static int[] GeneratePoints(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount; i++)
+			{
+				arr[i] = i ;
 			}
 
 			return arr;
 		}
+		
+		public static int[] GenerateLines(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount-1; i+=2)
+			{
+				arr[i] = i;
+				arr[i + 1] = i + 1;
+			}
 
+			return arr;
+		}
+		
+		public static int[] GenerateLineStrip(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount; i++)
+			{
+				arr[i] = i;
+			}
+
+			return arr;
+		}	
+		
+		public static int[] GenerateLineLoop(int vertCount)
+		{
+			var arr = new int[vertCount+1];
+			for (var i = 0; i < vertCount-1; i++)
+			{
+				arr[i] = i;
+			}
+
+			arr[vertCount - 1] = 0;
+			return arr;
+		}	
+		
 		public static MeshPrimitive Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var primitive = new MeshPrimitive();
