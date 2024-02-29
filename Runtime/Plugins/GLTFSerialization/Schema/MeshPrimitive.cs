@@ -190,11 +190,11 @@ namespace GLTF.Schema
 		{
 			var arr = new int[(vertCount-1)*3];
 			int arrIndex = 0;
-			for (var i = 1; i < vertCount; i++)
+			for (var i = 1; i < vertCount-1; i++)
 			{
-				arr[arrIndex] = i;
-				arr[arrIndex+1] = i == vertCount-1 ? 1 : i + 1;
-				arr[arrIndex+2] = 0;
+				arr[arrIndex] = 0;
+				arr[arrIndex+1] = i+1;
+				arr[arrIndex+2] = i;
 				arrIndex += 3;
 			}
 
