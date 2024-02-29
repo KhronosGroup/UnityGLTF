@@ -116,7 +116,7 @@ namespace GLTF.Schema
 
 			for (int i = 0; i < vertCount - 2; i++)
 			{
-				if (i % 2 == 0)
+				if (i % 2 == 1)
 				{
 					indices[3 * i] = i;
 					indices[3 * i + 1] = i + 1;
@@ -188,12 +188,14 @@ namespace GLTF.Schema
 		
 		public static int[] GenerateTriangleFans(int vertCount)
 		{
-			var arr = new int[vertCount];
-			for (var i = 0; i < vertCount-2; i+=3)
+			var arr = new int[(vertCount-1)*3];
+			int arrIndex = 0;
+			for (var i = 1; i < vertCount; i++)
 			{
-				arr[i] = i + 1;
-				arr[i + 1] = i + 2;
-				arr[i + 2] = 0;
+				arr[arrIndex] = i;
+				arr[arrIndex+1] = i == vertCount-1 ? 1 : i + 1;
+				arr[arrIndex+2] = 0;
+				arrIndex += 3;
 			}
 
 			return arr;
@@ -236,12 +238,12 @@ namespace GLTF.Schema
 		public static int[] GenerateLineLoop(int vertCount)
 		{
 			var arr = new int[vertCount+1];
-			for (var i = 0; i < vertCount-1; i++)
+			for (var i = 0; i < vertCount; i++)
 			{
 				arr[i] = i;
 			}
 
-			arr[vertCount - 1] = 0;
+			arr[^1] = 0;
 			return arr;
 		}	
 		
