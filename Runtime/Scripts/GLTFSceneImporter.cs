@@ -886,29 +886,29 @@ namespace UnityGLTF
 				if (extMeshGPUInstancing.attributes.TryGetValue(EXT_mesh_gpu_instancing.ATTRIBUTE_TRANSLATION, out var positionAccessorId))
 				{
 					positionsAttr = await GetAttrAccessorAndAccessorContent(positionAccessorId, true);
-					instancesCount = positionsAttr.AccessorContent.AsFloats3.Length;
+					instancesCount = positionsAttr.AccessorContent.AsFloat3s.Length;
 				}
 				if (extMeshGPUInstancing.attributes.TryGetValue(EXT_mesh_gpu_instancing.ATTRIBUTE_ROTATION, out var rotationAccessorId))
 				{
 					rotationAttr = await GetAttrAccessorAndAccessorContent(rotationAccessorId);
-					if (instancesCount != 0 && rotationAttr.AccessorContent.AsFloats4.Length != instancesCount)
+					if (instancesCount != 0 && rotationAttr.AccessorContent.AsFloat4s.Length != instancesCount)
 					{
 						Debug.LogError("Rotation attribute count does not match position attribute count for instances!", this);
 						return null;
 					}
 					else
-						instancesCount = rotationAttr.AccessorContent.AsFloats4.Length;
+						instancesCount = rotationAttr.AccessorContent.AsFloat4s.Length;
 				}
 				if (extMeshGPUInstancing.attributes.TryGetValue(EXT_mesh_gpu_instancing.ATTRIBUTE_SCALE, out var scaleAccessorId))
 				{
 					scaleAttr = await GetAttrAccessorAndAccessorContent(scaleAccessorId);
-					if (instancesCount != 0 && scaleAttr.AccessorContent.AsFloats4.Length != instancesCount)
+					if (instancesCount != 0 && scaleAttr.AccessorContent.AsFloat4s.Length != instancesCount)
 					{
 						Debug.LogError("Scale attribute count does not match position attribute count for instances!", this);
 						return null;
 					}
 					else
-						instancesCount = scaleAttr.AccessorContent.AsFloats3.Length;
+						instancesCount = scaleAttr.AccessorContent.AsFloat3s.Length;
 				}
 
 				if (instancesCount > 0)
@@ -917,9 +917,9 @@ namespace UnityGLTF
 					for (int i = 0; i < instancesCount; i++)
 					{
 						instancesTRS.Add(( 
-								positionsAttr != null ? positionsAttr.AccessorContent.AsFloats3[i].ToUnityVector3Raw() : Vector3.zero,
-								rotationAttr != null ? rotationAttr.AccessorContent.AsFloats4[i].ToUnityQuaternionConvert() : Quaternion.identity,
-								scaleAttr != null ? scaleAttr.AccessorContent.AsFloats3[i].ToUnityVector3Raw() : Vector3.one
+								positionsAttr != null ? positionsAttr.AccessorContent.AsFloat3s[i].ToUnityVector3Raw() : Vector3.zero,
+								rotationAttr != null ? rotationAttr.AccessorContent.AsFloat4s[i].ToUnityQuaternionConvert() : Quaternion.identity,
+								scaleAttr != null ? scaleAttr.AccessorContent.AsFloat3s[i].ToUnityVector3Raw() : Vector3.one
 								));
 					}
 					return instancesTRS.ToArray();
