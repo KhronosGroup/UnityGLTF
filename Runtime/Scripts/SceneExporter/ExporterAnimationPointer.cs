@@ -42,6 +42,27 @@ namespace UnityGLTF
 				pointerResolvers.Add(resolver);
 		}
 
+		/// <summary>
+		/// AddAnimationData should be called within the <see cref="ExportContext.AfterSceneExport"/> event.
+		/// <remarks>
+		/// Don't forget to add the GLTFAnimation to the root <see cref="GLTFRoot.Animations"/> list!
+		/// <para> e.g.: _exporter.GetRoot().Animations.Add(_animationA); </para>
+		/// </remarks>
+		/// <para><b>Important:</b> times[] and values[] need to be the same length!</para>
+		/// </summary>
+		/// <example><code>
+		/// var exportContext = new ExportContext(GLTFSettings.GetOrCreateSettings());
+		/// var _exporter = new GLTFSceneExporter(new Transform[]{transform }, exportContext);
+		/// exportContext.AfterSceneExport += (scene, root) =>
+		/// {
+		///		GLTFAnimation _animationA = new GLTFAnimation();
+		///		_animationA.Name = "TestA";
+		///		_exporter.AddAnimationData(rootTransform, "translation", _animationA,
+		///			new float[] { 0, 2 },
+		///			new object[] { (object)Vector3.one, (object)Vector3.up });
+		///		_exporter.GetRoot().Animations.Add(_animationA);
+		///	};
+		/// </code></example>
 		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
 		{
 			if (!animatedObject) return;
