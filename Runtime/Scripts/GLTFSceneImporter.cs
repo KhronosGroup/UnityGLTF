@@ -84,6 +84,7 @@ namespace UnityGLTF
 		public Vector3[][] MorphTargetTangents;
 
 		public MeshTopology[] Topology;
+		public DrawMode[] DrawModes;
 		public int[][] Indices;
 		
 		public HashSet<int> alreadyAddedAccessors = new HashSet<int>();
