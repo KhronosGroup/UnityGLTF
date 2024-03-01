@@ -520,7 +520,10 @@ namespace UnityGLTF
 		                    }
 
 		                    mat.name = matName;
-		                    mat.enableInstancing = _enableGpuInstancing;
+		                    
+		                    // In case the material is explicit set to instancing (e.g. EXT_mesh_gpu_instancing is used), don't override it.
+		                    if (!mat.enableInstancing)
+								mat.enableInstancing = _enableGpuInstancing;
 		                    materials.Add(mat);
 	                    }
                     }
