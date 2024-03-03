@@ -19,7 +19,7 @@
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "2.0.0",
     "com.unity.modules.imageconversion": "1.0.0",
-    "com.unity.shadergraph": "10.0.0"
+    "com.unity.shadergraph": "10.10.1"
   },
   "samples": [
     {
