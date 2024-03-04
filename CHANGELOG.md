@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.10.0-rc] - 2024-03-04
+- fix: GLTFRecorder issue where resulting animation would have linear interpolation for cases where a jump was expected
+- fix: GLTFSettings toolbar active index correctly stored in session now
+- fix: don't export empty buffers with length 0
+- fix: check for valid Humanoid avatar before export (#681)
+- fix: work around SRP issue with invalid camera data in render passes affecting rough refractions
+- fix: issue when morph targets have varying normals and tangents data (#682)
+- fix: prevent exception in earlier 2022.x versions with `isDataSRGB` not being available
+- fix: missing normalization checks for quantized accessor data (#693)
+- fix: make sure topology are triangles for calculating normals/tangents (#133)
+- fix: KTX2 textures were not checking for linear for "Fix All" importer button
+- fix: MAOS maps (combined metallic/ambient occlusion/roughness) were not exported correctly
+- fix: wrong accessor `UBYTE` > `BYTE` and `BYTE` > `SBYTE` conversion when reading data in some 
+- fix: restore multithreading support and improve performance
+- feat: import plugin for `EXT_mesh_gpu_instancing` extension
+- feat: added blend shape frame weight import option for easier animation retargeting
+- feat: show failing filenames more clearly when exceptions occur during import
+- feat: add option to hide scene obj during loading in `GLTFComponent`
+- feat: add import support for glTF `LineLoop`, `TriangleStrip`, `TriangleFan` topologies
+- feat: performance improvements in name resolution for importing files with many nodes
+- feat: performance improvements by using `NativeArray` and `Mathematics` types 
+
 ## [2.9.1-rc] - 2024-02-16
 - fix: spritesheet animation keyframes should be constant
 - change: log warning if spritesheet used for animation contains only one image/sprite (currently all images must be part of the same spritesheet)
