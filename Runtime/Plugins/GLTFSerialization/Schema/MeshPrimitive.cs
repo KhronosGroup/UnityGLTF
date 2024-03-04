@@ -243,7 +243,7 @@ namespace GLTF.Schema
 				arr[i] = i;
 			}
 
-			arr[^1] = 0;
+			arr[arr.Length - 1] = 0;
 			return arr;
 		}	
 		

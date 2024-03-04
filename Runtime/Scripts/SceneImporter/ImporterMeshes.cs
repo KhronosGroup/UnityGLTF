@@ -1144,10 +1144,10 @@ namespace UnityGLTF
 				switch (unityData.DrawModes[indexOffset])
 				{
 					case DrawMode.LineLoop:
-						if (indices[^1] != indices[0])
+						if (indices[indices.Length - 1] != indices[0])
 						{
 							Array.Resize(ref indices, indices.Length + 1);
-							indices[^1] = indices[0];
+							indices[indices.Length - 1] = indices[0];
 						}
 						break;
 					case DrawMode.Triangles:
