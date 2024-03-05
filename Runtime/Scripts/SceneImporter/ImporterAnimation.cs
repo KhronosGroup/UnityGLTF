@@ -435,7 +435,7 @@ namespace UnityGLTF
 											pointerData.unityProperties = new string[] { "background color.r", "background color.g", "background color.b", "background color.a" };
 											pointerData.conversion = (data, frame) =>
 											{
-												var color = data.AsFloats4[frame].ToUnityColorRaw();
+												var color = data.AsFloat4s[frame].ToUnityColorRaw();
 												return new float[] {color.r, color.g, color.b, color.a};
 											};
 											break;
@@ -481,17 +481,17 @@ namespace UnityGLTF
 					else
 					{
 						if (pointerData.animationType == null)
-							pointerData.animationType = targetNode.Skin != null ? typeof(SkinnedMeshRenderer) : typeof(MeshRenderer);
+							pointerData.animationType = targetNode.Skin != null
+								? typeof(SkinnedMeshRenderer)
+								: typeof(MeshRenderer);
 					}
 
 					switch (path)
 					{
 						case GLTFAnimationChannelPath.pointer:
-	
 							if (pointerData.conversion == null)
 								continue;
-							
-							SetAnimationCurve(clip, relativePath,  pointerData.unityProperties, input, output,
+							SetAnimationCurve(clip, relativePath, pointerData.unityProperties, input, output,
 								samplerCache.Interpolation, pointerData.animationType,
 								(data, frame) => pointerData.conversion(data, frame));
 							break;
@@ -502,83 +502,87 @@ namespace UnityGLTF
 							// but performance is much better if we do it when constructing the clips
 							var factor = Context?.ImportScaleFactor ?? 1f;
 #endif
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) =>
-										  {
-											  var position = data.AsFloat3s[frame].ToUnityVector3Convert();
+							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+								samplerCache.Interpolation, typeof(Transform),
+								(data, frame) =>
+								{
+									var position = data.AsFloat3s[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
 									return new float[]
 										{ position.x * factor, position.y * factor, position.z * factor };
 #else
 											  return new float[] { position.x, position.y, position.z };
 #endif
-										  });
-						break;
+								});
+							break;
 
-					case GLTFAnimationChannelPath.rotation:
-						propertyNames = new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
-						bool hasLight = (targetNode.Extensions != null &&
-						                 targetNode.Extensions.ContainsKey(KHR_lights_punctualExtensionFactory
-							                 .EXTENSION_NAME) && Context.TryGetPlugin<LightsPunctualImportContext>(out _));
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) =>
-										  {
-											  var rotation = data.AsFloat4s[frame];
-											  var quaternion = rotation.ToUnityQuaternionConvert();
-											  if (hasLight)
-											  {
-												  quaternion *= Quaternion.Euler(0,180, 0);
-											  }
-											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
-										  });
-
-						break;
-
-					case GLTFAnimationChannelPath.scale:
-						propertyNames = new string[] { "localScale.x", "localScale.y", "localScale.z" };
-
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) =>
-										  {
-											  var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
-											  return new float[] { scale.x, scale.y, scale.z };
-										  });
-						break;
-
-					case GLTFAnimationChannelPath.weights:
-						var mesh = targetNode.Mesh.Value;
-						var primitives = mesh.Primitives;
-						if (primitives[0].Targets == null) break;
-						var targetCount = primitives[0].Targets.Count;
-						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
-						{
-							// see SceneImporter:156
-							// blend shapes are always called "Morphtarget"
-							var targetNames = mesh.TargetNames;
-							propertyNames = new string[targetCount];
-							for (var i = 0; i < targetCount; i++)
-								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + ((targetNames != null && targetNames.Count > i) ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
-							var frameFloats = new float[targetCount];
-
-							var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
+						case GLTFAnimationChannelPath.rotation:
+							propertyNames = new string[]
+								{ "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
+							bool hasLight = (targetNode.Extensions != null
+							                 && targetNode.Extensions.ContainsKey(KHR_lights_punctualExtensionFactory.EXTENSION_NAME)
+							                 && Context.TryGetPlugin<LightsPunctualImportContext>(out _));
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 								samplerCache.Interpolation, typeof(Transform),
 								(data, frame) =>
 								{
-									var allValues = data.AsFloats;
-									for (var k = 0; k < targetCount; k++)
-										frameFloats[k] = allValues[frame * targetCount + k] * blendShapeFrameWeight;
-
+									var rotation = data.AsFloat4s[frame];
+									var quaternion = rotation.ToUnityQuaternionConvert();
+									if (hasLight)
+										quaternion *= Quaternion.Euler(0, 180, 0);
 									return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 								});
+							break;
+						case GLTFAnimationChannelPath.scale:
+							propertyNames = new string[] { "localScale.x", "localScale.y", "localScale.z" };
 
-					default:
-						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
-						break;
-				} // switch target type
+							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+								samplerCache.Interpolation, typeof(Transform),
+								(data, frame) =>
+								{
+									var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
+									return new float[] { scale.x, scale.y, scale.z };
+								});
+							break;
+
+						case GLTFAnimationChannelPath.weights:
+							var mesh = targetNode.Mesh.Value;
+							var primitives = mesh.Primitives;
+							if (primitives[0].Targets == null) break;
+							var targetCount = primitives[0].Targets.Count;
+							for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+							{
+								// see SceneImporter:156
+								// blend shapes are always called "Morphtarget"
+								var targetNames = mesh.TargetNames;
+								propertyNames = new string[targetCount];
+								for (var i = 0; i < targetCount; i++)
+									propertyNames[i] = _options.ImportBlendShapeNames
+										? ("blendShape." + ((targetNames != null && targetNames.Count > i)
+											? targetNames[i]
+											: ("Morphtarget" + i)))
+										: "blendShape." + i.ToString();
+								var frameFloats = new float[targetCount];
+
+								var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
+								SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+									samplerCache.Interpolation, typeof(Transform),
+									(data, frame) =>
+									{
+										var allValues = data.AsFloats;
+										for (var k = 0; k < targetCount; k++)
+											frameFloats[k] = allValues[frame * targetCount + k] * blendShapeFrameWeight;
+
+										return frameFloats;
+									});
+							}
+
+							break;
+						default:
+							Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
+							break;
+					} // switch target type
+				}
 			} // foreach channel
 
 			// EnsureQuaternionContinuity results in unwanted tangents on the first and last keyframes > custom Solution in SetAnimationCurve

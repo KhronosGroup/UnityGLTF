@@ -344,7 +344,7 @@ namespace GLTF.Schema.KHR_lights_punctual
 				case "color":
 					return (NumericArray data, int frame) =>
 					{
-						var col = data.AsFloats3[frame];
+						var col = data.AsFloat3s[frame];
 						var color = new Color(col[0], col[1], col[2], 1f).ToUnityColorRaw();
 						return new float[] { color.r, color.g, color.b };
 						//return new float[] { col.x, col.y, col.z };

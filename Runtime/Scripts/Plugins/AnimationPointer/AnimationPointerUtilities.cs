@@ -95,12 +95,12 @@ namespace UnityGLTF.Plugins
                     result[0] = data.AsFloats[frame];
                     break;
                 case 2:
-                    var frameData2 = data.AsFloats2[frame];
+                    var frameData2 = data.AsFloat2s[frame];
                     result[0] = frameData2.x;
                     result[1] = frameData2.y;
                     break;
                 case 3:
-                    var frameData3 = data.AsFloats3[frame];
+                    var frameData3 = data.AsFloat3s[frame];
                     if (map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
                     {
                         Color gammaColor = new Color(frameData3.x, frameData3.y, frameData3.z).gamma;
@@ -116,7 +116,7 @@ namespace UnityGLTF.Plugins
                     }
                     break;
                 case 4:
-                    var frameData4 = data.AsFloats4[frame];
+                    var frameData4 = data.AsFloat4s[frame];
                     if (map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
                     {
                         Color gammaColor = new Color(frameData4.x, frameData4.y, frameData4.z, frameData4.z).gamma;
@@ -149,15 +149,15 @@ namespace UnityGLTF.Plugins
                             secondary = new float[] { secondaryData.AsFloats[frame] };
                             break;
                         case GLTFAccessorAttributeType.VEC2:
-                            var s2 = secondaryData.AsFloats2[frame];
+                            var s2 = secondaryData.AsFloat2s[frame];
                             secondary = new float[] { s2.x, s2.y };
                             break;
                         case GLTFAccessorAttributeType.VEC3:
-                            var s3 = secondaryData.AsFloats3[frame];
+                            var s3 = secondaryData.AsFloat3s[frame];
                             secondary = new float[] { s3.x, s3.y, s3.z };
                             break;
                         case GLTFAccessorAttributeType.VEC4:
-                            var s4 = secondaryData.AsFloats4[frame];
+                            var s4 = secondaryData.AsFloat4s[frame];
                             secondary = new float[] { s4.x, s4.y, s4.z, s4.w };
                             break;
                         default:
