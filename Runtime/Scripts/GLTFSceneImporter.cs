@@ -999,22 +999,22 @@ namespace UnityGLTF
 						if (node.Skin != null)
 							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
-					// morph target weights
-					if (weights != null)
-					{
-						for (int i = 0; i < weights.Count; ++i)
+						// morph target weights
+						if (weights != null)
 						{
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
+							for (int i = 0; i < weights.Count; ++i)
+							{
+								renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
+							}
 						}
 					}
-				}
-				else
-				{
-					var filter = nodeObj.AddComponent<MeshFilter>();
-					filter.sharedMesh = unityMesh;
-					var renderer = nodeObj.AddComponent<MeshRenderer>();
-					renderer.sharedMaterials = materials;
-				}
+					else
+					{
+						var filter = nodeObj.AddComponent<MeshFilter>();
+						filter.sharedMesh = unityMesh;
+						var renderer = nodeObj.AddComponent<MeshRenderer>();
+						renderer.sharedMaterials = materials;
+					}
 
 #if UNITY_PHYSICS
 					if (!onlyMesh)
@@ -1047,14 +1047,6 @@ namespace UnityGLTF
 				}
 				
 				await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
-
-				/* TODO: implement camera (probably a flag to disable for VR as well)
-				if (camera != null)
-				{
-					GameObject cameraObj = camera.Value.Create();
-					cameraObj.transform.parent = nodeObj.transform;
-				}
-				*/
 
 				ConstructLights(nodeObj, node);
 				ConstructCamera(nodeObj, node);
@@ -1128,8 +1120,7 @@ namespace UnityGLTF
 				unityCamera.farClipPlane = (float)camera.Orthographic.ZFar;
 				unityCamera.nearClipPlane = (float)camera.Orthographic.ZNear;
 			}
-			else
-			if (camera.Perspective != null)
+			else if (camera.Perspective != null)
 			{
 				unityCamera = nodeObj.AddComponent<Camera>();
 				unityCamera.orthographic = false;
