@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.10.0-rc.2] - 2024-03-05
+- fix: add `com.unity.mathematics` as required dependency
+- fix: added null check in mesh data preparation code to prevent exception for files without nodes (e.g. just materials)
+
 ## [2.10.0-rc] - 2024-03-04
 - fix: GLTFRecorder issue where resulting animation would have linear interpolation for cases where a jump was expected
 - fix: GLTFSettings toolbar active index correctly stored in session now
