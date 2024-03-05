@@ -151,6 +151,9 @@ namespace UnityGLTF
 
 		protected void PrepareUnityMeshData()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			for (int i = 0; i < _gltfRoot.Meshes.Count(); i++)
 			{
 				int meshIndex = i;
@@ -886,6 +889,9 @@ namespace UnityGLTF
 
 		private void FreeUpAccessorContents()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
 			{
 				var gltfMesh = _gltfRoot.Meshes[meshIndex];
@@ -919,6 +925,9 @@ namespace UnityGLTF
 
 		private async Task PreparePrimitiveAttributes()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
 			{
 				if (_assetCache.MeshCache[meshIndex] == null)
