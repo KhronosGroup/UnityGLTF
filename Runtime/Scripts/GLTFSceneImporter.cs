@@ -45,6 +45,7 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
+		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
 
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
@@ -58,6 +59,13 @@ namespace UnityGLTF
 		public ILogger logger;
 	}
 
+	public enum CameraImportOption
+	{
+		None,
+		ImportAndActive,
+		ImportAndCameraDisabled
+	}
+	
 	public enum AnimationMethod
 	{
 		None,
@@ -1049,6 +1057,7 @@ namespace UnityGLTF
 				*/
 
 				ConstructLights(nodeObj, node);
+				ConstructCamera(nodeObj, node);
 
 				nodeObj.SetActive(true);
 			}
@@ -1101,6 +1110,41 @@ namespace UnityGLTF
 			progress?.Report(progressStatus);
 		}
 
+		private void ConstructCamera(GameObject nodeObj, Node node)
+		{
+			if (node.Camera == null)
+				return;
+
+			if (_options.CameraImport == CameraImportOption.None)
+				return;
+			
+			var camera = node.Camera.Value;
+			Camera unityCamera = null;
+			if (camera.Orthographic != null)
+			{
+				unityCamera = nodeObj.AddComponent<Camera>();
+				unityCamera.orthographic = true;
+				unityCamera.orthographicSize = Mathf.Max((float)camera.Orthographic.XMag, (float)camera.Orthographic.YMag);
+				unityCamera.farClipPlane = (float)camera.Orthographic.ZFar;
+				unityCamera.nearClipPlane = (float)camera.Orthographic.ZNear;
+			}
+			else
+			if (camera.Perspective != null)
+			{
+				unityCamera = nodeObj.AddComponent<Camera>();
+				unityCamera.orthographic = false;
+				unityCamera.fieldOfView = (float)camera.Perspective.YFov * Mathf.Rad2Deg;
+				unityCamera.farClipPlane = (float)camera.Perspective.ZFar;
+				unityCamera.nearClipPlane = (float)camera.Perspective.ZNear;
+			}
+
+			if (!unityCamera)
+				return;
+			
+			if (_options.CameraImport == CameraImportOption.ImportAndCameraDisabled)
+				unityCamera.enabled = false;
+		}
+		
 		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
