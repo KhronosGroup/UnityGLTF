@@ -150,7 +150,7 @@ namespace UnityGLTF
 				}
 #endif
 			}
-			catch (Exception e)
+			catch (System.Exception e)
 			{
 				if(importOptions.DataLoader != null)
 				{
