@@ -95,6 +95,12 @@ namespace UnityGLTF
 #pragma warning restore CS0618 // Type or member is obsolete
 	}
 
+    // Empty interface to mark a portion of a transform hierarchy as unexportable.
+    public interface IGLTFSceneExportGuard
+    {
+        //
+    }
+
 	[Obsolete("Use UnityGLTF.ExportContext instead. (UnityUpgradable) -> UnityGLTF.ExportContext")]
 	public class ExportOptions: ExportContext
 	{
@@ -967,9 +973,12 @@ namespace UnityGLTF
 			{
 				return false;
 			}
-			if (settings.UseMainCameraVisibility && (_exportLayerMask >= 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
+
+			if (settings.UseMainCameraVisibility && (_exportLayerMask != 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
 			if (transform.CompareTag("EditorOnly")) return false;
-			return true;
+            if (transform.GetComponent<IGLTFSceneExportGuard>() != null) return false;
+
+            return true;
 		}
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
