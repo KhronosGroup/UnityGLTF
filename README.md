@@ -1,3 +1,4 @@
+# IMPORTANT!!! This is public forked repo... Please don't add any personal code in it <!-- omit from toc -->
 # UnityGLTF <!-- omit from toc -->
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
