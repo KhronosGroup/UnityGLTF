@@ -319,9 +319,9 @@ namespace UnityGLTF
 				if (propertyType == null)
 				{
 					if (target is Material mat)
-						UnityEngine.Debug.LogWarning($"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
+						Debug.Log(LogType.Warning, (object) $"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
 					else
-						UnityEngine.Debug.LogError($"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
+						Debug.Log(LogType.Error, (object) $"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
 					return false;
 				}
 
@@ -346,14 +346,14 @@ namespace UnityGLTF
 
 						if (!hasEnoughCurves)
 						{
-							UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
+							Debug.Log(LogType.Warning, (object) $"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
 							return false;
 						}
 					}
 
 					if (!hasEnoughCurves)
 					{
-						UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
+						Debug.Log(LogType.Warning, (object) $"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
 						return false;
 					}
 				}
@@ -1134,6 +1134,12 @@ namespace UnityGLTF
 							var spriteSheetPath = AssetDatabase.GetAssetPath(spriteSheet);
 							// will only work with all sprites from the same spritesheet right now
 							var sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(spriteSheetPath);
+							if (sprites.Length == 1)
+							{
+								Debug.LogWarning(
+									$"Spritesheet animation {spriteSheet.name} has only one frame. Exporting sprite animation using multiple image files is currently not supported. If you intent to export animated sprites please provide a spritesheet containing all your frames.",
+									spriteRenderer);
+							}
 
 							var path = binding.propertyName;
 							if (!targetCurves.ContainsKey(path))
@@ -1165,6 +1171,11 @@ namespace UnityGLTF
 								lastKeyframe = kf;
 							}
 							curve.keys = keyframes.ToArray();
+							// Ensure that the curve is constant for spritesheet animation
+							for (var i = 0; i < curve.keys.Length; i++)
+							{
+								AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
+							}
 							current.AddPropertyCurves(obj, curve, binding);
 							targetCurves[path] = current;
 

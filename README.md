@@ -57,7 +57,12 @@ The library is designed to be easy to extend with additional extensions to the g
 
 ## Installation
 
-You can install this package from git, compatible with UPM (Unity Package Manager).
+You can install this package from the Needle Package Registry with a one-click installer:  
+
+1. Download [UnityGLTF Package Installer](http://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
+2. Drop the downloaded .unitypackage into Unity and follow the steps.
+
+You can also install this package from git, compatible with UPM (Unity Package Manager).
 1. Open `Window > Package Manager`
 2. Click <kbd>+</kbd>
 3. Select <kbd>Add Package from git URL</kbd>
@@ -68,7 +73,7 @@ You can install this package from git, compatible with UPM (Unity Package Manage
 5. Click <kbd>Add</kbd>.
 
 > **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
-> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.8.1-exp`.
+> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.9.0-rc`.
 
 ## Unity Version and Render Pipeline Compatibility
 
@@ -136,7 +141,8 @@ The lists below are non-conclusive and in no particular order. Note that there a
 
 ### Import only
 
-- KHR_mesh_quantization
+- KHR_mesh_quantization (smaller buffers)
+- EXT_mesh_gpu_instancing (instance data)
 - KHR_draco_mesh_compression (requires [`com.unity.cloud.draco`](https://docs.unity3d.com/Packages/com.unity.cloud.draco@latest))
 - KHR_texture_basisu (requires [`com.unity.cloud.ktx`](https://docs.unity3d.com/Packages/com.unity.cloud.ktx@latest))
 - EXT_meshopt_compression (requires [`com.unity.meshopt.decompress`](https://docs.unity3d.com/Packages/com.unity.meshopt.decompress@latest))
@@ -357,6 +363,8 @@ If your plugin reads/writes custom extension data, you need to also implement `G
 - Some material options (e.g. MAOS maps) are currently not exported correctly. 
 
 ## Contributing
+
+> **Note**: As of 20240129 the default branch of this repository has been renamed from `master` to `main`.
 
 UnityGLTF is an open-source project. Well-tested PRs are welcome.  
 

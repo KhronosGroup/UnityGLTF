@@ -36,7 +36,8 @@ namespace GLTF.Schema
 			{ MSFT_LODExtensionFactory.EXTENSION_NAME, new MSFT_LODExtensionFactory() },
 			{ KHR_draco_mesh_compression_Factory.EXTENSION_NAME, new KHR_draco_mesh_compression_Factory() },
 			{ KHR_texture_basisu_Factory.EXTENSION_NAME, new KHR_texture_basisu_Factory() },
-			{ EXT_meshopt_compression_Factory.EXTENSION_NAME, new EXT_meshopt_compression_Factory() }
+			{ EXT_meshopt_compression_Factory.EXTENSION_NAME, new EXT_meshopt_compression_Factory() },
+			{ EXT_mesh_gpu_instancing_Factory.EXTENSION_NAME, new EXT_mesh_gpu_instancing_Factory() }
 		};
 
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();

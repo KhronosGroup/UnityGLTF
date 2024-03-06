@@ -1,4 +1,4 @@
-﻿Shader "Hidden/MetalGlossChannelSwap"
+﻿Shader "Hidden/MetalGlossOcclusionChannelSwap"
 {
 	Properties
 	{
@@ -55,7 +55,8 @@
 				// Conversion Summary
 				// Unity R channel goes into B channel
 				// Unity A channel goes into G channel, then inverted
-				float4 result = float4(0, 1 - (col.a * _SmoothnessMultiplier), col.r, 1);
+				// Unity G channel goes into R channel > Occlusion
+				float4 result = float4(col.g, 1 - (col.a * _SmoothnessMultiplier), col.r, 1);
 				return result;
 			}
 			ENDCG

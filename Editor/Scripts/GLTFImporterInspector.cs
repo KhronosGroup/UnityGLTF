@@ -86,6 +86,7 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importBlendShapeNames)));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._blendShapeFrameWeight)));
 			
 			EditorGUILayout.Separator();
 			
@@ -459,12 +460,25 @@ namespace UnityGLTF
 				if (x.texture && AssetDatabase.Contains(x.texture))
 				{
 					var path = AssetDatabase.GetAssetPath(x.texture);
-					if (AssetImporter.GetAtPath(path) is TextureImporter textureImporter)
+					var asset = AssetImporter.GetAtPath(path);
+					if (asset is TextureImporter textureImporter)
 					{
 						var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
+						
 						var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
 						return correctLinearSetting && correctNormalSetting;
 					}
+#if HAVE_KTX			
+					else
+					if (KtxImporterHelper.IsKtxOrBasis(asset))
+					{
+						if (!KtxImporterHelper.TryGetLinear(asset, out var linear))
+							return false;
+						
+						var correctLinearSetting = (linear == x.shouldBeLinear | x.shouldBeNormalMap);
+						return correctLinearSetting;
+					}
+#endif
 				}
 				return true;
 			});
@@ -476,7 +490,34 @@ namespace UnityGLTF
 			foreach (var x in importer.Textures)
 			{
 				if (!x.texture) continue;
-				if (!AssetDatabase.Contains(x.texture) || !(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)) continue;
+				if (!AssetDatabase.Contains(x.texture))
+					continue;
+				
+				var asset = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture));
+#if HAVE_KTX
+				if (KtxImporterHelper.IsKtxOrBasis(asset))
+				{
+					if (!KtxImporterHelper.TryGetLinear(asset, out var isLinear))
+						continue;
+					
+					bool shouldBeLinear = x.shouldBeLinear | x.shouldBeNormalMap;
+					if (isLinear == shouldBeLinear)
+						continue;
+		
+					if (!haveStartedAssetEditing)
+					{
+						haveStartedAssetEditing = true;
+						AssetDatabase.StartAssetEditing();
+					}					
+					
+					KtxImporterHelper.SetLinear(asset, shouldBeLinear);
+					
+					asset.SaveAndReimport();
+					continue;
+				}
+#endif
+				
+				if (!(asset is TextureImporter textureImporter)) continue;
 
 				var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
 				var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;

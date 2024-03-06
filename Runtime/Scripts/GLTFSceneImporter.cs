@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,6 +46,8 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
 
+		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
+
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
 #else
@@ -83,6 +84,7 @@ namespace UnityGLTF
 		public Vector3[][] MorphTargetTangents;
 
 		public MeshTopology[] Topology;
+		public DrawMode[] DrawModes;
 		public int[][] Indices;
 		
 		public HashSet<int> alreadyAddedAccessors = new HashSet<int>();
@@ -358,7 +360,7 @@ namespace UnityGLTF
 
 				if (sizeToLoad == 0 && remainingSize > 0)
 				{
-					throw new Exception("Unexpected end of stream while loading buffer view");
+					throw new Exception($"Unexpected end of stream while loading buffer view (File: {_gltfFileName})");
 				}
 			}			
 			
@@ -405,7 +407,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot call LoadScene while GLTFSceneImporter is already running");
+						throw new GLTFLoadException($"Cannot call LoadScene while GLTFSceneImporter is already running (File: {_gltfFileName})");
 					}
 
 					_isRunning = true;
@@ -479,6 +481,7 @@ namespace UnityGLTF
 				DisposeNativeBuffers();
 
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
+				Debug.Log(LogType.Error, $"Error loading file: {_gltfFileName}");
 				throw;
 			}
 			finally
@@ -490,8 +493,8 @@ namespace UnityGLTF
 			}
 			_gltfStream.Stream.Close();
 			DisposeNativeBuffers();
-			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal})");
-			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal})");
+			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal}) (File: {_gltfFileName})");
+			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal}) (File: {_gltfFileName})");
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
@@ -548,7 +551,7 @@ namespace UnityGLTF
 			{
 				if (materialIndex < 0 || materialIndex >= _gltfRoot.Materials.Count)
 				{
-					throw new ArgumentException($"There is no material for index {materialIndex}");
+					throw new ArgumentException($"There is no material for index {materialIndex} (File: {_gltfFileName})");
 				}
 
 				if (_assetCache.MaterialCache[materialIndex] == null)
@@ -572,7 +575,7 @@ namespace UnityGLTF
 			{
 				if (meshIndex < 0 || meshIndex >= _gltfRoot.Meshes.Count)
 				{
-					throw new ArgumentException($"There is no mesh for index {meshIndex}");
+					throw new ArgumentException($"There is no mesh for index {meshIndex} (File: {_gltfFileName})");
 				}
 
 				if (_assetCache.MeshCache[meshIndex] == null)
@@ -613,7 +616,7 @@ namespace UnityGLTF
 				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !parseJsonThread.IsAlive)));
 				if (_gltfRoot == null)
 				{
-					throw new GLTFLoadException("Failed to parse glTF");
+					throw new GLTFLoadException($"Failed to parse glTF (File: {_gltfFileName})");
 				}
 			}
 			else
@@ -775,7 +778,7 @@ namespace UnityGLTF
 				{
 					if (nodeId >= _gltfRoot.Nodes.Count)
 					{
-						throw new ArgumentException("nodeIndex is out of range");
+						throw new ArgumentException($"nodeIndex is out of range (File: {_gltfFileName})");
 					}
 
 					var node = _gltfRoot.Nodes[nodeId];
@@ -837,7 +840,95 @@ namespace UnityGLTF
 				throw;
 			}
 		}
+		
+		private async Task<(Vector3, Quaternion, Vector3)[]> GetInstancesTRS(Node node)
+		{
+			if (Context.TryGetPlugin<GPUInstancingImportContext>(out _) && node.Extensions != null &&
+			    node.Extensions.TryGetValue(EXT_mesh_gpu_instancing_Factory.EXTENSION_NAME, out var ext))
+			{
+				AttributeAccessor positionsAttr = null;
+				AttributeAccessor rotationAttr = null;
+				AttributeAccessor scaleAttr = null;
+				var extMeshGPUInstancing = ext as EXT_mesh_gpu_instancing;
 
+				async Task<AttributeAccessor> GetAttrAccessorAndAccessorContent(AccessorId accessorId, bool isPosition = false)
+				{
+					var accessor = _gltfRoot.Accessors[accessorId.Id];
+					
+					var bufferId = accessor.BufferView.Value.Buffer;
+					var bufferData = await GetBufferData(bufferId);
+					
+					var attrAccessor = new AttributeAccessor
+					{
+						AccessorId = accessorId,
+						bufferData = bufferData.bufferData,
+						Offset = (uint)bufferData.ChunkOffset
+					};					
+					GLTFHelpers.LoadBufferView(accessor.BufferView.Value, attrAccessor.Offset, attrAccessor.bufferData, out var bufferViewCache);
+					NumericArray resultArray = attrAccessor.AccessorContent;
+					switch (accessor.Type)
+					{
+						case GLTFAccessorAttributeType.VEC3:
+							if (isPosition)
+								attrAccessor.AccessorId.Value.AsVertexArray(ref resultArray, bufferViewCache);
+							else
+								attrAccessor.AccessorId.Value.AsFloat3Array(ref resultArray, bufferViewCache);
+							break;
+						case GLTFAccessorAttributeType.VEC4:
+							attrAccessor.AccessorId.Value.AsFloat4Array(ref resultArray, bufferViewCache);
+							break;
+					}
+
+					attrAccessor.AccessorContent = resultArray;
+					return attrAccessor;
+				}
+
+				int instancesCount = 0;
+				if (extMeshGPUInstancing.attributes.TryGetValue(EXT_mesh_gpu_instancing.ATTRIBUTE_TRANSLATION, out var positionAccessorId))
+				{
+					positionsAttr = await GetAttrAccessorAndAccessorContent(positionAccessorId, true);
+					instancesCount = positionsAttr.AccessorContent.AsFloat3s.Length;
+				}
+				if (extMeshGPUInstancing.attributes.TryGetValue(EXT_mesh_gpu_instancing.ATTRIBUTE_ROTATION, out var rotationAccessorId))
+				{
+					rotationAttr = await GetAttrAccessorAndAccessorContent(rotationAccessorId);
+					if (instancesCount != 0 && rotationAttr.AccessorContent.AsFloat4s.Length != instancesCount)
+					{
+						Debug.LogError("Rotation attribute count does not match position attribute count for instances!", this);
+						return null;
+					}
+					else
+						instancesCount = rotationAttr.AccessorContent.AsFloat4s.Length;
+				}
+				if (extMeshGPUInstancing.attributes.TryGetValue(EXT_mesh_gpu_instancing.ATTRIBUTE_SCALE, out var scaleAccessorId))
+				{
+					scaleAttr = await GetAttrAccessorAndAccessorContent(scaleAccessorId);
+					if (instancesCount != 0 && scaleAttr.AccessorContent.AsFloat4s.Length != instancesCount)
+					{
+						Debug.LogError("Scale attribute count does not match position attribute count for instances!", this);
+						return null;
+					}
+					else
+						instancesCount = scaleAttr.AccessorContent.AsFloat3s.Length;
+				}
+
+				if (instancesCount > 0)
+				{
+					List<(Vector3, Quaternion, Vector3)> instancesTRS = new List<(Vector3, Quaternion, Vector3)>(instancesCount);
+					for (int i = 0; i < instancesCount; i++)
+					{
+						instancesTRS.Add(( 
+								positionsAttr != null ? positionsAttr.AccessorContent.AsFloat3s[i].ToUnityVector3Raw() : Vector3.zero,
+								rotationAttr != null ? rotationAttr.AccessorContent.AsFloat4s[i].ToUnityQuaternionConvert() : Quaternion.identity,
+								scaleAttr != null ? scaleAttr.AccessorContent.AsFloat3s[i].ToUnityVector3Raw() : Vector3.one
+								));
+					}
+					return instancesTRS.ToArray();
+				}
+			}
+			return null;
+		}
+		
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -855,51 +946,57 @@ namespace UnityGLTF
 			Quaternion rotation;
 			Vector3 scale;
 			node.GetUnityTRSProperties(out position, out rotation, out scale);
+			_assetCache.NodeCache[nodeIndex] = nodeObj;
 			nodeObj.transform.localPosition = position;
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
-			_assetCache.NodeCache[nodeIndex] = nodeObj;
 
-			if (node.Children != null)
+
+
+			async Task CreateNodeComponentsAndChilds(bool ignoreMesh = false, bool onlyMesh = false)
 			{
-				foreach (var child in node.Children)
+				// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
+				nodeObj.SetActive(false);
+
+				if (!onlyMesh && node.Children != null)
 				{
-					GameObject childObj = await GetNode(child.Id, cancellationToken);
-					childObj.transform.SetParent(nodeObj.transform, false);
+					foreach (var child in node.Children)
+					{
+						GameObject childObj = await GetNode(child.Id, cancellationToken);
+						childObj.transform.SetParent(nodeObj.transform, false);
+					}
 				}
-			}
 
-			if (node.Mesh != null)
-			{
-				var mesh = node.Mesh.Value;
-				await ConstructMesh(mesh, node.Mesh.Id, cancellationToken);
-				var unityMesh = _assetCache.MeshCache[node.Mesh.Id].LoadedMesh;
-				var materials = node.Mesh.Value.Primitives.Select(p =>
-					p.Material != null ?
-					_assetCache.MaterialCache[p.Material.Id].UnityMaterialWithVertexColor :
-					_defaultLoadedMaterial.UnityMaterialWithVertexColor
-				).ToArray();
-
-				var morphTargets = mesh.Primitives[0].Targets;
-				var weights = node.Weights ?? mesh.Weights ??
-					(morphTargets != null ? new List<double>(morphTargets.Select(mt => 0.0)) : null);
-				if (node.Skin != null || weights != null)
+				if (!ignoreMesh && node.Mesh != null)
 				{
-					var renderer = nodeObj.AddComponent<SkinnedMeshRenderer>();
-					renderer.sharedMesh = unityMesh;
-					renderer.sharedMaterials = materials;
-					renderer.quality = SkinQuality.Auto;
+					var mesh = node.Mesh.Value;
+					await ConstructMesh(mesh, node.Mesh.Id, cancellationToken);
+					var unityMesh = _assetCache.MeshCache[node.Mesh.Id].LoadedMesh;
+					var materials = node.Mesh.Value.Primitives.Select(p =>
+						p.Material != null
+							? _assetCache.MaterialCache[p.Material.Id].UnityMaterialWithVertexColor
+							: _defaultLoadedMaterial.UnityMaterialWithVertexColor
+					).ToArray();
 
-					if (node.Skin != null)
-						await SetupBones(node.Skin.Value, renderer, cancellationToken);
+					var morphTargets = mesh.Primitives[0].Targets;
+					var weights = node.Weights ?? mesh.Weights ??
+						(morphTargets != null ? new List<double>(morphTargets.Select(mt => 0.0)) : null);
+					if (node.Skin != null || weights != null)
+					{
+						var renderer = nodeObj.AddComponent<SkinnedMeshRenderer>();
+						renderer.sharedMesh = unityMesh;
+						renderer.sharedMaterials = materials;
+						renderer.quality = SkinQuality.Auto;
+
+						if (node.Skin != null)
+							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
 					// morph target weights
 					if (weights != null)
 					{
 						for (int i = 0; i < weights.Count; ++i)
 						{
-							// GLTF weights are [0, 1] range; Unity weights must match the frame weight
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * 1f));
+							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
 						}
 					}
 				}
@@ -912,40 +1009,94 @@ namespace UnityGLTF
 				}
 
 #if UNITY_PHYSICS
-				switch (Collider)
-				{
-					case ColliderType.Box:
-						var boxCollider = nodeObj.AddComponent<BoxCollider>();
-						boxCollider.center = unityMesh.bounds.center;
-						boxCollider.size = unityMesh.bounds.size;
-						break;
-					case ColliderType.Mesh:
-						var meshCollider = nodeObj.AddComponent<MeshCollider>();
-						meshCollider.sharedMesh = unityMesh;
-						break;
-					case ColliderType.MeshConvex:
-						var meshConvexCollider = nodeObj.AddComponent<MeshCollider>();
-						meshConvexCollider.sharedMesh = unityMesh;
-						meshConvexCollider.convex = true;
-						break;
-				}
+					if (!onlyMesh)
+					{
+						switch (Collider)
+						{
+							case ColliderType.Box:
+								var boxCollider = nodeObj.AddComponent<BoxCollider>();
+								boxCollider.center = unityMesh.bounds.center;
+								boxCollider.size = unityMesh.bounds.size;
+								break;
+							case ColliderType.Mesh:
+								var meshCollider = nodeObj.AddComponent<MeshCollider>();
+								meshCollider.sharedMesh = unityMesh;
+								break;
+							case ColliderType.MeshConvex:
+								var meshConvexCollider = nodeObj.AddComponent<MeshCollider>();
+								meshConvexCollider.sharedMesh = unityMesh;
+								meshConvexCollider.convex = true;
+								break;
+						}
+					}
 #endif
+				}
+
+				if (onlyMesh)
+				{
+					nodeObj.SetActive(true);
+					return;
+				}
+				
+				await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
+
+				/* TODO: implement camera (probably a flag to disable for VR as well)
+				if (camera != null)
+				{
+					GameObject cameraObj = camera.Value.Create();
+					cameraObj.transform.parent = nodeObj.transform;
+				}
+				*/
+
+				ConstructLights(nodeObj, node);
+
+				nodeObj.SetActive(true);
 			}
+						
+			var instancesTRS = await GetInstancesTRS(node);
 
-			await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
-
-			/* TODO: implement camera (probably a flag to disable for VR as well)
-			if (camera != null)
+			if (instancesTRS == null || instancesTRS.Length == 0)
 			{
-				GameObject cameraObj = camera.Value.Create();
-				cameraObj.transform.parent = nodeObj.transform;
+				await CreateNodeComponentsAndChilds();
 			}
-			*/
-
-			ConstructLights(nodeObj, node);
-
-			nodeObj.SetActive(true);
-
+			else
+			{
+				await CreateNodeComponentsAndChilds(true);
+				var instanceParentNode = new GameObject("Instances");
+				instanceParentNode.transform.SetParent(nodeObj.transform, false);
+				instanceParentNode.gameObject.SetActive(false);
+				GameObject firstInstance = null;
+				for (int i = 0; i < instancesTRS.Length; i++)
+				{
+					if (!firstInstance)
+					{
+						nodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode" + nodeIndex) : node.Name);
+						nodeObj.transform.SetParent(instanceParentNode.transform, false);
+						await CreateNodeComponentsAndChilds(false, true);
+						firstInstance = nodeObj;
+						
+						var renderers = firstInstance.GetComponentsInChildren<Renderer>();
+						foreach (var renderer in renderers)
+							foreach (var sh in renderer.sharedMaterials)
+								sh.enableInstancing = true;
+						var skinRenderers = firstInstance.GetComponentsInChildren<SkinnedMeshRenderer>();
+						foreach (var renderer in skinRenderers)
+							foreach (var sh in renderer.sharedMaterials)
+								sh.enableInstancing = true;
+					}
+					else
+					{
+						nodeObj = GameObject.Instantiate(firstInstance);
+						nodeObj.transform.SetParent(instanceParentNode.transform, false);
+					}
+					nodeObj.transform.localPosition = instancesTRS[i].Item1;
+					nodeObj.transform.localRotation = instancesTRS[i].Item2;
+					nodeObj.transform.localScale = instancesTRS[i].Item3;
+					nodeObj.name = $"Instance {i.ToString()}";
+				}
+				instanceParentNode.gameObject.SetActive(true);
+			}
+			
 			progressStatus.NodeLoaded++;
 			progress?.Report(progressStatus);
 		}
@@ -980,7 +1131,7 @@ namespace UnityGLTF
 #if HAVE_MESHOPT_DECOMPRESS
 			if (buffer.Extensions != null && buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"_assetCache.BufferCache[bufferIndex] != null; (File: {_gltfFileName})");
 				
 				var bufferCacheDate = new BufferCacheData
 				{
@@ -997,13 +1148,13 @@ namespace UnityGLTF
 			    buffer.Extensions.ContainsKey(EXT_meshopt_compression_Factory.EXTENSION_NAME))
 			{
 				//TODO: check for fallback URI or Buffer... ?
-				throw new NotSupportedException("Can't import model because it uses the EXT_meshopt_compression extension. Add the package \"com.unity.meshopt.decompress\" to your project to import this file.");
+				throw new NotSupportedException($"Can't import model because it uses the EXT_meshopt_compression extension. Add the package \"com.unity.meshopt.decompress\" to your project to import this file. (File: {_gltfFileName})");
 			}
 #endif
 
 			if (buffer.Uri == null)
 			{
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "Error: _assetCache.BufferCache[bufferIndex] != null. Please report a bug.");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"Error: _assetCache.BufferCache[bufferIndex] != null. Please report a bug. (File: {_gltfFileName})");
 				_assetCache.BufferCache[bufferIndex] = ConstructBufferFromGLB(bufferIndex);
 
 				progressStatus.BuffersLoaded++;
@@ -1025,7 +1176,7 @@ namespace UnityGLTF
 					bufferDataStream = await _options.DataLoader.LoadStreamAsync(buffer.Uri);
 				}
 
-				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, "_assetCache.BufferCache[bufferIndex] != null;");
+				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"_assetCache.BufferCache[bufferIndex] != null; (File: {_gltfFileName})");
 				_assetCache.BufferCache[bufferIndex] = new BufferCacheData
 				{
 					Stream = bufferDataStream,
@@ -1235,7 +1386,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot start a load while GLTFSceneImporter is already running");
+						throw new GLTFLoadException($"Cannot start a load while GLTFSceneImporter is already running (File: {_gltfFileName})");
 					}
 
 					_isRunning = true;

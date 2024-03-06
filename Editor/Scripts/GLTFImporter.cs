@@ -92,6 +92,8 @@ namespace UnityGLTF
         [SerializeField] internal bool _generateLightmapUVs = false;
 	    [Tooltip("When false, the index of the BlendShape is used as name.")]
         [SerializeField] internal bool _importBlendShapeNames = true;
+	    [Tooltip("Blend shape frame weight import multiplier. Default is 1. For compatibility with some FBX animations you may need to use 100.")]
+	    [SerializeField] internal BlendShapeFrameWeightSetting _blendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
@@ -235,7 +237,7 @@ namespace UnityGLTF
 		        }
 		        catch (Exception e)
 		        {
-			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e);
+			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e, GetAtPath(path));
 			        throw;
 		        }
 	        }
@@ -435,7 +437,6 @@ namespace UnityGLTF
 
 		                    mesh.bindposes = bindPoses;
 	                    }
-	     
                     }
                     if (_generateLightmapUVs)
                     {
@@ -489,7 +490,7 @@ namespace UnityGLTF
                 if (gltfScene && _importAnimations == AnimationMethod.MecanimHumanoid)
                 {
 	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene);
-	                if (avatar && avatar.isValid)
+	                if (avatar)
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
 
@@ -519,7 +520,10 @@ namespace UnityGLTF
 		                    }
 
 		                    mat.name = matName;
-		                    mat.enableInstancing = _enableGpuInstancing;
+		                    
+		                    // In case the material is explicit set to instancing (e.g. EXT_mesh_gpu_instancing is used), don't override it.
+		                    if (!mat.enableInstancing)
+								mat.enableInstancing = _enableGpuInstancing;
 		                    materials.Add(mat);
 	                    }
                     }
@@ -747,7 +751,7 @@ namespace UnityGLTF
             }
             catch (Exception e)
             {
-	            Debug.LogException(e);
+	            Debug.LogException(e, this);
                 if (gltfScene) DestroyImmediate(gltfScene);
                 throw;
             }
@@ -815,7 +819,7 @@ namespace UnityGLTF
 	        
 	        // run texture verification and warn about wrong configuration
 	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(this))
-		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.");
+		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.", this);
 
 	        if (context.SceneImporter != null)
 		        context.SceneImporter.Dispose();
@@ -863,7 +867,8 @@ namespace UnityGLTF
 			    SwapUVs = _swapUvs,
 			    ImportNormals = _importNormals,
 			    ImportTangents = _importTangents,
-			    ImportBlendShapeNames = _importBlendShapeNames
+			    ImportBlendShapeNames = _importBlendShapeNames,
+			    BlendShapeFrameWeight = _blendShapeFrameWeight
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))

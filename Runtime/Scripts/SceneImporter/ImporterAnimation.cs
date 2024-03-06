@@ -191,7 +191,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private static void SetTangentMode(Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
+		private void SetTangentMode(Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
 		{
 			var key = keyframes[keyframeIndex];
 
@@ -210,7 +210,7 @@ namespace UnityGLTF
 					key.outTangent = 0;
 					break;
 				default:
-					throw new NotImplementedException();
+					throw new NotImplementedException($"Unknown interpolation type for animation (File: {_gltfFileName})");
 			}
 			keyframes[keyframeIndex] = key;
 		}
@@ -297,7 +297,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var position = data.AsFloats3[frame].ToUnityVector3Convert();
+											  var position = data.AsFloat3s[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
 											  return new float[] { position.x * factor, position.y * factor, position.z * factor};
 #else
@@ -313,7 +313,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var rotation = data.AsFloats4[frame];
+											  var rotation = data.AsFloat4s[frame];
 											  var quaternion = rotation.ToUnityQuaternionConvert();
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 										  });
@@ -327,7 +327,7 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var scale = data.AsFloats3[frame].ToUnityVector3Raw();
+											  var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
 											  return new float[] { scale.x, scale.y, scale.z };
 										  });
 						break;
@@ -347,13 +347,14 @@ namespace UnityGLTF
 								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + ((targetNames != null && targetNames.Count > i) ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
 							var frameFloats = new float[targetCount];
 
+							var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 								samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
 								(data, frame) =>
 								{
 									var allValues = data.AsFloats;
 									for (var k = 0; k < targetCount; k++)
-										frameFloats[k] = allValues[frame * targetCount + k];
+										frameFloats[k] = allValues[frame * targetCount + k] * blendShapeFrameWeight;
 
 									return frameFloats;
 								});
@@ -361,7 +362,7 @@ namespace UnityGLTF
 						break;
 
 					default:
-						Debug.Log(LogType.Warning, "Cannot read GLTF animation path");
+						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
 						break;
 				} // switch target type
 			} // foreach channel

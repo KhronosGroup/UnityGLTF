@@ -146,7 +146,7 @@ namespace UnityGLTF
 					texture.LoadImage(data.ToArray(), markGpuOnly);
 					break;
 				case "image/exr":
-					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. glTF filename: {_gltfFileName}");
+					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
 					break;
 				case "image/ktx2":
 					string textureName = texture.name;
@@ -261,8 +261,7 @@ namespace UnityGLTF
 				// This way here we'll get into weird code for Runtime import, as we would still import mock textures...
 				// Or we add another option to avoid that.
 				texture = null;
-				UnityEngine.Debug.LogError("Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath);
-
+				Debug.Log(LogType.Error, "Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath+ $" (File: {_gltfFileName})");
 			}
 			else
 			if (_nativeBuffers.TryGetValue(stream, out var nativeData))
@@ -290,7 +289,7 @@ namespace UnityGLTF
 				// todo: potential optimization is to split stream read into multiple frames (or put it on a thread?)
 				if (stream.Length > int.MaxValue)
 				{
-					throw new Exception("Stream is larger than can be copied into byte array");
+					throw new Exception($"Stream is larger than can be copied into byte array (File: {_gltfFileName})");
 				}
 				
 				stream.Read(buffer, 0, (int)stream.Length);
@@ -357,7 +356,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot CreateTexture while GLTFSceneImporter is already running");
+						throw new GLTFLoadException($"Cannot CreateTexture while GLTFSceneImporter is already running (File: {_gltfFileName})");
 					}
 
 					_isRunning = true;
@@ -405,7 +404,7 @@ namespace UnityGLTF
 		{
 			if (_assetCache == null)
 			{
-				throw new GLTFLoadException("Asset cache needs initialized before calling GetTexture");
+				throw new GLTFLoadException($"Asset cache needs initialized before calling GetTexture (File: {_gltfFileName})");
 			}
 
 			if (_assetCache.TextureCache[textureIndex] == null)
@@ -448,7 +447,7 @@ namespace UnityGLTF
 							desiredFilterMode = FilterMode.Trilinear;
 							break;
 						default:
-							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter);
+							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
 							desiredFilterMode = FilterMode.Trilinear;
 							break;
 					}
@@ -464,7 +463,7 @@ namespace UnityGLTF
 							case GLTF.Schema.WrapMode.MirroredRepeat:
 								return TextureWrapMode.Mirror;
 							default:
-								Debug.Log(LogType.Warning, "Unsupported Sampler.Wrap: " + gltfWrapMode);
+								Debug.Log(LogType.Warning, "Unsupported Sampler.Wrap: " + gltfWrapMode+ $" (File: {_gltfFileName})");
 								return TextureWrapMode.Repeat;
 						}
 					}
@@ -482,12 +481,12 @@ namespace UnityGLTF
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;
 				if (matchSamplerState || markGpuOnly)
 				{
-					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks");
+					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks"+ $" (File: {_gltfFileName})");
 					_assetCache.TextureCache[textureIndex].Texture = source;
 
 					if (!matchSamplerState)
 					{
-						Debug.Log(LogType.Warning, $"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}");
+						Debug.Log(LogType.Warning, $"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}"+ $" (File: {_gltfFileName})");
 					}
 				}
 				else
@@ -517,7 +516,7 @@ namespace UnityGLTF
 					unityTexture.wrapModeU = desiredWrapModeS;
 					unityTexture.wrapModeV = desiredWrapModeT;
 
-					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks");
+					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, $"Texture should not be reset to prevent memory leaks (File: {_gltfFileName})");
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
 				}
 #if UNITY_EDITOR
@@ -525,7 +524,7 @@ namespace UnityGLTF
 				{
 					// don't warn for just filter mode, user choice
 					if (source.wrapModeU != desiredWrapModeS || source.wrapModeV != desiredWrapModeT)
-						Debug.Log(LogType.Warning, ($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT}"));
+						Debug.Log(LogType.Warning, ($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT} (File: {_gltfFileName})"));
 					_assetCache.TextureCache[textureIndex].Texture = source;
 				}
 #endif

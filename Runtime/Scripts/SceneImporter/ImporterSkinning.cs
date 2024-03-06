@@ -60,7 +60,7 @@ namespace UnityGLTF
 				}
 				else
 				{
-					throw new Exception("glTF skin joints do not share a root node!");
+					throw new Exception($"glTF skin joints do not share a root node! (File: {_gltfFileName})");
 				}
 			}
 			renderer.sharedMesh.bindposes = bindPoses;
