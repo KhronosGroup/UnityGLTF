@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.10.1-rc] - 2024-03-11
+- add: `OnAfterMeshExport` callback hook which allows adding extensions to the exported gltf mesh
+
 ## [2.10.0-rc.2] - 2024-03-05
 - fix: add `com.unity.mathematics` as required dependency
 - fix: added null check in mesh data preparation code to prevent exception for files without nodes (e.g. just materials)
