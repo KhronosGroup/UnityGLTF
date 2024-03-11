@@ -52,6 +52,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter.BeforeTextureExportDelegate BeforeTextureExport;
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
 		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
+		public GLTFSceneExporter.AfterMeshExportDelegate AfterMeshExport;
 		
 		internal GLTFExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
 
@@ -91,6 +92,7 @@ namespace UnityGLTF
 			public override void BeforeTextureExport(GLTFSceneExporter exporter, ref GLTFSceneExporter.UniqueTexture texture, string textureSlot) => _exportContext.BeforeTextureExport?.Invoke(exporter, ref texture, textureSlot);
 			public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex) => _exportContext.AfterTextureExport?.Invoke(exporter, texture, index, tex);
 			public override void AfterPrimitiveExport(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index) => _exportContext.AfterPrimitiveExport?.Invoke(exporter, mesh, primitive, index);
+			public override void AfterMeshExport(GLTFSceneExporter exporter, Mesh mesh, GLTFMesh gltfMesh, int index) => _exportContext.AfterMeshExport?.Invoke(exporter, mesh, gltfMesh, index);
 		}
 #pragma warning restore CS0618 // Type or member is obsolete
 	}
@@ -117,6 +119,7 @@ namespace UnityGLTF
 		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture, string textureSlot);
 		public delegate void AfterTextureExportDelegate(GLTFSceneExporter exporter, UniqueTexture texture, int index, GLTFTexture tex);
 		public delegate void AfterPrimitiveExportDelegate(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index);
+		public delegate void AfterMeshExportDelegate(GLTFSceneExporter exporter, Mesh mesh, GLTFMesh gltfMesh, int index);
 
 		
 		private class LegacyCallbacksPlugin : GLTFExportPluginContext

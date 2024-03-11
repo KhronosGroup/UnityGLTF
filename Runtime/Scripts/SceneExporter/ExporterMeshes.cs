@@ -217,6 +217,14 @@ namespace UnityGLTF
 			if (mesh.Primitives.Count > 0)
 			{
 				_root.Meshes.Add(mesh);
+
+				var uniquePrimitive = uniquePrimitives.FirstOrDefault();
+				if (uniquePrimitive.Mesh)
+				{
+					foreach (var plugin in _plugins)
+						plugin?.AfterMeshExport(this, uniquePrimitive.Mesh, mesh, id.Id);
+				}
+				
 				return id;
 			}
 
