@@ -164,9 +164,6 @@ namespace UnityGLTF
 						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear);
 						texture = resultTextureData.texture;
 						texture.name = textureName;
-
-						ktxTexture.Dispose();
-
 					}
 					else
 #endif
