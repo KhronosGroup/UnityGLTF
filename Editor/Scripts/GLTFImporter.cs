@@ -24,6 +24,7 @@ using System;
 using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF;
+using UnityEditor.Build;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
@@ -835,7 +836,15 @@ namespace UnityGLTF
         private static void UpdateCustomDependencies()
         {
 	        AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
-			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
+
+	        BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+#if UNITY_2023_1_OR_NEWER
+	        var normalEncoding = PlayerSettings.GetNormalMapEncoding(NamedBuildTarget.FromBuildTargetGroup(activeTargetGroup));
+#else				
+			var normalEncoding = PlayerSettings.GetNormalMapEncoding(activeTargetGroup);
+#endif	        
+	        
+			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) normalEncoding));
         }
 
 #if UNITY_2021_3_OR_NEWER
