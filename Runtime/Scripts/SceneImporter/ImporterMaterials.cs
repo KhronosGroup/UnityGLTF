@@ -142,6 +142,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						mrMapper.BaseColorXScale *= new Vector2(1f,-1f);
+						mrMapper.BaseColorXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -170,6 +171,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						mrMapper.MetallicRoughnessXScale *= new Vector2(1f,-1f);
+						mrMapper.MetallicRoughnessXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -223,6 +225,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						sgMapper.DiffuseXScale *= new Vector2(1f,-1f);
+						sgMapper.DiffuseXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -251,6 +254,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						sgMapper.SpecularGlossinessXScale *= new Vector2(1f,-1f);
+						sgMapper.SpecularGlossinessXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -283,6 +287,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						unlitMapper.BaseColorXScale *= new Vector2(1f,-1f);
+						unlitMapper.BaseColorXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -325,6 +330,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(transmission.transmissionTexture.Index.Value))
 						{
 							transmissionMapper.TransmissionTextureScale *= new Vector2(1f,-1f);
+							transmissionMapper.TransmissionTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -363,6 +369,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(volume.thicknessTexture.Index.Value))
 						{
 							volumeMapper.ThicknessTextureScale *= new Vector2(1f,-1f);
+							volumeMapper.ThicknessTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -401,6 +408,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(iridescence.iridescenceTexture.Index.Value))
 						{
 							iridescenceMapper.IridescenceTextureScale *= new Vector2(1f,-1f);
+							iridescenceMapper.IridescenceTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -425,6 +433,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(iridescence.iridescenceThicknessTexture.Index.Value))
 						{
 							iridescenceMapper.IridescenceThicknessTextureScale *= new Vector2(1f, -1f);
+							iridescenceMapper.IridescenceThicknessTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -461,6 +470,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(specular.specularTexture.Index.Value))
 						{
 							specularMapper.SpecularTextureScale *= new Vector2(1f, -1f);
+							specularMapper.SpecularTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -485,6 +495,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(specular.specularColorTexture.Index.Value))
 						{
 							specularMapper.SpecularColorTextureScale *= new Vector2(1f, -1f);
+							specularMapper.SpecularColorTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -521,6 +532,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(clearcoat.clearcoatTexture.Index.Value))
 						{
 							clearcoatMapper.ClearcoatTextureScale *= new Vector2(1f, -1f);
+							clearcoatMapper.ClearcoatTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -545,6 +557,7 @@ namespace UnityGLTF
 						if (IsTextureFlipped(clearcoat.clearcoatRoughnessTexture.Index.Value))
 						{
 							clearcoatMapper.ClearcoatRoughnessTextureScale *= new Vector2(1f, -1f);
+							clearcoatMapper.ClearcoatRoughnessTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 
@@ -576,6 +589,7 @@ namespace UnityGLTF
 							else if (IsTextureFlipped(clearcoat.clearcoatNormalTexture.Index.Value))
 							{
 								clearcoatNormalMapper.ClearcoatNormalTextureScale *= new Vector2(1f, -1f);
+								clearcoatNormalMapper.ClearcoatNormalTextureOffset = new Vector2(0f, 1f);
 								SetTransformKeyword();
 							}
 						}
@@ -613,6 +627,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						uniformMapper.NormalXScale *= new Vector2(1f,-1f);
+						uniformMapper.NormalXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -638,6 +653,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						uniformMapper.EmissiveXScale *= new Vector2(1f,-1f);
+						uniformMapper.EmissiveXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
@@ -665,6 +681,7 @@ namespace UnityGLTF
 					if (IsTextureFlipped(textureId.Value))
 					{
 						uniformMapper.OcclusionXScale *= new Vector2(1f,-1f);
+						uniformMapper.OcclusionXOffset = new Vector2(0f, 1f);
 						SetTransformKeyword();
 					}
 				}
