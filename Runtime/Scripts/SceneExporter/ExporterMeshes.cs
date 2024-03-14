@@ -17,7 +17,7 @@ namespace UnityGLTF
 	{
 		private struct MeshAccessors
 		{
-			public AccessorId aPosition, aNormal, aTangent, aTexcoord0, aTexcoord1, aColor0;
+			public AccessorId aPosition, aNormal, aTangent, aTexcoord0, aTexcoord1, aColor0, aJoints0, aWeights0;
 			public Dictionary<int, MeshPrimitive> subMeshPrimitives;
 		}
 
