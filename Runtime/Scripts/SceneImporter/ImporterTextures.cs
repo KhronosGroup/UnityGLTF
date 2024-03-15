@@ -184,7 +184,7 @@ namespace UnityGLTF
 				texture.wrapMode = TextureWrapMode.Repeat;
 				texture.wrapModeV = TextureWrapMode.Repeat;
 				texture.wrapModeU = TextureWrapMode.Repeat;
-				texture.filterMode = FilterMode.Bilinear;
+				texture.filterMode = FilterMode.Trilinear;
 			}
 
 			await Task.CompletedTask;
@@ -418,6 +418,9 @@ namespace UnityGLTF
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTFImage image = _gltfRoot.Images[sourceId];
+				
+				bool isFirstInstance = _assetCache.ImageCache[sourceId] == null;
+				
 				await ConstructImage(image, sourceId, markGpuOnly, isLinear, isNormal);
 
 				var source = _assetCache.ImageCache[sourceId];
@@ -473,6 +476,13 @@ namespace UnityGLTF
 					desiredFilterMode = FilterMode.Trilinear;
 					desiredWrapModeS = TextureWrapMode.Repeat;
 					desiredWrapModeT = TextureWrapMode.Repeat;
+				}
+
+				if (isFirstInstance)
+				{
+					source.filterMode = desiredFilterMode;
+					source.wrapModeU = desiredWrapModeS;
+					source.wrapModeV = desiredWrapModeT;		
 				}
 
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;
