@@ -365,6 +365,7 @@ namespace UnityGLTF
 						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
 						break;
 				} // switch target type
+				await Task.Yield();
 			} // foreach channel
 
 			// EnsureQuaternionContinuity results in unwanted tangents on the first and last keyframes > custom Solution in SetAnimationCurve
