@@ -449,7 +449,6 @@ namespace UnityGLTF
 			{
 				if (!Equals(Mesh, other.Mesh)) return false;
 				if (Materials == null && other.Materials == null) return true;
-				if (!Equals(SkinnedMeshRenderer, other.SkinnedMeshRenderer)) return false;
 				if (!(Materials != null && other.Materials != null)) return false;
 				if (!Equals(Materials.Length, other.Materials.Length)) return false;
 				for (var i = 0; i < Materials.Length; i++)
@@ -470,10 +469,6 @@ namespace UnityGLTF
 				unchecked
 				{
 					var code = (Mesh != null ? Mesh.GetHashCode() : 0) * 397;
-					if (SkinnedMeshRenderer != null)
-					{
-						code = code ^ SkinnedMeshRenderer.GetHashCode() * 397;
-					}
 					if (Materials != null)
 					{
 						code = code ^ Materials.Length.GetHashCode() * 397;
