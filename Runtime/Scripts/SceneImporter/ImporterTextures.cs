@@ -144,7 +144,6 @@ namespace UnityGLTF
 				case "image/jpeg":
 					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
 					texture.LoadImage(data.ToArray(), markGpuOnly);
-					await Task.Delay(10);
 					break;
 				case "image/exr":
 					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
@@ -179,7 +178,6 @@ namespace UnityGLTF
 					break;
 				default:
 					texture.LoadImage(data.ToArray(), markGpuOnly);
-					await Task.Delay(10);
 					break;
 			}
 
