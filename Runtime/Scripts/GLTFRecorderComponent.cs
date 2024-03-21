@@ -125,7 +125,7 @@ namespace UnityGLTF
 
 	    protected virtual void UpdateRecording()
 	    {
-		    if(CurrentTime > recorder.LastSampleTimeSinceStart)
+		    if(CurrentTime > recorder.LastRecordedTime)
 				recorder.UpdateRecording(CurrentTime);
 	    }
 

@@ -36,7 +36,7 @@ namespace UnityGLTF.Timeline
 		private Transform root;
 		private Dictionary<Transform, AnimationData> recordingAnimatedTransforms = new Dictionary<Transform, AnimationData>(64);
 		private double startTime;
-		private double lastSampleTimeSinceStart;
+		private double lastRecordedTime;
 		private bool hasRecording;
 		private bool isRecording;
 		
@@ -47,7 +47,14 @@ namespace UnityGLTF.Timeline
 		public bool HasRecording => hasRecording;
 		public bool IsRecording => isRecording;
 
-		public double LastSampleTimeSinceStart => lastSampleTimeSinceStart;
+		
+		/// <summary>
+		/// Application Time when the most recent sample was recorded
+		/// </summary>;
+		public double LastRecordedTime => lastRecordedTime;
+		
+		public double RecordingStartTime => startTime;
+		
 
 		public string AnimationName = "Recording";
 
@@ -101,14 +108,14 @@ namespace UnityGLTF.Timeline
 		public void StartRecording(double time)
 		{
 			startTime = time;
-			lastSampleTimeSinceStart = 0;
+			lastRecordedTime = 0;
 			var trs = root.GetComponentsInChildren<Transform>(true);
 			recordingAnimatedTransforms.Clear();
 
 			foreach (var tr in trs)
 			{
 				if (!AllowRecordingTransform(tr)) continue;
-				recordingAnimatedTransforms.Add(tr, new AnimationData(tr, lastSampleTimeSinceStart, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
+				recordingAnimatedTransforms.Add(tr, new AnimationData(tr, lastRecordedTime, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
 			}
 
 			isRecording = true;
@@ -122,7 +129,7 @@ namespace UnityGLTF.Timeline
 				throw new InvalidOperationException($"{nameof(GLTFRecorder)} isn't recording, but {nameof(UpdateRecording)} was called. This is invalid.");
 			}
 
-			if (time <= lastSampleTimeSinceStart)
+			if (time <= lastRecordedTime)
 			{
 				Debug.LogWarning("Can't record backwards in time, please avoid this.");
 				return;
@@ -136,13 +143,13 @@ namespace UnityGLTF.Timeline
 				if (!recordingAnimatedTransforms.ContainsKey(tr))
 				{
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame
-					var emptyData = new AnimationData(tr, lastSampleTimeSinceStart, true, recordBlendShapes, recordAnimationPointer);
+					var emptyData = new AnimationData(tr, lastRecordedTime, true, recordBlendShapes, recordAnimationPointer);
 					recordingAnimatedTransforms.Add(tr, emptyData);
 				}
 				recordingAnimatedTransforms[tr].Update(timeSinceStart);
 			}
 
-			lastSampleTimeSinceStart = time;
+			lastRecordedTime = time;
 		}
 		
 		internal void EndRecording(out Dictionary<Transform, AnimationData> param)
@@ -191,14 +198,14 @@ namespace UnityGLTF.Timeline
 
 			var logHandler = new StringBuilderLogHandler();
 
-			var exportOptions =
-				new ExportOptions(settings) { AfterSceneExport = PostExport, logger = new Logger(logHandler), };
+			var exportContext =
+				new ExportContext(settings) { AfterSceneExport = PostExport, logger = new Logger(logHandler), };
 
-			exportOptions.BeforeMaterialExport += (sceneExporter, gltfRoot, material, node) => {
+			exportContext.BeforeMaterialExport += (sceneExporter, gltfRoot, material, node) => {
 				Debug.Log($"Before exporting material: {material.name} (using shader {material.shader})");
 				return false;
 			};
-			var exporter = new GLTFSceneExporter(new Transform[] { root }, exportOptions);
+			var exporter = new GLTFSceneExporter(new Transform[] { root }, exportContext);
 			exporter.SaveGLBToStream(stream, sceneName);
 
 			logHandler.LogAndClear();
