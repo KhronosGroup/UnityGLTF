@@ -9,7 +9,8 @@ namespace UnityGLTF.Cache
 		public GLTFTexture TextureDefinition;
 		public Texture2D Texture;
 		public bool IsLinear;
-
+		public bool IsNormal;
+		
 		/// <summary>
 		/// Unloads the textures in this cache.
 		/// </summary>

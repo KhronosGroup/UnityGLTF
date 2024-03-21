@@ -1,139 +1,17 @@
-﻿#if UNITY_EDITOR && UNITY_IMGUI
-#define SHOW_SETTINGS_EDITOR
-#endif
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
-using UnityEngine.UIElements;
-using UnityGLTF.Cache;
 using UnityGLTF.Plugins;
+using System.Reflection;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace UnityGLTF
 {
-#if SHOW_SETTINGS_EDITOR
-    internal class GltfSettingsProvider : SettingsProvider
-    {
-	    internal static Action<GLTFSettings> OnAfterGUI;
-        private SerializedProperty showDefaultReferenceNameWarning, showNamingRecommendationHint;
-
-        public override void OnGUI(string searchContext)
-        {
-	        DrawGLTFSettingsGUI();
-        }
-
-        public override void OnActivate(string searchContext, VisualElement rootElement)
-        {
-	        base.OnActivate(searchContext, rootElement);
-	        CalculateCacheStats();
-        }
-
-
-        [SettingsProvider]
-        public static SettingsProvider CreateGltfSettingsProvider()
-        {
-	        GLTFSettings.GetOrCreateSettings();
-            return new GltfSettingsProvider("Project/UnityGLTF", SettingsScope.Project);;
-        }
-
-        public GltfSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null) : base(path, scopes, keywords) { }
-
-
-        private static long exportCacheByteLength = 0;
-        private static void CalculateCacheStats()
-        {
-	        var files = new List<FileInfo>();
-	        exportCacheByteLength = ExportCache.CalculateCacheSize(files);
-        }
-
-
-        private static GLTFSettings settings;
-        private static SerializedObject m_SerializedObject;
-
-        internal static void DrawGLTFSettingsGUI()
-        {
-	        EditorGUIUtility.labelWidth = 200;
-	        if (settings == null)
-	        {
-		        if (!settings) settings = GLTFSettings.GetOrCreateSettings();
-		        m_SerializedObject = new SerializedObject(settings);
-	        }
-
-	        var prop = m_SerializedObject.GetIterator();
-	        prop.NextVisible(true);
-	        if (prop.NextVisible(true))
-	        {
-		        do
-		        {
-			        EditorGUILayout.PropertyField(prop, true);
-			        switch (prop.name)
-			        {
-				        case nameof(GLTFSettings.UseCaching):
-					        EditorGUILayout.BeginHorizontal();
-					        if (GUILayout.Button($"Clear Cache ({(exportCacheByteLength / (1024f * 1024f)):F2} MB)")) {
-						        ExportCache.Clear();
-						        CalculateCacheStats();
-					        }
-					        if (GUILayout.Button("Open Cache Directory ↗"))
-						        ExportCache.OpenCacheDirectory();
-					        EditorGUILayout.EndHorizontal();
-					        break;
-			        }
-		        }
-		        while (prop.NextVisible(false));
-	        }
-
-	        if(m_SerializedObject.hasModifiedProperties) {
-		        m_SerializedObject.ApplyModifiedProperties();
-	        }
-
-	        GUILayout.Space(10);
-	        EditorGUILayout.LabelField("Import Plugins", EditorStyles.boldLabel);
-	        OnPluginsGUI();
-	        OnAfterGUI?.Invoke(settings);
-        }
-
-        internal static void OnPluginsGUI()
-        {
-	        foreach (var plugin in settings.ImportPlugins)
-	        {
-		        if (!plugin) continue;
-		        var displayName = plugin.DisplayName ?? plugin.name;
-		        if (string.IsNullOrEmpty(displayName))
-			        displayName = ObjectNames.NicifyVariableName(plugin.GetType().Name);
-		        using (new GUILayout.HorizontalScope())
-		        {
-			        var label = new GUIContent(displayName);
-			        plugin.Expanded = EditorGUILayout.BeginFoldoutHeaderGroup(plugin.Expanded, label);
-			        plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(20));
-		        }
-		        if (plugin.Expanded)
-		        {
-			        EditorGUI.indentLevel += 1;
-			        plugin.OnGUI();
-			        EditorGUI.indentLevel -= 1;
-		        }
-		        EditorGUILayout.EndFoldoutHeaderGroup();
-	        }
-        }
-
-    }
-
-    [CustomEditor(typeof(GLTFSettings))]
-    internal class GLTFSettingsEditor : Editor
-    {
-	    public override void OnInspectorGUI()
-	    {
-		    GltfSettingsProvider.DrawGLTFSettingsGUI();
-	    }
-    }
-
-#endif
 
     public class GLTFSettings : ScriptableObject
     {
@@ -141,7 +19,7 @@ namespace UnityGLTF
 	    private const string k_SettingsFileName = "UnityGLTFSettings.asset";
 	    public const string k_RuntimeAndEditorSettingsPath = "Assets/Resources/" + k_SettingsFileName;
 
-	    [System.Flags]
+	    [Flags]
 	    public enum BlendShapeExportPropertyFlags
 	    {
 		    None = 0,
@@ -151,9 +29,13 @@ namespace UnityGLTF
 		    All = ~0
 	    }
 
+	    // Plugins
 	    [SerializeField, HideInInspector]
-	    public List<GltfImportPlugin> ImportPlugins;
-
+	    public List<GLTFImportPlugin> ImportPlugins = new List<GLTFImportPlugin>();
+	    
+	    [SerializeField, HideInInspector]
+	    public List<GLTFExportPlugin> ExportPlugins = new List<GLTFExportPlugin>();
+	    
 	    [Header("Export Settings")]
 		[SerializeField]
 		private bool exportNames = true;
@@ -185,9 +67,9 @@ namespace UnityGLTF
 		private bool exportAnimations = true;
 		[SerializeField, Tooltip("When enabled the Animator State speed parameter is baked into the exported glTF animation")]
 		private bool bakeAnimationSpeed = true;
-		[Tooltip("(Experimental) Export animations using KHR_animation_pointer. Requires the viewer to also support this extension.")]
-		[SerializeField]
-		private bool useAnimationPointer = false;
+		// [Tooltip("(Experimental) Export animations using KHR_animation_pointer. Requires the viewer to also support this extension.")]
+		// [SerializeField]
+		// private bool useAnimationPointer = false;
 		[SerializeField]
 		[Tooltip("Some viewers can't distinguish between animation clips that have the same name. This option ensures all exported animation names are unique.")]
 		private bool uniqueAnimationNames = false;
@@ -219,7 +101,28 @@ namespace UnityGLTF
 		public bool ExportDisabledGameObjects { get => exportDisabledGameObjects; set => exportDisabledGameObjects = value; }
 		public bool ExportAnimations { get => exportAnimations; set => exportAnimations = value; }
 		public bool BakeAnimationSpeed { get => bakeAnimationSpeed; set => bakeAnimationSpeed = value; }
-		public bool UseAnimationPointer { get => useAnimationPointer; set => useAnimationPointer = value; }
+
+		[Obsolete("Add/remove \"AnimationPointerPlugin\" from ExportPlugins instead.")]
+		public bool UseAnimationPointer
+		{
+			get
+			{
+				return ExportPlugins?.Any(x => x is AnimationPointerExport && x.Enabled) ?? false;
+			}
+			set
+			{
+				var plugin = ExportPlugins?.FirstOrDefault(x => x is AnimationPointerExport);
+				if (plugin != null)
+					plugin.Enabled = value;
+				if (!value || plugin != null) return;
+				
+				if (ExportPlugins == null) ExportPlugins = new List<GLTFExportPlugin>();
+				ExportPlugins.Add(CreateInstance<AnimationPointerExport>());
+#if UNITY_EDITOR
+				EditorUtility.SetDirty(this);
+#endif
+			}
+		}
 		public bool UniqueAnimationNames { get => uniqueAnimationNames; set => uniqueAnimationNames = value; }
 		public bool BlendShapeExportSparseAccessors { get => blendShapeExportSparseAccessors; set => blendShapeExportSparseAccessors = value; }
 		public BlendShapeExportPropertyFlags BlendShapeExportProperties { get => blendShapeExportProperties; set => blendShapeExportProperties = value; }
@@ -234,14 +137,16 @@ namespace UnityGLTF
 			set => EditorPrefs.SetString(SaveFolderPathPref, value);
 		}
 #endif
-
-	    internal static GLTFSettings cachedSettings;
-
+	    
 	    public static GLTFSettings GetOrCreateSettings()
 	    {
+		    #if UNITY_EDITOR
+		    var hadSettings = true;
+		    #endif
 		    if (!TryGetSettings(out var settings))
 		    {
 #if UNITY_EDITOR
+			    hadSettings = false;
 			    settings = ScriptableObject.CreateInstance<GLTFSettings>();
 			    settings.name = Path.GetFileNameWithoutExtension(k_RuntimeAndEditorSettingsPath);
 			    var dir = Path.GetDirectoryName(k_RuntimeAndEditorSettingsPath);
@@ -263,11 +168,23 @@ namespace UnityGLTF
 				settings = ScriptableObject.CreateInstance<GLTFSettings>();
 #endif
 		    }
-#if UNITY_EDITOR
+		    
 		    RegisterPlugins(settings);
+		    
+#if UNITY_EDITOR		    
+		    // save again with plugins attached, if needed - the asset was only created in memory
+		    if (!hadSettings && !AssetDatabase.Contains(settings))
+				UnityEditorInternal.InternalEditorUtility.SaveToSerializedFileAndForget(new UnityEngine.Object[] { settings }, k_RuntimeAndEditorSettingsPath, true);
 #endif
 		    cachedSettings = settings;
 		    return settings;
+	    }
+
+	    public static GLTFSettings GetDefaultSettings()
+	    {
+			var freshSettings = CreateInstance<GLTFSettings>();
+		    RegisterPlugins(freshSettings);
+		    return freshSettings;
 	    }
 
 	    public static bool TryGetSettings(out GLTFSettings settings)
@@ -299,24 +216,87 @@ namespace UnityGLTF
 #endif
 	    }
 
-#if UNITY_EDITOR
+	    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+	    private static void ClearStatics()
+	    {
+		    cachedSettings = null;
+		    settingsWherePluginsAreRegistered.Clear();
+	    }
+	    
+	    private static GLTFSettings cachedSettings;
+	    private static List<GLTFSettings> settingsWherePluginsAreRegistered = new List<GLTFSettings>();
+	    
 	    private static void RegisterPlugins(GLTFSettings settings)
 	    {
-		    if(settings.ImportPlugins == null) settings.ImportPlugins = new List<GltfImportPlugin>();
-
-		    foreach (var pluginType in TypeCache.GetTypesDerivedFrom<GltfImportPlugin>())
+		    if (settingsWherePluginsAreRegistered.Contains(settings)) return;
+		    
+		    static List<Type> GetTypesDerivedFrom<T>()
 		    {
-			    if (pluginType.IsAbstract) continue;
-			    // If the plugin already exists we dont want to add it again
-			    if (settings.ImportPlugins.Any(p => p != null && p.GetType() == pluginType))
-				    continue;
-			    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
+#if UNITY_EDITOR
+			    return TypeCache.GetTypesDerivedFrom<T>().ToList();
+#else
+			    var types = new List<Type>();
+			    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
 			    {
-					var newInstance = ScriptableObject.CreateInstance(pluginType) as GltfImportPlugin;
-				    settings.ImportPlugins.Add(newInstance);
+				    try
+				    {
+					    types.AddRange(assembly.GetTypes().Where(t => !(t is T) && typeof(T).IsAssignableFrom(t)));
+				    }
+				    catch (ReflectionTypeLoadException e)
+				    {
+					    types.AddRange(e.Types);
+				    }
+				    catch (Exception)
+				    {
+					    // ignored
+				    }
+			    }
+			    return types;
+#endif
+		    }
+		    
+		    // Initialize
+		    if (settings.ImportPlugins == null) settings.ImportPlugins = new List<GLTFImportPlugin>();
+		    if (settings.ExportPlugins == null) settings.ExportPlugins = new List<GLTFExportPlugin>();
+
+		    // Cleanup
+		    settings.ImportPlugins.RemoveAll(x => x == null);
+		    settings.ExportPlugins.RemoveAll(x => x == null);
+		    
+		    void FindAndRegisterPlugins<T>(List<T> plugins) where T : GLTFPlugin
+		    {
+			    foreach (var pluginType in GetTypesDerivedFrom<T>())
+			    {
+				    if (pluginType.IsAbstract) continue;
+				    if (plugins.Any(p => p != null && p.GetType() == pluginType))
+					    continue;
+				    
+				    if (typeof(ScriptableObject).IsAssignableFrom(pluginType))
+				    {
+					    var newInstance = CreateInstance(pluginType) as T;
+					    if (!newInstance) continue;
+
+					    newInstance.name = pluginType.Name;
+						newInstance.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+					    newInstance.Enabled = newInstance.EnabledByDefault;
+					    
+					    plugins.Add(newInstance);
+#if UNITY_EDITOR
+					    if (AssetDatabase.Contains(settings))
+					    {
+							AssetDatabase.AddObjectToAsset(newInstance, settings);
+							EditorUtility.SetDirty(settings);
+					    }
+#endif
+				    }
 			    }
 		    }
+		    
+		    // Register with TypeCache
+		    FindAndRegisterPlugins(settings.ImportPlugins);
+		    FindAndRegisterPlugins(settings.ExportPlugins);
+		    
+		    settingsWherePluginsAreRegistered.Add(settings);
 	    }
-#endif
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityGLTF.Loader;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
@@ -21,6 +21,8 @@ namespace UnityGLTF
 		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
+		[Tooltip("Hide the scene object during load, then activate it when complete")]
+		public bool HideSceneObjDuringLoad = false;
         public ImporterFactory Factory = null;
         public UnityAction onLoadComplete;
 
@@ -48,6 +50,8 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool SwapUVs = false;
+		[Tooltip("Blend shape frame weight import multiplier. Default is 1. For compatibility with some FBX animations you may need to use 100.")]
+		public BlendShapeFrameWeightSetting blendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
 		private async void Start()
 		{
@@ -81,6 +85,9 @@ namespace UnityGLTF
 				ImportTangents = ImportTangents,
 				SwapUVs = SwapUVs
 			};
+			
+			var settings = GLTFSettings.GetOrCreateSettings();
+			importOptions.ImportContext = new GLTFImportContext(settings);
 
 			GLTFSceneImporter sceneImporter = null;
 			try
@@ -110,6 +117,7 @@ namespace UnityGLTF
 
 				// for logging progress
 				await sceneImporter.LoadSceneAsync(
+					showSceneObj:!HideSceneObjDuringLoad,
 					onLoadComplete:LoadCompleteAction
 					// ,progress: new Progress<ImportProgress>(
 					// 	p =>
@@ -129,6 +137,9 @@ namespace UnityGLTF
 				}
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
+				
+				if (HideSceneObjDuringLoad)
+					LastLoadedScene.SetActive(true);
 
 #if UNITY_ANIMATION
 				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();

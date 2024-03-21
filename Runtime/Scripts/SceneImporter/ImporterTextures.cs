@@ -3,11 +3,13 @@ using System.IO;
 using System.Threading.Tasks;
 using GLTF.Schema;
 using GLTF.Utilities;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
+using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF
@@ -35,17 +37,17 @@ namespace UnityGLTF
 			    && string.IsNullOrEmpty(Root.Textures[index].Source.Value.Uri))
 			{
 				await ConstructImageBuffer(Root.Textures[index], index);
-				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true);
+				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true, false);
 			}
 		}
 
-		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo)
+		private async Task<TextureData> FromTextureInfo(TextureInfo textureInfo, bool isNormal)
 		{
 			var result = new TextureData();
 			if (textureInfo?.Index?.Value == null) return result;
 
 			TextureId textureId = textureInfo.Index;
-			await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true);
+			await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true, isNormal);
 			result.Texture = _assetCache.TextureCache[textureId.Id].Texture;
 			result.TexCoord = textureInfo.TexCoord;
 
@@ -66,7 +68,7 @@ namespace UnityGLTF
 			return result;
 		}
 
-		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear)
+		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
 			if (_assetCache.InvalidImageCache[imageCacheIndex])
 				return;
@@ -77,11 +79,12 @@ namespace UnityGLTF
 				if (image.Uri == null)
 				{
 					var bufferView = image.BufferView.Value;
-					var data = new byte[bufferView.ByteLength];
-
 					BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-					bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
-					stream = new SubStream(bufferContents.Stream, 0, data.Length);
+					if (bufferContents.bufferData.IsCreated)
+					{
+						bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+						stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
+					}
 				}
 				else
 				{
@@ -100,7 +103,7 @@ namespace UnityGLTF
 				}
 
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				await ConstructUnityTexture(stream, markGpuOnly, isLinear, image, imageCacheIndex);
+				await ConstructUnityTexture(stream, markGpuOnly, isLinear, isNormal, image, imageCacheIndex);
 			}
 		}
 
@@ -133,44 +136,48 @@ namespace UnityGLTF
 		}
 
 		// With using KTX, we need to return a new Texture2D instance at the moment. Unity KTX package does not support loading into existing one
-		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, byte[] data, bool markGpuOnly)
+		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, NativeArray<byte> data, bool markGpuOnly, bool isLinear)
 		{
 			switch (image.MimeType)
 			{
 				case "image/png":
 				case "image/jpeg":
 					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-					texture.LoadImage(data, markGpuOnly);
+					texture.LoadImage(data.ToArray(), markGpuOnly);
 					break;
 				case "image/exr":
-					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. glTF filename: {_gltfFileName}");
+					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
 					break;
 				case "image/ktx2":
 					string textureName = texture.name;
+					
 #if HAVE_KTX
-#if UNITY_EDITOR
-					Texture.DestroyImmediate(texture);
-#else
-					Texture.Destroy(texture);
-#endif
-					var ktxTexture = new KtxUnity.KtxTexture();
-
-					using (var alloc = new Unity.Collections.NativeArray<byte>(data, Unity.Collections.Allocator.Persistent))
+					if (Context.TryGetPlugin<Ktx2ImportContext>(out _))
 					{
-						var resultTextureData = await ktxTexture.LoadFromBytes(alloc, false);
+#if UNITY_EDITOR
+						Texture.DestroyImmediate(texture);
+#else
+						Texture.Destroy(texture);
+#endif
+						var ktxTexture = new KtxUnity.KtxTexture();
+						
+						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear);
 						texture = resultTextureData.texture;
 						texture.name = textureName;
-					}
 
-					ktxTexture.Dispose();
-#else
-					Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Please add the package \"com.atteneder.ktx\" version v1.3+ to your project to import KTX2 textures.");
-					await Task.CompletedTask;
-					texture = null;
+						ktxTexture.Dispose();
+
+					}
+					else
 #endif
+					{
+						Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project to import KTX2 textures.");
+						await Task.CompletedTask;
+						texture = null;
+					}
 					break;
 				default:
-					texture.LoadImage(data, markGpuOnly);
+					texture.LoadImage(data.ToArray(), markGpuOnly);
 					break;
 			}
 
@@ -187,8 +194,9 @@ namespace UnityGLTF
 			return texture;
 		}
 
-		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, GLTFImage image, int imageCacheIndex)
+		protected virtual async Task ConstructUnityTexture(Stream stream, bool markGpuOnly, bool isLinear, bool isNormal, GLTFImage image, int imageCacheIndex)
 		{
+			bool convertToDxt5nmFormat = false;
 #if UNITY_EDITOR
 			if (stream is AssetDatabaseStream assetDatabaseStream)
 			{
@@ -198,6 +206,16 @@ namespace UnityGLTF
 				_assetCache.ImageCache[imageCacheIndex] = tx;
 				return;
 			}
+
+			if (isNormal && Context.SourceImporter != null)
+			{
+				BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+				if (PlayerSettings.GetNormalMapEncoding(activeTargetGroup) == NormalMapEncoding.DXT5nm)
+				{
+					convertToDxt5nmFormat = true;
+				}
+			}
+
 #endif
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
 			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
@@ -243,7 +261,14 @@ namespace UnityGLTF
 				// This way here we'll get into weird code for Runtime import, as we would still import mock textures...
 				// Or we add another option to avoid that.
 				texture = null;
-				UnityEngine.Debug.LogError("Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath);
+				Debug.Log(LogType.Error, "Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath+ $" (File: {_gltfFileName})");
+			}
+			else
+			if (_nativeBuffers.TryGetValue(stream, out var nativeData))
+			{
+				var bufferView = await GetBufferData(image.BufferView.Value.Buffer);
+				await YieldOnTimeoutAndThrowOnLowMemory();
+				texture = await CheckMimeTypeAndLoadImage(image, texture, bufferView.bufferData, markGpuOnly, isLinear);
 
 			}
 			else if (stream is MemoryStream)
@@ -251,7 +276,10 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStream.ToArray(), markGpuOnly);
+					using (var memoryStreamData = new NativeArray<byte>(memoryStream.ToArray(), Allocator.TempJob))
+					{
+						texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly, isLinear);
+					}
 				}
 			}
 			else
@@ -261,12 +289,24 @@ namespace UnityGLTF
 				// todo: potential optimization is to split stream read into multiple frames (or put it on a thread?)
 				if (stream.Length > int.MaxValue)
 				{
-					throw new Exception("Stream is larger than can be copied into byte array");
+					throw new Exception($"Stream is larger than can be copied into byte array (File: {_gltfFileName})");
 				}
+				
 				stream.Read(buffer, 0, (int)stream.Length);
-
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				texture = await CheckMimeTypeAndLoadImage(image, texture, buffer, markGpuOnly);
+				using (NativeArray<byte> bufferNative = new NativeArray<byte>(buffer, Allocator.TempJob))
+				{
+					texture = await CheckMimeTypeAndLoadImage(image, texture, bufferNative, markGpuOnly, isLinear);
+				}
+			}
+
+			if (texture && convertToDxt5nmFormat)
+			{
+				texture = await NormalMapEncodingConverter.ConvertToDxt5nmAndCheckTextureFormatAsync(texture);
+				if (texture != newTextureObject)
+					newTextureObject = texture;
+				
+				texture.Apply();
 			}
 
 			if (!texture)
@@ -316,7 +356,7 @@ namespace UnityGLTF
 				{
 					if (_isRunning)
 					{
-						throw new GLTFLoadException("Cannot CreateTexture while GLTFSceneImporter is already running");
+						throw new GLTFLoadException($"Cannot CreateTexture while GLTFSceneImporter is already running (File: {_gltfFileName})");
 					}
 
 					_isRunning = true;
@@ -338,7 +378,7 @@ namespace UnityGLTF
 				}
 
 				await ConstructImageBuffer(texture, textureIndex);
-				await ConstructTexture(texture, textureIndex, markGpuOnly, isLinear);
+				await ConstructTexture(texture, textureIndex, markGpuOnly, isLinear, false);
 			}
 			finally
 			{
@@ -364,7 +404,7 @@ namespace UnityGLTF
 		{
 			if (_assetCache == null)
 			{
-				throw new GLTFLoadException("Asset cache needs initialized before calling GetTexture");
+				throw new GLTFLoadException($"Asset cache needs initialized before calling GetTexture (File: {_gltfFileName})");
 			}
 
 			if (_assetCache.TextureCache[textureIndex] == null)
@@ -375,13 +415,13 @@ namespace UnityGLTF
 			return _assetCache.TextureCache[textureIndex].Texture;
 		}
 
-		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear)
+		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
 			if (_assetCache.TextureCache[textureIndex].Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTFImage image = _gltfRoot.Images[sourceId];
-				await ConstructImage(image, sourceId, markGpuOnly, isLinear);
+				await ConstructImage(image, sourceId, markGpuOnly, isLinear, isNormal);
 
 				var source = _assetCache.ImageCache[sourceId];
 				if (!source) return;
@@ -407,7 +447,7 @@ namespace UnityGLTF
 							desiredFilterMode = FilterMode.Trilinear;
 							break;
 						default:
-							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter);
+							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
 							desiredFilterMode = FilterMode.Trilinear;
 							break;
 					}
@@ -423,7 +463,7 @@ namespace UnityGLTF
 							case GLTF.Schema.WrapMode.MirroredRepeat:
 								return TextureWrapMode.Mirror;
 							default:
-								Debug.Log(LogType.Warning, "Unsupported Sampler.Wrap: " + gltfWrapMode);
+								Debug.Log(LogType.Warning, "Unsupported Sampler.Wrap: " + gltfWrapMode+ $" (File: {_gltfFileName})");
 								return TextureWrapMode.Repeat;
 						}
 					}
@@ -441,12 +481,12 @@ namespace UnityGLTF
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;
 				if (matchSamplerState || markGpuOnly)
 				{
-					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks");
+					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks"+ $" (File: {_gltfFileName})");
 					_assetCache.TextureCache[textureIndex].Texture = source;
 
 					if (!matchSamplerState)
 					{
-						Debug.Log(LogType.Warning, $"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}");
+						Debug.Log(LogType.Warning, $"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}"+ $" (File: {_gltfFileName})");
 					}
 				}
 				else
@@ -476,7 +516,7 @@ namespace UnityGLTF
 					unityTexture.wrapModeU = desiredWrapModeS;
 					unityTexture.wrapModeV = desiredWrapModeT;
 
-					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks");
+					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, $"Texture should not be reset to prevent memory leaks (File: {_gltfFileName})");
 					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
 				}
 #if UNITY_EDITOR
@@ -484,13 +524,14 @@ namespace UnityGLTF
 				{
 					// don't warn for just filter mode, user choice
 					if (source.wrapModeU != desiredWrapModeS || source.wrapModeV != desiredWrapModeT)
-						Debug.Log(LogType.Warning, ($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT}"));
+						Debug.Log(LogType.Warning, ($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT} (File: {_gltfFileName})"));
 					_assetCache.TextureCache[textureIndex].Texture = source;
 				}
 #endif
 			}
 
 			_assetCache.TextureCache[textureIndex].IsLinear = isLinear;
+			_assetCache.TextureCache[textureIndex].IsNormal = isNormal;
 
 			try
 			{

@@ -4,22 +4,18 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-	public abstract class GltfImportPlugin : ScriptableObject
+	public abstract class GLTFImportPlugin : GLTFPlugin
 	{
-		internal bool Expanded = true;
-		public abstract string DisplayName { get; }
-		public bool Enabled { get; set; } = true;
-		public abstract void OnGUI();
 		/// <summary>
 		/// Return the Plugin Instance that receives the import callbacks
 		/// </summary>
-		public abstract GltfImportPluginContext CreateInstance(GLTFImportContext context);
+		public abstract GLTFImportPluginContext CreateInstance(GLTFImportContext context);
 	}
 
 	/// <summary>
 	/// Instances are created during import once, they don't have to worry about clearing state
 	/// </summary>
-	public abstract class GltfImportPluginContext
+	public abstract class GLTFImportPluginContext
 	{
 		/// <summary>
 		/// Called before import starts

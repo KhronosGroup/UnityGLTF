@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GLTF;
@@ -61,7 +62,7 @@ namespace UnityGLTF
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
-					Stream = inputBufferCacheData.Stream,
+					bufferData = inputBufferCacheData.bufferData,
 					Offset = inputBufferCacheData.ChunkOffset
 				};
 
@@ -73,7 +74,7 @@ namespace UnityGLTF
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
-					Stream = outputBufferCacheData.Stream,
+					bufferData = outputBufferCacheData.bufferData,
 					Offset = outputBufferCacheData.ChunkOffset
 				};
 
@@ -147,7 +148,27 @@ namespace UnityGLTF
 				}
 			}
 
-			for (var ci = 0; ci < channelCount; ++ci)
+			if (mode == InterpolationType.LINEAR && channelCount == 4 && propertyNames.All(p => p == "localRotation.x" || p == "localRotation.y" || p == "localRotation.z" || p == "localRotation.w"))
+			{
+				Quaternion prev = Quaternion.identity;
+				for (int i = 0; i < keyframes[0].Length; i++)
+				{
+					Quaternion q = new Quaternion(keyframes[0][i].value, keyframes[1][i].value, keyframes[2][i].value, keyframes[3][i].value);
+					if (i > 0)
+					{
+						if (Quaternion.Dot(prev, q) < 0)
+							q = new Quaternion(-q.x, -q.y, -q.z, -q.w);
+						
+						keyframes[0][i].value = q.x;
+						keyframes[1][i].value = q.y;
+						keyframes[2][i].value = q.z;
+						keyframes[3][i].value = q.w;
+					}
+					prev = q;
+				}
+			}
+			
+			for (var ci = 0; ci < channelCount; ci++)
 			{
 				if (mode != InterpolationType.CUBICSPLINE)
 				{
@@ -170,7 +191,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private static void SetTangentMode(Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
+		private void SetTangentMode(Keyframe[] keyframes, int keyframeIndex, InterpolationType interpolation)
 		{
 			var key = keyframes[keyframeIndex];
 
@@ -189,7 +210,7 @@ namespace UnityGLTF
 					key.outTangent = 0;
 					break;
 				default:
-					throw new NotImplementedException();
+					throw new NotImplementedException($"Unknown interpolation type for animation (File: {_gltfFileName})");
 			}
 			keyframes[keyframeIndex] = key;
 		}
@@ -267,13 +288,21 @@ namespace UnityGLTF
 				{
 					case GLTFAnimationChannelPath.translation:
 						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
-
+#if UNITY_EDITOR
+						// TODO technically this should be postprocessing in the ScriptedImporter instead,
+						// but performance is much better if we do it when constructing the clips
+						var factor = Context?.ImportScaleFactor ?? 1f;
+#endif
 						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var position = data.AsVec3s[frame].ToUnityVector3Convert();
+											  var position = data.AsFloat3s[frame].ToUnityVector3Convert();
+#if UNITY_EDITOR
+											  return new float[] { position.x * factor, position.y * factor, position.z * factor};
+#else
 											  return new float[] { position.x, position.y, position.z };
+#endif
 										  });
 						break;
 
@@ -284,8 +313,8 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var rotation = data.AsVec4s[frame];
-											  var quaternion = new GLTF.Math.Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W).ToUnityQuaternionConvert();
+											  var rotation = data.AsFloat4s[frame];
+											  var quaternion = rotation.ToUnityQuaternionConvert();
 											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 										  });
 
@@ -298,34 +327,34 @@ namespace UnityGLTF
 										  samplerCache.Interpolation, typeof(Transform),
 										  (data, frame) =>
 										  {
-											  var scale = data.AsVec3s[frame].ToUnityVector3Raw();
+											  var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
 											  return new float[] { scale.x, scale.y, scale.z };
 										  });
 						break;
 
 					case GLTFAnimationChannelPath.weights:
-						var primitives = channel.Target.Node.Value.Mesh.Value.Primitives;
+						var mesh = channel.Target.Node.Value.Mesh.Value;
+						var primitives = mesh.Primitives;
 						if (primitives[0].Targets == null) break;
 						var targetCount = primitives[0].Targets.Count;
 						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
 						{
 							// see SceneImporter:156
-							// blend shapes are always called "Morphtarget" and always have frame weight 100 on import
-
-							var prim = primitives[primitiveIndex];
-							var targetNames = prim.TargetNames;
+							// blend shapes are always called "Morphtarget"
+							var targetNames = mesh.TargetNames;
 							propertyNames = new string[targetCount];
 							for (var i = 0; i < targetCount; i++)
-								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + (targetNames != null ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
+								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + ((targetNames != null && targetNames.Count > i) ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
 							var frameFloats = new float[targetCount];
 
+							var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 								samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
 								(data, frame) =>
 								{
 									var allValues = data.AsFloats;
 									for (var k = 0; k < targetCount; k++)
-										frameFloats[k] = allValues[frame * targetCount + k];
+										frameFloats[k] = allValues[frame * targetCount + k] * blendShapeFrameWeight;
 
 									return frameFloats;
 								});
@@ -333,7 +362,7 @@ namespace UnityGLTF
 						break;
 
 					default:
-						Debug.Log(LogType.Warning, "Cannot read GLTF animation path");
+						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
 						break;
 				} // switch target type
 			} // foreach channel

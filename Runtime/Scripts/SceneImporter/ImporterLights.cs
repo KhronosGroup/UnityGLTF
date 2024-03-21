@@ -2,6 +2,7 @@
 using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 using LightType = UnityEngine.LightType;
 
 namespace UnityGLTF
@@ -10,6 +11,9 @@ namespace UnityGLTF
 	{
 		private void ConstructLights(GameObject nodeObj, Node node)
 		{
+			var useLightsExtension = Context.TryGetPlugin<LightsPunctualImportContext>(out _);
+			if (!useLightsExtension) return;
+			
 			// TODO this should be handled by the lights extension directly, not here
 			const string lightExt = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;
 			KHR_LightsPunctualNodeExtension lightsExtension = null;

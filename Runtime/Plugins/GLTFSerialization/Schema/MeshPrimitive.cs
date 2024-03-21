@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GLTF.Extensions;
 using Newtonsoft.Json;
@@ -47,8 +48,6 @@ namespace GLTF.Schema
 		/// TODO: Make dictionary key enums?
 		public List<Dictionary<string, AccessorId>> Targets;
 
-		public List<string> TargetNames;
-
 		public MeshPrimitive()
 		{
 		}
@@ -91,26 +90,163 @@ namespace GLTF.Schema
 					Targets.Add(target);
 				}
 			}
-
-			if (meshPrimitive.TargetNames != null)
-			{
-				TargetNames = new List<string>(meshPrimitive.TargetNames);
-			}
 		}
 
 		public static int[] GenerateTriangles(int vertCount)
 		{
-			var arr = new int[vertCount];
-			for (var i = 0; i < vertCount; i+=3)
+			var indices = new int[vertCount];
+			for (var i = 0; i < vertCount-2; i+=3)
 			{
-				arr[i] = i + 2;
-				arr[i + 1] = i + 1;
-				arr[i + 2] = i;
+				indices[i] = i + 2;
+				indices[i + 1] = i + 1;
+				indices[i + 2] = i;
+			}
+
+			return indices;
+		}
+		
+		public static int[] GenerateTriangleStrips(int vertCount)
+		{
+			if (vertCount < 3)
+			{
+				throw new Exception("Vertex count must be at least 3 to generate a triangle strip.");
+			}
+
+			int[] indices = new int[3 * (vertCount - 2)];
+
+			for (int i = 0; i < vertCount - 2; i++)
+			{
+				if (i % 2 == 1)
+				{
+					indices[3 * i] = i;
+					indices[3 * i + 1] = i + 1;
+					indices[3 * i + 2] = i + 2;
+				}
+				else
+				{
+					indices[3 * i] = i + 1;
+					indices[3 * i + 1] = i;
+					indices[3 * i + 2] = i + 2;
+				}
+			}
+
+			return indices;
+		}		
+		
+		public static int[] ConvertTriangleStripsToTriangles(int[] indices)
+		{
+			if (indices.Length < 3)
+			{
+				throw new Exception("Input indices array must contain at least 3 elements.");
+			}
+			
+			List<int> triangles = new List<int>((indices.Length - 3) * 3 + 3);
+
+			for (int i = 2; i < indices.Length; i++)
+			{
+				// Every even-indexed element forms a triangle with the previous two elements
+				if (i % 2 == 0)
+				{
+					triangles.Add(indices[i - 2]);
+					triangles.Add(indices[i - 1]);
+					triangles.Add(indices[i]);
+				}
+				// Every odd-indexed element forms a triangle with the two previous elements but in reverse order
+				else
+				{
+					triangles.Add(indices[i - 1]);
+					triangles.Add(indices[i - 2]);
+					triangles.Add(indices[i]);
+				}
+			}
+
+			return triangles.ToArray();
+		}			
+		
+		public static int[] ConvertTriangleFanToTriangles(int[] indices)
+		{
+			if (indices.Length < 3)
+			{
+				throw new Exception("Input indices array must contain at least 3 elements.");
+			}
+
+			List<int> triangles = new List<int>();
+
+			// Assuming the first vertex is the center of the fan
+			int centerIndex = indices[0];
+
+			for (int i = 1; i < indices.Length - 1; i++)
+			{
+				// Form triangles using the center vertex and the adjacent vertices
+				triangles.Add(centerIndex);
+				triangles.Add(indices[i]);
+				triangles.Add(indices[i + 1]);
+			}
+
+			return triangles.ToArray();
+		}
+		
+		public static int[] GenerateTriangleFans(int vertCount)
+		{
+			var arr = new int[(vertCount-1)*3];
+			int arrIndex = 0;
+			for (var i = 1; i < vertCount-1; i++)
+			{
+				arr[arrIndex] = 0;
+				arr[arrIndex+1] = i+1;
+				arr[arrIndex+2] = i;
+				arrIndex += 3;
+			}
+
+			return arr;
+		}	
+		
+		public static int[] GeneratePoints(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount; i++)
+			{
+				arr[i] = i ;
 			}
 
 			return arr;
 		}
+		
+		public static int[] GenerateLines(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount-1; i+=2)
+			{
+				arr[i] = i;
+				arr[i + 1] = i + 1;
+			}
 
+			return arr;
+		}
+		
+		public static int[] GenerateLineStrip(int vertCount)
+		{
+			var arr = new int[vertCount];
+			for (var i = 0; i < vertCount; i++)
+			{
+				arr[i] = i;
+			}
+
+			return arr;
+		}	
+		
+		public static int[] GenerateLineLoop(int vertCount)
+		{
+			var arr = new int[vertCount+1];
+			for (var i = 0; i < vertCount; i++)
+			{
+				arr[i] = i;
+			}
+
+			arr[arr.Length - 1] = 0;
+			return arr;
+		}	
+		
 		public static MeshPrimitive Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var primitive = new MeshPrimitive();
@@ -147,24 +283,6 @@ namespace GLTF.Schema
 							},
 							skipStartObjectRead: true);
 						});
-						break;
-					case "extras":
-						// GLTF does not support morph target names, serialize in extras for now
-						// https://github.com/KhronosGroup/glTF/issues/1036
-						if (reader.Read() && reader.TokenType == JsonToken.StartObject)
-						{
-							while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-							{
-								var extraProperty = reader.Value.ToString();
-								switch (extraProperty)
-								{
-									case "targetNames":
-										primitive.TargetNames = reader.ReadStringList();
-										break;
-								}
-							}
-						}
-
 						break;
 					default:
 						primitive.DefaultPropertyDeserializer(root, reader);
@@ -223,21 +341,6 @@ namespace GLTF.Schema
 					writer.WriteEndObject();
 				}
 				writer.WriteEndArray();
-			}
-			// GLTF does not support morph target names, serialize in extras for now
-			// https://github.com/KhronosGroup/glTF/issues/1036
-			if (TargetNames != null && TargetNames.Count > 0)
-			{
-				writer.WritePropertyName("extras");
-				writer.WriteStartObject();
-				writer.WritePropertyName("targetNames");
-				writer.WriteStartArray();
-				foreach (var targetName in TargetNames)
-				{
-					writer.WriteValue(targetName);
-				}
-				writer.WriteEndArray();
-				writer.WriteEndObject();
 			}
 
 			base.Serialize(writer);

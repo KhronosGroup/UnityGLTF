@@ -22,7 +22,7 @@ namespace UnityGLTF
 		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
 		    avatar.name = "Avatar";
 
-		    if (!avatar.isValid)
+		    if (!avatar.isValid || !avatar.isHuman)
 		    {
 			    Object.DestroyImmediate(avatar);
 			    return null;

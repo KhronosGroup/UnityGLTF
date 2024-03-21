@@ -9,6 +9,8 @@ using UnityEditor;
 using UnityEngine;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
+using UnityGLTF.Plugins;
+
 #else
 using UnityEditor.Experimental.AssetImporters;
 #endif
@@ -27,18 +29,26 @@ namespace UnityGLTF
 
 			var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
 			if (m_HasSceneData.boolValue)
-				AddTab(new GltfAssetImporterTab(this, "Model", ModelInspectorGUI));
+				AddTab(new GLTFAssetImporterTab(this, "Model", ModelInspectorGUI));
 
-			AddTab(new GltfAssetImporterTab(this, "Animation", AnimationInspectorGUI));
+			AddTab(new GLTFAssetImporterTab(this, "Animation", AnimationInspectorGUI));
 
 			var m_HasMaterialData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasMaterialData));
 			var m_HasTextureData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasTextureData));
 			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
-				AddTab(new GltfAssetImporterTab(this, "Materials", MaterialInspectorGUI));
+				AddTab(new GLTFAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
-			AddTab(new GltfAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
+			AddTab(new GLTFAssetImporterTab(this, "Used Extensions", ExtensionInspectorGUI));
 
 			base.OnEnable();
+		}
+
+		public override void OnInspectorGUI()
+		{
+			var t = target as GLTFImporter;
+			TextureWarningsGUI(t);
+			EditorGUILayout.Space();
+			base.OnInspectorGUI();
 		}
 
 		private void TextureWarningsGUI(GLTFImporter t)
@@ -76,6 +86,7 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importBlendShapeNames)));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._blendShapeFrameWeight)));
 			
 			EditorGUILayout.Separator();
 			
@@ -105,7 +116,6 @@ namespace UnityGLTF
 				EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
 				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._textureCompression)));
 			}
-			TextureWarningsGUI(t);
 		}
 
 		private const string TextureRemappingKey = nameof(GLTFImporterInspector) + "_TextureRemapping";
@@ -163,7 +173,14 @@ namespace UnityGLTF
 			var t = target as GLTFImporter;
 			if (!t) return;
 
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importMaterials)));
+			var importMaterialsProp = serializedObject.FindProperty(nameof(GLTFImporter._importMaterials));
+			EditorGUILayout.PropertyField(importMaterialsProp);
+			if (importMaterialsProp.boolValue)
+			{
+				EditorGUI.indentLevel++;
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._enableGpuInstancing)), new GUIContent("GPU Instancing"));
+				EditorGUI.indentLevel--;
+			}
 			var importedMaterials = serializedObject.FindProperty("m_Materials");
 			if (importedMaterials.arraySize > 0)
 			{
@@ -207,8 +224,6 @@ namespace UnityGLTF
 			}
 
 			EditorGUILayout.Separator();
-
-			TextureWarningsGUI(t);
 		}
 
 		private void RemappingUI<T>(GLTFImporter t, SerializedProperty importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
@@ -356,6 +371,68 @@ namespace UnityGLTF
 			EditorGUI.EndDisabledGroup();
 
 			// TODO add list of supported extensions and links to docs
+			// Gather list of all plugins
+			var registeredPlugins = GLTFSettings.GetDefaultSettings().ImportPlugins;
+			var overridePlugins = t._importPlugins;
+
+			EditorGUILayout.LabelField("OVERRIDE", EditorStyles.miniLabel, GUILayout.Width(60));
+			EditorGUILayout.BeginHorizontal();
+			EditorGUILayout.LabelField("", GUILayout.Width(16));
+			EditorGUILayout.LabelField("ENABLED", EditorStyles.miniLabel, GUILayout.Width(60));
+			EditorGUILayout.EndHorizontal();
+			
+			foreach (var plugin in registeredPlugins)
+			{
+				if (plugin.AlwaysEnabled) continue; // no need to show
+				var pluginType = plugin.GetType().FullName;
+				// draw override toggle
+				EditorGUILayout.BeginHorizontal();
+				var overridePlugin = overridePlugins.FirstOrDefault(x => x.typeName == pluginType);
+				var hasOverride = overridePlugin?.overrideEnabled ?? false;
+				var hasOverride2 = EditorGUILayout.ToggleLeft("", hasOverride, GUILayout.Width(16));
+				if (hasOverride2 != hasOverride)
+				{
+					hasOverride = hasOverride2;
+					// add or remove a ScriptableObject with the plugin
+					if (!hasOverride)
+					{
+						if (overridePlugin != null) overridePlugin.overrideEnabled = false;
+					}
+					else
+					{
+						if (overridePlugin != null)
+						{
+							overridePlugin.overrideEnabled = true;
+						}
+						else
+						{
+							var newPlugin = new GLTFImporter.PluginInfo()
+							{
+								typeName = plugin.GetType().FullName,
+								enabled = plugin.EnabledByDefault,
+								overrideEnabled = true,
+							};
+							overridePlugin = newPlugin;
+							t._importPlugins.Add(newPlugin);
+						}
+					}
+					EditorUtility.SetDirty(t);
+				}
+				EditorGUI.BeginDisabledGroup(!hasOverride);
+				var currentlyEnabled = (overridePlugin != null && overridePlugin.overrideEnabled) ? overridePlugin.enabled : plugin.EnabledByDefault;
+				var enabled = EditorGUILayout.ToggleLeft("", currentlyEnabled, GUILayout.Width(16));
+				if (enabled != currentlyEnabled)
+				{
+					currentlyEnabled = enabled;
+					overridePlugin.enabled = enabled;
+					EditorUtility.SetDirty(t);
+				}
+				EditorGUI.EndDisabledGroup();
+				EditorGUI.BeginDisabledGroup(false);
+				EditorGUILayout.LabelField(plugin.DisplayName);
+				EditorGUI.EndDisabledGroup();
+				EditorGUILayout.EndHorizontal();
+			}
 		}
 
 		private static string SanitizePath(string subAssetName)
@@ -380,9 +457,28 @@ namespace UnityGLTF
 		{
 			return importer.Textures.All(x =>
 			{
-				if (AssetDatabase.Contains(x.texture) && AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)
+				if (x.texture && AssetDatabase.Contains(x.texture))
 				{
-					return textureImporter.sRGBTexture == !x.shouldBeLinear;
+					var path = AssetDatabase.GetAssetPath(x.texture);
+					var asset = AssetImporter.GetAtPath(path);
+					if (asset is TextureImporter textureImporter)
+					{
+						var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
+						
+						var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
+						return correctLinearSetting && correctNormalSetting;
+					}
+#if HAVE_KTX			
+					else
+					if (KtxImporterHelper.IsKtxOrBasis(asset))
+					{
+						if (!KtxImporterHelper.TryGetLinear(asset, out var linear))
+							return false;
+						
+						var correctLinearSetting = (linear == x.shouldBeLinear | x.shouldBeNormalMap);
+						return correctLinearSetting;
+					}
+#endif
 				}
 				return true;
 			});
@@ -393,10 +489,41 @@ namespace UnityGLTF
 			var haveStartedAssetEditing = false;
 			foreach (var x in importer.Textures)
 			{
-				if (!AssetDatabase.Contains(x.texture) || !(AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture)) is TextureImporter textureImporter)) continue;
+				if (!x.texture) continue;
+				if (!AssetDatabase.Contains(x.texture))
+					continue;
+				
+				var asset = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(x.texture));
+#if HAVE_KTX
+				if (KtxImporterHelper.IsKtxOrBasis(asset))
+				{
+					if (!KtxImporterHelper.TryGetLinear(asset, out var isLinear))
+						continue;
+					
+					bool shouldBeLinear = x.shouldBeLinear | x.shouldBeNormalMap;
+					if (isLinear == shouldBeLinear)
+						continue;
+		
+					if (!haveStartedAssetEditing)
+					{
+						haveStartedAssetEditing = true;
+						AssetDatabase.StartAssetEditing();
+					}					
+					
+					KtxImporterHelper.SetLinear(asset, shouldBeLinear);
+					
+					asset.SaveAndReimport();
+					continue;
+				}
+#endif
+				
+				if (!(asset is TextureImporter textureImporter)) continue;
 
+				var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
+				var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
+				
 				// skip if already correct
-				if (textureImporter.sRGBTexture == !x.shouldBeLinear)
+				if (correctLinearSetting && correctNormalSetting)
 					continue;
 
 				if (!haveStartedAssetEditing)
@@ -406,6 +533,7 @@ namespace UnityGLTF
 				}
 
 				textureImporter.sRGBTexture = !x.shouldBeLinear;
+				textureImporter.textureType = x.shouldBeNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
 				textureImporter.SaveAndReimport();
 			}
 

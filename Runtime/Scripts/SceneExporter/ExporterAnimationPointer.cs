@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Schema;
 using GLTF.Schema.KHR_lights_punctual;
 using UnityEngine;
 using UnityGLTF.Extensions;
 using UnityGLTF.JsonPointer;
+using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
 
 namespace UnityGLTF
@@ -40,6 +42,27 @@ namespace UnityGLTF
 				pointerResolvers.Add(resolver);
 		}
 
+		/// <summary>
+		/// AddAnimationData should be called within the <see cref="ExportContext.AfterSceneExport"/> event.
+		/// <remarks>
+		/// Don't forget to add the GLTFAnimation to the root <see cref="GLTFRoot.Animations"/> list!
+		/// <para> e.g.: _exporter.GetRoot().Animations.Add(_animationA); </para>
+		/// </remarks>
+		/// <para><b>Important:</b> times[] and values[] need to be the same length!</para>
+		/// </summary>
+		/// <example><code>
+		/// var exportContext = new ExportContext(GLTFSettings.GetOrCreateSettings());
+		/// var _exporter = new GLTFSceneExporter(new Transform[]{transform }, exportContext);
+		/// exportContext.AfterSceneExport += (scene, root) =>
+		/// {
+		///		GLTFAnimation _animationA = new GLTFAnimation();
+		///		_animationA.Name = "TestA";
+		///		_exporter.AddAnimationData(rootTransform, "translation", _animationA,
+		///			new float[] { 0, 2 },
+		///			new object[] { (object)Vector3.one, (object)Vector3.up });
+		///		_exporter.GetRoot().Animations.Add(_animationA);
+		///	};
+		/// </code></example>
 		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
 		{
 			if (!animatedObject) return;
@@ -70,6 +93,7 @@ namespace UnityGLTF
 			bool convertToLinearColor = false;
 			string secondPropertyName = null;
 			string extensionName = null;
+			var propertyType = values[0]?.GetType();
 
 			switch (animatedObject)
 			{
@@ -336,6 +360,9 @@ namespace UnityGLTF
 							case "far clip plane":
 								propertyName = "perspective/zfar";
 								break;
+							case "backgroundColor":
+								convertToLinearColor = true;
+								break;
 							default:
 								Debug.Log(LogType.Warning, "Unknown property name on Camera " + camera + ": " + propertyName);
 								break;
@@ -379,7 +406,7 @@ namespace UnityGLTF
 					// Debug.LogWarning($"Implicitly handling animated property \"{propertyName}\" for target {animatedObject}", animatedObject);
 
 					// filtering for what to include / what not to include based on whether its target can be resolved
-					if (settings.UseAnimationPointer && animatedObject is Component _)
+					if (UseAnimationPointer && animatedObject is Component _)
 					{
 						var couldResolve = false;
 						var prop = $"/nodes/{channelTargetId}/{propertyName}";
@@ -395,6 +422,11 @@ namespace UnityGLTF
 						{
 							return;
 						}
+						
+						// If the animated property is a color, we need to convert to linear –
+						// we're doing the same on regular non-animated property export.
+						if (propertyType == typeof(Color))
+							convertToLinearColor = true;
 					}
 					break;
 			}
@@ -518,16 +550,35 @@ namespace UnityGLTF
 						var colors = new Color[values.Length];
 						var strengths = new float[values.Length];
 						actuallyNeedSecondSampler = false;
-						for (int i = 0; i < values.Length; i++)
+						var pluginSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
+						var emissiveStrengthSupported = pluginSettings != null && pluginSettings.KHR_materials_emissive_strength;
+						if (emissiveStrengthSupported)
 						{
-							DecomposeEmissionColor((Color) values[i], out var color, out var intensity);
-							colors[i] = color;
-							strengths[i] = intensity;
-							if (intensity > 1)
-								actuallyNeedSecondSampler = true;
+							for (int i = 0; i < values.Length; i++)
+							{
+								DecomposeEmissionColor((Color) values[i], out var color, out var intensity);
+								colors[i] = color;
+								strengths[i] = intensity;
+								if (intensity > 1)
+									actuallyNeedSecondSampler = true;
+							}
 						}
+						else
+						{
+							// clamp 0..1
+							for (int i = 0; i < values.Length; i++)
+							{
+								var c = (Color) values[i];
+								if (c.r > 1) c.r = 1;
+								if (c.g > 1) c.g = 1;
+								if (c.b > 1) c.b = 1;
+								colors[i] = c;
+							}
+						}
+						
 						Tsampler.Output = ExportAccessor(colors, false);
-						Tsampler2.Output = ExportAccessor(strengths);
+						if (emissiveStrengthSupported)
+							Tsampler2.Output = ExportAccessor(strengths);
 					}
 					else
 					{
@@ -560,7 +611,7 @@ namespace UnityGLTF
 			animation.Samplers.Add(Tsampler);
 			animation.Channels.Add(Tchannel);
 
-			if (settings.UseAnimationPointer)
+			if (UseAnimationPointer)
 				ConvertToAnimationPointer(animatedObject, propertyName, TchannelTarget);
 
 			// in some cases, extensions aren't required even when we think they might, e.g. for emission color animation.
@@ -597,7 +648,7 @@ namespace UnityGLTF
 				animation.Samplers.Add(Tsampler2);
 				animation.Channels.Add(Tchannel2);
 
-				if (settings.UseAnimationPointer)
+				if (UseAnimationPointer)
 					ConvertToAnimationPointer(animatedObject, secondPropertyName, TchannelTarget2);
 			}
 		}

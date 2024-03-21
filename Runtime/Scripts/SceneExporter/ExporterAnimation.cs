@@ -13,6 +13,7 @@ using System.Reflection;
 using GLTF.Schema;
 using UnityEngine;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
 
 #if UNITY_2020_2_OR_NEWER
@@ -36,6 +37,18 @@ namespace UnityGLTF
 		private static int AnimationBakingFramerate = 30; // FPS
 		private static bool BakeAnimationData = true;
 #endif
+
+		private bool? _useAnimationPointer = null;
+
+		private bool UseAnimationPointer
+		{
+			get
+			{
+				if (_useAnimationPointer == null)
+					_useAnimationPointer = _plugins.Any(x => x is AnimationPointerExportContext);
+				return _useAnimationPointer.Value;
+			}
+		}
 
 		// Parses Animation/Animator component and generate a glTF animation for the active clip
 		// This may need additional work to fully support animatorControllers
@@ -135,7 +148,7 @@ namespace UnityGLTF
 				return existingAnim;
 			}
 			
-			if (_exportOptions.MergeClipsWithMatchingNames)
+			if (_exportContext.MergeClipsWithMatchingNames)
 			{
 				// Check if we already exported an animation with exactly that name. If yes, we want to append to the previous one instead of making a new one.
 				// This allows to merge multiple animations into one if required (e.g. a character and an instrument that should play at the same time but have individual clips).
@@ -306,9 +319,9 @@ namespace UnityGLTF
 				if (propertyType == null)
 				{
 					if (target is Material mat)
-						UnityEngine.Debug.LogWarning($"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
+						Debug.Log(LogType.Warning, (object) $"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
 					else
-						UnityEngine.Debug.LogError($"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
+						Debug.Log(LogType.Error, (object) $"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
 					return false;
 				}
 
@@ -320,7 +333,8 @@ namespace UnityGLTF
 					// When they have 3 components, we also need to check that these are r,g,b - theoretically someone can animate r,g,a and then we get wrong data.
 					if (propertyType == typeof(Color) && (
 						    (target is Material && colorPropertiesWithoutAlphaChannel.Contains(propertyName)) ||
-						    (target is Light && propertyName == "m_Color")))
+						    (target is Light && propertyName == "m_Color") ||
+						    (target is Camera)))
 					{
 						requiredCount = 3;
 						hasEnoughCurves = curve.Count >= requiredCount
@@ -332,14 +346,14 @@ namespace UnityGLTF
 
 						if (!hasEnoughCurves)
 						{
-							UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
+							Debug.Log(LogType.Warning, (object) $"<b>Can not export animation, please animate all three channels (R,G,B) for \"{propertyName}\" on {target}</b>", target);
 							return false;
 						}
 					}
 
 					if (!hasEnoughCurves)
 					{
-						UnityEngine.Debug.LogWarning($"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
+						Debug.Log(LogType.Warning, (object) $"<b>Can not export animation, please animate all channels for \"{propertyName}\"</b>, expected channel count is {requiredCount} but got only {curve.Count}", target);
 						return false;
 					}
 				}
@@ -590,6 +604,12 @@ namespace UnityGLTF
 						else if (animatedObject is Camera)
 						{
 							// types match, names are explicitly handled in ExporterAnimationPointer.cs
+							var lowercaseName = prop.propertyName.ToLowerInvariant();
+							if (lowercaseName.Contains("m_backgroundcolor"))
+							{
+								prop.propertyType = typeof(Color);
+								prop.propertyName = "backgroundColor";
+							}
 						}
 						else
 						{
@@ -769,7 +789,7 @@ namespace UnityGLTF
 						int alreadyExportedChannelTargetId = GetTransformIndex(alreadyExportedTransform);
 						animation.Channels.RemoveAll(x => x.Target.Node != null && x.Target.Node.Id == alreadyExportedChannelTargetId);
 
-						if (settings.UseAnimationPointer)
+						if (UseAnimationPointer)
 						{
 							animation.Channels.RemoveAll(x =>
 							{
@@ -885,7 +905,7 @@ namespace UnityGLTF
 
 					// arbitrary properties require the KHR_animation_pointer extension
 					bool sampledAnimationData = false;
-					if (settings.UseAnimationPointer && curve.propertyCurves != null && curve.propertyCurves.Count > 0)
+					if (UseAnimationPointer && curve.propertyCurves != null && curve.propertyCurves.Count > 0)
 					{
 						var curves = curve.propertyCurves;
 						foreach (KeyValuePair<string, PropertyCurve> c in curves)
@@ -1019,7 +1039,7 @@ namespace UnityGLTF
 				var containsBlendShapeWeight = binding.propertyName.StartsWith("blendShape.", StringComparison.Ordinal);
 				var containsCompatibleData = containsPosition || containsScale || containsRotation || containsEuler || containsBlendShapeWeight;
 
-				if (!containsCompatibleData && !settings.UseAnimationPointer)
+				if (!containsCompatibleData && !UseAnimationPointer)
 				{
 					Debug.LogWarning("No compatible animation data found in clip binding: " + binding.propertyName + ". You may want to turn KHR_animation_pointer export on.", clip);
 					continue;
@@ -1081,7 +1101,7 @@ namespace UnityGLTF
 					var weightName = binding.propertyName.Substring("blendShape.".Length);
 					current.weightCurves.Add(weightName, curve);
 				}
-				else if (settings.UseAnimationPointer)
+				else if (UseAnimationPointer)
 				{
 					var obj = AnimationUtility.GetAnimatedObject(root, binding);
 					if (obj)
@@ -1098,7 +1118,7 @@ namespace UnityGLTF
 
 			// object reference curves - in some cases animated data can be contained in here, e.g. for SpriteRenderers.
 			// this only makes sense when AnimationPointer is on, and someone needs to resolve the data to something in the glTF later via KHR_animation_pointer_Resolver
-			if (settings.UseAnimationPointer)
+			if (UseAnimationPointer)
 			{
 				var objectBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
 				foreach (var binding in objectBindings)
@@ -1114,6 +1134,12 @@ namespace UnityGLTF
 							var spriteSheetPath = AssetDatabase.GetAssetPath(spriteSheet);
 							// will only work with all sprites from the same spritesheet right now
 							var sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(spriteSheetPath);
+							if (sprites.Length == 1)
+							{
+								Debug.LogWarning(
+									$"Spritesheet animation {spriteSheet.name} has only one frame. Exporting sprite animation using multiple image files is currently not supported. If you intent to export animated sprites please provide a spritesheet containing all your frames.",
+									spriteRenderer);
+							}
 
 							var path = binding.propertyName;
 							if (!targetCurves.ContainsKey(path))
@@ -1145,6 +1171,11 @@ namespace UnityGLTF
 								lastKeyframe = kf;
 							}
 							curve.keys = keyframes.ToArray();
+							// Ensure that the curve is constant for spritesheet animation
+							for (var i = 0; i < curve.keys.Length; i++)
+							{
+								AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Constant);
+							}
 							current.AddPropertyCurves(obj, curve, binding);
 							targetCurves[path] = current;
 
@@ -1287,6 +1318,7 @@ namespace UnityGLTF
 			times = null;
 			values = null;
 
+			prop.SortCurves();
 			if (!prop.Validate()) return false;
 
 			var nbSamples = Mathf.Max(1, Mathf.CeilToInt(length * bakingFramerate));
@@ -1298,11 +1330,7 @@ namespace UnityGLTF
 			var curveCount = prop.curve.Count;
 			var keyframes = prop.curve.Select(x => x.keys).ToArray();
 			var keyframeIndex = new int[curveCount];
-
-			prop.SortCurves();
-
-			var vector3Scale = SchemaExtensions.CoordinateSpaceConversionScale.ToUnityVector3Raw();
-
+			
 			// Assuming all the curves exist now
 			for (var i = 0; i < nbSamples; ++i)
 			{
@@ -1362,7 +1390,6 @@ namespace UnityGLTF
 						}
 						else if (typeof(Color) == type)
 						{
-							// TODO should actually access r,g,b,a separately since any of these can have curves assigned.
 							var r = prop.Evaluate(t, 0);
 							var g = prop.Evaluate(t, 1);
 							var b = prop.Evaluate(t, 2);

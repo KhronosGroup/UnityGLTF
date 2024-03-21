@@ -1175,6 +1175,14 @@ public partial class GLTFSceneExporter
 			return id;
 		}
 
+		public BufferViewId ExportBufferView(byte[] bytes) {
+			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			_bufferWriter.Write(bytes);
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			return ExportBufferView((uint)byteOffset, (uint)byteLength);
+		}
+
 		private BufferViewId ExportBufferView(uint byteOffset, uint byteLength, uint byteStride = 0)
 		{
 			var bufferView = new BufferView

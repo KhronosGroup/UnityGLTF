@@ -69,7 +69,9 @@ namespace UnityGLTF
 				GUI.enabled = true;
 				EditorGUILayout.HelpBox("This material is part of a glTF asset. If you enable editing (experimental), changes will be stored back to the .glTF file when saving.", MessageType.None);
 			
-				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + targetMat.GetInstanceID();
+				// looks like GetInstanceID() changes per import; so we use the path instead
+				var path = AssetDatabase.GetAssetPath(targetMat) + "_" + targetMat.name;
+				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + path;
 				var isAllowed = SessionState.GetBool(materialEditingKey, false);
 				var allowMaterialEditing = EditorGUILayout.Toggle("Allow Editing", isAllowed);
 				if (allowMaterialEditing != isAllowed)
@@ -470,6 +472,14 @@ namespace UnityGLTF
 			if (!targetMaterial.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal) || x.name.EndsWith("Rotation", StringComparison.Ordinal));
+				
+				// Unity draws the tiling & offset properties based on the scale offset flag, so we need to ensure that's off here
+				// so that the property fields are not displayed. Otherwise it's confusing that editing them doesn't do anything.
+				foreach (var prop in propertyList)
+				{
+					if (prop.type == MaterialProperty.PropType.Texture)
+						ShaderGraphHelpers.SetNoScaleOffset(prop);
+				}
 			}
 			// want to remove the _ST properties since they are drawn inline already on 2021.2+
 			#if UNITY_2021_2_OR_NEWER
@@ -519,6 +529,7 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("TextureTexCoord", StringComparison.Ordinal));
 			}
+
 #if UNITY_2021_1_OR_NEWER
 			var isBirp = !GraphicsSettings.currentRenderPipeline;
 			if ((isBirp && !targetMaterial.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON")) ||
@@ -529,9 +540,31 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name == "alphaCutoff");
 			}
+			
+			// remove advanced properties that we want to draw a foldout for
+			var overrideSurfaceMode = propertyList.FirstOrDefault(x => x.name == "_OverrideSurfaceMode");
+			var normalMapFormatXYZ = propertyList.FirstOrDefault(x => x.name == "_NormalMapFormatXYZ");
+			if (overrideSurfaceMode != null) propertyList.Remove(overrideSurfaceMode);
+			if (normalMapFormatXYZ != null) propertyList.Remove(normalMapFormatXYZ);
+			
 			// TODO we probably want full manual control, all this internal access is horrible...
 			// E.g. impossible to render inline texture properties...
 			ShaderGraphHelpers.DrawShaderGraphGUI(materialEditor, propertyList);
+			
+			// draw a foldout with the advanced properties
+			const string key = nameof(PBRGraphGUI) + "_AdvancedFoldout";
+			var val = SessionState.GetBool(key, false);
+			var newVal = EditorGUILayout.Foldout(val, "Mode Overrides", true);
+			if (newVal != val) SessionState.SetBool(key, newVal);
+			if (newVal)
+			{
+				EditorGUI.indentLevel++;
+				if (overrideSurfaceMode != null) materialEditor.ShaderProperty(overrideSurfaceMode, 
+					new GUIContent(overrideSurfaceMode.displayName, "When disabled, surface mode and queue are set by default based on material options. For example, transmissive objects will be set to \"transparent\". For some cases, explicit control over the surface mode helps with render order, e.g. nested transparency sorting."));
+				if (normalMapFormatXYZ != null) materialEditor.ShaderProperty(normalMapFormatXYZ,
+					new GUIContent(normalMapFormatXYZ.displayName, "When disabled, normal maps are assumed to be in the specified project format (XYZ or DXT5nm). Normal maps imported at runtime are always in XYZ, so this option is enabled for materials imported at runtime."));
+				EditorGUI.indentLevel--;
+			}
 		}
 
 		public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
@@ -575,7 +608,6 @@ namespace UnityGLTF
 			{
 				if (obj is Material material)
 				{
-					// Tell the AssetImporter (?) that there are changes, or write the file directly?
 					PBRGraphGUI.InvokeMaterialChangedEvent(material);
 				}
 			}

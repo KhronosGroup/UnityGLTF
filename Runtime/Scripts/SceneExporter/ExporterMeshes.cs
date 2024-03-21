@@ -253,7 +253,7 @@ namespace UnityGLTF
 					aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
 
 				if (meshObj.tangents.Length != 0)
-					aTangent = ExportAccessor(SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
+					aTangent = ExportAccessor(SchemaExtensions.ConvertTangentCoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
 
 				if (meshObj.uv.Length != 0)
 					aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
@@ -343,7 +343,8 @@ namespace UnityGLTF
 	            // remove any prims that have empty triangles
 	            if (EmptyPrimitive(prim)) continue;
 	            // invoke pre export event
-	            _exportOptions.AfterPrimitiveExport?.Invoke(this, meshObj, prim, i);
+	            foreach (var plugin in _plugins)
+		            plugin?.AfterPrimitiveExport(this, meshObj, prim, i);
 	            nonEmptyPrims.Add(prim);
             }
             prims = nonEmptyPrims.ToArray();
@@ -363,9 +364,9 @@ namespace UnityGLTF
 
 			if (_meshToBlendShapeAccessors.TryGetValue(meshObj, out var data))
 			{
-				mesh.Weights = data.weights;
 				primitive.Targets = data.targets;
-				primitive.TargetNames = data.targetNames;
+				mesh.Weights = data.weights;
+				mesh.TargetNames = data.targetNames;
 				return;
 			}
 
@@ -473,14 +474,14 @@ namespace UnityGLTF
 				if(weights.Any() && targets.Any())
 				{
 					mesh.Weights = weights;
+					mesh.TargetNames = targetNames;
 					primitive.Targets = targets;
-					primitive.TargetNames = targetNames;
 				}
 				else
 				{
 					mesh.Weights = null;
+					mesh.TargetNames = null;
 					primitive.Targets = null;
-					primitive.TargetNames = null;
 				}
 
 				// cache the exported data; we can re-use it between all submeshes of a mesh.

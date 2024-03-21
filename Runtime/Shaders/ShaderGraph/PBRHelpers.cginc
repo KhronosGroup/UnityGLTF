@@ -130,3 +130,21 @@ void WorkaroundTilingOffset_half(UnityTexture2D Tex, half4 LegacyST, out half4 T
 	TilingOffset = LegacyST;
 	OutTex = Tex;
 }
+
+void AreNormalsEncodedInXYZ_half(out bool normalsInXYZ)
+{
+	#if	UNITY_NO_DXT5nm
+	normalsInXYZ = true;
+ 	#else
+	normalsInXYZ = false;
+	#endif
+}
+
+void AreNormalsEncodedInXYZ_float(out bool normalsInXYZ)
+{
+	#if	UNITY_NO_DXT5nm
+	normalsInXYZ = true;
+	#else
+	normalsInXYZ = false;
+	#endif
+}

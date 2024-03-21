@@ -4,6 +4,117 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.10.0-rc.2] - 2024-03-05
+- fix: add `com.unity.mathematics` as required dependency
+- fix: added null check in mesh data preparation code to prevent exception for files without nodes (e.g. just materials)
+
+## [2.10.0-rc] - 2024-03-04
+- fix: GLTFRecorder issue where resulting animation would have linear interpolation for cases where a jump was expected
+- fix: GLTFSettings toolbar active index correctly stored in session now
+- fix: don't export empty buffers with length 0
+- fix: check for valid Humanoid avatar before export (#681)
+- fix: work around SRP issue with invalid camera data in render passes affecting rough refractions
+- fix: issue when morph targets have varying normals and tangents data (#682)
+- fix: prevent exception in earlier 2022.x versions with `isDataSRGB` not being available
+- fix: missing normalization checks for quantized accessor data (#693)
+- fix: make sure topology are triangles for calculating normals/tangents (#133)
+- fix: KTX2 textures were not checking for linear for "Fix All" importer button
+- fix: MAOS maps (combined metallic/ambient occlusion/roughness) were not exported correctly
+- fix: wrong accessor `UBYTE` > `BYTE` and `BYTE` > `SBYTE` conversion when reading data in some 
+- fix: restore multithreading support and improve performance
+- feat: import plugin for `EXT_mesh_gpu_instancing` extension
+- feat: added blend shape frame weight import option for easier animation retargeting
+- feat: show failing filenames more clearly when exceptions occur during import
+- feat: add option to hide scene obj during loading in `GLTFComponent`
+- feat: add import support for glTF `LineLoop`, `TriangleStrip`, `TriangleFan` topologies
+- feat: performance improvements in name resolution for importing files with many nodes
+- feat: performance improvements by using `NativeArray` and `Mathematics` types 
+
+## [2.9.1-rc] - 2024-02-16
+- fix: spritesheet animation keyframes should be constant
+- change: log warning if spritesheet used for animation contains only one image/sprite (currently all images must be part of the same spritesheet)
+
+## [2.9.0-rc] - 2024-01-23
+### Release Candidate
+UnityGLTF has been maintained in a fork since the end of 2019.  
+Hundreds of fixes have been made, numerous features have been added, and the library has been brought up-to-speed on latest glTF developments,
+modern material extensions, and Unity versions. We're happy to bring these changes back to the main repository so everyone can benefit.  
+
+UnityGLTF has turned into an extremely versatile glTF exporter _and_ importer, which excellent support for data roundtrips and glTF-first workflows in Unity.  
+
+Please [open an issue](https://github.com/KhronosGroup/UnityGLTF/issues) if you find any problems with the release candidate.   
+
+- change: Readme updates with links changed back to KhronosGroup/UnityGLTF
+- change: Mark as release candidate
+
+## [2.8.1-exp] - 2024-01-18
+- fix: tangent recalculation was not working when importing draco meshes without tangents
+- fix: DXT5nm conversion for non-readable textures
+- fix: color space when loading KTX2 normals was incorrect
+- fix: tiling and offset properties were displayed even when TEXTURE_TRANSFORMS was disabled on 2022.3+
+- fix: nullref in texture format validation when texture is missing
+- fix: ifdefs to support Draco package 5.x from Unity Registry (`com.unity.cloud.draco`)
+- add: show UI for adding/removing optional compression packages in GLTFSettings
+
+## [2.8.0-exp] - 2024-01-17
+- fix: bone weights were not properly imported from Draco compressed meshes due to bug in Unity's `CombineMeshes`
+- fix: data loader was preventing multi-threaded imports from working
+- fix: compilation error when `TMPro` package is not present
+- fix: TMPro detection when `com.unity.ugui@2.0.0` is present which has TMPro embedded
+- fix: normal map color space was wrong on non-standalone target platforms when normal import settings is set to DXT5nm, which is default on Unity 2021.3+ on some platforms
+- fix: normal maps were not marked as Normal on editor import which is required for DXT5nm support
+- fix: normal maps imported at runtime now set a `_NormalMapFormatXYZ` flag on their materials to ensure correct display
+- fix: assets were not reimported when normal map setting changed between XYZ and DXT5nm (requires domain reload)
+- fix: prepare for changed package declarations due to draco/ktx packages moving registries
+- fix: GLTFRecorder should respect specified `UseAnimationPointer` setting
+- fix: warn after editor import when textures on disk have incorrect linear/normal settings
+- change: incorrectly named PBRGraph material option `_AutoSurfaceMode` is now called `_OverrideSurfaceMode`
+- change: display texture settings warning above tabbed inspector for better visibility
+
+## [2.7.1-exp] - 2024-01-08
+- fix: default property deserializer was missing for nested extras objects in `MeshPrimitive`
+- fix potential `ImportContext` NullRef
+- change: move blend shape target names to mesh, according to https://github.com/KhronosGroup/glTF/pull/1631
+- add: selection export options are also in the GameObject menu now for right-click > export support
+
+## [2.7.0-exp] - 2024-01-03
+- fix: import scale was not applied to position animation curves
+- fix: make sure `GLTFImporter` uses the default plugin import settings
+- change: refactored import/export plugins for better control of what's enabled and what's not. This allows shipping experimental/optional plugins earlier.
+- change: mark `GLTFSceneExporter.*` static callbacks obsolete. Use plugins instead
+- add: allow overrides for which editor import plugins are used
+- add: export plugin for `MSFT_lod`
+- add: export plugin for `KHR_materials_variants`. Add the `MaterialVariants` component to your root to configure variants.
+- add: export plugin to bake particle systems to meshes
+- add: export plugin to bake canvas to meshes
+- add: export plugin to bake TMPro GameObjects to meshes
+- add: per-import settings for which plugins are applied
+- add: `BeforeNodeExport` callback for export plugins
+- add: warning icon for plugins that e.g. have missing package dependencies
+
+## [2.6.0-exp] - 2023-12-13
+- fix: verify tangent.w component on animation export (should be exactly -1 or 1)
+- fix: recalculate mesh bounds when changing import scale
+- fix: ensure correct quaternion continuity on animation import
+- fix: sanitize Animator state names on import
+- add: allow enabling GPU Instancing for materials on editor import
+- add: ability to export files and buffer views, useful for e.g. KHR_audio
+
+## [2.5.2-exp] - 2023-11-13
+- fix: animation curve sorting running before validation
+- add: support to animate camera background color
+
+## [2.5.1-exp] - 2023-11-08
+- fix: issue where importer context root object was not set
+- fix: wrong flipped triangles when it's required to generate them ("Fox"-Test model) + fixed wrong imported vertex data on submeshes
+- fix: draco ifdef compiler error
+- fix: import reuse joints and weights for submeshes
+- fix: import normals when tangents are required
+- fix: humanoid importer inspector not being shown when model doesn't have animation data
+- fix: animation export for identical clip+node
+- fix: exporting glTF with external EXR texture falsely being encoded as PNG
+- change: importer exposes node- and mesh-cache
+
 ## [2.5.0-exp] - 2023-10-20
 - fix: default dataloader is now UnityWebRequestLoader
 - fix: importing animations at runtime did not work in specific settings combinations

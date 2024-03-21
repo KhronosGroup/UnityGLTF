@@ -12,11 +12,11 @@ namespace UnityGLTF
 {
 	internal class UnityGLTFTabbedEditor : AssetImporterTabbedEditor
 	{
-		private readonly List<GltfAssetImporterTab> _tabs = new List<GltfAssetImporterTab>();
+		private readonly List<GLTFAssetImporterTab> _tabs = new List<GLTFAssetImporterTab>();
 		internal int TabCount => _tabs.Count;
 		internal BaseAssetImporterTabUI __ActiveTab => activeTab;
 
-		protected void AddTab(GltfAssetImporterTab tab)
+		protected void AddTab(GLTFAssetImporterTab tab)
 		{
 			if (tab == null) return;
 			if (!_tabs.Contains(tab)) _tabs.Add(tab);
@@ -24,7 +24,7 @@ namespace UnityGLTF
 			m_TabNames = _tabs.Select(t => t.Label).ToArray();
 		}
 
-		public GltfAssetImporterTab GetTab(int index)
+		public GLTFAssetImporterTab GetTab(int index)
 		{
 			if (_tabs == null || _tabs.Count < 1) return null;
 			if (index < 0) index = 0;
@@ -45,14 +45,19 @@ namespace UnityGLTF
 			}
 			base.OnEnable();
 		}
+
+		public override void OnInspectorGUI()
+		{
+			base.OnInspectorGUI();
+		}
 	}
 
-	internal class GltfAssetImporterTab : BaseAssetImporterTabUI
+	internal class GLTFAssetImporterTab : BaseAssetImporterTabUI
 	{
 		internal readonly string Label;
 		private readonly Action _tabGui;
 
-		public GltfAssetImporterTab(AssetImporterEditor panelContainer, string label, Action tabGui) : base(panelContainer)
+		public GLTFAssetImporterTab(AssetImporterEditor panelContainer, string label, Action tabGui) : base(panelContainer)
 		{
 			this.Label = label;
 			this._tabGui = tabGui;

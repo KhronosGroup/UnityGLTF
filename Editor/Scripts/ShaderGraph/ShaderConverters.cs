@@ -151,7 +151,7 @@ namespace UnityGLTF
 					importer.SaveAndReimport();
 				}
 			}
-			else
+			else if (metallicGloss)
 			{
 				Debug.LogWarning(ConversionWarning + "This currently needs to be done manually. Please swap channels in an external software.", material);
 			}

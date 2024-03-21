@@ -95,15 +95,6 @@ namespace GLTF.Schema
 				}
 
 				extrasReader.Close();
-
-				if (mesh.Primitives != null && mesh.TargetNames != null && mesh.TargetNames.Count > 0)
-				{
-					foreach (MeshPrimitive mp in mesh.Primitives)
-					{
-						if (mp == null) continue;
-						mp.TargetNames = mesh.TargetNames;
-					}
-				}
 			}
 
 			return mesh;
@@ -133,6 +124,22 @@ namespace GLTF.Schema
 					writer.WriteValue(weight);
 				}
 				writer.WriteEndArray();
+			}
+			
+			// GLTF does not support morph target names, serialize in extras for now
+			// https://github.com/KhronosGroup/glTF/issues/1036
+			if (TargetNames != null && TargetNames.Count > 0)
+			{
+				writer.WritePropertyName("extras");
+				writer.WriteStartObject();
+				writer.WritePropertyName("targetNames");
+				writer.WriteStartArray();
+				foreach (var targetName in TargetNames)
+				{
+					writer.WriteValue(targetName);
+				}
+				writer.WriteEndArray();
+				writer.WriteEndObject();
 			}
 
 			base.Serialize(writer);

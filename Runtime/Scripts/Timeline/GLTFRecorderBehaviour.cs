@@ -36,7 +36,7 @@ namespace UnityGLTF.Timeline
 	    {
 		    if (recorder == null)
 		    {
-			    recorder = new GLTFRecorder(getExportRoot, Clip.m_RecordBlendShapes, Clip.m_RecordAnimationPointer);
+			    recorder = new GLTFRecorder(getExportRoot, Clip.m_RecordBlendShapes, recordAnimationPointer: Clip.m_RecordAnimationPointer);
 			    recorder.AnimationName = Clip.m_AnimationName;
 			    recorder.StartRecording(getTime);
 		    }

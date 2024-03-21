@@ -10,6 +10,10 @@ namespace UnityGLTF
 	public static class GLTFExportMenu
 	{
 		private const string MenuPrefix = "Assets/UnityGLTF/";
+		private const string MenuPrefixGameObject = "GameObject/UnityGLTF/";
+
+		private const string ExportGltf = "Export selected as glTF";
+		private const string ExportGlb = "Export selected as GLB";
 
 	    public static string RetrieveTexturePath(UnityEngine.Texture texture)
 	    {
@@ -50,13 +54,15 @@ namespace UnityGLTF
 		    return false;
 	    }
 
-	    [MenuItem(MenuPrefix + "Export selected as glTF", true)]
+	    [MenuItem(MenuPrefix + ExportGltf, true)]
+	    [MenuItem(MenuPrefixGameObject + ExportGltf, true)]
 	    private static bool ExportSelectedValidate()
 	    {
 		    return TryGetExportNameAndRootTransformsFromSelection(out _, out _);
 	    }
 
-	    [MenuItem(MenuPrefix + "Export selected as glTF")]
+	    [MenuItem(MenuPrefix + ExportGltf)]
+	    [MenuItem(MenuPrefixGameObject + ExportGltf, false, 33)]
 	    private static void ExportSelected()
 		{
 			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms))
@@ -68,13 +74,15 @@ namespace UnityGLTF
 			Export(rootTransforms, false, sceneName);
 		}
 
-		[MenuItem(MenuPrefix + "Export selected as GLB", true)]
+		[MenuItem(MenuPrefix + ExportGlb, true)]
+		[MenuItem(MenuPrefixGameObject + ExportGlb, true)]
 		private static bool ExportGLBSelectedValidate()
 		{
 			return TryGetExportNameAndRootTransformsFromSelection(out _, out _);
 		}
 
-		[MenuItem(MenuPrefix + "Export selected as GLB")]
+		[MenuItem(MenuPrefix + ExportGlb)]
+		[MenuItem(MenuPrefixGameObject + ExportGlb, false, 34)]
 		private static void ExportGLBSelected()
 		{
 			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms))
@@ -108,7 +116,7 @@ namespace UnityGLTF
 		private static void Export(Transform[] transforms, bool binary, string sceneName)
 		{
 			var settings = GLTFSettings.GetOrCreateSettings();
-			var exportOptions = new ExportOptions { TexturePathRetriever = RetrieveTexturePath };
+			var exportOptions = new ExportContext(settings) { TexturePathRetriever = RetrieveTexturePath };
 			var exporter = new GLTFSceneExporter(transforms, exportOptions);
 
 			var invokedByShortcut = Event.current?.type == EventType.KeyDown;

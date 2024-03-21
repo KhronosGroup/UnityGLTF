@@ -1,0 +1,31 @@
+{
+    "name": "UnityGLTF.Plugins.Experimental",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:18d18f811ba286c49814567a3cfba688",
+        "GUID:40f39bff7bc9be34182ebe488fcf8228"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "",
+            "define": "HAVE_TMPRO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "HAVE_TMPRO"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -23,11 +23,12 @@ using System.Linq;
 using System;
 using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
-using GLTF.Schema;
 using GLTF;
+using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
+using UnityEditorInternal;
 using UnityEngine.Rendering;
 #else
 using UnityEditor.Experimental.AssetImporters;
@@ -46,7 +47,7 @@ namespace UnityGLTF
 #else
 	[ScriptedImporter(ImporterVersion, new[] { "glb" })]
 #endif
-    public class GLTFImporter : ScriptedImporter, IGLTFImportRemap
+    public class GLTFImporter : ScriptedImporter
     {
 	    private const int ImporterVersion = 9;
 
@@ -91,6 +92,8 @@ namespace UnityGLTF
         [SerializeField] internal bool _generateLightmapUVs = false;
 	    [Tooltip("When false, the index of the BlendShape is used as name.")]
         [SerializeField] internal bool _importBlendShapeNames = true;
+	    [Tooltip("Blend shape frame weight import multiplier. Default is 1. For compatibility with some FBX animations you may need to use 100.")]
+	    [SerializeField] internal BlendShapeFrameWeightSetting _blendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
@@ -98,6 +101,7 @@ namespace UnityGLTF
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
         [SerializeField] internal bool _importMaterials = true;
+        [SerializeField] internal bool _enableGpuInstancing = false;
         [Tooltip("Enable this to get the same main asset identifiers as glTFast uses. This is recommended for new asset imports. Note that changing this for already imported assets will break their scene references and require manually re-adding the affected assets.")]
         [SerializeField] internal bool _useSceneNameIdentifier = false;
         [Tooltip("Compress textures after import using the platform default settings. If you need more control, use a .gltf file instead.")]
@@ -121,14 +125,19 @@ namespace UnityGLTF
         [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
         [SerializeField] internal string _mainAssetIdentifier;
 
-        // TODO make internal and allow access for relevant assemblies
         internal List<TextureInfo> Textures => _textures;
 
+        // Import Plugin Overrides
+        [SerializeField] // but we can serialize their YAML representations as string
+        internal List<PluginInfo> _importPlugins = new List<PluginInfo>();
+        
         [Serializable]
         internal class ExtensionInfo
         {
 	        public string name;
+	        [HideInInspector]
 	        public bool supported;
+	        [HideInInspector]
 	        public bool used;
 	        public bool required;
         }
@@ -142,11 +151,21 @@ namespace UnityGLTF
 	        Best = 100
 		}
 
+		[Serializable]
+		public class PluginInfo
+		{
+			public string typeName;
+			public bool overrideEnabled;
+			public bool enabled;
+			public string jsonSettings;
+		}
+
         [Serializable]
         public class TextureInfo
         {
 	        public Texture2D texture;
 	        public bool shouldBeLinear;
+	        public bool shouldBeNormalMap;
         }
 
         [Serializable]
@@ -218,7 +237,7 @@ namespace UnityGLTF
 		        }
 		        catch (Exception e)
 		        {
-			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e);
+			        Debug.LogError($"Exception when importing glTF dependencies for {path}:\n" + e, GetAtPath(path));
 			        throw;
 		        }
 	        }
@@ -227,28 +246,27 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-	        var plugins = new List<GltfImportPluginContext>();
-	        var context = new GLTFImportContext(ctx, plugins);
-	        var settings = GLTFSettings.GetOrCreateSettings();
-	        foreach (var plugin in settings.ImportPlugins)
+	        var settings = GLTFSettings.GetDefaultSettings();
+	        
+	        // make a copy, and apply import override settings
+	        foreach (var importPlugin in _importPlugins)
 	        {
-		        if (plugin != null && plugin.Enabled)
+		        if (importPlugin == null || !importPlugin.overrideEnabled) continue;
+		        var existing = settings.ImportPlugins.Find(x => x.GetType().FullName == importPlugin.typeName);
+		        if (existing)
 		        {
-			        var instance = plugin.CreateInstance(context);
-			        if(instance != null) plugins.Add(instance);
+			        existing.Enabled = importPlugin.enabled;
+			        JsonUtility.FromJsonOverwrite(importPlugin.jsonSettings, existing);
 		        }
 	        }
-
-	        foreach (var plugin in plugins)
-	        {
-		        plugin.OnBeforeImport();
-	        }
+	        var context = new GLTFImportContext(ctx, settings) { ImportScaleFactor = _scaleFactor };
 
             GameObject gltfScene = null;
             AnimationClip[] animations = null;
             Mesh[] meshes = null;
 
-            var uniqueNames = new List<string>() { "main asset" };
+	        var uniqueNames = new Dictionary<int, int>(100);
+	        uniqueNames.Add("main asset".GetHashCode(), 0);
             EnsureShadersAreLoaded();
 
 #if UNITY_2020_2_OR_NEWER && !UNITY_2021_3_OR_NEWER
@@ -258,9 +276,17 @@ namespace UnityGLTF
 
             string GetUniqueName(string desiredName)
             {
-	            var uniqueName = ObjectNames.GetUniqueName(uniqueNames.ToArray(), desiredName);
-	            if (!uniqueNames.Contains(uniqueName)) uniqueNames.Add(uniqueName);
-	            return uniqueName;
+	            var hash = desiredName.GetHashCode();
+	            if (uniqueNames.ContainsKey(hash))
+	            {
+		            uniqueNames[hash]++;
+		            return $"{desiredName} ({uniqueNames[hash]})";
+	            }
+	            else
+	            {
+		            uniqueNames.Add(hash, 0);
+		            return desiredName;
+	            }
             }
 
 #if UNITY_2017_3_OR_NEWER
@@ -399,6 +425,18 @@ namespace UnityGLTF
 	                        vertexBuffer[i] *= _scaleFactor;
 	                    }
 	                    mesh.SetVertices(vertexBuffer);
+
+	                    if (mesh.bindposes != null && mesh.bindposes.Length > 0)
+	                    {
+		                    var bindPoses = mesh.bindposes;
+		                    for (var i = 0; i < bindPoses.Length; ++i)
+		                    {
+			                    bindPoses[i].GetTRSProperties(out var p, out var q, out var s);
+			                    bindPoses[i].SetTRS(p * _scaleFactor, q, s);
+		                    }
+
+		                    mesh.bindposes = bindPoses;
+	                    }
                     }
                     if (_generateLightmapUVs)
                     {
@@ -420,6 +458,7 @@ namespace UnityGLTF
                     }
 
 					mesh.UploadMeshData(!_readWriteEnabled);
+					mesh.RecalculateBounds(MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers);
 
                     if (_generateColliders)
                     {
@@ -451,7 +490,7 @@ namespace UnityGLTF
                 if (gltfScene && _importAnimations == AnimationMethod.MecanimHumanoid)
                 {
 	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene);
-	                if (avatar && avatar.isValid)
+	                if (avatar)
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
 
@@ -481,6 +520,10 @@ namespace UnityGLTF
 		                    }
 
 		                    mat.name = matName;
+		                    
+		                    // In case the material is explicit set to instancing (e.g. EXT_mesh_gpu_instancing is used), don't override it.
+		                    if (!mat.enableInstancing)
+								mat.enableInstancing = _enableGpuInstancing;
 		                    materials.Add(mat);
 	                    }
                     }
@@ -624,7 +667,7 @@ namespace UnityGLTF
 			                        var convertedFormat = (TextureFormat)(int)format;
 			                        if ((int)convertedFormat > -1)
 			                        {
-				                        // Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
+				                        //Debug.Log("Compressing texture " + tex.name + "(format: " + tex.format + ", mips: " + tex.mipmapCount + ") to: " + convertedFormat);
 				                        EditorUtility.CompressTexture(tex, convertedFormat, (TextureCompressionQuality) (int) _textureCompression);
 				                        // Debug.Log("Mips now: " + tex.mipmapCount); // TODO figure out why mipmaps disappear here
 			                        }
@@ -708,7 +751,7 @@ namespace UnityGLTF
             }
             catch (Exception e)
             {
-	            Debug.LogException(e);
+	            Debug.LogException(e, this);
                 if (gltfScene) DestroyImmediate(gltfScene);
                 throw;
             }
@@ -743,6 +786,7 @@ namespace UnityGLTF
 
 #if UNITY_2020_2_OR_NEWER
 			ctx.DependsOnCustomDependency(ColorSpaceDependency);
+			ctx.DependsOnCustomDependency(NormalMapEncodingDependency);
 #endif
 	        if (gltfScene)
 	        {
@@ -772,16 +816,39 @@ namespace UnityGLTF
 
 	        foreach(var plugin in context.Plugins)
 		        plugin.OnAfterImport();
+	        
+	        // run texture verification and warn about wrong configuration
+	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(this))
+		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.", this);
+
+	        if (context.SceneImporter != null)
+		        context.SceneImporter.Dispose();
 		}
+		        
 
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
+        private const string NormalMapEncodingDependency = nameof(GLTFImporter) + "_normalMapEncoding";
 
 #if UNITY_2020_2_OR_NEWER
         [InitializeOnLoadMethod]
-        private static void UpdateColorSpace()
+        private static void UpdateCustomDependencies()
         {
 	        AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
+			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
         }
+
+#if UNITY_2021_3_OR_NEWER
+        // This asset postprocessor ensures that dependencies are updated whenever any asset is reimported.
+        // So for example if any texture is reimported (because color spaces or texture encoding settings have been changed)
+        // then we can update the custom dependencies here and potentially reimport required glTF assets.
+        class UpdateCustomDependenciesAfterImport : AssetPostprocessor
+        {
+	        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+	        {
+		        UpdateCustomDependencies();
+	        }
+        }
+#endif
 #endif
 
 	    private void CreateGLTFScene(GLTFImportContext context, out GameObject scene,
@@ -800,7 +867,8 @@ namespace UnityGLTF
 			    SwapUVs = _swapUvs,
 			    ImportNormals = _importNormals,
 			    ImportTangents = _importTangents,
-			    ImportBlendShapeNames = _importBlendShapeNames
+			    ImportBlendShapeNames = _importBlendShapeNames,
+			    BlendShapeFrameWeight = _blendShapeFrameWeight
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))
@@ -834,7 +902,7 @@ namespace UnityGLTF
 
 			    _textures = loader.TextureCache
 				    .Where(x => x != null)
-				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear })
+				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear, shouldBeNormalMap = x.IsNormal })
 				    .ToList();
 
 			    scene = loader.LastLoadedScene;

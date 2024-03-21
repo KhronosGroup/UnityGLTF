@@ -9,7 +9,9 @@
         "Unity.InputSystem",
         "Unity.Animation.Rigging",
         "Draco",
-        "Unity.Meshopt.Decompress"
+        "Unity.Meshopt.Decompress",
+        "Unity.Collections",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -21,6 +23,11 @@
     "versionDefines": [
         {
             "name": "com.atteneder.ktx",
+            "expression": "1.3.0",
+            "define": "HAVE_KTX"
+        },
+        {
+            "name": "com.unity.cloud.ktx",
             "expression": "1.3.0",
             "define": "HAVE_KTX"
         },
@@ -65,9 +72,19 @@
             "define": "HAVE_DRACO"
         },
         {
+            "name": "com.unity.cloud.draco",
+            "expression": "5.0.0",
+            "define": "HAVE_DRACO"
+        },
+        {
             "name": "com.unity.meshopt.decompress",
             "expression": "",
             "define": "HAVE_MESHOPT_DECOMPRESS"
+        },
+        {
+            "name": "com.unity.cloud.draco",
+            "expression": "5.0.0",
+            "define": "HAVE_DRACO_VERSION_5"
         }
     ],
     "noEngineReferences": false
