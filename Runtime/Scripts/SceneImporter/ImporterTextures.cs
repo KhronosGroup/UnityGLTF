@@ -187,7 +187,7 @@ namespace UnityGLTF
 				texture.wrapMode = TextureWrapMode.Repeat;
 				texture.wrapModeV = TextureWrapMode.Repeat;
 				texture.wrapModeU = TextureWrapMode.Repeat;
-				texture.filterMode = FilterMode.Bilinear;
+				texture.filterMode = FilterMode.Trilinear;
 			}
 
 			await Task.CompletedTask;
@@ -478,56 +478,16 @@ namespace UnityGLTF
 					desiredWrapModeT = TextureWrapMode.Repeat;
 				}
 
-				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;
-				if (matchSamplerState || markGpuOnly)
+				var updateSamplerState = source.filterMode != desiredFilterMode || source.wrapModeU != desiredWrapModeS || source.wrapModeV != desiredWrapModeT;
+				if (updateSamplerState)
 				{
-					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, "Texture should not be reset to prevent memory leaks"+ $" (File: {_gltfFileName})");
-					_assetCache.TextureCache[textureIndex].Texture = source;
-
-					if (!matchSamplerState)
-					{
-						Debug.Log(LogType.Warning, $"Ignoring sampler; filter mode: source {source.filterMode}, desired {desiredFilterMode}; wrap mode: source {source.wrapModeU}x{source.wrapModeV}, desired {desiredWrapModeS}x{desiredWrapModeT}"+ $" (File: {_gltfFileName})");
-					}
+					source.filterMode = desiredFilterMode;
+					source.wrapModeU = desiredWrapModeS;
+					source.wrapModeV = desiredWrapModeT;
 				}
-				else
-#if UNITY_EDITOR
-				if (!UnityEditor.AssetDatabase.Contains(source))
-#endif
-				{
-					Texture2D unityTexture;
-					if (!source.isReadable)
-					{
-						unityTexture = new Texture2D(source.width, source.height, source.format, source.mipmapCount, isLinear);
-						Graphics.CopyTexture(source, unityTexture);
-					}
-					else
-						unityTexture = Object.Instantiate(source);
 
-					unityTexture.name = string.IsNullOrEmpty(image.Name) ?
-						string.IsNullOrEmpty(texture.Name) ?
-							Path.GetFileNameWithoutExtension(image.Uri) :
-							texture.Name :
-						image.Name;
-
-					if (string.IsNullOrEmpty(unityTexture.name))
-						unityTexture.name = $"Texture_{textureIndex.ToString()}{EMPTY_TEXTURE_NAME_SUFFIX}";
-
-					unityTexture.filterMode = desiredFilterMode;
-					unityTexture.wrapModeU = desiredWrapModeS;
-					unityTexture.wrapModeV = desiredWrapModeT;
-
-					if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, $"Texture should not be reset to prevent memory leaks (File: {_gltfFileName})");
-					_assetCache.TextureCache[textureIndex].Texture = unityTexture;
-				}
-#if UNITY_EDITOR
-				else
-				{
-					// don't warn for just filter mode, user choice
-					if (source.wrapModeU != desiredWrapModeS || source.wrapModeV != desiredWrapModeT)
-						Debug.Log(LogType.Warning, ($"Sampler state doesn't match but source texture is non-readable. Results might not be correct if textures are used multiple times with different sampler states. {source.filterMode} == {desiredFilterMode} && {source.wrapModeU} == {desiredWrapModeS} && {source.wrapModeV} == {desiredWrapModeT} (File: {_gltfFileName})"));
-					_assetCache.TextureCache[textureIndex].Texture = source;
-				}
-#endif
+				if (_assetCache.TextureCache[textureIndex].Texture != null) Debug.Log(LogType.Assert, $"Texture should not be reset to prevent memory leaks (File: {_gltfFileName})");
+				_assetCache.TextureCache[textureIndex].Texture = source;
 			}
 
 			_assetCache.TextureCache[textureIndex].IsLinear = isLinear;
