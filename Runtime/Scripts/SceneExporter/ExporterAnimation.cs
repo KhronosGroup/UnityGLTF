@@ -318,7 +318,11 @@ namespace UnityGLTF
 			{
 				if (propertyType == null)
 				{
-					if (target is Material mat)
+					if (!target)
+					{
+						// the warning should already been printed during export (at which point we also have more context (like the Object the missing target belongs to so we can ping it)
+					}
+					else if (target is Material mat)
 						Debug.Log(LogType.Warning, (object) $"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
 					else
 						Debug.Log(LogType.Error, (object) $"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
@@ -524,7 +528,7 @@ namespace UnityGLTF
 							var mat = rend.sharedMaterial;
 							if (!mat)
 							{
-								Debug.LogWarning("Animated missing material?", animatedObject);
+								Debug.LogWarning("Animation Export", $"Animated material is missing {memberName} {mat?.name}", animatedObject);
 							}
 							memberName = memberName.Substring("material.".Length);
 							prop.propertyName = memberName;
@@ -533,7 +537,7 @@ namespace UnityGLTF
 							{
 								prop.propertyType = typeof(Vector4);
 							}
-							else
+							else if(mat)
 							{
 								var found = false;
 								var shaderPropertyCount = ShaderUtil.GetPropertyCount(mat.shader);
@@ -573,7 +577,7 @@ namespace UnityGLTF
 								}
 							}
 							// The type can still be missing if the animated property doesnt exist on the shader anymore
-							if (prop.propertyType == null)
+							if (mat && prop.propertyType == null)
 							{
 								foreach (var name in prop.curveName)
 								{
@@ -583,7 +587,7 @@ namespace UnityGLTF
 										prop.propertyType = typeof(Color);
 								}
 								if (prop.propertyType == null)
-									Debug.LogWarning(null, "Animated property is missing/unknown: " + binding.propertyName, animatedObject);
+									Debug.LogWarning("Animation Export", "Animated property is missing/unknown: " + binding.propertyName, animatedObject);
 							}
 						}
 						else if (animatedObject is Light)
