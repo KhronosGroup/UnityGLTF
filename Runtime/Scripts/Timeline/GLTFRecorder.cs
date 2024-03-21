@@ -180,12 +180,14 @@ namespace UnityGLTF.Timeline
 
 			var logHandler = new StringBuilderLogHandler();
 
-			var exporter = new GLTFSceneExporter(new Transform[] { root }, new ExportOptions(settings)
-			{
-				AfterSceneExport = PostExport,
-				logger = new Logger(logHandler),
-			});
+			var exportOptions =
+				new ExportOptions(settings) { AfterSceneExport = PostExport, logger = new Logger(logHandler), };
 
+			exportOptions.BeforeMaterialExport += (sceneExporter, gltfRoot, material, node) => {
+				Debug.Log($"Before exporting material: {material.name} (using shader {material.shader})");
+				return false;
+			};
+			var exporter = new GLTFSceneExporter(new Transform[] { root }, exportOptions);
 			exporter.SaveGLBToStream(stream, sceneName);
 
 			logHandler.LogAndClear();
@@ -272,7 +274,7 @@ namespace UnityGLTF.Timeline
 
 		private static (double[] times, Vector3[] mergedScales) mergeVisibilityAndScaleTracks(
 			VisibilityTrack visibilityTrack,
-			AnimationTrack<Transform, Vector3> scaleTrack
+			BaseAnimationTrack<Transform, Vector3> scaleTrack
 		) {
 			if (visibilityTrack == null && scaleTrack == null) return (null, null);
 			if (visibilityTrack == null) return (scaleTrack.Times, scaleTrack.values);
@@ -319,7 +321,7 @@ namespace UnityGLTF.Timeline
 				}
 				else if (scaleTime < visTime) {
 					// the next scale change occurs sooner than the next visibility change
-					// However, if the model is currently invisible, be simply dont care
+					// However, if the model is currently invisible, we simply dont care
                     if (lastVisible) {
 	                    record(scaleTime, scale);
                     }
@@ -345,7 +347,7 @@ namespace UnityGLTF.Timeline
 			}
 			
 			// process remaining scale changes - this will only enter if vis end was reached first -
-			// if last visible was invisible then there is no point in adding these
+			// if last visibility was invisible then there is no point in adding these
 			while (lastVisible && scaleIndex < scaleTimes.Length) {
 				var scaleTime = scaleTimes[scaleIndex];
 				var scale = scaleValues[scaleIndex];
