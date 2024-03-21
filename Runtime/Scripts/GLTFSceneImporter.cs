@@ -597,7 +597,12 @@ namespace UnityGLTF
 				Thread loadThread = new Thread(() => _gltfStream.Stream = dataLoader2.LoadStream(jsonFilePath));
 				loadThread.Priority = ThreadPriority.Highest;
 				loadThread.Start();
-				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !loadThread.IsAlive)));
+				while (loadThread.IsAlive)
+				{
+					Debug.Log("GLB json data is loading async...");
+					await Task.Delay(25);
+				}
+				Debug.Log("GLB json data is loaded.");
 			}
 			else
 #endif
@@ -613,7 +618,12 @@ namespace UnityGLTF
 				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				parseJsonThread.Priority = ThreadPriority.Highest;
 				parseJsonThread.Start();
-				RunCoroutineSync(WaitUntilEnum(new WaitUntil(() => !parseJsonThread.IsAlive)));
+				while (parseJsonThread.IsAlive)
+				{
+					Debug.Log("GLB json data is loading async...");
+					await Task.Delay(25);
+				}
+				Debug.Log("GLB json data is loaded.");
 				if (_gltfRoot == null)
 				{
 					throw new GLTFLoadException($"Failed to parse glTF (File: {_gltfFileName})");
@@ -1433,30 +1443,5 @@ namespace UnityGLTF
 				await _options.AsyncCoroutineHelper.YieldOnTimeout();
 			}
 		}
-
-		protected IEnumerator WaitUntilEnum(WaitUntil waitUntil)
-		{
-			yield return waitUntil;
-		}
-
-		private static void RunCoroutineSync(IEnumerator streamEnum)
-		{
-			var stack = new Stack<IEnumerator>();
-			stack.Push(streamEnum);
-			while (stack.Count > 0)
-			{
-				var enumerator = stack.Pop();
-				if (enumerator.MoveNext())
-				{
-					stack.Push(enumerator);
-					var subEnumerator = enumerator.Current as IEnumerator;
-					if (subEnumerator != null)
-					{
-						stack.Push(subEnumerator);
-					}
-				}
-			}
-		}
-
 	}
 }
