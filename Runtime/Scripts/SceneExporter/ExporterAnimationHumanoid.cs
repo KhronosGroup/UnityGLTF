@@ -25,7 +25,7 @@ namespace UnityGLTF
 #if ANIMATION_SUPPORTED
 		internal void CollectClipCurvesBySampling(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
-			var recorder = new GLTFRecorder(root.transform, false, false, false);
+			var recorder = new GLTFRecorder(root.transform, _ => false, false, false);
 
 			var playableGraph = PlayableGraph.Create();
 			var animationClipPlayable = (Playable) AnimationClipPlayable.Create(playableGraph, clip);
@@ -142,7 +142,7 @@ namespace UnityGLTF
 			Undo.FlushUndoRecordObjects();
 			Undo.PerformUndo();
 
-			recorder.EndRecording(out var data);
+			recorder.endRecording(out var data);
 			if (data == null || !data.Any()) return;
 
 			string CalculatePath(Transform child, Transform parent)

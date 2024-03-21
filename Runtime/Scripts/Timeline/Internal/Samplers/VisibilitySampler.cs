@@ -2,12 +2,9 @@ using UnityEngine;
 
 namespace UnityGLTF.Timeline.Samplers
 {
-    internal sealed class VisibilitySampler : AnimationSampler<GameObject, bool>
+    public sealed class VisibilitySampler : AnimationSampler<GameObject, bool>
     {
         public override string PropertyName => "visibility";
-
-        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
-            new AnimationTrack<GameObject, bool>(data, this, time);
 
         internal VisibilityTrack startNewAnimationTrackAtStartOfTime(AnimationData data, double time) =>
             new VisibilityTrack(data, this, time);

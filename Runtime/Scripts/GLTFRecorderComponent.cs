@@ -62,7 +62,14 @@ namespace UnityGLTF
 				shouldUseAnimationPointer = false;
 			}
 
-			recorder = new GLTFRecorder(exportRoot, shouldRecordBlendShapes, recordRootInWorldSpace, shouldUseAnimationPointer);
+			recorder = new GLTFRecorder(
+				exportRoot,
+				recordTransformInWorldSpace: tr => recordRootInWorldSpace && tr == exportRoot,
+				shouldRecordBlendShapes,
+				shouldUseAnimationPointer,
+				recordVisibility: true
+			);
+			
 			recorder.StartRecording(CurrentTime);
 			recordingStarted?.Invoke();
 

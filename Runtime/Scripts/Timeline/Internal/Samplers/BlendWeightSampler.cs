@@ -2,11 +2,9 @@ using UnityEngine;
 
 namespace UnityGLTF.Timeline.Samplers
 {
-    internal sealed class BlendWeightSampler : AnimationSampler<SkinnedMeshRenderer, float[]>, SimpleAnimationSampler
+    internal sealed class BlendWeightSampler : AnimationSampler<SkinnedMeshRenderer, float[]>
     {
         public override string PropertyName => "weights";
-        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
-            new AnimationTrack<SkinnedMeshRenderer, float[]>(data, this, time);
         
         protected override SkinnedMeshRenderer getTarget(Transform transform) => transform.GetComponent<SkinnedMeshRenderer>();
 

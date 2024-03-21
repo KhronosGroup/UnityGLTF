@@ -6,9 +6,9 @@ using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Timeline
 {
-    internal interface AnimationTrack
+    public interface AnimationTrack
     {
-        Object AnimatedObject { get; }
+        Object? AnimatedObject { get; }
         string PropertyName { get; }
         double[] Times { get; }
         object[] Values { get; }
@@ -19,7 +19,7 @@ namespace UnityGLTF.Timeline
         void SampleIfChanged(double time);
     }
 
-    internal abstract class BaseAnimationTrack<TObject, TData> : AnimationTrack where TObject : Object
+    public abstract class BaseAnimationTrack<TObject, TData> : AnimationTrack where TObject : Object
     {
         private readonly Dictionary<double, TData> samples;
         
@@ -28,7 +28,7 @@ namespace UnityGLTF.Timeline
         private Tuple<double, TData>? lastSample = null;
         private Tuple<double, TData>? secondToLastSample = null;
 
-        public Object AnimatedObject => sampler.GetTarget(animationData.transform);
+        public Object? AnimatedObject => sampler.GetTarget(animationData.transform);
         public string PropertyName => sampler.PropertyName;
         public double[] Times => samples.Keys.ToArray();
         
@@ -46,7 +46,7 @@ namespace UnityGLTF.Timeline
             SampleIfChanged(time);
         }
 
-        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, Func<TData, TData> overrideInitialValueFunc) {
+        protected BaseAnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time, Func<TData?, TData?> overrideInitialValueFunc) {
             this.animationData = tr;
             this.sampler = plan;
             samples = new Dictionary<double, TData>();
@@ -55,7 +55,7 @@ namespace UnityGLTF.Timeline
         
         public void SampleIfChanged(double time) => recordSampleIfChanged(time, sampler.sample(animationData));
         
-        protected void recordSampleIfChanged(double time, TData value) {
+        protected void recordSampleIfChanged(double time, TData? value) {
             if (value == null || (value is Object o && !o)) return;
             // As a memory optimization we want to be able to skip identical samples.
             // But, we cannot always skip samples when they are identical to the previous one - otherwise cases like this break:
@@ -86,7 +86,7 @@ namespace UnityGLTF.Timeline
             lastSample = new Tuple<double, TData>(time, value); }
     }
 
-    internal sealed class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
+    public sealed class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
     {
         public AnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) : base(tr, plan, time) { }
     }

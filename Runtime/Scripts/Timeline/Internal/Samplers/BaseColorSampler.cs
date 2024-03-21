@@ -1,14 +1,13 @@
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace UnityGLTF.Timeline.Samplers
 {
-    internal sealed class BaseColorSampler : AnimationSampler<Material, Color?>, SimpleAnimationSampler
+    internal sealed class BaseColorSampler : AnimationSampler<Material, Color?>
     {
         private static readonly MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
         
         public override string PropertyName => "weights";
-        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
-            new AnimationTrack<Material, Color?>(data, this, time);
         
         protected override Material getTarget(Transform transform) => transform.GetComponent<MeshRenderer>()?.sharedMaterial;
 

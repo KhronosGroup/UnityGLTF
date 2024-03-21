@@ -63,7 +63,7 @@ namespace UnityGLTF
 		///		_exporter.GetRoot().Animations.Add(_animationA);
 		///	};
 		/// </code></example>
-		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
+		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, double[] times, object[] values)
 		{
 			if (!animatedObject) return;
 
@@ -102,6 +102,11 @@ namespace UnityGLTF
 					// mapping from known Unity property names to glTF property names
 					switch (propertyName)
 					{
+						case "_PerformPlaneCut": 
+						case "_PlanePosition": 
+						case "_PlaneNormal": 
+							propertyName = $"extensions/NONE_plane_mesh_cutting/{propertyName}";
+							break;
 						case "_Color":
 						case "_BaseColor":
 						case "_BaseColorFactor":
@@ -437,7 +442,7 @@ namespace UnityGLTF
 				Root = _root
 			};
 
-			AccessorId timeAccessor = ExportAccessor(times);
+			AccessorId timeAccessor = ExportAccessor(times.Select(d => (float)d).ToArray());
 
 			AnimationChannel Tchannel = new AnimationChannel();
 			AnimationChannelTarget TchannelTarget = new AnimationChannelTarget() { Path = propertyName, Node = Node };
@@ -459,6 +464,10 @@ namespace UnityGLTF
 			var val = values[0];
 			switch (val)
 			{
+				case bool _: {
+					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => ((bool)e) ? 1.0f : 0.0f));
+					break;
+				}
 				case float _:
 					if (flipValueRange)
 					{
@@ -590,6 +599,9 @@ namespace UnityGLTF
 							return c;
 						}), keepColorAlpha);
 					}
+					break;
+				default:
+					Debug.LogError($"GLTFExporter: Sampler returned unexpected type {val.GetType()}", animatedObject);
 					break;
 			}
 

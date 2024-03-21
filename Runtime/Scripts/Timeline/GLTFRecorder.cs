@@ -1,3 +1,4 @@
+#nullable enable
 #define USE_ANIMATION_POINTER
 
 using System;
@@ -6,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using GLTF.Schema;
+using JetBrains.Annotations;
 using Unity.Profiling;
 using UnityEngine;
 using UnityGLTF.Timeline.Samplers;
@@ -16,34 +18,48 @@ namespace UnityGLTF.Timeline
 {
 	public class GLTFRecorder
 	{
-		public GLTFRecorder(Transform root, bool recordBlendShapes = true, bool recordRootInWorldSpace = false, bool recordAnimationPointer = false)
-		{
+		private readonly bool recordBlendShapes;
+		private readonly bool recordAnimationPointer;
+		
+		public GLTFRecorder(
+			Transform root,
+			Func<Transform, bool> recordTransformInWorldSpace,
+			bool recordBlendShapes = true,
+			bool recordAnimationPointer = false,
+			bool recordVisibility = false,
+			IEnumerable<AnimationSampler>? additionalSamplers = null
+		) {
 			if (!root)
 				throw new ArgumentNullException(nameof(root), "Please provide a root transform to record.");
 
+			this.animationSamplers = AnimationSamplers.From(
+				recordTransformInWorldSpace,
+				recordVisibility,
+				recordBlendShapes,
+				recordAnimationPointer,
+				additionalSamplers
+			);
 			this.root = root;
 			this.recordBlendShapes = recordBlendShapes;
-			this.recordRootInWorldSpace = recordRootInWorldSpace;
 			this.recordAnimationPointer = recordAnimationPointer;
 		}
 
 		/// <summary>
 		/// Optionally assign a list of transforms to be recorded, other transforms will be ignored
 		/// </summary>
-		internal ICollection<Transform> recordingList = null;
-		private bool AllowRecordingTransform(Transform tr) => recordingList == null || recordingList.Contains(tr);
+		internal ICollection<Transform>? recordingList = null;
+		private bool allowRecordingTransform(Transform tr) => recordingList == null || recordingList.Contains(tr);
 
 		private Transform root;
 		private Dictionary<Transform, AnimationData> recordingAnimatedTransforms = new Dictionary<Transform, AnimationData>(64);
+
+		private readonly AnimationSamplers animationSamplers;
+
 		private double startTime;
 		private double lastRecordedTime;
 		private bool hasRecording;
 		private bool isRecording;
 		
-		private readonly bool recordBlendShapes;
-		private readonly bool recordRootInWorldSpace;
-		private readonly bool recordAnimationPointer;
-
 		public bool HasRecording => hasRecording;
 		public bool IsRecording => isRecording;
 
@@ -58,7 +74,7 @@ namespace UnityGLTF.Timeline
 
 		public string AnimationName = "Recording";
 
-		public delegate void OnBeforeAddAnimationDataDelegate(PostAnimationData animationData);
+		//public delegate void OnBeforeAddAnimationDataDelegate(PostAnimationData animationData);
 		public delegate void OnPostExportDelegate(PostExportArgs animationData);
 		
 		/// <summary>
@@ -67,13 +83,13 @@ namespace UnityGLTF.Timeline
 		/// so the original recorded data is not modified. Every time you call EndRecording to the save the gltf/glb,
 		/// you can modify the data again. 
 		/// </summary>
-		public OnBeforeAddAnimationDataDelegate OnBeforeAddAnimationData;
+		//public OnBeforeAddAnimationDataDelegate OnBeforeAddAnimationData;
 		
 		/// <summary>
 		/// Callback to modify or add additional data to the gltf root after the recording has ended and animation
 		/// data is added to the animation.
 		/// </summary>
-		public OnPostExportDelegate OnPostExport;
+		public OnPostExportDelegate? OnPostExport;
 
 		public class PostExportArgs
 		{
@@ -89,33 +105,33 @@ namespace UnityGLTF.Timeline
 			}
 		}
 
-		public class PostAnimationData
-		{
-			public float[] Times;
-			public object[] Values;
-			
-			public Object AnimatedObject { get; }
-			public string PropertyName { get; }
-			
-			internal PostAnimationData(Object animatedObject, string propertyName, float[] times, object[] values) {
-				this.AnimatedObject = animatedObject;
-				this.PropertyName = propertyName;
-				this.Times = times;
-				this.Values = values;
-			}
-		}
+		// public class PostAnimationData
+		// {
+		// 	public float[] Times;
+		// 	public object[] Values;
+		// 	
+		// 	public Object AnimatedObject { get; }
+		// 	public string PropertyName { get; }
+		// 	
+		// 	internal PostAnimationData(Object animatedObject, string propertyName, float[] times, object[] values) {
+		// 		this.AnimatedObject = animatedObject;
+		// 		this.PropertyName = propertyName;
+		// 		this.Times = times;
+		// 		this.Values = values;
+		// 	}
+		// }
 		
 		public void StartRecording(double time)
 		{
 			startTime = time;
 			lastRecordedTime = 0;
-			var trs = root.GetComponentsInChildren<Transform>(true);
+			var transforms = root.GetComponentsInChildren<Transform>(true);
 			recordingAnimatedTransforms.Clear();
 
-			foreach (var tr in trs)
+			foreach (var tr in transforms)
 			{
-				if (!AllowRecordingTransform(tr)) continue;
-				recordingAnimatedTransforms.Add(tr, new AnimationData(tr, lastRecordedTime, recordBlendShapes, recordRootInWorldSpace && tr == root, recordAnimationPointer));
+				if (!allowRecordingTransform(tr)) continue;
+				recordingAnimatedTransforms.Add(tr, new AnimationData(animationSamplers, tr, lastRecordedTime));
 			}
 
 			isRecording = true;
@@ -139,11 +155,11 @@ namespace UnityGLTF.Timeline
 			var trs = root.GetComponentsInChildren<Transform>(true);
 			foreach (var tr in trs)
 			{
-				if (!AllowRecordingTransform(tr)) continue;
+				if (!allowRecordingTransform(tr)) continue;
 				if (!recordingAnimatedTransforms.ContainsKey(tr))
 				{
 					// insert "empty" frame with scale=0,0,0 because this object might have just appeared in this frame
-					var emptyData = new AnimationData(tr, lastRecordedTime, true, recordBlendShapes, recordAnimationPointer);
+					var emptyData = new AnimationData(animationSamplers, tr, lastRecordedTime);
 					recordingAnimatedTransforms.Add(tr, emptyData);
 				}
 				recordingAnimatedTransforms[tr].Update(timeSinceStart);
@@ -152,14 +168,14 @@ namespace UnityGLTF.Timeline
 			lastRecordedTime = time;
 		}
 		
-		internal void EndRecording(out Dictionary<Transform, AnimationData> param)
+		internal void endRecording(out Dictionary<Transform, AnimationData>? param)
 		{
 			param = null;
 			if (!hasRecording) return;
 			param = recordingAnimatedTransforms;
 		}
 
-		public void EndRecording(string filename, string sceneName = "scene", GLTFSettings settings = null)
+		public void EndRecording(string filename, string sceneName = "scene", GLTFSettings? settings = null)
 		{
 			if (!isRecording) return;
 			if (!hasRecording) return;
@@ -172,13 +188,12 @@ namespace UnityGLTF.Timeline
 			}
 		}
 
-		public void EndRecording(Stream stream, string sceneName = "scene", GLTFSettings settings = null)
+		public void EndRecording(Stream stream, string sceneName = "scene", GLTFSettings? settings = null)
 		{
 			if (!hasRecording) return;
 			isRecording = false;
 			Debug.Log("Gltf Recording saved. Tracks: " + recordingAnimatedTransforms.Count + ", Total Keyframes: " + recordingAnimatedTransforms.Sum(x => x.Value.tracks.Sum(y => y.Values.Count())));
-
-			if (!settings)
+			if (settings == null)
 			{
 				var adjustedSettings = Object.Instantiate(GLTFSettings.GetOrCreateSettings());
 				adjustedSettings.ExportDisabledGameObjects = true;
@@ -201,10 +216,6 @@ namespace UnityGLTF.Timeline
 			var exportContext =
 				new ExportContext(settings) { AfterSceneExport = PostExport, logger = new Logger(logHandler), };
 
-			exportContext.BeforeMaterialExport += (sceneExporter, gltfRoot, material, node) => {
-				Debug.Log($"Before exporting material: {material.name} (using shader {material.shader})");
-				return false;
-			};
 			var exporter = new GLTFSceneExporter(new Transform[] { root }, exportContext);
 			exporter.SaveGLBToStream(stream, sceneName);
 
@@ -247,30 +258,32 @@ namespace UnityGLTF.Timeline
 			foreach (var kvp in recordingAnimatedTransforms)
 			{
 				processAnimationMarker.Begin();
-				foreach (var tr in kvp.Value.tracks)
+				foreach (var track in kvp.Value.tracks)
 				{
-					if (tr.Times.Length == 0) continue;
+					if (track.Times.Length == 0) continue;
 
-					PostAnimationData postAnimation = null;
+					var animatedObject = track.AnimatedObject;
+					var trackName = track.PropertyName;
+					var trackTimes = track.Times;
+					var trackValues = track.Values;
+					//PostAnimationData? postAnimation = null;
 					// AnimationData always has a visibility track, and if there is also a scale track, merge them
-					if (tr.PropertyName == "scale" && tr is AnimationTrack<Transform, Vector3> scaleTrack) {
+					if (track.PropertyName == "scale" && track is AnimationTrack<Transform, Vector3> scaleTrack) {
 						// GLTF does not internally support a visibility state (animation).
 						// So to simulate support for that, merge the visibility track with the scale track
 						// forcing the scale to (0,0,0) whenever the model is invisible
 						var (mergedTimes, mergedScales) = mergeVisibilityAndScaleTracks(kvp.Value.visibilityTrack, scaleTrack);
-						if (mergedTimes == null || mergedScales == null) continue;
-						postAnimation = new PostAnimationData(tr.AnimatedObject, tr.PropertyName, mergedTimes.Select(dbl => (float)dbl).ToArray(), mergedScales.Cast<object>().ToArray());	
+						if (mergedTimes == null || mergedScales == null)
+							continue;
+						trackTimes = mergedTimes;
+						trackValues = mergedScales.Cast<object>().ToArray();
 					}
-					else {
-						postAnimation = new PostAnimationData(tr.AnimatedObject, tr.PropertyName, tr.Times.Select(dbl => (float)dbl).ToArray(), tr.Values);	
-					}
-					OnBeforeAddAnimationData?.Invoke(postAnimation);
+					//OnBeforeAddAnimationData?.Invoke(postAnimation);
 
-					if (calculateTranslationBounds && tr.PropertyName == "translation")
-					{
-						for (var i = 0; i < postAnimation.Values.Length; i++)
-						{
-							var vec = (Vector3) postAnimation.Values[i];
+					if (calculateTranslationBounds && track.PropertyName == "translation") {
+						
+						foreach (var t in trackValues) {
+							var vec = (Vector3) t;
 							if (!gotFirstValue)
 							{
 								translationBounds = new Bounds(vec, Vector3.zero);
@@ -283,19 +296,19 @@ namespace UnityGLTF.Timeline
 						}
 					}
 
-					GLTFSceneExporter.RemoveUnneededKeyframes(ref postAnimation.Times, ref postAnimation.Values);
-					gltfSceneExporter.AddAnimationData(tr.AnimatedObject, tr.PropertyName, anim, postAnimation.Times, postAnimation.Values);
+					GLTFSceneExporter.RemoveUnneededKeyframes(ref trackTimes, ref trackValues);
+					gltfSceneExporter.AddAnimationData(track.AnimatedObject, track.PropertyName, anim, trackTimes, trackValues);
 				}
 				processAnimationMarker.End();
 			}
 		}
 
-		private static (double[] times, Vector3[] mergedScales) mergeVisibilityAndScaleTracks(
-			VisibilityTrack visibilityTrack,
-			BaseAnimationTrack<Transform, Vector3> scaleTrack
+		private static (double[]? times, Vector3[]? mergedScales) mergeVisibilityAndScaleTracks(
+			VisibilityTrack? visibilityTrack,
+			BaseAnimationTrack<Transform, Vector3>? scaleTrack
 		) {
 			if (visibilityTrack == null && scaleTrack == null) return (null, null);
-			if (visibilityTrack == null) return (scaleTrack.Times, scaleTrack.values);
+			if (visibilityTrack == null) return (scaleTrack?.Times, scaleTrack?.values);
 			var visTimes = visibilityTrack.Times;
 			var visValues = visibilityTrack.values;
 			
