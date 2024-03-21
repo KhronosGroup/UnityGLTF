@@ -59,7 +59,7 @@ The library is designed to be easy to extend with additional extensions to the g
 
 You can install this package from the Needle Package Registry with a one-click installer:  
 
-1. Download [UnityGLTF Package Installer](http://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
+1. Download [UnityGLTF Package Installer](https://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
 2. Drop the downloaded .unitypackage into Unity and follow the steps.
 
 You can also install this package from git, compatible with UPM (Unity Package Manager).
