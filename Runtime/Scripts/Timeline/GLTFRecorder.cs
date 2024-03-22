@@ -74,7 +74,7 @@ namespace UnityGLTF.Timeline
 
 		public string AnimationName = "Recording";
 
-		//public delegate void OnBeforeAddAnimationDataDelegate(PostAnimationData animationData);
+		public delegate void OnBeforeAddAnimationDataDelegate(PostAnimationData animationData);
 		public delegate void OnPostExportDelegate(PostExportArgs animationData);
 		
 		/// <summary>
@@ -83,7 +83,7 @@ namespace UnityGLTF.Timeline
 		/// so the original recorded data is not modified. Every time you call EndRecording to the save the gltf/glb,
 		/// you can modify the data again. 
 		/// </summary>
-		//public OnBeforeAddAnimationDataDelegate OnBeforeAddAnimationData;
+		public OnBeforeAddAnimationDataDelegate OnBeforeAddAnimationData;
 		
 		/// <summary>
 		/// Callback to modify or add additional data to the gltf root after the recording has ended and animation
@@ -105,21 +105,21 @@ namespace UnityGLTF.Timeline
 			}
 		}
 
-		// public class PostAnimationData
-		// {
-		// 	public float[] Times;
-		// 	public object[] Values;
-		// 	
-		// 	public Object AnimatedObject { get; }
-		// 	public string PropertyName { get; }
-		// 	
-		// 	internal PostAnimationData(Object animatedObject, string propertyName, float[] times, object[] values) {
-		// 		this.AnimatedObject = animatedObject;
-		// 		this.PropertyName = propertyName;
-		// 		this.Times = times;
-		// 		this.Values = values;
-		// 	}
-		// }
+		public class PostAnimationData
+		{
+			public double[] Times;
+			public object[] Values;
+			
+			public Object AnimatedObject { get; }
+			public string PropertyName { get; }
+			
+			internal PostAnimationData(Object animatedObject, string propertyName, double[] times, object[] values) {
+				this.AnimatedObject = animatedObject;
+				this.PropertyName = propertyName;
+				this.Times = times;
+				this.Values = values;
+			}
+		}
 		
 		public void StartRecording(double time)
 		{
@@ -266,7 +266,7 @@ namespace UnityGLTF.Timeline
 					var trackName = track.PropertyName;
 					var trackTimes = track.Times;
 					var trackValues = track.Values;
-					//PostAnimationData? postAnimation = null;
+					
 					// AnimationData always has a visibility track, and if there is also a scale track, merge them
 					if (track.PropertyName == "scale" && track is AnimationTrack<Transform, Vector3> scaleTrack) {
 						// GLTF does not internally support a visibility state (animation).
@@ -278,7 +278,7 @@ namespace UnityGLTF.Timeline
 						trackTimes = mergedTimes;
 						trackValues = mergedScales.Cast<object>().ToArray();
 					}
-					//OnBeforeAddAnimationData?.Invoke(postAnimation);
+					OnBeforeAddAnimationData?.Invoke(new PostAnimationData(animatedObject, trackName, trackTimes, trackValues));
 
 					if (calculateTranslationBounds && track.PropertyName == "translation") {
 						
