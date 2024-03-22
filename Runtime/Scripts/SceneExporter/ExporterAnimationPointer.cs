@@ -102,11 +102,6 @@ namespace UnityGLTF
 					// mapping from known Unity property names to glTF property names
 					switch (propertyName)
 					{
-						case "_PerformPlaneCut": 
-						case "_PlanePosition": 
-						case "_PlaneNormal": 
-							propertyName = $"extensions/NONE_plane_mesh_cutting/{propertyName}";
-							break;
 						case "_Color":
 						case "_BaseColor":
 						case "_BaseColorFactor":
