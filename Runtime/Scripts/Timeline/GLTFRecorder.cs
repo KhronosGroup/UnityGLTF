@@ -27,7 +27,7 @@ namespace UnityGLTF.Timeline
 			bool recordBlendShapes = true,
 			bool recordAnimationPointer = false,
 			bool recordVisibility = false,
-			IEnumerable<AnimationSampler>? additionalSamplers = null
+			IEnumerable<CustomComponentAnimationSampler>? additionalSamplers = null
 		) {
 			if (!root)
 				throw new ArgumentNullException(nameof(root), "Please provide a root transform to record.");
@@ -37,7 +37,7 @@ namespace UnityGLTF.Timeline
 				recordVisibility,
 				recordBlendShapes,
 				recordAnimationPointer,
-				additionalSamplers
+				additionalSamplers?.Select(customSampler => new CustomAnimationSamplerWrapper(customSampler))
 			);
 			this.root = root;
 			this.recordBlendShapes = recordBlendShapes;

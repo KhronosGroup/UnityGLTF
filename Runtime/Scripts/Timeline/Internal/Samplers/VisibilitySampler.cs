@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Timeline.Samplers
 {
-    public sealed class VisibilitySampler : AnimationSampler<GameObject, bool>
+    internal sealed class VisibilitySampler : AnimationSampler<GameObject, bool>
     {
         public override string PropertyName => "visibility";
 

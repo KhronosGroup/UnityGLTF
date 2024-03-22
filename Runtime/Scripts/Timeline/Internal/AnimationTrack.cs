@@ -19,7 +19,7 @@ namespace UnityGLTF.Timeline
         void SampleIfChanged(double time);
     }
 
-    public abstract class BaseAnimationTrack<TObject, TData> : AnimationTrack where TObject : Object
+    internal abstract class BaseAnimationTrack<TObject, TData> : AnimationTrack where TObject : Object
     {
         private readonly Dictionary<double, TData> samples;
         
@@ -86,7 +86,7 @@ namespace UnityGLTF.Timeline
             lastSample = new Tuple<double, TData>(time, value); }
     }
 
-    public sealed class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
+    internal sealed class AnimationTrack<TObject, TData> : BaseAnimationTrack<TObject, TData> where TObject : Object
     {
         public AnimationTrack(AnimationData tr, AnimationSampler<TObject, TData> plan, double time) : base(tr, plan, time) { }
     }

@@ -9,18 +9,7 @@ using Object = UnityEngine.Object;
 namespace UnityGLTF.Timeline
 {
     
-    public interface AnimationSampler
-    {
-        public string PropertyName { get; }
-        
-        object? Sample(AnimationData data);
-
-        public Object? GetTarget(Transform transform);
-        
-        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
-    }
-    
-    public sealed class AnimationSamplers
+    internal sealed class AnimationSamplers
     {
         /// GLTF internally does not seem to support animated visibility state, but recording this explicitly makes a lot of things easier.
         /// The resulting animation track will be merged with the "scale" track of any animation while exporting, forcing the scale
@@ -67,7 +56,18 @@ namespace UnityGLTF.Timeline
         public IEnumerable<AnimationSampler> GetAdditionalAnimationSamplers() => registeredAnimationSamplers.Values;
     }
     
-    public abstract class AnimationSampler<TObject, TData> : AnimationSampler
+    internal interface AnimationSampler
+    {
+        public string PropertyName { get; }
+        
+        object? Sample(AnimationData data);
+
+        public Object? GetTarget(Transform transform);
+        
+        public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time);
+    }
+    
+    internal abstract class AnimationSampler<TObject, TData> : AnimationSampler
         where TObject : UnityEngine.Object
     {
         public abstract string PropertyName { get; }
@@ -86,5 +86,20 @@ namespace UnityGLTF.Timeline
         
         public AnimationTrack StartNewAnimationTrackAt(AnimationData data, double time) =>
             new AnimationTrack<TObject, TData>(data, this, time);
+    }
+
+    internal sealed class CustomAnimationSamplerWrapper : AnimationSampler<Component, object?>
+    {
+
+        public override string PropertyName => customSampler.PropertyName;
+
+        protected override Component? getTarget(Transform transform) => customSampler.GetTarget(transform);
+
+        protected override object? getValue(Transform transform, Component target, AnimationData data) =>
+            customSampler.GetValue(transform, target);
+
+        private readonly CustomComponentAnimationSampler customSampler;
+        public CustomAnimationSamplerWrapper(CustomComponentAnimationSampler customSampler) => this.customSampler = customSampler;
+
     }
 }

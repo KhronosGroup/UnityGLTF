@@ -6,7 +6,7 @@ using UnityGLTF.Timeline.Samplers;
 
 namespace UnityGLTF.Timeline
 {
-    public sealed class AnimationData
+    internal sealed class AnimationData
     {
         internal readonly Transform transform;
         
