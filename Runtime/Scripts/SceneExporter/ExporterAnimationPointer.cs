@@ -459,10 +459,6 @@ namespace UnityGLTF
 			var val = values[0];
 			switch (val)
 			{
-				case bool _: {
-					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => ((bool)e) ? 1.0f : 0.0f));
-					break;
-				}
 				case float _:
 					if (flipValueRange)
 					{
