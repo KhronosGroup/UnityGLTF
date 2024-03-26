@@ -187,7 +187,7 @@ namespace UnityGLTF
 				texture.wrapMode = TextureWrapMode.Repeat;
 				texture.wrapModeV = TextureWrapMode.Repeat;
 				texture.wrapModeU = TextureWrapMode.Repeat;
-				texture.filterMode = FilterMode.Trilinear;
+				texture.filterMode = FilterMode.Bilinear;
 			}
 
 			await Task.CompletedTask;
@@ -451,7 +451,7 @@ namespace UnityGLTF
 							break;
 						default:
 							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
-							desiredFilterMode = FilterMode.Trilinear;
+							desiredFilterMode = FilterMode.Bilinear;
 							break;
 					}
 
@@ -476,7 +476,7 @@ namespace UnityGLTF
 				}
 				else
 				{
-					desiredFilterMode = FilterMode.Trilinear;
+					desiredFilterMode = FilterMode.Bilinear;
 					desiredWrapModeS = TextureWrapMode.Repeat;
 					desiredWrapModeT = TextureWrapMode.Repeat;
 				}
