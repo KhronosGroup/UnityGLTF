@@ -583,6 +583,7 @@ namespace UnityGLTF
 							break;
 					} // switch target type
 				}
+				await YieldOnTimeoutAndThrowOnLowMemory();
 			} // foreach channel
 
 			// EnsureQuaternionContinuity results in unwanted tangents on the first and last keyframes > custom Solution in SetAnimationCurve
