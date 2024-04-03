@@ -1,129 +1,109 @@
-﻿using System.Collections;
-
-namespace GLTF.Utilities
+﻿namespace GLTF.Utilities
 {
-   public class AnimationPointerPathHierarchy
+   public class PointerPath
     {
-        public enum ElementTypeOptions { Root, RootExtension, Index, Child, Property }
-        public ElementTypeOptions elementType { get; private set; } = ElementTypeOptions.Root;
+        public enum PathElement { Root, RootExtension, Index, Extension, Child, Property }
+        public PathElement PathElementType { get; private set; } = PathElement.Root;
         public int index { get; private set; } = -1;
         public string elementName { get; private set; } = "";
 
-        public AnimationPointerPathHierarchy next { get; private set; }= null;
+        public bool isValid { get; internal set; } = false;
+        
+        public PointerPath next { get; private set; } = null;
 
         public string ExtractPath()
         {
             return elementName+ (next != null ? "/" + next.ExtractPath() : "");
         }
         
-        public AnimationPointerPathHierarchy FindNext(ElementTypeOptions elementType)
+        public PointerPath FindNext(PathElement pathElementType)
         {
-            if (this.elementType == elementType)
+            if (this.PathElementType == pathElementType)
                 return this;
             
             if (next == null)
                 return null;
-            return next.FindNext(elementType);
+            return next.FindNext(pathElementType);
         }
         
-        public static AnimationPointerPathHierarchy CreateHierarchyFromPath(string fullPath)
+        private PointerPath()
         {
-            var path = new PathResolver(fullPath.Remove(0,1));
-            
-            var result = new AnimationPointerPathHierarchy();
-            result.elementName = path.GetCurrentAsString();
-            result.elementType = ElementTypeOptions.Root;
+            isValid = true;
+        }
 
-            AnimationPointerPathHierarchy TravelHierarchy(PathResolver path)
+        public PointerPath(string fullPath)
+        {
+            if (string.IsNullOrEmpty(fullPath))
+                return;
+
+            
+            var splittedPath = fullPath.Split("/");
+            var pathIndex = 0;
+
+            if (string.IsNullOrEmpty(splittedPath[0]))
+                pathIndex++;
+            
+            if (splittedPath.Length <= pathIndex)
+                return;
+            
+            isValid = true;
+
+            elementName = splittedPath[pathIndex];
+            PathElementType = PathElement.Root;
+
+            string GetCurrentAsString()
             {
-                if (!path.MoveNext())
+                return splittedPath[pathIndex];
+            }
+
+            bool GetCurrentAsInt(out int result)
+            {
+                return int.TryParse(splittedPath[pathIndex], out result);
+            }            
+            
+            PointerPath TravelHierarchy()
+            {
+                pathIndex++;
+                if (pathIndex >= splittedPath.Length)
                     return null;
                 
-                var result = new AnimationPointerPathHierarchy();
+                var result = new PointerPath();
                 
-                if (path.GetCurrentAsInt(out int index))
+                if (GetCurrentAsInt(out int index))
                 {
                     result.index = index;
-                    result.elementType = ElementTypeOptions.Index;
+                    result.PathElementType = PathElement.Index;
                     result.elementName = index.ToString();
-                    result.next = TravelHierarchy(path);
+                    result.next = TravelHierarchy();
                     return result;
                 }
                 
-                result.elementName = path.GetCurrentAsString();
-                result.elementType = path.IsLast() ? ElementTypeOptions.Property : ElementTypeOptions.Child;
-                if (!path.IsLast())
-                    result.next = TravelHierarchy(path);
+                result.elementName = GetCurrentAsString();
+                if (result.elementName == "extensions")
+                    result.PathElementType = PathElement.Extension;
+                else
+                    result.PathElementType = (pathIndex == splittedPath.Length-1) ? PathElement.Property : PathElement.Child;
+                if ((pathIndex < splittedPath.Length))
+                    result.next = TravelHierarchy();
                 return result;
             }
             
-            if (result.elementName == "extensions")
+            if (elementName == "extensions")
             {
-                if (path.MoveNext())
+                pathIndex++;
+                if (pathIndex < splittedPath.Length)
                 {
-                    result.elementName = path.GetCurrentAsString();
-                    result.elementType = ElementTypeOptions.RootExtension;
-                    result.next = TravelHierarchy(path);
+                    elementName = GetCurrentAsString();
+                    PathElementType = PathElement.RootExtension;
+                    next = TravelHierarchy();
                 }
             }
             else
             {
-                result.next = TravelHierarchy(path);
+                next = TravelHierarchy();
             }
-
-            return result;
+            
         }
     }
    
-    public class PathResolver : IEnumerator
-    {
-        private string[] _splittedPath;
-        private int currentIndex;
-        
-        public PathResolver (string path)
-        {
-            _splittedPath = path.Split("/");
-            currentIndex = 0;
-        }
-        
-        public bool IsLast()
-        {
-            return currentIndex == _splittedPath.Length - 1;
-        }
-        
-        public string GetCurrentAsString()
-        {
-            return _splittedPath[currentIndex];
-        }
-
-        public bool GetCurrentAsInt(out int result)
-        {
-            return int.TryParse(_splittedPath[currentIndex], out result);
-        }
-        
-        public bool MoveNext()
-        {
-            currentIndex++;
-            return currentIndex < _splittedPath.Length;
-        }
-
-        public void Reset()
-        {
-            currentIndex = 0;
-        }
-
-        public object Current
-        {
-            get
-            {
-                if (currentIndex < _splittedPath.Length)
-                {
-                    return _splittedPath[currentIndex];
-                }
-
-                return null;
-            }
-        }
-    }
-    
 }

@@ -328,11 +328,13 @@ namespace UnityGLTF
 
 					path = GLTFAnimationChannelPath.pointer;
 					relativePath = pointer.path;
-					var pointerHierarchy = AnimationPointerPathHierarchy.CreateHierarchyFromPath(relativePath);
-
-					switch (pointerHierarchy.elementType)
+					var pointerHierarchy = new PointerPath(relativePath);
+					if (!pointerHierarchy.isValid)
+						continue;
+					
+					switch (pointerHierarchy.PathElementType)
 					{
-						case AnimationPointerPathHierarchy.ElementTypeOptions.RootExtension:
+						case PointerPath.PathElement.RootExtension:
 							if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
 								continue;
 							
@@ -346,16 +348,16 @@ namespace UnityGLTF
 									continue;
 							}
 							break;
-						case AnimationPointerPathHierarchy.ElementTypeOptions.Root:
+						case PointerPath.PathElement.Root:
 							var rootType = pointerHierarchy.elementName;
-							var rootIndex = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
+							var rootIndex = pointerHierarchy.FindNext(PointerPath.PathElement.Index);
 							if (rootIndex == null)
 								continue;
 						
 							switch (rootType)
 							{
 								case "nodes":
-									var pointerPropertyElement = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
+									var pointerPropertyElement = pointerHierarchy.FindNext(PointerPath.PathElement.Property);
 									if (pointerPropertyElement == null)
 										continue;
 								
@@ -372,7 +374,7 @@ namespace UnityGLTF
 									nodeIds = _gltfRoot.GetAllNodeIdsWithMaterialId(rootIndex.index);
 									if (nodeIds.Length == 0)
 										continue;
-									var materialPath = pointerHierarchy.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index).next;
+									var materialPath = pointerHierarchy.FindNext(PointerPath.PathElement.Index).next;
 									if (materialPath == null)
 										continue;
 								

@@ -368,11 +368,14 @@ namespace GLTF.Schema.KHR_lights_punctual
 			pointerData.nodeId = -1;
 			pointerData.animationType = typeof(UnityEngine.Light);
 			
-			var pointId = pointerPath.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Index);
+			if (root.Nodes == null)
+				return false;
+			
+			var pointId = pointerPath.FindNext(PointerPath.PathElement.Index);
 			if (pointId == null)
 				return false;
 
-			var property = pointerPath.FindNext(AnimationPointerPathHierarchy.ElementTypeOptions.Property);
+			var property = pointerPath.FindNext(PointerPath.PathElement.Property);
 			if (property == null)
 				return false;
 			
