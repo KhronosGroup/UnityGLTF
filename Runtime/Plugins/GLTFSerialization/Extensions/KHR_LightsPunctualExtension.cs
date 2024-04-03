@@ -290,7 +290,7 @@ namespace GLTF.Schema.KHR_lights_punctual
 		}
 	}
 
-	public class KHR_LightsPunctualExtension : IExtension, IAnimationPointerRootExtension
+	public class KHR_LightsPunctualExtension : IExtension, IImportAnimationPointerRootExtension
 	{
 		public List<PunctualLight> Lights;
 
@@ -337,36 +337,36 @@ namespace GLTF.Schema.KHR_lights_punctual
 			}
 		}
 
-		private static AnimationPointerData.ValuesConvertion GetConversion(string gltfPropertyName)
+		private static AnimationPointerData.ImportValuesConversion GetConversion(string gltfPropertyName)
 		{
 			switch (gltfPropertyName)
 			{
 				case "color":
-					return (NumericArray data, int frame) =>
+					return (data, index) =>
 					{
-						var col = data.AsFloat3s[frame];
+						var col = data.primaryData.AccessorContent.AsFloat3s[index];
 						var color = new Color(col[0], col[1], col[2], 1f).ToUnityColorRaw();
 						return new float[] { color.r, color.g, color.b };
 						//return new float[] { col.x, col.y, col.z };
 					};
 				case "intensity":
-					return (data, frame) => new float[1] { data.AsFloats[frame] / Mathf.PI }; 
+					return (data, index) => new float[1] { data.primaryData.AccessorContent.AsFloats[index] / Mathf.PI }; 
 				case "range":
-					return (data, frame) => new float[1] { data.AsFloats[frame] };
+					return (data, index) => new float[1] { data.primaryData.AccessorContent.AsFloats[index] };
 				case "spot/innerConeAngle":
-					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / (Mathf.Deg2Rad * 0.8f)}; 
+					return (data, index) => new float[] { data.primaryData.AccessorContent.AsFloats[index] * 2 / (Mathf.Deg2Rad * 0.8f)}; 
 				case "spot/outerConeAngle":
-					return (data, frame) => new float[] { data.AsFloats[frame] * 2 / Mathf.Deg2Rad};
+					return (data, index) => new float[] { data.primaryData.AccessorContent.AsFloats[index] * 2 / Mathf.Deg2Rad};
 				default:
 					return null;
 			}
 		}
 
-		public bool TryGetAnimationPointerData(GLTFRoot root, AnimationPointerPathHierarchy pointerPath, out AnimationPointerData pointerData)
+		public bool TryGetImportAnimationPointerData(GLTFRoot root, PointerPath pointerPath, out AnimationPointerData pointerData)
 		{
 			pointerData = new AnimationPointerData();
-			pointerData.nodeId = -1;
-			pointerData.animationType = typeof(UnityEngine.Light);
+			pointerData.targetNodeIds = new int[0];
+			pointerData.targetType = typeof(UnityEngine.Light);
 			
 			if (root.Nodes == null)
 				return false;
@@ -379,6 +379,10 @@ namespace GLTF.Schema.KHR_lights_punctual
 			if (property == null)
 				return false;
 			
+			pointerData.unityPropertyNames = GltfLightPropertyToUnityPropertyName(property.elementName);
+			pointerData.importAccessorContentConversion = GetConversion(property.elementName);
+
+			List<int> targetNodes = new List<int>();
 			for (int i = 0; i < root.Nodes.Count; i++)
 			{
 				var n = root.Nodes[i];
@@ -389,13 +393,15 @@ namespace GLTF.Schema.KHR_lights_punctual
 
 					if (lightExtension.LightId.Id == pointId.index)
 					{
-						pointerData.nodeId = i;;
-						pointerData.unityProperties = GltfLightPropertyToUnityPropertyName(property.elementName);
-						pointerData.conversion = GetConversion(property.elementName);
-						
-						return true;							
+						targetNodes.Add(i);
 					}
 				}
+			}
+
+			if (targetNodes.Count > 0)
+			{
+				pointerData.targetNodeIds = targetNodes.ToArray();
+				return true;
 			}
 
 			return false;

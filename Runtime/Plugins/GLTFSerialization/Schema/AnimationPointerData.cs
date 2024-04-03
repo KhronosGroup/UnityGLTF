@@ -4,14 +4,18 @@ namespace GLTF.Schema
 {
     public class AnimationPointerData
     {
-        public string[] unityProperties;
-        public Type animationType;
-        public int nodeId;
+        public string[] unityPropertyNames;
+        public Type targetType;
+        public int[] targetNodeIds;
 		
-        public delegate float[] ValuesConvertion(NumericArray data, int frame);
-        public ValuesConvertion conversion;
+        public delegate float[] ImportValuesConversion(AnimationPointerData data, int index);
+        public ImportValuesConversion importAccessorContentConversion;
 
+        public string primaryPath = "";
+        public AttributeAccessor primaryData;
+        
         public string secondaryPath = "";
         public AttributeAccessor secondaryData;
     }
+
 }

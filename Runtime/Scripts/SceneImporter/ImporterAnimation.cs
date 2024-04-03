@@ -339,14 +339,15 @@ namespace UnityGLTF
 								continue;
 							
 							// Check if the extension support animation pointers
-							if (hierarchyExtension is IAnimationPointerRootExtension rootExtension)
+							if (hierarchyExtension is IImportAnimationPointerRootExtension rootExtension)
 							{
 								// Let the extension handle the pointer data and create the nodeIds and unity properties
-								if (rootExtension.TryGetAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
-									nodeIds = new int[] { pointerData.nodeId};
+								if (rootExtension.TryGetImportAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
+									nodeIds = pointerData.targetNodeIds;
 								else
 									continue;
 							}
+							pointerData.primaryData = samplerCache.Output; 
 							break;
 						case PointerPath.PathElement.Root:
 							var rootType = pointerHierarchy.elementName;
@@ -362,10 +363,10 @@ namespace UnityGLTF
 										continue;
 								
 									pointerData = new AnimationPointerData();
-									pointerData.nodeId = rootIndex.index;
-									nodeIds = new int[] {rootIndex.index};
+									pointerData.targetNodeIds = new int[] {rootIndex.index};
+									nodeIds = pointerData.targetNodeIds;
 
-									// Convert translate, scale, rotation from pointer path to to GLTFAnimationChannelPath, so we can use the same code as the other channels
+									// Convert translate, scale, rotation from pointer path to to GLTFAnimationChannelPath, so we can use the same code path as the non-animation-pointer channels
 									if (!GLTFAnimationChannelPath.TryParse(pointerPropertyElement.elementName, out path))
 										continue;
 
@@ -380,10 +381,14 @@ namespace UnityGLTF
 								
 									var gltfPropertyPath = materialPath.ExtractPath();
 									var mat = _assetCache.MaterialCache[rootIndex.index];
-									
-									if (!AnimationPointerHelpers.BuildMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type, out pointerData))
+									if (!mat.UnityMaterial)
 										continue;
 									
+									if (!AnimationPointerHelpers.BuildImportMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type, out pointerData))
+										continue;
+									
+									pointerData.primaryData = samplerCache.Output;
+									pointerData.primaryPath = pointer.path;
 									if (!string.IsNullOrEmpty(pointerData.secondaryPath))
 									{
 										// When an property has potentially a second Sampler, we need to find it. e.g. like EmissionFactor and EmissionStrength
@@ -394,19 +399,20 @@ namespace UnityGLTF
 								case "cameras":
 									int cameraId = rootIndex.index;
 									pointerData = new AnimationPointerData();
-									pointerData.animationType = typeof(Camera);
-									
+									pointerData.targetType = typeof(Camera);
+									pointerData.primaryData = samplerCache.Output; 
+	
 									string gltfCameraPropertyPath = rootIndex.next.ExtractPath();
 									switch (gltfCameraPropertyPath)
 									{
 										case "orthographic/ymag":
 											pointerData.secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/orthographic/xmag";
-											pointerData.unityProperties = new string[] { "orthographic size" };
+											pointerData.unityPropertyNames = new string[] { "orthographic size" };
 											pointerData.secondaryData = FindSecondaryChannel(pointerData.secondaryPath);
-											pointerData.conversion = (data, frame) =>
+											pointerData.importAccessorContentConversion = (data, frame) =>
 											{
-												var xmag = pointerData.secondaryData.AccessorContent.AsFloats[frame];
-												var ymag = data.AsFloats[frame];
+												var xmag = data.secondaryData.AccessorContent.AsFloats[frame];
+												var ymag = data.primaryData.AccessorContent.AsFloats[frame];
 												return new float[] {Mathf.Max(xmag, ymag)};
 											};
 											break;
@@ -414,29 +420,29 @@ namespace UnityGLTF
 											continue;
 										case "perspective/znear":
 										case "orthographic/znear":
-											pointerData.unityProperties = new string[] { "near clip plane" };
-											pointerData.conversion = (data, frame) =>
-												new float[] {data.AsFloats[frame]};
+											pointerData.unityPropertyNames = new string[] { "near clip plane" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
+												new float[] {data.primaryData.AccessorContent.AsFloats[frame]};
 											break;
 										case "perspective/zfar":
 										case "orthographic/zfar":
-											pointerData.unityProperties = new string[] { "far clip plane" };
-											pointerData.conversion = (data, frame) =>
-												new float[] {data.AsFloats[frame]};
+											pointerData.unityPropertyNames = new string[] { "far clip plane" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
+												new float[] {data.primaryData.AccessorContent.AsFloats[frame]};
 											break;
 										case "perspective/yfov":
-											pointerData.unityProperties = new string[] { "field of view" };
-											pointerData.conversion = (data, frame) =>
+											pointerData.unityPropertyNames = new string[] { "field of view" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
 											{
-												var fov = data.AsFloats[frame] * Mathf.Rad2Deg;
+												var fov = data.primaryData.AccessorContent.AsFloats[frame] * Mathf.Rad2Deg;
 												return new float[] {fov};
 											};
 											break;
 										case "backgroundColor":
-											pointerData.unityProperties = new string[] { "background color.r", "background color.g", "background color.b", "background color.a" };
-											pointerData.conversion = (data, frame) =>
+											pointerData.unityPropertyNames = new string[] { "background color.r", "background color.g", "background color.b", "background color.a" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
 											{
-												var color = data.AsFloat4s[frame].ToUnityColorRaw();
+												var color = data.primaryData.AccessorContent.AsFloat4s[frame].ToUnityColorRaw();
 												return new float[] {color.r, color.g, color.b, color.a};
 											};
 											break;
@@ -450,7 +456,8 @@ namespace UnityGLTF
 								default:
 									continue;
 								//throw new NotImplementedException();
-							}							break;
+							}
+							break;
 						default:
 							continue;
 					}
@@ -465,7 +472,7 @@ namespace UnityGLTF
 					nodeIds = new int[] {channel.Target.Node.Id};
 				}
 
-				// In case an animated material are referenced from many nodes, whe need to create a curve for each node
+				// In case an animated material are referenced from many nodes, whe need to create a curve for each node. (e.g. Materials)
 				foreach (var nodeId in nodeIds)
 				{
 					var node = await GetNode(nodeId, cancellationToken);
@@ -481,8 +488,8 @@ namespace UnityGLTF
 					}
 					else
 					{
-						if (pointerData.animationType == null)
-							pointerData.animationType = targetNode.Skin != null
+						if (pointerData.targetType == null)
+							pointerData.targetType = targetNode.Skin != null
 								? typeof(SkinnedMeshRenderer)
 								: typeof(MeshRenderer);
 					}
@@ -490,11 +497,11 @@ namespace UnityGLTF
 					switch (path)
 					{
 						case GLTFAnimationChannelPath.pointer:
-							if (pointerData.conversion == null)
+							if (pointerData.importAccessorContentConversion == null)
 								continue;
-							SetAnimationCurve(clip, relativePath, pointerData.unityProperties, input, output,
-								samplerCache.Interpolation, pointerData.animationType,
-								(data, frame) => pointerData.conversion(data, frame));
+							SetAnimationCurve(clip, relativePath, pointerData.unityPropertyNames, input, output,
+								samplerCache.Interpolation, pointerData.targetType,
+								(data, frame) => pointerData.importAccessorContentConversion(pointerData, frame));
 							break;
 						case GLTFAnimationChannelPath.translation:
 							propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
@@ -520,7 +527,7 @@ namespace UnityGLTF
 						case GLTFAnimationChannelPath.rotation:
 							propertyNames = new string[]
 								{ "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
-							bool hasLight = (targetNode.Extensions != null
+							bool flipRotation = (targetNode.Extensions != null
 							                 && targetNode.Extensions.ContainsKey(KHR_lights_punctualExtensionFactory.EXTENSION_NAME)
 							                 && Context.TryGetPlugin<LightsPunctualImportContext>(out _));
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
@@ -529,7 +536,7 @@ namespace UnityGLTF
 								{
 									var rotation = data.AsFloat4s[frame];
 									var quaternion = rotation.ToUnityQuaternionConvert();
-									if (hasLight)
+									if (flipRotation)
 										quaternion *= Quaternion.Euler(0, 180, 0);
 									return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 								});
@@ -567,7 +574,7 @@ namespace UnityGLTF
 
 								var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
 								SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-									samplerCache.Interpolation, typeof(Transform),
+									samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
 									(data, frame) =>
 									{
 										var allValues = data.AsFloats;
@@ -577,13 +584,13 @@ namespace UnityGLTF
 										return frameFloats;
 									});
 							}
-
 							break;
 						default:
 							Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
 							break;
 					} // switch target type
-				}
+				} // foreach nodeIds
+				
 				await YieldOnTimeoutAndThrowOnLowMemory();
 			} // foreach channel
 

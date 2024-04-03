@@ -7,9 +7,9 @@ namespace GLTF.Schema
 	/// <summary>
 	/// Additional interface for Root Extensions to support custom animation pointers
 	/// </summary>
-	public interface IAnimationPointerRootExtension
+	public interface IImportAnimationPointerRootExtension
 	{
-		bool TryGetAnimationPointerData(GLTFRoot root, AnimationPointerPathHierarchy pointerPath, out AnimationPointerData pointerData);
+		bool TryGetImportAnimationPointerData(GLTFRoot root, PointerPath pointerPath, out AnimationPointerData pointerData);
 	}
 	
 	/// <summary>
