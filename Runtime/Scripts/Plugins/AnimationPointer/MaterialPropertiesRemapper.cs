@@ -7,10 +7,10 @@ namespace UnityGLTF.Plugins
 {
     public class MaterialPointerPropertyMap
     {
-        public enum PropertyTypeOption {LinearColor, SRGBColor, Texture, LinearTexture, TextureTransform, Generic}
+        public enum PropertyTypeOption {LinearColor, SRGBColor, Texture, LinearTexture, TextureTransform, Float}
         public enum CombineResultType { SameAsPrimary, Override}
         
-        public PropertyTypeOption PropertyType = PropertyTypeOption.Generic;
+        public PropertyTypeOption PropertyType = PropertyTypeOption.Float;
         
         public string[] PropertyNames
         {
@@ -81,7 +81,7 @@ namespace UnityGLTF.Plugins
                 case PropertyTypeOption.TextureTransform:
                     SetupAsTextureTransform();
                     break;
-                case PropertyTypeOption.Generic:
+                case PropertyTypeOption.Float:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -247,7 +247,7 @@ namespace UnityGLTF.Plugins
             };
             AddMap(baseColor);
 
-            var smoothness = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var smoothness = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_Smoothness", "_Glossiness" },
                 ExportFlipValueRange = true,
@@ -255,14 +255,14 @@ namespace UnityGLTF.Plugins
             };
             AddMap(smoothness, ImportExportUsageOption.ExportOnly);
 
-            var roughness = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var roughness = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_Roughness", "_RoughnessFactor", "roughnessFactor" },
                 GltfPropertyName = "pbrMetallicRoughness/roughnessFactor"
             };
             AddMap(roughness);
 
-            var metallic = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var metallic = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_Metallic", "_MetallicFactor", "metallicFactor" },
                 GltfPropertyName = "pbrMetallicRoughness/metallicFactor"
@@ -333,14 +333,14 @@ namespace UnityGLTF.Plugins
             
             maps.Add(roughnessTex);		*/
 
-            var alphaCutoff = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var alphaCutoff = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_AlphaCutoff", "alphaCutoff", "_Cutoff" },
                 GltfPropertyName = "alphaCutoff"
             };
             AddMap(alphaCutoff);
 
-            var normalScale = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var normalScale = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_BumpScale", "_NormalScale", "normalScale", "normalTextureScale" },
                 GltfPropertyName = "normalTexture/scale"
@@ -358,7 +358,7 @@ namespace UnityGLTF.Plugins
             };
             AddMap(normalTexture);
 
-            var occlusionStrength = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var occlusionStrength = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_OcclusionStrength", "occlusionStrength", "occlusionTextureStrength" },
                 GltfPropertyName = "occlusionTexture/strength"
@@ -377,7 +377,7 @@ namespace UnityGLTF.Plugins
             AddMap(occlusionTexture);
 
             // KHR_materials_transmission
-            var transmissionFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var transmissionFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_TransmissionFactor", "transmissionFactor" },
                 GltfPropertyName =
@@ -387,7 +387,7 @@ namespace UnityGLTF.Plugins
             AddMap(transmissionFactor);
 
             // KHR_materials_volume
-            var thicknessFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var thicknessFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_ThicknessFactor", "thicknessFactor" },
                 GltfPropertyName =
@@ -396,7 +396,7 @@ namespace UnityGLTF.Plugins
             };
             AddMap(thicknessFactor);
 
-            var attenuationDistance = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var attenuationDistance = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_AttenuationDistance", "attenuationDistance" },
                 GltfPropertyName =
@@ -416,7 +416,7 @@ namespace UnityGLTF.Plugins
             AddMap(attenuationColor);
 
             // KHR_materials_ior
-            var ior = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var ior = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_IOR", "ior" },
                 GltfPropertyName =
@@ -426,7 +426,7 @@ namespace UnityGLTF.Plugins
             AddMap(ior);
 
             // KHR_materials_iridescence
-            var iridescenceFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var iridescenceFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_IridescenceFactor", "iridescenceFactor" },
                 GltfPropertyName =
@@ -436,7 +436,7 @@ namespace UnityGLTF.Plugins
             AddMap(iridescenceFactor);
 
             // KHR_materials_specular
-            var specularFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Generic)
+            var specularFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_SpecularFactor", "specularFactor" },
                 GltfPropertyName =
