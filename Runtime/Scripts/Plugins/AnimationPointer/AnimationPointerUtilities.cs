@@ -8,8 +8,10 @@ namespace UnityGLTF.Plugins
         private static readonly string[] MATERIAL_PROPERTY_COMPONENTS = {"x", "y", "z", "w"};
         private static readonly string[] MATERIAL_COLOR_PROPERTY_COMPONENTS = {"r", "g", "b", "a"};
 
-        internal static bool BuildMaterialAnimationPointerData(MaterialPropertiesRemapper remapper, AnimationPointerData pointerData, Material material, string gltfProperty, GLTFAccessorAttributeType valueType)
+        internal static bool BuildMaterialAnimationPointerData(MaterialPropertiesRemapper remapper, Material material,
+            string gltfProperty, GLTFAccessorAttributeType valueType, out AnimationPointerData pointerData)
         {
+            pointerData = new AnimationPointerData();
             if (!remapper.GetUnityPropertyName(material, gltfProperty, out string unityPropertyName,
                     out MaterialPointerPropertyMap propertyMap, out bool isSecondaryGltfProperty))
                 return false;

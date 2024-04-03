@@ -378,11 +378,10 @@ namespace UnityGLTF
 								
 									var gltfPropertyPath = materialPath.ExtractPath();
 									var mat = _assetCache.MaterialCache[rootIndex.index];
-
-									pointerData = new AnimationPointerData();
 									
-									if (!AnimationPointerHelpers.BuildMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, pointerData, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type))
+									if (!AnimationPointerHelpers.BuildMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type, out pointerData))
 										continue;
+									
 									if (!string.IsNullOrEmpty(pointerData.secondaryPath))
 									{
 										// When an property has potentially a second Sampler, we need to find it. e.g. like EmissionFactor and EmissionStrength
