@@ -421,6 +421,9 @@ namespace UnityGLTF
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTFImage image = _gltfRoot.Images[sourceId];
+				
+				bool isFirstInstance = _assetCache.ImageCache[sourceId] == null;
+				
 				await ConstructImage(image, sourceId, markGpuOnly, isLinear, isNormal);
 
 				var source = _assetCache.ImageCache[sourceId];
@@ -448,7 +451,7 @@ namespace UnityGLTF
 							break;
 						default:
 							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
-							desiredFilterMode = FilterMode.Trilinear;
+							desiredFilterMode = FilterMode.Bilinear;
 							break;
 					}
 
@@ -473,9 +476,16 @@ namespace UnityGLTF
 				}
 				else
 				{
-					desiredFilterMode = FilterMode.Trilinear;
+					desiredFilterMode = FilterMode.Bilinear;
 					desiredWrapModeS = TextureWrapMode.Repeat;
 					desiredWrapModeT = TextureWrapMode.Repeat;
+				}
+
+				if (isFirstInstance)
+				{
+					source.filterMode = desiredFilterMode;
+					source.wrapModeU = desiredWrapModeS;
+					source.wrapModeV = desiredWrapModeT;		
 				}
 
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;
