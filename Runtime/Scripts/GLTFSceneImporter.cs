@@ -45,6 +45,7 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
+		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
 
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
@@ -58,6 +59,13 @@ namespace UnityGLTF
 		public ILogger logger;
 	}
 
+	public enum CameraImportOption
+	{
+		None,
+		ImportAndActive,
+		ImportAndCameraDisabled
+	}
+	
 	public enum AnimationMethod
 	{
 		None,
@@ -991,22 +999,22 @@ namespace UnityGLTF
 						if (node.Skin != null)
 							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
-					// morph target weights
-					if (weights != null)
-					{
-						for (int i = 0; i < weights.Count; ++i)
+						// morph target weights
+						if (weights != null)
 						{
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
+							for (int i = 0; i < weights.Count; ++i)
+							{
+								renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
+							}
 						}
 					}
-				}
-				else
-				{
-					var filter = nodeObj.AddComponent<MeshFilter>();
-					filter.sharedMesh = unityMesh;
-					var renderer = nodeObj.AddComponent<MeshRenderer>();
-					renderer.sharedMaterials = materials;
-				}
+					else
+					{
+						var filter = nodeObj.AddComponent<MeshFilter>();
+						filter.sharedMesh = unityMesh;
+						var renderer = nodeObj.AddComponent<MeshRenderer>();
+						renderer.sharedMaterials = materials;
+					}
 
 #if UNITY_PHYSICS
 					if (!onlyMesh)
@@ -1040,15 +1048,8 @@ namespace UnityGLTF
 				
 				await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
 
-				/* TODO: implement camera (probably a flag to disable for VR as well)
-				if (camera != null)
-				{
-					GameObject cameraObj = camera.Value.Create();
-					cameraObj.transform.parent = nodeObj.transform;
-				}
-				*/
-
 				ConstructLights(nodeObj, node);
+				ConstructCamera(nodeObj, node);
 
 				nodeObj.SetActive(true);
 			}
@@ -1101,6 +1102,40 @@ namespace UnityGLTF
 			progress?.Report(progressStatus);
 		}
 
+		private void ConstructCamera(GameObject nodeObj, Node node)
+		{
+			if (node.Camera == null)
+				return;
+
+			if (_options.CameraImport == CameraImportOption.None)
+				return;
+			
+			var camera = node.Camera.Value;
+			Camera unityCamera = null;
+			if (camera.Orthographic != null)
+			{
+				unityCamera = nodeObj.AddComponent<Camera>();
+				unityCamera.orthographic = true;
+				unityCamera.orthographicSize = Mathf.Max((float)camera.Orthographic.XMag, (float)camera.Orthographic.YMag);
+				unityCamera.farClipPlane = (float)camera.Orthographic.ZFar;
+				unityCamera.nearClipPlane = (float)camera.Orthographic.ZNear;
+			}
+			else if (camera.Perspective != null)
+			{
+				unityCamera = nodeObj.AddComponent<Camera>();
+				unityCamera.orthographic = false;
+				unityCamera.fieldOfView = (float)camera.Perspective.YFov * Mathf.Rad2Deg;
+				unityCamera.farClipPlane = (float)camera.Perspective.ZFar;
+				unityCamera.nearClipPlane = (float)camera.Perspective.ZNear;
+			}
+
+			if (!unityCamera)
+				return;
+			
+			if (_options.CameraImport == CameraImportOption.ImportAndCameraDisabled)
+				unityCamera.enabled = false;
+		}
+		
 		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();

@@ -96,6 +96,7 @@ namespace UnityGLTF
 	    [SerializeField] internal BlendShapeFrameWeightSetting _blendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
+        [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
@@ -868,7 +869,8 @@ namespace UnityGLTF
 			    ImportNormals = _importNormals,
 			    ImportTangents = _importTangents,
 			    ImportBlendShapeNames = _importBlendShapeNames,
-			    BlendShapeFrameWeight = _blendShapeFrameWeight
+			    BlendShapeFrameWeight = _blendShapeFrameWeight,
+			    CameraImport = _importCamera
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))
