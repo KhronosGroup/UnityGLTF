@@ -611,15 +611,7 @@ namespace UnityGLTF
 			var dataLoader2 = _options.DataLoader as IDataLoader2;
 			if (IsMultithreaded && dataLoader2 != null)
 			{
-				Thread loadThread = new Thread(() => _gltfStream.Stream = dataLoader2.LoadStream(jsonFilePath));
-				loadThread.Priority = ThreadPriority.Highest;
-				loadThread.Start();
-				while (loadThread.IsAlive)
-				{
-					Debug.Log("GLB json data is loading async...");
-					await Task.Delay(25);
-				}
-				Debug.Log("GLB json data is loaded.");
+				await Task.Run(() => _gltfStream.Stream = dataLoader2.LoadStream(jsonFilePath));
 			}
 			else
 #endif
@@ -632,15 +624,7 @@ namespace UnityGLTF
 #if !WINDOWS_UWP && !UNITY_WEBGL
 			if (IsMultithreaded)
 			{
-				Thread parseJsonThread = new Thread(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
-				parseJsonThread.Priority = ThreadPriority.Highest;
-				parseJsonThread.Start();
-				while (parseJsonThread.IsAlive)
-				{
-					Debug.Log("GLB json data is loading async...");
-					await Task.Delay(25);
-				}
-				Debug.Log("GLB json data is loaded.");
+				await Task.Run(() => GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition));
 				if (_gltfRoot == null)
 				{
 					throw new GLTFLoadException($"Failed to parse glTF (File: {_gltfFileName})");
