@@ -1097,10 +1097,7 @@ namespace UnityGLTF
 						var smr = uniquePrimitives[0].SkinnedMeshRenderer;
 						// Only export the blendShapeWeights into the Node, when it's not the first SkinnedMeshRenderer with the same Mesh
 						// Because the weights already exported into the GltfMesh
-						if (smr 
-						    && meshObj
-					        && _meshToBlendShapeAccessors.TryGetValue(meshObj, out var data)
-					        && smr != data.firstSkinnedMeshRenderer)
+						if (smr && meshObj && _meshToBlendShapeAccessors.TryGetValue(meshObj, out var data) && smr != data.firstSkinnedMeshRenderer)
 						{
 							var blendShapeWeights = GetBlendShapeWeights(smr, meshObj);
 							if (blendShapeWeights != null)
@@ -1119,7 +1116,6 @@ namespace UnityGLTF
 						}
 					}
 				}
-				
 			}
 
 			exportNodeMarker.End();
