@@ -111,7 +111,9 @@ namespace UnityGLTF
 	    }
 
 	    private CustomRenderPass m_RoughRefractionPassNonRG;
+#if UNITY_2023_3_OR_NEWER
 	    private bool usingRenderGraph = false;
+#endif
 
 #if !UNITY_2022_3_OR_NEWER
 	    RenderTargetHandle m_OpaqueColor;
