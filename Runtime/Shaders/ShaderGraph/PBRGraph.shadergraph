@@ -2109,7 +2109,7 @@
                 "m_Node": {
                     "m_Id": "e0bff10ce0fd44b987e06f5b52d7647c"
                 },
-                "m_SlotId": 1
+                "m_SlotId": 4
             }
         },
         {
@@ -4475,7 +4475,7 @@
                 "m_Node": {
                     "m_Id": "d7d21152b9784cfcadb1b29f1bc48ed2"
                 },
-                "m_SlotId": 1
+                "m_SlotId": 2
             }
         },
         {
@@ -4489,7 +4489,7 @@
                 "m_Node": {
                     "m_Id": "d7d21152b9784cfcadb1b29f1bc48ed2"
                 },
-                "m_SlotId": 2
+                "m_SlotId": 4
             }
         },
         {
@@ -6959,7 +6959,7 @@
             "referenceName": "ON"
         },
         {
-            "id": 1,
+            "id": 4,
             "displayName": "AndDispersion",
             "referenceName": "ANDDISPERSION"
         }
@@ -6987,30 +6987,6 @@
         "y": 0.0
     },
     "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
-    "m_ObjectId": "141a74c75fe547ed83d0cc2710c41ad8",
-    "m_Id": 1,
-    "m_DisplayName": "AndDispersion",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "ANDDISPERSION",
-    "m_StageCapability": 3,
-    "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.0
-    },
-    "m_DefaultValue": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.0
-    }
 }
 
 {
@@ -16068,6 +16044,30 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+    "m_ObjectId": "6ababe5909c448a0b65a1c7c9a54be04",
+    "m_Id": 4,
+    "m_DisplayName": "AndDispersion",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "ANDDISPERSION",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    }
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
     "m_ObjectId": "6b41807fd9ec4ea3998966d6ad43532d",
     "m_Id": -1162300524,
@@ -17138,7 +17138,7 @@
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Dispersion",
     "m_DefaultReferenceName": "_Dispersion",
-    "m_OverrideReferenceName": "",
+    "m_OverrideReferenceName": "dispersion",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
@@ -24309,6 +24309,30 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+    "m_ObjectId": "b885294f25364a91b739435cf1bcfd06",
+    "m_Id": 4,
+    "m_DisplayName": "AndDispersion",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "ANDDISPERSION",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    }
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
     "m_ObjectId": "b90342ab59b04cdcbd7cb9b885d35a1f",
     "m_Id": 1470722099,
@@ -28885,7 +28909,7 @@
             "m_Id": "dead151ec73c439fb686a997aabd7b20"
         },
         {
-            "m_Id": "141a74c75fe547ed83d0cc2710c41ad8"
+            "m_Id": "6ababe5909c448a0b65a1c7c9a54be04"
         }
     ],
     "synonyms": [],
@@ -29915,7 +29939,7 @@
             "m_Id": "bde83b393e6443a0ace985a582d1c930"
         },
         {
-            "m_Id": "f2241a7a6387424c95f3f7faebabd999"
+            "m_Id": "b885294f25364a91b739435cf1bcfd06"
         }
     ],
     "synonyms": [],
@@ -31853,30 +31877,6 @@
         "e31": 0.0,
         "e32": 0.0,
         "e33": 1.0
-    }
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
-    "m_ObjectId": "f2241a7a6387424c95f3f7faebabd999",
-    "m_Id": 1,
-    "m_DisplayName": "AndDispersion",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "ANDDISPERSION",
-    "m_StageCapability": 3,
-    "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.0
-    },
-    "m_DefaultValue": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.0
     }
 }
 

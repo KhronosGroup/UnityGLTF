@@ -85,6 +85,11 @@ namespace UnityGLTF
 		int TransmissionTextureTexCoord { get; set; }
 	}
 
+	public interface IDispersionMap : ITransmissionMap
+	{
+		float Dispersion { get; set; }
+	}
+
 	public interface IIORMap : IMetalRoughUniformMap
 	{
 		double IOR { get; set; }

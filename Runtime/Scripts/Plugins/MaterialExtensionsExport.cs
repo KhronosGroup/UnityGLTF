@@ -49,6 +49,7 @@ namespace UnityGLTF.Plugins
 		private static readonly int ior = Shader.PropertyToID("ior");
 		private static readonly int transmissionFactor = Shader.PropertyToID("transmissionFactor");
 		private static readonly int transmissionTexture = Shader.PropertyToID("transmissionTexture");
+		private static readonly int dispersion = Shader.PropertyToID("dispersion");
 
 		private static readonly int iridescenceFactor = Shader.PropertyToID("iridescenceFactor");
 		private static readonly int iridescenceIor = Shader.PropertyToID("iridescenceIor");
@@ -73,7 +74,8 @@ namespace UnityGLTF.Plugins
 		{
 			if (!material) return;
 
-			var usesTransmission = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON");
+			var usesTransmission = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON") || material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION");
+			var usesDispersion = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION");
 			var usesVolume = material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f;
 			var hasNonDefaultIor = material.HasProperty(ior) && !Mathf.Approximately(material.GetFloat(ior), KHR_materials_ior.DefaultIor);
 			var usesIridescence = material.IsKeywordEnabled("_IRIDESCENCE_ON");
@@ -116,6 +118,24 @@ namespace UnityGLTF.Plugins
 					vt.transmissionFactor = material.GetFloat(transmissionFactor);
 				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
 					vt.transmissionTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(transmissionTexture), nameof(transmissionTexture));
+
+				if (usesDispersion)
+				{
+					float dispersionValue =  material.GetFloat(dispersion);
+					if (dispersionValue > 0)
+					{
+						exporter.DeclareExtensionUsage(KHR_materials_dispersion_Factory.EXTENSION_NAME, false);
+						// if the material already has an extension, we should get and modify that
+						var vd = new KHR_materials_dispersion();
+
+						if (materialnode.Extensions.TryGetValue(KHR_materials_dispersion_Factory.EXTENSION_NAME, out var vd2))
+							vd = (KHR_materials_dispersion) vd2;
+						else
+							materialnode.Extensions.Add(KHR_materials_dispersion_Factory.EXTENSION_NAME, vd);
+
+						vd.dispersion = dispersionValue;
+					}
+				}
 			}
 
 			if (usesVolume && settings.KHR_materials_volume)
