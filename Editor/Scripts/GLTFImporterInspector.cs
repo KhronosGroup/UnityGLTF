@@ -1,5 +1,6 @@
 #if UNITY_2017_1_OR_NEWER
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -388,6 +389,8 @@ namespace UnityGLTF
 				var pluginType = plugin.GetType().FullName;
 				// draw override toggle
 				EditorGUILayout.BeginHorizontal();
+				var hasWarning = plugin.Warning != null;
+				EditorGUI.BeginDisabledGroup(hasWarning);
 				var overridePlugin = overridePlugins.FirstOrDefault(x => x.typeName == pluginType);
 				var hasOverride = overridePlugin?.overrideEnabled ?? false;
 				var hasOverride2 = EditorGUILayout.ToggleLeft("", hasOverride, GUILayout.Width(16));
@@ -432,9 +435,21 @@ namespace UnityGLTF
 				EditorGUI.BeginDisabledGroup(false);
 				EditorGUILayout.LabelField(plugin.DisplayName);
 				EditorGUI.EndDisabledGroup();
+				EditorGUI.EndDisabledGroup();
 				EditorGUILayout.EndHorizontal();
+				// This assumes that the display name of a Plugin matches what extension it operates on.
+				// It's not correct for Plugins that operate on multiple extensions, or none at all.
+				if (hasWarning && t._extensions?.Find(x => x.name == plugin.DisplayName) != null)
+				{
+					EditorGUILayout.HelpBox(plugin.Warning, MessageType.Warning);
+					editorCache.TryGetValue(plugin.GetType(), out var editor);
+					CreateCachedEditor(plugin, null, ref editor);
+					editor.OnInspectorGUI();
+				}
 			}
 		}
+		
+		private static Dictionary<Type, Editor> editorCache = new Dictionary<Type, Editor>();
 
 		private static string SanitizePath(string subAssetName)
 		{

@@ -885,15 +885,9 @@ namespace UnityGLTF
 		    using (var stream = File.OpenRead(projectFilePath))
 		    {
 			    GLTFParser.ParseJson(stream, out var gltfRoot);
-			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
-			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
-			    loader.LoadUnreferencedImagesAndMaterials = true;
-			    loader.MaximumLod = _maximumLod;
-			    loader.IsMultithreaded = true;
-
-			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
-			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
-
+			    
+			    // Early writing of _extensions – if there are any import errors
+			    // we want to be able to show proper warnings/errors for them.
 			    if (gltfRoot.ExtensionsUsed != null)
 			    {
 				    _extensions = gltfRoot.ExtensionsUsed
@@ -910,6 +904,15 @@ namespace UnityGLTF
 			    {
 				    _extensions = new List<ExtensionInfo>();
 			    }
+			    
+			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
+			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
+			    loader.LoadUnreferencedImagesAndMaterials = true;
+			    loader.MaximumLod = _maximumLod;
+			    loader.IsMultithreaded = true;
+
+			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
+			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
 
 			    _textures = loader.TextureCache
 				    .Where(x => x != null)
