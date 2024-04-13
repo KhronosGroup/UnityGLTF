@@ -449,7 +449,6 @@ namespace UnityGLTF
 			{
 				if (!Equals(Mesh, other.Mesh)) return false;
 				if (Materials == null && other.Materials == null) return true;
-				if (!Equals(SkinnedMeshRenderer, other.SkinnedMeshRenderer)) return false;
 				if (!(Materials != null && other.Materials != null)) return false;
 				if (!Equals(Materials.Length, other.Materials.Length)) return false;
 				for (var i = 0; i < Materials.Length; i++)
@@ -470,10 +469,6 @@ namespace UnityGLTF
 				unchecked
 				{
 					var code = (Mesh != null ? Mesh.GetHashCode() : 0) * 397;
-					if (SkinnedMeshRenderer != null)
-					{
-						code = code ^ SkinnedMeshRenderer.GetHashCode() * 397;
-					}
 					if (Materials != null)
 					{
 						code = code ^ Materials.Length.GetHashCode() * 397;
@@ -1094,6 +1089,32 @@ namespace UnityGLTF
 				{
 					node.Mesh = ExportMesh(nodeTransform.name, uniquePrimitives);
 					RegisterPrimitivesWithNode(node, uniquePrimitives);
+
+					// Node - BlendShape Weights 
+					if (uniquePrimitives[0].SkinnedMeshRenderer)
+					{
+						var meshObj = uniquePrimitives[0].Mesh;
+						var smr = uniquePrimitives[0].SkinnedMeshRenderer;
+						// Only export the blendShapeWeights into the Node, when it's not the first SkinnedMeshRenderer with the same Mesh
+						// Because the weights already exported into the GltfMesh
+						if (smr && meshObj && _meshToBlendShapeAccessors.TryGetValue(meshObj, out var data) && smr != data.firstSkinnedMeshRenderer)
+						{
+							var blendShapeWeights = GetBlendShapeWeights(smr, meshObj);
+							if (blendShapeWeights != null)
+							{
+								if (data.weights != null)
+								{
+									// Check if the blendShapeWeights has any differences to the weights already exported into the gltfMesh
+									// When not, we don't need to set the same values to the Node Weights
+									bool isSame = true;
+									for (int i = 0; i < blendShapeWeights.Count; i++)
+										isSame &= System.Math.Abs(blendShapeWeights[i] - data.weights[i]) < double.Epsilon;
+									if (!isSame)
+										node.Weights = blendShapeWeights;
+								}
+							}
+						}
+					}
 				}
 			}
 
