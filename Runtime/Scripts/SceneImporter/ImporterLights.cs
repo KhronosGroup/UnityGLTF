@@ -9,10 +9,10 @@ namespace UnityGLTF
 {
 	public partial class GLTFSceneImporter
 	{
-		private void ConstructLights(GameObject nodeObj, Node node)
+		private bool ConstructLights(GameObject nodeObj, Node node)
 		{
 			var useLightsExtension = Context.TryGetPlugin<LightsPunctualImportContext>(out _);
-			if (!useLightsExtension) return;
+			if (!useLightsExtension) return false;
 			
 			// TODO this should be handled by the lights extension directly, not here
 			const string lightExt = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;
@@ -51,9 +51,11 @@ namespace UnityGLTF
 					newLight.spotAngle = (float) light.Spot.OuterConeAngle * 2 / Mathf.Deg2Rad;
 				}
 
-				// flip?
-				nodeObj.transform.localRotation *= Quaternion.Euler(0, 180, 0);
+				nodeObj.transform.localRotation *= SchemaExtensions.InvertDirection;
+				return true;
 			}
+
+			return false;
 		}
 	}
 }

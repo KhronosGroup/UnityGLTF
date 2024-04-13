@@ -1048,9 +1048,62 @@ namespace UnityGLTF
 				
 				await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
 
-				ConstructLights(nodeObj, node);
-				ConstructCamera(nodeObj, node);
+				var hasLight = ConstructLights(nodeObj, node);
+				var hasCamera = ConstructCamera(nodeObj, node);
 
+				// Cameras and lights have a different forward axis in glTF vs. Unity.
+				// Thus, when importing lights and cameras we have to flip them.
+				// To ensure children are still oriented correctly, we need to add an inbetween node
+				// That counters the transformation of the parent node.
+				// This way, animations can still correctly apply – e.g. if a camera is animated,
+				// the childs should move along. We can't just add the camera to an empty child and flip that.
+				if ((hasLight || hasCamera) && nodeObj.transform.childCount > 0 && node.Children?.Count > 0)
+				{
+					var flipQuaternion = Quaternion.Inverse(SchemaExtensions.InvertDirection);
+					
+					// Special case for hierarchy simplification and roundtrips: if we have
+					// - exactly one child
+					// - that's flipped 180°
+					// - and doesn't have any components
+					// - and the node doesn't have any extensions
+					// we can just remove that, it's likely an inbetween our own exporter has added.
+					// Theoretically, there are more conditions (not checked here):
+					// - it's not targeted by any animations
+					// - it's not the target of any glTF pointer or index
+					var firstNode = node.Children?.FirstOrDefault()?.Value;
+					var firstChild = nodeObj.transform.GetChild(0);
+					if (nodeObj.transform.childCount == 1 && node.Children?.Count == 1 &&
+					    (firstNode.Extensions == null || !firstNode.Extensions.Any()) &&
+					    firstChild.GetComponents<Component>().Length == 1 &&
+					    Quaternion.Angle(firstChild.localRotation, flipQuaternion) < 0.1f)
+					{
+						firstChild.localRotation = Quaternion.identity;
+						for (int i = 0; i < firstChild.childCount; i++)
+						{
+							firstChild.GetChild(i).SetParent(nodeObj.transform, true);
+						}
+						UnityEngine.Object.DestroyImmediate(firstChild.gameObject);
+					}
+					// Otherwise, we need to add an inbetween object
+					else
+					{
+						var childCount = nodeObj.transform.childCount;
+						var inbetween = new GameObject();
+						inbetween.name = node.Name + "-flipped";
+						// make sure this objects sits exactly where the nodeObj is
+						inbetween.transform.SetParent(nodeObj.transform, false);
+						inbetween.transform.SetParent(null, true);
+						// move all children to the inbetween object
+						for (int i = 0; i < childCount; i++)
+						{
+							nodeObj.transform.GetChild(i).SetParent(inbetween.transform, true);
+						}
+						// reparent and flip
+						inbetween.transform.SetParent(nodeObj.transform, true);
+						inbetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
+					}
+				}
+				
 				nodeObj.SetActive(true);
 			}
 						
@@ -1100,40 +1153,6 @@ namespace UnityGLTF
 			
 			progressStatus.NodeLoaded++;
 			progress?.Report(progressStatus);
-		}
-
-		private void ConstructCamera(GameObject nodeObj, Node node)
-		{
-			if (node.Camera == null)
-				return;
-
-			if (_options.CameraImport == CameraImportOption.None)
-				return;
-			
-			var camera = node.Camera.Value;
-			Camera unityCamera = null;
-			if (camera.Orthographic != null)
-			{
-				unityCamera = nodeObj.AddComponent<Camera>();
-				unityCamera.orthographic = true;
-				unityCamera.orthographicSize = Mathf.Max((float)camera.Orthographic.XMag, (float)camera.Orthographic.YMag);
-				unityCamera.farClipPlane = (float)camera.Orthographic.ZFar;
-				unityCamera.nearClipPlane = (float)camera.Orthographic.ZNear;
-			}
-			else if (camera.Perspective != null)
-			{
-				unityCamera = nodeObj.AddComponent<Camera>();
-				unityCamera.orthographic = false;
-				unityCamera.fieldOfView = (float)camera.Perspective.YFov * Mathf.Rad2Deg;
-				unityCamera.farClipPlane = (float)camera.Perspective.ZFar;
-				unityCamera.nearClipPlane = (float)camera.Perspective.ZNear;
-			}
-
-			if (!unityCamera)
-				return;
-			
-			if (_options.CameraImport == CameraImportOption.ImportAndCameraDisabled)
-				unityCamera.enabled = false;
 		}
 		
 		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
