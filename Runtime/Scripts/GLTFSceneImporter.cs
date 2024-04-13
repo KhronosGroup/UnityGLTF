@@ -1077,10 +1077,13 @@ namespace UnityGLTF
 					    firstChild.GetComponents<Component>().Length == 1 &&
 					    Quaternion.Angle(firstChild.localRotation, flipQuaternion) < 0.1f)
 					{
-						firstChild.localRotation = Quaternion.identity;
-						for (int i = 0; i < firstChild.childCount; i++)
+						firstChild.localRotation *= flipQuaternion;
+						var childCount = firstChild.childCount;
+						for (var i = 0; i < childCount; i++)
 						{
-							firstChild.GetChild(i).SetParent(nodeObj.transform, true);
+							// Index 0 is correct here, after removing the first child, the next one is now the first and we want to keep the order.
+							var child = firstChild.GetChild(0);
+							child.SetParent(nodeObj.transform, true);
 						}
 						UnityEngine.Object.DestroyImmediate(firstChild.gameObject);
 					}
@@ -1096,9 +1099,9 @@ namespace UnityGLTF
 						// move all children to the inbetween object
 						for (int i = 0; i < childCount; i++)
 						{
-							nodeObj.transform.GetChild(i).SetParent(inbetween.transform, true);
+							// Index 0 is correct here, after removing the first child, the next one is now the first and we want to keep the order.
+							nodeObj.transform.GetChild(0).SetParent(inbetween.transform, true);
 						}
-						// reparent and flip
 						inbetween.transform.SetParent(nodeObj.transform, true);
 						inbetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
 					}
