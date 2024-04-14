@@ -302,6 +302,12 @@ namespace UnityGLTF
 			{
 				imagePath = Path.ChangeExtension(imagePath, desiredExtension);
 			}
+			
+			// Avoid overwriting existing files
+			if (_imageInfos.Exists(i => i.outputPath == imagePath))
+			{
+				imagePath = Path.ChangeExtension(imagePath, texture.GetInstanceID() + Path.GetExtension(imagePath));
+			}
 
 			return imagePath;
 		}
