@@ -158,7 +158,7 @@ namespace UnityGLTF
 			    return;
 		    
 #if UNITY_2022_3_OR_NEWER
-		    if (!usingRenderGraph && m_RoughRefractionPassNonRG != null)
+		    if (m_RoughRefractionPassNonRG != null)
 		    {
 				renderer.EnqueuePass(m_RoughRefractionPassNonRG);
 		    }

@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - change: outdated warning about occlusion textures not being on the UV1 channel (support has improved)
 - add: visual indicator which extensions are required for a given file when the file has import errors
 - add: support for humanoid import for Meta avatar bone hierarchies
-- add: initial support for PolySpatial/MaterialX conversion for `PBRGraph` and `UnlitGraph`
+- add: initial support for PolySpatial/MaterialX conversion for `PBRGraph` and `UnlitGraph` (#725)
   - due to a Unity bug (IN-72885) emission colors and textures are currently not working correctly
 - add: Camera import support (#706)
 
