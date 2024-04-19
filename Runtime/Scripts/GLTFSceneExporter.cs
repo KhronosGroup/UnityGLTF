@@ -365,6 +365,7 @@ namespace UnityGLTF
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
 		private List<ImageInfo> _imageInfos;
+		private HashSet<string> _imageExportPaths;
 		private List<FileInfo> _fileInfos;
 		private HashSet<string> _fileNames;
 		private List<UniqueTexture> _textures;
@@ -640,6 +641,7 @@ namespace UnityGLTF
 			_fileNames = new HashSet<string>();
 			_exportedMaterials = new Dictionary<int, int>();
 			_textures = new List<UniqueTexture>();
+			_imageExportPaths = new HashSet<string>();
 
 			_buffer = new GLTFBuffer();
 			_bufferId = new BufferId
