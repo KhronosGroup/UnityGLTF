@@ -347,9 +347,7 @@ namespace UnityGLTF
 				DoubleSided = false,
 				PbrMetallicRoughness = new PbrMetallicRoughness
 				{
-					// We're explicitly not using the glTF default here – if NO material is set,
-					// it's much more reasonable to assume and display metallic=0.
-					MetallicFactor = 0, 
+					MetallicFactor = 1, 
 					RoughnessFactor = 1,
 				}
 			};
