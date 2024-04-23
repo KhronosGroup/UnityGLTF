@@ -278,6 +278,15 @@ namespace UnityGLTF.Plugins
                 GltfPropertyName = "pbrMetallicRoughness/roughnessFactor"
             };
             AddMap(roughness);
+            
+            var roughnessTex = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform)
+            {
+                PropertyNames = new[] { "metallicRoughnessTexture_ST", "_metallicRoughnessTexture_ST", "_MetallicRoughnessTexture_ST" },
+                GltfPropertyName = $"pbrMetallicRoughness/metallicRoughnessTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}",
+                GltfSecondaryPropertyName = $"pbrMetallicRoughness/metallicRoughnessTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}",
+                ExtensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME
+            };
+            AddMap(roughnessTex);	            
 
             var metallic = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
@@ -337,18 +346,6 @@ namespace UnityGLTF.Plugins
                 ExtensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME
             };
             AddMap(emissiveTexture);
-
-            /*var roughnessTex = new MaterialPointerPropertyMap
-            {
-                propertyNames = new[] { "_BumpMap_ST", "_NormalTexture_ST", "normalTexture_ST" },
-                isTexture = true,
-                isTextureTransform = true,
-                gltfPropertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}",
-                gltfSecondaryPropertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}",
-                extensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME
-            };
-            
-            maps.Add(roughnessTex);		*/
 
             var alphaCutoff = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
