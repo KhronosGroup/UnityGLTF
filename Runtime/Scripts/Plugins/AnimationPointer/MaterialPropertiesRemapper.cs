@@ -7,8 +7,21 @@ namespace UnityGLTF.Plugins
 {
     public class MaterialPointerPropertyMap
     {
-        public enum PropertyTypeOption {LinearColor, SRGBColor, Texture, LinearTexture, TextureTransform, Float}
-        public enum CombineResultType { SameAsPrimary, Override}
+        public enum PropertyTypeOption
+        {
+            LinearColor,
+            SRGBColor,
+            Texture,
+            LinearTexture,
+            TextureTransform, 
+            Float
+        }
+
+        public enum CombineResultType
+        {
+            SameAsPrimary, 
+            Override
+        }
         
         public PropertyTypeOption PropertyType = PropertyTypeOption.Float;
         
@@ -128,10 +141,14 @@ namespace UnityGLTF.Plugins
 
     public class MaterialPropertiesRemapper
     {
-        public enum ImportExportUsageOption {ImportOnly, ExportOnly, ImportAndExport}
+        public enum ImportExportUsageOption
+        {
+            ImportOnly, 
+            ExportOnly, 
+            ImportAndExport
+        }
         
-        private Dictionary<string, MaterialPointerPropertyMap> importMaps =
-            new Dictionary<string, MaterialPointerPropertyMap>();
+        private Dictionary<string, MaterialPointerPropertyMap> importMaps = new Dictionary<string, MaterialPointerPropertyMap>();
         private Dictionary<string,MaterialPointerPropertyMap> exportMaps = new Dictionary<string,MaterialPointerPropertyMap> ();
 
         public void AddMap(MaterialPointerPropertyMap map, ImportExportUsageOption importExport = ImportExportUsageOption.ImportAndExport)
