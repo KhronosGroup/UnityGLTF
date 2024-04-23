@@ -472,18 +472,44 @@ namespace UnityGLTF.Plugins
             };
             AddMap(specularColorFactor);
 
+            var clearcoatFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+            {
+                PropertyNames = new[] { "_ClearcoatFactor", "clearcoatFactor" },
+                GltfPropertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatFactor)}",
+                ExtensionName = KHR_materials_clearcoat_Factory.EXTENSION_NAME,
+            };
+            AddMap(clearcoatFactor);
+            
+            var clearcoatRoughnessFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+            {
+                PropertyNames = new[] { "_ClearcoatRoughnessFactor", "clearcoatRoughnessFactor" },
+                GltfPropertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatRoughnessFactor)}",
+                ExtensionName = KHR_materials_clearcoat_Factory.EXTENSION_NAME,
+            };
+            AddMap(clearcoatRoughnessFactor);
 
-            // TODO KHR_materials_clearcoat
-            // case "_ClearcoatFactor":
-            // case "clearcoatFactor":
-            // 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatFactor)}";
-            //	extensionName = KHR_materials_clearcoat_Factory.EXTENSION_NAME;
-            // 	break;
-            // case "_ClearcoatRoughnessFactor":
-            // case "clearcoatRoughnessFactor":
-            // 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatRoughnessFactor)}";
-            //	extensionName = KHR_materials_clearcoat_Factory.EXTENSION_NAME;
-            // 	break;
+            var clearcoatTexture = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform)
+            {
+                PropertyNames = new[] { "_clearcoatTexture_ST", "clearcoatTexture_ST", "ClearcoatTexture_ST" },
+                GltfPropertyName =
+                    $"{nameof(KHR_materials_clearcoat.clearcoatTexture)}/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}",
+                GltfSecondaryPropertyName =
+                    $"{nameof(KHR_materials_clearcoat.clearcoatTexture)}/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}",
+                ExtensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME
+            };
+            AddMap(clearcoatTexture);            
+
+            var clearcoatRoughnessTexture = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform)
+            {
+                PropertyNames = new[] { "_clearcoatRoughnessTexture_ST", "clearcoatRoughnessTexture_ST", "ClearcoatRoughnessTexture_ST" },
+                GltfPropertyName =
+                    $"{nameof(KHR_materials_clearcoat.clearcoatRoughnessTexture)}/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}",
+                GltfSecondaryPropertyName =
+                    $"{nameof(KHR_materials_clearcoat.clearcoatRoughnessTexture)}/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}",
+                ExtensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME
+            };
+            AddMap(clearcoatRoughnessTexture);               
+            
 
             // TODO KHR_materials_sheen
             // case "_SheenColorFactor":
