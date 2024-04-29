@@ -1424,7 +1424,8 @@ namespace UnityGLTF
 		{
 			if (_options.ThrowOnLowMemory)
 			{
-				_memoryChecker.ThrowIfOutOfMemory();
+				await _memoryChecker.YieldOnOutOfMemory();
+				// _memoryChecker.ThrowIfOutOfMemory();
 			}
 
 			if (_options.AsyncCoroutineHelper != null)

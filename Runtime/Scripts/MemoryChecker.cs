@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using UnityEngine;
 #if WINDOWS_UWP
 using Windows.System;
@@ -32,6 +33,15 @@ namespace UnityGLTF
 			if (outOfMemory)
 			{
 				throw new OutOfMemoryException();
+			}
+		}
+
+		public async Task YieldOnOutOfMemory()
+		{
+			if (outOfMemory)
+			{
+				await Task.Delay(TimeSpan.FromSeconds(3f));
+				outOfMemory = false;
 			}
 		}
 
