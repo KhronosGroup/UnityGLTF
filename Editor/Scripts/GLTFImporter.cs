@@ -317,65 +317,95 @@ namespace UnityGLTF
                 // Remove empty roots
                 if (gltfScene && _removeEmptyRootObjects)
                 {
+	                // To avoid removing a Root object which is animated, we collect from all animation clips the paths that are animated.
+	                var pathBindings = new List<string>();
+	                foreach (var aniClip in animations)
+	                {
+		                var bindings = AnimationUtility.GetCurveBindings(aniClip);
+		                var distinctPaths = bindings.Select( x => x.path).Distinct();
+						pathBindings.AddRange(distinctPaths);
+	                }
+	                pathBindings = pathBindings.Distinct().ToList();
+	                
                     var t = gltfScene.transform;
                     var existingAnimator = t.GetComponent<Animator>();
                     var hadAnimator = (bool)existingAnimator;
                     var existingAvatar = existingAnimator ? existingAnimator.avatar : default;
+                    var rootIsAnimated = false;
                     if (existingAnimator)
-	                    DestroyImmediate(existingAnimator);
+                    {
+	                    var firstChildName = t.childCount > 0 ? t.GetChild(0).gameObject.name : "";
+	                    // check if the object is animated, when true, cancel here
+						rootIsAnimated = firstChildName != "" && pathBindings.Contains(firstChildName);
+						
+						if (!rootIsAnimated)
+							DestroyImmediate(existingAnimator);
+                    }
 
                     var animationPathPrefix = "";
                     var originalImportName = gltfScene.name;
-                    while (
-                        gltfScene.transform.childCount == 1 &&
-                        gltfScene.GetComponents<Component>().Length == 1) // Transform component
+                    if (!rootIsAnimated)
                     {
-                        var parent = gltfScene;
-                        gltfScene = gltfScene.transform.GetChild(0).gameObject;
-                        var importName = gltfScene.name;
-                        t = gltfScene.transform;
-                        t.parent = null; // To keep transform information in the new parent
-                        DestroyImmediate(parent); // Get rid of the parent
-                        if (animationPathPrefix != "")
-	                        animationPathPrefix += "/";
-                        animationPathPrefix += importName;
-                    }
-                    animationPathPrefix += "/";
+	                    while (
+		                    gltfScene.transform.childCount == 1 &&
+		                    gltfScene.GetComponents<Component>().Length == 1) // Transform component
+	                    {
+		                    // check if the object is animated, when true, cancel here
+		                    if (pathBindings.Contains(animationPathPrefix != ""
+			                        ? $"{animationPathPrefix}/{gltfScene.transform.GetChild(0).gameObject.name}"
+			                        : gltfScene.transform.GetChild(0).gameObject.name))
+			                    break;
+		                    
+		                    var parent = gltfScene;
+		                    gltfScene = gltfScene.transform.GetChild(0).gameObject;
+		                    var importName = gltfScene.name;
 
-                    // Re-add animator if it was removed
-                    if (hadAnimator)
-					{
-	                    var newAnimator = gltfScene.AddComponent<Animator>();
-	                    newAnimator.avatar = existingAvatar;
-					}
 
-                    // Re-target animation clips - when we strip the root, all animations also change and have a different path now.
-                    if (animations != null)
-					{
-						foreach (var clip in animations)
-						{
-							if (clip == null) continue;
+		                    t = gltfScene.transform;
+		                    t.parent = null; // To keep transform information in the new parent
+		                    DestroyImmediate(parent); // Get rid of the parent
+		                    if (animationPathPrefix != "")
+			                    animationPathPrefix += "/";
+		                    animationPathPrefix += importName;
+	                    }
 
-							// change all animation clip targets
-							var bindings = AnimationUtility.GetCurveBindings(clip);
-							var curves = new AnimationCurve[bindings.Length];
-							var newBindings = new EditorCurveBinding[bindings.Length];
-							for (var index = 0; index < bindings.Length; index++)
-							{
-								var binding = bindings[index];
-								curves[index] = AnimationUtility.GetEditorCurve(clip, binding);
+	                    animationPathPrefix += "/";
 
-								var newBinding = bindings[index];
-								if (binding.path.StartsWith(animationPathPrefix, StringComparison.Ordinal))
-									newBinding.path = binding.path.Substring(animationPathPrefix.Length);
-								newBindings[index] = newBinding;
-							}
+	                    // Re-add animator if it was removed
+	                    if (hadAnimator)
+	                    {
+		                    var newAnimator = gltfScene.AddComponent<Animator>();
+		                    newAnimator.avatar = existingAvatar;
+	                    }
 
-							var emptyCurves = new AnimationCurve[curves.Length];
-							AnimationUtility.SetEditorCurves(clip, bindings, emptyCurves);
-							AnimationUtility.SetEditorCurves(clip, newBindings, curves);
-						}
-					}
+	                    // Re-target animation clips - when we strip the root, all animations also change and have a different path now.
+	                    if (animations != null)
+	                    {
+		                    foreach (var clip in animations)
+		                    {
+			                    if (clip == null) continue;
+
+			                    // change all animation clip targets
+			                    var bindings = AnimationUtility.GetCurveBindings(clip);
+			                    var curves = new AnimationCurve[bindings.Length];
+			                    var newBindings = new EditorCurveBinding[bindings.Length];
+			                    for (var index = 0; index < bindings.Length; index++)
+			                    {
+				                    var binding = bindings[index];
+				                    curves[index] = AnimationUtility.GetEditorCurve(clip, binding);
+
+				                    var newBinding = bindings[index];
+				                    if (binding.path.StartsWith(animationPathPrefix, StringComparison.Ordinal))
+					                    newBinding.path = binding.path.Substring(animationPathPrefix.Length);
+				                    newBindings[index] = newBinding;
+			                    }
+
+			                    var emptyCurves = new AnimationCurve[curves.Length];
+			                    AnimationUtility.SetEditorCurves(clip, bindings, emptyCurves);
+			                    AnimationUtility.SetEditorCurves(clip, newBindings, curves);
+		                    }
+	                    }
+                    } // (!rootIsAnimated)
 
                     gltfScene.name = originalImportName;
                 }
