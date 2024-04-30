@@ -319,11 +319,14 @@ namespace UnityGLTF
                 {
 	                // To avoid removing a Root object which is animated, we collect from all animation clips the paths that are animated.
 	                var pathBindings = new List<string>();
-	                foreach (var aniClip in animations)
+	                if (animations != null)
 	                {
-		                var bindings = AnimationUtility.GetCurveBindings(aniClip);
-		                var distinctPaths = bindings.Select( x => x.path).Distinct();
-						pathBindings.AddRange(distinctPaths);
+		                foreach (var aniClip in animations)
+		                {
+			                var bindings = AnimationUtility.GetCurveBindings(aniClip);
+			                var distinctPaths = bindings.Select( x => x.path).Distinct();
+							pathBindings.AddRange(distinctPaths);
+		                }
 	                }
 	                pathBindings = pathBindings.Distinct().ToList();
 	                
