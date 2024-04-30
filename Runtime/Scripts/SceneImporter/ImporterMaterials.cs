@@ -330,8 +330,28 @@ namespace UnityGLTF
 					}
 
 					mapper.Material.renderQueue = 3000;
-					mapper.Material.SetKeyword("_VOLUME_TRANSMISSION", true);
-					mapper.Material.SetFloat("_VOLUME_TRANSMISSION_ON", 1f);
+					bool hasDispersion = false;
+					if (transmissionMapper is IDispersionMap dispersionMapper)
+					{
+						var dispersion = GetDispersion(def);
+						if (dispersion != null)
+						{
+							hasDispersion = true;
+							dispersionMapper.Dispersion = dispersion.dispersion;
+						}
+					}
+
+					if (hasDispersion)
+					{
+						mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ANDDISPERSION");
+						mapper.Material.SetFloat("_VOLUME_TRANSMISSION", 2f);
+						
+					}
+					else
+					{
+						mapper.Material.EnableKeyword("_VOLUME_TRANSMISSION_ON");
+						mapper.Material.SetFloat("_VOLUME_TRANSMISSION", 1f);
+					}
 				}
 			}
 
@@ -887,6 +907,17 @@ namespace UnityGLTF
 			}
 			return null;
 		}
+		
+		protected virtual KHR_materials_dispersion GetDispersion(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_dispersion_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_dispersion_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_dispersion) extension;
+			}
+			return null;
+		}
+
 
 		protected virtual KHR_materials_volume GetVolume(GLTFMaterial def)
 		{

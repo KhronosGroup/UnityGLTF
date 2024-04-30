@@ -288,6 +288,13 @@ namespace UnityGLTF.Plugins
             };
             AddMap(roughnessTex);	            
 
+            var dispersion = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+            {
+                PropertyNames = new[] { "dispersion"},
+                GltfPropertyName = "dispersion"
+            };
+            AddMap(dispersion);            
+            
             var metallic = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
             {
                 PropertyNames = new[] { "_Metallic", "_MetallicFactor", "metallicFactor" },

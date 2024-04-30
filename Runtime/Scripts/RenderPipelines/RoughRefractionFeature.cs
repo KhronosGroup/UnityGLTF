@@ -67,6 +67,20 @@ namespace UnityGLTF
 			    m_destination?.Release();
 		    }
 #else
+		    
+		    public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+		    {
+			    if (renderingData.cameraData.isPreviewCamera)
+				    return;
+			    
+			    Setup(renderingData.cameraData.renderer.cameraColorTarget, destination, m_DownsamplingMethod);
+				     
+#pragma warning disable 672
+#pragma warning disable 618
+			    base.Execute(context, ref renderingData);
+#pragma warning restore 672
+#pragma warning restore 618
+		    }		    
 	        public new void Setup(RenderTargetIdentifier source, RenderTargetHandle destination, Downsampling downsampling)
 	        {
 	            base.Setup(source, destination, downsampling);
@@ -179,12 +193,13 @@ namespace UnityGLTF
 		    var identifier = new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
 		    m_RoughRefractionPassNonRG.Setup(identifier, m_OpaqueColor, downsampling);
 #else
+		    
 	        m_RoughRefractionPassNonRG.Setup(renderer.cameraColorTarget, m_OpaqueColor, downsampling);
 #endif
 	        renderer.EnqueuePass(m_RoughRefractionPassNonRG);
 #endif
 	    }
-
+	    
 #if UNITY_2022_3_OR_NEWER
 		public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
 		{
