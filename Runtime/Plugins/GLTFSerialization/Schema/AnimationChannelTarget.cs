@@ -89,6 +89,7 @@ namespace GLTF.Schema
 		translation,
 		rotation,
 		scale,
-		weights
+		weights,
+		pointer
 	}
 }

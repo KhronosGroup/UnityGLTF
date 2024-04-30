@@ -1,7 +1,17 @@
+using GLTF.Utilities;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace GLTF.Schema
 {
+	/// <summary>
+	/// Additional interface for Root Extensions to support custom animation pointers
+	/// </summary>
+	public interface IImportAnimationPointerRootExtension
+	{
+		bool TryGetImportAnimationPointerData(GLTFRoot root, PointerPath pointerPath, out AnimationPointerData pointerData);
+	}
+	
 	/// <summary>
 	/// General interface for extensions
 	/// </summary>

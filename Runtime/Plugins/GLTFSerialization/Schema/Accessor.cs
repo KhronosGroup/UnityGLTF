@@ -1390,6 +1390,32 @@ namespace GLTF.Schema
 		MAT4
 	}
 
+	public static class GLTFAccessorAttributeTypeExtensions
+	{
+		public static int ComponentCount(this GLTFAccessorAttributeType attrType)
+		{
+			switch (attrType)
+			{
+				case GLTFAccessorAttributeType.SCALAR:
+					return 1;
+				case GLTFAccessorAttributeType.VEC2:
+					return 2;
+				case GLTFAccessorAttributeType.VEC3:
+					return 3;
+				case GLTFAccessorAttributeType.VEC4:
+					return 4;
+				case GLTFAccessorAttributeType.MAT2:
+					return 4;
+				case GLTFAccessorAttributeType.MAT3:
+					return 9;
+				case GLTFAccessorAttributeType.MAT4:
+					return 16;
+			}
+
+			return 0;
+		}
+	}
+
     /// <summary>
 	[StructLayout(LayoutKind.Explicit)]
 	public struct NumericArray

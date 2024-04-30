@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GLTF.Schema;
 using GLTF.Schema.KHR_lights_punctual;
+using GLTF.Utilities;
 using UnityEngine;
 using UnityGLTF.Extensions;
 using UnityGLTF.JsonPointer;
@@ -16,32 +17,12 @@ namespace UnityGLTF
 		internal readonly List<IJsonPointerResolver> pointerResolvers = new List<IJsonPointerResolver>();
 		private readonly KHR_animation_pointer_Resolver animationPointerResolver = new KHR_animation_pointer_Resolver();
 
-#region Shader Property Names
-		// ReSharper disable InconsistentNaming
-
-		private static readonly int _MainTex = Shader.PropertyToID("_MainTex");
-		private static readonly int _BaseMap = Shader.PropertyToID("_BaseMap");
-		private static readonly int _BaseColorTexture = Shader.PropertyToID("_BaseColorTexture");
-		private static readonly int baseColorTexture = Shader.PropertyToID("baseColorTexture");
-		private static readonly int _EmissionMap = Shader.PropertyToID("_EmissionMap");
-		private static readonly int _EmissiveTexture = Shader.PropertyToID("_EmissiveTexture");
-		private static readonly int emissiveTexture = Shader.PropertyToID("emissiveTexture");
-		private static readonly int _BumpMap = Shader.PropertyToID("_BumpMap");
-		private static readonly int _NormalTexture = Shader.PropertyToID("_NormalTexture");
-		private static readonly int normalTexture = Shader.PropertyToID("normalTexture");
-		private static readonly int _OcclusionMap = Shader.PropertyToID("_OcclusionMap");
-		private static readonly int _OcclusionTexture = Shader.PropertyToID("_OcclusionTexture");
-		private static readonly int occlusionTexture = Shader.PropertyToID("occlusionTexture");
-
-		// ReSharper restore InconsistentNaming
-#endregion
-
 		public void RegisterResolver(IJsonPointerResolver resolver)
 		{
 			if (!pointerResolvers.Contains(resolver))
 				pointerResolvers.Add(resolver);
 		}
-
+		
 		/// <summary>
 		/// AddAnimationData should be called within the <see cref="ExportContext.AfterSceneExport"/> event.
 		/// <remarks>
@@ -66,7 +47,7 @@ namespace UnityGLTF
 		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
 		{
 			if (!animatedObject) return;
-
+			
 			// TODO should skip property switches that are not supported without KHR_animation_pointer
 			// TODO should probably start with the transform check below and stop afterwards if KHR_animation_pointer is off
 
@@ -95,204 +76,40 @@ namespace UnityGLTF
 			string extensionName = null;
 			var propertyType = values[0]?.GetType();
 
+			var animationPointerExportContext = _plugins.FirstOrDefault(x => x is AnimationPointerExportContext) as AnimationPointerExportContext;
+			
 			switch (animatedObject)
 			{
 				case Material material:
 					// Debug.Log("material: " + material + ", propertyName: " + propertyName);
 					// mapping from known Unity property names to glTF property names
-					switch (propertyName)
+					if (animationPointerExportContext == null ||
+					    animationPointerExportContext.materialPropertiesRemapper == null)
 					{
-						case "_Color":
-						case "_BaseColor":
-						case "_BaseColorFactor":
-						case "baseColorFactor":
-							propertyName = "pbrMetallicRoughness/baseColorFactor";
-							convertToLinearColor = true;
-							break;
-						case "_Smoothness":
-						case "_Glossiness":
-							propertyName = "pbrMetallicRoughness/roughnessFactor";
-							flipValueRange = true;
-							break;
-						case "_Roughness":
-						case "_RoughnessFactor":
-						case "roughnessFactor":
-							propertyName = "pbrMetallicRoughness/roughnessFactor";
-							break;
-						case "_Metallic":
-						case "_MetallicFactor":
-						case "metallicFactor":
-							propertyName = "pbrMetallicRoughness/metallicFactor";
-							break;
-						case "_MainTex_ST":
-						case "_BaseMap_ST":
-						case "_BaseColorTexture_ST":
-						case "baseColorTexture_ST":
-							if (!(material.HasProperty(_MainTex) && material.GetTexture(_MainTex)) &&
-							    !(material.HasProperty(_BaseMap) && material.GetTexture(_BaseMap)) &&
-							    !(material.HasProperty(_BaseColorTexture) && material.GetTexture(_BaseColorTexture)) &&
-							    !(material.HasProperty(baseColorTexture) && material.GetTexture(baseColorTexture))) return;
-							propertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
-							secondPropertyName = $"pbrMetallicRoughness/baseColorTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
-							isTextureTransform = true;
-							extensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME;
-							break;
-						case "_EmissionColor":
-						case "_EmissiveFactor":
-						case "emissiveFactor":
-							propertyName = "emissiveFactor";
-							secondPropertyName = $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}";
-							extensionName = KHR_materials_emissive_strength_Factory.EXTENSION_NAME;
-							keepColorAlpha = false;
-							convertToLinearColor = true;
-							break;
-						case "_EmissionMap_ST":
-						case "_EmissiveTexture_ST":
-						case "emissiveTexture_ST":
-							if (!(material.HasProperty(_EmissionMap) && material.GetTexture(_EmissionMap)) &&
-							    !(material.HasProperty(_EmissiveTexture) && material.GetTexture(_EmissiveTexture)) &&
-							    !(material.HasProperty(emissiveTexture) && material.GetTexture(emissiveTexture))) return;
-							propertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
-							secondPropertyName = $"emissiveTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
-							isTextureTransform = true;
-							extensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME;
-							break;
-						case "_Cutoff":
-						case "_AlphaCutoff":
-						case "alphaCutoff":
-							propertyName = "alphaCutoff";
-							break;
-						case "_BumpScale":
-						case "_NormalScale":
-						case "normalScale":
-						case "normalTextureScale":
-							propertyName = "normalTexture/scale";
-							break;
-						case "_BumpMap_ST":
-						case "_NormalTexture_ST":
-						case "normalTexture_ST":
-							if (!(material.HasProperty(_BumpMap) && material.GetTexture(_BumpMap)) &&
-							    !(material.HasProperty(_NormalTexture) && material.GetTexture(_NormalTexture)) &&
-							    !(material.HasProperty(normalTexture) && material.GetTexture(normalTexture))) return;
-							propertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
-							secondPropertyName = $"normalTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
-							isTextureTransform = true;
-							extensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME;
-							break;
-						case "_OcclusionStrength":
-						case "occlusionStrength":
-						case "occlusionTextureStrength":
-							propertyName = "occlusionTexture/strength";
-							break;
-						case "_OcclusionMap_ST":
-						case "_OcclusionTexture_ST":
-						case "occlusionTexture_ST":
-							if (!(material.HasProperty(_OcclusionMap) && material.GetTexture(_OcclusionMap)) &&
-							    !(material.HasProperty(_OcclusionTexture) && material.GetTexture(_OcclusionTexture)) &&
-							    !(material.HasProperty(occlusionTexture) && material.GetTexture(occlusionTexture))) return;
-							propertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.SCALE}";
-							secondPropertyName = $"occlusionTexture/extensions/{ExtTextureTransformExtensionFactory.EXTENSION_NAME}/{ExtTextureTransformExtensionFactory.OFFSET}";
-							isTextureTransform = true;
-							extensionName = ExtTextureTransformExtensionFactory.EXTENSION_NAME;
-							break;
-
-						// TODO metallic/roughness _ST
-
-						// KHR_materials_transmission
-						case "_TransmissionFactor":
-						case "transmissionFactor":
-							propertyName = $"extensions/{KHR_materials_transmission_Factory.EXTENSION_NAME}/{nameof(KHR_materials_transmission.transmissionFactor)}";
-							extensionName = KHR_materials_transmission_Factory.EXTENSION_NAME;
-							break;
-
-						// KHR_materials_volume
-						case "_ThicknessFactor":
-						case "thicknessFactor":
-							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.thicknessFactor)}";
-							extensionName = KHR_materials_volume_Factory.EXTENSION_NAME;
-							break;
-						case "_AttenuationDistance":
-						case "attenuationDistance":
-							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.attenuationDistance)}";
-							extensionName = KHR_materials_volume_Factory.EXTENSION_NAME;
-							break;
-						case "_AttenuationColor":
-						case "attenuationColor":
-							propertyName = $"extensions/{KHR_materials_volume_Factory.EXTENSION_NAME}/{nameof(KHR_materials_volume.attenuationColor)}";
-							extensionName = KHR_materials_volume_Factory.EXTENSION_NAME;
-							keepColorAlpha = false;
-							break;
-
-						// KHR_materials_ior
-						case "_IOR":
-						case "ior":
-							propertyName = $"extensions/{KHR_materials_ior_Factory.EXTENSION_NAME}/{nameof(KHR_materials_ior.ior)}";
-							extensionName = KHR_materials_ior_Factory.EXTENSION_NAME;
-							break;
-
-						// KHR_materials_iridescence
-						case "_IridescenceFactor":
-						case "iridescenceFactor":
-							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceFactor)}";
-							extensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME;
-							break;
-						case "_IridescenceIor":
-						case "iridescenceIor":
-							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceIor)}";
-							extensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME;
-							break;
-						case "_IridescenceThicknessMinimum":
-						case "iridescenceThicknessMinimum":
-							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMinimum)}";
-							extensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME;
-							break;
-						case "_IridescenceThicknessMaximum":
-						case "iridescenceThicknessMaximum":
-							propertyName = $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMaximum)}";
-							extensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME;
-							break;
-
-						// KHR_materials_specular
-						case "_SpecularFactor":
-						case "specularFactor":
-							propertyName = $"extensions/{KHR_materials_specular_Factory.EXTENSION_NAME}/{nameof(KHR_materials_specular.specularFactor)}";
-							extensionName = KHR_materials_specular_Factory.EXTENSION_NAME;
-							break;
-						case "_SpecularColorFactor":
-						case "specularColorFactor":
-							propertyName = $"extensions/{KHR_materials_specular_Factory.EXTENSION_NAME}/{nameof(KHR_materials_specular.specularColorFactor)}";
-							extensionName = KHR_materials_specular_Factory.EXTENSION_NAME;
-							keepColorAlpha = false;
-							break;
-
-						// TODO KHR_materials_clearcoat
-						// case "_ClearcoatFactor":
-						// case "clearcoatFactor":
-						// 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatFactor)}";
-						//	extensionName = KHR_materials_clearcoat_Factory.EXTENSION_NAME;
-						// 	break;
-						// case "_ClearcoatRoughnessFactor":
-						// case "clearcoatRoughnessFactor":
-						// 	propertyName = $"extensions/{KHR_materials_clearcoat_Factory.EXTENSION_NAME}/{nameof(KHR_materials_clearcoat.clearcoatRoughnessFactor)}";
-						//	extensionName = KHR_materials_clearcoat_Factory.EXTENSION_NAME;
-						// 	break;
-
-						// TODO KHR_materials_sheen
-						// case "_SheenColorFactor":
-						// case "sheenColorFactor":
-						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenColorFactor)}";
-						//	extensionName = KHR_materials_sheen_Factory.EXTENSION_NAME;
-						//	keepColorAlpha = false;
-						// 	break;
-						// case "_SheenRoughnessFactor":
-						// case "sheenRoughnessFactor":
-						// 	propertyName = $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenRoughnessFactor)}";
-						//	extensionName = KHR_materials_sheen_Factory.EXTENSION_NAME;
-						// 	break;
-						default:
-							Debug.Log(LogType.Warning, "Unknown property name on Material " + material + ": " + propertyName);
-							break;
+						if (animationPointerExportContext == null)
+							Debug.Log(LogType.Error, "No AnimationPointerExportContext found in GLTFSceneExporter. Skipping animation");
+						else
+							Debug.Log(LogType.Error, "No MaterialPropertiesRemapper found in AnimationPointerExportContext. Skipping animation");
+						return;
 					}
+					
+					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material, propertyName, out MaterialPointerPropertyMap map))
+					{
+						Debug.Log(LogType.Warning, "Unknown property name on Material " + material + ": " + propertyName);
+
+						return;
+					}
+
+					secondPropertyName = map.GltfSecondaryPropertyName;
+					propertyName = map.GltfPropertyName;
+					extensionName = map.ExtensionName;
+					
+					flipValueRange = map.ExportFlipValueRange;
+					valueMultiplier = map.ExportValueMultiplier == 1f ? null : map.ExportValueMultiplier;
+					isTextureTransform = map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform;
+					keepColorAlpha = map.ExportKeepColorAlpha;
+					convertToLinearColor = map.ExportConvertToLinearColor;
+					
 					break;
 				case Light light:
 					extensionName = KHR_lights_punctualExtensionFactory.EXTENSION_NAME;
@@ -312,7 +129,7 @@ namespace UnityGLTF
 							propertyName = $"spot/outerConeAngle";
 							break;
 						case "m_InnerSpotAngle":
-							valueMultiplier = Mathf.Deg2Rad / 2;
+							valueMultiplier = Mathf.Deg2Rad / 2 * 0.8f;
 							propertyName = $"spot/innerConeAngle";
 							break;
 						case "m_Range":

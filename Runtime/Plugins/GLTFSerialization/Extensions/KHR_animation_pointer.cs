@@ -22,6 +22,12 @@ namespace UnityGLTF.Extensions
 			if (path == null && clonedFrom != null) path = clonedFrom.path;
 			return new JProperty(EXTENSION_NAME, new JObject(new JProperty("pointer", path)));
 		}
+		
+		public void Deserialize(GLTFRoot root, JProperty extensionToken)
+		{
+			var extensionObject = (JObject) extensionToken.Value;
+			path = (string) extensionObject["pointer"];
+		}
 
 		public IExtension Clone(GLTFRoot root)
 		{
