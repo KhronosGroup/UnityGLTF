@@ -4,13 +4,16 @@ using System.Threading.Tasks;
 using GLTF.Schema;
 using GLTF.Utilities;
 using Unity.Collections;
-using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Build;
+#endif
 
 namespace UnityGLTF
 {
@@ -164,9 +167,6 @@ namespace UnityGLTF
 						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear);
 						texture = resultTextureData.texture;
 						texture.name = textureName;
-
-						ktxTexture.Dispose();
-
 					}
 					else
 #endif
@@ -210,7 +210,11 @@ namespace UnityGLTF
 			if (isNormal && Context.SourceImporter != null)
 			{
 				BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+#if UNITY_2023_1_OR_NEWER
+				if (PlayerSettings.GetNormalMapEncoding(NamedBuildTarget.FromBuildTargetGroup(activeTargetGroup)) == NormalMapEncoding.DXT5nm)
+#else				
 				if (PlayerSettings.GetNormalMapEncoding(activeTargetGroup) == NormalMapEncoding.DXT5nm)
+#endif
 				{
 					convertToDxt5nmFormat = true;
 				}
@@ -421,6 +425,9 @@ namespace UnityGLTF
 			{
 				int sourceId = GetTextureSourceId(texture);
 				GLTFImage image = _gltfRoot.Images[sourceId];
+				
+				bool isFirstInstance = _assetCache.ImageCache[sourceId] == null;
+				
 				await ConstructImage(image, sourceId, markGpuOnly, isLinear, isNormal);
 
 				var source = _assetCache.ImageCache[sourceId];
@@ -448,7 +455,7 @@ namespace UnityGLTF
 							break;
 						default:
 							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
-							desiredFilterMode = FilterMode.Trilinear;
+							desiredFilterMode = FilterMode.Bilinear;
 							break;
 					}
 
@@ -473,9 +480,16 @@ namespace UnityGLTF
 				}
 				else
 				{
-					desiredFilterMode = FilterMode.Trilinear;
+					desiredFilterMode = FilterMode.Bilinear;
 					desiredWrapModeS = TextureWrapMode.Repeat;
 					desiredWrapModeT = TextureWrapMode.Repeat;
+				}
+
+				if (isFirstInstance)
+				{
+					source.filterMode = desiredFilterMode;
+					source.wrapModeU = desiredWrapModeS;
+					source.wrapModeV = desiredWrapModeT;		
 				}
 
 				var matchSamplerState = source.filterMode == desiredFilterMode && source.wrapModeU == desiredWrapModeS && source.wrapModeV == desiredWrapModeT;

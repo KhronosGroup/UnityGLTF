@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.11.0-rc] - 2024-04-14
+
+- fix: correct disposal of toktx textures after API change in upstream dependency (#710)
+- fix: incorrect blendshape tangents when using sparse accessor export
+- fix: wrong texture import offset when importing KTX2 textures without texture transforms (#709)
+- fix: use of draco with tangents and creating the draco attribute map with all the other mesh attributes (#726)
+- fix: export of multiple instances of the same skinned mesh not reusing attributes correctly
+- fix: extra memory usage due to unnecessary duplication of the first imported instance of a texture (#713)
+- fix: one case of default texture import filter mode being set to TriLinear instead of Bilinear
+- change: outdated warning about occlusion textures not being on the UV1 channel (support has improved)
+- add: visual indicator which extensions are required for a given file when the file has import errors
+- add: support for humanoid import for Meta avatar bone hierarchies
+- add: initial support for PolySpatial/MaterialX conversion for `PBRGraph` and `UnlitGraph` (#725)
+  - due to a Unity bug (IN-72885) emission colors and textures are currently not working correctly
+- add: Camera import support (#706)
+
+## [2.10.2-rc] - 2024-03-21
+- fix: Exception caused by animation targeting a missing material
+
+## [2.10.1-rc] - 2024-03-11
+- add: `OnAfterMeshExport` callback hook which allows adding extensions to the exported gltf mesh
+
+## [2.10.0-rc.2] - 2024-03-05
+- fix: add `com.unity.mathematics` as required dependency
+- fix: added null check in mesh data preparation code to prevent exception for files without nodes (e.g. just materials)
+
 ## [2.10.0-rc] - 2024-03-04
 - fix: GLTFRecorder issue where resulting animation would have linear interpolation for cases where a jump was expected
 - fix: GLTFSettings toolbar active index correctly stored in session now

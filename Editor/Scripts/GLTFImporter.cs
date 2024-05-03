@@ -24,6 +24,7 @@ using System;
 using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF;
+using UnityEditor.Build;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
@@ -96,6 +97,7 @@ namespace UnityGLTF
 	    [SerializeField] internal BlendShapeFrameWeightSetting _blendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
         [SerializeField] internal GLTFImporterNormals _importNormals = GLTFImporterNormals.Import;
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
+        [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
@@ -834,7 +836,15 @@ namespace UnityGLTF
         private static void UpdateCustomDependencies()
         {
 	        AssetDatabase.RegisterCustomDependency(ColorSpaceDependency, Hash128.Compute((int) PlayerSettings.colorSpace));
-			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) PlayerSettings.GetNormalMapEncoding(BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
+
+	        BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+#if UNITY_2023_1_OR_NEWER
+	        var normalEncoding = PlayerSettings.GetNormalMapEncoding(NamedBuildTarget.FromBuildTargetGroup(activeTargetGroup));
+#else				
+			var normalEncoding = PlayerSettings.GetNormalMapEncoding(activeTargetGroup);
+#endif	        
+	        
+			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) normalEncoding));
         }
 
 #if UNITY_2021_3_OR_NEWER
@@ -868,21 +878,16 @@ namespace UnityGLTF
 			    ImportNormals = _importNormals,
 			    ImportTangents = _importTangents,
 			    ImportBlendShapeNames = _importBlendShapeNames,
-			    BlendShapeFrameWeight = _blendShapeFrameWeight
+			    BlendShapeFrameWeight = _blendShapeFrameWeight,
+			    CameraImport = _importCamera
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))
 		    {
 			    GLTFParser.ParseJson(stream, out var gltfRoot);
-			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
-			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
-			    loader.LoadUnreferencedImagesAndMaterials = true;
-			    loader.MaximumLod = _maximumLod;
-			    loader.IsMultithreaded = true;
-
-			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
-			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
-
+			    
+			    // Early writing of _extensions – if there are any import errors
+			    // we want to be able to show proper warnings/errors for them.
 			    if (gltfRoot.ExtensionsUsed != null)
 			    {
 				    _extensions = gltfRoot.ExtensionsUsed
@@ -899,6 +904,15 @@ namespace UnityGLTF
 			    {
 				    _extensions = new List<ExtensionInfo>();
 			    }
+			    
+			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
+			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
+			    loader.LoadUnreferencedImagesAndMaterials = true;
+			    loader.MaximumLod = _maximumLod;
+			    loader.IsMultithreaded = true;
+
+			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
+			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
 
 			    _textures = loader.TextureCache
 				    .Where(x => x != null)

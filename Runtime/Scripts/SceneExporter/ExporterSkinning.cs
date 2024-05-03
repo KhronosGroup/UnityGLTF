@@ -89,6 +89,12 @@ namespace UnityGLTF
 				GLTF.Schema.GLTFMesh gltfMesh = _root.Meshes[val.Id];
 				if(gltfMesh != null)
 				{
+					var accessors = _meshToPrims[mesh];
+					if (accessors.aJoints0 != null)
+						sharedBones = accessors.aJoints0;
+					if (accessors.aWeights0 != null)
+						sharedWeights = accessors.aWeights0;
+					
 					foreach (MeshPrimitive prim in gltfMesh.Primitives)
 					{
 						if (!prim.Attributes.ContainsKey("JOINTS_0"))
@@ -101,6 +107,8 @@ namespace UnityGLTF
 								jointsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
 								prim.Attributes.Add("JOINTS_0", jointsAccessor);
 								sharedBones = jointsAccessor;
+								accessors.aJoints0 = jointsAccessor;
+								_meshToPrims[mesh] = accessors;
 							}
 						}
 
@@ -114,6 +122,8 @@ namespace UnityGLTF
 								weightsAccessor.Value.BufferView.Value.Target = BufferViewTarget.ArrayBuffer;
 								prim.Attributes.Add("WEIGHTS_0", weightsAccessor);
 								sharedWeights = weightsAccessor;
+								accessors.aWeights0 = weightsAccessor;
+								_meshToPrims[mesh] = accessors;
 							}
 						}
 					}

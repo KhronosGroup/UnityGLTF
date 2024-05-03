@@ -151,6 +151,9 @@ namespace UnityGLTF
 
 		protected void PrepareUnityMeshData()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			for (int i = 0; i < _gltfRoot.Meshes.Count(); i++)
 			{
 				int meshIndex = i;
@@ -262,8 +265,30 @@ namespace UnityGLTF
 						decodeSettings |= DecodeSettings.RequireTangents;
 					if (firstPrim != null && firstPrim.Targets != null)
 						decodeSettings |= DecodeSettings.ForceUnityVertexLayout;
+
+					var attrMap = DracoDecoder.CreateAttributeIdMap(weightsAttributeId, jointsAttributeId);
+					if (attrMap == null)
+						attrMap = new Dictionary<VertexAttribute, int>();
+
+					if (hasTangents)
+						attrMap.Add( VertexAttribute.Tangent, dracoExtension.attributes[SemanticProperties.TANGENT]);
 					
-					decodeResult.decodeResults[i] = DracoDecoder.DecodeMesh( _assetCache.MeshCache[meshIndex].DracoMeshData[i], bufferViewData, decodeSettings, DracoDecoder.CreateAttributeIdMap(weightsAttributeId, jointsAttributeId));
+					if (dracoExtension.attributes.TryGetValue(SemanticProperties.COLOR_0, out var colorAttr))
+						attrMap.Add( VertexAttribute.Color, colorAttr);
+					
+					if (dracoExtension.attributes.TryGetValue(SemanticProperties.TEXCOORD_0, out var uvAttr))
+						attrMap.Add( VertexAttribute.TexCoord0, uvAttr);
+					
+					if (dracoExtension.attributes.TryGetValue(SemanticProperties.TEXCOORD_1, out var uv2Attr))
+						attrMap.Add( VertexAttribute.TexCoord1, uv2Attr);
+					
+					if (dracoExtension.attributes.TryGetValue(SemanticProperties.NORMAL, out var normalAttr))
+						attrMap.Add( VertexAttribute.Normal, normalAttr);
+					
+					if (dracoExtension.attributes.TryGetValue(SemanticProperties.POSITION, out var positionAttr))
+						attrMap.Add( VertexAttribute.Position, positionAttr);
+
+					decodeResult.decodeResults[i] = DracoDecoder.DecodeMesh( _assetCache.MeshCache[meshIndex].DracoMeshData[i], bufferViewData, decodeSettings, attrMap);
 					
 #else
 					var draco = new DracoMeshLoader();
@@ -886,6 +911,9 @@ namespace UnityGLTF
 
 		private void FreeUpAccessorContents()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
 			{
 				var gltfMesh = _gltfRoot.Meshes[meshIndex];
@@ -919,6 +947,9 @@ namespace UnityGLTF
 
 		private async Task PreparePrimitiveAttributes()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
 			{
 				if (_assetCache.MeshCache[meshIndex] == null)

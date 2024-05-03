@@ -331,6 +331,7 @@ namespace UnityGLTF
 						EditorGUI.indentLevel--;
 					}
 
+					/* Now mostly supported, e.g. in three.js
 					if (currentMaterialInfo.hasUV1 && targetMaterial.HasProperty("occlusionTexture") && targetMaterial.GetTexture("occlusionTexture"))
 					{
 						EditorGUI.indentLevel++;
@@ -345,6 +346,7 @@ namespace UnityGLTF
 						}
 						EditorGUI.indentLevel--;
 					}
+					*/
 
 					if (!currentMaterialInfo.hasUV1)
 					{
