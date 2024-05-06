@@ -105,7 +105,7 @@ namespace UnityGLTF
 					extensionName = map.ExtensionName;
 					
 					flipValueRange = map.ExportFlipValueRange;
-					valueMultiplier = map.ExportValueMultiplier == 1f ? null : map.ExportValueMultiplier;
+					valueMultiplier = map.ExportValueMultiplier == 1f ? null : (float?) map.ExportValueMultiplier;
 					isTextureTransform = map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform;
 					keepColorAlpha = map.ExportKeepColorAlpha;
 					convertToLinearColor = map.ExportConvertToLinearColor;

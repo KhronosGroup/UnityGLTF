@@ -35,9 +35,8 @@
         {
             if (string.IsNullOrEmpty(fullPath))
                 return;
-
             
-            var splittedPath = fullPath.Split("/");
+            var splittedPath = fullPath.Split('/');
             var pathIndex = 0;
 
             if (string.IsNullOrEmpty(splittedPath[0]))
