@@ -325,7 +325,7 @@ namespace UnityGLTF
 					else if (target is Material mat)
 						Debug.Log(LogType.Warning, (object) $"Animated material property {propertyName} does not exist on material {mat}{(mat ? " / shader " + mat.shader : "")}. Will not be exported", mat);
 					else
-						Debug.Log(LogType.Error, (object) $"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
+						Debug.Log(LogType.Warning, (object) $"Curve of animated property has no property type, can not validate {propertyName} on {target}. Will not be exported.", target);
 					return false;
 				}
 
