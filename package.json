@@ -1,7 +1,7 @@
 {
   "name": "org.khronos.unitygltf",
   "displayName": "UnityGLTF",
-  "version": "2.11.0-rc",
+  "version": "2.12.0-rc",
   "unity": "2020.3",
   "description": "Import and export glTF 2.0 assets, both in the editor and at runtime.",
   "repository": {

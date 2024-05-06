@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.12.0-rc] - 2024-05-06
+
+- fix: PolySpatial support now also includes emission textures and colors
+  - Unity bug IN-72885 is fixed in PolySpatial 1.2.3+, please update
+- fix: avoid overwriting texture files with identical names on glTF export
+- fix: avoid NullReferenceException when read values from array are not a number (invalid glTF but encountered in the wild)
+- fix: rough refraction feature sometimes had incorrect cameraColorTarget as source
+- fix: better math for index of refraction – improves visual correctness of transmission, volume, dispersion
+- fix: stripping empty roots now respects when some of those roots are animated and doesn't strip them
+- fix: import of default unspecified materials was sometimes not handled correctly
+- fix: incorrect duplicated texture tiling regression due to PolySpatial support changes
+- add: [KHR_animation_pointer]() import support. Export has been supported for a couple years.
+- add: [KHR_materials_dispersion](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_dispersion) import, export, and shader support
+
 ## [2.11.0-rc] - 2024-04-14
 
 - fix: correct disposal of toktx textures after API change in upstream dependency (#710)
