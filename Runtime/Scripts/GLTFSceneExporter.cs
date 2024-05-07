@@ -605,7 +605,8 @@ namespace UnityGLTF
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
 
-			_rootTransforms = rootTransforms;
+			// Remove invalid transforms
+			_rootTransforms = rootTransforms?.Where(x => x).ToArray() ?? Array.Empty<Transform>();
 
 			_exportedTransforms = new Dictionary<int, int>();
 			_exportedCameras = new Dictionary<int, int>();
@@ -915,6 +916,8 @@ namespace UnityGLTF
 		/// </remarks>
 		private static string EnsureValidFileName(string filename)
 		{
+			if (filename == null) return "";
+			
 			var invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
 			var invalidReStr = string.Format(@"[{0}]+", invalidChars);
 
@@ -999,6 +1002,11 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
+				if (!transform)
+				{
+					Debug.LogWarning("GLTFSceneExporter", $"Skipping empty transform in root transforms provided for scene export for {name}", transform);
+					continue;
+				}
 				scene.Nodes.Add(ExportNode(transform));
 			}
 
