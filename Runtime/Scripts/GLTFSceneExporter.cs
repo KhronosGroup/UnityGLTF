@@ -977,6 +977,8 @@ namespace UnityGLTF
 
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
+			if (rootObjTransforms == null || rootObjTransforms.Length < 1) return null;
+			
 			exportSceneMarker.Begin();
 
 			var scene = new GLTFScene();
