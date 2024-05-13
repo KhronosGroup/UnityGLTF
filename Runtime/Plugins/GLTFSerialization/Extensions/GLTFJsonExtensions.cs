@@ -31,7 +31,9 @@ namespace GLTF.Extensions
 
 			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
 			{
-				list.Add(reader.Value.ToString());
+				var value = reader.Value;
+				if (value != null)
+					list.Add(value.ToString());
 			}
 
 			return list;
@@ -48,7 +50,9 @@ namespace GLTF.Extensions
 
 			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
 			{
-				list.Add(double.Parse(reader.Value.ToString()));
+				var value = reader.Value;
+				if (value != null)
+					list.Add(double.Parse(value.ToString()));
 			}
 
 			return list;
@@ -65,7 +69,9 @@ namespace GLTF.Extensions
 
 			while (reader.Read() && reader.TokenType != JsonToken.EndArray)
 			{
-				list.Add(int.Parse(reader.Value.ToString()));
+				var value = reader.Value;
+				if (value != null)
+					list.Add(int.Parse(value.ToString()));
 			}
 
 			return list;
@@ -141,7 +147,7 @@ namespace GLTF.Extensions
 			{
 				var normalTex = new NormalTextureInfo() { Index = tex.Index, TexCoord = tex.TexCoord };
 				JObject textureObject = token as JObject;
-				if (textureObject.ContainsKey(NormalTextureInfo.SCALE))
+				if (textureObject != null && textureObject.ContainsKey(NormalTextureInfo.SCALE))
 				{
 					normalTex.Scale = textureObject[NormalTextureInfo.SCALE].DeserializeAsDouble();
 				}
@@ -367,7 +373,9 @@ namespace GLTF.Extensions
 
 			while (reader.Read() && reader.TokenType != JsonToken.EndObject)
 			{
-				dict.Add(reader.Value.ToString(), deserializerFunc());
+				var value = reader.Value;
+				if (value != null)
+					dict.Add(value.ToString(), deserializerFunc());
 			}
 
 			return dict;
@@ -384,7 +392,9 @@ namespace GLTF.Extensions
 
 			while (reader.Read() && reader.TokenType != JsonToken.EndObject)
 			{
-			   dict.Add(reader.Value.ToString(), ReadDictionaryValue(reader));
+				var value = reader.Value;
+				if (value != null)
+					dict.Add(value.ToString(), ReadDictionaryValue(reader));
 			}
 
 			return dict;

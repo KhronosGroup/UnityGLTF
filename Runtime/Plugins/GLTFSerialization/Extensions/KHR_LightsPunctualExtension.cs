@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using GLTF.Math;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using GLTF.Extensions;
+using GLTF.Utilities;
+using UnityEngine;
+using UnityGLTF.Extensions;
+using Color = GLTF.Math.Color;
 
 namespace GLTF.Schema.KHR_lights_punctual
 {
@@ -287,7 +290,7 @@ namespace GLTF.Schema.KHR_lights_punctual
 		}
 	}
 
-	public class KHR_LightsPunctualExtension : IExtension
+	public class KHR_LightsPunctualExtension : IExtension, IImportAnimationPointerRootExtension
 	{
 		public List<PunctualLight> Lights;
 
@@ -313,6 +316,95 @@ namespace GLTF.Schema.KHR_lights_punctual
 					new JProperty(KHR_lights_punctualExtensionFactory.PNAME_LIGHTS, new JArray(Lights))
 				)
 			);
+		}
+		
+		private static string[] GltfLightPropertyToUnityPropertyName(string gltfPropertyName)
+		{
+			switch (gltfPropertyName)
+			{
+				case "color":
+					return new string[] { "m_Color.r", "m_Color.g", "m_Color.b"};
+				case "intensity":
+					return new string[] { "m_Intensity"};
+				case "range":
+					return new string[]  {"m_Range"};
+				case "spot/innerConeAngle":
+					return new string[]  {"m_InnerConeAngle"};
+				case "spot/outerConeAngle":
+					return new string[]  {"m_OuterConeAngle"};
+				default:
+					return new string[] {gltfPropertyName};
+			}
+		}
+
+		private static AnimationPointerData.ImportValuesConversion GetConversion(string gltfPropertyName)
+		{
+			switch (gltfPropertyName)
+			{
+				case "color":
+					return (data, index) =>
+					{
+						var col = data.primaryData.AccessorContent.AsFloat3s[index];
+						var color = new Color(col[0], col[1], col[2], 1f).ToUnityColorRaw();
+						return new float[] { color.r, color.g, color.b };
+						//return new float[] { col.x, col.y, col.z };
+					};
+				case "intensity":
+					return (data, index) => new float[1] { data.primaryData.AccessorContent.AsFloats[index] / Mathf.PI }; 
+				case "range":
+					return (data, index) => new float[1] { data.primaryData.AccessorContent.AsFloats[index] };
+				case "spot/innerConeAngle":
+					return (data, index) => new float[] { data.primaryData.AccessorContent.AsFloats[index] * 2 / (Mathf.Deg2Rad * 0.8f)}; 
+				case "spot/outerConeAngle":
+					return (data, index) => new float[] { data.primaryData.AccessorContent.AsFloats[index] * 2 / Mathf.Deg2Rad};
+				default:
+					return null;
+			}
+		}
+
+		public bool TryGetImportAnimationPointerData(GLTFRoot root, PointerPath pointerPath, out AnimationPointerData pointerData)
+		{
+			pointerData = new AnimationPointerData();
+			pointerData.targetNodeIds = new int[0];
+			pointerData.targetType = typeof(UnityEngine.Light);
+			
+			if (root.Nodes == null)
+				return false;
+			
+			var pointId = pointerPath.FindNext(PointerPath.PathElement.Index);
+			if (pointId == null)
+				return false;
+
+			var property = pointerPath.FindNext(PointerPath.PathElement.Property);
+			if (property == null)
+				return false;
+			
+			pointerData.unityPropertyNames = GltfLightPropertyToUnityPropertyName(property.elementName);
+			pointerData.importAccessorContentConversion = GetConversion(property.elementName);
+
+			List<int> targetNodes = new List<int>();
+			for (int i = 0; i < root.Nodes.Count; i++)
+			{
+				var n = root.Nodes[i];
+				if (n.Extensions != null && n.Extensions.TryGetValue(KHR_lights_punctualExtensionFactory.EXTENSION_NAME, out IExtension extension))
+				{
+					if (!(extension is KHR_LightsPunctualNodeExtension lightExtension))
+						continue;
+
+					if (lightExtension.LightId.Id == pointId.index)
+					{
+						targetNodes.Add(i);
+					}
+				}
+			}
+
+			if (targetNodes.Count > 0)
+			{
+				pointerData.targetNodeIds = targetNodes.ToArray();
+				return true;
+			}
+
+			return false;
 		}
 	}
 

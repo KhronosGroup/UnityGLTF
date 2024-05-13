@@ -14,24 +14,6 @@ namespace UnityGLTF.Extensions
 			registered.Add(anim);
 		}
 
-		// private struct MaterialMapping
-		// {
-		// 	public string propertyName;
-		// 	public string exportName;
-		// }
-		//
-		// private readonly Dictionary<Material, List<MaterialMapping>> mappings = new Dictionary<Material, List<MaterialMapping>>();
-		//
-		// // TODO: should we use a static switch instead?
-		// public void RegisterMapping(Material mat, string propertyName, string exportedPropertyName)
-		// {
-		// 	if (!mappings.ContainsKey(mat))
-		// 	{
-		// 		mappings.Add(mat, new List<MaterialMapping>());
-		// 	}
-		// 	mappings[mat].Add(new MaterialMapping() { propertyName = propertyName, exportName = exportedPropertyName });
-		// }
-
 		public void Resolve(GLTFSceneExporter exporter)
 		{
 			foreach (var reg in registered)

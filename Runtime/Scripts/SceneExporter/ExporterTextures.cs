@@ -19,22 +19,21 @@ namespace UnityGLTF
 		{
 			if (!existingNames.Contains(name)) return name;
 			var i = 1;
-			while (existingNames.Contains(name + "-" + i))
+			while (existingNames.Contains( $"{name}-{i}"))
 				i++;
-			return name + "-" + i;
+			return $"{name}-{i}";
 		}
 
 		private void ExportImages(string outputPath)
 		{
-			var allPaths = new HashSet<string>();
 			for (int t = 0; t < _imageInfos.Count; ++t)
 			{
 				writeImageToDiskMarker.Begin();
 
 				var image = _imageInfos[t].texture;
 				var textureMapType = _imageInfos[t].textureMapType;
-				var fileOutputPath = Path.Combine(outputPath, GetUniqueName(allPaths, _imageInfos[t].outputPath));
-				allPaths.Add(fileOutputPath);
+				var fileOutputPath = Path.Combine(outputPath, GetUniqueName(_imageExportPaths, _imageInfos[t].outputPath));
+				_imageExportPaths.Add(fileOutputPath);
 
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
@@ -302,6 +301,10 @@ namespace UnityGLTF
 			{
 				imagePath = Path.ChangeExtension(imagePath, desiredExtension);
 			}
+			
+			// Avoid overwriting existing files
+			imagePath = GetUniqueName(_imageExportPaths, imagePath);
+			_imageExportPaths.Add(imagePath);
 
 			return imagePath;
 		}

@@ -17,7 +17,7 @@ namespace UnityGLTF
 	{
 		private struct MeshAccessors
 		{
-			public AccessorId aPosition, aNormal, aTangent, aTexcoord0, aTexcoord1, aColor0;
+			public AccessorId aPosition, aNormal, aTangent, aTexcoord0, aTexcoord1, aColor0, aJoints0, aWeights0;
 			public Dictionary<int, MeshPrimitive> subMeshPrimitives;
 		}
 
@@ -26,10 +26,12 @@ namespace UnityGLTF
 			public List<Dictionary<string, AccessorId>> targets;
 			public List<Double> weights;
 			public List<string> targetNames;
+			internal SkinnedMeshRenderer firstSkinnedMeshRenderer; 
 		}
 
 		private readonly Dictionary<Mesh, MeshAccessors> _meshToPrims = new Dictionary<Mesh, MeshAccessors>();
 		private readonly Dictionary<Mesh, BlendShapeAccessors> _meshToBlendShapeAccessors = new Dictionary<Mesh, BlendShapeAccessors>();
+		private readonly Dictionary<SkinnedMeshRenderer, List<double>> _NodeBlendShapeWeights = new Dictionary<SkinnedMeshRenderer, List<double>>();
 
 		public void RegisterPrimitivesWithNode(Node node, List<UniquePrimitive> uniquePrimitives)
 		{
@@ -217,6 +219,14 @@ namespace UnityGLTF
 			if (mesh.Primitives.Count > 0)
 			{
 				_root.Meshes.Add(mesh);
+
+				var uniquePrimitive = uniquePrimitives.FirstOrDefault();
+				if (uniquePrimitive.Mesh)
+				{
+					foreach (var plugin in _plugins)
+						plugin?.AfterMeshExport(this, uniquePrimitive.Mesh, mesh, id.Id);
+				}
+				
 				return id;
 			}
 
@@ -354,6 +364,32 @@ namespace UnityGLTF
             return prims;
 		}
 
+		private List<double> GetBlendShapeWeights(SkinnedMeshRenderer smr, Mesh meshObj)
+		{
+			if (_NodeBlendShapeWeights.TryGetValue(smr, out var w))
+				return w;
+
+			List<Double> weights = new List<double>(meshObj.blendShapeCount);
+			
+			for (int blendShapeIndex = 0; blendShapeIndex < meshObj.blendShapeCount; blendShapeIndex++)
+			{
+				// We need to get the weight from the SkinnedMeshRenderer because this represents the currently
+				// defined weight by the user to apply to this blend shape.  If we instead got the value from
+				// the unityMesh, it would be a _per frame_ weight, and for a single-frame blend shape, that would
+				// always be 100.  A blend shape might have more than one frame if a user wanted to more tightly
+				// control how a blend shape will be animated during weight changes (e.g. maybe they want changes
+				// between 0-50% to be really minor, but between 50-100 to be extreme, hence they'd have two frames
+				// where the first frame would have a weight of 50 (meaning any weight between 0-50 should be relative
+				// to the values in this frame) and then any weight between 50-100 would be relevant to the weights in
+				// the second frame.  See Post 20 for more info:
+				// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
+				var frameWeight = meshObj.GetBlendShapeFrameWeight(blendShapeIndex, 0);
+				weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / frameWeight);
+			}
+
+			return weights;
+		}
+		
 		// Blend Shapes / Morph Targets
 		// Adopted from Gary Hsu (bghgary)
 		// https://github.com/bghgary/glTF-Tools-for-Unity/blob/master/UnityProject/Assets/Gltf/Editor/Exporter.cs
@@ -373,7 +409,7 @@ namespace UnityGLTF
 			if (smr != null && meshObj.blendShapeCount > 0)
 			{
 				List<Dictionary<string, AccessorId>> targets = new List<Dictionary<string, AccessorId>>(meshObj.blendShapeCount);
-				List<Double> weights = new List<double>(meshObj.blendShapeCount);
+				List<Double> weights;
 				List<string> targetNames = new List<string>(meshObj.blendShapeCount);
 
 #if UNITY_2019_3_OR_NEWER
@@ -414,7 +450,6 @@ namespace UnityGLTF
 						// - get the accessor we want to base this upon
 						// - this is how position is originally exported:
 						//   ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
-						var baseAccessor = _meshToPrims[meshObj].aPosition;
 						var exportedAccessor = ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale));
 						if (exportedAccessor != null)
 						{
@@ -432,8 +467,7 @@ namespace UnityGLTF
 						}
 						else
 						{
-							var baseAccessor = _meshToPrims[meshObj].aNormal;
-							exportTargets.Add(SemanticProperties.NORMAL, ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.CoordinateSpaceConversionScale)));
+							exportTargets.Add(SemanticProperties.NORMAL, ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaNormals, SchemaExtensions.CoordinateSpaceConversionScale)));
 						}
 					}
 					if (meshHasTangents && settings.BlendShapeExportProperties.HasFlag(GLTFSettings.BlendShapeExportPropertyFlags.Tangent))
@@ -446,36 +480,22 @@ namespace UnityGLTF
 						}
 						else
 						{
-							// 	var baseAccessor = _meshToPrims[meshObj].aTangent;
-							// 	exportTargets.Add(SemanticProperties.TANGENT, ExportSparseAccessor(baseAccessor, SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale), SchemaExtensions.ConvertVector4CoordinateSpaceAndCopy(deltaVertices, SchemaExtensions.TangentSpaceConversionScale)));
-							exportTargets.Add(SemanticProperties.TANGENT, ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
-							// Debug.LogWarning("Blend Shape Tangents for " + meshObj + " won't be exported with sparse accessors – sparse accessor for tangents isn't supported right now.");
+							exportTargets.Add(SemanticProperties.TANGENT, ExportSparseAccessor(null, null, SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(deltaTangents, SchemaExtensions.CoordinateSpaceConversionScale)));
 						}
 					}
+
 					targets.Add(exportTargets);
-
-					// We need to get the weight from the SkinnedMeshRenderer because this represents the currently
-					// defined weight by the user to apply to this blend shape.  If we instead got the value from
-					// the unityMesh, it would be a _per frame_ weight, and for a single-frame blend shape, that would
-					// always be 100.  A blend shape might have more than one frame if a user wanted to more tightly
-					// control how a blend shape will be animated during weight changes (e.g. maybe they want changes
-					// between 0-50% to be really minor, but between 50-100 to be extreme, hence they'd have two frames
-					// where the first frame would have a weight of 50 (meaning any weight between 0-50 should be relative
-					// to the values in this frame) and then any weight between 50-100 would be relevant to the weights in
-					// the second frame.  See Post 20 for more info:
-					// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
-					var frameWeight = meshObj.GetBlendShapeFrameWeight(blendShapeIndex, 0);
-					if(exportTargets.Any())
-						weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / frameWeight);
-
+					
 					exportBlendShapeMarker.End();
 				}
 
+				weights = GetBlendShapeWeights(smr, meshObj);
 				if(weights.Any() && targets.Any())
 				{
 					mesh.Weights = weights;
 					mesh.TargetNames = targetNames;
 					primitive.Targets = targets;
+					_NodeBlendShapeWeights.Add(smr, weights);
 				}
 				else
 				{
@@ -489,7 +509,8 @@ namespace UnityGLTF
 				{
 					targets = targets,
 					weights = weights,
-					targetNames = targetNames
+					targetNames = targetNames,
+					firstSkinnedMeshRenderer = smr
 				});
 			}
 		}

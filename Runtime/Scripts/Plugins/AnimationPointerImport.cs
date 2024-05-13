@@ -1,19 +1,17 @@
-namespace UnityGLTF.Plugins
+﻿namespace UnityGLTF.Plugins
 {
-    public class AnimationPointerExport: GLTFExportPlugin
+    public class AnimationPointerImport: GLTFImportPlugin
     {
         public override string DisplayName => "KHR_animation_pointer";
         public override string Description => "Animate arbitrary material and object properties. Without this extension, only node transforms and blend shape weights can be animated.";
-        public override bool EnabledByDefault => false;
-        public override GLTFExportPluginContext CreateInstance(ExportContext context)
+        public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
         {
-            return new AnimationPointerExportContext();
+            return new AnimationPointerImportContext();
         }
     }
-    
-    public class AnimationPointerExportContext: GLTFExportPluginContext
+
+    public class AnimationPointerImportContext: GLTFImportPluginContext
     {
         public MaterialPropertiesRemapper materialPropertiesRemapper = new DefaultMaterialPropertiesRemapper();
-        
     }
 }

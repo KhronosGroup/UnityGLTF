@@ -35,8 +35,11 @@ namespace UnityGLTF.Plugins
             var previousSortMode = p.sortMode;
             if (p.sortMode == ParticleSystemSortMode.None)
                 p.sortMode = ParticleSystemSortMode.Distance;
-            
+#if UNITY_2023_1_OR_NEWER
+            p.BakeMesh(m, Camera.main, ParticleSystemBakeMeshOptions.Default);
+#else
             p.BakeMesh(m, Camera.main, true);
+#endif
             mf.sharedMesh = m;
             mr.sharedMaterial = p.sharedMaterial;
             p.sortMode = previousSortMode;

@@ -52,6 +52,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter.BeforeTextureExportDelegate BeforeTextureExport;
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
 		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
+		public GLTFSceneExporter.AfterMeshExportDelegate AfterMeshExport;
 		
 		internal GLTFExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
 
@@ -91,6 +92,7 @@ namespace UnityGLTF
 			public override void BeforeTextureExport(GLTFSceneExporter exporter, ref GLTFSceneExporter.UniqueTexture texture, string textureSlot) => _exportContext.BeforeTextureExport?.Invoke(exporter, ref texture, textureSlot);
 			public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex) => _exportContext.AfterTextureExport?.Invoke(exporter, texture, index, tex);
 			public override void AfterPrimitiveExport(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index) => _exportContext.AfterPrimitiveExport?.Invoke(exporter, mesh, primitive, index);
+			public override void AfterMeshExport(GLTFSceneExporter exporter, Mesh mesh, GLTFMesh gltfMesh, int index) => _exportContext.AfterMeshExport?.Invoke(exporter, mesh, gltfMesh, index);
 		}
 #pragma warning restore CS0618 // Type or member is obsolete
 	}
@@ -117,6 +119,7 @@ namespace UnityGLTF
 		public delegate void BeforeTextureExportDelegate(GLTFSceneExporter exporter, ref UniqueTexture texture, string textureSlot);
 		public delegate void AfterTextureExportDelegate(GLTFSceneExporter exporter, UniqueTexture texture, int index, GLTFTexture tex);
 		public delegate void AfterPrimitiveExportDelegate(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index);
+		public delegate void AfterMeshExportDelegate(GLTFSceneExporter exporter, Mesh mesh, GLTFMesh gltfMesh, int index);
 
 		
 		private class LegacyCallbacksPlugin : GLTFExportPluginContext
@@ -362,6 +365,7 @@ namespace UnityGLTF
 		private BufferId _bufferId;
 		private GLTFBuffer _buffer;
 		private List<ImageInfo> _imageInfos;
+		private HashSet<string> _imageExportPaths;
 		private List<FileInfo> _fileInfos;
 		private HashSet<string> _fileNames;
 		private List<UniqueTexture> _textures;
@@ -446,7 +450,6 @@ namespace UnityGLTF
 			{
 				if (!Equals(Mesh, other.Mesh)) return false;
 				if (Materials == null && other.Materials == null) return true;
-				if (!Equals(SkinnedMeshRenderer, other.SkinnedMeshRenderer)) return false;
 				if (!(Materials != null && other.Materials != null)) return false;
 				if (!Equals(Materials.Length, other.Materials.Length)) return false;
 				for (var i = 0; i < Materials.Length; i++)
@@ -467,10 +470,6 @@ namespace UnityGLTF
 				unchecked
 				{
 					var code = (Mesh != null ? Mesh.GetHashCode() : 0) * 397;
-					if (SkinnedMeshRenderer != null)
-					{
-						code = code ^ SkinnedMeshRenderer.GetHashCode() * 397;
-					}
 					if (Materials != null)
 					{
 						code = code ^ Materials.Length.GetHashCode() * 397;
@@ -642,6 +641,7 @@ namespace UnityGLTF
 			_fileNames = new HashSet<string>();
 			_exportedMaterials = new Dictionary<int, int>();
 			_textures = new List<UniqueTexture>();
+			_imageExportPaths = new HashSet<string>();
 
 			_buffer = new GLTFBuffer();
 			_bufferId = new BufferId
@@ -1091,6 +1091,32 @@ namespace UnityGLTF
 				{
 					node.Mesh = ExportMesh(nodeTransform.name, uniquePrimitives);
 					RegisterPrimitivesWithNode(node, uniquePrimitives);
+
+					// Node - BlendShape Weights 
+					if (uniquePrimitives[0].SkinnedMeshRenderer)
+					{
+						var meshObj = uniquePrimitives[0].Mesh;
+						var smr = uniquePrimitives[0].SkinnedMeshRenderer;
+						// Only export the blendShapeWeights into the Node, when it's not the first SkinnedMeshRenderer with the same Mesh
+						// Because the weights already exported into the GltfMesh
+						if (smr && meshObj && _meshToBlendShapeAccessors.TryGetValue(meshObj, out var data) && smr != data.firstSkinnedMeshRenderer)
+						{
+							var blendShapeWeights = GetBlendShapeWeights(smr, meshObj);
+							if (blendShapeWeights != null)
+							{
+								if (data.weights != null)
+								{
+									// Check if the blendShapeWeights has any differences to the weights already exported into the gltfMesh
+									// When not, we don't need to set the same values to the Node Weights
+									bool isSame = true;
+									for (int i = 0; i < blendShapeWeights.Count; i++)
+										isSame &= System.Math.Abs(blendShapeWeights[i] - data.weights[i]) < double.Epsilon;
+									if (!isSame)
+										node.Weights = blendShapeWeights;
+								}
+							}
+						}
+					}
 				}
 			}
 

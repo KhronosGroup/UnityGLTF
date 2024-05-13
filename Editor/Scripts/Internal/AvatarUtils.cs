@@ -135,6 +135,33 @@ namespace UnityGLTF
 			{ "rightFoot", "RightFoot" },
 			{ "rightToes", "RightToes" },
 			// { "toesR_end", "" },
+			
+			// Meta Avatar
+			{"Hips_jnt", "Hips"},
+			{"SpineLower_jnt", "Spine"},
+			{"SpineMiddle_jnt", "Chest"},
+			{"Chest_jnt", "UpperChest"},
+			{"Neck_jnt", "Neck"},
+			{"Head_jnt", "Head"},
+			{"Jaw_jnt", "Jaw"},
+			{"LeftEye_jnt", "LeftEye"},
+			{"RightEye_jnt", "RightEye"},
+			{"LeftShoulder_jnt", "LeftShoulder"},
+			{"LeftArmUpper_jnt", "LeftUpperArm"},
+			{"LeftArmLower_jnt", "LeftLowerArm"},
+			{"LeftHandWrist_jnt", "LeftHand"},
+			{"RightShoulder_jnt", "RightShoulder"},
+			{"RightArmUpper_jnt", "RightUpperArm"},
+			{"RightArmLower_jnt", "RightLowerArm"},
+			{"RightHandWrist_jnt", "RightHand"},
+			{"LeftLegUpper_jnt", "LeftUpperLeg"},
+			{"LeftLegLower_jnt", "LeftLowerLeg"},
+			{"LeftFootBall_jnt", "LeftFoot"},
+			{"LeftFootToe_jnt", "LeftToes"},
+			{"RightLegUpper_jnt", "RightUpperLeg"},
+			{"RightLegLower_jnt", "RightLowerLeg"},
+			{"RightFootBall_jnt", "RightFoot"},
+			{"RightFootToe_jnt", "RightToes"}			
 
 		};
 

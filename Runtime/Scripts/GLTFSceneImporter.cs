@@ -45,6 +45,7 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
+		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
 
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
@@ -58,6 +59,13 @@ namespace UnityGLTF
 		public ILogger logger;
 	}
 
+	public enum CameraImportOption
+	{
+		None,
+		ImportAndActive,
+		ImportAndCameraDisabled
+	}
+	
 	public enum AnimationMethod
 	{
 		None,
@@ -285,7 +293,7 @@ namespace UnityGLTF
 		protected MemoryChecker _memoryChecker;
 
 		protected GameObject _lastLoadedScene;
-		protected readonly GLTFMaterial DefaultMaterial = new GLTFMaterial();
+		protected readonly GLTFMaterial DefaultMaterial;
 		internal MaterialCacheData _defaultLoadedMaterial = null;
 
 		protected string _gltfFileName;
@@ -301,35 +309,15 @@ namespace UnityGLTF
 
 		protected ColorSpace _activeColorSpace; 
 		
-		public GLTFSceneImporter(string gltfFileName, ImportOptions options)
+		public GLTFSceneImporter(string gltfFileName, ImportOptions options) : this(options)
 		{
-			if (options.ImportContext != null)
-			{
-				options.ImportContext.SceneImporter = this;
-			}
-
 			_gltfFileName = gltfFileName;
-			_options = options;
-
-			_activeColorSpace = QualitySettings.activeColorSpace; 
-			
-			if (options.logger != null)
-				Debug = options.logger;
-			else
-				Debug = UnityEngine.Debug.unityLogger;
 
 			VerifyDataLoader();
 		}
 
-		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options)
+		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options) : this(options)
 		{
-			if (options.ImportContext != null)
-			{
-				options.ImportContext.SceneImporter = this;
-			}
-
-			_activeColorSpace = QualitySettings.activeColorSpace; 
-
 			_gltfRoot = rootNode;
 
 			if (gltfStream != null)
@@ -337,8 +325,35 @@ namespace UnityGLTF
 				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
 			}
 
-			_options = options;
 			VerifyDataLoader();
+		}
+
+		private GLTFSceneImporter(ImportOptions options)
+		{
+			if (options.ImportContext != null)
+			{
+				options.ImportContext.SceneImporter = this;
+			}
+			
+			if (options.logger != null)
+				Debug = options.logger;
+			else
+				Debug = UnityEngine.Debug.unityLogger;
+			
+			DefaultMaterial = new GLTFMaterial
+			{
+				Name = "Default",
+				AlphaMode = AlphaMode.OPAQUE,
+				DoubleSided = false,
+				PbrMetallicRoughness = new PbrMetallicRoughness
+				{
+					MetallicFactor = 1, 
+					RoughnessFactor = 1,
+				}
+			};
+			
+			_activeColorSpace = QualitySettings.activeColorSpace; 
+			_options = options;
 		}
 
 		private NativeArray<byte> GetOrCreateNativeBuffer(Stream stream)
@@ -985,22 +1000,22 @@ namespace UnityGLTF
 						if (node.Skin != null)
 							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
-					// morph target weights
-					if (weights != null)
-					{
-						for (int i = 0; i < weights.Count; ++i)
+						// morph target weights
+						if (weights != null)
 						{
-							renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
+							for (int i = 0; i < weights.Count; ++i)
+							{
+								renderer.SetBlendShapeWeight(i, (float)(weights[i] * _options.BlendShapeFrameWeight));
+							}
 						}
 					}
-				}
-				else
-				{
-					var filter = nodeObj.AddComponent<MeshFilter>();
-					filter.sharedMesh = unityMesh;
-					var renderer = nodeObj.AddComponent<MeshRenderer>();
-					renderer.sharedMaterials = materials;
-				}
+					else
+					{
+						var filter = nodeObj.AddComponent<MeshFilter>();
+						filter.sharedMesh = unityMesh;
+						var renderer = nodeObj.AddComponent<MeshRenderer>();
+						renderer.sharedMaterials = materials;
+					}
 
 #if UNITY_PHYSICS
 					if (!onlyMesh)
@@ -1034,16 +1049,65 @@ namespace UnityGLTF
 				
 				await ConstructLods(_gltfRoot, nodeObj, node, nodeIndex, cancellationToken);
 
-				/* TODO: implement camera (probably a flag to disable for VR as well)
-				if (camera != null)
+				var hasLight = ConstructLights(nodeObj, node);
+				var hasCamera = ConstructCamera(nodeObj, node);
+
+				// Cameras and lights have a different forward axis in glTF vs. Unity.
+				// Thus, when importing lights and cameras we have to flip them.
+				// To ensure children are still oriented correctly, we need to add an inbetween node
+				// That counters the transformation of the parent node.
+				// This way, animations can still correctly apply – e.g. if a camera is animated,
+				// the childs should move along. We can't just add the camera to an empty child and flip that.
+				if ((hasLight || hasCamera) && nodeObj.transform.childCount > 0 && node.Children?.Count > 0)
 				{
-					GameObject cameraObj = camera.Value.Create();
-					cameraObj.transform.parent = nodeObj.transform;
+					var flipQuaternion = Quaternion.Inverse(SchemaExtensions.InvertDirection);
+					
+					// Special case for hierarchy simplification and roundtrips: if we have
+					// - exactly one child
+					// - that's flipped 180°
+					// - and doesn't have any components
+					// - and the node doesn't have any extensions
+					// we can just remove that, it's likely an inbetween our own exporter has added.
+					// Theoretically, there are more conditions (not checked here):
+					// - it's not targeted by any animations
+					// - it's not the target of any glTF pointer or index
+					var firstNode = node.Children?.FirstOrDefault()?.Value;
+					var firstChild = nodeObj.transform.GetChild(0);
+					if (nodeObj.transform.childCount == 1 && node.Children?.Count == 1 &&
+					    (firstNode.Extensions == null || !firstNode.Extensions.Any()) &&
+					    firstChild.GetComponents<Component>().Length == 1 &&
+					    Quaternion.Angle(firstChild.localRotation, flipQuaternion) < 0.1f)
+					{
+						firstChild.localRotation *= flipQuaternion;
+						var childCount = firstChild.childCount;
+						for (var i = 0; i < childCount; i++)
+						{
+							// Index 0 is correct here, after removing the first child, the next one is now the first and we want to keep the order.
+							var child = firstChild.GetChild(0);
+							child.SetParent(nodeObj.transform, true);
+						}
+						UnityEngine.Object.DestroyImmediate(firstChild.gameObject);
+					}
+					// Otherwise, we need to add an inbetween object
+					else
+					{
+						var childCount = nodeObj.transform.childCount;
+						var inbetween = new GameObject();
+						inbetween.name = node.Name + "-flipped";
+						// make sure this objects sits exactly where the nodeObj is
+						inbetween.transform.SetParent(nodeObj.transform, false);
+						inbetween.transform.SetParent(null, true);
+						// move all children to the inbetween object
+						for (int i = 0; i < childCount; i++)
+						{
+							// Index 0 is correct here, after removing the first child, the next one is now the first and we want to keep the order.
+							nodeObj.transform.GetChild(0).SetParent(inbetween.transform, true);
+						}
+						inbetween.transform.SetParent(nodeObj.transform, true);
+						inbetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
+					}
 				}
-				*/
-
-				ConstructLights(nodeObj, node);
-
+				
 				nodeObj.SetActive(true);
 			}
 						
@@ -1094,7 +1158,7 @@ namespace UnityGLTF
 			progressStatus.NodeLoaded++;
 			progress?.Report(progressStatus);
 		}
-
+		
 		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();

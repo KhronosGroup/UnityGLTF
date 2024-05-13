@@ -5,9 +5,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
+using GLTF.Schema.KHR_lights_punctual;
+using GLTF.Utilities;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
@@ -264,10 +267,46 @@ namespace UnityGLTF
 			if (_options.AnimationMethod == AnimationMethod.Legacy)
 				clip.legacy = true;
 
+			int[] nodeIds = new int[0];
+			
+			AnimationPointerImportContext pointerImportContext = null;
+
+			AttributeAccessor FindSecondaryChannel(string animationPointerPath)
+			{
+				foreach (AnimationChannel secondAnimationChannel in animation.Channels)
+				{
+					if (secondAnimationChannel.Target.Extensions == null ||
+					    !secondAnimationChannel.Target.Extensions.TryGetValue(KHR_animation_pointer.EXTENSION_NAME,
+						    out IExtension secondaryExt))
+						continue;
+					if (secondaryExt is KHR_animation_pointer secondaryPointer)
+					{
+						AnimationSamplerCacheData secondarySamplerCache =
+							animationCache.Samplers[secondAnimationChannel.Sampler.Id];
+						if (secondaryPointer.path == animationPointerPath)
+						{
+							return secondarySamplerCache.Output;
+						}
+					}
+				}
+
+				return null;
+			}
+
 			foreach (AnimationChannel channel in animation.Channels)
 			{
+				bool usesPointer = false;
+				IExtension pointerExtension = null;
 				AnimationSamplerCacheData samplerCache = animationCache.Samplers[channel.Sampler.Id];
-				if (channel.Target.Node == null)
+				if (channel.Target.Extensions != null && channel.Target.Extensions.TryGetValue(
+					    KHR_animation_pointer.EXTENSION_NAME,
+					    out pointerExtension))
+				{
+					if (Context.TryGetPlugin(out pointerImportContext))
+						usesPointer = true;
+				}
+				
+				if (!usesPointer && channel.Target.Node == null)
 				{
 					// If a channel doesn't have a target node, then just skip it.
 					// This is legal and is present in one of the asset generator models, but means that animation doesn't actually do anything.
@@ -275,96 +314,283 @@ namespace UnityGLTF
 					// Model 08
 					continue;
 				}
-				var node = await GetNode(channel.Target.Node.Id, cancellationToken);
-				string relativePath = RelativePathFrom(node.transform, root);
 
-				NumericArray input = samplerCache.Input.AccessorContent,
-					output = samplerCache.Output.AccessorContent;
-
+				string relativePath = null;
+				AnimationPointerData pointerData = null;
 				string[] propertyNames;
-				var known = Enum.TryParse(channel.Target.Path, out GLTFAnimationChannelPath path);
-				if (!known) continue;
-				switch (path)
+				GLTFAnimationChannelPath path = GLTFAnimationChannelPath.translation;
+				
+				if (usesPointer && pointerExtension != null)
 				{
-					case GLTFAnimationChannelPath.translation:
-						propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
+					KHR_animation_pointer pointer = pointerExtension as KHR_animation_pointer;
+					if (pointer == null || pointer.path == null)
+						continue;
+
+					path = GLTFAnimationChannelPath.pointer;
+					relativePath = pointer.path;
+					var pointerHierarchy = new PointerPath(relativePath);
+					if (!pointerHierarchy.isValid)
+						continue;
+					
+					switch (pointerHierarchy.PathElementType)
+					{
+						case PointerPath.PathElement.RootExtension:
+							if (!_gltfRoot.Extensions.TryGetValue(pointerHierarchy.elementName, out IExtension hierarchyExtension))
+								continue;
+							
+							// Check if the extension support animation pointers
+							if (hierarchyExtension is IImportAnimationPointerRootExtension rootExtension)
+							{
+								// Let the extension handle the pointer data and create the nodeIds and unity properties
+								if (rootExtension.TryGetImportAnimationPointerData(_gltfRoot, pointerHierarchy, out pointerData))
+									nodeIds = pointerData.targetNodeIds;
+								else
+									continue;
+							}
+							pointerData.primaryData = samplerCache.Output; 
+							break;
+						case PointerPath.PathElement.Root:
+							var rootType = pointerHierarchy.elementName;
+							var rootIndex = pointerHierarchy.FindNext(PointerPath.PathElement.Index);
+							if (rootIndex == null)
+								continue;
+						
+							switch (rootType)
+							{
+								case "nodes":
+									var pointerPropertyElement = pointerHierarchy.FindNext(PointerPath.PathElement.Property);
+									if (pointerPropertyElement == null)
+										continue;
+								
+									pointerData = new AnimationPointerData();
+									pointerData.targetNodeIds = new int[] {rootIndex.index};
+									nodeIds = pointerData.targetNodeIds;
+
+									// Convert translate, scale, rotation from pointer path to to GLTFAnimationChannelPath, so we can use the same code path as the non-animation-pointer channels
+									if (!GLTFAnimationChannelPath.TryParse(pointerPropertyElement.elementName, out path))
+										continue;
+
+									break; 
+								case "materials":
+									nodeIds = _gltfRoot.GetAllNodeIdsWithMaterialId(rootIndex.index);
+									if (nodeIds.Length == 0)
+										continue;
+									var materialPath = pointerHierarchy.FindNext(PointerPath.PathElement.Index).next;
+									if (materialPath == null)
+										continue;
+								
+									var gltfPropertyPath = materialPath.ExtractPath();
+									var mat = _assetCache.MaterialCache[rootIndex.index];
+									if (!mat.UnityMaterial)
+										continue;
+									
+									if (!AnimationPointerHelpers.BuildImportMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type, out pointerData))
+										continue;
+									
+									pointerData.primaryData = samplerCache.Output;
+									pointerData.primaryPath = pointer.path;
+									if (!string.IsNullOrEmpty(pointerData.secondaryPath))
+									{
+										// When an property has potentially a second Sampler, we need to find it. e.g. like EmissionFactor and EmissionStrength
+										string secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/{pointerData.secondaryPath}";
+										pointerData.secondaryData = FindSecondaryChannel(secondaryPath);
+									}
+									break;
+								case "cameras":
+									int cameraId = rootIndex.index;
+									pointerData = new AnimationPointerData();
+									pointerData.targetType = typeof(Camera);
+									pointerData.primaryData = samplerCache.Output; 
+	
+									string gltfCameraPropertyPath = rootIndex.next.ExtractPath();
+									switch (gltfCameraPropertyPath)
+									{
+										case "orthographic/ymag":
+											pointerData.secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/orthographic/xmag";
+											pointerData.unityPropertyNames = new string[] { "orthographic size" };
+											pointerData.secondaryData = FindSecondaryChannel(pointerData.secondaryPath);
+											pointerData.importAccessorContentConversion = (data, frame) =>
+											{
+												var xmag = data.secondaryData.AccessorContent.AsFloats[frame];
+												var ymag = data.primaryData.AccessorContent.AsFloats[frame];
+												return new float[] {Mathf.Max(xmag, ymag)};
+											};
+											break;
+										case "orthographic/xmag":
+											continue;
+										case "perspective/znear":
+										case "orthographic/znear":
+											pointerData.unityPropertyNames = new string[] { "near clip plane" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
+												new float[] {data.primaryData.AccessorContent.AsFloats[frame]};
+											break;
+										case "perspective/zfar":
+										case "orthographic/zfar":
+											pointerData.unityPropertyNames = new string[] { "far clip plane" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
+												new float[] {data.primaryData.AccessorContent.AsFloats[frame]};
+											break;
+										case "perspective/yfov":
+											pointerData.unityPropertyNames = new string[] { "field of view" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
+											{
+												var fov = data.primaryData.AccessorContent.AsFloats[frame] * Mathf.Rad2Deg;
+												return new float[] {fov};
+											};
+											break;
+										case "backgroundColor":
+											pointerData.unityPropertyNames = new string[] { "background color.r", "background color.g", "background color.b", "background color.a" };
+											pointerData.importAccessorContentConversion = (data, frame) =>
+											{
+												var color = data.primaryData.AccessorContent.AsFloat4s[frame].ToUnityColorRaw();
+												return new float[] {color.r, color.g, color.b, color.a};
+											};
+											break;
+										default:
+											Debug.Log(LogType.Warning, "Unknown property name on Camera " + cameraId.ToString() + ": " + gltfCameraPropertyPath);
+											break;
+									}
+									
+									nodeIds = _gltfRoot.GetAllNodeIdsWithCameraId(cameraId);
+									break;
+								default:
+									continue;
+								//throw new NotImplementedException();
+							}
+							break;
+						default:
+							continue;
+					}
+					
+					if (pointerData == null)
+						continue;
+				}
+				else
+				{
+					if (channel.Target == null || channel.Target.Node == null)
+						continue;
+					nodeIds = new int[] {channel.Target.Node.Id};
+				}
+
+				// In case an animated material are referenced from many nodes, whe need to create a curve for each node. (e.g. Materials)
+				foreach (var nodeId in nodeIds)
+				{
+					var node = await GetNode(nodeId, cancellationToken);
+					var targetNode = _gltfRoot.Nodes[nodeId];
+					relativePath = RelativePathFrom(node.transform, root);
+					NumericArray input = samplerCache.Input.AccessorContent;
+					NumericArray output = samplerCache.Output.AccessorContent;
+
+					if (!usesPointer)
+					{
+						var known = Enum.TryParse(channel.Target.Path, out path);
+						if (!known) continue;
+					}
+					else
+					{
+						if (pointerData.targetType == null)
+							pointerData.targetType = targetNode.Skin != null
+								? typeof(SkinnedMeshRenderer)
+								: typeof(MeshRenderer);
+					}
+
+					switch (path)
+					{
+						case GLTFAnimationChannelPath.pointer:
+							if (pointerData.importAccessorContentConversion == null)
+								continue;
+							SetAnimationCurve(clip, relativePath, pointerData.unityPropertyNames, input, output,
+								samplerCache.Interpolation, pointerData.targetType,
+								(data, frame) => pointerData.importAccessorContentConversion(pointerData, frame));
+							break;
+						case GLTFAnimationChannelPath.translation:
+							propertyNames = new string[] { "localPosition.x", "localPosition.y", "localPosition.z" };
 #if UNITY_EDITOR
-						// TODO technically this should be postprocessing in the ScriptedImporter instead,
-						// but performance is much better if we do it when constructing the clips
-						var factor = Context?.ImportScaleFactor ?? 1f;
+							// TODO technically this should be postprocessing in the ScriptedImporter instead,
+							// but performance is much better if we do it when constructing the clips
+							var factor = Context?.ImportScaleFactor ?? 1f;
 #endif
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) =>
-										  {
-											  var position = data.AsFloat3s[frame].ToUnityVector3Convert();
+							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+								samplerCache.Interpolation, typeof(Transform),
+								(data, frame) =>
+								{
+									var position = data.AsFloat3s[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
-											  return new float[] { position.x * factor, position.y * factor, position.z * factor};
+									return new float[]
+										{ position.x * factor, position.y * factor, position.z * factor };
 #else
 											  return new float[] { position.x, position.y, position.z };
 #endif
-										  });
-						break;
+								});
+							break;
 
-					case GLTFAnimationChannelPath.rotation:
-						propertyNames = new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
-
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) =>
-										  {
-											  var rotation = data.AsFloat4s[frame];
-											  var quaternion = rotation.ToUnityQuaternionConvert();
-											  return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
-										  });
-
-						break;
-
-					case GLTFAnimationChannelPath.scale:
-						propertyNames = new string[] { "localScale.x", "localScale.y", "localScale.z" };
-
-						SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-										  samplerCache.Interpolation, typeof(Transform),
-										  (data, frame) =>
-										  {
-											  var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
-											  return new float[] { scale.x, scale.y, scale.z };
-										  });
-						break;
-
-					case GLTFAnimationChannelPath.weights:
-						var mesh = channel.Target.Node.Value.Mesh.Value;
-						var primitives = mesh.Primitives;
-						if (primitives[0].Targets == null) break;
-						var targetCount = primitives[0].Targets.Count;
-						for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
-						{
-							// see SceneImporter:156
-							// blend shapes are always called "Morphtarget"
-							var targetNames = mesh.TargetNames;
-							propertyNames = new string[targetCount];
-							for (var i = 0; i < targetCount; i++)
-								propertyNames[i] = _options.ImportBlendShapeNames ? ("blendShape." + ((targetNames != null && targetNames.Count > i) ? targetNames[i] : ("Morphtarget" + i))) : "blendShape."+i.ToString();
-							var frameFloats = new float[targetCount];
-
-							var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
+						case GLTFAnimationChannelPath.rotation:
+							propertyNames = new string[]
+								{ "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" };
+							bool flipRotation = (targetNode.Extensions != null
+							                 && targetNode.Extensions.ContainsKey(KHR_lights_punctualExtensionFactory.EXTENSION_NAME)
+							                 && Context.TryGetPlugin<LightsPunctualImportContext>(out _));
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
-								samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
+								samplerCache.Interpolation, typeof(Transform),
 								(data, frame) =>
 								{
-									var allValues = data.AsFloats;
-									for (var k = 0; k < targetCount; k++)
-										frameFloats[k] = allValues[frame * targetCount + k] * blendShapeFrameWeight;
-
-									return frameFloats;
+									var rotation = data.AsFloat4s[frame];
+									var quaternion = rotation.ToUnityQuaternionConvert();
+									if (flipRotation)
+										quaternion *= Quaternion.Euler(0, 180, 0);
+									return new float[] { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
 								});
-						}
-						break;
+							break;
+						case GLTFAnimationChannelPath.scale:
+							propertyNames = new string[] { "localScale.x", "localScale.y", "localScale.z" };
 
-					default:
-						Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
-						break;
-				} // switch target type
+							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+								samplerCache.Interpolation, typeof(Transform),
+								(data, frame) =>
+								{
+									var scale = data.AsFloat3s[frame].ToUnityVector3Raw();
+									return new float[] { scale.x, scale.y, scale.z };
+								});
+							break;
+
+						case GLTFAnimationChannelPath.weights:
+							var mesh = targetNode.Mesh.Value;
+							var primitives = mesh.Primitives;
+							if (primitives[0].Targets == null) break;
+							var targetCount = primitives[0].Targets.Count;
+							for (int primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
+							{
+								// see SceneImporter:156
+								// blend shapes are always called "Morphtarget"
+								var targetNames = mesh.TargetNames;
+								propertyNames = new string[targetCount];
+								for (var i = 0; i < targetCount; i++)
+									propertyNames[i] = _options.ImportBlendShapeNames
+										? ("blendShape." + ((targetNames != null && targetNames.Count > i)
+											? targetNames[i]
+											: ("Morphtarget" + i)))
+										: "blendShape." + i.ToString();
+								var frameFloats = new float[targetCount];
+
+								var blendShapeFrameWeight = _options.BlendShapeFrameWeight;
+								SetAnimationCurve(clip, relativePath, propertyNames, input, output,
+									samplerCache.Interpolation, typeof(SkinnedMeshRenderer),
+									(data, frame) =>
+									{
+										var allValues = data.AsFloats;
+										for (var k = 0; k < targetCount; k++)
+											frameFloats[k] = allValues[frame * targetCount + k] * blendShapeFrameWeight;
+
+										return frameFloats;
+									});
+							}
+							break;
+						default:
+							Debug.Log(LogType.Warning, $"Cannot read GLTF animation path (File: {_gltfFileName})");
+							break;
+					} // switch target type
+				} // foreach nodeIds
+				
 				await YieldOnTimeoutAndThrowOnLowMemory();
 			} // foreach channel
 

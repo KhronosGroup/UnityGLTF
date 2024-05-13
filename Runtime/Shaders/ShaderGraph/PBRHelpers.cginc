@@ -116,18 +116,22 @@ void Spectral_float(float wavelength, out half3 color)
 void WorkaroundTilingOffset_float(UnityTexture2D Tex, float4 LegacyST, out float4 TilingOffset, out UnityTexture2D OutTex)
 {
 	#if UNITY_VERSION >= 202120
+	TilingOffset = Tex.scaleTranslate;
 	Tex.scaleTranslate = float4(1,1,0,0);
-	#endif
+	#else
 	TilingOffset = LegacyST;
+	#endif
 	OutTex = Tex;
 }
 
 void WorkaroundTilingOffset_half(UnityTexture2D Tex, half4 LegacyST, out half4 TilingOffset, out UnityTexture2D OutTex)
 {
 	#if UNITY_VERSION >= 202120
+	TilingOffset = Tex.scaleTranslate;
 	Tex.scaleTranslate = half4(1,1,0,0);
-	#endif
+	#else
 	TilingOffset = LegacyST;
+	#endif
 	OutTex = Tex;
 }
 

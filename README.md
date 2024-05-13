@@ -60,7 +60,7 @@ The library is designed to be easy to extend with additional extensions to the g
 
 You can install this package from the Needle Package Registry with a one-click installer:  
 
-1. Download [UnityGLTF Package Installer](http://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
+1. Download [UnityGLTF Package Installer](https://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
 2. Drop the downloaded .unitypackage into Unity and follow the steps.
 
 You can also install this package from git, compatible with UPM (Unity Package Manager).
@@ -138,7 +138,9 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - KHR_materials_iridescence (thin-film interference, like oil on water)
 - KHR_materials_clearcoat (secondary specular layer, like a coat of varnish)
 - KHR_materials_specular (partial support)
+- KHR_materials_dispersion (refractive index dispersion)
 - MSFT_lods (level of detail)
+- KHR_animation_pointer (arbitrary property animations)
 
 ### Import only
 
@@ -150,14 +152,13 @@ The lists below are non-conclusive and in no particular order. Note that there a
 
 ### Export only
 
-- KHR_animation_pointer
 - KHR_materials_variants
 - Timeline recorder track for exporting animations in the editor and at runtime
 - Lossless keyframe optimization on export
 - All 2D textures can be exported, RenderTextures included – they're baked at export.
-- Optional plugin: bake TMPro 3D objects to meshes on export
-- Optional plugin: bake Particle Systems to meshes on export
-- Optional plugin: bake Canvas to meshes on export
+- Optional plugin: Bake TMPro 3D objects to meshes on export
+- Optional plugin: Bake Particle Systems to meshes on export
+- Optional plugin: Bake Canvas to meshes on export
 - Included plugin sample: KHR_audio
 
 ## glTF Materials
