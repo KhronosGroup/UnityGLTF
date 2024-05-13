@@ -6,6 +6,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityGLTF.Cache;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
 
@@ -42,6 +43,7 @@ namespace UnityGLTF
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
 		public GameObject LastLoadedScene { get; private set; } = null;
+		public MeshCacheData[] MeshCache { get; private set; } = null;
 
 		[SerializeField]
 		private Shader shaderOverride = null;
@@ -137,6 +139,7 @@ namespace UnityGLTF
 				}
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
+				MeshCache = sceneImporter._assetCache.MeshCache;
 				
 				if (HideSceneObjDuringLoad)
 					LastLoadedScene.SetActive(true);

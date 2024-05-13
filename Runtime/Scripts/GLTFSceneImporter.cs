@@ -291,7 +291,7 @@ namespace UnityGLTF
 		protected string _gltfFileName;
 		protected GLBStream _gltfStream;
 		protected GLTFRoot _gltfRoot;
-		protected AssetCache _assetCache;
+		public AssetCache _assetCache;
 		protected bool _isRunning = false;
 		
 		protected ImportProgress progressStatus = default(ImportProgress);
