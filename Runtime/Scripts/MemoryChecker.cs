@@ -40,7 +40,7 @@ namespace UnityGLTF
 		{
 			if (outOfMemory)
 			{
-				await Task.Delay(TimeSpan.FromSeconds(3f));
+				await Task.Delay(TimeSpan.FromSeconds(10f));
 				outOfMemory = false;
 			}
 		}
