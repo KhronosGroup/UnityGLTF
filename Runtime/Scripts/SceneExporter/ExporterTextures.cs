@@ -18,10 +18,32 @@ namespace UnityGLTF
 		private string GetUniqueName(HashSet<string> existingNames, string name)
 		{
 			if (!existingNames.Contains(name)) return name;
-			var i = 1;
-			while (existingNames.Contains( $"{name}-{i}"))
-				i++;
-			return $"{name}-{i}";
+
+			string newName = name;
+			if (Path.HasExtension(name))
+			{
+				string extension = Path.GetExtension(name);
+				string baseName = Path.GetFileNameWithoutExtension(name);
+				var i = 1;
+				newName = $"{baseName}-{i}{extension}";
+				while (existingNames.Contains($"{baseName}-{i}{extension}"))
+				{
+					i++;
+					newName = $"{baseName}-{i}{extension}";
+				}
+			}
+			else
+			{
+				var i = 1;
+				newName = $"{name}-{i}";
+				while (existingNames.Contains($"{name}-{i}"))
+				{
+					i++;
+					newName = $"{name}-{i}";
+				}
+			}
+			
+			return newName;
 		}
 
 		private void ExportImages(string outputPath)
@@ -32,7 +54,7 @@ namespace UnityGLTF
 
 				var image = _imageInfos[t].texture;
 				var textureMapType = _imageInfos[t].textureMapType;
-				var fileOutputPath = Path.Combine(outputPath, GetUniqueName(_imageExportPaths, _imageInfos[t].outputPath));
+				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
 				_imageExportPaths.Add(fileOutputPath);
 
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
