@@ -508,7 +508,6 @@ namespace UnityGLTF
 			}
 			_gltfStream.Stream.Close();
 			DisposeNativeBuffers();
-			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal}) (File: {_gltfFileName})");
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
