@@ -1304,6 +1304,7 @@ namespace UnityGLTF
 							for (int i = 0; i < constructedClips.Count; i++)
 							{
 								var clip = constructedClips[i];
+								clip.wrapMode = _options.AnimationLoopTime ? WrapMode.Loop : WrapMode.Default;
 								animation.AddClip(clip, clip.name);
 								if (i == 0)
 								{
