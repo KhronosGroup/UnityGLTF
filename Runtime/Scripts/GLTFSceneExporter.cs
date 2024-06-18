@@ -999,7 +999,8 @@ namespace UnityGLTF
 			scene.Nodes = new List<NodeId>(rootObjTransforms.Length);
 			foreach (var transform in rootObjTransforms)
 			{
-				scene.Nodes.Add(ExportNode(transform));
+				var node = ExportNode(transform);
+				if (node != null) scene.Nodes.Add(node);
 			}
 
 			_root.Scenes.Add(scene);
@@ -1017,6 +1018,9 @@ namespace UnityGLTF
 		{
 			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
 				return new NodeId() { Id = existingNodeId, Root = _root };
+
+			foreach (var plugin in _plugins)
+				if (!(plugin?.ShouldNodeExport(this, _root, nodeTransform) ?? true)) return null;
 
 			exportNodeMarker.Begin();
 			
@@ -1158,7 +1162,8 @@ namespace UnityGLTF
 				foreach (var child in nonPrimitives)
 				{
 					if (!ShouldExportTransform(child.transform)) continue;
-					parentOfChilds.Children.Add(ExportNode(child.transform));
+					var childNode = ExportNode(child.transform);
+					if (childNode != null) parentOfChilds.Children.Add(childNode);
 				}
 			}
 
