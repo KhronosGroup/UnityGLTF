@@ -842,7 +842,7 @@ public partial class GLTFSceneExporter
 			for (int i = 0; i < arr.Length; i++)
 			{
 				var comparer = (baseAccessor == null || baseData == null) ? Vector3.zero : baseData[i];
-				if (comparer != arr[i])
+				if (!comparer.Equals(arr[i]))
 				{
 					indices.Add(i);
 				}
