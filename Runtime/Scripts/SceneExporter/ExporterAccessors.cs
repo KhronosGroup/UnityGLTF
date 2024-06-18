@@ -254,10 +254,10 @@ public partial class GLTFSceneExporter
 #else
 			foreach (var vec in arr)
 			{
-				_bufferWriter.Write(vect.x);
-				_bufferWriter.Write(vect.y);
-				_bufferWriter.Write(vect.z);
-				_bufferWriter.Write(vect.w);
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
+				_bufferWriter.Write(vec.w);
 			}
 #endif
 			exportAccessorBufferWriteMarker.End();
