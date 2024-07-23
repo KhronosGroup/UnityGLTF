@@ -227,19 +227,23 @@ namespace UnityGLTF
 			Transform[] avatarTransforms = avatarRoot.GetComponentsInChildren<Transform>();
 			foreach (Transform avatarTransform in avatarTransforms)
 			{
-				if (HumanSkeletonNames.TryGetValue(avatarTransform.name, out string humanName))
+				string humanName = avatarTransform.name;
+				if (HumanSkeletonNames.TryGetValue(humanName, out string newHumanName))
+					humanName = newHumanName;
+				else
+					if (!HumanSkeletonNames.ContainsValue(humanName))
+						continue;
+			
+				HumanBone bone = new HumanBone
 				{
-					HumanBone bone = new HumanBone
-					{
-						boneName = avatarTransform.name,
-						humanName = humanName,
-						limit = new HumanLimit()
-					};
-					bone.limit.useDefaultValues = true;
+					boneName = avatarTransform.name,
+					humanName = humanName,
+					limit = new HumanLimit()
+				};
+				bone.limit.useDefaultValues = true;
 
-					human.Add(bone);
-				}
-			}
+				human.Add(bone);
+			} 
 			return human.ToArray();
 		}
 	}
