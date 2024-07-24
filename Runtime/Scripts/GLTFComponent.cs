@@ -8,6 +8,9 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
+#if WINDOWS_UWP 
+using System; 
+#endif
 
 namespace UnityGLTF
 {

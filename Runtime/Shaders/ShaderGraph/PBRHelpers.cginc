@@ -51,6 +51,11 @@ float3 Sample4Tap(float2 uv, float lod)
 
 void SampleSceneColor_float(float2 uv, float lod, out float3 color)
 {
+	#if !UNITY_UV_STARTS_AT_TOP
+	if (_CameraOpaqueTexture_TexelSize.y > 0)
+		uv.y = 1-uv.y;
+	#endif
+	
 	#define REQUIRE_OPAQUE_TEXTURE // seems we need to define this ourselves? HDSceneColorNode does that as well
 
 #if defined(USE_CAMERA_OPAQUE)

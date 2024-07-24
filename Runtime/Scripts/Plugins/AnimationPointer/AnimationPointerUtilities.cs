@@ -1,4 +1,5 @@
-﻿using GLTF.Schema;
+﻿using GLTF;
+using GLTF.Schema;
 using UnityEngine;
 
 namespace UnityGLTF.Plugins
@@ -8,18 +9,21 @@ namespace UnityGLTF.Plugins
         private static readonly string[] MATERIAL_PROPERTY_COMPONENTS = {"x", "y", "z", "w"};
         private static readonly string[] MATERIAL_COLOR_PROPERTY_COMPONENTS = {"r", "g", "b", "a"};
 
-        internal static bool BuildImportMaterialAnimationPointerData(MaterialPropertiesRemapper remapper, Material material,
-            string gltfProperty, GLTFAccessorAttributeType valueType, out AnimationPointerData pointerData)
+        internal static bool BuildImportMaterialAnimationPointerData(string pointerPath, MaterialPropertiesRemapper remapper, Material material,
+            string gltfProperty, AttributeAccessor accessor, out AnimationPointerData pointerData)
         {
+            var valueType = accessor.AccessorId.Value.Type;
             pointerData = new AnimationPointerData();
+            pointerData.primaryPath = pointerPath;
+            pointerData.primaryData = accessor;
+            
             if (!remapper.GetUnityPropertyName(material, gltfProperty, out string unityPropertyName,
                     out MaterialPointerPropertyMap propertyMap, out bool isSecondaryGltfProperty))
                 return false;
-            
-            // e.g. Emission Factor and Emission Color are combined into a single property
-            if (isSecondaryGltfProperty && propertyMap.CombinePrimaryAndSecondaryOnImport)
-                return false;
 
+            pointerData.primaryProperty = propertyMap.GltfPropertyName;
+            pointerData.secondaryProperty = propertyMap.GltfSecondaryPropertyName;
+                        
             if (propertyMap.CombinePrimaryAndSecondaryOnImport)
             {
                 if (propertyMap.CombinePrimaryAndSecondaryDataFunction == null)
@@ -36,23 +40,31 @@ namespace UnityGLTF.Plugins
                 valueType = propertyMap.OverrideCombineResultType;
             }
             
+            if (isSecondaryGltfProperty)
+            {
+                pointerData.primaryPath = "";
+                pointerData.primaryData = null;
+                pointerData.secondaryPath = pointerPath;
+                pointerData.secondaryData = accessor;
+            }
+            
             switch (valueType)
             {
                 case GLTFAccessorAttributeType.SCALAR:
                     pointerData.unityPropertyNames = GetAnimationChannelProperties(unityPropertyName, 1, isSecondaryGltfProperty ? 1 : 0 );
-                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(data.primaryData.AccessorContent, frame, primaryComponentCount, propertyMap, pointerDataCopy);
+                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(frame, primaryComponentCount, propertyMap, pointerDataCopy);
                     break;
                 case GLTFAccessorAttributeType.VEC2:
                     pointerData.unityPropertyNames = GetAnimationChannelProperties(unityPropertyName, 2, isSecondaryGltfProperty ? 2 : 0);
-                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(data.primaryData.AccessorContent, frame, primaryComponentCount, propertyMap, pointerDataCopy);
+                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(frame, primaryComponentCount, propertyMap, pointerDataCopy);
                     break;
                 case GLTFAccessorAttributeType.VEC3:
                     pointerData.unityPropertyNames = GetAnimationChannelProperties(unityPropertyName, 3, isColor: propertyMap.IsColor);
-                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(data.primaryData.AccessorContent, frame, primaryComponentCount, propertyMap, pointerDataCopy);
+                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(frame, primaryComponentCount, propertyMap, pointerDataCopy);
                     break;
                 case GLTFAccessorAttributeType.VEC4:
                     pointerData.unityPropertyNames = GetAnimationChannelProperties(unityPropertyName, 4, isColor: propertyMap.IsColor);
-                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(data.primaryData.AccessorContent, frame, primaryComponentCount, propertyMap, pointerDataCopy);
+                    pointerData.importAccessorContentConversion = (data, frame) => MaterialValueConversion(frame, primaryComponentCount, propertyMap, pointerDataCopy);
                     break;
                 default:
                     return false;
@@ -81,63 +93,72 @@ namespace UnityGLTF.Plugins
             return result;
         }
         
-        internal static float[] MaterialValueConversion(NumericArray data, int index, int componentCount, MaterialPointerPropertyMap map, AnimationPointerData pointerData)
+        internal static float[] MaterialValueConversion(int index, int componentCount, MaterialPointerPropertyMap map, AnimationPointerData pointerData)
         {
             int resultComponentCount = componentCount;
             if (map.CombineComponentResult == MaterialPointerPropertyMap.CombineResultType.Override)
             {
                 resultComponentCount = map.OverrideCombineResultType.ComponentCount();
             }
+            float[] primary = new float[0];
             float[] result = new float[resultComponentCount];
-
-            
-            switch (componentCount)
+            if (pointerData.primaryData != null)
             {
-                case 1:
-                    result[0] = data.AsFloats[index];
-                    break;
-                case 2:
-                    var frameData2 = data.AsFloat2s[index];
-                    result[0] = frameData2.x;
-                    result[1] = frameData2.y;
-                    break;
-                case 3:
-                    var frameData3 = data.AsFloat3s[index];
-                    if (map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
-                    {
-                        Color gammaColor = new Color(frameData3.x, frameData3.y, frameData3.z).gamma;
-                        result[0] = gammaColor.r;
-                        result[1] = gammaColor.g;
-                        result[2] = gammaColor.b;
-                    }
-                    else
-                    {
-                        result[0] = frameData3.x;
-                        result[1] = frameData3.y;
-                        result[2] = frameData3.z;
-                    }
-                    break;
-                case 4:
-                    var frameData4 = data.AsFloat4s[index];
-                    if (map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
-                    {
-                        Color gammaColor = new Color(frameData4.x, frameData4.y, frameData4.z, frameData4.z).gamma;
-                        result[0] = gammaColor.r;
-                        result[1] = gammaColor.g;
-                        result[2] = gammaColor.b;
-                        result[3] = gammaColor.a;
-                    }
-                    else
-                    {
-                        result[0] = frameData4.x;
-                        result[1] = frameData4.y;
-                        result[2] = frameData4.z;
-                        result[3] = frameData4.w;
-                    }
+                var primaryData = pointerData.primaryData.AccessorContent;
+                switch (componentCount)
+                {
+                    case 1:
+                        primary = new float[1];
+                        primary[0] = primaryData.AsFloats[index];
+                        break;
+                    case 2:
+                        primary = new float[2];
+                        var frameData2 = primaryData.AsFloat2s[index];
+                        primary[0] = frameData2.x;
+                        primary[1] = frameData2.y;
+                        break;
+                    case 3:
+                        primary = new float[3];
+                        var frameData3 = primaryData.AsFloat3s[index];
+                        if (map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
+                        {
+                            Color gammaColor = new Color(frameData3.x, frameData3.y, frameData3.z).gamma;
+                            primary[0] = gammaColor.r;
+                            primary[1] = gammaColor.g;
+                            primary[2] = gammaColor.b;
+                        }
+                        else
+                        {
+                            primary[0] = frameData3.x;
+                            primary[1] = frameData3.y;
+                            primary[2] = frameData3.z;
+                        }
 
-                    break;
+                        break;
+                    case 4:
+                        primary = new float[4];
+                        var frameData4 = primaryData.AsFloat4s[index];
+                        if (map.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
+                        {
+                            Color gammaColor = new Color(frameData4.x, frameData4.y, frameData4.z, frameData4.z).gamma;
+                            primary[0] = gammaColor.r;
+                            primary[1] = gammaColor.g;
+                            primary[2] = gammaColor.b;
+                            primary[3] = gammaColor.a;
+                        }
+                        else
+                        {
+                            primary[0] = frameData4.x;
+                            primary[1] = frameData4.y;
+                            primary[2] = frameData4.z;
+                            primary[3] = frameData4.w;
+                        }
+
+                        break;
+                }
             }
             
+
             if (map.CombinePrimaryAndSecondaryOnImport && map.CombinePrimaryAndSecondaryDataFunction != null)
             {
                 float[] secondary = new float[0];
@@ -163,12 +184,14 @@ namespace UnityGLTF.Plugins
                             secondary = new float[] { s4.x, s4.y, s4.z, s4.w };
                             break;
                         default:
-                            return result;
+                            return primary;
                     }
                 }
 
-                result = map.CombinePrimaryAndSecondaryDataFunction(result, secondary);
+                result = map.CombinePrimaryAndSecondaryDataFunction(primary, secondary, result.Length);
             }
+            else
+                result = primary;
 
             return result;
         }

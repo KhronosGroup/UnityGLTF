@@ -508,8 +508,6 @@ namespace UnityGLTF
 			}
 			_gltfStream.Stream.Close();
 			DisposeNativeBuffers();
-			if (progressStatus.NodeLoaded != progressStatus.NodeTotal) Debug.Log(LogType.Error, $"Nodes loaded ({progressStatus.NodeLoaded}) does not match node total in the scene ({progressStatus.NodeTotal}) (File: {_gltfFileName})");
-			if (progressStatus.TextureLoaded > progressStatus.TextureTotal) Debug.Log(LogType.Error, $"Textures loaded ({progressStatus.TextureLoaded}) is larger than texture total in the scene ({progressStatus.TextureTotal}) (File: {_gltfFileName})");
 
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
@@ -1304,6 +1302,7 @@ namespace UnityGLTF
 							for (int i = 0; i < constructedClips.Count; i++)
 							{
 								var clip = constructedClips[i];
+								clip.wrapMode = _options.AnimationLoopTime ? WrapMode.Loop : WrapMode.Default;
 								animation.AddClip(clip, clip.name);
 								if (i == 0)
 								{

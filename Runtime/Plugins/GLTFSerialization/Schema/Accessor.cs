@@ -738,7 +738,7 @@ namespace GLTF.Schema
 				return contents.AsFloat2s;
 			}
 
-			if (Type != GLTFAccessorAttributeType.VEC2)
+			if (Type != GLTFAccessorAttributeType.VEC2 && Type != GLTFAccessorAttributeType.VEC3 && Type != GLTFAccessorAttributeType.VEC4)
 			{
 				return null;
 			}
@@ -754,7 +754,8 @@ namespace GLTF.Schema
 			GetTypeDetails(ComponentType, out uint componentSize, out float maxValue);
 			var bufferPointer = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr<byte>(bufferViewData);
 
-			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * 2;
+			uint typeBasedStride = Type == GLTFAccessorAttributeType.VEC2 ? (uint) 2 : Type == GLTFAccessorAttributeType.VEC3 ? (uint) 3 : (uint) 4;
+			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize * typeBasedStride;
 			if (!normalizeIntValues) maxValue = 1;
 
 			if (ComponentType == GLTFComponentType.Float)
