@@ -384,16 +384,26 @@ namespace UnityGLTF
 									if (!mat.UnityMaterial)
 										continue;
 									
-									if (!AnimationPointerHelpers.BuildImportMaterialAnimationPointerData(pointerImportContext.materialPropertiesRemapper, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output.AccessorId.Value.Type, out pointerData))
+									if (!AnimationPointerHelpers.BuildImportMaterialAnimationPointerData(pointer.path, pointerImportContext.materialPropertiesRemapper, mat.UnityMaterial, gltfPropertyPath, samplerCache.Output, out pointerData))
 										continue;
-									
-									pointerData.primaryData = samplerCache.Output;
-									pointerData.primaryPath = pointer.path;
-									if (!string.IsNullOrEmpty(pointerData.secondaryPath))
+									pointerData.targetNodeIds = nodeIds;
+									if (string.IsNullOrEmpty(pointerData.primaryPath))
+									{
+										pointerData.primaryPath = "/" + pointerHierarchy.ExtractPath().Replace(rootIndex.next.ExtractPath(), pointerData.primaryProperty);
+										pointerData.primaryData = FindSecondaryChannel(pointerData.primaryPath);
+										if (pointerData.primaryData != null)
+										{
+											//cancel here and process this combined property later when we found first the Primary Property
+											continue;
+										}
+									}
+									else
+									if (!string.IsNullOrEmpty(pointerData.secondaryProperty))
 									{
 										// When an property has potentially a second Sampler, we need to find it. e.g. like EmissionFactor and EmissionStrength
-										string secondaryPath = $"/{pointerHierarchy.elementName}/{rootIndex.index.ToString()}/{pointerData.secondaryPath}";
-										pointerData.secondaryData = FindSecondaryChannel(secondaryPath);
+
+										pointerData.secondaryPath = "/" + pointerHierarchy.ExtractPath().Replace(rootIndex.next.ExtractPath(), pointerData.secondaryProperty);
+										pointerData.secondaryData = FindSecondaryChannel(pointerData.secondaryPath);
 									}
 									break;
 								case "cameras":

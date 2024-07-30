@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2024-07-23
+
+- fix: empty or invalid root transforms should not be exported
+- fix: when no root transforms are exported, no scene should be created by default
+- fix: image filenames were sometimes incorrectly exported when exporting .gltf files (#737)
+- fix: set wrap mode for legacy animation import mode
+- fix: added missing ExtTransform for some textures in animationpointer import/export, fixes when only offset exist (#740)
+- fix: added uv-starts-at-top check for transmission support on WebGL and other platforms (#746)
+- fix: added missing generate mitmaps to ktx texture load (#752)
+- fix: bone name mapping for exact names was not applied on humanoid import (#751)
+- fix: added missing using system for uwp target (#757)
+- feat: allow importing non-standard VEC3 and VEC4 TEXCOORD_n data and convert it to VEC2
+- add: exposed texture readwrite enabled and generate mipmaps option to importer
+- change: removed log for loaded node count mismatch, extensions can modify node counts so the log was misleading
+- change: removed loaded texture count error log: when multiple samplers are used for one texture, the textures will be duplicated
+
 ## [2.12.0] - 2024-05-06
 
 - fix: PolySpatial support now also includes emission textures and colors

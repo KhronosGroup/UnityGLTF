@@ -164,7 +164,7 @@ namespace UnityGLTF
 #endif
 						var ktxTexture = new KtxUnity.KtxTexture();
 						
-						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear);
+						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear, mipChain: GenerateMipMapsForTextures);
 						texture = resultTextureData.texture;
 						texture.name = textureName;
 					}

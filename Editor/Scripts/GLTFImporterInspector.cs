@@ -115,7 +115,9 @@ namespace UnityGLTF
 			var importedTextures = serializedObject.FindProperty("m_Textures");
 			if (importedTextures.arraySize > 0)
 			{
-				EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
+				EditorGUILayout.LabelField("Textures", EditorStyles.boldLabel);
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._texturesReadWriteEnabled)));
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateMipMaps)));
 				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._textureCompression)));
 			}
 		}
