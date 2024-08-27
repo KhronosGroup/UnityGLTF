@@ -496,7 +496,9 @@ namespace UnityGLTF
 				DisposeNativeBuffers();
 
 				onLoadComplete?.Invoke(null, ExceptionDispatchInfo.Capture(ex));
-				Debug.Log(LogType.Error, $"Error loading file: {_gltfFileName}");
+				Debug.Log(LogType.Error, $"Error loading file: {_gltfFileName}" 
+				                         + System.Environment.NewLine + "Message: " + ex.Message
+				                         + System.Environment.NewLine + "StackTrace: " + ex.StackTrace);
 				throw;
 			}
 			finally
