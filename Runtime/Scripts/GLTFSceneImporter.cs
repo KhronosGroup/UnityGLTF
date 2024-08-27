@@ -654,7 +654,8 @@ namespace UnityGLTF
 				_assetCache.MaterialCache,
 				_assetCache.MeshCache,
 				_assetCache.TextureCache,
-				_assetCache.ImageCache
+				_assetCache.ImageCache,
+				_assetCache.AnimationCache
 			);
 		}
 

@@ -36,18 +36,24 @@ namespace UnityGLTF.Cache
 		/// Textures used by this GLTF node.
 		/// </summary>
 		public TextureCacheData[] TextureCache { get; private set; }
-
+		
+		/// <summary>
+		/// Animations used by this GLTF node.
+		/// </summary>
+		public AnimationCacheData[] AnimationCache { get; private set; }
+		
 		/// <summary>
 		/// Textures from the AssetCache that might need to be cleaned up
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
 
-		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache)
+		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache, AnimationCacheData[] animationCache)
 		{
 			MaterialCache = materialCache;
 			MeshCache = meshCache;
 			TextureCache = textureCache;
 			ImageCache = imageCache;
+			AnimationCache = animationCache;
 		}
 
 		public void IncreaseRefCount()
@@ -116,6 +122,16 @@ namespace UnityGLTF.Cache
 				{
 					UnityEngine.Object.Destroy(ImageCache[i]);
 					ImageCache[i] = null;
+				}
+			}
+			
+			// Destroy the cached animations
+			for (int i = 0; i < AnimationCache.Length; i++)
+			{
+				if (AnimationCache[i] != null)
+				{
+					UnityEngine.Object.Destroy(AnimationCache[i].LoadedAnimationClip);
+					AnimationCache[i] = null;
 				}
 			}
 
