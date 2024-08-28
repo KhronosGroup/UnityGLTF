@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UnityGltf_pbrGraph_ShaderVariantCollection
+  m_Shaders:
+  - first: {fileID: -6465566751694194690, guid: 478ce3626be7a5f4ea58d6b13f05a2e4,
+      type: 3}
+    second:
+      variants:
+      - keywords: _CLEARCOAT_ON _IRIDESCENCE_ON _SPECULAR_ON _TEXTURE_TRANSFORM_ON
+          _VERTEX_COLORS_ON _VOLUME_TRANSMISSION_ANDDISPERSION _VOLUME_TRANSMISSION_OFF
+          _VOLUME_TRANSMISSION_ON
+        passType: 0
