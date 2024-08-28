@@ -41,6 +41,7 @@ namespace UnityGLTF
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
 
+		public bool DeduplicateResources = false;
 		public bool SwapUVs = false;
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
@@ -115,6 +116,75 @@ namespace UnityGLTF
 			Topology = null;
 			Indices = null;
 			subMeshVertexOffset = null;
+		}
+
+		public bool IsEqual(UnityMeshData other)
+		{
+			bool CompareArray<T>(T[] array1, T[] array2) 
+			{
+				if (array1 == null && array2 == null)
+					return true;
+				if (array1 == array2)
+					return true;
+				if (array1?.Length != array2?.Length)
+					return false;
+				
+				for (int i = 0; i < array1.Length; i++)
+				{
+					if (!array1[i].Equals(array2[i]))
+						return false;
+				}
+
+				return true;
+			}
+			
+			bool CompareArray2<T>(T[][] array1, T[][] array2) 
+			{
+				if (array1 == null && array2 == null)
+					return true;
+				if (array1 == array2)
+					return true;
+				if (array1?.Length != array2?.Length)
+					return false;
+				
+				for (int i = 0; i < array1.Length; i++)
+				{
+					if (array1[i] == null && array2[i] == null)
+						continue;
+					if (array1[i] == array2[i])
+						continue;
+					
+					if (array1[i].Length != array2[i].Length)
+						return false;
+					
+					for (int j = 0; j < array1.Length; j++)
+					{
+						if (!array1[i][j].Equals(array2[i][j]))
+							return false;
+					}
+				}
+
+				return true;
+			}
+			
+			if (!CompareArray(Vertices, other.Vertices)
+			    || !CompareArray(Normals, other.Normals)
+			    || !CompareArray(Tangents, other.Tangents)
+			    || !CompareArray(Uv1, other.Uv1)
+			    || !CompareArray(Uv2, other.Uv2)
+			    || !CompareArray(Uv3, other.Uv3)
+			    || !CompareArray(Uv4, other.Uv4)
+			    || !CompareArray(Colors, other.Colors)
+			    || !CompareArray(BoneWeights, other.BoneWeights)
+				|| !CompareArray(Topology, other.Topology)
+				|| !CompareArray(DrawModes, other.DrawModes)
+				|| !CompareArray2(MorphTargetVertices, other.MorphTargetVertices)
+				|| !CompareArray2(MorphTargetNormals, other.MorphTargetNormals)
+				|| !CompareArray2(MorphTargetTangents, other.MorphTargetTangents)
+				|| !CompareArray2(Indices, other.Indices))
+				return false;
+			
+			return true;
 		}
 	}
 
@@ -703,6 +773,14 @@ namespace UnityGLTF
 
 			// Free up some Memory, Accessor contents are no longer needed
 			FreeUpAccessorContents();
+
+			if (_options.DeduplicateResources)
+			{
+				if (IsMultithreaded)
+					await Task.Run(CheckForMeshDuplicates, cancellationToken);
+				else
+					CheckForMeshDuplicates();
+			}
 			
 			await ConstructScene(scene, showSceneObj, cancellationToken);
 

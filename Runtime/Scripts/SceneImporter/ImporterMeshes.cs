@@ -1361,5 +1361,47 @@ namespace UnityGLTF
 			for (var i = 0; i < x; i++) result[i] = new T[y];
 			return result;
 		}
+
+		private void CheckForMeshDuplicates()
+		{
+			Dictionary<int, int> meshDuplicates = new Dictionary<int, int>();
+
+			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
+			{
+				if (meshDuplicates.ContainsKey(meshIndex))
+				    continue;
+				
+				for (int i = meshIndex+1; i < _gltfRoot.Meshes.Count; i++)
+				{
+					
+					if (i == meshIndex)
+						continue;
+					if (_assetCache.MeshCache[i] == null)
+						continue;
+
+					if (_assetCache.UnityMeshDataCache[i] == null
+					    || _assetCache.UnityMeshDataCache[meshIndex] == null)
+						continue;
+
+					var meshIsEqual = _assetCache.UnityMeshDataCache[i]
+						.IsEqual(_assetCache.UnityMeshDataCache[meshIndex]);
+					
+					if (meshIsEqual)
+						meshDuplicates[i] = meshIndex;
+				}
+			}
+
+			foreach (var dm in meshDuplicates)
+			{
+				for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
+				{
+					if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
+					{
+						_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
+					}
+				}
+			}
+
+		}
 	}
 }
