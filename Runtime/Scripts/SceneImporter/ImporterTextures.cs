@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using GLTF.Schema;
@@ -20,6 +21,7 @@ namespace UnityGLTF
 	public partial class GLTFSceneImporter
 	{
 		internal const string EMPTY_TEXTURE_NAME_SUFFIX = " \0";
+		private Dictionary<int, int> _imageDeduplicationLinks; // Org Image ID -> distinct Image ID
 
 		private class TextureData
 		{
@@ -70,7 +72,98 @@ namespace UnityGLTF
 
 			return result;
 		}
+        
+		private static int ComputeHash(byte[] data)
+		{
+			unchecked
+			{
+				const int p = 16777619;
+				int hash = (int)2166136261;
 
+				for (int i = 0; i < data.Length; i++)
+					hash = (hash ^ data[i]) * p;
+
+				return hash;
+			}
+		}
+		
+        private Dictionary<int, int> CollectImageHashes()
+        {
+	        Dictionary<int, int> hashes = new Dictionary<int, int>();
+
+	        int index = -1;
+            foreach (var image in _gltfRoot.Images)
+            {
+	            index++;
+                if (image.Uri == null)
+                {
+	                if (image.BufferView == null)
+		                continue;
+
+	                var stream = GetImageStream(image);
+	                if (stream == null || stream.Length == 0)
+		                continue;
+	                
+	                // Create a hash for the stream data
+	                var bufferData = new byte[stream.Length];
+	                stream.Read(bufferData, 0, bufferData.Length);
+	                
+	                int streamHash = ComputeHash(bufferData);
+	                
+	                hashes.Add(index, streamHash);
+                }
+                else
+                {
+	                hashes.Add(index, image.Uri.GetHashCode());
+                }
+            }
+
+            return hashes;
+        }
+        
+        private void CheckForDuplicateImages()
+        {
+	        var hashes = CollectImageHashes();
+	        var reverseHashes = new Dictionary<int, int>();
+	        foreach (var h in hashes)
+		        reverseHashes[h.Value] = h.Key;
+	        
+	        _imageDeduplicationLinks = new Dictionary<int, int>();
+	        foreach (var h in hashes)
+		        _imageDeduplicationLinks[h.Key] = reverseHashes[h.Value];
+        }
+        
+        private Stream GetImageStream(GLTFImage image)
+		{
+	        Stream stream = null;
+			if (image.Uri == null)
+			{
+	            if (image.BufferView == null)
+		            return null;
+	            
+	            var bufferView = image.BufferView.Value;
+	            BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
+	            if (bufferContents.bufferData.IsCreated)
+	            {
+		            bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+		            stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
+	            }
+			}
+			else
+			{
+	            string uri = image.Uri;
+
+	            byte[] bufferData;
+	            URIHelper.TryParseBase64(uri, out bufferData);
+	            if (bufferData != null)
+	            {
+		            stream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
+	            }
+			}
+
+			return stream;
+		}
+      
 		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
 			if (_assetCache.InvalidImageCache[imageCacheIndex])
@@ -78,33 +171,7 @@ namespace UnityGLTF
 
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
-				Stream stream = null;
-				if (image.Uri == null)
-				{
-					var bufferView = image.BufferView.Value;
-					BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-					if (bufferContents.bufferData.IsCreated)
-					{
-						bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
-						stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
-					}
-				}
-				else
-				{
-					string uri = image.Uri;
-
-					byte[] bufferData;
-					URIHelper.TryParseBase64(uri, out bufferData);
-					if (bufferData != null)
-					{
-						stream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
-					}
-					else
-					{
-						stream = _assetCache.ImageStreamCache[imageCacheIndex];
-					}
-				}
-
+				Stream stream = GetImageStream(image);
 				await YieldOnTimeoutAndThrowOnLowMemory();
 				await ConstructUnityTexture(stream, markGpuOnly, isLinear, isNormal, image, imageCacheIndex);
 			}
@@ -332,7 +399,15 @@ namespace UnityGLTF
 			{
 				return ((KHR_texture_basisu)texture.Extensions[KHR_texture_basisu.EXTENSION_NAME]).source.Id;
 			}
-			return texture.Source?.Id ?? 0;
+			
+			int id = texture.Source?.Id ?? 0;
+			if (_imageDeduplicationLinks != null)
+			{
+				if (_imageDeduplicationLinks.TryGetValue(id, out int replacedId))
+					id = replacedId;
+			}
+			
+			return id;
 		}
 
 		protected virtual bool IsTextureFlipped(GLTFTexture texture)

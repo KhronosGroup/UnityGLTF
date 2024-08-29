@@ -85,9 +85,9 @@ namespace UnityGLTF
 
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
         [SerializeField] internal bool _removeEmptyRootObjects = true;
-        [SerializeField] internal float _scaleFactor = 1.0f;
-		[Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
-        [SerializeField] internal bool _deduplicateResources = false;
+        [SerializeField] internal float _scaleFactor = 1.0f; 
+        [Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
+        [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
         [SerializeField] internal int _maximumLod = 300;
         [SerializeField] internal bool _readWriteEnabled = true;
         [SerializeField] internal bool _generateColliders = false;

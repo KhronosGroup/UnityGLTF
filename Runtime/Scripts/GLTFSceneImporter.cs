@@ -25,6 +25,14 @@ using WrapMode = UnityEngine.WrapMode;
 
 namespace UnityGLTF
 {
+	[Flags]
+	public enum DeduplicateOptions
+	{
+		None = 0,
+		Meshes = 1,
+		Textures = 2,
+	}
+	
 	public class ImportOptions
 	{
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -40,8 +48,7 @@ namespace UnityGLTF
 		public AnimationMethod AnimationMethod = AnimationMethod.Legacy;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
-
-		public bool DeduplicateResources = false;
+		public DeduplicateOptions DeduplicateResources = DeduplicateOptions.None;
 		public bool SwapUVs = false;
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
@@ -774,12 +781,22 @@ namespace UnityGLTF
 			// Free up some Memory, Accessor contents are no longer needed
 			FreeUpAccessorContents();
 
-			if (_options.DeduplicateResources)
+			if (_options.DeduplicateResources != DeduplicateOptions.None)
 			{
 				if (IsMultithreaded)
-					await Task.Run(CheckForMeshDuplicates, cancellationToken);
+				{
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
+						await Task.Run(CheckForMeshDuplicates, cancellationToken);
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Textures))
+						await Task.Run(CheckForDuplicateImages, cancellationToken);
+				}
 				else
-					CheckForMeshDuplicates();
+				{
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
+						CheckForMeshDuplicates();
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Textures))
+						CheckForDuplicateImages();
+				}
 			}
 			
 			await ConstructScene(scene, showSceneObj, cancellationToken);
