@@ -1397,6 +1397,9 @@ namespace UnityGLTF
 				{
 					if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
 					{
+						if (_gltfRoot.Nodes[i].Weights == null && _gltfRoot.Meshes[dm.Value].Weights != null)
+							_gltfRoot.Nodes[i].Weights = _gltfRoot.Meshes[_gltfRoot.Nodes[i].Mesh.Id].Weights;
+						
 						_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
 					}
 				}
