@@ -39,7 +39,7 @@ namespace UnityGLTF
 		}
 
 		public GLTFSceneExporter.RetrieveTexturePathDelegate TexturePathRetriever = (texture) => texture.name;
-
+		
 		// TODO Should we make all the callbacks on ExportContext obsolete?
 		// Pro: We can remove them from the API
 		// Con: No direct way to "just add callbacks" right now, always needs a plugin.
@@ -53,7 +53,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter.AfterTextureExportDelegate AfterTextureExport;
 		public GLTFSceneExporter.AfterPrimitiveExportDelegate AfterPrimitiveExport;
 		public GLTFSceneExporter.AfterMeshExportDelegate AfterMeshExport;
-
+		
 		internal GLTFExportPluginContext GetExportContextCallbacks() => new ExportContextCallbacks(this);
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -65,7 +65,7 @@ namespace UnityGLTF
 			{
 				_exportContext = context;
 			}
-
+			
 			public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => _exportContext.BeforeSceneExport?.Invoke(exporter, gltfRoot);
 			public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => _exportContext.AfterSceneExport?.Invoke(exporter, gltfRoot);
 			public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node) => _exportContext.AfterNodeExport?.Invoke(exporter, gltfRoot, transform, node);
@@ -121,7 +121,7 @@ namespace UnityGLTF
 		public delegate void AfterPrimitiveExportDelegate(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index);
 		public delegate void AfterMeshExportDelegate(GLTFSceneExporter exporter, Mesh mesh, GLTFMesh gltfMesh, int index);
 
-
+		
 		private class LegacyCallbacksPlugin : GLTFExportPluginContext
 		{
 			public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) => GLTFSceneExporter.AfterSceneExport?.Invoke(exporter, gltfRoot);
@@ -148,7 +148,7 @@ namespace UnityGLTF
 			}
 			public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) => GLTFSceneExporter.AfterMaterialExport?.Invoke(exporter, gltfRoot, material, materialNode);
 		}
-
+		
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 		private List<GLTFExportPluginContext> _plugins = new List<GLTFExportPluginContext>();
 
@@ -330,7 +330,7 @@ namespace UnityGLTF
 				case TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap:
 					if (_metalGlossOcclusionChannelSwapMaterial && _metalGlossOcclusionChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
 						_metalGlossOcclusionChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
-
+					
 					return _metalGlossOcclusionChannelSwapMaterial;
 				default:
 					return null;
@@ -379,7 +379,7 @@ namespace UnityGLTF
 
 		private Material _metalGlossChannelSwapMaterial;
 		private Material _metalGlossOcclusionChannelSwapMaterial;
-
+		
 		private Material _normalChannelMaterial;
 
 		private const uint MagicGLTF = 0x46546C67;
@@ -578,12 +578,12 @@ namespace UnityGLTF
 				Debug = context.logger;
 			else
 				Debug = UnityEngine.Debug.unityLogger;
-
+			
 			// legacy: implicit plugin for all the static methods on GLTFSceneExporter
 			_plugins.Add(new LegacyCallbacksPlugin());
 			// legacy: implicit plugin for all the methods on ExportContext
 			_plugins.Add(context.GetExportContextCallbacks());
-
+			
 			// create export plugin instances
 			foreach (var plugin in settings.ExportPlugins)
 			{
@@ -601,7 +601,7 @@ namespace UnityGLTF
 
 			var metalGlossOcclusionChannelSwapShader = Resources.Load("MetalGlossOcclusionChannelSwap", typeof(Shader)) as Shader;
 			_metalGlossOcclusionChannelSwapMaterial = new Material(metalGlossOcclusionChannelSwapShader);
-
+			
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
 
@@ -882,7 +882,7 @@ namespace UnityGLTF
 
 			if (exportTextures)
 				ExportImages(path);
-
+				
 			ExportFiles(path);
 
 			gltfWriteOutMarker.End();
@@ -917,7 +917,7 @@ namespace UnityGLTF
 		private static string EnsureValidFileName(string filename)
 		{
 			if (filename == null) return "";
-
+			
 			var invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
 			var invalidReStr = string.Format(@"[{0}]+", invalidChars);
 
@@ -965,7 +965,7 @@ namespace UnityGLTF
 			// Root transforms should *always* be exported since this is a deliberate decision by the user calling - it should override any other setting that would prevent the export (e.g. if a user calls Export with disabled or hidden objects the exporter should never prevent this)
 			var isRoot = _rootTransforms.Contains(transform);
 			if (isRoot) return true;
-
+			
 			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf)
 			{
 				return false;
@@ -978,7 +978,7 @@ namespace UnityGLTF
 		private SceneId ExportScene(string name, Transform[] rootObjTransforms)
 		{
 			if (rootObjTransforms == null || rootObjTransforms.Length < 1) return null;
-
+			
 			exportSceneMarker.Begin();
 
 			var scene = new GLTFScene();
@@ -1033,14 +1033,14 @@ namespace UnityGLTF
 				if (!(plugin?.ShouldNodeExport(this, _root, nodeTransform) ?? true)) return null;
 
 			exportNodeMarker.Begin();
-
+			
 			var node = new Node();
 
 			if (ExportNames)
 			{
 				node.Name = nodeTransform.name;
 			}
-
+			
 			// TODO think more about how this callback is used – could e.g. be modifying the hierarchy,
 			// and we would want to prevent exporting children of this node.
 			// Could also be that we want to add a mesh based on some condition
@@ -1106,7 +1106,7 @@ namespace UnityGLTF
 					node.Mesh = ExportMesh(nodeTransform.name, uniquePrimitives);
 					RegisterPrimitivesWithNode(node, uniquePrimitives);
 
-					// Node - BlendShape Weights
+					// Node - BlendShape Weights 
 					if (uniquePrimitives[0].SkinnedMeshRenderer)
 					{
 						var meshObj = uniquePrimitives[0].Mesh;
@@ -1214,7 +1214,7 @@ namespace UnityGLTF
 					prims.Add(transform.gameObject);
 				}
 			}
-
+			
 			for (var i = 0; i < childCount; i++)
 			{
 				var go = transform.GetChild(i).gameObject;
@@ -1366,7 +1366,7 @@ namespace UnityGLTF
 			}
 			return null;
 		}
-
+		
 		public MeshId GetMeshId(Mesh meshObj)
 		{
 			foreach (var primOwner in _primOwner)
