@@ -134,35 +134,35 @@ namespace UnityGLTF
         }
         
         private Stream GetImageStream(GLTFImage image)
-		{
+        {
 	        Stream stream = null;
-			if (image.Uri == null)
-			{
-	            if (image.BufferView == null)
-		            return null;
-	            
-	            var bufferView = image.BufferView.Value;
-	            BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-	            if (bufferContents.bufferData.IsCreated)
-	            {
-		            bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
-		            stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
-	            }
-			}
-			else
-			{
-	            string uri = image.Uri;
+	        if (image.Uri == null)
+	        {
+		        if (image.BufferView == null)
+			        return null;
 
-	            byte[] bufferData;
-	            URIHelper.TryParseBase64(uri, out bufferData);
-	            if (bufferData != null)
-	            {
-		            stream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
-	            }
-			}
+		        var bufferView = image.BufferView.Value;
+		        BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
+		        if (bufferContents.bufferData.IsCreated)
+		        {
+			        bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+			        stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
+		        }
+	        }
+	        else
+	        {
+		        string uri = image.Uri;
 
-			return stream;
-		}
+		        byte[] bufferData;
+		        URIHelper.TryParseBase64(uri, out bufferData);
+		        if (bufferData != null)
+		        {
+			        stream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
+		        }
+	        }
+
+	        return stream;
+        }
       
 		protected async Task ConstructImage(GLTFImage image, int imageCacheIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
