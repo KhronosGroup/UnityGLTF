@@ -84,6 +84,34 @@ namespace UnityGLTF
 		Vector2 TransmissionTextureScale { get; set; }
 		int TransmissionTextureTexCoord { get; set; }
 	}
+	
+	public interface ISheenMap : IMetalRoughUniformMap
+	{
+	    float SheenRoughnessFactor { get; set; }
+	    
+	    Color SheenColorFactor { get; set; }
+	    
+	    Texture SheenColorTexture { get; set; }
+
+	    double SheenColorTextureRotation { get; set; }
+
+	    Vector2 SheenColorTextureOffset { get; set; }
+
+	    Vector2 SheenColorTextureScale { get; set; }
+
+	    int SheenColorTextureTexCoord { get; set; }
+	    
+	    Texture SheenRoughnessTexture { get; set; }
+
+	    double SheenRoughnessTextureRotation { get; set; }
+
+	    Vector2 SheenRoughnessTextureOffset { get; set; }
+
+	    Vector2 SheenRoughnessTextureScale { get; set; }
+
+	    int SheenRoughnessTextureTexCoord { get; set; }
+
+	}
 
 	public interface IDispersionMap : ITransmissionMap
 	{

@@ -40,6 +40,7 @@ namespace GLTF.Schema
 			{ EXT_mesh_gpu_instancing_Factory.EXTENSION_NAME, new EXT_mesh_gpu_instancing_Factory() },
 			{ KHR_animation_pointerExtensionFactory.EXTENSION_NAME, new KHR_animation_pointerExtensionFactory() },
 			{ KHR_materials_dispersion_Factory.EXTENSION_NAME, new KHR_materials_dispersion_Factory() },
+			{ KHR_materials_sheen_Factory.EXTENSION_NAME, new KHR_materials_sheen_Factory()},
 		};
 
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();

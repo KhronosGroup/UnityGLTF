@@ -14,7 +14,8 @@ namespace UnityGLTF.Plugins
 		public bool KHR_materials_specular = true;
 		public bool KHR_materials_clearcoat = true;
 		public bool KHR_materials_emissive_strength = true;
-
+		public bool KHR_materials_sheen = true;
+		
 		public override GLTFExportPluginContext CreateInstance(ExportContext context)
 		{
 			return new MaterialExtensionsExportContext(this);
@@ -30,6 +31,7 @@ namespace UnityGLTF.Plugins
 - KHR_materials_specular
 - KHR_materials_clearcoat
 - KHR_materials_emissive_strength
+- KHR_materials_sheen
 ";
 	}
 	
@@ -69,6 +71,10 @@ namespace UnityGLTF.Plugins
 		private static readonly int clearcoatRoughnessTexture = Shader.PropertyToID("clearcoatRoughnessTexture");
 		private static readonly int clearcoatNormalTexture = Shader.PropertyToID("clearcoatNormalTexture");
 
+		private static readonly int sheenColorFactor = Shader.PropertyToID("sheenColorFactor");
+		private static readonly int sheenRoughnessFactor = Shader.PropertyToID("sheenRoughnessFactor");
+		private static readonly int sheenColorTexture = Shader.PropertyToID("sheenColorTexture");
+		private static readonly int sheenRoughnessTexture = Shader.PropertyToID("sheenRoughnessTexture");
 
 		public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{
@@ -81,6 +87,7 @@ namespace UnityGLTF.Plugins
 			var usesIridescence = material.IsKeywordEnabled("_IRIDESCENCE_ON");
 			var usesSpecular = material.IsKeywordEnabled("_SPECULAR_ON");
 			var usesClearcoat = material.IsKeywordEnabled("_CLEARCOAT_ON");
+			var usesSheen = material.IsKeywordEnabled("_SHEEN_ON");
 			
 			if (hasNonDefaultIor && settings.KHR_materials_ior)
 			{
@@ -239,6 +246,31 @@ namespace UnityGLTF.Plugins
 					cc.clearcoatRoughnessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatRoughnessTexture), nameof(clearcoatRoughnessTexture));
 				if (material.HasProperty(clearcoatNormalTexture))
 					cc.clearcoatNormalTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(clearcoatNormalTexture), nameof(clearcoatNormalTexture));
+			}
+			
+			if (usesSheen && settings.KHR_materials_sheen)
+			{
+				exporter.DeclareExtensionUsage(KHR_materials_sheen_Factory.EXTENSION_NAME, false);
+
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
+				var cc = new KHR_materials_sheen();
+
+				if (materialnode.Extensions.TryGetValue(KHR_materials_sheen_Factory.EXTENSION_NAME, out var vv0))
+					cc = (KHR_materials_sheen) vv0;
+				else
+					materialnode.Extensions.Add(KHR_materials_sheen_Factory.EXTENSION_NAME, cc);
+
+				if (material.HasProperty(sheenColorFactor))
+					cc.sheenColorFactor = material.GetColor(sheenColorFactor).ToNumericsColorRaw();
+				if (material.HasProperty(sheenColorTexture))
+					cc.sheenColorTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(sheenColorTexture), nameof(sheenColorTexture));
+				
+				if (material.HasProperty(sheenRoughnessFactor))
+					cc.sheenRoughnessFactor = material.GetFloat(sheenRoughnessFactor);
+				if (material.HasProperty(sheenRoughnessTexture))
+					cc.sheenRoughnessTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(sheenRoughnessTexture), nameof(sheenRoughnessTexture));
 			}
 		}
 	}
