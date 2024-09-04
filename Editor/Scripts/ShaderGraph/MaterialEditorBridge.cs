@@ -81,7 +81,7 @@ namespace UnityGLTF
 			// after importing a changed material, which can be confusing. Could be caching inside PBRGraphGUI
 			AssetDatabase.Refresh();
 
-			EditorApplication.update += () =>
+			EditorApplication.delayCall += () =>
 			{
 				// Repaint Inspector, newly imported values can be different if we're not perfectly round tripping
 				foreach (var editor in ActiveEditorTracker.sharedTracker.activeEditors)
