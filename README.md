@@ -295,13 +295,13 @@ Animation components and their legacy clips can also be exported.
 
 ### KHR_animation_pointer support
 
-UnityGLTF supports exporting animations with the KHR_animation_pointer extension. 
+UnityGLTF supports importing and exporting animations with the KHR_animation_pointer extension. 
 The core glTF spec only allows animation node transforms and blend shape weights, while this extension allows animating arbitrary properties in the glTF file – 
 including material and object properties, even in custom extensions and script components.
 
 Exporting with KHR_animation_pointer can be turned on in `Project Settings > UnityGLTF` by enabling the KHR_animation_pointer plugin.
 
-> **Note:** The exported files can be viewed with Gestaltor, Babylon Sandbox, and Needle Engine, but currently not with three.js / model-viewer. See https://github.com/mrdoob/three.js/pull/24108. They can also not be reimported into UnityGLTF at this point.
+> **Note:** The exported files can be viewed with Gestaltor, Babylon Sandbox, and Needle Engine, but currently not with three.js / model-viewer. See https://github.com/mrdoob/three.js/pull/24108.
 
 ## Blend Shape Export
 
