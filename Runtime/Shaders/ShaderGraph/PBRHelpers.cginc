@@ -133,7 +133,7 @@ void Sheen_float(float roughness, float3 sheenColor, float3 albedo, float3 viewD
 {
 	// Not physical auccurate! but looks good enough and a perfomance friendly approximation
 	
-	#if UNITY_VERSION >= 202120	
+	#if UNITY_VERSION >= 202210	
 	Light mainLight = GetMainLight();
 	float3 lightDirection = mainLight.direction;
 	#else
