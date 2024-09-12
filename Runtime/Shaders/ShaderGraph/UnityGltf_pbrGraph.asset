@@ -6,7 +6,7 @@ ShaderVariantCollection:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UnityGltf_pbrGraph_ShaderVariantCollection
+  m_Name: UnityGltf_pbrGraph
   m_Shaders:
   - first: {fileID: -6465566751694194690, guid: 478ce3626be7a5f4ea58d6b13f05a2e4,
       type: 3}
