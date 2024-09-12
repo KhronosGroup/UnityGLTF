@@ -317,6 +317,11 @@ Make sure to bring .bin/textures along for `.gltf` files with the correct relati
 
 When moving `.gltf` files inside Unity, make sure to move their .bin/texture files as well, to not break the path references between them.
 
+### Runtime Import
+
+When importing glTF files at runtime, make sure all required Shader Variants exist in build. 
+You can add the predefined `UnityGltf_pbrGraph`-ShaderVariantCollection to `Project Settings > Graphics > Preloaded Shaders` to ensure they're included in the build.
+
 ### Default Importer Selection
 
 UnityGLTF will register itself as the default importer for the `.gltf` and .`glb` extensions.  
