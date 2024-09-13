@@ -129,34 +129,6 @@ void WorkaroundTilingOffset_float(UnityTexture2D Tex, float4 LegacyST, out float
 	OutTex = Tex;
 }
 
-void Sheen_float(float roughness, float3 sheenColor, float3 albedo, float3 viewDir, float3 normal, out float3 resultColor)
-{
-	// Not physical auccurate! but looks good enough and a perfomance friendly approximation
-	
-	#if UNITY_VERSION >= 202210	
-	Light mainLight = GetMainLight();
-	float3 lightDirection = mainLight.direction;
-	#else
-	float3 lightDirection = viewDir;
-	#endif
-
-	float oneMinusRoughness = 1.0 - roughness;
-	float NdotV = max(dot(normal, viewDir), 0.0);
-	float halfDir = normalize(viewDir + lightDirection);
-	float sheenColorMax = max(max(sheenColor.x, sheenColor.y), sheenColor.z);
-	
-	float sheen = pow(1.0 - NdotV, 5.0 + oneMinusRoughness * 4 * pow(sheenColorMax,2)) ;
-	sheen = oneMinusRoughness * halfDir * sheen + sheen;
-	
-	float sheenEnergyComp = 1.0 - 0.157 * sheen;
-	resultColor = albedo * sheenEnergyComp + sheen * sheenColor + (sheenColor * sheenColorMax * 0.157 * roughness);
-}
-
-void Sheen_half(half roughness, half3 sheenColor, half3 albedo, half3 viewDir, half3 normal, out half3 resultColor)
-{
-	Sheen_float(roughness, sheenColor, albedo, viewDir, normal, resultColor);
-}
-
 void WorkaroundTilingOffset_half(UnityTexture2D Tex, half4 LegacyST, out half4 TilingOffset, out UnityTexture2D OutTex)
 {
 	#if UNITY_VERSION >= 202120
