@@ -403,6 +403,11 @@ namespace UnityGLTF
 			{
 				if (_options.ExternalDataLoader == null)
 				{
+					if (string.IsNullOrEmpty(_gltfFileName))
+					{
+						Debug.Log(LogType.Warning, "No filename specified for GLTFSceneImporter, external references will not be loaded");
+						return;
+					}
 					_options.DataLoader = new UnityWebRequestLoader(URIHelper.GetDirectoryName(_gltfFileName));
 					_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
 				}
