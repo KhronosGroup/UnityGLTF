@@ -1,0 +1,119 @@
+name: 🐞 Bug Report
+description: File a bug report
+labels: ["untriaged"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! 🙏
+        
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug 💬
+      description: A clear and concise description of what the bug is. Thanks!
+      placeholder: I am doing... What I expect to happen is... What's actually happening is ...
+
+    validations:
+      required: true
+    
+  - type: dropdown
+    id: OS
+    attributes:
+      label: Operating System 👩‍💻
+      description: Which operating system are you using / on which operating system did you observe the issue?
+      multiple: true
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - iOS
+        - Android
+        - Other (I provide details below)
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: version
+    attributes:
+      label: Editor Version 🎲
+      description: Which Unity Editor version are you using?
+      options:
+        - 2020.3
+        - 2021.3
+        - 2022.x
+        - 2023.x
+        - 2024.x
+        - 6000.x
+    validations:
+      required: true
+      
+  - type: input
+    id: renderpipeline
+    attributes:
+      label: Renderpipeline & Version
+      placeholder: URP 10.0.0 / HDRP 10.0.0 / Builtin
+    validations:
+      required: true
+      
+  - type: input
+    id: unitygltf
+    attributes:
+      label: UnityGLTF Version
+      placeholder: 2.0.0
+    validations:
+      required: true
+      
+  - type: checkboxes
+    attributes:
+      label: When does this problem happen?
+      description: Does this issue happen in the Unity Editor (e.g. when importing assets to your project) or at runtime (e.g. when loading assets in your build)
+      options:
+        - label: Editor
+        - label: Runtime
+    validations:
+      required: true
+
+  - type: textarea
+    id: project-info
+    attributes:
+      label: Project Info 📜
+      description: |
+        Optional if provided reproduction. Please paste any information here that is relevant. Provide all relevant files.
+      
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce 🔢
+      description: Please provide any reproduction steps that may need to be described.
+      placeholder: 
+      value: |
+        1.
+        2.
+        3.
+        ...
+      render: bash
+    validations:
+      required: true
+      
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction / Files to reproduce ♻
+      description: Please provide necessary files, a link for download or a link to a repo that can reproduce the problem you ran into. A [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) is favored ([Why?](https://antfu.me/posts/why-reproductions-are-required)). If a report is vague (e.g. just a generic error message) and has no reproduction, it will receive a "need reproduction" label.
+      placeholder: Reproduction files or URL
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: Validations 🩹
+      description: Before submitting the issue, please make sure you do the following
+      options:
+        - label: I follow the [Code of Conduct](https://www.khronos.org/about/code-of-conduct)
+          required: true
+        - label: "I have [searched existing issues](https://github.com/KhronosGroup/UnityGLTF/issues): no issue already exist that reports the same bug"
+          required: true
+        - label: I provided a [minimal reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) of the bug or all necessary files that can be used to reproduce this problem.
+          required: false
