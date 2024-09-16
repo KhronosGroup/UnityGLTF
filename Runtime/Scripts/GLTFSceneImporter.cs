@@ -328,6 +328,17 @@ namespace UnityGLTF
 			VerifyDataLoader();
 		}
 
+		public GLTFSceneImporter(Stream gltfStream, ImportOptions options) : this(options)
+		{
+			if (gltfStream != null)
+			{
+				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
+			}
+			GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
+
+			VerifyDataLoader();
+		}
+		
 		private GLTFSceneImporter(ImportOptions options)
 		{
 			if (options.ImportContext != null)
