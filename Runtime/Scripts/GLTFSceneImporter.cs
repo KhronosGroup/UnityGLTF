@@ -327,7 +327,19 @@ namespace UnityGLTF
 
 			VerifyDataLoader();
 		}
-
+		
+		/// <summary>
+		/// Loads a glTF file from a stream. It's recommended to load only gltf data without any external references. 
+		/// </summary>
+		/// <example>
+		/// <code>
+		/// var stream = new FileStream(filePath, FileMode.Open);
+		///	var importOptions = new ImportOptions();
+		///	var importer = new GLTFSceneImporter(stream, importOptions);
+		///	await importer.LoadSceneAsync();
+		///	stream.Dispose();
+		/// </code>
+		/// </example>
 		public GLTFSceneImporter(Stream gltfStream, ImportOptions options) : this(options)
 		{
 			if (gltfStream != null)
