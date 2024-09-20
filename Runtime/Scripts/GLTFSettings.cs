@@ -28,6 +28,27 @@ namespace UnityGLTF
 		    Tangent = 4,
 		    All = ~0
 	    }
+	    
+#if UNITY_EDITOR
+	    [Serializable]
+	    public class ShaderStrippingSettings
+	    {
+		    [Flags]
+		    public enum ShaderPassStrippingMode
+		    {
+			    None = 0,
+			    BuildInPasses = 1,
+			    URPForwardPasses = 2,
+			    URPDeferredPasses = 4,
+		    }
+		    
+		    public bool stripPassesFromAllShaders = false;
+		    public ShaderPassStrippingMode stripPasses = ShaderPassStrippingMode.None;
+	    }
+	    
+	    [Tooltip("Strip unnecessary shader passes from built-in and URP shader passes. This can drastically reduce shader compile time and size.")]
+	    public ShaderStrippingSettings shaderStrippingSettings = new ShaderStrippingSettings();
+#endif
 
 	    // Plugins
 	    [SerializeField, HideInInspector]
