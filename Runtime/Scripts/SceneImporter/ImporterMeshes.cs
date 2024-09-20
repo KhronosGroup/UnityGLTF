@@ -698,7 +698,7 @@ namespace UnityGLTF
 
 		private void AddBlendShapesToMesh(UnityMeshData unityMeshData, int meshIndex, Mesh mesh)
 		{
-			if (unityMeshData.MorphTargetVertices != null)
+			if (unityMeshData.MorphTargetVertices != null && _gltfRoot.Meshes != null)
 			{
 				var gltfMesh = _gltfRoot.Meshes[meshIndex];
 				var firstPrim = gltfMesh.Primitives[0];
@@ -1328,6 +1328,10 @@ namespace UnityGLTF
 
 		private static void AddNewBufferAndViewToAccessor(byte[] data, Accessor accessor, GLTFRoot _gltfRoot)
 		{
+			if (_gltfRoot.Buffers == null)
+				_gltfRoot.Buffers = new List<GLTFBuffer>();
+			if (_gltfRoot.BufferViews == null)
+				_gltfRoot.BufferViews = new List<BufferView>();
 			_gltfRoot.Buffers.Add(new GLTFBuffer() { ByteLength = (uint) data.Length });
 			_gltfRoot.BufferViews.Add(new BufferView() { ByteLength = (uint) data.Length, ByteOffset = 0, Buffer = new BufferId() { Id = _gltfRoot.Buffers.Count, Root = _gltfRoot } });
 			accessor.BufferView = new BufferViewId() { Id = _gltfRoot.BufferViews.Count - 1, Root = _gltfRoot };
@@ -1364,6 +1368,9 @@ namespace UnityGLTF
 
 		private void CheckForMeshDuplicates()
 		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
 			Dictionary<int, int> meshDuplicates = new Dictionary<int, int>();
 
 			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
@@ -1393,6 +1400,7 @@ namespace UnityGLTF
 
 			foreach (var dm in meshDuplicates)
 			{
+				if (_gltfRoot.Nodes == null) continue;
 				for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
 				{
 					if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
@@ -1404,7 +1412,6 @@ namespace UnityGLTF
 					}
 				}
 			}
-
 		}
 	}
 }

@@ -36,8 +36,9 @@ namespace UnityGLTF
 
 		private async Task CreateNotReferencedTexture(int index)
 		{
+			if (Root.Textures == null) return;
 			if (Root.Textures[index].Source != null
-			    && Root.Images.Count > 0
+			    && Root.Images?.Count > 0
 			    && Root.Images.Count > Root.Textures[index].Source.Id
 			    && string.IsNullOrEmpty(Root.Textures[index].Source.Value.Uri))
 			{
@@ -89,6 +90,7 @@ namespace UnityGLTF
 		
         private Dictionary<int, int> CollectImageHashes()
         {
+	        if (_gltfRoot.Images == null) return new Dictionary<int, int>();
 	        Dictionary<int, int> hashes = new Dictionary<int, int>();
 
 	        int index = -1;
