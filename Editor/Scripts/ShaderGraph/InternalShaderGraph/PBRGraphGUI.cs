@@ -489,9 +489,13 @@ namespace UnityGLTF
 				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal));
 			}
 			#endif
-			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
+			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON") && !targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION"))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("transmission", StringComparison.Ordinal));
+			}
+			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("dispersion", StringComparison.Ordinal));
 			}
 			if (!targetMaterial.HasProperty("_VOLUME_ON") || !(targetMaterial.GetFloat("_VOLUME_ON") > 0.5f))
 			{
@@ -509,6 +513,11 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("clearcoat", StringComparison.Ordinal));
 			}
+			if (!targetMaterial.IsKeywordEnabled("_SHEEN_ON"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("sheen", StringComparison.Ordinal));
+			}
+			
 			if (HasPropertyButNoTex(targetMaterial, "occlusionTexture"))
 			{
 				propertyList.RemoveAll(x => x.name == "occlusionStrength" || (x.name.StartsWith("occlusionTexture", StringComparison.Ordinal) && x.name != "occlusionTexture"));
