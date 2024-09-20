@@ -111,7 +111,7 @@ namespace UnityGLTF
         [SerializeField] internal bool _useSceneNameIdentifier = false;
         [Tooltip("Compress textures after import using the platform default settings. If you need more control, use a .gltf file instead.")]
         [SerializeField] internal GLTFImporterTextureCompressionQuality _textureCompression = GLTFImporterTextureCompressionQuality.None;
-        
+        [SerializeField, Multiline] internal string _gltfAsset = default;
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;
         [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
@@ -960,7 +960,7 @@ namespace UnityGLTF
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
 
-
+			    _gltfAsset = loader.Root.Asset.ToString(true);
 			    importer = loader;
 		    }
 	    }

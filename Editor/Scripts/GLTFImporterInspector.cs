@@ -40,6 +40,7 @@ namespace UnityGLTF
 				AddTab(new GLTFAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
 			AddTab(new GLTFAssetImporterTab(this, "Used Extensions", ExtensionInspectorGUI));
+			AddTab(new GLTFAssetImporterTab(this, "Info", AssetInfoInspectorGUI));
 
 			base.OnEnable();
 		}
@@ -367,6 +368,28 @@ namespace UnityGLTF
 			}
 
 			EditorGUILayout.EndFoldoutHeaderGroup();
+		}
+
+		private void AssetInfoInspectorGUI()
+		{
+			var t = target as GLTFImporter;
+			if (!t) return;
+			var assetProp = serializedObject.FindProperty(nameof(GLTFImporter._gltfAsset));
+			if (assetProp == null)
+				return;
+
+			if (string.IsNullOrEmpty(t._gltfAsset))
+			{
+				EditorGUILayout.LabelField("[ No informations included ]");
+				return;
+			}
+			GUIStyle style = new GUIStyle(GUI.skin.label);
+			style.richText = true;
+			style.wordWrap = true;
+			EditorGUILayout.Space();
+			
+			var rect = GUILayoutUtility.GetRect(new GUIContent(t._gltfAsset), style);
+			EditorGUI.SelectableLabel(rect, t._gltfAsset, style);
 		}
 
 		private void ExtensionInspectorGUI()
