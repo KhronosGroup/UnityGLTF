@@ -327,7 +327,30 @@ namespace UnityGLTF
 
 			VerifyDataLoader();
 		}
+		
+		/// <summary>
+		/// Loads a glTF file from a stream. It's recommended to load only gltf data without any external references. 
+		/// </summary>
+		/// <example>
+		/// <code>
+		/// var stream = new FileStream(filePath, FileMode.Open);
+		///	var importOptions = new ImportOptions();
+		///	var importer = new GLTFSceneImporter(stream, importOptions);
+		///	await importer.LoadSceneAsync();
+		///	stream.Dispose();
+		/// </code>
+		/// </example>
+		public GLTFSceneImporter(Stream gltfStream, ImportOptions options) : this(options)
+		{
+			if (gltfStream != null)
+			{
+				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
+			}
+			GLTFParser.ParseJson(_gltfStream.Stream, out _gltfRoot, _gltfStream.StartPosition);
 
+			VerifyDataLoader();
+		}
+		
 		private GLTFSceneImporter(ImportOptions options)
 		{
 			if (options.ImportContext != null)
@@ -392,6 +415,11 @@ namespace UnityGLTF
 			{
 				if (_options.ExternalDataLoader == null)
 				{
+					if (string.IsNullOrEmpty(_gltfFileName))
+					{
+						Debug.Log(LogType.Warning, "No filename specified for GLTFSceneImporter, external references will not be loaded");
+						return;
+					}
 					_options.DataLoader = new UnityWebRequestLoader(URIHelper.GetDirectoryName(_gltfFileName));
 					_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
 				}
