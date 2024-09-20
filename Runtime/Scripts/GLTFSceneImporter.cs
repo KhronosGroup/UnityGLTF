@@ -15,9 +15,7 @@ using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
 using Quaternion = UnityEngine.Quaternion;
-using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
-using Vector4 = UnityEngine.Vector4;
 #if !WINDOWS_UWP && !UNITY_WEBGL
 using ThreadPriority = System.Threading.ThreadPriority;
 #endif
@@ -25,6 +23,14 @@ using WrapMode = UnityEngine.WrapMode;
 
 namespace UnityGLTF
 {
+	[Flags]
+	public enum DeduplicateOptions
+	{
+		None = 0,
+		Meshes = 1,
+		Textures = 2,
+	}
+	
 	public class ImportOptions
 	{
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -40,7 +46,7 @@ namespace UnityGLTF
 		public AnimationMethod AnimationMethod = AnimationMethod.Legacy;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
-
+		public DeduplicateOptions DeduplicateResources = DeduplicateOptions.None;
 		public bool SwapUVs = false;
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
@@ -73,51 +79,7 @@ namespace UnityGLTF
 		Mecanim,
 		MecanimHumanoid,
 	}
-
-	public class UnityMeshData
-	{
-		public bool[] subMeshDataCreated;
-		public Vector3[] Vertices;
-		public Vector3[] Normals;
-		public Vector4[] Tangents;
-		public Vector2[] Uv1;
-		public Vector2[] Uv2;
-		public Vector2[] Uv3;
-		public Vector2[] Uv4;
-		public Color[] Colors;
-		public BoneWeight[] BoneWeights;
-
-		public Vector3[][] MorphTargetVertices;
-		public Vector3[][] MorphTargetNormals;
-		public Vector3[][] MorphTargetTangents;
-
-		public MeshTopology[] Topology;
-		public DrawMode[] DrawModes;
-		public int[][] Indices;
-		
-		public HashSet<int> alreadyAddedAccessors = new HashSet<int>();
-		public uint[] subMeshVertexOffset;
-		
-		public void Clear()
-		{
-			Vertices = null;
-			Normals = null;
-			Tangents = null;
-			Uv1 = null;
-			Uv2 = null;
-			Uv3 = null;
-			Uv4 = null;
-			Colors = null;
-			BoneWeights = null;
-			MorphTargetVertices = null;
-			MorphTargetNormals = null;
-			MorphTargetTangents = null;
-			Topology = null;
-			Indices = null;
-			subMeshVertexOffset = null;
-		}
-	}
-
+	
 	public struct ImportProgress
 	{
 		public bool IsDownloaded;
@@ -732,6 +694,24 @@ namespace UnityGLTF
 
 			// Free up some Memory, Accessor contents are no longer needed
 			FreeUpAccessorContents();
+
+			if (_options.DeduplicateResources != DeduplicateOptions.None)
+			{
+				if (IsMultithreaded)
+				{
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
+						await Task.Run(CheckForMeshDuplicates, cancellationToken);
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Textures))
+						await Task.Run(CheckForDuplicateImages, cancellationToken);
+				}
+				else
+				{
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
+						CheckForMeshDuplicates();
+					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Textures))
+						CheckForDuplicateImages();
+				}
+			}
 			
 			await ConstructScene(scene, showSceneObj, cancellationToken);
 
