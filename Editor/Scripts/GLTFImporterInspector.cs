@@ -39,7 +39,7 @@ namespace UnityGLTF
 			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
 				AddTab(new GLTFAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
-			AddTab(new GLTFAssetImporterTab(this, "Used Extensions", ExtensionInspectorGUI));
+			AddTab(new GLTFAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
 			AddTab(new GLTFAssetImporterTab(this, "Info", AssetInfoInspectorGUI));
 
 			base.OnEnable();
@@ -371,6 +371,7 @@ namespace UnityGLTF
 			EditorGUILayout.EndFoldoutHeaderGroup();
 		}
 
+		private static GUIStyle _richTextWordWrap;
 		private void AssetInfoInspectorGUI()
 		{
 			var t = target as GLTFImporter;
@@ -379,18 +380,28 @@ namespace UnityGLTF
 			if (assetProp == null)
 				return;
 
+			if (_richTextWordWrap == null)
+			{
+				GUIStyle style = new GUIStyle(GUI.skin.label);
+				style.richText = true;
+				style.wordWrap = true;
+				_richTextWordWrap = style;
+			}
+			
 			if (string.IsNullOrEmpty(t._gltfAsset))
 			{
-				EditorGUILayout.LabelField("[ No informations included ]");
+				EditorGUILayout.LabelField("<i>No asset information included in file</i>", _richTextWordWrap);
 				return;
 			}
-			GUIStyle style = new GUIStyle(GUI.skin.label);
-			style.richText = true;
-			style.wordWrap = true;
-			EditorGUILayout.Space();
 			
-			var rect = GUILayoutUtility.GetRect(new GUIContent(t._gltfAsset), style);
-			EditorGUI.SelectableLabel(rect, t._gltfAsset, style);
+			EditorGUILayout.Space();
+			var rect = GUILayoutUtility.GetRect(new GUIContent(t._gltfAsset), _richTextWordWrap);
+			EditorGUI.SelectableLabel(rect, t._gltfAsset, _richTextWordWrap);
+			
+			EditorGUILayout.Space();
+			EditorGUI.BeginDisabledGroup(true);
+			var mainAssetIdentifierProp = serializedObject.FindProperty(nameof(GLTFImporter._mainAssetIdentifier));
+			EditorGUILayout.PropertyField(mainAssetIdentifierProp);
 		}
 
 		private void ExtensionInspectorGUI()
@@ -398,11 +409,7 @@ namespace UnityGLTF
 			var t = target as GLTFImporter;
 			if (!t) return;
 
-			EditorGUI.BeginDisabledGroup(true);
-			var mainAssetIdentifierProp = serializedObject.FindProperty(nameof(GLTFImporter._mainAssetIdentifier));
-			EditorGUILayout.PropertyField(mainAssetIdentifierProp);
-
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions"));
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions in file"));
 			EditorGUI.EndDisabledGroup();
 
 			// TODO add list of supported extensions and links to docs
@@ -410,6 +417,8 @@ namespace UnityGLTF
 			var registeredPlugins = GLTFSettings.GetDefaultSettings().ImportPlugins;
 			var overridePlugins = t._importPlugins;
 
+			EditorGUILayout.Space();
+			EditorGUILayout.LabelField("Available Import Plugins", EditorStyles.boldLabel);
 			EditorGUILayout.LabelField("OVERRIDE", EditorStyles.miniLabel, GUILayout.Width(60));
 			EditorGUILayout.BeginHorizontal();
 			EditorGUILayout.LabelField("", GUILayout.Width(16));
