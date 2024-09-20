@@ -10,7 +10,7 @@ namespace UnityGLTF
 	{
 	    private static MethodInfo _SetupHumanSkeleton;
 
-	    internal static Avatar AddAvatarToGameObject(GameObject gameObject)
+	    internal static Avatar AddAvatarToGameObject(GameObject gameObject, bool flipForward)
 	    {
 		    HumanDescription description = AvatarUtils.CreateHumanDescription(gameObject);
 		    var bones = description.human;
@@ -19,8 +19,15 @@ namespace UnityGLTF
 		    description.skeleton = skeletonBones;
 		    description.hasTranslationDoF = hasTranslationDoF;
 
+		    var previousRotation = gameObject.transform.rotation;
+		    if (flipForward)
+				gameObject.transform.rotation *= Quaternion.Euler(0,180,0);
+		    
 		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
 		    avatar.name = "Avatar";
+		    
+		    if (flipForward)
+			    gameObject.transform.rotation = previousRotation;
 
 		    if (!avatar.isValid || !avatar.isHuman)
 		    {

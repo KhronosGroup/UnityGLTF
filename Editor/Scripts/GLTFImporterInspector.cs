@@ -144,6 +144,13 @@ namespace UnityGLTF
 			
 			var anim = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
 			EditorGUILayout.PropertyField(anim, new GUIContent("Animation Type"));
+			if (anim.enumValueIndex == (int)AnimationMethod.MecanimHumanoid)
+			{
+				var flip = serializedObject.FindProperty(nameof(GLTFImporter._mecanimHumanoidFlip));
+				EditorGUI.indentLevel++;
+				EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
+				EditorGUI.indentLevel--;
+			}
 			if (hasAnimationData && anim.enumValueIndex > 0)
 			{
 				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
