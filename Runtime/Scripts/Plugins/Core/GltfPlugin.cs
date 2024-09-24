@@ -37,7 +37,7 @@ namespace UnityGLTF.Plugins
         public virtual string Description => null;
         public virtual string HelpUrl => null;
         
-        [SerializeField] private bool enabled = true;
+        [SerializeField] [HideInInspector] private bool enabled = true;
         public virtual bool Enabled
         {
 	        get
