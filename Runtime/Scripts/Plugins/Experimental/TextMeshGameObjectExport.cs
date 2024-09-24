@@ -33,8 +33,7 @@ namespace UnityGLTF.Plugins
 				kvp.Value.Release();
 			rtCache.Clear();
 		}
-
-		private Material tempMat;
+		
 		private Dictionary<Texture, RenderTexture> rtCache;
 
 		public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
@@ -52,32 +51,41 @@ namespace UnityGLTF.Plugins
 #endif
 				if (!newS)
 				{
-					Debug.LogError("TextMeshPro/Mobile/Distance Field shader not found. For exporting TextMeshPro GameObjects, please ensure this shader exist in build.");
+					Debug.LogError("TrextMeshPro/Mobile/Distance Field shader not found. For exporting TextMeshPro GameObjects, please ensure this shader exist in build.");
 					return false;
 				}
-				
+
 				material.shader = newS;
-
-				if (!tempMat) tempMat = new Material(Shader.Find("Unlit/Transparent Cutout"));
-
+				
 				var existingTex = material.mainTexture;
 				if (rtCache == null) rtCache = new Dictionary<Texture, RenderTexture>();
 				if (!rtCache.ContainsKey(existingTex))
 				{
-					var rt = new RenderTexture(existingTex.width, existingTex.height, 0, RenderTextureFormat.ARGB32);
+					var rt = new RenderTexture(existingTex.width * 2, existingTex.height * 2, 0, RenderTextureFormat.ARGB32);
+					
+					float outlineSoftness = 0;
 					if (material.HasProperty("_OutlineSoftness"))
+					{
+						outlineSoftness = material.GetFloat("_OutlineSoftness");
 						material.SetFloat("_OutlineSoftness", 0);
+					}
 					// TODO figure out how to get this more smooth
 					Graphics.Blit(existingTex, rt, material);
 					rtCache[existingTex] = rt;
 					rt.anisoLevel = 9;
 					rt.filterMode = FilterMode.Bilinear;
+					
+					if (material.HasProperty("_OutlineSoftness"))
+					{
+						material.SetFloat("_OutlineSoftness", outlineSoftness);
+					}
+
 				}
-
-				tempMat.mainTexture = rtCache[existingTex];
-
-
-				exporter.ExportUnlit(materialNode, tempMat);
+				
+				const string extname = KHR_MaterialsUnlitExtensionFactory.EXTENSION_NAME;
+				exporter.DeclareExtensionUsage( extname, true );
+				materialNode.AddExtension( extname, new KHR_MaterialsUnlitExtension());
+				materialNode.PbrMetallicRoughness = new PbrMetallicRoughness();
 
 				// export material
 				// alternative: double sided, alpha clipping, white RGB + TMPro mainTex R channel as alpha
@@ -85,6 +93,8 @@ namespace UnityGLTF.Plugins
 				materialNode.PbrMetallicRoughness.BaseColorFactor = Color.white.ToNumericsColorLinear();
 				materialNode.AlphaMode = AlphaMode.BLEND;
 
+				materialNode.PbrMetallicRoughness.BaseColorTexture = exporter.ExportTextureInfo(rtCache[existingTex], GLTFSceneExporter.TextureMapType.BaseColor);
+				
 				material.shader = s;
 #if UNITY_EDITOR && UNITY_2019_3_OR_NEWER
 				UnityEditor.EditorUtility.ClearDirty(material);
