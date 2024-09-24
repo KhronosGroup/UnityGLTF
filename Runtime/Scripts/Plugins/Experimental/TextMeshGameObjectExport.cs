@@ -50,6 +50,12 @@ namespace UnityGLTF.Plugins
 					newS = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(UnityEditor.AssetDatabase.GUIDToAssetPath("fe393ace9b354375a9cb14cdbbc28be4")); // same as above
 				}
 #endif
+				if (!newS)
+				{
+					Debug.LogError("TextMeshPro/Mobile/Distance Field shader not found. For exporting TextMeshPro GameObjects, please ensure this shader exist in build.");
+					return false;
+				}
+				
 				material.shader = newS;
 
 				if (!tempMat) tempMat = new Material(Shader.Find("Unlit/Transparent Cutout"));
