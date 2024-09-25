@@ -51,7 +51,7 @@ namespace UnityGLTF.Plugins
 #endif
 				if (!newS)
 				{
-					Debug.LogError("TrextMeshPro/Mobile/Distance Field shader not found. For exporting TextMeshPro GameObjects, please ensure this shader exist in build.");
+					Debug.LogError("TextMeshPro/Mobile/Distance Field shader not found. For exporting TextMeshPro GameObjects, please ensure this shader exist in build.");
 					return false;
 				}
 
