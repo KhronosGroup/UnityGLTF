@@ -429,7 +429,11 @@ namespace UnityGLTF
 				{
 					// We dont want to use GetHashCode() for the texture here since it will change the hash after restarting the editor
 					#if UNITY_EDITOR
-					var hashCode = Texture ? Texture.imageContentsHash.GetHashCode() : 0;
+					var hashCode = 0;
+					if (Texture && Texture.imageContentsHash.isValid)
+						hashCode = Texture.imageContentsHash.GetHashCode();
+					else if (Texture)
+						hashCode = Texture.GetHashCode();
 					#else
 					var hashCode = Texture ? Texture.GetHashCode() : 0;
 					#endif

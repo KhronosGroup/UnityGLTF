@@ -698,7 +698,7 @@ namespace UnityGLTF
 
 		private void AddBlendShapesToMesh(UnityMeshData unityMeshData, int meshIndex, Mesh mesh)
 		{
-			if (unityMeshData.MorphTargetVertices != null)
+			if (unityMeshData.MorphTargetVertices != null && _gltfRoot.Meshes != null)
 			{
 				var gltfMesh = _gltfRoot.Meshes[meshIndex];
 				var firstPrim = gltfMesh.Primitives[0];
@@ -1328,6 +1328,10 @@ namespace UnityGLTF
 
 		private static void AddNewBufferAndViewToAccessor(byte[] data, Accessor accessor, GLTFRoot _gltfRoot)
 		{
+			if (_gltfRoot.Buffers == null)
+				_gltfRoot.Buffers = new List<GLTFBuffer>();
+			if (_gltfRoot.BufferViews == null)
+				_gltfRoot.BufferViews = new List<BufferView>();
 			_gltfRoot.Buffers.Add(new GLTFBuffer() { ByteLength = (uint) data.Length });
 			_gltfRoot.BufferViews.Add(new BufferView() { ByteLength = (uint) data.Length, ByteOffset = 0, Buffer = new BufferId() { Id = _gltfRoot.Buffers.Count, Root = _gltfRoot } });
 			accessor.BufferView = new BufferViewId() { Id = _gltfRoot.BufferViews.Count - 1, Root = _gltfRoot };
@@ -1360,6 +1364,54 @@ namespace UnityGLTF
 			var result = new T[x][];
 			for (var i = 0; i < x; i++) result[i] = new T[y];
 			return result;
+		}
+
+		private void CheckForMeshDuplicates()
+		{
+			if (_gltfRoot.Meshes == null)
+				return;
+			
+			Dictionary<int, int> meshDuplicates = new Dictionary<int, int>();
+
+			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
+			{
+				if (meshDuplicates.ContainsKey(meshIndex))
+				    continue;
+				
+				for (int i = meshIndex+1; i < _gltfRoot.Meshes.Count; i++)
+				{
+					
+					if (i == meshIndex)
+						continue;
+					if (_assetCache.MeshCache[i] == null)
+						continue;
+
+					if (_assetCache.UnityMeshDataCache[i] == null
+					    || _assetCache.UnityMeshDataCache[meshIndex] == null)
+						continue;
+
+					var meshIsEqual = _assetCache.UnityMeshDataCache[i]
+						.IsEqual(_assetCache.UnityMeshDataCache[meshIndex]);
+					
+					if (meshIsEqual)
+						meshDuplicates[i] = meshIndex;
+				}
+			}
+
+			foreach (var dm in meshDuplicates)
+			{
+				if (_gltfRoot.Nodes == null) continue;
+				for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
+				{
+					if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
+					{
+						if (_gltfRoot.Nodes[i].Weights == null && _gltfRoot.Meshes[dm.Value].Weights != null)
+							_gltfRoot.Nodes[i].Weights = _gltfRoot.Meshes[_gltfRoot.Nodes[i].Mesh.Id].Weights;
+						
+						_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
+					}
+				}
+			}
 		}
 	}
 }

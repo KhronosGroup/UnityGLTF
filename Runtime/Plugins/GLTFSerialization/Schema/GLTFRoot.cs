@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using GLTF.Extensions;
 using GLTF.Schema.KHR_lights_punctual;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -16,21 +17,25 @@ namespace GLTF.Schema
 		/// <summary>
 		/// Names of glTF extensions used somewhere in this asset.
 		/// </summary>
+		[CanBeNull]
 		public List<string> ExtensionsUsed;
 
 		/// <summary>
 		/// Names of glTF extensions required to properly load this asset.
 		/// </summary>
+		[CanBeNull]
 		public List<string> ExtensionsRequired;
 
 		/// <summary>
 		/// An array of accessors. An accessor is a typed view into a bufferView.
 		/// </summary>
+		[CanBeNull]
 		public List<Accessor> Accessors;
 
 		/// <summary>
 		/// An array of keyframe animations.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFAnimation> Animations;
 
 		/// <summary>
@@ -41,42 +46,50 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of buffers. A buffer points to binary geometry, animation, or skins.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFBuffer> Buffers;
 
 		/// <summary>
 		/// An array of bufferViews.
 		/// A bufferView is a view into a buffer generally representing a subset of the buffer.
 		/// </summary>
+		[CanBeNull]
 		public List<BufferView> BufferViews;
 
 		/// <summary>
 		/// An array of cameras. A camera defines a projection matrix.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFCamera> Cameras;
 
 		/// <summary>
 		/// An array of images. An image defines data used to create a texture.
 		/// </summary>
+		[CanBeNull] 
 		public List<GLTFImage> Images;
 
 		/// <summary>
 		/// An array of materials. A material defines the appearance of a primitive.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFMaterial> Materials;
 
 		/// <summary>
 		/// An array of meshes. A mesh is a set of primitives to be rendered.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFMesh> Meshes;
 
 		/// <summary>
 		/// An array of nodes.
 		/// </summary>
+		[CanBeNull]
 		public List<Node> Nodes;
 
 		/// <summary>
 		/// An array of samplers. A sampler contains properties for texture filtering and wrapping modes.
 		/// </summary>
+		[CanBeNull]
 		public List<Sampler> Samplers;
 
 		/// <summary>
@@ -87,18 +100,22 @@ namespace GLTF.Schema
 		/// <summary>
 		/// An array of scenes.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFScene> Scenes;
 
 		/// <summary>
 		/// An array of skins. A skin is defined by joints and matrices.
 		/// </summary>
+		[CanBeNull]
 		public List<Skin> Skins;
 
 		/// <summary>
 		/// An array of textures.
 		/// </summary>
+		[CanBeNull]
 		public List<GLTFTexture> Textures;
 
+		[CanBeNull]
 		public List<GLTFLight> Lights;
 
 		public GLTFRoot()
@@ -291,7 +308,7 @@ namespace GLTF.Schema
 
 			while (jsonReader.Read() && jsonReader.TokenType == JsonToken.PropertyName)
 			{
-				var curProp = jsonReader.Value.ToString();
+				var curProp = jsonReader.Value?.ToString();
 
 				switch (curProp)
 				{

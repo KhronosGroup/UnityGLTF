@@ -1,0 +1,119 @@
+name: 🐞 Bug Report
+description: File a technical issue, import or export problem, API issue
+labels: ["untriaged"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report. The more info you add, the higher the chance that we'll be able to help! 🙏
+        
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug 💬
+      description: A clear and concise description of what the bug is. Thanks!
+      placeholder: I am doing... What I expect to happen is... What's actually happening is ...
+    validations:
+      required: true
+  
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce 🔢
+      description: Please provide step-by-step instructions for how to see the issue you're describing with the files you provide.
+      placeholder: |
+        1. Download the attached reproduction file
+        2. Drop it into Unity <insert version>
+        3. See <specific error> in console
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Files to reproduce the issue ♻
+      description: Please drop necessary files to reproduce the problem you ran into as `.zip` file or paste a link to a `.gltf/.glb`. A [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) is best ([Why?](https://antfu.me/posts/why-reproductions-are-required)).
+      placeholder: Reproduction files or URL
+    validations:
+      required: false
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: Editor Version 🎲
+      description: Which Unity version are you using? Please note that while we try to support the latest Unity versions, officially only LTS versions are supported.
+      options:
+        - 2020.3 or older
+        - 2021.3
+        - 2022.3
+        - 6000.0
+        - Other (Provide details below)
+      default: 1
+    validations:
+      required: true
+      
+  - type: input
+    id: renderpipeline
+    attributes:
+      label: Render Pipeline and version
+      placeholder: URP 10.0.0 / HDRP 10.0.0 / Built-In Render Pipeline
+    validations:
+      required: true
+      
+  - type: input
+    id: unitygltf
+    attributes:
+      label: UnityGLTF Version
+      placeholder: 2.13.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: OS
+    attributes:
+      label: Operating System 👩‍💻
+      description: Which operating system are you using / on which operating system did you observe the issue?
+      multiple: true
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - iOS
+        - Android
+        - WebGL
+        - VisionOS
+        - Other (Provide details below)
+    validations:
+      required: true
+
+  - type: checkboxes
+    attributes:
+      label: When does this problem happen?
+      description: Does this issue happen in the Unity Editor (e.g. when importing assets to your project) or at runtime (e.g. when loading assets in your build)
+      options:
+        - label: Editor Import
+        - label: Runtime Import
+        - label: Editor Export
+        - label: Runtime Export
+    validations:
+      required: true
+
+  - type: textarea
+    id: project-info
+    attributes:
+      label: Additional Info 📜
+      description: |
+        Provide additional information that might be useful to understand your use case.
+      
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: Validations 🩹
+      description: Before submitting the issue, please make sure you do the following
+      options:
+        - label: "I have [searched existing issues](https://github.com/KhronosGroup/UnityGLTF/issues): no issue already exist that reports the same problem."
+          required: true
+        - label: I follow the [Code of Conduct](https://www.khronos.org/about/code-of-conduct)
+          required: true
+        - label: I provided a [minimal reproducible example](https://stackoverflow.com/help/minimal-reproducible-example), including files when necessary.
+          required: false        
