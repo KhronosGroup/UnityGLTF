@@ -37,6 +37,7 @@ namespace UnityGLTF.Plugins
                 return false;
             }
             
+            g.SetVerticesDirty();
             g.Rebuild(CanvasUpdate.PreRender);
 
             mesh = this.mesh;
