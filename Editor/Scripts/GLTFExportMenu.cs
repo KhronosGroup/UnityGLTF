@@ -148,7 +148,7 @@ namespace UnityGLTF
 		[MenuItem("Assets/Create/UnityGLTF/Material", false)]
 		private static void CreateNewAsset()
 		{
-			var filename = "New glTF Material.gltf";
+			var filename = "glTF Material Library.gltf";
 			var content = @"{
 	""asset"": {
 		""generator"": ""UnityGLTF"",

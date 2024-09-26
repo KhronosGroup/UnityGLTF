@@ -72,7 +72,8 @@ namespace UnityGLTF
 				// looks like GetInstanceID() changes per import; so we use the path instead
 				var path = AssetDatabase.GetAssetPath(targetMat) + "_" + targetMat.name;
 				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + path;
-				var isAllowed = SessionState.GetBool(materialEditingKey, false);
+				var parentAssetIsMaterialLibrary = !(AssetDatabase.LoadMainAssetAtPath(path) is GameObject);
+				var isAllowed = SessionState.GetBool(materialEditingKey, parentAssetIsMaterialLibrary);
 				var allowMaterialEditing = EditorGUILayout.Toggle("Allow Editing", isAllowed);
 				if (allowMaterialEditing != isAllowed)
 					SessionState.SetBool(materialEditingKey, allowMaterialEditing);

@@ -23,7 +23,7 @@ namespace UnityGLTF
 	internal class GLTFImporterInspector : UnityGLTFTabbedEditor
 	{
 		private string[] _importNormalsNames;
-
+		
 		public override void OnEnable()
 		{
 			if (!this) return;
@@ -506,6 +506,34 @@ namespace UnityGLTF
 				}
 			}
 			return sb.ToString();
+		}
+
+		private static Editor cachedMateriaLibraryEditor;
+		public override void DrawPreview(Rect previewArea)
+		{
+			// Is the root object a MaterialLibrary? Then draw the preview of that.
+			// Otherwise, use base implementation.
+			// get the assetimporter target object:
+			if (assetTarget is MaterialLibrary materialLibrary)
+			{
+				var subassets = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(materialLibrary)).Where(x => x is Material).ToArray();
+				CreateCachedEditor(subassets, typeof(MaterialEditor), ref cachedMateriaLibraryEditor);
+				cachedMateriaLibraryEditor.DrawPreview(previewArea);
+			}
+			else
+			{
+				base.DrawPreview(previewArea);
+			}
+		}
+
+		protected override bool useAssetDrawPreview
+		{
+			get
+			{
+				if (assetTarget is MaterialLibrary)
+					return false;
+				return true;
+			}
 		}
 	}
 
