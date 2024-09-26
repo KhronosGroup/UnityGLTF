@@ -37,7 +37,7 @@ namespace UnityGLTF
 		    public enum ShaderPassStrippingMode
 		    {
 			    None = 0,
-			    BuildInPasses = 1,
+			    BuiltInPasses = 1,
 			    URPForwardPasses = 2,
 			    URPDeferredPasses = 4,
 		    }
