@@ -1,9 +1,12 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
+using UnityEditor.ProjectWindowCallback;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 namespace UnityGLTF
 {
@@ -145,7 +148,8 @@ namespace UnityGLTF
 		[MenuItem("Assets/Create/UnityGLTF/Material", false)]
 		private static void CreateNewAsset()
 		{
-			ProjectWindowUtil.CreateAssetWithContent("New glTF Material.gltf", @"{
+			var filename = "New glTF Material.gltf";
+			var content = @"{
 	""asset"": {
 		""generator"": ""UnityGLTF"",
 		""version"": ""2.0""
@@ -158,7 +162,51 @@ namespace UnityGLTF
 			}
 		}
 	]
-}");
+}";
+
+			var importAction = ScriptableObject.CreateInstance<AdjustImporterAction>();
+			importAction.fileContent = content;
+			ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, importAction, filename, null, (string) null);
+		}
+
+		// Based on DoCreateAssetWithContent.cs
+		private class AdjustImporterAction : EndNameEditAction
+		{
+			public string fileContent;
+			public override void Action(int instanceId, string pathName, string resourceFile)
+			{
+				var templateContent = SetLineEndings(fileContent, EditorSettings.lineEndingsForNewScripts);
+				File.WriteAllText(Path.GetFullPath(pathName), templateContent);
+				AssetDatabase.ImportAsset(pathName);
+				// This is why we're not using ProjectWindowUtil.CreateAssetWithContent directly:
+				// We want glTF materials created with UnityGLTF to also use UnityGLTF for importing.
+				AssetDatabase.SetImporterOverride<GLTFImporter>(pathName);
+				var asset = AssetDatabase.LoadAssetAtPath(pathName, typeof (UnityEngine.Object));
+				ProjectWindowUtil.ShowCreatedAsset(asset);
+			}
+		}
+		
+		// Unmodified from ProjectWindowUtil.cs:SetLineEndings (internal)
+		private static string SetLineEndings(string content, LineEndingsMode lineEndingsMode)
+		{
+			string replacement;
+			switch (lineEndingsMode)
+			{
+				case LineEndingsMode.OSNative:
+					replacement = Application.platform != RuntimePlatform.WindowsEditor ? "\n" : "\r\n";
+					break;
+				case LineEndingsMode.Unix:
+					replacement = "\n";
+					break;
+				case LineEndingsMode.Windows:
+					replacement = "\r\n";
+					break;
+				default:
+					replacement = "\n";
+					break;
+			}
+			content = Regex.Replace(content, "\\r\\n?|\\n", replacement);
+			return content;
 		}
 	}
 }
