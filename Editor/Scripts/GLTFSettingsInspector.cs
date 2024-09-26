@@ -179,6 +179,7 @@ namespace UnityGLTF
 				var expanded = SessionState.GetBool(key, false);
 				using (new GUILayout.HorizontalScope())
 				{
+					bool wasEnabled = plugin.Enabled;
 					if (plugin.AlwaysEnabled || !allowDisabling)
 					{
 						plugin.Enabled = true;
@@ -192,6 +193,8 @@ namespace UnityGLTF
 					{
 						plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
 					}
+					if (plugin.Enabled != wasEnabled)
+						EditorUtility.SetDirty(plugin);
 
 					var label = new GUIContent(displayName, plugin.Description);
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
