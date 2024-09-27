@@ -285,7 +285,10 @@ namespace UnityGLTF
 					EditorGUILayout.Toggle("Has Vertex Colors", currentMaterialInfo.hasColor);
 					EditorGUI.EndDisabledGroup();
 
-					if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
+					/*
+					 > _VERTEX_COLORS_ON is currently not used in the shader, so we can't really check for it
+					 
+					 if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
 					{
 						EditorGUI.indentLevel++;
 						var msg = "";
@@ -318,7 +321,7 @@ namespace UnityGLTF
 							});
 						}
 						EditorGUI.indentLevel--;
-					}
+					}*/
 
 					EditorGUI.BeginDisabledGroup(true);
 					EditorGUILayout.Toggle("Has UV0", currentMaterialInfo.hasUV0);
