@@ -969,7 +969,7 @@ namespace UnityGLTF
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
 
-			    _gltfAsset = loader.Root.Asset.ToString(true);
+			    _gltfAsset = loader.Root.Asset?.ToString(true);
 			    importer = loader;
 		    }
 	    }

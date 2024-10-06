@@ -205,8 +205,8 @@ namespace UnityGLTF
 					key.outTangent = 0;
 					break;
 				case InterpolationType.LINEAR:
-					key.inTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex);
-					key.outTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex + 1);
+					key.inTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex, ref AnyAnimationTimeNotIncreasing);
+					key.outTangent = GetCurveKeyframeLeftLinearSlope(keyframes, keyframeIndex + 1, ref AnyAnimationTimeNotIncreasing);
 					break;
 				case InterpolationType.STEP:
 					key.inTangent = float.PositiveInfinity;
@@ -218,7 +218,7 @@ namespace UnityGLTF
 			keyframes[keyframeIndex] = key;
 		}
 
-		private static float GetCurveKeyframeLeftLinearSlope(Keyframe[] keyframes, int keyframeIndex)
+		private static float GetCurveKeyframeLeftLinearSlope(Keyframe[] keyframes, int keyframeIndex, ref bool anyNonCreasing)
 		{
 			if (keyframeIndex <= 0 || keyframeIndex >= keyframes.Length)
 			{
@@ -233,7 +233,7 @@ namespace UnityGLTF
 				var k = keyframes[keyframeIndex];
 				k.time = keyframes[keyframeIndex - 1].time + Mathf.Epsilon + 1 / 100f;
 				keyframes[keyframeIndex] = k;
-				Debug.Log(LogType.Warning, "Time of subsequent animation keyframes is not increasing (glTF-Validator error ACCESSOR_ANIMATION_INPUT_NON_INCREASING)");
+				anyNonCreasing = true;
 				return float.PositiveInfinity;
 			}
 			return valueDelta / timeDelta;
