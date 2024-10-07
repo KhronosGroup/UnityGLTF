@@ -779,7 +779,7 @@ namespace UnityGLTF
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
 					int newTargetId = targetTr ? GetTransformIndex(targetTr) : -1;
 
-					var targetTrShouldNotBeExported = targetTr && !targetTr.gameObject.activeInHierarchy && !settings.ExportDisabledGameObjects;
+					var targetTrShouldNotBeExported = !ShouldTargetBeExported(targetTr);
 
 					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{
@@ -1190,6 +1190,23 @@ namespace UnityGLTF
 
 #endif
 		}
+
+        private bool ShouldTargetBeExported(Transform transform)
+        {
+            if (!transform) return false;
+            if (settings.ExportDisabledGameObjects) return true;
+
+            //Custom activeInHierarchy check.
+            //gameObject.activeInHierarchy will return false if the GameObject is a prefab and not instantiated in the scene
+            var root = transform.root;
+            var current = transform;
+            while (current != root)
+            {
+                if (!current.gameObject.activeSelf) return false;
+                current = current.parent;
+            }
+            return true;
+        }
 
 		private void GenerateMissingCurves(float endTime, Transform tr, ref Dictionary<string, TargetCurveSet> targetCurvesBinding)
 		{
