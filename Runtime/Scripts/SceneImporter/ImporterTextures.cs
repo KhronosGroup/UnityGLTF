@@ -214,12 +214,21 @@ namespace UnityGLTF
 		// With using KTX, we need to return a new Texture2D instance at the moment. Unity KTX package does not support loading into existing one
 		async Task<Texture2D> CheckMimeTypeAndLoadImage(GLTFImage image, Texture2D texture, NativeArray<byte> data, bool markGpuOnly, bool isLinear)
 		{
+			bool textureWillBeCompressed = false;
+#if UNITY_EDITOR
+			if (Context.SourceImporter != null)
+#endif
+			{
+				if (_options.RuntimeTextureCompression != RuntimeTextureCompression.None)
+					textureWillBeCompressed = true;
+			}
+
 			switch (image.MimeType)
 			{
 				case "image/png":
 				case "image/jpeg":
 					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-					texture.LoadImage(data.ToArray(), markGpuOnly);
+					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
 					break;
 				case "image/exr":
 					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
@@ -250,7 +259,7 @@ namespace UnityGLTF
 					}
 					break;
 				default:
-					texture.LoadImage(data.ToArray(), markGpuOnly);
+					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
 					break;
 			}
 
@@ -261,6 +270,20 @@ namespace UnityGLTF
 				texture.wrapModeV = TextureWrapMode.Repeat;
 				texture.wrapModeU = TextureWrapMode.Repeat;
 				texture.filterMode = FilterMode.Bilinear;
+			}
+#if UNITY_EDITOR
+			if (Context.SourceImporter != null)
+#endif
+			{
+				// Only when this import is not an Asset Import
+				
+				if (_options.RuntimeTextureCompression != RuntimeTextureCompression.None)
+				{
+					// Texture need to be readable to compress it
+					texture.Compress(_options.RuntimeTextureCompression == RuntimeTextureCompression.HighQuality);
+					if (markGpuOnly)
+						texture.Apply(true, true);
+				}
 			}
 
 			await Task.CompletedTask;
