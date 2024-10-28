@@ -79,8 +79,12 @@ namespace UnityGLTF
 
 	    [MenuItem(MenuPrefix + ExportGltf)]
 	    [MenuItem(MenuPrefixGameObject + ExportGltf, false, 33)]
-	    private static void ExportSelected()
+	    private static void ExportSelected(MenuCommand command)
 		{
+			// The exporter handles multi-selection. We don't want to call export multiple times here.
+			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0])
+				return;
+			
 			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources))
 			{
 				Debug.LogError("Can't export: selection is empty");
@@ -99,8 +103,12 @@ namespace UnityGLTF
 
 		[MenuItem(MenuPrefix + ExportGlb)]
 		[MenuItem(MenuPrefixGameObject + ExportGlb, false, 34)]
-		private static void ExportGLBSelected()
+		private static void ExportGLBSelected(MenuCommand command)
 		{
+			// The exporter handles multi-selection. We don't want to call export multiple times here.
+			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0])
+				return;
+			
 			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources))
 			{
 				Debug.LogError("Can't export: selection is empty");
