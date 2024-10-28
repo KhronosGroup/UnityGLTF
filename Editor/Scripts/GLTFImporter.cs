@@ -85,7 +85,9 @@ namespace UnityGLTF
 
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
         [SerializeField] internal bool _removeEmptyRootObjects = true;
-        [SerializeField] internal float _scaleFactor = 1.0f;
+        [SerializeField] internal float _scaleFactor = 1.0f; 
+        [Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
+        [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
         [SerializeField] internal int _maximumLod = 300;
         [SerializeField] internal bool _readWriteEnabled = true;
         [SerializeField] internal bool _generateColliders = false;
@@ -99,6 +101,7 @@ namespace UnityGLTF
         [SerializeField] internal GLTFImporterNormals _importTangents = GLTFImporterNormals.Import;
         [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
+        [SerializeField] internal bool _mecanimHumanoidFlip = false;
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
@@ -110,7 +113,7 @@ namespace UnityGLTF
         [SerializeField] internal bool _useSceneNameIdentifier = false;
         [Tooltip("Compress textures after import using the platform default settings. If you need more control, use a .gltf file instead.")]
         [SerializeField] internal GLTFImporterTextureCompressionQuality _textureCompression = GLTFImporterTextureCompressionQuality.None;
-        
+        [SerializeField, Multiline] internal string _gltfAsset = default;
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;
         [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
@@ -526,7 +529,7 @@ namespace UnityGLTF
 
                 if (gltfScene && _importAnimations == AnimationMethod.MecanimHumanoid)
                 {
-	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene);
+	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
 	                if (avatar)
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
@@ -831,10 +834,16 @@ namespace UnityGLTF
 	        }
 	        else if (m_Materials.Length > 0)
 	        {
+		        // Create a "MaterialLibrary" asset that will hold one or more materials imported from glTF
+		        var library = ScriptableObject.CreateInstance<MaterialLibrary>();
+		        ctx.AddObjectToAsset("material library", library);
+		        ctx.SetMainObject(library);
+		        /*
 		        if (m_Materials.Length == 1)
 		        {
 			        ctx.SetMainObject(m_Materials[0]);
 		        }
+		        */
 	        }
 #else
             // Set main asset
@@ -915,6 +924,7 @@ namespace UnityGLTF
 			    ImportBlendShapeNames = _importBlendShapeNames,
 			    BlendShapeFrameWeight = _blendShapeFrameWeight,
 			    CameraImport = _importCamera,
+			    DeduplicateResources = _deduplicateResources,
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))
@@ -959,7 +969,7 @@ namespace UnityGLTF
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
 
-
+			    _gltfAsset = loader.Root.Asset?.ToString(true);
 			    importer = loader;
 		    }
 	    }

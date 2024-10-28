@@ -498,6 +498,25 @@ namespace UnityGLTF.Plugins
             };
             AddMap(clearcoatRoughnessFactor);
 
+            var sheenRoughnessFactor =
+                new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+                {
+                    PropertyNames = new[] { "sheenRoughness", "_sheenRoughness", "sheenRoughnessFactor", "_sheenRoughnessFactor" },
+                    GltfPropertyName =
+                        $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenRoughnessFactor)}",
+                    ExtensionName = KHR_materials_sheen_Factory.EXTENSION_NAME,
+                };
+            AddMap(sheenRoughnessFactor);
+            var sheenColorFactor =
+                new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+                {
+                    PropertyNames = new[] { "sheenColor", "_sheenColor", "sheenColorFactor", "_sheenColorFactor" },
+                    GltfPropertyName =
+                        $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenColorFactor)}",
+                    ExtensionName = KHR_materials_sheen_Factory.EXTENSION_NAME,
+                };
+            AddMap(sheenColorFactor);
+            
             AddTextureExtTransforms("pbrMetallicRoughness/baseColorTexture", new[] { "_MainTex", "_BaseMap", "_BaseColorTexture", "baseColorTexture" });
             AddTextureExtTransforms("emissiveTexture", new[] { "_EmissionMap", "_EmissiveTexture", "emissiveTexture" } );
             AddTextureExtTransforms("normalTexture", new[] { "_BumpMap", "_NormalTexture", "normalTexture" });
@@ -518,6 +537,8 @@ namespace UnityGLTF.Plugins
             AddTextureExtTransforms("extensions/"+nameof(KHR_materials_specular)+"/"+nameof(KHR_materials_specular.specularTexture), new[] { "specularTexture", "_specularTexture"}, nameof(KHR_materials_specular));
             AddTextureExtTransforms("extensions/"+nameof(KHR_materials_specular)+"/"+nameof(KHR_materials_specular.specularColorTexture), new[] { "specularColorTexture", "_specularColorTexture"}, nameof(KHR_materials_specular));
 
+            AddTextureExtTransforms("extensions/"+nameof(KHR_materials_sheen)+"/"+nameof(KHR_materials_sheen.sheenColorTexture), new[] {"sheenColorTexture", "_sheenColorTexture"}, nameof(KHR_materials_sheen));
+            AddTextureExtTransforms("extensions/"+nameof(KHR_materials_sheen)+"/"+nameof(KHR_materials_sheen.sheenRoughnessTexture), new[] {"sheenRoughnessTexture", "_sheenRoughnessTexture"}, nameof(KHR_materials_sheen));
 
             // TODO KHR_materials_sheen
             // case "_SheenColorFactor":

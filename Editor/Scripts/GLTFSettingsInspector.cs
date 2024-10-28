@@ -58,11 +58,12 @@ namespace UnityGLTF
 
 		private static SerializedObject m_SerializedObject;
 		private static int m_ActiveEditorIndex = 0;
-		private static readonly string[] m_TabNames = new string[2] { "Export", "Import" };
+		private static readonly string[] m_TabNames = new string[3] { "Export", "Import", "Build" };
 		private static readonly string key = typeof(GLTFSettings) + "ActiveEditorIndex";
 		
 		internal static void DrawGLTFSettingsGUI(GLTFSettings settings, SerializedObject m_SerializedObject)
 		{
+			var shaderStripping = m_SerializedObject.FindProperty(nameof(GLTFSettings.shaderStrippingSettings));
 			EditorGUIUtility.labelWidth = 220;
 			m_SerializedObject.Update();
 			
@@ -81,6 +82,15 @@ namespace UnityGLTF
 				GUILayout.FlexibleSpace();
 			}
 
+			if (m_ActiveEditorIndex == 2)
+			{
+				EditorGUI.BeginChangeCheck();
+				EditorGUILayout.PropertyField(shaderStripping);
+				if (EditorGUI.EndChangeCheck())
+					m_SerializedObject.ApplyModifiedProperties();
+				
+			}
+			else
 			if (m_ActiveEditorIndex == 1)
 			{
 				var tooltip = "These plugins are enabled by default when importing a glTF file at runtime.\nFor assets imported in the editor, adjust plugin settings on the respective importer.";
@@ -105,6 +115,8 @@ namespace UnityGLTF
 				{
 					do
 					{
+						if (prop.name == shaderStripping.name)
+							continue;
 						EditorGUILayout.PropertyField(prop, true);
 						switch (prop.name)
 						{
@@ -179,6 +191,7 @@ namespace UnityGLTF
 				var expanded = SessionState.GetBool(key, false);
 				using (new GUILayout.HorizontalScope())
 				{
+					bool wasEnabled = plugin.Enabled;
 					if (plugin.AlwaysEnabled || !allowDisabling)
 					{
 						plugin.Enabled = true;
@@ -192,6 +205,8 @@ namespace UnityGLTF
 					{
 						plugin.Enabled = GUILayout.Toggle(plugin.Enabled, "", GUILayout.Width(12));
 					}
+					if (plugin.Enabled != wasEnabled)
+						EditorUtility.SetDirty(plugin);
 
 					var label = new GUIContent(displayName, plugin.Description);
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);

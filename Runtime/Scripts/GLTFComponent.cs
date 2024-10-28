@@ -50,6 +50,16 @@ namespace UnityGLTF
 
 		[SerializeField]
 		private Shader shaderOverride = null;
+		
+		public Shader ShaderOverride
+		{
+			get => shaderOverride;
+			set
+			{
+				shaderOverride = value;
+				ApplyOverrideShader();
+			}
+		}
 
 		[Header("Import Settings")]
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
@@ -132,14 +142,7 @@ namespace UnityGLTF
 				);
 
 				// Override the shaders on all materials if a shader is provided
-				if (shaderOverride != null)
-				{
-					Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
-					foreach (Renderer renderer in renderers)
-					{
-						renderer.sharedMaterial.shader = shaderOverride;
-					}
-				}
+				ApplyOverrideShader();
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
 				MeshCache = sceneImporter._assetCache.MeshCache;
@@ -173,6 +176,18 @@ namespace UnityGLTF
 					sceneImporter?.Dispose();
 					sceneImporter = null;
 					importOptions.DataLoader = null;
+				}
+			}
+		}
+		
+		public void ApplyOverrideShader()
+		{
+			if (shaderOverride != null)
+			{
+				Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
+				foreach (Renderer renderer in renderers)
+				{
+					renderer.sharedMaterial.shader = shaderOverride;
 				}
 			}
 		}

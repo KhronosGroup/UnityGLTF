@@ -72,7 +72,8 @@ namespace UnityGLTF
 				// looks like GetInstanceID() changes per import; so we use the path instead
 				var path = AssetDatabase.GetAssetPath(targetMat) + "_" + targetMat.name;
 				var materialEditingKey = nameof(PBRGraphGUI) + ".AllowGltfMaterialEditing." + path;
-				var isAllowed = SessionState.GetBool(materialEditingKey, false);
+				var parentAssetIsMaterialLibrary = !(AssetDatabase.LoadMainAssetAtPath(path) is GameObject);
+				var isAllowed = SessionState.GetBool(materialEditingKey, parentAssetIsMaterialLibrary);
 				var allowMaterialEditing = EditorGUILayout.Toggle("Allow Editing", isAllowed);
 				if (allowMaterialEditing != isAllowed)
 					SessionState.SetBool(materialEditingKey, allowMaterialEditing);
@@ -284,7 +285,10 @@ namespace UnityGLTF
 					EditorGUILayout.Toggle("Has Vertex Colors", currentMaterialInfo.hasColor);
 					EditorGUI.EndDisabledGroup();
 
-					if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
+					/*
+					 > _VERTEX_COLORS_ON is currently not used in the shader, so we can't really check for it
+					 
+					 if (currentMaterialInfo.hasColor != targetMaterial.IsKeywordEnabled("_VERTEX_COLORS_ON"))
 					{
 						EditorGUI.indentLevel++;
 						var msg = "";
@@ -317,7 +321,7 @@ namespace UnityGLTF
 							});
 						}
 						EditorGUI.indentLevel--;
-					}
+					}*/
 
 					EditorGUI.BeginDisabledGroup(true);
 					EditorGUILayout.Toggle("Has UV0", currentMaterialInfo.hasUV0);
@@ -489,9 +493,13 @@ namespace UnityGLTF
 				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal));
 			}
 			#endif
-			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
+			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON") && !targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION"))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("transmission", StringComparison.Ordinal));
+			}
+			if (!targetMaterial.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("dispersion", StringComparison.Ordinal));
 			}
 			if (!targetMaterial.HasProperty("_VOLUME_ON") || !(targetMaterial.GetFloat("_VOLUME_ON") > 0.5f))
 			{
@@ -509,6 +517,11 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("clearcoat", StringComparison.Ordinal));
 			}
+			if (!targetMaterial.IsKeywordEnabled("_SHEEN_ON"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("sheen", StringComparison.Ordinal));
+			}
+			
 			if (HasPropertyButNoTex(targetMaterial, "occlusionTexture"))
 			{
 				propertyList.RemoveAll(x => x.name == "occlusionStrength" || (x.name.StartsWith("occlusionTexture", StringComparison.Ordinal) && x.name != "occlusionTexture"));

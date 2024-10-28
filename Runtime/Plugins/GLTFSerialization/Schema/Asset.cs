@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema
@@ -100,6 +101,40 @@ namespace GLTF.Schema
 			base.Serialize(writer);
 
 			writer.WriteEndObject();
+		}
+
+		public override string ToString()
+		{
+			return ToString(false);
+		}
+		
+		public string ToString(bool richFormat)
+		{
+			string bStart = richFormat ? "<b>" : "";
+			string bEnd = richFormat ? "</b>" : "";
+			
+			var sb = new StringBuilder();
+			if (!string.IsNullOrEmpty(Generator))
+				sb.AppendLine($"{bStart}{nameof(Generator)}: {bEnd}{Generator}");
+			
+			if (!string.IsNullOrEmpty(Version))
+				sb.AppendLine($"{bStart}{nameof(Version)}: {bEnd}{Version}");
+			
+			if (!string.IsNullOrEmpty(MinVersion))
+				sb.AppendLine($"{bStart}{nameof(MinVersion)}: {bEnd}{MinVersion}");
+			
+			if (!string.IsNullOrEmpty(Copyright))
+				sb.AppendLine($"{bStart}{nameof(Copyright)}: {bEnd}{Copyright}");
+			    
+			if (Extras != null)
+			{
+				sb.AppendLine("");
+				sb.AppendLine($"{bStart}Extras: {bEnd}");
+				foreach (var extra in Extras)
+					sb.AppendLine(extra.ToString());
+			}
+
+			return sb.ToString();
 		}
 	}
 }
