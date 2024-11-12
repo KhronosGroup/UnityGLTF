@@ -958,6 +958,16 @@ namespace UnityGLTF
 			return null;
 		}
 		
+		private bool ShouldBeVisible(Node node, GameObject nodeObj)
+		{
+			if (node.Extensions != null && node.Extensions.TryGetValue(KHR_visbility_Factory.EXTENSION_NAME, out var ext))
+			{
+				return (ext as KHR_visbility).visible;
+			}
+			else
+				return true;
+		}
+		
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -1063,7 +1073,7 @@ namespace UnityGLTF
 
 				if (onlyMesh)
 				{
-					nodeObj.SetActive(true);
+					nodeObj.SetActive(ShouldBeVisible(node, nodeObj));
 					return;
 				}
 				
@@ -1127,8 +1137,7 @@ namespace UnityGLTF
 						inbetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
 					}
 				}
-				
-				nodeObj.SetActive(true);
+				nodeObj.SetActive( ShouldBeVisible(node, nodeObj));
 			}
 						
 			var instancesTRS = await GetInstancesTRS(node);
@@ -1139,6 +1148,7 @@ namespace UnityGLTF
 			}
 			else
 			{
+				var shouldBeVisible = ShouldBeVisible(node, nodeObj);
 				await CreateNodeComponentsAndChilds(true);
 				var instanceParentNode = new GameObject("Instances");
 				instanceParentNode.transform.SetParent(nodeObj.transform, false);
@@ -1172,7 +1182,7 @@ namespace UnityGLTF
 					nodeObj.transform.localScale = instancesTRS[i].Item3;
 					nodeObj.name = $"Instance {i.ToString()}";
 				}
-				instanceParentNode.gameObject.SetActive(true);
+				instanceParentNode.gameObject.SetActive(shouldBeVisible);
 			}
 			
 			progressStatus.NodeLoaded++;
