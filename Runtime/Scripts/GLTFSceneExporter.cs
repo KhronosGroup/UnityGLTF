@@ -1047,7 +1047,7 @@ namespace UnityGLTF
 
 			if (_visbilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
 			{
-				DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
+				DeclareExtensionUsage(KHR_node_visbility_Factory.EXTENSION_NAME, false);
 				node.AddExtension(KHR_node_visbility_Factory.EXTENSION_NAME, new KHR_node_visbility { visible = false });
 			}
 			
