@@ -41,7 +41,7 @@ namespace GLTF.Schema
 			{ KHR_animation_pointerExtensionFactory.EXTENSION_NAME, new KHR_animation_pointerExtensionFactory() },
 			{ KHR_materials_dispersion_Factory.EXTENSION_NAME, new KHR_materials_dispersion_Factory() },
 			{ KHR_materials_sheen_Factory.EXTENSION_NAME, new KHR_materials_sheen_Factory()},
-			{ KHR_visbility_Factory.EXTENSION_NAME, new KHR_visbility_Factory()},
+			{ KHR_node_visbility_Factory.EXTENSION_NAME, new KHR_node_visbility_Factory()},
 			{ KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability_Factory()},
 		};
 
