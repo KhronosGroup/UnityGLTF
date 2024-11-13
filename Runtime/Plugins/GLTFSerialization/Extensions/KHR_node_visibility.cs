@@ -13,6 +13,7 @@ namespace GLTF.Schema
 		{
 			var obj = new JObject();
 			JProperty jProperty = new JProperty(KHR_node_visbility_Factory.EXTENSION_NAME, obj);
+			obj.Add(new JProperty(nameof(visible), visible));
 			return jProperty;
 		}
 

@@ -14,6 +14,8 @@ namespace GLTF.Schema
         {
             var obj = new JObject();
             JProperty jProperty = new JProperty(KHR_node_selectability_Factory.EXTENSION_NAME, obj);
+            obj.Add(new JProperty(nameof(selectable), selectable));
+
             return jProperty;
         }
 
