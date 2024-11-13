@@ -389,6 +389,8 @@ namespace UnityGLTF
 		private const int GLTFHeaderSize = 12;
 		private const int SectionHeaderSize = 8;
 
+		private bool _visbilityPluginEnabled = false;
+		
 		public struct UniqueTexture : IEquatable<UniqueTexture>
 		{
 			public Texture Texture;
@@ -655,6 +657,12 @@ namespace UnityGLTF
 				Root = _root
 			};
 			_root.Buffers.Add(_buffer);
+			
+			_visbilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
+			if (_visbilityPluginEnabled && !settings.ExportDisabledGameObjects)
+			{
+				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
+			}
 		}
 
 		/// <summary>
@@ -974,6 +982,7 @@ namespace UnityGLTF
 			{
 				return false;
 			}
+			
 			if (settings.UseMainCameraVisibility && (_exportLayerMask >= 0 && _exportLayerMask != (_exportLayerMask | 1 << transform.gameObject.layer))) return false;
 			if (transform.CompareTag("EditorOnly")) return false;
 			return true;
@@ -1036,6 +1045,12 @@ namespace UnityGLTF
 			
 			var node = new Node();
 
+			if (_visbilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
+			{
+				DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
+				node.AddExtension(KHR_node_visbility_Factory.EXTENSION_NAME, new KHR_node_visbility { visible = false });
+			}
+			
 			if (ExportNames)
 			{
 				node.Name = nodeTransform.name;
