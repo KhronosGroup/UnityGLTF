@@ -60,6 +60,11 @@ namespace UnityGLTF.Loader
 		}
 		public Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
+			if (relativeFilePath.StartsWith("http://") || relativeFilePath.StartsWith("https://"))
+			{
+				return new UnityWebRequestLoader("").LoadStreamAsync(relativeFilePath);
+			}
+			
 #if UNITY_EDITOR
 			string path = CombinePaths(_rootDirectoryPath, relativeFilePath);
 
@@ -99,7 +104,7 @@ namespace UnityGLTF.Loader
 			string pathToLoad = Path.Combine(_rootDirectoryPath, relativeFilePath);
 			if (!File.Exists(pathToLoad))
 			{
-				pathToLoad = Path.Combine(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath));
+				pathToLoad = Uri.UnescapeDataString(Path.Combine(_rootDirectoryPath, relativeFilePath));
 			}
 
 			if (!File.Exists(pathToLoad))
