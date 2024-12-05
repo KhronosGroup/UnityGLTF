@@ -1,8 +1,10 @@
+using GLTF.Schema;
+
 namespace UnityGLTF.Plugins
 {
     public class VisibilityExport : GLTFExportPlugin
     {
-        public override string DisplayName => "KHR_visibility";
+        public override string DisplayName => KHR_node_visbility_Factory.EXTENSION_NAME;
         public override string Description => "Exports visibility of objects.";
         public override bool AlwaysEnabled => false;
         public override bool EnabledByDefault => false;
