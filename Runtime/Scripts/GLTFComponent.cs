@@ -22,7 +22,6 @@ namespace UnityGLTF
 	{
 		public string GLTFUri = null;
 		public bool Multithreaded = true;
-		public bool UseStream = false;
 		public bool AppendStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
 		[Tooltip("Hide the scene object during load, then activate it when complete")]
@@ -109,7 +108,6 @@ namespace UnityGLTF
 			{
 				if (!Factory) Factory = ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
-                // UseStream is currently not supported...
                 string fullPath;
                 if (AppendStreamingAssets)
 	                fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
