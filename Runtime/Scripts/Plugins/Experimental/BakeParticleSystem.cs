@@ -35,7 +35,7 @@ namespace UnityGLTF.Plugins
             var previousSortMode = p.sortMode;
             if (p.sortMode == ParticleSystemSortMode.None)
                 p.sortMode = ParticleSystemSortMode.Distance;
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_2022_3_11_OR_NEWER
             p.BakeMesh(m, Camera.main, ParticleSystemBakeMeshOptions.Default);
 #else
             p.BakeMesh(m, Camera.main, true);

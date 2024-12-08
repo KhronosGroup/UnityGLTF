@@ -203,6 +203,8 @@ namespace UnityGLTF
 			get { return _lastLoadedScene; }
 		}
 
+		private bool AnyAnimationTimeNotIncreasing;
+
 		public TextureCacheData[] TextureCache => _assetCache.TextureCache;
 		public Texture2D[] InvalidImageCache => _assetCache.InvalidImageCache;
 		public MaterialCacheData[] MaterialCache => _assetCache.MaterialCache;
@@ -223,7 +225,7 @@ namespace UnityGLTF
 		/// Whether to keep a CPU-side copy of the texture after upload to GPU
 		/// </summary>
 		/// <remaks>
-		/// This is is necessary when a texture is used with different sampler states, as Unity doesn't allow setting
+		/// This is necessary when a texture is used with different sampler states, as Unity doesn't allow setting
 		/// of filter and wrap modes separately form the texture object. Setting this to false will omit making a copy
 		/// of a texture in that case and use the original texture's sampler state wherever it's referenced; this is
 		/// appropriate in cases such as the filter and wrap modes being specified in the shader instead
@@ -1350,6 +1352,11 @@ namespace UnityGLTF
 #else
 						Debug.Log(LogType.Warning, "glTF scene contains animations but com.unity.modules.animation isn't installed. Install that module to import animations.");
 #endif
+						if (AnyAnimationTimeNotIncreasing)
+						{
+							Debug.Log(LogType.Warning, $"Time of some subsequent animation keyframes is not increasing in {_gltfFileName} (glTF-Validator error ACCESSOR_ANIMATION_INPUT_NON_INCREASING)");
+						}
+						
 						CreatedAnimationClips = constructedClips.ToArray();
 					}
 				}

@@ -27,10 +27,15 @@ namespace UnityGLTF.Plugins
             // emit mesh and material if this is a Graphic element in a Canvas that's not disabled
             if (!shader)
             {
-                shader = Shader.Find("Hidden/UnityGLTF/UnlitGraph-Transparent");
+                shader = Shader.Find("UnityGLTF/UnlitGraph");
 #if UNITY_EDITOR
-                if (!shader) shader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("83f2caca07949794fb997734c4b0520f"));
+                if (!shader) shader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("59541e6caf586ca4f96ccf48a4813a51"));
 #endif
+                if (!shader)
+                {
+                    Debug.LogError("CanvasExport: Shader not found. Please make sure the UnityGLTF/UnlitGraph shader is included in build or add the UnityGLTFShaderVariantCollection in Project Settings/Graphics.");
+                    return;
+                }
             }
             
             var g = transform;

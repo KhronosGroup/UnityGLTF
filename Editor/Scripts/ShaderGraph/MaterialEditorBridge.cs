@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,8 +13,8 @@ namespace UnityGLTF
 		{
 			PBRGraphGUI.ImmutableMaterialChanged += OnImmutableMaterialChanged;
 		}
-
-		private static void OnImmutableMaterialChanged(Material material)
+		
+		internal static void OnImmutableMaterialChanged(Material material)
 		{
 			if (!material) return;
 			if (!AssetDatabase.Contains(material)) return;
@@ -23,20 +25,23 @@ namespace UnityGLTF
 			// var mainAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
 
 			// Transform[] rootTransforms = null;
-			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportContext());
-			// load all materials from mainAsset
 			var importer = AssetImporter.GetAtPath(assetPath) as GLTFImporter;
 			if (!importer) return;
+			var materialsToExport = importer.m_Materials.Where(x => x is Material).Cast<Material>().ToList();
+
+			SaveAssetWithMaterials(assetPath, materialsToExport);
+		}
+		
+		internal static void SaveAssetWithMaterials(string assetPath, List<Material> materials)
+		{
+			var importer = AssetImporter.GetAtPath(assetPath) as GLTFImporter;
+			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportContext());
+			// load all materials from mainAsset
 
 			// var allObjects = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-			foreach (var obj in importer.m_Materials)
+			foreach (var mat in materials)
 			{
-				if (!(obj is Material mat))
-				{
-					// TODO warn that there are extra objects we can't store right now
-					continue;
-				}
-
+				if (!mat) continue;
 				exporter.ExportMaterial(mat);
 			}
 
@@ -54,7 +59,7 @@ namespace UnityGLTF
 			var importedTextures = importer.m_Textures;
 			// If these don't match, we could only try by name... not ideal.
 			// They may not match due to different sampler settings etc.
-			if (exportedTextures.Count == importedTextures.Length)
+			if (exportedTextures?.Count == importedTextures.Length)
 			{
 				for (int i = 0; i < exportedTextures.Count; i++)
 				{
@@ -90,5 +95,6 @@ namespace UnityGLTF
 				}
 			};
 		}
+		
 	}
 }

@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.14.1] - 2024-10-28
+
+- fix: compiler error with `ParticleSystemBakeMeshOptions` before 2022.3.11f1 since that's where the API was introduced
+- fix: prevent incorrect warning when meshes don't have UV1/UV2 attributes
+- fix: don't call export multiple times from context menu for multi-selections
+- fix: remove unused property from `GLTFComponent`
+
+## [2.14.0] - 2024-10-06
+
+- fix: potential NullReferenceExceptions when importing material-only, mesh-only or texture-only glTF files
+- fix: check for missing primitives on mesh import instead of throwing
+- fix: GLTFSceneImporter reference counting properly tracks Animation data now
+- fix: incorrect callback subscription in glTF Material editing
+- fix: CanvasExport plugin was not working correctly in WebGL builds
+- fix: rare case of incorrect texture export with invalid texture content hash (thanks @Vaso64)
+- fix: ensure materials created with Create > UnityGLTF > Material use UnityGLTF as importer instead of glTFast
+- fix: Canvas export plugin was not correctly updating the canvas mesh in builds
+- fix: Particle Bake export plugin was not working correctly in 2022.3
+- fix: Import/Export plugin enabled/disabled state was not correctly serialized in some cases
+- fix: TMPro export plugin uses UnityGLTF shaders for export now instead of adding another dependency
+- fix: GLTFSceneImporter can be called without external data loader, but will warn that external data will not be loaded. Previously, a data loader had to be added even when it was not needed.
+- change: log warning when exporting UV0 and UV1 with more than 2 components, as glTF only supports 2-component UVs
+- change: simplify sampler usage in PBRGraph where possible to prevent warnings in later Unity versions
+- change: simplify PBRGraph variants to reduce shader variant count. This removes a separate option to use vertex color.
+- change: material-only files are now imported as MaterialLibrary assets with Material sub-assets, even when only a single material is present
+- add: log more meaningful exception messages on import
+- add: sheen support for PBRGraph
+- add: PBRGraph UI properly shows sheen and dispersion properties
+- add: allow flipping humanoid root bone on import to support more avatar types (like Meta Avatars)
+- add: new "Info" tab in GLTFImporter for asset information (generator, copyright, etc.) about the imported file
+- add: ShaderOverride is now public on GLTFComponent
+- add: new GLTFSceneImporter constructor overload for easier loading of files from streams
+- add: meshes and textures can now be deduplicated on import, since many exporters don't properly instance them
+- add: UV2 is exported as 2-, 3-, or 4-component texture coordinate. 3- and 4-component texture coordinates are not in the core glTF spec, but widely supported by implementations.
+- add: complete PBRGraph and UnlitGraph Shader Variant Collections for easier runtime import and export of glTF files
+- add: options for shader pass stripping in builds to reduce variant count and compilation times
+- add: ability to export a set of materials as material-only glTF or glb file
+- add: option to add new materials to glTF Material Libraries (material-only files)
+
 ## [2.13.0] - 2024-07-23
 
 - fix: empty or invalid root transforms should not be exported
@@ -15,7 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: added missing generate mitmaps to ktx texture load (#752)
 - fix: bone name mapping for exact names was not applied on humanoid import (#751)
 - fix: added missing using system for uwp target (#757)
-- feat: allow importing non-standard VEC3 and VEC4 TEXCOORD_n data and convert it to VEC2
+- add: allow importing non-standard VEC3 and VEC4 TEXCOORD_n data and convert it to VEC2
 - add: exposed texture readwrite enabled and generate mipmaps option to importer
 - change: removed log for loaded node count mismatch, extensions can modify node counts so the log was misleading
 - change: removed loaded texture count error log: when multiple samplers are used for one texture, the textures will be duplicated

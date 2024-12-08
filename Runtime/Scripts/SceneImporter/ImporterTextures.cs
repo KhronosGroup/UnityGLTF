@@ -102,7 +102,7 @@ namespace UnityGLTF
 	                if (image.BufferView == null)
 		                continue;
 
-	                var stream = GetImageStream(image);
+	                var stream = GetImageStream(image, -1);
 	                if (stream == null || stream.Length == 0)
 		                continue;
 	                
@@ -135,7 +135,7 @@ namespace UnityGLTF
 		        _imageDeduplicationLinks[h.Key] = reverseHashes[h.Value];
         }
         
-        private Stream GetImageStream(GLTFImage image)
+        private Stream GetImageStream(GLTFImage image, int imageCacheIndex)
         {
 	        Stream stream = null;
 	        if (image.Uri == null)
@@ -161,6 +161,10 @@ namespace UnityGLTF
 		        {
 			        stream = new MemoryStream(bufferData, 0, bufferData.Length, false, true);
 		        }
+		        else
+		        {
+			        stream = _assetCache.ImageStreamCache[imageCacheIndex];
+		        }
 	        }
 
 	        return stream;
@@ -173,7 +177,7 @@ namespace UnityGLTF
 
 			if (_assetCache.ImageCache[imageCacheIndex] == null)
 			{
-				Stream stream = GetImageStream(image);
+				Stream stream = GetImageStream(image, imageCacheIndex);
 				await YieldOnTimeoutAndThrowOnLowMemory();
 				await ConstructUnityTexture(stream, markGpuOnly, isLinear, isNormal, image, imageCacheIndex);
 			}
@@ -336,8 +340,7 @@ namespace UnityGLTF
 				texture = null;
 				Debug.Log(LogType.Error, "Buffer file " + invalidStream.RelativeFilePath + " not found in path: " + invalidStream.AbsoluteFilePath+ $" (File: {_gltfFileName})");
 			}
-			else
-			if (_nativeBuffers.TryGetValue(stream, out var nativeData))
+			else if (stream != null && _nativeBuffers.TryGetValue(stream, out var nativeData))
 			{
 				var bufferView = await GetBufferData(image.BufferView.Value.Buffer);
 				await YieldOnTimeoutAndThrowOnLowMemory();
@@ -355,7 +358,7 @@ namespace UnityGLTF
 					}
 				}
 			}
-			else
+			else if (stream != null)
 			{
 				byte[] buffer = new byte[stream.Length];
 

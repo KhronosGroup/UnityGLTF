@@ -259,24 +259,34 @@ namespace UnityGLTF
 
 				aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
-				if (meshObj.normals.Length != 0)
+				if (meshObj.HasVertexAttribute(VertexAttribute.Normal))
 					aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
 
-				if (meshObj.tangents.Length != 0)
+				if (meshObj.HasVertexAttribute(VertexAttribute.Tangent))
 					aTangent = ExportAccessor(SchemaExtensions.ConvertTangentCoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
 
-				var uvDim = meshObj.GetVertexAttributeDimension(VertexAttribute.TexCoord0);
-				if (uvDim != 2) Debug.LogWarning(null, "UV0 must be Vector2 in glTF, but it has " + uvDim + " channels. Only xy will be exported. Mesh: " + meshObj.name);
-				if (meshObj.uv.Length != 0)
-					aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv));
-
-				var uvDim1 = meshObj.GetVertexAttributeDimension(VertexAttribute.TexCoord1);
-				if (uvDim1 != 2) Debug.LogWarning(null, "UV1 must be Vector2 in glTF, but it has " + uvDim1 + " channels. Only xy will be exported. Mesh: " + meshObj.name);
-				if (meshObj.uv2.Length != 0)
-					aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(meshObj.uv2));
+				if (meshObj.HasVertexAttribute(VertexAttribute.TexCoord0))
+				{
+					var uvDim = meshObj.GetVertexAttributeDimension(VertexAttribute.TexCoord0);
+					if (uvDim != 2) Debug.LogWarning(null, "UV0 must be Vector2 in glTF, but it has " + uvDim + " channels. Only xy will be exported. Mesh: " + meshObj.name);
+					var uv= meshObj.uv;
+					if (uv.Length != 0)
+						aTexcoord0 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(uv));
+				}
 				
+				if (meshObj.HasVertexAttribute(VertexAttribute.TexCoord1))
+				{
+					var uvDim1 = meshObj.GetVertexAttributeDimension(VertexAttribute.TexCoord1);
+					if (uvDim1 != 2)
+						Debug.LogWarning(null, "UV1 must be Vector2 in glTF, but it has " + uvDim1 + " channels. Only xy will be exported. Mesh: " + meshObj.name);
+					var uv2 = meshObj.uv2;
+					if (uv2.Length != 0)
+						aTexcoord1 = ExportAccessor(SchemaExtensions.FlipTexCoordArrayVAndCopy(uv2));
+				}
+
 				// From UV2, we're exporting as custom attribute
-				if (meshObj.HasVertexAttribute(VertexAttribute.TexCoord2)) {
+				if (meshObj.HasVertexAttribute(VertexAttribute.TexCoord2))
+				{
 					var uvDim2 = meshObj.GetVertexAttributeDimension(VertexAttribute.TexCoord2);
 					if (uvDim2 == 2)
 					{

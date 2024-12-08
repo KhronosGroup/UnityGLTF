@@ -37,6 +37,7 @@ namespace UnityGLTF.Plugins
                 return false;
             }
             
+            g.SetVerticesDirty();
             g.Rebuild(CanvasUpdate.PreRender);
 
             mesh = this.mesh;
@@ -53,7 +54,11 @@ namespace UnityGLTF.Plugins
                 material = tmPro.fontSharedMaterial;
             }
 #endif
-            if (!material) material = new Material(shader);
+            if (!material)
+            {
+                material = new Material(shader);
+                material.SetOverrideTag("RenderType", "Transparent");
+            }
             
             if (!hasTMPro)
             {

@@ -834,10 +834,16 @@ namespace UnityGLTF
 	        }
 	        else if (m_Materials.Length > 0)
 	        {
+		        // Create a "MaterialLibrary" asset that will hold one or more materials imported from glTF
+		        var library = ScriptableObject.CreateInstance<MaterialLibrary>();
+		        ctx.AddObjectToAsset("material library", library);
+		        ctx.SetMainObject(library);
+		        /*
 		        if (m_Materials.Length == 1)
 		        {
 			        ctx.SetMainObject(m_Materials[0]);
 		        }
+		        */
 	        }
 #else
             // Set main asset
@@ -963,7 +969,7 @@ namespace UnityGLTF
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
 
-			    _gltfAsset = loader.Root.Asset.ToString(true);
+			    _gltfAsset = loader.Root.Asset?.ToString(true);
 			    importer = loader;
 		    }
 	    }
