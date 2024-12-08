@@ -46,7 +46,9 @@ namespace UnityGLTF.Plugins
 					return;
 				}
 
-				nodeIds[index] = exporter.ExportNode(lod.renderers[0].gameObject).Id;
+				var lodNode = exporter.ExportNode(lod.renderers[0].gameObject);
+				if (lodNode != null) nodeIds[index] = lodNode.Id;
+
 				coverages[index] = lod.screenRelativeTransitionHeight;
 			}
 			// if (usesCulling) coverages[coverages.Length - 1] = 0;
