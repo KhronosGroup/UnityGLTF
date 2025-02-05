@@ -502,7 +502,10 @@ namespace UnityGLTF
 			}
 			_gltfStream.Stream.Close();
 			DisposeNativeBuffers();
-
+			
+			if (this.progress != null)
+				await Task.Yield();
+			
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
