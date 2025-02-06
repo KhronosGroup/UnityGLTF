@@ -152,6 +152,8 @@ namespace UnityGLTF
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 		private List<GLTFExportPluginContext> _plugins = new List<GLTFExportPluginContext>();
 
+		public IReadOnlyList<GLTFExportPluginContext> Plugins => _plugins;
+		
 		public struct TextureMapType
 		{
 			public const string BaseColor = "baseColorTexture";
