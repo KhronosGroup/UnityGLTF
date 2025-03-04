@@ -702,8 +702,7 @@ namespace UnityGLTF
 		                        if (_textureCompression != GLTFImporterTextureCompressionQuality.None)
 		                        {
 			                        // platform-dependant texture compression
-			                        var buildTargetName = BuildPipeline.GetBuildTargetName(ctx.selectedBuildTarget);
-			                        var format = TextureImporterHelper.GetAutomaticFormat(tex, buildTargetName);
+			                        var format = TextureImporterHelper.GetAutomaticFormat(tex);
 			                        var convertedFormat = (TextureFormat)(int)format;
 			                        if ((int)convertedFormat > -1)
 			                        {
