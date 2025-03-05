@@ -960,9 +960,9 @@ namespace UnityGLTF
 		
 		private bool ShouldBeVisible(Node node, GameObject nodeObj)
 		{
-			if (node.Extensions != null && node.Extensions.TryGetValue(KHR_node_visbility_Factory.EXTENSION_NAME, out var ext))
+			if (node.Extensions != null && node.Extensions.TryGetValue(KHR_node_visibility_Factory.EXTENSION_NAME, out var ext))
 			{
-				return (ext as KHR_node_visbility).visible;
+				return (ext as KHR_node_visibility).visible;
 			}
 			else
 				return true;
