@@ -316,7 +316,7 @@ To create smaller files for complex blend shape animations (e.g. faces with doze
 
 To import `.gltf` or `.glb` files at runtime, you can use the `GLTFComponent` for loading.
 
-
+![image](https://github.com/user-attachments/assets/ae00761a-513d-4ea9-8ce8-edfc06086ce2)
 
 #### Load via code example:
 
