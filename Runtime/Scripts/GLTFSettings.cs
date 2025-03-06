@@ -19,6 +19,44 @@ namespace UnityGLTF
 	    private const string k_SettingsFileName = "UnityGLTFSettings.asset";
 	    public const string k_RuntimeAndEditorSettingsPath = "Assets/Resources/" + k_SettingsFileName;
 
+	    
+	    [SerializeField, HideInInspector]
+	    // Will be set on building in PackageVersionPreprocessBuild.cs
+	    internal string packageVersion = null;
+	    
+	    public string Generator { get => GetGenerator();}
+	    
+#if UNITY_EDITOR
+	    internal string GetUnityGltfVersion()
+	    {
+		    var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(Assembly.GetAssembly(typeof(GLTFSettings)));
+		    if (packageInfo != null)
+			    return packageInfo.version;
+		    return "";
+	    }
+#endif
+	    
+	    internal string GetGenerator()
+	    {
+		    string gltfVersion;
+#if UNITY_EDITOR
+		    gltfVersion = GetUnityGltfVersion();
+#else
+			gltfVersion = packageVersion;
+#endif
+		    var renderPipeline = "Built-in RP";
+		    var renderPipelineAsset =  UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+		    if (renderPipelineAsset)
+		    { 
+			    renderPipeline = renderPipelineAsset.GetType().Name;
+			    if (renderPipeline == "UniversalRenderPipelineAsset")
+				    renderPipeline = "URP";
+			    else if (renderPipeline == "HighDefinitionRenderPipelineAsset")
+				    renderPipeline = "HDRP";
+		    }
+		    return  $"UnityGltf {gltfVersion}, Unity {Application.unityVersion}, {renderPipeline}";
+	    }
+	    
 	    [Flags]
 	    public enum BlendShapeExportPropertyFlags
 	    {
