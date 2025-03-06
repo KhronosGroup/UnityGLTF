@@ -6,6 +6,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
 #if WINDOWS_UWP 
@@ -21,7 +22,7 @@ namespace UnityGLTF
 	{
 		public string GLTFUri = null;
 		public bool Multithreaded = true;
-		public bool AppendStreamingAssets = true;
+		[FormerlySerializedAs("AppendStreamingAssets")] public bool LoadFromStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
 		[Tooltip("Hide the scene object during load, then activate it when complete")]
 		public bool HideSceneObjDuringLoad = false;
@@ -114,7 +115,7 @@ namespace UnityGLTF
 				if (!Factory) Factory = ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
                 string fullPath;
-                if (AppendStreamingAssets)
+                if (LoadFromStreamingAssets)
 	                fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
                 else
 	                fullPath = GLTFUri;

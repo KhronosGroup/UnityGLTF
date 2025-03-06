@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: `RoughRefractionFeature` now supports Unity 6 and new Render Graph API
 - fix: set volume and transmission materials to `AlphaMode.BLEND` on VisionOS to ensure proper rendering
 - change: mark package as compatible with Unity 2021.3+. Legacy support for 2020 and earlier will be removed in future updates.
+- change: renamed `GLTFComponent` setting `AppendStreamingAssets` to `LoadFromStreamingAssetsFolder`
 - add: MaterialX branches to `UnityGLTF/PBRGraph` shader with conditional compilation for VisionOS
 - add: `MaterialXColor` and `MaterialXFloat` shadersubgraphs for platform-specific material settings
 - add: new runtime texture compression option (`None`, `LowQuality`, `HighQuality`) to improve runtime memory usage
