@@ -702,7 +702,7 @@ namespace UnityGLTF
 		                        if (_textureCompression != GLTFImporterTextureCompressionQuality.None)
 		                        {
 			                        // platform-dependant texture compression
-			                        var format = TextureImporterHelper.GetAutomaticFormat(tex);
+			                        var format = TextureImporterHelper.GetAutomaticFormat(tex, ctx.selectedBuildTarget);
 			                        var convertedFormat = (TextureFormat)(int)format;
 			                        if ((int)convertedFormat > -1)
 			                        {

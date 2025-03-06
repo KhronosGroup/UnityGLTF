@@ -10,10 +10,9 @@ namespace UnityGLTF
     {
         private const string DefaultTextureAssetGuid = "7b7ff3cec11c24c599d6f12443877d5e";
         
-        public static TextureImporterFormat GetAutomaticFormat(Texture2D texture)
+        public static TextureImporterFormat GetAutomaticFormat(Texture2D texture, BuildTarget buildTarget)
         {
             var defaultTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(DefaultTextureAssetGuid)) as TextureImporter;
-            // defaultTextureImporter = new TextureImporter();
             
             TextureImporterSettings importerSettings = new TextureImporterSettings();
             
@@ -25,19 +24,8 @@ namespace UnityGLTF
             
             var hasAlpha = TextureUtil.HasAlphaTextureFormat(texture.format);
             var isHDR = TextureUtil.IsHDRFormat(texture.format);
-           
-            // var platformSettings = new TextureImporterPlatformSettings();
-            foreach (BuildPlatform validPlatform in BuildPlatforms.instance.GetValidPlatforms())
-            {
-                // TextureImporter.RecommendedFormatsFromTextureTypeAndPlatform
-                if (validPlatform.IsActive())
-                {
-                    return TextureImporter.DefaultFormatFromTextureParameters(importerSettings, defaultTextureImporter.GetPlatformTextureSettings(validPlatform.name), hasAlpha, isHDR, validPlatform.defaultTarget);
-                }
-            }
             
-            // This should never happen
-            return TextureImporterFormat.Automatic;
+            return TextureImporter.DefaultFormatFromTextureParameters(importerSettings, defaultTextureImporter.GetDefaultPlatformTextureSettings(), hasAlpha, isHDR, buildTarget);
         }
     }
 }
