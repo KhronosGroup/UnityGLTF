@@ -435,7 +435,7 @@ namespace UnityGLTF
                 // scale all localPosition values if necessary
                 if (gltfScene && !Mathf.Approximately(_scaleFactor, 1))
                 {
-	                var transforms = gltfScene.GetComponentsInChildren<Transform>();
+	                var transforms = gltfScene.GetComponentsInChildren<Transform>(true);
 	                foreach (var tr in transforms)
 	                {
 		                tr.localPosition *= _scaleFactor;
@@ -447,8 +447,8 @@ namespace UnityGLTF
                 var meshFilters = new List<(GameObject gameObject, Mesh sharedMesh)>();
                 if (gltfScene)
                 {
-		            meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
-	                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>().Select(x => (x.gameObject, x.sharedMesh)));
+		            meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>(true).Select(x => (x.gameObject, x.sharedMesh)).ToList();
+	                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>(true).Select(x => (x.gameObject, x.sharedMesh)));
                 }
 
                 var vertexBuffer = new List<Vector3>();
@@ -538,7 +538,7 @@ namespace UnityGLTF
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
 
-                var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>() : Array.Empty<Renderer>();
+                var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
 
                 if (_importMaterials)
                 {
