@@ -310,6 +310,52 @@ To create smaller files for complex blend shape animations (e.g. faces with doze
 
 ## Importing glTF files
 
+### Runtime Import
+
+#### Load via Gltf Component
+
+To import `.gltf` or `.glb` files at runtime, you can use the `GLTFComponent` for loading.
+
+
+
+#### Load via code example:
+
+From local file:
+```csharp
+string dir = "C:\SamplePath\";
+string filename = "AntiqueCamera.glb";
+
+var importOpt = new ImportOptions();
+importOpt.DataLoader = new UnityWebRequestLoader(dir);
+var import = new GLTFSceneImporter(filename, importOpt);
+await import.LoadSceneAsync();
+```
+
+From Web:
+```csharp
+string uriDir = "https://github.com/KhronosGroup/glTF-Sample-Models/raw/refs/heads/main/2.0/AntiqueCamera/glTF-Binary/";
+string filename = "AntiqueCamera.glb";
+
+var importOpt = new ImportOptions();
+importOpt.DataLoader = new UnityWebRequestLoader(uriDir);
+var import = new GLTFSceneImporter(filename, importOpt);
+await import.LoadSceneAsync();
+```
+
+Accessing the loaded gltf scene:
+```csharp
+import.LastLoadedScene
+```
+On the loaded gltf scene you will find the `InstantiatedGLTFObject` component. Use the method `Duplicate` from it, to create a copy of the loaded scene.
+
+### Ensure shaders are available in your build
+Please make sure you have added the `UnityGLTFShaderVariantCollection` (or `UnityGLTFShaderVariantCollection-BiRP` for BuildIn render pipeline) in the `Project Settings > Graphics > Preloaded Shaders`.
+Otherwise, it's possible that shaders are missing in build. Please be aware, that on the first build the compile time can take some time.
+
+When you building for mobile platforms and you have the requirement for smaller shader sizes, and you know which shaders features you realy need, it might be better to create your own Shader Variant Collection. 
+
+You can also strip additional shader variants under `Project Settings > UnityGtlf > Build` to reduce shader compile time.  
+
 ### Editor Import
 
 For importing `.gltf` or `.glb` files in the editor, place them in your project as usual (Assets or Packages). 
