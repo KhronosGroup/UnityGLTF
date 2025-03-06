@@ -30,6 +30,13 @@ namespace UnityGLTF
 		Meshes = 1,
 		Textures = 2,
 	}
+
+	public enum RuntimeTextureCompression
+	{
+		None,
+		LowQuality ,
+		HighQuality,
+	}
 	
 	public class ImportOptions
 	{
@@ -52,7 +59,7 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
 		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
-
+		public RuntimeTextureCompression RuntimeTextureCompression = RuntimeTextureCompression.None;
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
 #if UNITY_EDITOR
