@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - add: new runtime texture compression option (`None`, `LowQuality`, `HighQuality`) to improve runtime memory usage
 - add: exposed import settings to keep CPU copy of mesh/textures to `GLTFComponent`
 - add: include UnityGLTF package version, Unity version and current render pipeline in `assets.extras` on export
+- add: [`KHR_node_visibility`](https://github.com/KhronosGroup/glTF/pull/2410) import and export support, currently disabled by default. Enable in `UnityGLTFSettings`. This is a preparative step for `KHR_interactivity`, which will be added in a later release. Please note that this extension is not yet ratified and implementation details may change.
+- add: schema and serialization support for [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) and [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422). Please note that these extensions are not yet ratified and implementation details may change.
 
 ## [2.14.1] - 2024-10-28
 
