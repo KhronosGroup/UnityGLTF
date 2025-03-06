@@ -4,7 +4,7 @@ namespace UnityGLTF
 {
 	public class UnlitGraphMap : BaseGraphMap, IUnlitUniformMap
 	{
-		private const string UnlitGraphGuid = "59541e6caf586ca4f96ccf48a4813a51";
+		internal const string UnlitGraphGuid = "59541e6caf586ca4f96ccf48a4813a51";
 		public UnlitGraphMap() : this("UnityGLTF/UnlitGraph") {}
 
 #if !UNITY_2021_1_OR_NEWER

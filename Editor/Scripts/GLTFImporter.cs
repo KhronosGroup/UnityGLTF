@@ -195,6 +195,10 @@ namespace UnityGLTF
         private static string[] GatherDependenciesFromSourceFile(string path)
         {
 	        var dependencies = new List<string>();
+	        
+	        // Add shader dependencies to ensure they're imported first
+	        dependencies.Add(AssetDatabase.GUIDToAssetPath(PBRGraphMap.PBRGraphGuid));
+	        dependencies.Add(AssetDatabase.GUIDToAssetPath(UnlitGraphMap.UnlitGraphGuid));
 
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
 	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
