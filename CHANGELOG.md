@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.15.0] - 2025-03-06
+
+- fix: assets with absolute URLs or paths containing URL encoded information now load correctly
+- fix: improve shader dependencies in editor importer to work around some edge cases at first library import
+- fix: check all sub-meshes of used attributes instead of only the first one when creating attribute arrays
+- fix: ensure progress callback is triggered before `onLoadComplete` in scene loader
+- fix: prevent null reference exception when plugin is not loaded/defined
+- fix: work around API change in Unity 6000.0.38f1 that caused compilation error
+- fix: clamped `Sheen Roughness` to 0..1 range in PBRGraph shader
+- fix: `RoughRefractionFeature` now supports Unity 6 and new Render Graph API
+- fix: set volume and transmission materials to `AlphaMode.BLEND` on VisionOS to ensure proper rendering
+- change: mark package as compatible with Unity 2021.3+. Legacy support for 2020 and earlier will be removed in future updates.
+- add: MaterialX branches to `UnityGLTF/PBRGraph` shader with conditional compilation for VisionOS
+- add: `MaterialXColor` and `MaterialXFloat` shadersubgraphs for platform-specific material settings
+- add: new runtime texture compression option (`None`, `LowQuality`, `HighQuality`) to improve runtime memory usage
+- add: exposed import settings to keep CPU copy of mesh/textures to `GLTFComponent`
+- add: include UnityGLTF package version, Unity version and current render pipeline in `assets.extras` on export
+
 ## [2.14.1] - 2024-10-28
 
 - fix: compiler error with `ParticleSystemBakeMeshOptions` before 2022.3.11f1 since that's where the API was introduced
