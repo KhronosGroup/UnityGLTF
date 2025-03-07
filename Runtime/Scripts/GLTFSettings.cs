@@ -45,7 +45,7 @@ namespace UnityGLTF
 			gltfVersion = packageVersion;
 #endif
 		    var renderPipeline = "Built-in RP";
-		    var renderPipelineAsset =  UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+		    var renderPipelineAsset =  UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
 		    if (renderPipelineAsset)
 		    { 
 			    renderPipeline = renderPipelineAsset.GetType().Name;
