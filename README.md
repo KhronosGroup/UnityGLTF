@@ -140,6 +140,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - KHR_materials_dispersion (refractive index dispersion)
 - MSFT_lods (level of detail)
 - KHR_animation_pointer (arbitrary property animations)
+- KHR_node_visibility (GameObject active state)
 
 ### Import only
 
