@@ -2,7 +2,6 @@
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
 ![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2021.3%E2%80%932023.1%2B-brightgreen)
-![Support for 2020.3 is not actively maintained](https://img.shields.io/badge/Unity-2020.3-yellow)
 
 ![URP supported](https://img.shields.io/badge/Render%20Pipeline-URP-brightgreen)
 ![BiRP supported with better support on 2021.3+](https://img.shields.io/badge/Render%20Pipeline-Built--in-brightgreen)
@@ -85,19 +84,17 @@ Please use Long-Term Support versions of Unity (2021.3+, 2022.3+, 2023.3+).
 - Universal Render Pipeline (URP) and Built-In Render Pipeline (BiRP)
 
 **Tested:**
-- Unity 2020.3+
+- Unity 2021.3+
 - Linear colorspace
 - Universal Render Pipeline (URP) and Built-In Render Pipeline (BiRP)
 
-**Legacy:**  
-These configurations have been working in the past. They will not be updated with material extensions or new features. Also, issues in these configurations will most likely not be addressed if they're not also happening on later versions.
-- Unity 2018.4–2019.4
-- Gamma colorspace
+**Legacy:**
+- When using Unity 2020.3, please use an older version of UnityGLTF, like 2.9.1-rc and before.
 
 **HDRP**:
 - Currently limited functionality.
 
-> **Note:** Issues on non-LTS Unity versions (not on 2020.3, 2021.3, 2022.3, ...) will most likely not be addressed. Please use LTS (Long-Term Support) versions where possible.
+> **Note:** Issues on non-LTS Unity versions (not on 2021.3, 2022.3, 2023.3...) will most likely not be addressed. Please use LTS (Long-Term Support) versions where possible.
 
 ## UnityGLTF and glTFast
 
