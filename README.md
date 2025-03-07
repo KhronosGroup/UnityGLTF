@@ -402,6 +402,33 @@ To create a plugin, follow these steps:
 
 If your plugin reads/writes custom extension data, you need to also implement `GLTF.Schema.IExtension` for serialization and deserialization.
 
+> [!WARNING] 
+> `ShouldNodeExport` callback: Using this callback requires understanding of how glTF works. For example, if you filter out some bones of a skeleton on export, the result might not be valid glTF or might not display what you expect. Use with caution
+
+### Example for custom plugin
+```csharp
+public class MyExportPlugin : GLTFExportPlugin
+{
+    public override string DisplayName { get => "My Custom Plugin"; }
+    public override bool EnabledByDefault => true;
+    public override bool AlwaysEnabled => false;
+    
+    public override GLTFExportPluginContext CreateInstance(ExportContext context)
+    {
+        return new MyExportPluginContext();
+    }
+}
+
+public class MyExportPluginContext: GLTFExportPluginContext
+{
+    public override bool ShouldNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform)
+    {
+        return !transform.CompareTag("ignore");
+    }
+}
+```
+
+
 > 🏗️ Under construction. You can take a look at `MaterialVariantsPlugin.cs` for an example.
 
 ## Known Issues
