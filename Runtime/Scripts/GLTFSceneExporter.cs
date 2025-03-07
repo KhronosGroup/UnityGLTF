@@ -1043,6 +1043,9 @@ namespace UnityGLTF
 			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
+			foreach (var plugin in _plugins)
+				if (!(plugin?.ShouldNodeExport(this, _root, nodeTransform) ?? true)) return null;
+
 			exportNodeMarker.Begin();
 			
 			var node = new Node();
@@ -1189,7 +1192,8 @@ namespace UnityGLTF
 				foreach (var child in nonPrimitives)
 				{
 					if (!ShouldExportTransform(child.transform)) continue;
-					parentOfChilds.Children.Add(ExportNode(child.transform));
+					var childNode = ExportNode(child.transform);
+					if (childNode != null) parentOfChilds.Children.Add(childNode);
 				}
 			}
 
