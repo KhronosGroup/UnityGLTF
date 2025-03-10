@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.16.0-pre] - 2025-03-10
+
+- add: Editor export support for [`KHR_interactivity`](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc), [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) and [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422).Support for these extensions is based on the draft specification as of Mar 10 2024. Please note that these extensions are not yet ratified and implementation details may change.
+- add: convert `Unity Visual Scripting` Units to `KHR_interactivity` nodes on export, including virtual properties from the [`glTF Object Model`](https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/ObjectModel.adoc). 
+- add: visual hints for which nodes can be exported from Visual Scripting to `KHR_interactivity`
+- add: `KHR_interactivity` export plugin. This plugin is disabled by default; enable it in `UnityGLTFSettings`.
+
 ## [2.15.0] - 2025-03-06
 
 - fix: assets with absolute URLs or paths containing URL encoded information now load correctly
