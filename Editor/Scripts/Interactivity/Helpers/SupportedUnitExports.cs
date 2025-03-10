@@ -16,7 +16,7 @@ namespace UnityGLTF.Interactivity
             Dictionary<Type, Dictionary<string, MemberAccess>> memberAccess = new Dictionary<Type, Dictionary<string, MemberAccess>>();
             List<string> units = new List<string>();
             IEnumerable<Type> supportedStructsCreation = null;
-            IEnumerable<(Type type, string[] mmembers)> exposedMembers = null;
+            IEnumerable<(Type type, string[] members)> exposedMembers = null;
             
             var sb = new StringBuilder();
             
@@ -76,7 +76,7 @@ namespace UnityGLTF.Interactivity
                 foreach (var member in exposedMembers.OrderBy(m => m.type.FullName))
                 {
                     sb.AppendLine($"\t{member.type.ToString()}");
-                    foreach (var m in member.mmembers.OrderBy( m => m))
+                    foreach (var m in member.members.OrderBy( m => m))
                     {
                         sb.AppendLine($"\t\t.{m}");
                     }
