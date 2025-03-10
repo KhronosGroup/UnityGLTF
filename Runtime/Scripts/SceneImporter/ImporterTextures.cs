@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using GLTF;
 using GLTF.Schema;
 using GLTF.Utilities;
 using Unity.Collections;
@@ -11,6 +12,7 @@ using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Build;
