@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
 using GLTF.Extensions;
-using GLTF.Math;
 using Newtonsoft.Json;
 
 namespace GLTF.Schema

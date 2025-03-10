@@ -1,7 +1,5 @@
-﻿using System;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using GLTF.Math;
-using Newtonsoft.Json;
 using GLTF.Extensions;
 
 namespace GLTF.Schema

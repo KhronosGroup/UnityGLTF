@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using GLTF.Extensions;
 using Newtonsoft.Json.Linq;
-using Color = GLTF.Math.Color;
 
 namespace GLTF.Schema
 {

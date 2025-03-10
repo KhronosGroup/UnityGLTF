@@ -1,6 +1,5 @@
 using System;
 using Newtonsoft.Json.Linq;
-using UnityEngine.Serialization;
 
 namespace GLTF.Schema
 {

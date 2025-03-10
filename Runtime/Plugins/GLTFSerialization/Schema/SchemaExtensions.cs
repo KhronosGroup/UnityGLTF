@@ -1,5 +1,4 @@
-﻿using System;
-using GLTF;
+﻿using GLTF;
 using GLTF.Schema;
 using Unity.Mathematics;
 using UnityEngine;
