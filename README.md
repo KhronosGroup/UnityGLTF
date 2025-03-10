@@ -1,7 +1,7 @@
 # UnityGLTF <!-- omit from toc -->
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
-![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2021.3%E2%80%932023.1%2B-brightgreen)
+![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2021.3%E2%80%936000.0%2B-brightgreen)
 
 ![URP supported](https://img.shields.io/badge/Render%20Pipeline-URP-brightgreen)
 ![BiRP supported with better support on 2021.3+](https://img.shields.io/badge/Render%20Pipeline-Built--in-brightgreen)
@@ -24,30 +24,35 @@ The library is designed to be easy to extend with additional extensions to the g
 - [UnityGLTF and glTFast](#unitygltf-and-gltfast)
 - [Supported Features and Extensions](#supported-features-and-extensions)
   - [Import and Export](#import-and-export)
-  - [Export only](#export-only)
   - [Import only](#import-only)
+  - [Export only](#export-only)
 - [glTF Materials](#gltf-materials)
   - [Material Conversions](#material-conversions)
+  - [Material and Shader Export Compatibility](#material-and-shader-export-compatibility)
   - [Configure for Refractive Materials (Transmission and Volume)](#configure-for-refractive-materials-transmission-and-volume)
     - [Material Setup](#material-setup)
     - [URP](#urp)
     - [Built-In](#built-in)
     - [HDRP](#hdrp)
-  - [Material and Shader Export Compatibility](#material-and-shader-export-compatibility)
 - [Exporting glTF Files](#exporting-gltf-files)
   - [Testing, debugging, compatibility](#testing-debugging-compatibility)
 - [Animation Export](#animation-export)
   - [Animator Controller](#animator-controller)
-  - [GLTFRecorder](#gltfrecorder-api)
+  - [GLTFRecorder API](#gltfrecorder-api)
   - [Timeline Recorder](#timeline-recorder)
-  - [Legacy: Animation Component](#legacy-animation-component)
-  - [KHR\_animation\_pointer](#khr_animation_pointer-support)
-- [Blendshape Export](#blend-shape-export)
+  - [Legacy Animation Component](#legacy-animation-component)
+  - [KHR\_animation\_pointer support](#khr_animation_pointer-support)
+- [Blend Shape Export](#blend-shape-export)
 - [Importing glTF files](#importing-gltf-files)
+  - [Runtime Import](#runtime-import)
+    - [Load via Gltf Component](#load-via-gltf-component)
+    - [Load via code example:](#load-via-code-example)
+  - [Ensure shaders are available in your build](#ensure-shaders-are-available-in-your-build)
   - [Editor Import](#editor-import)
   - [Default Importer Selection](#default-importer-selection)
 - [Animation Import](#animation-import)
 - [Extensibility](#extensibility)
+  - [Example for custom plugin](#example-for-custom-plugin)
 - [Known Issues](#known-issues)
 - [Contributing](#contributing)
   - [Unity Package](#unity-package)
@@ -72,29 +77,24 @@ You can also install this package from git, compatible with UPM (Unity Package M
 5. Click <kbd>Add</kbd>.
 
 > **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
-> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.9.0-rc`.
+> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.14.1`.
 
 ## Unity Version and Render Pipeline Compatibility
 
-Please use Long-Term Support versions of Unity (2021.3+, 2022.3+, 2023.3+).
+Please use Long-Term Support versions of Unity (2021.3+, 2022.3+, 6000.0+).
 
 **Recommended:**
-- Unity 2021.3+, Unity 2022.3+, Unity 2023.3+
+- Unity 2021.3+, Unity 2022.3+, Unity 6+
 - Linear colorspace
 - Universal Render Pipeline (URP) and Built-In Render Pipeline (BiRP)
-
-**Tested:**
-- Unity 2021.3+
-- Linear colorspace
-- Universal Render Pipeline (URP) and Built-In Render Pipeline (BiRP)
-
-**Legacy:**
-- When using Unity 2020.3, please use an older version of UnityGLTF, like 2.9.1-rc and before.
 
 **HDRP**:
 - Currently limited functionality.
 
-> **Note:** Issues on non-LTS Unity versions (not on 2021.3, 2022.3, 2023.3...) will most likely not be addressed. Please use LTS (Long-Term Support) versions where possible.
+**Legacy:**
+- When using Unity 2020.3, please use an older version of UnityGLTF, like 2.9.1-rc and before.
+
+> **Note:** Issues on non-LTS Unity versions (not on 2021.3, 2022.3, 6000.0...) will most likely not be addressed. Please use LTS (Long-Term Support) versions where possible.
 
 ## UnityGLTF and glTFast
 
@@ -116,7 +116,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 
 ### Import and Export
 
-- Animations
+- Animation and Animator with multiple clips
 - Skinned Mesh Renderers
 - Blend Shapes
   - Sparse accessors for Blend Shapes
@@ -124,45 +124,44 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - Vertex Colors
 - Cameras (perspective, orthographic)
 - URP and Built-In Render Pipeline [Learn More](#material-and-shader-export-compatibility)
-- KHR_lights_punctual (point, spot, and directional lights)
-- KHR_texture_transform (UV offset, scale, rotation)
-- KHR_materials_unlit
-- KHR_materials_transmission (glass-like materials)
-- KHR_materials_volume (refractive materials)
-- KHR_materials_ior (for transmission and volume)
-- KHR_materials_emissive_strength (emissive values greater than 1)
-- KHR_materials_iridescence (thin-film interference, like oil on water)
-- KHR_materials_clearcoat (secondary specular layer, like a coat of varnish)
-- KHR_materials_specular (partial support)
-- KHR_materials_dispersion (refractive index dispersion)
-- MSFT_lods (level of detail)
-- KHR_animation_pointer (arbitrary property animations)
-- KHR_node_visibility (GameObject active state)
-
+- [KHR_lights_punctual](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md) (point, spot, and directional lights)
+- [KHR_texture_transform](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_transform/README.md) (UV offset, scale, rotation)
+- [KHR_materials_unlit](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_unlit/README.md) (unlit surfaces)
+- [KHR_materials_transmission](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_transmission/README.md) (glass-like materials)
+- [KHR_materials_volume](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_volume/README.md) (refractive materials)
+- [KHR_materials_ior](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_ior/README.md) (for transmission and volume)
+- [KHR_materials_emissive_strength](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_emissive_strength/README.md) (emissive values greater than 1)
+- [KHR_materials_iridescence](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_iridescence/README.md) (thin-film interference, like oil on water)
+- [KHR_materials_clearcoat](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md) (secondary specular layer, like a coat of varnish)
+- [KHR_materials_sheen](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_sheen/README.md) (fabric surfaces)
+- [KHR_materials_specular](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_specular/README.md) (partial support)
+- [KHR_materials_dispersion](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_dispersion/README.md) (refractive index dispersion)
+- [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_animation_pointer/README.md) (arbitrary property animations)
+- [KHR_node_visibility](https://github.com/KhronosGroup/glTF/blob/fbe806836526cdd8cd99ed3770b1c56df56c6863/extensions/2.0/Khronos/KHR_node_visibility/README.md) (GameObject active state) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [MSFT_lod](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_lod/README.md) (level of detail) ![Vendor-specific Extension](https://img.shields.io/badge/⚠️%20Vendor--specific%20Extension-gray)
 ### Import only
 
-- KHR_mesh_quantization (smaller buffers)
-- EXT_mesh_gpu_instancing (instance data)
-- KHR_draco_mesh_compression (requires [`com.unity.cloud.draco`](https://docs.unity3d.com/Packages/com.unity.cloud.draco@latest))
-- KHR_texture_basisu (requires [`com.unity.cloud.ktx`](https://docs.unity3d.com/Packages/com.unity.cloud.ktx@latest))
-- EXT_meshopt_compression (requires [`com.unity.meshopt.decompress`](https://docs.unity3d.com/Packages/com.unity.meshopt.decompress@latest))
+- [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md) (smaller buffers / smaller filesize)
+- [KHR_draco_mesh_compression](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_draco_mesh_compression/README.md) (requires [`com.unity.cloud.draco`](https://docs.unity3d.com/Packages/com.unity.cloud.draco@latest))
+- [KHR_texture_basisu](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_texture_basisu/README.md) (requires [`com.unity.cloud.ktx`](https://docs.unity3d.com/Packages/com.unity.cloud.ktx@latest))
+- [EXT_mesh_gpu_instancing](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_mesh_gpu_instancing/README.md) (instance data) ![Vendor-specific Extension](https://img.shields.io/badge/⚠️%20Vendor--specific%20Extension-gray)
+- [EXT_meshopt_compression](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/EXT_meshopt_compression/README.md) (requires [`com.unity.meshopt.decompress`](https://docs.unity3d.com/Packages/com.unity.meshopt.decompress@latest)) ![Vendor-specific Extension](https://img.shields.io/badge/⚠️%20Vendor--specific%20Extension-gray)
 
 ### Export only
 
-- KHR_materials_variants
+- [KHR_materials_variants](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_variants/README.md)
 - Timeline recorder track for exporting animations in the editor and at runtime
 - Lossless keyframe optimization on export
 - All 2D textures can be exported, RenderTextures included – they're baked at export.
 - Optional plugin: Bake TMPro 3D objects to meshes on export
 - Optional plugin: Bake Particle Systems to meshes on export
 - Optional plugin: Bake Canvas to meshes on export
-- Included plugin sample: KHR_audio
+- Included plugin sample: [KHR_audio_emitter](https://github.com/KhronosGroup/glTF/pull/2137) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 
 ## glTF Materials
 
-To leverage the extended material model of glTF in Unity, use the `UnityGLTF/PBRGraph` material.  
-It allows the use of various glTF material extensions for import, export, and inside Unity.  
-This includes features that URP is missing, such as transmission, volume, and per-texture UV control.  
+The glTF shading model is physically based and supports many different types of surfaces. To use this extended material model of glTF in Unity, use the `UnityGLTF/PBRGraph` material.  
+It allows the use of various glTF material extensions for import, export, and inside Unity. The shader includes a number of features that URP is missing, such as transmission and rough refraction, sheen and clearcoat, and per-texture UV control. For unlit materials, use `UnityGLTF/UnlitGraph`.
 
 ### Material Conversions
 
@@ -174,13 +173,13 @@ When a shader doesn't have a converter yet, UnityGLTF will ask if you want to cr
 After the conversion script has been created, you can edit it to correctly map from the source shader's properties to PBRGraph properties.   
 When you switch such a shader to PBRGraph the next time, your conversion script will run and automatically translate the materials in the specified way.
 
-> **Note:** Currently, conversion scripts aren't used automatically on glTF export. Convert materials at edit time for best results.
+> **Note:** Currently, custom conversion scripts aren't used automatically on glTF export. For best results, convert materials in the Editor.
 
 ### Material and Shader Export Compatibility
 
-If you want to design for glTF export, it's recommended to use Unity 2021.3+ with URP and the **UnityGLTF/PBRGraph** material. It comes with support for modern material extensions like refraction and iridescence, and allows for perfect roundtrips. Great for building glTF pipelines in and out of Unity.
+If you want to design for glTF export, it's recommended to use Unity 2021.3+ with URP and the **UnityGLTF/PBRGraph** material. It comes with support for modern material extensions like refraction and iridescence, and allows for perfect roundtrips. This material works great for building glTF pipelines in and out of Unity.
 
-| Render Pipeline                        | Shader                                                       | Notes                                  | Source             | 
+| Render Pipeline                        | Used Shader                                                       | Notes                                  | Source             | 
 |----------------------------------------|--------------------------------------------------------------|----------------------------------------|--------------------| 
 | URP on 2020.3+<br/>Built-In on 2021.3+ | **UnityGLTF/PBRGraph** <br/>☝️ *Use this if you're not sure* | Perfect roundtrip, Material Extensions | UnityGLTF          |
 |                                        | UnityGLTF/UnlitGraph                                         | Perfect roundtrip                      | UnityGLTF          |
@@ -287,7 +286,7 @@ Timeline recording uses the GLTFRecorder API under the hood.
 
 ### Legacy Animation Component
 
-> **Note**: Animation Component export only works in the Editor. For runtime export, use the GLTFRecorder capabilities.
+> **Note**: Animation Component export only works in the Editor since Unity does not provide the required runtime access. For runtime export, use the `GLTFRecorder` capabilities.
 
 Animation components and their legacy clips can also be exported.
 
@@ -435,13 +434,13 @@ public class MyExportPluginContext: GLTFExportPluginContext
 
 ## Contributing
 
-> **Note**: As of 20240129 the default branch of this repository has been renamed from `master` to `main`.
-
 UnityGLTF is an open-source project. Well-tested PRs are welcome.  
 
-It is currently maintained by
+UnityGLTF is currently maintained by
 - [prefrontal cortex](https://prefrontalcortex.de), member of the Khronos Group and 
 - [Needle](https://needle.tools), member of the Metaverse Standards Forum.
+
+> **Note**: As of 20240129, the default branch of this repository has been renamed from `master` to `main`.
 
 <details>
 <summary>More Details (legacy)</summary>

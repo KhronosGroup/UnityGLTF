@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: clamped `Sheen Roughness` to 0..1 range in PBRGraph shader
 - fix: `RoughRefractionFeature` now supports Unity 6 and new Render Graph API
 - fix: set volume and transmission materials to `AlphaMode.BLEND` on VisionOS to ensure proper rendering
+- fix: update render pipeline-related methods for Unity 6000.0+
 - change: mark package as compatible with Unity 2021.3+. Legacy support for 2020 and earlier will be removed in future updates.
 - change: renamed `GLTFComponent` setting `AppendStreamingAssets` to `LoadFromStreamingAssetsFolder`
 - add: MaterialX branches to `UnityGLTF/PBRGraph` shader with conditional compilation for VisionOS
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - add: new runtime texture compression option (`None`, `LowQuality`, `HighQuality`) to improve runtime memory usage
 - add: exposed import settings to keep CPU copy of mesh/textures to `GLTFComponent`
 - add: include UnityGLTF package version, Unity version and current render pipeline in `assets.extras` on export
+- add: better code snippets for the readme
+- add: export plugin hook for `ShouldNodeExport` (https://github.com/KhronosGroup/UnityGLTF/pull/767)
 - add: [`KHR_node_visibility`](https://github.com/KhronosGroup/glTF/pull/2410) import and export support, currently disabled by default. Enable in `UnityGLTFSettings`. This is a preparative step for `KHR_interactivity`, which will be added in a later release. Please note that this extension is not yet ratified and implementation details may change.
 - add: schema and serialization support for [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) and [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422). Please note that these extensions are not yet ratified and implementation details may change.
 
