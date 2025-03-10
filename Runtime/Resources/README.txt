@@ -1,3 +1,5 @@
+> **NOTE**: This file is outdated. Please use UnityGLTF/PBRGraph and UnityGLTF/UnlitGraph as shaders for your materials. UnityGLTF ships with the correct Shader Variant Collections to use all shader features at runtime. See the README file in the package root folder for more information.
+
 Notes on Standard (Specular setup).mat and Standard (Specular setup).shadervariants
 -----------------------------------------------------------------------------------
 
