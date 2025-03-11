@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     internal static class GameEventSupportRegister
     {

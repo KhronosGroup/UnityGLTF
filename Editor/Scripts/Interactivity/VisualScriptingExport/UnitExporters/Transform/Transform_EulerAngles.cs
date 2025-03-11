@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class Transform_EulerAngles : IUnitExporter
     {

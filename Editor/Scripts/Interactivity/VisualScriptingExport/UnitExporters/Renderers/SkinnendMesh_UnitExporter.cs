@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 using InvokeMember = Unity.VisualScripting.InvokeMember;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class SkinnendMesh_SetWeightsUnitExport : IUnitExporter
     {

@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     /// <summary>
     /// Don't use this interface directly, use IUnitExporter or IUnitExporterProvider instead.

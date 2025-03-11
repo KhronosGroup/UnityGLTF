@@ -5,7 +5,7 @@ using Editor.UnitExporters.Lists;
 using Unity.VisualScripting;
 using UnityEditor;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class GetVariableUnitExport : IUnitExporter
     {

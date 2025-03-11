@@ -2,7 +2,7 @@ using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport;
+using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
 namespace Editor.UnitExporters.Lists

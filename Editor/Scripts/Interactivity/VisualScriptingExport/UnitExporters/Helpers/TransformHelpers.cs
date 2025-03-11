@@ -2,7 +2,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public static class TransformHelpers
     {

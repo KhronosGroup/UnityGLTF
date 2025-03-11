@@ -1,6 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport;
+using UnityGLTF.Interactivity.VisualScripting.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {

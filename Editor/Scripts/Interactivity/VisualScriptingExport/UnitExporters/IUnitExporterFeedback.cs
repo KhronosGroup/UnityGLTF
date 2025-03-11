@@ -1,7 +1,6 @@
 using Unity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public interface IUnitExporterFeedback
     {

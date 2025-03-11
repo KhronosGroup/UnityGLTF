@@ -3,7 +3,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     /// <summary>
     /// Adapts the "Animator.Play" InvokeMember Unity node to a world/startAnimation glTF node.

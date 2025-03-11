@@ -2,7 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport;
+using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
 namespace Editor.UnitExporters.Lists

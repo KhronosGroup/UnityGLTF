@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class ForUnitExport : IUnitExporter, ICoroutineAwaiter, ICoroutineWait
     {

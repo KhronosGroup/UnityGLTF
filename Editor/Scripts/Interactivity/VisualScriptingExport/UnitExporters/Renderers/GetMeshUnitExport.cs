@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class GetMeshUnitExport : IUnitExporter
     {

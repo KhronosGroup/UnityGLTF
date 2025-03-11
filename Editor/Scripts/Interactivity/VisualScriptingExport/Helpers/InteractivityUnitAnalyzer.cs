@@ -4,7 +4,7 @@ using Editor.UnitExporters;
 using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport;
+using UnityGLTF.Interactivity.VisualScripting.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {

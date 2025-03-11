@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityGLTF.Interactivity.VisualScripting.Schema;
 using Random = UnityEngine.Random;
 
-namespace UnityGLTF.Interactivity.VisualScripting.VisualScriptingExport
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class RandomRangeUnitExport : IUnitExporter
     {
