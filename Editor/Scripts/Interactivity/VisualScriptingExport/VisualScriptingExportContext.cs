@@ -787,6 +787,15 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             foreach (var node in nodesToSerialize)
             {
+                foreach (var config in node.ConfigurationData)
+                {
+                    if (config.Key == "type" && config.Value.Value != null)
+                    {
+                        if ((int)config.Value.Value != -1)
+                            usedTypeIndices.Add((int)config.Value.Value);
+                        
+                    }
+                }
                 foreach (var valueSocket in node.ValueSocketConnectionData)
                     if (valueSocket.Value.Value != null)
                     {
@@ -813,6 +822,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
             // Replace the old type indices with the new ones
             foreach (var node in nodesToSerialize)
             {
+                foreach (var config in node.ConfigurationData)
+                {
+                    if (config.Key == "type" && config.Value.Value != null)
+                    {
+                        if ((int)config.Value.Value != -1)
+                            config.Value.Value = typesIndexReplacement[(int)config.Value.Value];
+                    }
+                }
                 foreach (var valueSocket in node.ValueSocketConnectionData)
                     if (valueSocket.Value.Value != null && valueSocket.Value.Type != -1)
                         valueSocket.Value.Type = typesIndexReplacement[valueSocket.Value.Type];
