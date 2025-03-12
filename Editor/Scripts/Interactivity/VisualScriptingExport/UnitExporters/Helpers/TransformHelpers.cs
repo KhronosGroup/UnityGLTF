@@ -86,16 +86,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             setPosition.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(flowOut);
         }
 
-        public static void SetWorldPosition(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData position, ControlInput flowIn,
+
+        private static void SetWorldPositionFromConvertedSpace(UnitExporter unitExporter, ValueInput target,
+            GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedPosition, ControlInput flowIn,
             ControlOutput flowOut)
         {
             var setPosition = unitExporter.CreateNode(new Pointer_SetNode());
 
             setPosition.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
                 target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
-            
-            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, position, out var convertedOutput);
             
             var localToWorldMatrix = unitExporter.CreateNode(new Pointer_GetNode());
             localToWorldMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
@@ -106,27 +105,43 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var localMatrix = unitExporter.CreateNode(new Pointer_GetNode());
             localMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
                 target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
-            
+
             var matrixMultiply = unitExporter.CreateNode(new Math_MatMulNode());
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(inverseMatrix.FirstValueOut());
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(localMatrix.FirstValueOut());
 
             var trs = unitExporter.CreateNode(new Math_MatComposeNode());
-            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(position);
+            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedPosition);
             trs.ValueIn(Math_MatComposeNode.IdInputRotation).SetValue(Quaternion.identity);
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
-            
+
             var matrixMultiply2 = unitExporter.CreateNode(new Math_MatMulNode());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(matrixMultiply.FirstValueOut());
 
             var trsDecompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
-            
-            setPosition.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation));
+
+            setPosition.ValueIn(Pointer_SetNode.IdValue)
+                .ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation));
 
             setPosition.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(flowIn);
             setPosition.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(flowOut);
+        }
+        
+        public static void SetWorldPosition(UnitExporter unitExporter, ValueInput target,
+            ValueInput position, ControlInput flowIn, ControlOutput flowOut)
+        {
+            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, position, out var convertedOutput);
+            SetWorldPositionFromConvertedSpace(unitExporter, target, convertedOutput, flowIn, flowOut);
+        }
+
+        public static void SetWorldPosition(UnitExporter unitExporter, ValueInput target,
+            GltfInteractivityUnitExporterNode.ValueOutputSocketData position, ControlInput flowIn,
+            ControlOutput flowOut)
+        {
+            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, position, out var convertedOutput);
+            SetWorldPositionFromConvertedSpace(unitExporter, target, convertedOutput, flowIn, flowOut);
         }
 
         public static void GetLocalRotation(UnitExporter unitExporter, ValueInput target,
@@ -250,7 +265,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             worldMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
                 target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
-   
             
             var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());

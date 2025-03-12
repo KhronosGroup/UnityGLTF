@@ -25,10 +25,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
-            // TODO: World Space conversion
-            
            var unit = unitExporter.unit as Unity.VisualScripting.SetMember;
-           TransformHelpers.SetLocalPosition(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
+           if (worldSpace)
+                TransformHelpers.SetWorldPosition(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
+           else
+                TransformHelpers.SetLocalPosition(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
            
            return true;
         }
