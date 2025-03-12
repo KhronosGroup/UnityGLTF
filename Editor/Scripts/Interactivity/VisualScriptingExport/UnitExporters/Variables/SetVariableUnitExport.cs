@@ -32,6 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             unitExporter.MapInputPortToSocketName(unit.input, Variable_SetNode.IdInputValue, node);
             unitExporter.MapInputPortToSocketName(unit.assign, Variable_SetNode.IdFlowIn, node);
 
+            node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(variableType));
             bool inputIsLiteral = !unit.input.hasDefaultValue && unit.input.hasValidConnection &&
                                   (unit.input.connections.First().source.unit is Literal 
                                   || unit.input.connections.First().source.unit is Null);
