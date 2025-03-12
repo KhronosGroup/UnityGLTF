@@ -33,14 +33,12 @@ namespace UnityGLTF
         public IEnumerable<Animation> Animations { get; private set; }
 #endif
 
-		[SerializeField]
-		private bool loadOnStart = true;
+		public bool loadOnStart = true;
 
 		[SerializeField] private int RetryCount = 10;
 		[SerializeField] private float RetryTimeout = 2.0f;
 		private int numRetries = 0;
-
-
+		
 		public int MaximumLod = 300;
 		public int Timeout = 8;
 		public GLTFSceneImporter.ColliderType Collider = GLTFSceneImporter.ColliderType.None;
