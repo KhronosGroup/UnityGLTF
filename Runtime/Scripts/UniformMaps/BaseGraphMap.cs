@@ -85,7 +85,8 @@ namespace UnityGLTF
 				    _material.renderQueue = (int)RenderQueue.Transparent;
 				    _material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
 				    _material.EnableKeyword("_BUILTIN_SURFACE_TYPE_TRANSPARENT");
-
+				    _material.SetFloat("_BlendModePreserveSpecular", 0);
+			
 				    SetShaderModeBlend(_material);
 			    }
 			    else
@@ -136,6 +137,7 @@ namespace UnityGLTF
 		    material.SetFloat(k_AlphaClipBuiltin, 1);
 		    if (isMask) material.EnableKeyword(KW_ALPHACLIP_ON_BUILTIN);
 		    else material.DisableKeyword(KW_ALPHACLIP_ON_BUILTIN);
+		    material.SetFloat(alphaToMask, isMask ? 1 : 0);
 	    }
 
 	    static readonly int cullPropId = Shader.PropertyToID("_Cull");
@@ -150,7 +152,8 @@ namespace UnityGLTF
 	    static readonly int srcBlendPropId = Shader.PropertyToID("_SrcBlend");
 	    static readonly int dstBlendPropId = Shader.PropertyToID("_DstBlend");
 	    static readonly int zWritePropId = Shader.PropertyToID("_ZWrite");
-
+	    static readonly int alphaToMask = Shader.PropertyToID("_AlphaToMask");
+	    
 	    const string TAG_RENDER_TYPE = "RenderType";
 	    const string TAG_RENDER_TYPE_CUTOUT = "TransparentCutout";
 	    const string TAG_RENDER_TYPE_OPAQUE = "Opaque";
@@ -188,6 +191,7 @@ namespace UnityGLTF
 		    material.SetFloat(k_Surface, 1);
 		    material.SetFloat(k_SurfaceBuiltin, 1);
 		    material.SetFloat(zWritePropId, 0);
+		    material.SetFloat(alphaToMask, 0);
 	    }
 
 	    public double AlphaCutoff
