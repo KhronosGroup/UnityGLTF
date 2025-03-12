@@ -289,6 +289,7 @@ namespace UnityGLTF
 					{
 						_material.SetFloat("_Cutoff", (float)_alphaCutoff);
 					}
+					_material.SetFloat("_AlphaToMask", 1f);
 				}
 				else if (value == AlphaMode.BLEND)
 				{
@@ -301,6 +302,7 @@ namespace UnityGLTF
 					_material.EnableKeyword("_ALPHABLEND_ON");
 					_material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
 					_material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+					_material.SetFloat("_AlphaToMask", 0f);
 				}
 				else
 				{
@@ -313,6 +315,7 @@ namespace UnityGLTF
 					_material.DisableKeyword("_ALPHABLEND_ON");
 					_material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
 					_material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
+					_material.SetFloat("_AlphaToMask", 0f);
 				}
 
 				_alphaMode = value;
