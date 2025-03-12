@@ -230,6 +230,7 @@ namespace UnityEditor
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
                     material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
                     material.SetFloat("_Cutoff", alphaCutoff);
+                    material.SetFloat("_AlphaToMask", 1f);
                     break;
                 case BlendMode.Blend:
                     material.SetOverrideTag("RenderType", "Transparent");
@@ -239,6 +240,8 @@ namespace UnityEditor
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.EnableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.SetFloat("_BlendModePreserveSpecular", 0);
+                    material.SetFloat("_AlphaToMask", 0);
                     material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
                     break;
             }
