@@ -12,8 +12,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         private static readonly string[] MatrixMemberIndex = new string[]
         {
-            "M00", "M10", "M20", "M30", "M01", "M11", "M21", "M31", "M02", "M12", "M22", "M32", "M03", "M13", "M23",
-            "M33"
+            "m00", "m10", "m20", "m30", "m01", "m11", "m21", "m31", "m02", "m12", "m22", "m32", "m03", "m13", "m23",
+            "m33"
         };
 
 
@@ -69,7 +69,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 type = getMemberNode.target.type;
                 target = getMemberNode.target;
             }
-            
+
+            bool isMatrix = false;
             if (type == typeof(Vector2))
                 schema = new Math_Extract2Node();
             else if (type == typeof(Vector3))
@@ -77,12 +78,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             else if (type == typeof(Vector4) || type == typeof(Quaternion))
                 schema = new Math_Extract4Node();
             else if (type == typeof(Matrix4x4))
+            {
+                isMatrix = true;
                 schema = new Math_Extract4x4Node();
+            }
             
             if (schema == null)
                 return false;
-
-            bool isMatrix = schema.OutputValueSockets.Count == 16;
             
             var node = unitExporter.CreateNode(schema);
             

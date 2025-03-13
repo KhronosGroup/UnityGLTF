@@ -16,8 +16,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         private static readonly string[] MatrixMemberIndex = new string[]
         {
-            "M00", "M10", "M20", "M30", "M01", "M11", "M21", "M31", "M02", "M12", "M22", "M32", "M03", "M13", "M23",
-            "M33"
+            "m00", "m10", "m20", "m30", "m01", "m11", "m21", "m31", "m02", "m12", "m22", "m32", "m03", "m13", "m23",
+            "m33"
         };
         
         [InitializeOnLoadMethod]
