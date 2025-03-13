@@ -144,6 +144,62 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             SetWorldPositionFromConvertedSpace(unitExporter, target, convertedOutput, flowIn, flowOut);
         }
 
+        public static void SetWorldRotation(UnitExporter unitExporter, ValueInput target,
+            ValueInput rotation, ControlInput flowIn, ControlOutput flowOut)
+        {
+            SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, rotation, out var convertedOutput);
+            SetWorldRotationFromConvertedSpace(unitExporter, target, convertedOutput, flowIn, flowOut);
+        }
+
+        public static void SetWorldRotation(UnitExporter unitExporter, ValueInput target,
+            GltfInteractivityUnitExporterNode.ValueOutputSocketData rotation, ControlInput flowIn,
+            ControlOutput flowOut)
+        {
+            SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, rotation, out var convertedOutput);
+            SetWorldRotationFromConvertedSpace(unitExporter, target, convertedOutput, flowIn, flowOut);
+        }
+        private static void SetWorldRotationFromConvertedSpace(UnitExporter unitExporter, ValueInput target,
+            GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedRotation, ControlInput flowIn,
+            ControlOutput flowOut)
+        {
+            var setRotation = unitExporter.CreateNode(new Pointer_SetNode());
+
+            setRotation.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
+                target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+            
+            var localToWorldMatrix = unitExporter.CreateNode(new Pointer_GetNode());
+            localToWorldMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
+                target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            var inverseMatrix = unitExporter.CreateNode(new Math_InverseNode());
+            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
+
+            var localMatrix = unitExporter.CreateNode(new Pointer_GetNode());
+            localMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
+                target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
+
+            var matrixMultiply = unitExporter.CreateNode(new Math_MatMulNode());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(inverseMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(localMatrix.FirstValueOut());
+   
+            var trs = unitExporter.CreateNode(new Math_MatComposeNode());
+            trs.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
+            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).SetValue(Vector3.zero);
+            trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
+
+            var matrixMultiply2 = unitExporter.CreateNode(new Math_MatMulNode());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(matrixMultiply.FirstValueOut());
+
+            var trsDecompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
+            trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
+
+            setRotation.ValueIn(Pointer_SetNode.IdValue)
+                .ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation));
+
+            setRotation.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(flowIn);
+            setRotation.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(flowOut);
+        }
+        
         public static void GetLocalRotation(UnitExporter unitExporter, ValueInput target,
             out GltfInteractivityUnitExporterNode.ValueOutputSocketData value)
         {
