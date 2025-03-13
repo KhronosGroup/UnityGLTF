@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting.Schema;
+using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {

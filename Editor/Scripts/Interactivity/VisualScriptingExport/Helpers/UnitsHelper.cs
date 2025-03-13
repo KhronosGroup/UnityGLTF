@@ -1,4 +1,4 @@
-using UnityGLTF.Interactivity.VisualScripting.Schema;
+using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting

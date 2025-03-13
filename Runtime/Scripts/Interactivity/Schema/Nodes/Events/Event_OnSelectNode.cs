@@ -1,6 +1,7 @@
 using GLTF.Schema;
+using UnityGLTF.Interactivity.VisualScripting;
 
-namespace UnityGLTF.Interactivity.VisualScripting.Schema
+namespace UnityGLTF.Interactivity.Schema
 {
 
     /// <summary>

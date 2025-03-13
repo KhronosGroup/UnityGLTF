@@ -1,7 +1,7 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityGLTF.Interactivity.VisualScripting.Schema;
+using UnityGLTF.Interactivity.Schema;
 using Random = UnityEngine.Random;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export

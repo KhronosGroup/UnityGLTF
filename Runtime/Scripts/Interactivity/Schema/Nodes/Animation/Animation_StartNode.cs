@@ -1,4 +1,6 @@
-namespace UnityGLTF.Interactivity.VisualScripting.Schema
+using UnityGLTF.Interactivity.VisualScripting;
+
+namespace UnityGLTF.Interactivity.Schema
 {
     /// <summary>
     /// The world/startAnimation node plays a global animation

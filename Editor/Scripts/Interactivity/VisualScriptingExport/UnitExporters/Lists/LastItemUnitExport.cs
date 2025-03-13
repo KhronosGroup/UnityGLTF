@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Interactivity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Export;
-using UnityGLTF.Interactivity.VisualScripting.Schema;
+using UnityGLTF.Interactivity.Schema;
 
 namespace Editor.UnitExporters.Lists
 {

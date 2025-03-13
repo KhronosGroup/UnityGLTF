@@ -2,7 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.Schema;
+using UnityGLTF.Interactivity.Schema;
 using InvokeMember = Unity.VisualScripting.InvokeMember;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export

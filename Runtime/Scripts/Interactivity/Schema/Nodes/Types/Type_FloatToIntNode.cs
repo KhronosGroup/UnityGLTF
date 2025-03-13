@@ -1,4 +1,6 @@
-namespace UnityGLTF.Interactivity.VisualScripting.Schema
+using UnityGLTF.Interactivity.VisualScripting;
+
+namespace UnityGLTF.Interactivity.Schema
 {
     public class Type_FloatToIntNode : GltfInteractivityNodeSchema
     {

@@ -1,6 +1,7 @@
 using System;
+using UnityGLTF.Interactivity.VisualScripting;
 
-namespace UnityGLTF.Interactivity.VisualScripting.Schema
+namespace UnityGLTF.Interactivity.Schema
 {
     [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = true)]
     public class InputSocketDescriptionAttribute : Attribute

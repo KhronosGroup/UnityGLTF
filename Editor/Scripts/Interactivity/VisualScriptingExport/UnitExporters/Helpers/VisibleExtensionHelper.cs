@@ -1,7 +1,7 @@
 using GLTF.Schema;
 using Unity.VisualScripting;
 using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.Schema;
+using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
