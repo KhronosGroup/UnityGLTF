@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
@@ -29,7 +31,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             ExposeUnitExport.RegisterExposeConvert(typeof(Vector2), converter, "x", "y");
             ExposeUnitExport.RegisterExposeConvert(typeof(Vector3), converter, "x", "y", "z");
             ExposeUnitExport.RegisterExposeConvert(typeof(Vector4), converter, "x", "y", "z", "w");
-            ExposeUnitExport.RegisterExposeConvert(typeof(Matrix4x4), converter, MatrixMemberIndex);
+            var matrixMembers = MatrixMemberIndex.Concat(new string[] {nameof(Matrix4x4.lossyScale), nameof(Matrix4x4.rotation)}).ToArray();
+            ExposeUnitExport.RegisterExposeConvert(typeof(Matrix4x4), converter, matrixMembers);
 
             ExposeUnitExport.RegisterExposeConvert(typeof(Quaternion), converter, "x", "y", "z", "w");
 
@@ -43,7 +46,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 GetMemberUnitExport.RegisterMemberExporter(typeof(Vector4), VectorMemberIndex[i], converter);
                 GetMemberUnitExport.RegisterMemberExporter(typeof(Quaternion), VectorMemberIndex[i], converter);
-                
             }
 
             for (int i = 0; i < MatrixMemberIndex.Length; i++)
@@ -79,6 +81,25 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 schema = new Math_Extract4Node();
             else if (type == typeof(Matrix4x4))
             {
+                if (exposeUnit != null)
+                {
+                    var rotation =
+                        exposeUnit.members.FirstOrDefault(member => member.Value.name == nameof(Matrix4x4.rotation));
+                    var scale = exposeUnit.members.FirstOrDefault(member =>
+                        member.Value.name == nameof(Matrix4x4.lossyScale));
+
+                    if (rotation.Key != null || scale.Key != null)
+                    {
+                        var unit = unitExporter.unit as Expose;
+                        var extract = unitExporter.CreateNode(new Math_MatDecomposeNode());
+                        extract.ValueIn(Math_MatDecomposeNode.IdInput).MapToInputPort(unit.target);
+                        if (rotation.Key != null)
+                             extract.ValueOut(Math_MatDecomposeNode.IdOutputRotation).MapToPort(rotation.Key);
+                        if (scale.Key != null)
+                            extract.ValueOut(Math_MatDecomposeNode.IdOutputScale).MapToPort(scale.Key);
+                    }
+                }
+
                 isMatrix = true;
                 schema = new Math_Extract4x4Node();
             }
@@ -116,7 +137,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 } 
             }
             
-                
             if (getMemberNode != null)
                 AddMember(getMemberNode.value, getMemberNode.member);
 
