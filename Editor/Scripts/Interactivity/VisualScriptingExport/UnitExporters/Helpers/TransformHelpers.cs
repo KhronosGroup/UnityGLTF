@@ -10,13 +10,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             out GltfInteractivityUnitExporterNode.ValueOutputSocketData scaleOutput)
         {
             var getScale = unitExporter.CreateNode(new Pointer_GetNode());
-            getScale.FirstValueOut().ExpectedType(ExpectedType.Float3);
+            scaleOutput = getScale.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, getScale.FirstValueOut(),
-                out var convertedOutput);
-            scaleOutput = convertedOutput;
-            scaleOutput.ExpectedType(ExpectedType.Float3);
-            
             getScale.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
                 target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/scale", GltfTypes.Float3);
         }
@@ -303,20 +298,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public static void GetWorldScale(UnitExporter unitExporter, ValueInput target,
             out GltfInteractivityUnitExporterNode.ValueOutputSocketData worldScale)
         {
-            
-            if (UnitsHelper.IsMainCameraInInput(target))
-            {
-                var getPosition = unitExporter.CreateNode(new Pointer_GetNode());
-                getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
-
-                SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, getPosition.FirstValueOut(),
-                    out worldScale);
-                worldScale.ExpectedType(ExpectedType.Float3);
-
-                UnitsHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
-                return;
-            }
-            
             var worldMatrix = unitExporter.CreateNode(new Pointer_GetNode());
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             worldMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
@@ -324,12 +305,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
-            var gltfWorldScale = decompose.ValueOut(Math_MatDecomposeNode.IdOutputScale);
-
-            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, gltfWorldScale,
-                out var convertedOutput);
-
-            worldScale = convertedOutput;
+            worldScale = decompose.ValueOut(Math_MatDecomposeNode.IdOutputScale);
         }
         
         public static void GetWorldScale(UnitExporter unitExporter, ValueInput target, ValueOutput scaleOutput)
@@ -344,14 +320,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             if (UnitsHelper.IsMainCameraInInput(target))
             {
-                var getPosition = unitExporter.CreateNode(new Pointer_GetNode());
-                getPosition.FirstValueOut().ExpectedType(ExpectedType.Float4);
+                var getRotation = unitExporter.CreateNode(new Pointer_GetNode());
+                getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
 
-                SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, getPosition.FirstValueOut(),
+                SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, getRotation.FirstValueOut(),
                     out worldRotation);
                 worldRotation.ExpectedType(ExpectedType.Float4);
 
-                UnitsHelper.AddPointerConfig(getPosition, "/activeCamera/rotation", GltfTypes.Float4);
+                UnitsHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
                 return;
             }
             
