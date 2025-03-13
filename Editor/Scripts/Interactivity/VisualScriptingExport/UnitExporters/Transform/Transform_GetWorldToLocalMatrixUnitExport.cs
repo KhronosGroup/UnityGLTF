@@ -28,8 +28,19 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var inverse = unitExporter.CreateNode(new Math_InverseNode());
             inverse.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(getMatrix.FirstValueOut());
+            
+            var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
+            decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(inverse.FirstValueOut());
 
-            inverse.FirstValueOut().MapToPort(getMemberUnit.value);
+            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation), out var convertedTranslation);
+            SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation), out var convertedRotation);
+            
+            var compose = unitExporter.CreateNode(new Math_MatComposeNode());
+            compose.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedTranslation);
+            compose.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
+            compose.ValueIn(Math_MatComposeNode.IdInputScale).ConnectToSource(decompose.ValueOut(Math_MatDecomposeNode.IdOutputScale));
+
+            compose.FirstValueOut().MapToPort(getMemberUnit.value);
             
             return true;
             
