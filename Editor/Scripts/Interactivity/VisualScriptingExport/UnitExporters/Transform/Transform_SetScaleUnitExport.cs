@@ -8,25 +8,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public class Transform_SetScaleUnitExport : IUnitExporter
     {
         public Type unitType { get; }
-        private bool worldSpace = false;
-        
         
         [InitializeOnLoadMethod]
         private static void Register()
         {
-            SetMemberUnitExport.RegisterMemberExporter(typeof(Transform), nameof(Transform.lossyScale), new Transform_SetScaleUnitExport(true));
-            SetMemberUnitExport.RegisterMemberExporter(typeof(Transform), nameof(Transform.localScale), new Transform_SetScaleUnitExport(false));
-        }
-        
-        public Transform_SetScaleUnitExport(bool worldSpace)
-        {
-            this.worldSpace = worldSpace;
+            SetMemberUnitExport.RegisterMemberExporter(typeof(Transform), nameof(Transform.localScale), new Transform_SetScaleUnitExport());
         }
         
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
-            // TODO: World Space conversion
-            
            var unit = unitExporter.unit as Unity.VisualScripting.SetMember;
            
            var setScale = unitExporter.CreateNode(new Pointer_SetNode());
