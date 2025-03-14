@@ -31,12 +31,5 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             }
         }
-
-        public static int GetAnimationId(AnimatorState state, VisualScriptingExportContext exportContext)
-        {
-            string animationName = state.motion.name;
-            return UnitsHelper.GetNamedPropertyGltfIndex(animationName,
-                exportContext.ActiveGltfRoot.Animations);
-        }
     }
 }

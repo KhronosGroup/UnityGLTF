@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             var animationState = AnimatorHelper.GetAnimationState(target, stateName);
-            int animationId = AnimatorHelper.GetAnimationId(animationState, unitExporter.exportContext);
+            int animationId = unitExporter.exportContext.exporter.GetAnimationId(animationState.motion as AnimationClip, target.transform);
 
             if (animationId == -1)
             {
@@ -69,10 +69,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 if (state == animationState) continue;
                 var stopNode = unitExporter.CreateNode(new Animation_StopNode());
+                int stopAnimationId = unitExporter.exportContext.exporter.GetAnimationId(state.motion as AnimationClip, target.transform);
                 stopNode.ValueIn(Animation_StopNode.IdValueAnimation)
-                    .SetValue(AnimatorHelper.GetAnimationId(state, unitExporter.exportContext));
+                    .SetValue(stopAnimationId);
 
-                var sequFlowId = "sequ" + index.ToString("D3");
+                var sequFlowId =$"{index.ToString("D3")}_stopAnim_{stopAnimationId}";
                 index++;
                 stopSequence.FlowOut(sequFlowId).ConnectToFlowDestination(stopNode.FlowIn(Animation_StopNode.IdFlowIn));
             }
