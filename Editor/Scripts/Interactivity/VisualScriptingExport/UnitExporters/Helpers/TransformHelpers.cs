@@ -102,8 +102,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
 
             var matrixMultiply = unitExporter.CreateNode(new Math_MatMulNode());
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(inverseMatrix.FirstValueOut());
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(localMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
 
             var trs = unitExporter.CreateNode(new Math_MatComposeNode());
             trs.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedPosition);
@@ -111,8 +111,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
 
             var matrixMultiply2 = unitExporter.CreateNode(new Math_MatMulNode());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(trs.FirstValueOut());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(matrixMultiply.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
 
             var trsDecompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
@@ -173,8 +173,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
 
             var matrixMultiply = unitExporter.CreateNode(new Math_MatMulNode());
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(inverseMatrix.FirstValueOut());
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(localMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
    
             var trs = unitExporter.CreateNode(new Math_MatComposeNode());
             trs.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
@@ -182,8 +182,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
 
             var matrixMultiply2 = unitExporter.CreateNode(new Math_MatMulNode());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(trs.FirstValueOut());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(matrixMultiply.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
 
             var trsDecompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
