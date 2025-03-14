@@ -60,6 +60,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // TODO: Get from clip start from state cycleOffset
             node.ValueSocketConnectionData[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
+            var otherAnimationStates = AnimatorHelper.GetAllAnimationStates(target);
+            var stopSequence = unitExporter.CreateNode(new Flow_SequenceNode());
+            foreach (var state in otherAnimationStates)
+            {
+                if (state == animationState) continue;
+                var stopNode = unitExporter.CreateNode(new Animation_StopNode());
+                stopNode.ValueSocketConnectionData[Animation_StopNode.IdValueAnimation].Value =
+                    AnimatorHelper.GetAnimationId(state, unitExporter.exportContext);
+                // HOW TO CONNECT THE FLOW? stopSequence -> stopNode
+            }
+            
             AnimationClip clip = animationState.motion as AnimationClip;
             node.ValueSocketConnectionData[Animation_StartNode.IdValueEndtime].Value =
                 (clip != null && !clip.isLooping) ? clip.length : float.PositiveInfinity;
