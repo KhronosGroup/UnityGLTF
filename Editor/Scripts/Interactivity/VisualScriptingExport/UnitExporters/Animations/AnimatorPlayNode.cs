@@ -62,20 +62,28 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var otherAnimationStates = AnimatorHelper.GetAllAnimationStates(target);
             var stopSequence = unitExporter.CreateNode(new Flow_SequenceNode());
+            stopSequence.FlowIn(Flow_SequenceNode.IdFlowIn).MapToControlInput(unit.enter);
+       
+            int index = 0;
             foreach (var state in otherAnimationStates)
             {
                 if (state == animationState) continue;
                 var stopNode = unitExporter.CreateNode(new Animation_StopNode());
-                stopNode.ValueSocketConnectionData[Animation_StopNode.IdValueAnimation].Value =
-                    AnimatorHelper.GetAnimationId(state, unitExporter.exportContext);
-                // HOW TO CONNECT THE FLOW? stopSequence -> stopNode
+                stopNode.ValueIn(Animation_StopNode.IdValueAnimation)
+                    .SetValue(AnimatorHelper.GetAnimationId(state, unitExporter.exportContext));
+
+                var sequFlowId = "sequ" + index.ToString("D3");
+                index++;
+                stopSequence.FlowOut(sequFlowId).ConnectToFlowDestination(stopNode.FlowIn(Animation_StopNode.IdFlowIn));
             }
+
+            var lastSequenceFlow = stopSequence.FlowOut("zzz");
+            lastSequenceFlow.ConnectToFlowDestination(node.FlowIn(Animation_StartNode.IdFlowIn));
             
             AnimationClip clip = animationState.motion as AnimationClip;
             node.ValueSocketConnectionData[Animation_StartNode.IdValueEndtime].Value =
                 (clip != null && !clip.isLooping) ? clip.length : float.PositiveInfinity;
-            
-            unitExporter.MapInputPortToSocketName(unit.enter, Animation_StartNode.IdFlowIn, node);
+
             // There should only be one output flow from the Animator.Play node
             unitExporter.MapOutFlowConnectionWhenValid(unit.exit, Animation_StartNode.IdFlowOut, node);
             return true;
