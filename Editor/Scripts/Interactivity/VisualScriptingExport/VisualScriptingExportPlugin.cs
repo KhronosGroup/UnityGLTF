@@ -17,6 +17,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         [Serializable]
         public class DebugLogSetting
         {
+            public bool GltfLog = true;
             public bool ADBEConsole = true;
             public bool BabylonLog = false;
         }
