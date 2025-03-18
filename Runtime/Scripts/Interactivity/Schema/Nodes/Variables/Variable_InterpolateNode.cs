@@ -1,5 +1,3 @@
-using UnityGLTF.Interactivity.VisualScripting;
-
 namespace UnityGLTF.Interactivity.Schema
 {
     public class Variable_InterpolateNode : GltfInteractivityNodeSchema

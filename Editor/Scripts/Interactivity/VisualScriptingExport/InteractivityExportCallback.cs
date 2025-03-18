@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {

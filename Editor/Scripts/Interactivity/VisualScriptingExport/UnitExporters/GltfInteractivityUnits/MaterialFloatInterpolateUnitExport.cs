@@ -1,7 +1,7 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEngine;
+using UnityGLTF.Interactivity;
 using UnityGLTF.Interactivity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;

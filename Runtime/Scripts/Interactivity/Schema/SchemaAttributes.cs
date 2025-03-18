@@ -1,5 +1,4 @@
 using System;
-using UnityGLTF.Interactivity.VisualScripting;
 
 namespace UnityGLTF.Interactivity.Schema
 {

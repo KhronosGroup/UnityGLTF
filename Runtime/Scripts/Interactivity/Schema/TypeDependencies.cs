@@ -1,4 +1,4 @@
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity.Schema
 {
   public class ExpectedType
     {

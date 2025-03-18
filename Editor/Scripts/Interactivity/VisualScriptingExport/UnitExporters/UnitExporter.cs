@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
@@ -16,18 +17,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             public string sourceSocketName;
         }
 
-        public Dictionary<ControlOutput, List<GltfInteractivityUnitExporterNode.SocketData>> unitSocketConnections =
-            new Dictionary<ControlOutput, List<GltfInteractivityUnitExporterNode.SocketData>>();
+        public Dictionary<ControlOutput, List<GltfInteractivityNode.SocketData>> unitSocketConnections =
+            new Dictionary<ControlOutput, List<GltfInteractivityNode.SocketData>>();
 
         public List<NodeToNodeSocketConnection> nodeSocketConnections = new List<NodeToNodeSocketConnection>();
 
-        public void AddWhenValid(ControlOutput controlOutput, GltfInteractivityUnitExporterNode.SocketData socketData)
+        public void AddWhenValid(ControlOutput controlOutput, GltfInteractivityNode.SocketData socketData)
         {
             if (controlOutput.hasValidConnection)
             {
                 if (!unitSocketConnections.ContainsKey(controlOutput))
                 {
-                    unitSocketConnections.Add(controlOutput, new List<GltfInteractivityUnitExporterNode.SocketData>());
+                    unitSocketConnections.Add(controlOutput, new List<GltfInteractivityNode.SocketData>());
                 }
 
                 unitSocketConnections[controlOutput].Add(socketData);

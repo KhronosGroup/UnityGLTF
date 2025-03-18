@@ -1,6 +1,6 @@
 using GLTF.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity.Schema
 {
     using System;
     using System.Linq;

@@ -426,7 +426,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return variables.Count - 1;
         }
         
-        public int AddEventIfNeeded(Unit eventUnit, Dictionary<string, GltfInteractivityUnitExporterNode.EventValues> arguments = null)
+        public int AddEventIfNeeded(Unit eventUnit, Dictionary<string, GltfInteractivityNode.EventValues> arguments = null)
         {
             var eventId = eventUnit.defaultValues["name"] as string;
             if (string.IsNullOrEmpty(eventId))
@@ -439,7 +439,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return AddEventWithIdIfNeeded(eventId, arguments);
         }
         
-        public int AddEventWithIdIfNeeded(string id, Dictionary<string, GltfInteractivityUnitExporterNode.EventValues> arguments = null)
+        public int AddEventWithIdIfNeeded(string id, Dictionary<string, GltfInteractivityNode.EventValues> arguments = null)
         {
             var index = customEvents.FindIndex(customEvents => customEvents.Id == id);
             if (index != -1)
@@ -1098,7 +1098,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 conversionNode= new GltfInteractivityNode(schema);
                 conversionNode.Index = conversionNodeIndex;
                 newNodes.Add(conversionNode);
-                conversionNode.ValueSocketConnectionData["a"] = new GltfInteractivityUnitExporterNode.ValueSocketData()
+                conversionNode.ValueSocketConnectionData["a"] = new GltfInteractivityNode.ValueSocketData()
                 {
                     Node = targetSocketData.Node, 
                     Socket = targetSocketData.Socket, 

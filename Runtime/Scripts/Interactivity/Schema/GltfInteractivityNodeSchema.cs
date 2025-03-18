@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityGLTF.Interactivity.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity.Schema
 {
     
     public class GltfInteractivityNodeSchema

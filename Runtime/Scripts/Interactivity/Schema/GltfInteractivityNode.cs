@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity.Schema
 {
     using System.Collections.Generic;
     using System.Linq;

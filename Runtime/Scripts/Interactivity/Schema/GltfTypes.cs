@@ -1,6 +1,6 @@
 using UnityGLTF.Interactivity.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     using System;
     using System.Linq;
@@ -35,7 +35,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             new TypeMapping(Float3, new [] {typeof(Vector3)}),
             new TypeMapping(Float4, new [] {typeof(Color), typeof(Color32), typeof(Vector4), typeof(Quaternion)}),
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
-            new TypeMapping(String, new [] {typeof(string)}),
+        //    new TypeMapping(String, new [] {typeof(string)}),
             new TypeMapping("custom", new [] {typeof(string)}, "AMZN_interactivity_string"),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
         };
