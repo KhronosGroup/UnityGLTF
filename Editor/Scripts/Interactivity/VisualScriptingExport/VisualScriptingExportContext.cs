@@ -1153,8 +1153,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     var extractNode = new GltfInteractivityNode(extractSchema);
                     extractNode.Index = conversionNodeIndex + newNodes.Count;
                     newNodes.Add(extractNode);
-
-                    indexForTargetNodeInput = extractNode.Index;
                     
                     var extractInput = extractNode.ValueSocketConnectionData["a"];
                     extractInput.Node = targetSocketData.Node;
@@ -1165,7 +1163,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     int inputExtractIndex = 0;
                     foreach (var inputSocket in conversionNode.ValueSocketConnectionData)
                     {
-                        if (inputExtractIndex < extractNode.ValueSocketConnectionData.Count - 1)
+                        if (inputExtractIndex <= extractNode.OutValueSocket.Count - 1)
                         {
                             inputSocket.Value.Node = extractNode.Index;
                             inputSocket.Value.Socket = inputExtractIndex.ToString();
