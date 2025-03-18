@@ -27,6 +27,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.Magnitude), new GenericInvokeMathInvokeUnitExporters(new Math_LenghNode()));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), nameof(Vector4.Magnitude), new GenericInvokeMathInvokeUnitExporters(new Math_LenghNode()));
+
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Dot), new GenericInvokeMathInvokeUnitExporters(new Math_DotNode()));
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Sign), new GenericInvokeMathInvokeUnitExporters(new Math_SignNode()));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Floor), new GenericInvokeMathInvokeUnitExporters(new Math_FloorNode()));
