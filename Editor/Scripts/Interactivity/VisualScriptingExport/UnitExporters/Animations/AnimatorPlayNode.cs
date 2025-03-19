@@ -67,9 +67,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             int index = 0;
             foreach (var state in otherAnimationStates)
             {
-                if (state == animationState) continue;
-                var stopNode = unitExporter.CreateNode(new Animation_StopNode());
+                if (state == animationState)
+                    continue;
+                
                 int stopAnimationId = unitExporter.exportContext.exporter.GetAnimationId(state.motion as AnimationClip, target.transform);
+                if (stopAnimationId == -1)
+                    continue;
+                
+                var stopNode = unitExporter.CreateNode(new Animation_StopNode());
                 stopNode.ValueIn(Animation_StopNode.IdValueAnimation)
                     .SetValue(stopAnimationId);
 
