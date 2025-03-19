@@ -56,17 +56,27 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     int index = 0;
                     foreach (var output in validOutputs)
                     {
-                        multiGate.FlowOut(index.ToString()).MapToControlOutput(output);
-                        var awaiter = CoroutineHelper.AddCoroutineAwaiter(unitExporter, index.ToString());
-                        awaiter.FlowOutDoneSocket()
+                        //multiGate.FlowOut(index.ToString()).MapToControlOutput(output);
+
+                        // Adds WaitAll node
+                        var awaiterNode = CoroutineHelper.AddCoroutineAwaiter(unitExporter, multiGate, index.ToString());
+                        awaiterNode.FlowOutDoneSocket()
                             .ConnectToFlowDestination(multiGate.FlowIn(Flow_MultiGateNode.IdFlowIn));
+
+
+                        awaiterNode.ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value = 1;
+                        var outputSequ = unitExporter.CreateNode(new Flow_SequenceNode());
+                        multiGate.FlowOut(index.ToString())
+                            .ConnectToFlowDestination(outputSequ.FlowIn(Flow_SequenceNode.IdFlowIn));
+                        outputSequ.FlowOut("0").MapToControlOutput(output);
+                        outputSequ.FlowOut("1").ConnectToFlowDestination(awaiterNode.FlowIn("0"));
+
                         index++;
                     }
                 }
-
                 unitExporter.exportContext.OnNodesCreated += (nodes) =>
                 {
-                    var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, node);
+                    var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, multiGate);
                     if (awaiter == null)
                         return;
 
@@ -75,6 +85,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     var newFlowOut = multiGate.FlowOut(nextIndex.ToString());
                     awaiter.AddCoroutineWait(unitExporter, multiGate, newFlowOut.socket.Key);
                 };
+
             }
 
             return true;

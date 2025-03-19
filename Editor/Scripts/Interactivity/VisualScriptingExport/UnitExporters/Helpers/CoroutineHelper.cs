@@ -8,9 +8,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public static class CoroutineHelper
     {
-        public static CoroutineAwaiterNode AddCoroutineAwaiter(UnitExporter unitExporter, string outFlowSocket)
+        public static CoroutineAwaiterNode AddCoroutineAwaiter(UnitExporter unitExporter, GltfInteractivityNode node,  string outFlowSocket)
         {
-            return new CoroutineAwaiterNode(unitExporter, outFlowSocket);
+            return new CoroutineAwaiterNode(unitExporter, node, outFlowSocket);
         }
 
         public static bool CoroutineRequired(Unit unit)
@@ -65,8 +65,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     {
                         if (coroutineNode != node && node is GltfInteractivityUnitExporterNode exporterNode)
                         {
+                            if (exporterNode.Exporter != coroutineNode.Exporter)
                             if (exporterNode.Exporter.exporter is ICoroutineAwaiter coroutineAwaiter)
-                                return CoroutineAwaiterNode.GetAwaiterNode(exporterNode.Exporter, flow.Key);
+                            {
+                                var awaiter = CoroutineAwaiterNode.GetAwaiterNode(exporterNode.Exporter, node, flow.Key);
+                                if (awaiter != null)
+                                    return awaiter;
+                            }
                         }
                         
                         if (!visited.Contains(node.Index))
@@ -86,17 +91,19 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public class CoroutineAwaiterNode : GltfInteractivityUnitExporterNode
         {
             public string OutFlowSocketTarget = "";
-
-            public static CoroutineAwaiterNode GetAwaiterNode(UnitExporter unitExporter, string outFlowSocket)
+            public GltfInteractivityNode OutFlowNode;
+            
+            public static CoroutineAwaiterNode GetAwaiterNode(UnitExporter unitExporter, GltfInteractivityNode fromNode, string outFlowSocket)
             {
                 foreach (var node in unitExporter.Nodes)
-                    if (node is CoroutineAwaiterNode awaiterNode && awaiterNode.OutFlowSocketTarget == outFlowSocket)
+                        if (node is CoroutineAwaiterNode awaiterNode && awaiterNode.OutFlowSocketTarget == outFlowSocket && awaiterNode.OutFlowNode == fromNode)
                         return awaiterNode;
                 return null;
             }
             
-            public CoroutineAwaiterNode(UnitExporter exporter, string outFlowSocketTarget) : base(exporter, new Flow_WaitAllNode())
+            public CoroutineAwaiterNode(UnitExporter exporter, GltfInteractivityNode node, string outFlowSocketTarget) : base(exporter, new Flow_WaitAllNode())
             {
+                this.OutFlowNode = node;
                 this.OutFlowSocketTarget = outFlowSocketTarget;
                 exporter.AddCustomNode(this);
                 ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value = 0;
@@ -106,7 +113,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 return FlowOut(Flow_WaitAllNode.IdFlowOutCompleted);
             }
-
+            
             public void AddCoroutineWait(UnitExporter unitExporter, GltfInteractivityNode node, string socket)
             {
                 if (unitExporter.exporter is not ICoroutineWait coroutineWait)

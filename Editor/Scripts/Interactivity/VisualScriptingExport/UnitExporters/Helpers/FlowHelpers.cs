@@ -168,7 +168,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             bool waitForTrue,
             out GltfInteractivityUnitExporterNode.FlowOutSocketData flowOutWhenDone)
         {
-               var setVarStart = unitExporter.CreateNode(new Variable_SetNode());
+            var setVarStart = unitExporter.CreateNode(new Variable_SetNode());
             var setVarFinish = unitExporter.CreateNode(new Variable_SetNode());
             var getVar = unitExporter.CreateNode(new Variable_GetNode());
             var varId = unitExporter.exportContext.AddVariableWithIdIfNeeded("waitWhile"+System.Guid.NewGuid(), false, VariableKind.Graph, typeof(bool));
