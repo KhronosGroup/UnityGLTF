@@ -102,8 +102,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 else
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]);
-                node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
                 }
+                node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
             }
             
             return true;
