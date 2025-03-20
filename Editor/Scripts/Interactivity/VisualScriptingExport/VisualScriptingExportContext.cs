@@ -639,7 +639,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             CheckForCircularFlows();
             
-            CleanUp();
+            if (plugin.cleanUpAndOptimizeExportedGraph)
+                CleanUp();
             
             PostIndexTopologicalSort();  
             

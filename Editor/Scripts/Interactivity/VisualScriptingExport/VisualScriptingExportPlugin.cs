@@ -29,6 +29,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public override string Description => "Exports flow graph data for Visual Scripting ScriptMachines.";
         
         public DebugLogSetting debugLogSetting = new DebugLogSetting();
+
+        [Tooltip("This should only be disabled for debugging purposes.")]
+        public bool cleanUpAndOptimizeExportedGraph = true;
         
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
