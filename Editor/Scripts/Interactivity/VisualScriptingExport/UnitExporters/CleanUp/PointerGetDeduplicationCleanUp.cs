@@ -72,9 +72,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             foreach (var pointerNode in pointerNodes)
             {
                 var pointer = (string)pointerNode.ConfigurationData[Pointer_GetNode.IdPointer].Value;
-                if (pointers.Contains(pointer))
-                    continue;
-                
                 pointers.Add(pointer);
             }
             
