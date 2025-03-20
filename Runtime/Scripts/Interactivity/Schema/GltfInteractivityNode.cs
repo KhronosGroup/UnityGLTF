@@ -26,6 +26,16 @@ namespace UnityGLTF.Interactivity.Schema
             new Dictionary<string, ValueOutSocket>();
         
         public Dictionary<string, string> MetaData = new Dictionary<string, string>();
+
+        public void RemoveUnconnectedFlows()
+        {
+            var keys = FlowSocketConnectionData.Keys.ToList();
+            foreach (var key in keys)
+            {
+                if (FlowSocketConnectionData[key].Node == null || FlowSocketConnectionData[key].Node == -1)
+                    FlowSocketConnectionData.Remove(key);
+            }
+        }
         
         public void SetFlowOut(string socketId, GltfInteractivityNode targetNode, string targetSocketId)
         {

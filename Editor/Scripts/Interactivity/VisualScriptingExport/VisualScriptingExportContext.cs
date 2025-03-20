@@ -639,18 +639,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             CheckForCircularFlows();
             
+            CleanUp();
+            
             PostIndexTopologicalSort();  
             
             CollectOpDeclarations();
-
-            /*
-            StringBuilder sb = new StringBuilder();
-            foreach (var g in graphBypasses)
-            {
-                sb.AppendLine($"INPUT FROM: {g.Key.port.key} [{g.Key.port.unit.ToString()}] ({g.Key.port.graph.title}) TO: {g.Value.port.key} [{g.Value.port.unit.ToString()}] ({g.Value.port.graph.title})");
-            }
-            Debug.Log("GRAPH BYPASSES: "+sb.ToString());
-            */
             
             OnBeforeSerialization?.Invoke(nodesToSerialize);
             // Clear the events
@@ -1007,6 +1000,63 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         }
 
+        internal void RemoveNode(GltfInteractivityNode nodeToRemove)
+        {
+            var indexToRemove = nodesToSerialize.IndexOf(nodeToRemove);
+            if (indexToRemove == nodesToSerialize.Count - 1)
+            {
+                // Just remove, no other indices are affected
+                nodesToSerialize.RemoveAt(indexToRemove);
+                return;
+            }
+                
+            nodesToSerialize.RemoveAt(indexToRemove);
+            // Move last node to the removed node index
+            nodesToSerialize.Insert(indexToRemove, nodesToSerialize.Last());
+            nodesToSerialize.RemoveAt(nodesToSerialize.Count - 1);
+              
+            int indexToReplace = nodesToSerialize[indexToRemove].Index;
+            nodesToSerialize[indexToRemove].Index = nodeToRemove.Index;
+            // Replace old index with new index of the inserted node
+            foreach (var n in nodesToSerialize)
+            {
+                foreach (var valueSocket in n.ValueSocketConnectionData)
+                {
+                    if (valueSocket.Value.Node == indexToReplace)
+                        valueSocket.Value.Node = nodeToRemove.Index;
+                }
+                foreach (var flowSocket in n.FlowSocketConnectionData)
+                {
+                    if (flowSocket.Value.Node == indexToReplace)
+                        flowSocket.Value.Node = nodeToRemove.Index;
+                }
+            }
+        }
+        
+        private void RemoveNodes(IReadOnlyList<GltfInteractivityNode> nodesToRemove)
+        {
+            foreach (var removedNode in nodesToRemove)
+            {
+                RemoveNode(removedNode);
+            }
+        }
+
+        private void CleanUp()
+        {
+            var nodeCountBefore = nodesToSerialize.Count;
+            bool hasChanges = false;
+            do
+            {
+                hasChanges = CleanUpRegistry.StartCleanUp(this);
+            } while (hasChanges);
+            
+            var nodeCountAfter = nodesToSerialize.Count;
+            if (nodeCountBefore != nodeCountAfter)
+            {
+                Debug.Log($"Removed {nodeCountBefore - nodeCountAfter} nodes in cleanup.");
+            }
+        }
+
         private void RemoveUnconnectedNodes()
         {
             var visited = new HashSet<int>(nodesToSerialize.Count);
@@ -1046,38 +1096,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     nodesToRemove.Add(node);
             }
             
-            foreach (var node in nodesToRemove)
-            {
-                var indexToRemove = nodesToSerialize.IndexOf(node);
-                if (indexToRemove == nodesToSerialize.Count - 1)
-                {
-                    // Just remove, no other indices are affected
-                    nodesToSerialize.RemoveAt(indexToRemove);
-                    continue;
-                }
-                
-                nodesToSerialize.RemoveAt(indexToRemove);
-                // Move last node to the removed node index
-                nodesToSerialize.Insert(indexToRemove, nodesToSerialize.Last());
-                nodesToSerialize.RemoveAt(nodesToSerialize.Count - 1);
-              
-                int replaceIndex = nodesToSerialize[indexToRemove].Index;
-                nodesToSerialize[indexToRemove].Index = node.Index;
-                // Replace old index with new index of the inserted node
-                foreach (var n in nodesToSerialize)
-                {
-                    foreach (var valueSocket in n.ValueSocketConnectionData)
-                    {
-                        if (valueSocket.Value.Node == replaceIndex)
-                            valueSocket.Value.Node = node.Index;
-                    }
-                    foreach (var flowSocket in n.FlowSocketConnectionData)
-                    {
-                        if (flowSocket.Value.Node == replaceIndex)
-                            flowSocket.Value.Node = node.Index;
-                    }
-                }
-            }
+            RemoveNodes(nodesToRemove);
         }
         
         private GltfInteractivityNode[] AddTypeConversion(GltfInteractivityNode targetNode, int conversionNodeIndex, string targetInputSocket, int fromType, int toType)
