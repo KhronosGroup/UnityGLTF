@@ -5,7 +5,7 @@ using UnityGLTF.Interactivity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
 
-namespace Editor.UnitExporters.Lists
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public static class ListHelpers
     {

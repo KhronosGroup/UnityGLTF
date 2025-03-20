@@ -1,11 +1,9 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
 
-namespace Editor.UnitExporters.Lists
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class ForEachLoopUnitExport : IUnitExporter
     {
@@ -24,7 +22,8 @@ namespace Editor.UnitExporters.Lists
             var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
             if (list == null)
             {
-                Debug.LogError("Can't resolve list input for ForEachLoop");
+                UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
+                return false;
             }
             var forLoop = unitExporter.CreateNode(new Flow_ForLoopNode());
             forLoop.ConfigurationData[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;

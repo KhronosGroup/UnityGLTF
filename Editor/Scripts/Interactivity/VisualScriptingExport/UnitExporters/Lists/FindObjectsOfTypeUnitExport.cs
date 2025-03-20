@@ -3,12 +3,9 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityGLTF.Interactivity;
-using UnityGLTF.Interactivity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 using Object = UnityEngine.Object;
 
-namespace Editor.UnitExporters.Lists
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class FindObjectsOfTypeUnitExport : IUnitExporter, IUnitExporterFeedback
     {

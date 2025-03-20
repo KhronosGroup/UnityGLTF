@@ -2,11 +2,8 @@ using System;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 
-namespace Editor.UnitExporters.Lists
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class CreateListUnitExport : IUnitExporter, IUnitExporterFeedback
     {
@@ -28,13 +25,13 @@ namespace Editor.UnitExporters.Lists
             var firstInput = unit.validInputs.FirstOrDefault();
             if (firstInput == null)
             {
-                Debug.LogError("Can't resolve list detection by connections.");
+                UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
 
             if (!unitExporter.IsInputLiteralOrDefaultValue(firstInput as ValueInput, out var value))
             {
-                Debug.LogError("Currently only literals are supported for list creation.");
+                UnitExportLogging.AddErrorLog(unit, "Currently only literals are supported for list creation.");
                 return false;
             }
 

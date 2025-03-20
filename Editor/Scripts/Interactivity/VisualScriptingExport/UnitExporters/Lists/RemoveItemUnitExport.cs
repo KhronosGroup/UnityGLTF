@@ -1,10 +1,8 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 
-namespace Editor.UnitExporters.Lists
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class RemoveItemUnitExport : IUnitExporter
     {
@@ -23,7 +21,7 @@ namespace Editor.UnitExporters.Lists
             var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
             if (list == null)
             {
-                Debug.LogError("Could not find list for RemoveListItemAt unit");
+                UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
             

@@ -1,10 +1,8 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 
-namespace Editor.UnitExporters.Lists
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class CountItemsUnitExport : IUnitExporter
     {
@@ -26,11 +24,12 @@ namespace Editor.UnitExporters.Lists
 
             if (list == null)
             {
-                Debug.LogError("Can't resolve list detection by connections.");
+                UnitExportLogging.AddErrorLog(countItems, "Can't resolve list detection by connections.");
                 return false;
             }
             
             ListHelpers.GetListCount(list, countItems.count);
+
             return true;
         }
     }
