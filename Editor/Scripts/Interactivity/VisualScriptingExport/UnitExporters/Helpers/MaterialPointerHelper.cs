@@ -1,5 +1,6 @@
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Plugins;
 
@@ -13,6 +14,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var animationPointerExportContext =
                 plugins.FirstOrDefault(x => x is AnimationPointerExportContext) as AnimationPointerExportContext;
+            
+            if (animationPointerExportContext == null)
+            {
+                Debug.LogError("Please activate the KHR_animation_pointer exporter extension under Project Settings > UnityGLTF > Export. This is required for exporting materials with pointers.");
+                map = null;
+                return null;
+            }
             
             if (animationPointerExportContext.materialPropertiesRemapper.GetMapByUnityProperty(unityMaterialPropertyName, out map))
                 return map.GltfPropertyName;
