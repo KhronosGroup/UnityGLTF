@@ -7,6 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
+    [UnitExportPriority(ExportPriority.First)]
     public class FindObjectsOfTypeUnitExport : IUnitExporter, IUnitExporterFeedback
     {
         public Type unitType

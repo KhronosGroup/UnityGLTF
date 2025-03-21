@@ -58,8 +58,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             public List<ExportGraph> subGraphs = new List<ExportGraph>();
         }
         #endregion
-
-        // TODO: Clear all these values once the scene export is done
+        
         public ScriptMachine ActiveScriptMachine = null;
         public GLTFRoot ActiveGltfRoot = null;
 
@@ -565,12 +564,31 @@ namespace UnityGLTF.Interactivity.VisualScripting
             var lastCurrentGraph = currentGraphProcessing;
             currentGraphProcessing = newExportGraph;
             // Topologically sort the graph to establish the dependency order
-            LinkedList<IUnit> topologicallySortedNodes = TopologicalSort(graph.units);
             
-            newExportGraph.nodes = UnitsHelper.GetTranslatableUnits(topologicallySortedNodes, this);
+            // Keep an eye on it if topologicallySortedNodes are really not needed anymore
+            //LinkedList<IUnit> topologicallySortedNodes = TopologicalSort(graph.units);
+            
+            var translatableUnits = UnitsHelper.GetTranslatableUnits(graph.units, this);
+            
+            // Order nodesToExport by priority, e.g. List/Array nodes should be exported first,
+            // so other nodes which are required exisiting List/Array creators can find them
+            var priorityOrdered = translatableUnits.Select( kvp => kvp.Value).OrderBy(n => n.unitExportPriority);
+            foreach (var export in priorityOrdered)
+            {
+                export.InitializeInteractivityNode();
+                if (export.IsTranslatable && export.Nodes.Length > 0)
+                    newExportGraph.nodes.Add(export.unit, export);
+            }
+            
+            // // Sort newExportGraph.nodes by topologicallySortedNodes
+            // var sortedNodes = new Dictionary<IUnit, UnitExporter>();
+            // foreach (var node in topologicallySortedNodes)
+            // {
+            //     if (newExportGraph.nodes.TryGetValue(node, out var exporter))
+            //         sortedNodes.Add(node, exporter);
+            // }
             
             nodesToExport.AddRange(newExportGraph.nodes.Select( g => g.Value));
- 
             currentGraphProcessing = lastCurrentGraph;
             return newExportGraph;
         }

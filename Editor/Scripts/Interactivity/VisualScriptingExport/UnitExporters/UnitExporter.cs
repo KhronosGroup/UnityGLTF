@@ -67,6 +67,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
     public class UnitExporter
     {
+        public ExportPriority unitExportPriority { get; private set; }
         public IUnitExporter exporter { get; private set; }
         public IUnit unit { get; private set; }
         public bool IsTranslatable = true;
@@ -117,13 +118,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             this.Graph = exportContext.currentGraphProcessing;
             this.scriptMachineGameObject = exportContext.ActiveScriptMachine.gameObject;
 
-            InitializeInteractivityNode();
-            
-            if (!IsTranslatable)
-                UnitExportLogging.AddErrorLog(unit, "Could not be exported to GLTF.");
+            var unitExportPriorityAttribute = exporter.GetType().GetAttribute<UnitExportPriority>(true);
+            if (unitExportPriorityAttribute != null)
+            {
+                this.unitExportPriority = unitExportPriorityAttribute.priority;
+            }
+            else
+                this.unitExportPriority = ExportPriority.Default;
         }
         
-        private void InitializeInteractivityNode()
+        public void InitializeInteractivityNode()
         {
             try
             {
@@ -149,6 +153,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 UnitExportLogging.AddErrorLog(unit, "Error initializing interactivity nodes: " + e.Message);
                 Console.WriteLine(e);
             }
+            
+            if (!IsTranslatable)
+                UnitExportLogging.AddErrorLog(unit, "Could not be exported to GLTF.");
         }
 
         public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
@@ -211,6 +218,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         else if (inputPort.node.ConfigurationData.TryGetValue(inputPort.socketName,
                                      out var config))
                         {
+                            // Is it relevant anymore??
                             // TODO how do we correctly update the config value here?
                             // We don't know what it is – e.g. when its an event, we need to put the index of that event here.
                             // config.Value = literal;

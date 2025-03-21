@@ -37,6 +37,24 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
     public interface ICoroutineAwaiter { }
     
+    public enum ExportPriority
+    {
+        First = 0,
+        Default = 1,
+        Last = 2
+    }
+    
+    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = false)]
+    public class UnitExportPriority : Attribute
+    {
+        public ExportPriority priority { get; private set; }
+        
+        public UnitExportPriority(ExportPriority priority)
+        {
+            this.priority = priority;
+        }
+    }
+    
     public interface IUnitExporter : IUnitTypeExporter
     {
         bool InitializeInteractivityNodes(UnitExporter unitExporter);

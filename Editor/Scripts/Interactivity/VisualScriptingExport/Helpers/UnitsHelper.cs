@@ -13,27 +13,26 @@ namespace UnityGLTF.Interactivity.VisualScripting
     {
         
         public static Dictionary<IUnit, UnitExporter> GetTranslatableUnits(
-            IEnumerable<IUnit> sortedNodes, VisualScriptingExportContext exportContext)
+            IEnumerable<IUnit> nodes, VisualScriptingExportContext exportContext)
         {
-            Dictionary<IUnit, UnitExporter> validNodes =
+            Dictionary<IUnit, UnitExporter> exporters =
                 new Dictionary<IUnit, UnitExporter>();
 
-            foreach (IUnit unit in sortedNodes)
+            foreach (IUnit unit in nodes)
             {
                 if (unit is Literal || unit is This || unit is Null)
                     continue;
                 
                 UnitExporter unitExporter = UnitExporterRegistry.CreateUnitExporter(exportContext, unit);
-                if (unitExporter != null)
+                if (unitExporter == null)
                 {
-                    if (unitExporter.IsTranslatable && unitExporter.Nodes.Length > 0)
-                        validNodes.Add(unit, unitExporter);
+                    Debug.LogWarning("Could not find a UnitExporter for " + unit.ToString());
+                    continue;
                 }
-                else
-                     Debug.LogWarning("ExportNode is null for unit: " + Log(unit)+ " of type: " + unit.GetType());
+                exporters.Add(unit, unitExporter);
             }
 
-            return validNodes;
+            return exporters;
         }
 
         static string Log(IUnit unit)

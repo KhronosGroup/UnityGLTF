@@ -5,6 +5,7 @@ using UnityEditor;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
+    [UnitExportPriority(ExportPriority.First)]
     public class CreateListUnitExport : IUnitExporter, IUnitExporterFeedback
     {
         public Type unitType { get => typeof(CreateList); }
