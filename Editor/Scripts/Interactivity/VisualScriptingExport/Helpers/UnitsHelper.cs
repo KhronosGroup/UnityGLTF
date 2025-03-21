@@ -120,6 +120,17 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         public static GameObject GetGameObjectFromValueInput(ValueInput value, Dictionary<string, object> defaultValues, VisualScriptingExportContext exportContext)
         {
+            if (value.hasValidConnection && value.connections.First().source.unit is GraphInput graphInput)
+            {
+                var subGraphUnit = exportContext.currentGraphProcessing.subGraphUnit;
+                if (subGraphUnit != null)
+                {
+                    var graphValueKey = value.connections.First().source.key;
+                    // Reroute to the SubGraph Unit to get the value
+                    value = subGraphUnit.valueInputs[graphValueKey];
+                }
+            }
+            
             if (value.hasValidConnection == false)
             {
                 // If there are no connections, then we can return the non-null default value

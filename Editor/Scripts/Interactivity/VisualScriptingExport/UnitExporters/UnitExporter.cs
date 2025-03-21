@@ -414,6 +414,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         public bool IsInputLiteralOrDefaultValue(ValueInput inputPort, out object value)
         {
+            if (inputPort.hasValidConnection && inputPort.connections.First().source.unit is GraphInput)
+            {
+                var subGraphUnit = exportContext.currentGraphProcessing.subGraphUnit;
+                if (subGraphUnit != null)
+                {
+                    var graphValueKey = inputPort.connections.First().source.key;
+                    // Reroute to the SubGraph Unit to get the value
+                    inputPort = subGraphUnit.valueInputs[graphValueKey];
+                }
+            }
+            
             if (inputPort.hasDefaultValue && !inputPort.hasValidConnection && !inputPort.hasAnyConnection)
             {
                 value = unit.defaultValues[inputPort.key];

@@ -47,7 +47,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var subGraph = unit.nest.graph;
             
-            var subGraphExport = unitExporter.exportContext.AddGraph(subGraph);
+            var subGraphExport = unitExporter.exportContext.AddGraph(subGraph, unit);
             
             var subGraphInputUnit = subGraph.units.FirstOrDefault(u => u is GraphInput);
             var subGraphOutputUnit = subGraph.units.FirstOrDefault(u => u is GraphOutput);

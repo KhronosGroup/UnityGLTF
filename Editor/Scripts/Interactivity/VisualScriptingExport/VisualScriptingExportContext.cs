@@ -58,6 +58,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             public Dictionary<IUnit, UnitExporter> nodes = new Dictionary<IUnit, UnitExporter>();
             internal Dictionary<IUnitInputPort, IUnitInputPort> bypasses = new Dictionary<IUnitInputPort, IUnitInputPort>();
             public List<ExportGraph> subGraphs = new List<ExportGraph>();
+            public SubgraphUnit subGraphUnit = null;
         }
         #endregion
         
@@ -548,9 +549,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }
         
-        internal ExportGraph AddGraph(FlowGraph graph)
+        internal ExportGraph AddGraph(FlowGraph graph, SubgraphUnit subGraphUnit = null)
         {
             var newExportGraph = new ExportGraph();
+
+            newExportGraph.subGraphUnit = subGraphUnit;
             newExportGraph.gameObject = ActiveScriptMachine.gameObject;
             newExportGraph.parentGraph = currentGraphProcessing;
             newExportGraph.graph = graph;
