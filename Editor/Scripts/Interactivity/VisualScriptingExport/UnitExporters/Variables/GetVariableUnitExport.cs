@@ -6,6 +6,8 @@ using UnityEditor;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
+    // Set priority to first, in case this will create a List/Array, so other nodes can find them
+    [UnitExportPriority(ExportPriority.First)]
     public class GetVariableUnitExport : IUnitExporter
     {
         public Type unitType { get => typeof(GetVariable); }
@@ -34,11 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         if (existingList != null)
                         {
                             // List already exist
-                            
-                            // TODO: because we don't create any node here,
-                            // we would get a false-error message that this Unit could not be exported.
-                            // We would need to add a Return Bool for error handling in UnitExporter in the future 
-                            return false;
+                            return true;
                         }
                         
                         // Create list
@@ -84,7 +82,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     }
                     
                     // We cancel here, since we don't want to create a gltf variable for the list
-                    return false;
+                    return true;
                 }
             }
             
