@@ -245,12 +245,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 node = list[0].node;
                 return list[0].socketName;
             }
-            else
-            {
-                Debug.LogError("This node: " +
-                               unit.ToString() + "does not have a socket mapping for the inputPort: " +
-                               input.ToString());
-            }
             
             return null;
         }
@@ -359,11 +353,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             foreach (var n in nodeInputPortToSocketNameMapping)
             {
-                if (!n.Value.node.ValueSocketConnectionData.ContainsKey(n.Value.socketName))
-                {
-                    Debug.LogError("Node: " + n.Value.node.Schema.Op + " does not have a socket named: " + n.Value.socketName);
+                if (!n.Value.node.ValueSocketConnectionData.ContainsKey(n.Value.socketName)) 
                     continue;
-                }
                 n.Value.node.ValueSocketConnectionData[n.Value.socketName].Node = n.Key.node.Index;
                 n.Value.node.ValueSocketConnectionData[n.Value.socketName].Socket = n.Key.socketName;
             }
