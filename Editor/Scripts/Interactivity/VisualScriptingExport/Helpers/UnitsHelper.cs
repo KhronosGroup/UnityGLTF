@@ -101,23 +101,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             });
         }
         
-        // Get the index of a named property that has been exported to GLTF
-        public static int GetNamedPropertyGltfIndex(string objectName, IEnumerable<GLTFChildOfRootProperty> gltfRootProperties)
-        {
-            int i = 0;
-            foreach (GLTFChildOfRootProperty property in gltfRootProperties)
-            {
-                if (objectName == property.Name)
-                {
-                    return i;
-                }
-                i++;
-            }
-
-            Debug.LogWarning($"Could not find {objectName} in the GLTF List: {gltfRootProperties.ToString()}");
-            return -1;
-        }
-
         public static GameObject GetGameObjectFromValueInput(ValueInput value, Dictionary<string, object> defaultValues, VisualScriptingExportContext exportContext)
         {
             if (value.hasValidConnection && value.connections.First().source.unit is GraphInput graphInput)
