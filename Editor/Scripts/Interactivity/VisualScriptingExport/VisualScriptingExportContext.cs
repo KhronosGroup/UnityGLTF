@@ -105,6 +105,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 .FirstOrDefault(l => l.listCreatorUnit == listCreatorUnit && l.listCreatorGraph == currentGraphProcessing);
         }
         
+        public VariableBasedList GetListByName(string listId)
+        {
+            return addedVariableBasedLists.FirstOrDefault(l => l.ListId == listId);
+        }
+        
         public VariableBasedList GetListByCreator(VariableDeclaration variable)
         {
             return addedVariableBasedLists
