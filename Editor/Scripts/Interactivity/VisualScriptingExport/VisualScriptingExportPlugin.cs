@@ -31,8 +31,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public DebugLogSetting debugLogSetting = new DebugLogSetting();
 
-        [Tooltip("This should only be disabled for debugging purposes.")]
+        [Header("This settings should only be disabled for debugging purposes.")]
         public bool cleanUpAndOptimizeExportedGraph = true;
+        public bool addUnityToGltfSpaceConversion = true;
         
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
