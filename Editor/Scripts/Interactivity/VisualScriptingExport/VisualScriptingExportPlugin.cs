@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting
