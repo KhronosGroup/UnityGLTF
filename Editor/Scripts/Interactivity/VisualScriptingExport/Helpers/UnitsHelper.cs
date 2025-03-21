@@ -167,6 +167,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
                 return null;
             }
+            else
+            if (value.hasValidConnection && value.connections.First().source.unit is This thisUnit)
+            {
+                return exportContext.ActiveScriptMachine.gameObject;
+            }
             else if (value.hasValidConnection && value.connections.First().source.unit is GetVariable getVariable)
             {
                 // If there is a connection, then we can return the value of the literal
