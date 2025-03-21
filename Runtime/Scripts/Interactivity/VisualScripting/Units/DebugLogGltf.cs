@@ -84,12 +84,15 @@ namespace Unity.VisualScripting
             });
 
             exit = ControlOutput("exit");
+            Succession(enter, exit);
             
             argumentPorts.Clear();
 
             for (var i = 0; i < argumentCount; i++)
             {
-                argumentPorts.Add(ValueInput<object>($"Arg. - {i}"));
+                var port = ValueInput<object>($"Arg. - {i}");
+                argumentPorts.Add(port);
+                Requirement(port, enter);
             }
         }
         
