@@ -135,9 +135,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// Get the value of a variable from a VariableUnit.
         /// Materials and GameObjects Values will be converted to their respective indices.
         /// </summary>
-        public object GetVariableValue(IUnifiedVariableUnit unit, out string varName, out string varType, bool checkTypeIsSupported = true)
+        public object GetVariableValue(IUnifiedVariableUnit unit, out string varName, out string cSharpVarType, bool checkTypeIsSupported = true)
         {
-            var rawValue = GetVariableValueRaw(unit, out varName, out varType, checkTypeIsSupported);
+            var rawValue = GetVariableValueRaw(unit, out varName, out cSharpVarType, checkTypeIsSupported);
             
             if (rawValue is GameObject gameObjectValue)
                 rawValue = exporter.GetTransformIndex(gameObjectValue.transform);
@@ -187,13 +187,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// Get the value of a variable from a VariableUnit.
         /// Materials and GameObjects Values will be returned as is.
         /// </summary>
-        public object GetVariableValueRaw(IUnifiedVariableUnit unit, out string exportVarName, out string varType, bool checkTypeIsSupported = true)
+        public object GetVariableValueRaw(IUnifiedVariableUnit unit, out string exportVarName, out string cSharpVarType, bool checkTypeIsSupported = true)
         {
             string varName = unit.name.unit.defaultValues["name"] as string;
 
             exportVarName = varName;
             object varValue = null;
-            varType = null;
+            cSharpVarType = null;
 
             VariableDeclarations varDeclarations = null; 
             
@@ -232,7 +232,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 if (varDeclaration != null)
                 {
                     varValue = varDeclaration.value;
-                    varType = varDeclaration.typeHandle.Identification;
+                    cSharpVarType = varDeclaration.typeHandle.Identification;
                 }
                 else
                 {
@@ -248,7 +248,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 return null;
             }
 
-            if (varType == null)
+            if (cSharpVarType == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Unkknown variable type");
                 return null;
@@ -256,12 +256,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             if (checkTypeIsSupported)
             {
-                var typeIndex = GltfTypes.TypeIndex(varType);
+                var typeIndex = GltfTypes.TypeIndex(cSharpVarType);
                 if (typeIndex == -1)
                 {
                     UnitExportLogging.AddErrorLog(unit, "Unsupported type");
 
-                    Debug.LogError("Unsupported type for variable: " + varType);
+                    Debug.LogError("Unsupported type for variable: " + cSharpVarType);
                     return null;
                 }
             }
@@ -371,20 +371,20 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public int AddVariableIfNeeded(IUnifiedVariableUnit unit)
         {
-            var varValue = GetVariableValue(unit, out string varName, out string varType);
+            var varValue = GetVariableValue(unit, out string varName, out string cSharpVarType);
 
-            if (GltfTypes.TypeIndex(varType) == -1)
+            if (GltfTypes.TypeIndex(cSharpVarType) == -1)
             {
-                UnitExportLogging.AddErrorLog(unit, "Type not supported for variable: " + varType);
+                UnitExportLogging.AddErrorLog(unit, "Type not supported for variable: " + cSharpVarType);
             }
             
-            var variableIndex = AddVariableWithIdIfNeeded(varName, varValue, unit.kind, varType);
+            var variableIndex = AddVariableWithIdIfNeeded(varName, varValue, unit.kind, cSharpVarType);
             return variableIndex;
         }
 
-        public int AddVariableWithIdIfNeeded(string id, object defaultValue, VariableKind varKind, string type)
+        public int AddVariableWithIdIfNeeded(string id, object defaultValue, VariableKind varKind, string cSharpVarType)
         {
-            return AddVariableWithIdIfNeeded(id, defaultValue, varKind, GltfTypes.TypeIndex(type));
+            return AddVariableWithIdIfNeeded(id, defaultValue, varKind, GltfTypes.TypeIndex(cSharpVarType));
         }
         
         public int AddVariableWithIdIfNeeded(string id, object defaultValue, VariableKind varKind, Type type)

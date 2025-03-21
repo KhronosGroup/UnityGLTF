@@ -52,24 +52,19 @@ namespace UnityGLTF.Interactivity.VisualScripting
             Context = context;
             ListId = listId;
 
-            CurrentIndexVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_CurrentIndex", 0,
-                VariableKind.Scene, GltfTypes.TypeIndexByGltfSignature("int"));
-            ValueToSetVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_ValueToSet", 0, VariableKind.Scene,
-                GltfTypes.TypeIndexByGltfSignature("int"));
+            CurrentIndexVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_CurrentIndex", 0, VariableKind.Scene, typeof(int));
+            ValueToSetVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_ValueToSet", 0, VariableKind.Scene, gltfType);
 
             ListIndex = Context.variables.Count;
 
-            CountVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_Count", 0, VariableKind.Scene,
-                GltfTypes.TypeIndexByGltfSignature("int"));
-            CapacityVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_Capacity", Capacity,
-                VariableKind.Scene, GltfTypes.TypeIndexByGltfSignature("int"));
+            CountVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_Count", 0, VariableKind.Scene, typeof(int));
+            CapacityVarId = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_Capacity", Capacity, VariableKind.Scene, typeof(int));
 
             StartIndex = -1;
             EndIndex = -1;
             for (int i = 0; i < capacity; i++)
             {
-                EndIndex = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_{i}", null, VariableKind.Scene,
-                    gltfType);
+                EndIndex = Context.AddVariableWithIdIfNeeded($"VARLIST_{listId}_{i}", null, VariableKind.Scene, gltfType);
                 if (StartIndex == -1)
                     StartIndex = EndIndex;
             }
@@ -85,7 +80,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (Context.variables[CountVarId].Value is int count)
             {
                 if (count >= Capacity)
-                    throw new ArgumentException("List is full");
+                    throw new ArgumentException("List is full. Current Capacity: " + Capacity);
 
                 Context.variables[StartIndex + count].Value = value;
                 Context.variables[CountVarId].Value = count + 1;

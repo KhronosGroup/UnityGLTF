@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as GetVariable;
             
-            var varValue = unitExporter.exportContext.GetVariableValue(unit, out string varName, out string varType, false);
+            var varValue = unitExporter.exportContext.GetVariableValue(unit, out string varName, out string cSharpVarType, false);
             if (varValue != null)
             {
                 // Check if the variable is a list/array
@@ -88,7 +88,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             }
             
-            var typeIndex = GltfTypes.TypeIndex(varType);
+            var typeIndex = GltfTypes.TypeIndex(cSharpVarType);
             if (typeIndex == -1)
             {
                 UnitExportLogging.AddErrorLog(unit, "Unsupported type");
