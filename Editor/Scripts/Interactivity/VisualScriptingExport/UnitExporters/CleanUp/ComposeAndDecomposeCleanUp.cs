@@ -13,8 +13,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public void OnCleanUp(CleanUpTask task)
         {
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/globalMatrix");
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix");
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/globalMatrix", UnitsHelper.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix", UnitsHelper.IdPointerNodeIndex);
             
             var decompose = task.context.Nodes.FindAll(node => node.Schema is Math_MatDecomposeNode).ToArray();
             

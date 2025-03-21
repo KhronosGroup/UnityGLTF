@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityGLTF.Interactivity.Schema;
 
@@ -13,25 +14,27 @@ namespace UnityGLTF.Interactivity.VisualScripting
         }
         
         
-        public static void MergeSameGetPointersNodes(CleanUpTask task, string pointer)
+        public static void MergeSameGetPointersNodes(CleanUpTask task, string pointer, string pointerInputName)
         {
             var pointerNodes = task.context.Nodes.FindAll(node => node.Schema is Pointer_GetNode
                                                                        && node.ConfigurationData[
-                                                                           Pointer_GetNode.IdPointer].Value.Equals(pointer)).ToArray();
+                                                                           Pointer_GetNode.IdPointer].Value.Equals(pointer)
+                                                                       && node.ValueSocketConnectionData.ContainsKey(pointerInputName)
+                                                                       ).ToArray();
             
             foreach (var glNode1 in pointerNodes)
             {
                 if (glNode1.Index == -1)
                     continue;
-
-                var glNode1Socket = glNode1.ValueSocketConnectionData[UnitsHelper.IdPointerNodeIndex];
+                
+                var glNode1Socket = glNode1.ValueSocketConnectionData[pointerInputName];
                 
                 foreach (var glNode2 in pointerNodes)
                 {
                     if (glNode2.Index == -1 || glNode1 == glNode2)
                         continue;
 
-                    var glNode2Socket = glNode2.ValueSocketConnectionData[UnitsHelper.IdPointerNodeIndex];
+                    var glNode2Socket = glNode2.ValueSocketConnectionData[pointerInputName];
 
                     bool isSameValueInput = false;
                     if (glNode1Socket.Node != null
@@ -65,18 +68,21 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public void OnCleanUp(CleanUpTask task)
         {
-            var pointerNodes = task.context.Nodes.FindAll(node => node.Schema is Pointer_GetNode);
+            var pointerNodes = task.context.Nodes.FindAll(node => node.Schema is Pointer_GetNode && node.ValueSocketConnectionData.Count == 1);
 
-            var pointers = new HashSet<string>();
+            var pointers = new HashSet<(string template, string valueInput)>();
             
             foreach (var pointerNode in pointerNodes)
             {
                 var pointer = (string)pointerNode.ConfigurationData[Pointer_GetNode.IdPointer].Value;
-                pointers.Add(pointer);
+                var pointerInput = pointerNode.ValueSocketConnectionData.First().Key;
+                pointers.Add((pointer, pointerInput));
             }
-            
+
             foreach (var pointer in pointers)
-                MergeSameGetPointersNodes(task, pointer);
+            {
+                MergeSameGetPointersNodes(task, pointer.template, pointer.valueInput);
+            }
         }
     }
 }
