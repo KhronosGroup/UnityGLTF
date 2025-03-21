@@ -1,3 +1,5 @@
+//#define INTERACTIVITY_DEBUG_LOGS
+
 using System.Text;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
@@ -236,14 +238,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 else
                 {
                     UnitExportLogging.AddErrorLog(unit, "Variable not found");
-                    Debug.LogError("Variable not found: " + varName);
                     return null;
                 }
             }
             else
             {
                 UnitExportLogging.AddErrorLog(unit, "Variable not found");
-                Debug.LogError("Variable not found: " + varName);
                 return null;
             }
 
@@ -259,8 +259,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 if (typeIndex == -1)
                 {
                     UnitExportLogging.AddErrorLog(unit, "Unsupported type");
-
-                    Debug.LogError("Unsupported type for variable: " + cSharpVarType);
                     return null;
                 }
             }
@@ -396,7 +394,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (gltfTypeIndex == -1)
             {
                 if (defaultValue != null)
-                    Debug.Log("Type not supported for variable: " + defaultValue.GetType().Name);
+                    Debug.LogError("Type not supported for variable: " + defaultValue.GetType().Name);
                 return -1;
             }
             
@@ -431,7 +429,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (string.IsNullOrEmpty(eventId))
             {
                 UnitExportLogging.AddErrorLog(eventUnit, "No event selected.");
-                Debug.LogError("Event Id is empty");
                 return -1;
             }
             
@@ -713,11 +710,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
         private void OutputUnitLogs()
         {
             if (UnitExportLogging.unitLogMessages.Count == 0)
-            {
-                Debug.Log("Successfull Exported without any warnings!");
                 return;
-            }
-
+    
             var sb = new StringBuilder();
             
             foreach (var unitLog in UnitExportLogging.unitLogMessages)
@@ -1069,11 +1063,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 hasChanges = CleanUpRegistry.StartCleanUp(this);
             } while (hasChanges);
             
+#if INTERACTIVITY_DEBUG_LOGS
             var nodeCountAfter = nodesToSerialize.Count;
             if (nodeCountBefore != nodeCountAfter)
             {
                 Debug.Log($"Removed {nodeCountBefore - nodeCountAfter} nodes in cleanup.");
             }
+#endif
         }
 
         private void RemoveUnconnectedNodes()
