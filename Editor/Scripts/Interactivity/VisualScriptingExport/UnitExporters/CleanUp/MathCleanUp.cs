@@ -146,6 +146,24 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 var socketA = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueA];
                 var socketB = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueB];
              
+                
+                bool IsThereAnyOtherConnectionToThisPort(GltfInteractivityNode toNode, string outPort, GltfInteractivityNode ignoreNode)
+                {
+                    foreach (var node in nodes)
+                    {
+                        if (node == toNode || node.Index == -1 || node == ignoreNode)
+                            continue;
+                        
+                        foreach (var socket in node.ValueSocketConnectionData)
+                        {
+                            if (socket.Value.Node != null && socket.Value.Node == toNode.Index && socket.Value.Socket == outPort)
+                                return true;
+                        }
+                    }
+
+                    return false;
+                }
+                
                 bool CheckSocket(GltfInteractivityNode.ValueSocketData socket, GltfInteractivityNode.ValueSocketData socket2)
                 {
                     var valueB = socket2.Value;
@@ -162,6 +180,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     
                         if (otherValueA != null && socket2.Value != null && otherSocketB.Node != null && WillOffsetEachOther(valueB, otherValueA))
                         {
+                            if (IsThereAnyOtherConnectionToThisPort(otherMulNode, Math_MulNode.IdOut, mulNode))
+                                return false;
+                            if (IsThereAnyOtherConnectionToThisPort(mulNode, Math_MulNode.IdOut, otherMulNode))
+                                return false;
+                            
                             task.ByPassValue(otherMulNode, Math_MulNode.IdValueB, mulNode, Math_MulNode.IdOut);
                             task.RemoveNode(mulNode);
                             task.RemoveNode(otherMulNode);
@@ -169,6 +192,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         }
                         if (otherValueB != null && socket2.Value != null && otherSocketA.Node != null && WillOffsetEachOther(valueB, otherValueB))
                         {
+                            if (IsThereAnyOtherConnectionToThisPort(otherMulNode, Math_MulNode.IdOut, mulNode))
+                                return false;
+                            if (IsThereAnyOtherConnectionToThisPort(mulNode, Math_MulNode.IdOut, otherMulNode))
+                                return false;
+
                             task.ByPassValue(otherMulNode, Math_MulNode.IdValueA, mulNode, Math_MulNode.IdOut);
                             task.RemoveNode(mulNode);
                             task.RemoveNode(otherMulNode);
