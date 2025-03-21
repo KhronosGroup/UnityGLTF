@@ -29,10 +29,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, node);
                 if (awaiter == null)
-                {
-                    UnitExportLogging.AddErrorLog(unit, "Could not find coroutine awaiter");
                     return;
-                }
                 
                 awaiter.AddCoroutineWait(unitExporter, node, Flow_SetDelayNode.IdFlowDone);
             };

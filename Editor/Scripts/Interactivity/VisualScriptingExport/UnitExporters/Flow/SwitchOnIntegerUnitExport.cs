@@ -29,10 +29,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             };
             
             foreach (var branch in unit.branches)
-            {
-                var caseFlow = new GltfInteractivityUnitExporterNode.FlowSocketData();
                 node.FlowOut(branch.Key.ToString()).MapToControlOutput(branch.Value);
-            }
 
             node.FlowOut(Flow_SwitchNode.IdFDefaultFlowOut).MapToControlOutput(unit.@default);
             node.ValueIn(Flow_SwitchNode.IdSelection).MapToInputPort(unit.selector);
