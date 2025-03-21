@@ -31,6 +31,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     return ((Vector3)value).magnitude == 0;
                 case Type t when t == typeof(Vector4):
                     return ((Vector4)value).magnitude == 0;
+                case Type t when t == typeof(Quaternion):
+                    return ((Quaternion)value) == new Quaternion(0,0,0,0);
             }
 
             return false;
@@ -53,6 +55,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     return (Vector3)value == Vector3.one;
                 case Type t when t == typeof(Vector4):
                     return (Vector4)value == Vector4.one;
+                case Type t when t == typeof(Quaternion):
+                    return (Quaternion)value == new Quaternion(0,0,0,1);
             }
 
             return false;
