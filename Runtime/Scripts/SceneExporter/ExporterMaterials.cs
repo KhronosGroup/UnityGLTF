@@ -238,6 +238,25 @@ namespace UnityGLTF
 				}
 			}
 
+			if (materialObj.HasProperty("_NormalMap"))
+			{
+				var propName = "_NormalMap";
+				var normalTex = materialObj.GetTexture(propName);
+
+				if (normalTex)
+				{
+					if (normalTex is Texture2D)
+					{
+						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Normal, materialObj);
+						ExportTextureTransform(material.NormalTexture, materialObj, propName);
+					}
+					else
+					{
+						Debug.LogFormat(LogType.Error, "Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+					}
+				}
+			}
+
 			if (IsUnlit(materialObj))
 			{
 				ExportUnlit( material, materialObj );
