@@ -186,10 +186,7 @@ namespace UnityGLTF.Interactivity.Schema
             public JObject SerializeObject()
             {
                 if (Value == null)
-                {
-                    Debug.LogError($"{nameof(Value)} is null for ConfigData");
                     return null;
-                }
                 
                 var jObject = new JObject
                 {
@@ -359,16 +356,6 @@ namespace UnityGLTF.Interactivity.Schema
                     valueObject.Add(new JProperty("type", Type));
 
                     ValueSerializer.Serialize(Value, valueObject);
-                }
-                else if (Node == null)
-                {
-                    if (Type != -1)
-                        Debug.LogError(
-                            $"{nameof(Value)} is null for ValueSocketData: of type \"{GltfTypes.TypesMapping[Type].GltfSignature}\" on node \"{(Node.HasValue ? Node.Value : "<null node>")}\"");
-                    else
-                        Debug.LogError(
-                            $"{nameof(Value)} is null for ValueSocketData: on node \"{(Node.HasValue ? Node.Value : "<null node>")}\"");
-
                 }
 
                 return valueObject;
