@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -32,7 +33,7 @@ namespace UnityGLTF
 	        return path;
 	    }
 
-	    private static bool TryGetExportNameAndRootTransformsFromSelection(out string sceneName, out Transform[] rootTransforms, out Object[] rootResources)
+	    private static bool TryGetExportNameAndRootTransformsFromSelection(out string sceneName, out Transform[] rootTransforms, out Object[] rootResources, bool openSceneIfNeeded)
 	    {
 		    if (Selection.transforms.Length > 1)
 		    {
@@ -51,7 +52,7 @@ namespace UnityGLTF
 		    if (Selection.objects.Any() && Selection.objects.All(x => x is GameObject))
 		    {
 			    sceneName = Selection.objects.First().name;
-			    rootTransforms = Selection.objects.Select(x => (x as GameObject).transform).ToArray();
+			    rootTransforms = Array.ConvertAll(Selection.objects, x => (Transform)x);
 			    rootResources = null;
 			    return true;
 		    }
@@ -61,6 +62,26 @@ namespace UnityGLTF
 			    sceneName = "Material Library";
 			    rootTransforms = null;
 			    rootResources = Selection.objects;
+			    return true;
+		    }
+		    
+		    if (Selection.objects.Any() && Selection.objects.All(x => x is SceneAsset))
+		    {
+			    sceneName = Selection.objects.First().name;
+			    if (openSceneIfNeeded)
+			    {
+				    if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+				    {
+					    var scenePath = AssetDatabase.GetAssetPath(Selection.objects.First());
+					    var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+					    var roots = scene.GetRootGameObjects();
+					    rootTransforms = Array.ConvertAll(roots, x => x.transform);
+					    rootResources = null;
+					    return true;
+				    }
+			    }
+			    rootTransforms = null;
+			    rootResources = null;
 			    return true;
 		    }
 
@@ -74,7 +95,7 @@ namespace UnityGLTF
 	    [MenuItem(MenuPrefixGameObject + ExportGltf, true)]
 	    private static bool ExportSelectedValidate()
 	    {
-		    return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _);
+		    return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _, false);
 	    }
 
 	    [MenuItem(MenuPrefix + ExportGltf)]
@@ -85,7 +106,7 @@ namespace UnityGLTF
 			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0])
 				return;
 			
-			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources))
+			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources, true))
 			{
 				Debug.LogError("Can't export: selection is empty");
 				return;
@@ -98,7 +119,7 @@ namespace UnityGLTF
 		[MenuItem(MenuPrefixGameObject + ExportGlb, true)]
 		private static bool ExportGLBSelectedValidate()
 		{
-			return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _);
+			return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _, false);
 		}
 
 		[MenuItem(MenuPrefix + ExportGlb)]
@@ -106,10 +127,10 @@ namespace UnityGLTF
 		private static void ExportGLBSelected(MenuCommand command)
 		{
 			// The exporter handles multi-selection. We don't want to call export multiple times here.
-			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0])
+			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0] && !(Selection.activeObject is SceneAsset))
 				return;
 			
-			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources))
+			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources, true))
 			{
 				Debug.LogError("Can't export: selection is empty");
 				return;
