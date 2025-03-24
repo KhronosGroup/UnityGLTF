@@ -6,7 +6,7 @@ namespace UnityGLTF.Interactivity.Schema
 
         [InputSocketDescription(GltfTypes.Bool)]
         public const string IdInputA = "a";
-        [InputSocketDescription(GltfTypes.Int)]
+        [OutputSocketDescription(GltfTypes.Int)]
         public const string IdValueResult = "value";
     }
 }
