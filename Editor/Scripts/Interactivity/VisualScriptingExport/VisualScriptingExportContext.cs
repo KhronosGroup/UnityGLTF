@@ -703,15 +703,37 @@ namespace UnityGLTF.Interactivity.VisualScripting
             UnitExportLogging.ClearLogs();
 
             var scriptMachines = new List<ScriptMachine>();
+
+            var warningLog = new StringBuilder();
+            
+            string GetHierarchyName(Transform transform)
+            {
+                if (transform == null)
+                    return "";
+                return GetHierarchyName(transform.parent) + "/" + transform.name;
+            }
             
             foreach (var root in exporter.RootTransforms)
             {
                 if (!root) continue;
                 var machines = root
-                    .GetComponentsInChildren<ScriptMachine>()
-                    .Where(x => x.isActiveAndEnabled && x.graph != null);
-                scriptMachines.AddRange(machines);
+                    .GetComponentsInChildren<ScriptMachine>(true)
+                    .Where(x => x.graph != null);
+                
+                scriptMachines.AddRange(machines.Where(m => m.isActiveAndEnabled));
+                
+                // Just for warning log, we collect the inactive machines, which will be ignored for export
+                var inactiveMachines = machines.Where(m => !m.isActiveAndEnabled);
+                foreach (var inactive in inactiveMachines)
+                    warningLog.AppendLine(GetHierarchyName(inactive.transform));
             }
+
+            if (warningLog.Length > 0)
+            {
+                warningLog.Insert(0, "Inactive Script Machines found! Following Script Machine will be ignored for export: \n");
+                Debug.LogWarning(warningLog.ToString());
+            }
+            
             AfterSceneExport(exporter, gltfRoot, scriptMachines);
         }
 
