@@ -207,7 +207,7 @@ namespace UnityGLTF
 
                             var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
                             var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
-                            if (emissiveStrengthSupported)
+                            if (emissiveStrengthSupported && material.Extensions != null)
                             {
 								// remove the old entry
 								material.Extensions.Remove(KHR_materials_emissive_strength_Factory.EXTENSION_NAME);
