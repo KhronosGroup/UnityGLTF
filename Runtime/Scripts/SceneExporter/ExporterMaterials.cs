@@ -792,7 +792,7 @@ namespace UnityGLTF
 					if (needToBakeRoughnessIntoTexture)
 					{
 						conversion = new TextureExportSettings(conversion);
-						conversion.smoothnessMultiplier = 1 - roughnessMultiplier;
+						conversion.smoothnessRangeMax = 1 - roughnessMultiplier;
 					}
 					
 					if (occlusionGetBakedIntoMetallicRoughness)
@@ -817,10 +817,10 @@ namespace UnityGLTF
                 {
 					// bake remapping into texture during export
                     var conversion = GetExportSettingsForSlot(TextureMapType.MetallicGloss);
-                    conversion.metallicMultiplier = material.GetFloat("_MetallicRemapMax");
-                    conversion.metallicMultiplier2 = material.GetFloat("_MetallicRemapMin");
-                    conversion.smoothnessMultiplier = material.GetFloat("_SmoothnessRemapMax");
-					conversion.smoothnessMultiplier2 = material.GetFloat("_SmoothnessRemapMin");
+                    conversion.metallicRangeMax = material.GetFloat("_MetallicRemapMax");
+                    conversion.metallicRangeMin = material.GetFloat("_MetallicRemapMin");
+                    conversion.smoothnessRangeMax = material.GetFloat("_SmoothnessRemapMax");
+					conversion.smoothnessRangeMin = material.GetFloat("_SmoothnessRemapMin");
 					conversion.conversion = TextureExportSettings.Conversion.MetalGlossChannelSwap;
 
 					// set factors to 1 because of baked values
