@@ -390,7 +390,8 @@ namespace UnityGLTF
 	        return (material.HasProperty("_Metallic") || material.HasProperty("_MetallicFactor") || material.HasProperty("metallicFactor")) &&
 	               (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness") ||
 	                material.HasProperty("_Roughness") || material.HasProperty("_RoughnessFactor") || material.HasProperty("roughnessFactor") ||
-	                material.HasProperty("_MetallicRoughnessTexture") || material.HasProperty("metallicRoughnessTexture"));
+					material.HasProperty("_MetallicRoughnessTexture") || material.HasProperty("metallicRoughnessTexture") ||
+					material.HasProperty("_Smoothness"));
         }
 
         private bool IsUnlit(Material material)
