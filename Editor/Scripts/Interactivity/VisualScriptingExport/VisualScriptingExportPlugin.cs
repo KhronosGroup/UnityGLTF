@@ -18,6 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         [Serializable]
         public class DebugLogSetting
         {
+            [Header("Which Gltf Interactivity Log should be used")]
             public bool GltfLog = true;
             public bool ADBEConsole = true;
             public bool BabylonLog = false;
