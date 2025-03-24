@@ -809,6 +809,29 @@ namespace UnityGLTF
 					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
 				}
 			}
+			else if(material.HasProperty("_MaskMap"))
+			{
+                var mrTex = material.GetTexture("_MaskMap");
+
+                if (mrTex)
+                {
+					// bake remapping into texture during export
+                    var conversion = GetExportSettingsForSlot(TextureMapType.MetallicGloss);
+                    conversion.metallicMultiplier = material.GetFloat("_MetallicRemapMax");
+                    conversion.metallicMultiplier2 = material.GetFloat("_MetallicRemapMin");
+                    conversion.smoothnessMultiplier = material.GetFloat("_SmoothnessRemapMax");
+					conversion.smoothnessMultiplier2 = material.GetFloat("_SmoothnessRemapMin");
+					conversion.conversion = TextureExportSettings.Conversion.MetalGlossChannelSwap;
+
+					// set factors to 1 because of baked values
+					pbr.MetallicFactor = 1f;
+					pbr.RoughnessFactor = 1f;
+
+                    pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);
+
+                    ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MaskMap");
+                }
+            }
 
 			return pbr;
 		}

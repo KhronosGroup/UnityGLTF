@@ -4,6 +4,9 @@
 	{
 		_MainTex ("Texture", 2D) = "white" {}
 		_SmoothnessMultiplier ("Smoothness Multiplier", float) = 1
+		_SmoothnessMultiplier2 ("Smoothness Multiplier2", float) = 0
+		_MetallicMultiplier ("_MetallicMultiplier", float) = 1
+		_MetallicMultiplier2 ("_MetallicMultiplier2", float) = 0
 	}
 	SubShader
 	{
@@ -39,7 +42,12 @@
 			}
 			
 			sampler2D _MainTex;
+
+			float _MetallicMultiplier;
+			float _MetallicMultiplier2;
+
 			float _SmoothnessMultiplier;
+			float _SmoothnessMultiplier2;
 
 			float4 frag (v2f i) : SV_Target
 			{
@@ -55,7 +63,11 @@
 				// Conversion Summary
 				// Unity R channel goes into B channel
 				// Unity A channel goes into G channel, then inverted
-				float4 result = float4(0, 1 - (col.a * _SmoothnessMultiplier), col.r, 1);
+				float4 result = float4(
+					0,
+					1 - (_SmoothnessMultiplier2 + col.a * (_SmoothnessMultiplier - _SmoothnessMultiplier2)),
+					_MetallicMultiplier2 + col.r * (_MetallicMultiplier - _MetallicMultiplier2),
+					0);
 				return result;
 			}
 			ENDCG

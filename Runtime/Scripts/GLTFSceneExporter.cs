@@ -190,14 +190,20 @@ namespace UnityGLTF
 			public bool linear;
 			// required for metallic-smoothness conversion
 			public float smoothnessMultiplier;
+			public float smoothnessMultiplier2;
+            public float metallicMultiplier;
+            public float metallicMultiplier2;
 
-			public TextureExportSettings(TextureExportSettings source)
+            public TextureExportSettings(TextureExportSettings source)
 			{
 				conversion = source.conversion;
 				alphaMode = source.alphaMode;
 				linear = source.linear;
 				smoothnessMultiplier = source.smoothnessMultiplier;
-				isValid = true;
+				smoothnessMultiplier2 = source.smoothnessMultiplier2;
+				metallicMultiplier = source.metallicMultiplier;
+				metallicMultiplier2 = source.metallicMultiplier2;
+                isValid = true;
 			}
 
 			public enum Conversion
@@ -247,7 +253,10 @@ namespace UnityGLTF
 					hashCode = (hashCode * 397) ^ (int)alphaMode;
 					hashCode = (hashCode * 397) ^ linear.GetHashCode();
 					hashCode = (hashCode * 397) ^ smoothnessMultiplier.GetHashCode();
-					return hashCode;
+					hashCode = (hashCode * 397) ^ smoothnessMultiplier2.GetHashCode();
+					hashCode = (hashCode * 397) ^ metallicMultiplier.GetHashCode();
+                    hashCode = (hashCode * 397) ^ metallicMultiplier2.GetHashCode();
+                    return hashCode;
 				}
 			}
 		}
@@ -256,8 +265,10 @@ namespace UnityGLTF
 		{
 			var exportSettings = new TextureExportSettings();
 			exportSettings.isValid = true;
+			exportSettings.metallicMultiplier = 1f;
+			exportSettings.smoothnessMultiplier = 1f;
 
-			switch (textureSlot)
+            switch (textureSlot)
 			{
 				case TextureMapType.BaseColor: // Main = new TextureExportSettings() { alphaMode = AlphaMode.Heuristic };
 					exportSettings.linear = false;
@@ -327,13 +338,22 @@ namespace UnityGLTF
 				case TextureExportSettings.Conversion.MetalGlossChannelSwap:
 					if (_metalGlossChannelSwapMaterial && _metalGlossChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
 						_metalGlossChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
+                    if (_metalGlossChannelSwapMaterial && _metalGlossChannelSwapMaterial.HasProperty("_SmoothnessMultiplier2"))
+                        _metalGlossChannelSwapMaterial.SetFloat("_SmoothnessMultiplier2", textureMapType.smoothnessMultiplier2);
+                    
+					if (_metalGlossChannelSwapMaterial && _metalGlossChannelSwapMaterial.HasProperty("_MetallicMultiplier"))
+                        _metalGlossChannelSwapMaterial.SetFloat("_MetallicMultiplier", textureMapType.metallicMultiplier);
+                    if (_metalGlossChannelSwapMaterial && _metalGlossChannelSwapMaterial.HasProperty("_MetallicMultiplier2"))
+                        _metalGlossChannelSwapMaterial.SetFloat("_MetallicMultiplier2", textureMapType.metallicMultiplier2);
 
-					return _metalGlossChannelSwapMaterial;
+                    return _metalGlossChannelSwapMaterial;
 				case TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap:
 					if (_metalGlossOcclusionChannelSwapMaterial && _metalGlossOcclusionChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
 						_metalGlossOcclusionChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
-					
-					return _metalGlossOcclusionChannelSwapMaterial;
+                    if (_metalGlossOcclusionChannelSwapMaterial && _metalGlossOcclusionChannelSwapMaterial.HasProperty("_SmoothnessMultiplier2"))
+                        _metalGlossOcclusionChannelSwapMaterial.SetFloat("_SmoothnessMultiplier2", textureMapType.smoothnessMultiplier2);
+
+                    return _metalGlossOcclusionChannelSwapMaterial;
 				default:
 					return null;
 			}
