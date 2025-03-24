@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 UnitExporter unitExporter = UnitExporterRegistry.CreateUnitExporter(exportContext, unit);
                 if (unitExporter == null)
                 {
-                    Debug.LogWarning("Could not find a UnitExporter for " + unit.ToString());
+                    UnitExportLogging.AddErrorLog(unit, "Export not supported");
                     continue;
                 }
                 exporters.Add(unit, unitExporter);
@@ -35,16 +35,16 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return exporters;
         }
 
-        static string Log(IUnit unit)
+        public static string UnitToString(IUnit unit)
         {
             if (unit is InvokeMember invokeMember)
                 return unit.ToString() + " Invoke: " + invokeMember.member.declaringType + "." + invokeMember.member.name;
             if (unit is SetMember setMember)
-                return unit.ToString() + " Set: " + setMember.target + "." + setMember.member.name;
+                return unit.ToString() + " Set: " + setMember.member.declaringType + "." + setMember.member.name;
             if (unit is GetMember getMember)
-                return unit.ToString() + " Get: " + getMember.target + "." + getMember.member.name;
+                return unit.ToString() + " Get: " + getMember.member.declaringType + "." + getMember.member.name;
             if (unit is Expose expose)
-                return unit.ToString() + " Expose: " + expose.target + " Type: " + expose.type;
+                return unit.ToString() + " Expose: " + expose.type;
             return unit.ToString();
         }
         

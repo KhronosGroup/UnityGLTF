@@ -724,12 +724,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             foreach (var unitLog in UnitExportLogging.unitLogMessages)
             {
-                sb.AppendLine("Unit: "+unitLog.Key.ToString());
-                foreach (var info in unitLog.Value.infos)
+                sb.AppendLine("Unit: "+ UnitsHelper.UnitToString(unitLog.Key));
+                foreach (var info in unitLog.Value.infos.Distinct())
                     sb.AppendLine("   Info: "+info);
-                foreach (var warning in unitLog.Value.warnings)
+                foreach (var warning in unitLog.Value.warnings.Distinct())
                     sb.AppendLine("   Warning: "+warning);
-                foreach (var error in unitLog.Value.errors)
+                foreach (var error in unitLog.Value.errors.Distinct())
                     sb.AppendLine("   Error: "+error);
             }
             
@@ -1468,7 +1468,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 if (node.ConfigurationData != null)
                 {
                     foreach (var config in node.ConfigurationData)
-                        message += $" (config: {config.Key}={config.Value.Value})";
+                        if (config.Value == null)
+                            message += $" (config: {config.Key} has no Value)";
+                        else
+                            message += $" (config: {config.Key}={config.Value.Value})";
                 }
                 
                 foreach (var g in addedGraphs)
@@ -1498,13 +1501,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     if (valueSocket.Value.Node == null)
                     {
                         if (valueSocket.Value.Value == null)
-                            NodeAppendLine(node, $"Socket {valueSocket.Key} has no connection and no Value");
+                            NodeAppendLine(node, $"Socket <{valueSocket.Key}> has no connection and no Value");
                         else if (valueSocket.Value.Type == -1)
-                            NodeAppendLine(node, $"Socket {valueSocket.Key} has invalid Type (-1). Value-Type: {valueSocket.Value.Value.GetType().Name}");
+                            NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Type (-1). Value-Type: {valueSocket.Value.Value.GetType().Name}");
                     }
                     else if (valueSocket.Value.Node == -1)
                     {
-                        NodeAppendLine(node, $"Socket {valueSocket.Key} has invalid Node Index (-1)");
+                        NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Node Index (-1)");
                     }
                 }
                 
@@ -1512,7 +1515,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 {
                     if (flowSocket.Value.Node == -1)
                     {
-                        NodeAppendLine(node, $"Flow Socket {flowSocket.Key} has invalid Node Index (-1)");
+                        NodeAppendLine(node, $"Flow Socket <{flowSocket.Key}> has invalid Node Index (-1)");
                     }
                 }
 
