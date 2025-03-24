@@ -145,7 +145,7 @@ namespace UnityGLTF
 			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off) ||
 			                       (materialObj.shader.name.EndsWith("-Double")); // workaround for exporting shaders that are set to double-sided on 2020.3
 
-			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture"))
+			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("_EmissiveColorMap"))
 			{
 				// In Gamma space, some materials treat their emissive color inputs differently than in Linear space.
 				// This is super confusing when converting materials, but we also need to handle it correctly here.
@@ -156,9 +156,15 @@ namespace UnityGLTF
 					materialObj.shader.name == "Universal Render Pipeline/Simple Lit" ||
 					materialObj.shader.name == "Universal Render Pipeline/Unlit");
 				                                             
-				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor"))
+				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor") || materialObj.HasProperty("_EmissiveColor"))
 				{
-					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") : materialObj.GetColor("_EmissiveFactor");
+                    // give _EmissionColor lower priority because according to a comment in HDRP's Lit.shader
+                    // it might only be there to  shut the compiler up:
+                    // C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
+                    var c = materialObj.HasProperty("_EmissiveColor") ? materialObj.GetColor("_EmissiveColor") :
+                        materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
+						materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
+                        materialObj.GetColor("_EmissiveFactor");
 					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
 					
 					if (isUnityMaterialWithWeirdColorspaceHandling)
@@ -178,13 +184,36 @@ namespace UnityGLTF
 					}
 				}
 
-				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("emissiveTexture"))
+				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveColorMap"))
 				{
-					var propName = materialObj.HasProperty("emissiveTexture") ? "emissiveTexture" : materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" : materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
+					var propName = materialObj.HasProperty("emissiveTexture") ? "emissiveTexture" :
+						materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" :
+						materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" :
+                        materialObj.HasProperty("_EmissiveColorMap") ? "_EmissiveColorMap" :
+                        "_EmissiveMap";
+
 					var emissionTex = materialObj.GetTexture(propName);
 
 					if (emissionTex)
 					{
+						// emissive color is not used for hdrp lit materials when map is set, we have to look at the intensity :o
+						if(materialObj.HasProperty("_EmissiveColorMap") && materialObj.HasProperty("_EmissiveIntensity"))
+						{
+                            //var ei = materialObj.GetFloat("_EmissiveIntensity");
+                            //material.EmissiveFactor = new GLTF.Math.Color(ei, ei, ei, 1f);
+
+							// for now, lets just default to white and remove the extension if it was applied
+							material.EmissiveFactor = GLTF.Math.Color.White;
+
+                            var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
+                            var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
+                            if (emissiveStrengthSupported)
+                            {
+								// remove the old entry
+								material.Extensions.Remove(KHR_materials_emissive_strength_Factory.EXTENSION_NAME);
+                            }
+                        }
+
 						if(emissionTex is Texture2D)
 						{
 							material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emissive);
