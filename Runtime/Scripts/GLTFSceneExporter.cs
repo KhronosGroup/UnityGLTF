@@ -193,6 +193,8 @@ namespace UnityGLTF
 			public float smoothnessRangeMax;
             public float metallicRangeMin;
             public float metallicRangeMax;
+            public float occlusionRangeMin;
+            public float occlusionRangeMax;
 
             public TextureExportSettings(TextureExportSettings source)
 			{
@@ -203,6 +205,8 @@ namespace UnityGLTF
 				smoothnessRangeMax = source.smoothnessRangeMax;
 				metallicRangeMin = source.metallicRangeMin;
 				metallicRangeMax = source.metallicRangeMax;
+				occlusionRangeMin = source.occlusionRangeMin;
+				occlusionRangeMax = source.occlusionRangeMax;
                 isValid = true;
 			}
 
@@ -269,6 +273,8 @@ namespace UnityGLTF
 			exportSettings.metallicRangeMax = 1f;
             exportSettings.smoothnessRangeMin = 0f;
 			exportSettings.smoothnessRangeMax = 1f;
+			exportSettings.occlusionRangeMin = 0f;
+			exportSettings.occlusionRangeMax = 1f;
 
             switch (textureSlot)
 			{
@@ -358,7 +364,12 @@ namespace UnityGLTF
             if (material && material.HasProperty("_MetallicRangeMax"))
                 material.SetFloat("_MetallicRangeMax", textureMapType.metallicRangeMax);
 
-			return material;
+            if (material && material.HasProperty("_OcclusionRangeMin"))
+                material.SetFloat("_OcclusionRangeMin", textureMapType.occlusionRangeMin);
+            if (material && material.HasProperty("_OcclusionRangeMax"))
+                material.SetFloat("_OcclusionRangeMax", textureMapType.occlusionRangeMax);
+
+            return material;
         }
 
         private struct ImageInfo

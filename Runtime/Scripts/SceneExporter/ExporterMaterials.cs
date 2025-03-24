@@ -324,9 +324,13 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
-			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture"))
+			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture") || materialObj.HasProperty("_MaskMap"))
 			{
-				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" : materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
+				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" :
+					materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" :
+					materialObj.HasProperty("_MaskMap") ? "_MaskMap" :
+					"_OcclusionMap";
+
 				var occTex = materialObj.GetTexture(propName);
 				if (occTex)
 				{
@@ -817,14 +821,19 @@ namespace UnityGLTF
                 {
 					// bake remapping into texture during export
                     var conversion = GetExportSettingsForSlot(TextureMapType.MetallicGloss);
-                    conversion.metallicRangeMax = material.GetFloat("_MetallicRemapMax");
-                    conversion.metallicRangeMin = material.GetFloat("_MetallicRemapMin");
-                    conversion.smoothnessRangeMax = material.GetFloat("_SmoothnessRemapMax");
-					conversion.smoothnessRangeMin = material.GetFloat("_SmoothnessRemapMin");
-					conversion.conversion = TextureExportSettings.Conversion.MetalGlossChannelSwap;
 
-					// set factors to 1 because of baked values
-					pbr.MetallicFactor = 1f;
+                    conversion.metallicRangeMin = material.GetFloat("_MetallicRemapMin");
+                    conversion.metallicRangeMax = material.GetFloat("_MetallicRemapMax");
+					conversion.smoothnessRangeMin = material.GetFloat("_SmoothnessRemapMin");
+                    conversion.smoothnessRangeMax = material.GetFloat("_SmoothnessRemapMax");
+					conversion.occlusionRangeMin = material.GetFloat("_AORemapMin");
+					conversion.occlusionRangeMax = material.GetFloat("_AORemapMax");
+                    
+					conversion.conversion = TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap;
+					_occlusionBakedTextures.Add(material);
+
+                    // set factors to 1 because of baked values
+                    pbr.MetallicFactor = 1f;
 					pbr.RoughnessFactor = 1f;
 
                     pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);

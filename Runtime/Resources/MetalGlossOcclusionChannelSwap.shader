@@ -7,6 +7,8 @@
 		_SmoothnessRangeMax ("Smoothness Range Max", float) = 1
 		_MetallicRangeMin ("Metallic Range Min", float) = 0
 		_MetallicRangeMax ("Metallic Range Max", float) = 1
+		_OcclusionRangeMin ("Occlusion Range Min", float) = 0
+		_OcclusionRangeMax ("Occlusion Range Max", float) = 1
 	}
 	SubShader
 	{
@@ -49,6 +51,9 @@
 			float _SmoothnessRangeMin;
 			float _SmoothnessRangeMax;
 
+			float _OcclusionRangeMin;
+			float _OcclusionRangeMax;
+
 			float4 frag (v2f i) : SV_Target
 			{
 				float4 col = tex2D(_MainTex, i.uv);
@@ -65,10 +70,10 @@
 				// Unity A channel goes into G channel, then inverted
 				// Unity G channel goes into R channel > Occlusion
 				float4 result = float4(
-					col.g,
+					_OcclusionRangeMin + col.g * (_OcclusionRangeMax - _OcclusionRangeMin),
 					1 - (_SmoothnessRangeMin + col.a * (_SmoothnessRangeMax - _SmoothnessRangeMin)),
 					_MetallicRangeMin + col.r * (_MetallicRangeMax - _MetallicRangeMin),
-					1);
+					0);
 				return result;
 			}
 			ENDCG
