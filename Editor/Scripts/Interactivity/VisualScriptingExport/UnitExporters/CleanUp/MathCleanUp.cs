@@ -56,7 +56,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 case Type t when t == typeof(Vector4):
                     return (Vector4)value == Vector4.one;
                 case Type t when t == typeof(Quaternion):
-                    return (Quaternion)value == new Quaternion(0,0,0,1);
+                    return ((Quaternion)value).Equals(new Quaternion(0,0,0,1));
             }
 
             return false;
@@ -149,7 +149,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             {
                 var socketA = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueA];
                 var socketB = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueB];
-             
                 
                 bool IsThereAnyOtherConnectionToThisPort(GltfInteractivityNode toNode, string outPort, GltfInteractivityNode ignoreNode)
                 {
