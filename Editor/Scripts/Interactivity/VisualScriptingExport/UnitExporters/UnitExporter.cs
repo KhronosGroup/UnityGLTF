@@ -138,12 +138,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     if (unit is InvokeMember invokeMemberUnit)
                     {
                         if (invokeMemberUnit.supportsChaining && invokeMemberUnit.chainable)
-                            ByPassValue(invokeMemberUnit.target, invokeMemberUnit.targetOutput);
+                            if (!HasPortMappingTo(invokeMemberUnit.targetOutput))
+                                ByPassValue(invokeMemberUnit.target, invokeMemberUnit.targetOutput);
                     }
                     if (unit is SetMember setMemberUnit)
                     {
                         if (setMemberUnit.supportsChaining && setMemberUnit.chainable)
-                            ByPassValue(setMemberUnit.target, setMemberUnit.targetOutput);
+                            if (!HasPortMappingTo(setMemberUnit.targetOutput))
+                            {
+                                ByPassValue(setMemberUnit.target, setMemberUnit.targetOutput);
+                            }
                     }
                 }
             }
