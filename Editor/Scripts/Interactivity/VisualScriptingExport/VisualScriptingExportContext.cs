@@ -576,7 +576,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             var translatableUnits = UnitsHelper.GetTranslatableUnits(graph.units, this);
             
             // Order nodesToExport by priority, e.g. List/Array nodes should be exported first,
-            // so other nodes which are required exisiting List/Array creators can find them
+            // so other nodes which are required existing List/Array creators can find them
             var priorityOrdered = translatableUnits.Select( kvp => kvp.Value).OrderBy(n => n.unitExportPriority);
             foreach (var export in priorityOrdered)
             {
