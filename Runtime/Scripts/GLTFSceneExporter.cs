@@ -241,7 +241,12 @@ namespace UnityGLTF
 					conversion == other.conversion &&
 				    alphaMode == other.alphaMode &&
 				    linear == other.linear &&
-					Mathf.Approximately(smoothnessRangeMax, other.smoothnessRangeMax);
+					Mathf.Approximately(smoothnessRangeMin, other.smoothnessRangeMin) &&
+					Mathf.Approximately(smoothnessRangeMax, other.smoothnessRangeMax) &&
+					Mathf.Approximately(metallicRangeMin, other.metallicRangeMin) &&
+					Mathf.Approximately(metallicRangeMax, other.metallicRangeMax) &&
+					Mathf.Approximately(occlusionRangeMin, other.occlusionRangeMin) &&
+					Mathf.Approximately(occlusionRangeMax, other.occlusionRangeMax);
 			}
 
 			public override bool Equals(object obj)
@@ -260,6 +265,8 @@ namespace UnityGLTF
 					hashCode = (hashCode * 397) ^ smoothnessRangeMax.GetHashCode();
 					hashCode = (hashCode * 397) ^ metallicRangeMin.GetHashCode();
 					hashCode = (hashCode * 397) ^ metallicRangeMax.GetHashCode();
+                    hashCode = (hashCode * 397) ^ occlusionRangeMin.GetHashCode();
+                    hashCode = (hashCode * 397) ^ occlusionRangeMax.GetHashCode();
 					return hashCode;
 				}
 			}
