@@ -212,26 +212,6 @@ namespace UnityGLTF
 
 					if (emissionTex)
 					{
-						UnityEngine.Debug.Log(emissionTex.ToString(), emissionTex);
-						UnityEngine.Debug.Log(materialObj.ToString(), materialObj);
-						//// emissive color is not used for hdrp lit materials when map is set, we have to look at the intensity :o
-						//if(materialObj.HasProperty("_EmissiveColorMap") && materialObj.HasProperty("_EmissiveIntensity"))
-						//{
-      //                      //var ei = materialObj.GetFloat("_EmissiveIntensity");
-      //                      //material.EmissiveFactor = new GLTF.Math.Color(ei, ei, ei, 1f);
-
-						//	// for now, lets just default to white and remove the extension if it was applied
-						//	material.EmissiveFactor = GLTF.Math.Color.White;
-
-      //                      var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
-      //                      var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
-      //                      if (emissiveStrengthSupported && material.Extensions != null)
-      //                      {
-						//		// remove the old entry
-						//		material.Extensions.Remove(KHR_materials_emissive_strength_Factory.EXTENSION_NAME);
-      //                      }
-      //                  }
-
 						if(emissionTex is Texture2D)
 						{
 							material.EmissiveTexture = ExportTextureInfo(emissionTex, TextureMapType.Emissive);
