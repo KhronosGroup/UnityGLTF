@@ -18,7 +18,7 @@ namespace UnityGLTF
 		private const string MenuPrefix = "Assets/UnityGLTF/";
 		private const string MenuPrefixGameObject = "GameObject/UnityGLTF/";
 
-		private const string ExportGlb = "Export selected as one asset";
+		private const string ExportGlb = "Export selected";
 		private const string ExportGlbBatch = "Export each as separate asset";
 
 	    public static string RetrieveTexturePath(UnityEngine.Texture texture)
@@ -33,6 +33,14 @@ namespace UnityGLTF
 	        }
 	        return path;
 	    }
+	    
+	    private struct ExportBatch
+	    {
+		    public string sceneName;
+		    public Transform[] rootTransforms;
+		    public Object[] rootResources;
+		    public SceneAsset[] sceneAssets;
+	    }
 
 	    /// <summary>
 	    /// This method collects GameObjects into export jobs. It supports multi-selection exports in various useful ways.
@@ -41,40 +49,134 @@ namespace UnityGLTF
 	    /// 3. When multiple scenes are selected, each scene is exported as individual file.
 	    /// </summary>
 	    /// <returns>True if the current selection can be exported.</returns>
-	    private static bool TryGetExportNameAndRootTransformsFromSelection(out string sceneName, out Transform[] rootTransforms, out Object[] rootResources, bool openSceneIfNeeded)
+	    private static bool TryGetExportBatchesFromSelection(out List<ExportBatch> batches, bool separateBatches)
 	    {
 		    if (Selection.transforms.Length > 1)
 		    {
-			    sceneName = SceneManager.GetActiveScene().name;
-			    rootTransforms = Selection.transforms;
-			    rootResources = null;
-			    return true;
-		    }
-		    if (Selection.transforms.Length == 1)
-		    {
-			    sceneName = Selection.activeGameObject.name;
-			    rootTransforms = Selection.transforms;
-			    rootResources = null;
-			    return true;
-		    }
-		    if (Selection.objects.Any() && Selection.objects.All(x => x is GameObject))
-		    {
-			    sceneName = Selection.objects.First().name;
-			    rootTransforms = Array.ConvertAll(Selection.objects, x => (Transform)x);
-			    rootResources = null;
-			    return true;
-		    }
-
-		    if (Selection.objects.Any() && Selection.objects.All(x => x is Material))
-		    {
-			    sceneName = "Material Library";
-			    rootTransforms = null;
-			    rootResources = Selection.objects;
+			    if (!separateBatches)
+			    {
+				    batches = new List<ExportBatch>()
+				    {
+					    new()
+					    {
+						    sceneName = SceneManager.GetActiveScene().name,
+						    rootTransforms = Selection.transforms,
+					    }
+				    };
+			    }
+			    else
+			    {
+				    batches = new List<ExportBatch>();
+				    foreach (var transform in Selection.transforms)
+				    {
+					    batches.Add(new ExportBatch()
+					    {
+						    sceneName = transform.name,
+						    rootTransforms = new[] { transform },
+					    });
+				    }
+			    }
 			    return true;
 		    }
 		    
+		    // Special case for one selected object: use the object's name as the scene name
+		    if (Selection.transforms.Length == 1)
+		    {
+			    batches = new List<ExportBatch>()
+			    {
+				    new()
+				    {
+					    sceneName = Selection.activeGameObject.name,
+					    rootTransforms = Selection.transforms,
+				    }
+			    };
+			    return true;
+		    }
+		    
+		    // Project object selection
+		    if (Selection.objects.Any() && Selection.objects.All(x => x is GameObject))
+		    {
+			    if (!separateBatches)
+			    {
+				    batches = new List<ExportBatch>()
+				    {
+					    new()
+					    {
+						    sceneName = Selection.objects.First().name,
+						    rootTransforms = Array.ConvertAll(Selection.objects, x => (Transform)x),
+					    }
+				    };
+			    }
+			    else
+			    {
+				    batches = new List<ExportBatch>();
+				    foreach (var obj in Selection.objects)
+				    {
+					    var go = (GameObject) obj;
+					    batches.Add(new ExportBatch()
+					    {
+						    sceneName = go.name,
+						    rootTransforms = new[] { go.transform },
+					    });
+				    }
+			    }
+			    return true;
+		    }
+
+		    // Project material selection
+		    if (Selection.objects.Any() && Selection.objects.All(x => x is Material))
+		    {
+			    if (!separateBatches)
+			    {
+				    batches = new List<ExportBatch>()
+				    {
+					    new() {
+						    sceneName = "Material Library",
+						    rootResources = Selection.objects,
+					    }
+				    };
+			    }
+			    else
+			    {
+				    batches = new List<ExportBatch>();
+				    foreach (var obj in Selection.objects)
+				    {
+					    var material = (Material) obj;
+					    batches.Add(new ExportBatch()
+					    {
+						    sceneName = material.name,
+						    rootResources = new Object[] { material },
+					    });
+				    }
+			    }
+			    return true;
+		    }
+		    
+		    // Project scene selection
 		    if (Selection.objects.Any() && Selection.objects.All(x => x is SceneAsset))
 		    {
+			    batches = new List<ExportBatch>();
+			    if (!separateBatches)
+			    {
+				    batches.Add(new ExportBatch()
+				    {
+					    sceneName = "Scenes",
+					    sceneAssets = Selection.objects.Cast<SceneAsset>().ToArray(),
+				    });
+			    }
+			    else
+			    {
+				    foreach (var obj in Selection.objects)
+				    {
+					    var scene = (SceneAsset) obj;
+					    batches.Add(new()
+					    {
+						    sceneName = scene.name,
+						    sceneAssets = new[] { scene },
+					    });
+				    }
+			    }
+			    /*
 			    sceneName = Selection.objects.First().name;
 			    if (openSceneIfNeeded)
 			    {
@@ -87,14 +189,11 @@ namespace UnityGLTF
 				    rootResources = null;
 				    return true;
 			    }
-			    rootTransforms = null;
-			    rootResources = null;
+			    */
 			    return true;
 		    }
 
-		    sceneName = null;
-		    rootTransforms = null;
-		    rootResources = null;
+		    batches = null;
 		    return false;
 	    }
 
@@ -122,55 +221,62 @@ namespace UnityGLTF
 		    }
 	    }
 	    
-	    private static bool ExportBinary => !SessionState.GetBool(ExportAsBinary, false);
+	    private static bool ExportBinary => SessionState.GetBool(ExportAsBinary, true);
+	    private const int Priority = 34;
 
-		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true)]
-		[MenuItem(MenuPrefixGameObject + ExportGlb, true)]
+		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true, Priority)]
+		[MenuItem(MenuPrefixGameObject + ExportGlb, true, Priority)]
 		private static bool ExportSelectedValidate()
 		{
-			return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _, false);
+			return TryGetExportBatchesFromSelection(out _, false);
 		}
 
-		[MenuItem(MenuPrefix + ExportGlb + " &SPACE")]
-		[MenuItem(MenuPrefixGameObject + ExportGlb, false, 34)]
+		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", false, Priority)]
+		[MenuItem(MenuPrefixGameObject + ExportGlb, false, Priority)]
 		private static void ExportSelected(MenuCommand command)
 		{
 			// The exporter handles multi-selection. We don't want to call export multiple times here.
-			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0] && !(Selection.activeObject is SceneAsset))
+			if (command.context && Selection.objects.Length > 1 && command.context != Selection.objects[0])
 				return;
 			
-			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources, true))
-			{
-				Debug.LogError("Can't export: selection is empty");
-				return;
-			}
-			Export(rootTransforms, rootResources, ExportBinary, sceneName);
+			_ExportSelected(false);
 		}
 		
-		[MenuItem(MenuPrefix + ExportGlbBatch, true)]
-		[MenuItem(MenuPrefixGameObject + ExportGlbBatch, true)]
+		[MenuItem(MenuPrefix + ExportGlbBatch, true, Priority + 1)]
+		[MenuItem(MenuPrefixGameObject + ExportGlbBatch, true, Priority + 1)]
 		private static bool ExportSelectedBatchValidate()
 		{
-			return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _, false);
+			if (Selection.objects.Length < 2) return false;
+			return TryGetExportBatchesFromSelection(out _, false);
 		}
 		
-		[MenuItem(MenuPrefix + ExportGlbBatch)]
-		[MenuItem(MenuPrefixGameObject + ExportGlbBatch, false, 34)]
+		[MenuItem(MenuPrefix + ExportGlbBatch, false, Priority + 1)]
+		[MenuItem(MenuPrefixGameObject + ExportGlbBatch, false, Priority + 1)]
 		private static void ExportSelectedBatch(MenuCommand command)
 		{
 			// The exporter handles multi-selection. We don't want to call export multiple times here.
-			if (Selection.gameObjects.Length > 1 && command.context != Selection.gameObjects[0] && !(Selection.activeObject is SceneAsset))
+			if (command.context && Selection.objects.Length > 1 && command.context != Selection.objects[0])
 				return;
-			
-			if (!TryGetExportNameAndRootTransformsFromSelection(out var sceneName, out var rootTransforms, out var rootResources, true))
+		
+			_ExportSelected(true);
+		}
+
+		private static void _ExportSelected(bool separateBatches)
+		{
+			if (!TryGetExportBatchesFromSelection(out var batches, separateBatches))
 			{
 				Debug.LogError("Can't export: selection is empty");
 				return;
 			}
-			Export(rootTransforms, rootResources, ExportBinary, sceneName);
+
+			for (var i = 0; i < batches.Count; i++)
+			{
+				var success = Export(batches[i], ExportBinary, i == 0);
+				if (!success) break;
+			}
 		}
 
-		[MenuItem(MenuPrefix + "Export active scene", true)]
+		[MenuItem(MenuPrefix + "Export active scene", true, Priority + 2)]
 		private static bool ExportSceneValidate()
 		{
 			var activeScene = SceneManager.GetActiveScene();
@@ -178,7 +284,7 @@ namespace UnityGLTF
 			return true;
 		}
 		
-		[MenuItem(MenuPrefix + "Export active scene")]
+		[MenuItem(MenuPrefix + "Export active scene", false, Priority + 2)]
 		private static void ExportScene()
 		{
 			var scene = SceneManager.GetActiveScene();
@@ -190,7 +296,11 @@ namespace UnityGLTF
 			var gameObjects = scene.GetRootGameObjects();
 			var transforms = Array.ConvertAll(gameObjects, gameObject => gameObject.transform);
 
-			Export(transforms, null, ExportBinary, scene.name);
+			Export(new ExportBatch() {
+				rootTransforms = transforms,
+				sceneName = scene.name,
+				rootResources = null,
+			}, ExportBinary, true);
 		}
 
 		private static void ExportAllScenes()
@@ -201,8 +311,12 @@ namespace UnityGLTF
 				var scene = SceneManager.GetSceneAt(i);
 				if (!scene.IsValid()) continue;
 				roots.AddRange(Array.ConvertAll(scene.GetRootGameObjects(), gameObject => gameObject.transform));
-			}
-			Export(roots.ToArray(), null, ExportBinary, SceneManager.GetActiveScene().name);
+			}				
+			Export(new ExportBatch() {
+				rootTransforms = roots.ToArray(),
+				sceneName = SceneManager.GetActiveScene().name,
+				rootResources = null,
+			}, ExportBinary, true);
 		}
 
 		private static void ExportAllScenesBatch()
@@ -212,21 +326,57 @@ namespace UnityGLTF
 				var scene = SceneManager.GetSceneAt(i);
 				if (!scene.IsValid()) continue;
 				var roots = Array.ConvertAll(scene.GetRootGameObjects(), gameObject => gameObject.transform);
-				Export(roots, null, ExportBinary, scene.name);
+				var success = Export(new ExportBatch() {
+					rootTransforms = roots,
+					sceneName = scene.name,
+					rootResources = null,
+				}, ExportBinary, i == 0);
+				if (!success) break;
 			}
 		}
 
-		private static void Export(Transform[] transforms, Object[] resources, bool binary, string sceneName)
+		private static bool Export(ExportBatch batch, bool binary, bool askForLocation)
 		{
+			var currentlyOpenScene = SceneManager.GetActiveScene().path;
+			
+			if (batch.sceneAssets != null)
+			{
+				if (batch.sceneAssets.Length == 0)
+				{
+					// Successful export of empty batch
+					return true;
+				}
+				
+				if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+				{
+					var first = batch.sceneAssets.First();
+					EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(first), OpenSceneMode.Single);
+					foreach (var scene in batch.sceneAssets)
+					{
+						if (scene == first) continue;
+						EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(scene), OpenSceneMode.Additive);
+					}
+					
+					var sceneRoots = new List<Transform>();
+					for (var i = 0; i < SceneManager.sceneCount; i++)
+					{
+						var scene = SceneManager.GetSceneAt(i);
+						if (!scene.IsValid()) continue;
+						sceneRoots.AddRange(Array.ConvertAll(scene.GetRootGameObjects(), gameObject => gameObject.transform));
+					}
+					batch.rootTransforms = sceneRoots.ToArray();
+				}
+			}
+			
 			var settings = GLTFSettings.GetOrCreateSettings();
 			var exportOptions = new ExportContext(settings) { TexturePathRetriever = RetrieveTexturePath };
-			var exporter = new GLTFSceneExporter(transforms, exportOptions);
+			var exporter = new GLTFSceneExporter(batch.rootTransforms, exportOptions);
 
-			if (resources != null)
+			if (batch.rootResources != null)
 			{
 				exportOptions.AfterSceneExport += (sceneExporter, _) =>
 				{
-					foreach (var resource in resources)
+					foreach (var resource in batch.rootResources)
 					{
 						if (resource is Material material)
 							sceneExporter.ExportMaterial(material);
@@ -240,11 +390,13 @@ namespace UnityGLTF
 
 			var invokedByShortcut = Event.current?.type == EventType.KeyDown;
 			var path = settings.SaveFolderPath;
-			if (!invokedByShortcut || !Directory.Exists(path))
+			if ((askForLocation && !invokedByShortcut) || !Directory.Exists(path))
 				path = EditorUtility.SaveFolderPanel("glTF Export Path", settings.SaveFolderPath, "");
 
-			if (!string.IsNullOrEmpty(path))
+			var havePath = !string.IsNullOrEmpty(path);
+			if (havePath)
 			{
+				var sceneName = batch.sceneName;
 				var ext = binary ? ".glb" : ".gltf";
 				var resultFile = GLTFSceneExporter.GetFileName(path, sceneName, ext);
 				settings.SaveFolderPath = path;
@@ -257,13 +409,18 @@ namespace UnityGLTF
 				Debug.Log("Exported to " + resultFile);
 				EditorUtility.RevealInFinder(resultFile);
 			}
+			
+			if (currentlyOpenScene != SceneManager.GetActiveScene().path)
+				EditorSceneManager.OpenScene(currentlyOpenScene, OpenSceneMode.Single);
+
+			return havePath;
 		}
 		
 		const string SettingsMenu = "Open Export Settings";
 		[MenuItem(MenuPrefixGameObject + SettingsMenu, true, 3000)]
 		private static bool ShowSettingsValidate()
 		{
-			return TryGetExportNameAndRootTransformsFromSelection(out _, out _, out _, false);
+			return TryGetExportBatchesFromSelection(out _, false);
 		}
 
 		[InitializeOnLoadMethod]
@@ -272,14 +429,19 @@ namespace UnityGLTF
 			SceneHierarchyHooks.addItemsToSceneHeaderContextMenu += (menu, scene) =>
 			{
 				menu.AddItem(new GUIContent("UnityGLTF/Export selected scene"), false, () => ExportScene(scene));
+				if (SceneManager.loadedSceneCount > 1)
+				{
+					menu.AddItem(new GUIContent("UnityGLTF/Export each scene as separate asset"), false, ExportAllScenesBatch);
+					menu.AddItem(new GUIContent("UnityGLTF/Export all scenes as one asset"), false, ExportAllScenes);
+				}
 			};
 			
 			SceneHierarchyHooks.addItemsToGameObjectContextMenu += (menu, gameObject) =>
 			{
 				if (gameObject)
 				{
-					var current = SessionState.GetBool(ExportAsBinary, false);
-					menu.AddItem(new GUIContent("UnityGLTF/Export as binary (GLB)"), !current, () =>
+					var current = SessionState.GetBool(ExportAsBinary, true);
+					menu.AddItem(new GUIContent("UnityGLTF/Export as binary (GLB)"), current, () =>
 					{
 						current = !current;
 						SessionState.SetBool(ExportAsBinary, current);
@@ -290,8 +452,8 @@ namespace UnityGLTF
 					menu.AddItem(new GUIContent("UnityGLTF/Export active scene"), false, ExportScene);
 					if (SceneManager.loadedSceneCount > 1)
 					{
-						menu.AddItem(new GUIContent("UnityGLTF/Export all scenes as one asset"), false, ExportAllScenes);
 						menu.AddItem(new GUIContent("UnityGLTF/Export each scene as separate asset"), false, ExportAllScenesBatch);
+						menu.AddItem(new GUIContent("UnityGLTF/Export all scenes as one asset"), false, ExportAllScenes);
 					}
 				}
 			};
