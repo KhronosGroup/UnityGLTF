@@ -56,7 +56,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 case Type t when t == typeof(Vector4):
                     return (Vector4)value == Vector4.one;
                 case Type t when t == typeof(Quaternion):
-                    return ((Quaternion)value).Equals(new Quaternion(0,0,0,1));
+                    return ((Quaternion)value).Equals(new Quaternion(1,1,1,1));
             }
 
             return false;
