@@ -165,8 +165,8 @@ namespace UnityGLTF
 						// hdrp route uses its own color decomposition
 						if (materialObj.GetFloat("_UseEmissiveIntensity") == 1)
 						{
-                            emissiveAmount = materialObj.GetColor("_EmissiveColorLDR");
-                            maxEmissiveAmount = materialObj.GetFloat("_EmissiveIntensity");
+							emissiveAmount = materialObj.GetColor("_EmissiveColorLDR");
+							maxEmissiveAmount = materialObj.GetFloat("_EmissiveIntensity");
 						}
 						else
 						{
@@ -182,7 +182,7 @@ namespace UnityGLTF
 							materialObj.GetColor("_EmissiveFactor");
 						DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);
 					}
-
+					
 					if (isUnityMaterialWithWeirdColorspaceHandling)
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 					else
@@ -205,8 +205,8 @@ namespace UnityGLTF
 					var propName = materialObj.HasProperty("emissiveTexture") ? "emissiveTexture" :
 						materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" :
 						materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" :
-                        materialObj.HasProperty("_EmissiveColorMap") ? "_EmissiveColorMap" :
-                        "_EmissiveMap";
+						materialObj.HasProperty("_EmissiveColorMap") ? "_EmissiveColorMap" :
+						"_EmissiveMap";
 
 					var emissionTex = materialObj.GetTexture(propName);
 
@@ -842,32 +842,32 @@ namespace UnityGLTF
 			}
 			else if(material.HasProperty("_MaskMap"))
 			{
-                var mrTex = material.GetTexture("_MaskMap");
+				var mrTex = material.GetTexture("_MaskMap");
 
-                if (mrTex)
-                {
+				if (mrTex)
+				{
 					// bake remapping into texture during export
-                    var conversion = GetExportSettingsForSlot(TextureMapType.MetallicGloss);
+					var conversion = GetExportSettingsForSlot(TextureMapType.MetallicGloss);
 
-                    conversion.metallicRangeMin = material.GetFloat("_MetallicRemapMin");
-                    conversion.metallicRangeMax = material.GetFloat("_MetallicRemapMax");
+					conversion.metallicRangeMin = material.GetFloat("_MetallicRemapMin");
+					conversion.metallicRangeMax = material.GetFloat("_MetallicRemapMax");
 					conversion.smoothnessRangeMin = material.GetFloat("_SmoothnessRemapMin");
-                    conversion.smoothnessRangeMax = material.GetFloat("_SmoothnessRemapMax");
+					conversion.smoothnessRangeMax = material.GetFloat("_SmoothnessRemapMax");
 					conversion.occlusionRangeMin = material.GetFloat("_AORemapMin");
 					conversion.occlusionRangeMax = material.GetFloat("_AORemapMax");
-                    
+					
 					conversion.conversion = TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap;
 					_occlusionBakedTextures.Add(material);
 
-                    // set factors to 1 because of baked values
-                    pbr.MetallicFactor = 1f;
+					// set factors to 1 because of baked values
+					pbr.MetallicFactor = 1f;
 					pbr.RoughnessFactor = 1f;
 
-                    pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);
 
-                    ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MaskMap");
-                }
-            }
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MaskMap");
+				}
+			}
 
 			return pbr;
 		}
@@ -1098,29 +1098,29 @@ namespace UnityGLTF
 			return _textures[textureIndex].Texture;
 		}
 
-        // from HDRP's HDUtils.ConvertHDRColorToLDR
-        internal static void ConvertHDRColorToLDR(Color hdr, out Color ldr, out float intensity)
-        {
-            // specifies the max byte value to use when decomposing a float color into bytes with exposure
-            // this is the value used by Photoshop
-            const float k_MaxByteForOverexposedColor = 191;
+		// from HDRP's HDUtils.ConvertHDRColorToLDR
+		internal static void ConvertHDRColorToLDR(Color hdr, out Color ldr, out float intensity)
+		{
+			// specifies the max byte value to use when decomposing a float color into bytes with exposure
+			// this is the value used by Photoshop
+			const float k_MaxByteForOverexposedColor = 191;
 
-            hdr.a = 1.0f;
-            ldr = hdr;
-            intensity = 1.0f;
+			hdr.a = 1.0f;
+			ldr = hdr;
+			intensity = 1.0f;
 
-            var maxColorComponent = hdr.maxColorComponent;
-            if (maxColorComponent != 0f)
-            {
-                // calibrate exposure to the max float color component
-                var scaleFactor = k_MaxByteForOverexposedColor / maxColorComponent;
+			var maxColorComponent = hdr.maxColorComponent;
+			if (maxColorComponent != 0f)
+			{
+				// calibrate exposure to the max float color component
+				var scaleFactor = k_MaxByteForOverexposedColor / maxColorComponent;
 
-                ldr.r = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.r) / 255f;
-                ldr.g = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.g) / 255f;
-                ldr.b = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.b) / 255f;
+				ldr.r = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.r) / 255f;
+				ldr.g = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.g) / 255f;
+				ldr.b = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.b) / 255f;
 
-                intensity = 255f / scaleFactor;
-            }
-        }
-    }
+				intensity = 255f / scaleFactor;
+			}
+		}
+	}
 }
