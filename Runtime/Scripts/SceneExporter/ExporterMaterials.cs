@@ -156,17 +156,33 @@ namespace UnityGLTF
 					materialObj.shader.name == "Universal Render Pipeline/Simple Lit" ||
 					materialObj.shader.name == "Universal Render Pipeline/Unlit");
 				                                             
-				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor") || materialObj.HasProperty("_EmissiveColor"))
+				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor") || materialObj.HasProperty("_UseEmissiveIntensity"))
 				{
-                    // give _EmissionColor lower priority because according to a comment in HDRP's Lit.shader
-                    // it might only be there to  shut the compiler up:
-                    // C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
-                    var c = materialObj.HasProperty("_EmissiveColor") ? materialObj.GetColor("_EmissiveColor") :
-                        materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
-						materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
-                        materialObj.GetColor("_EmissiveFactor");
-					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
-					
+					var emissiveAmount = Color.black;
+					var maxEmissiveAmount = 0f;
+					if (materialObj.HasProperty("_UseEmissiveIntensity"))
+					{
+						// hdrp route uses its own color decomposition
+						if (materialObj.GetFloat("_UseEmissiveIntensity") == 1)
+						{
+                            emissiveAmount = materialObj.GetColor("_EmissiveColorLDR");
+                            maxEmissiveAmount = materialObj.GetFloat("_EmissiveIntensity");
+						}
+						else
+						{
+							var colorHdr = materialObj.GetColor("_EmissiveColor");
+							ConvertHDRColorToLDR(colorHdr, out emissiveAmount, out maxEmissiveAmount);
+						}
+					}
+					else
+					{
+						var c =
+							materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
+							materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
+							materialObj.GetColor("_EmissiveFactor");
+						DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);
+					}
+
 					if (isUnityMaterialWithWeirdColorspaceHandling)
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 					else
@@ -196,23 +212,25 @@ namespace UnityGLTF
 
 					if (emissionTex)
 					{
-						// emissive color is not used for hdrp lit materials when map is set, we have to look at the intensity :o
-						if(materialObj.HasProperty("_EmissiveColorMap") && materialObj.HasProperty("_EmissiveIntensity"))
-						{
-                            //var ei = materialObj.GetFloat("_EmissiveIntensity");
-                            //material.EmissiveFactor = new GLTF.Math.Color(ei, ei, ei, 1f);
+						UnityEngine.Debug.Log(emissionTex.ToString(), emissionTex);
+						UnityEngine.Debug.Log(materialObj.ToString(), materialObj);
+						//// emissive color is not used for hdrp lit materials when map is set, we have to look at the intensity :o
+						//if(materialObj.HasProperty("_EmissiveColorMap") && materialObj.HasProperty("_EmissiveIntensity"))
+						//{
+      //                      //var ei = materialObj.GetFloat("_EmissiveIntensity");
+      //                      //material.EmissiveFactor = new GLTF.Math.Color(ei, ei, ei, 1f);
 
-							// for now, lets just default to white and remove the extension if it was applied
-							material.EmissiveFactor = GLTF.Math.Color.White;
+						//	// for now, lets just default to white and remove the extension if it was applied
+						//	material.EmissiveFactor = GLTF.Math.Color.White;
 
-                            var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
-                            var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
-                            if (emissiveStrengthSupported && material.Extensions != null)
-                            {
-								// remove the old entry
-								material.Extensions.Remove(KHR_materials_emissive_strength_Factory.EXTENSION_NAME);
-                            }
-                        }
+      //                      var materialSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
+      //                      var emissiveStrengthSupported = materialSettings && materialSettings.KHR_materials_emissive_strength;
+      //                      if (emissiveStrengthSupported && material.Extensions != null)
+      //                      {
+						//		// remove the old entry
+						//		material.Extensions.Remove(KHR_materials_emissive_strength_Factory.EXTENSION_NAME);
+      //                      }
+      //                  }
 
 						if(emissionTex is Texture2D)
 						{
@@ -1099,5 +1117,30 @@ namespace UnityGLTF
 			var textureIndex = _root.Textures.FindIndex(x => x == exported);
 			return _textures[textureIndex].Texture;
 		}
-	}
+
+        // from HDRP's HDUtils.ConvertHDRColorToLDR
+        internal static void ConvertHDRColorToLDR(Color hdr, out Color ldr, out float intensity)
+        {
+            // specifies the max byte value to use when decomposing a float color into bytes with exposure
+            // this is the value used by Photoshop
+            const float k_MaxByteForOverexposedColor = 191;
+
+            hdr.a = 1.0f;
+            ldr = hdr;
+            intensity = 1.0f;
+
+            var maxColorComponent = hdr.maxColorComponent;
+            if (maxColorComponent != 0f)
+            {
+                // calibrate exposure to the max float color component
+                var scaleFactor = k_MaxByteForOverexposedColor / maxColorComponent;
+
+                ldr.r = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.r) / 255f;
+                ldr.g = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.g) / 255f;
+                ldr.b = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.b) / 255f;
+
+                intensity = 255f / scaleFactor;
+            }
+        }
+    }
 }
