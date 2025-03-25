@@ -176,8 +176,7 @@ namespace UnityGLTF
 					}
 					else
 					{
-						var c =
-							materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
+						var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
 							materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
 							materialObj.GetColor("_EmissiveFactor");
 						DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);

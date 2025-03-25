@@ -265,8 +265,8 @@ namespace UnityGLTF
 					hashCode = (hashCode * 397) ^ smoothnessRangeMax.GetHashCode();
 					hashCode = (hashCode * 397) ^ metallicRangeMin.GetHashCode();
 					hashCode = (hashCode * 397) ^ metallicRangeMax.GetHashCode();
-                    hashCode = (hashCode * 397) ^ occlusionRangeMin.GetHashCode();
-                    hashCode = (hashCode * 397) ^ occlusionRangeMax.GetHashCode();
+					hashCode = (hashCode * 397) ^ occlusionRangeMin.GetHashCode();
+					hashCode = (hashCode * 397) ^ occlusionRangeMax.GetHashCode();
 					return hashCode;
 				}
 			}
