@@ -399,7 +399,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 sourceNode.FlowSocketConnectionData[sourceSocketName].Socket = destinationSocketName;
             }
         }
-
+        
+        public bool HasPortMappingTo(ValueOutput valueOutput)
+        {
+            return outputPortToSocketNameByPort.ContainsKey(valueOutput);
+        }
+        
         public void MapValueOutportToSocketName(IUnitOutputPort outputPort, string socketName, GltfInteractivityUnitExporterNode node)
         {
             outputPortToSocketNameByPort.Add(outputPort, new NodeSocketName(socketName, node));
