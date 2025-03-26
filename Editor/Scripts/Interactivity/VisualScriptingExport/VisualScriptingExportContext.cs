@@ -658,6 +658,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             TriggerInterfaceExportCallbacks();
             
+            // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
+            TopologicalSort();
             CheckForImplicitValueConversions();
             
             CheckForCircularFlows();
@@ -665,7 +667,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (plugin.cleanUpAndOptimizeExportedGraph)
                 CleanUp();
             
-            PostIndexTopologicalSort();  
+            // Final Topological Sort
+            TopologicalSort();  
             
             CollectOpDeclarations();
             
@@ -758,7 +761,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             Debug.LogWarning("Exported with warnings/errors: "+System.Environment.NewLine+ sb.ToString());
         }
         
-        private void PostIndexTopologicalSort()
+        private void TopologicalSort()
         {
             // Resort the nodes after resolving the connections
             var sorted = PostTopologicalSort();
