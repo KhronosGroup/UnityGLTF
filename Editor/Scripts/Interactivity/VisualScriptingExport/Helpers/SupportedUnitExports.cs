@@ -41,6 +41,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         }
                     }
                 }
+                else
                 if (exporter.Value is CreateStructsUnitExport structExporter)
                 {
                     supportedStructsCreation = structExporter.SupportedTypes;
