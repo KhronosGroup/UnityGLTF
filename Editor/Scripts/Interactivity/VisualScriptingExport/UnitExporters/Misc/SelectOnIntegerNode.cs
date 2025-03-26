@@ -24,8 +24,24 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             for (int i = 0; i < unit.branches.Count; i++)
                 cases[i] = (int)unit.branches[i].Key;
 
-            switchNode.ValueIn(Math_SwitchNode.IdDefaultValue).MapToInputPort(unit.@default);
-
+            if (unit.@default.hasValidConnection || unit.@default.hasDefaultValue)
+                switchNode.ValueIn(Math_SwitchNode.IdDefaultValue).MapToInputPort(unit.@default);
+            else
+            {
+                if (unit.branches.Count > 0)
+                {
+                    var firstBranch = unit.branches[0];
+                    switchNode.ValueIn(Math_SwitchNode.IdDefaultValue).MapToInputPort(firstBranch.Value);
+                }
+     
+            }
+                
+            if (unit.branches.Count == 0)
+            {
+                UnitExportLogging.AddErrorLog(unit, "There are no branches in the SelectOnInteger node.");
+                return false;
+            }
+            
             switchNode.ValueIn(Math_SwitchNode.IdSelection).MapToInputPort(unit.selector);
             var valueout = switchNode.ValueOut(Math_SwitchNode.IdOut).MapToPort(unit.selection);
             
