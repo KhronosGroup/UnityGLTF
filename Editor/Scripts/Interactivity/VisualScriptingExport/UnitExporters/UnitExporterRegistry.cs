@@ -112,10 +112,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
 
             if (!_exportRegistry.ContainsKey(unitType))
-            {
-                Debug.LogWarning("No ExportNodeConvert found for unitType: " + unitType.ToString());
                 return null;
-            }
 
             var converter = _exportRegistry[unitType];
             if (converter == null)
