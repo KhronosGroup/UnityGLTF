@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using GLTF.Schema;
+using TMPro;
 using UnityEngine;
 using UnityGLTF.Extensions;
 
@@ -36,6 +37,15 @@ namespace UnityGLTF.Plugins
 		
 		private Dictionary<Texture, RenderTexture> rtCache;
 
+		public override void BeforeNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform,
+			Node node)
+		{
+			var tmp = transform.GetComponent<TextMeshPro>();
+			if (tmp == null) return;
+			
+			tmp.ForceMeshUpdate();
+		}
+		
 		public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
 		{
 			if (material.shader.name.Contains("TextMeshPro")) // seems to only work for TextMeshPro/Mobile/ right now (SDFAA_HINTED?)
