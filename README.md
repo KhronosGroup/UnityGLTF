@@ -185,6 +185,10 @@ A lot of VisualScripting nodes are already supported, to see the full list of su
 
 When the interactivity extension is enabled, you can also see in the Visual Scripting Editor which nodes are supported by the extension. You can also see any warnings/errors from the last exporting there (sometimes the editor will not be immediately updates the view and need some time).
 
+![image](https://github.com/user-attachments/assets/df9d4e8e-fd8d-4c5a-a6a4-15812a5ea484)
+
+You can also find some limitation warnings and information:
+![image](https://github.com/user-attachments/assets/011618d4-623e-4aa9-b343-bdbeb06df141)
 
 
 ## glTF Materials
