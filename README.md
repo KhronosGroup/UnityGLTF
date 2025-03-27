@@ -157,6 +157,35 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - Optional plugin: Bake Particle Systems to meshes on export
 - Optional plugin: Bake Canvas to meshes on export
 - Included plugin sample: [KHR_audio_emitter](https://github.com/KhronosGroup/glTF/pull/2137) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/interactivity/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (VisualScripting Graph exporter) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+
+## Gltf Interactivity (work-in-progress)
+### VisualScripting Graph Exporter
+
+This plugin allows you to export VisualScripting Graphs as KHR_interactivity Graphs in glTF files.
+>Because the specification of KHR_interactivity is still in development, the plugin is disabled by default. To enable it, go to `Project Settings > UnityGLTF > Export` and enable the 'KHR_interactivity (VisualScripting)' plugin.
+So please keep in mind, that exported glTF files with the KHR_interactivity extension might be outdated and not valid anymore with new specification updates.
+
+**Supported features:**
+- SubGraphes
+- Variables ("Saved" variables are not supported)
+- Limited List/Array support (Capacity of Lists can't be changed at runtime, so make sure you create a List with enough size in VisualScripting.)
+- Custom Events
+- Coroutines
+- Multiple VisualScripting Graphs in one glTF file
+- Logic operations
+- Math operations
+- Material editing: Get/Set of Floats, Color, Texture Offset/Scale
+
+A lot of VisualScripting nodes are already supported, to see the full list of supported nodes, click on the button `Project Settings > UnityGLTF > Export > KHR_interactivity (VisualScripting) > Log supported Visual Scripting Units` to see the full list of supported nodes in the console.
+
+**Unsupported:**
+- Strings (not supported by the KHR_interactivity extension)
+- Quaternion math operations are currently missing (specification will be updated soon)
+
+When the interactivity extension is enabled, you can also see in the Visual Scripting Editor which nodes are supported by the extension. You can also see any warnings/errors from the last exporting there (sometimes the editor will not be immediately updates the view and need some time).
+
+
 
 ## glTF Materials
 
