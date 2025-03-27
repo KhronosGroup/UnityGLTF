@@ -159,10 +159,10 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - Included plugin sample: [KHR_audio_emitter](https://github.com/KhronosGroup/glTF/pull/2137) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 - [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/interactivity/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (VisualScripting Graph exporter) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 
-## Gltf Interactivity (work-in-progress)
+## glTF Interactivity (work-in-progress)
 ### VisualScripting Graph Exporter
 
-This plugin allows you to export VisualScripting Graphs as KHR_interactivity Graphs in glTF files.
+This plugin allows you to export VisualScripting Graphs as KHR_interactivity graphs in glTF files.
 >Because the specification of KHR_interactivity is still in development, the plugin is disabled by default. To enable it, go to `Project Settings > UnityGLTF > Export` and enable the 'KHR_interactivity (VisualScripting)' plugin.
 So please keep in mind, that exported glTF files with the KHR_interactivity extension might be outdated and not valid anymore with new specification updates.
 
