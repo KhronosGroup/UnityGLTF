@@ -660,6 +660,12 @@ namespace UnityGLTF
 			};
 			_root.Buffers.Add(_buffer);
 			
+			foreach (var plugin in settings.ExportPlugins)
+			{
+				if (plugin != null && plugin.Enabled && plugin.AssetExtras != null)
+					_root.Asset.PluginExtras.Add(plugin.DisplayName, plugin.AssetExtras);
+			}
+			
 			_visbilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
 			if (_visbilityPluginEnabled && !settings.ExportDisabledGameObjects)
 			{

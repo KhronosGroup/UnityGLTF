@@ -1,10 +1,16 @@
 using GLTF.Schema;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
     public abstract class GLTFExportPlugin: GLTFPlugin
     {
+        public virtual JToken AssetExtras
+        {
+            get => null;
+        }
+        
         /// <summary>
         /// Return the Plugin Instance that receives the import callbacks
         /// </summary>

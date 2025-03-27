@@ -1,4 +1,6 @@
 using System;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
@@ -23,7 +25,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
             public bool ADBEConsole = true;
             public bool BabylonLog = false;
         }
-        
+
+        public override JToken AssetExtras 
+        { 
+            get => new JObject(
+                    new JProperty("Spec.Version URL", "https://github.com/KhronosGroup/glTF/blob/d9bfdb08f0c09c125f588783921d9edceb7ee78c/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc"),
+                    new JProperty("Spec.Version Date", "2025-03-10"));
+        }
+
         // Disabled by default until Gltf Interactivity spec is ratified
         public override bool EnabledByDefault => false;
         
