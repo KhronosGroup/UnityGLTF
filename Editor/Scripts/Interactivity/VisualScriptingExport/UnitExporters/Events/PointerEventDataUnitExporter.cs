@@ -8,14 +8,25 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     /// <summary>
     /// This is only an informative exporter, which shows additional information about export support in the graph editor.
     /// </summary>
-    public class PointerEventDataUnitExporter : IUnitExporter, IUnitExporterFeedback
+    internal class PointerEventDataUnitExporter : IUnitExporter, IUnitExporterFeedback
     {
         private const string WARNING_TEXT = "Export support is currently limited: Only use this node in combination with a OnPointerClick, OnPointerEnter or OnPointerExit as input connection.";
         
         [InitializeOnLoadMethod]
         private static void Register()
         {
+            ExposeUnitExport.RegisterExposeConvert(typeof(PointerEventData), new PointerEventDataUnitExporter(), 
+                nameof(PointerEventData.pointerCurrentRaycast),
+                nameof(PointerEventData.pointerEnter),
+                nameof(PointerEventData.pointerClick),
+                nameof(PointerEventData.pointerId),
+                nameof(PointerEventData.position));
+            
             GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerCurrentRaycast), new PointerEventDataUnitExporter());
+            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerEnter), new PointerEventDataUnitExporter());
+            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerClick), new PointerEventDataUnitExporter());
+            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerId), new PointerEventDataUnitExporter());
+            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.position), new PointerEventDataUnitExporter());
         }
         
         public Type unitType { get => typeof(GetMember); }

@@ -7,25 +7,6 @@ using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
-    internal static class GameEventSupportRegister
-    {
-        [InitializeOnLoadMethod]
-        private static void Register()
-        {
-            // Just mark it as exportable
-            ExposeUnitExport.RegisterExposeConvert(typeof(PointerEventData), null, 
-                "pointerEnter",
-                "pointerClick", 
-                "position", 
-                "pointerId"
-                );
-            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerEnter), null);
-            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerClick), null);
-            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.pointerId), null);
-            GetMemberUnitExport.RegisterMemberExporter(typeof(PointerEventData), nameof(PointerEventData.position), null);            
-        }
-    }
-    
     public abstract class GameObjectEvents<TVisualGraphUnit, TNodeSchema> : IUnitExporter 
         where TNodeSchema : GltfInteractivityNodeSchema, new()
         where TVisualGraphUnit : class, IGameObjectEventUnit
