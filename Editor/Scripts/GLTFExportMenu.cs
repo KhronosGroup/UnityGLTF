@@ -306,17 +306,32 @@ namespace UnityGLTF
 		private static void ExportAllScenes()
 		{
 			var roots = new List<Transform>();
+			var scenesThatWereNotLoaded = new List<Scene>();
+			
 			for (var i = 0; i < SceneManager.sceneCount; i++)
 			{
 				var scene = SceneManager.GetSceneAt(i);
 				if (!scene.IsValid()) continue;
+				var sceneWasLoaded = scene.isLoaded;
+				if (!sceneWasLoaded)
+				{
+					EditorSceneManager.OpenScene(scene.path, OpenSceneMode.Additive);
+					scenesThatWereNotLoaded.Add(scene);
+				}
 				roots.AddRange(Array.ConvertAll(scene.GetRootGameObjects(), gameObject => gameObject.transform));
 			}				
+			
 			Export(new ExportBatch() {
 				rootTransforms = roots.ToArray(),
 				sceneName = SceneManager.GetActiveScene().name,
 				rootResources = null,
 			}, ExportBinary, true);
+			
+			foreach (var scene in scenesThatWereNotLoaded)
+			{
+				if (!scene.isLoaded) continue;
+				EditorSceneManager.CloseScene(scene, false);
+			}
 		}
 
 		private static void ExportAllScenesBatch()
@@ -325,12 +340,18 @@ namespace UnityGLTF
 			{
 				var scene = SceneManager.GetSceneAt(i);
 				if (!scene.IsValid()) continue;
+				
+				var sceneWasLoaded = scene.isLoaded;
+				if (!sceneWasLoaded) EditorSceneManager.OpenScene(scene.path, OpenSceneMode.Additive);
+				
 				var roots = Array.ConvertAll(scene.GetRootGameObjects(), gameObject => gameObject.transform);
 				var success = Export(new ExportBatch() {
 					rootTransforms = roots,
 					sceneName = scene.name,
 					rootResources = null,
 				}, ExportBinary, i == 0);
+				
+				if (!sceneWasLoaded) EditorSceneManager.CloseScene(scene, false);
 				if (!success) break;
 			}
 		}
@@ -429,7 +450,7 @@ namespace UnityGLTF
 			SceneHierarchyHooks.addItemsToSceneHeaderContextMenu += (menu, scene) =>
 			{
 				menu.AddItem(new GUIContent("UnityGLTF/Export selected scene"), false, () => ExportScene(scene));
-				if (SceneManager.loadedSceneCount > 1)
+				if (SceneManager.sceneCount > 1)
 				{
 					menu.AddItem(new GUIContent("UnityGLTF/Export each scene as separate asset"), false, ExportAllScenesBatch);
 					menu.AddItem(new GUIContent("UnityGLTF/Export all scenes as one asset"), false, ExportAllScenes);
@@ -450,7 +471,7 @@ namespace UnityGLTF
 				else
 				{
 					menu.AddItem(new GUIContent("UnityGLTF/Export active scene"), false, ExportScene);
-					if (SceneManager.loadedSceneCount > 1)
+					if (SceneManager.sceneCount > 1)
 					{
 						menu.AddItem(new GUIContent("UnityGLTF/Export each scene as separate asset"), false, ExportAllScenesBatch);
 						menu.AddItem(new GUIContent("UnityGLTF/Export all scenes as one asset"), false, ExportAllScenes);
