@@ -190,6 +190,9 @@ When the interactivity extension is enabled, you can also see in the Visual Scri
 You can also find some limitation warnings and information:
 ![image](https://github.com/user-attachments/assets/011618d4-623e-4aa9-b343-bdbeb06df141)
 
+Exported files can currently be loaded in:
+- Babylon: https://sandbox.babylonjs.com/
+- Khronos Interactivity Graph Authoring Tool https://github.khronos.org/glTF-InteractivityGraph-AuthoringTool/
 
 ## glTF Materials
 
