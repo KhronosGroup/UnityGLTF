@@ -34,7 +34,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 foreach (var nodeWithKeyType in nodesWithKeyType)
                 {
                    
-                    foreach (var valueSocket in nodeWithKeyType.ValueSocketConnectionData)
+                    foreach (var valueSocket in nodeWithKeyType.ValueInConnection)
                     {
                         if (valueSocket.Value.Node == null || valueSocket.Value.Node == -1)
                             continue;

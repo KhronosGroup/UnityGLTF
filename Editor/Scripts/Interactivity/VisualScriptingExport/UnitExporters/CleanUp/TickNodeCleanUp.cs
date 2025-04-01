@@ -40,7 +40,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             }
             var firstTickNode = tickNodes[0];
             
-            var firstTickNodeFlowOut = firstTickNode.FlowSocketConnectionData[Event_OnTickNode.IdFlowOut];
+            var firstTickNodeFlowOut = firstTickNode.FlowConnections[Event_OnTickNode.IdFlowOut];
 
             GltfInteractivityNode firstTickNodeSelectNode = null;
             
@@ -57,7 +57,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             {
                 var tickNode = tickNodes[i];
                 bool dontDelete = false;
-                var flowOut = tickNode.FlowSocketConnectionData[Event_OnTickNode.IdFlowOut];
+                var flowOut = tickNode.FlowConnections[Event_OnTickNode.IdFlowOut];
                 GltfInteractivityNode tickNodeSelectNode = null;
                    
                 if (tickNode is GltfInteractivityUnitExporterNode tickNodeExport)
@@ -84,7 +84,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 
                 foreach (var node in nodes)
                 {
-                    foreach (var socket in node.ValueSocketConnectionData)
+                    foreach (var socket in node.ValueInConnection)
                     {
                         if (tickNodeSelectNode != null && firstTickNodeSelectNode != null)
                         {

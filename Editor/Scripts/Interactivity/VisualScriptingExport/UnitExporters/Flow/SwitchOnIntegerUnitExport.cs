@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             unitExporter.MapInputPortToSocketName(unit.enter, Flow_SwitchNode.IdFlowIn, node);
 
-            node.ConfigurationData["cases"] = new GltfInteractivityNode.ConfigData
+            node.Configuration["cases"] = new GltfInteractivityNode.ConfigData
             {
                 Value = unit.branches.Select(b => b.Key).ToArray()
             };

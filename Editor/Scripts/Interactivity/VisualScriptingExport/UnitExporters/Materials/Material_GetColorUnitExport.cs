@@ -25,14 +25,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             
             
-            var materialTemplate = "/materials/{" + UnitsHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
             var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
             
             if (unit is GetMember getMember)
             {
                 var node = unitExporter.CreateNode(new Pointer_GetNode());
                 node.FirstValueOut().MapToPort(getMember.value).ExpectedType(ExpectedType.Float4);
-                node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                     getMember.target, template, GltfTypes.Float4);
             }
             else if (unit is InvokeMember invokeMember)
@@ -63,12 +63,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (hasAlpha)
                 {
                     node.FirstValueOut().MapToPort(invokeMember.result).ExpectedType(ExpectedType.Float4);
-                    node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float4);
                 }
                 else
                 {
-                    node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float3);
                     
                     var extract = unitExporter.CreateNode(new Math_Extract3Node());

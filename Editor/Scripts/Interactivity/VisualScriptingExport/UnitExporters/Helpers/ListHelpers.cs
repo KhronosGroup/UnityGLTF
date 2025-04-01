@@ -208,7 +208,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             VariablesHelpers.GetVariable(unitExporter, list.StartIndex, out var firstValue);
             switchNode.ValueIn(Math_SwitchNode.IdDefaultValue).ConnectToSource(firstValue).SetType(TypeRestriction.LimitToType(varType));
             
-            switchNode.ConfigurationData[Math_SwitchNode.IdConfigCases].Value = cases;
+            switchNode.Configuration[Math_SwitchNode.IdConfigCases].Value = cases;
         }
 
         public static void RemoveListItemAt(UnitExporter unitExporter, VariableBasedList list, ValueInput index, ControlInput flowIn, ControlOutput flowOut)
@@ -230,7 +230,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var forLoop = unitExporter.CreateNode(new Flow_ForLoopNode());
             index = forLoop.ValueIn(Flow_ForLoopNode.IdStartIndex);
             forLoop.ValueIn(Flow_ForLoopNode.IdEndIndex).ConnectToSource(countMinusOne.FirstValueOut());
-            forLoop.ConfigurationData[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
+            forLoop.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
             flowIn = forLoop.FlowIn(Flow_ForLoopNode.IdFlowIn);
             
             var currentIndexPlusOne = unitExporter.CreateNode(new Math_AddNode());
@@ -300,11 +300,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var flowSwitch = unitExporter.CreateNode(new Flow_SwitchNode());
             list.setValueFlowIn = flowSwitch.FlowIn(Flow_SwitchNode.IdFlowIn);
             flowSwitch.ValueIn(Flow_SwitchNode.IdSelection).ConnectToSource(currentIndexValueOut);
-            flowSwitch.ConfigurationData["cases"] = new GltfInteractivityNode.ConfigData { Value = indices };
+            flowSwitch.Configuration["cases"] = new GltfInteractivityNode.ConfigData { Value = indices };
 
             for (int i = 0; i < indices.Length; i++)
             {
-                flowSwitch.FlowSocketConnectionData.Add(i.ToString(), new GltfInteractivityNode.FlowSocketData());
+                flowSwitch.FlowConnections.Add(i.ToString(), new GltfInteractivityNode.FlowSocketData());
                 
                 VariablesHelpers.SetVariable(unitExporter, list.StartIndex + i, valueToSetValueOut, flowSwitch.FlowOut(i.ToString()), null);
             }

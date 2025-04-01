@@ -54,11 +54,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueAnimation].Value = animationId;
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueSpeed].Value = animationState.speed;
+            node.ValueInConnection[Animation_StartNode.IdValueAnimation].Value = animationId;
+            node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = animationState.speed;
 
             // TODO: Get from clip start from state cycleOffset
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueStartTime].Value = 0.0f;
+            node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
             var otherAnimationStates = AnimatorHelper.GetAllAnimationStates(target);
             var stopSequence = unitExporter.CreateNode(new Flow_SequenceNode());
@@ -87,7 +87,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             lastSequenceFlow.ConnectToFlowDestination(node.FlowIn(Animation_StartNode.IdFlowIn));
             
             AnimationClip clip = animationState.motion as AnimationClip;
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueEndtime].Value =
+            node.ValueInConnection[Animation_StartNode.IdValueEndtime].Value =
                 (clip != null && !clip.isLooping) ? clip.length : float.PositiveInfinity;
 
             // There should only be one output flow from the Animator.Play node

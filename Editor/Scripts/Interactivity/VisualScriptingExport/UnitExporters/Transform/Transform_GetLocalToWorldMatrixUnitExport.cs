@@ -22,8 +22,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var getMatrix = unitExporter.CreateNode(new Pointer_GetNode());
             
-            getMatrix.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex,
-                getMemberUnit.target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeIndex,
+                getMemberUnit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
 
             var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(getMatrix.FirstValueOut());

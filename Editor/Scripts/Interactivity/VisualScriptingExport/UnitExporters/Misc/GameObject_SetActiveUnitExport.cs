@@ -28,15 +28,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             visibleNode.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
             
-            visibleNode.SetupPointerTemplateAndTargetInput(
-                UnitsHelper.IdPointerNodeIndex,
+            PointersHelper.SetupPointerTemplateAndTargetInput(visibleNode,
+                PointersHelper.IdPointerNodeIndex,
                 unit.target, VisibleExtensionHelper.PointerTemplate,
                 GltfTypes.Bool);
             
             visibleNode.FlowOut(Pointer_SetNode.IdFlowOut)
                 .ConnectToFlowDestination(selectableNode.FlowIn(Pointer_SetNode.IdFlowIn));
-            selectableNode.SetupPointerTemplateAndTargetInput(
-                UnitsHelper.IdPointerNodeIndex,
+            PointersHelper.SetupPointerTemplateAndTargetInput(selectableNode,
+                PointersHelper.IdPointerNodeIndex,
                 unit.target, SelectableExtensionHelper.PointerTemplate,
                 GltfTypes.Bool);
             

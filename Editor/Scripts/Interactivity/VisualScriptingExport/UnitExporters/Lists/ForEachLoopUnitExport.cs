@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             var forLoop = unitExporter.CreateNode(new Flow_ForLoopNode());
-            forLoop.ConfigurationData[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
+            forLoop.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
             forLoop.ValueIn(Flow_ForLoopNode.IdStartIndex).SetValue(0);
 
             forLoop.FlowIn(Flow_ForLoopNode.IdFlowIn).MapToControlInput(unit.enter);

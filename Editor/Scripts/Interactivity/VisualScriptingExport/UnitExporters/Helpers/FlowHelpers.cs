@@ -176,12 +176,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var branch = unitExporter.CreateNode(new Flow_BranchNode());
             var waitingBranch = unitExporter.CreateNode(new Flow_BranchNode());
             
-            setVarStart.ConfigurationData[Variable_SetNode.IdConfigVarIndex].Value = varId;
-            setVarFinish.ConfigurationData[Variable_SetNode.IdConfigVarIndex].Value = varId;
+            setVarStart.Configuration[Variable_SetNode.IdConfigVarIndex].Value = varId;
+            setVarFinish.Configuration[Variable_SetNode.IdConfigVarIndex].Value = varId;
             setVarFinish.ValueIn(Variable_SetNode.IdInputValue).SetValue(false);
             setVarStart.ValueIn(Variable_SetNode.IdInputValue).SetValue(true);
             
-            getVar.ConfigurationData[Variable_SetNode.IdConfigVarIndex].Value = varId;
+            getVar.Configuration[Variable_SetNode.IdConfigVarIndex].Value = varId;
 
             flowIn = setVarStart.FlowIn(Variable_SetNode.IdFlowIn); 
             setVarStart.FlowOut(Variable_SetNode.IdFlowOut)

@@ -31,7 +31,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             ValueInput target = null;
             
-            var materialTemplate = "/materials/{" + UnitsHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
             var template = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/" + property;
             var scaleTemplate = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale";
 
@@ -51,7 +51,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.MapValueOutportToSocketName(getMember.value, Pointer_GetNode.IdValue, node);
                 }
                 
-                node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
             }
             else if (unitExporter.unit is InvokeMember invokeMember)
             {
@@ -88,7 +88,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 var node = unitExporter.CreateNode(new Pointer_GetNode());
                 unitExporter.ByPassFlow(invokeMember.enter, invokeMember.exit);
-                node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
                 
                 if (isOffset)
                 {

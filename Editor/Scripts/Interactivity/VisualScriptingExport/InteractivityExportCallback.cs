@@ -10,17 +10,17 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
     public class GltfInteractivityExportNodes
     {
-        public readonly List<GltfInteractivityNode> nodes = new List<GltfInteractivityNode>();
+        public readonly List<GltfInteractivityExportNode> nodes = new List<GltfInteractivityExportNode>();
 
-        public GltfInteractivityNode CreateNode(GltfInteractivityNodeSchema schema)
+        public GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
         {
-            var newNode = new GltfInteractivityNode(schema);
+            var newNode = new GltfInteractivityExportNode(schema);
             nodes.Add(newNode);
             newNode.Index = nodes.Count - 1;
             return newNode;
         }
         
-        internal GltfInteractivityExportNodes(List<GltfInteractivityNode> nodes)
+        internal GltfInteractivityExportNodes(List<GltfInteractivityExportNode> nodes)
         {
             this.nodes = nodes;
         }

@@ -35,7 +35,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
                     break;
             }
             
-            logNode.ConfigurationData[Debug_LogNode.IdConfigMessage].Value = msgPrefix + unit.message;
+            logNode.Configuration[Debug_LogNode.IdConfigMessage].Value = msgPrefix + unit.message;
 
             for (int i = 0; i < unit.argumentCount; i++)
             {

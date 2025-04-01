@@ -37,7 +37,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             unitExporter.MapInputPortToSocketName(socketName, tickNode, 
                 Math_SelectNode.IdValueB, selectNode);
-            selectNode.ValueSocketConnectionData[Math_SelectNode.IdValueA] = new GltfInteractivityUnitExporterNode.ValueSocketData()
+            selectNode.ValueInConnection[Math_SelectNode.IdValueA] = new GltfInteractivityUnitExporterNode.ValueSocketData()
             {
                 Value = 0f,
                 Type = GltfTypes.TypeIndexByGltfSignature("float"),

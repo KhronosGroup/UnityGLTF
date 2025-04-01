@@ -22,7 +22,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
         {
             var unit = unitExporter.unit as MaterialFloatInterpolate;
             
-            var materialTemplate = "/materials/{" + UnitsHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
             var template = materialTemplate;
             
             var valueType = GltfTypes.Float;
@@ -67,7 +67,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
             node.ValueIn(Pointer_InterpolateNode.IdPoint2).MapToInputPort(unit.pointB);
             node.FlowOut(Pointer_InterpolateNode.IdFlowOutDone).MapToControlOutput(unit.done);
             
-            node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex, unit.target, template, valueType);
+            PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, unit.target, template, valueType);
             return true;
         }
     }

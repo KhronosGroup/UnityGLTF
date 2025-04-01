@@ -19,7 +19,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             foreach (var waitAllNode in waitAllNodes)
             {
-                int flowInCount = (int)waitAllNode.ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value;
+                int flowInCount = (int)waitAllNode.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value;
                 bool canRemove = flowInCount <= 1;
                 
                 if (canRemove)

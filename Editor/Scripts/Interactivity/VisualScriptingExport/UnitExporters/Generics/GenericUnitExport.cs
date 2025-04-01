@@ -49,7 +49,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var node = unitExporter.CreateNode(schema);
             
-            foreach (var flow in node.FlowSocketConnectionData)
+            foreach (var flow in node.FlowConnections)
             {
                 // TODO: Map flow sockets
             }
@@ -68,7 +68,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             }
             
-            foreach (var input in node.ValueSocketConnectionData)
+            foreach (var input in node.ValueInConnection)
             {
                 for (int i = 0; i < inputSocketNames.Length; i++)
                 {

@@ -16,7 +16,7 @@ namespace UnityGLTF.Interactivity.Schema
         public Dictionary<string, FlowSocketDescriptor> InputFlowSockets { get; set; } = new();
         public Dictionary<string, FlowSocketDescriptor> OutputFlowSockets {get; set;} = new();
         public Dictionary<string, InputValueSocketDescriptor> InputValueSockets {get; set;} = new();
-        public Dictionary<string, OutValueSocketDescriptor> OutputValueSockets {get; set;} = new();
+        public Dictionary<string, OutputValueSocketDescriptor> OutputValueSockets {get; set;} = new();
         
         public MetaDataEntry[] MetaDatas {get; protected set;}
 
@@ -58,7 +58,7 @@ namespace UnityGLTF.Interactivity.Schema
                     }
                     else if (attribute is OutputSocketDescriptionWithTypeDependencyFromInputAttribute outputSocketDescriptionWithExpectedType)
                     {
-                        var newOut = new OutValueSocketDescriptor
+                        var newOut = new OutputValueSocketDescriptor
                         {
                             SupportedTypes = outputSocketDescriptionWithExpectedType.supportedTypes,
                             expectedType = outputSocketDescriptionWithExpectedType.expectedType
@@ -96,7 +96,7 @@ namespace UnityGLTF.Interactivity.Schema
                     }
                     else if (attribute is OutputSocketDescriptionAttribute outputSocketDescription)
                     {
-                        var newOut = new OutValueSocketDescriptor
+                        var newOut = new OutputValueSocketDescriptor
                         {
                             SupportedTypes = outputSocketDescription.supportedTypes
                         };
@@ -164,7 +164,7 @@ namespace UnityGLTF.Interactivity.Schema
         /// <summary>
         /// Describes sockets that import/export values before/after the node's execution.
         /// </summary>
-        public class OutValueSocketDescriptor : ValueSocketDescriptor
+        public class OutputValueSocketDescriptor : ValueSocketDescriptor
         {
             // List of data types that can be imported/exported by this value socket.
             public ExpectedType expectedType = null;

@@ -104,8 +104,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             // Remove all +0 nodes
             foreach (var addNode in addNodes)
             {
-                var socketA = addNode.ValueSocketConnectionData[Math_MulNode.IdValueA];
-                var socketB = addNode.ValueSocketConnectionData[Math_MulNode.IdValueB];
+                var socketA = addNode.ValueInConnection[Math_MulNode.IdValueA];
+                var socketB = addNode.ValueInConnection[Math_MulNode.IdValueB];
 
                 var valueA = socketA.Value;
                 var valueB = socketB.Value;
@@ -127,8 +127,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             // Remove all *1 nodes
             foreach (var mulNode in mulNodes)
             {
-                var socketA = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueA];
-                var socketB = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueB];
+                var socketA = mulNode.ValueInConnection[Math_MulNode.IdValueA];
+                var socketB = mulNode.ValueInConnection[Math_MulNode.IdValueB];
 
                 if (socketA.Value != null && IsOne(socketA.Value) && socketB.Node != null)
                 {
@@ -147,8 +147,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             mulNodes = nodes.FindAll(node => node.Schema is Math_MulNode).ToArray();
             foreach (var mulNode in mulNodes)
             {
-                var socketA = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueA];
-                var socketB = mulNode.ValueSocketConnectionData[Math_MulNode.IdValueB];
+                var socketA = mulNode.ValueInConnection[Math_MulNode.IdValueA];
+                var socketB = mulNode.ValueInConnection[Math_MulNode.IdValueB];
                 
                 bool IsThereAnyOtherConnectionToThisPort(GltfInteractivityNode toNode, string outPort, GltfInteractivityNode ignoreNode)
                 {
@@ -157,7 +157,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         if (node == toNode || node.Index == -1 || node == ignoreNode)
                             continue;
                         
-                        foreach (var socket in node.ValueSocketConnectionData)
+                        foreach (var socket in node.ValueInConnection)
                         {
                             if (socket.Value.Node != null && socket.Value.Node == toNode.Index && socket.Value.Socket == outPort)
                                 return true;
@@ -176,8 +176,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         // Is connected to a prev. mul node
                         var otherMulNode = task.context.Nodes[socket.Node.Value];
 
-                        var otherSocketA = otherMulNode.ValueSocketConnectionData[Math_MulNode.IdValueA];
-                        var otherSocketB = otherMulNode.ValueSocketConnectionData[Math_MulNode.IdValueB];
+                        var otherSocketA = otherMulNode.ValueInConnection[Math_MulNode.IdValueA];
+                        var otherSocketB = otherMulNode.ValueInConnection[Math_MulNode.IdValueB];
                         var otherValueA = otherSocketA.Value;
                         var otherValueB = otherSocketB.Value;
                     

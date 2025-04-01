@@ -28,7 +28,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             var node = unitExporter.CreateNode(new Event_ReceiveNode());
-            node.MapInputPortToSocketName(unit.name, "event");
             
             var args = new Dictionary<string, GltfInteractivityUnitExporterNode.EventValues>();
             args.Add("targetNodeIndex", new GltfInteractivityUnitExporterNode.EventValues {Type = GltfTypes.TypeIndexByGltfSignature("int") });
@@ -44,7 +43,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             var index = unitExporter.exportContext.AddEventIfNeeded(unit, args);
-            node.ConfigurationData["event"].Value = index;
+            node.Configuration["event"].Value = index;
             node.ValueOut("targetNodeIndex").ExpectedType(ExpectedType.Int);
 
             // Setup target Node checks
@@ -85,12 +84,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             };
   
-            unitExporter.exportContext.OnNodesCreated += (List<GltfInteractivityNode> nodes) =>
+            unitExporter.exportContext.OnNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };
 
-            unitExporter.exportContext.OnBeforeSerialization += (List<GltfInteractivityNode> nodes) =>
+            unitExporter.exportContext.OnBeforeSerialization += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };   

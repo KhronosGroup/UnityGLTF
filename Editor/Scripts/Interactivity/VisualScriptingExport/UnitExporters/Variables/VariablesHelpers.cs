@@ -11,8 +11,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var node = unitExporter.CreateNode(new Variable_GetNode());
             
             var varType = unitExporter.exportContext.variables[id].Type;
-            node.OutValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(varType);
-            node.ConfigurationData["variable"].Value = id;
+            node.OutputValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(varType);
+            node.Configuration["variable"].Value = id;
             value = node.FirstValueOut();
             return node;
         }
@@ -26,14 +26,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(flowOut);
             node.ValueIn(Variable_SetNode.IdInputValue).SetValue(value).SetType(TypeRestriction.LimitToType(variableType));
 
-            node.ConfigurationData["variable"].Value = id;
+            node.Configuration["variable"].Value = id;
             return node;
         }
         
         public static GltfInteractivityUnitExporterNode SetVariable(UnitExporter unitExporter, int id)
         {
             var node = unitExporter.CreateNode(new Variable_SetNode());
-            node.ConfigurationData["variable"].Value = id;
+            node.Configuration["variable"].Value = id;
             node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(unitExporter.exportContext.variables[id].Type));
             return node;
         }
@@ -47,7 +47,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(flowOut);
             node.ValueIn(Variable_SetNode.IdInputValue).MapToInputPort(value).SetType(TypeRestriction.LimitToType(variableType));
 
-            node.ConfigurationData["variable"].Value = id;
+            node.Configuration["variable"].Value = id;
             return node;
         }
         
@@ -60,7 +60,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(flowOut);
             node.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueSource)
                 .SetType(TypeRestriction.LimitToType(variableType));
-            node.ConfigurationData["variable"].Value = id;
+            node.Configuration["variable"].Value = id;
             return node;
         }
         
@@ -76,7 +76,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             node.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueSource)
                 .SetType(TypeRestriction.LimitToType(variableType));
-            node.ConfigurationData["variable"].Value = id;
+            node.Configuration["variable"].Value = id;
             return node;
         }
         

@@ -71,7 +71,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Animation_StopNode());
-            node.ValueSocketConnectionData[Animation_StopNode.IdValueAnimation].Value = animationId;
+            node.ValueInConnection[Animation_StopNode.IdValueAnimation].Value = animationId;
 
             
             unitExporter.MapInputPortToSocketName(unit.enter, Animation_StopNode.IdFlowIn, node);

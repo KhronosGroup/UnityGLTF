@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getVar = unitExporter.CreateNode(new Variable_GetNode());
 
             var varIndex = unitExporter.exportContext.AddVariableWithIdIfNeeded(onceVarName, false, VariableKind.Flow, typeof(bool));
-            getVar.ConfigurationData["variable"].Value = varIndex;
+            getVar.Configuration["variable"].Value = varIndex;
             
             var branch = unitExporter.CreateNode(new Flow_BranchNode());
             // Branch flow in - from Once.Enter
@@ -39,8 +39,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var setVar = unitExporter.CreateNode(new Variable_SetNode());
 
-            setVar.ConfigurationData["variable"].Value = varIndex;
-            setVar.ValueSocketConnectionData[Variable_SetNode.IdInputValue].Value = true;
+            setVar.Configuration["variable"].Value = varIndex;
+            setVar.ValueInConnection[Variable_SetNode.IdInputValue].Value = true;
             // Set OnceVariable to true when Branch is false 
             unitExporter.MapOutFlowConnection(setVar, Variable_SetNode.IdFlowIn, branch, Flow_BranchNode.IdFlowOutFalse);
             // Map once.once out flow to SetVariable outflow
@@ -50,8 +50,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 var resetVar = unitExporter.CreateNode(new Variable_SetNode());
                 
-                resetVar.ConfigurationData["variable"].Value = varIndex;
-                resetVar.ValueSocketConnectionData[Variable_SetNode.IdInputValue].Value = false;
+                resetVar.Configuration["variable"].Value = varIndex;
+                resetVar.ValueInConnection[Variable_SetNode.IdInputValue].Value = false;
                 unitExporter.MapInputPortToSocketName(once.reset, Variable_SetNode.IdFlowIn, resetVar);
             }
             return true;

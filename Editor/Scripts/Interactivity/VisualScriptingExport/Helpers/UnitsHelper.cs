@@ -47,24 +47,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 return unit.ToString() + " Expose: " + expose.type;
             return unit.ToString();
         }
-        
-        public static readonly string IdPointerNodeIndex = "nodeIndex";
-        public static readonly string IdPointerMeshIndex = "meshIndex";
-        public static readonly string IdPointerMaterialIndex = "materialIndex";
-        public static readonly string IdPointerAnimationIndex = "animationIndex";
-
-        public static void AddPointerConfig(GltfInteractivityNode node, string pointer, string gltfType)
-        {
-            AddPointerConfig(node, pointer, GltfTypes.TypeIndexByGltfSignature(gltfType));
-        }
-
-        public static void AddPointerConfig(GltfInteractivityNode node, string pointer, int gltfType)
-        {
-            var pointerConfig = node.ConfigurationData[Pointer_SetNode.IdPointer];
-            pointerConfig.Value = pointer; 
-            var typeConfig = node.ConfigurationData[Pointer_SetNode.IdPointerValueType];
-            typeConfig.Value = gltfType; 
-        }
 
         public static bool IsMainCameraInInput(IUnit unit)
         {
@@ -89,16 +71,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             }
 
             return false;
-        }
-        
-        public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
-        {
-            node.ValueSocketConnectionData.Add(pointerId, new GltfInteractivityNode.ValueSocketData()
-            {
-                Value = index,
-                Type = GltfTypes.TypeIndexByGltfSignature("int"),
-                typeRestriction = TypeRestriction.LimitToInt,
-            });
         }
         
         public static GameObject GetGameObjectFromValueInput(ValueInput value, Dictionary<string, object> defaultValues, VisualScriptingExportContext exportContext)

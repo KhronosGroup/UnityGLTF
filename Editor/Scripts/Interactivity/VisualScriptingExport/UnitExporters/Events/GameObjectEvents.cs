@@ -47,15 +47,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
 
             int targetIndex = unitExporter.exportContext.exporter.GetTransformIndex(target.transform);
-            node.ConfigurationData["nodeIndex"].Value = targetIndex;
+            node.Configuration["nodeIndex"].Value = targetIndex;
             OnTargetNodeConfigured(unitExporter, targetIndex);
             
             // Config for stop propagation will just default to False. We don't have an equivalent
             // parameter in Unity Visual Scripting so we will default to preventing the selection
             // event from being propagated up the hierarchy.
-            node.ConfigurationData["stopPropagation"].Value = false;
+            node.Configuration["stopPropagation"].Value = false;
 
-            node.MapOutFlowConnectionWhenValid(triggerOutput, "out");
+            node.FlowOut("out").MapToControlOutput(triggerOutput);
             
             // Resolve PointerEventData in out connections
             
@@ -73,7 +73,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         if (memberStr == "PointerEventData.pointerEnter"
                             || memberStr == "PointerEventData.pointerClick")
                         {
-                            node.MapValueOutportToSocketName(getMember.value, Event_OnSelectNode.IdValueSelectedNodeIndex);
+                            node.ValueOut(Event_OnSelectNode.IdValueSelectedNodeIndex).MapToPort(getMember.value);
                         }
                         // else if (memberStr == "PointerEventData.position")
                         // {

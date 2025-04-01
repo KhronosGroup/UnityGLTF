@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             // Regular pointer/set
             
-            var materialTemplate = "/materials/{" + UnitsHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
             var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
             
             if (unit is SetMember setMember)
@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 unitExporter.MapOutFlowConnectionWhenValid(setMember.assigned, Pointer_SetNode.IdFlowOut, node);
 
-                node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                     setMember.target, template, GltfTypes.Float4);
             }
             else if (unit is InvokeMember invokeMember)
@@ -70,7 +70,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]).SetType(TypeRestriction.LimitToFloat4);
          
-                    node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float4);
                 }
                 else
@@ -85,7 +85,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     combine.ValueIn("c").ConnectToSource(extract.ValueOut("2"));
                     
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(combine.FirstValueOut());
-                    node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float3);
                 }
             }

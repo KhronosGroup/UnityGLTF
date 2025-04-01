@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var unit = unitExporter.unit as CreateStruct;
             var node = unitExporter.CreateNode(schema);
 
-            foreach (var value in node.ValueSocketConnectionData)
+            foreach (var value in node.ValueInConnection)
             {
                 value.Value.Value = 0f;
                 value.Value.Type = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Float);

@@ -254,7 +254,7 @@ namespace UnityGLTF.Interactivity.Schema
         public Math_Extract4x4Node() : base()
         {
             for (int i = 0; i < 16; i++)
-                OutputValueSockets.Add(i.ToString(), new OutValueSocketDescriptor()
+                OutputValueSockets.Add(i.ToString(), new OutputValueSocketDescriptor()
                 {
                     SupportedTypes = new string[] { "float" },
                     expectedType =  ExpectedType.Float
@@ -291,7 +291,7 @@ namespace UnityGLTF.Interactivity.Schema
         public Math_Extract3x3Node() : base()
         {
             for (int i = 0; i < 9; i++)
-                OutputValueSockets.Add(i.ToString(), new OutValueSocketDescriptor()
+                OutputValueSockets.Add(i.ToString(), new OutputValueSocketDescriptor()
                 {
                     SupportedTypes = new string[] { "float" },
                     expectedType =  ExpectedType.Float
@@ -328,7 +328,7 @@ namespace UnityGLTF.Interactivity.Schema
         public Math_Extract2x2Node() : base()
         {
             for (int i = 0; i < 4; i++)
-                OutputValueSockets.Add(i.ToString(), new OutValueSocketDescriptor()
+                OutputValueSockets.Add(i.ToString(), new OutputValueSocketDescriptor()
                 {
                     SupportedTypes = new string[] { "float" },
                     expectedType =  ExpectedType.Float

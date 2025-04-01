@@ -17,9 +17,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public static void MergeSameGetPointersNodes(CleanUpTask task, string pointer, string pointerInputName)
         {
             var pointerNodes = task.context.Nodes.FindAll(node => node.Schema is Pointer_GetNode
-                                                                       && node.ConfigurationData[
+                                                                       && node.Configuration[
                                                                            Pointer_GetNode.IdPointer].Value.Equals(pointer)
-                                                                       && node.ValueSocketConnectionData.ContainsKey(pointerInputName)
+                                                                       && node.ValueInConnection.ContainsKey(pointerInputName)
                                                                        ).ToArray();
             
             foreach (var glNode1 in pointerNodes)
@@ -27,14 +27,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 if (glNode1.Index == -1)
                     continue;
                 
-                var glNode1Socket = glNode1.ValueSocketConnectionData[pointerInputName];
+                var glNode1Socket = glNode1.ValueInConnection[pointerInputName];
                 
                 foreach (var glNode2 in pointerNodes)
                 {
                     if (glNode2.Index == -1 || glNode1 == glNode2)
                         continue;
 
-                    var glNode2Socket = glNode2.ValueSocketConnectionData[pointerInputName];
+                    var glNode2Socket = glNode2.ValueInConnection[pointerInputName];
 
                     bool isSameValueInput = false;
                     if (glNode1Socket.Node != null
@@ -51,7 +51,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         // Find all nodes which are connected to glNode2 and connect them to glNode1
                         foreach (var node in task.context.Nodes)
                         {
-                            foreach (var socket in node.ValueSocketConnectionData)
+                            foreach (var socket in node.ValueInConnection)
                                 if (socket.Value.Node == glNode2.Index && socket.Value.Socket == Pointer_GetNode.IdValue)
                                     socket.Value.Node = glNode1.Index;
                         }
@@ -68,14 +68,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public void OnCleanUp(CleanUpTask task)
         {
-            var pointerNodes = task.context.Nodes.FindAll(node => node.Schema is Pointer_GetNode && node.ValueSocketConnectionData.Count == 1);
+            var pointerNodes = task.context.Nodes.FindAll(node => node.Schema is Pointer_GetNode && node.ValueInConnection.Count == 1);
 
             var pointers = new HashSet<(string template, string valueInput)>();
             
             foreach (var pointerNode in pointerNodes)
             {
-                var pointer = (string)pointerNode.ConfigurationData[Pointer_GetNode.IdPointer].Value;
-                var pointerInput = pointerNode.ValueSocketConnectionData.First().Key;
+                var pointer = (string)pointerNode.Configuration[Pointer_GetNode.IdPointer].Value;
+                var pointerInput = pointerNode.ValueInConnection.First().Key;
                 pointers.Add((pointer, pointerInput));
             }
 

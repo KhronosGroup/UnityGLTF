@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var unit = unitExporter.unit as WaitForFlow;
             var node = unitExporter.CreateNode(new Flow_WaitAllNode());
             
-            node.ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value = unit.inputCount;
+            node.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = unit.inputCount;
 
             unitExporter.MapInputPortToSocketName(unit.reset, Flow_WaitAllNode.IdFlowInReset, node);
             

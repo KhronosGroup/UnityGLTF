@@ -45,7 +45,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             switchNode.ValueIn(Math_SwitchNode.IdSelection).MapToInputPort(unit.selector);
             var valueout = switchNode.ValueOut(Math_SwitchNode.IdOut).MapToPort(unit.selection);
             
-            switchNode.ConfigurationData[Math_SwitchNode.IdConfigCases].Value = cases;
+            switchNode.Configuration[Math_SwitchNode.IdConfigCases].Value = cases;
             for (int i = 0; i < unit.branches.Count; i++)
             {
                 var branch = unit.branches[i];

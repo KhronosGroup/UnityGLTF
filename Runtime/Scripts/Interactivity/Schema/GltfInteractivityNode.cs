@@ -15,31 +15,28 @@ namespace UnityGLTF.Interactivity.Schema
         public virtual GltfInteractivityNodeSchema Schema { get; protected set; }
         
         // Data to be serialized into Gltf
-        public Dictionary<string, ConfigData> ConfigurationData =
+        public Dictionary<string, ConfigData> Configuration =
             new Dictionary<string, ConfigData>();
-        public Dictionary<string, FlowSocketData> FlowSocketConnectionData =
+        public Dictionary<string, FlowSocketData> FlowConnections =
             new Dictionary<string, FlowSocketData>();
-        public Dictionary<string, ValueSocketData> ValueSocketConnectionData =
+        public Dictionary<string, ValueSocketData> ValueInConnection =
             new Dictionary<string, ValueSocketData>();
-        
-        public Dictionary<string, ValueOutSocket> OutValueSocket =
-            new Dictionary<string, ValueOutSocket>();
         
         public Dictionary<string, string> MetaData = new Dictionary<string, string>();
 
         public void RemoveUnconnectedFlows()
         {
-            var keys = FlowSocketConnectionData.Keys.ToList();
+            var keys = FlowConnections.Keys.ToList();
             foreach (var key in keys)
             {
-                if (FlowSocketConnectionData[key].Node == null || FlowSocketConnectionData[key].Node == -1)
-                    FlowSocketConnectionData.Remove(key);
+                if (FlowConnections[key].Node == null || FlowConnections[key].Node == -1)
+                    FlowConnections.Remove(key);
             }
         }
         
         public void SetFlowOut(string socketId, GltfInteractivityNode targetNode, string targetSocketId)
         {
-            if (FlowSocketConnectionData.TryGetValue(socketId, out var socket))
+            if (FlowConnections.TryGetValue(socketId, out var socket))
             {
                 socket.Node = targetNode.Index;
                 socket.Socket = targetSocketId;
@@ -50,7 +47,7 @@ namespace UnityGLTF.Interactivity.Schema
             }
         }
 
-        public void SetSchema(GltfInteractivityNodeSchema schema, bool applySocketDescriptors, bool clearExistingSocketData = true)
+        public virtual void SetSchema(GltfInteractivityNodeSchema schema, bool applySocketDescriptors, bool clearExistingSocketData = true)
         {
             this.Schema = schema;
             if (applySocketDescriptors)
@@ -59,39 +56,29 @@ namespace UnityGLTF.Interactivity.Schema
 
                 if (clearExistingSocketData)
                 {
-                    ConfigurationData.Clear();
-                    FlowSocketConnectionData.Clear();
-                    ValueSocketConnectionData.Clear();
-                    OutValueSocket.Clear();
+                    Configuration.Clear();
+                    FlowConnections.Clear();
+                    ValueInConnection.Clear();
                     MetaData.Clear();
                 }
                 
                 foreach (var descriptor in Schema.Configuration)
                 {
-                    ConfigurationData.Add(descriptor.Key, new ConfigData());
+                    Configuration.Add(descriptor.Key, new ConfigData());
                 }
 
                 foreach (var descriptor in Schema.InputValueSockets)
                 {
-                    ValueSocketConnectionData.Add(descriptor.Key, new ValueSocketData()
+                    ValueInConnection.Add(descriptor.Key, new ValueSocketData()
                     {
                         Type = GltfTypes.TypeIndexByGltfSignature(descriptor.Value.SupportedTypes[0]),
                         typeRestriction = descriptor.Value.typeRestriction
                     });
                 }
-                foreach (var descriptor in Schema.OutputValueSockets)
-                {
-                    if (descriptor.Value.SupportedTypes.Length == 1 && descriptor.Value.expectedType == null)
-                        OutValueSocket.Add(descriptor.Key,
-                            new ValueOutSocket {expectedType = ExpectedType.GtlfType(descriptor.Value.SupportedTypes[0])});
-                    else
-                        OutValueSocket.Add(descriptor.Key,
-                            new ValueOutSocket {expectedType = descriptor.Value.expectedType });
-                }
-
+                
                 foreach (var descriptor in Schema.OutputFlowSockets)
                 {
-                    FlowSocketConnectionData.Add(descriptor.Key, new FlowSocketData());
+                    FlowConnections.Add(descriptor.Key, new FlowSocketData());
                 }
             
                 foreach (GltfInteractivityNodeSchema.MetaDataEntry descriptor in Schema.MetaDatas)
@@ -99,12 +86,11 @@ namespace UnityGLTF.Interactivity.Schema
                     MetaData.Add(descriptor.key, descriptor.value);
                 }
             }
-                
         }
         
         public void SetValueInSocketSource(string socketId,  GltfInteractivityNode sourceNode, string sourceSocketId, TypeRestriction typeRestriction = null)
         {
-            if (ValueSocketConnectionData.TryGetValue(socketId, out var socket))
+            if (ValueInConnection.TryGetValue(socketId, out var socket))
             {
                 socket.Node = sourceNode.Index;
                 socket.Socket = sourceSocketId;
@@ -121,7 +107,7 @@ namespace UnityGLTF.Interactivity.Schema
         
         public void SetValueInSocket(string socketId, object value, TypeRestriction typeRestriction = null)
         {
-            if (ValueSocketConnectionData.TryGetValue(socketId, out var socket))
+            if (ValueInConnection.TryGetValue(socketId, out var socket))
             {
                 socket.Node = null;
                 socket.Socket = null;
@@ -146,15 +132,15 @@ namespace UnityGLTF.Interactivity.Schema
         public virtual JObject SerializeObject()
         {
             var configs = new JObject();
-            foreach (var config in ConfigurationData)
+            foreach (var config in Configuration)
                 configs.Add(config.Key, config.Value.SerializeObject());
             
             var values = new JObject();
-            foreach (var value in ValueSocketConnectionData)
+            foreach (var value in ValueInConnection)
                 values.Add(value.Key, value.Value.SerializeObject());
 
             var flows = new JObject();
-            foreach (var flow in FlowSocketConnectionData)
+            foreach (var flow in FlowConnections)
                 if (flow.Value.Node != null)
                     flows.Add(flow.Key, flow.Value.SerializeObject());
 
@@ -315,7 +301,7 @@ namespace UnityGLTF.Interactivity.Schema
             }    
         }
 
-        public class ValueOutSocket
+        public class OutputValueSocketData
         {
             public ExpectedType expectedType;
         }

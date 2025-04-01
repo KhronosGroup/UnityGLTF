@@ -45,8 +45,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 node.FlowIn(Flow_SequenceNode.IdFlowIn).MapToControlInput(unit.enter);
 
                 var multiGate = unitExporter.CreateNode(new Flow_MultiGateNode());
-                multiGate.ConfigurationData[Flow_MultiGateNode.IdConfigIsLoop].Value = false;
-                multiGate.ConfigurationData[Flow_MultiGateNode.IdConfigIsRandom].Value = false;
+                multiGate.Configuration[Flow_MultiGateNode.IdConfigIsLoop].Value = false;
+                multiGate.Configuration[Flow_MultiGateNode.IdConfigIsRandom].Value = false;
 
                 node.FlowOut("a").ConnectToFlowDestination(multiGate.FlowIn(Flow_MultiGateNode.IdFlowInReset));
                 node.FlowOut("b").ConnectToFlowDestination(multiGate.FlowIn(Flow_MultiGateNode.IdFlowIn));
@@ -64,7 +64,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                             .ConnectToFlowDestination(multiGate.FlowIn(Flow_MultiGateNode.IdFlowIn));
 
 
-                        awaiterNode.ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value = 1;
+                        awaiterNode.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = 1;
                         var outputSequ = unitExporter.CreateNode(new Flow_SequenceNode());
                         multiGate.FlowOut(index.ToString())
                             .ConnectToFlowDestination(outputSequ.FlowIn(Flow_SequenceNode.IdFlowIn));
@@ -80,7 +80,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     if (awaiter == null)
                         return;
 
-                    var nextIndex = multiGate.FlowSocketConnectionData.Count;
+                    var nextIndex = multiGate.FlowConnections.Count;
 
                     var newFlowOut = multiGate.FlowOut(nextIndex.ToString());
                     awaiter.AddCoroutineWait(unitExporter, multiGate, newFlowOut.socket.Key);

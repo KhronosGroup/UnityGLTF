@@ -22,15 +22,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
      
             var getMesh = unitExporter.CreateNode(new Pointer_GetNode());
          
-            getMesh.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerNodeIndex, 
-                unit.target, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/mesh", GltfTypes.Int);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getMesh, PointersHelper.IdPointerNodeIndex, 
+                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/mesh", GltfTypes.Int);
             
             var getMaterial = unitExporter.CreateNode(new Pointer_GetNode());
-            unitExporter.MapInputPortToSocketName(Pointer_GetNode.IdValue, getMesh, UnitsHelper.IdPointerMeshIndex, getMaterial);
+            unitExporter.MapInputPortToSocketName(Pointer_GetNode.IdValue, getMesh, PointersHelper.IdPointerMeshIndex, getMaterial);
             
             // TODO: support multiple materials/primitives
-            getMaterial.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMeshIndex,
-                "/meshes/{" + UnitsHelper.IdPointerMeshIndex + "}/primitives/0/material", GltfTypes.Int);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getMaterial, PointersHelper.IdPointerMeshIndex,
+                "/meshes/{" + PointersHelper.IdPointerMeshIndex + "}/primitives/0/material", GltfTypes.Int);
             
             unitExporter.MapValueOutportToSocketName(unit.value, Pointer_GetNode.IdValue, getMaterial);
         

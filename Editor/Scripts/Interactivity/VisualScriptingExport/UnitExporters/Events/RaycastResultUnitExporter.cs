@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     /// <summary>
     /// This is only an informative exporter, which shows additional information about export support in the graph editor.
     /// </summary>
-    public class RaycastResultUnitExporter : IUnitExporter, IUnitExporterFeedback
+    internal class RaycastResultUnitExporter : IUnitExporter, IUnitExporterFeedback
     {
         private const string WARNING_TEXT =
             "Export support is currently limited: Only use this node from a 'Get Pointer Current Raycast' in combination with a OnPointerClick, OnPointerEnter or OnPointerExit as input connection.";

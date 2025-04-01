@@ -13,8 +13,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public void OnCleanUp(CleanUpTask task)
         {
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/globalMatrix", UnitsHelper.IdPointerNodeIndex);
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + UnitsHelper.IdPointerNodeIndex + "}/matrix", UnitsHelper.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", PointersHelper.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/matrix", PointersHelper.IdPointerNodeIndex);
             
             var decompose = task.context.Nodes.FindAll(node => node.Schema is Math_MatDecomposeNode).ToArray();
             
@@ -23,14 +23,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 if (node1.Index == -1)
                     continue;
 
-                var socket1 = node1.ValueSocketConnectionData[Math_MatDecomposeNode.IdInput];
+                var socket1 = node1.ValueInConnection[Math_MatDecomposeNode.IdInput];
 
                 foreach (var node2 in decompose)
                 {
                     if (node2.Index == -1 || node1 == node2)
                         continue;
                     
-                    var socket2 = node2.ValueSocketConnectionData[Math_MatDecomposeNode.IdInput];
+                    var socket2 = node2.ValueInConnection[Math_MatDecomposeNode.IdInput];
     
                     bool isSameValueInput = false;
                     if (socket1.Node != null
@@ -47,7 +47,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         // Find all nodes which are connected to node2 and connect them to node1
                         foreach (var node in task.context.Nodes)
                         {
-                            foreach (var socket in node.ValueSocketConnectionData)
+                            foreach (var socket in node.ValueInConnection)
                                 if (socket.Value.Node == node2.Index)
                                    socket.Value.Node = node1.Index;
                         }

@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Flow_ForLoopNode());
                 // TODO: set inital index > also... why even using it
-                node.ConfigurationData[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
+                node.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
                 
                 unitExporter.MapInputPortToSocketName(unit.enter, Flow_ForLoopNode.IdFlowIn, node);
                 unitExporter.MapInputPortToSocketName(unit.firstIndex, Flow_ForLoopNode.IdStartIndex, node);

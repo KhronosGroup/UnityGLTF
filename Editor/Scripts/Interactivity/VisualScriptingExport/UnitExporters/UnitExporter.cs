@@ -37,7 +37,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         public void AddWhenValid(ControlOutput controlOutput, string id, GltfInteractivityUnitExporterNode node)
         {
-            AddWhenValid(controlOutput, node.FlowSocketConnectionData[id]);
+            AddWhenValid(controlOutput, node.FlowConnections[id]);
         }
 
         public void AddNodeConnection(GltfInteractivityUnitExporterNode destinationNode, string destinationSocketName,
@@ -207,7 +207,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     foreach (var inputPort in input.Value)
                     {
-                        if (inputPort.node.ValueSocketConnectionData.TryGetValue(inputPort.socketName,
+                        if (inputPort.node.ValueInConnection.TryGetValue(inputPort.socketName,
                                 out var valueSocketData))
                         {
                             if (valueSocketData.Value == null)
@@ -219,7 +219,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                                     UnitExportLogging.AddErrorLog(unit, "Unsupported type: " + defaultValue.GetType().ToString());
                             }
                         }
-                        else if (inputPort.node.ConfigurationData.TryGetValue(inputPort.socketName,
+                        else if (inputPort.node.Configuration.TryGetValue(inputPort.socketName,
                                      out var config))
                         {
                             // Is it relevant anymore??
@@ -232,9 +232,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                             throw new System.Exception(
                                 "ValueSocketConnectionData nor ConfigurationData  contains key: " + input.Value +
                                 ", instead: [Value: " +
-                                string.Join(", ", inputPort.node.ValueSocketConnectionData.Keys) +
+                                string.Join(", ", inputPort.node.ValueInConnection.Keys) +
                                 "], [Config: " +
-                                string.Join(", ", inputPort.node.ConfigurationData.Keys) + "]");
+                                string.Join(", ", inputPort.node.Configuration.Keys) + "]");
                         }
                     }
                 }
@@ -307,8 +307,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     foreach (var socket in toSockets)
                     {
-                        socket.node.ValueSocketConnectionData[socket.socketName].Node = sourceNode.Index;
-                        socket.node.ValueSocketConnectionData[socket.socketName].Socket = socketName;
+                        socket.node.ValueInConnection[socket.socketName].Node = sourceNode.Index;
+                        socket.node.ValueInConnection[socket.socketName].Socket = socketName;
                     }
                 }
             }
@@ -357,10 +357,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             foreach (var n in nodeInputPortToSocketNameMapping)
             {
-                if (!n.Value.node.ValueSocketConnectionData.ContainsKey(n.Value.socketName)) 
+                if (!n.Value.node.ValueInConnection.ContainsKey(n.Value.socketName)) 
                     continue;
-                n.Value.node.ValueSocketConnectionData[n.Value.socketName].Node = n.Key.node.Index;
-                n.Value.node.ValueSocketConnectionData[n.Value.socketName].Socket = n.Key.socketName;
+                n.Value.node.ValueInConnection[n.Value.socketName].Node = n.Key.node.Index;
+                n.Value.node.ValueInConnection[n.Value.socketName].Socket = n.Key.socketName;
             }
 
             // Resolve Out Flow Connections
@@ -395,8 +395,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 var destinationSocketName = nodeConnection.destinationSocketName;
                 var sourceSocketName = nodeConnection.sourceSocketName;
 
-                sourceNode.FlowSocketConnectionData[sourceSocketName].Node = destinationNode.Index;
-                sourceNode.FlowSocketConnectionData[sourceSocketName].Socket = destinationSocketName;
+                sourceNode.FlowConnections[sourceSocketName].Node = destinationNode.Index;
+                sourceNode.FlowConnections[sourceSocketName].Socket = destinationSocketName;
             }
         }
         

@@ -15,18 +15,18 @@ namespace UnityGLTF.Interactivity.VisualScripting
             this.context = context;
         }
         
-        public void RemoveNode(GltfInteractivityNode node)
+        public void RemoveNode(GltfInteractivityExportNode node)
         {
             context.RemoveNode(node);
             hasChanges = true;
         }
         
-        public void ByPassFlow(GltfInteractivityNode node, string flowIn, string flowOut)
+        public void ByPassFlow(GltfInteractivityExportNode node, string flowIn, string flowOut)
         {
-            var flowSocket = node.FlowSocketConnectionData[flowOut];
+            var flowSocket = node.FlowConnections[flowOut];
             foreach (var n in context.Nodes)
             {
-                foreach (var flow in n.FlowSocketConnectionData)
+                foreach (var flow in n.FlowConnections)
                 {
                     if (flow.Value.Node == node.Index && flow.Value.Socket == flowIn)
                     {
@@ -38,13 +38,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
             hasChanges = true;
         }
         
-        public void ByPassValue(GltfInteractivityNode node, string valueIn, string valueOut)
+        public void ByPassValue(GltfInteractivityExportNode node, string valueIn, string valueOut)
         {
-            var flowSocket = node.ValueSocketConnectionData[valueIn];
+            var flowSocket = node.ValueInConnection[valueIn];
 
             foreach (var n in context.Nodes)
             {
-                foreach (var valueSocket in n.ValueSocketConnectionData)
+                foreach (var valueSocket in n.ValueInConnection)
                 {
                     if (valueSocket.Value.Node == node.Index &&
                         valueSocket.Value.Socket == valueOut)
@@ -57,14 +57,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
             hasChanges = true;
         }
         
-        public void ByPassValue(GltfInteractivityNode nodeA, string valueAIn, GltfInteractivityNode nodeB, string valueBOut)
+        public void ByPassValue(GltfInteractivityExportNode nodeA, string valueAIn, GltfInteractivityExportNode nodeB, string valueBOut)
         {
-            var socketA = nodeA.ValueSocketConnectionData[valueAIn];
+            var socketA = nodeA.ValueInConnection[valueAIn];
 
 
             foreach (var node in context.Nodes)
             {
-                foreach (var valueSocket in node.ValueSocketConnectionData)
+                foreach (var valueSocket in node.ValueInConnection)
                 {
                     if (valueSocket.Value.Node != null && nodeB.Index == valueSocket.Value.Node.Value && valueBOut == valueSocket.Value.Socket)
                     {

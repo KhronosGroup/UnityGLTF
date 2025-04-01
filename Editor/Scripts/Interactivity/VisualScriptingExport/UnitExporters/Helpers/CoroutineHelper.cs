@@ -56,7 +56,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 var currentNode = queue.Dequeue();
                 
                 foreach (var node in nodes)
-                foreach (var flow in node.FlowSocketConnectionData)
+                foreach (var flow in node.FlowConnections)
                 {
                     if (flow.Value == null || flow.Value.Node == null)
                         continue;
@@ -106,7 +106,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 this.OutFlowNode = node;
                 this.OutFlowSocketTarget = outFlowSocketTarget;
                 exporter.AddCustomNode(this);
-                ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value = 0;
+                Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = 0;
             }
 
             public FlowOutSocketData FlowOutDoneSocket()
@@ -122,7 +122,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     return;
                 }
                 
-                var value = ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value;
+                var value = Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value;
                 if (value == null)
                     value = 1;
                 else
@@ -130,7 +130,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                 int currentIndex = (int)value - 1;
                 
-                ConfigurationData[Flow_WaitAllNode.IdConfigInputFlows].Value = value;
+                Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = value;
                 
                 var sequence = unitExporter.CreateNode(new Flow_SequenceNode());
                 if (unitExporter.exportContext.Nodes.Count > 0)
@@ -138,13 +138,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.exportContext.Nodes.Add(sequence);
                     sequence.Index = unitExporter.exportContext.Nodes.Count - 1;
 
-                    var sourceSocket = node.FlowSocketConnectionData[socket];
+                    var sourceSocket = node.FlowConnections[socket];
                     
-                    sequence.FlowSocketConnectionData.Add("a", new FlowSocketData { Socket = sourceSocket.Socket, Node = sourceSocket.Node});
-                    sequence.FlowSocketConnectionData.Add("b", new FlowSocketData { Socket = currentIndex.ToString(), Node = Index});
+                    sequence.FlowConnections.Add("a", new FlowSocketData { Socket = sourceSocket.Socket, Node = sourceSocket.Node});
+                    sequence.FlowConnections.Add("b", new FlowSocketData { Socket = currentIndex.ToString(), Node = Index});
                     
-                    node.FlowSocketConnectionData[socket].Node = sequence.Index;
-                    node.FlowSocketConnectionData[socket].Socket = Flow_SequenceNode.IdFlowIn;
+                    node.FlowConnections[socket].Node = sequence.Index;
+                    node.FlowConnections[socket].Socket = Flow_SequenceNode.IdFlowIn;
                 }
                 else
                 {

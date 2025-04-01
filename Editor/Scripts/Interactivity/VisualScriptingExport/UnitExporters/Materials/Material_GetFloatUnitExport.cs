@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (unit.target == null)
                 return false;
             
-            var materialTemplate = "/materials/{" + UnitsHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
             string template = "";
             bool oneMinus = false;
             
@@ -59,7 +59,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 node.FirstValueOut().MapToPort(unit.result).ExpectedType(ExpectedType.Float);
 
  
-            node.SetupPointerTemplateAndTargetInput(UnitsHelper.IdPointerMaterialIndex,
+            PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                 unit.target, template, GltfTypes.Float);
             return true;
         }

@@ -51,11 +51,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 var gltf_Node = unitExporter.CreateNode(new Debug_LogNode());
                 if (unitExporter.IsInputLiteralOrDefaultValue(unit.inputParameters[0], out var message))
                 {
-                    gltf_Node.ConfigurationData[Debug_LogNode.IdConfigMessage].Value = messagePrefix + message;
+                    gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + message;
                 }
                 else
                 {
-                    gltf_Node.ConfigurationData[Debug_LogNode.IdConfigMessage].Value = messagePrefix + "{0}";
+                    gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + "{0}";
                     gltf_Node.ValueIn("0").MapToInputPort(unit.inputParameters[0]);
                 }
                 

@@ -98,11 +98,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 else
                     combineNode.ValueIn(InputNames[i]).ConnectToSource(extractNode.ValueOut(i.ToString()));
             }
-
-            combineNode.FirstValueOut().ExpectedType(expectedType);
             
             unitExporter.ByPassValue(setMember.input, setMember.output);
-            combineNode.FirstValueOut().MapToPort(setMember.targetOutput);
+            
+            combineNode.FirstValueOut().ExpectedType(expectedType).MapToPort(setMember.targetOutput);
+          
             unitExporter.ByPassFlow(setMember.assign, setMember.assigned);
             return true;
         }

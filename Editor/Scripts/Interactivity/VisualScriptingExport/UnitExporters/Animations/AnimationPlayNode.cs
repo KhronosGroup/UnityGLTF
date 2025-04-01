@@ -71,11 +71,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
 
             var node = unitExporter.CreateNode(new Animation_StartNode());
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueAnimation].Value = animationId;
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueSpeed].Value = 1f;
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueStartTime].Value = 0.0f;
+            node.ValueInConnection[Animation_StartNode.IdValueAnimation].Value = animationId;
+            node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = 1f;
+            node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
-            node.ValueSocketConnectionData[Animation_StartNode.IdValueEndtime].Value =
+            node.ValueInConnection[Animation_StartNode.IdValueEndtime].Value =
                 (clip != null && !clip.isLooping) ? clip.length : float.PositiveInfinity;
             
             unitExporter.MapInputPortToSocketName(unit.enter, Animation_StartNode.IdFlowIn, node);

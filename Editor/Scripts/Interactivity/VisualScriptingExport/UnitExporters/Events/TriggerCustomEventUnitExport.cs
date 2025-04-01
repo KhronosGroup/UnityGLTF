@@ -74,12 +74,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             // Set the type of the event values on a later stage when we can identify the type of the input.
             // Also in case a Event Trigger uses a NULL as input, we also check for the input types for existing events
-            unitExporter.exportContext.OnNodesCreated += (List<GltfInteractivityNode> nodes) =>
+            unitExporter.exportContext.OnNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };
 
-            unitExporter.exportContext.OnBeforeSerialization += (List<GltfInteractivityNode> nodes) =>
+            unitExporter.exportContext.OnBeforeSerialization += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };
@@ -88,7 +88,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 return false;
             }
-            node.ConfigurationData["event"].Value = index;
+            node.Configuration["event"].Value = index;
             
             unitExporter.MapOutFlowConnectionWhenValid(unit.exit, Event_SendNode.IdFlowOut, node);
             return true;
