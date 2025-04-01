@@ -682,7 +682,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             mainGraph.Nodes = nodesToSerialize.ToArray();
             mainGraph.Types = CollectAndFilterUsedTypes();
             
-            ValidateData();
+            Validator.ValidateData(this);
             
             mainGraph.Variables = variables.ToArray();
             mainGraph.CustomEvents = customEvents.ToArray();
