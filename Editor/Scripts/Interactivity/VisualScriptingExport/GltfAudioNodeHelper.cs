@@ -27,6 +27,7 @@ namespace UnityGLTF.Audio
                     continue;
 
                 UnitExporter unitExporter = UnitExporterRegistry.CreateUnitExporter(exportContext, unit);
+                validNodes.Add(unit, unitExporter);
             }
 
             return validNodes;
