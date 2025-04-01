@@ -1217,7 +1217,7 @@ namespace UnityGLTF
 			if (materials != null)
 				for (int i = 0; i < materials.Length; i++)
 					anyMaterialIsNonNull |= materials[i];
-			return (meshFilter && meshRenderer && (meshRenderer.enabled || exportDisabledGameObjects)) || (skinnedMeshRender && (skinnedMeshRender.enabled || exportDisabledGameObjects)) && anyMaterialIsNonNull;
+			return ((meshFilter && meshRenderer && (meshRenderer.enabled || exportDisabledGameObjects)) || (skinnedMeshRender && (skinnedMeshRender.enabled || exportDisabledGameObjects))) && anyMaterialIsNonNull;
 		}
 
         private void FilterPrimitives(Transform transform, out GameObject[] primitives, out GameObject[] nonPrimitives)
