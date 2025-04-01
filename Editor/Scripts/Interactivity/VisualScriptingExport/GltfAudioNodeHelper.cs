@@ -9,6 +9,10 @@ namespace UnityGLTF.Audio
     using UnityGLTF.Interactivity.VisualScripting.Export;
     using UnityGLTF.Interactivity.VisualScripting;
 
+    /// <summary>
+    /// Copied the GltfInteractivityNodeHelper for now to use with audio. 
+	/// This will need to be cleaned up since a lot of this is not used.
+    /// </summary>
     public static class GltfAudioNodeHelper
     {        
         public static Dictionary<IUnit, UnitExporter> GetTranslatableNodes(
@@ -23,13 +27,6 @@ namespace UnityGLTF.Audio
                     continue;
 
                 UnitExporter unitExporter = UnitExporterRegistry.CreateUnitExporter(exportContext, unit);
-                //if (unitExporter != null)
-                //{
-                //    if (unitExporter.IsTranslatable && unitExporter.Nodes.Length > 0)
-                //        validNodes.Add(unit, unitExporter);
-                //}
-                //else
-                //     Debug.LogWarning("ExportNode is null for unit: " + Log(unit)+ " of type: " + unit.GetType());
             }
 
             return validNodes;
@@ -52,19 +49,6 @@ namespace UnityGLTF.Audio
         public static readonly string IdPointerMeshIndex = "meshIndex";
         public static readonly string IdPointerMaterialIndex = "materialIndex";
         public static readonly string IdPointerAnimationIndex = "animationIndex";
-
-        //public static void AddPointerConfig(GltfInteractivityNode node, string pointer, string gltfType)
-        //{
-        //    AddPointerConfig(node, pointer, GltfTypes.TypeIndexByGltfSignature(gltfType));
-        //}
-
-        //public static void AddPointerConfig(GltfInteractivityNode node, string pointer, int gltfType)
-        //{
-        //    var pointerConfig = node.ConfigurationData[Pointer_SetNode.IdPointer];
-        //    pointerConfig.Value = pointer; 
-        //    var typeConfig = node.ConfigurationData[Pointer_SetNode.IdPointerValueType];
-        //    typeConfig.Value = gltfType; 
-        //}
 
         public static bool IsMainCameraInInput(IUnit unit)
         {
@@ -90,17 +74,7 @@ namespace UnityGLTF.Audio
 
             return false;
         }
-        
-        //public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
-        //{
-        //    node.ValueSocketConnectionData.Add(pointerId, new GltfInteractivityNode.ValueSocketData()
-        //    {
-        //        Value = index,
-        //        Type = GltfTypes.TypeIndexByGltfSignature("int"),
-        //        typeRestriction = TypeRestriction.LimitToInt,
-        //    });
-        //}
-        
+                
         // Get the index of a named property that has been exported to GLTF
         public static int GetNamedPropertyGltfIndex(string objectName, IEnumerable<GLTFChildOfRootProperty> gltfRootProperties)
         {
@@ -118,66 +92,6 @@ namespace UnityGLTF.Audio
             return -1;
         }
 
-        //public static GameObject GetGameObjectFromValueInput(ValueInput value, Dictionary<string, object> defaultValues, GltfInteractivityExportContext exportContext)
-        //{
-        //    if (value.hasValidConnection == false)
-        //    {
-        //        // If there are no connections, then we can return the non-null default value
-        //        if (value.hasDefaultValue && defaultValues.ContainsKey(value.key))
-        //        {
-        //            GameObject defaultGameObject = null;
-        //            if (defaultValues[value.key] is GameObject)
-        //                defaultGameObject = (GameObject)defaultValues[value.key];
-        //            else if (defaultValues[value.key] is Component component)
-        //                defaultGameObject = component.gameObject;
-
-        //            // If the value is null, then likely it's set to "this" in the UI
-        //            // meaning that it's pointing to the Gameobject that owns the graph
-        //            if (defaultGameObject == null)
-        //            {
-        //                // The value is referencing the gameobject that owns the graph
-        //                return exportContext.ActiveScriptMachine.gameObject;
-        //            }
-        //            else
-        //            {
-        //                return defaultGameObject;
-        //            }
-        //        }
-        //        return null;
-        //    }
-        //    else
-        //    if (value.hasValidConnection && value.connections.First().source.unit is Literal literal)
-        //    {
-        //        // If there is a connection, then we can return the value of the literal
-        //        if (literal.value is GameObject)
-        //            return literal.value as GameObject;
-        //        else if (literal.value is Component component)
-        //            return component.gameObject;
-
-        //        return null;
-        //    }
-        //    else if (value.hasValidConnection && value.connections.First().source.unit is GetVariable getVariable)
-        //    {
-        //        // If there is a connection, then we can return the value of the literal
-        //        var getVarValue = exportContext.GetVariableValueRaw(getVariable, out _, out var varType);
-        //        if (getVariable != null && getVarValue is GameObject gameObject) 
-        //            return gameObject;
-        //        else if (getVariable != null && getVarValue is Component component)
-        //            return component.gameObject;
-                
-        //        if (varType != null)
-        //            return null;
-                
-        //        Debug.LogError("Could not get the default value of the GetVariable node: " + getVariable.ToString());
-        //        return null;
-        //    }
-        //    else
-        //    {
-        //        // TODO: Parse the input nodes for a value
-        //        Debug.LogWarning("This ValueInput has a valid connection, but we only support self-references");
-        //        return null;
-        //    }
-        //}
 
         public static bool GetDefaultValue<T> (IUnit unit, string key, out T tOut)
         {

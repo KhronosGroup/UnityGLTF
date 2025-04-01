@@ -9,6 +9,10 @@ namespace UnityGLTF.Interactivity.Schema
     using UnityGLTF.Interactivity;
 
     [Serializable]
+
+	/// <summary>
+	/// Audio Extension class that is called to serialize the data
+	/// </summary>
     public class GltfAudioExtension : IExtension
     {
         public const string AudioExtensionName = "KHR_audio_emitter";
@@ -20,6 +24,9 @@ namespace UnityGLTF.Interactivity.Schema
         {
         }
 
+        /// <summary>
+        /// Called when the data is written and serialized to file.
+        /// </summary>
         public JProperty Serialize()
         {
             JObject jo = new JObject
@@ -36,6 +43,9 @@ namespace UnityGLTF.Interactivity.Schema
             return extension;
         }
 
+        /// <summary>
+        /// Clones the object
+        /// </summary>
         public IExtension Clone(GLTFRoot root)
         {
             return new GltfAudioExtension()

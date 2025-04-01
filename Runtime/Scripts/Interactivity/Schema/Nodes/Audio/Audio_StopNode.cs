@@ -1,5 +1,8 @@
 namespace UnityGLTF.Interactivity.Schema
 {
+    /// <summary>
+	/// The audio stop node schema / data
+    /// </summary>
     public class Audio_StopNode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "audio/stop";

@@ -11,7 +11,7 @@ using UnityGLTF.Plugins;
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     /// <summary>
-    /// Unit Exporte for audio source play node
+    /// Unit Exporter for audio source play node
     /// </summary>
     public class AudioSource_PlayUnitExport : IUnitExporter
     {

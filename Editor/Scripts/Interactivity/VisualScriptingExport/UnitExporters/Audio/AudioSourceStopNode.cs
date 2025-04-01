@@ -10,11 +10,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class AudioSource_StopUnitExport : IUnitExporter
     {
-        public System.Type unitType
+		/// <summary>
+		/// Unit Exporter for audio source stop node
+		/// </summary>
+    	public System.Type unitType
         {
             get => typeof(InvokeMember);
         }
 
+        /// <summary>
+        /// Register the instance of stop audio exporter
+        /// </summary>
         [InitializeOnLoadMethod]
         private static void Register()
         {
@@ -22,6 +28,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 new AudioSource_StopUnitExport());
         }
 
+        /// <summary>
+        /// Sets up the unitexporter with the correct data and associations
+        /// </summary>
+        /// <param name="unitExporter"></param>
+        /// <returns></returns>
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             InvokeMember unit = unitExporter.unit as InvokeMember;

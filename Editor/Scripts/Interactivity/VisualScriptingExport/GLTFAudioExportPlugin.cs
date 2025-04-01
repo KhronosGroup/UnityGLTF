@@ -19,12 +19,14 @@ public class GLTFAudioExportPlugin : VisualScriptingExportPlugin
         public override string DisplayName => "GLTF_Audio_Export";
 
         /// <summary>
-        /// plugin descriptions
+        /// Plugin descriptions
         /// </summary>
         public override string Description => "Exports KHR Audio source nodes(literals) from the visual scripting graph";
 
         /// <summary>
-        /// Creates a audio export context with the save to external file arg as true
+        /// Creates a audio export context with the save to external file arg as false.
+		/// The second arugment option for the GLTDAudionExportContext tells it to 
+		/// forces a save of the audio to external file by setting to true
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>

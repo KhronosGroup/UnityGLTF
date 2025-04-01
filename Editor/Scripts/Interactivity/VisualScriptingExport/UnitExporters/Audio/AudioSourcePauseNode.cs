@@ -8,6 +8,9 @@ using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
+	/// <summary>
+    /// Unit Exporter for audio source play node
+    /// </summary>
     public class AudioSource_PauseUnitExport : IUnitExporter
     {
         public System.Type unitType
@@ -15,6 +18,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             get => typeof(InvokeMember);
         }
 
+        /// <summary>
+        /// Register the instance of the pause exporter
+        /// </summary>
         [InitializeOnLoadMethod]
         private static void Register()
         {
@@ -23,6 +29,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
 
+        /// <summary>
+        /// Sets up the unitexporter with the correct data and associations
+        /// </summary>
+        /// <param name="unitExporter"></param>
+        /// <returns></returns>
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             InvokeMember unit = unitExporter.unit as InvokeMember;
