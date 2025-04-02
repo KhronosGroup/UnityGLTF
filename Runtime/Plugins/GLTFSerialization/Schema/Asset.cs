@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GLTF.Schema
 {
@@ -28,6 +30,8 @@ namespace GLTF.Schema
 		/// The minimum glTF version that this asset targets.
 		/// </summary>
 		public string MinVersion;
+		
+		public Dictionary<string, JToken> PluginExtras = new Dictionary<string, JToken>();
 
 		public Asset()
 		{
@@ -98,6 +102,21 @@ namespace GLTF.Schema
 			writer.WritePropertyName("version");
 			writer.WriteValue(Version);
 
+			if (PluginExtras.Count > 0)
+			{
+				writer.WritePropertyName("extras");
+				writer.WriteStartObject();
+				writer.WritePropertyName("plugins");
+				foreach (var extra in PluginExtras)
+				{
+					writer.WriteStartObject();
+					writer.WritePropertyName(extra.Key);
+					extra.Value.WriteTo(writer);
+					writer.WriteEndObject();
+				}
+				writer.WriteEndObject();
+			}
+			
 			base.Serialize(writer);
 
 			writer.WriteEndObject();
@@ -126,11 +145,11 @@ namespace GLTF.Schema
 			if (!string.IsNullOrEmpty(Copyright))
 				sb.AppendLine($"{bStart}{nameof(Copyright)}: {bEnd}{Copyright}");
 			    
-			if (Extras != null)
+			if (PluginExtras != null)
 			{
 				sb.AppendLine("");
 				sb.AppendLine($"{bStart}Extras: {bEnd}");
-				foreach (var extra in Extras)
+				foreach (var extra in PluginExtras)
 					sb.AppendLine(extra.ToString());
 			}
 

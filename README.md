@@ -26,6 +26,11 @@ The library is designed to be easy to extend with additional extensions to the g
   - [Import and Export](#import-and-export)
   - [Import only](#import-only)
   - [Export only](#export-only)
+- [glTF Interactivity](#gltf-interactivity)
+  - [Visual Scripting Graph Exporter](#visual-scripting-graph-exporter)
+  - [Features](#features)
+  - [Unsupported](#unsupported)
+  - [Viewer support](#viewer-support)
 - [glTF Materials](#gltf-materials)
   - [Material Conversions](#material-conversions)
   - [Material and Shader Export Compatibility](#material-and-shader-export-compatibility)
@@ -150,6 +155,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ### Export only
 
 - [KHR_materials_variants](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_variants/README.md)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/interactivity/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting Graph exporter) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 - Timeline recorder track for exporting animations in the editor and at runtime
 - Lossless keyframe optimization on export
 - All 2D textures can be exported, RenderTextures included – they're baked at export.
@@ -157,6 +163,53 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - Optional plugin: Bake Particle Systems to meshes on export
 - Optional plugin: Bake Canvas to meshes on export
 - Included plugin sample: [KHR_audio_emitter](https://github.com/KhronosGroup/glTF/pull/2137) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+
+## glTF Interactivity
+### Visual Scripting Graph Exporter
+
+This plugin allows you to export VisualScripting Graphs as KHR_interactivity graphs in glTF files.
+> [!NOTE]  
+> Because the specification of KHR_interactivity is still in development, the plugin is disabled by default. To enable it, go to `Project Settings > UnityGLTF > Export` and enable the 'KHR_interactivity (VisualScripting)' plugin.
+Please keep in mind that until ratification of the extension, exported glTF files with the KHR_interactivity extension might be outdated and not valid anymore with new specification updates.
+
+### Features
+
+A wide range of nodes are supported for export. Additionally, many features that Unity's Visual Scripting has, but that are lacking in the KHR_interactivity extension, are "flattened" on export into compatible graph logic. For example, scoped variables get exported as variables with unique names, so that there are no conflicts in the exported graph. This allows a lot of flexibility for building complex graphs in the Unity editor, while still being able to export to a glTF file. 
+
+- SubGraph support
+  - SubGraphs will be flattened on export
+- Variables
+  - "Saved" variables are not supported
+- Custom Events
+- Coroutines
+- Multiple Visual Scripting Graphs in one glTF file
+  - Multiple graphs will be merged into a single KHR_interactivity graph
+- Partial List/Array support
+  - Capacity of lists can't be changed at runtime, so make sure you create a List with enough size in the Visual Scripting graph.
+- Math, Vector, Matrix operations
+- Partial Animator support
+  - Starting an animation is supported. Automatic graph transitions are currently not supported.
+- Logic operations
+- Material editing: Get/Set of floats, colors, texture offset/scale
+- Property interpolation: Use the "Interpolate ..." family of nodes
+
+A lot of Visual Scripting nodes are already supported. To see the full list of supported nodes, click on the button `Project Settings > UnityGLTF > Export > KHR_interactivity (VisualScripting) > Log supported Visual Scripting Units` to see the full list of supported nodes in the console.
+
+> [!TIP]  
+> When the interactivity extension is enabled, you can also see in the Visual Scripting Editor which nodes are supported by the extension. You can also see any warnings/errors from the last exporting there (sometimes the editor will not be immediately updates the view and need some time).  
+> ![image](https://github.com/user-attachments/assets/df9d4e8e-fd8d-4c5a-a6a4-15812a5ea484)
+> _Example: `On Pointer Click` is supported, while `On Pointer Up` is not supported for export._
+
+### Unsupported
+- String manipulation (not supported by the KHR_interactivity extension)
+- Quaternion math operations are currently missing (not yet in the KHR_interactivity specification)
+- Some nodes have additional limitations. You can see these in the Script Graph:  
+  ![image](https://github.com/user-attachments/assets/011618d4-623e-4aa9-b343-bdbeb06df141)
+
+### Viewer support
+These viewers support the current KHR_interactivity specification and have been extensively tested with the UnityGLTF exporter:  
+- Babylon: https://sandbox.babylonjs.com/  
+- Khronos Interactivity Graph Authoring Tool https://github.khronos.org/glTF-InteractivityGraph-AuthoringTool/  
 
 ## glTF Materials
 

@@ -1,0 +1,34 @@
+{
+    "name": "UnityGLTF.Interactivity.VisualScripting.Editor",
+    "rootNamespace": "",
+    "references": [
+        "UnityGLTFEditor",
+        "UnityGLTFScripts",
+        "GLTFSerialization",
+        "UnityGLTF.Plugins.Experimental",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.Core.Editor",
+        "Unity.VisualScripting.Flow.Editor",
+        "UnityGLTF.Interactivity.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "HAVE_VISUAL_SCRIPTING"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.9",
+            "define": "HAVE_VISUAL_SCRIPTING"
+        }
+    ],
+    "noEngineReferences": false
+}
