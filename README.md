@@ -142,8 +142,12 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - [KHR_materials_specular](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_specular/README.md) (partial support)
 - [KHR_materials_dispersion](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_dispersion/README.md) (refractive index dispersion)
 - [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_animation_pointer/README.md) (arbitrary property animations)
-- [KHR_node_visibility](https://github.com/KhronosGroup/glTF/blob/fbe806836526cdd8cd99ed3770b1c56df56c6863/extensions/2.0/Khronos/KHR_node_visibility/README.md) (GameObject active state) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 - [MSFT_lod](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_lod/README.md) (level of detail) ![Vendor-specific Extension](https://img.shields.io/badge/⚠️%20Vendor--specific%20Extension-gray)
+- [KHR_node_visibility](https://github.com/KhronosGroup/glTF/blob/fbe806836526cdd8cd99ed3770b1c56df56c6863/extensions/2.0/Khronos/KHR_node_visibility/README.md) (GameObject active state) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting export as interactivity graph) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+
 ### Import only
 
 - [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md) (smaller buffers / smaller filesize)
