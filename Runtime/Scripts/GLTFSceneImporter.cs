@@ -720,8 +720,8 @@ namespace UnityGLTF
 			}
 			
 			await ConstructScene(scene, showSceneObj, cancellationToken);
-
-			if (SceneParent != null)
+			
+			if (SceneParent != null && CreatedObject)
 			{
 				CreatedObject.transform.SetParent(SceneParent, false);
 			}
