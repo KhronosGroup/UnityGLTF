@@ -139,26 +139,27 @@ namespace UnityGLTF.Plugins.Experimental
 
   [Serializable]
   public class KHR_AudioEmitter : GLTFChildOfRootProperty {
-
+    public string name;
     public string type;
     public float gain;
     public List<AudioSourceId> sources;
 
     public virtual JObject Serialize() {
       var jo = new JObject();
-
+            
+      if (!string.IsNullOrEmpty(name)){
+         jo.Add(nameof(name), name);
+      }
       jo.Add(nameof(type), type);
 
-//      if (gain != 1.0f) {
-        jo.Add(nameof(gain), gain);
-//      }
+      jo.Add(nameof(gain), gain);
 
       if (sources != null && sources.Count > 0) {
-        JArray arr = new JArray();
+      JArray arr = new JArray();
 
-        foreach (var source in sources) {
-          arr.Add(source.Id);
-        }
+      foreach (var source in sources) {
+        arr.Add(source.Id);
+      }
 
         jo.Add(new JProperty(nameof(sources), arr));
       }
@@ -169,7 +170,6 @@ namespace UnityGLTF.Plugins.Experimental
 
   [Serializable]
   public class KHR_PositionalAudioEmitter : KHR_AudioEmitter {
-
     public float coneInnerAngle;
     public float coneOuterAngle;
     public float coneOuterGain;
@@ -209,7 +209,6 @@ namespace UnityGLTF.Plugins.Experimental
       if (maxDistance != 10000.0f) {
         positional.Add(new JProperty(nameof(maxDistance), maxDistance));
       }
-
       
       //if (refDistance != 1.0f) {
       //  positional.Add(new JProperty(nameof(refDistance), refDistance));
@@ -227,7 +226,7 @@ namespace UnityGLTF.Plugins.Experimental
 
   [Serializable]
   public class KHR_AudioSource : GLTFChildOfRootProperty {
-    public string sourceName;
+    public string name;
     public bool autoPlay;
     public float gain;
     public bool loop;
@@ -252,9 +251,9 @@ namespace UnityGLTF.Plugins.Experimental
         jo.Add(nameof(audio), audio.Id);  
       }
 
-      if (!string.IsNullOrEmpty(sourceName))
+      if (!string.IsNullOrEmpty(name))
       {
-        jo.Add(nameof(sourceName), sourceName);
+        jo.Add(nameof(name), name);
       }
       return jo;
     }

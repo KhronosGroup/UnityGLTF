@@ -201,7 +201,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 gain = audioSource.volume,
                 minDistance = audioSource.minDistance,
                 maxDistance = audioSource.maxDistance,
-                distanceModel = PositionalAudioDistanceModel.linear
+                distanceModel = PositionalAudioDistanceModel.linear,
+                name = "positional emitter"
             };
 
             audioEmitters.Add(emitter);
@@ -237,15 +238,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 }
 
                 audio.uri = uriPath + fileName; //"." + Path.DirectorySeparatorChar + AudioRelDirectory + Path.DirectorySeparatorChar + fileName;
-                audio.mimeType = MimeTypeString;
             }
             else
             {
                 var result = exporter.ExportFile(fileName, "audio/mpeg", fileStream);
-                audio.uri = result.uri;
                 audio.mimeType = result.mimeType;
                 audio.bufferView = result.bufferView;
-
             }
 
             var audioData = new List<KHR_AudioData>();
@@ -260,7 +258,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 autoPlay = audioSource.playOnAwake,
                 loop = audioSource.loop,
                 gain = audioSource.volume,
-                sourceName = Path.GetFileNameWithoutExtension(path)
+                name = Path.GetFileNameWithoutExtension(path)
             };
 
             audioSources.Add(khrAudio);
