@@ -269,7 +269,7 @@ namespace UnityGLTF
 		    }
 	    }
 	    
-	    private static bool ExportBinary => SessionState.GetBool(ExportAsBinary, true);
+	    private static bool ExportBinary => GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary;
 	    private const int Priority = 34;
 
 		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true, Priority)]
@@ -535,11 +535,11 @@ namespace UnityGLTF
 			{
 				if (gameObject)
 				{
-					var current = SessionState.GetBool(ExportAsBinary, true);
+					var current = GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary;
 					menu.AddItem(new GUIContent("UnityGLTF/Export as binary (GLB)"), current, () =>
 					{
 						current = !current;
-						SessionState.SetBool(ExportAsBinary, current);
+						GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary = current;
 					});
 				}
 				else
@@ -565,9 +565,9 @@ namespace UnityGLTF
 		[MenuItem(ExportAsBinary, false, 3001)]
 		private static void ToggleExportAsGltf()
 		{
-			var current = SessionState.GetBool(ExportAsBinary, true);
+			var current = GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary;
 			current = !current;
-			SessionState.SetBool(ExportAsBinary, current);
+			GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary = current;
 			Menu.SetChecked(ExportAsBinary, current);
 		}
 	}

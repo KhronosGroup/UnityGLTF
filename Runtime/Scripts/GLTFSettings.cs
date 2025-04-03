@@ -117,6 +117,8 @@ namespace UnityGLTF
 	    
 	    [Tooltip("AutoTransform: Reset local position, keep local rotation, keep world scale. \nLocalTransforms: Keep local position, rotation, and scale. \nWorldTransforms: Keep world position, rotation, and scale.")]
 	    public TransformMode EditorExportTransformMode = TransformMode.AutoTransforms;
+		[Tooltip("If true, the exported glTF file will be in Glb format. \nIf false, it will be in Gltf format.")]
+	    public bool EditorExportsAsBinary = true;
 #endif
 	    
 		[Header("Export Visibility")]
