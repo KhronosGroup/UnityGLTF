@@ -101,8 +101,6 @@ namespace UnityGLTF
 		[SerializeField]
 		[Tooltip("If on, the entire texture path will be preserved. If off (default), textures are exported at root level.")]
 		private bool exportFullPath = false;
-		[SerializeField]
-		private bool requireExtensions = false;
 
 		[Header("Export Visibility")]
 		[SerializeField]
@@ -152,7 +150,6 @@ namespace UnityGLTF
 		public bool ExportNames { get => exportNames; set  => exportNames = value; }
 		public bool ExportFullPath { get => exportFullPath; set => exportFullPath = value; }
 		public bool UseMainCameraVisibility { get => useMainCameraVisibility; set => useMainCameraVisibility = value; }
-		public bool RequireExtensions { get => requireExtensions; set => requireExtensions = value; }
 		public bool TryExportTexturesFromDisk { get => tryExportTexturesFromDisk; set => tryExportTexturesFromDisk = value; }
 		public bool UseTextureFileTypeHeuristic { get => useTextureFileTypeHeuristic; set => useTextureFileTypeHeuristic = value; }
 		public bool ExportVertexColors { get => exportVertexColors; set => exportVertexColors = value; }

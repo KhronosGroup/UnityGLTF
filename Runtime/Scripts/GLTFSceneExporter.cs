@@ -500,7 +500,6 @@ namespace UnityGLTF
 
 		private GLTFSettings settings => _exportContext.settings;
 		private bool ExportNames => settings.ExportNames;
-		private bool RequireExtensions => settings.RequireExtensions;
 		private bool ExportAnimations => settings.ExportAnimations;
 
 		#endregion

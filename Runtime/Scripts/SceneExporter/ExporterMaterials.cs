@@ -526,21 +526,7 @@ namespace UnityGLTF
 			{
 				_root.ExtensionsUsed.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
 			}
-
-			if (RequireExtensions)
-			{
-				if (_root.ExtensionsRequired == null)
-				{
-					_root.ExtensionsRequired = new List<string>(
-						new[] { ExtTextureTransformExtensionFactory.EXTENSION_NAME }
-					);
-				}
-				else if (!_root.ExtensionsRequired.Contains(ExtTextureTransformExtensionFactory.EXTENSION_NAME))
-				{
-					_root.ExtensionsRequired.Add(ExtTextureTransformExtensionFactory.EXTENSION_NAME);
-				}
-			}
-
+			
 			if (def.Extensions == null)
 				def.Extensions = new Dictionary<string, IExtension>();
 
@@ -869,19 +855,7 @@ namespace UnityGLTF
 			{
 				_root.ExtensionsUsed.Add("KHR_materials_pbrSpecularGlossiness");
 			}
-
-			if (RequireExtensions)
-			{
-				if (_root.ExtensionsRequired == null)
-				{
-					_root.ExtensionsRequired = new List<string>(new[] { "KHR_materials_pbrSpecularGlossiness" });
-				}
-				else if (!_root.ExtensionsRequired.Contains("KHR_materials_pbrSpecularGlossiness"))
-				{
-					_root.ExtensionsRequired.Add("KHR_materials_pbrSpecularGlossiness");
-				}
-			}
-
+			
 			if (material.Extensions == null)
 			{
 				material.Extensions = new Dictionary<string, IExtension>();
@@ -972,19 +946,7 @@ namespace UnityGLTF
 			{
 				_root.ExtensionsUsed.Add("KHR_materials_common");
 			}
-
-			if (RequireExtensions)
-			{
-				if (_root.ExtensionsRequired == null)
-				{
-					_root.ExtensionsRequired = new List<string>(new[] { "KHR_materials_common" });
-				}
-				else if (!_root.ExtensionsRequired.Contains("KHR_materials_common"))
-				{
-					_root.ExtensionsRequired.Add("KHR_materials_common");
-				}
-			}
-
+			
 			var constant = new MaterialCommonConstant();
 
 			if (materialObj.HasProperty("_AmbientFactor"))
