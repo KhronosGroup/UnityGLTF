@@ -115,6 +115,9 @@ namespace UnityGLTF
 		    /** Keep world position, rotation, and scale. This is useful for exporting parts of scenes and keeping all relations between objects the same. */
 		    [InspectorName("World: keep world position, rotation and scale")]
 		    WorldTransforms,
+		    /** Reset position, rotation, and scale to identity. Keeps scale aspect ratio, so purposefully stretched objects will stay stretched. */
+		    [InspectorName("Reset: reset position, rotation and scale")]
+		    Reset,
 	    }
 	    
 	    [Tooltip("Specifies how root transforms will be exported.\nAuto (default): reset local position, keep local rotation, keep world scale. \nLocalTransforms: keep local position, rotation, and scale. \nWorldTransforms: keep world position, rotation, and scale.")]

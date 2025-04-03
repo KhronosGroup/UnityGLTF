@@ -89,6 +89,19 @@ namespace UnityGLTF
 					    rotation = transform.rotation, 
 					    scale = transform.lossyScale
 				    };
+			    case GLTFSettings.TransformMode.Reset:
+				    var normalizedScale = transform.lossyScale;
+				    var maxEdge = Math.Max(normalizedScale.x, Math.Max(normalizedScale.y, normalizedScale.z));
+				    if (maxEdge < 0.00001f)
+					    normalizedScale = Vector3.one;
+				    else
+						normalizedScale /= maxEdge;
+				    return new TransformData()
+				    {
+					    position = Vector3.zero,
+					    rotation = Quaternion.identity,
+					    scale = normalizedScale,
+				    };
 			    // This is the built-in case for GLTFExporter: it exports the local transforms of nodes into glTF.
 			    case GLTFSettings.TransformMode.LocalTransforms:
 			    default:
