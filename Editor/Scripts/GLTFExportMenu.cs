@@ -464,8 +464,8 @@ namespace UnityGLTF
 			
 			var exportOptions = new ExportContext(settings) { TexturePathRetriever = RetrieveTexturePath };
 			
-			var haveOverrides = batch.rootTransformOverride != null && batch.rootTransformOverride.Length > 0;
-			var originalTransforms = batch.rootTransforms.Select(x => (x.localPosition, x.localRotation, x.localScale)).ToArray();
+			var haveOverrides = batch.rootTransformOverride != null && batch.rootTransformOverride.Length > 0 && batch.rootTransforms != null;
+			var originalTransforms = batch.rootTransforms?.Select(x => (x.localPosition, x.localRotation, x.localScale)).ToArray();
 			if (haveOverrides)
 			{
 				var overrideLength = batch.rootTransformOverride.Length;
