@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.16.0-pre.1] - 2025-04-03
+- add: Interactivity Export API now has `AddLog` method that takes log settings into account, so app-specific logging can be used
+- add: Transform Modes for batch exporting from the UnityGLTF menu (`Auto`, `Local`, `World`, `Reset`), with options covering various use cases
+- add: editor setting for export type (GLB vs. glTF) from the UnityGLTF menu
+- add: improvements to HDRP material export support (#826)
+- change: API cleanup for Interactivity node export
+- change: removed legacy `GLTFSettings.requireExtensions` option that wasn't really used
+
 ## [2.16.0-pre] - 2025-04-02
 
 - add: Editor export support for [`KHR_interactivity`](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc), [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) and [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422).Support for these extensions is based on the draft specification as of Mar 10 2024. Please note that these extensions are not yet ratified and implementation details may change.
