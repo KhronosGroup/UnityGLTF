@@ -263,17 +263,17 @@ namespace UnityGLTF
 
 		    protected override bool OnOpenStage() => true;
 
-		    public void Setup(string scenePath)
-		    {
-#if !UNITY_2023_1_OR_NEWER
-			    if (_openPreviewScene == null) _openPreviewScene = typeof(EditorSceneManager).GetMethod("OpenPreviewScene", (BindingFlags)(-1), null, new[] {typeof(string), typeof(bool)}, null);
-			    if (_openPreviewScene == null) return;
-			    
-			    scene = (Scene) _openPreviewScene.Invoke(null, new object[] { scenePath, false });
-#else
-			    scene = EditorSceneManager.OpenPreviewScene(scenePath, false);
-#endif
-		    }
+// 		    public void Setup(string scenePath)
+// 		    {
+// #if !UNITY_2023_1_OR_NEWER
+// 			    if (_openPreviewScene == null) _openPreviewScene = typeof(EditorSceneManager).GetMethod("OpenPreviewScene", (BindingFlags)(-1), null, new[] {typeof(string), typeof(bool)}, null);
+// 			    if (_openPreviewScene == null) return;
+// 			    
+// 			    scene = (Scene) _openPreviewScene.Invoke(null, new object[] { scenePath, false });
+// #else
+// 			    scene = EditorSceneManager.OpenPreviewScene(scenePath, false);
+// #endif
+// 		    }
 		    
 		    protected override GUIContent CreateHeaderContent()
 		    {
