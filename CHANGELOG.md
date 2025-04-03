@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+## [2.16.0-pre.2] - 2025-04-03
+- fix: regression when batch exporting material-only files
+- fix nullreference when loading a materials-only file with `GLTFSceneImporter` or `GLTFComponent`
+- fix GLTFComponent failing when the loaded file is a web URL but "Load from streaming assets" is on (the default). If the URI starts with `http://` or `https://`, we now automatically load from the web.
+- fix: GPU instancing can't be enabled on Shader Graph-based materials when the built-in render pipeline is active. Unity does not support GPU instancing with Shader Graph.
+
 ## [2.16.0-pre.1] - 2025-04-03
 - add: Interactivity Export API now has `AddLog` method that takes log settings into account, so app-specific logging can be used
 - add: Transform Modes for batch exporting from the UnityGLTF menu (`Auto`, `Local`, `World`, `Reset`), with options covering various use cases
