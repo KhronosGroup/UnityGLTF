@@ -49,10 +49,22 @@ namespace UnityGLTF
 		    public Quaternion rotation;
 		    public Vector3 scale;
 	    }
+	    
+	    private static GLTFSettings _cachedSettings;
+	    
+	    private static GLTFSettings settings
+	    { 
+		    get { 
+			    if (_cachedSettings == null)
+			    {
+				    _cachedSettings = GLTFSettings.GetOrCreateSettings();
+			    }
+			    return _cachedSettings;
+			} 
+	    }
 
 	    private static TransformData? GetOverride(Transform transform)
 	    {
-		    var settings = GLTFSettings.GetOrCreateSettings();
 		    switch (settings.EditorExportTransformMode)
 		    {
 			    // Heuristic for correcting the placement of the object in the scene
@@ -269,7 +281,7 @@ namespace UnityGLTF
 		    }
 	    }
 	    
-	    private static bool ExportBinary => GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary;
+	    private static bool ExportBinary => settings.EditorExportsAsBinary;
 	    private const int Priority = 34;
 
 		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true, Priority)]
@@ -437,7 +449,6 @@ namespace UnityGLTF
 				}
 			}
 			
-			var settings = GLTFSettings.GetOrCreateSettings();
 			var exportOptions = new ExportContext(settings) { TexturePathRetriever = RetrieveTexturePath };
 			
 			var haveOverrides = batch.rootTransformOverride != null && batch.rootTransformOverride.Length > 0;
@@ -535,11 +546,11 @@ namespace UnityGLTF
 			{
 				if (gameObject)
 				{
-					var current = GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary;
+					var current = settings.EditorExportsAsBinary;
 					menu.AddItem(new GUIContent("UnityGLTF/Export as binary (GLB)"), current, () =>
 					{
 						current = !current;
-						GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary = current;
+						settings.EditorExportsAsBinary = current;
 					});
 				}
 				else
@@ -565,9 +576,9 @@ namespace UnityGLTF
 		[MenuItem(ExportAsBinary, false, 3001)]
 		private static void ToggleExportAsGltf()
 		{
-			var current = GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary;
+			var current = settings.EditorExportsAsBinary;
 			current = !current;
-			GLTFSettings.GetOrCreateSettings().EditorExportsAsBinary = current;
+			settings.EditorExportsAsBinary = current;
 			Menu.SetChecked(ExportAsBinary, current);
 		}
 	}
