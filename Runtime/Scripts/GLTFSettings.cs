@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityGLTF.Plugins;
 using System.Reflection;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -108,23 +109,30 @@ namespace UnityGLTF
 	    public enum TransformMode
 	    {
 		    /** Reset local position, keep local rotation, keep world scale. This is a heuristic for exporting objects from anywhere in the scene for general usage. */
-		    AutoTransforms,
+		    [InspectorName(("Auto: reset local position, keep local rotation, keep world scale"))]
+		    Auto,
 		    /** Keep local position, rotation, and scale. This is useful if you want to export childs of hierarchies and import them again as childs. */
+		    [InspectorName("Local: keep local position, rotation and scale")]
 		    LocalTransforms,
 		    /** Keep world position, rotation, and scale. This is useful for exporting parts of scenes and keeping all relations between objects the same. */
+		    [InspectorName("World: keep world position, rotation and scale")]
 		    WorldTransforms,
 	    }
 	    
-	    [Tooltip("AutoTransform: Reset local position, keep local rotation, keep world scale. \nLocalTransforms: Keep local position, rotation, and scale. \nWorldTransforms: Keep world position, rotation, and scale.")]
-	    public TransformMode EditorExportTransformMode = TransformMode.AutoTransforms;
+	    [Tooltip("Specifies how root transforms will be exported.\nAuto (default): reset local position, keep local rotation, keep world scale. \nLocalTransforms: keep local position, rotation, and scale. \nWorldTransforms: keep world position, rotation, and scale.")]
+	    public TransformMode EditorExportTransformMode = TransformMode.Auto;
 
 	    public enum ExportFileFormat
 	    {
+		    /** glTF-Binary (GLB) with embedded buffers and textures */
+		    [InspectorName("glTF-Binary (.glb)")]
 		    Glb,
-		    Gltf
+		    /** glTF JSON + separate binary buffers and textures */
+		    [InspectorName("glTF (.gltf + .bin + textures)")]
+		    Gltf,
 	    }
 	    
-	    public ExportFileFormat EditorExportsFileFormat = ExportFileFormat.Glb;
+	    public ExportFileFormat EditorExportFileFormat = ExportFileFormat.Glb;
 #endif
 	    
 		[Header("Export Visibility")]

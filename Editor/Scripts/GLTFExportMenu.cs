@@ -75,7 +75,7 @@ namespace UnityGLTF
 			    // Adjust local position
 			    // - easy case for now: set to 0
 			    // - better heuristic might be: if current local position in any axis fits into the bounds: keep that axis; if it doesn't fit into the bounds: set to 0
-			    case GLTFSettings.TransformMode.AutoTransforms:
+			    case GLTFSettings.TransformMode.Auto:
 				    return new TransformData
 				    {
 					    position = Vector3.zero, 
@@ -281,7 +281,7 @@ namespace UnityGLTF
 		    }
 	    }
 	    
-	    private static bool ExportBinary => settings.EditorExportsFileFormat == GLTFSettings.ExportFileFormat.Glb;
+	    private static bool ExportBinary => settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
 	    private const int Priority = 34;
 
 		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true, Priority)]
@@ -546,11 +546,11 @@ namespace UnityGLTF
 			{
 				if (gameObject)
 				{
-					var current = settings.EditorExportsFileFormat == GLTFSettings.ExportFileFormat.Glb;
+					var current = settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
 					menu.AddItem(new GUIContent("UnityGLTF/Export as binary (GLB)"), current, () =>
 					{
 						current = !current;
-						settings.EditorExportsFileFormat = current ? GLTFSettings.ExportFileFormat.Glb : GLTFSettings.ExportFileFormat.Gltf;
+						settings.EditorExportFileFormat = current ? GLTFSettings.ExportFileFormat.Glb : GLTFSettings.ExportFileFormat.Gltf;
 					});
 				}
 				else
@@ -576,9 +576,9 @@ namespace UnityGLTF
 		[MenuItem(ExportAsBinary, false, 3001)]
 		private static void ToggleExportAsGltf()
 		{
-			var current = settings.EditorExportsFileFormat == GLTFSettings.ExportFileFormat.Glb;
+			var current = settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
 			current = !current;
-			settings.EditorExportsFileFormat = current ? GLTFSettings.ExportFileFormat.Glb : GLTFSettings.ExportFileFormat.Gltf;
+			settings.EditorExportFileFormat = current ? GLTFSettings.ExportFileFormat.Glb : GLTFSettings.ExportFileFormat.Gltf;
 			Menu.SetChecked(ExportAsBinary, current);
 		}
 	}
