@@ -50,22 +50,10 @@ namespace UnityGLTF
 		    public Vector3 scale;
 	    }
 
-	    enum TransformMode
-	    {
-		    /** Reset local position, keep local rotation, keep world scale. This is a heuristic for exporting objects from anywhere in the scene for general usage. */
-		    AutoTransforms,
-		    /** Keep local position, rotation, and scale. This is useful if you want to export childs of hierarchies and import them again as childs. */
-		    LocalTransforms,
-		    /** Keep world position, rotation, and scale. This is useful for exporting parts of scenes and keeping all relations between objects the same. */
-		    WorldTransforms,
-	    }
-
-	    // TODO this should come from settings
-	    private static TransformMode transformMode = TransformMode.WorldTransforms;
-
 	    private static TransformData? GetOverride(Transform transform)
 	    {
-		    switch (transformMode)
+		    var settings = GLTFSettings.GetOrCreateSettings();
+		    switch (settings.EditorExportTransformMode)
 		    {
 			    // Heuristic for correcting the placement of the object in the scene
 			    // Keep world scale
@@ -75,14 +63,14 @@ namespace UnityGLTF
 			    // Adjust local position
 			    // - easy case for now: set to 0
 			    // - better heuristic might be: if current local position in any axis fits into the bounds: keep that axis; if it doesn't fit into the bounds: set to 0
-			    case TransformMode.AutoTransforms:
+			    case GLTFSettings.TransformMode.AutoTransforms:
 				    return new TransformData
 				    {
 					    position = Vector3.zero, 
 					    rotation = transform.localRotation, 
 					    scale = transform.lossyScale
 				    };
-			    case TransformMode.WorldTransforms:
+			    case GLTFSettings.TransformMode.WorldTransforms:
 				    return new TransformData
 				    {
 					    position = transform.position, 
@@ -90,7 +78,7 @@ namespace UnityGLTF
 					    scale = transform.lossyScale
 				    };
 			    // This is the built-in case for GLTFExporter: it exports the local transforms of nodes into glTF.
-			    case TransformMode.LocalTransforms:
+			    case GLTFSettings.TransformMode.LocalTransforms:
 			    default:
 				    return null;
 		    }
