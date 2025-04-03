@@ -36,15 +36,14 @@ namespace UnityGLTF.Interactivity.Schema
         
         public void SetFlowOut(string socketId, GltfInteractivityNode targetNode, string targetSocketId)
         {
-            if (FlowConnections.TryGetValue(socketId, out var socket))
+            if (!FlowConnections.TryGetValue(socketId, out var socket))
             {
-                socket.Node = targetNode.Index;
-                socket.Socket = targetSocketId;
+                socket = new FlowSocketData();
+                FlowConnections.Add(socketId, socket);
             }
-            else
-            {
-                Debug.LogError($"Socket {socketId} not found in node {Schema.Op}");
-            }
+
+            socket.Node = targetNode.Index;
+            socket.Socket = targetSocketId;
         }
 
         public virtual void SetSchema(GltfInteractivityNodeSchema schema, bool applySocketDescriptors, bool clearExistingSocketData = true)
@@ -90,38 +89,36 @@ namespace UnityGLTF.Interactivity.Schema
         
         public void SetValueInSocketSource(string socketId,  GltfInteractivityNode sourceNode, string sourceSocketId, TypeRestriction typeRestriction = null)
         {
-            if (ValueInConnection.TryGetValue(socketId, out var socket))
+            if (!ValueInConnection.TryGetValue(socketId, out var socket))
             {
-                socket.Node = sourceNode.Index;
-                socket.Socket = sourceSocketId;
-                socket.Value = null;
-                socket.Type = -1;
-                if (typeRestriction != null)
-                    socket.typeRestriction = typeRestriction;
+                socket = new ValueSocketData(); 
+                ValueInConnection.Add(socketId, socket);
             }
-            else
-            {
-                Debug.LogError($"Socket {socketId} not found in node {Schema.Op}");
-            }
+            
+            socket.Node = sourceNode.Index;
+            socket.Socket = sourceSocketId;
+            socket.Value = null;
+            socket.Type = -1;
+            if (typeRestriction != null)
+                socket.typeRestriction = typeRestriction;
         }
         
         public void SetValueInSocket(string socketId, object value, TypeRestriction typeRestriction = null)
         {
-            if (ValueInConnection.TryGetValue(socketId, out var socket))
+            if (!ValueInConnection.TryGetValue(socketId, out var socket))
             {
-                socket.Node = null;
-                socket.Socket = null;
-                socket.Value = value;
-                if (value != null)
-                    socket.Type =  GltfTypes.TypeIndex(value.GetType());
-                
-                if (typeRestriction != null)
-                    socket.typeRestriction = typeRestriction;
+                socket = new ValueSocketData(); 
+                ValueInConnection.Add(socketId, socket);
             }
-            else
-            {
-                Debug.LogError($"Socket {socketId} not found in node {Schema.Op}");
-            }
+            
+            socket.Node = null;
+            socket.Socket = null;
+            socket.Value = value;
+            if (value != null)
+                socket.Type =  GltfTypes.TypeIndex(value.GetType());
+            
+            if (typeRestriction != null)
+                socket.typeRestriction = typeRestriction;
         }
         
         public GltfInteractivityNode(GltfInteractivityNodeSchema schema)
