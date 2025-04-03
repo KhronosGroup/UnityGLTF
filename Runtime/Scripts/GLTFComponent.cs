@@ -114,7 +114,8 @@ namespace UnityGLTF
 				if (!Factory) Factory = ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
                 string fullPath;
-                if (LoadFromStreamingAssets)
+                var isWebRequest = GLTFUri.StartsWith("http://", System.StringComparison.OrdinalIgnoreCase) || GLTFUri.StartsWith("https://", System.StringComparison.OrdinalIgnoreCase);
+                if (LoadFromStreamingAssets && !isWebRequest)
 	                fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
                 else
 	                fullPath = GLTFUri;
