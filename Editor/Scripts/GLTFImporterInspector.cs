@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using UnityEditor;
 
 using UnityEngine;
+using UnityEngine.Rendering;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
 using UnityGLTF.Plugins;
@@ -188,10 +189,12 @@ namespace UnityGLTF
 
 			var importMaterialsProp = serializedObject.FindProperty(nameof(GLTFImporter._importMaterials));
 			EditorGUILayout.PropertyField(importMaterialsProp);
-			if (importMaterialsProp.boolValue)
+			if (importMaterialsProp.boolValue && GraphicsSettings.currentRenderPipeline)
 			{
 				EditorGUI.indentLevel++;
+				EditorGUI.BeginDisabledGroup(!GraphicsSettings.currentRenderPipeline);
 				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._enableGpuInstancing)), new GUIContent("GPU Instancing"));
+				EditorGUI.EndDisabledGroup();
 				EditorGUI.indentLevel--;
 			}
 			var importedMaterials = serializedObject.FindProperty("m_Materials");

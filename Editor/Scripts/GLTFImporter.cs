@@ -568,6 +568,15 @@ namespace UnityGLTF
 		                    // In case the material is explicit set to instancing (e.g. EXT_mesh_gpu_instancing is used), don't override it.
 		                    if (!mat.enableInstancing)
 								mat.enableInstancing = _enableGpuInstancing;
+		                    
+		                    // If we're in built-in RP, don#t use GPU instancing since Shader Graph doesn't support it.
+		                    if (!GraphicsSettings.currentRenderPipeline)
+		                    {
+			                    // Shader Graphs are not compatible with GPU instancing, so we need to turn it off
+			                    // even if the user has explicitly turned the option to import materials with GPU instancing on.
+			                    mat.enableInstancing = false;
+		                    }
+		                    
 		                    materials.Add(mat);
 	                    }
                     }
