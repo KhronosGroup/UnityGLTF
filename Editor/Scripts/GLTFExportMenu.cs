@@ -40,13 +40,67 @@ namespace UnityGLTF
 		    public Transform[] rootTransforms;
 		    public Object[] rootResources;
 		    public SceneAsset[] sceneAssets;
+		    public TransformData?[] rootTransformOverride;
 	    }
 
+	    private struct TransformData
+	    {
+		    public Vector3 position;
+		    public Quaternion rotation;
+		    public Vector3 scale;
+	    }
+	    
+	    private static GLTFSettings _cachedSettings;
+	    
+	    private static GLTFSettings settings
+	    { 
+		    get { 
+			    if (_cachedSettings == null)
+			    {
+				    _cachedSettings = GLTFSettings.GetOrCreateSettings();
+			    }
+			    return _cachedSettings;
+			} 
+	    }
+
+	    private static TransformData? GetOverride(Transform transform)
+	    {
+		    switch (settings.EditorExportTransformMode)
+		    {
+			    // Heuristic for correcting the placement of the object in the scene
+			    // Keep world scale
+			    //   This is questionable; alternative: keep local UNIFORM scale, so when the parent is stretched we don't want to inherit that stretch.
+			    //   Otherwise, exporting a child of a stretched object will result in an exported object that looks visually different from the scene. 
+			    // Keep local rotation
+			    // Adjust local position
+			    // - easy case for now: set to 0
+			    // - better heuristic might be: if current local position in any axis fits into the bounds: keep that axis; if it doesn't fit into the bounds: set to 0
+			    case GLTFSettings.TransformMode.Auto:
+				    return new TransformData
+				    {
+					    position = Vector3.zero, 
+					    rotation = transform.localRotation, 
+					    scale = transform.lossyScale
+				    };
+			    case GLTFSettings.TransformMode.WorldTransforms:
+				    return new TransformData
+				    {
+					    position = transform.position, 
+					    rotation = transform.rotation, 
+					    scale = transform.lossyScale
+				    };
+			    // This is the built-in case for GLTFExporter: it exports the local transforms of nodes into glTF.
+			    case GLTFSettings.TransformMode.LocalTransforms:
+			    default:
+				    return null;
+		    }
+	    }
+	    
 	    /// <summary>
 	    /// This method collects GameObjects into export jobs. It supports multi-selection exports in various useful ways.
 	    /// 1. When multiple scene objects are selected, they are exported together as one file.
-	    /// 2. When multiple prefabs are selected, each one is exported as individual file.
-	    /// 3. When multiple scenes are selected, each scene is exported as individual file.
+	    /// 2. When multiple prefabs are selected, each one gets exported as individual file.
+	    /// 3. When multiple scenes are selected, each scene gets exported as individual file.
 	    /// </summary>
 	    /// <returns>True if the current selection can be exported.</returns>
 	    private static bool TryGetExportBatchesFromSelection(out List<ExportBatch> batches, bool separateBatches)
@@ -55,12 +109,15 @@ namespace UnityGLTF
 		    {
 			    if (!separateBatches)
 			    {
+				    // A better Auto heuristic for rootTransformOverride here is more complicated; we would need to determine what the shared root of those objects is, and
+				    // decide if we want to keep world position or keep local position in the shared root.
 				    batches = new List<ExportBatch>()
 				    {
 					    new()
 					    {
 						    sceneName = SceneManager.GetActiveScene().name,
 						    rootTransforms = Selection.transforms,
+						    rootTransformOverride = Selection.transforms.Select(GetOverride).ToArray(),
 					    }
 				    };
 			    }
@@ -73,6 +130,7 @@ namespace UnityGLTF
 					    {
 						    sceneName = transform.name,
 						    rootTransforms = new[] { transform },
+						    rootTransformOverride = new[] { GetOverride(transform) },
 					    });
 				    }
 			    }
@@ -82,12 +140,14 @@ namespace UnityGLTF
 		    // Special case for one selected object: use the object's name as the scene name
 		    if (Selection.transforms.Length == 1)
 		    {
+			    var transform = Selection.transforms[0];
 			    batches = new List<ExportBatch>()
 			    {
 				    new()
 				    {
 					    sceneName = Selection.activeGameObject.name,
-					    rootTransforms = Selection.transforms,
+					    rootTransforms = new[] { transform },
+					    rootTransformOverride = new[] { GetOverride(transform) },
 				    }
 			    };
 			    return true;
@@ -203,17 +263,17 @@ namespace UnityGLTF
 
 		    protected override bool OnOpenStage() => true;
 
-		    public void Setup(string scenePath)
-		    {
-#if !UNITY_2023_1_OR_NEWER
-			    if (_openPreviewScene == null) _openPreviewScene = typeof(EditorSceneManager).GetMethod("OpenPreviewScene", (BindingFlags)(-1), null, new[] {typeof(string), typeof(bool)}, null);
-			    if (_openPreviewScene == null) return;
-			    
-			    scene = (Scene) _openPreviewScene.Invoke(null, new object[] { scenePath, false });
-#else
-			    scene = EditorSceneManager.OpenPreviewScene(scenePath, false);
-#endif
-		    }
+// 		    public void Setup(string scenePath)
+// 		    {
+// #if !UNITY_2023_1_OR_NEWER
+// 			    if (_openPreviewScene == null) _openPreviewScene = typeof(EditorSceneManager).GetMethod("OpenPreviewScene", (BindingFlags)(-1), null, new[] {typeof(string), typeof(bool)}, null);
+// 			    if (_openPreviewScene == null) return;
+// 			    
+// 			    scene = (Scene) _openPreviewScene.Invoke(null, new object[] { scenePath, false });
+// #else
+// 			    scene = EditorSceneManager.OpenPreviewScene(scenePath, false);
+// #endif
+// 		    }
 		    
 		    protected override GUIContent CreateHeaderContent()
 		    {
@@ -221,7 +281,7 @@ namespace UnityGLTF
 		    }
 	    }
 	    
-	    private static bool ExportBinary => SessionState.GetBool(ExportAsBinary, true);
+	    private static bool ExportBinary => settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
 	    private const int Priority = 34;
 
 		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true, Priority)]
@@ -389,8 +449,22 @@ namespace UnityGLTF
 				}
 			}
 			
-			var settings = GLTFSettings.GetOrCreateSettings();
 			var exportOptions = new ExportContext(settings) { TexturePathRetriever = RetrieveTexturePath };
+			
+			var haveOverrides = batch.rootTransformOverride != null && batch.rootTransformOverride.Length > 0;
+			var originalTransforms = batch.rootTransforms.Select(x => (x.localPosition, x.localRotation, x.localScale)).ToArray();
+			if (haveOverrides)
+			{
+				var overrideLength = batch.rootTransformOverride.Length;
+				for (int i = 0; i < batch.rootTransforms.Length; i++)
+				{
+					var overrideData = batch.rootTransformOverride[i % overrideLength];
+					if (!overrideData.HasValue) continue;
+					batch.rootTransforms[i].localPosition = overrideData.Value.position;
+					batch.rootTransforms[i].localRotation = overrideData.Value.rotation;
+					batch.rootTransforms[i].localScale = overrideData.Value.scale;
+				}
+			}
 			var exporter = new GLTFSceneExporter(batch.rootTransforms, exportOptions);
 
 			if (batch.rootResources != null)
@@ -431,6 +505,17 @@ namespace UnityGLTF
 				EditorUtility.RevealInFinder(resultFile);
 			}
 			
+			if (haveOverrides)
+			{
+				for (var i = 0; i < batch.rootTransforms.Length; i++)
+				{
+					var (position, rotation, scale) = originalTransforms[i];
+					batch.rootTransforms[i].localPosition = position;
+					batch.rootTransforms[i].localRotation = rotation;
+					batch.rootTransforms[i].localScale = scale;
+				}
+			}
+			
 			if (currentlyOpenScene != SceneManager.GetActiveScene().path)
 				EditorSceneManager.OpenScene(currentlyOpenScene, OpenSceneMode.Single);
 
@@ -461,11 +546,11 @@ namespace UnityGLTF
 			{
 				if (gameObject)
 				{
-					var current = SessionState.GetBool(ExportAsBinary, true);
+					var current = settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
 					menu.AddItem(new GUIContent("UnityGLTF/Export as binary (GLB)"), current, () =>
 					{
 						current = !current;
-						SessionState.SetBool(ExportAsBinary, current);
+						settings.EditorExportFileFormat = current ? GLTFSettings.ExportFileFormat.Glb : GLTFSettings.ExportFileFormat.Gltf;
 					});
 				}
 				else
@@ -491,9 +576,9 @@ namespace UnityGLTF
 		[MenuItem(ExportAsBinary, false, 3001)]
 		private static void ToggleExportAsGltf()
 		{
-			var current = SessionState.GetBool(ExportAsBinary, true);
+			var current = settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
 			current = !current;
-			SessionState.SetBool(ExportAsBinary, current);
+			settings.EditorExportFileFormat = current ? GLTFSettings.ExportFileFormat.Glb : GLTFSettings.ExportFileFormat.Gltf;
 			Menu.SetChecked(ExportAsBinary, current);
 		}
 	}

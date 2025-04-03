@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityGLTF.Plugins;
 using System.Reflection;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -102,6 +103,36 @@ namespace UnityGLTF
 		[Tooltip("If on, the entire texture path will be preserved. If off (default), textures are exported at root level.")]
 		private bool exportFullPath = false;
 
+#if UNITY_EDITOR
+	    public enum TransformMode
+	    {
+		    /** Reset local position, keep local rotation, keep world scale. This is a heuristic for exporting objects from anywhere in the scene for general usage. */
+		    [InspectorName(("Auto: reset local position, keep local rotation, keep world scale"))]
+		    Auto,
+		    /** Keep local position, rotation, and scale. This is useful if you want to export childs of hierarchies and import them again as childs. */
+		    [InspectorName("Local: keep local position, rotation and scale")]
+		    LocalTransforms,
+		    /** Keep world position, rotation, and scale. This is useful for exporting parts of scenes and keeping all relations between objects the same. */
+		    [InspectorName("World: keep world position, rotation and scale")]
+		    WorldTransforms,
+	    }
+	    
+	    [Tooltip("Specifies how root transforms will be exported.\nAuto (default): reset local position, keep local rotation, keep world scale. \nLocalTransforms: keep local position, rotation, and scale. \nWorldTransforms: keep world position, rotation, and scale.")]
+	    public TransformMode EditorExportTransformMode = TransformMode.Auto;
+
+	    public enum ExportFileFormat
+	    {
+		    /** glTF-Binary (GLB) with embedded buffers and textures */
+		    [InspectorName("glTF-Binary (.glb)")]
+		    Glb,
+		    /** glTF JSON + separate binary buffers and textures */
+		    [InspectorName("glTF (.gltf + .bin + textures)")]
+		    Gltf,
+	    }
+	    
+	    public ExportFileFormat EditorExportFileFormat = ExportFileFormat.Glb;
+#endif
+	    
 		[Header("Export Visibility")]
 		[SerializeField]
 		[Tooltip("Uses Camera.main layer settings to filter which objects are exported")]
