@@ -189,14 +189,24 @@ namespace UnityGLTF
 			// is the texture linear or sRGB
 			public bool linear;
 			// required for metallic-smoothness conversion
-			public float smoothnessMultiplier;
+			public float smoothnessRangeMin;
+			public float smoothnessRangeMax;
+			public float metallicRangeMin;
+			public float metallicRangeMax;
+			public float occlusionRangeMin;
+			public float occlusionRangeMax;
 
 			public TextureExportSettings(TextureExportSettings source)
 			{
 				conversion = source.conversion;
 				alphaMode = source.alphaMode;
 				linear = source.linear;
-				smoothnessMultiplier = source.smoothnessMultiplier;
+				smoothnessRangeMin = source.smoothnessRangeMin;
+				smoothnessRangeMax = source.smoothnessRangeMax;
+				metallicRangeMin = source.metallicRangeMin;
+				metallicRangeMax = source.metallicRangeMax;
+				occlusionRangeMin = source.occlusionRangeMin;
+				occlusionRangeMax = source.occlusionRangeMax;
 				isValid = true;
 			}
 
@@ -231,7 +241,12 @@ namespace UnityGLTF
 					conversion == other.conversion &&
 				    alphaMode == other.alphaMode &&
 				    linear == other.linear &&
-					Mathf.Approximately(smoothnessMultiplier, other.smoothnessMultiplier);
+					Mathf.Approximately(smoothnessRangeMin, other.smoothnessRangeMin) &&
+					Mathf.Approximately(smoothnessRangeMax, other.smoothnessRangeMax) &&
+					Mathf.Approximately(metallicRangeMin, other.metallicRangeMin) &&
+					Mathf.Approximately(metallicRangeMax, other.metallicRangeMax) &&
+					Mathf.Approximately(occlusionRangeMin, other.occlusionRangeMin) &&
+					Mathf.Approximately(occlusionRangeMax, other.occlusionRangeMax);
 			}
 
 			public override bool Equals(object obj)
@@ -246,7 +261,12 @@ namespace UnityGLTF
 					var hashCode = (int)conversion;
 					hashCode = (hashCode * 397) ^ (int)alphaMode;
 					hashCode = (hashCode * 397) ^ linear.GetHashCode();
-					hashCode = (hashCode * 397) ^ smoothnessMultiplier.GetHashCode();
+					hashCode = (hashCode * 397) ^ smoothnessRangeMin.GetHashCode();
+					hashCode = (hashCode * 397) ^ smoothnessRangeMax.GetHashCode();
+					hashCode = (hashCode * 397) ^ metallicRangeMin.GetHashCode();
+					hashCode = (hashCode * 397) ^ metallicRangeMax.GetHashCode();
+					hashCode = (hashCode * 397) ^ occlusionRangeMin.GetHashCode();
+					hashCode = (hashCode * 397) ^ occlusionRangeMax.GetHashCode();
 					return hashCode;
 				}
 			}
@@ -256,6 +276,12 @@ namespace UnityGLTF
 		{
 			var exportSettings = new TextureExportSettings();
 			exportSettings.isValid = true;
+			exportSettings.metallicRangeMin = 0f;
+			exportSettings.metallicRangeMax = 1f;
+			exportSettings.smoothnessRangeMin = 0f;
+			exportSettings.smoothnessRangeMax = 1f;
+			exportSettings.occlusionRangeMin = 0f;
+			exportSettings.occlusionRangeMax = 1f;
 
 			switch (textureSlot)
 			{
@@ -325,18 +351,32 @@ namespace UnityGLTF
 				case TextureExportSettings.Conversion.NormalChannel:
 					return _normalChannelMaterial;
 				case TextureExportSettings.Conversion.MetalGlossChannelSwap:
-					if (_metalGlossChannelSwapMaterial && _metalGlossChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
-						_metalGlossChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
-
-					return _metalGlossChannelSwapMaterial;
+					return SetConversionMaterialSettings(_metalGlossChannelSwapMaterial, textureMapType);
 				case TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap:
-					if (_metalGlossOcclusionChannelSwapMaterial && _metalGlossOcclusionChannelSwapMaterial.HasProperty("_SmoothnessMultiplier"))
-						_metalGlossOcclusionChannelSwapMaterial.SetFloat("_SmoothnessMultiplier", textureMapType.smoothnessMultiplier);
-					
-					return _metalGlossOcclusionChannelSwapMaterial;
+					return SetConversionMaterialSettings(_metalGlossOcclusionChannelSwapMaterial, textureMapType);
 				default:
 					return null;
 			}
+		}
+
+		private static Material SetConversionMaterialSettings(Material material, TextureExportSettings textureMapType)
+		{
+			if (material && material.HasProperty("_SmoothnessRangeMin"))
+				material.SetFloat("_SmoothnessRangeMin", textureMapType.smoothnessRangeMin);
+			if (material && material.HasProperty("_SmoothnessRangeMax"))
+				material.SetFloat("_SmoothnessRangeMax", textureMapType.smoothnessRangeMax);
+
+			if (material && material.HasProperty("_MetallicRangeMin"))
+				material.SetFloat("_MetallicRangeMin", textureMapType.metallicRangeMin);
+			if (material && material.HasProperty("_MetallicRangeMax"))
+				material.SetFloat("_MetallicRangeMax", textureMapType.metallicRangeMax);
+
+			if (material && material.HasProperty("_OcclusionRangeMin"))
+				material.SetFloat("_OcclusionRangeMin", textureMapType.occlusionRangeMin);
+			if (material && material.HasProperty("_OcclusionRangeMax"))
+				material.SetFloat("_OcclusionRangeMax", textureMapType.occlusionRangeMax);
+
+			return material;
 		}
 
 		private struct ImageInfo

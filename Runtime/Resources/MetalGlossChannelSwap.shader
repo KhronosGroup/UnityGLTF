@@ -3,7 +3,10 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
-		_SmoothnessMultiplier ("Smoothness Multiplier", float) = 1
+		_SmoothnessRangeMin ("Smoothness Range Min", float) = 0
+		_SmoothnessRangeMax ("Smoothness Range Max", float) = 1
+		_MetallicRangeMin ("Metallic Range Min", float) = 0
+		_MetallicRangeMax ("Metallic Range Max", float) = 1
 	}
 	SubShader
 	{
@@ -39,7 +42,12 @@
 			}
 			
 			sampler2D _MainTex;
-			float _SmoothnessMultiplier;
+
+			float _MetallicRangeMin;
+			float _MetallicRangeMax;
+
+			float _SmoothnessRangeMin;
+			float _SmoothnessRangeMax;
 
 			float4 frag (v2f i) : SV_Target
 			{
@@ -55,7 +63,11 @@
 				// Conversion Summary
 				// Unity R channel goes into B channel
 				// Unity A channel goes into G channel, then inverted
-				float4 result = float4(0, 1 - (col.a * _SmoothnessMultiplier), col.r, 1);
+				float4 result = float4(
+					0,
+					1 - (_SmoothnessRangeMin + col.a * (_SmoothnessRangeMax - _SmoothnessRangeMin)),
+					_MetallicRangeMin + col.r * (_MetallicRangeMax - _MetallicRangeMin),
+					0);
 				return result;
 			}
 			ENDCG

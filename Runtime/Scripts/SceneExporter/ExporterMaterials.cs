@@ -145,7 +145,7 @@ namespace UnityGLTF
 			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off) ||
 			                       (materialObj.shader.name.EndsWith("-Double")); // workaround for exporting shaders that are set to double-sided on 2020.3
 
-			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture"))
+			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("_EmissiveColorMap"))
 			{
 				// In Gamma space, some materials treat their emissive color inputs differently than in Linear space.
 				// This is super confusing when converting materials, but we also need to handle it correctly here.
@@ -156,10 +156,31 @@ namespace UnityGLTF
 					materialObj.shader.name == "Universal Render Pipeline/Simple Lit" ||
 					materialObj.shader.name == "Universal Render Pipeline/Unlit");
 				                                             
-				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor"))
+				if (materialObj.HasProperty("_EmissionColor") || materialObj.HasProperty("emissiveFactor") || materialObj.HasProperty("_EmissiveFactor") || materialObj.HasProperty("_UseEmissiveIntensity"))
 				{
-					var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") : materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") : materialObj.GetColor("_EmissiveFactor");
-					DecomposeEmissionColor(c, out var emissiveAmount, out var maxEmissiveAmount);
+					var emissiveAmount = Color.black;
+					var maxEmissiveAmount = 0f;
+					if (materialObj.HasProperty("_UseEmissiveIntensity"))
+					{
+						// hdrp route uses its own color decomposition
+						if (materialObj.GetFloat("_UseEmissiveIntensity") == 1)
+						{
+							emissiveAmount = materialObj.GetColor("_EmissiveColorLDR");
+							maxEmissiveAmount = materialObj.GetFloat("_EmissiveIntensity");
+						}
+						else
+						{
+							var colorHdr = materialObj.GetColor("_EmissiveColor");
+							ConvertHDRColorToLDR(colorHdr, out emissiveAmount, out maxEmissiveAmount);
+						}
+					}
+					else
+					{
+						var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
+							materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
+							materialObj.GetColor("_EmissiveFactor");
+						DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);
+					}
 					
 					if (isUnityMaterialWithWeirdColorspaceHandling)
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
@@ -178,9 +199,14 @@ namespace UnityGLTF
 					}
 				}
 
-				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("emissiveTexture"))
+				if (materialObj.HasProperty("_EmissionMap") || materialObj.HasProperty("_EmissiveMap") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveColorMap"))
 				{
-					var propName = materialObj.HasProperty("emissiveTexture") ? "emissiveTexture" : materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" : materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" : "_EmissiveMap";
+					var propName = materialObj.HasProperty("emissiveTexture") ? "emissiveTexture" :
+						materialObj.HasProperty("_EmissiveTexture") ? "_EmissiveTexture" :
+						materialObj.HasProperty("_EmissionMap") ? "_EmissionMap" :
+						materialObj.HasProperty("_EmissiveColorMap") ? "_EmissiveColorMap" :
+						"_EmissiveMap";
+
 					var emissionTex = materialObj.GetTexture(propName);
 
 					if (emissionTex)
@@ -227,6 +253,25 @@ namespace UnityGLTF
 				if (normalTex)
 				{
 					if(normalTex is Texture2D)
+					{
+						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Normal, materialObj);
+						ExportTextureTransform(material.NormalTexture, materialObj, propName);
+					}
+					else
+					{
+						Debug.LogFormat(LogType.Error, "Can't export a {0} normal texture in material {1}", normalTex.GetType(), materialObj.name);
+					}
+				}
+			}
+
+			if (materialObj.HasProperty("_NormalMap"))
+			{
+				var propName = "_NormalMap";
+				var normalTex = materialObj.GetTexture(propName);
+
+				if (normalTex)
+				{
+					if (normalTex is Texture2D)
 					{
 						material.NormalTexture = ExportNormalTextureInfo(normalTex, TextureMapType.Normal, materialObj);
 						ExportTextureTransform(material.NormalTexture, materialObj, propName);
@@ -305,9 +350,13 @@ namespace UnityGLTF
                 material.DoubleSided = true;
             }
 
-			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture"))
+			if (materialObj.HasProperty("_OcclusionMap") || materialObj.HasProperty("occlusionTexture") || materialObj.HasProperty("_OcclusionTexture") || materialObj.HasProperty("_MaskMap"))
 			{
-				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" : materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" : "_OcclusionMap";
+				var propName = materialObj.HasProperty("occlusionTexture") ? "occlusionTexture" :
+					materialObj.HasProperty("_OcclusionTexture") ? "_OcclusionTexture" :
+					materialObj.HasProperty("_MaskMap") ? "_MaskMap" :
+					"_OcclusionMap";
+
 				var occTex = materialObj.GetTexture(propName);
 				if (occTex)
 				{
@@ -371,7 +420,8 @@ namespace UnityGLTF
 	        return (material.HasProperty("_Metallic") || material.HasProperty("_MetallicFactor") || material.HasProperty("metallicFactor")) &&
 	               (material.HasProperty("_MetallicGlossMap") || material.HasProperty("_Glossiness") ||
 	                material.HasProperty("_Roughness") || material.HasProperty("_RoughnessFactor") || material.HasProperty("roughnessFactor") ||
-	                material.HasProperty("_MetallicRoughnessTexture") || material.HasProperty("metallicRoughnessTexture"));
+					material.HasProperty("_MetallicRoughnessTexture") || material.HasProperty("metallicRoughnessTexture") ||
+					material.HasProperty("_Smoothness"));
         }
 
         private bool IsUnlit(Material material)
@@ -758,7 +808,7 @@ namespace UnityGLTF
 					if (needToBakeRoughnessIntoTexture)
 					{
 						conversion = new TextureExportSettings(conversion);
-						conversion.smoothnessMultiplier = 1 - roughnessMultiplier;
+						conversion.smoothnessRangeMax = 1 - roughnessMultiplier;
 					}
 					
 					if (occlusionGetBakedIntoMetallicRoughness)
@@ -773,6 +823,34 @@ namespace UnityGLTF
 					if (ignoreMetallicFactor)
 						pbr.MetallicFactor = 1.0f;
 					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MetallicGlossMap");
+				}
+			}
+			else if(material.HasProperty("_MaskMap"))
+			{
+				var mrTex = material.GetTexture("_MaskMap");
+
+				if (mrTex)
+				{
+					// bake remapping into texture during export
+					var conversion = GetExportSettingsForSlot(TextureMapType.MetallicGloss);
+
+					conversion.metallicRangeMin = material.GetFloat("_MetallicRemapMin");
+					conversion.metallicRangeMax = material.GetFloat("_MetallicRemapMax");
+					conversion.smoothnessRangeMin = material.GetFloat("_SmoothnessRemapMin");
+					conversion.smoothnessRangeMax = material.GetFloat("_SmoothnessRemapMax");
+					conversion.occlusionRangeMin = material.GetFloat("_AORemapMin");
+					conversion.occlusionRangeMax = material.GetFloat("_AORemapMax");
+					
+					conversion.conversion = TextureExportSettings.Conversion.MetalGlossOcclusionChannelSwap;
+					_occlusionBakedTextures.Add(material);
+
+					// set factors to 1 because of baked values
+					pbr.MetallicFactor = 1f;
+					pbr.RoughnessFactor = 1f;
+
+					pbr.MetallicRoughnessTexture = ExportTextureInfo(mrTex, TextureMapType.MetallicRoughness, conversion);
+
+					ExportTextureTransform(pbr.MetallicRoughnessTexture, material, "_MaskMap");
 				}
 			}
 
@@ -979,6 +1057,31 @@ namespace UnityGLTF
 		{
 			var textureIndex = _root.Textures.FindIndex(x => x == exported);
 			return _textures[textureIndex].Texture;
+		}
+
+		// from HDRP's HDUtils.ConvertHDRColorToLDR
+		internal static void ConvertHDRColorToLDR(Color hdr, out Color ldr, out float intensity)
+		{
+			// specifies the max byte value to use when decomposing a float color into bytes with exposure
+			// this is the value used by Photoshop
+			const float k_MaxByteForOverexposedColor = 191;
+
+			hdr.a = 1.0f;
+			ldr = hdr;
+			intensity = 1.0f;
+
+			var maxColorComponent = hdr.maxColorComponent;
+			if (maxColorComponent != 0f)
+			{
+				// calibrate exposure to the max float color component
+				var scaleFactor = k_MaxByteForOverexposedColor / maxColorComponent;
+
+				ldr.r = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.r) / 255f;
+				ldr.g = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.g) / 255f;
+				ldr.b = Mathf.Min(k_MaxByteForOverexposedColor, scaleFactor * hdr.b) / 255f;
+
+				intensity = 255f / scaleFactor;
+			}
 		}
 	}
 }
