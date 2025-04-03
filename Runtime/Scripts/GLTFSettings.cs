@@ -124,7 +124,6 @@ namespace UnityGLTF
 		    Gltf
 	    }
 	    
-	    [Tooltip("If true, the exported glTF file will be in Glb format. \nIf false, it will be in Gltf format.")]
 	    public ExportFileFormat EditorExportsFileFormat = ExportFileFormat.Glb;
 #endif
 	    
