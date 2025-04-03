@@ -22,7 +22,8 @@ namespace UnityGLTF
 	{
 		public string GLTFUri = null;
 		public bool Multithreaded = true;
-		[FormerlySerializedAs("AppendStreamingAssets")] public bool LoadFromStreamingAssets = true;
+		[FormerlySerializedAs("AppendStreamingAssets")] 
+		public bool LoadFromStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
 		[Tooltip("Hide the scene object during load, then activate it when complete")]
 		public bool HideSceneObjDuringLoad = false;
@@ -149,12 +150,22 @@ namespace UnityGLTF
 				ApplyOverrideShader();
 
 				LastLoadedScene = sceneImporter.LastLoadedScene;
-				
-				if (HideSceneObjDuringLoad)
+
+				if (HideSceneObjDuringLoad && LastLoadedScene)
+				{
 					LastLoadedScene.SetActive(true);
+				}
 
 #if UNITY_ANIMATION
-				Animations = sceneImporter.LastLoadedScene.GetComponents<Animation>();
+				if (LastLoadedScene)
+				{
+					Animations = LastLoadedScene.GetComponents<Animation>();
+				}
+				else
+				{
+					Animations = System.Array.Empty<Animation>();
+				}
+				
 
 				if (PlayAnimationOnLoad && Animations.Any())
 				{
