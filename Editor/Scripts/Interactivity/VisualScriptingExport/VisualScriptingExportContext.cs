@@ -1147,22 +1147,22 @@ namespace UnityGLTF.Interactivity.VisualScripting
             RemoveNodes(nodesToRemove);
         }
         
-        private GltfInteractivityNode[] AddTypeConversion(GltfInteractivityNode targetNode, int conversionNodeIndex, string targetInputSocket, int fromType, int toType)
+        private GltfInteractivityExportNode[] AddTypeConversion(GltfInteractivityExportNode targetNode, int conversionNodeIndex, string targetInputSocket, int fromType, int toType)
         {
-            List<GltfInteractivityNode> newNodes = new List<GltfInteractivityNode>();
+            var newNodes = new List<GltfInteractivityExportNode>();
             
             var fromTypeSignature = GltfTypes.TypesMapping[fromType].GltfSignature;
             var toTypeSignature = GltfTypes.TypesMapping[toType].GltfSignature;
 
             var targetSocketData = targetNode.ValueInConnection[targetInputSocket];
-            GltfInteractivityNode conversionNode = null;
+            GltfInteractivityExportNode conversionNode = null;
             
             var fromTypeComponentCount = GltfTypes.GetComponentCount(fromTypeSignature);
             var toTypeComponentCount = GltfTypes.GetComponentCount(toTypeSignature);
             
             void SetupSimpleConversion(GltfInteractivityNodeSchema schema)
             {
-                conversionNode= new GltfInteractivityNode(schema);
+                conversionNode = new GltfInteractivityExportNode(schema);
                 conversionNode.Index = conversionNodeIndex;
                 newNodes.Add(conversionNode);
                 conversionNode.ValueInConnection["a"] = new GltfInteractivityNode.ValueSocketData()
@@ -1180,7 +1180,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             void SetupConversion(GltfInteractivityNodeSchema schema)
             {
-                conversionNode= new GltfInteractivityNode(schema);
+                conversionNode= new GltfInteractivityExportNode(schema);
                 conversionNode.Index = conversionNodeIndex;
                 newNodes.Add(conversionNode);
 
