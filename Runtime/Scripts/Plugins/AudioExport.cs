@@ -135,7 +135,7 @@ namespace UnityGLTF.Plugins
                     loop = firstAudioSource.loop,
                     gain = firstAudioSource.volume,
                     // TODO: uniquename required?
-                    name = audioSourceId.Clip.name
+                    Name = audioSourceId.Clip.name
                 };
 
                 _audioExtension.sources.Add(khrAudio);

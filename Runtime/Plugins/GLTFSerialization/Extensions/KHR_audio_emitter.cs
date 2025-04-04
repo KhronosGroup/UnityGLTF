@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using GLTF.Extensions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace GLTF.Schema
@@ -37,6 +39,15 @@ namespace GLTF.Schema
                 }
             }
         }
+        
+        public static AudioEmitterId Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            return new AudioEmitterId
+            {
+                Id = reader.ReadAsInt32().Value,
+                Root = root
+            };
+        }
     }
 
     [Serializable]
@@ -65,6 +76,15 @@ namespace GLTF.Schema
                 }
             }
         }
+        
+        public static AudioSourceId Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            return new AudioSourceId
+            {
+                Id = reader.ReadAsInt32().Value,
+                Root = root
+            };
+        }
     }
 
     [Serializable]
@@ -92,6 +112,15 @@ namespace GLTF.Schema
                     throw new Exception("KHR_audio not found on root object");
                 }
             }
+        }
+        
+        public static AudioDataId Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            return new AudioDataId
+            {
+                Id = reader.ReadAsInt32().Value,
+                Root = root
+            };
         }
     }
 
@@ -122,6 +151,23 @@ namespace GLTF.Schema
         {
             return new KHR_SceneAudioEmittersRef() { emitters = emitters };
         }
+        
+        public static KHR_SceneAudioEmittersRef Deserialize(GLTFRoot root, JProperty extensionToken)
+        {
+            var extension = new KHR_SceneAudioEmittersRef();
+
+            var idsToken = extensionToken.Value[nameof(KHR_SceneAudioEmittersRef.emitters)];
+            if (idsToken != null)
+            {
+                var ids = idsToken as JArray;
+                
+               // var ids = idsToken.CreateReader().ReadInt32List();
+                foreach (var id in ids)
+                    extension.emitters.Add(new AudioEmitterId { Id = id.DeserializeAsInt(), Root = root });
+            }
+            
+            return extension;
+        }
     }
 
     [Serializable]
@@ -141,6 +187,19 @@ namespace GLTF.Schema
         public IExtension Clone(GLTFRoot root)
         {
             return new KHR_NodeAudioEmitterRef() { emitter = emitter };
+        }
+        
+        public static KHR_NodeAudioEmitterRef Deserialize(GLTFRoot root, JProperty extensionToken)
+        {
+            var extension = new KHR_NodeAudioEmitterRef();
+
+            var id = extensionToken.Value[nameof(KHR_NodeAudioEmitterRef.emitter)]?.ToObject<int>();
+            if (id != null)
+            {
+                extension.emitter = new AudioEmitterId { Id = id.Value, Root = root };
+            }
+            
+            return extension;
         }
     }
 
@@ -178,6 +237,43 @@ namespace GLTF.Schema
             }
 
             return jo;
+        }
+        
+        public static KHR_AudioEmitter Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            var emitter = new KHR_AudioEmitter();
+            
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("AudioSource must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case nameof(KHR_AudioEmitter.name):
+                        emitter.Name = reader.ReadAsString();
+                        break;               
+                    case nameof(KHR_AudioEmitter.gain):
+                        emitter.gain = (float)reader.ReadAsDouble();
+                        break;
+                    case nameof(KHR_AudioEmitter.type):
+                        emitter.type = reader.ReadAsString();
+                        break;               
+                    case nameof(KHR_AudioEmitter.sources):
+                        var list = reader.ReadInt32List();
+                        if (list == null)
+                            break;
+                        foreach (var source in list)
+                            emitter.sources.Add(new AudioSourceId { Id = source, Root = root });
+                        break;               
+                }
+            }    
+            
+            return emitter;
         }
     }
 
@@ -244,39 +340,67 @@ namespace GLTF.Schema
     [Serializable]
     public class KHR_AudioSource : GLTFChildOfRootProperty
     {
-        public string name;
-        public bool autoPlay;
-        public float gain;
-        public bool loop;
+        public bool? autoPlay;
+        public float? gain;
+        public bool? loop;
         public AudioDataId audio;
 
         public JObject Serialize()
         {
             var jo = new JObject();
+            
+            if (autoPlay != null) 
+                jo.Add(nameof(autoPlay), autoPlay);
 
-//      if (autoPlay) {
-            jo.Add(nameof(autoPlay), autoPlay);
-            //     }
+            if (gain != null) 
+                jo.Add(nameof(gain), gain);
 
-            //    if (gain != 1.0f) {
-            jo.Add(nameof(gain), gain);
-            //     }
-
-            //     if (loop) {
-            jo.Add(nameof(loop), loop);
-            //     }
-
+            if (loop != null) 
+                jo.Add(nameof(loop), loop);
+    
             if (audio != null)
-            {
                 jo.Add(nameof(audio), audio.Id);
-            }
 
-            if (!string.IsNullOrEmpty(name))
-            {
-                jo.Add(nameof(name), name);
-            }
+            if (!string.IsNullOrEmpty(Name))
+                jo.Add("name", Name);
 
             return jo;
+        }
+        
+        public static KHR_AudioSource Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            var audioSource = new KHR_AudioSource();
+            
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("AudioSource must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case nameof(KHR_AudioSource.Name):
+                        audioSource.Name = reader.ReadAsString();
+                        break;               
+                    case nameof(KHR_AudioSource.audio):
+                        audioSource.audio = AudioDataId.Deserialize(root, reader);
+                        break;
+                    case nameof(KHR_AudioSource.autoPlay):
+                        audioSource.autoPlay = reader.ReadAsBoolean();
+                        break;               
+                    case nameof(KHR_AudioSource.gain):
+                        audioSource.gain = (float)reader.ReadAsDouble();
+                        break;               
+                    case nameof(KHR_AudioSource.loop):
+                        audioSource.loop = reader.ReadAsBoolean();
+                        break;               
+                }
+            }    
+
+            return audioSource;
         }
     }
 
@@ -302,6 +426,38 @@ namespace GLTF.Schema
             }
 
             return jo;
+        }
+        
+        public static KHR_AudioData Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            var audioData = new KHR_AudioData();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("Audio must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case nameof(KHR_AudioData.mimeType):
+                        audioData.mimeType = reader.ReadAsString();
+                        break;
+                      case nameof(KHR_AudioData.uri):
+                        audioData.uri = reader.ReadAsString();
+                        break;               
+                    case nameof(KHR_AudioData.Name):
+                        audioData.Name = reader.ReadAsString();
+                        break;               
+                    case nameof(KHR_AudioData.bufferView):
+                        audioData.bufferView = BufferViewId.Deserialize(root, reader);
+                        break;               
+                }
+            }    
+            return audioData;
         }
     }
 
