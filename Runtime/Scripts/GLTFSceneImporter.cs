@@ -778,6 +778,13 @@ namespace UnityGLTF
 			progress?.Report(progressStatus);
 		}
 
+		public NativeArray<byte> GetBufferViewData(BufferView bufferView)
+		{
+			GetBufferData(bufferView.Buffer).Wait();
+			GLTFHelpers.LoadBufferView(bufferView, 0, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
+			return bufferViewCache;
+		}
+
 		private async Task<BufferCacheData> GetBufferData(BufferId bufferId)
 		{
 			if (bufferId == null) return null;
