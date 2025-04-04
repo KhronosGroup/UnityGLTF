@@ -21,7 +21,7 @@ namespace UnityGLTF.Plugins
     {
         private ExportContext _context;
         private List<AudioDescription> _audioSourceIds = new();
-        private KHR_audio _audioExtension; 
+        private KHR_audio_emitter _audioExtension; 
         private KHR_SceneAudioEmittersRef _sceneExtension = null;
 
         private bool _saveAudioToFile;
@@ -149,11 +149,11 @@ namespace UnityGLTF.Plugins
             
             if (_audioExtension == null)
             {
-                _audioExtension = new KHR_audio();
+                _audioExtension = new KHR_audio_emitter();
                 if (gltfRoot != null)
                 {
-                    gltfRoot.AddExtension(KHR_audio.ExtensionName, _audioExtension);
-                    exporter.DeclareExtensionUsage(KHR_audio.ExtensionName);
+                    gltfRoot.AddExtension(KHR_audio_emitter.ExtensionName, _audioExtension);
+                    exporter.DeclareExtensionUsage(KHR_audio_emitter.ExtensionName);
                 }
             }
             

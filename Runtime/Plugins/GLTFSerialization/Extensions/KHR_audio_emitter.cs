@@ -26,9 +26,9 @@ namespace GLTF.Schema
         {
             get
             {
-                if (Root.Extensions.TryGetValue(KHR_audio.ExtensionName, out IExtension iextension))
+                if (Root.Extensions.TryGetValue(KHR_audio_emitter.ExtensionName, out IExtension iextension))
                 {
-                    KHR_audio extension = iextension as KHR_audio;
+                    KHR_audio_emitter extension = iextension as KHR_audio_emitter;
                     return extension.emitters[Id];
                 }
                 else
@@ -54,9 +54,9 @@ namespace GLTF.Schema
         {
             get
             {
-                if (Root.Extensions.TryGetValue(KHR_audio.ExtensionName, out IExtension iextension))
+                if (Root.Extensions.TryGetValue(KHR_audio_emitter.ExtensionName, out IExtension iextension))
                 {
-                    KHR_audio extension = iextension as KHR_audio;
+                    KHR_audio_emitter extension = iextension as KHR_audio_emitter;
                     return extension.sources[Id];
                 }
                 else
@@ -82,9 +82,9 @@ namespace GLTF.Schema
         {
             get
             {
-                if (Root.Extensions.TryGetValue(KHR_audio.ExtensionName, out IExtension iextension))
+                if (Root.Extensions.TryGetValue(KHR_audio_emitter.ExtensionName, out IExtension iextension))
                 {
-                    KHR_audio extension = iextension as KHR_audio;
+                    KHR_audio_emitter extension = iextension as KHR_audio_emitter;
                     return extension.audio[Id];
                 }
                 else
@@ -98,13 +98,13 @@ namespace GLTF.Schema
     [Serializable]
     public class KHR_SceneAudioEmittersRef : IExtension
     {
-        public static string ExtensionName => KHR_audio.ExtensionName;
+        public static string ExtensionName => KHR_audio_emitter.ExtensionName;
         public List<AudioEmitterId> emitters = new List<AudioEmitterId>();
 
         public JProperty Serialize()
         {
             var jo = new JObject();
-            JProperty jProperty = new JProperty(KHR_audio.ExtensionName, jo);
+            JProperty jProperty = new JProperty(KHR_audio_emitter.ExtensionName, jo);
 
             JArray arr = new JArray();
 
@@ -127,13 +127,13 @@ namespace GLTF.Schema
     [Serializable]
     public class KHR_NodeAudioEmitterRef : IExtension
     {
-        public static string ExtensionName => KHR_audio.ExtensionName;
+        public static string ExtensionName => KHR_audio_emitter.ExtensionName;
         public AudioEmitterId emitter;
 
         public JProperty Serialize()
         {
             var jo = new JObject();
-            JProperty jProperty = new JProperty(KHR_audio.ExtensionName, jo);
+            JProperty jProperty = new JProperty(KHR_audio_emitter.ExtensionName, jo);
             jo.Add(new JProperty(nameof(emitter), emitter.Id));
             return jProperty;
         }
@@ -306,7 +306,7 @@ namespace GLTF.Schema
     }
 
     [Serializable]
-    public class KHR_audio : IExtension
+    public class KHR_audio_emitter : IExtension
     {
         public const string ExtensionName = "KHR_audio_emitter";
 
@@ -361,7 +361,7 @@ namespace GLTF.Schema
 
         public IExtension Clone(GLTFRoot root)
         {
-            return new KHR_audio()
+            return new KHR_audio_emitter()
             {
                 audio = audio,
                 sources = sources,
