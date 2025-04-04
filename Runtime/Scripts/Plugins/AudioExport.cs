@@ -144,8 +144,8 @@ namespace UnityGLTF.Plugins
             if (audioSources.Length == 0)
                 return;
 
-            var globalSources = new List<AudioSource>( audioSources.Where( a => a.spatialBlend >= 0.5f) );
-            var positionalSources = new List<AudioSource>( audioSources.Where( a => a.spatialBlend < 0.5f) );
+            var globalSources = new List<AudioSource>( audioSources.Where( a => a.spatialBlend < 0.5f) );
+            var positionalSources = new List<AudioSource>( audioSources.Where( a => a.spatialBlend >= 0.5f) );
             
             if (_audioExtension == null)
             {
