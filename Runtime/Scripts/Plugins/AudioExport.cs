@@ -113,8 +113,16 @@ namespace UnityGLTF.Plugins
 
                 var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
                 var result = exporter.ExportFile(fileName, "audio/mpeg", fileStream);
-                audio.mimeType = result.mimeType;
-                audio.bufferView = result.bufferView;
+                
+                if (string.IsNullOrEmpty(result.uri))
+                {
+                    audio.mimeType = result.mimeType;
+                    audio.bufferView = result.bufferView;
+                }
+                else
+                {
+                    audio.uri = result.uri;
+                }
                 _audioExtension.audio.Add(audio);
             }
             
