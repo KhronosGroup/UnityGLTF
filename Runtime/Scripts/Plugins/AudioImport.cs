@@ -110,6 +110,8 @@ namespace UnityGLTF.Plugins
                     Debug.LogWarning($"Audio buffer view not found for {audio.Name}");
                 }
             }
+            
+            _context.SceneImporter.GenericObjectReferences.AddRange(_audioClips.Select( kvp => kvp.Value).ToArray());
         }
 
         public override void OnAfterImportScene(GLTFScene scene, int sceneIndex, GameObject sceneObject)

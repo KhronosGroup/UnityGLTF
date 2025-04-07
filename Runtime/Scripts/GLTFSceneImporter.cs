@@ -14,6 +14,7 @@ using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
+using Object = UnityEngine.Object;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 #if !WINDOWS_UWP && !UNITY_WEBGL
@@ -218,6 +219,12 @@ namespace UnityGLTF
 		public AnimationCacheData[] AnimationCache => _assetCache.AnimationCache;
 		public GameObject[] NodeCache => _assetCache.NodeCache;
 		public MeshCacheData[] MeshCache => _assetCache.MeshCache;
+
+		/// <summary>
+		/// Add here any objects, which are not GameObject, Materials, Textures and Animation Clips,
+		/// that need to be cleaned up when the scene is destroyed
+		/// </summary>
+		public List<Object> GenericObjectReferences { get; private set; } = new List<Object>();
 
 		private Dictionary<Stream, NativeArray<byte>> _nativeBuffers = new Dictionary<Stream, NativeArray<byte>>(); 
 #if HAVE_MESHOPT_DECOMPRESS
@@ -651,7 +658,8 @@ namespace UnityGLTF
 				_assetCache.MeshCache,
 				_assetCache.TextureCache,
 				_assetCache.ImageCache,
-				_assetCache.AnimationCache
+				_assetCache.AnimationCache,
+				GenericObjectReferences.ToArray()
 			);
 		}
 
