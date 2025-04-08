@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     public static class CleanUpRegistry
     {
@@ -12,7 +12,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             cleanUpRegistry.Add(cleanUp);
         }
         
-        public static bool StartCleanUp(VisualScriptingExportContext context)
+        public static bool StartCleanUp(InteractivityExportContext context)
         {
             var task = new CleanUpTask(context);
             foreach (var cleanUp in cleanUpRegistry)

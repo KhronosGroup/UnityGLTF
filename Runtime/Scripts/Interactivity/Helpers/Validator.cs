@@ -3,11 +3,11 @@ using System.Text;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     public static class Validator
     {
-        public static void ValidateData(VisualScriptingExportContext visualScriptingExportContext)
+        public static void ValidateData(InteractivityExportContext context)
         {
             var sb = new StringBuilder();
             
@@ -22,19 +22,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
                             message += $" (config: {config.Key}={config.Value.Value})";
                 }
                 
-                foreach (var g in visualScriptingExportContext.addedGraphs)
-                foreach (var kvpNode in g.nodes)
-                    if (kvpNode.Value.Nodes.Contains(node))
-                    {
-                        UnitExportLogging.AddErrorLog(kvpNode.Key, "Validation Error: "+message);
-                        sb.AppendLine($"Node Index {node.Index} with Schema={node.Schema.Op} from Unit={kvpNode.Key}: {message}");
-                        return;
-                    }
-                
                 sb.AppendLine($"Node Index {node.Index} with Schema={node.Schema.Op}: {message}");
             }
             
-            foreach (var node in visualScriptingExportContext.Nodes)
+            foreach (var node in context.Nodes)
             {
                 foreach (var config in node.Configuration)
                 {
@@ -69,7 +60,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
                 if (node.Schema.Op == "pointer/set" || node.Schema.Op == "pointer/get")
                 {
-                    if (node.ValueInConnection.TryGetValue(PointersHelper.IdPointerNodeIndex, out var valueSocket))
+                    if (node.ValueInConnection.TryGetValue(Pointers.IdPointerNodeIndex, out var valueSocket))
                     {
                         if (valueSocket.Value != null && valueSocket.Node == null && (int)valueSocket.Value == -1)
                             NodeAppendLine(node, $"Node Pointer Node has invalid nodeIndex Value: -1");
@@ -99,13 +90,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 }
             }
             
-            foreach (var variable in visualScriptingExportContext.variables)
+            foreach (var variable in context.variables)
             {
                 if (variable.Type == -1)
                     sb.AppendLine($"Variable with Id >{variable.Id}< has invalid Type (-1)");
             }
             
-            foreach (var customEvent in visualScriptingExportContext.customEvents)
+            foreach (var customEvent in context.customEvents)
             {
                 foreach (var customEventValue in customEvent.Values)
                 {

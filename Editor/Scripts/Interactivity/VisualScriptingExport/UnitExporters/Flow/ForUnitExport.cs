@@ -77,7 +77,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     var awaiter = CoroutineHelper.AddCoroutineAwaiter(unitExporter, loopBody.node, loopBody.socket.Key);
                     awaiter.FlowOutDoneSocket().ConnectToFlowDestination(nextStep);
                     
-                    unitExporter.exportContext.OnNodesCreated += (nodes) =>
+                    unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
                     {
                         var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node);
                         if (awaiter == null)

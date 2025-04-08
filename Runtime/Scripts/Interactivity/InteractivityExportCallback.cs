@@ -1,17 +1,24 @@
 using System.Collections.Generic;
 using UnityGLTF.Interactivity.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     public interface IInteractivityExport
     {
-        void OnInteractivityExport(VisualScriptingExportContext context, GltfInteractivityExportNodes nodes);
+        void OnInteractivityExport(InteractivityExportContext context, GltfInteractivityExportNodes nodes);
     }
 
     public class GltfInteractivityExportNodes
     {
+        public enum LogLevel
+        {
+            Info,
+            Warning,
+            Error
+        }
+        
         public readonly List<GltfInteractivityExportNode> nodes = new List<GltfInteractivityExportNode>();
-
+        public InteractivityExportContext Context { get; private set; }
         public GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
         {
             var newNode = new GltfInteractivityExportNode(schema);
@@ -20,15 +27,15 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return newNode;
         }
 
-        public GltfInteractivityExportNode AddLog(LogHelper.LogLevel level, string messageTemplate)
+        public GltfInteractivityExportNode AddLog(LogLevel level, string messageTemplate)
         {
             string messagePrefix = "";
             switch (level)
             {
-                case LogHelper.LogLevel.Warning:
+                case LogLevel.Warning:
                     messagePrefix = "Warning: ";
                     break;
-                case LogHelper.LogLevel.Error:
+                case LogLevel.Error:
                     messagePrefix = "Error: ";
                     break;
             }
@@ -38,9 +45,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return gltf_Node;
         }
         
-        internal GltfInteractivityExportNodes(List<GltfInteractivityExportNode> nodes)
+        internal GltfInteractivityExportNodes(InteractivityExportContext context)
         {
-            this.nodes = nodes;
+            this.nodes = context.Nodes;
+            this.Context = context;
         }
     }
 }

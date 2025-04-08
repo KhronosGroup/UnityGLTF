@@ -44,7 +44,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 awaiter.FlowOutDoneSocket().ConnectToFlowDestination(branch.FlowIn(Flow_BranchNode.IdFlowIn));
                     
                 //Need to add additional nodes after we know which other nodes are created
-                unitExporter.exportContext.OnNodesCreated += (nodes) =>
+                unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
                 {
                     var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, branch);
                     if (awaiter == null)

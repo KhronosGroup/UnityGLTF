@@ -74,7 +74,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         index++;
                     }
                 }
-                unitExporter.exportContext.OnNodesCreated += (nodes) =>
+                unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
                 {
                     var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, multiGate);
                     if (awaiter == null)

@@ -1,14 +1,16 @@
 using System;
-using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
-using UnityGLTF.Interactivity.VisualScripting;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     public class MathCleanUp : ICleanUp
     {
-        [InitializeOnLoadMethod]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#else
+        [RuntimeInitializeOnLoadMethod]
+#endif
         private static void Register()
         {
             CleanUpRegistry.RegisterCleanUp(new MathCleanUp());

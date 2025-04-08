@@ -1,11 +1,14 @@
-using UnityEditor;
 using UnityGLTF.Interactivity.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     public class WaitAllNodeCleanUp : ICleanUp
     {
-        [InitializeOnLoadMethod]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#else
+        [RuntimeInitializeOnLoadMethod]
+#endif
         private static void Register()
         {
             CleanUpRegistry.RegisterCleanUp(new WaitAllNodeCleanUp());

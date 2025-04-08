@@ -1,16 +1,13 @@
-using UnityGLTF.Interactivity.Schema;
-
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
-    
     public class CleanUpTask
     {
   
-        public VisualScriptingExportContext context { get; }
+        public InteractivityExportContext context { get; }
         
         private bool hasChanges = false;
         
-        public CleanUpTask(VisualScriptingExportContext context)
+        public CleanUpTask(InteractivityExportContext context)
         {
             this.context = context;
         }

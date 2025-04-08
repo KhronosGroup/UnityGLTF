@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             unitExporter.MapInputPortToSocketName(unit.enter, Flow_SetDelayNode.IdFlowIn, node);
             // TODO: cancel, err, lastDelayIndex ... maybe custom Unit also with a Static Dict. for delay index
            
-            unitExporter.exportContext.OnNodesCreated += (nodes) =>
+            unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
             {
                 var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, node);
                 if (awaiter == null)

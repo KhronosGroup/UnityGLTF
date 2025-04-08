@@ -1,11 +1,15 @@
-using UnityEditor;
 using UnityGLTF.Interactivity.Schema;
 
-namespace UnityGLTF.Interactivity.VisualScripting
+namespace UnityGLTF.Interactivity
 {
     public class ComposeAndDecomposeCleanUp : ICleanUp
     {
-        [InitializeOnLoadMethod]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#else
+        [RuntimeInitializeOnLoadMethod]
+#endif
+
         private static void Register()
         {
             CleanUpRegistry.RegisterCleanUp(new ComposeAndDecomposeCleanUp());
@@ -13,8 +17,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public void OnCleanUp(CleanUpTask task)
         {
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", PointersHelper.IdPointerNodeIndex);
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/matrix", PointersHelper.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + Pointers.IdPointerNodeIndex + "}/globalMatrix", Pointers.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/{" + Pointers.IdPointerNodeIndex + "}/matrix", Pointers.IdPointerNodeIndex);
             
             var decompose = task.context.Nodes.FindAll(node => node.Schema is Math_MatDecomposeNode).ToArray();
             

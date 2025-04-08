@@ -74,7 +74,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             // Set the type of the event values on a later stage when we can identify the type of the input.
             // Also in case a Event Trigger uses a NULL as input, we also check for the input types for existing events
-            unitExporter.exportContext.OnNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
+            unitExporter.exportContext.OnUnitNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };

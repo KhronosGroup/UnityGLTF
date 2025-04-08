@@ -84,7 +84,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             };
   
-            unitExporter.exportContext.OnNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
+            unitExporter.exportContext.OnUnitNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };

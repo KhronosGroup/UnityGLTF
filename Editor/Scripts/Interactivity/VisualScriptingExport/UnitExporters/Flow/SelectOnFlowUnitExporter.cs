@@ -73,7 +73,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             // Update Type Index
-            unitExporter.exportContext.OnNodesCreated += (nodes => { PostTypeResolving(); });
+            unitExporter.exportContext.OnUnitNodesCreated += (nodes => { PostTypeResolving(); });
             unitExporter.exportContext.OnBeforeSerialization += (nodes) => { PostTypeResolving(true); };
             return true;
         }
