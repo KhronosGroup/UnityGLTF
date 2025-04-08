@@ -61,6 +61,18 @@ namespace UnityGLTF.Plugins
             return ad;
         }
 
+        private string GetMimeType(string path)
+        {
+            var extension = Path.GetExtension(path);
+            if (extension == ".mp3")
+                return "audio/mpeg";
+            if (extension == ".ogg")
+                return "audio/ogg";
+            if (extension == ".wav")
+                return "audio/wav";
+            return null;
+        }
+        
         private AudioEmitterId ProcessAudioSource(bool isGlobal, AudioSource[] audioSources, GLTFSceneExporter exporter, GLTFRoot gltfRoot)
         {
             var audioSourceIds = new List<AudioDescription>();
@@ -110,9 +122,14 @@ namespace UnityGLTF.Plugins
                 var fileName = Path.GetFileName(path);
              
                 var audio = new KHR_AudioData();
-
                 var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                var result = exporter.ExportFile(fileName, "audio/mpeg", fileStream);
+                var mimeType = GetMimeType(fileName);
+                if (string.IsNullOrEmpty(mimeType))
+                {
+                    Debug.LogError("Unsupported audio file type: " + fileName);
+                    continue;
+                }
+                var result = exporter.ExportFile(fileName, mimeType, fileStream);
                 
                 if (string.IsNullOrEmpty(result.uri))
                 {
