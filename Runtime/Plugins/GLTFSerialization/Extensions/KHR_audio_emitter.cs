@@ -449,9 +449,6 @@ namespace GLTF.Schema
                       case nameof(KHR_AudioData.uri):
                         audioData.uri = reader.ReadAsString();
                         break;               
-                    case nameof(KHR_AudioData.Name):
-                        audioData.Name = reader.ReadAsString();
-                        break;               
                     case nameof(KHR_AudioData.bufferView):
                         audioData.bufferView = BufferViewId.Deserialize(root, reader);
                         break;               
