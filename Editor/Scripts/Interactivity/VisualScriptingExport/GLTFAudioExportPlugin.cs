@@ -32,7 +32,7 @@ public class GLTFAudioExportPlugin : VisualScriptingExportPlugin
         /// <returns></returns>
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
-            return new GLTFAudioExportContext(this);//, true);
+            return new GLTFAudioExportContext(this, false);
         }
     }
 

@@ -63,7 +63,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                 var node = unitExporter.CreateNode(new Audio_PauseNode());
                 node.ValueSocketConnectionData[Audio_PauseNode.IdValueAudio].Value = description.Id;
-                node.ValueSocketConnectionData[Audio_PauseNode.IdValueNode].Value = $"audio/node/{description.Id}";
+//                node.ValueSocketConnectionData[Audio_PauseNode.IdValueNode].Value = $"audio/node/{description.Id}";
 
                 unitExporter.MapInputPortToSocketName(unit.enter, Audio_PauseNode.IdFlowIn, node);
                 // There should only be one output flow from the Animator.Play node

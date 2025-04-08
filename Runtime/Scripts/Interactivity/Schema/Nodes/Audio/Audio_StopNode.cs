@@ -16,7 +16,7 @@ namespace UnityGLTF.Interactivity.Schema
         [InputSocketDescription(GltfTypes.Int)]
         public const string IdValueAudio = "audioSourceIndex";
 
-        [InputSocketDescription(GltfTypes.String)]
-        public const string IdValueNode = "audioSourcePath";
+        //[InputSocketDescription(GltfTypes.String)]
+        //public const string IdValueNode = "audioSourcePath";
     }
 }
