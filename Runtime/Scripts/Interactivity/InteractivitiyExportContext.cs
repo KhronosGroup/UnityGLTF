@@ -7,6 +7,9 @@ using UnityGLTF.Plugins;
 
 namespace UnityGLTF.Interactivity
 {
+    /// <summary>
+    /// Basic functionality for exporting Interactivity Graphs
+    /// </summary>
     public class InteractivityExportContext : GLTFExportPluginContext
     {
         public GLTFRoot ActiveGltfRoot = null;

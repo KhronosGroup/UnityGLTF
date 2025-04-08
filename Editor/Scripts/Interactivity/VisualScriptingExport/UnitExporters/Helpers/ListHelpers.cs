@@ -1,8 +1,6 @@
 using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export

@@ -2,14 +2,11 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using Newtonsoft.Json.Linq;
-    
     public class GltfInteractivityUnitExporterNode : GltfInteractivityExportNode
     {
         public UnitExporter Exporter { get; private set; }
