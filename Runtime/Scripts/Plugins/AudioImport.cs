@@ -14,6 +14,7 @@ namespace UnityGLTF.Plugins
 {
     public class AudioImport : GLTFImportPlugin
     {
+        public override bool EnabledByDefault => false;
         public override string DisplayName => "KHR_audio";
         public override string Description => "Import positional and global audio sources (Wav, Mp3, Ogg)";
         
