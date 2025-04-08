@@ -11,7 +11,7 @@ namespace UnityGLTF.Plugins
     {
         public override bool EnabledByDefault => false;
         public override string DisplayName => "KHR_audio";
-        public override string Description => "Exports positional and global audio sources and .mp3 audio clips.";
+        public override string Description => "Exports positional and global audio sources";
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
             return new AudioExportContext(context);
