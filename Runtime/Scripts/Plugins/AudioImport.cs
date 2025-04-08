@@ -306,11 +306,11 @@ namespace UnityGLTF.Plugins
                 audioSource.volume = emitter.gain * (source.Value.gain ?? 1f);
                 audioSource.playOnAwake = source.Value.autoPlay ?? false;
                 audioSource.spatialBlend = isGlobal ? 0f : 1.0f;
-                if (!isGlobal && emitter is KHR_PositionalAudioEmitter posEmitter)
+                if (!isGlobal && emitter.positional != null)
                 {
                     audioSource.rolloffMode = AudioRolloffMode.Linear;
-                    audioSource.minDistance = posEmitter.minDistance;
-                    audioSource.maxDistance = posEmitter.maxDistance;
+                    audioSource.minDistance = emitter.positional.refDistance ?? 1f;
+                    audioSource.maxDistance = emitter.positional.maxDistance ?? 0f;
                 }
             }
         }

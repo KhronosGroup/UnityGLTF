@@ -29,7 +29,6 @@ namespace UnityGLTF.Plugins
         private Dictionary<AudioSource, AudioEmitterId> _audioSourceToEmitter = new();
         private Dictionary<AudioSource, Node> _audioSourceToNode = new();
         
-        
         public class AudioDescription
         {
             public int Id;
@@ -88,26 +87,21 @@ namespace UnityGLTF.Plugins
 
             var firstAudioSource = audioSources[0];
 
-            KHR_AudioEmitter emitter;
-            if (isGlobal)
+
+            var emitter = new KHR_AudioEmitter
             {
-                emitter = new KHR_AudioEmitter
-                {
-                    type = "global",
-                    gain = firstAudioSource.volume,
-                    name = "global emitter",
-                };
-            }
-            else
+                type = isGlobal ? "global" : "positional",
+                gain = firstAudioSource.volume,
+                name = isGlobal ? "global emitter" : "positional emitter"
+            };
+            
+            if (!isGlobal)
             {
-                emitter = new KHR_PositionalAudioEmitter()
+                emitter.positional = new PositionalEmitterData()
                 {
-                    type = "positional",
-                    gain = firstAudioSource.volume,
-                    minDistance = firstAudioSource.minDistance,
+                    refDistance = firstAudioSource.minDistance,
                     maxDistance = firstAudioSource.maxDistance,
                     distanceModel = PositionalAudioDistanceModel.linear,
-                    name = "positional emitter"
                 };
             }
             emitter.sources.AddRange(audioSourceIds.Select(a => new AudioSourceId { Id = a.Id, Root = gltfRoot }));

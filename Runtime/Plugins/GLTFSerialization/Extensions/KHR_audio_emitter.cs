@@ -203,6 +203,106 @@ namespace GLTF.Schema
         }
     }
 
+    public class PositionalEmitterData
+    {
+        public string shapeType;
+        public float? coneInnerAngle;
+        public float? coneOuterAngle;
+        public float? coneOuterGain;
+        public PositionalAudioDistanceModel? distanceModel;
+        
+        public float? maxDistance
+            ;
+        public float? refDistance;
+        public float? rolloffFactor;
+        
+        public JObject Serialize()
+        {
+            var positional = new JObject();
+
+            //if (!Mathf.Approximately(coneInnerAngle, Mathf.PI * 2)) {
+            //  positional.Add(new JProperty(nameof(coneInnerAngle), coneInnerAngle));
+            //}
+
+            //if (!Mathf.Approximately(coneInnerAngle, Mathf.PI * 2)) {
+            //  positional.Add(new JProperty(nameof(coneOuterAngle), coneOuterAngle));
+            //}
+
+            //if (coneOuterGain != 0.0f) {
+            //  positional.Add(new JProperty(nameof(coneOuterGain), coneOuterGain));
+            //}
+
+
+            if (distanceModel != PositionalAudioDistanceModel.inverse)
+            {
+                positional.Add(new JProperty(nameof(distanceModel), distanceModel.ToString()));
+            }
+            
+            if (maxDistance != 10000.0f)
+            {
+                positional.Add(new JProperty(nameof(maxDistance), maxDistance));
+            }
+
+            if (refDistance != 1.0f)
+            {
+                positional.Add(new JProperty(nameof(refDistance), refDistance));
+            }
+
+            //if (rolloffFactor != 1.0f) {
+            //  positional.Add(new JProperty(nameof(rolloffFactor), rolloffFactor));
+            //}
+
+     
+            return positional;
+        }
+
+        public static PositionalEmitterData Deserialize(GLTFRoot root, JsonReader reader)
+        {
+            var positional = new PositionalEmitterData();
+
+            if (reader.Read() && reader.TokenType != JsonToken.StartObject)
+            {
+                throw new Exception("PositionalEmitterData must be an object.");
+            }
+
+            while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
+            {
+                var curProp = reader.Value.ToString();
+
+                switch (curProp)
+                {
+                    case nameof(shapeType):
+                        positional.shapeType = reader.ReadAsString();
+                        break;
+                    case nameof(coneInnerAngle):
+                        positional.coneInnerAngle = (float)reader.ReadAsDouble();
+                        break;
+                    case nameof(coneOuterAngle):
+                        positional.coneOuterAngle = (float)reader.ReadAsDouble();
+                        break;
+                    case nameof(coneOuterGain):
+                        positional.coneOuterGain = (float)reader.ReadAsDouble();
+                        break;
+                    case nameof(distanceModel):
+                        positional.distanceModel = (PositionalAudioDistanceModel)Enum.Parse(typeof(PositionalAudioDistanceModel), reader.ReadAsString());
+                        break;
+                    case nameof(maxDistance):
+                        positional.maxDistance = (float)reader.ReadAsDouble();
+                        break;
+                    case nameof(refDistance):
+                        positional.refDistance = (float)reader.ReadAsDouble();
+                        break;
+                    case nameof(rolloffFactor):
+                        positional.rolloffFactor = (float)reader.ReadAsDouble();
+                        break;
+                }
+            }
+
+            return positional;
+           
+        }
+    }
+
     [Serializable]
     public class KHR_AudioEmitter : GLTFChildOfRootProperty
     {
@@ -211,6 +311,8 @@ namespace GLTF.Schema
         public float gain;
         public List<AudioSourceId> sources = new List<AudioSourceId>();
 
+        public PositionalEmitterData positional = null;
+        
         public virtual JObject Serialize()
         {
             var jo = new JObject();
@@ -223,6 +325,11 @@ namespace GLTF.Schema
             jo.Add(nameof(type), type);
 
             jo.Add(nameof(gain), gain);
+            
+            if (positional != null)
+            {
+                jo.Add(new JProperty(nameof(positional), positional.Serialize()));
+            }
 
             if (sources != null && sources.Count > 0)
             {
@@ -269,74 +376,17 @@ namespace GLTF.Schema
                             break;
                         foreach (var source in list)
                             emitter.sources.Add(new AudioSourceId { Id = source, Root = root });
-                        break;               
+                        break;    
+                    case nameof(positional):
+                        emitter.positional = PositionalEmitterData.Deserialize(root, reader);
+                        break;
                 }
             }    
             
             return emitter;
         }
     }
-
-    [Serializable]
-    public class KHR_PositionalAudioEmitter : KHR_AudioEmitter
-    {
-        public float coneInnerAngle;
-        public float coneOuterAngle;
-        public float coneOuterGain;
-        public PositionalAudioDistanceModel distanceModel;
-        public float minDistance;
-        public float maxDistance;
-        public float refDistance;
-        public float rolloffFactor;
-
-        public override JObject Serialize()
-        {
-            var jo = base.Serialize();
-
-            var positional = new JObject();
-
-            //if (!Mathf.Approximately(coneInnerAngle, Mathf.PI * 2)) {
-            //  positional.Add(new JProperty(nameof(coneInnerAngle), coneInnerAngle));
-            //}
-
-            //if (!Mathf.Approximately(coneInnerAngle, Mathf.PI * 2)) {
-            //  positional.Add(new JProperty(nameof(coneOuterAngle), coneOuterAngle));
-            //}
-
-            //if (coneOuterGain != 0.0f) {
-            //  positional.Add(new JProperty(nameof(coneOuterGain), coneOuterGain));
-            //}
-
-
-            if (distanceModel != PositionalAudioDistanceModel.inverse)
-            {
-                positional.Add(new JProperty(nameof(distanceModel), distanceModel.ToString()));
-            }
-
-            if (minDistance != 0)
-            {
-                positional.Add(new JProperty(nameof(minDistance), minDistance));
-            }
-
-            if (maxDistance != 10000.0f)
-            {
-                positional.Add(new JProperty(nameof(maxDistance), maxDistance));
-            }
-
-            //if (refDistance != 1.0f) {
-            //  positional.Add(new JProperty(nameof(refDistance), refDistance));
-            //}
-
-            //if (rolloffFactor != 1.0f) {
-            //  positional.Add(new JProperty(nameof(rolloffFactor), rolloffFactor));
-            //}
-
-            jo.Add("positional", positional);
-
-            return jo;
-        }
-    }
-
+    
     [Serializable]
     public class KHR_AudioSource : GLTFChildOfRootProperty
     {
