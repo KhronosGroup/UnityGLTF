@@ -789,7 +789,7 @@ namespace UnityGLTF
 		public NativeArray<byte> GetBufferViewData(BufferView bufferView)
 		{
 			GetBufferData(bufferView.Buffer).Wait();
-			GLTFHelpers.LoadBufferView(bufferView, 0, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
+			GLTFHelpers.LoadBufferView(bufferView, _assetCache.BufferCache[bufferView.Buffer.Id].ChunkOffset, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
 			return bufferViewCache;
 		}
 
