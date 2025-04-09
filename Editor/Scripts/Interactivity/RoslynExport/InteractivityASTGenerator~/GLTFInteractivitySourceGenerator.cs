@@ -138,8 +138,8 @@ namespace InteractivityASTGenerator
                     // Log some details about the class
                     LogInfo(context, $"Class namespace: {classSymbol.ContainingNamespace}");
                     
-                    // Generate the GetAST method
-                    string classSource = GetASTMethodGenerator.GenerateGetASTMethod(classDeclaration, classSymbol);
+                    // Generate the GetAST method - pass the semantic model
+                    string classSource = GetASTMethodGenerator.GenerateGetASTMethod(classDeclaration, classSymbol, model);
                     string fileName = $"{classSymbol.Name}_AST.cs";
                     
                     // Add to compilation
