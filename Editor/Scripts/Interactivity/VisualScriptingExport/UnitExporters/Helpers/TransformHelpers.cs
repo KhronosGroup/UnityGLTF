@@ -7,7 +7,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public static class TransformHelpers
     {
         public static void GetLocalScale(UnitExporter unitExporter, ValueInput target,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData scaleOutput)
+            out ValueOutRef scaleOutput)
         {
             var getScale = unitExporter.CreateNode(new Pointer_GetNode());
             scaleOutput = getScale.FirstValueOut().ExpectedType(ExpectedType.Float3);
@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
         public static void GetLocalPosition(UnitExporter unitExporter, ValueInput target,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData positionOutput)
+            out ValueOutRef positionOutput)
         {
             var getPosition = unitExporter.CreateNode(new Pointer_GetNode());
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
@@ -65,7 +65,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void SetLocalPosition(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData position, ControlInput flowIn,
+            ValueOutRef position, ControlInput flowIn,
             ControlOutput flowOut)
         {
             var setPosition = unitExporter.CreateNode(new Pointer_SetNode());
@@ -80,10 +80,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             setPosition.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(flowIn);
             setPosition.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(flowOut);
         }
-
-
+        
         private static void SetWorldPositionFromConvertedSpace(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedPosition, ControlInput flowIn,
+            ValueOutRef convertedPosition, ControlInput flowIn,
             ControlOutput flowOut)
         {
             var setPosition = unitExporter.CreateNode(new Pointer_SetNode());
@@ -132,7 +131,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void SetWorldPosition(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData position, ControlInput flowIn,
+            ValueOutRef position, ControlInput flowIn,
             ControlOutput flowOut)
         {
             SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, position, out var convertedOutput);
@@ -147,14 +146,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void SetWorldRotation(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData rotation, ControlInput flowIn,
+            ValueOutRef rotation, ControlInput flowIn,
             ControlOutput flowOut)
         {
             SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, rotation, out var convertedOutput);
             SetWorldRotationFromConvertedSpace(unitExporter, target, convertedOutput, flowIn, flowOut);
         }
         private static void SetWorldRotationFromConvertedSpace(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedRotation, ControlInput flowIn,
+            ValueOutRef convertedRotation, ControlInput flowIn,
             ControlOutput flowOut)
         {
             var setRotation = unitExporter.CreateNode(new Pointer_SetNode());
@@ -196,7 +195,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
         public static void GetLocalRotation(UnitExporter unitExporter, ValueInput target,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData value)
+            out ValueOutRef value)
         {
             var getRotation = unitExporter.CreateNode(new Pointer_GetNode());
             getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
@@ -226,7 +225,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void SetLocalRotation(UnitExporter unitExporter, ValueInput target,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData rotationInput,
+            ValueOutRef rotationInput,
             ControlInput flowIn, ControlOutput flowOut)
         {
             var setRotation = unitExporter.CreateNode(new Pointer_SetNode());
@@ -257,7 +256,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
         public static void GetWorldPosition(UnitExporter unitExporter, ValueInput target,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData worldPosition)
+            out ValueOutRef worldPosition)
         {
             
             if (UnitsHelper.IsMainCameraInInput(target))
@@ -296,7 +295,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
         public static void GetWorldScale(UnitExporter unitExporter, ValueInput target,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData worldScale)
+            out ValueOutRef worldScale)
         {
             var worldMatrix = unitExporter.CreateNode(new Pointer_GetNode());
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
@@ -315,7 +314,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
         public static void GetWorldRotation(UnitExporter unitExporter, ValueInput target,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData worldRotation)
+            out ValueOutRef worldRotation)
         {
             
             if (UnitsHelper.IsMainCameraInInput(target))

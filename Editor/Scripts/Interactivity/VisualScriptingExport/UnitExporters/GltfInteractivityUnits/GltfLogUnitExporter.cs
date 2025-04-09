@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityGLTF.Interactivity.Schema;
+using UnityGLTF.Interactivity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 
 namespace Editor.UnitExporters.GltfInteractivityUnits

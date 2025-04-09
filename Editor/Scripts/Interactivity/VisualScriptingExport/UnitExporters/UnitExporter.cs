@@ -11,8 +11,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     {
         public class NodeToNodeSocketConnection
         {
-            public GltfInteractivityUnitExporterNode destination;
-            public GltfInteractivityUnitExporterNode source;
+            public GltfInteractivityExportNode destination;
+            public GltfInteractivityExportNode source;
             public string destinationSocketName;
             public string sourceSocketName;
         }
@@ -35,13 +35,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
         }
 
-        public void AddWhenValid(ControlOutput controlOutput, string id, GltfInteractivityUnitExporterNode node)
+        public void AddWhenValid(ControlOutput controlOutput, string id, GltfInteractivityExportNode node)
         {
             AddWhenValid(controlOutput, node.FlowConnections[id]);
         }
 
-        public void AddNodeConnection(GltfInteractivityUnitExporterNode destinationNode, string destinationSocketName,
-            GltfInteractivityUnitExporterNode sourceNode, string sourceSocketName)
+        public void AddNodeConnection(GltfInteractivityExportNode destinationNode, string destinationSocketName,
+            GltfInteractivityExportNode sourceNode, string sourceSocketName)
         {
             nodeSocketConnections.Add(new NodeToNodeSocketConnection()
             {
@@ -56,16 +56,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public class NodeSocketName
     {
         public string socketName;
-        public GltfInteractivityUnitExporterNode node;
+        public GltfInteractivityExportNode node;
 
-        public NodeSocketName(string socketName, GltfInteractivityUnitExporterNode node)
+        public NodeSocketName(string socketName, GltfInteractivityExportNode node)
         {
             this.socketName = socketName;
             this.node = node;
         }
     }
 
-    public class UnitExporter
+    public class UnitExporter : IUnitSocketConnector
     {
         public ExportPriority unitExportPriority { get; private set; }
         public IUnitExporter exporter { get; private set; }
@@ -241,7 +241,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
         }
         
-        public string GetFirstInputSocketName(IUnitInputPort input, out GltfInteractivityUnitExporterNode node)
+        public string GetFirstInputSocketName(IUnitInputPort input, out GltfInteractivityExportNode node)
         {
             node = null;
             if (inputPortToSocketNameMapping.TryGetValue(input, out var list) && list.Count > 0)
@@ -253,7 +253,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return null;
         }
 
-        public string GetOutputSocketName(IUnitOutputPort output, out GltfInteractivityUnitExporterNode node)
+        public string GetOutputSocketName(IUnitOutputPort output, out GltfInteractivityExportNode node)
         {
             node = null;
             if (outputPortToSocketNameByPort.ContainsKey(output))
@@ -263,18 +263,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
 
             return null;
-        }
-
-        public void MapOutFlowConnectionWhenValid(ControlOutput destinationPort, string sourceSocketName,
-            GltfInteractivityUnitExporterNode sourceNode)
-        {
-            outFlowConnections.AddWhenValid(destinationPort, sourceSocketName, sourceNode);
-        }
-
-        public void MapOutFlowConnection(GltfInteractivityUnitExporterNode destinationNode, string destinationSocketName,
-            GltfInteractivityUnitExporterNode sourceNode, string sourceSocketName)
-        {
-            outFlowConnections.AddNodeConnection(destinationNode, destinationSocketName, sourceNode, sourceSocketName);
         }
         
         private IUnitInputPort ResolveBypass(IUnitInputPort inputPort,
@@ -298,6 +286,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return inputPort;
         }
 
+        private void SetAllUnitExporterNodesToDirectSocketConnector()
+        {
+            // default socket connector for Unit Exporter Nodes is based on mapping.
+            // After ResolvingConnections, we can set connection directly, because we now have node indices
+            foreach (var node in _nodes)
+            {
+                node.SocketConnector = new DirectSocketConnector();
+            }
+        }
+        
         public void ResolveConnections()
         {
             void SetInputConnection(UnitExporter exportNode, List<NodeSocketName> toSockets, IUnitOutputPort port)
@@ -398,6 +396,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 sourceNode.FlowConnections[sourceSocketName].Node = destinationNode.Index;
                 sourceNode.FlowConnections[sourceSocketName].Socket = destinationSocketName;
             }
+            
+            SetAllUnitExporterNodesToDirectSocketConnector();
         }
         
         public bool HasPortMappingTo(ValueOutput valueOutput)
@@ -405,22 +405,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return outputPortToSocketNameByPort.ContainsKey(valueOutput);
         }
         
-        public void MapValueOutportToSocketName(IUnitOutputPort outputPort, string socketName, GltfInteractivityUnitExporterNode node)
-        {
-            outputPortToSocketNameByPort.Add(outputPort, new NodeSocketName(socketName, node));
-        }
-        
-        public void MapInputPortToSocketName(IUnitInputPort inputPort, string socketName, GltfInteractivityUnitExporterNode node)
-        {
-            if (!inputPortToSocketNameMapping.TryGetValue(inputPort, out var portList))
-            {
-                portList = new List<NodeSocketName>();
-                inputPortToSocketNameMapping.Add(inputPort, portList);
-            }
-
-            portList.Add(new NodeSocketName(socketName, node));
-        }
-
         public bool IsInputLiteralOrDefaultValue(ValueInput inputPort, out object value)
         {
             if (inputPort.hasValidConnection && inputPort.connections.First().source.unit is GraphInput)
@@ -518,11 +502,38 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
         }
 
-        public void MapInputPortToSocketName(string sourceSocketName, GltfInteractivityUnitExporterNode sourceNode,
-            string socketName, GltfInteractivityUnitExporterNode node)
+
+        public void ConnectOutFlow(GltfInteractivityExportNode otherNode, string otherSocketId, GltfInteractivityExportNode fromNode,
+            string fromSocketId)
         {
-            nodeInputPortToSocketNameMapping.Add(new NodeSocketName(sourceSocketName, sourceNode),
-                new NodeSocketName(socketName, node));
+             outFlowConnections.AddNodeConnection(otherNode, otherSocketId, fromNode, fromSocketId);        
+        }
+
+        public void ConnectValueIn(GltfInteractivityExportNode otherNode, string otherSocketId, GltfInteractivityExportNode fromNode,
+            string fromSocketId)
+        {
+            nodeInputPortToSocketNameMapping.Add(new NodeSocketName(otherSocketId, otherNode), new NodeSocketName(fromSocketId, fromNode));         
+       }
+
+        public void MapValueOutportToSocketName(IUnitOutputPort outputPort, string socketId, GltfInteractivityExportNode node)
+        {
+            outputPortToSocketNameByPort.Add(outputPort, new NodeSocketName(socketId, node));
+        }
+
+        public void MapInputPortToSocketName(IUnitInputPort valueInput, string socketId, GltfInteractivityExportNode node)
+        {
+            if (!inputPortToSocketNameMapping.TryGetValue(valueInput, out var portList))
+            {
+                portList = new List<NodeSocketName>();
+                inputPortToSocketNameMapping.Add(valueInput, portList);
+            }
+
+            portList.Add(new NodeSocketName(socketId, node));
+        }
+
+        public void MapOutFlowConnectionWhenValid(ControlOutput output, string socketId, GltfInteractivityExportNode node)
+        {
+            outFlowConnections.AddWhenValid(output, socketId, node);
         }
     }
 }

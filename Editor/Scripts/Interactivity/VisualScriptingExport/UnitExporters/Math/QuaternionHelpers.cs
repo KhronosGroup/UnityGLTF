@@ -6,7 +6,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public static class QuaternionHelpers
     {
-        public static void CreateQuaternionFromEuler(UnitExporter unitExporter, ValueInput x, ValueInput y, ValueInput z, out GltfInteractivityUnitExporterNode.ValueOutputSocketData result)
+        public static void CreateQuaternionFromEuler(UnitExporter unitExporter, ValueInput x, ValueInput y, ValueInput z, out ValueOutRef result)
         {
             var combineXYZ = unitExporter.CreateNode(new Math_Combine3Node());
             combineXYZ.ValueIn("a").MapToInputPort(x).SetType(TypeRestriction.LimitToFloat); 
@@ -17,8 +17,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void CreateQuaternionFromEuler(UnitExporter unitExporter,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData xyz,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData result)
+            ValueOutRef xyz,
+            out ValueOutRef result)
         {
             
             var degToRad = unitExporter.CreateNode(new Math_RadNode());
@@ -30,7 +30,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void CreateQuaternionFromEuler(UnitExporter unitExporter, ValueInput xyz,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData result)
+            out ValueOutRef result)
         {
             
             var degToRad = unitExporter.CreateNode(new Math_RadNode());
@@ -41,7 +41,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             CreateQuaternionFromRadEuler(unitExporter, degToRad.FirstValueOut(), out result);
         }
 
-        private static void CreateQuaternionFromRadEuler(UnitExporter unitExporter, GltfInteractivityUnitExporterNode.ValueOutputSocketData  radxyz, out GltfInteractivityUnitExporterNode.ValueOutputSocketData result)
+        private static void CreateQuaternionFromRadEuler(UnitExporter unitExporter, ValueOutRef  radxyz, out ValueOutRef result)
         {
             /*
              Based on:
@@ -75,32 +75,32 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             extractXYZCosNode.ValueIn("a").ConnectToSource(cosNode.FirstValueOut());
 
             #region Helpers
-            GltfInteractivityUnitExporterNode.ValueInputSocketData SinX(GltfInteractivityUnitExporterNode.ValueInputSocketData inSocket)
+            ValueInRef SinX(ValueInRef inSocket)
             {
                 inSocket.ConnectToSource(extractXYZSinNode.ValueOut(Math_Extract3Node.IdValueOutX));
                 return inSocket;
             }
-            GltfInteractivityUnitExporterNode.ValueInputSocketData SinY(GltfInteractivityUnitExporterNode.ValueInputSocketData inSocket)
+            ValueInRef SinY(ValueInRef inSocket)
             {
                 inSocket.ConnectToSource(extractXYZSinNode.ValueOut(Math_Extract3Node.IdValueOutY));
                 return inSocket;
             }
-            GltfInteractivityUnitExporterNode.ValueInputSocketData SinZ(GltfInteractivityUnitExporterNode.ValueInputSocketData inSocket)
+            ValueInRef SinZ(ValueInRef inSocket)
             {
                 inSocket.ConnectToSource(extractXYZSinNode.ValueOut(Math_Extract3Node.IdValueOutZ));
                 return inSocket;
             } 
-            GltfInteractivityUnitExporterNode.ValueInputSocketData CosX(GltfInteractivityUnitExporterNode.ValueInputSocketData inSocket)
+            ValueInRef CosX(ValueInRef inSocket)
             {
                 inSocket.ConnectToSource(extractXYZCosNode.ValueOut(Math_Extract3Node.IdValueOutX));
                 return inSocket;
             }
-            GltfInteractivityUnitExporterNode.ValueInputSocketData CosY(GltfInteractivityUnitExporterNode.ValueInputSocketData inSocket)
+            ValueInRef CosY(ValueInRef inSocket)
             {
                 inSocket.ConnectToSource(extractXYZCosNode.ValueOut(Math_Extract3Node.IdValueOutY));
                 return inSocket;
             }
-            GltfInteractivityUnitExporterNode.ValueInputSocketData CosZ(GltfInteractivityUnitExporterNode.ValueInputSocketData inSocket)
+            ValueInRef CosZ(ValueInRef inSocket)
             {
                 inSocket.ConnectToSource(extractXYZCosNode.ValueOut(Math_Extract3Node.IdValueOutZ));
                 return inSocket;
@@ -190,8 +190,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
 
-        public static void Invert(UnitExporter unitExporter, GltfInteractivityUnitExporterNode.ValueOutputSocketData quaternion,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData result)
+        public static void Invert(UnitExporter unitExporter, ValueOutRef quaternion,
+            out ValueOutRef result)
         {
             var mul = unitExporter.CreateNode(new Math_MulNode());
             mul.ValueIn("a").ConnectToSource(quaternion).SetType(TypeRestriction.LimitToFloat4);
@@ -211,7 +211,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             result = combine.FirstValueOut();
         }
 
-        public static void Invert(UnitExporter unitExporter, ValueInput quaternion, out GltfInteractivityUnitExporterNode.ValueOutputSocketData result)
+        public static void Invert(UnitExporter unitExporter, ValueInput quaternion, out ValueOutRef result)
         {
             var mul = unitExporter.CreateNode(new Math_MulNode());
             mul.ValueIn("a").MapToInputPort(quaternion).SetType(TypeRestriction.LimitToFloat4);

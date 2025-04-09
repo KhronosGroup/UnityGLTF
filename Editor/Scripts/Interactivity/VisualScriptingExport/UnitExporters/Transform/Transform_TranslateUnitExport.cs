@@ -27,18 +27,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
            if (unit.valueInputs.Skip(1).First().type == typeof(Vector3))
            {
                // translate value is a vector3
-               unitExporter.MapInputPortToSocketName(unit.valueInputs.Skip(1).First(), Math_AddNode.IdValueA, add);
+               add.ValueIn(Math_AddNode.IdValueA).MapToInputPort(unit.valueInputs.Skip(1).First());
            }
            else
            {
                // translate value is separate floats
                var combine3 = unitExporter.CreateNode(new Math_Combine3Node());
 
-               unitExporter.MapInputPortToSocketName(unit.valueInputs[1], "a", combine3);
-               unitExporter.MapInputPortToSocketName(unit.valueInputs[2], "b", combine3);
-               unitExporter.MapInputPortToSocketName(unit.valueInputs[3], "c", combine3);
-               
-               unitExporter.MapInputPortToSocketName("value", combine3, Math_AddNode.IdValueA, add);
+                combine3.ValueIn(Math_Combine3Node.IdValueA).MapToInputPort(unit.valueInputs[1]);
+                combine3.ValueIn(Math_Combine3Node.IdValueB).MapToInputPort(unit.valueInputs[2]);
+                combine3.ValueIn(Math_Combine3Node.IdValueC).MapToInputPort(unit.valueInputs[3]);
+              
+                add.ValueIn(Math_AddNode.IdValueA).ConnectToSource(combine3.FirstValueOut());
            }
            //TODO: translate of non self
 

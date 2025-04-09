@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public static class ListHelpers
     {
 
-        public static void GetListCount(VariableBasedList list, GltfInteractivityUnitExporterNode.ValueInputSocketData toInputSocket)
+        public static void GetListCount(VariableBasedList list, ValueInRef toInputSocket)
         {
             if (list is VariableBasedListExporter listExporter)
             {
@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
         }
 
-        public static GltfInteractivityUnitExporterNode.ValueOutputSocketData GetListCountSocket(VariableBasedList list)
+        public static ValueOutRef GetListCountSocket(VariableBasedList list)
         {
             if (list is VariableBasedListExporter listExporter)
             {
@@ -48,8 +48,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void InsertItem(UnitExporter unitExporter, VariableBasedListExporter list,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData atIndexInputSocket,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData valueInputSocket,
+            out ValueInRef atIndexInputSocket,
+            out ValueInRef valueInputSocket,
             ControlInput flowIn, ControlOutput flowOut)
         {
             var addCount = unitExporter.CreateNode(new Math_AddNode());
@@ -106,7 +106,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void AddItem(UnitExporter unitExporter, VariableBasedListExporter list,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData valueInputSocket,
+            out ValueInRef valueInputSocket,
             ControlInput flowIn, ControlOutput flowOut)
         {
             var addCount = unitExporter.CreateNode(new Math_AddNode());
@@ -139,9 +139,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void SetItem(UnitExporter unitExporter, VariableBasedListExporter list,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData indexInput,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData valueInput,
-            out GltfInteractivityUnitExporterNode.FlowInSocketData flowIn, out GltfInteractivityUnitExporterNode.FlowOutSocketData flowOut)
+            out ValueInRef indexInput,
+            out ValueInRef valueInput,
+            out FlowInRef flowIn, out FlowOutRef flowOut)
         {
             if (list.setValueFlowIn == null)
                 CreateSetItemListNodes(unitExporter, list);
@@ -164,8 +164,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void SetItem(UnitExporter unitExporter, VariableBasedListExporter list,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData indexInput,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData valueInput,
+            out ValueInRef indexInput,
+            out ValueInRef valueInput,
             ControlInput flowIn, ControlOutput flowOut)
         {
             SetItem(unitExporter, list, out indexInput, out valueInput, out var flowInSocket, out var flowOutSocket);
@@ -182,20 +182,20 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
         public static void GetItem(UnitExporter unitExporter, VariableBasedList list,
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData indexInput, out GltfInteractivityUnitExporterNode.ValueOutputSocketData valueOutput)
+            ValueOutRef indexInput, out ValueOutRef valueOutput)
         {
             GetItem(unitExporter, list, out var indexInputSocket, out valueOutput);
             indexInputSocket.ConnectToSource(indexInput);
         }
         
         public static void GetItem(UnitExporter unitExporter, VariableBasedList list,
-            ValueInput indexInput, out GltfInteractivityUnitExporterNode.ValueOutputSocketData valueOutput)
+            ValueInput indexInput, out ValueOutRef valueOutput)
         {
             GetItem(unitExporter, list, out var indexInputSocket, out valueOutput);
             indexInputSocket.MapToInputPort(indexInput);
         }
 
-        public static void GetItem(UnitExporter unitExporter, VariableBasedList list, out GltfInteractivityUnitExporterNode.ValueInputSocketData indexInput, out GltfInteractivityUnitExporterNode.ValueOutputSocketData valueOutput)
+        public static void GetItem(UnitExporter unitExporter, VariableBasedList list, out ValueInRef indexInput, out ValueOutRef valueOutput)
         {
             var varType = unitExporter.exportContext.variables[list.StartIndex].Type;
            
@@ -229,7 +229,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void RemoveListItemAt(UnitExporter unitExporter, VariableBasedListExporter list,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData index, out GltfInteractivityUnitExporterNode.FlowInSocketData flowIn, out GltfInteractivityUnitExporterNode.FlowOutSocketData flowOut)
+            out ValueInRef index, out FlowInRef flowIn, out FlowOutRef flowOut)
         {
             var countMinusOne = unitExporter.CreateNode(new Math_SubNode());
             countMinusOne.ValueIn("a").ConnectToSource(GetListCountSocket(list));

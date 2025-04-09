@@ -188,7 +188,7 @@ namespace UnityGLTF.Interactivity.Schema
         {
             public string Socket = null;
             public int? Node = null;
-
+        
             public override string ToString()
             {
                 return $"Node: {(Node.HasValue ? Node.Value.ToString() : "null")}, Socket: \"{Socket}\"";

@@ -109,7 +109,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = 0;
             }
 
-            public FlowOutSocketData FlowOutDoneSocket()
+            public FlowOutRef FlowOutDoneSocket()
             {
                 return FlowOut(Flow_WaitAllNode.IdFlowOutCompleted);
             }

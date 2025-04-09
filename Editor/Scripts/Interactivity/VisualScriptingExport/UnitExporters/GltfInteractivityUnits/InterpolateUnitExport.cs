@@ -27,7 +27,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
 
             string pointerTemplate = null;
             string pointerId = null;
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedValue = null;
+            ValueOutRef convertedValue = null;
             
             var valueType = GltfTypes.Float;
             if (unit.member.targetType == typeof(Transform))

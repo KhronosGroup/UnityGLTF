@@ -30,21 +30,21 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var branch = unitExporter.CreateNode(new Flow_BranchNode());
             // Branch flow in - from Once.Enter
-            unitExporter.MapInputPortToSocketName(once.enter, Flow_BranchNode.IdFlowIn, branch);
+            branch.FlowIn(Flow_BranchNode.IdFlowIn).MapToControlInput(once.enter);
             //Condition - from GetVariable
-            unitExporter.MapInputPortToSocketName(Variable_GetNode.IdOutputValue, getVar, Flow_BranchNode.IdCondition, branch);
+            branch.ValueIn(Flow_BranchNode.IdCondition).ConnectToSource(getVar.ValueOut(Variable_GetNode.IdOutputValue));
             
             // Once.After flow to Branch when true
-            unitExporter.MapOutFlowConnectionWhenValid(once.after, Flow_BranchNode.IdFlowOutTrue, branch);
+            branch.FlowOut(Flow_BranchNode.IdFlowOutTrue).MapToControlOutput(once.after);
 
             var setVar = unitExporter.CreateNode(new Variable_SetNode());
 
             setVar.Configuration["variable"].Value = varIndex;
             setVar.ValueInConnection[Variable_SetNode.IdInputValue].Value = true;
             // Set OnceVariable to true when Branch is false 
-            unitExporter.MapOutFlowConnection(setVar, Variable_SetNode.IdFlowIn, branch, Flow_BranchNode.IdFlowOutFalse);
+            branch.FlowOut(Flow_BranchNode.IdFlowOutFalse).ConnectToFlowDestination(setVar.FlowIn(Variable_SetNode.IdFlowIn));
             // Map once.once out flow to SetVariable outflow
-            unitExporter.MapOutFlowConnectionWhenValid(once.once,  Variable_SetNode.IdFlowOut, setVar);
+            setVar.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(once.once);
             
             if (once.reset.hasAnyConnection)
             {
@@ -52,7 +52,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 resetVar.Configuration["variable"].Value = varIndex;
                 resetVar.ValueInConnection[Variable_SetNode.IdInputValue].Value = false;
-                unitExporter.MapInputPortToSocketName(once.reset, Variable_SetNode.IdFlowIn, resetVar);
+                resetVar.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(once.reset);
             }
             return true;
         }

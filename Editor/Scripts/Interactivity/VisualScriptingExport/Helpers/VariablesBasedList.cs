@@ -33,8 +33,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
     public class VariableBasedListExporter : VariableBasedList
     {
-        public GltfInteractivityUnitExporterNode.ValueOutputSocketData getCountNodeSocket;
-        public GltfInteractivityUnitExporterNode.FlowInSocketData setValueFlowIn;
+        public ValueOutRef getCountNodeSocket;
+        public FlowInRef setValueFlowIn;
         
         public VariableBasedListExporter(VisualScriptingExportContext context, string listId, int capacity, int gltfType) : base(context, listId,
             capacity, gltfType) {}

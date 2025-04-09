@@ -26,7 +26,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
             var template = materialTemplate;
             
             var valueType = GltfTypes.Float;
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedValue = null;
+            ValueOutRef convertedValue = null;
             
             if (unitExporter.IsInputLiteralOrDefaultValue(unit.valueName, out var floatPropertyName))
             {

@@ -39,18 +39,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 var prevNode = node;
   
-                unitExporter.MapInputPortToSocketName(unit.valueInputs[0], Math_MaxNode.IdValueA, prevNode);
-                unitExporter.MapInputPortToSocketName(unit.valueInputs[1], Math_MaxNode.IdValueB, prevNode);
+                prevNode.ValueIn(Math_MaxNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
+                prevNode.ValueIn(Math_MaxNode.IdValueB).MapToInputPort(unit.valueInputs[1]);
                 
                 for (int i = 2; i < unit.valueInputs.Count; i++)
                 {
                     GltfInteractivityUnitExporterNode nodeNext = unitExporter.CreateNode(new Math_MaxNode());
-                    unitExporter.MapInputPortToSocketName(unit.valueInputs[i], Math_MaxNode.IdValueB, nodeNext);
-                    unitExporter.MapInputPortToSocketName(Math_MaxNode.IdOut, prevNode, Math_MaxNode.IdValueA, nodeNext);
-               
+                    nodeNext.ValueIn(Math_MaxNode.IdValueB).MapToInputPort(unit.valueInputs[i]);
+                    nodeNext.ValueIn(Math_MaxNode.IdValueA).ConnectToSource(prevNode.ValueOut(Math_MaxNode.IdOut));
+                    
                     prevNode = nodeNext;
                 }
-                unitExporter.MapValueOutportToSocketName(sum, Math_MaxNode.IdOut, prevNode);
+                prevNode.FirstValueOut().MapToPort(sum);
                 
             }
             else
@@ -58,9 +58,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 var a = unit.valueInputs[0];
                 var b = unit.valueInputs[1];
 
-                unitExporter.MapInputPortToSocketName(a, Math_MaxNode.IdValueA, node);
-                unitExporter.MapInputPortToSocketName(b, Math_MaxNode.IdValueB, node);
-                unitExporter.MapValueOutportToSocketName(sum, Math_MaxNode.IdOut, node);
+
+                node.ValueIn(Math_MaxNode.IdValueA).MapToInputPort(a);
+                node.ValueIn(Math_MaxNode.IdValueB).MapToInputPort(b);
+                node.FirstValueOut().MapToPort(sum);
             }
             return true;
         }

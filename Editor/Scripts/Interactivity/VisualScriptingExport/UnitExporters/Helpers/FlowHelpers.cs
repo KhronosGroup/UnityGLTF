@@ -41,14 +41,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
         
          public static void CreateCustomForLoopWithFlowStep(UnitExporter unitExporter, 
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData startIndex,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData endIndex,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData step,
-            out GltfInteractivityUnitExporterNode.FlowInSocketData flowIn,
-            out GltfInteractivityUnitExporterNode.FlowInSocketData nextStepIn,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData currentIndex,
-            out GltfInteractivityUnitExporterNode.FlowOutSocketData loopBodyOut,
-            out GltfInteractivityUnitExporterNode.FlowOutSocketData completed)
+            out ValueInRef startIndex,
+            out ValueInRef endIndex,
+            out ValueInRef step,
+            out FlowInRef flowIn,
+            out FlowInRef nextStepIn,
+            out ValueOutRef currentIndex,
+            out FlowOutRef loopBodyOut,
+            out FlowOutRef completed)
         {
             var indexVar = unitExporter.exportContext.AddVariableWithIdIfNeeded("ForLoopIndex"+System.Guid.NewGuid().ToString(), 0, VariableKind.Scene, typeof(int));
             
@@ -105,13 +105,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void CreateCustomForLoop(UnitExporter unitExporter, 
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData startIndex,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData endIndex,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData step,
-            out GltfInteractivityUnitExporterNode.FlowInSocketData flowIn,
-            out GltfInteractivityUnitExporterNode.ValueOutputSocketData currentIndex,
-            out GltfInteractivityUnitExporterNode.FlowOutSocketData loopBodyOut,
-            out GltfInteractivityUnitExporterNode.FlowOutSocketData completed)
+            out ValueInRef startIndex,
+            out ValueInRef endIndex,
+            out ValueInRef step,
+            out FlowInRef flowIn,
+            out ValueOutRef currentIndex,
+            out FlowOutRef loopBodyOut,
+            out FlowOutRef completed)
         {
             var indexVar = unitExporter.exportContext.AddVariableWithIdIfNeeded("ForLoopIndex"+System.Guid.NewGuid().ToString(), 0, VariableKind.Scene, typeof(int));
 
@@ -163,10 +163,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
 
         public static void CreateConditionalWaiting(UnitExporter unitExporter,
-            out GltfInteractivityUnitExporterNode.ValueInputSocketData condition, 
-            out GltfInteractivityUnitExporterNode.FlowInSocketData flowIn,
+            out ValueInRef condition, 
+            out FlowInRef flowIn,
             bool waitForTrue,
-            out GltfInteractivityUnitExporterNode.FlowOutSocketData flowOutWhenDone)
+            out FlowOutRef flowOutWhenDone)
         {
             var setVarStart = unitExporter.CreateNode(new Variable_SetNode());
             var setVarFinish = unitExporter.CreateNode(new Variable_SetNode());

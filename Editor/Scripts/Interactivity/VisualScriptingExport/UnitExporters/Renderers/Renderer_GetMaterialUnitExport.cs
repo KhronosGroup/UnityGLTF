@@ -26,13 +26,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/mesh", GltfTypes.Int);
             
             var getMaterial = unitExporter.CreateNode(new Pointer_GetNode());
-            unitExporter.MapInputPortToSocketName(Pointer_GetNode.IdValue, getMesh, PointersHelper.IdPointerMeshIndex, getMaterial);
+            getMaterial.ValueIn(PointersHelper.IdPointerMeshIndex).ConnectToSource(getMesh.ValueOut(Pointer_GetNode.IdValue));
             
             // TODO: support multiple materials/primitives
             PointersHelper.SetupPointerTemplateAndTargetInput(getMaterial, PointersHelper.IdPointerMeshIndex,
                 "/meshes/{" + PointersHelper.IdPointerMeshIndex + "}/primitives/0/material", GltfTypes.Int);
-            
-            unitExporter.MapValueOutportToSocketName(unit.value, Pointer_GetNode.IdValue, getMaterial);
+
+            getMaterial.ValueOut(Pointer_GetNode.IdValue).MapToPort(unit.value);
         
             return true;
         }

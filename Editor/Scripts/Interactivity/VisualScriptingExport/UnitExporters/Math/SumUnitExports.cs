@@ -40,28 +40,28 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 var prevNode = node;
   
-                unitExporter.MapInputPortToSocketName(unit.valueInputs[0], Math_AddNode.IdValueA, prevNode);
-                unitExporter.MapInputPortToSocketName(unit.valueInputs[1], Math_AddNode.IdValueB, prevNode);
+                prevNode.ValueIn(Math_AddNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
+                prevNode.ValueIn(Math_AddNode.IdValueB).MapToInputPort(unit.valueInputs[1]);
                 
                 for (int i = 2; i < unit.valueInputs.Count; i++)
                 {
                     GltfInteractivityUnitExporterNode nodeNext = unitExporter.CreateNode(new Math_AddNode());
-                    unitExporter.MapInputPortToSocketName(unit.valueInputs[i], Math_AddNode.IdValueB, nodeNext);
-                    unitExporter.MapInputPortToSocketName(Math_AddNode.IdOut, prevNode, Math_AddNode.IdValueA, nodeNext);
+                    nodeNext.ValueIn(Math_AddNode.IdValueB).MapToInputPort(unit.valueInputs[i]);
+                    nodeNext.ValueIn(Math_AddNode.IdValueA).ConnectToSource(prevNode.FirstValueOut());
                
                     prevNode = nodeNext;
                 }
-                unitExporter.MapValueOutportToSocketName(sum, Math_AddNode.IdOut, prevNode);
                 
+                prevNode.FirstValueOut().MapToPort(sum);
             }
             else
             {
                 var a = unit.valueInputs[0];
                 var b = unit.valueInputs[1];
-
-                unitExporter.MapInputPortToSocketName(a, Math_AddNode.IdValueA, node);
-                unitExporter.MapInputPortToSocketName(b, Math_AddNode.IdValueB, node);
-                unitExporter.MapValueOutportToSocketName(sum, Math_AddNode.IdOut, node);
+                
+                node.ValueIn(Math_AddNode.IdValueA).MapToInputPort(a);
+                node.ValueIn(Math_AddNode.IdValueB).MapToInputPort(b);
+                node.FirstValueOut().MapToPort(sum);
             }
             return true;
         }

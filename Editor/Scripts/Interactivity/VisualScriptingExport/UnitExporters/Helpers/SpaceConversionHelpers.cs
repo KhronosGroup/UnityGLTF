@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     {
         #region Position Space Conversion
         
-        public static void AddSpaceConversionNodes(UnitExporter unitExporter, GltfInteractivityUnitExporterNode.ValueOutputSocketData unitySpaceVector3, out GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedVector3Socket)
+        public static void AddSpaceConversionNodes(UnitExporter unitExporter, ValueOutRef unitySpaceVector3, out ValueOutRef convertedVector3Socket)
         {
             if (!unitExporter.exportContext.plugin.addUnityToGltfSpaceConversion)
             {
@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             convertedVector3Socket = multiplyNode.FirstValueOut();
         }
         
-        public static void AddSpaceConversionNodes(UnitExporter unitExporter, ValueInput unitySpaceVector3, out GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedVector3Socket)
+        public static void AddSpaceConversionNodes(UnitExporter unitExporter, ValueInput unitySpaceVector3, out ValueOutRef convertedVector3Socket)
         {
             if (!unitExporter.exportContext.plugin.addUnityToGltfSpaceConversion)
             {
@@ -48,7 +48,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         #region Rotation Space Conversion
         
-        public static void AddRotationSpaceConversionNodes(UnitExporter unitExporter, GltfInteractivityUnitExporterNode.ValueOutputSocketData unitySpaceQuaternion, out GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedQuaternion)
+        public static void AddRotationSpaceConversionNodes(UnitExporter unitExporter, ValueOutRef unitySpaceQuaternion, out ValueOutRef convertedQuaternion)
         {
             if (!unitExporter.exportContext.plugin.addUnityToGltfSpaceConversion)
             {
@@ -61,7 +61,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             convertedQuaternion = multiplyNode.FirstValueOut().ExpectedType(ExpectedType.Float4);
         }
         
-        public static void AddRotationSpaceConversionNodes(UnitExporter unitExporter, ValueInput unitySpaceQuaternion, out GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedQuaternion)
+        public static void AddRotationSpaceConversionNodes(UnitExporter unitExporter, ValueInput unitySpaceQuaternion, out ValueOutRef convertedQuaternion)
         {
             if (!unitExporter.exportContext.plugin.addUnityToGltfSpaceConversion)
             {

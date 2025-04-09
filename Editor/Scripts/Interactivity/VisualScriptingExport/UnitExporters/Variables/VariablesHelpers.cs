@@ -6,7 +6,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public static class VariablesHelpers
     {
 
-        public static GltfInteractivityUnitExporterNode GetVariable(UnitExporter unitExporter, int id, out GltfInteractivityUnitExporterNode.ValueOutputSocketData value)
+        public static GltfInteractivityUnitExporterNode GetVariable(UnitExporter unitExporter, int id, out ValueOutRef value)
         {
             var node = unitExporter.CreateNode(new Variable_GetNode());
             
@@ -51,7 +51,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return node;
         }
         
-        public static GltfInteractivityUnitExporterNode SetVariable(UnitExporter unitExporter, int id, GltfInteractivityUnitExporterNode.ValueOutputSocketData valueSource, ControlInput flowIn, ControlOutput flowOut)
+        public static GltfInteractivityUnitExporterNode SetVariable(UnitExporter unitExporter, int id, ValueOutRef valueSource, ControlInput flowIn, ControlOutput flowOut)
         {
             var node = unitExporter.CreateNode(new Variable_SetNode());
             
@@ -64,7 +64,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return node;
         }
         
-        public static GltfInteractivityUnitExporterNode SetVariable(UnitExporter unitExporter, int id, GltfInteractivityUnitExporterNode.ValueOutputSocketData valueSource, GltfInteractivityUnitExporterNode.FlowOutSocketData fromFlow, GltfInteractivityUnitExporterNode.FlowInSocketData targetFlowIn)
+        public static GltfInteractivityUnitExporterNode SetVariable(UnitExporter unitExporter, int id, ValueOutRef valueSource, FlowOutRef fromFlow, FlowInRef targetFlowIn)
         {
             var node = unitExporter.CreateNode(new Variable_SetNode());
             

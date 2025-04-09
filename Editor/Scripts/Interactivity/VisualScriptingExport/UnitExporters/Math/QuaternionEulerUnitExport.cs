@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var invokeMember = unitExporter.unit as InvokeMember;
 
-            GltfInteractivityUnitExporterNode.ValueOutputSocketData result;
+            ValueOutRef result;
             if (invokeMember.valueInputs.Count == 1)
             {
                 // Vector3 Input

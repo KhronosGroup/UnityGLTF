@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return null;
         }
 
-        public static void ConvertUvOffsetToGltf(UnitExporter unitExporter, ValueInput targetMaterial, string pointerToTextureTransformScale, out GltfInteractivityUnitExporterNode.ValueInputSocketData uvOffset, out GltfInteractivityUnitExporterNode.ValueOutputSocketData convertedUvOffset)
+        public static void ConvertUvOffsetToGltf(UnitExporter unitExporter, ValueInput targetMaterial, string pointerToTextureTransformScale, out ValueInRef uvOffset, out ValueOutRef convertedUvOffset)
         {
             var getScale = unitExporter.CreateNode(new Pointer_GetNode());
             PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerMaterialIndex, targetMaterial, pointerToTextureTransformScale, GltfTypes.Float2);

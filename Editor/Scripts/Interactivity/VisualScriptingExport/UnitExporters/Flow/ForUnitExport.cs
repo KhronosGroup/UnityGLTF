@@ -79,7 +79,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     
                     unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
                     {
-                        var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node);
+                        var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node as GltfInteractivityUnitExporterNode);
                         if (awaiter == null)
                             return;
                         awaiter.AddCoroutineWait(unitExporter, completed.node, completed.socket.Key);

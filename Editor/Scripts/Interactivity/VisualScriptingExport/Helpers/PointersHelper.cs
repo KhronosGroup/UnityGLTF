@@ -5,8 +5,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
 {
     public class PointersHelper : Pointers
     {
-      
-
         public static void SetupPointerTemplateAndTargetInput(GltfInteractivityUnitExporterNode node, string pointerId, ValueInput targetInputPort, string pointerTemplate, int valueGltfType)
         {
             PointersHelper.AddPointerConfig(node, pointerTemplate, valueGltfType);
