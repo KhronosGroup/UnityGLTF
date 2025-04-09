@@ -19,7 +19,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as ForEach;
             
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, unit);
             if (list == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
@@ -33,9 +33,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             forLoop.FlowOut(Flow_ForLoopNode.IdLoopBody).MapToControlOutput(unit.body);
             forLoop.FlowOut(Flow_ForLoopNode.IdCompleted).MapToControlOutput(unit.exit);
             
-            ListHelpers.GetListCount(list, forLoop.ValueIn(Flow_ForLoopNode.IdEndIndex));
+            ListHelpersVS.GetListCount(list, forLoop.ValueIn(Flow_ForLoopNode.IdEndIndex));
             
-            ListHelpers.GetItem(unitExporter, list, forLoop.ValueOut(Flow_ForLoopNode.IdIndex), out var getItemValueSocket);
+            ListHelpersVS.GetItem(unitExporter, list, forLoop.ValueOut(Flow_ForLoopNode.IdIndex), out var getItemValueSocket);
 
             forLoop.ValueOut(Flow_ForLoopNode.IdIndex).MapToPort(unit.currentIndex);
             

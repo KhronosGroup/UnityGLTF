@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -23,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
          
             bool coroutine = CoroutineHelper.CoroutineRequired(unit);
             
-            GltfInteractivityUnitExporterNode node;
+            GltfInteractivityExportNode node;
             if (!coroutine)
             {
                 node = unitExporter.CreateNode(new Flow_SequenceNode());
@@ -74,9 +75,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         index++;
                     }
                 }
-                unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
+                unitExporter.vsExportContext.OnUnitNodesCreated += (nodes) =>
                 {
-                    var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, multiGate);
+                    var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, multiGate as GltfInteractivityUnitExporterNode);
                     if (awaiter == null)
                         return;
 

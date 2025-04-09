@@ -142,7 +142,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             var node = unitExporter.CreateNode(new Variable_GetNode());
 
-            var variableIndex = unitExporter.exportContext.AddVariableWithIdIfNeeded(varName, value, VariableKind.Scene, gltfTypeIndex);
+            var variableIndex = unitExporter.vsExportContext.AddVariableWithIdIfNeeded(varName, value, VariableKind.Scene, gltfTypeIndex);
             node.OutputValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(gltfTypeIndex);
             
             node.Configuration["variable"].Value = variableIndex;

@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -36,7 +37,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 unitExporter.MapOutFlowConnectionWhenValid(setMember.assigned, Pointer_SetNode.IdFlowOut, node);
 
-                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                     setMember.target, template, GltfTypes.Float4);
             }
             else if (unit is InvokeMember invokeMember)
@@ -70,7 +71,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]).SetType(TypeRestriction.LimitToFloat4);
          
-                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float4);
                 }
                 else
@@ -85,7 +86,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     combine.ValueIn("c").ConnectToSource(extract.ValueOut("2"));
                     
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(combine.FirstValueOut());
-                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float3);
                 }
             }

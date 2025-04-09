@@ -24,7 +24,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
             
             var node = unitExporter.CreateNode(new Variable_InterpolateNode());
 
-            var varDeclaration = unitExporter.exportContext.GetVariableDeclaration(unit);
+            var varDeclaration = unitExporter.vsExportContext.GetVariableDeclaration(unit);
             if (varDeclaration == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Could not find variable declaration");
@@ -32,7 +32,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
             }
             
             var useSlerp = false;
-            var varId = unitExporter.exportContext.AddVariableIfNeeded(unit);
+            var varId = unitExporter.vsExportContext.AddVariableIfNeeded(unit);
             node.Configuration[Variable_InterpolateNode.IdConfigVariable].Value = varId;
             node.Configuration[Variable_InterpolateNode.IdUseSlerp].Value = useSlerp;
             node.FlowIn(Variable_InterpolateNode.IdFlowIn).MapToControlInput(unit.assign);

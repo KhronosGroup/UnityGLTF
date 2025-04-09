@@ -1,6 +1,7 @@
 //#define INTERACTIVITY_DEBUG_LOGS
 
 using System.Text;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 

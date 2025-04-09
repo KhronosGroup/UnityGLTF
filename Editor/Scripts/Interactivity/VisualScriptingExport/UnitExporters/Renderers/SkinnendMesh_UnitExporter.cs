@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 using InvokeMember = Unity.VisualScripting.InvokeMember;
 
@@ -23,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var setWeight = unitExporter.CreateNode(new Pointer_SetNode());
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeIndex,
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/weights/{weightIndex}", GltfTypes.Float);
 
             setWeight.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
@@ -51,7 +52,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getWeight = unitExporter.CreateNode(new Pointer_GetNode());
             getWeight.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeIndex,
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/weights/{weightIndex}", GltfTypes.Float);
             getWeight.ValueIn("weightIndex").MapToInputPort(unit.valueInputs["%index"]);
             
@@ -77,7 +78,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getWeightCount = unitExporter.CreateNode(new Pointer_GetNode());
             getWeightCount.FirstValueOut().ExpectedType(ExpectedType.Int).MapToPort(unit.value);
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshIndex,
                 unit.target, "/meshes/{" + PointersHelper.IdPointerMeshIndex + "}/weights.length", GltfTypes.Int);
             
             return true;

@@ -19,7 +19,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as LastItem;
 
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, unit);
             if (list == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
@@ -27,11 +27,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             var subNode = unitExporter.CreateNode(new Math_SubNode());
-            subNode.ValueIn("a").ConnectToSource(ListHelpers.GetListCountSocket(list));
+            subNode.ValueIn("a").ConnectToSource(ListHelpersVS.GetListCountSocket(list));
             subNode.ValueIn("b").SetValue(1);
             subNode.ValueOut("value").ExpectedType(ExpectedType.Int);
             
-            ListHelpers.GetItem(unitExporter, list, subNode.ValueOut("value"), out var itemValue);
+            ListHelpersVS.GetItem(unitExporter, list, subNode.ValueOut("value"), out var itemValue);
             itemValue.MapToPort(unit.lastItem);
             return true;
         }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
-    public static class AnimatorHelper
+    public static class AnimatorHelper 
     {
         public static AnimatorState GetAnimationState(GameObject target, string stateName)
         {

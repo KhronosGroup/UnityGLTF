@@ -1,9 +1,10 @@
 using System;
 using Unity.VisualScripting;
+using UnityGLTF.Interactivity.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {
-    public class VariableBasedListFromUnit : VariableBasedListExporter
+    public class VariableBasedListFromUnit : VariableBasedList
     {
         public Unit listCreatorUnit;
 
@@ -17,7 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         }
     }
 
-    public class VariableBasedListFromGraphVariable : VariableBasedListExporter
+    public class VariableBasedListFromGraphVariable : VariableBasedList
     {
         public VariableDeclaration varDeclarationSource;
         
@@ -29,16 +30,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
         {
             this.varDeclarationSource = varDeclarationSource;
         }
-    }
-
-    public class VariableBasedListExporter : VariableBasedList
-    {
-        public ValueOutRef getCountNodeSocket;
-        public FlowInRef setValueFlowIn;
-        
-        public VariableBasedListExporter(VisualScriptingExportContext context, string listId, int capacity, int gltfType) : base(context, listId,
-            capacity, gltfType) {}
-
     }
     
 }

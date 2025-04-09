@@ -1,6 +1,7 @@
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -28,14 +29,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             visibleNode.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(visibleNode,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(visibleNode,
                 PointersHelper.IdPointerNodeIndex,
                 unit.target, VisibleExtensionHelper.PointerTemplate,
                 GltfTypes.Bool);
             
             visibleNode.FlowOut(Pointer_SetNode.IdFlowOut)
                 .ConnectToFlowDestination(selectableNode.FlowIn(Pointer_SetNode.IdFlowIn));
-            PointersHelper.SetupPointerTemplateAndTargetInput(selectableNode,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(selectableNode,
                 PointersHelper.IdPointerNodeIndex,
                 unit.target, SelectableExtensionHelper.PointerTemplate,
                 GltfTypes.Bool);

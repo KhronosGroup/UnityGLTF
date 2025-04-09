@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityGLTF.Interactivity;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
@@ -56,7 +57,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
             node.ValueIn(Pointer_InterpolateNode.IdPoint2).MapToInputPort(unit.pointB);
             node.FlowOut(Pointer_InterpolateNode.IdFlowOutDone).MapToControlOutput(unit.done);
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, unit.target, template, valueType);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, unit.target, template, valueType);
             return true;
         }
     }

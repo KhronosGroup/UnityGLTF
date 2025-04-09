@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -28,7 +29,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var getRotation = unitExporter.CreateNode(new Pointer_GetNode());
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
 
             var setRotation = unitExporter.CreateNode(new Pointer_SetNode());
@@ -72,7 +73,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             setRotation.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
             setRotation.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(unit.exit);
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
 
             return true;

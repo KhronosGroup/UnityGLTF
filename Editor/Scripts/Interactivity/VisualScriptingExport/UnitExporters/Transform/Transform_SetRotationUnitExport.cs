@@ -27,9 +27,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
            var unit = unitExporter.unit as Unity.VisualScripting.SetMember;
            if (worldSpace)
-                TransformHelpers.SetWorldRotation(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
+                TransformHelpersVS.SetWorldRotation(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
            else
-                TransformHelpers.SetLocalRotation(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
+                TransformHelpersVS.SetLocalRotation(unitExporter, unit.target, unit.input, unit.assign, unit.assigned);
            
            return true;
         }

@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 

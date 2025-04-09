@@ -3,6 +3,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -26,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
 
-            var extracts = new GltfInteractivityUnitExporterNode[4];
+            var extracts = new GltfInteractivityExportNode[4];
             for (int i = 0; i < 4; i++)
             {
                 extracts[i] = unitExporter.CreateNode(new Math_Extract4Node());

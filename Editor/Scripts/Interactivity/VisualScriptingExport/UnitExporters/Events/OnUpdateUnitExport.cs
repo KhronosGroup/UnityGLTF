@@ -18,7 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as Update;
-            GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Event_OnTickNode());
+            var node = unitExporter.CreateNode(new Event_OnTickNode());
             unitExporter.MapOutFlowConnectionWhenValid(unit.trigger, Event_OnTickNode.IdFlowOut, node);
             return true;
         }

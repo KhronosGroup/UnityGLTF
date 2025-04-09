@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Interactivity;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.VisualScripting;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
@@ -38,31 +39,31 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
                 {
                     pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation";
                     valueType = GltfTypes.Float3;
-                    SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, unit.input, out convertedValue);
+                    SpaceConversionHelpersVS.AddSpaceConversionWithCheck(unitExporter, unit.input, out convertedValue);
                 }
                 if (unit.member.name == "position")
                 {
                     pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation";
                     valueType = GltfTypes.Float3;
-                    SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, unit.input, out convertedValue);
+                    SpaceConversionHelpersVS.AddSpaceConversionWithCheck(unitExporter, unit.input, out convertedValue);
                 }
                 else if (unit.member.name == "localRotation")
                 {
                     pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation";
                     valueType = GltfTypes.Float4;
-                    SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, unit.input, out convertedValue);
+                    SpaceConversionHelpersVS.AddRotationSpaceConversionWithCheck(unitExporter, unit.input, out convertedValue);
                 }
                 else if (unit.member.name == "rotation")
                 {
                     pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation";
                     valueType = GltfTypes.Float4;
-                    SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, unit.input, out convertedValue);
+                    SpaceConversionHelpersVS.AddRotationSpaceConversionWithCheck(unitExporter, unit.input, out convertedValue);
                 }
                 else if (unit.member.name == "localScale")
                 {
                     pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale";
                     valueType = GltfTypes.Float3;
-                    SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, unit.input, out convertedValue);
+                    SpaceConversionHelpersVS.AddSpaceConversionWithCheck(unitExporter, unit.input, out convertedValue);
                 }
             }
             
@@ -87,7 +88,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
             node.ValueIn(Pointer_InterpolateNode.IdPoint2).MapToInputPort(unit.pointB);
             node.FlowOut(Pointer_InterpolateNode.IdFlowOutDone).MapToControlOutput(unit.done);
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(node, pointerId, unit.target, pointerTemplate, valueType);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, pointerId, unit.target, pointerTemplate, valueType);
             return true;
         }
     }

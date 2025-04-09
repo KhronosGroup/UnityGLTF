@@ -43,17 +43,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }).Where( obj => obj != null).ToArray();
 
             var transformsIndicies = transforms
-                .Select(transform => unitExporter.exportContext.exporter.GetTransformIndex(transform)).Where(trIndex => trIndex != -1);
+                .Select(transform => unitExporter.vsExportContext.exporter.GetTransformIndex(transform)).Where(trIndex => trIndex != -1);
             
-            var objectList = unitExporter.exportContext.CreateNewVariableBasedListFromUnit(unit, transformsIndicies.Count(),
+            var objectList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, transformsIndicies.Count(),
                 GltfTypes.TypeIndexByGltfSignature("int"));
             
             foreach (var transformIndex in transformsIndicies)
                 objectList.AddItem(transformIndex);
 
-            objectList.listCreatorGraph = unitExporter.exportContext.currentGraphProcessing;
+            objectList.listCreatorGraph = unitExporter.vsExportContext.currentGraphProcessing;
             
-            ListHelpers.CreateListNodes(unitExporter, objectList);
+            ListHelpersVS.CreateListNodes(unitExporter, objectList);
             
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);

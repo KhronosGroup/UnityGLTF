@@ -2,7 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityGLTF.Interactivity.Schema;
+using UnityGLTF.Interactivity.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
@@ -27,12 +27,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (invokeMember.valueInputs.Count == 1)
             {
                 // Vector3 Input
-                QuaternionHelpers.CreateQuaternionFromEuler(unitExporter, invokeMember.valueInputs[0], out result);
+                QuaternionHelpersVS.CreateQuaternionFromEuler(unitExporter, invokeMember.valueInputs[0], out result);
             }
             else
             {
                 // XYZ Input
-                QuaternionHelpers.CreateQuaternionFromEuler(unitExporter, 
+                QuaternionHelpersVS.CreateQuaternionFromEuler(unitExporter, 
                     invokeMember.valueInputs[0],
                     invokeMember.valueInputs[1],
                     invokeMember.valueInputs[2],

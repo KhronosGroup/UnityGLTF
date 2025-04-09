@@ -27,10 +27,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             InvokeMember unit = unitExporter.unit as InvokeMember;
-            GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Animation_StartNode());
+            var node = unitExporter.CreateNode(new Animation_StartNode());
 
             GameObject target = UnitsHelper.GetGameObjectFromValueInput(
-                unit.target, unit.defaultValues, unitExporter.exportContext);
+                unit.target, unit.defaultValues, unitExporter.vsExportContext);
 
             if (target == null)
             {
@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             var animationState = AnimatorHelper.GetAnimationState(target, stateName);
-            int animationId = unitExporter.exportContext.exporter.GetAnimationId(animationState.motion as AnimationClip, target.transform);
+            int animationId = unitExporter.vsExportContext.exporter.GetAnimationId(animationState.motion as AnimationClip, target.transform);
 
             if (animationId == -1)
             {
@@ -70,7 +70,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (state == animationState)
                     continue;
                 
-                int stopAnimationId = unitExporter.exportContext.exporter.GetAnimationId(state.motion as AnimationClip, target.transform);
+                int stopAnimationId = unitExporter.vsExportContext.exporter.GetAnimationId(state.motion as AnimationClip, target.transform);
                 if (stopAnimationId == -1)
                     continue;
                 

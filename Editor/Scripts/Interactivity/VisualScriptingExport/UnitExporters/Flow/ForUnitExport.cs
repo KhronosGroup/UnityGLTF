@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             if (!coroutine && unitExporter.IsInputLiteralOrDefaultValue(unit.step, out var defaultStepValue) && (int)defaultStepValue == 1)
             {
-                GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Flow_ForLoopNode());
+                var node = unitExporter.CreateNode(new Flow_ForLoopNode());
                 // TODO: set inital index > also... why even using it
                 node.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
                 
@@ -44,7 +44,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 if (!coroutine)
                 {
-                    FlowHelpers.CreateCustomForLoop(unitExporter, out var startIndex,
+                    FlowHelpersVS.CreateCustomForLoop(unitExporter, out var startIndex,
                         out var endIndex, out var step, 
                         out var flowIn, out var currentIndex, 
                         out var loopBody, out var completed );
@@ -60,7 +60,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
                 else
                 {
-                    FlowHelpers.CreateCustomForLoopWithFlowStep(unitExporter, out var startIndex,
+                    FlowHelpersVS.CreateCustomForLoopWithFlowStep(unitExporter, out var startIndex,
                         out var endIndex, out var step, 
                         out var flowIn,  out var nextStep, out var currentIndex, 
                         out var loopBody, out var completed );
@@ -77,7 +77,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     var awaiter = CoroutineHelper.AddCoroutineAwaiter(unitExporter, loopBody.node, loopBody.socket.Key);
                     awaiter.FlowOutDoneSocket().ConnectToFlowDestination(nextStep);
                     
-                    unitExporter.exportContext.OnUnitNodesCreated += (nodes) =>
+                    unitExporter.vsExportContext.OnUnitNodesCreated += (nodes) =>
                     {
                         var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node as GltfInteractivityUnitExporterNode);
                         if (awaiter == null)

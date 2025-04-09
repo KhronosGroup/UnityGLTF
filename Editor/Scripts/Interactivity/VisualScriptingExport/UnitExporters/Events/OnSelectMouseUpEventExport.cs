@@ -15,7 +15,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         protected override void OnTargetNodeConfigured(UnitExporter unitExporter, int nodeIndex)
         {
-            unitExporter.exportContext.AddSelectabilityExtensionToNode(nodeIndex);
+            unitExporter.vsExportContext.AddSelectabilityExtensionToNode(nodeIndex);
         }
     }
 }

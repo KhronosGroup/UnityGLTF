@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var countItems = unitExporter.unit as CountItems;
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, countItems);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, countItems);
 
             if (list == null)
             {
@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            ListHelpers.GetListCount(list, countItems.count);
+            ListHelpersVS.GetListCount(list, countItems.count);
 
             return true;
         }

@@ -14,7 +14,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         protected override void OnTargetNodeConfigured(UnitExporter unitExporter, int nodeIndex)
         {
-            unitExporter.exportContext.AddHoverabilityExtensionToNode(nodeIndex);
+            unitExporter.vsExportContext.AddHoverabilityExtensionToNode(nodeIndex);
         }
     }
 }

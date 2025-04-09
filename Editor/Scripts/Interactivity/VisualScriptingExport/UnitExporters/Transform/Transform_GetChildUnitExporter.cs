@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -26,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
             
-            GameObject target = UnitsHelper.GetGameObjectFromValueInput(unit.target, unit.defaultValues, unitExporter.exportContext);
+            GameObject target = UnitsHelper.GetGameObjectFromValueInput(unit.target, unit.defaultValues, unitExporter.vsExportContext);
 
             if (target ==null)
             {
@@ -34,7 +35,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            int targetIndex = unitExporter.exportContext.exporter.GetTransformIndex(target.transform);
+            int targetIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(target.transform);
             if (targetIndex == -1)
             {
                 UnitExportLogging.AddErrorLog(unit, "Could not resolve target GameObject.");
@@ -47,7 +48,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 // When all is a static value: 
                 int childIndex = (int)childIndexValueObj;
-                var varId = unitExporter.exportContext.AddVariableWithIdIfNeeded($"CHILD_{childIndex}_FROM_TRANSFORM_{targetIndex}", childIndex, VariableKind.Scene, typeof(int));
+                var varId = unitExporter.vsExportContext.AddVariableWithIdIfNeeded($"CHILD_{childIndex}_FROM_TRANSFORM_{targetIndex}", childIndex, VariableKind.Scene, typeof(int));
                 VariablesHelpers.GetVariable(unitExporter, varId, out var socket);
                 socket.MapToPort(unit.result).ExpectedType(ExpectedType.Int);
                 return true;
@@ -56,18 +57,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // When the input index is dynamic, we create a List of childs
             var childCount = target.transform.childCount;
             
-            var childList = unitExporter.exportContext.CreateNewVariableBasedListFromUnit(unit, childCount,
+            var childList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, childCount,
                 GltfTypes.TypeIndex(typeof(int)), $"CHILD_LIST_FROM_TRANSFORM_{targetIndex}");
             
-            ListHelpers.CreateListNodes(unitExporter, childList);
+            ListHelpersVS.CreateListNodes(unitExporter, childList);
             
             for (int i = 0; i < childCount; i++)
             {
                 var childTransform = target.transform.GetChild(i);
-                var childIndex = unitExporter.exportContext.exporter.GetTransformIndex(childTransform);
+                var childIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(childTransform);
                 childList.AddItem(childIndex);
             }
-            ListHelpers.GetItem(unitExporter, childList, unit.inputParameters[0], out var valueOutput);
+            ListHelpersVS.GetItem(unitExporter, childList, unit.inputParameters[0], out var valueOutput);
             valueOutput.MapToPort(unit.result);
             return true;
         }

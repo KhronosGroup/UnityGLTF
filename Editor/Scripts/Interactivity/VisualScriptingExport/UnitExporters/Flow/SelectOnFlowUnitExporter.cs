@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -26,21 +27,21 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            var setVarNodes = new List<GltfInteractivityUnitExporterNode>();
+            var setVarNodes = new List<GltfInteractivityExportNode>();
             
             // Temporary set a Type Index, will be updated later in OnNodesCreated callback,
             // when it's possible to identify the type from then connected inputs
             int typeIndex = 0;
             
             // using VariableKind.Scene, because we already generated a unique name for the variable
-            var varIndex = unitExporter.exportContext.AddVariableWithIdIfNeeded($"SelectOnFlowValue_{GUID.Generate().ToString()}", null, VariableKind.Scene, typeIndex);
+            var varIndex = unitExporter.vsExportContext.AddVariableWithIdIfNeeded($"SelectOnFlowValue_{GUID.Generate().ToString()}", null, VariableKind.Scene, typeIndex);
 
             var getVar = VariablesHelpers.GetVariable(unitExporter, varIndex, out var getVarValue);
             getVarValue.MapToPort(unit.selection);
             
             for (int i = 0; i < unit.branchCount; i++)
             {
-                var setVar = VariablesHelpers.SetVariable(unitExporter, varIndex, unit.valueInputs[i], unit.controlInputs[i], unit.exit);
+                var setVar = VariablesHelpersVS.SetVariable(unitExporter, varIndex, unit.valueInputs[i], unit.controlInputs[i], unit.exit);
                 setVarNodes.Add(setVar);
                 setVar.ValueIn(Variable_SetNode.IdInputValue).socket.Value.Type = -1;
             }
@@ -50,7 +51,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 int typeIndex = -1;
                 foreach (var setVarNode in setVarNodes)
                 {
-                    typeIndex = unitExporter.exportContext.GetValueTypeForInput(setVarNode, Variable_SetNode.IdInputValue);
+                    typeIndex = unitExporter.vsExportContext.GetValueTypeForInput(setVarNode, Variable_SetNode.IdInputValue);
                     if (typeIndex != -1)
                         break;
                 }
@@ -61,7 +62,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         UnitExportLogging.AddErrorLog(unit, "Can't resolve input type.");
                     // We don't cancel here, to trigger later the validation process for invalid type index
                 }
-                unitExporter.exportContext.variables[varIndex].Type = typeIndex;
+                unitExporter.vsExportContext.variables[varIndex].Type = typeIndex;
                 if (typeIndex == -1)
                     return;
                 
@@ -73,8 +74,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             // Update Type Index
-            unitExporter.exportContext.OnUnitNodesCreated += (nodes => { PostTypeResolving(); });
-            unitExporter.exportContext.OnBeforeSerialization += (nodes) => { PostTypeResolving(true); };
+            unitExporter.vsExportContext.OnUnitNodesCreated += (nodes => { PostTypeResolving(); });
+            unitExporter.vsExportContext.OnBeforeSerialization += (nodes) => { PostTypeResolving(true); };
             return true;
         }
     }

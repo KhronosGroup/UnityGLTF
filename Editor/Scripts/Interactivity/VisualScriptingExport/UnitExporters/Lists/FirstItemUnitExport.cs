@@ -1,6 +1,7 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
@@ -17,7 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as FirstItem;
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, unit);
             if (list == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");

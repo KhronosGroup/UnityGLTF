@@ -27,9 +27,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // TODO: World Space conversion
             
             var unit = unitExporter.unit as Unity.VisualScripting.SetMember;
-            QuaternionHelpers.CreateQuaternionFromEuler(unitExporter, unit.input, out var quaternion);
+            QuaternionHelpersVS.CreateQuaternionFromEuler(unitExporter, unit.input, out var quaternion);
             
-            TransformHelpers.SetLocalRotation(unitExporter, unit.target, quaternion, unit.assign, unit.assigned);
+            TransformHelpersVS.SetLocalRotation(unitExporter, unit.target, quaternion, unit.assign, unit.assigned);
             return true;
         }
     }

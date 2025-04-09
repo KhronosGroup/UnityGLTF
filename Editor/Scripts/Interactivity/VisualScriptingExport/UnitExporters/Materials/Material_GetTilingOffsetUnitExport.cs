@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -42,7 +43,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 if (isOffset)
                 {
-                    MaterialPointerHelper.ConvertUvOffsetToGltf(unitExporter, target, scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.ConnectToSource(node.FirstValueOut());
                     uvOffSetOut.MapToPort(getMember.value);
                 }
@@ -51,7 +52,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.MapValueOutportToSocketName(getMember.value, Pointer_GetNode.IdValue, node);
                 }
                 
-                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
             }
             else if (unitExporter.unit is InvokeMember invokeMember)
             {
@@ -88,11 +89,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 var node = unitExporter.CreateNode(new Pointer_GetNode());
                 unitExporter.ByPassFlow(invokeMember.enter, invokeMember.exit);
-                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
                 
                 if (isOffset)
                 {
-                    MaterialPointerHelper.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.ConnectToSource(node.FirstValueOut());
                     uvOffSetOut.MapToPort(invokeMember.result);
                 }

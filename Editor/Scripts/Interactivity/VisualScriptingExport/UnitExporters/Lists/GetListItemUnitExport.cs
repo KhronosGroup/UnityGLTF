@@ -20,14 +20,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as GetListItem;
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, unit);
             if (list == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
             
-            ListHelpers.GetItem(unitExporter, list, unit.index, out var socket);
+            ListHelpersVS.GetItem(unitExporter, list, unit.index, out var socket);
             socket.MapToPort(unit.item);
             return true;
         }

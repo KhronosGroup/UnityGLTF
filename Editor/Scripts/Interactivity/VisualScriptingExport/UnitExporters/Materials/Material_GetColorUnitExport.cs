@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -32,7 +33,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 var node = unitExporter.CreateNode(new Pointer_GetNode());
                 node.FirstValueOut().MapToPort(getMember.value).ExpectedType(ExpectedType.Float4);
-                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                     getMember.target, template, GltfTypes.Float4);
             }
             else if (unit is InvokeMember invokeMember)
@@ -63,12 +64,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (hasAlpha)
                 {
                     node.FirstValueOut().MapToPort(invokeMember.result).ExpectedType(ExpectedType.Float4);
-                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float4);
                 }
                 else
                 {
-                    PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float3);
                     
                     var extract = unitExporter.CreateNode(new Math_Extract3Node());

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -65,13 +66,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         }
     }
 
-    public class UnitExporter : IUnitSocketConnector
+    public class UnitExporter : IUnitSocketConnector, INodeExporter
     {
         public ExportPriority unitExportPriority { get; private set; }
         public IUnitExporter exporter { get; private set; }
         public IUnit unit { get; private set; }
         public bool IsTranslatable = true;
-        public VisualScriptingExportContext exportContext { get; private set; }
+        public VisualScriptingExportContext vsExportContext { get; private set; }
+        
+        public InteractivityExportContext Context { get => vsExportContext; }
+        
         public VisualScriptingExportContext.ExportGraph Graph { get; private set; }
         private GameObject scriptMachineGameObject;
 
@@ -98,7 +102,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             _nodes.Add(node);
         }
 
-        public GltfInteractivityUnitExporterNode CreateNode(GltfInteractivityNodeSchema schema)
+        public GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
         {
             var newNode = new GltfInteractivityUnitExporterNode(this, schema);
             AddNode(newNode);
@@ -110,13 +114,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             AddNode(node);
         }
 
-        public UnitExporter(VisualScriptingExportContext exportContext, IUnitExporter exporter, IUnit unit)
+        public UnitExporter(VisualScriptingExportContext vsExportContext, IUnitExporter exporter, IUnit unit)
         {
             this.exporter = exporter;
             this.unit = unit;
-            this.exportContext = exportContext;
-            this.Graph = exportContext.currentGraphProcessing;
-            this.scriptMachineGameObject = exportContext.ActiveScriptMachine.gameObject;
+            this.vsExportContext = vsExportContext;
+            this.Graph = vsExportContext.currentGraphProcessing;
+            this.scriptMachineGameObject = vsExportContext.ActiveScriptMachine.gameObject;
 
             var unitExportPriorityAttribute = exporter.GetType().GetAttribute<UnitExportPriority>(true);
             if (unitExportPriorityAttribute != null)
@@ -167,7 +171,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (originalValue is GameObject gameObject)
             {
                 var gameObjectNodeIndex =
-                    exportContext.exporter.GetTransformIndex(gameObject.transform);
+                    vsExportContext.exporter.GetTransformIndex(gameObject.transform);
 
                 convertedValue = gameObjectNodeIndex;
                 typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
@@ -175,13 +179,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             else if (originalValue is Component component)
             {
                 var gameObjectNodeIndex =
-                    exportContext.exporter.GetTransformIndex(component.transform);
+                    vsExportContext.exporter.GetTransformIndex(component.transform);
                 convertedValue = gameObjectNodeIndex;
                 typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
             }
             else if (originalValue is Material material)
             {
-                var materialIndex = exportContext.exporter.ExportMaterial(material).Id;
+                var materialIndex = vsExportContext.exporter.ExportMaterial(material).Id;
                 convertedValue = materialIndex;
                 typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
             }
@@ -274,7 +278,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return ResolveBypass(byPassInputPort, ref graph);
             }
 
-            if (exportContext.graphBypasses.TryGetValue(
+            if (vsExportContext.graphBypasses.TryGetValue(
                     new VisualScriptingExportContext.InputPortGraph(inputPort, graph), out var graphByPassInputPort))
             {
                 inputPort = graphByPassInputPort.port;
@@ -409,7 +413,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             if (inputPort.hasValidConnection && inputPort.connections.First().source.unit is GraphInput)
             {
-                var subGraphUnit = exportContext.currentGraphProcessing.subGraphUnit;
+                var subGraphUnit = vsExportContext.currentGraphProcessing.subGraphUnit;
                 if (subGraphUnit != null)
                 {
                     var graphValueKey = inputPort.connections.First().source.key;
@@ -474,7 +478,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return;
 
             var outFlow = controlOutput.validConnections.First();
-            exportContext.graphBypasses.Add(new VisualScriptingExportContext.InputPortGraph(controlInput, inputGraph),
+            vsExportContext.graphBypasses.Add(new VisualScriptingExportContext.InputPortGraph(controlInput, inputGraph),
                 new VisualScriptingExportContext.InputPortGraph(outFlow.destination, outputGraph));
         }
 
@@ -495,7 +499,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             foreach (var valueOut in valueOutput.validConnections)
             {
-                exportContext.graphBypasses.Add(
+                vsExportContext.graphBypasses.Add(
                     new VisualScriptingExportContext.InputPortGraph(
                         valueOut.destination.connections.First().destination, outputGraph),
                     new VisualScriptingExportContext.InputPortGraph(valueInput, inputGraph));
@@ -535,5 +539,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             outFlowConnections.AddWhenValid(output, socketId, node);
         }
+
     }
 }

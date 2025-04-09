@@ -18,7 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as WaitUntilUnit;
 
-            FlowHelpers.CreateConditionalWaiting(unitExporter,
+            FlowHelpersVS.CreateConditionalWaiting(unitExporter,
                 out var condition,
                 out var flowIn,
                 true,

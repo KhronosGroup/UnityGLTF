@@ -38,9 +38,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             unitExporter.ConvertValue(value, out _, out var valueTypeIndex);
             
-            var objectList = unitExporter.exportContext.CreateNewVariableBasedListFromUnit(unit, listCapacity, valueTypeIndex);
+            var objectList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, listCapacity, valueTypeIndex);
             
-            ListHelpers.CreateListNodes(unitExporter, objectList);
+            ListHelpersVS.CreateListNodes(unitExporter, objectList);
             
             foreach (var input in unit.validInputs)
             {

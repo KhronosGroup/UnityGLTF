@@ -17,14 +17,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as ClearList;
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, unit);
             if (list == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
             
-            ListHelpers.ClearList(unitExporter, list, unit.enter, unit.exit);
+            ListHelpersVS.ClearList(unitExporter, list, unit.enter, unit.exit);
             unitExporter.ByPassValue(unit.listInput, unit.listOutput);
 
             return true;

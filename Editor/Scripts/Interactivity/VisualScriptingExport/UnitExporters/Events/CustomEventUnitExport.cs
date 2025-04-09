@@ -3,6 +3,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -42,15 +43,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 node.ValueOut(argId).MapToPort(arg);
             }
             
-            var index = unitExporter.exportContext.AddEventIfNeeded(unit, args);
+            var index = unitExporter.vsExportContext.AddEventIfNeeded(unit, args);
             node.Configuration["event"].Value = index;
             node.ValueOut("targetNodeIndex").ExpectedType(ExpectedType.Int);
 
             // Setup target Node checks
             var eqIdNode = unitExporter.CreateNode(new Math_EqNode());
             eqIdNode.ValueIn(Math_EqNode.IdValueA).ConnectToSource(node.ValueOut("targetNodeIndex")).SetType(TypeRestriction.LimitToInt);
-            var currentGameObject = unitExporter.exportContext.currentGraphProcessing.gameObject;
-            var transformIndex = unitExporter.exportContext.exporter.GetTransformIndex(currentGameObject.transform);
+            var currentGameObject = unitExporter.vsExportContext.currentGraphProcessing.gameObject;
+            var transformIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(currentGameObject.transform);
             eqIdNode.ValueIn(Math_EqNode.IdValueB).SetValue(transformIndex).SetType(TypeRestriction.LimitToInt);            
             
             var branchNode = unitExporter.CreateNode(new Flow_BranchNode());
@@ -62,7 +63,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             void ResolveTypes()
             {
-                var customEvent = unitExporter.exportContext.customEvents[index];
+                var customEvent = unitExporter.vsExportContext.customEvents[index];
 
                 foreach (var argValue in args)
                 {
@@ -72,7 +73,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                     int argTypeIndex = -1;
                     if (eventValue.Value.Type == -1)
-                        argTypeIndex = unitExporter.exportContext.GetValueTypeForOutput(node, argValue.Key);
+                        argTypeIndex = unitExporter.vsExportContext.GetValueTypeForOutput(node, argValue.Key);
                     else
                         argTypeIndex = eventValue.Value.Type;
                     
@@ -84,12 +85,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             };
   
-            unitExporter.exportContext.OnUnitNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
+            unitExporter.vsExportContext.OnUnitNodesCreated += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };
 
-            unitExporter.exportContext.OnBeforeSerialization += (List<GltfInteractivityExportNode> nodes) =>
+            unitExporter.vsExportContext.OnBeforeSerialization += (List<GltfInteractivityExportNode> nodes) =>
             {
                 ResolveTypes();
             };   

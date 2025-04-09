@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 
@@ -27,18 +28,19 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return socket;
         }
         
-        public static LinkedValueInputRef MapToInputPort(this LinkedValueInputRef socket, IUnitInputPort inputPort)
-        {
-            foreach (var n in socket.links)
-                MapToInputPort(n, inputPort);
-
-            return socket;
-        }
-        
         public static ValueInRef MapToInputPort(this ValueInRef socket, IUnitInputPort inputPort)
         {
-            if (socket.SocketConnector is IUnitSocketConnector s) 
-                s.MapInputPortToSocketName(inputPort, socket.socket.Key, socket.node);
+            if (socket.SocketConnector is IUnitSocketConnector s)
+            {
+                if (socket is LinkedValueInputRef linked)
+                {
+                    s.MapInputPortToSocketName(inputPort, linked.socket.Key, linked.node);
+                    foreach (var l in linked.links)
+                        s.MapInputPortToSocketName(inputPort, l.socket.Key, l.node);
+                }
+                else
+                    s.MapInputPortToSocketName(inputPort, socket.socket.Key, socket.node);
+            }
             else
                 Debug.LogError("Mapping to VisualScripting Unit Ports is not allowed at this export stage!");
 

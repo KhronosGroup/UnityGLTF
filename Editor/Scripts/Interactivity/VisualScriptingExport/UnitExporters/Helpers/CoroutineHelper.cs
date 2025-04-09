@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -43,7 +44,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public static CoroutineAwaiterNode FindCoroutineAwaiter(UnitExporter unitExporter, GltfInteractivityUnitExporterNode coroutineNode)
         {
-            var nodes = unitExporter.exportContext.Nodes;
+            var nodes = unitExporter.vsExportContext.Nodes;
 
             Queue<GltfInteractivityNode> queue = new Queue<GltfInteractivityNode>();
             var visited = new HashSet<int>();
@@ -133,10 +134,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = value;
                 
                 var sequence = unitExporter.CreateNode(new Flow_SequenceNode());
-                if (unitExporter.exportContext.Nodes.Count > 0)
+                if (unitExporter.vsExportContext.Nodes.Count > 0)
                 {
-                    unitExporter.exportContext.Nodes.Add(sequence);
-                    sequence.Index = unitExporter.exportContext.Nodes.Count - 1;
+                    unitExporter.vsExportContext.Nodes.Add(sequence);
+                    sequence.Index = unitExporter.vsExportContext.Nodes.Count - 1;
 
                     var sourceSocket = node.FlowConnections[socket];
                     

@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using Unity.VisualScripting;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -24,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var unit = unitExporter.unit as MemberUnit;
 
             GameObject target = UnitsHelper.GetGameObjectFromValueInput(
-                unit.target, unit.defaultValues, unitExporter.exportContext);
+                unit.target, unit.defaultValues, unitExporter.vsExportContext);
 
             if (target == null)
             {
@@ -63,7 +64,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             }
             
-            int animationId = unitExporter.exportContext.exporter.GetAnimationId(clip, target.transform);
+            int animationId = unitExporter.vsExportContext.exporter.GetAnimationId(clip, target.transform);
 
             if (animationId == -1)
             {

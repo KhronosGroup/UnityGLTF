@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeMember unit = unitExporter.unit as InvokeMember;
 
             GameObject target = UnitsHelper.GetGameObjectFromValueInput(
-                unit.target, unit.defaultValues, unitExporter.exportContext);
+                unit.target, unit.defaultValues, unitExporter.vsExportContext);
 
             if (target == null)
             {
@@ -62,7 +62,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
             }
             
-            int animationId = unitExporter.exportContext.exporter.GetAnimationId(clip, target.transform);
+            int animationId = unitExporter.vsExportContext.exporter.GetAnimationId(clip, target.transform);
 
             if (animationId == -1)
             {
@@ -70,7 +70,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Animation_StopNode());
+            var node = unitExporter.CreateNode(new Animation_StopNode());
             node.ValueInConnection[Animation_StopNode.IdValueAnimation].Value = animationId;
 
             

@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -57,7 +58,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             else
                 node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(unit.inputParameters[1]).SetType(TypeRestriction.LimitToFloat);
  
-            PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                 unit.target, template, GltfTypes.Float);
             
             return true;

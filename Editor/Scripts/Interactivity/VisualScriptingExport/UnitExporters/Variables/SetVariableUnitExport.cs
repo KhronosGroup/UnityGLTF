@@ -22,9 +22,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var node = unitExporter.CreateNode(new Variable_SetNode());
             
-            var variableIndex = unitExporter.exportContext.AddVariableIfNeeded(unit);
+            var variableIndex = unitExporter.vsExportContext.AddVariableIfNeeded(unit);
 
-            var variableType = unitExporter.exportContext.variables[variableIndex].Type;
+            var variableType = unitExporter.vsExportContext.variables[variableIndex].Type;
             unitExporter.MapOutFlowConnectionWhenValid(unit.assigned, Variable_SetNode.IdFlowOut, node);
             
             node.Configuration["variable"].Value = variableIndex;

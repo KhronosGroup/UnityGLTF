@@ -27,9 +27,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
            var unit = unitExporter.unit as Unity.VisualScripting.GetMember;
            if (worldSpace)
-               TransformHelpers.GetWorldPosition(unitExporter, unit.target, unit.value);
+               TransformHelpersVS.GetWorldPosition(unitExporter, unit.target, unit.value);
            else
-               TransformHelpers.GetLocalPosition(unitExporter, unit.target, unit.value);
+               TransformHelpersVS.GetLocalPosition(unitExporter, unit.target, unit.value);
            return true;
         }
     }

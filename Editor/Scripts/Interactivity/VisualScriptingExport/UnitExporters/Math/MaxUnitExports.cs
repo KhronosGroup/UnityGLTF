@@ -32,7 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit;
-            GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new Math_MaxNode());
+            var node = unitExporter.CreateNode(new Math_MaxNode());
             
             var sum = unit.valueOutputs[0];
             if (unit.valueInputs.Count > 2)
@@ -44,7 +44,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 for (int i = 2; i < unit.valueInputs.Count; i++)
                 {
-                    GltfInteractivityUnitExporterNode nodeNext = unitExporter.CreateNode(new Math_MaxNode());
+                    var nodeNext = unitExporter.CreateNode(new Math_MaxNode());
                     nodeNext.ValueIn(Math_MaxNode.IdValueB).MapToInputPort(unit.valueInputs[i]);
                     nodeNext.ValueIn(Math_MaxNode.IdValueA).ConnectToSource(prevNode.ValueOut(Math_MaxNode.IdOut));
                     

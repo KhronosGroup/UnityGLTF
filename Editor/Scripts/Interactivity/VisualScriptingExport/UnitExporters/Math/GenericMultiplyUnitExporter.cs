@@ -26,9 +26,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             // We need to check later - when its available - the input type of the node,
             // for Matrix4x4 we need to change the Schema to math/matmul
-            unitExporter.exportContext.OnUnitNodesCreated += nodes =>
+            unitExporter.vsExportContext.OnUnitNodesCreated += nodes =>
             {
-                var valueType = unitExporter.exportContext.GetValueTypeForInput(mulNode, "a");
+                var valueType = unitExporter.vsExportContext.GetValueTypeForInput(mulNode, "a");
                 if (valueType == GltfTypes.TypeIndexByGltfSignature("float4x4"))
                 {
                     mulNode.SetSchema(new Math_MatMulNode(), false);

@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -22,14 +23,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var getMatrix = unitExporter.CreateNode(new Pointer_GetNode());
             
-            PointersHelper.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeIndex,
                 getMemberUnit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
 
             var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(getMatrix.FirstValueOut());
 
-            SpaceConversionHelpers.AddSpaceConversionNodes(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation), out var convertedTranslation);
-            SpaceConversionHelpers.AddRotationSpaceConversionNodes(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation), out var convertedRotation);
+            SpaceConversionHelpersVS.AddSpaceConversionWithCheck(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation), out var convertedTranslation);
+            SpaceConversionHelpersVS.AddRotationSpaceConversionWithCheck(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation), out var convertedRotation);
             
             var compose = unitExporter.CreateNode(new Math_MatComposeNode());
             compose.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedTranslation);

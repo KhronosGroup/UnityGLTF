@@ -1,6 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -21,7 +22,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
            
            var setScale = unitExporter.CreateNode(new Pointer_SetNode());
            
-           PointersHelper.SetupPointerTemplateAndTargetInput(setScale, PointersHelper.IdPointerNodeIndex,
+           PointersHelperVS.SetupPointerTemplateAndTargetInput(setScale, PointersHelper.IdPointerNodeIndex,
                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale", GltfTypes.Float3);
            
            unitExporter.MapInputPortToSocketName(unit.assign, Pointer_SetNode.IdFlowIn, setScale);

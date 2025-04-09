@@ -18,14 +18,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as RemoveListItemAt;
             
-            var list = ListHelpers.FindListByConnections(unitExporter.exportContext, unit);
+            var list = ListHelpersVS.FindListByConnections(unitExporter.vsExportContext, unit);
             if (list == null)
             {
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
             
-            ListHelpers.RemoveListItemAt(unitExporter, list, unit.index, unit.enter, unit.exit);
+            ListHelpersVS.RemoveListItemAt(unitExporter, list, unit.index, unit.enter, unit.exit);
             return true;
         }
     }

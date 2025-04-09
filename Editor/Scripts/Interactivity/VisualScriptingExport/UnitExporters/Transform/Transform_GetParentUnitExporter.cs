@@ -3,6 +3,7 @@ using System.Globalization;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -25,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as GetMember;
         
-            GameObject target = UnitsHelper.GetGameObjectFromValueInput(unit.target, unit.defaultValues, unitExporter.exportContext);
+            GameObject target = UnitsHelper.GetGameObjectFromValueInput(unit.target, unit.defaultValues, unitExporter.vsExportContext);
 
             if (target ==null)
             {
@@ -33,14 +34,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            int targetIndex = unitExporter.exportContext.exporter.GetTransformIndex(target.transform);
+            int targetIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(target.transform);
             if (targetIndex == -1)
             {
                 UnitExportLogging.AddErrorLog(unit, "Could not resolve target GameObject.");
                 return false;
             }
             
-            var varId = unitExporter.exportContext.AddVariableWithIdIfNeeded("_PARENT_TRANSFORM_"+targetIndex.ToString(), targetIndex, VariableKind.Scene, typeof(int));
+            var varId = unitExporter.vsExportContext.AddVariableWithIdIfNeeded("_PARENT_TRANSFORM_"+targetIndex.ToString(), targetIndex, VariableKind.Scene, typeof(int));
             VariablesHelpers.GetVariable(unitExporter, varId, out var socket);
             socket.MapToPort(unit.value).ExpectedType(ExpectedType.Int);
             

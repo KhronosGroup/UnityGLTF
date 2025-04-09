@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -45,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 if (isOffset)
                 {
-                    MaterialPointerHelper.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.MapToInputPort(setMember.input);
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(uvOffSetOut);
                 }
@@ -54,7 +55,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 }
                 
-                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
             }
             else if (unitExporter.unit is InvokeMember invokeMember)
             {
@@ -95,7 +96,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                 if (isOffset)
                 {
-                    MaterialPointerHelper.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.MapToInputPort(invokeMember.inputParameters[1]);
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(uvOffSetOut);
                 }
@@ -103,7 +104,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]);
                 }
-                PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
             }
             
             return true;

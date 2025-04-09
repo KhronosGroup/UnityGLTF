@@ -1,0 +1,280 @@
+using UnityEngine;
+using UnityGLTF.Interactivity.Schema;
+
+namespace UnityGLTF.Interactivity.Export
+{
+    public class TransformHelpers
+    {
+        public static void GetLocalScale(INodeExporter exporter, out ValueInRef target,
+            out ValueOutRef scaleOutput)
+        {
+            var getScale = exporter.CreateNode(new Pointer_GetNode());
+            scaleOutput = getScale.FirstValueOut().ExpectedType(ExpectedType.Float3);
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale", GltfTypes.Float3);
+            target = getScale.ValueIn(PointersHelper.IdPointerNodeIndex);
+        }
+
+        public static void GetLocalPositionFromMainCamera(INodeExporter exporter, out ValueOutRef positionOutput)
+        {
+            var getPosition = exporter.CreateNode(new Pointer_GetNode());
+            getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+
+            SpaceConversionHelpers.AddSpaceConversion(exporter, getPosition.FirstValueOut(),
+                out var convertedOutput);
+            positionOutput = convertedOutput;
+            positionOutput.ExpectedType(ExpectedType.Float3);
+
+            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
+        }
+
+        public static void GetLocalPosition(INodeExporter exporter, out ValueInRef target,
+            out ValueOutRef positionOutput)
+        {
+            var getPosition = exporter.CreateNode(new Pointer_GetNode());
+            getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+
+            SpaceConversionHelpers.AddSpaceConversion(exporter, getPosition.FirstValueOut(),
+                out var convertedOutput);
+            positionOutput = convertedOutput;
+            positionOutput.ExpectedType(ExpectedType.Float3);
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+            target = getPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
+        }
+
+        public static void SetLocalPosition(INodeExporter exporter, ValueOutRef position, out ValueInRef target,
+            out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            var setPosition = exporter.CreateNode(new Pointer_SetNode());
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+            target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            SpaceConversionHelpers.AddSpaceConversion(exporter, position, out var convertedOutput);
+            setPosition.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedOutput);
+
+            flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
+            flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
+        }
+
+        public static void SetWorldPosition(INodeExporter exporter, ValueOutRef position,
+            out ValueInRef target, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            SpaceConversionHelpers.AddSpaceConversion(exporter, position, out var convertedOutput);
+            SetWorldPositionFromConvertedSpace(exporter, convertedOutput, out target, out flowIn, out flowOut);
+        }
+
+        public static void SetWorldPositionFromConvertedSpace(INodeExporter exporter,
+            ValueOutRef convertedPosition,
+            out ValueInRef target, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            var setPosition = exporter.CreateNode(new Pointer_SetNode());
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+
+            target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            var localToWorldMatrix = exporter.CreateNode(new Pointer_GetNode());
+            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            target = localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex).Link(target);
+
+            var inverseMatrix = exporter.CreateNode(new Math_InverseNode());
+            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
+
+            var localMatrix = exporter.CreateNode(new Pointer_GetNode());
+            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
+            target = localMatrix.ValueIn(PointersHelper.IdPointerNodeIndex).Link(target);
+
+            var matrixMultiply = exporter.CreateNode(new Math_MatMulNode());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
+
+            var trs = exporter.CreateNode(new Math_MatComposeNode());
+            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedPosition);
+            trs.ValueIn(Math_MatComposeNode.IdInputRotation).SetValue(Quaternion.identity);
+            trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
+
+            var matrixMultiply2 = exporter.CreateNode(new Math_MatMulNode());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
+
+            var trsDecompose = exporter.CreateNode(new Math_MatDecomposeNode());
+            trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
+
+            setPosition.ValueIn(Pointer_SetNode.IdValue)
+                .ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation));
+
+            flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
+            flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
+        }
+
+        public static void SetWorldRotationFromConvertedSpace(INodeExporter exporter, ValueOutRef convertedRotation,
+            out ValueInRef target, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            var setRotation = exporter.CreateNode(new Pointer_SetNode());
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+            target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            var localToWorldMatrix = exporter.CreateNode(new Pointer_GetNode());
+            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            target = target.Link(localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex));
+
+            var inverseMatrix = exporter.CreateNode(new Math_InverseNode());
+            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
+
+            var localMatrix = exporter.CreateNode(new Pointer_GetNode());
+            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
+            target = target.Link(localMatrix.ValueIn(PointersHelper.IdPointerNodeIndex));
+
+            var matrixMultiply = exporter.CreateNode(new Math_MatMulNode());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
+
+            var trs = exporter.CreateNode(new Math_MatComposeNode());
+            trs.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
+            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).SetValue(Vector3.zero);
+            trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
+
+            var matrixMultiply2 = exporter.CreateNode(new Math_MatMulNode());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
+            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
+
+            var trsDecompose = exporter.CreateNode(new Math_MatDecomposeNode());
+            trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
+
+            setRotation.ValueIn(Pointer_SetNode.IdValue)
+                .ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation));
+
+            flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
+            flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
+        }
+
+        public static void GetLocalRotationFromMainCamera(INodeExporter exporter, out ValueOutRef value)
+        {
+            var getRotation = exporter.CreateNode(new Pointer_GetNode());
+            getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
+
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(),
+                out var convertedRotation);
+            value = convertedRotation;
+
+            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
+            QuaternionHelpers.Invert(exporter, convertedRotation, out var invertedRotation);
+            value = invertedRotation;
+        }
+
+        public static void GetLocalRotation(INodeExporter exporter, out ValueInRef target, out ValueOutRef value)
+        {
+            var getRotation = exporter.CreateNode(new Pointer_GetNode());
+            getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
+
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(),
+                out var convertedRotation);
+            value = convertedRotation;
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+            target = getRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+        }
+
+        public static void SetLocalRotation(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef rotationInput, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            var setRotation = exporter.CreateNode(new Pointer_SetNode());
+
+            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+            target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, out rotationInput,
+                out var convertedRotation);
+            rotationInput = setRotation.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedRotation);
+            flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
+            flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
+        }
+
+        public static void GetWorldPositionFromMainCamera(INodeExporter exporter, out ValueOutRef worldPosition)
+        {
+            var getPosition = exporter.CreateNode(new Pointer_GetNode());
+            getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+
+            SpaceConversionHelpers.AddSpaceConversion(exporter, getPosition.FirstValueOut(),
+                out worldPosition);
+            worldPosition.ExpectedType(ExpectedType.Float3);
+
+            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
+        }
+
+        public static void GetWorldPosition(INodeExporter exporter, out ValueInRef target,
+            out ValueOutRef worldPosition)
+        {
+            var worldMatrix = exporter.CreateNode(new Pointer_GetNode());
+            worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            var decompose = exporter.CreateNode(new Math_MatDecomposeNode());
+            decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
+            var gltfWorldPosition = decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation);
+
+            SpaceConversionHelpers.AddSpaceConversion(exporter, gltfWorldPosition, out var convertedOutput);
+
+            worldPosition = convertedOutput;
+        }
+
+        public static void GetWorldScale(INodeExporter exporter, out ValueInRef target, out ValueOutRef worldScale)
+        {
+            var worldMatrix = exporter.CreateNode(new Pointer_GetNode());
+            worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            var decompose = exporter.CreateNode(new Math_MatDecomposeNode());
+            decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
+            worldScale = decompose.ValueOut(Math_MatDecomposeNode.IdOutputScale);
+        }
+
+        public static void GetWorldRotationFromMainCamera(INodeExporter exporter, out ValueOutRef worldRotation)
+        {
+            var getRotation = exporter.CreateNode(new Pointer_GetNode());
+            getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
+
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(), out worldRotation);
+            worldRotation.ExpectedType(ExpectedType.Float4);
+
+            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
+        }
+
+        public static void GetWorldRotation(INodeExporter exporter, out ValueInRef target,
+            out ValueOutRef worldRotation)
+        {
+            var worldMatrix = exporter.CreateNode(new Pointer_GetNode());
+            worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            var decompose = exporter.CreateNode(new Math_MatDecomposeNode());
+            decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
+            var gltfWorldRotation = decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation);
+
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, gltfWorldRotation,
+                out var convertedOutput);
+
+            worldRotation = convertedOutput;
+        }
+    }
+}

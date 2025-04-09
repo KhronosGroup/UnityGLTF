@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as TVisualGraphUnit;
-            GltfInteractivityUnitExporterNode node = unitExporter.CreateNode(new TNodeSchema());
+            var node = unitExporter.CreateNode(new TNodeSchema());
 
             if (!unit.valueInputs.TryGetValue("target", out var targetInput))
             {
@@ -38,7 +38,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             // NodeIndex's value should equal the ID of the object referenced by the target value input.
-            GameObject target = UnitsHelper.GetGameObjectFromValueInput(targetInput, unit.defaultValues, unitExporter.exportContext);
+            GameObject target = UnitsHelper.GetGameObjectFromValueInput(targetInput, unit.defaultValues, unitExporter.vsExportContext);
 
             if (target == null)
             {
@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            int targetIndex = unitExporter.exportContext.exporter.GetTransformIndex(target.transform);
+            int targetIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(target.transform);
             node.Configuration["nodeIndex"].Value = targetIndex;
             OnTargetNodeConfigured(unitExporter, targetIndex);
             

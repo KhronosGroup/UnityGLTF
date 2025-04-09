@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
            var unit = unitExporter.unit as Unity.VisualScripting.InvokeMember;
            
-           TransformHelpers.GetLocalPosition(unitExporter, unit.target, out var positionOutput);
+           TransformHelpersVS.GetLocalPosition(unitExporter, unit.target, out var positionOutput);
            var add = unitExporter.CreateNode(new Math_AddNode());
            add.ValueIn(Math_AddNode.IdValueB).ConnectToSource(positionOutput);
            
@@ -42,7 +42,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
            }
            //TODO: translate of non self
 
-           TransformHelpers.SetLocalPosition(unitExporter, unit.target,  add.FirstValueOut(), unit.enter, unit.exit);
+           TransformHelpersVS.SetLocalPosition(unitExporter, unit.target,  add.FirstValueOut(), unit.enter, unit.exit);
            return true;
         }
     }

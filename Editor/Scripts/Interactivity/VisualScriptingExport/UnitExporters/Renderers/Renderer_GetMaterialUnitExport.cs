@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -22,7 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
      
             var getMesh = unitExporter.CreateNode(new Pointer_GetNode());
          
-            PointersHelper.SetupPointerTemplateAndTargetInput(getMesh, PointersHelper.IdPointerNodeIndex, 
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getMesh, PointersHelper.IdPointerNodeIndex, 
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/mesh", GltfTypes.Int);
             
             var getMaterial = unitExporter.CreateNode(new Pointer_GetNode());

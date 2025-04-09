@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
@@ -22,17 +23,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as GetVariable;
             
-            var varValue = unitExporter.exportContext.GetVariableValue(unit, out string varName, out string cSharpVarType, false);
+            var varValue = unitExporter.vsExportContext.GetVariableValue(unit, out string varName, out string cSharpVarType, false);
             if (varValue != null)
             {
                 // Check if the variable is a list/array
                 if (varValue.GetType() != typeof(string) && (varValue.GetType().GetInterfaces().Contains(typeof(IEnumerable))))
                 {
                     // Check if the list/array is already created
-                    var declaration = unitExporter.exportContext.GetVariableDeclaration(unit);
+                    var declaration = unitExporter.vsExportContext.GetVariableDeclaration(unit);
                     if (declaration != null)
                     {
-                        var existingList = unitExporter.exportContext.GetListByCreator(declaration);
+                        var existingList = unitExporter.vsExportContext.GetListByCreator(declaration);
                         if (existingList != null)
                         {
                             // List already exist
@@ -74,8 +75,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                             UnitExportLogging.AddErrorLog(unit, "Unsupported list type");
                             return false;
                         }
-                        var objectList = unitExporter.exportContext.CreateNewVariableBasedListFromVariable(declaration, listCapacity, valueTypeIndex);
-                        ListHelpers.CreateListNodes(unitExporter, objectList);
+                        var objectList = unitExporter.vsExportContext.CreateNewVariableBasedListFromVariable(declaration, listCapacity, valueTypeIndex);
+                        ListHelpersVS.CreateListNodes(unitExporter, objectList);
 
                         foreach (var v in varValue as IEnumerable)
                             objectList.AddItem(v);
@@ -93,7 +94,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            var variableIndex = unitExporter.exportContext.AddVariableIfNeeded(unit);
+            var variableIndex = unitExporter.vsExportContext.AddVariableIfNeeded(unit);
             VariablesHelpers.GetVariable(unitExporter, variableIndex, out var valueSocket);
             valueSocket.MapToPort(unit.value);
             return true;

@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var getVar = unitExporter.CreateNode(new Variable_GetNode());
 
-            var varIndex = unitExporter.exportContext.AddVariableWithIdIfNeeded(onceVarName, false, VariableKind.Flow, typeof(bool));
+            var varIndex = unitExporter.vsExportContext.AddVariableWithIdIfNeeded(onceVarName, false, VariableKind.Flow, typeof(bool));
             getVar.Configuration["variable"].Value = varIndex;
             
             var branch = unitExporter.CreateNode(new Flow_BranchNode());

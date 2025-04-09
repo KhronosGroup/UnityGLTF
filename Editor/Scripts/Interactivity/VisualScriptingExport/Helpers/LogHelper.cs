@@ -16,9 +16,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public static void AddLog(UnitExporter unitExporter, LogLevel level, ValueInput messageInput, ControlInput enter, ControlOutput exit)
         {
-            var addGltfLog = unitExporter.exportContext.plugin.debugLogSetting.GltfLog;
-            var addBabylon = unitExporter.exportContext.plugin.debugLogSetting.BabylonLog;
-            var addADBE = unitExporter.exportContext.plugin.debugLogSetting.ADBEConsole;
+            var addGltfLog = unitExporter.vsExportContext.plugin.debugLogSetting.GltfLog;
+            var addBabylon = unitExporter.vsExportContext.plugin.debugLogSetting.BabylonLog;
+            var addADBE = unitExporter.vsExportContext.plugin.debugLogSetting.ADBEConsole;
 
             if (!addBabylon && !addADBE && !addGltfLog)
             {
@@ -62,7 +62,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 adbe_node.ValueIn(ADBE_OutputConsoleNode.IdMessage).MapToInputPort(messageInput);
                 sequence_node.FlowOut("1").ConnectToFlowDestination(adbe_node.FlowIn(ADBE_OutputConsoleNode.IdFlowIn));
 
-                unitExporter.exportContext.exporter.DeclareExtensionUsage(ADBE_OutputConsoleNode.EXTENSION_ID, false);
+                unitExporter.vsExportContext.exporter.DeclareExtensionUsage(ADBE_OutputConsoleNode.EXTENSION_ID, false);
             }
 
             if (addBabylon)
@@ -72,7 +72,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 babylon_node.ValueIn(Babylon_LogNode.IdMessage).MapToInputPort(messageInput);
                 sequence_node.FlowOut("2").ConnectToFlowDestination(babylon_node.FlowIn(Babylon_LogNode.IdFlowIn));
     
-                unitExporter.exportContext.exporter.DeclareExtensionUsage(Babylon_LogNode.EXTENSION_ID, false);
+                unitExporter.vsExportContext.exporter.DeclareExtensionUsage(Babylon_LogNode.EXTENSION_ID, false);
             }
             
             sequence_node.FlowOut("9").MapToControlOutput(exit);
