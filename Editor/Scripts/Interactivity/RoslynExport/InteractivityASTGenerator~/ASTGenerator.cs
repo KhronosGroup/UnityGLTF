@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using InteractivityASTGenerator.Models;
 using InteractivityASTGenerator.Generators;
 
 // This file has been split into multiple files for better maintainability.

@@ -17,9 +17,7 @@ namespace InteractivityASTGenerator.Generators
         {
             string namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
             bool isGlobalNamespace = string.IsNullOrEmpty(namespaceName) || namespaceName == "<global namespace>";
-            string astNamespace = isGlobalNamespace 
-                ? "GLTFInteractivity.AST" 
-                : $"{namespaceName}.GLTFInteractivity.AST";
+            string astNamespace = "UnityGLTF.Interactivity.AST";
             
             var source = new StringBuilder();
             

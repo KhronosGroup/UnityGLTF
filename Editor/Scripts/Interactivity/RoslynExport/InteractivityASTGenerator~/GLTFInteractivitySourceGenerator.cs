@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using InteractivityASTGenerator.Models;
+using UnityGLTF.Interactivity.AST;
 using InteractivityASTGenerator.Generators;
 
 namespace InteractivityASTGenerator
@@ -114,21 +114,6 @@ namespace InteractivityASTGenerator
                     requiredASTNamespaces.Add(astNamespace);
                 }
                 
-                // Generate AST class definitions for each required namespace
-                foreach (string astNamespace in requiredASTNamespaces)
-                {
-                    // Generate AST classes for this namespace
-                    string astClassesSource = ASTClassGenerator.GenerateASTClasses(astNamespace);
-                    string fileName = $"ASTClasses_{astNamespace.Replace(".", "_")}.cs";
-                    
-                    // Add to compilation
-                    context.AddSource(fileName, SourceText.From(astClassesSource, Encoding.UTF8));
-                    LogInfo(context, $"Generated AST classes for namespace: {astNamespace}");
-                    
-                    // Mark this namespace as generated
-                    GeneratedASTNamespaces.Add(astNamespace);
-                }
-
                 // Now process each class to generate the GetAST method
                 foreach (ClassDeclarationSyntax classDeclaration in receiver.CandidateClasses)
                 {
