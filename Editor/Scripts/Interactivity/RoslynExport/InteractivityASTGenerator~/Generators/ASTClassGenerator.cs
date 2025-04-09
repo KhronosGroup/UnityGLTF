@@ -86,7 +86,7 @@ namespace InteractivityASTGenerator.Generators
             source.AppendLine("    public class ASTExpression : ASTNode");
             source.AppendLine("    {");
             source.AppendLine("        public string Text { get; set; }");
-            source.AppendLine("        public string ExpressionType { get; set; }");
+            source.AppendLine("        public ASTTypeInfo ExpressionType { get; set; }");
             source.AppendLine("        public List<ASTExpression> ChildExpressions { get; set; } = new List<ASTExpression>();");
             source.AppendLine("    }");
             source.AppendLine();
@@ -125,6 +125,13 @@ namespace InteractivityASTGenerator.Generators
             source.AppendLine("        public ASTMethodInfo MethodInfo { get; set; }");
             source.AppendLine("        public ASTExpression TargetExpression { get; set; }");
             source.AppendLine("        public List<ASTExpression> Arguments { get; set; } = new List<ASTExpression>();");
+            source.AppendLine("    }");
+            source.AppendLine();
+            source.AppendLine("    public class ASTPropertyAccessExpression : ASTExpression");
+            source.AppendLine("    {");
+            source.AppendLine("        public ASTExpression Expression { get; set; }");
+            source.AppendLine("        public string MemberName { get; set; }");
+            source.AppendLine("        public ASTTypeInfo MemberType { get; set; }");
             source.AppendLine("    }");
             source.AppendLine("}");
             

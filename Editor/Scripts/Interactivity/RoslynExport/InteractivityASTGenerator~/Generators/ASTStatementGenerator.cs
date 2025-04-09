@@ -64,8 +64,7 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}        new {astNamespace}.ASTExpression");
                 source.AppendLine($"{indent}        {{");
                 source.AppendLine($"{indent}            Kind = \"Condition\",");
-                source.AppendLine($"{indent}            Text = @\"{ifStmt.Condition.ToString().Replace("\"", "\"\"")}\",");
-                source.AppendLine($"{indent}            ExpressionType = \"Condition\"");
+                source.AppendLine($"{indent}            Text = @\"{ifStmt.Condition.ToString().Replace("\"", "\"\"")}\"");
                 source.AppendLine($"{indent}        }}");
                 source.AppendLine($"{indent}    }},");
                 
@@ -312,13 +311,23 @@ namespace InteractivityASTGenerator.Generators
         /// </summary>
         public static void GenerateExpressionNode(ExpressionSyntax expression, StringBuilder source, string indent, string astNamespace)
         {
+            if (expression == null)
+            {
+                source.AppendLine($"{indent}null,");
+                return;
+            }
+
             if (expression is BinaryExpressionSyntax binaryExpr)
             {
                 source.AppendLine($"{indent}new {astNamespace}.ASTExpression");
                 source.AppendLine($"{indent}{{");
                 source.AppendLine($"{indent}    Kind = \"BinaryExpression\",");
                 source.AppendLine($"{indent}    Text = @\"{expression.ToString().Replace("\"", "\"\"")}\",");
-                source.AppendLine($"{indent}    ExpressionType = \"{binaryExpr.OperatorToken.Text}\",");
+                source.AppendLine($"{indent}    ExpressionType = new {astNamespace}.ASTTypeInfo");
+                source.AppendLine($"{indent}    {{");
+                source.AppendLine($"{indent}        TypeName = \"{binaryExpr.OperatorToken.Text}\"");
+                source.AppendLine($"{indent}    }},");
+                
                 source.AppendLine($"{indent}    ChildExpressions = new List<{astNamespace}.ASTExpression>");
                 source.AppendLine($"{indent}    {{");
                 
@@ -337,7 +346,10 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}{{");
                 source.AppendLine($"{indent}    Kind = \"InvocationExpression\",");
                 source.AppendLine($"{indent}    Text = @\"{expression.ToString().Replace("\"", "\"\"")}\",");
-                source.AppendLine($"{indent}    ExpressionType = \"MethodCall\",");
+                source.AppendLine($"{indent}    ExpressionType = new {astNamespace}.ASTTypeInfo");
+                source.AppendLine($"{indent}    {{");
+                source.AppendLine($"{indent}        TypeName = \"MethodCall\"");
+                source.AppendLine($"{indent}    }},");
                 
                 // Generate method info with target
                 string methodName = invocationExpr.Expression is MemberAccessExpressionSyntax maExpr 
@@ -351,10 +363,11 @@ namespace InteractivityASTGenerator.Generators
                 // If it's a member access, we can determine the declaring type
                 if (invocationExpr.Expression is MemberAccessExpressionSyntax memberAccess)
                 {
+                    string expressionText = memberAccess.Expression.ToString();
                     source.AppendLine($"{indent}        ,");
                     source.AppendLine($"{indent}        DeclaringType = new {astNamespace}.ASTTypeInfo");
                     source.AppendLine($"{indent}        {{");
-                    source.AppendLine($"{indent}            TypeName = @\"{memberAccess.Expression.ToString().Replace("\"", "\"\"")}\"");
+                    source.AppendLine($"{indent}            TypeName = @\"{expressionText.Replace("\"", "\"\"")}\"");
                     source.AppendLine($"{indent}        }}");
                 }
                 
@@ -386,16 +399,17 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}{{");
                 source.AppendLine($"{indent}    Kind = \"AssignmentExpression\",");
                 source.AppendLine($"{indent}    Text = @\"{expression.ToString().Replace("\"", "\"\"")}\",");
-                source.AppendLine($"{indent}    ExpressionType = \"{assignmentExpr.OperatorToken.Text}\",");
+                source.AppendLine($"{indent}    ExpressionType = new {astNamespace}.ASTTypeInfo");
+                source.AppendLine($"{indent}    {{");
+                source.AppendLine($"{indent}        TypeName = \"{assignmentExpr.OperatorToken.Text}\"");
+                source.AppendLine($"{indent}    }},");
+                
                 source.AppendLine($"{indent}    ChildExpressions = new List<{astNamespace}.ASTExpression>");
                 source.AppendLine($"{indent}    {{");
                 
                 // Left expression (target of assignment)
-                source.AppendLine($"{indent}        new {astNamespace}.ASTExpression");
-                source.AppendLine($"{indent}        {{");
-                source.AppendLine($"{indent}            Kind = \"Left\",");
-                source.AppendLine($"{indent}            Text = @\"{assignmentExpr.Left.ToString().Replace("\"", "\"\"")}\"");
-                source.AppendLine($"{indent}        }},");
+                // Instead of simple string representation, use proper recursive parsing
+                GenerateExpressionNode(assignmentExpr.Left, source, indent + "        ", astNamespace);
                 
                 // Right expression (value being assigned) - recursive parsing for complex expressions
                 GenerateExpressionNode(assignmentExpr.Right, source, indent + "        ", astNamespace);
@@ -405,25 +419,26 @@ namespace InteractivityASTGenerator.Generators
             }
             else if (expression is MemberAccessExpressionSyntax memberAccessExpr)
             {
-                source.AppendLine($"{indent}new {astNamespace}.ASTExpression");
+                source.AppendLine($"{indent}new {astNamespace}.ASTPropertyAccessExpression");
                 source.AppendLine($"{indent}{{");
-                source.AppendLine($"{indent}    Kind = \"MemberAccessExpression\",");
+                source.AppendLine($"{indent}    Kind = \"PropertyAccessExpression\",");
                 source.AppendLine($"{indent}    Text = @\"{expression.ToString().Replace("\"", "\"\"")}\",");
-                source.AppendLine($"{indent}    ExpressionType = \"{memberAccessExpr.OperatorToken.Text}\",");
-                source.AppendLine($"{indent}    ChildExpressions = new List<{astNamespace}.ASTExpression>");
+                source.AppendLine($"{indent}    ExpressionType = new {astNamespace}.ASTTypeInfo");
                 source.AppendLine($"{indent}    {{");
+                source.AppendLine($"{indent}        TypeName = \"{memberAccessExpr.OperatorToken.Text}\"");
+                source.AppendLine($"{indent}    }},");
+                source.AppendLine($"{indent}    MemberName = @\"{memberAccessExpr.Name.ToString().Replace("\"", "\"\"")}\",");
                 
-                // Expression being accessed - recursive for nested member access expressions
-                GenerateExpressionNode(memberAccessExpr.Expression, source, indent + "        ", astNamespace);
+                // The object being accessed
+                source.AppendLine($"{indent}    Expression = ");
+                GenerateExpressionNode(memberAccessExpr.Expression, source, indent + "    ", astNamespace);
                 
-                // Name of member being accessed
-                source.AppendLine($"{indent}        new {astNamespace}.ASTExpression");
-                source.AppendLine($"{indent}        {{");
-                source.AppendLine($"{indent}            Kind = \"Name\",");
-                source.AppendLine($"{indent}            Text = @\"{memberAccessExpr.Name.ToString().Replace("\"", "\"\"")}\"");
-                source.AppendLine($"{indent}        }}");
-                
+                // Add member type info if available
+                source.AppendLine($"{indent}    MemberType = new {astNamespace}.ASTTypeInfo");
+                source.AppendLine($"{indent}    {{");
+                source.AppendLine($"{indent}        TypeName = \"Unknown\" // Type resolution would require semantic model");
                 source.AppendLine($"{indent}    }}");
+                
                 source.AppendLine($"{indent}}},");
             }
             else if (expression is ObjectCreationExpressionSyntax objectCreationExpr)
@@ -436,7 +451,7 @@ namespace InteractivityASTGenerator.Generators
                 // Detailed type information
                 source.AppendLine($"{indent}    CreatedType = new {astNamespace}.ASTTypeInfo");
                 source.AppendLine($"{indent}    {{");
-                source.AppendLine($"{indent}        TypeName = @\"{objectCreationExpr.Type.ToString().Replace("\"", "\"\"")}\",");
+                source.AppendLine($"{indent}        TypeName = @\"{objectCreationExpr.Type.ToString().Replace("\"", "\"\"")}\"");
                 
                 // Parse the namespace from the type if possible
                 string typeName = objectCreationExpr.Type.ToString();
@@ -444,14 +459,14 @@ namespace InteractivityASTGenerator.Generators
                 if (lastDot > 0)
                 {
                     string ns = typeName.Substring(0, lastDot);
-                    source.AppendLine($"{indent}        Namespace = @\"{ns.Replace("\"", "\"\"")}\",");
+                    source.AppendLine($"{indent}        , Namespace = @\"{ns.Replace("\"", "\"\"")}\"");
                 }
                 
                 // Check if it's a generic type
                 if (objectCreationExpr.Type is GenericNameSyntax genericType)
                 {
-                    source.AppendLine($"{indent}        IsGeneric = true,");
-                    source.AppendLine($"{indent}        TypeArguments = new List<{astNamespace}.ASTTypeInfo>");
+                    source.AppendLine($"{indent}        , IsGeneric = true");
+                    source.AppendLine($"{indent}        , TypeArguments = new List<{astNamespace}.ASTTypeInfo>");
                     source.AppendLine($"{indent}        {{");
                     
                     foreach (var typeArg in genericType.TypeArgumentList.Arguments)
@@ -507,7 +522,10 @@ namespace InteractivityASTGenerator.Generators
                 
                 // Include literal type information
                 source.AppendLine($"{indent}    ,");
-                source.AppendLine($"{indent}    ExpressionType = \"{literalExpr.Token.ValueText}\"");
+                source.AppendLine($"{indent}    ExpressionType = new {astNamespace}.ASTTypeInfo");
+                source.AppendLine($"{indent}    {{");
+                source.AppendLine($"{indent}        TypeName = \"{literalExpr.Token.ValueText}\"");
+                source.AppendLine($"{indent}    }}");
                 
                 source.AppendLine($"{indent}}},");
             }
@@ -529,7 +547,7 @@ namespace InteractivityASTGenerator.Generators
                 // Default handling for other expression types
                 source.AppendLine($"{indent}new {astNamespace}.ASTExpression");
                 source.AppendLine($"{indent}{{");
-                source.AppendLine($"{indent}    Kind = \"{expression.Kind()}\",");
+                source.AppendLine($"{indent}    Kind = \"UnknownExpression\",");
                 source.AppendLine($"{indent}    Text = @\"{expression.ToString().Replace("\"", "\"\"")}\"");
                 source.AppendLine($"{indent}}},");
             }
