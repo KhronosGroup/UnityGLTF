@@ -270,6 +270,134 @@ namespace InteractivityASTGenerator.Generators
                 }
                 source.AppendLine($"{indent}    }}");
             }
+            // Handle for loops
+            else if (statement is ForStatementSyntax forStmt)
+            {
+                source.AppendLine($"{indent}    Expressions = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // Process initializer
+                if (forStmt.Declaration != null)
+                {
+                    source.AppendLine($"{indent}        new ExpressionInfo");
+                    source.AppendLine($"{indent}        {{");
+                    source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.ForInitializer,");
+                    
+                    // Get type information for initializer
+                    var typeInfo = semanticModel.GetTypeInfo(forStmt.Declaration.Type);
+                    if (typeInfo.Type != null)
+                    {
+                        string typeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        source.AppendLine($"{indent}            ResultType = typeof({typeName}),");
+                    }
+                    
+                    // Process initializer variables and their values
+                    if (forStmt.Declaration.Variables.Count > 0)
+                    {
+                        source.AppendLine($"{indent}            Children = new List<ExpressionInfo>");
+                        source.AppendLine($"{indent}            {{");
+                        foreach (var variable in forStmt.Declaration.Variables)
+                        {
+                            if (variable.Initializer != null)
+                            {
+                                source.AppendLine($"{indent}                new ExpressionInfo");
+                                source.AppendLine($"{indent}                {{");
+                                source.AppendLine($"{indent}                    Kind = ExpressionInfo.ExpressionKind.Assignment,");
+                                source.AppendLine($"{indent}                    Children = new List<ExpressionInfo>");
+                                source.AppendLine($"{indent}                    {{");
+                                // Add identifier as left side
+                                source.AppendLine($"{indent}                        new ExpressionInfo");
+                                source.AppendLine($"{indent}                        {{");
+                                source.AppendLine($"{indent}                            Kind = ExpressionInfo.ExpressionKind.Identifier,");
+                                if (typeInfo.Type != null)
+                                {
+                                    string typeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                                    source.AppendLine($"{indent}                            ResultType = typeof({typeName}),");
+                                }
+                                source.AppendLine($"{indent}                            LiteralValue = \"{variable.Identifier.Text}\"");
+                                source.AppendLine($"{indent}                        }},");
+                                // Add initializer value as right side
+                                GenerateExpressionWithSemanticModel(variable.Initializer.Value, source, indent + "                        ", semanticModel);
+                                source.AppendLine($"{indent}                    }}");
+                                source.AppendLine($"{indent}                }},");
+                            }
+                        }
+                        source.AppendLine($"{indent}            }}");
+                    }
+                    
+                    source.AppendLine($"{indent}        }},");
+                }
+                else
+                {
+                    // Handle initializers in the form of expressions (i.e., i = 0)
+                    foreach (var initializer in forStmt.Initializers)
+                    {
+                        GenerateExpressionWithSemanticModel(initializer, source, indent + "        ", semanticModel);
+                    }
+                }
+                
+                // Process condition
+                if (forStmt.Condition != null)
+                {
+                    source.AppendLine($"{indent}        new ExpressionInfo");
+                    source.AppendLine($"{indent}        {{");
+                    source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.ForCondition,");
+                    
+                    var conditionTypeInfo = semanticModel.GetTypeInfo(forStmt.Condition);
+                    if (conditionTypeInfo.Type != null)
+                    {
+                        string typeName = conditionTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        source.AppendLine($"{indent}            ResultType = typeof({typeName}),");
+                    }
+                    
+                    source.AppendLine($"{indent}            Children = new List<ExpressionInfo>");
+                    source.AppendLine($"{indent}            {{");
+                    GenerateExpressionWithSemanticModel(forStmt.Condition, source, indent + "                ", semanticModel);
+                    source.AppendLine($"{indent}            }}");
+                    source.AppendLine($"{indent}        }},");
+                }
+                
+                // Process incrementors
+                foreach (var incrementor in forStmt.Incrementors)
+                {
+                    source.AppendLine($"{indent}        new ExpressionInfo");
+                    source.AppendLine($"{indent}        {{");
+                    source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.ForIncrementor,");
+                    
+                    var incrementorTypeInfo = semanticModel.GetTypeInfo(incrementor);
+                    if (incrementorTypeInfo.Type != null)
+                    {
+                        string typeName = incrementorTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        source.AppendLine($"{indent}            ResultType = typeof({typeName}),");
+                    }
+                    
+                    source.AppendLine($"{indent}            Children = new List<ExpressionInfo>");
+                    source.AppendLine($"{indent}            {{");
+                    GenerateExpressionWithSemanticModel(incrementor, source, indent + "                ", semanticModel);
+                    source.AppendLine($"{indent}            }}");
+                    source.AppendLine($"{indent}        }},");
+                }
+                
+                source.AppendLine($"{indent}    }},");
+                
+                // For loop body
+                source.AppendLine($"{indent}    Children = new List<StatementInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                if (forStmt.Statement is BlockSyntax forBlock)
+                {
+                    foreach (var childStatement in forBlock.Statements)
+                    {
+                        GenerateStatementWithSemanticModel(childStatement, source, indent + "        ", semanticModel);
+                    }
+                }
+                else
+                {
+                    GenerateStatementWithSemanticModel(forStmt.Statement, source, indent + "        ", semanticModel);
+                }
+                
+                source.AppendLine($"{indent}    }}");
+            }
             // Handle if statements
             else if (statement is IfStatementSyntax ifStmt)
             {
@@ -563,7 +691,8 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}new ExpressionInfo");
                 source.AppendLine($"{indent}{{");
                 source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Identifier,");
-                source.AppendLine($"{indent}    ResultType = typeof({typeName})");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    LiteralValue = \"{identifierExpr.Identifier.Text}\"");
                 source.AppendLine($"{indent}}},");
             }
             // Binary expressions (e.g. a + b)

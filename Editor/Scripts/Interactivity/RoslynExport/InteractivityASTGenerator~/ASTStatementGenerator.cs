@@ -457,7 +457,29 @@ namespace InteractivityASTGenerator.Generators
             {
                 source.AppendLine($"{indent}new {astNamespace}.ExpressionInfo");
                 source.AppendLine($"{indent}{{");
-                source.AppendLine($"{indent}    Kind = {astNamespace}.ExpressionInfo.ExpressionKind.Binary,");
+                
+                // Determine specific binary operation type for better AST representation
+                var operatorKind = binaryExpr.OperatorToken.Text;
+                var specificExpressionKind = $"{astNamespace}.ExpressionInfo.ExpressionKind.Binary";
+                
+                if (operatorKind == "*")
+                {
+                    specificExpressionKind = $"{astNamespace}.ExpressionInfo.ExpressionKind.Multiplication";
+                }
+                else if (operatorKind == "+")
+                {
+                    specificExpressionKind = $"{astNamespace}.ExpressionInfo.ExpressionKind.Addition";
+                }
+                else if (operatorKind == "-")
+                {
+                    specificExpressionKind = $"{astNamespace}.ExpressionInfo.ExpressionKind.Subtraction";
+                }
+                else if (operatorKind == "/")
+                {
+                    specificExpressionKind = $"{astNamespace}.ExpressionInfo.ExpressionKind.Division";
+                }
+                
+                source.AppendLine($"{indent}    Kind = {specificExpressionKind},");
                 source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
                 source.AppendLine($"{indent}    Operator = \"{binaryExpr.OperatorToken.Text}\",");
                 
