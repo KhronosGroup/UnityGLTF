@@ -428,7 +428,18 @@ namespace UnityGLTF.Interactivity.AST
             // For loop specific expression kinds
             ForInitializer,
             ForCondition,
-            ForIncrementor
+            ForIncrementor,
+            // Increment/decrement expression kinds
+            PostfixUnary,
+            PrefixUnary,
+            // Modern C# features
+            SwitchExpression,
+            SwitchArm,
+            SwitchPattern,
+            AwaitExpression,
+            AsyncLambda,
+            ThrowExpression,
+            PatternMatching
         }
         
         /// <summary>

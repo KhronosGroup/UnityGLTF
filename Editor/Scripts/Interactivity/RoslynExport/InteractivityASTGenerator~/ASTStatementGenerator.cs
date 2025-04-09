@@ -514,6 +514,71 @@ namespace InteractivityASTGenerator.Generators
                 // Process the inner expression directly
                 GenerateExpressionNode(parenthesizedExpr.Expression, source, indent, astNamespace, semanticModel);
             }
+            // Switch expressions (C# 8.0+)
+            else if (expression is SwitchExpressionSyntax switchExpr)
+            {
+                source.AppendLine($"{indent}new {astNamespace}.ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = {astNamespace}.ExpressionInfo.ExpressionKind.SwitchExpression,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                
+                // Generate the governing expression and arms
+                source.AppendLine($"{indent}    Children = new List<{astNamespace}.ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // First child is always the governing expression
+                GenerateExpressionNode(switchExpr.GoverningExpression, source, indent + "        ", astNamespace, semanticModel);
+                
+                // Then add each switch arm as a child
+                foreach (var arm in switchExpr.Arms)
+                {
+                    source.AppendLine($"{indent}        new {astNamespace}.ExpressionInfo");
+                    source.AppendLine($"{indent}        {{");
+                    source.AppendLine($"{indent}            Kind = {astNamespace}.ExpressionInfo.ExpressionKind.SwitchArm,");
+                    source.AppendLine($"{indent}            Children = new List<{astNamespace}.ExpressionInfo>");
+                    source.AppendLine($"{indent}            {{");
+                    
+                    // Pattern is first child of arm
+                    source.AppendLine($"{indent}                new {astNamespace}.ExpressionInfo");
+                    source.AppendLine($"{indent}                {{");
+                    source.AppendLine($"{indent}                    Kind = {astNamespace}.ExpressionInfo.ExpressionKind.SwitchPattern,");
+                    
+                    // Get type info for pattern if possible
+                    var patternTypeInfo = semanticModel.GetTypeInfo(arm.Pattern);
+                    if (patternTypeInfo.Type != null)
+                    {
+                        string patternTypeName = patternTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        source.AppendLine($"{indent}                    ResultType = typeof({patternTypeName}),");
+                    }
+                    
+                    source.AppendLine($"{indent}                    LiteralValue = \"{arm.Pattern.ToString().Replace("\"", "\\\"")}\"");
+                    source.AppendLine($"{indent}                }},");
+                    
+                    // Expression is second child of arm
+                    GenerateExpressionNode(arm.Expression, source, indent + "                ", astNamespace, semanticModel);
+                    
+                    source.AppendLine($"{indent}            }}");
+                    source.AppendLine($"{indent}        }},");
+                }
+                
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}},");
+            }
+            // Await expressions (C# 5.0+)
+            else if (expression is AwaitExpressionSyntax awaitExpr)
+            {
+                source.AppendLine($"{indent}new {astNamespace}.ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = {astNamespace}.ExpressionInfo.ExpressionKind.AwaitExpression,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                
+                // Generate child expression being awaited
+                source.AppendLine($"{indent}    Children = new List<{astNamespace}.ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                GenerateExpressionNode(awaitExpr.Expression, source, indent + "        ", astNamespace, semanticModel);
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}},");
+            }
             // Default handling for other expression types
             else
             {

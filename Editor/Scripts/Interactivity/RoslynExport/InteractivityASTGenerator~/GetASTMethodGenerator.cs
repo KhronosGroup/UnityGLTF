@@ -572,6 +572,36 @@ namespace InteractivityASTGenerator.Generators
                 
                 source.AppendLine($"{indent}}},");
             }
+            // Post-increment and post-decrement expressions (i++, i--)
+            else if (expression is PostfixUnaryExpressionSyntax postfixExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.PostfixUnary,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Operator = \"{postfixExpr.OperatorToken.Text}\",");
+                
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                GenerateExpressionWithSemanticModel(postfixExpr.Operand, source, indent + "        ", semanticModel);
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}},");
+            }
+            // Pre-increment and pre-decrement expressions (++i, --i)
+            else if (expression is PrefixUnaryExpressionSyntax prefixExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.PrefixUnary,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Operator = \"{prefixExpr.OperatorToken.Text}\",");
+                
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                GenerateExpressionWithSemanticModel(prefixExpr.Operand, source, indent + "        ", semanticModel);
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}},");
+            }
             // Method invocations
             else if (expression is InvocationExpressionSyntax invocationExpr)
             {
@@ -729,9 +759,77 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}    }}");
                 source.AppendLine($"{indent}}},");
             }
+            // Switch expressions
+            else if (expression is SwitchExpressionSyntax switchExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.SwitchExpression,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                
+                // Generate the governing expression and arms
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // First child is always the governing expression
+                GenerateExpressionWithSemanticModel(switchExpr.GoverningExpression, source, indent + "        ", semanticModel);
+                
+                // Then add each switch arm as children
+                foreach (var arm in switchExpr.Arms)
+                {
+                    source.AppendLine($"{indent}        new ExpressionInfo");
+                    source.AppendLine($"{indent}        {{");
+                    source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.SwitchArm,");
+                    source.AppendLine($"{indent}            Children = new List<ExpressionInfo>");
+                    source.AppendLine($"{indent}            {{");
+                    
+                    // Pattern is first child of arm
+                    source.AppendLine($"{indent}                new ExpressionInfo");
+                    source.AppendLine($"{indent}                {{");
+                    source.AppendLine($"{indent}                    Kind = ExpressionInfo.ExpressionKind.SwitchPattern,");
+                    
+                    // Get type info for pattern if possible
+                    var patternTypeInfo = semanticModel.GetTypeInfo(arm.Pattern);
+                    if (patternTypeInfo.Type != null)
+                    {
+                        string patternTypeName = patternTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        source.AppendLine($"{indent}                    ResultType = typeof({patternTypeName}),");
+                    }
+                    
+                    source.AppendLine($"{indent}                    LiteralValue = \"{arm.Pattern.ToString().Replace("\"", "\\\"")}\"");
+                    source.AppendLine($"{indent}                }},");
+                    
+                    // Expression is second child of arm
+                    GenerateExpressionWithSemanticModel(arm.Expression, source, indent + "                ", semanticModel);
+                    
+                    source.AppendLine($"{indent}            }}");
+                    source.AppendLine($"{indent}        }},");
+                }
+                
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}},");
+            }
+            // Await expressions
+            else if (expression is AwaitExpressionSyntax awaitExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.AwaitExpression,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                
+                // Generate child expression being awaited
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                GenerateExpressionWithSemanticModel(awaitExpr.Expression, source, indent + "        ", semanticModel);
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}},");
+            }
             // Default fallback for any other expression type
             else
             {
+                // Log warning for unknown expression type
+                System.Diagnostics.Debug.WriteLine($"WARNING: Unknown expression type: {expression.GetType().Name} in {expression}");
+
                 source.AppendLine($"{indent}new ExpressionInfo");
                 source.AppendLine($"{indent}{{");
                 source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Unknown,");
@@ -759,6 +857,9 @@ namespace InteractivityASTGenerator.Generators
             if (statement is ContinueStatementSyntax) return "Continue";
             if (statement is ThrowStatementSyntax) return "Throw";
             if (statement is TryStatementSyntax) return "Try";
+            
+            // Log warning for unknown statement type
+            System.Diagnostics.Debug.WriteLine($"WARNING: Unknown statement type: {statement.GetType().Name} in {statement}");
             
             return "Unknown";
         }
