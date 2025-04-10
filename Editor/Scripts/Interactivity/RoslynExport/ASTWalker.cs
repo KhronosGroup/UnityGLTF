@@ -849,7 +849,7 @@ namespace UnityGLTF.Interactivity.AST
         {
             // Create a Vector3 constructor node
             // For simplicity, we assume the arguments are in x, y, z order
-            var vec3Node = context.CreateNode(new Math_MatComposeNode());
+            var vec3Node = context.CreateNode(new Math_Combine3Node());
 
             // Process the constructor arguments
             for (int i = 0; i < Math.Min(expression.Children.Count, 3); i++)
@@ -958,98 +958,11 @@ namespace UnityGLTF.Interactivity.AST
     // INodeExporter implementation for creating and managing nodes
 
     #region INodeExporter Implementation
-
-    /// <summary>
-    /// Create a new interactivity node
-    /// </summary>
-    /// <typeparam name="T">Node type</typeparam>
-    /// <returns>The created node</returns>
-    public T CreateNode<T>() where T : GltfInteractivityExportNode, new()
-    {
-        var node = new T();
-        InitializeNode(node);
-        return node;
-    }
-
+    
     public GltfInteractivityExportNodes context { get; private set; }
     public GameObject gameObject { get; private set; }
-
-    /// <summary>
-    /// Initialize a node with a unique ID and add it to the graph
-    /// </summary>
-    private void InitializeNode(GltfInteractivityExportNode node)
-    {
-        // Generate a unique ID for the node
-        string opType = node.Schema.Op;
-        if (!_nodeIdCounter.ContainsKey(opType))
-        {
-            _nodeIdCounter[opType] = 0;
-        }
-
-        string nodeId = $"{opType}_{_nodeIdCounter[opType]++}";
-        // node.NodeId = nodeId;
-
-        // Add the node to the graph
-        _nodes[nodeId] = node;
-
-        // Add the node to the graph's Nodes array
-        var nodesList = _graph.Nodes.ToList();
-        nodesList.Add(node);
-        _graph.Nodes = nodesList.ToArray();
-
-        // Add declaration if needed
-        if (!_graph.Declarations.Any(d => d.op == node.Schema.Op))
-        {
-            // Create a declaration for this node type
-            var declaration = CreateDeclarationForNode(node);
-
-            // Add the declaration to the graph's Declarations array
-            var declarationsList = _graph.Declarations.ToList();
-            declarationsList.Add(declaration);
-            _graph.Declarations = declarationsList.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// Creates a Declaration object for a node
-    /// </summary>
-    /// <param name="node">The node to create a declaration for</param>
-    /// <returns>A declaration object</returns>
-    private GltfInteractivityGraph.Declaration CreateDeclarationForNode(GltfInteractivityExportNode node)
-    {
-        var declaration = new GltfInteractivityGraph.Declaration
-        {
-            op = node.Schema.Op,
-            extension = node.Schema.Extension
-        };
-
-        // Set up input and output value sockets if needed
-        // This is a simplified implementation - you might need more logic
-        // based on your specific node types
-
-        return declaration;
-    }
-
-    /// <summary>
-    /// Dispose all registered disposables
-    /// </summary>
-    public void Dispose()
-    {
-        foreach (var disposable in _disposables)
-        {
-            try
-            {
-                disposable.Dispose();
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error disposing object: {e.Message}");
-            }
-        }
-
-        _disposables.Clear();
-    }
-
+    
+   
     #endregion
 
     public void OnInteractivityExport(GltfInteractivityExportNodes export, GameObject gameObject)
