@@ -91,8 +91,7 @@ namespace UnityGLTF.Interactivity.AST
         }
 
         // Create an entry flow out reference for this method
-        _methodEntryPoints[methodName] =
-            eventNode.FlowOut(methodName == "Start" ? Event_OnStartNode.IdFlowOut : Event_OnTickNode.IdFlowOut);
+        _methodEntryPoints[methodName] = eventNode.FlowOut(methodName == "Start" ? Event_OnStartNode.IdFlowOut : Event_OnTickNode.IdFlowOut);
 
         // Process the method body
         ProcessMethodBody(methodBodyInfo);
