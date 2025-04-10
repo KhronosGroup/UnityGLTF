@@ -60,6 +60,8 @@ namespace UnityGLTF
 			}
 			else if (_assetCache.MeshCache[meshIndex].LoadedMesh)
 			{
+				// Make sure we created all materials in case this mesh is shared because of deduplication
+				await CreateMeshMaterials(mesh);
 				return;
 			}
 
@@ -101,23 +103,37 @@ namespace UnityGLTF
 			{
 				var primitive = mesh.Primitives[i];
 				var primCache = meshCache.Primitives[i];
-				unityData.Topology[i] = GetTopology(primitive.Mode);
-				unityData.DrawModes[i] = primitive.Mode;
+				if (!unityData.subMeshDataCreated[i])
+				{
+					unityData.Topology[i] = GetTopology(primitive.Mode);
+					unityData.DrawModes[i] = primitive.Mode;
 
-				ConvertAttributeAccessorsToUnityTypes(primCache, unityData, unityData.subMeshVertexOffset[i], i);
+					ConvertAttributeAccessorsToUnityTypes(primCache, unityData, unityData.subMeshVertexOffset[i], i);
+					
+					cancellationToken.ThrowIfCancellationRequested();
+
+					if (unityData.Topology[i] == MeshTopology.Triangles && primitive.Indices != null &&
+					    primitive.Indices.Value != null)
+					{
+						Statistics.TriangleCount += primitive.Indices.Value.Count / 3;
+					}
+				}
 
 				await CreateMaterials(primitive);
-
-				cancellationToken.ThrowIfCancellationRequested();
-				
-				if (unityData.Topology[i] == MeshTopology.Triangles && primitive.Indices != null && primitive.Indices.Value != null)
-				{
-					Statistics.TriangleCount += primitive.Indices.Value.Count / 3;
-				}
 			}
-
-			Statistics.VertexCount += unityData.Vertices.Length;
+			
+			if (unityData.Vertices != null)
+				Statistics.VertexCount += unityData.Vertices.Length;
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
+		}
+
+		private async Task CreateMeshMaterials(GLTFMesh mesh)
+		{
+			for (int i = 0; i < mesh.Primitives.Count; ++i)
+			{
+				var primitive = mesh.Primitives[i];
+				await CreateMaterials(primitive);
+			}
 		}
 
 		private static uint[] CalculateSubMeshVertexOffset(GLTFMesh mesh, out uint totalVertCount)
@@ -656,6 +672,9 @@ namespace UnityGLTF
 		/// <returns></returns>
 		protected async Task ConstructUnityMesh(UnityMeshData unityMeshData, int meshIndex, string meshName)
 		{
+			if (_assetCache.MeshCache[meshIndex].LoadedMesh != null)
+				return;
+
 			await YieldOnTimeoutAndThrowOnLowMemory();
 			Mesh mesh = new Mesh
 			{
@@ -703,7 +722,10 @@ namespace UnityGLTF
 				mesh.UploadMeshData(true);
 			}
 
-			_assetCache.MeshCache[meshIndex].LoadedMesh = mesh;
+			// Assign the loaded mesh to all MeshCache entries that reference the same UnityMeshData
+			for (int i = 0; i < _assetCache.UnityMeshDataCache.Length; i++)
+				if (_assetCache.UnityMeshDataCache[i] == unityMeshData)
+					_assetCache.MeshCache[i].LoadedMesh = mesh;
 			
 			// Free up some memory
 			unityMeshData.Clear();
@@ -1403,6 +1425,9 @@ namespace UnityGLTF
 					    || _assetCache.UnityMeshDataCache[meshIndex] == null)
 						continue;
 
+					if (_assetCache.UnityMeshDataCache[i] == _assetCache.UnityMeshDataCache[meshIndex])
+						continue;
+					
 					var meshIsEqual = _assetCache.UnityMeshDataCache[i]
 						.IsEqual(_assetCache.UnityMeshDataCache[meshIndex]);
 					
@@ -1413,17 +1438,20 @@ namespace UnityGLTF
 
 			foreach (var dm in meshDuplicates)
 			{
-				if (_gltfRoot.Nodes == null) continue;
-				for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
-				{
-					if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
-					{
-						if (_gltfRoot.Nodes[i].Weights == null && _gltfRoot.Meshes[dm.Value].Weights != null)
-							_gltfRoot.Nodes[i].Weights = _gltfRoot.Meshes[_gltfRoot.Nodes[i].Mesh.Id].Weights;
-						
-						_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
-					}
-				}
+				_assetCache.UnityMeshDataCache[dm.Key] = _assetCache.UnityMeshDataCache[dm.Value];
+				
+				// if (_gltfRoot.Nodes == null) continue;
+				// for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
+				// {
+				// 	if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
+				// 	{
+				// 		if (_gltfRoot.Nodes[i].Weights == null && _gltfRoot.Meshes[dm.Value].Weights != null)
+				// 			_gltfRoot.Nodes[i].Weights = _gltfRoot.Meshes[_gltfRoot.Nodes[i].Mesh.Id].Weights;
+				// 		
+				// 		
+				// 		_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
+				// 	}
+				// }
 			}
 		}
 	}
