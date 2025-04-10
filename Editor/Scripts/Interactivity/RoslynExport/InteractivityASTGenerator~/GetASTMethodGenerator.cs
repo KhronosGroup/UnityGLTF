@@ -29,6 +29,7 @@ namespace InteractivityASTGenerator.Generators
             source.AppendLine("using System.Reflection;");
             source.AppendLine($"using {astNamespace};");  // Reference to our AST namespace
             source.AppendLine("using UnityGLTF.Interactivity.Export;"); // Add reference to Export namespace for IInteractivityExport
+            source.AppendLine("using UnityEngine;"); // Add reference to Unity Engine for GameObject
             source.AppendLine();
             
             // Begin namespace for actual class (only if not global)
@@ -238,7 +239,31 @@ namespace InteractivityASTGenerator.Generators
             source.AppendLine($"{indent}    public void OnInteractivityExport(GltfInteractivityExportNodes export)");
             source.AppendLine($"{indent}    {{");
             source.AppendLine($"{indent}        var k = new ClassReflectionASTWalker(GetAST());");
-            source.AppendLine($"{indent}        k.OnInteractivityExport(export, this.gameObject);");
+            
+            // Check if the class derives from MonoBehaviour to safely access gameObject
+            bool isMonoBehaviour = false;
+            var currentType = classSymbol;
+            
+            while (currentType != null)
+            {
+                if (currentType.Name == "MonoBehaviour" && currentType.ContainingNamespace.ToString() == "UnityEngine")
+                {
+                    isMonoBehaviour = true;
+                    break;
+                }
+                
+                currentType = currentType.BaseType;
+            }
+            
+            if (isMonoBehaviour)
+            {
+                source.AppendLine($"{indent}        k.OnInteractivityExport(export, this.gameObject);");
+            }
+            else
+            {
+                source.AppendLine($"{indent}        k.OnInteractivityExport(export, null);");
+            }
+            
             source.AppendLine($"{indent}    }}");
             
             source.AppendLine($"{indent}}}");

@@ -648,6 +648,14 @@ namespace UnityGLTF.Interactivity.AST
 
         string propertyName = expression.Property?.Name;
 
+        // Handle Time.deltaTime
+        if (targetExpr.ResultType?.Name == "Time" && propertyName == "deltaTime")
+        {
+            // Create an OnTick node to access deltaTime
+            var tickNode = context.CreateNode(new Event_OnTickNode());
+            return tickNode.ValueOut(Event_OnTickNode.IdOutTimeSinceLastTick);
+        }
+
         // Handle transform properties
         if (targetExpr.ResultType?.Name == "Transform")
         {
@@ -748,6 +756,37 @@ namespace UnityGLTF.Interactivity.AST
                     }
 
                     break;
+            }
+        }
+
+        // Handle static Math methods (like Mathf.Sin)
+        if (expression.Children[0].Method != null && expression.Children[0].Method.IsStatic && expression.Children[0].ResultType?.Name == "Mathf")
+        {
+            if (expression.Children.Count >= 2)
+            {
+                var argExpr = expression.Children[1];
+                var argRef = ProcessExpression(argExpr);
+
+                if (argRef != null)
+                {
+                    switch (methodName)
+                    {
+                        case "Sin":
+                            var sinNode = context.CreateNode(new Math_SinNode());
+                            sinNode.ValueIn("a").ConnectToSource(argRef);
+                            return sinNode.ValueOut("value");
+                            
+                        case "Cos":
+                            var cosNode = context.CreateNode(new Math_CosNode());
+                            cosNode.ValueIn("a").ConnectToSource(argRef);
+                            return cosNode.ValueOut("value");
+                            
+                        case "Tan":
+                            var tanNode = context.CreateNode(new Math_TanNode());
+                            tanNode.ValueIn("a").ConnectToSource(argRef);
+                            return tanNode.ValueOut("value");
+                    }
+                }
             }
         }
 
