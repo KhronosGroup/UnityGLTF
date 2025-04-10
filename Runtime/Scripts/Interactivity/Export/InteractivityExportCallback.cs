@@ -5,7 +5,7 @@ namespace UnityGLTF.Interactivity.Export
 {
     public interface IInteractivityExport
     {
-        void OnInteractivityExport(InteractivityExportContext context, GltfInteractivityExportNodes nodes);
+        void OnInteractivityExport(GltfInteractivityExportNodes export);
     }
     
     public class GltfInteractivityExportNodes : INodeExporter

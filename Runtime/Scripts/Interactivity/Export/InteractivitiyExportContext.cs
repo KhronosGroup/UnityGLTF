@@ -241,7 +241,7 @@ namespace UnityGLTF.Interactivity.Export
                 var interfaces = root.GetComponentsInChildren<IInteractivityExport>(true);
                 foreach (var callback in interfaces)
                 {
-                    callback.OnInteractivityExport(this, nodesExport);
+                    callback.OnInteractivityExport(nodesExport);
                 }                
             }
         }
