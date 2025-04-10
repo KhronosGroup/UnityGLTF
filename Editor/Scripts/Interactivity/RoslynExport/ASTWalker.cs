@@ -10,12 +10,8 @@ namespace UnityGLTF.Interactivity.AST
     /// <summary>
     /// A walker that processes ClassReflectionInfo and converts specific methods to GLTF interactivity graphs
     /// </summary>
-    public class ClassReflectionASTWalker
-
-    {
+    public class ClassReflectionASTWalker {
     private readonly ClassReflectionInfo _classInfo;
-    private readonly GltfInteractivityGraph _graph;
-
 
     // Track variable declarations across method bodies
     private readonly Dictionary<string, ValueOutRef> _variables = new Dictionary<string, ValueOutRef>();
@@ -30,7 +26,6 @@ namespace UnityGLTF.Interactivity.AST
     public ClassReflectionASTWalker(ClassReflectionInfo classInfo)
     {
         _classInfo = classInfo;
-        _graph = new GltfInteractivityGraph();
     }
 
     /// <summary>
@@ -853,13 +848,13 @@ namespace UnityGLTF.Interactivity.AST
                     switch (i)
                     {
                         case 0:
-                            vec3Node.ValueIn("x").ConnectToSource(argRef);
+                            vec3Node.ValueIn("a").ConnectToSource(argRef);
                             break;
                         case 1:
-                            vec3Node.ValueIn("y").ConnectToSource(argRef);
+                            vec3Node.ValueIn("b").ConnectToSource(argRef);
                             break;
                         case 2:
-                            vec3Node.ValueIn("z").ConnectToSource(argRef);
+                            vec3Node.ValueIn("c").ConnectToSource(argRef);
                             break;
                     }
                 }
