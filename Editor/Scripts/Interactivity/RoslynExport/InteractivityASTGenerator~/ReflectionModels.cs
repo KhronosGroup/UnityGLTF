@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 
@@ -361,7 +362,15 @@ namespace UnityGLTF.Interactivity.AST
                 
                 if (Expressions[i].LiteralValue != null)
                 {
-                    string literalStr = Expressions[i].LiteralValue.ToString();
+                    string literalStr;
+                    if (Expressions[i].LiteralValue is double || Expressions[i].LiteralValue is float || Expressions[i].LiteralValue is decimal)
+                    {
+                        literalStr = Convert.ToString(Expressions[i].LiteralValue, CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        literalStr = Expressions[i].LiteralValue.ToString();
+                    }
                     // Escape quotes for mermaid diagram
                     literalStr = literalStr.Replace("\"", "'");
                     // Truncate if too long
@@ -494,7 +503,14 @@ namespace UnityGLTF.Interactivity.AST
             
             if (LiteralValue != null)
             {
-                sb.Append($" Value: {LiteralValue}");
+                if (LiteralValue is double || LiteralValue is float || LiteralValue is decimal)
+                {
+                    sb.Append($" Value: {Convert.ToString(LiteralValue, CultureInfo.InvariantCulture)}");
+                }
+                else
+                {
+                    sb.Append($" Value: {LiteralValue}");
+                }
             }
             
             if (!string.IsNullOrEmpty(Operator))
@@ -559,7 +575,15 @@ namespace UnityGLTF.Interactivity.AST
                 // Add literal value
                 if (Children[i].LiteralValue != null)
                 {
-                    string literalStr = Children[i].LiteralValue.ToString();
+                    string literalStr;
+                    if (Children[i].LiteralValue is double || Children[i].LiteralValue is float || Children[i].LiteralValue is decimal)
+                    {
+                        literalStr = Convert.ToString(Children[i].LiteralValue, CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        literalStr = Children[i].LiteralValue.ToString();
+                    }
                     // Escape quotes for mermaid diagram
                     literalStr = literalStr.Replace("\"", "'");
                     // Truncate if too long
