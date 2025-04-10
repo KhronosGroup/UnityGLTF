@@ -347,9 +347,11 @@ namespace UnityGLTF.Interactivity.AST
                     ValueInRef target;
                     FlowInRef flowIn;
                     FlowOutRef flowOut;
+                    ValueInRef value;
 
                     // Set position using the position helper
-                    TransformHelpers.SetWorldPosition(context, valueRef, out target, out flowIn, out flowOut);
+                    TransformHelpers.SetWorldPosition(context, out value, out target, out flowIn, out flowOut);
+                    value.ConnectToSource(valueRef);
 
                     // Check if target is null
                     if (target == null)
@@ -371,9 +373,11 @@ namespace UnityGLTF.Interactivity.AST
                     ValueInRef target;
                     FlowInRef flowIn;
                     FlowOutRef flowOut;
+                    ValueInRef value;
 
                     // Set position using the position helper
-                    TransformHelpers.SetLocalPosition(context, valueRef, out target, out flowIn, out flowOut);
+                    TransformHelpers.SetLocalPosition(context, out value, out target, out flowIn, out flowOut);
+                    value.ConnectToSource(valueRef);
                     
                     // Check if target is null
                     if (target == null)
@@ -547,9 +551,10 @@ namespace UnityGLTF.Interactivity.AST
         // Set the new position
         FlowInRef flowIn;
         FlowOutRef flowOut;
-        TransformHelpers.SetLocalPosition(context, addNode.ValueOut("value"), out target, out flowIn, out flowOut);
+        TransformHelpers.SetLocalPosition(context, out target, out var valueIn, out flowIn, out flowOut);
 
-        // Connect the object reference to the target
+        valueIn.ConnectToSource(addNode.FirstValueOut());
+        
         target.ConnectToSource(targetRef);
 
         // Connect the flow
