@@ -632,78 +632,94 @@ namespace UnityGLTF.Interactivity.AST
     /// </summary>
     private ValueOutRef ProcessMemberAccessExpression(ExpressionInfo expression)
     {
-        if (expression.Children.Count == 0)
-        {
-            return null;
-        }
-
-        // Get the target object (e.g. transform in transform.position)
-        var targetExpr = expression.Children[0];
-        var targetRef = ProcessExpression(targetExpr);
-
-        if (targetRef == null)
-        {
-            return null;
-        }
-
+        // First check for static properties that don't require accessing children
         string propertyName = expression.Property?.Name;
-
-        // Handle Time.deltaTime
-        if (targetExpr.ResultType?.Name == "Time" && propertyName == "deltaTime")
+        
+        // Check if the expression has information about its target type
+        if (expression.Children.Count > 0)
         {
-            // Create an OnTick node to access deltaTime
-            var tickNode = context.CreateNode(new Event_OnTickNode());
-            return tickNode.ValueOut(Event_OnTickNode.IdOutTimeSinceLastTick);
-        }
-
-        // Handle transform properties
-        if (targetExpr.ResultType?.Name == "Transform")
-        {
-            if (propertyName == "position" || propertyName == "localPosition")
+            var targetExpr = expression.Children[0];
+            
+            // Handle known static properties first
+            if (targetExpr.ResultType?.Name == "Time")
             {
-                ValueInRef target;
-                ValueOutRef positionValue;
-
-                if (propertyName == "position")
+                ValueOutRef result;
+                // Handle Time properties without recursively processing the Time class
+                switch (propertyName)
                 {
-                    TransformHelpers.GetWorldPosition(context, out target, out positionValue);
+                    case "deltaTime":
+                        TimeHelpers.AddTickNode(context, TimeHelpers.GetTimeValueOption.DeltaTime, out result);
+                        return result;
+                    
+                    case "time":
+                    case "fixedTime":
+                    case "unscaledTime":
+                    case "realtimeSinceStartup":
+                        TimeHelpers.AddTickNode(context, TimeHelpers.GetTimeValueOption.TimeSinceStartup, out result);
+                        return result;
                 }
-                else
+            }
+            
+            // For non-static properties or methods, process the target object
+            var targetRef = ProcessExpression(targetExpr);
+            
+            if (targetRef == null)
+            {
+                return null;
+            }
+
+            // Handle transform properties
+            if (targetExpr.ResultType?.Name == "Transform")
+            {
+                if (propertyName == "position" || propertyName == "localPosition")
                 {
-                    TransformHelpers.GetLocalPosition(context, out target, out positionValue);
+                    ValueInRef target;
+                    ValueOutRef positionValue;
+
+                    if (propertyName == "position")
+                    {
+                        TransformHelpers.GetWorldPosition(context, out target, out positionValue);
+                    }
+                    else
+                    {
+                        TransformHelpers.GetLocalPosition(context, out target, out positionValue);
+                    }
+
+                    // Connect the target object
+                    target.ConnectToSource(targetRef);
+
+                    return positionValue;
                 }
+                else if (propertyName == "rotation" || propertyName == "localRotation")
+                {
+                    ValueInRef target;
+                    ValueOutRef rotationValue;
 
-                // Connect the target object
-                target.ConnectToSource(targetRef);
+                    TransformHelpers.GetLocalRotation(context, out target, out rotationValue);
 
-                return positionValue;
+                    // Connect the target object
+                    target.ConnectToSource(targetRef);
+
+                    return rotationValue;
+                }
+                else if (propertyName == "localScale")
+                {
+                    ValueInRef target;
+                    ValueOutRef scaleValue;
+
+                    TransformHelpers.GetLocalScale(context, out target, out scaleValue);
+
+                    // Connect the target object
+                    target.ConnectToSource(targetRef);
+
+                    return scaleValue;
+                }
             }
-            else if (propertyName == "rotation" || propertyName == "localRotation")
-            {
-                ValueInRef target;
-                ValueOutRef rotationValue;
-
-                TransformHelpers.GetLocalRotation(context, out target, out rotationValue);
-
-                // Connect the target object
-                target.ConnectToSource(targetRef);
-
-                return rotationValue;
-            }
-            else if (propertyName == "localScale")
-            {
-                ValueInRef target;
-                ValueOutRef scaleValue;
-
-                TransformHelpers.GetLocalScale(context, out target, out scaleValue);
-
-                // Connect the target object
-                target.ConnectToSource(targetRef);
-
-                return scaleValue;
-            }
+            
+            // Add other non-static property handlers here
         }
-
+        
+        Debug.LogWarning($"Unsupported member access: {propertyName}");
         return null;
     }
 
@@ -760,7 +776,7 @@ namespace UnityGLTF.Interactivity.AST
         }
 
         // Handle static Math methods (like Mathf.Sin)
-        if (expression.Children[0].Method != null && expression.Children[0].Method.IsStatic && expression.Children[0].ResultType?.Name == "Mathf")
+        if (expression.Method != null && expression.Method.IsStatic && expression.Method.DeclaringType == typeof(Mathf))
         {
             if (expression.Children.Count >= 2)
             {
