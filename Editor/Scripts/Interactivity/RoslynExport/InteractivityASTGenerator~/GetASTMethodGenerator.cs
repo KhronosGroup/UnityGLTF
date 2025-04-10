@@ -273,8 +273,10 @@ namespace InteractivityASTGenerator.Generators
         private static void GenerateStatementWithSemanticModel(StatementSyntax statement, StringBuilder source, string indent, SemanticModel semanticModel)
         {
             // Create a variable for the statement
-            source.AppendLine($"{indent}var statement = new StatementInfo();");
-            source.AppendLine($"{indent}statement.Kind = StatementInfo.StatementKind.{GetStatementKind(statement)};");
+            source.AppendLine($"{indent}var statement = new StatementInfo");
+            source.AppendLine($"{indent}{{");
+            source.AppendLine($"{indent}    Kind = StatementInfo.StatementKind.{GetStatementKind(statement)}");
+            source.AppendLine($"{indent}}};");
             
             // Handle block statements
             if (statement is BlockSyntax blockStmt)
@@ -294,16 +296,19 @@ namespace InteractivityASTGenerator.Generators
                 // Process initializer
                 if (forStmt.Declaration != null)
                 {
-                    source.AppendLine($"{indent}var initExpr = new ExpressionInfo();");
-                    source.AppendLine($"{indent}initExpr.Kind = ExpressionInfo.ExpressionKind.ForInitializer;");
+                    source.AppendLine($"{indent}var initExpr = new ExpressionInfo");
+                    source.AppendLine($"{indent}{{");
+                    source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.ForInitializer");
                     
                     // Get type information for initializer
                     var typeInfo = semanticModel.GetTypeInfo(forStmt.Declaration.Type);
                     if (typeInfo.Type != null)
                     {
                         string typeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        source.AppendLine($"{indent}initExpr.ResultType = typeof({typeName});");
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    ResultType = typeof({typeName})");
                     }
+                    source.AppendLine($"{indent}}};");
                     
                     // Process initializer variables and their values
                     if (forStmt.Declaration.Variables.Count > 0)
@@ -314,19 +319,25 @@ namespace InteractivityASTGenerator.Generators
                         {
                             if (variable.Initializer != null)
                             {
-                                source.AppendLine($"{indent}var assignExpr = new ExpressionInfo();");
-                                source.AppendLine($"{indent}assignExpr.Kind = ExpressionInfo.ExpressionKind.Assignment;");
+                                source.AppendLine($"{indent}var assignExpr = new ExpressionInfo");
+                                source.AppendLine($"{indent}{{");
+                                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Assignment");
+                                source.AppendLine($"{indent}}};");
                                 source.AppendLine($"{indent}assignExpr.Children = new List<ExpressionInfo>();");
                                 
                                 // Add identifier as left side
-                                source.AppendLine($"{indent}var idExpr = new ExpressionInfo();");
-                                source.AppendLine($"{indent}idExpr.Kind = ExpressionInfo.ExpressionKind.Identifier;");
+                                source.AppendLine($"{indent}var idExpr = new ExpressionInfo");
+                                source.AppendLine($"{indent}{{");
+                                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Identifier");
                                 if (typeInfo.Type != null)
                                 {
                                     string typeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                                    source.AppendLine($"{indent}idExpr.ResultType = typeof({typeName});");
+                                    source.AppendLine($"{indent},");
+                                    source.AppendLine($"{indent}    ResultType = typeof({typeName})");
                                 }
-                                source.AppendLine($"{indent}idExpr.LiteralValue = \"{variable.Identifier.Text}\";");
+                                source.AppendLine($"{indent},");
+                                source.AppendLine($"{indent}    LiteralValue = \"{variable.Identifier.Text}\"");
+                                source.AppendLine($"{indent}}};");
                                 source.AppendLine($"{indent}assignExpr.Children.Add(idExpr);");
                                 
                                 // Add initializer value as right side
@@ -353,15 +364,19 @@ namespace InteractivityASTGenerator.Generators
                 // Process condition
                 if (forStmt.Condition != null)
                 {
-                    source.AppendLine($"{indent}var conditionExpr = new ExpressionInfo();");
-                    source.AppendLine($"{indent}conditionExpr.Kind = ExpressionInfo.ExpressionKind.ForCondition;");
+                    source.AppendLine($"{indent}var conditionExpr = new ExpressionInfo");
+                    source.AppendLine($"{indent}{{");
+                    source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.ForCondition");
                     
                     var conditionTypeInfo = semanticModel.GetTypeInfo(forStmt.Condition);
                     if (conditionTypeInfo.Type != null)
                     {
                         string typeName = conditionTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        source.AppendLine($"{indent}conditionExpr.ResultType = typeof({typeName});");
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    ResultType = typeof({typeName})");
                     }
+                    
+                    source.AppendLine($"{indent}}};");
                     
                     source.AppendLine($"{indent}conditionExpr.Children = new List<ExpressionInfo>();");
                     
@@ -374,15 +389,19 @@ namespace InteractivityASTGenerator.Generators
                 // Process incrementors
                 foreach (var incrementor in forStmt.Incrementors)
                 {
-                    source.AppendLine($"{indent}var incrementorExpr = new ExpressionInfo();");
-                    source.AppendLine($"{indent}incrementorExpr.Kind = ExpressionInfo.ExpressionKind.ForIncrementor;");
+                    source.AppendLine($"{indent}var incrementorExpr = new ExpressionInfo");
+                    source.AppendLine($"{indent}{{");
+                    source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.ForIncrementor");
                     
                     var incrementorTypeInfo = semanticModel.GetTypeInfo(incrementor);
                     if (incrementorTypeInfo.Type != null)
                     {
                         string typeName = incrementorTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        source.AppendLine($"{indent}incrementorExpr.ResultType = typeof({typeName});");
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    ResultType = typeof({typeName})");
                     }
+                    
+                    source.AppendLine($"{indent}}};");
                     
                     source.AppendLine($"{indent}incrementorExpr.Children = new List<ExpressionInfo>();");
                     
@@ -420,8 +439,10 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}statement.Children = new List<StatementInfo>();");
                 
                 // Then clause
-                source.AppendLine($"{indent}var thenStatement = new StatementInfo();");
-                source.AppendLine($"{indent}thenStatement.Kind = StatementInfo.StatementKind.ThenClause;");
+                source.AppendLine($"{indent}var thenStatement = new StatementInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = StatementInfo.StatementKind.ThenClause");
+                source.AppendLine($"{indent}}};");
                 source.AppendLine($"{indent}thenStatement.Children = new List<StatementInfo>();");
                 
                 if (ifStmt.Statement is BlockSyntax thenBlock)
@@ -443,8 +464,10 @@ namespace InteractivityASTGenerator.Generators
                 // Else clause if present
                 if (ifStmt.Else != null)
                 {
-                    source.AppendLine($"{indent}var elseStatement = new StatementInfo();");
-                    source.AppendLine($"{indent}elseStatement.Kind = StatementInfo.StatementKind.ElseClause;");
+                    source.AppendLine($"{indent}var elseStatement = new StatementInfo");
+                    source.AppendLine($"{indent}{{");
+                    source.AppendLine($"{indent}    Kind = StatementInfo.StatementKind.ElseClause");
+                    source.AppendLine($"{indent}}};");
                     source.AppendLine($"{indent}elseStatement.Children = new List<StatementInfo>();");
                     
                     if (ifStmt.Else.Statement is BlockSyntax elseBlock)
@@ -490,16 +513,19 @@ namespace InteractivityASTGenerator.Generators
                 
                 foreach (var variable in localDecl.Declaration.Variables)
                 {
-                    source.AppendLine($"{indent}var declExpr = new ExpressionInfo();");
-                    source.AppendLine($"{indent}declExpr.Kind = ExpressionInfo.ExpressionKind.Identifier;");
+                    source.AppendLine($"{indent}var declExpr = new ExpressionInfo");
+                    source.AppendLine($"{indent}{{");
+                    source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Identifier");
                     
                     // Resolve the variable type using semantic model
                     var typeInfo = semanticModel.GetTypeInfo(localDecl.Declaration.Type);
                     if (typeInfo.Type != null)
                     {
                         string typeFullName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        source.AppendLine($"{indent}declExpr.ResultType = typeof({typeFullName});");
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    ResultType = typeof({typeFullName})");
                     }
+                    source.AppendLine($"{indent}}};");
                     
                     // If there's an initializer, include it with proper type resolution
                     if (variable.Initializer != null)
@@ -522,8 +548,11 @@ namespace InteractivityASTGenerator.Generators
         /// </summary>
         private static void GenerateExpressionBodyWithSemanticModel(ArrowExpressionClauseSyntax expressionBody, StringBuilder source, string indent, SemanticModel semanticModel)
         {
-            source.AppendLine($"{indent}var expressionBodyStmt = new StatementInfo();");
-            source.AppendLine($"{indent}expressionBodyStmt.Kind = StatementInfo.StatementKind.ExpressionBody;");
+            source.AppendLine($"{indent}var expressionBodyStmt = new StatementInfo");
+            source.AppendLine($"{indent}{{");
+            source.AppendLine($"{indent}    Kind = StatementInfo.StatementKind.ExpressionBody");
+            source.AppendLine($"{indent}}};");
+            
             source.AppendLine($"{indent}expressionBodyStmt.Expressions = new List<ExpressionInfo>();");
             
             GenerateExpressionWithSemanticModel(expressionBody.Expression, source, indent, semanticModel, "exprBodyExpr");
