@@ -28,6 +28,7 @@ namespace InteractivityASTGenerator.Generators
             source.AppendLine("using System.Text;");
             source.AppendLine("using System.Reflection;");
             source.AppendLine($"using {astNamespace};");  // Reference to our AST namespace
+            source.AppendLine("using UnityGLTF.Interactivity.Export;"); // Add reference to Export namespace for IInteractivityExport
             source.AppendLine();
             
             // Begin namespace for actual class (only if not global)
@@ -39,8 +40,8 @@ namespace InteractivityASTGenerator.Generators
             
             string indent = isGlobalNamespace ? "" : "    ";
             
-            // Create partial class with appropriate indentation
-            source.AppendLine($"{indent}public partial class {classSymbol.Name}");
+            // Create partial class with appropriate indentation and implement IInteractivityExport
+            source.AppendLine($"{indent}public partial class {classSymbol.Name} : IInteractivityExport");
             source.AppendLine($"{indent}{{");
 
             // Add GetAST method that returns the ClassReflectionInfo structure
@@ -226,6 +227,18 @@ namespace InteractivityASTGenerator.Generators
             source.AppendLine($"{indent}        }};");
             source.AppendLine();
             source.AppendLine($"{indent}        return ast;");
+            source.AppendLine($"{indent}    }}");
+            
+            // Add the OnInteractivityExport method implementation from IInteractivityExport interface
+            source.AppendLine();
+            source.AppendLine($"{indent}    /// <summary>");
+            source.AppendLine($"{indent}    /// Implements the IInteractivityExport interface to allow exporting this class to GLTF interactivity format");
+            source.AppendLine($"{indent}    /// </summary>");
+            source.AppendLine($"{indent}    /// <param name=\"export\">The export context</param>");
+            source.AppendLine($"{indent}    public void OnInteractivityExport(GltfInteractivityExportNodes export)");
+            source.AppendLine($"{indent}    {{");
+            source.AppendLine($"{indent}        var k = new ClassReflectionASTWalker(GetAST());");
+            source.AppendLine($"{indent}        k.OnInteractivityExport(export, this.gameObject);");
             source.AppendLine($"{indent}    }}");
             
             source.AppendLine($"{indent}}}");
