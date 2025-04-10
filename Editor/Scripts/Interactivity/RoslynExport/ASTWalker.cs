@@ -16,11 +16,6 @@ namespace UnityGLTF.Interactivity.AST
     private readonly ClassReflectionInfo _classInfo;
     private readonly GltfInteractivityGraph _graph;
 
-    private readonly Dictionary<string, GltfInteractivityExportNode> _nodes =
-        new Dictionary<string, GltfInteractivityExportNode>();
-
-    private readonly Dictionary<string, int> _nodeIdCounter = new Dictionary<string, int>();
-    private readonly List<IDisposable> _disposables = new List<IDisposable>();
 
     // Track variable declarations across method bodies
     private readonly Dictionary<string, ValueOutRef> _variables = new Dictionary<string, ValueOutRef>();
@@ -42,7 +37,7 @@ namespace UnityGLTF.Interactivity.AST
     /// Process the ClassReflectionInfo and convert specific methods to GLTF interactivity graphs
     /// </summary>
     /// <returns>The generated interactivity graph</returns>
-    public GltfInteractivityGraph Process()
+    public void Process()
     {
         try
         {
@@ -51,13 +46,10 @@ namespace UnityGLTF.Interactivity.AST
 
             // Find and process "Update" method
             ProcessSpecificMethod("Update");
-
-            return _graph;
         }
         catch (Exception e)
         {
             Debug.LogError($"Error processing ClassReflectionInfo: {e.Message}\n{e.StackTrace}");
-            return _graph;
         }
     }
 
@@ -880,6 +872,8 @@ namespace UnityGLTF.Interactivity.AST
         return null;
     }
 
+
+    
     /// <summary>
     /// Process a literal expression (e.g. string, number, bool literals)
     /// </summary>
@@ -974,7 +968,6 @@ namespace UnityGLTF.Interactivity.AST
         {
             // Process the class information into the interactivity graph
             Process();
-            Debug.Log($"Exported {_nodes.Count} nodes to GLTF interactivity graph from class {_classInfo.Type.Name}");
         }
         catch (Exception e)
         {
