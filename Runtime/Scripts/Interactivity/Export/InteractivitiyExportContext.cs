@@ -25,6 +25,8 @@ namespace UnityGLTF.Interactivity.Export
             get => nodesToSerialize;
         }
         
+        public bool addUnityGltfSpaceConversion = true;
+        
         public delegate void OnBeforeSerializationDelegate(List<GltfInteractivityExportNode> nodes);
         public event OnBeforeSerializationDelegate OnBeforeSerialization;
         
@@ -68,6 +70,8 @@ namespace UnityGLTF.Interactivity.Export
         
         protected void ApplyInteractivityExtension()
         {
+            // TODO: Add support for multiple graphs and/or check if a graph already exists
+            
             GltfInteractivityExtension extension = new GltfInteractivityExtension();
             GltfInteractivityGraph mainGraph = new GltfInteractivityGraph();
             extension.graphs = new GltfInteractivityGraph[] {mainGraph};
@@ -232,7 +236,7 @@ namespace UnityGLTF.Interactivity.Export
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }
         
-        protected void TriggerInterfaceExportCallbacks()
+        protected virtual void TriggerInterfaceExportCallbacks()
         {
             GltfInteractivityExportNodes nodesExport = new GltfInteractivityExportNodes(this);
             

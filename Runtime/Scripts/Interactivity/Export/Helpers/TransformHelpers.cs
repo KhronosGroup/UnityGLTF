@@ -20,13 +20,18 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getPosition = exporter.CreateNode(new Pointer_GetNode());
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
 
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                positionOutput = getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+                return;
+            }
+            
             SpaceConversionHelpers.AddSpaceConversion(exporter, getPosition.FirstValueOut(),
                 out var convertedOutput);
             positionOutput = convertedOutput;
             positionOutput.ExpectedType(ExpectedType.Float3);
-
-            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
         }
 
         public static void GetLocalPosition(INodeExporter exporter, out ValueInRef target,
@@ -34,43 +39,67 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getPosition = exporter.CreateNode(new Pointer_GetNode());
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+            target = getPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
 
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                positionOutput = getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+                return;
+            }
+            
             SpaceConversionHelpers.AddSpaceConversion(exporter, getPosition.FirstValueOut(),
                 out var convertedOutput);
             positionOutput = convertedOutput;
             positionOutput.ExpectedType(ExpectedType.Float3);
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
-            target = getPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
         }
 
-        public static void SetLocalPosition(INodeExporter exporter, ValueOutRef position, out ValueInRef target,
+        public static void SetLocalPosition(INodeExporter exporter, out ValueInRef target, out ValueInRef position,
             out FlowInRef flowIn, out FlowOutRef flowOut)
         {
             var setPosition = exporter.CreateNode(new Pointer_SetNode());
 
             PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex,
                 "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
-            target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
-
-            SpaceConversionHelpers.AddSpaceConversion(exporter, position, out var convertedOutput);
-            setPosition.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedOutput);
-
+            target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex).SetType(TypeRestriction.LimitToInt);
             flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
             flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                position = setPosition.ValueIn(Pointer_SetNode.IdValue);
+                return;
+            }
+            
+            SpaceConversionHelpers.AddSpaceConversion(exporter, out position, out var convertedOutput);
+            setPosition.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedOutput);
         }
 
-        public static void SetWorldPosition(INodeExporter exporter, ValueOutRef position,
-            out ValueInRef target, out FlowInRef flowIn, out FlowOutRef flowOut)
+        public static void SetWorldPosition(INodeExporter exporter, out ValueInRef target, out ValueInRef position,
+            out FlowInRef flowIn, out FlowOutRef flowOut)
         {
-            SpaceConversionHelpers.AddSpaceConversion(exporter, position, out var convertedOutput);
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                SetWorldPositionFromConvertedSpace(exporter, out target, out position, out flowIn, out flowOut);
+                return;                
+            }
+            SpaceConversionHelpers.AddSpaceConversion(exporter, out position, out var convertedOutput);
             SetWorldPositionFromConvertedSpace(exporter, convertedOutput, out target, out flowIn, out flowOut);
         }
-
+        
         public static void SetWorldPositionFromConvertedSpace(INodeExporter exporter,
             ValueOutRef convertedPosition,
             out ValueInRef target, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            SetWorldPositionFromConvertedSpace(exporter, out target, out var convertedPositionInRef, out flowIn, out flowOut);
+            convertedPositionInRef.ConnectToSource(convertedPosition);
+        }
+
+        public static void SetWorldPositionFromConvertedSpace(INodeExporter exporter,
+            out ValueInRef target, out ValueInRef convertedPosition,
+            out FlowInRef flowIn, out FlowOutRef flowOut)
         {
             var setPosition = exporter.CreateNode(new Pointer_SetNode());
 
@@ -97,7 +126,7 @@ namespace UnityGLTF.Interactivity.Export
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
 
             var trs = exporter.CreateNode(new Math_MatComposeNode());
-            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedPosition);
+            convertedPosition = trs.ValueIn(Math_MatComposeNode.IdInputTranslation);
             trs.ValueIn(Math_MatComposeNode.IdInputRotation).SetValue(Quaternion.identity);
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
 
@@ -115,8 +144,28 @@ namespace UnityGLTF.Interactivity.Export
             flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
         }
 
+        public static void SetWorldRotation(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef convertedRotation, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                SetWorldRotationFromConvertedSpace(exporter, out target, out convertedRotation, out flowIn, out flowOut);
+                return;
+            }
+            
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, out convertedRotation, out var convertedOutput);
+            SetWorldRotationFromConvertedSpace(exporter, convertedOutput, out target, out flowIn, out flowOut);
+        }
+
         public static void SetWorldRotationFromConvertedSpace(INodeExporter exporter, ValueOutRef convertedRotation,
             out ValueInRef target, out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            SetWorldRotationFromConvertedSpace(exporter, out target, out var convertedRotationInRef, out flowIn, out flowOut);
+            convertedRotationInRef.ConnectToSource(convertedRotation);
+        }
+        
+        public static void SetWorldRotationFromConvertedSpace(INodeExporter exporter, out ValueInRef target, out ValueInRef convertedRotation,
+             out FlowInRef flowIn, out FlowOutRef flowOut)
         {
             var setRotation = exporter.CreateNode(new Pointer_SetNode());
 
@@ -142,7 +191,7 @@ namespace UnityGLTF.Interactivity.Export
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
 
             var trs = exporter.CreateNode(new Math_MatComposeNode());
-            trs.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
+            convertedRotation = trs.ValueIn(Math_MatComposeNode.IdInputRotation);
             trs.ValueIn(Math_MatComposeNode.IdInputTranslation).SetValue(Vector3.zero);
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
 
@@ -164,12 +213,16 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getRotation = exporter.CreateNode(new Pointer_GetNode());
             getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
+            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                value = getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
+                return;
+            }
 
             SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(),
                 out var convertedRotation);
-            value = convertedRotation;
-
-            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
             QuaternionHelpers.Invert(exporter, convertedRotation, out var invertedRotation);
             value = invertedRotation;
         }
@@ -178,14 +231,21 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getRotation = exporter.CreateNode(new Pointer_GetNode());
             getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
+            PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+
+            target = getRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                value = getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
+                return;
+            }
 
             SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(),
                 out var convertedRotation);
             value = convertedRotation;
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
-            target = getRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
         }
 
         public static void SetLocalRotation(INodeExporter exporter, out ValueInRef target,
@@ -196,24 +256,36 @@ namespace UnityGLTF.Interactivity.Export
             PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
                 "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
             target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+            flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
+            flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                rotationInput = setRotation.ValueIn(Pointer_SetNode.IdValue);
+                return;
+            }
 
             SpaceConversionHelpers.AddRotationSpaceConversion(exporter, out rotationInput,
                 out var convertedRotation);
             rotationInput = setRotation.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedRotation);
-            flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
-            flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
         }
 
         public static void GetWorldPositionFromMainCamera(INodeExporter exporter, out ValueOutRef worldPosition)
         {
             var getPosition = exporter.CreateNode(new Pointer_GetNode());
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                worldPosition = getPosition.FirstValueOut();
+                return;
+            }
 
             SpaceConversionHelpers.AddSpaceConversion(exporter, getPosition.FirstValueOut(),
                 out worldPosition);
             worldPosition.ExpectedType(ExpectedType.Float3);
 
-            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
         }
 
         public static void GetWorldPosition(INodeExporter exporter, out ValueInRef target,
@@ -228,6 +300,13 @@ namespace UnityGLTF.Interactivity.Export
             var decompose = exporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
             var gltfWorldPosition = decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation);
+
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                worldPosition = gltfWorldPosition;
+                return;
+            }
 
             SpaceConversionHelpers.AddSpaceConversion(exporter, gltfWorldPosition, out var convertedOutput);
 
@@ -251,11 +330,17 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getRotation = exporter.CreateNode(new Pointer_GetNode());
             getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
+            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                worldRotation = getRotation.FirstValueOut();
+                return;
+            }
 
             SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(), out worldRotation);
             worldRotation.ExpectedType(ExpectedType.Float4);
 
-            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
         }
 
         public static void GetWorldRotation(INodeExporter exporter, out ValueInRef target,
@@ -270,7 +355,13 @@ namespace UnityGLTF.Interactivity.Export
             var decompose = exporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
             var gltfWorldRotation = decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation);
-
+           
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                worldRotation = gltfWorldRotation;
+                return;
+            }
+            
             SpaceConversionHelpers.AddRotationSpaceConversion(exporter, gltfWorldRotation,
                 out var convertedOutput);
 

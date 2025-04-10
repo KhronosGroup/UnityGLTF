@@ -43,7 +43,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         [Header("This settings should only be disabled for debugging purposes.")]
         public bool cleanUpAndOptimizeExportedGraph = true;
-        public bool addUnityToGltfSpaceConversion = true;
         
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {

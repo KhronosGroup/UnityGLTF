@@ -61,6 +61,9 @@ namespace UnityGLTF.Interactivity.Export
                 {
                     if (node.ValueInConnection.TryGetValue(PointersHelper.IdPointerNodeIndex, out var valueSocket))
                     {
+                        if (valueSocket.Value != null && valueSocket.Value.GetType() != typeof(int))
+                            NodeAppendLine(node, $"Node Pointer Node has invalid nodeIndex Type: {valueSocket.Value.GetType().Name}");
+                        else
                         if (valueSocket.Value != null && valueSocket.Node == null && (int)valueSocket.Value == -1)
                             NodeAppendLine(node, $"Node Pointer Node has invalid nodeIndex Value: -1");
                     }

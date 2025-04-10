@@ -33,12 +33,20 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(inverse.FirstValueOut());
 
-            SpaceConversionHelpersVS.AddSpaceConversionWithCheck(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation), out var convertedTranslation);
-            SpaceConversionHelpersVS.AddRotationSpaceConversionWithCheck(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation), out var convertedRotation);
-            
             var compose = unitExporter.CreateNode(new Math_MatComposeNode());
-            compose.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedTranslation);
-            compose.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
+            if (unitExporter.Context.addUnityGltfSpaceConversion)
+            {
+                SpaceConversionHelpers.AddSpaceConversion(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation), out var convertedTranslation);
+                SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation), out var convertedRotation);
+                compose.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(convertedTranslation);
+                compose.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(convertedRotation);
+            }
+            else
+            {
+                compose.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation));
+                compose.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(decompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation));
+            }
+            
             compose.ValueIn(Math_MatComposeNode.IdInputScale).ConnectToSource(decompose.ValueOut(Math_MatDecomposeNode.IdOutputScale));
 
             compose.FirstValueOut().MapToPort(getMemberUnit.value);
