@@ -1105,7 +1105,7 @@ namespace UnityGLTF.Interactivity.AST
         if (value == "transform")
         {
             var nodeId = context.Context.exporter.ExportNode(gameObject);
-            return new LiteralValueRef(nodeId.Id);;
+            return new LiteralValueRef(nodeId.Id);
         }
         else
         {
@@ -1273,6 +1273,9 @@ namespace UnityGLTF.Interactivity.AST
         if (!isSimpleIncrement)
         {
             Debug.LogWarning("For statement incrementor must be a simple increment (i++ or i+=1) for KHR_interactivity");
+           
+            // TODO: when step != 1, use FlowHelpers.CreateCustomForLoop();
+            
             // We'll still continue since we can default to step=1
         }
         
@@ -1281,16 +1284,6 @@ namespace UnityGLTF.Interactivity.AST
         
         // Connect flow
         inFlow.ConnectToFlowDestination(forLoopNode.FlowIn(Flow_ForLoopNode.IdFlowIn));
-        
-        // Create a variable get node to access the loop index
-        var indexVarNode = context.CreateNode(new Variable_GetNode());
-        indexVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor { Type = "string" };
-        indexVarNode.Schema.Configuration["variableName"].Type = loopVarName;
-        
-        /* TODO fix API usage
-        // Connect the loop index output to the variable
-        forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex).ConnectToFlowDestination(indexVarNode.ValueIn(Variable_GetNode.IdInputVariableName));
-        */
         
         // Store a reference to the loop variable for use inside the loop body
         _variables[loopVarName] = forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex);
