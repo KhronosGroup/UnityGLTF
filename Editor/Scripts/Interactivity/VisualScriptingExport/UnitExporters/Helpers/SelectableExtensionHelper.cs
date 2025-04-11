@@ -8,8 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public static class SelectableExtensionHelper
     {
-        public static readonly string PointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex +
-                                                        "}/extensions/"+KHR_node_selectability_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_selectability.selectable); 
+        public static string PointerTemplate => PointersHelper.IdPointerSelectability;
         
         public static void AddExtension(UnitExporter unitExporter, IUnit unit, GltfInteractivityExportNode node)
         {

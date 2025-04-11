@@ -1,3 +1,4 @@
+using GLTF.Schema;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.Export
@@ -8,6 +9,10 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerMeshIndex = "meshIndex";
         public static readonly string IdPointerMaterialIndex = "materialIndex";
         public static readonly string IdPointerAnimationIndex = "animationIndex";
+        public static readonly string IddPointerVisibility = "/nodes/{" + IdPointerNodeIndex +
+                                                        "}/extensions/"+KHR_node_visibility_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_visibility.visible); 
+        public static readonly string IdPointerSelectability = "/nodes/{" + IdPointerNodeIndex +
+                                                        "}/extensions/"+KHR_node_selectability_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_selectability.selectable); 
 
         public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
         {
