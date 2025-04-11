@@ -710,14 +710,19 @@ namespace UnityGLTF.Interactivity.AST
         // Second child is the index
         var indexExpr = expression.Children[1];
         
+        /*
         var arrayRef = ProcessExpression(arrayExpr);
+        */
+        
         var indexRef = ProcessExpression(indexExpr);
         
+        /*
         if (arrayRef == null || indexRef == null)
         {
             Debug.LogWarning("Could not process array or index reference in element access");
             return null;
         }
+        */
         
         // Create an array element node
         /*
@@ -763,7 +768,6 @@ namespace UnityGLTF.Interactivity.AST
             // TODO handle arrays correctly – currently we're getting "Default constructor not found for type UnityEngine.Vector3[]" because of the Activator.CreateInstance call
             var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(expression.ResultType), "float");
             VariablesHelpers.GetVariable(context, variableId, out var output);
-            _variables[variableName] = output;
             return output;
         }
 
