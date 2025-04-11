@@ -15,7 +15,7 @@ namespace UnityGLTF.Interactivity.Schema
 	/// </summary>
     public class GltfAudioExtension : IExtension
     {
-        public const string AudioExtensionName = "KHR_audio_emitter";
+        public const string AudioExtensionName = "GOOG_audio_emitter";
 
         public GltfInteractivityGraph[] graphs;
         public int graph = 0;

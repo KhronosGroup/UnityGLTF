@@ -16,7 +16,7 @@ public class GLTFAudioExportPlugin : VisualScriptingExportPlugin
         /// <summary>
         /// Plugin name
         /// </summary>
-        public override string DisplayName => "GLTF_Audio_Export";
+        public override string DisplayName => "GOOG_audio_emitter";
 
         /// <summary>
         /// Plugin descriptions
@@ -32,7 +32,7 @@ public class GLTFAudioExportPlugin : VisualScriptingExportPlugin
         /// <returns></returns>
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
-            return new GLTFAudioExportContext(this, false);
+            return new GLTFAudioExportContext(this, true);
         }
     }
 

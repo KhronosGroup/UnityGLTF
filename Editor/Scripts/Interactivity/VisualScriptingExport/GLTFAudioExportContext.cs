@@ -61,7 +61,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
             _saveAudioToFile = saveToExternalFile;
         }
 
-        public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) { }
+        public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) 
+        {
+        }
 
         /// <summary>
         /// Called after the scene has been exported to add khr audio data.
@@ -73,6 +75,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// <param name="visualScriptingComponents"> list of ScriptMachines in the scene.</param>
         public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
         {
+            var scenes = gltfRoot.Scenes;
             var scriptMachines = new List<ScriptMachine>();
 
             foreach (var root in exporter.RootTransforms)
@@ -85,6 +88,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
             }
 
             AfterSceneExport(exporter, gltfRoot, scriptMachines);
+
+            // add new scenes audio emitter extension before process and JSON is written out.
+            var v = new Dictionary<string, IExtension>();
+            v.Add(GltfAudioExtension.AudioExtensionName, new GltfSceneAudioEmitterExtension() { emitters = GetAudioSourceIndexes() });
+            gltfRoot.Scenes.Add(new GLTFScene() { Extensions = v });
+
         }
 
         /// <summary>
@@ -156,6 +165,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return newExportGraph;
         }
 
+        public static List<int> GetAudioSourceIndexes()
+        {
+            return (_audioSourceIds.Select(r => r.Id).ToList());
+        }
+
         public static AudioDescription AddAudioSource(AudioSource audioSource)
         {
             AudioClip clip = audioSource.clip;
@@ -194,24 +208,31 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 Root = _gltfRoot
             };
 
-            var emitter = new KHR_PositionalAudioEmitter()
-            {
-                type = "positional",
-                sources = new List<AudioSourceId>() { new AudioSourceId() { Id = audioSourceId.Id, Root = _gltfRoot } },
-                gain = audioSource.volume,
-                minDistance = audioSource.minDistance,
-                maxDistance = audioSource.maxDistance,
-                distanceModel = PositionalAudioDistanceModel.linear,
-                name = "positional emitter"
-            };
+            //var emitter = new KHR_AudioEmitter()
+            //{
+            //    audio = audioSourceId.Id,
+            //    gain = 1,
+            //    autoPlay = true,
+            //    loop = false
+            //};
 
-            audioEmitters.Add(emitter);
+            //var emitter = new KHR_PositionalAudioEmitter()
+            //{
+            //    type = "global",
+            //    sources = new List<AudioSourceId>() { new AudioSourceId() { Id = audioSourceId.Id, Root = _gltfRoot } },
+            //    gain = audioSource.volume,
+            //    minDistance = audioSource.minDistance,
+            //    maxDistance = audioSource.maxDistance,
+            //    distanceModel = PositionalAudioDistanceModel.linear,
+            //    name = "positional emitter"
+            //};
+
+//            audioEmitters.Add(emitter);
 
             var path = AssetDatabase.GetAssetPath(clip);
 
             var fileName = Path.GetFileName(path);
             var settings = GLTFSettings.GetOrCreateSettings();
-
 
             string savePath = string.Empty;
 
@@ -250,23 +271,33 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             audioData.Add(audio);
 
-            var audioSources = new List<KHR_AudioSource>();
-
-            var khrAudio = new KHR_AudioSource
+            var emitter = new KHR_AudioEmitter()
             {
-                audio = new AudioDataId { Id = audioSourceId.Id, Root = _gltfRoot },
-                autoPlay = audioSource.playOnAwake,
-                loop = audioSource.loop,
+                audio = audioSourceId.Id,
                 gain = audioSource.volume,
-                name = Path.GetFileNameWithoutExtension(path)
+                autoPlay = audioSource.playOnAwake,
+                loop = audioSource.loop
             };
 
-            audioSources.Add(khrAudio);
+            audioEmitters.Add(emitter);
+
+            //var audioSources = new List<KHR_AudioSource>();
+
+            //var khrAudio = new KHR_AudioSource
+            //{
+            //    audio = new AudioDataId { Id = audioSourceId.Id, Root = _gltfRoot },
+            //    autoPlay = audioSource.playOnAwake,
+            //    loop = audioSource.loop,
+            //    gain = audioSource.volume,
+            //    name = Path.GetFileNameWithoutExtension(path)
+            //};
+
+            //audioSources.Add(khrAudio);
 
             var extension = new KHR_audio
             {
                 audio = new List<KHR_AudioData>(audioData),
-                sources = new List<KHR_AudioSource>(audioSources),
+//                sources = new List<KHR_AudioSource>(audioSources),
                 emitters = new List<KHR_AudioEmitter>(audioEmitters),
             };
 
