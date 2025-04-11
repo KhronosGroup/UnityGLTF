@@ -928,16 +928,10 @@ namespace UnityGLTF.Interactivity.AST
             if (propertyName == "Length" && targetExpr.ResultType != null && targetExpr.ResultType.IsArray)
             {
                 // For array length, we'll use a constant value for now based on the actual array instance
-                var addNode = context.CreateNode(new Math_AddNode());
-                
+               
                 // Try to determine array length if possible
                 int arrayLength = GetArrayLength(targetExpr.LiteralValue?.ToString());
-                
-                // Set the length as a constant
-                addNode.ValueIn("a").SetValue(arrayLength);
-                addNode.ValueIn("b").SetValue(0);
-                
-                return addNode.FirstValueOut();
+                return new LiteralValueRef(arrayLength);
             }
             
             // For non-static properties or methods, process the target object
