@@ -724,7 +724,15 @@ namespace UnityGLTF.Interactivity.AST
         // create a new Variable_Get node to access it
         if (!string.IsNullOrEmpty(variableName))
         {
+            if (expression.ResultType.IsArray)
+            {
+                // TODO handle arrays correctly
+                Debug.LogWarning($"Array type not supported for variable: {variableName}");
+                return null;
+            }
+            
             // TODO get type properly
+            // TODO handle arrays correctly – currently we're getting "Default constructor not found for type UnityEngine.Vector3[]" because of the Activator.CreateInstance call
             var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(expression.ResultType), "float");
             var getVarNode = context.CreateNode(new Variable_GetNode());
             getVarNode.Configuration["variable"].Value = variableId;
@@ -769,6 +777,22 @@ namespace UnityGLTF.Interactivity.AST
                         TimeHelpers.AddTickNode(context, TimeHelpers.GetTimeValueOption.TimeSinceStartup, out result);
                         return result;
                 }
+            }
+            
+            // Check for Array.Length property
+            if (propertyName == "Length" && targetExpr.ResultType != null && targetExpr.ResultType.IsArray)
+            {
+                // For array length, we'll use a constant value for now based on the actual array instance
+                var addNode = context.CreateNode(new Math_AddNode());
+                
+                // Try to determine array length if possible
+                int arrayLength = GetArrayLength(targetExpr.LiteralValue?.ToString());
+                
+                // Set the length as a constant
+                addNode.ValueIn("a").SetValue(arrayLength);
+                addNode.ValueIn("b").SetValue(0);
+                
+                return addNode.FirstValueOut();
             }
             
             // For non-static properties or methods, process the target object
@@ -1290,20 +1314,91 @@ namespace UnityGLTF.Interactivity.AST
         return forLoopNode.FlowOut(Flow_ForLoopNode.IdCompleted);
     }
 
+    /// <summary>
+    /// Gets the length of an array by name, checking fields, properties, and local variables
+    /// </summary>
+    /// <param name="arrayName">The name of the array</param>
+    /// <returns>The length of the array, or 0 if not found</returns>
+    private int GetArrayLength(string arrayName)
+    {
+        if (string.IsNullOrEmpty(arrayName))
+        {
+            return 0;
+        }
+        
+        try
+        {
+            // Try to get the field directly from the current instance
+            var field = _classInfo.Type.GetField(arrayName, 
+                System.Reflection.BindingFlags.Public | 
+                System.Reflection.BindingFlags.NonPublic | 
+                System.Reflection.BindingFlags.Instance);
+            
+            if (field != null && field.FieldType.IsArray)
+            {
+                // Get the array from the instance
+                var array = field.GetValue(instance) as Array;
+                if (array != null)
+                {
+                    return array.Length;
+                }
+            }
+            
+            // Try to get as a property
+            var property = _classInfo.Type.GetProperty(arrayName,
+                System.Reflection.BindingFlags.Public | 
+                System.Reflection.BindingFlags.NonPublic | 
+                System.Reflection.BindingFlags.Instance);
+            
+            if (property != null && property.PropertyType.IsArray)
+            {
+                // Get the array from the property
+                var array = property.GetValue(instance) as Array;
+                if (array != null)
+                {
+                    return array.Length;
+                }
+            }
+            
+            /* TODO ???
+            // It's a local variable, try to get from context if available
+            if (_variables.TryGetValue(arrayName, out _))
+            {
+                if (context.Context != null && 
+                    context.Context.TryGetVariableValue(arrayName, out object arrayInstance) && 
+                    arrayInstance != null && 
+                    arrayInstance.GetType().IsArray)
+                {
+                    return ((Array)arrayInstance).Length;
+                }
+            }
+            */
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"Error accessing array length for '{arrayName}': {ex.Message}");
+        }
+        
+        return 0;
+    }
+
     // INodeExporter implementation for creating and managing nodes
 
     #region INodeExporter Implementation
     
     public GltfInteractivityExportNodes context { get; private set; }
     public GameObject gameObject { get; private set; }
+    public object instance { get; private set; }
     
    
     #endregion
 
-    public void OnInteractivityExport(GltfInteractivityExportNodes export, GameObject gameObject)
+    public void OnInteractivityExport(GltfInteractivityExportNodes export, object instance)
     {
         context = export;
-        this.gameObject = gameObject;
+        this.instance = instance;
+        if (instance is Component component)
+            gameObject = component.gameObject;
 
         try
         {

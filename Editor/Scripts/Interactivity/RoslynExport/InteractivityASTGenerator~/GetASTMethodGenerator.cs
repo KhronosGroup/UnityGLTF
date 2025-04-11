@@ -254,7 +254,7 @@ namespace InteractivityASTGenerator.Generators
             
             if (isMonoBehaviour)
             {
-                source.AppendLine($"{indent}        k.OnInteractivityExport(export, this.gameObject);");
+                source.AppendLine($"{indent}        k.OnInteractivityExport(export, this);");
             }
             else
             {
