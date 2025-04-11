@@ -1,3 +1,5 @@
+using GLTF.Schema;
+
 namespace UnityGLTF.Interactivity.AST
 {
     using System;
@@ -7,6 +9,58 @@ namespace UnityGLTF.Interactivity.AST
     using UnityGLTF.Interactivity.Export;
     using UnityGLTF.Interactivity.Schema;
 
+    
+    public class LiteralValueRef : ValueOutRef
+    {
+        public class TempLiteralNode : GltfInteractivityExportNode
+        {
+             public object value;
+        
+            public TempLiteralNode(object value) : base(null)
+            {
+                Index = int.MaxValue;
+                this.value = value;
+            }
+            
+            public override void SetSchema(GltfInteractivityNodeSchema schema, bool applySocketDescriptors,
+                bool clearExistingSocketData = true)
+            {
+            }
+        }
+        
+        public static Dictionary<int, TempLiteralNode> tempNodes = new ();
+
+        public static int StartNodeId = int.MaxValue - tempNodes.Count;
+
+        public static object GetValue(int id)
+        {
+            if (!tempNodes.TryGetValue(id, out var tempNode))
+                return null;
+                    
+            if (tempNode == null)
+            {
+                Debug.LogError($"Temp node at index {id} is null");
+                return null;
+            }
+
+            return tempNode.value;
+            
+        }
+        
+        public LiteralValueRef(object value) : base(null, new KeyValuePair<string, GltfInteractivityNode.OutputValueSocketData>("literal", new GltfInteractivityNode.OutputValueSocketData()))
+        {
+            var tempNode = new TempLiteralNode(value);
+            node = tempNode;
+            node.Index = int.MaxValue - tempNodes.Count;
+            tempNodes.Add(node.Index, tempNode);
+        }
+
+        public static void CleanUp()
+        {
+            LiteralValueRef.tempNodes.Clear();
+        }
+    }
+    
     /// <summary>
     /// A walker that processes ClassReflectionInfo and converts specific methods to GLTF interactivity graphs
     /// </summary>
@@ -28,6 +82,26 @@ namespace UnityGLTF.Interactivity.AST
         _classInfo = classInfo;
     }
 
+    private void ResolveLiterals()
+    {
+        foreach (var input in context.nodes.SelectMany( n => n.ValueInConnection).Where( inSocket => inSocket.Value.Node >= context.nodes.Count))
+        {
+            
+            var value = LiteralValueRef.GetValue(input.Value.Node.Value);
+            if (value == null)
+            {
+                input.Value.Node = null;
+                continue;
+            }
+            // TODO: Type Conversion (e.g transform and components into int)
+            input.Value.Value = value;
+            input.Value.Type = GltfTypes.TypeIndex(value.GetType());
+            input.Value.Node = null;
+        }
+        
+        LiteralValueRef.CleanUp();
+    }
+
     /// <summary>
     /// Process the ClassReflectionInfo and convert specific methods to GLTF interactivity graphs
     /// </summary>
@@ -36,11 +110,15 @@ namespace UnityGLTF.Interactivity.AST
     {
         try
         {
+            LiteralValueRef.CleanUp();
+
             // Find and process "Start" method
             ProcessSpecificMethod("Start");
 
             // Find and process "Update" method
             ProcessSpecificMethod("Update");
+            
+            ResolveLiterals();
         }
         catch (Exception e)
         {
@@ -632,11 +710,8 @@ namespace UnityGLTF.Interactivity.AST
 
         if (variableName == "transform")
         {
-            var addNode = context.CreateNode(new Math_AddNode());
             var nodeId = context.Context.exporter.ExportNode(gameObject);
-            addNode.ValueIn("a").SetValue(nodeId.Id);
-            addNode.ValueIn("b").SetValue(0);
-            return addNode.FirstValueOut();
+            return new LiteralValueRef(nodeId.Id);;
         }
         
         // Check if we have a reference to this variable
@@ -1002,34 +1077,18 @@ namespace UnityGLTF.Interactivity.AST
         {
             return null;
         }
-        
-        var addNode = context.CreateNode(new Math_AddNode());
 
         if (value == "transform")
         {
             var nodeId = context.Context.exporter.ExportNode(gameObject);
-            addNode.ValueIn("a").SetValue(nodeId.Id);
+            return new LiteralValueRef(nodeId.Id);;
         }
-        else if (value is int intValue)
+        else
         {
-            addNode.ValueIn("a").SetValue(intValue);
-        }
-        else if (value is float floatValue || value is double doubleValue)
-        {
-            addNode.ValueIn("a").SetValue(value);
-        }
-        else if (value is bool boolValue)
-        {
-            addNode.ValueIn("a").SetValue(boolValue);
-        }
-        else if (value is string stringValue)
-        {
-            addNode.ValueIn("a").SetValue(stringValue);
+            context.Context.ConvertValue(value, out var convertedValue, out var type);
+            return new LiteralValueRef(convertedValue);
         }
         
-        addNode.ValueIn("b").SetValue(0);
-        return addNode.FirstValueOut();
-
         /*
 
         // Create appropriate constant node based on the type
