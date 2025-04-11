@@ -165,36 +165,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (!IsTranslatable)
                 UnitExportLogging.AddErrorLog(unit, "Could not be exported to GLTF.");
         }
-
-        public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
-        {
-            if (originalValue is GameObject gameObject)
-            {
-                var gameObjectNodeIndex =
-                    vsExportContext.exporter.GetTransformIndex(gameObject.transform);
-
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
-            }
-            else if (originalValue is Component component)
-            {
-                var gameObjectNodeIndex =
-                    vsExportContext.exporter.GetTransformIndex(component.transform);
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
-            }
-            else if (originalValue is Material material)
-            {
-                var materialIndex = vsExportContext.exporter.ExportMaterial(material).Id;
-                convertedValue = materialIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
-            }
-            else
-            {
-                typeIndex = GltfTypes.TypeIndex(originalValue.GetType());
-                convertedValue = originalValue;
-            }            
-        }
         
         public void ResolveDefaultAndLiterals()
         {
@@ -216,7 +186,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         {
                             if (valueSocketData.Value == null)
                             {
-                                ConvertValue(defaultValue, out var convertedValue, out int typeIndex);
+                                Context.ConvertValue(defaultValue, out var convertedValue, out int typeIndex);
                                 valueSocketData.Value = convertedValue;
                                 valueSocketData.Type = typeIndex;
                                 if (typeIndex == -1 && defaultValue != null)

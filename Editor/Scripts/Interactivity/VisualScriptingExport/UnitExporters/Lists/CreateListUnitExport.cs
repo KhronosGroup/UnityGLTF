@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            unitExporter.ConvertValue(value, out _, out var valueTypeIndex);
+            unitExporter.Context.ConvertValue(value, out _, out var valueTypeIndex);
             
             var objectList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, listCapacity, valueTypeIndex);
             
@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 if (unitExporter.IsInputLiteralOrDefaultValue(input as ValueInput, out var inputValue))
                 {
-                    unitExporter.ConvertValue(inputValue, out var convertedValue, out var convertedTypeIndex);
+                    unitExporter.Context.ConvertValue(inputValue, out var convertedValue, out var convertedTypeIndex);
                     objectList.AddItem(convertedValue);
                 }
             }

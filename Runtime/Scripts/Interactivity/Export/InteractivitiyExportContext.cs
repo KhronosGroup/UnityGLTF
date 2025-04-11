@@ -95,6 +95,36 @@ namespace UnityGLTF.Interactivity.Export
             OnBeforeSerialization = null;
         }
 
+        public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
+        {
+            if (originalValue is GameObject gameObject)
+            {
+                var gameObjectNodeIndex =
+                    exporter.GetTransformIndex(gameObject.transform);
+
+                convertedValue = gameObjectNodeIndex;
+                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+            }
+            else if (originalValue is Component component)
+            {
+                var gameObjectNodeIndex =
+                    exporter.GetTransformIndex(component.transform);
+                convertedValue = gameObjectNodeIndex;
+                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+            }
+            else if (originalValue is Material material)
+            {
+                var materialIndex = exporter.ExportMaterial(material).Id;
+                convertedValue = materialIndex;
+                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+            }
+            else
+            {
+                typeIndex = GltfTypes.TypeIndex(originalValue.GetType());
+                convertedValue = originalValue;
+            }            
+        }
+        
         public int AddVariableWithIdIfNeeded(string id, object defaultValue, string gltfType)
         {
             return AddVariableWithIdIfNeeded(id, defaultValue, GltfTypes.TypeIndexByGltfSignature(gltfType));

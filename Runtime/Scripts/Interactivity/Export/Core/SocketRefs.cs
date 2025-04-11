@@ -97,7 +97,7 @@ namespace UnityGLTF.Interactivity.Export
     {
         public ISocketConnector SocketConnector => node.GetSocketConnector();
         public KeyValuePair<string, GltfInteractivityNode.OutputValueSocketData> socket { get; private set; }
-        public GltfInteractivityExportNode node { get; private set; }
+        public GltfInteractivityExportNode node { get; protected set; }
             
         public ValueOutRef(GltfInteractivityExportNode node, KeyValuePair<string, GltfInteractivityNode.OutputValueSocketData> socket)
         {
