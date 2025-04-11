@@ -1,3 +1,4 @@
+using System.Reflection;
 using GLTF.Schema;
 
 namespace UnityGLTF.Interactivity.AST
@@ -673,11 +674,65 @@ namespace UnityGLTF.Interactivity.AST
 
             case ExpressionInfo.ExpressionKind.ObjectCreation:
                 return ProcessObjectCreationExpression(expression);
+                
+            case ExpressionInfo.ExpressionKind.ElementAccess:
+                return ProcessElementAccessExpression(expression);
+                
+            case ExpressionInfo.ExpressionKind.Cast:
+                // For cast expressions, we simply return the value of the first child
+                // Automatic type conversions are handled during graph export
+                if (expression.Children.Count > 0)
+                {
+                    return ProcessExpression(expression.Children[0]);
+                }
+                Debug.LogWarning("Cast expression has no children");
+                return null;
 
             default:
                 Debug.LogWarning($"Unsupported expression kind: {expression.Kind}. Full expression: {expression}");
                 return null;
         }
+    }
+    
+    /// <summary>
+    /// Process an element access expression (e.g. array[index])
+    /// </summary>
+    private ValueOutRef ProcessElementAccessExpression(ExpressionInfo expression)
+    {
+        if (expression.Children.Count < 2)
+        {
+            Debug.LogWarning("Element access expression has fewer than 2 children");
+            return null;
+        }
+        
+        // First child is the array/collection
+        var arrayExpr = expression.Children[0];
+        // Second child is the index
+        var indexExpr = expression.Children[1];
+        
+        var arrayRef = ProcessExpression(arrayExpr);
+        var indexRef = ProcessExpression(indexExpr);
+        
+        if (arrayRef == null || indexRef == null)
+        {
+            Debug.LogWarning("Could not process array or index reference in element access");
+            return null;
+        }
+        
+        // Create an array element node
+        /*
+        var arrayElementNode = context.CreateNode(new Array_ElementNode());
+        arrayElementNode.ValueIn(Array_ElementNode.IdArray).ConnectToSource(arrayRef);
+        arrayElementNode.ValueIn(Array_ElementNode.IdIndex).ConnectToSource(indexRef);
+        
+        return arrayElementNode.ValueOut(Array_ElementNode.IdElement);
+        */
+        // static access for now
+        var instanceArrayValue = GetMemberValue(arrayExpr.LiteralValue?.ToString(), instance);
+        if (instanceArrayValue == null) return null;
+        var arrayType = instanceArrayValue.GetType();
+        var value = arrayType.GetProperty("Item").GetValue(instanceArrayValue, new object[] { indexRef });
+        return null;
     }
 
     /// <summary>
@@ -1274,6 +1329,45 @@ namespace UnityGLTF.Interactivity.AST
         return forLoopNode.FlowOut(Flow_ForLoopNode.IdCompleted);
     }
 
+    private MemberInfo GetMemberInfo(string identifier)
+    {
+        var field = _classInfo.Type.GetField(identifier, 
+            System.Reflection.BindingFlags.Public | 
+            System.Reflection.BindingFlags.NonPublic | 
+            System.Reflection.BindingFlags.Instance);
+
+        if (field != null)
+            return field;
+        
+        var property = _classInfo.Type.GetProperty(identifier,
+            System.Reflection.BindingFlags.Public | 
+            System.Reflection.BindingFlags.NonPublic | 
+            System.Reflection.BindingFlags.Instance);
+
+        if (property != null)
+            return property;
+
+        return null;
+    }
+
+    private object GetMemberValue(string identifier, object instance)
+    {
+        var memberInfo = GetMemberInfo(identifier);
+        
+        if (memberInfo is FieldInfo fieldInfo)
+        {
+            return fieldInfo.GetValue(instance);
+        }
+
+        if (memberInfo is PropertyInfo propertyInfo)
+        {
+            return propertyInfo.GetValue(instance);
+        }
+        
+        Debug.LogWarning($"Member '{identifier}' not found in type '{_classInfo.Type.Name}'");
+        return null;
+    }
+    
     /// <summary>
     /// Gets the length of an array by name, checking fields, properties, and local variables
     /// </summary>
@@ -1288,37 +1382,18 @@ namespace UnityGLTF.Interactivity.AST
         
         try
         {
-            // Try to get the field directly from the current instance
-            var field = _classInfo.Type.GetField(arrayName, 
-                System.Reflection.BindingFlags.Public | 
-                System.Reflection.BindingFlags.NonPublic | 
-                System.Reflection.BindingFlags.Instance);
-            
-            if (field != null && field.FieldType.IsArray)
+            var value = GetMemberValue(arrayName, instance);
+            if (value == null)
             {
-                // Get the array from the instance
-                var array = field.GetValue(instance) as Array;
-                if (array != null)
-                {
-                    return array.Length;
-                }
+                return 0;
             }
             
-            // Try to get as a property
-            var property = _classInfo.Type.GetProperty(arrayName,
-                System.Reflection.BindingFlags.Public | 
-                System.Reflection.BindingFlags.NonPublic | 
-                System.Reflection.BindingFlags.Instance);
-            
-            if (property != null && property.PropertyType.IsArray)
+            // Check if the value is an array
+            if (value is Array array)
             {
-                // Get the array from the property
-                var array = property.GetValue(instance) as Array;
-                if (array != null)
-                {
-                    return array.Length;
-                }
+                return array.Length;
             }
+            
             
             /* TODO ???
             // It's a local variable, try to get from context if available

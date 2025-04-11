@@ -412,59 +412,145 @@ namespace UnityGLTF.Interactivity.AST
     /// </summary>
     public class ExpressionInfo
     {
+        /// <summary>
+        /// Defines the types of expressions that can be represented in the AST
+        /// </summary>
         public enum ExpressionKind
         {
-            [Obsolete("Unknown expression kind. This is likely a bug.")]
+            /** Represents an expression whose kind could not be determined */
             Unknown,
+            
+            /** Represents a literal value (e.g., string, number, boolean, etc.) */
             Literal,
+            
+            /** Represents a name identifier in code (e.g., variable name) */
             Identifier,
+            
+            /** Represents member access (e.g., obj.Property) */
             MemberAccess,
+            
+            /** Represents a method call (e.g., Method() or obj.Method()) */
             MethodInvocation,
+            
+            /** Represents object creation (e.g., new Type()) */
             ObjectCreation,
+            
+            /** Represents a binary operation (e.g., a + b, a == b) */
             Binary,
+            
+            /** Represents a unary operation (e.g., !x, ~x) */
             Unary,
+            
+            /** Represents an assignment (e.g., a = b, a += b) */
             Assignment,
+            
+            /** Represents a conditional expression (e.g., condition ? ifTrue : ifFalse) */
             Conditional,
+            
+            /** Represents a lambda expression (e.g., () => expression or x => x * 2) */
             Lambda,
+            
+            /** Represents array creation (e.g., new int[] { 1, 2, 3 }) */
             ArrayCreation,
+            
+            /** Represents array indexing (e.g., array[0]) */
             ArrayIndex,
+            
+            /** Represents a type cast (e.g., (int)value) */
             Cast,
-            // New expression kinds for more accurate classifications
+            
+            /** Represents multiplication (e.g., a * b) */
             Multiplication,
+            
+            /** Represents addition (e.g., a + b) */
             Addition,
+            
+            /** Represents subtraction (e.g., a - b) */
             Subtraction,
+            
+            /** Represents division (e.g., a / b) */
             Division,
+            
+            /** Represents a method argument */
             MethodArgument,
-            // For loop specific expression kinds
+            
+            /** Represents a for loop initializer */
             ForInitializer,
+            
+            /** Represents a for loop condition */
             ForCondition,
+            
+            /** Represents a for loop incrementor */
             ForIncrementor,
-            // Increment/decrement expression kinds
+            
+            /** Represents postfix increment/decrement (e.g., i++, i--) */
             PostfixUnary,
+            
+            /** Represents prefix increment/decrement (e.g., ++i, --i) */
             PrefixUnary,
-            // Modern C# features
+            
+            /** Represents a switch expression (e.g., x switch { 1 => "one", _ => "other" }) */
             SwitchExpression,
+            
+            /** Represents a switch arm (e.g., 1 => "one") */
             SwitchArm,
+            
+            /** Represents a switch pattern (e.g., 1 or > 0 or _ or Person { Age: > 18 }) */
             SwitchPattern,
+            
+            /** Represents an await expression (e.g., await task) */
             AwaitExpression,
+            
+            /** Represents an async lambda (e.g., async () => await task) */
             AsyncLambda,
+            
+            /** Represents a throw expression (e.g., throw new Exception()) */
             ThrowExpression,
+            
+            /** Represents pattern matching (e.g., is pattern expressions) */
             PatternMatching,
-            // Additional expression kinds
-            ElementAccess,      // For array/list indexing (array[index])
-            Parenthesized,      // For expressions in parentheses
-            InterpolatedString, // For string interpolation ($"Hello {name}")
-            AnonymousObject,    // For anonymous object creation (new { Name = "value" })
-            DefaultValue,       // For default value expressions (default(int))
-            TypeOf,             // For typeof expressions (typeof(int))
-            NameOf,             // For nameof expressions (nameof(variable))
-            NullCoalescing,     // For null coalescing operator (??)
-            NullConditional,    // For null conditional operator (?.)
-            RangeExpression,    // For range expressions (1..5)
-            IsPattern,          // For is pattern matching (x is int i)
-            AsExpression,       // For as expressions (obj as string)
-            QueryExpression,    // For LINQ query expressions
-            InitializerExpression // For object/collection initializer expressions
+            
+            /** Represents array/list indexing (e.g., array[index]) */
+            ElementAccess,
+            
+            /** Represents expressions in parentheses (e.g., (a + b)) */
+            Parenthesized,
+            
+            /** Represents string interpolation (e.g., $"Hello {name}") */
+            InterpolatedString,
+            
+            /** Represents anonymous object creation (e.g., new { Name = "value" }) */
+            AnonymousObject,
+            
+            /** Represents default value expressions (e.g., default(int) or default) */
+            DefaultValue,
+            
+            /** Represents typeof expressions (e.g., typeof(int)) */
+            TypeOf,
+            
+            /** Represents nameof expressions (e.g., nameof(variable)) */
+            NameOf,
+            
+            /** Represents null coalescing operator (e.g., a ?? b) */
+            NullCoalescing,
+            
+            /** Represents null conditional operator (e.g., a?.b) */
+            NullConditional,
+            
+            /** Represents range expressions (e.g., 1..5) */
+            RangeExpression,
+            
+            /** Represents is pattern matching (e.g., x is int i) */
+            IsPattern,
+            
+            /** Represents type testing with as (e.g., obj as string) */
+            AsExpression,
+            
+            /** Represents LINQ query expressions (e.g., from x in list where x > 0 select x) */
+            QueryExpression,
+            
+            /** Represents object or collection initializer expressions (e.g., new List<int> { 1, 2, 3 }) */
+            InitializerExpression
         }
         
         /// <summary>
