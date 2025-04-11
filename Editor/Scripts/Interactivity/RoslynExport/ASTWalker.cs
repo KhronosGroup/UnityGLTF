@@ -15,7 +15,7 @@ namespace UnityGLTF.Interactivity.AST
     {
         public class TempLiteralNode : GltfInteractivityExportNode
         {
-             public object value;
+            public object value;
         
             public TempLiteralNode(object value) : base(null)
             {
@@ -54,6 +54,17 @@ namespace UnityGLTF.Interactivity.AST
             node = tempNode;
             node.Index = int.MaxValue - tempNodes.Count;
             tempNodes.Add(node.Index, tempNode);
+        }
+        
+        public object Value
+        {
+            get => node as TempLiteralNode != null ? ((TempLiteralNode)node).value : null;
+            set => ((TempLiteralNode)node).value = value;
+        }
+        
+        public T ValueAs<T>()
+        {
+            return (T)(node as TempLiteralNode).value;
         }
 
         public static void CleanUp()
@@ -623,17 +634,24 @@ namespace UnityGLTF.Interactivity.AST
             var selectableNode = context.CreateNode(new Pointer_SetNode());
 
             // Add extensions for visible and selectable
-            VisibleExtensionHelper.AddExtension(context, targetRef, visibleNode);
-            SelectableExtensionHelper.AddExtension(context, targetRef, selectableNode);
+
+            if (targetRef is LiteralValueRef literalValueRef && literalValueRef.Value is int)
+            {
+                context.Context.AddVisibilityExtensionToNode(literalValueRef.ValueAs<int>());
+                context.Context.AddSelectabilityExtensionToNode(literalValueRef.ValueAs<int>());
+            }
+            else
+            {
+                context.Context.AddVisibilityExtensionToAllNodes();
+                context.Context.AddSelectabilityExtensionToAllNode();
+            }
             
             // Connect flow for visible node
             inFlow.ConnectToFlowDestination(visibleNode.FlowIn(Pointer_SetNode.IdFlowIn));
             
             // Setup pointer template and target input for visible
-            PointersHelper.SetupPointerTemplateAndTargetInput(visibleNode,
-                PointersHelper.IdPointerNodeIndex,
-                targetRef, VisibleExtensionHelper.PointerTemplate,
-                GltfTypes.Bool);
+            PointersHelper.SetupPointerTemplateAndTargetInput(visibleNode, PointersHelper.IdPointerNodeIndex, PointersHelper.IddPointerVisibility, GltfTypes.Bool);
+            visibleNode.ValueIn(PointersHelper.IdPointerNodeIndex).ConnectToSource(targetRef);
             
             // Connect active state to visible node
             visibleNode.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(activeRef);
@@ -643,11 +661,9 @@ namespace UnityGLTF.Interactivity.AST
                 .ConnectToFlowDestination(selectableNode.FlowIn(Pointer_SetNode.IdFlowIn));
                 
             // Setup pointer template and target input for selectable
-            PointersHelper.SetupPointerTemplateAndTargetInput(selectableNode,
-                PointersHelper.IdPointerNodeIndex,
-                targetRef, SelectableExtensionHelper.PointerTemplate,
-                GltfTypes.Bool);
-                
+            PointersHelper.SetupPointerTemplateAndTargetInput(selectableNode, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerSelectability, GltfTypes.Bool);
+            selectableNode.ValueIn(PointersHelper.IdPointerNodeIndex).ConnectToSource(targetRef);
+            
             // Connect active state to selectable node
             selectableNode.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(activeRef);
             
