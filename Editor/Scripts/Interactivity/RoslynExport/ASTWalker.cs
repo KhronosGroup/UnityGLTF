@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading.Tasks;
 using GLTF.Schema;
 
 namespace UnityGLTF.Interactivity.AST
@@ -245,7 +246,7 @@ namespace UnityGLTF.Interactivity.AST
         var expression = statement.Expressions[0];
         if (expression.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
         {
-            return ProcessMethodInvocation(expression, inFlow);
+            return ProcessMethodInvocation(expression, inFlow) as FlowOutRef;
         }
         else if (expression.Kind == ExpressionInfo.ExpressionKind.Assignment)
         {
@@ -270,13 +271,13 @@ namespace UnityGLTF.Interactivity.AST
                     childExpr.Method.DeclaringType != null &&
                     childExpr.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
                 {
-                    return ProcessMethodInvocation(childExpr, inFlow);
+                    return ProcessMethodInvocation(childExpr, inFlow) as FlowOutRef;
                 }
                 
                 // For other types of awaited expressions, just process the child expression
                 if (childExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
                 {
-                    return ProcessMethodInvocation(childExpr, inFlow);
+                    return ProcessMethodInvocation(childExpr, inFlow) as FlowOutRef;
                 }
             }
         }
@@ -293,43 +294,137 @@ namespace UnityGLTF.Interactivity.AST
     /// </summary>
     private FlowOutRef ProcessDeclarationStatement(StatementInfo statement, FlowOutRef inFlow)
     {
+        ExpressionInfo identifierExpr = null;
+        string variableName = null;
+        ExpressionInfo initExpr = null;
+        StatementInfo initializer = null;
+
+        // Handle expressions directly on statement (no children)
         if (statement.Children.Count == 0)
         {
+            if (statement.Expressions.Count == 0)
+            {
+                return inFlow;
+            }
+
+            // Get the first expression which should be the identifier
+            identifierExpr = statement.Expressions[0];
+            if (identifierExpr.Kind != ExpressionInfo.ExpressionKind.Identifier || identifierExpr.Children.Count == 0)
+            {
+                Debug.LogWarning("Expected identifier expression with children in declaration statement");
+                return inFlow;
+            }
+
+            // Get variable name
+            variableName = ExtractVariableName(identifierExpr);
+            if (string.IsNullOrEmpty(variableName))
+            {
+                Debug.LogWarning("Failed to determine variable name in declaration statement");
+                // return inFlow;
+            }
+
+            // Process the initialization expression (e.g. await expression)
+            initExpr = identifierExpr.Children[0];
+        }
+        else
+        {
+            // Find variable declarator child
+            var declarator = statement.Children.FirstOrDefault(c => c.Kind == StatementInfo.StatementKind.VariableDeclarator);
+            if (declarator == null || declarator.Expressions.Count == 0)
+            {
+                return inFlow;
+            }
+
+            // Get variable name from identifier expression
+            identifierExpr = declarator.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.Identifier);
+            if (identifierExpr == null)
+            {
+                return inFlow;
+            }
+
+            variableName = ExtractVariableName(identifierExpr);
+            if (string.IsNullOrEmpty(variableName))
+            {
+                return inFlow;
+            }
+
+            // Find initializer expression if any
+            initializer = declarator.Children.FirstOrDefault(c => c.Kind == StatementInfo.StatementKind.Initializer);
+            if (initializer != null && initializer.Expressions.Count > 0)
+            {
+                initExpr = initializer.Expressions[0];
+            }
+        }
+
+        // If there's no initialization expression, just create the variable
+        if (initExpr == null)
+        {
+            // Create the variable without an initializer
+            var variableType = identifierExpr.ResultType ?? typeof(object);
+            var defaultValue = variableType.IsValueType ? Activator.CreateInstance(variableType) : null;
+
+            var getVarNode = context.CreateNode(new Variable_GetNode());
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, defaultValue, variableType.Name);
+            getVarNode.Configuration["variable"].Value = variableId;
+
             return inFlow;
         }
 
-        // Find variable declarator child
-        var declarator =
-            statement.Children.FirstOrDefault(c => c.Kind == StatementInfo.StatementKind.VariableDeclarator);
-        if (declarator == null || declarator.Expressions.Count == 0)
+        // Process the initialization expression to get the value
+        var initValue = ProcessExpression(initExpr);
+
+        // Handle method invocation
+        if (initValue == null && initExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
         {
-            return inFlow;
+            var currentFlow = ProcessMethodInvocation(initExpr, inFlow) as FlowOutRef;
+            if (currentFlow != null)
+            {
+                // Create a variable set node with the result from the method
+                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
+                    Activator.CreateInstance(initExpr.ResultType ?? typeof(object)), 
+                    initExpr.ResultType?.Name ?? "object");
+                
+                // Create a variable get node for future references
+                var getVarNode = context.CreateNode(new Variable_GetNode());
+                getVarNode.Configuration["variable"].Value = variableId;
+
+                return currentFlow;
+            }
         }
-
-        // Get variable name from identifier expression
-        var identifierExpr =
-            declarator.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.Identifier);
-        if (identifierExpr == null)
+        // Handle await expressions
+        else if (initExpr.Kind == ExpressionInfo.ExpressionKind.AwaitExpression)
         {
-            return inFlow;
+            if (initExpr.Children.Count > 0)
+            {
+                var childExpr = initExpr.Children[0];
+                
+                // If the awaited expression is a method invocation, handle it
+                if (childExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
+                {
+                    var currentFlow = ProcessMethodInvocation(childExpr, inFlow) as FlowOutRef;
+                    if (currentFlow != null)
+                    {
+                        // Create a variable set node with the result
+                        var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
+                            Activator.CreateInstance(initExpr.ResultType ?? typeof(object)), 
+                            initExpr.ResultType?.Name ?? "object");
+                        
+                        // Create a variable get node for future references
+                        var getVarNode = context.CreateNode(new Variable_GetNode());
+                        getVarNode.Configuration["variable"].Value = variableId;
+
+                        return currentFlow;
+                    }
+                }
+            }
         }
-
-        string variableName = identifierExpr.LiteralValue?.ToString();
-        if (string.IsNullOrEmpty(variableName))
+        // Handle normal expressions with a direct value
+        else if (initValue != null)
         {
-            return inFlow;
-        }
-
-        // Find initializer expression if any
-        var initializer = declarator.Children.FirstOrDefault(c => c.Kind == StatementInfo.StatementKind.Initializer);
-        if (initializer != null && initializer.Expressions.Count > 0)
-        {
-            // Process the initializer expression to get the value
-            var initExpr = initializer.Expressions[0];
-            var initValue = ProcessExpression(initExpr);
-
             // Create a variable set node
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(initExpr.ResultType), initExpr.ResultType.Name);
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
+                Activator.CreateInstance(initExpr.ResultType ?? typeof(object)), 
+                initExpr.ResultType?.Name ?? "object");
             var variableSetNode = context.CreateNode(new Variable_SetNode());
             variableSetNode.Configuration["variable"].Value = variableId;
 
@@ -339,17 +434,38 @@ namespace UnityGLTF.Interactivity.AST
             // Connect the flow
             inFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
 
-            return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
-        }
-        else
-        {
-            // If there's no initializer, just create the variable get node for future references
+            // Create a variable get node for future references
             var getVarNode = context.CreateNode(new Variable_GetNode());
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(typeof(object)), "float");
             getVarNode.Configuration["variable"].Value = variableId;
+
+            return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
         }
 
         return inFlow;
+    }
+
+    /// <summary>
+    /// Helper method to extract variable name from an identifier expression
+    /// </summary>
+    private string ExtractVariableName(ExpressionInfo identifierExpr)
+    {
+        string variableName = identifierExpr.LiteralValue?.ToString();
+        if (!string.IsNullOrEmpty(variableName))
+        {
+            return variableName;
+        }
+        
+        // If literal value is null, try to get the variable name from another way
+        variableName = identifierExpr.ToString();
+        // Remove any "Expression: Identifier (Type: ..." part
+        int parenIndex = variableName.IndexOf('(');
+        if (parenIndex > 0)
+        {
+            variableName = variableName.Substring(0, parenIndex).Trim();
+            variableName = variableName.Replace("Expression: Identifier", "").Trim();
+        }
+        
+        return variableName;
     }
 
     /// <summary>
@@ -587,22 +703,27 @@ namespace UnityGLTF.Interactivity.AST
     }
 
     /// <summary>
-    /// Process a method invocation expression
+    /// Process a method invocation - both as a statement and as an expression
     /// </summary>
-    private FlowOutRef ProcessMethodInvocation(ExpressionInfo expression, FlowOutRef inFlow)
+    /// <param name="expression">The method invocation expression</param>
+    /// <param name="inFlow">The incoming flow reference (optional, null if called as an expression)</param>
+    /// <returns>A flow reference if processing as a statement, or a value reference if called as an expression</returns>
+    private object ProcessMethodInvocation(ExpressionInfo expression, FlowOutRef inFlow = null)
     {
         string methodName = expression.Method?.Name;
+        bool isStatement = inFlow != null; // If inFlow is provided, we're processing as a statement
+        ValueOutRef returnValue = null; // For expression mode
 
         if (string.IsNullOrEmpty(methodName))
         {
-            return inFlow;
+            return isStatement ? inFlow : null; // Return unchanged flow for statements, null value for expressions
         }
 
         // Handle Task.Delay
         if (methodName == "Delay" && 
             expression.Method.DeclaringType != null && 
             expression.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
-        {
+        {   
             // Get the delay duration parameter
             if (expression.Children.Count < 2)
             {
@@ -662,7 +783,6 @@ namespace UnityGLTF.Interactivity.AST
             var selectableNode = context.CreateNode(new Pointer_SetNode());
 
             // Add extensions for visible and selectable
-
             if (targetRef is LiteralValueRef literalValueRef && literalValueRef.Value is int)
             {
                 context.Context.AddVisibilityExtensionToNode(literalValueRef.ValueAs<int>());
@@ -698,6 +818,37 @@ namespace UnityGLTF.Interactivity.AST
             // Return the flow out from selectable node
             return selectableNode.FlowOut(Pointer_SetNode.IdFlowOut);
         }
+        
+        // Handle Debug.Log
+        if (methodName == "Log" &&
+            expression.Children.Count >= 2 &&
+            expression.Children[0].ResultType != null &&
+            expression.Children[0].ResultType.Name == "Debug")
+        {
+            // Get the message parameter
+            var messageExpr = expression.Children[1];
+            var messageRef = ProcessExpression(messageExpr);
+
+            if (messageRef == null)
+            {
+                Debug.LogWarning("Failed to process Debug.Log parameters");
+                return inFlow;
+            }
+            
+            // Convert the logging format to a pointer template string, 
+            // all the parameters become inputs.
+            var messageTemplate = "{0}";
+
+            // Create a log node
+            var logNode = context.AddLog(GltfInteractivityExportNodes.LogLevel.Info, messageTemplate);
+            logNode.ValueIn("0").ConnectToSource(messageRef);
+            
+            // Connect flow
+            inFlow.ConnectToFlowDestination(logNode.FlowIn(Debug_LogNode.IdFlowIn));
+            
+            // Return the flow out from log node
+            return logNode.FlowOut(Debug_LogNode.IdFlowOut);
+        }
 
         // Check if this is a transform-related method
         if (expression.Children.Count > 0 &&
@@ -705,20 +856,143 @@ namespace UnityGLTF.Interactivity.AST
         {
             var targetExpr = ProcessExpression(expression.Children[0]);
 
-            switch (methodName)
-            {
-                case "Translate":
-                    return ProcessTranslateMethod(expression, targetExpr, inFlow);
+            if (isStatement) {
+                switch (methodName)
+                {
+                    case "Translate":
+                        return ProcessTranslateMethod(expression, targetExpr, inFlow);
 
-                case "Rotate":
-                    return ProcessRotateMethod(expression, targetExpr, inFlow);
+                    case "Rotate":
+                        return ProcessRotateMethod(expression, targetExpr, inFlow);
 
-                case "LookAt":
-                    return ProcessLookAtMethod(expression, targetExpr, inFlow);
+                    case "LookAt":
+                        return ProcessLookAtMethod(expression, targetExpr, inFlow);
+                }
+            }
+            // For transform methods that return values, handle here in the future
+        }
+        
+        // Handle Vector3 methods when used as an expression
+        if (expression.Children.Count > 0) {
+            var targetExpr = expression.Children[0];
+            var targetRef = ProcessExpression(targetExpr);
+            
+            if (targetRef != null) {
+                if (targetExpr.ResultType == typeof(Vector3)) {
+                    switch (methodName) {
+                        case "Normalize":
+                            var normalizeNode = context.CreateNode(new Math_NormalizeNode());
+                            normalizeNode.ValueIn("a").ConnectToSource(targetRef);
+                            returnValue = normalizeNode.ValueOut("value");
+                            break;
+                            
+                        case "Dot":
+                            if (expression.Children.Count >= 2) {
+                                var argExpr = expression.Children[1];
+                                var argRef = ProcessExpression(argExpr);
+                                
+                                if (argRef != null) {
+                                    var dotNode = context.CreateNode(new Math_DotNode());
+                                    dotNode.ValueIn("a").ConnectToSource(targetRef);
+                                    dotNode.ValueIn("b").ConnectToSource(argRef);
+                                    returnValue = dotNode.ValueOut("value");
+                                }
+                            }
+                            break;
+                    }
+                }
             }
         }
+        
+        // Handle static Math methods when used as an expression
+        if (expression.Method != null && expression.Method.IsStatic && expression.Method.DeclaringType == typeof(Mathf)) {
+            if (expression.Children.Count >= 2) {
+                var argExpr = expression.Children[1];
+                var argRef = ProcessExpression(argExpr);
+                
+                if (argRef != null) {
+                    switch (methodName) {
+                        case "Sin":
+                            var sinNode = context.CreateNode(new Math_SinNode());
+                            sinNode.ValueIn("a").ConnectToSource(argRef);
+                            returnValue = sinNode.ValueOut("value");
+                            break;
+                            
+                        case "Cos":
+                            var cosNode = context.CreateNode(new Math_CosNode());
+                            cosNode.ValueIn("a").ConnectToSource(argRef);
+                            returnValue = cosNode.ValueOut("value");
+                            break;
+                            
+                        case "Tan":
+                            var tanNode = context.CreateNode(new Math_TanNode());
+                            tanNode.ValueIn("a").ConnectToSource(argRef);
+                            returnValue = tanNode.ValueOut("value");
+                            break;
+                    }
+                }
+            }
+        }
+        
+        // If we're processing as an expression and have a return value, return it
+        if (returnValue != null) {
+            return returnValue;
+        }
+        
+        // Check if this is a method call to another method in the same class
+        if (expression.Method != null)
+        {
+            // Check if the method exists in the current class
+            var classMethod = _classInfo.Methods.FirstOrDefault(m => m.Name == methodName);
+            if (classMethod != null && _classInfo.MethodBodies.TryGetValue(methodName, out var methodBodyInfo))
+            {
+                Debug.Log($"Processing method call to {methodName} within the same class");
+                
+                // Create a method entry node (similar to a function call)
+                var methodEntryNode = context.CreateNode(new Flow_SequenceNode());
+                
+                // Connect flow from caller to method entry
+                inFlow.ConnectToFlowDestination(methodEntryNode.FlowIn(Flow_SequenceNode.IdFlowIn));
+                
+                // Get the flow out that will be used after the method completes
+                var returnFlow = methodEntryNode.FlowOut("0");
+                
+                // Create a temporary flow out reference to use as the entry point
+                var methodEntryFlow = methodEntryNode.FlowOut("1");
+                
+                // Process the body of the method, starting from our entry flow
+                var currentFlow = methodEntryFlow;
+                foreach (var statement in methodBodyInfo.Statements)
+                {
+                    currentFlow = ProcessStatement(statement, currentFlow);
+                    
+                    // If a statement returns null flow (like an if statement with branches), break the chain
+                    if (currentFlow == null)
+                    {
+                        break;
+                    }
+                }
+                
+                // Return the flow that continues after the method call
+                return returnFlow;
+            }
+            
+            Debug.LogWarning($"Method {methodName} not found in class {_classInfo.Type.Name}");
+        }
 
-        return inFlow;
+        // Return appropriate value based on context
+        return isStatement ? inFlow : returnValue; 
+    }
+
+    /// <summary>
+    /// Process a method invocation expression that returns a value
+    /// </summary>
+    /// <param name="expression">The expression to process</param>
+    /// <returns>A reference to the output value of the expression</returns>
+    private ValueOutRef ProcessMethodInvocationExpression(ExpressionInfo expression)
+    {
+        // Use the unified method in expression mode (inFlow = null)
+        return ProcessMethodInvocation(expression, null) as ValueOutRef;
     }
 
     /// <summary>
@@ -930,14 +1204,23 @@ namespace UnityGLTF.Interactivity.AST
                 Debug.LogWarning($"Array type not supported for variable: {variableName}");
                 return null;
             }
+
+            var resultType = expression.ResultType;
+            if (expression.ResultType.IsSubclassOf(typeof(Task)))
+            {
+                // unwrap the expression and continue with the below
+                resultType = expression.ResultType.GetGenericArguments()[0];
+            }
             
             // TODO get type properly
             // TODO handle arrays correctly – currently we're getting "Default constructor not found for type UnityEngine.Vector3[]" because of the Activator.CreateInstance call
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(expression.ResultType), "float");
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(resultType), "float");
             VariablesHelpers.GetVariable(context, variableId, out var output);
             return output;
         }
 
+        Debug.LogWarning($"Variable '{variableName}' not found in context – neither a method nor a property nor a local variable");
+        
         return null;
     }
 
@@ -1077,102 +1360,6 @@ namespace UnityGLTF.Interactivity.AST
         }
         
         Debug.LogWarning($"Unsupported member access: {propertyName}");
-        return null;
-    }
-
-    /// <summary>
-    /// Process a method invocation expression that returns a value
-    /// </summary>
-    private ValueOutRef ProcessMethodInvocationExpression(ExpressionInfo expression)
-    {
-        // For this implementation, we'll focus on a few common methods
-        // In a full implementation, you'd handle many more cases
-
-        string methodName = expression.Method?.Name;
-
-        if (string.IsNullOrEmpty(methodName) || expression.Children.Count == 0)
-        {
-            return null;
-        }
-
-        // Support for Task.Delay
-        if (methodName == "Delay" && 
-            expression.Method.DeclaringType != null && 
-            expression.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
-        {
-            // Task.Delay creates a SetDelay node but doesn't return a value
-            // We'll handle it via ProcessMethodInvocation from the statement handler instead
-            return null;
-        }
-
-        // Process Vector3 methods
-        if (expression.Children[0].ResultType == typeof(Vector3))
-        {
-            var targetExpr = expression.Children[0];
-            var targetRef = ProcessExpression(targetExpr);
-
-            if (targetRef == null)
-            {
-                return null;
-            }
-
-            switch (methodName)
-            {
-                case "Normalize":
-                    var normalizeNode = context.CreateNode(new Math_NormalizeNode());
-                    normalizeNode.ValueIn("a").ConnectToSource(targetRef);
-                    return normalizeNode.ValueOut("value");
-
-                case "Dot":
-                    if (expression.Children.Count >= 2)
-                    {
-                        var argExpr = expression.Children[1];
-                        var argRef = ProcessExpression(argExpr);
-
-                        if (argRef != null)
-                        {
-                            var dotNode = context.CreateNode(new Math_DotNode());
-                            dotNode.ValueIn("a").ConnectToSource(targetRef);
-                            dotNode.ValueIn("b").ConnectToSource(argRef);
-                            return dotNode.ValueOut("value");
-                        }
-                    }
-
-                    break;
-            }
-        }
-
-        // Handle static Math methods (like Mathf.Sin)
-        if (expression.Method != null && expression.Method.IsStatic && expression.Method.DeclaringType == typeof(Mathf))
-        {
-            if (expression.Children.Count >= 2)
-            {
-                var argExpr = expression.Children[1];
-                var argRef = ProcessExpression(argExpr);
-
-                if (argRef != null)
-                {
-                    switch (methodName)
-                    {
-                        case "Sin":
-                            var sinNode = context.CreateNode(new Math_SinNode());
-                            sinNode.ValueIn("a").ConnectToSource(argRef);
-                            return sinNode.ValueOut("value");
-                            
-                        case "Cos":
-                            var cosNode = context.CreateNode(new Math_CosNode());
-                            cosNode.ValueIn("a").ConnectToSource(argRef);
-                            return cosNode.ValueOut("value");
-                            
-                        case "Tan":
-                            var tanNode = context.CreateNode(new Math_TanNode());
-                            tanNode.ValueIn("a").ConnectToSource(argRef);
-                            return tanNode.ValueOut("value");
-                    }
-                }
-            }
-        }
-
         return null;
     }
 
@@ -1539,7 +1726,7 @@ namespace UnityGLTF.Interactivity.AST
             return propertyInfo.GetValue(instance);
         }
         
-        Debug.LogWarning($"Member '{identifier}' not found in type '{_classInfo.Type.Name}'");
+        // Debug.LogWarning($"Member '{identifier}' not found in type '{_classInfo.Type.Name}'");
         return null;
     }
     
