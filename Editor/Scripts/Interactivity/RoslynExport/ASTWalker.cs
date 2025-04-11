@@ -67,9 +67,6 @@ namespace UnityGLTF.Interactivity.AST
     public class ClassReflectionASTWalker {
     private readonly ClassReflectionInfo _classInfo;
 
-    // Track variable declarations across method bodies
-    private readonly Dictionary<string, ValueOutRef> _variables = new Dictionary<string, ValueOutRef>();
-
     // Maps specific method names to their exported flow entry points
     private readonly Dictionary<string, FlowOutRef> _methodEntryPoints = new Dictionary<string, FlowOutRef>();
 
@@ -297,10 +294,9 @@ namespace UnityGLTF.Interactivity.AST
             var initValue = ProcessExpression(initExpr);
 
             // Create a variable set node
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(initExpr.ResultType), initExpr.ResultType.Name);
             var variableSetNode = context.CreateNode(new Variable_SetNode());
-            variableSetNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
-                { Type = "string" };
-            variableSetNode.Configuration["variableName"].Value = variableName;
+            variableSetNode.Configuration["variable"].Value = variableId;
 
             // Connect the value to the variable
             variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(initValue);
@@ -308,26 +304,14 @@ namespace UnityGLTF.Interactivity.AST
             // Connect the flow
             inFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
 
-            // Create a Variable_Get node that will be used when this variable is referenced
-            var getVarNode = context.CreateNode(new Variable_GetNode());
-            getVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
-                { Type = "string" };
-            getVarNode.Configuration["variableName"].Value = variableName;
-            
-            // Store the variable for later use
-            _variables[variableName] = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
-
             return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
         }
         else
         {
             // If there's no initializer, just create the variable get node for future references
             var getVarNode = context.CreateNode(new Variable_GetNode());
-            getVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
-                { Type = "string" };
-            getVarNode.Configuration["variableName"].Value = variableName;
-            
-            _variables[variableName] = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(typeof(object)), "float");
+            getVarNode.Configuration["variable"].Value = variableId;
         }
 
         return inFlow;
@@ -364,9 +348,8 @@ namespace UnityGLTF.Interactivity.AST
             {
                 // Create a variable set node
                 var variableSetNode = context.CreateNode(new Variable_SetNode());
-                variableSetNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
-                    { Type = "string" };
-                variableSetNode.Configuration["variableName"].Value = variableName;
+                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(typeof(object)), "float");
+                variableSetNode.Configuration["variable"].Value = variableId;
 
                 // Connect the value to the variable
                 variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueRef);
@@ -376,12 +359,8 @@ namespace UnityGLTF.Interactivity.AST
 
                 // Create a Variable_Get node that will be used when this variable is referenced
                 var getVarNode = context.CreateNode(new Variable_GetNode());
-                getVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
-                    { Type = "string" };
-                getVarNode.Configuration["variableName"].Value = variableName;
-                
-                // Store the variable for later use
-                _variables[variableName] = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
+                var variableGetId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(typeof(object)), "float");
+                getVarNode.Configuration["variable"].Value = variableGetId;
 
                 return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
             }
@@ -696,7 +675,7 @@ namespace UnityGLTF.Interactivity.AST
                 return ProcessObjectCreationExpression(expression);
 
             default:
-                Debug.LogWarning($"Unsupported expression kind: {expression.Kind}");
+                Debug.LogWarning($"Unsupported expression kind: {expression.Kind}. Full expression: {expression}");
                 return null;
         }
     }
@@ -712,12 +691,6 @@ namespace UnityGLTF.Interactivity.AST
         {
             var nodeId = context.Context.exporter.ExportNode(gameObject);
             return new LiteralValueRef(nodeId.Id);;
-        }
-        
-        // Check if we have a reference to this variable
-        if (!string.IsNullOrEmpty(variableName) && _variables.TryGetValue(variableName, out var variableRef))
-        {
-            return variableRef;
         }
         
         // If we don't have a cached reference but the variable seems to be defined,
@@ -739,7 +712,6 @@ namespace UnityGLTF.Interactivity.AST
             
             // Store it for future references
             var output = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
-            _variables[variableName] = output;
             return output;
         }
 
