@@ -1226,17 +1226,18 @@ namespace UnityGLTF.Interactivity.AST
         bool isSimpleIncrement = false;
         
         // Check for i++ or ++i pattern
-        if (incrementorExpr.Children[0].Kind == ExpressionInfo.ExpressionKind.Unary &&
-            (incrementorExpr.Children[0].Operator == "++" || incrementorExpr.Children[0].Operator == "++"))
+        var child = incrementorExpr.Children[0];
+        if ((child.Kind == ExpressionInfo.ExpressionKind.PostfixUnary || child.Kind == ExpressionInfo.ExpressionKind.PrefixUnary) &&
+            (child.Operator == "++" || child.Operator == "++"))
         {
             isSimpleIncrement = true;
         }
         // Check for i+=1 pattern
-        else if (incrementorExpr.Children[0].Kind == ExpressionInfo.ExpressionKind.Assignment &&
-                 incrementorExpr.Children[0].Operator == "+=" &&
-                 incrementorExpr.Children[0].Children.Count == 2 &&
-                 incrementorExpr.Children[0].Children[1].Kind == ExpressionInfo.ExpressionKind.Literal &&
-                 incrementorExpr.Children[0].Children[1].LiteralValue is int intValue && 
+        else if (child.Kind == ExpressionInfo.ExpressionKind.Assignment &&
+                 child.Operator == "+=" &&
+                 child.Children.Count == 2 &&
+                 child.Children[1].Kind == ExpressionInfo.ExpressionKind.Literal &&
+                 child.Children[1].LiteralValue is int intValue && 
                  intValue == 1)
         {
             isSimpleIncrement = true;
@@ -1256,9 +1257,6 @@ namespace UnityGLTF.Interactivity.AST
         
         // Connect flow
         inFlow.ConnectToFlowDestination(forLoopNode.FlowIn(Flow_ForLoopNode.IdFlowIn));
-        
-        // Store a reference to the loop variable for use inside the loop body
-        _variables[loopVarName] = forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex);
         
         // Process the loop body statements
         var bodyFlow = forLoopNode.FlowOut(Flow_ForLoopNode.IdLoopBody);
