@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
 using System.Linq;
@@ -853,6 +854,68 @@ namespace InteractivityASTGenerator.Generators
                 
                 source.AppendLine($"{indent}}}");
             }
+            // Numeric literals 
+            else if (expression.IsKind(SyntaxKind.NumericLiteralExpression))
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Literal,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName})");
+                
+                // Get the numeric value
+                var constantValue = semanticModel.GetConstantValue(expression);
+                if (constantValue.HasValue)
+                {
+                    object value = constantValue.Value;
+                    if (value is int intValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {intValue}");
+                    }
+                    else if (value is double doubleValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {doubleValue.ToString(CultureInfo.InvariantCulture)}");
+                    }
+                    else if (value is float floatValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {floatValue.ToString(CultureInfo.InvariantCulture)}f");
+                    }
+                    else if (value is decimal decimalValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {decimalValue.ToString(CultureInfo.InvariantCulture)}m");
+                    }
+                    else if (value is long longValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {longValue}L");
+                    }
+                    else if (value is uint uintValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {uintValue}U");
+                    }
+                    else if (value is ulong ulongValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {ulongValue}UL");
+                    }
+                    else
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {Convert.ToString(value, CultureInfo.InvariantCulture)}");
+                    }
+                }
+                else
+                {
+                    source.AppendLine($"{indent},");
+                    source.AppendLine($"{indent}    LiteralValue = \"{expression.ToString()}\"");
+                }
+                
+                source.AppendLine($"{indent}}}");
+            }
             // Identifiers (variable names)
             else if (expression is IdentifierNameSyntax identifierExpr)
             {
@@ -904,6 +967,256 @@ namespace InteractivityASTGenerator.Generators
                 
                 // Right expression
                 GenerateExpressionInitializer(assignmentExpr.Right, source, indent + "        ", semanticModel);
+                
+                source.AppendLine();
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}}");
+            }
+            // Element access expressions (e.g. array[index])
+            else if (expression is ElementAccessExpressionSyntax elementAccessExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.ElementAccess,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // The expression being accessed (e.g., the array/list)
+                source.AppendLine($"{indent}        // Array/collection expression");
+                GenerateExpressionInitializer(elementAccessExpr.Expression, source, indent + "        ", semanticModel);
+                source.Append(",");
+                source.AppendLine();
+                
+                // Process all arguments (indexes)
+                int argIndex = 0;
+                foreach (var arg in elementAccessExpr.ArgumentList.Arguments)
+                {
+                    source.AppendLine($"{indent}        // Index expression {argIndex + 1}");
+                    GenerateExpressionInitializer(arg.Expression, source, indent + "        ", semanticModel);
+                    
+                    if (argIndex < elementAccessExpr.ArgumentList.Arguments.Count - 1)
+                    {
+                        source.Append(",");
+                    }
+                    source.AppendLine();
+                    argIndex++;
+                }
+                
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}}");
+            }
+            // Interpolated string expressions ($"Hello {name}")
+            else if (expression is InterpolatedStringExpressionSyntax interpolatedStringExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.InterpolatedString,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+
+                // Process string contents and interpolations
+                if (interpolatedStringExpr.Contents.Count > 0)
+                {
+                    source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                    source.AppendLine($"{indent}    {{");
+                    
+                    int contentIndex = 0;
+                    foreach (var content in interpolatedStringExpr.Contents)
+                    {
+                        if (content is InterpolationSyntax interpolation)
+                        {
+                            // Process interpolated expression
+                            GenerateExpressionInitializer(interpolation.Expression, source, indent + "        ", semanticModel);
+                        }
+                        else if (content is InterpolatedStringTextSyntax textContent)
+                        {
+                            // Process text content
+                            source.AppendLine($"{indent}        new ExpressionInfo");
+                            source.AppendLine($"{indent}        {{");
+                            source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.Literal,");
+                            source.AppendLine($"{indent}            ResultType = typeof(string),");
+                            source.AppendLine($"{indent}            LiteralValue = \"{textContent.TextToken.ValueText.Replace("\"", "\\\"")}\"");
+                            source.AppendLine($"{indent}        }}");
+                        }
+                        
+                        if (contentIndex < interpolatedStringExpr.Contents.Count - 1)
+                        {
+                            source.Append(",");
+                        }
+                        source.AppendLine();
+                        contentIndex++;
+                    }
+                    
+                    source.AppendLine($"{indent}    }}");
+                }
+                
+                source.AppendLine($"{indent}}}");
+            }
+            // Anonymous object creation expressions (new { Name = "value" })
+            else if (expression is AnonymousObjectCreationExpressionSyntax anonymousObjectExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.AnonymousObject,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName})");
+                
+                // Process initializers
+                if (anonymousObjectExpr.Initializers.Count > 0)
+                {
+                    source.AppendLine($"{indent},");
+                    source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                    source.AppendLine($"{indent}    {{");
+                    
+                    int initIndex = 0;
+                    foreach (var initializer in anonymousObjectExpr.Initializers)
+                    {
+                        source.AppendLine($"{indent}        new ExpressionInfo");
+                        source.AppendLine($"{indent}        {{");
+                        source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.Assignment,");
+                        
+                        // Get the type of the initializer expression
+                        var initTypeInfo = semanticModel.GetTypeInfo(initializer.Expression);
+                        if (initTypeInfo.Type != null)
+                        {
+                            string initTypeName = initTypeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                            source.AppendLine($"{indent}            ResultType = typeof({initTypeName}),");
+                        }
+                        
+                        // Store property name
+                        string propertyName = initializer.NameEquals?.Name.ToString() ?? 
+                                             (initializer.Expression is IdentifierNameSyntax idName ? idName.Identifier.Text : "anonymousProperty");
+                        
+                        source.AppendLine($"{indent}            LiteralValue = \"{propertyName}\",");
+                        source.AppendLine($"{indent}            Children = new List<ExpressionInfo>");
+                        source.AppendLine($"{indent}            {{");
+                        
+                        // Process expression
+                        GenerateExpressionInitializer(initializer.Expression, source, indent + "                ", semanticModel);
+                        
+                        source.AppendLine();
+                        source.AppendLine($"{indent}            }}");
+                        source.AppendLine($"{indent}        }}");
+                        
+                        if (initIndex < anonymousObjectExpr.Initializers.Count - 1)
+                        {
+                            source.Append(",");
+                        }
+                        source.AppendLine();
+                        initIndex++;
+                    }
+                    
+                    source.AppendLine($"{indent}    }}");
+                }
+                
+                source.AppendLine($"{indent}}}");
+            }
+            // Default value expression (default(Type) or default)
+            else if (expression is DefaultExpressionSyntax defaultExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.DefaultValue,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName})");
+                source.AppendLine($"{indent}}}");
+            }
+            // Typeof expressions (typeof(Type))
+            else if (expression is TypeOfExpressionSyntax typeOfExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.TypeOf,");
+                source.AppendLine($"{indent}    ResultType = typeof(System.Type),");
+                
+                // Get the actual type from the argument
+                var actualType = semanticModel.GetTypeInfo(typeOfExpr.Type).Type;
+                string actualTypeName = actualType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? 
+                                      typeOfExpr.Type.ToString();
+                
+                source.AppendLine($"{indent}    LiteralValue = \"{actualTypeName}\"");
+                source.AppendLine($"{indent}}}");
+            }
+            // Nameof expressions (nameof(identifier))
+            else if (expression is InvocationExpressionSyntax nameofInvocation && 
+                    nameofInvocation.Expression is IdentifierNameSyntax nameofIdentifier && 
+                    nameofIdentifier.Identifier.Text == "nameof")
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.NameOf,");
+                source.AppendLine($"{indent}    ResultType = typeof(string)");
+                
+                // Get the argument (should be just one)
+                if (nameofInvocation.ArgumentList.Arguments.Count > 0)
+                {
+                    var arg = nameofInvocation.ArgumentList.Arguments[0].Expression;
+                    string nameValue;
+                    
+                    // Extract the last identifier from chained member accesses
+                    if (arg is MemberAccessExpressionSyntax memberAccess)
+                    {
+                        nameValue = memberAccess.Name.Identifier.Text;
+                    }
+                    else if (arg is IdentifierNameSyntax idName)
+                    {
+                        nameValue = idName.Identifier.Text;
+                    }
+                    else
+                    {
+                        nameValue = arg.ToString();
+                    }
+                    
+                    source.AppendLine($"{indent},");
+                    source.AppendLine($"{indent}    LiteralValue = \"{nameValue}\"");
+                }
+                
+                source.AppendLine($"{indent}}}");
+            }
+            // Null-coalescing operator (??)
+            else if (expression is BinaryExpressionSyntax nullCoalescingExpr && 
+                    nullCoalescingExpr.OperatorToken.Kind() == SyntaxKind.QuestionQuestionToken)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.NullCoalescing,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Operator = \"??\",");
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // Left expression (potentially null)
+                GenerateExpressionInitializer(nullCoalescingExpr.Left, source, indent + "        ", semanticModel);
+                source.Append(",");
+                source.AppendLine();
+                
+                // Right expression (fallback)
+                GenerateExpressionInitializer(nullCoalescingExpr.Right, source, indent + "        ", semanticModel);
+                
+                source.AppendLine();
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}}");
+            }
+            // Is-pattern expressions (x is int i)
+            else if (expression is IsPatternExpressionSyntax isPatternExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.IsPattern,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // Expression being tested
+                GenerateExpressionInitializer(isPatternExpr.Expression, source, indent + "        ", semanticModel);
+                source.Append(",");
+                source.AppendLine();
+                
+                // Pattern description
+                source.AppendLine($"{indent}        new ExpressionInfo");
+                source.AppendLine($"{indent}        {{");
+                source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.Literal,");
+                source.AppendLine($"{indent}            ResultType = typeof(string),");
+                source.AppendLine($"{indent}            LiteralValue = \"{isPatternExpr.Pattern}\"");
+                source.AppendLine($"{indent}        }}");
                 
                 source.AppendLine();
                 source.AppendLine($"{indent}    }}");
@@ -986,16 +1299,88 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}    }}");
                 source.AppendLine($"{indent}}}");
             }
+            // Parenthesized expressions
+            else if (expression is ParenthesizedExpressionSyntax parenthesizedExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Parenthesized,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                GenerateExpressionInitializer(parenthesizedExpr.Expression, source, indent + "        ", semanticModel);
+                
+                source.AppendLine();
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}}");
+            }
+            // Cast expressions
+            else if (expression is CastExpressionSyntax castExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Cast,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                GenerateExpressionInitializer(castExpr.Expression, source, indent + "        ", semanticModel);
+                
+                source.AppendLine();
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}}");
+            }
+            // Conditional expressions (ternary operator: condition ? ifTrue : ifFalse)
+            else if (expression is ConditionalExpressionSyntax conditionalExpr)
+            {
+                source.AppendLine($"{indent}new ExpressionInfo");
+                source.AppendLine($"{indent}{{");
+                source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Conditional,");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    Children = new List<ExpressionInfo>");
+                source.AppendLine($"{indent}    {{");
+                
+                // Condition
+                source.AppendLine($"{indent}        // Condition");
+                GenerateExpressionInitializer(conditionalExpr.Condition, source, indent + "        ", semanticModel);
+                source.Append(",");
+                source.AppendLine();
+                
+                // WhenTrue
+                source.AppendLine($"{indent}        // WhenTrue");
+                GenerateExpressionInitializer(conditionalExpr.WhenTrue, source, indent + "        ", semanticModel);
+                source.Append(",");
+                source.AppendLine();
+                
+                // WhenFalse
+                source.AppendLine($"{indent}        // WhenFalse");
+                GenerateExpressionInitializer(conditionalExpr.WhenFalse, source, indent + "        ", semanticModel);
+                
+                source.AppendLine();
+                source.AppendLine($"{indent}    }}");
+                source.AppendLine($"{indent}}}");
+            }
             // Default fallback for any other expression type
             else
             {
-                // Log warning for unknown expression type
-                System.Diagnostics.Debug.WriteLine($"WARNING: Unknown expression type: {expression.GetType().Name} in {expression}");
+                // Emit a detailed warning in the generated code
+                var warningMessage = $"WARNING: Unhandled expression type: {expression.GetType().Name} in '{expression}'. This will be processed as an Unknown expression.";
+                source.AppendLine($"{indent}// {warningMessage}");
+                
+                // Also write to debug output for diagnostics during generation
+                System.Diagnostics.Debug.WriteLine(warningMessage);
+                
+                // Try to provide more information from kind
+                string kindName = expression.Kind().ToString();
+                source.AppendLine($"{indent}// SyntaxKind: {kindName}");
 
                 source.AppendLine($"{indent}new ExpressionInfo");
                 source.AppendLine($"{indent}{{");
                 source.AppendLine($"{indent}    Kind = ExpressionInfo.ExpressionKind.Unknown,");
-                source.AppendLine($"{indent}    ResultType = typeof({typeName})");
+                source.AppendLine($"{indent}    ResultType = typeof({typeName}),");
+                source.AppendLine($"{indent}    // Using ToString() to capture at least the text representation");
+                source.AppendLine($"{indent}    LiteralValue = \"{expression.ToString().Replace("\"", "\\\"")}\"");
                 source.AppendLine($"{indent}}}");
             }
         }
@@ -1020,8 +1405,9 @@ namespace InteractivityASTGenerator.Generators
             if (statement is ThrowStatementSyntax) return "Throw";
             if (statement is TryStatementSyntax) return "Try";
             
-            // Log warning for unknown statement type
-            System.Diagnostics.Debug.WriteLine($"WARNING: Unknown statement type: {statement.GetType().Name} in {statement}");
+            // Log warning for unknown statement type with more detailed information
+            var warningMessage = $"WARNING: Unknown statement type: {statement.GetType().Name} in '{statement}'. Using Unknown statement kind.";
+            System.Diagnostics.Debug.WriteLine(warningMessage);
             
             return "Unknown";
         }

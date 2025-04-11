@@ -414,6 +414,7 @@ namespace UnityGLTF.Interactivity.AST
     {
         public enum ExpressionKind
         {
+            [Obsolete("Unknown expression kind. This is likely a bug.")]
             Unknown,
             Literal,
             Identifier,
@@ -448,7 +449,22 @@ namespace UnityGLTF.Interactivity.AST
             AwaitExpression,
             AsyncLambda,
             ThrowExpression,
-            PatternMatching
+            PatternMatching,
+            // Additional expression kinds
+            ElementAccess,      // For array/list indexing (array[index])
+            Parenthesized,      // For expressions in parentheses
+            InterpolatedString, // For string interpolation ($"Hello {name}")
+            AnonymousObject,    // For anonymous object creation (new { Name = "value" })
+            DefaultValue,       // For default value expressions (default(int))
+            TypeOf,             // For typeof expressions (typeof(int))
+            NameOf,             // For nameof expressions (nameof(variable))
+            NullCoalescing,     // For null coalescing operator (??)
+            NullConditional,    // For null conditional operator (?.)
+            RangeExpression,    // For range expressions (1..5)
+            IsPattern,          // For is pattern matching (x is int i)
+            AsExpression,       // For as expressions (obj as string)
+            QueryExpression,    // For LINQ query expressions
+            InitializerExpression // For object/collection initializer expressions
         }
         
         /// <summary>
