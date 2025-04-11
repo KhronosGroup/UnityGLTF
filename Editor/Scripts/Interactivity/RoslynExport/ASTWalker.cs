@@ -257,6 +257,29 @@ namespace UnityGLTF.Interactivity.AST
             };
             return ProcessAssignmentStatement(assignmentStatement, inFlow);
         }
+        else if (expression.Kind == ExpressionInfo.ExpressionKind.AwaitExpression)
+        {
+            // For await expressions, process the awaited expression as a statement
+            if (expression.Children.Count > 0)
+            {
+                var childExpr = expression.Children[0];
+                
+                // If the awaited expression is a Task.Delay call, handle it directly
+                if (childExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation &&
+                    childExpr.Method?.Name == "Delay" &&
+                    childExpr.Method.DeclaringType != null &&
+                    childExpr.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
+                {
+                    return ProcessMethodInvocation(childExpr, inFlow);
+                }
+                
+                // For other types of awaited expressions, just process the child expression
+                if (childExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
+                {
+                    return ProcessMethodInvocation(childExpr, inFlow);
+                }
+            }
+        }
         else
         {
             Debug.LogWarning($"Unsupported expression type in expression statement: {expression.Kind}");
@@ -599,8 +622,13 @@ namespace UnityGLTF.Interactivity.AST
             // Create a setDelay node
             var setDelayNode = context.CreateNode(new Flow_SetDelayNode());
             
-            // Connect the duration parameter
-            setDelayNode.ValueIn(Flow_SetDelayNode.IdDuration).ConnectToSource(durationRef);
+            // Create a multiply node to convert milliseconds to seconds (multiply by 0.001)
+            var multiplyNode = context.CreateNode(new Math_MulNode());
+            multiplyNode.ValueIn("a").ConnectToSource(durationRef);
+            multiplyNode.ValueIn("b").SetValue(0.001f);
+            
+            // Connect the converted duration parameter
+            setDelayNode.ValueIn(Flow_SetDelayNode.IdDuration).ConnectToSource(multiplyNode.FirstValueOut());
             
             // Connect flow
             inFlow.ConnectToFlowDestination(setDelayNode.FlowIn(Flow_SetDelayNode.IdFlowIn));
@@ -796,11 +824,25 @@ namespace UnityGLTF.Interactivity.AST
                 return null;
 
             case ExpressionInfo.ExpressionKind.AwaitExpression:
-                // For await expressions, we simply return the value of the first child
-                // The actual async/await behavior is handled at the method call level
+                // Process the awaited expression
                 if (expression.Children.Count > 0)
                 {
-                    return ProcessExpression(expression.Children[0]);
+                    var childExpr = expression.Children[0];
+                    
+                    // If the awaited expression is a Task.Delay call, we can just process it directly
+                    // as the Task.Delay implementation already handles the await behavior
+                    if (childExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation &&
+                        childExpr.Method?.Name == "Delay" &&
+                        childExpr.Method.DeclaringType != null &&
+                        childExpr.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
+                    {
+                        return ProcessExpression(childExpr);
+                    }
+                    
+                    // Otherwise, just process the child expression normally
+                    // In the context of a statement, the async/await behavior will be handled 
+                    // by the ProcessMethodInvocation method
+                    return ProcessExpression(childExpr);
                 }
                 Debug.LogWarning("Await expression has no children");
                 return null;
@@ -864,10 +906,18 @@ namespace UnityGLTF.Interactivity.AST
     {
         string variableName = expression.LiteralValue?.ToString();
 
-        if (variableName == "transform")
+        var value = GetMemberValue(variableName, instance);
+        // TODO this can currently only statically access variables; we might be able to make this dynamic as well by
+        // leveraging variable get/set properly and treating the local variables as glTF variables
+        if (value is GameObject go)
         {
             var nodeId = context.Context.exporter.ExportNode(gameObject);
-            return new LiteralValueRef(nodeId.Id);;
+            return new LiteralValueRef(nodeId.Id);
+        }
+        if (value is Transform tr)
+        {
+            var nodeId = context.Context.exporter.ExportNode(tr.gameObject);
+            return new LiteralValueRef(nodeId.Id);
         }
         
         // If we don't have a cached reference but the variable seems to be defined,
