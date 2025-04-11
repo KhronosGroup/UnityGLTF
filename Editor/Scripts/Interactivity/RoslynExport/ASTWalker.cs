@@ -134,6 +134,9 @@ namespace UnityGLTF.Interactivity.AST
 
             case StatementInfo.StatementKind.Block:
                 return ProcessBlockStatement(statement, inFlow);
+                
+            case StatementInfo.StatementKind.For:
+                return ProcessForStatement(statement, inFlow);
 
             default:
                 Debug.LogWarning($"Unsupported statement kind: {statement.Kind}");
@@ -996,6 +999,168 @@ namespace UnityGLTF.Interactivity.AST
         */
 
         return null;
+    }
+
+    /// <summary>
+    /// Process a for statement
+    /// </summary>
+    private FlowOutRef ProcessForStatement(StatementInfo statement, FlowOutRef inFlow)
+    {
+        // Check if this has the expected components of a for loop
+        if (statement.Expressions.Count < 1)
+        {
+            Debug.LogWarning("For statement missing required expressions");
+            return inFlow;
+        }
+        
+        // Find initializer, condition, and incrementor expressions
+        var initializerExpr = statement.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.ForInitializer);
+        var conditionExpr = statement.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.ForCondition);
+        var incrementorExpr = statement.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.ForIncrementor);
+
+        // Ensure all required parts are present
+        if (initializerExpr == null || conditionExpr == null || incrementorExpr == null)
+        {
+            Debug.LogWarning("For statement missing required parts (initializer, condition, or incrementor)");
+            return inFlow;
+        }
+
+        // For KHR_interactivity, the initializer should be a simple variable assignment
+        if (initializerExpr.Children.Count == 0 || 
+            initializerExpr.Children[0].Kind != ExpressionInfo.ExpressionKind.Assignment || 
+            initializerExpr.Children[0].Children.Count < 2)
+        {
+            Debug.LogWarning("For statement initializer must be a simple variable assignment for KHR_interactivity");
+            return inFlow;
+        }
+
+        // Extract the loop variable name
+        var loopVarExpr = initializerExpr.Children[0].Children[0];
+        if (loopVarExpr.Kind != ExpressionInfo.ExpressionKind.Identifier)
+        {
+            Debug.LogWarning("For statement loop variable must be a simple identifier for KHR_interactivity");
+            return inFlow;
+        }
+
+        string loopVarName = loopVarExpr.LiteralValue?.ToString();
+        if (string.IsNullOrEmpty(loopVarName))
+        {
+            Debug.LogWarning("For statement loop variable name could not be determined");
+            return inFlow;
+        }
+
+        // Process the initial value of the loop variable
+        var initialValueExpr = initializerExpr.Children[0].Children[1];
+        var initialValueRef = ProcessExpression(initialValueExpr);
+        if (initialValueRef == null)
+        {
+            Debug.LogWarning("Failed to process for loop initializer value");
+            return inFlow;
+        }
+
+        // Process the condition (should result in a boolean value)
+        if (conditionExpr.Children.Count == 0)
+        {
+            Debug.LogWarning("For statement condition is missing");
+            return inFlow;
+        }
+
+        // Create the for loop node
+        var forLoopNode = context.CreateNode(new Flow_ForLoopNode());
+        
+        // Connect the start index (initial value)
+        forLoopNode.ValueIn(Flow_ForLoopNode.IdStartIndex).ConnectToSource(initialValueRef);
+        
+        // Process and connect the end condition
+        // In a for loop, the condition is typically i < endValue
+        if (conditionExpr.Children[0].Kind == ExpressionInfo.ExpressionKind.Binary &&
+            conditionExpr.Children[0].Operator == "<" && 
+            conditionExpr.Children[0].Children.Count == 2)
+        {
+            var endValueExpr = conditionExpr.Children[0].Children[1];
+            var endValueRef = ProcessExpression(endValueExpr);
+            
+            if (endValueRef == null)
+            {
+                Debug.LogWarning("Failed to process for loop end condition");
+                return inFlow;
+            }
+            
+            forLoopNode.ValueIn(Flow_ForLoopNode.IdEndIndex).ConnectToSource(endValueRef);
+        }
+        else
+        {
+            Debug.LogWarning("For statement condition must be a simple comparison (i < endValue) for KHR_interactivity");
+            return inFlow;
+        }
+        
+        // Process the incrementor
+        // For KHR_interactivity, we only support i++ or i+=1 patterns
+        if (incrementorExpr.Children.Count == 0)
+        {
+            Debug.LogWarning("For statement incrementor is missing");
+            return inFlow;
+        }
+        
+        bool isSimpleIncrement = false;
+        
+        // Check for i++ or ++i pattern
+        if (incrementorExpr.Children[0].Kind == ExpressionInfo.ExpressionKind.Unary &&
+            (incrementorExpr.Children[0].Operator == "++" || incrementorExpr.Children[0].Operator == "++"))
+        {
+            isSimpleIncrement = true;
+        }
+        // Check for i+=1 pattern
+        else if (incrementorExpr.Children[0].Kind == ExpressionInfo.ExpressionKind.Assignment &&
+                 incrementorExpr.Children[0].Operator == "+=" &&
+                 incrementorExpr.Children[0].Children.Count == 2 &&
+                 incrementorExpr.Children[0].Children[1].Kind == ExpressionInfo.ExpressionKind.Literal &&
+                 incrementorExpr.Children[0].Children[1].LiteralValue is int intValue && 
+                 intValue == 1)
+        {
+            isSimpleIncrement = true;
+        }
+        
+        if (!isSimpleIncrement)
+        {
+            Debug.LogWarning("For statement incrementor must be a simple increment (i++ or i+=1) for KHR_interactivity");
+            // We'll still continue since we can default to step=1
+        }
+        
+        // Set the step to 1 (this is the only supported value in Flow_ForLoopNode)
+        forLoopNode.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
+        
+        // Connect flow
+        inFlow.ConnectToFlowDestination(forLoopNode.FlowIn(Flow_ForLoopNode.IdFlowIn));
+        
+        // Create a variable get node to access the loop index
+        var indexVarNode = context.CreateNode(new Variable_GetNode());
+        indexVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor { Type = "string" };
+        indexVarNode.Schema.Configuration["variableName"].Type = loopVarName;
+        
+        // Connect the loop index output to the variable
+        forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex).ConnectToFlowDestination(indexVarNode.ValueIn(Variable_GetNode.IdInputVariableName));
+        
+        // Store a reference to the loop variable for use inside the loop body
+        _variables[loopVarName] = forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex);
+        
+        // Process the loop body statements
+        var bodyFlow = forLoopNode.FlowOut(Flow_ForLoopNode.IdLoopBody);
+        
+        foreach (var childStatement in statement.Children)
+        {
+            bodyFlow = ProcessStatement(childStatement, bodyFlow);
+            
+            // If a statement returns null flow (like an if statement with branches), use the original flow
+            if (bodyFlow == null)
+            {
+                bodyFlow = forLoopNode.FlowOut(Flow_ForLoopNode.IdLoopBody);
+                Debug.LogWarning("Flow control inside for loop body may not work as expected");
+            }
+        }
+        
+        // Return the completion flow
+        return forLoopNode.FlowOut(Flow_ForLoopNode.IdCompleted);
     }
 
     // INodeExporter implementation for creating and managing nodes
