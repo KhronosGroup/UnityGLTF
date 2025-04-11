@@ -649,12 +649,10 @@ namespace UnityGLTF.Interactivity.AST
         // create a new Variable_Get node to access it
         if (!string.IsNullOrEmpty(variableName))
         {
+            // TODO get type properly
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(expression.ResultType), "float");
             var getVarNode = context.CreateNode(new Variable_GetNode());
-            getVarNode.Configuration["variableName"] = new GltfInteractivityNode.ConfigData()
-            {
-                
-            };
-            getVarNode.Configuration["variableName"].Value = variableName;
+            getVarNode.Configuration["variable"].Value = variableId;
             
             // Store it for future references
             var output = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
