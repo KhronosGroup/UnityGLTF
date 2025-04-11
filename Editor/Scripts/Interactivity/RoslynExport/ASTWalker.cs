@@ -564,6 +564,97 @@ namespace UnityGLTF.Interactivity.AST
             return inFlow;
         }
 
+        // Handle Task.Delay
+        if (methodName == "Delay" && 
+            expression.Method.DeclaringType != null && 
+            expression.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
+        {
+            // Get the delay duration parameter
+            if (expression.Children.Count < 2)
+            {
+                Debug.LogWarning("Task.Delay call missing duration parameter");
+                return inFlow;
+            }
+
+            var durationExpr = expression.Children[1];
+            var durationRef = ProcessExpression(durationExpr);
+
+            if (durationRef == null)
+            {
+                Debug.LogWarning("Failed to process Task.Delay duration parameter");
+                return inFlow;
+            }
+
+            // Create a setDelay node
+            var setDelayNode = context.CreateNode(new Flow_SetDelayNode());
+            
+            // Connect the duration parameter
+            setDelayNode.ValueIn(Flow_SetDelayNode.IdDuration).ConnectToSource(durationRef);
+            
+            // Connect flow
+            inFlow.ConnectToFlowDestination(setDelayNode.FlowIn(Flow_SetDelayNode.IdFlowIn));
+            
+            // Return the "done" output - this is where execution will continue after the delay
+            return setDelayNode.FlowOut(Flow_SetDelayNode.IdFlowDone);
+        }
+
+        // Handle GameObject.SetActive
+        if (methodName == "SetActive" && 
+            expression.Children.Count >= 2 &&
+            expression.Children[0].ResultType != null &&
+            expression.Children[0].ResultType.Name == "GameObject")
+        {
+            // Get the target GameObject
+            var targetExpr = expression.Children[0];
+            var targetRef = ProcessExpression(targetExpr);
+            
+            // Get the active state parameter
+            var activeExpr = expression.Children[1];
+            var activeRef = ProcessExpression(activeExpr);
+
+            if (targetRef == null || activeRef == null)
+            {
+                Debug.LogWarning("Failed to process GameObject.SetActive parameters");
+                return inFlow;
+            }
+
+            // Create visible and selectable nodes using Pointer_SetNode as in GameObject_SetActiveUnitExport
+            var visibleNode = context.CreateNode(new Pointer_SetNode());
+            var selectableNode = context.CreateNode(new Pointer_SetNode());
+
+            // Add extensions for visible and selectable
+            VisibleExtensionHelper.AddExtension(context, targetRef, visibleNode);
+            SelectableExtensionHelper.AddExtension(context, targetRef, selectableNode);
+            
+            // Connect flow for visible node
+            inFlow.ConnectToFlowDestination(visibleNode.FlowIn(Pointer_SetNode.IdFlowIn));
+            
+            // Setup pointer template and target input for visible
+            PointersHelper.SetupPointerTemplateAndTargetInput(visibleNode,
+                PointersHelper.IdPointerNodeIndex,
+                targetRef, VisibleExtensionHelper.PointerTemplate,
+                GltfTypes.Bool);
+            
+            // Connect active state to visible node
+            visibleNode.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(activeRef);
+            
+            // Connect flow between visible and selectable nodes
+            visibleNode.FlowOut(Pointer_SetNode.IdFlowOut)
+                .ConnectToFlowDestination(selectableNode.FlowIn(Pointer_SetNode.IdFlowIn));
+                
+            // Setup pointer template and target input for selectable
+            PointersHelper.SetupPointerTemplateAndTargetInput(selectableNode,
+                PointersHelper.IdPointerNodeIndex,
+                targetRef, SelectableExtensionHelper.PointerTemplate,
+                GltfTypes.Bool);
+                
+            // Connect active state to selectable node
+            selectableNode.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(activeRef);
+            
+            // Return the flow out from selectable node
+            return selectableNode.FlowOut(Pointer_SetNode.IdFlowOut);
+        }
+
         // Check if this is a transform-related method
         if (expression.Children.Count > 0 &&
             expression.Children[0].ResultType?.Name == "Transform")
@@ -686,6 +777,16 @@ namespace UnityGLTF.Interactivity.AST
                     return ProcessExpression(expression.Children[0]);
                 }
                 Debug.LogWarning("Cast expression has no children");
+                return null;
+
+            case ExpressionInfo.ExpressionKind.AwaitExpression:
+                // For await expressions, we simply return the value of the first child
+                // The actual async/await behavior is handled at the method call level
+                if (expression.Children.Count > 0)
+                {
+                    return ProcessExpression(expression.Children[0]);
+                }
+                Debug.LogWarning("Await expression has no children");
                 return null;
 
             default:
@@ -931,6 +1032,16 @@ namespace UnityGLTF.Interactivity.AST
 
         if (string.IsNullOrEmpty(methodName) || expression.Children.Count == 0)
         {
+            return null;
+        }
+
+        // Support for Task.Delay
+        if (methodName == "Delay" && 
+            expression.Method.DeclaringType != null && 
+            expression.Method.DeclaringType.FullName == "System.Threading.Tasks.Task")
+        {
+            // Task.Delay creates a SetDelay node but doesn't return a value
+            // We'll handle it via ProcessMethodInvocation from the statement handler instead
             return null;
         }
 

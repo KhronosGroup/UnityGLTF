@@ -845,6 +845,11 @@ namespace InteractivityASTGenerator.Generators
                         source.AppendLine($"{indent},");
                         source.AppendLine($"{indent}    LiteralValue = {decimalValue.ToString(CultureInfo.InvariantCulture)}m");
                     }
+                    else if (value is bool boolValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {boolValue.ToString().ToLowerInvariant()}");
+                    }
                     else
                     {
                         source.AppendLine($"{indent},");
@@ -901,6 +906,11 @@ namespace InteractivityASTGenerator.Generators
                     {
                         source.AppendLine($"{indent},");
                         source.AppendLine($"{indent}    LiteralValue = {ulongValue}UL");
+                    }
+                    else if (value is bool boolValue)
+                    {
+                        source.AppendLine($"{indent},");
+                        source.AppendLine($"{indent}    LiteralValue = {boolValue.ToString().ToLowerInvariant()}");
                     }
                     else
                     {

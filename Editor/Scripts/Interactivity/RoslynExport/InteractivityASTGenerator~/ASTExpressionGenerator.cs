@@ -186,6 +186,10 @@ namespace InteractivityASTGenerator.Generators
                     {
                         source.AppendLine($"{indent}    LiteralValue = {decimalValue.ToString(CultureInfo.InvariantCulture)}m");
                     }
+                    else if (value is bool boolValue)
+                    {
+                        source.AppendLine($"{indent}    LiteralValue = {boolValue.ToString().ToLowerInvariant()}");
+                    }
                     else
                     {
                         // For other numeric types and boolean values
