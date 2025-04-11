@@ -218,24 +218,38 @@ namespace UnityGLTF.Interactivity.AST
             var initExpr = initializer.Expressions[0];
             var initValue = ProcessExpression(initExpr);
 
-            // Create a variable node
-            var variableNode = context.CreateNode(new Variable_SetNode());
-            variableNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
+            // Create a variable set node
+            var variableSetNode = context.CreateNode(new Variable_SetNode());
+            variableSetNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
                 { Type = "string" };
+            variableSetNode.Configuration["variableName"].Value = variableName;
 
             // Connect the value to the variable
-            variableNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(initValue);
+            variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(initValue);
 
             // Connect the flow
-            inFlow.ConnectToFlowDestination(variableNode.FlowIn(Variable_SetNode.IdFlowIn));
+            inFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
 
-            // Store the variable for later use
+            // Create a Variable_Get node that will be used when this variable is referenced
             var getVarNode = context.CreateNode(new Variable_GetNode());
             getVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
                 { Type = "string" };
+            getVarNode.Configuration["variableName"].Value = variableName;
+            
+            // Store the variable for later use
             _variables[variableName] = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
 
-            return variableNode.FlowOut(Variable_SetNode.IdFlowOut);
+            return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
+        }
+        else
+        {
+            // If there's no initializer, just create the variable get node for future references
+            var getVarNode = context.CreateNode(new Variable_GetNode());
+            getVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
+                { Type = "string" };
+            getVarNode.Configuration["variableName"].Value = variableName;
+            
+            _variables[variableName] = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
         }
 
         return inFlow;
@@ -270,24 +284,28 @@ namespace UnityGLTF.Interactivity.AST
             string variableName = leftExpr.LiteralValue?.ToString();
             if (!string.IsNullOrEmpty(variableName))
             {
-                // Create a variable node
-                var variableNode = context.CreateNode(new Variable_SetNode());
-                variableNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
+                // Create a variable set node
+                var variableSetNode = context.CreateNode(new Variable_SetNode());
+                variableSetNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
                     { Type = "string" };
+                variableSetNode.Configuration["variableName"].Value = variableName;
 
                 // Connect the value to the variable
-                variableNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueRef);
+                variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueRef);
 
                 // Connect the flow
-                inFlow.ConnectToFlowDestination(variableNode.FlowIn(Variable_SetNode.IdFlowIn));
+                inFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
 
-                // Update the variable reference for later use
+                // Create a Variable_Get node that will be used when this variable is referenced
                 var getVarNode = context.CreateNode(new Variable_GetNode());
                 getVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor
                     { Type = "string" };
+                getVarNode.Configuration["variableName"].Value = variableName;
+                
+                // Store the variable for later use
                 _variables[variableName] = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
 
-                return variableNode.FlowOut(Variable_SetNode.IdFlowOut);
+                return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
             }
         }
         else if (leftExpr.Kind == ExpressionInfo.ExpressionKind.MemberAccess)
@@ -626,6 +644,23 @@ namespace UnityGLTF.Interactivity.AST
         {
             return variableRef;
         }
+        
+        // If we don't have a cached reference but the variable seems to be defined,
+        // create a new Variable_Get node to access it
+        if (!string.IsNullOrEmpty(variableName))
+        {
+            var getVarNode = context.CreateNode(new Variable_GetNode());
+            getVarNode.Configuration["variableName"] = new GltfInteractivityNode.ConfigData()
+            {
+                
+            };
+            getVarNode.Configuration["variableName"].Value = variableName;
+            
+            // Store it for future references
+            var output = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
+            _variables[variableName] = output;
+            return output;
+        }
 
         return null;
     }
@@ -669,6 +704,39 @@ namespace UnityGLTF.Interactivity.AST
             if (targetRef == null)
             {
                 return null;
+            }
+
+            // Handle Vector3/Vector4 component access (x, y, z, w)
+            if (targetExpr.ResultType == typeof(Vector3) || targetExpr.ResultType == typeof(Vector4))
+            {
+                switch (propertyName)
+                {
+                    case "x":
+                        var extractXNode = context.CreateNode(new Math_Extract3Node());
+                        extractXNode.ValueIn("a").ConnectToSource(targetRef);
+                        return extractXNode.ValueOut("value");
+                        
+                    case "y":
+                        var extractYNode = context.CreateNode(new Math_Extract3Node());
+                        extractYNode.ValueIn("a").ConnectToSource(targetRef);
+                        return extractYNode.ValueOut("value");
+                        
+                    case "z":
+                        var extractZNode = context.CreateNode(new Math_Extract3Node());
+                        extractZNode.ValueIn("a").ConnectToSource(targetRef);
+                        return extractZNode.ValueOut("value");
+                        
+                    case "w":
+                        // Only valid for Vector4
+                        if (targetExpr.ResultType == typeof(Vector4))
+                        {
+                            var extractWNode = context.CreateNode(new Math_Extract4Node());
+                            extractWNode.ValueIn("a").ConnectToSource(targetRef);
+                            return extractWNode.ValueOut("value");
+                        }
+                        Debug.LogWarning("Attempting to access 'w' component on a Vector3");
+                        return null;
+                }
             }
 
             // Handle transform properties
@@ -1138,8 +1206,10 @@ namespace UnityGLTF.Interactivity.AST
         indexVarNode.Schema.Configuration["variableName"] = new GltfInteractivityNodeSchema.ConfigDescriptor { Type = "string" };
         indexVarNode.Schema.Configuration["variableName"].Type = loopVarName;
         
+        /* TODO fix API usage
         // Connect the loop index output to the variable
         forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex).ConnectToFlowDestination(indexVarNode.ValueIn(Variable_GetNode.IdInputVariableName));
+        */
         
         // Store a reference to the loop variable for use inside the loop body
         _variables[loopVarName] = forLoopNode.ValueOut(Flow_ForLoopNode.IdIndex);
