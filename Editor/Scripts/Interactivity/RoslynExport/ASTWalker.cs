@@ -707,11 +707,8 @@ namespace UnityGLTF.Interactivity.AST
             // TODO get type properly
             // TODO handle arrays correctly – currently we're getting "Default constructor not found for type UnityEngine.Vector3[]" because of the Activator.CreateInstance call
             var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(expression.ResultType), "float");
-            var getVarNode = context.CreateNode(new Variable_GetNode());
-            getVarNode.Configuration["variable"].Value = variableId;
-            
-            // Store it for future references
-            var output = getVarNode.ValueOut(Variable_GetNode.IdOutputValue);
+            VariablesHelpers.GetVariable(context, variableId, out var output);
+            _variables[variableName] = output;
             return output;
         }
 
