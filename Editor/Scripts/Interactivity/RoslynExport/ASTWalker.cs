@@ -343,15 +343,46 @@ namespace UnityGLTF.Interactivity.AST
                 // If the awaited expression is a method invocation, handle it
                 if (childExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
                 {
+                    // Process the method invocation first (this will set up the method's return value if it has one)
                     var currentFlow = ProcessMethodInvocation(childExpr, inFlow) as FlowOutRef;
                     if (currentFlow != null)
                     {
-                        // Create a variable set node with the result
-                        var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
+                        // Get the method name to find its return value
+                        string methodName = childExpr.Method?.Name;
+                        if (!string.IsNullOrEmpty(methodName))
+                        {
+                            // Create a variable for the declaration
+                            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
+                            
+                            // Check if we have a return value from this method
+                            var returnInfo = GetMethodReturnInfo(methodName);
+                            if (returnInfo.ReturnType != null && returnInfo.VariableId > -1)
+                            {
+                                // Create a Variable_Get node to access the method's return value
+                                var getReturnNode = context.CreateNode(new Variable_GetNode());
+                                getReturnNode.Configuration["variable"].Value = returnInfo.VariableId;
+                                var returnValueRef = getReturnNode.ValueOut(Variable_GetNode.IdOutputValue);
+                                
+                                // Create a variable set node to set our new variable to the method's return value
+                                var variableSetNode = context.CreateNode(new Variable_SetNode());
+                                variableSetNode.Configuration["variable"].Value = variableId;
+                                variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(returnValueRef);
+                                
+                                // Connect the flow
+                                currentFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
+                                
+                                // Create a variable get node for future references to this variable
+                                var getVarNode = context.CreateNode(new Variable_GetNode());
+                                getVarNode.Configuration["variable"].Value = variableId;
+                                
+                                return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
+                            }
+                        }
                         
-                        // Create a variable get node for future references
-                        var getVarNode = context.CreateNode(new Variable_GetNode());
-                        getVarNode.Configuration["variable"].Value = variableId;
+                        // If we couldn't get the return value, just create the variable without setting it
+                        var fallbackVariableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
+                        var fallbackGetVarNode = context.CreateNode(new Variable_GetNode());
+                        fallbackGetVarNode.Configuration["variable"].Value = fallbackVariableId;
                         
                         return currentFlow;
                     }
@@ -361,15 +392,46 @@ namespace UnityGLTF.Interactivity.AST
         // Handle method invocation
         else if (initExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
         {
+            // Process the method invocation first (this will set up the method's return value if it has one)
             var currentFlow = ProcessMethodInvocation(initExpr, inFlow) as FlowOutRef;
             if (currentFlow != null)
             {
-                // Create a variable set node with the result from the method
-                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
+                // Get the method name to find its return value
+                string methodName = initExpr.Method?.Name;
+                if (!string.IsNullOrEmpty(methodName))
+                {
+                    // Create a variable for the declaration
+                    var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
+                    
+                    // Check if we have a return value from this method
+                    var returnInfo = GetMethodReturnInfo(methodName);
+                    if (returnInfo.ReturnType != null && returnInfo.VariableId > -1)
+                    {
+                        // Create a Variable_Get node to access the method's return value
+                        var getReturnNode = context.CreateNode(new Variable_GetNode());
+                        getReturnNode.Configuration["variable"].Value = returnInfo.VariableId;
+                        var returnValueRef = getReturnNode.ValueOut(Variable_GetNode.IdOutputValue);
+                        
+                        // Create a variable set node to set our new variable to the method's return value
+                        var variableSetNode = context.CreateNode(new Variable_SetNode());
+                        variableSetNode.Configuration["variable"].Value = variableId;
+                        variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(returnValueRef);
+                        
+                        // Connect the flow
+                        currentFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
+                        
+                        // Create a variable get node for future references to this variable
+                        var getVarNode = context.CreateNode(new Variable_GetNode());
+                        getVarNode.Configuration["variable"].Value = variableId;
+                        
+                        return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
+                    }
+                }
                 
-                // Create a variable get node for future references
-                var getVarNode = context.CreateNode(new Variable_GetNode());
-                getVarNode.Configuration["variable"].Value = variableId;
+                // If we couldn't get the return value, just create the variable without setting it
+                var fallbackVariableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
+                var fallbackGetVarNode = context.CreateNode(new Variable_GetNode());
+                fallbackGetVarNode.Configuration["variable"].Value = fallbackVariableId;
                 
                 return currentFlow;
             }
@@ -994,6 +1056,15 @@ namespace UnityGLTF.Interactivity.AST
             
             // Return the flow out from log node
             return logNode.FlowOut(Debug_LogNode.IdFlowOut);
+        }
+
+        // Handle method calls that might return values
+        // Store a reference to the return value for later use if this is part of an expression
+        string returnVarName = null;
+        if (expression.Method != null)
+        {
+            // Create a temporary return value variable name based on the method name
+            returnVarName = $"__return_{methodName}";
         }
 
         // Check if this is a transform-related method
