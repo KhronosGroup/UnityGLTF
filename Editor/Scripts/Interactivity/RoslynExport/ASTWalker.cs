@@ -83,6 +83,10 @@ namespace UnityGLTF.Interactivity.AST
     // Maps specific method names to their exported flow entry points
     private readonly Dictionary<string, FlowOutRef> _methodEntryPoints = new Dictionary<string, FlowOutRef>();
 
+    // Stack to track method invocations and their containing statements
+    private readonly Stack<(string MethodName, StatementInfo CallingStatement)> _methodInvocationStack = 
+        new Stack<(string, StatementInfo)>();
+
     /// <summary>
     /// Create a new ClassReflectionASTWalker
     /// </summary>
@@ -246,7 +250,7 @@ namespace UnityGLTF.Interactivity.AST
         var expression = statement.Expressions[0];
         if (expression.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
         {
-            return ProcessMethodInvocation(expression, inFlow) as FlowOutRef;
+            return ProcessMethodInvocation(expression, inFlow, statement) as FlowOutRef;
         }
         else if (expression.Kind == ExpressionInfo.ExpressionKind.Assignment)
         {
@@ -314,9 +318,7 @@ namespace UnityGLTF.Interactivity.AST
         // Check if there's an initialization expression
         if (declaratorExpr.Children == null || declaratorExpr.Children.Count == 0)
         {
-            // No initialization - just create the variable with default value
-            var defaultValue = variableType.IsValueType ? Activator.CreateInstance(variableType) : null;
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, defaultValue, variableType?.Name ?? "object");
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, variableType);
             
             // Create a variable get node for future references
             var getVarNode = context.CreateNode(new Variable_GetNode());
@@ -345,9 +347,7 @@ namespace UnityGLTF.Interactivity.AST
                     if (currentFlow != null)
                     {
                         // Create a variable set node with the result
-                        var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
-                            Activator.CreateInstance(initExpr.ResultType ?? variableType ?? typeof(object)), 
-                            "float");
+                        var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
                         
                         // Create a variable get node for future references
                         var getVarNode = context.CreateNode(new Variable_GetNode());
@@ -365,9 +365,7 @@ namespace UnityGLTF.Interactivity.AST
             if (currentFlow != null)
             {
                 // Create a variable set node with the result from the method
-                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
-                    Activator.CreateInstance(initExpr.ResultType ?? variableType ?? typeof(object)), 
-                    initExpr.ResultType?.Name ?? variableType?.Name ?? "object");
+                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
                 
                 // Create a variable get node for future references
                 var getVarNode = context.CreateNode(new Variable_GetNode());
@@ -386,9 +384,7 @@ namespace UnityGLTF.Interactivity.AST
         if (initValue != null)
         {
             // Create a variable set node
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
-                Activator.CreateInstance(initExpr.ResultType ?? variableType ?? typeof(object)), 
-                initExpr.ResultType?.Name ?? variableType?.Name ?? "object");
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, initExpr.ResultType);
             var variableSetNode = context.CreateNode(new Variable_SetNode());
             variableSetNode.Configuration["variable"].Value = variableId;
             
@@ -455,16 +451,70 @@ namespace UnityGLTF.Interactivity.AST
         var rightExpr = assignExpr.Children[1];
         var valueRef = ProcessExpression(rightExpr);
 
+        // Get the assignment operator (=, +=, -=, etc.)
+        string assignmentOperator = assignExpr.Operator ?? "=";
+
         if (leftExpr.Kind == ExpressionInfo.ExpressionKind.Identifier)
         {
             // Simple variable assignment
             string variableName = leftExpr.LiteralValue?.ToString();
             if (!string.IsNullOrEmpty(variableName))
             {
+                // For compound operators (+=, -=, *=, /=), we need to get the current value first
+                if (assignmentOperator != "=")
+                {
+                    // Create a Variable_Get node to get the current value
+                    var variableGetNode = context.CreateNode(new Variable_GetNode());
+                    var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, leftExpr.ResultType);
+                    variableGetNode.Configuration["variable"].Value = variableId;
+                    
+                    var currentValueRef = variableGetNode.ValueOut(Variable_GetNode.IdOutputValue);
+                    
+                    // Create the appropriate math node based on the compound operator
+                    ValueOutRef resultRef = null;
+                    switch (assignmentOperator)
+                    {
+                        case "+=":
+                            var addNode = context.CreateNode(new Math_AddNode());
+                            addNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            addNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = addNode.ValueOut("value");
+                            break;
+                            
+                        case "-=":
+                            var subNode = context.CreateNode(new Math_SubNode());
+                            subNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            subNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = subNode.ValueOut("value");
+                            break;
+                            
+                        case "*=":
+                            var mulNode = context.CreateNode(new Math_MulNode());
+                            mulNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            mulNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = mulNode.ValueOut("value");
+                            break;
+                            
+                        case "/=":
+                            var divNode = context.CreateNode(new Math_DivNode());
+                            divNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            divNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = divNode.ValueOut("value");
+                            break;
+                            
+                        default:
+                            Debug.LogWarning($"Unsupported compound assignment operator: {assignmentOperator}");
+                            return inFlow;
+                    }
+                    
+                    // Use the result value for the actual assignment
+                    valueRef = resultRef;
+                }
+                
                 // Create a variable set node
                 var variableSetNode = context.CreateNode(new Variable_SetNode());
-                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(typeof(object)), "float");
-                variableSetNode.Configuration["variable"].Value = variableId;
+                var variableSetId = context.Context.AddVariableWithIdIfNeeded(variableName, leftExpr.ResultType);
+                variableSetNode.Configuration["variable"].Value = variableSetId;
 
                 // Connect the value to the variable
                 variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueRef);
@@ -474,7 +524,7 @@ namespace UnityGLTF.Interactivity.AST
 
                 // Create a Variable_Get node that will be used when this variable is referenced
                 var getVarNode = context.CreateNode(new Variable_GetNode());
-                var variableGetId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(typeof(object)), "float");
+                var variableGetId = context.Context.AddVariableWithIdIfNeeded(variableName, leftExpr.ResultType);
                 getVarNode.Configuration["variable"].Value = variableGetId;
 
                 return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
@@ -482,6 +532,56 @@ namespace UnityGLTF.Interactivity.AST
         }
         else if (leftExpr.Kind == ExpressionInfo.ExpressionKind.MemberAccess)
         {
+            // For member access with compound operators (e.g. transform.position += value)
+            if (assignmentOperator != "=")
+            {
+                // Get the current value of the member
+                var currentValueRef = ProcessMemberAccessExpression(leftExpr);
+                
+                if (currentValueRef != null)
+                {
+                    // Create the appropriate math node based on the compound operator
+                    ValueOutRef resultRef = null;
+                    switch (assignmentOperator)
+                    {
+                        case "+=":
+                            var addNode = context.CreateNode(new Math_AddNode());
+                            addNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            addNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = addNode.ValueOut("value");
+                            break;
+                            
+                        case "-=":
+                            var subNode = context.CreateNode(new Math_SubNode());
+                            subNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            subNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = subNode.ValueOut("value");
+                            break;
+                            
+                        case "*=":
+                            var mulNode = context.CreateNode(new Math_MulNode());
+                            mulNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            mulNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = mulNode.ValueOut("value");
+                            break;
+                            
+                        case "/=":
+                            var divNode = context.CreateNode(new Math_DivNode());
+                            divNode.ValueIn("a").ConnectToSource(currentValueRef);
+                            divNode.ValueIn("b").ConnectToSource(valueRef);
+                            resultRef = divNode.ValueOut("value");
+                            break;
+                            
+                        default:
+                            Debug.LogWarning($"Unsupported compound assignment operator: {assignmentOperator}");
+                            return inFlow;
+                    }
+                    
+                    // Use the result value for the actual assignment
+                    valueRef = resultRef;
+                }
+            }
+            
             // Processing member access (e.g. transform.position)
             return ProcessMemberAssignment(leftExpr, valueRef, inFlow);
         }
@@ -646,8 +746,89 @@ namespace UnityGLTF.Interactivity.AST
     /// </summary>
     private FlowOutRef ProcessReturnStatement(StatementInfo statement, FlowOutRef inFlow)
     {
-        // For simplicity, we just return the inFlow since returns in Start/Update don't need special handling
+        // Check if there's a return value expression
+        if (statement.Expressions != null && statement.Expressions.Count > 0)
+        {
+            var returnValueExpr = statement.Expressions[0];
+            var returnValueRef = ProcessExpression(returnValueExpr);
+            
+            if (returnValueRef != null)
+            {
+                // Get the method name from the invocation stack
+                string methodName = GetCurrentMethodName();
+                if (!string.IsNullOrEmpty(methodName))
+                {
+                    // Create a temporary return value variable name based on the method name
+                    string returnVarName = $"__return_{methodName}";
+                    
+                    // Store the return type from the expression
+                    var returnType = returnValueExpr.ResultType ?? typeof(object);
+                    
+                    // Create or get a variable for storing the return value
+                    var variableId = context.Context.AddVariableWithIdIfNeeded(returnVarName, returnType);
+                    
+                    // Create a variable set node for the return value
+                    var variableSetNode = context.CreateNode(new Variable_SetNode());
+                    variableSetNode.Configuration["variable"].Value = variableId;
+                    
+                    // Connect the return value to the variable
+                    variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(returnValueRef);
+                    
+                    // Connect the flow
+                    inFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
+                    
+                    // Store the method return type and variable info for later retrieval
+                    StoreMethodReturnInfo(methodName, returnType, variableId);
+                    
+                    // Return the flow out from variable set node
+                    return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
+                }
+            }
+        }
+
+        // For statements with no return value, or if we couldn't process the return value,
+        // just pass through the flow
         return inFlow;
+    }
+    
+    // Dictionary to store method return information (method name -> (return type, variable id))
+    private readonly Dictionary<string, (Type ReturnType, int VariableId)> _methodReturnInfo = 
+        new Dictionary<string, (Type, int)>();
+    
+    /// <summary>
+    /// Store information about a method's return value for later retrieval
+    /// </summary>
+    private void StoreMethodReturnInfo(string methodName, Type returnType, int variableId)
+    {
+        _methodReturnInfo[methodName] = (returnType, variableId);
+    }
+    
+    /// <summary>
+    /// Get information about a method's return value
+    /// </summary>
+    private (Type ReturnType, int VariableId) GetMethodReturnInfo(string methodName)
+    {
+        return _methodReturnInfo.TryGetValue(methodName, out var info) ? info : (null, -1);
+    }
+    
+    /// <summary>
+    /// Check if a list of statements contains a specific statement recursively
+    /// </summary>
+    private bool ContainsStatementRecursive(List<StatementInfo> statements, StatementInfo target)
+    {
+        if (statements == null)
+            return false;
+            
+        foreach (var statement in statements)
+        {
+            if (statement == target)
+                return true;
+                
+            if (statement.Children != null && ContainsStatementRecursive(statement.Children, target))
+                return true;
+        }
+        
+        return false;
     }
 
     /// <summary>
@@ -671,8 +852,9 @@ namespace UnityGLTF.Interactivity.AST
     /// </summary>
     /// <param name="expression">The method invocation expression</param>
     /// <param name="inFlow">The incoming flow reference (optional, null if called as an expression)</param>
+    /// <param name="callingStatement">The statement that contains this method call</param>
     /// <returns>A flow reference if processing as a statement, or a value reference if called as an expression</returns>
-    private object ProcessMethodInvocation(ExpressionInfo expression, FlowOutRef inFlow = null)
+    private object ProcessMethodInvocation(ExpressionInfo expression, FlowOutRef inFlow = null, StatementInfo callingStatement = null)
     {
         string methodName = expression.Method?.Name;
         bool isStatement = inFlow != null; // If inFlow is provided, we're processing as a statement
@@ -833,7 +1015,8 @@ namespace UnityGLTF.Interactivity.AST
                         return ProcessLookAtMethod(expression, targetExpr, inFlow);
                 }
             }
-            // For transform methods that return values, handle here in the future
+            // For transform methods that return values in expression context, 
+            // we would handle that here
         }
         
         // Handle Vector3 methods when used as an expression
@@ -916,13 +1099,19 @@ namespace UnityGLTF.Interactivity.AST
                 var methodEntryNode = context.CreateNode(new Flow_SequenceNode());
                 
                 // Connect flow from caller to method entry
-                inFlow.ConnectToFlowDestination(methodEntryNode.FlowIn(Flow_SequenceNode.IdFlowIn));
+                if (inFlow != null)
+                {
+                    inFlow.ConnectToFlowDestination(methodEntryNode.FlowIn(Flow_SequenceNode.IdFlowIn));
+                }
                 
                 // Create a temporary flow out reference to use as the entry point
                 var methodEntryFlow = methodEntryNode.FlowOut("0");
                 
                 // Get the flow out that will be used after the method completes
                 var returnFlow = methodEntryNode.FlowOut("1");
+                
+                // Push the method onto the stack before processing its body
+                _methodInvocationStack.Push((methodName, callingStatement));
                 
                 // Process the body of the method, starting from our entry flow
                 var currentFlow = methodEntryFlow;
@@ -946,8 +1135,31 @@ namespace UnityGLTF.Interactivity.AST
                     }
                 }
                 
-                // Return the flow that continues after the method call
-                return returnFlow;
+                // Pop the method from the stack after processing
+                _methodInvocationStack.Pop();
+
+                // Check if we have a stored return value for this method
+                var returnInfo = GetMethodReturnInfo(methodName);
+                if (returnInfo.ReturnType != null && returnInfo.VariableId > -1)
+                {
+                    // Create a Variable_Get node to access the return value
+                    var getReturnNode = context.CreateNode(new Variable_GetNode());
+                    getReturnNode.Configuration["variable"].Value = returnInfo.VariableId;
+                    
+                    if (isStatement)
+                    {
+                        // If called as a statement, return the flow
+                        return returnFlow;
+                    }
+                    else
+                    {
+                        // If called as an expression, return the value
+                        return getReturnNode.ValueOut(Variable_GetNode.IdOutputValue);
+                    }
+                }
+                
+                // Return the flow that continues after the method call or null if we're in expression mode
+                return isStatement ? returnFlow : null;
             }
             
             Debug.LogWarning($"Method {methodName} not found in class {_classInfo.Type.Name}");
@@ -1187,7 +1399,7 @@ namespace UnityGLTF.Interactivity.AST
             
             // TODO get type properly
             // TODO handle arrays correctly – currently we're getting "Default constructor not found for type UnityEngine.Vector3[]" because of the Activator.CreateInstance call
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, Activator.CreateInstance(resultType), "float");
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, resultType);
             VariablesHelpers.GetVariable(context, variableId, out var output);
             return output;
         }
@@ -1779,6 +1991,41 @@ namespace UnityGLTF.Interactivity.AST
         {
             Debug.LogError($"Error during interactivity export: {e.Message}\n{e.StackTrace}");
         }
+    }
+
+    /// <summary>
+    /// Get the current method name from the invocation stack
+    /// </summary>
+    private string GetCurrentMethodName()
+    {
+        return _methodInvocationStack.Count > 0 ? _methodInvocationStack.Peek().MethodName : null;
+    }
+    
+    /// <summary>
+    /// Get the current method name for a return statement
+    /// </summary>
+    /// <param name="statement">The return statement</param>
+    /// <returns>The name of the method containing this return statement</returns>
+    private string GetCurrentMethodName(StatementInfo statement)
+    {
+        // First try to get the method name from the invocation stack
+        string methodName = GetCurrentMethodName();
+        if (!string.IsNullOrEmpty(methodName))
+        {
+            return methodName;
+        }
+            
+        // If the stack is empty, fall back to searching in method bodies
+        foreach (var entry in _classInfo.MethodBodies)
+        {
+            if (entry.Value.Statements.Contains(statement) || 
+                ContainsStatementRecursive(entry.Value.Statements, statement))
+            {
+                return entry.Key;
+            }
+        }
+        
+        return null;
     }
     }
 }
