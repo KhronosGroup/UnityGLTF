@@ -560,19 +560,38 @@ namespace InteractivityASTGenerator.Generators
                 source.AppendLine($"{indent}    Expressions = new List<ExpressionInfo>");
                 source.AppendLine($"{indent}    {{");
                 
+                // Add declaration type info
+                source.AppendLine($"{indent}        new ExpressionInfo");
+                source.AppendLine($"{indent}        {{");
+                source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.DeclarationType,");
+                
+                // Resolve the declaration type using semantic model
+                var typeInfo = semanticModel.GetTypeInfo(localDecl.Declaration.Type);
+                if (typeInfo.Type != null)
+                {
+                    string typeFullName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    source.AppendLine($"{indent}            ResultType = typeof({typeFullName}),");
+                    source.AppendLine($"{indent}            LiteralValue = \"{localDecl.Declaration.Type}\"");
+                }
+                
+                source.AppendLine($"{indent}        }},");
+                
+                // Add each variable declarator
                 foreach (var variable in localDecl.Declaration.Variables)
                 {
                     source.AppendLine($"{indent}        new ExpressionInfo");
                     source.AppendLine($"{indent}        {{");
-                    source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.Identifier,");
+                    source.AppendLine($"{indent}            Kind = ExpressionInfo.ExpressionKind.Declarator,");
                     
                     // Resolve the variable type using semantic model
-                    var typeInfo = semanticModel.GetTypeInfo(localDecl.Declaration.Type);
                     if (typeInfo.Type != null)
                     {
                         string typeFullName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                         source.AppendLine($"{indent}            ResultType = typeof({typeFullName}),");
                     }
+                    
+                    // Store the identifier name
+                    source.AppendLine($"{indent}            LiteralValue = \"{variable.Identifier.Text}\",");
                     
                     // If there's an initializer, include it with proper type resolution
                     if (variable.Initializer != null)

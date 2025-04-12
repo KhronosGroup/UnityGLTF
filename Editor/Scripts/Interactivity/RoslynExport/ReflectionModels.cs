@@ -550,7 +550,13 @@ namespace UnityGLTF.Interactivity.AST
             QueryExpression,
             
             /** Represents object or collection initializer expressions (e.g., new List<int> { 1, 2, 3 }) */
-            InitializerExpression
+            InitializerExpression,
+            
+            /** Represents the type part of a variable declaration (e.g., 'int' in 'int x = 5;') */
+            DeclarationType,
+            
+            /** Represents the variable declarator part of a declaration (e.g., 'x' in 'int x = 5;') */
+            Declarator
         }
         
         /// <summary>

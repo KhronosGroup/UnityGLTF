@@ -294,105 +294,45 @@ namespace UnityGLTF.Interactivity.AST
     /// </summary>
     private FlowOutRef ProcessDeclarationStatement(StatementInfo statement, FlowOutRef inFlow)
     {
-        ExpressionInfo identifierExpr = null;
-        string variableName = null;
-        ExpressionInfo initExpr = null;
-        StatementInfo initializer = null;
-
-        // Handle expressions directly on statement (no children)
-        if (statement.Children.Count == 0)
+        // Get the declaration type expression if it exists
+        var declarationTypeExpr = statement.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.DeclarationType);
+        
+        // Get the declarator expression which contains the variable name and initialization
+        var declaratorExpr = statement.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.Declarator);
+        
+        // Get variable name from the declarator expression
+        string variableName = declaratorExpr.LiteralValue?.ToString();
+        if (string.IsNullOrEmpty(variableName))
         {
-            if (statement.Expressions.Count == 0)
-            {
-                return inFlow;
-            }
-
-            // Get the first expression which should be the identifier
-            identifierExpr = statement.Expressions[0];
-            if (identifierExpr.Kind != ExpressionInfo.ExpressionKind.Identifier || identifierExpr.Children.Count == 0)
-            {
-                Debug.LogWarning("Expected identifier expression with children in declaration statement");
-                return inFlow;
-            }
-
-            // Get variable name
-            variableName = ExtractVariableName(identifierExpr);
-            if (string.IsNullOrEmpty(variableName))
-            {
-                Debug.LogWarning("Failed to determine variable name in declaration statement");
-                // return inFlow;
-            }
-
-            // Process the initialization expression (e.g. await expression)
-            initExpr = identifierExpr.Children[0];
-        }
-        else
-        {
-            // Find variable declarator child
-            var declarator = statement.Children.FirstOrDefault(c => c.Kind == StatementInfo.StatementKind.VariableDeclarator);
-            if (declarator == null || declarator.Expressions.Count == 0)
-            {
-                return inFlow;
-            }
-
-            // Get variable name from identifier expression
-            identifierExpr = declarator.Expressions.FirstOrDefault(e => e.Kind == ExpressionInfo.ExpressionKind.Identifier);
-            if (identifierExpr == null)
-            {
-                return inFlow;
-            }
-
-            variableName = ExtractVariableName(identifierExpr);
-            if (string.IsNullOrEmpty(variableName))
-            {
-                return inFlow;
-            }
-
-            // Find initializer expression if any
-            initializer = declarator.Children.FirstOrDefault(c => c.Kind == StatementInfo.StatementKind.Initializer);
-            if (initializer != null && initializer.Expressions.Count > 0)
-            {
-                initExpr = initializer.Expressions[0];
-            }
-        }
-
-        // If there's no initialization expression, just create the variable
-        if (initExpr == null)
-        {
-            // Create the variable without an initializer
-            var variableType = identifierExpr.ResultType ?? typeof(object);
-            var defaultValue = variableType.IsValueType ? Activator.CreateInstance(variableType) : null;
-
-            var getVarNode = context.CreateNode(new Variable_GetNode());
-            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, defaultValue, variableType.Name);
-            getVarNode.Configuration["variable"].Value = variableId;
-
+            Debug.LogWarning("Failed to determine variable name in declaration statement");
             return inFlow;
         }
-
-        // Process the initialization expression to get the value
-        var initValue = ProcessExpression(initExpr);
-
-        // Handle method invocation
-        if (initValue == null && initExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
+        
+        // Get variable type from the declaration type or declarator expression
+        Type variableType = declarationTypeExpr?.ResultType ?? declaratorExpr.ResultType ?? typeof(object);
+        
+        // Check if there's an initialization expression
+        if (declaratorExpr.Children == null || declaratorExpr.Children.Count == 0)
         {
-            var currentFlow = ProcessMethodInvocation(initExpr, inFlow) as FlowOutRef;
-            if (currentFlow != null)
-            {
-                // Create a variable set node with the result from the method
-                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
-                    Activator.CreateInstance(initExpr.ResultType ?? typeof(object)), 
-                    initExpr.ResultType?.Name ?? "object");
-                
-                // Create a variable get node for future references
-                var getVarNode = context.CreateNode(new Variable_GetNode());
-                getVarNode.Configuration["variable"].Value = variableId;
-
-                return currentFlow;
-            }
+            // No initialization - just create the variable with default value
+            var defaultValue = variableType.IsValueType ? Activator.CreateInstance(variableType) : null;
+            var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, defaultValue, variableType?.Name ?? "object");
+            
+            // Create a variable get node for future references
+            var getVarNode = context.CreateNode(new Variable_GetNode());
+            getVarNode.Configuration["variable"].Value = variableId;
+            
+            return inFlow;
         }
+        
+        // Get the initialization expression
+        var initExpr = declaratorExpr.Children[0];
+        
+        // Process the initialization expression
+        ValueOutRef initValue = null;
+        
         // Handle await expressions
-        else if (initExpr.Kind == ExpressionInfo.ExpressionKind.AwaitExpression)
+        if (initExpr.Kind == ExpressionInfo.ExpressionKind.AwaitExpression)
         {
             if (initExpr.Children.Count > 0)
             {
@@ -406,44 +346,68 @@ namespace UnityGLTF.Interactivity.AST
                     {
                         // Create a variable set node with the result
                         var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
-                            Activator.CreateInstance(initExpr.ResultType ?? typeof(object)), 
-                            initExpr.ResultType?.Name ?? "object");
+                            Activator.CreateInstance(initExpr.ResultType ?? variableType ?? typeof(object)), 
+                            "float");
                         
                         // Create a variable get node for future references
                         var getVarNode = context.CreateNode(new Variable_GetNode());
                         getVarNode.Configuration["variable"].Value = variableId;
-
+                        
                         return currentFlow;
                     }
                 }
             }
         }
+        // Handle method invocation
+        else if (initExpr.Kind == ExpressionInfo.ExpressionKind.MethodInvocation)
+        {
+            var currentFlow = ProcessMethodInvocation(initExpr, inFlow) as FlowOutRef;
+            if (currentFlow != null)
+            {
+                // Create a variable set node with the result from the method
+                var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
+                    Activator.CreateInstance(initExpr.ResultType ?? variableType ?? typeof(object)), 
+                    initExpr.ResultType?.Name ?? variableType?.Name ?? "object");
+                
+                // Create a variable get node for future references
+                var getVarNode = context.CreateNode(new Variable_GetNode());
+                getVarNode.Configuration["variable"].Value = variableId;
+                
+                return currentFlow;
+            }
+        }
+        // Handle normal expressions by processing them
+        else
+        {
+            initValue = ProcessExpression(initExpr);
+        }
+        
         // Handle normal expressions with a direct value
-        else if (initValue != null)
+        if (initValue != null)
         {
             // Create a variable set node
             var variableId = context.Context.AddVariableWithIdIfNeeded(variableName, 
-                Activator.CreateInstance(initExpr.ResultType ?? typeof(object)), 
-                initExpr.ResultType?.Name ?? "object");
+                Activator.CreateInstance(initExpr.ResultType ?? variableType ?? typeof(object)), 
+                initExpr.ResultType?.Name ?? variableType?.Name ?? "object");
             var variableSetNode = context.CreateNode(new Variable_SetNode());
             variableSetNode.Configuration["variable"].Value = variableId;
-
+            
             // Connect the value to the variable
             variableSetNode.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(initValue);
-
+            
             // Connect the flow
             inFlow.ConnectToFlowDestination(variableSetNode.FlowIn(Variable_SetNode.IdFlowIn));
-
+            
             // Create a variable get node for future references
             var getVarNode = context.CreateNode(new Variable_GetNode());
             getVarNode.Configuration["variable"].Value = variableId;
-
+            
             return variableSetNode.FlowOut(Variable_SetNode.IdFlowOut);
         }
-
+        
         return inFlow;
     }
-
+    
     /// <summary>
     /// Helper method to extract variable name from an identifier expression
     /// </summary>
@@ -954,11 +918,11 @@ namespace UnityGLTF.Interactivity.AST
                 // Connect flow from caller to method entry
                 inFlow.ConnectToFlowDestination(methodEntryNode.FlowIn(Flow_SequenceNode.IdFlowIn));
                 
-                // Get the flow out that will be used after the method completes
-                var returnFlow = methodEntryNode.FlowOut("0");
-                
                 // Create a temporary flow out reference to use as the entry point
-                var methodEntryFlow = methodEntryNode.FlowOut("1");
+                var methodEntryFlow = methodEntryNode.FlowOut("0");
+                
+                // Get the flow out that will be used after the method completes
+                var returnFlow = methodEntryNode.FlowOut("1");
                 
                 // Process the body of the method, starting from our entry flow
                 var currentFlow = methodEntryFlow;
@@ -970,6 +934,15 @@ namespace UnityGLTF.Interactivity.AST
                     if (currentFlow == null)
                     {
                         break;
+                    }
+                    // If it returns a flow, we attach a WaitAll node so that the return flow only
+                    // continues after all branches are done
+                    if (currentFlow is FlowOutRef flowOutRef)
+                    {
+                        var waitAllNode = context.CreateNode(new Flow_WaitAllNode());
+                        waitAllNode.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = 1;
+                        currentFlow.ConnectToFlowDestination(waitAllNode.FlowIn("0"));
+                        returnFlow = waitAllNode.FlowOut(Flow_WaitAllNode.IdFlowOutCompleted);
                     }
                 }
                 
