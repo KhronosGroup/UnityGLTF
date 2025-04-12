@@ -28,9 +28,9 @@ namespace UnityGLTF.Interactivity
         // TODO: change to Dict!
         public static readonly TypeMapping[] TypesMapping =
         {
-            new TypeMapping(Bool,  new [] {typeof(bool)}),
+            new TypeMapping(Bool,  new [] {typeof(bool), typeof(Boolean)}),
             new TypeMapping(Int, new [] {typeof(int), typeof(long), typeof(GameObject), typeof(Material), typeof(Transform)}),
-            new TypeMapping(Float, new [] {typeof(float), typeof(double)}),
+            new TypeMapping(Float, new [] {typeof(float), typeof(double), typeof(Single), typeof(Double)}),
             new TypeMapping(Float2, new [] {typeof(Vector2)}),
             new TypeMapping(Float3, new [] {typeof(Vector3)}),
             new TypeMapping(Float4, new [] {typeof(Color), typeof(Color32), typeof(Vector4), typeof(Quaternion)}),

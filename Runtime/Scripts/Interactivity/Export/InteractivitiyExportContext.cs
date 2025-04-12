@@ -125,6 +125,16 @@ namespace UnityGLTF.Interactivity.Export
             }            
         }
         
+        public int AddVariableWithIdIfNeeded(string id, System.Type type)
+        {
+            return AddVariableWithIdIfNeeded(id, System.Activator.CreateInstance(type), GltfTypes.GetTypeMapping(type)?.GltfSignature);
+        }
+        
+        public int AddVariableWithIdIfNeeded(string id, object defaultValue, System.Type type)
+        {
+            return AddVariableWithIdIfNeeded(id, defaultValue, GltfTypes.GetTypeMapping(type)?.GltfSignature);
+        }
+        
         public int AddVariableWithIdIfNeeded(string id, object defaultValue, string gltfType)
         {
             return AddVariableWithIdIfNeeded(id, defaultValue, GltfTypes.TypeIndexByGltfSignature(gltfType));
