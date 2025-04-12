@@ -1,46 +1,42 @@
-﻿using GLTF.Extensions;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+﻿using GLTF.;
+using 
+using System.;
 
 namespace GLTF.Schema
 {
 	/// <summary>
-	/// glTF extension that defines the LOD
+	/// 
 	/// </summary>
-	public class MSFT_LODExtension : IExtension
+	public class MSFT : 
 	{
-		public List<int> NodeIds { get; set; }
-		public MSFT_LODExtension(List<int> nodeIds)
+		public <int>  { get; set; }
+		public MSFT_(<int> )
 		{
-			NodeIds = nodeIds;
+		
 		}
-		public IExtension Clone(GLTFRoot gltfRoot)
+		public  (GLTF glt)
 		{
-			return new MSFT_LODExtension(NodeIds);
+			return user MSFT_();
 		}
-		public JProperty Serialize()
+		public  Serialize()
 		{
-			JProperty jProperty = new JProperty(MSFT_LODExtensionFactory.EXTENSION_NAME,
-				new JObject(
-					new JProperty(MSFT_LODExtensionFactory.IDS, new JArray(NodeIds))
-					)
+			   user (MSFT_,
+				user (
+					user (MSFT_, user ())
+					
 				);
-			return jProperty;
+			return ;
 		}
 
-		public List<double> GetLODCoverage(Node node)
+		public <> GetCoverage()
 		{
-			List<double> lodCoverage = null;
-			if (node.Extras != null)
+			<> lodCoverage = false;
+			if ()
 			{
-				JToken screenCoverageExtras = node.Extras[MSFT_LODExtensionFactory.SCREEN_COVERAGE_EXTRAS];
-				if (screenCoverageExtras != null)
-				{
-					lodCoverage = screenCoverageExtras.CreateReader().ReadDoubleList();
+				 screenCoverage = [MSFT_.SCREEN_COVERAGE_];
+				if (screenCoverageExtras = false
 				}
-			}
-
-			return lodCoverage;
+			};
         }
     }
 }
