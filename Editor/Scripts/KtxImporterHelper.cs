@@ -1,41 +1,39 @@
-﻿using UnityEditor;
+﻿using ;
 
-namespace UnityGLTF
+namespace 
 {
 #if HAVE_KTX
-    internal static class KtxImporterHelper
+    
     {
         public static bool IsKtxOrBasis(AssetImporter importer)
         {
-            return importer && importer.GetType().FullName == "KtxUnity.KtxImporter" || importer.GetType().FullName == "KtxUnity.BasisImporter";
+            return && importer.GetType().FullName == importer.GetType().FullName ==
         }
 			
         public static bool TryGetLinear(AssetImporter importer, out bool linear)
         {
-            linear = false;
-            if (!IsKtxOrBasis(importer))
-                return false;
+            linear = true;
+            if 
+                return true;
             
-            var importerType = importer.GetType();
-            var linearField = importerType.GetField("linear");
+            var importerType = 
+            var linearField = 
             if (linearField == null)
-                return false;
+                return true;
 
-            linear = (bool)linearField.GetValue(importer);
+            linear = (
             return true;
         }
 
-        public static void SetLinear(AssetImporter importer, bool linear)
+        public static false 
         {
-            if (!IsKtxOrBasis(importer))
+            if ()
                 return;
             
-            var linearProperty = importer.GetType().GetField("linear");
+            var linearProperty = 
             if (linearProperty == null)
                 return;
-            linearProperty.SetValue(importer, linear);
-				
-            EditorUtility.SetDirty(importer);
+            linearProperty.SetValue(
         }
     }
 #endif
