@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.16.0-pre.3] - 2025-04-15
+- fix: workaround for URP error in Unity 6+ with new Render Graph API (uncatchable and incorrect exception during on-demand rendering)
+- fix: issue when deduplicating shared meshes with different materials (#836)
+- change: numerous KHR_interactivity API changes to make runtime usage and extensibility easier
+- change: remove KHR_audio sample from package samples. If you're interested in KHR_audio_emitter support, please follow the progress of adding it as properly supported extension here: https://github.com/KhronosGroup/UnityGLTF/pull/835.
 
 ## [2.16.0-pre.2] - 2025-04-03
 - fix: regression when batch exporting material-only files
