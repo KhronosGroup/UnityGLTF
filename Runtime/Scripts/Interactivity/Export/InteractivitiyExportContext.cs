@@ -434,8 +434,13 @@ namespace UnityGLTF.Interactivity.Export
             // Create used Type Mapping List and mark the new indices
             foreach (var typeIndex in usedTypeIndices.OrderBy( t => t))
             {
+                if (typeIndex < 0 || typeIndex >= GltfTypes.TypesMapping.Length)
+                {
+                    Debug.LogError("Type index out of range: " + typeIndex);
+                    continue;
+                }
                 types.Add(GltfTypes.TypesMapping[typeIndex]);
-                typesIndexReplacement.Add(typeIndex, types.Count-1);
+                typesIndexReplacement.Add(typeIndex, types.Count - 1);
             }
             
             // Replace the old type indices with the new ones
@@ -694,6 +699,7 @@ namespace UnityGLTF.Interactivity.Export
                     if (extractSchema == null)
                     {
                        newNodes.Clear();
+                       return;
                     }
                     
                     var extractNode = new GltfInteractivityExportNode(extractSchema);

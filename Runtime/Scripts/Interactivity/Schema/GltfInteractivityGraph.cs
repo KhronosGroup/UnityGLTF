@@ -6,7 +6,7 @@ namespace UnityGLTF.Interactivity.Schema
 {
     public class GltfInteractivityGraph
     {
-             // The list of nodes in the behavior graph
+        // The list of nodes in the behavior graph
         public GltfInteractivityNode[] Nodes = { };
 
         // The variables that are accessible to the nodes in the graph.

@@ -17,6 +17,13 @@ namespace UnityGLTF.Interactivity.Export
             
         public virtual ValueInRef ConnectToSource(ValueOutRef other)
         {
+            // Add null check to prevent NullReferenceException
+            if (other == null)
+            {
+                UnityEngine.Debug.LogWarning($"Attempted to connect null ValueOutRef to ValueInRef on node {node}");
+                return this;
+            }
+
             SocketConnector.ConnectValueIn(other.node, other.socket.Key, node, socket.Key);
             return this;
         }
