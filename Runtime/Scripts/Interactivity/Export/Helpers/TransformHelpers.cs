@@ -56,6 +56,14 @@ namespace UnityGLTF.Interactivity.Export
 
         }
 
+        public static void SetLocalPosition(INodeExporter exporter, out ValueInRef target, ValueOutRef position,
+            out FlowInRef flowIn, out FlowOutRef flowOut)
+        {
+            SetLocalPosition(exporter, out target, out var positionIn, out flowIn, out flowOut);
+            positionIn.ConnectToSource(position);
+        }
+
+
         public static void SetLocalPosition(INodeExporter exporter, out ValueInRef target, out ValueInRef position,
             out FlowInRef flowIn, out FlowOutRef flowOut)
         {
