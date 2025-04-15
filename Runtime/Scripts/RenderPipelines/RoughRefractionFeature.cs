@@ -236,7 +236,11 @@ namespace UnityGLTF
 	        // The RecordRenderGraph method instructs the render graph to use it with the SetRenderFunc method.
 	        static void ExecutePass(PassData data, RasterGraphContext context)
 	        {
-	            Blitter.BlitTexture(context.cmd, data.activeColorTexture, new Vector4(1, 1, 0, 0), 0, false);
+		        var rtHandle = (RTHandle) data.activeColorTexture;
+		        // The implicit conversion seems to mess up when calling RenderToCubemap() programmatically,
+		        // so we need to do the conversion ourselves and check validity
+		        if (rtHandle.rt || rtHandle.externalTexture)
+					Blitter.BlitTexture(context.cmd, rtHandle, new Vector4(1, 1, 0, 0), 0, false);
 	        }
 	 
 	        // This method adds and configures one or more render passes in the render graph.
