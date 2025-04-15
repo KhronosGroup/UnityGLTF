@@ -7,7 +7,7 @@ namespace UnityGLTF.Interactivity.Export
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
 #else
-        [RuntimeInitializeOnLoadMethod]
+        [UnityEngine.RuntimeInitializeOnLoadMethod]
 #endif
         private static void Register()
         {
