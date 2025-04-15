@@ -414,7 +414,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             CollectOpDeclarations();
             
-            TriggerInterfaceExportCallbacks();
+            TriggerOnBeforeSerialization();
             
             ApplyInteractivityExtension();
             OutputUnitLogs();
