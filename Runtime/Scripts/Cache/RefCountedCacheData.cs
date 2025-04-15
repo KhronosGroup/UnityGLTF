@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityGLTF.Cache
 {
@@ -28,6 +29,11 @@ namespace UnityGLTF.Cache
 		public MeshCacheData[] MeshCache { get; private set; }
 
 		/// <summary>
+		/// Generic Unity Objects used by this GLTF node.
+		/// </summary>
+		public Object[] GenericObjectCache { get; private set; }
+		
+		/// <summary>
 		/// Materials used by this GLTF node.
 		/// </summary>
 		public MaterialCacheData[] MaterialCache { get; private set; }
@@ -47,13 +53,14 @@ namespace UnityGLTF.Cache
 		/// </summary>
 		public Texture2D[] ImageCache { get; private set; }
 
-		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache, AnimationCacheData[] animationCache)
+		public RefCountedCacheData(MaterialCacheData[] materialCache, MeshCacheData[] meshCache, TextureCacheData[] textureCache, Texture2D[] imageCache, AnimationCacheData[] animationCache, Object[] genericObjectCache)
 		{
 			MaterialCache = materialCache;
 			MeshCache = meshCache;
 			TextureCache = textureCache;
 			ImageCache = imageCache;
 			AnimationCache = animationCache;
+			GenericObjectCache = genericObjectCache;
 		}
 
 		public void IncreaseRefCount()
@@ -99,6 +106,13 @@ namespace UnityGLTF.Cache
 			{
 				MeshCache[i]?.Dispose();
 				MeshCache[i] = null;
+			}
+			
+			// Destroy the cached AudioClips
+			for (int i = 0; i < GenericObjectCache.Length; i++)
+			{
+				UnityEngine.Object.Destroy(GenericObjectCache[i]);
+				GenericObjectCache[i] = null;
 			}
 
 			// Destroy the cached textures
