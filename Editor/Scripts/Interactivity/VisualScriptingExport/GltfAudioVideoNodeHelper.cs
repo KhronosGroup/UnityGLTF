@@ -13,10 +13,10 @@ namespace UnityGLTF.Audio
     /// Copied the GltfInteractivityNodeHelper for now to use with audio. 
 	/// This will need to be cleaned up since a lot of this is not used.
     /// </summary>
-    public static class GltfAudioNodeHelper
+    public static class GltfAudioVideoNodeHelper
     {        
         public static Dictionary<IUnit, UnitExporter> GetTranslatableNodes(
-            IEnumerable<IUnit> sortedNodes, GLTFAudioExportContext exportContext)
+            IEnumerable<IUnit> sortedNodes, VisualScriptingExportContext exportContext)
         {
             Dictionary<IUnit, UnitExporter> validNodes =
                 new Dictionary<IUnit, UnitExporter>();
@@ -27,7 +27,6 @@ namespace UnityGLTF.Audio
                     continue;
 
                 UnitExporter unitExporter = UnitExporterRegistry.CreateUnitExporter(exportContext, unit);
-                validNodes.Add(unit, unitExporter);
             }
 
             return validNodes;

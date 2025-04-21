@@ -9,32 +9,33 @@ using System.IO;
 using UnityEditor;
 using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
+using UnityEngine.Video;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {
     /// <summary>
     /// Audio GLTF export context 
     /// </summary>
-    public class GLTFAudioExportContext : VisualScriptingExportContext
+    public class GLTFVideoExportContext : VisualScriptingExportContext
     {
         /// <summary>
         /// Contains summary information for an audio clip.
         /// </summary>
-        public class AudioDescription
+        public class VideoDescription
         {
             public int Id;
             public string Name;
-            public AudioClip Clip;
+            public VideoClip Clip;
         }
 
         // container for audio sources by description
-        private static List<AudioDescription> _audioSourceIds = new();
+        private static List<VideoDescription> _videoSourceIds = new();
 
-        private const string AudioExtension = ".mp3";
-        private const string AudioRelDirectory = "audio";
-        private const string MimeTypeString = "audio/mpeg";
+        private const string AudioExtension = ".mp4";
+        private const string AudioRelDirectory = "video";
+        private const string MimeTypeString = "video/mpeg";
 
-        private bool _saveAudioToFile = false;
+        private bool _saveVideoToFile = false;
 
         private List<ExportGraph> addedGraphs = new List<ExportGraph>();
         private List<UnitExporter> nodesToExport = new List<UnitExporter>();
@@ -46,7 +47,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// Default construction initializes the parent GLTFInteractivity export context.
         /// </summary>
         /// <param name="plugin"></param>
-        public GLTFAudioExportContext(GLTFAudioExportPlugin plugin): base(plugin)
+        public GLTFVideoExportContext(GLTFVideoExportPlugin plugin): base(plugin)
         {
 
         }
@@ -56,9 +57,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// </summary>
         /// <param name="plugin"></param>
         /// <param name="saveToExternalFile"></param>
-        public GLTFAudioExportContext(GLTFAudioExportPlugin plugin, bool saveToExternalFile) : base(plugin)
+        public GLTFVideoExportContext(GLTFVideoExportPlugin plugin, bool saveToExternalFile) : base(plugin)
         {
-            _saveAudioToFile = saveToExternalFile;
+            _saveVideoToFile = saveToExternalFile;
         }
 
         public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) 
@@ -66,7 +67,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         }
 
         /// <summary>
-        /// Called after the scene has been exported to add khr audio data.
+        /// Called after the scene has been exported to add video data.
         ///
         /// This overload of AfterSceneExport exposes the origins as a parameter to simplify tests.
         /// </summary>
@@ -91,7 +92,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             // add new scenes audio emitter extension before process and JSON is written out.
             var v = new Dictionary<string, IExtension>();
-            v.Add(GltfAudioExtension.AudioExtensionName, new GltfSceneAudioEmitterExtension() { emitters = GetAudioSourceIndexes() });
+            v.Add(GltfVideoExtension.VideoExtensionName, new GltfSceneVideoEmitterExtension() { videos = GetVideoSourceIndexes() });
             gltfRoot.Scenes.Add(new GLTFScene() { Extensions = v });
 
         }
@@ -116,7 +117,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             {
                 ActiveScriptMachine = scriptMachine;
                 FlowGraph flowGraph = scriptMachine.graph;
-                GetAudio(flowGraph);
+                GetVideo(flowGraph);
             }
         }
 
@@ -125,7 +126,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// </summary>
         /// <param name="graph"></param>
         /// <returns></returns>
-        internal ExportGraph GetAudio(FlowGraph graph)
+        internal ExportGraph GetVideo(FlowGraph graph)
         {
             var newExportGraph = new ExportGraph();
             newExportGraph.gameObject = ActiveScriptMachine.gameObject;
@@ -146,14 +147,14 @@ namespace UnityGLTF.Interactivity.VisualScripting
             {
                 if (unit is Literal literal)
                 {
-                    AudioSource audio = null;
+                    VideoPlayer video = null;
                     // If there is a connection, then we can return the value of the literal
-                    if (literal.value is Component component && component is AudioSource)
-                        audio = component.GetComponent<AudioSource>();
-                    if (audio == null)
+                    if (literal.value is Component component && component is VideoPlayer)
+                        video = component.GetComponent<VideoPlayer>();
+                    if (video == null)
                         continue;
 
-                    ProcessAudioSource(unit, audio);
+                    ProcessVideoSource(unit, video);
                 }
             }
 
@@ -165,25 +166,25 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return newExportGraph;
         }
 
-        public static List<int> GetAudioSourceIndexes()
+        public static List<int> GetVideoSourceIndexes()
         {
-            return (_audioSourceIds.Select(r => r.Id).ToList());
+            return (_videoSourceIds.Select(r => r.Id).ToList());
         }
 
-        public static AudioDescription AddAudioSource(AudioSource audioSource)
+        public static VideoDescription AddVideoSource(VideoPlayer videoPlayer)
         {
-            AudioClip clip = audioSource.clip;
+            VideoClip clip = videoPlayer.clip;
             string name = clip.name;
 
-            foreach (var a in _audioSourceIds)
+            foreach (var v in _videoSourceIds)
             {
-                if (name == a.Name && clip == a.Clip)
+                if (name == v.Name && clip == v.Clip)
                 {
-                    return a;
+                    return v;
                 }
             }
-            AudioDescription ad = new AudioDescription() { Id = _audioSourceIds.Count, Name = clip.name, Clip = clip };
-            _audioSourceIds.Add(ad);
+            VideoDescription ad = new VideoDescription() { Id = _videoSourceIds.Count, Name = clip.name, Clip = clip };
+            _videoSourceIds.Add(ad);
             return ad;
         }
 
@@ -193,41 +194,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
         /// </summary>
         /// <param name="unit"> supplied iunit which is not currently used</param>
         /// <param name="audioSource">the audio source in the unity scene to parse</param>
-        internal void ProcessAudioSource(IUnit unit, AudioSource audioSource)
+        internal void ProcessVideoSource(IUnit unit, VideoPlayer videoPlayer)
         {
-            List<AudioClip> audioDataClips = new List<AudioClip>();
-            List<KHR_AudioEmitter> audioEmitters = new List<KHR_AudioEmitter>();
+            List<VideoClip> videoDataClips = new List<VideoClip>();
 
-            var clip = audioSource.clip;
+            var clip = videoPlayer.clip;
 
-            var audioSourceId = AddAudioSource(audioSource);
-
-            var emitterId = new AudioEmitterId
-            {
-                Id = audioSourceId.Id,
-                Root = _gltfRoot
-            };
-
-            //var emitter = new KHR_AudioEmitter()
-            //{
-            //    audio = audioSourceId.Id,
-            //    gain = 1,
-            //    autoPlay = true,
-            //    loop = false
-            //};
-
-            //var emitter = new KHR_PositionalAudioEmitter()
-            //{
-            //    type = "global",
-            //    sources = new List<AudioSourceId>() { new AudioSourceId() { Id = audioSourceId.Id, Root = _gltfRoot } },
-            //    gain = audioSource.volume,
-            //    minDistance = audioSource.minDistance,
-            //    maxDistance = audioSource.maxDistance,
-            //    distanceModel = PositionalAudioDistanceModel.linear,
-            //    name = "positional emitter"
-            //};
-
-//            audioEmitters.Add(emitter);
+            var audioSourceId = AddVideoSource(videoPlayer);
 
             var path = AssetDatabase.GetAssetPath(clip);
 
@@ -236,11 +209,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             string savePath = string.Empty;
 
-            var audio = new KHR_AudioData();
+            var videoSource = new GOOG_VideoSource();
 
             var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
 
-            if (settings != null && !string.IsNullOrEmpty(settings.SaveFolderPath) && _saveAudioToFile)
+            if (settings != null && !string.IsNullOrEmpty(settings.SaveFolderPath) && _saveVideoToFile)
             {
                 string uriPath;
                 (uriPath, savePath) = GetRelativePath(settings.SaveFolderPath);
@@ -258,53 +231,40 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     fileWriteStream.Write(data, 0, data.Length);
                 }
 
-                audio.uri = uriPath + fileName; //"." + Path.DirectorySeparatorChar + AudioRelDirectory + Path.DirectorySeparatorChar + fileName;
+                videoSource.uri = uriPath + fileName; //"." + Path.DirectorySeparatorChar + AudioRelDirectory + Path.DirectorySeparatorChar + fileName;
             }
             else
             {
-                var result = exporter.ExportFile(fileName, "audio/mpeg", fileStream);
-                audio.mimeType = result.mimeType;
-                audio.bufferView = result.bufferView;
+                var result = exporter.ExportFile(fileName, "video/mpeg", fileStream);
+                videoSource.mimeType = result.mimeType;
+                videoSource.bufferView = result.bufferView;
             }
 
-            var audioData = new List<KHR_AudioData>();
+            var videoSources = new List<GOOG_VideoSource>();
 
-            audioData.Add(audio);
+            videoSources.Add(videoSource);
 
-            var emitter = new KHR_AudioEmitter()
+            var videoDatas = new List<GOOG_VideoData>();
+            var videoData = new GOOG_VideoData()
             {
-                audio = audioSourceId.Id,
-                gain = audioSource.volume,
-                autoPlay = audioSource.playOnAwake,
-                loop = audioSource.loop
+                name = videoPlayer.clip?.name,
+                speed = videoPlayer.playbackSpeed,
+                video = audioSourceId.Id,
+                autoPlay = videoPlayer.playOnAwake
             };
 
-            audioEmitters.Add(emitter);
+            videoDatas.Add(videoData);
 
-            //var audioSources = new List<KHR_AudioSource>();
-
-            //var khrAudio = new KHR_AudioSource
-            //{
-            //    audio = new AudioDataId { Id = audioSourceId.Id, Root = _gltfRoot },
-            //    autoPlay = audioSource.playOnAwake,
-            //    loop = audioSource.loop,
-            //    gain = audioSource.volume,
-            //    name = Path.GetFileNameWithoutExtension(path)
-            //};
-
-            //audioSources.Add(khrAudio);
-
-            var extension = new KHR_audio
+            var extension = new GOOG_Video
             {
-                audio = new List<KHR_AudioData>(audioData),
-//                sources = new List<KHR_AudioSource>(audioSources),
-                emitters = new List<KHR_AudioEmitter>(audioEmitters),
+                videoData = new List<GOOG_VideoData>(videoDatas),
+                videoSource = new List<GOOG_VideoSource>(videoSources)
             };
 
             if (_gltfRoot != null)
             {
-                _gltfRoot.AddExtension(GltfAudioExtension.AudioExtensionName, (IExtension)extension);
-                exporter.DeclareExtensionUsage(GltfAudioExtension.AudioExtensionName);
+                _gltfRoot.AddExtension(GltfVideoExtension.VideoExtensionName, (IExtension)extension);
+                exporter.DeclareExtensionUsage(GltfVideoExtension.VideoExtensionName);
             }
         }
 
@@ -377,59 +337,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return sorted;
         }
 
-
-
-        //private static LinkedList<IUnit> TopologicalSort(IEnumerable<IUnit> nodes)
-        //{
-        //    var sorted = new LinkedList<IUnit>();
-        //    var visited = new Dictionary<IUnit, bool>();
-
-        //    void Visit(IUnit node)
-        //    {
-        //        bool inProcess;
-        //        bool alreadyVisited = visited.TryGetValue(node, out inProcess);
-
-        //        if (alreadyVisited)
-        //        {
-        //            if (inProcess)
-        //            {
-        //                // TODO: Should quit the topological sort and cancel the export
-        //                // throw new ArgumentException("Cyclic dependency found.");
-        //            }
-        //        }
-        //        else
-        //        {
-        //            visited[node] = true;
-
-        //            // Get the dependencies from incoming connections and ignore self-references
-        //            HashSet<IUnit> dependencies = new HashSet<IUnit>();
-        //            foreach (IUnitConnection connection in node.connections)
-        //            {
-        //                if (connection.source.unit != node)
-        //                {
-        //                    dependencies.Add(connection.source.unit);
-        //                }
-        //            }
-
-        //            foreach (IUnit dependency in dependencies)
-        //            {
-        //                Visit(dependency);
-        //            }
-
-        //            visited[node] = false;
-        //            sorted.AddLast(node);
-        //        }
-        //    }
-
-        //    foreach (var node in nodes)
-        //    {
-        //        Visit(node);
-        //    }
-
-        //    return sorted;
-        //}
-
-        // remaining context callbacks which are not currently being used.
         public override void BeforeNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node) { }
         public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node){}
         public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) => false;
