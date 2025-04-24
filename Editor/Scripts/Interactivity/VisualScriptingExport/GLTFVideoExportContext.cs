@@ -40,6 +40,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
         private List<ExportGraph> addedGraphs = new List<ExportGraph>();
         private List<UnitExporter> nodesToExport = new List<UnitExporter>();
 
+        private List<GOOG_VideoData> _videoDatas = new List<GOOG_VideoData>();
+        private List<GOOG_VideoSource> _videoSources = new List<GOOG_VideoSource>();
+
+
         internal new ExportGraph currentGraphProcessing { get; private set; } = null;
         private GLTFRoot _gltfRoot = null;
 
@@ -158,6 +162,21 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 }
             }
 
+            var extension = new GOOG_Video
+            {
+                videoData = new List<GOOG_VideoData>(_videoDatas),
+                videoSource = new List<GOOG_VideoSource>(_videoSources)
+            };
+
+            if (_gltfRoot != null && !_gltfRoot.Extensions.ContainsKey(GltfVideoExtension.VideoExtensionName))
+            {
+                _gltfRoot.AddExtension(GltfVideoExtension.VideoExtensionName, (IExtension)extension);
+                exporter.DeclareExtensionUsage(GltfVideoExtension.VideoExtensionName);
+            }
+
+            _videoDatas.Clear();
+            _videoSources.Clear();
+
             newExportGraph.nodes = GltfAudioVideoNodeHelper.GetTranslatableNodes(topologicallySortedNodes, this);
 
             nodesToExport.AddRange(newExportGraph.nodes.Select(g => g.Value));
@@ -240,11 +259,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 videoSource.bufferView = result.bufferView;
             }
 
-            var videoSources = new List<GOOG_VideoSource>();
 
-            videoSources.Add(videoSource);
+            _videoSources.Add(videoSource);
 
-            var videoDatas = new List<GOOG_VideoData>();
             var videoData = new GOOG_VideoData()
             {
                 name = videoPlayer.clip?.name,
@@ -253,19 +270,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 autoPlay = videoPlayer.playOnAwake
             };
 
-            videoDatas.Add(videoData);
-
-            var extension = new GOOG_Video
-            {
-                videoData = new List<GOOG_VideoData>(videoDatas),
-                videoSource = new List<GOOG_VideoSource>(videoSources)
-            };
-
-            if (_gltfRoot != null)
-            {
-                _gltfRoot.AddExtension(GltfVideoExtension.VideoExtensionName, (IExtension)extension);
-                exporter.DeclareExtensionUsage(GltfVideoExtension.VideoExtensionName);
-            }
+            _videoDatas.Add(videoData);
         }
 
         /// <summary>
