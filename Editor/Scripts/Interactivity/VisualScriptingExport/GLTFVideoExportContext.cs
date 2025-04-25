@@ -94,11 +94,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             AfterSceneExport(exporter, gltfRoot, scriptMachines);
 
-            // add new scenes audio emitter extension before process and JSON is written out.
+            // add texture extension here otherwise it will skip over the textures block when writing
             var v = new Dictionary<string, IExtension>();
-            v.Add(GltfVideoExtension.VideoExtensionName, new GltfSceneVideoEmitterExtension() { videos = GetVideoSourceIndexes() });
-            gltfRoot.Scenes.Add(new GLTFScene() { Extensions = v });
-
+            v.Add(GltfVideoExtension.VideoExtensionName, new GltfTextureVideoEmitterExtension() { videos = _videoDatas.ToArray() });
+            exporter.GetRoot().Textures.Add(new GLTFTexture() { Extensions = v });
         }
 
         /// <summary>
@@ -164,8 +163,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             var extension = new GOOG_Video
             {
-                videoData = new List<GOOG_VideoData>(_videoDatas),
-                videoSource = new List<GOOG_VideoSource>(_videoSources)
+                videos = new List<GOOG_VideoSource>(_videoSources)
             };
 
             if (_gltfRoot != null && !_gltfRoot.Extensions.ContainsKey(GltfVideoExtension.VideoExtensionName))
@@ -173,9 +171,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 _gltfRoot.AddExtension(GltfVideoExtension.VideoExtensionName, (IExtension)extension);
                 exporter.DeclareExtensionUsage(GltfVideoExtension.VideoExtensionName);
             }
-
-            _videoDatas.Clear();
-            _videoSources.Clear();
 
             newExportGraph.nodes = GltfAudioVideoNodeHelper.GetTranslatableNodes(topologicallySortedNodes, this);
 
@@ -185,10 +180,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
             return newExportGraph;
         }
 
-        public static List<int> GetVideoSourceIndexes()
-        {
-            return (_videoSourceIds.Select(r => r.Id).ToList());
-        }
 
         public static VideoDescription AddVideoSource(VideoPlayer videoPlayer)
         {
@@ -264,9 +255,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             var videoData = new GOOG_VideoData()
             {
-                name = videoPlayer.clip?.name,
-                speed = videoPlayer.playbackSpeed,
-                video = audioSourceId.Id,
+                source = _videoSources.Count - 1,
+                playhead = 0,
+                loop = videoPlayer.isLooping,  
                 autoPlay = videoPlayer.playOnAwake
             };
 
@@ -347,7 +338,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) => false;
         public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) { }
         public override void BeforeTextureExport(GLTFSceneExporter exporter, ref GLTFSceneExporter.UniqueTexture texture, string textureSlot) { }
-        public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex) { }
+        public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex){        }
         public override void AfterPrimitiveExport(GLTFSceneExporter exporter, Mesh mesh, MeshPrimitive primitive, int index) { }
         public override void AfterMeshExport(GLTFSceneExporter exporter, Mesh mesh, GLTFMesh gltfMesh, int index) { }
     }
