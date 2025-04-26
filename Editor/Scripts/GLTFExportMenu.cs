@@ -55,7 +55,7 @@ namespace UnityGLTF
 	    private static GLTFSettings settings
 	    { 
 		    get { 
-			    if (_cachedSettings == null)
+			    if (!_cachedSettings)
 			    {
 				    _cachedSettings = GLTFSettings.GetOrCreateSettings();
 			    }
@@ -169,6 +169,7 @@ namespace UnityGLTF
 		    // Project object selection
 		    if (Selection.objects.Any() && Selection.objects.All(x => x is GameObject))
 		    {
+			    if (Selection.objects.Length <= 1) separateBatches = true;
 			    if (!separateBatches)
 			    {
 				    batches = new List<ExportBatch>()
@@ -199,6 +200,7 @@ namespace UnityGLTF
 		    // Project material selection
 		    if (Selection.objects.Any() && Selection.objects.All(x => x is Material))
 		    {
+			    if (Selection.objects.Length <= 1) separateBatches = true;
 			    if (!separateBatches)
 			    {
 				    batches = new List<ExportBatch>()
@@ -228,6 +230,7 @@ namespace UnityGLTF
 		    // Project scene selection
 		    if (Selection.objects.Any() && Selection.objects.All(x => x is SceneAsset))
 		    {
+			    if (Selection.objects.Length <= 1) separateBatches = true;
 			    batches = new List<ExportBatch>();
 			    if (!separateBatches)
 			    {
