@@ -780,6 +780,8 @@ namespace UnityGLTF
 
 		private async Task<BufferCacheData> GetBufferData(BufferId bufferId)
 		{
+			if (bufferId == null) return null;
+			
 			if (_assetCache.BufferCache[bufferId.Id] == null)
 			{
 				await ConstructBuffer(bufferId.Value, bufferId.Id);

@@ -61,24 +61,24 @@ namespace UnityGLTF
 				samplers[i].Interpolation = samplerDef.Interpolation;
 
 				// set up input accessors
-				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView.Value.Buffer);
+				BufferCacheData inputBufferCacheData = await GetBufferData(samplerDef.Input.Value.BufferView?.Value?.Buffer);
 				AttributeAccessor attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Input,
-					bufferData = inputBufferCacheData.bufferData,
-					Offset = inputBufferCacheData.ChunkOffset
+					bufferData = inputBufferCacheData?.bufferData ?? default,
+					Offset = inputBufferCacheData?.ChunkOffset ?? 0,
 				};
 
 				samplers[i].Input = attributeAccessor;
 				samplersByType["time"].Add(attributeAccessor);
 
 				// set up output accessors
-				BufferCacheData outputBufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView.Value.Buffer);
+				BufferCacheData outputBufferCacheData = await GetBufferData(samplerDef.Output.Value.BufferView?.Value?.Buffer);
 				attributeAccessor = new AttributeAccessor
 				{
 					AccessorId = samplerDef.Output,
-					bufferData = outputBufferCacheData.bufferData,
-					Offset = outputBufferCacheData.ChunkOffset
+					bufferData = outputBufferCacheData?.bufferData ?? default,
+					Offset = outputBufferCacheData?.ChunkOffset ?? 0,
 				};
 
 				samplers[i].Output = attributeAccessor;
@@ -485,6 +485,8 @@ namespace UnityGLTF
 				// In case an animated material are referenced from many nodes, whe need to create a curve for each node. (e.g. Materials)
 				foreach (var nodeId in nodeIds)
 				{
+					if (samplerCache.Input == null || samplerCache.Output == null)
+						continue;
 					var node = await GetNode(nodeId, cancellationToken);
 					var targetNode = _gltfRoot.Nodes[nodeId];
 					relativePath = RelativePathFrom(node.transform, root);

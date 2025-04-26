@@ -668,13 +668,20 @@ namespace GLTF.Schema
 			}
 
 			var arr = new float[Count];
+			
+			if (bufferViewData == default)
+			{
+				contents.AsFloats = arr;
+				return arr;
+			}
+			
 			uint totalByteOffset = ByteOffset + offset;
 
 			GetTypeDetails(ComponentType, out uint componentSize, out float maxValue);
 			if (normalizeIntValues) maxValue = 1f;
 			var bufferPointer = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr<byte>(bufferViewData);
 
-			uint stride = BufferView.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
+			uint stride = BufferView?.Value.ByteStride > 0 ? BufferView.Value.ByteStride : componentSize;
 
 			if (ComponentType == GLTFComponentType.Float)
 			{

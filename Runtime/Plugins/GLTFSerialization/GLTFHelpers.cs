@@ -516,11 +516,19 @@ namespace GLTF
 		
 		private static void LoadBufferView(AttributeAccessor attributeAccessor, out NativeArray<byte> bufferViewCache)
 		{
-			LoadBufferView(attributeAccessor.AccessorId.Value.BufferView.Value, attributeAccessor.Offset, attributeAccessor.bufferData, out bufferViewCache);
+			LoadBufferView(attributeAccessor.AccessorId.Value.BufferView?.Value, attributeAccessor.Offset, attributeAccessor.bufferData, out bufferViewCache);
 		}
 		
 		internal static void LoadBufferView(BufferView bufferView, uint Offset, NativeArray<byte> nativeBuffer, out NativeArray<byte> bufferViewCache)
 		{
+			// The bufferView can be null for sparse buffers with just a count.
+			// In that case, this is a buffer padded with zeros, so we can just return the nativeBuffer.
+			if (bufferView == null || nativeBuffer == default)
+			{
+				bufferViewCache = nativeBuffer;
+				return;
+			}
+			
 			uint totalOffset = bufferView.ByteOffset + Offset;
 			bufferViewCache = nativeBuffer.GetSubArray((int)totalOffset, (int)bufferView.ByteLength);
 		}
