@@ -30,16 +30,34 @@ namespace UnityGLTF.Interactivity.Schema
         /// </summary>
         public JProperty Serialize()
         {
-//            JObject jo = new JObject();
+            JObject jo = new JObject();
             JArray arr = new JArray();
 
             foreach (var vid in videos)
             {
                 arr.Add(vid.SerializeObject());
             }
+            jo.Add("data", arr);
+            //            jo.Add("data", arr);
             JProperty extension =
-                new JProperty(TextureVideoExtensionName, arr);
+                new JProperty(TextureVideoExtensionName, jo);
             return extension;
+
+            //JObject jo = new JObject();
+
+            //JArray arr = new JArray();
+
+            //foreach (var video in videos)
+            //{
+            //    arr.Add(video);
+            //}
+
+            //jo.Add(new JProperty(nameof(videos), arr));
+
+
+            //JProperty extension =
+            //    new JProperty(GltfTextureVideoEmitterExtension.TextureVideoExtensionName, jo);
+            //return extension;
         }
 
         /// <summary>
