@@ -65,7 +65,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public ScriptMachine ActiveScriptMachine = null;
         public GLTFRoot ActiveGltfRoot = null;
 
-        public GLTFSceneExporter exporter { get; private set; }
+        public GLTFSceneExporter exporter { get; set; }
         
         internal List<GltfInteractivityGraph.Variable> variables = new List<GltfInteractivityGraph.Variable>();
         internal List<GltfInteractivityGraph.CustomEvent> customEvents = new List<GltfInteractivityGraph.CustomEvent>();

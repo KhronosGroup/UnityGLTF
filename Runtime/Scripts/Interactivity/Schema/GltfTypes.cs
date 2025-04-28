@@ -35,9 +35,9 @@ namespace UnityGLTF.Interactivity
             new TypeMapping(Float3, new [] {typeof(Vector3)}),
             new TypeMapping(Float4, new [] {typeof(Color), typeof(Color32), typeof(Vector4), typeof(Quaternion)}),
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
-        //    new TypeMapping(String, new [] {typeof(string)}),
-            new TypeMapping("custom", new [] {typeof(string)}, "AMZN_interactivity_string"),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
+            new TypeMapping(String, new [] {typeof(string)}),
+//            new TypeMapping("custom", new [] {typeof(string)}, "AMZN_interactivity_string"),
         };
 
         public static int GetComponentCount(int typeIndex)
