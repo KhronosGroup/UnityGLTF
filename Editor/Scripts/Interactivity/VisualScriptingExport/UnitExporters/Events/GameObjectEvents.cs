@@ -76,7 +76,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         if (memberStr == "PointerEventData.pointerEnter"
                             || memberStr == "PointerEventData.pointerClick")
                         {
-                            node.ValueOut(NodeIndexId).MapToPort(getMember.value);
+                            if (node.OutputValueSocket.ContainsKey(NodeIndexId))
+                                node.ValueOut(NodeIndexId).MapToPort(getMember.value);
                         }
                         // else if (memberStr == "PointerEventData.position")
                         // {
@@ -85,11 +86,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         // }
                         else if (memberStr == "PointerEventData.pointerId")
                         {
-                            unitExporter.MapValueOutportToSocketName(getMember.value, ControllerIndexId, node);
+                            if (node.OutputValueSocket.ContainsKey(ControllerIndexId))
+                                unitExporter.MapValueOutportToSocketName(getMember.value, ControllerIndexId, node);
                         }
                         else if (memberStr == "PointerEventData.pointerId")
                         {
-                            unitExporter.MapValueOutportToSocketName(getMember.value, ControllerIndexId, node);
+                            if (node.OutputValueSocket.ContainsKey(ControllerIndexId))
+                                unitExporter.MapValueOutportToSocketName(getMember.value, ControllerIndexId, node);
                         }
                         else if (memberStr == "PointerEventData.pointerCurrentRaycast")
                         {
@@ -101,13 +104,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                                 {
                                     if (secondGetMember.member.ToString() == "RaycastResult.worldPosition")
                                     {
-                                        unitExporter.MapValueOutportToSocketName(secondGetMember.value, HitLocationId, node);
+                                        if (node.OutputValueSocket.ContainsKey(HitLocationId))
+                                            unitExporter.MapValueOutportToSocketName(secondGetMember.value, HitLocationId, node);
                                     }
                                     if (secondGetMember.member.ToString() == "RaycastResult.gameObject")
                                     {
-                                        
-                                        unitExporter.MapValueOutportToSocketName(secondGetMember.value,
-                                            NodeIndexId, node);
+                                        if (node.OutputValueSocket.ContainsKey(NodeIndexId))
+                                            unitExporter.MapValueOutportToSocketName(secondGetMember.value, NodeIndexId, node);
                                     }
                                     
                                 }
@@ -117,13 +120,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     else
                     if (targetUnit is Expose expose && expose.type == typeof(PointerEventData))
                     {
-                        if (expose.valueOutputs.TryGetValue("pointerEnter", out var pointerEnterOutput))
+                        if (expose.valueOutputs.TryGetValue("pointerEnter", out var pointerEnterOutput)
+                            && node.OutputValueSocket.ContainsKey(NodeIndexId))
                             unitExporter.MapValueOutportToSocketName(pointerEnterOutput, NodeIndexId, node);
 
-                        if (expose.valueOutputs.TryGetValue("position", out var pointerPositionOutput))
+                        if (expose.valueOutputs.TryGetValue("position", out var pointerPositionOutput)
+                            && node.OutputValueSocket.ContainsKey(HitLocationId))
                             unitExporter.MapValueOutportToSocketName(pointerPositionOutput, HitLocationId, node);
                         
-                        if (expose.valueOutputs.TryGetValue("pointerId", out var pointerIdOutput))
+                        if (expose.valueOutputs.TryGetValue("pointerId", out var pointerIdOutput)
+                            && node.OutputValueSocket.ContainsKey(ControllerIndexId))
                             unitExporter.MapValueOutportToSocketName(pointerIdOutput, ControllerIndexId, node);
                     }
                 }
