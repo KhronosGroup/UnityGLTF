@@ -6,6 +6,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class OnPointerExitEventExport : GameObjectEvents<OnPointerExit, Event_OnHoverOutNode>
     {
+        protected override string NodeIndexId
+        {
+            get => Event_OnHoverOutNode.IdOutHoverNodeIndex;
+        }
+        
         [InitializeOnLoadMethod]
         private static void Register()
         {
