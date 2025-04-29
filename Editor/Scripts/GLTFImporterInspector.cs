@@ -89,7 +89,17 @@ namespace UnityGLTF
 			
 			EditorGUILayout.LabelField("Meshes", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)));
+
+#pragma warning disable 0618	
+			if (t._generateColliders)
+			{
+				serializedObject.FindProperty(nameof(GLTFImporter._addColliders)).enumValueIndex =
+					(int)GLTFSceneImporter.ColliderType.Mesh;
+				serializedObject.FindProperty(nameof(GLTFImporter._generateColliders)).boolValue = false;
+			}
+#pragma warning restore 0618
+			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._addColliders)));
+			
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importBlendShapeNames)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._blendShapeFrameWeight)));
 			

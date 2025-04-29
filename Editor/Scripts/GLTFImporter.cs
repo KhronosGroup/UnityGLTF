@@ -90,7 +90,12 @@ namespace UnityGLTF
         [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
         [SerializeField] internal int _maximumLod = 300;
         [SerializeField] internal bool _readWriteEnabled = true;
+        
+        // Just for backwards compatibility > should remove in future > use _addColliders instead
+		[Obsolete("Use _addColliders instead")]
         [SerializeField] internal bool _generateColliders = false;
+        [SerializeField] internal GLTFSceneImporter.ColliderType _addColliders = GLTFSceneImporter.ColliderType.None;
+        
         [SerializeField] internal bool _swapUvs = false;
         [SerializeField] internal bool _generateLightmapUVs = false;
 	    [Tooltip("When false, the index of the BlendShape is used as name.")]
@@ -503,12 +508,6 @@ namespace UnityGLTF
 
 					mesh.UploadMeshData(!_readWriteEnabled);
 					mesh.RecalculateBounds(MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers);
-
-                    if (_generateColliders)
-                    {
-                        var collider = mf.gameObject.AddComponent<MeshCollider>();
-                        collider.sharedMesh = mesh;
-                    }
 
                     return mesh;
                 }).Where(x => x).ToArray();
@@ -969,6 +968,15 @@ namespace UnityGLTF
 			    loader.LoadUnreferencedImagesAndMaterials = true;
 			    loader.MaximumLod = _maximumLod;
 			    loader.IsMultithreaded = true;
+
+			    // For backwards compatibility, _addColliders has replaced _generateColliders
+			    if (_generateColliders)
+			    {
+				    _addColliders = GLTFSceneImporter.ColliderType.Mesh;
+				    _generateColliders = false;
+			    }
+			    
+			    loader.Collider = _addColliders;
 
 			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
 			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
