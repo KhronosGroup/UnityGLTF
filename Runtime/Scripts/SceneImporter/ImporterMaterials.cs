@@ -790,7 +790,7 @@ namespace UnityGLTF
 
 			foreach (var plugin in Context.Plugins)
 			{
-				plugin.OnAfterImportMaterial(def, materialIndex, mapper.Material);
+				await plugin.OnAfterImportMaterialAsync(def, materialIndex, mapper.Material);
 			}
 		}
 

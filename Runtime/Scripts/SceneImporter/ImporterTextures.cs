@@ -658,7 +658,7 @@ namespace UnityGLTF
 
 				foreach (var plugin in Context.Plugins)
 				{
-					plugin.OnAfterImportTexture(texture, textureIndex, tex);
+					await plugin.OnAfterImportTextureAsync(texture, textureIndex, tex);
 				}
 			}
 			catch (Exception ex)
