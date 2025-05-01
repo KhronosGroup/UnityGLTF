@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using GLTF.Schema;
 using UnityEngine;
 
@@ -61,5 +62,51 @@ namespace UnityGLTF.Plugins
 		{
 
 		}
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously.
+		// These methods can be overridden if an importer needs to call async functions.
+		// These are provided for backwards compatibility and by default, will call the
+		// synchronous version.
+
+		public virtual async Task OnBeforeImportAsync()
+		{
+			OnBeforeImport();
+		}
+
+		public virtual async Task OnBeforeImportRootAsync()
+		{
+			OnBeforeImportRoot();
+		}
+
+		public virtual async Task OnAfterImportRootAsync(GLTFRoot gltfRoot)
+		{
+			OnAfterImportRoot(gltfRoot);
+		}
+
+		public virtual async Task OnBeforeImportSceneAsync(GLTFScene scene)
+		{
+			OnBeforeImportScene(scene);
+		}
+
+		public virtual async Task OnAfterImportNodeAsync(Node node, int nodeIndex, GameObject nodeObject)
+		{
+			OnAfterImportNode(node, nodeIndex, nodeObject);
+		}
+
+		public virtual async Task OnAfterImportMaterialAsync(GLTFMaterial material, int materialIndex, Material materialObject)
+		{
+			OnAfterImportMaterial(material, materialIndex, materialObject);
+		}
+
+		public virtual async Task OnAfterImportTextureAsync(GLTFTexture texture, int textureIndex, Texture textureObject)
+		{
+			OnAfterImportTexture(texture, textureIndex, textureObject);
+		}
+
+		public virtual async Task OnAfterImportSceneAsync(GLTFScene scene, int sceneIndex, GameObject sceneObject)
+		{
+			OnAfterImportScene(scene, sceneIndex, sceneObject);
+		}
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously.
 	}
 }
