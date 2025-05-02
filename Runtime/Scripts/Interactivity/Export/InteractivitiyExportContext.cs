@@ -17,7 +17,7 @@ namespace UnityGLTF.Interactivity.Export
     
         public List<GltfInteractivityGraph.Variable> variables = new List<GltfInteractivityGraph.Variable>();
         public List<GltfInteractivityGraph.CustomEvent> customEvents = new List<GltfInteractivityGraph.CustomEvent>();
-        internal List<GltfInteractivityGraph.Declaration> opDeclarations = new List<GltfInteractivityGraph.Declaration>();
+        public List<GltfInteractivityGraph.Declaration> opDeclarations = new List<GltfInteractivityGraph.Declaration>();
 
         protected List<GltfInteractivityExportNode> nodesToSerialize = new List<GltfInteractivityExportNode>();
         public List<GltfInteractivityExportNode> Nodes
@@ -51,24 +51,11 @@ namespace UnityGLTF.Interactivity.Export
             CollectOpDeclarations();
 
             TriggerOnBeforeSerialization();
-            // Create the extension and add nodes to it
-            GltfInteractivityExtension extension = new GltfInteractivityExtension();
-            GltfInteractivityGraph mainGraph = new GltfInteractivityGraph();
-            extension.graphs = new GltfInteractivityGraph[] {mainGraph};
-            mainGraph.Nodes = nodesToSerialize.ToArray();
-            mainGraph.Types = CollectAndFilterUsedTypes();
             
-            Validator.ValidateData(this);
-            
-            mainGraph.Variables = variables.ToArray();
-            mainGraph.CustomEvents = customEvents.ToArray();
-            mainGraph.Declarations = opDeclarations.ToArray();
-            
-            gltfRoot.AddExtension(GltfInteractivityExtension.ExtensionName, extension);
-            exporter.DeclareExtensionUsage(GltfInteractivityExtension.ExtensionName);   
+            ApplyInteractivityExtension();
         }
         
-        protected void ApplyInteractivityExtension()
+        protected virtual void ApplyInteractivityExtension()
         {
             // TODO: Add support for multiple graphs and/or check if a graph already exists
             

@@ -74,7 +74,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool IsTranslatable = true;
         public VisualScriptingExportContext vsExportContext { get; private set; }
         
-        public InteractivityExportContext Context { get => vsExportContext; }
+        public virtual InteractivityExportContext Context { get => vsExportContext; }
         
         public VisualScriptingExportContext.ExportGraph Graph { get; private set; }
         private GameObject scriptMachineGameObject;
@@ -102,7 +102,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             _nodes.Add(node);
         }
 
-        public GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
+        public virtual GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
         {
             var newNode = new GltfInteractivityUnitExporterNode(this, schema);
             AddNode(newNode);
