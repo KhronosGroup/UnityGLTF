@@ -275,7 +275,7 @@ namespace UnityGLTF.Interactivity.Export
 
             SpaceConversionHelpers.AddRotationSpaceConversion(exporter, out rotationInput,
                 out var convertedRotation);
-            rotationInput = setRotation.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedRotation);
+            setRotation.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(convertedRotation);
         }
 
         public static void GetWorldPositionFromMainCamera(INodeExporter exporter, out ValueOutRef worldPosition)
