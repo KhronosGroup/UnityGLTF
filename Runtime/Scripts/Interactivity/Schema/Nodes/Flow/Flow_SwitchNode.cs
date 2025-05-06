@@ -4,13 +4,14 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "flow/switch";
 
+        [ConfigDescription]
+        public const string IdConfigurationCases = "cases";
+        
         [FlowInSocketDescription]
         public const string IdFlowIn = "in";
         [InputSocketDescription(GltfTypes.Int)]
         public const string IdSelection = "selection";
         [FlowOutSocketDescription]
         public const string IdFDefaultFlowOut = "default";
-        
-        
     }
 }
