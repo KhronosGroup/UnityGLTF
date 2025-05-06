@@ -63,7 +63,7 @@ namespace UnityGLTF.Interactivity.Schema
                 
                 foreach (var descriptor in Schema.Configuration)
                 {
-                    Configuration.Add(descriptor.Key, new ConfigData());
+                    Configuration.Add(descriptor.Key, new ConfigData {Value = descriptor.Value.defaultValue});
                 }
 
                 foreach (var descriptor in Schema.InputValueSockets)

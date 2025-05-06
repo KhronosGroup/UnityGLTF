@@ -5,7 +5,7 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/switch";
         
-        [ConfigDescription]
+        [ConfigDescription(new int[]{})]
         public const string IdConfigCases = "cases";
         
         [InputSocketDescription(GltfTypes.Int)]

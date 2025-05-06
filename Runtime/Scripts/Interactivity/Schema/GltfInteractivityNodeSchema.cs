@@ -54,7 +54,7 @@ namespace UnityGLTF.Interactivity.Schema
                     
                     if (attribute is ConfigDescriptionAttribute configDescription)
                     {
-                        Configuration.Add(fieldValue, new ConfigDescriptor( ));
+                        Configuration.Add(fieldValue, new ConfigDescriptor { defaultValue = configDescription.defaultValue });
                     }
                     else if (attribute is OutputSocketDescriptionWithTypeDependencyFromInputAttribute outputSocketDescriptionWithExpectedType)
                     {
@@ -138,6 +138,7 @@ namespace UnityGLTF.Interactivity.Schema
         {
             // The expected data type of the configuration parameter field.
             public string Type = string.Empty;
+            public object defaultValue = null;
         }
 
         /// <summary>

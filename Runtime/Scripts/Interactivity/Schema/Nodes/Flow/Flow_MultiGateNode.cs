@@ -4,9 +4,9 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "flow/multiGate";
 
-        [ConfigDescription]
+        [ConfigDescription(false)]
         public const string IdConfigIsRandom = "isRandom";
-        [ConfigDescription]
+        [ConfigDescription(false)]
         public const string IdConfigIsLoop = "isLoop";
         
         [FlowInSocketDescription]

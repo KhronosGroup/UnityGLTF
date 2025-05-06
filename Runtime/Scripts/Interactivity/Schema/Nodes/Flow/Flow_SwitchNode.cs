@@ -4,7 +4,7 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "flow/switch";
 
-        [ConfigDescription]
+        [ConfigDescription(new int[] {})]
         public const string IdConfigurationCases = "cases";
         
         [FlowInSocketDescription]

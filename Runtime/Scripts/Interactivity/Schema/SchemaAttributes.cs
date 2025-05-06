@@ -60,5 +60,11 @@ namespace UnityGLTF.Interactivity.Schema
     [System.AttributeUsage(System.AttributeTargets.Field, AllowMultiple = true)]
     public class ConfigDescriptionAttribute : Attribute
     {
+        public object defaultValue = null;
+        
+        public ConfigDescriptionAttribute(object defaultValue = null)
+        {
+            this.defaultValue = defaultValue;
+        }
     }
 }
