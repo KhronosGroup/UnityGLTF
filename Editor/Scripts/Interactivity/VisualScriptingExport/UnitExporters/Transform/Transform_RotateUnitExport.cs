@@ -48,7 +48,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 // Euler Rotation
                 var add = unitExporter.CreateNode(new Math_AddNode());
                 
-                add.ValueIn(Math_AddNode.IdValueA).ConnectToSource(getRotation.ValueOut(Pointer_GetNode.IdValue));
+                add.ValueIn(Math_AddNode.IdValueB).ConnectToSource(getRotation.ValueOut(Pointer_GetNode.IdValue));
 
                 if (unit.valueInputs.Any(vi => vi.type == typeof(Vector3)))
                 {
