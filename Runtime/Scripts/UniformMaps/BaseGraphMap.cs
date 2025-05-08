@@ -24,7 +24,7 @@ namespace UnityGLTF
 #endif
 
 			if (!s)
-				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build?");
+				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build? For more information, see: https://github.com/KhronosGroup/UnityGLTF?tab=readme-ov-file#ensure-shaders-are-available-in-your-build");
 
 			_material = new Material(s);
 		}
