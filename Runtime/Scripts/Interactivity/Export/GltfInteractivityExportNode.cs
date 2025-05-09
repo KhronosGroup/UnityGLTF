@@ -69,6 +69,14 @@ namespace UnityGLTF.Interactivity.Export
             var socket = new FlowInRef(this, new KeyValuePair<string, FlowSocketData>(socketName, new FlowSocketData()));
             return socket;
         }
+
+        public FlowInRef FlowIn()
+        {
+            if (Schema.InputFlowSockets.ContainsKey("in"))
+                return FlowIn("in");
+            
+            throw new System.Exception("No default 'in' socket found in input flow sockets. Schema: " + Schema.Op);
+        }
         
         public ValueOutRef ValueOut(string socket)
         {
@@ -79,6 +87,14 @@ namespace UnityGLTF.Interactivity.Export
 
             return new ValueOutRef(this, new KeyValuePair<string, OutputValueSocketData>(socket, OutputValueSocket[socket]));
         }
+        public FlowOutRef FlowOut()
+        {
+            if (Schema.OutputFlowSockets.ContainsKey("out"))
+                return FlowOut("out");
+            
+            throw new System.Exception("No default 'out' socket found in output flow sockets. Schema: " + Schema.Op);
+        }
+        
         
         public ValueOutRef FirstValueOut()
         {
