@@ -44,6 +44,7 @@ namespace GLTF.Schema
 			{ KHR_node_visibility_Factory.EXTENSION_NAME, new KHR_node_visibility_Factory()},
 			{ KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability_Factory()},
 			{ KHR_node_hoverability_Factory.EXTENSION_NAME, new KHR_node_hoverability_Factory()},
+			{ KHR_audio_emitterFactory.EXTENSION_NAME, new KHR_audio_emitterFactory()},
 		};
 
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
