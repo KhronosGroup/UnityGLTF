@@ -4,8 +4,10 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "debug/log";
         
-        [ConfigDescription]
+        [ConfigDescription("")]
         public const string IdConfigMessage = "message";
+        [ConfigDescription(0)]
+        public const string IdConfigSeverity = "severity";
         
         [FlowInSocketDescription]
         public const string IdFlowIn = "in";
