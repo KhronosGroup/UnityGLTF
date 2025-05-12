@@ -7,51 +7,8 @@ using UnityEngine;
 
 namespace UnityGLTF.Interactivity.Playback
 {
-    public struct BezierInterpolateData
-    {
-        public IPointer pointer;
-        public float duration;
-        public float2 cp0;
-        public float2 cp1;
-        public NodeEngineCancelToken cancellationToken;
-    }
-
     public static partial class Helpers
     {
-        public static async Task<bool> InterpolateAsync<T,V>(T from, T to, Action<T> setter, Func<T, T, float, T> evaluator, float duration, V cancellationToken) where V : struct, ICancelToken
-        {
-            for (float t = 0f; t < 1f; t += Time.deltaTime / duration)
-            {
-                if (cancellationToken.isCancelled)
-                    return false;
-
-                setter(evaluator(from, to, t));
-                await Task.Yield();
-            }
-
-            return true;
-        }
-
-        public static async Task<bool> LinearInterpolateAsync<T,V>(T to, Pointer<T> pointer, float duration, V cancellationToken) where V : struct, ICancelToken
-        {
-            return await InterpolateAsync(pointer.getter(), to, pointer.setter, pointer.evaluator, duration, cancellationToken);
-        }
-
-        public static async Task<bool> InterpolateBezierAsync<T>(Property<T> to, BezierInterpolateData d)
-        {
-            var v = to.value;
-            return await InterpolateBezierAsync(v, d);
-        }
-
-        public static async Task<bool> InterpolateBezierAsync<T>(T to, BezierInterpolateData d)
-        {
-            var p = (Pointer<T>)d.pointer;
-            
-            var evaluator = new Func<T, T, float, T>((a, b, t) => p.evaluator(a, b, CubicBezier(t, d.cp0, d.cp1).y));
-
-            return await InterpolateAsync(p.getter(), to, p.setter, evaluator, d.duration, d.cancellationToken);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float2 CubicBezier(float t, float2 cp0, float2 cp1)
         {
