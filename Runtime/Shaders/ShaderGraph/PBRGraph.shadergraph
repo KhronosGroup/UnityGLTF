@@ -29745,7 +29745,7 @@
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Enable Anisotropy",
     "m_DefaultReferenceName": "_Enable_Anisotropy",
-    "m_OverrideReferenceName": "",
+    "m_OverrideReferenceName": "_ANISOTROPY",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
