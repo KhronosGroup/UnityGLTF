@@ -544,7 +544,26 @@ namespace UnityGLTF.Plugins
 
             AddTextureExtTransforms("extensions/"+nameof(KHR_materials_sheen)+"/"+nameof(KHR_materials_sheen.sheenColorTexture), new[] {"sheenColorTexture", "_sheenColorTexture"}, nameof(KHR_materials_sheen));
             AddTextureExtTransforms("extensions/"+nameof(KHR_materials_sheen)+"/"+nameof(KHR_materials_sheen.sheenRoughnessTexture), new[] {"sheenRoughnessTexture", "_sheenRoughnessTexture"}, nameof(KHR_materials_sheen));
-
+            
+            AddTextureExtTransforms("extensions/"+nameof(KHR_materials_anisotropy_Factory.EXTENSION_NAME)+"/"+ nameof(KHR_materials_anisotropy.anisotropyTexture), new[] { "anisotropyTexture", "_anisotropyTexture", "anisotropyMap" }, nameof(KHR_materials_clearcoat));
+            var anisotropyStrength =
+                new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+                {
+                    PropertyNames = new[] { "anisotropyStrength", "_anisotropyStrength", "anisotropyFactor", "_anisotropyFactor" },
+                    GltfPropertyName = $"extensions/{KHR_materials_anisotropy_Factory.EXTENSION_NAME}/{nameof(KHR_materials_anisotropy.anisotropyStrength)}",
+                    ExtensionName = KHR_materials_anisotropy_Factory.EXTENSION_NAME,
+                };
+            AddMap(anisotropyStrength);
+            var anisotropyRotation =
+                new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+                {
+                    PropertyNames = new[] { "anisotropyRotation", "_anisotropyRotation", "anisotropyDirection", "_anisotropyDirection" },
+                    GltfPropertyName = $"extensions/{KHR_materials_anisotropy_Factory.EXTENSION_NAME}/{nameof(KHR_materials_anisotropy.anisotropyRotation)}",
+                    ExtensionName = KHR_materials_anisotropy_Factory.EXTENSION_NAME,
+                };
+            AddMap(anisotropyRotation);
+            
+            
             // TODO KHR_materials_sheen
             // case "_SheenColorFactor":
             // case "sheenColorFactor":
