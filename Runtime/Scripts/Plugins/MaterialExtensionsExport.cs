@@ -15,6 +15,7 @@ namespace UnityGLTF.Plugins
 		public bool KHR_materials_clearcoat = true;
 		public bool KHR_materials_emissive_strength = true;
 		public bool KHR_materials_sheen = true;
+		public bool KHR_materials_anisotropy = true;
 		
 		public override GLTFExportPluginContext CreateInstance(ExportContext context)
 		{
@@ -32,6 +33,7 @@ namespace UnityGLTF.Plugins
 - KHR_materials_clearcoat
 - KHR_materials_emissive_strength
 - KHR_materials_sheen
+- KHR_materials_anisotropy
 ";
 	}
 	
@@ -75,6 +77,11 @@ namespace UnityGLTF.Plugins
 		private static readonly int sheenRoughnessFactor = Shader.PropertyToID("sheenRoughnessFactor");
 		private static readonly int sheenColorTexture = Shader.PropertyToID("sheenColorTexture");
 		private static readonly int sheenRoughnessTexture = Shader.PropertyToID("sheenRoughnessTexture");
+		
+		private static readonly int anisotropyStrength = Shader.PropertyToID("anisotropyStrength");
+		private static readonly int anisotropyRotation = Shader.PropertyToID("anisotropyRotation");
+		private static readonly int anisotropyTexture = Shader.PropertyToID("anisotropyTexture");
+		
 
 		public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfroot, Material material, GLTFMaterial materialnode)
 		{
@@ -88,6 +95,7 @@ namespace UnityGLTF.Plugins
 			var usesSpecular = material.IsKeywordEnabled("_SPECULAR_ON");
 			var usesClearcoat = material.IsKeywordEnabled("_CLEARCOAT_ON");
 			var usesSheen = material.IsKeywordEnabled("_SHEEN_ON");
+			var usesAnisotropy = material.IsKeywordEnabled("_ANISOTROPY_ON") || (material.HasFloat("_ANISOTROPY") && material.GetFloat("_ANISOTROPY") > 0.5f);
 			
 			if (hasNonDefaultIor && settings.KHR_materials_ior)
 			{
@@ -104,6 +112,27 @@ namespace UnityGLTF.Plugins
 
 				if (material.HasProperty(ior))
 					vi.ior = material.GetFloat(ior);
+			}
+			
+			if (usesAnisotropy && settings.KHR_materials_anisotropy)
+			{
+				if (materialnode.Extensions == null)
+					materialnode.Extensions = new Dictionary<string, IExtension>();
+
+				var aniso = new KHR_materials_anisotropy();
+				if (materialnode.Extensions.TryGetValue(KHR_materials_anisotropy_Factory.EXTENSION_NAME, out var vv1))
+					aniso = (KHR_materials_anisotropy) vv1;
+				else
+					materialnode.Extensions.Add(KHR_materials_anisotropy_Factory.EXTENSION_NAME, aniso);
+
+				exporter.DeclareExtensionUsage(KHR_materials_anisotropy_Factory.EXTENSION_NAME, false);
+
+				if (material.HasProperty(anisotropyRotation))
+					aniso.anisotropyRotation = material.GetFloat(anisotropyRotation);
+				if (material.HasProperty(anisotropyStrength))
+					aniso.anisotropyStrength = material.GetFloat(anisotropyStrength);
+				if (material.HasProperty(anisotropyTexture) && material.GetTexture(anisotropyTexture))
+					aniso.anisotropyTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(anisotropyTexture), nameof(anisotropyTexture));
 			}
 
 			if (usesTransmission && settings.KHR_materials_transmission)

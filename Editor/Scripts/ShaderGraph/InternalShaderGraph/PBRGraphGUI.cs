@@ -477,7 +477,7 @@ namespace UnityGLTF
 			var propertyList = properties.ToList();
 			if (!targetMaterial.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
 			{
-				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal) || x.name.EndsWith("Rotation", StringComparison.Ordinal));
+				propertyList.RemoveAll(x => x.name.EndsWith("_ST", StringComparison.Ordinal) || x.name.EndsWith("TextureRotation", StringComparison.Ordinal));
 				
 				// Unity draws the tiling & offset properties based on the scale offset flag, so we need to ensure that's off here
 				// so that the property fields are not displayed. Otherwise it's confusing that editing them doesn't do anything.
@@ -520,6 +520,10 @@ namespace UnityGLTF
 			if (!targetMaterial.IsKeywordEnabled("_SHEEN_ON"))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("sheen", StringComparison.Ordinal));
+			}
+			if (targetMaterial.GetFloat("_ANISOTROPY") < 0.5f)
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("anisotropy", StringComparison.Ordinal));
 			}
 			
 			if (HasPropertyButNoTex(targetMaterial, "occlusionTexture"))

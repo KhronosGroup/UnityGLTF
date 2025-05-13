@@ -193,6 +193,7 @@ namespace UnityGLTF
 			var KHR_materials_pbrSpecularGlossiness = settings && settings.KHR_materials_pbrSpecularGlossiness;
 			var KHR_materials_emissive_strength = settings && settings.KHR_materials_emissive_strength;
 			var KHR_materials_sheen = settings && settings.KHR_materials_sheen;
+			var KHR_materials_anisotropy = settings && settings.KHR_materials_anisotropy;
 			// ReSharper restore InconsistentNaming
 			
 			var sgMapper = mapper as ISpecGlossUniformMap;
@@ -351,6 +352,42 @@ namespace UnityGLTF
 						{
 							sheenMapper.SheenRoughnessTextureScale = new Vector2(1f,-1f);
 							sheenMapper.SheenRoughnessTextureOffset = new Vector2(0f, 1f);
+							SetTransformKeyword();
+						}
+					}
+				}
+			}
+			
+			var anisotropyMapper = mapper as IAnisotropyMap;
+			if (anisotropyMapper != null && KHR_materials_anisotropy)
+			{
+				var anisotropy = GetAnisotropy(def);
+				if (anisotropy != null)
+				{
+					anisotropyMapper.anisotropyRotation = anisotropy.anisotropyRotation;
+					anisotropyMapper.anisotropyStrength = anisotropy.anisotropyStrength;
+					
+					MatHelper.SetKeyword(mapper.Material, "_ANISOTROPY", true );
+					
+					if (anisotropy.anisotropyTexture != null)
+					{
+						var td = await FromTextureInfo(anisotropy.anisotropyTexture, false);
+						anisotropyMapper.anisotropyTexture = td.Texture;
+						anisotropyMapper.anisotropyTextureTexCoord = td.TexCoord;
+						var ext = GetTextureTransform(anisotropy.anisotropyTexture);
+						if (ext != null)
+						{
+							CalculateYOffsetAndScale(anisotropy.anisotropyTexture.Index, ext, out var scale, out var offset);
+							anisotropyMapper.anisotropyTextureOffset = offset;
+							anisotropyMapper.anisotropyTextureScale = scale;
+							anisotropyMapper.anisotropyTextureRotation = td.Rotation;
+							if (td.TexCoordExtra != null) anisotropyMapper.anisotropyTextureTexCoord = td.TexCoordExtra.Value;
+							SetTransformKeyword();
+						}
+						else if (IsTextureFlipped(anisotropy.anisotropyTexture.Index.Value))
+						{
+							anisotropyMapper.anisotropyTextureScale = new Vector2(1f,-1f);
+							anisotropyMapper.anisotropyTextureOffset = new Vector2(0f, 1f);
 							SetTransformKeyword();
 						}
 					}
@@ -930,6 +967,16 @@ namespace UnityGLTF
 					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
 				}
 			}
+			
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_anisotropy_Factory.EXTENSION_NAME))
+			{
+				var ansiDef = (KHR_materials_anisotropy)def.Extensions[KHR_materials_anisotropy_Factory.EXTENSION_NAME];
+				if (ansiDef.anisotropyTexture != null)
+				{
+					var textureId = ansiDef.anisotropyTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
 
 			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_clearcoat_Factory.EXTENSION_NAME))
 			{
@@ -993,6 +1040,16 @@ namespace UnityGLTF
 			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_sheen_Factory.EXTENSION_NAME, out var extension))
 			{
 				return (KHR_materials_sheen) extension;
+			}
+			return null;
+		}
+		
+		protected virtual KHR_materials_anisotropy GetAnisotropy(GLTFMaterial def)
+		{
+			if (_gltfRoot.ExtensionsUsed != null && _gltfRoot.ExtensionsUsed.Contains(KHR_materials_anisotropy_Factory.EXTENSION_NAME) &&
+			    def.Extensions != null && def.Extensions.TryGetValue(KHR_materials_anisotropy_Factory.EXTENSION_NAME, out var extension))
+			{
+				return (KHR_materials_anisotropy) extension;
 			}
 			return null;
 		}

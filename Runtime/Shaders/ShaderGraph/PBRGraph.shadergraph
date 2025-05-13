@@ -260,6 +260,27 @@
         },
         {
             "m_Id": "cb6f985ac6a64e0c9a6b2ebc9c77a63c"
+        },
+        {
+            "m_Id": "c3ecf1dc15434a698c763a6237534962"
+        },
+        {
+            "m_Id": "018412a5b405429cbdeee85cf887e3e1"
+        },
+        {
+            "m_Id": "e8441d7fa41a40bd9876c8542572c093"
+        },
+        {
+            "m_Id": "7780b47ceaeb4bb8a2c420f962bae231"
+        },
+        {
+            "m_Id": "2e176f9cc6354b6e90d1ff6819313cdc"
+        },
+        {
+            "m_Id": "9c83f7785ef2494a89db3ddaf4ba6228"
+        },
+        {
+            "m_Id": "3b9a6dfa91a44e5186c28dd828bf48df"
         }
     ],
     "m_Keywords": [
@@ -5641,6 +5662,33 @@
         "e31": 0.0,
         "e32": 0.0,
         "e33": 1.0
+    }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "018412a5b405429cbdeee85cf887e3e1",
+    "m_Guid": {
+        "m_GuidSerialized": "78c6ae39-f8f6-4231-a2b5-e43f27add360"
+    },
+    "m_Name": "Anisotropy Strength",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Strength",
+    "m_DefaultReferenceName": "_Anisotropy_Strength",
+    "m_OverrideReferenceName": "anisotropyStrength",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 1,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
     }
 }
 
@@ -11335,6 +11383,33 @@
 }
 
 {
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector4ShaderProperty",
+    "m_ObjectId": "2e176f9cc6354b6e90d1ff6819313cdc",
+    "m_Guid": {
+        "m_GuidSerialized": "153d1dd7-3df3-45eb-993f-36aa22cd8c34"
+    },
+    "m_Name": "Anisotropy Map Tiling/Scale",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Map Tiling/Scale",
+    "m_DefaultReferenceName": "_Anisotropy_Map_Tiling_Scale",
+    "m_OverrideReferenceName": "anisotropyTexture_ST",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    }
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.DynamicValueMaterialSlot",
     "m_ObjectId": "2e2300e51dd64a23a1109cc2a9019951",
@@ -12802,6 +12877,33 @@
         "e31": 0.0,
         "e32": 0.0,
         "e33": 1.0
+    }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "3b9a6dfa91a44e5186c28dd828bf48df",
+    "m_Guid": {
+        "m_GuidSerialized": "1c8f1636-61c1-4995-b5ae-12b17d4461bb"
+    },
+    "m_Name": "Anisotropy Map UV",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Map UV",
+    "m_DefaultReferenceName": "_Anisotropy_Map_UV",
+    "m_OverrideReferenceName": "anisotropyTextureTexCoord",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 0,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
     }
 }
 
@@ -20255,6 +20357,35 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
+    "m_ObjectId": "7780b47ceaeb4bb8a2c420f962bae231",
+    "m_Guid": {
+        "m_GuidSerialized": "abdb309f-0225-4798-bb2c-b57d2817f46e"
+    },
+    "m_Name": "Anisotropy Map",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Map",
+    "m_DefaultReferenceName": "_Anisotropy_Map",
+    "m_OverrideReferenceName": "anisotropyTexture",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "m_SerializedTexture": "{\"texture\":{\"instanceID\":0}}",
+        "m_Guid": ""
+    },
+    "isMainTexture": false,
+    "useTilingAndOffset": false,
+    "m_Modifiable": true,
+    "m_DefaultType": 0
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
     "m_ObjectId": "78d30d0064d943acaa6963fab3a547f3",
     "m_Group": {
@@ -24550,6 +24681,33 @@
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
+    }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "9c83f7785ef2494a89db3ddaf4ba6228",
+    "m_Guid": {
+        "m_GuidSerialized": "f7e373ee-bb4c-4521-8354-572f48857d5b"
+    },
+    "m_Name": "Anisotropy Map Rotation",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Map Rotation",
+    "m_DefaultReferenceName": "_Anisotropy_Map_Rotation",
+    "m_OverrideReferenceName": "anisotropyTextureRotation",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 0,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
     }
 }
 
@@ -29578,6 +29736,28 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.BooleanShaderProperty",
+    "m_ObjectId": "c3ecf1dc15434a698c763a6237534962",
+    "m_Guid": {
+        "m_GuidSerialized": "5be82455-494c-46b7-a35e-5c8ec58762e2"
+    },
+    "m_Name": "Enable Anisotropy",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Enable Anisotropy",
+    "m_DefaultReferenceName": "_Enable_Anisotropy",
+    "m_OverrideReferenceName": "_ANISOTROPY",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": false
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
     "m_ObjectId": "c4a8931d83dc40f8ae8e1680cba9f430",
     "m_Id": -1162300524,
@@ -34276,6 +34456,33 @@
 }
 
 {
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "e8441d7fa41a40bd9876c8542572c093",
+    "m_Guid": {
+        "m_GuidSerialized": "a1a3d787-282b-4957-b64f-7f39e761f8e9"
+    },
+    "m_Name": "Anisotropy Rotation",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Rotation",
+    "m_DefaultReferenceName": "_Anisotropy_Rotation",
+    "m_OverrideReferenceName": "anisotropyRotation",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 0,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    }
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.DynamicValueMaterialSlot",
     "m_ObjectId": "e84a89cc58204cc08b68f15cb6469644",
@@ -35498,6 +35705,24 @@
             "m_Id": "cb6f985ac6a64e0c9a6b2ebc9c77a63c"
         },
         {
+            "m_Id": "018412a5b405429cbdeee85cf887e3e1"
+        },
+        {
+            "m_Id": "e8441d7fa41a40bd9876c8542572c093"
+        },
+        {
+            "m_Id": "7780b47ceaeb4bb8a2c420f962bae231"
+        },
+        {
+            "m_Id": "2e176f9cc6354b6e90d1ff6819313cdc"
+        },
+        {
+            "m_Id": "9c83f7785ef2494a89db3ddaf4ba6228"
+        },
+        {
+            "m_Id": "3b9a6dfa91a44e5186c28dd828bf48df"
+        },
+        {
             "m_Id": "b3bf6e9825a34fe5ab67bdb85f17df32"
         },
         {
@@ -35517,6 +35742,9 @@
         },
         {
             "m_Id": "14eb9f49890e4fdf8e6c058bfe728c2c"
+        },
+        {
+            "m_Id": "c3ecf1dc15434a698c763a6237534962"
         },
         {
             "m_Id": "5959c998527d4aaf8a3653895a8d1279"
