@@ -70,7 +70,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            var node = unitExporter.CreateNode(new Animation_StartNode());
+            var node = unitExporter.CreateNode<Animation_StartNode>();
             node.ValueInConnection[Animation_StartNode.IdValueAnimation].Value = animationId;
             node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = 1f;
             node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;

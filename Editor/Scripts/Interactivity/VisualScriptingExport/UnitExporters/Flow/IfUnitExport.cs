@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as Unity.VisualScripting.If;
-            var node = unitExporter.CreateNode(new Flow_BranchNode());
+            var node = unitExporter.CreateNode<Flow_BranchNode>();
             
             unitExporter.MapInputPortToSocketName(unit.enter, Flow_BranchNode.IdFlowIn, node);
             unitExporter.MapInputPortToSocketName(unit.condition, Flow_BranchNode.IdCondition, node);

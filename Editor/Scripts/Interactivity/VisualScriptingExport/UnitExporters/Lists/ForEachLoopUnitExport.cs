@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
-            var forLoop = unitExporter.CreateNode(new Flow_ForLoopNode());
+            var forLoop = unitExporter.CreateNode<Flow_ForLoopNode>();
             forLoop.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
             forLoop.ValueIn(Flow_ForLoopNode.IdStartIndex).SetValue(0);
 

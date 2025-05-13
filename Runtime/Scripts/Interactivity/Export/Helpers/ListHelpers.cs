@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var varType = exporter.Context.variables[list.StartIndex].Type;
 
-            var switchNode = exporter.CreateNode(new Math_SwitchNode());
+            var switchNode = exporter.CreateNode<Math_SwitchNode>();
             indexInput = switchNode.ValueIn(Math_SwitchNode.IdSelection).SetType(TypeRestriction.LimitToInt);
             valueOutput = switchNode.ValueOut(Math_SwitchNode.IdOut).ExpectedType(ExpectedType.GtlfType(varType));
 
@@ -56,12 +56,12 @@ namespace UnityGLTF.Interactivity.Export
             out ValueInRef valueInputSocket,
             out FlowInRef flowIn, out FlowOutRef flowOut)
         {
-            var addCount = exporter.CreateNode(new Math_AddNode());
+            var addCount = exporter.CreateNode<Math_AddNode>();
             addCount.ValueIn("a").ConnectToSource(GetListCountSocket(list));
             addCount.ValueIn("b").SetValue(1);
             addCount.FirstValueOut().ExpectedType(ExpectedType.Int);
 
-            var insertIndexPlusOne = exporter.CreateNode(new Math_AddNode());
+            var insertIndexPlusOne = exporter.CreateNode<Math_AddNode>();
             atIndexInputSocket = insertIndexPlusOne.ValueIn("a");
             insertIndexPlusOne.ValueIn("b").SetValue(0);
             insertIndexPlusOne.FirstValueOut().ExpectedType(ExpectedType.Int);
@@ -71,7 +71,7 @@ namespace UnityGLTF.Interactivity.Export
                 out var forFlowIn, out var currentIndex,
                 out var loopBodyOut, out var completed);
 
-            var countMinusOne = exporter.CreateNode(new Math_SubNode());
+            var countMinusOne = exporter.CreateNode<Math_SubNode>();
             countMinusOne.ValueIn("a").ConnectToSource(GetListCountSocket(list));
             countMinusOne.ValueIn("b").SetValue(1);
 
@@ -87,7 +87,7 @@ namespace UnityGLTF.Interactivity.Export
             setCountVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(addCount.FirstValueOut());
 
             // Index of item that will be move to current Index
-            var indexMinusOne = exporter.CreateNode(new Math_SubNode());
+            var indexMinusOne = exporter.CreateNode<Math_SubNode>();
             indexMinusOne.ValueIn("a").ConnectToSource(currentIndex);
             indexMinusOne.ValueIn("b").SetValue(1);
 
@@ -114,7 +114,7 @@ namespace UnityGLTF.Interactivity.Export
             out ValueInRef valueInputSocket,
             out FlowInRef flowIn, out FlowOutRef flowOut)
         {
-            var addCount = exporter.CreateNode(new Math_AddNode());
+            var addCount = exporter.CreateNode<Math_AddNode>();
             addCount.ValueIn("a").ConnectToSource(GetListCountSocket(list));
             addCount.ValueIn("b").SetValue(1);
             addCount.FirstValueOut().ExpectedType(ExpectedType.Int);
@@ -123,7 +123,7 @@ namespace UnityGLTF.Interactivity.Export
             setCountVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(addCount.FirstValueOut());
             flowIn = setCountVar.FlowIn(Variable_SetNode.IdFlowIn);
 
-            var index = exporter.CreateNode(new Math_SubNode());
+            var index = exporter.CreateNode<Math_SubNode>();
             index.ValueIn("a").ConnectToSource(GetListCountSocket(list));
             index.ValueIn("b").SetValue(1);
             index.FirstValueOut().ExpectedType(ExpectedType.Int);
@@ -145,7 +145,7 @@ namespace UnityGLTF.Interactivity.Export
             if (list.setValueFlowIn == null)
                 CreateSetItemListNodes(exporter, list);
 
-            var sequence = exporter.CreateNode(new Flow_SequenceNode());
+            var sequence = exporter.CreateNode<Flow_SequenceNode>();
             var setIndex = VariablesHelpers.SetVariable(exporter, list.CurrentIndexVarId);
             var setValue = VariablesHelpers.SetVariable(exporter, list.ValueToSetVarId);
 
@@ -171,7 +171,7 @@ namespace UnityGLTF.Interactivity.Export
             for (int i = 0; i < list.Capacity; i++)
                 indices[i] = i;
 
-            var flowSwitch = exporter.CreateNode(new Flow_SwitchNode());
+            var flowSwitch = exporter.CreateNode<Flow_SwitchNode>();
             list.setValueFlowIn = flowSwitch.FlowIn(Flow_SwitchNode.IdFlowIn);
             flowSwitch.ValueIn(Flow_SwitchNode.IdSelection).ConnectToSource(currentIndexValueOut);
             flowSwitch.Configuration["cases"] = new GltfInteractivityNode.ConfigData { Value = indices };
@@ -188,18 +188,18 @@ namespace UnityGLTF.Interactivity.Export
         public static void RemoveListItemAt(INodeExporter exporter, VariableBasedList list,
             out ValueInRef index, out FlowInRef flowIn, out FlowOutRef flowOut)
         {
-            var countMinusOne = exporter.CreateNode(new Math_SubNode());
+            var countMinusOne = exporter.CreateNode<Math_SubNode>();
             countMinusOne.ValueIn("a").ConnectToSource(GetListCountSocket(list));
             countMinusOne.ValueIn("b").SetValue(1);
             countMinusOne.FirstValueOut().ExpectedType(ExpectedType.Int);
 
-            var forLoop = exporter.CreateNode(new Flow_ForLoopNode());
+            var forLoop = exporter.CreateNode<Flow_ForLoopNode>();
             index = forLoop.ValueIn(Flow_ForLoopNode.IdStartIndex);
             forLoop.ValueIn(Flow_ForLoopNode.IdEndIndex).ConnectToSource(countMinusOne.FirstValueOut());
             forLoop.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
             flowIn = forLoop.FlowIn(Flow_ForLoopNode.IdFlowIn);
 
-            var currentIndexPlusOne = exporter.CreateNode(new Math_AddNode());
+            var currentIndexPlusOne = exporter.CreateNode<Math_AddNode>();
             currentIndexPlusOne.ValueIn("a").ConnectToSource(forLoop.ValueOut(Flow_ForLoopNode.IdIndex));
             currentIndexPlusOne.ValueIn("b").SetValue(1);
             currentIndexPlusOne.FirstValueOut().ExpectedType(ExpectedType.Int);

@@ -21,15 +21,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var getMemberUnit = unitExporter.unit as GetMember;
             
-            var getMatrix = unitExporter.CreateNode(new Pointer_GetNode());
+            var getMatrix = unitExporter.CreateNode<Pointer_GetNode>();
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeIndex,
                 getMemberUnit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
 
-            var decompose = unitExporter.CreateNode(new Math_MatDecomposeNode());
+            var decompose = unitExporter.CreateNode<Math_MatDecomposeNode>();
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(getMatrix.FirstValueOut());
 
-            var compose = unitExporter.CreateNode(new Math_MatComposeNode());
+            var compose = unitExporter.CreateNode<Math_MatComposeNode>();
             if (unitExporter.Context.addUnityGltfSpaceConversion)
             {
                 SpaceConversionHelpers.AddSpaceConversion(unitExporter, decompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation), out var convertedTranslation);

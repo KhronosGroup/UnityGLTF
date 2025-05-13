@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as SetVariable;
             
-            var node = unitExporter.CreateNode(new Variable_SetNode());
+            var node = unitExporter.CreateNode<Variable_SetNode>();
             
             var variableIndex = unitExporter.vsExportContext.AddVariableIfNeeded(unit);
 
@@ -43,7 +43,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 // SetVar has a default value and it's connected to an output,
                 // we need to add a GetVar node to ensure the output connected nodes can get the value
                 
-                var getVarNode = unitExporter.CreateNode(new Variable_GetNode());
+                var getVarNode = unitExporter.CreateNode<Variable_GetNode>();
                 
                 getVarNode.Configuration["variable"].Value = variableIndex;
                 unitExporter.MapValueOutportToSocketName(unit.output, Variable_GetNode.IdOutputValue, getVarNode);

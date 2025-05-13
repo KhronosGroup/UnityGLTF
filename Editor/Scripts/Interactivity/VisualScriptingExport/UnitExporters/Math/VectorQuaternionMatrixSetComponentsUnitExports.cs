@@ -57,30 +57,30 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var setMember = unitExporter.unit as SetMember;
             
-            GltfInteractivityNodeSchema extractSchema = null;
-            GltfInteractivityNodeSchema combineSchema = null;
+            Type extractSchema = null;
+            Type combineSchema = null;
             ExpectedType expectedType = ExpectedType.Float;
             switch (componentCount)
             {
                 case 2:
-                    extractSchema = new Math_Extract2Node();
+                    extractSchema = typeof(Math_Extract2Node);
                     expectedType = ExpectedType.Float2;
-                    combineSchema = new Math_Combine2Node();
+                    combineSchema = typeof(Math_Combine2Node);
                     break;
                 case 3:
-                    extractSchema = new Math_Extract3Node();
+                    extractSchema = typeof(Math_Extract3Node);
                     expectedType = ExpectedType.Float3;
-                    combineSchema = new Math_Combine3Node();
+                    combineSchema = typeof(Math_Combine3Node);
                     break;
                 case 4:
-                    extractSchema = new Math_Extract4Node();
+                    extractSchema = typeof(Math_Extract4Node);
                     expectedType = ExpectedType.Float4;
-                    combineSchema = new Math_Combine4Node();
+                    combineSchema = typeof(Math_Combine4Node);
                     break;
                 case 16:
-                    extractSchema = new Math_Extract4x4Node();
+                    extractSchema = typeof(Math_Extract4x4Node);
                     expectedType = ExpectedType.Float4x4;
-                    combineSchema = new Math_Combine4x4Node();
+                    combineSchema = typeof(Math_Combine4x4Node);
                     break;
                 default:
                     Debug.LogError("Unsupported component count: " + componentCount);

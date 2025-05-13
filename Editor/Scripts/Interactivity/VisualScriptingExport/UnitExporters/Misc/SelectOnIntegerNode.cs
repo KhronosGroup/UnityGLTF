@@ -18,7 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as SelectOnInteger;
             
-            var switchNode = unitExporter.CreateNode(new Math_SwitchNode());
+            var switchNode = unitExporter.CreateNode<Math_SwitchNode>();
             int[] cases = new int[unit.branches.Count];
 
             for (int i = 0; i < unit.branches.Count; i++)

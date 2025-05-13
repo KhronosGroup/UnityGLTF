@@ -21,9 +21,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
             
-            var floorNode = unitExporter.CreateNode(new Math_FloorNode());
+            var floorNode = unitExporter.CreateNode<Math_FloorNode>();
             
-            var floatToIntNode = unitExporter.CreateNode(new Type_FloatToIntNode());
+            var floatToIntNode = unitExporter.CreateNode<Type_FloatToIntNode>();
    
             floorNode.ValueIn(Math_FloorNode.IdInputA).MapToInputPort(unit.valueInputs[0]);
             floatToIntNode.ValueIn(Type_FloatToIntNode.IdInputA).ConnectToSource(floorNode.ValueOut(Math_FloorNode.IdValueResult));

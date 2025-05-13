@@ -46,7 +46,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
                 return false;
             } 
             
-            var node = unitExporter.CreateNode(new Pointer_InterpolateNode());
+            var node = unitExporter.CreateNode<Pointer_InterpolateNode>();
 
             node.FlowIn(Pointer_InterpolateNode.IdFlowIn).MapToControlInput(unit.assign);
             node.FlowOut(Pointer_InterpolateNode.IdFlowOut).MapToControlOutput(unit.assigned);

@@ -72,7 +72,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            var node = unitExporter.CreateNode(new Pointer_GetNode());
+            var node = unitExporter.CreateNode<Pointer_GetNode>();
             PointersHelper.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerAnimationIndex, "/animations/{" + PointersHelper.IdPointerAnimationIndex + "}/extensions/KHR_interactivity/isPlaying", GltfTypes.Bool);
             node.ValueIn(PointersHelper.IdPointerAnimationIndex).SetValue(animationId)
                 .SetType(TypeRestriction.LimitToInt);

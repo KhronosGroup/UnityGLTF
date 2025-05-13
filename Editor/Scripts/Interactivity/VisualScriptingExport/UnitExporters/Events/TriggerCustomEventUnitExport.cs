@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            var node = unitExporter.CreateNode(new Event_SendNode());
+            var node = unitExporter.CreateNode<Event_SendNode>();
             
             unitExporter.MapInputPortToSocketName(unit.name, Event_SendNode.IdEvent, node);
             unitExporter.MapInputPortToSocketName(unit.enter, Event_SendNode.IdFlowIn, node);

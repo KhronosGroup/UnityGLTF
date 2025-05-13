@@ -6,21 +6,21 @@ using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
-    public abstract class GenericInvokeUnitExport : GenericUnitExport
+    public abstract class GenericInvokeUnitExport<TSchema> : GenericUnitExport<TSchema> where TSchema : GltfInteractivityNodeSchema, new()
     {
-        public GenericInvokeUnitExport(GltfInteractivityNodeSchema schema) : base(typeof(InvokeMember), schema)
+        public GenericInvokeUnitExport() : base(typeof(InvokeMember))
         {
         }
     }
     
-    public abstract class GenericGetMemberUnitExport : GenericUnitExport
+    public abstract class GenericGetMemberUnitExport<TSchema> : GenericUnitExport<TSchema> where TSchema : GltfInteractivityNodeSchema, new()
     {
-        public GenericGetMemberUnitExport(GltfInteractivityNodeSchema schema) : base(typeof(GetMember), schema)
+        public GenericGetMemberUnitExport() : base(typeof(GetMember))
         {
         }
     }
     
-    public abstract class GenericUnitExport : IUnitExporter
+    public abstract class GenericUnitExport<TSchema> : IUnitExporter where TSchema : GltfInteractivityNodeSchema, new()
     {
         private Type _unitType;
         public Type unitType
@@ -31,30 +31,21 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         private static readonly string[] inputSocketNames = new string[] {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"};
         private static readonly string[] outputSocketNames = new string[] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"};
         
-        private GltfInteractivityNodeSchema schema;
-        
-        public GltfInteractivityNodeSchema Schema
+        public GenericUnitExport(Type unitType)
         {
-            get => schema;
-        }
-        
-        public GenericUnitExport(Type unitType, GltfInteractivityNodeSchema schema)
-        {
-            this.schema = schema;
-
             _unitType = unitType;
         }
         
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
-            var node = unitExporter.CreateNode(schema);
+            var node = unitExporter.CreateNode<TSchema>();
             
             foreach (var flow in node.FlowConnections)
             {
                 // TODO: Map flow sockets
             }
 
-            if (schema.InputFlowSockets.Count == 0 && schema.OutputFlowSockets.Count == 0)
+            if (node.Schema.InputFlowSockets.Count == 0 && node.Schema.OutputFlowSockets.Count == 0)
             {
                 // Gltf Node has no flow sockets, we need to bypass the flow sockets
                 if (unitExporter.unit.controlInputs.Count == 1 && unitExporter.unit.controlOutputs.Count == 1)

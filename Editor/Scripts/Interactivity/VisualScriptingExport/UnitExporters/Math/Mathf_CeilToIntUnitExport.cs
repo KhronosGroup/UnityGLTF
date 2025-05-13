@@ -21,9 +21,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
             
-            var ceilNode = unitExporter.CreateNode(new Math_CeilNode());
+            var ceilNode = unitExporter.CreateNode<Math_CeilNode>();
 
-            var floatToIntNode = unitExporter.CreateNode(new Type_FloatToIntNode());
+            var floatToIntNode = unitExporter.CreateNode<Type_FloatToIntNode>();
 
             ceilNode.ValueIn(Math_CeilNode.IdInputA).MapToInputPort(unit.valueInputs[0]);
 

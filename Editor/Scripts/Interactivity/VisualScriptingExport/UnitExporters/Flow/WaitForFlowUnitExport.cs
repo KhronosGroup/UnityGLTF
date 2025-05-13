@@ -21,7 +21,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as WaitForFlow;
-            var node = unitExporter.CreateNode(new Flow_WaitAllNode());
+            var node = unitExporter.CreateNode<Flow_WaitAllNode>();
             
             node.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = unit.inputCount;
 

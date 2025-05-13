@@ -6,7 +6,7 @@ namespace UnityGLTF.Interactivity.Export
     {
         public static GltfInteractivityExportNode GetVariable(INodeExporter exporter, int id, out ValueOutRef value)
         {
-            var node = exporter.CreateNode(new Variable_GetNode());
+            var node = exporter.CreateNode<Variable_GetNode>();
             
             var varType = exporter.Context.variables[id].Type;
             node.OutputValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(varType);
@@ -17,7 +17,7 @@ namespace UnityGLTF.Interactivity.Export
         
         public static GltfInteractivityExportNode SetVariable(INodeExporter exporter, int id)
         {
-            var node = exporter.CreateNode(new Variable_SetNode());
+            var node = exporter.CreateNode<Variable_SetNode>();
             node.Configuration["variable"].Value = id;
             node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(exporter.Context.variables[id].Type));
             return node;
@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.Export
 
         public static GltfInteractivityExportNode SetVariableStaticValue(INodeExporter exporter, int id, object value, out FlowInRef flowIn, out FlowOutRef flowOut)
         {
-            var node = exporter.CreateNode(new Variable_SetNode());
+            var node = exporter.CreateNode<Variable_SetNode>();
             
             var variableType = exporter.Context.variables[id].Type;
             flowIn = node.FlowIn(Variable_SetNode.IdFlowIn);
@@ -38,7 +38,7 @@ namespace UnityGLTF.Interactivity.Export
         
         public static GltfInteractivityExportNode SetVariable(INodeExporter exporter, int id, ValueOutRef valueSource, FlowOutRef fromFlow, FlowInRef targetFlowIn = null)
         {
-            var node = exporter.CreateNode(new Variable_SetNode());
+            var node = exporter.CreateNode<Variable_SetNode>();
             
             var variableType = exporter.Context.variables[id].Type;
             fromFlow.ConnectToFlowDestination(node.FlowIn(Variable_SetNode.IdFlowIn));

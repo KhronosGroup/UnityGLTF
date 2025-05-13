@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     {
         public static GltfInteractivityExportNode SetVariableStaticValue(INodeExporter unitExporter, int id, object value, ControlInput flowIn, ControlOutput flowOut)
         {
-            var node = unitExporter.CreateNode(new Variable_SetNode());
+            var node = unitExporter.CreateNode<Variable_SetNode>();
             
             var variableType = unitExporter.Context.variables[id].Type;
             node.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(flowIn);
@@ -22,7 +22,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public static GltfInteractivityExportNode SetVariable(INodeExporter unitExporter, int id, ValueInput value, ControlInput flowIn, ControlOutput flowOut)
         {
-            var node = unitExporter.CreateNode(new Variable_SetNode());
+            var node = unitExporter.CreateNode<Variable_SetNode>();
             
             var variableType = unitExporter.Context.variables[id].Type;
             node.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(flowIn);
@@ -35,7 +35,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public static GltfInteractivityExportNode SetVariable(INodeExporter unitExporter, int id, ValueOutRef valueSource, ControlInput flowIn, ControlOutput flowOut)
         {
-            var node = unitExporter.CreateNode(new Variable_SetNode());
+            var node = unitExporter.CreateNode<Variable_SetNode>();
             
             var variableType = unitExporter.Context.variables[id].Type;
             node.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(flowIn);

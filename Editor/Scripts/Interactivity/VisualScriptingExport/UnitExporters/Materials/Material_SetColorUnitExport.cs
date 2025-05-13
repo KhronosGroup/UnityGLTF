@@ -32,7 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             if (unit is SetMember setMember)
             {
-                var node = unitExporter.CreateNode(new Pointer_SetNode());
+                var node = unitExporter.CreateNode<Pointer_SetNode>();
                 unitExporter.MapInputPortToSocketName(setMember.assign, Pointer_SetNode.IdFlowIn, node);
                 unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 unitExporter.MapOutFlowConnectionWhenValid(setMember.assigned, Pointer_SetNode.IdFlowOut, node);
@@ -63,7 +63,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     return false;
                 } 
                 
-                var node = unitExporter.CreateNode(new Pointer_SetNode());
+                var node = unitExporter.CreateNode<Pointer_SetNode>();
                 node.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(invokeMember.enter);
                 node.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(invokeMember.exit);
 
@@ -76,8 +76,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
                 else
                 {
-                    var extract = unitExporter.CreateNode(new Math_Extract4Node());
-                    var combine = unitExporter.CreateNode(new Math_Combine3Node());
+                    var extract = unitExporter.CreateNode<Math_Extract4Node>();
+                    var combine = unitExporter.CreateNode<Math_Combine3Node>();
                     extract.ValueIn("a").MapToInputPort(invokeMember.inputParameters[1])
                         .SetType(TypeRestriction.LimitToFloat4);
                     

@@ -57,7 +57,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var exposeUnit = unitExporter.unit as Expose;
             var getMemberNode = unitExporter.unit as GetMember;
             
-            GltfInteractivityNodeSchema schema = null;
+            Type schema = null;
             Type type = null;
             ValueInput target = null;
             
@@ -74,11 +74,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             bool isMatrix = false;
             if (type == typeof(Vector2))
-                schema = new Math_Extract2Node();
+                schema = typeof(Math_Extract2Node);
             else if (type == typeof(Vector3))
-                schema = new Math_Extract3Node();
+                schema = typeof(Math_Extract3Node);
             else if (type == typeof(Vector4) || type == typeof(Quaternion))
-                schema = new Math_Extract4Node();
+                schema = typeof(Math_Extract4Node);
             else if (type == typeof(Matrix4x4))
             {
                 if (exposeUnit != null)
@@ -91,7 +91,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     if (rotation.Key != null || scale.Key != null)
                     {
                         var unit = unitExporter.unit as Expose;
-                        var extract = unitExporter.CreateNode(new Math_MatDecomposeNode());
+                        var extract = unitExporter.CreateNode<Math_MatDecomposeNode>();
                         extract.ValueIn(Math_MatDecomposeNode.IdInput).MapToInputPort(unit.target);
                         if (rotation.Key != null)
                              extract.ValueOut(Math_MatDecomposeNode.IdOutputRotation).MapToPort(rotation.Key);
@@ -101,7 +101,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
 
                 isMatrix = true;
-                schema = new Math_Extract4x4Node();
+                schema = typeof(Math_Extract4x4Node);
             }
             
             if (schema == null)

@@ -45,12 +45,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            var node = unitExporter.CreateNode(new Pointer_GetNode());
+            var node = unitExporter.CreateNode<Pointer_GetNode>();
             unitExporter.ByPassFlow(unit.enter, unit.exit);
             
             if (oneMinus)
             {
-                var oneMinusNode = unitExporter.CreateNode(new Math_SubNode());
+                var oneMinusNode = unitExporter.CreateNode<Math_SubNode>();
                 oneMinusNode.ValueIn("a").SetValue(1f).SetType(TypeRestriction.LimitToFloat);
                 oneMinusNode.ValueIn("b").ConnectToSource(node.FirstValueOut()).SetType(TypeRestriction.LimitToFloat);
                 

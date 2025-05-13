@@ -22,7 +22,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
             
-            var setWeight = unitExporter.CreateNode(new Pointer_SetNode());
+            var setWeight = unitExporter.CreateNode<Pointer_SetNode>();
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeIndex,
                 unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/weights/{weightIndex}", GltfTypes.Float);
@@ -49,7 +49,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
             
-            var getWeight = unitExporter.CreateNode(new Pointer_GetNode());
+            var getWeight = unitExporter.CreateNode<Pointer_GetNode>();
             getWeight.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeIndex,
@@ -75,7 +75,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as GetMember;
             
-            var getWeightCount = unitExporter.CreateNode(new Pointer_GetNode());
+            var getWeightCount = unitExporter.CreateNode<Pointer_GetNode>();
             getWeightCount.FirstValueOut().ExpectedType(ExpectedType.Int).MapToPort(unit.value);
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshIndex,

@@ -140,7 +140,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 // Unsupported type
                 return false;
             }
-            var node = unitExporter.CreateNode(new Variable_GetNode());
+            var node = unitExporter.CreateNode<Variable_GetNode>();
 
             var variableIndex = unitExporter.vsExportContext.AddVariableWithIdIfNeeded(varName, value, VariableKind.Scene, gltfTypeIndex);
             node.OutputValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(gltfTypeIndex);

@@ -21,7 +21,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
         {
             var unit = unitExporter.unit as DebugLogGltf;
             
-            var logNode = unitExporter.CreateNode(new Debug_LogNode());
+            var logNode = unitExporter.CreateNode<Debug_LogNode>();
             logNode.FlowIn(Debug_LogNode.IdFlowIn).MapToControlInput(unit.enter);
             logNode.FlowOut(Debug_LogNode.IdFlowOut).MapToControlOutput(unit.exit);
 

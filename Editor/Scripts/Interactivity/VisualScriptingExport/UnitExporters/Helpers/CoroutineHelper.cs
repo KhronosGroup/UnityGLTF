@@ -133,7 +133,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = value;
                 
-                var sequence = unitExporter.CreateNode(new Flow_SequenceNode());
+                var sequence = unitExporter.CreateNode<Flow_SequenceNode>();
                 if (unitExporter.vsExportContext.Nodes.Count > 0)
                 {
                     unitExporter.vsExportContext.Nodes.Add(sequence);

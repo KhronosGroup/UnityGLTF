@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             InvokeMember unit = unitExporter.unit as InvokeMember;
-            var node = unitExporter.CreateNode(new Animation_StartNode());
+            var node = unitExporter.CreateNode<Animation_StartNode>();
 
             GameObject target = UnitsHelper.GetGameObjectFromValueInput(
                 unit.target, unit.defaultValues, unitExporter.vsExportContext);
@@ -61,7 +61,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
             var otherAnimationStates = AnimatorHelper.GetAllAnimationStates(target);
-            var stopSequence = unitExporter.CreateNode(new Flow_SequenceNode());
+            var stopSequence = unitExporter.CreateNode<Flow_SequenceNode>();
             stopSequence.FlowIn(Flow_SequenceNode.IdFlowIn).MapToControlInput(unit.enter);
        
             int index = 0;
@@ -74,7 +74,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (stopAnimationId == -1)
                     continue;
                 
-                var stopNode = unitExporter.CreateNode(new Animation_StopNode());
+                var stopNode = unitExporter.CreateNode<Animation_StopNode>();
                 stopNode.ValueIn(Animation_StopNode.IdValueAnimation)
                     .SetValue(stopAnimationId);
 

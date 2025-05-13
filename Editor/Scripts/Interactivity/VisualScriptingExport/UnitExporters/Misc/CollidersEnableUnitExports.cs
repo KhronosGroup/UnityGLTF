@@ -22,7 +22,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as GetMember;
                 
-            var selectableNode = unitExporter.CreateNode(new Pointer_GetNode());
+            var selectableNode = unitExporter.CreateNode<Pointer_GetNode>();
 
             SelectableExtensionHelper.AddExtension(unitExporter, unit, selectableNode);
             
@@ -48,7 +48,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as SetMember;
-            var selectableNode = unitExporter.CreateNode(new Pointer_SetNode());
+            var selectableNode = unitExporter.CreateNode<Pointer_SetNode>();
             
             SelectableExtensionHelper.AddExtension(unitExporter, unit, selectableNode);
 

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.Export
@@ -18,10 +20,20 @@ namespace UnityGLTF.Interactivity.Export
         }
         
         public readonly List<GltfInteractivityExportNode> nodes = new List<GltfInteractivityExportNode>();
+
         public InteractivityExportContext Context { get; private set; }
-        public GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
+        
+        public GltfInteractivityExportNode CreateNode(Type schemaType)
         {
-            var newNode = new GltfInteractivityExportNode(schema);
+            var newNode = new GltfInteractivityExportNode(GltfInteractivityNodeSchema.GetSchema(schemaType));
+            nodes.Add(newNode);
+            newNode.Index = nodes.Count - 1;
+            return newNode;
+        }
+        
+        public GltfInteractivityExportNode CreateNode<TSchema>() where TSchema : GltfInteractivityNodeSchema, new()
+        {
+            var newNode = new GltfInteractivityExportNode<TSchema>();
             nodes.Add(newNode);
             newNode.Index = nodes.Count - 1;
             return newNode;
@@ -40,7 +52,7 @@ namespace UnityGLTF.Interactivity.Export
                     break;
             }
             
-            var gltf_Node = CreateNode(new Debug_LogNode());
+            var gltf_Node = CreateNode<Debug_LogNode>();
             gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + messageTemplate;
             return gltf_Node;
         }

@@ -4,6 +4,15 @@ using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.Export
 {
+    public class GltfInteractivityExportNode<TSchema> : GltfInteractivityExportNode
+        where TSchema : GltfInteractivityNodeSchema, new()
+    {
+        
+        public GltfInteractivityExportNode() : base(GltfInteractivityNodeSchema.GetSchema<TSchema>())
+        {
+        }
+    }
+    
     public class GltfInteractivityExportNode : GltfInteractivityNode, ISocketConnectorProvider
     {
         // This data will not be serialized

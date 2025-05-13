@@ -21,7 +21,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
            var unit = unitExporter.unit as Unity.VisualScripting.InvokeMember;
            
            TransformHelpersVS.GetLocalPosition(unitExporter, unit.target, out var positionOutput);
-           var add = unitExporter.CreateNode(new Math_AddNode());
+           var add = unitExporter.CreateNode<Math_AddNode>();
            add.ValueIn(Math_AddNode.IdValueB).ConnectToSource(positionOutput);
            
            if (unit.valueInputs.Skip(1).First().type == typeof(Vector3))
@@ -32,7 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
            else
            {
                // translate value is separate floats
-               var combine3 = unitExporter.CreateNode(new Math_Combine3Node());
+               var combine3 = unitExporter.CreateNode<Math_Combine3Node>();
 
                 combine3.ValueIn(Math_Combine3Node.IdValueA).MapToInputPort(unit.valueInputs[1]);
                 combine3.ValueIn(Math_Combine3Node.IdValueB).MapToInputPort(unit.valueInputs[2]);

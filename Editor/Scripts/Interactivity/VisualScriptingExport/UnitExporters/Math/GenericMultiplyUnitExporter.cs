@@ -19,7 +19,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as GenericMultiply;
             
-            var mulNode = unitExporter.CreateNode(new Math_MulNode());
+            var mulNode = unitExporter.CreateNode<Math_MulNode>();
             mulNode.ValueIn("a").MapToInputPort(unit.a);
             mulNode.ValueIn("b").MapToInputPort(unit.b);
             mulNode.FirstValueOut().MapToPort(unit.product);

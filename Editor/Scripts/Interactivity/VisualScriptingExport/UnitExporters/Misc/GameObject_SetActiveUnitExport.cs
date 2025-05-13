@@ -21,8 +21,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as InvokeMember;
             
-            var visibleNode = unitExporter.CreateNode(new Pointer_SetNode());
-            var selectableNode = unitExporter.CreateNode(new Pointer_SetNode());
+            var visibleNode = unitExporter.CreateNode<Pointer_SetNode>();
+            var selectableNode = unitExporter.CreateNode<Pointer_SetNode>();
 
             VisibleExtensionHelper.AddExtension(unitExporter, unit, visibleNode);
             SelectableExtensionHelper.AddExtension(unitExporter, unit, selectableNode);

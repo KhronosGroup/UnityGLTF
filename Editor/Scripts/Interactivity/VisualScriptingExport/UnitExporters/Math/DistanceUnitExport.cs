@@ -38,12 +38,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
-            var subNode = unitExporter.CreateNode( new Math_SubNode());
+            var subNode = unitExporter.CreateNode<Math_SubNode>();
             subNode.ValueIn("a").MapToInputPort(unitExporter.unit.valueInputs[0]);
             subNode.ValueIn("b").MapToInputPort(unitExporter.unit.valueInputs[1]);
             subNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
             
-            var lengthNode = unitExporter.CreateNode( new Math_LenghNode());
+            var lengthNode = unitExporter.CreateNode<Math_LenghNode>();
             lengthNode.ValueIn("a").ConnectToSource(subNode.FirstValueOut()).SetType(TypeRestriction.LimitToFloat3);
             lengthNode.FirstValueOut().MapToPort(unitExporter.unit.valueOutputs[0]);
             return true;

@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             if (!coroutine)
             {
-                var node = unitExporter.CreateNode(new Flow_WhileNode());
+                var node = unitExporter.CreateNode<Flow_WhileNode>();
 
                 unitExporter.MapInputPortToSocketName(unit.condition, Flow_WhileNode.IdCondition, node);
                 unitExporter.MapOutFlowConnectionWhenValid(unit.body, Flow_WhileNode.IdLoopBody, node);
@@ -34,7 +34,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             else
             {
-                var branch  = unitExporter.CreateNode(new Flow_BranchNode());
+                var branch  = unitExporter.CreateNode<Flow_BranchNode>();
                 branch.FlowIn(Flow_BranchNode.IdFlowIn).MapToControlInput(unit.enter); 
                 branch.FlowOut(Flow_BranchNode.IdFlowOutFalse).MapToControlOutput(unit.exit);
                 branch.FlowOut(Flow_BranchNode.IdFlowOutTrue).MapToControlOutput(unit.body);

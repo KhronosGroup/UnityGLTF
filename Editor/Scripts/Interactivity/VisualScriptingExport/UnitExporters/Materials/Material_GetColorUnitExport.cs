@@ -31,7 +31,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             if (unit is GetMember getMember)
             {
-                var node = unitExporter.CreateNode(new Pointer_GetNode());
+                var node = unitExporter.CreateNode<Pointer_GetNode>();
                 node.FirstValueOut().MapToPort(getMember.value).ExpectedType(ExpectedType.Float4);
                 PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                     getMember.target, template, GltfTypes.Float4);
@@ -59,7 +59,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     UnitExportLogging.AddErrorLog(unit, "color property name is not a literal or default value, which is not supported.");
                     return false;
                 }
-                var node = unitExporter.CreateNode(new Pointer_GetNode());
+                var node = unitExporter.CreateNode<Pointer_GetNode>();
                 unitExporter.ByPassFlow(invokeMember.enter, invokeMember.exit);
                 if (hasAlpha)
                 {
@@ -72,8 +72,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
                         invokeMember.target, template, GltfTypes.Float3);
                     
-                    var extract = unitExporter.CreateNode(new Math_Extract3Node());
-                    var combine = unitExporter.CreateNode(new Math_Combine4Node());
+                    var extract = unitExporter.CreateNode<Math_Extract3Node>();
+                    var combine = unitExporter.CreateNode<Math_Combine4Node>();
                     extract.ValueIn("a").ConnectToSource(node.FirstValueOut());
                     
                     combine.ValueIn("a").ConnectToSource(extract.ValueOut("0"));

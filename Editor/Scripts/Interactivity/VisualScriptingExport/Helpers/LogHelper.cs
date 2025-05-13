@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 return;
             }
             
-            var sequence_node = unitExporter.CreateNode(new Flow_SequenceNode());
+            var sequence_node = unitExporter.CreateNode<Flow_SequenceNode>();
            
             if (addGltfLog)
             {
@@ -41,7 +41,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         break;
                 }
         
-                var gltf_Node = unitExporter.CreateNode(new Debug_LogNode());
+                var gltf_Node = unitExporter.CreateNode<Debug_LogNode>();
                 if (unitExporter.IsInputLiteralOrDefaultValue(messageInput, out var message))
                 {
                     gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + message;
@@ -57,7 +57,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             if (addADBE)
             {
-                var adbe_node = unitExporter.CreateNode(new ADBE_OutputConsoleNode());
+                var adbe_node = unitExporter.CreateNode<ADBE_OutputConsoleNode>();
 
                 adbe_node.ValueIn(ADBE_OutputConsoleNode.IdMessage).MapToInputPort(messageInput);
                 sequence_node.FlowOut("1").ConnectToFlowDestination(adbe_node.FlowIn(ADBE_OutputConsoleNode.IdFlowIn));
@@ -67,7 +67,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             if (addBabylon)
             {
-                var babylon_node = unitExporter.CreateNode(new Babylon_LogNode());
+                var babylon_node = unitExporter.CreateNode<Babylon_LogNode>();
              
                 babylon_node.ValueIn(Babylon_LogNode.IdMessage).MapToInputPort(messageInput);
                 sequence_node.FlowOut("2").ConnectToFlowDestination(babylon_node.FlowIn(Babylon_LogNode.IdFlowIn));

@@ -22,7 +22,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
         {
             var unit = unitExporter.unit as VariableInterpolate;
             
-            var node = unitExporter.CreateNode(new Variable_InterpolateNode());
+            var node = unitExporter.CreateNode<Variable_InterpolateNode>();
 
             var varDeclaration = unitExporter.vsExportContext.GetVariableDeclaration(unit);
             if (varDeclaration == null)

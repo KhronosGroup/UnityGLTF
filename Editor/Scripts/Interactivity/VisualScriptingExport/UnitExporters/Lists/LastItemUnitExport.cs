@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            var subNode = unitExporter.CreateNode(new Math_SubNode());
+            var subNode = unitExporter.CreateNode<Math_SubNode>();
             subNode.ValueIn("a").ConnectToSource(ListHelpersVS.GetListCountSocket(list));
             subNode.ValueIn("b").SetValue(1);
             subNode.ValueOut("value").ExpectedType(ExpectedType.Int);

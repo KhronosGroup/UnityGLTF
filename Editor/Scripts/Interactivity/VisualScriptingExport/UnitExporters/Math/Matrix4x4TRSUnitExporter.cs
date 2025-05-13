@@ -18,7 +18,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as Unity.VisualScripting.InvokeMember;
-            var trs = unitExporter.CreateNode(new Math_MatComposeNode());
+            var trs = unitExporter.CreateNode<Math_MatComposeNode>();
             trs.ValueIn(Math_MatComposeNode.IdInputTranslation).MapToInputPort(unit.valueInputs["%pos"]);
             trs.ValueIn(Math_MatComposeNode.IdInputRotation).MapToInputPort(unit.valueInputs["%q"]);
             trs.ValueIn(Math_MatComposeNode.IdInputScale).MapToInputPort(unit.valueInputs["%s"]);

@@ -38,7 +38,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             if (unitExporter.unit is GetMember getMember)
             {
-                var node = unitExporter.CreateNode(new Pointer_GetNode());
+                var node = unitExporter.CreateNode<Pointer_GetNode>();
                 target = getMember.target;
                 
                 if (isOffset)
@@ -87,7 +87,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     return false;
                 } 
                 
-                var node = unitExporter.CreateNode(new Pointer_GetNode());
+                var node = unitExporter.CreateNode<Pointer_GetNode>();
                 unitExporter.ByPassFlow(invokeMember.enter, invokeMember.exit);
                 PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
                 

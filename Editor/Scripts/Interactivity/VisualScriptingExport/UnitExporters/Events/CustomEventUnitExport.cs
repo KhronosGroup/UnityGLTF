@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            var node = unitExporter.CreateNode(new Event_ReceiveNode());
+            var node = unitExporter.CreateNode<Event_ReceiveNode>();
             
             var args = new Dictionary<string, GltfInteractivityUnitExporterNode.EventValues>();
             args.Add("targetNodeIndex", new GltfInteractivityUnitExporterNode.EventValues {Type = GltfTypes.TypeIndexByGltfSignature("int") });
@@ -48,13 +48,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.ValueOut("targetNodeIndex").ExpectedType(ExpectedType.Int);
 
             // Setup target Node checks
-            var eqIdNode = unitExporter.CreateNode(new Math_EqNode());
+            var eqIdNode = unitExporter.CreateNode<Math_EqNode>();
             eqIdNode.ValueIn(Math_EqNode.IdValueA).ConnectToSource(node.ValueOut("targetNodeIndex")).SetType(TypeRestriction.LimitToInt);
             var currentGameObject = unitExporter.vsExportContext.currentGraphProcessing.gameObject;
             var transformIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(currentGameObject.transform);
             eqIdNode.ValueIn(Math_EqNode.IdValueB).SetValue(transformIndex).SetType(TypeRestriction.LimitToInt);            
             
-            var branchNode = unitExporter.CreateNode(new Flow_BranchNode());
+            var branchNode = unitExporter.CreateNode<Flow_BranchNode>();
             branchNode.ValueIn(Flow_BranchNode.IdCondition).ConnectToSource(eqIdNode.FirstValueOut());
             node.FlowOut(Event_ReceiveNode.IdFlowOut)
                 .ConnectToFlowDestination(branchNode.FlowIn(Flow_BranchNode.IdFlowIn));

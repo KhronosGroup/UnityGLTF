@@ -17,7 +17,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as WaitForSecondsUnit;
-            var node = unitExporter.CreateNode(new Flow_SetDelayNode());
+            var node = unitExporter.CreateNode<Flow_SetDelayNode>();
             
             unitExporter.MapOutFlowConnectionWhenValid(unit.exit, Flow_SetDelayNode.IdFlowDone, node);
             

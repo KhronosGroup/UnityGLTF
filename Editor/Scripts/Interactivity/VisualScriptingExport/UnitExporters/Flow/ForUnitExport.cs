@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             if (!coroutine && unitExporter.IsInputLiteralOrDefaultValue(unit.step, out var defaultStepValue) && (int)defaultStepValue == 1)
             {
-                var node = unitExporter.CreateNode(new Flow_ForLoopNode());
+                var node = unitExporter.CreateNode<Flow_ForLoopNode>();
                 // TODO: set inital index > also... why even using it
                 node.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
                 

@@ -15,11 +15,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var typeRestr = TypeRestriction.LimitToType(gltfType);
             var expType = ExpectedType.GtlfType(gltfType);
             
-            var saturateNode = unitExporter.CreateNode(new Math_SaturateNode());
+            var saturateNode = unitExporter.CreateNode<Math_SaturateNode>();
             saturateNode.ValueIn("a").MapToInputPort(unit.valueInputs[2]).SetType(typeRestr);
             saturateNode.FirstValueOut().ExpectedType(expType);
 
-            var mixNode = unitExporter.CreateNode(new Math_MixNode());
+            var mixNode = unitExporter.CreateNode<Math_MixNode>();
             mixNode.ValueIn("a").MapToInputPort(unit.valueInputs[0]).SetType(typeRestr);
             mixNode.ValueIn("b").MapToInputPort(unit.valueInputs[1]).SetType(typeRestr);
             mixNode.ValueIn("c").ConnectToSource(saturateNode.FirstValueOut()).SetType(typeRestr);

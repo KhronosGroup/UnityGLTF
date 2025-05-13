@@ -40,7 +40,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
 
                 if (map.ExportFlipValueRange)
                 {
-                    var flipNode = unitExporter.CreateNode(new Math_SubNode());
+                    var flipNode = unitExporter.CreateNode<Math_SubNode>();
                     flipNode.ValueIn("a").SetValue(1f);
                     flipNode.ValueIn("b").MapToInputPort(unit.targetValue);
                     convertedValue = flipNode.ValueOut("out").ExpectedType(ExpectedType.Float);
@@ -53,7 +53,7 @@ namespace Editor.UnitExporters.GltfInteractivityUnits
                 return false;
             } 
             
-            var node = unitExporter.CreateNode(new Pointer_InterpolateNode());
+            var node = unitExporter.CreateNode<Pointer_InterpolateNode>();
 
             node.FlowIn(Pointer_InterpolateNode.IdFlowIn).MapToControlInput(unit.assign);
             node.FlowOut(Pointer_InterpolateNode.IdFlowOut).MapToControlOutput(unit.assigned);

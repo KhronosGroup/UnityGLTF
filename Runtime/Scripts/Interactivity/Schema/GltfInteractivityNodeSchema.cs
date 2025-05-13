@@ -12,23 +12,53 @@ namespace UnityGLTF.Interactivity.Schema
 
         public virtual string Extension { get; protected set; } = null;
 
-        public Dictionary<string, ConfigDescriptor> Configuration { get; set; } = new();
-        public Dictionary<string, FlowSocketDescriptor> InputFlowSockets { get; set; } = new();
-        public Dictionary<string, FlowSocketDescriptor> OutputFlowSockets {get; set;} = new();
-        public Dictionary<string, InputValueSocketDescriptor> InputValueSockets {get; set;} = new();
-        public Dictionary<string, OutputValueSocketDescriptor> OutputValueSockets {get; set;} = new();
+        public IReadOnlyDictionary<string, ConfigDescriptor> Configuration { get => _configuration; }
+        public IReadOnlyDictionary<string, FlowSocketDescriptor> InputFlowSockets { get => _inputFlowSockets; } 
+        public IReadOnlyDictionary<string, FlowSocketDescriptor> OutputFlowSockets {get => _outputFlowSockets; } 
+        public IReadOnlyDictionary<string, InputValueSocketDescriptor> InputValueSockets {get => _inputValueSockets;}
+        public IReadOnlyDictionary<string, OutputValueSocketDescriptor> OutputValueSockets {get => _outputValueSockets;} 
+
+        protected Dictionary<string, ConfigDescriptor> _configuration = new();
+        protected Dictionary<string, FlowSocketDescriptor> _inputFlowSockets = new();
+        protected Dictionary<string, FlowSocketDescriptor> _outputFlowSockets = new();
+        protected Dictionary<string, InputValueSocketDescriptor> _inputValueSockets = new();
+        protected Dictionary<string, OutputValueSocketDescriptor> _outputValueSockets = new();
         
         public MetaDataEntry[] MetaDatas {get; protected set;}
+        
+        private static Dictionary<System.Type, GltfInteractivityNodeSchema> _schemaInstances =
+            new Dictionary<System.Type, GltfInteractivityNodeSchema>();
+
+        public static GltfInteractivityNodeSchema GetSchema<TSchema>() where TSchema : GltfInteractivityNodeSchema, new()
+        {
+            var type = typeof(TSchema);
+            if (_schemaInstances.ContainsKey(type))
+                return _schemaInstances[type];
+            
+            var schema = new TSchema();
+            _schemaInstances.Add(type, schema);
+            return schema;
+        }
+        
+        public static GltfInteractivityNodeSchema GetSchema(Type schemaType)
+        {
+            if (_schemaInstances.ContainsKey(schemaType))
+                return _schemaInstances[schemaType];
+            
+            var schema = (GltfInteractivityNodeSchema)Activator.CreateInstance(schemaType);
+            _schemaInstances.Add(schemaType, schema);
+            return schema;
+        }
 
         public void CreateDescriptorsFromAttributes(bool clearExisting = false)
         {
             if (clearExisting)
             {
-                Configuration.Clear();
-                InputFlowSockets.Clear();
-                OutputFlowSockets.Clear();
-                InputValueSockets.Clear();
-                OutputValueSockets.Clear();
+                _configuration.Clear();
+                _inputFlowSockets.Clear();
+                _outputFlowSockets.Clear();
+                _inputValueSockets.Clear();
+                _outputValueSockets.Clear();
             }
             
             var fields = new List<FieldInfo>();
@@ -54,7 +84,7 @@ namespace UnityGLTF.Interactivity.Schema
                     
                     if (attribute is ConfigDescriptionAttribute configDescription)
                     {
-                        Configuration.Add(fieldValue, new ConfigDescriptor { defaultValue = configDescription.defaultValue });
+                        _configuration.Add(fieldValue, new ConfigDescriptor { defaultValue = configDescription.defaultValue });
                     }
                     else if (attribute is OutputSocketDescriptionWithTypeDependencyFromInputAttribute outputSocketDescriptionWithExpectedType)
                     {
@@ -66,7 +96,7 @@ namespace UnityGLTF.Interactivity.Schema
                         if (newOut.SupportedTypes == null || newOut.SupportedTypes.Length == 0)
                             newOut.SupportedTypes = GltfTypes.allTypes;
 
-                        OutputValueSockets.Add(fieldValue, newOut);
+                        _outputValueSockets.Add(fieldValue, newOut);
                     }
                     else if (attribute is InputSocketDescriptionWithTypeDependencyFromOtherPortAttribute inputSocketDescriptionWithTypeRestriction)
                     {
@@ -78,7 +108,7 @@ namespace UnityGLTF.Interactivity.Schema
                         if (newIn.SupportedTypes == null || newIn.SupportedTypes.Length == 0)
                             newIn.SupportedTypes = GltfTypes.allTypes;
                         
-                        InputValueSockets.Add(fieldValue, newIn);
+                        _inputValueSockets.Add(fieldValue, newIn);
                     }
                     else if (attribute is InputSocketDescriptionAttribute inputSocketDescription)
                     {
@@ -92,7 +122,7 @@ namespace UnityGLTF.Interactivity.Schema
                         if (newIn.SupportedTypes != null && newIn.SupportedTypes.Length == 1)
                             newIn.typeRestriction = TypeRestriction.LimitToType(newIn.SupportedTypes[0]);
                         
-                        InputValueSockets.Add(fieldValue, newIn);
+                        _inputValueSockets.Add(fieldValue, newIn);
                     }
                     else if (attribute is OutputSocketDescriptionAttribute outputSocketDescription)
                     {
@@ -107,15 +137,15 @@ namespace UnityGLTF.Interactivity.Schema
                         {
                             newOut.expectedType = ExpectedType.GtlfType(newOut.SupportedTypes[0]);
                         }
-                        OutputValueSockets.Add(fieldValue, newOut);
+                        _outputValueSockets.Add(fieldValue, newOut);
                     }
                     else if (attribute is FlowInSocketDescriptionAttribute)
                     {
-                        InputFlowSockets.Add(fieldValue, new FlowSocketDescriptor());
+                        _inputFlowSockets.Add(fieldValue, new FlowSocketDescriptor());
                     }
                     else if (attribute is FlowOutSocketDescriptionAttribute)
                     {
-                        OutputFlowSockets.Add(fieldValue, new FlowSocketDescriptor());
+                        _outputFlowSockets.Add(fieldValue, new FlowSocketDescriptor());
                     }
                 }
             }

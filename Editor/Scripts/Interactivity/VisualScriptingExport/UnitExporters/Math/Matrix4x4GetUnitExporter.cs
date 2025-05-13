@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as MemberUnit;
 
-            var extract = unitExporter.CreateNode(new Math_MatDecomposeNode());
+            var extract = unitExporter.CreateNode<Math_MatDecomposeNode>();
             extract.ValueIn(Math_MatDecomposeNode.IdInput).MapToInputPort(unit.target);
 
             var resultSocket = unit.valueOutputs[0];

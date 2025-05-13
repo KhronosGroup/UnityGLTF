@@ -5,104 +5,71 @@ using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
-    /* TODO: MISSING:
-     
-     !!Max with multiple inputs!! like Add
-     
-     */
 
-    public class GenericMathUnitExporters : GenericUnitExport
+    public static class GenericMathUnitExportersRegister
     {
-        [InitializeOnLoadMethod]
+         [InitializeOnLoadMethod]
         public static void Register()
         {
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Equal), new Math_EqNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_EqNode>(typeof(Equal)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(GenericSubtract),
-                new Math_SubNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(ScalarSubtract),
-                new Math_SubNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2Subtract),
-                new Math_SubNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3Subtract),
-                new Math_SubNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4Subtract),
-                new Math_SubNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(GenericSubtract)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(ScalarSubtract)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(Vector2Subtract)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(Vector3Subtract)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(Vector4Subtract)));
             
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2Multiply),
-                new Math_MulNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3Multiply),
-                new Math_MulNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4Multiply),
-                new Math_MulNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(ScalarMultiply),
-                new Math_MulNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_MulNode>(typeof(Vector2Multiply)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_MulNode>(typeof(Vector3Multiply)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_MulNode>(typeof(Vector4Multiply)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_MulNode>(typeof(ScalarMultiply)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(GenericDivide),
-                new Math_DivNode()));
-            UnitExporterRegistry.RegisterExporter(
-                new GenericMathUnitExporters(typeof(ScalarDivide), new Math_DivNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2Divide),
-                new Math_DivNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3Divide),
-                new Math_DivNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4Divide),
-                new Math_DivNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DivNode>(typeof(GenericDivide)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DivNode>(typeof(ScalarDivide)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DivNode>(typeof(Vector2Divide)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DivNode>(typeof(Vector3Divide)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DivNode>(typeof(Vector4Divide)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(GenericModulo),
-                new Math_RemNode()));
-            UnitExporterRegistry.RegisterExporter(
-                new GenericMathUnitExporters(typeof(ScalarModulo), new Math_RemNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2Modulo),
-                new Math_RemNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3Modulo),
-                new Math_RemNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4Modulo),
-                new Math_RemNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_RemNode>(typeof(GenericModulo)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_RemNode>(typeof(ScalarModulo)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_RemNode>(typeof(Vector2Modulo)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_RemNode>(typeof(Vector3Modulo)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_RemNode>(typeof(Vector4Modulo)));
             
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Less), new Math_LtNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(LessOrEqual), new Math_LeNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Greater), new Math_GtNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(GreaterOrEqual),
-                new Math_GeNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_LtNode>(typeof(Less)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_LeNode>(typeof(LessOrEqual)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_GtNode>(typeof(Greater)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_GeNode>(typeof(GreaterOrEqual)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2DotProduct),
-                new Math_DotNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3DotProduct),
-                new Math_DotNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4DotProduct),
-                new Math_DotNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DotNode>(typeof(Vector2DotProduct)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DotNode>(typeof(Vector3DotProduct)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_DotNode>(typeof(Vector4DotProduct)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3CrossProduct),
-                new Math_CrossNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_CrossNode>(typeof(Vector3CrossProduct)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(And), new Math_AndNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Or), new Math_OrNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(ExclusiveOr),
-                new Math_XorNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_AndNode>(typeof(And)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_OrNode>(typeof(Or)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_XorNode>(typeof(ExclusiveOr)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(ScalarAbsolute),
-                new Math_AbsNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2Absolute),
-                new Math_AbsNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3Absolute),
-                new Math_AbsNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4Absolute),
-                new Math_AbsNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_AbsNode>(typeof(ScalarAbsolute)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_AbsNode>(typeof(Vector2Absolute)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_AbsNode>(typeof(Vector3Absolute)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_AbsNode>(typeof(Vector4Absolute)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector2Normalize),
-                new Math_NormalizeNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector3Normalize),
-                new Math_NormalizeNode()));
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Vector4Normalize),
-                new Math_NormalizeNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_NormalizeNode>(typeof(Vector2Normalize)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_NormalizeNode>(typeof(Vector3Normalize)));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_NormalizeNode>(typeof(Vector4Normalize)));
 
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters(typeof(Negate), new Math_NotNode()));
+            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_NotNode>(typeof(Negate)));
         }
-
-        public GenericMathUnitExporters(Type unitType, GltfInteractivityNodeSchema schema) : base(unitType, schema)
+    }
+    
+    public class GenericMathUnitExporters<TSchema>: GenericUnitExport<TSchema> where TSchema: GltfInteractivityNodeSchema, new()
+    {
+        public GenericMathUnitExporters(Type unitType) : base(unitType)
         {
         }
+        
     }
     
 }

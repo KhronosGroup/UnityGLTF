@@ -30,13 +30,13 @@ namespace UnityGLTF.Interactivity.Export
                     break;
                 
             }
-            var tickNode = exporter.CreateNode(new Event_OnTickNode());
+            var tickNode = exporter.CreateNode<Event_OnTickNode>();
             
-            var isNaNNode = exporter.CreateNode(new Math_IsNaNNode());
+            var isNaNNode = exporter.CreateNode<Math_IsNaNNode>();
 
             isNaNNode.ValueIn(Math_IsNaNNode.IdValueA).ConnectToSource(tickNode.ValueOut(socketName));
             
-            var selectNode = exporter.CreateNode(new Math_SelectNode());
+            var selectNode = exporter.CreateNode<Math_SelectNode>();
             selectNode.ValueIn(Math_SelectNode.IdCondition).ConnectToSource(isNaNNode.FirstValueOut());
             value = selectNode.FirstValueOut();
 

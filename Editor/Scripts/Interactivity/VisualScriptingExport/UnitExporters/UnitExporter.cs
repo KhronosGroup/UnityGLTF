@@ -102,9 +102,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             _nodes.Add(node);
         }
 
-        public virtual GltfInteractivityExportNode CreateNode(GltfInteractivityNodeSchema schema)
+        public virtual GltfInteractivityExportNode CreateNode<TSchema>() where TSchema : GltfInteractivityNodeSchema, new()
         {
-            var newNode = new GltfInteractivityUnitExporterNode(this, schema);
+            var newNode = new GltfInteractivityUnitExporterNode(this, GltfInteractivityNodeSchema.GetSchema<TSchema>());
+            AddNode(newNode);
+            return newNode;
+        }
+        
+        public virtual GltfInteractivityExportNode CreateNode(Type schemaType)
+        {
+            var newNode = new GltfInteractivityUnitExporterNode(this, GltfInteractivityNodeSchema.GetSchema(schemaType));
             AddNode(newNode);
             return newNode;
         }

@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as TVisualGraphUnit;
-            var node = unitExporter.CreateNode(new TNodeSchema());
+            var node = unitExporter.CreateNode<TNodeSchema>();
 
             if (!unit.valueInputs.TryGetValue("target", out var targetInput))
             {

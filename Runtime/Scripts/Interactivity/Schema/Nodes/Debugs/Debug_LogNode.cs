@@ -1,3 +1,5 @@
+using UnityGLTF.Interactivity.Export;
+
 namespace UnityGLTF.Interactivity.Schema
 {
     public class Debug_LogNode : GltfInteractivityNodeSchema
@@ -15,4 +17,5 @@ namespace UnityGLTF.Interactivity.Schema
         [FlowOutSocketDescription]
         public const string IdFlowOut = "out";
     }
+    
 }

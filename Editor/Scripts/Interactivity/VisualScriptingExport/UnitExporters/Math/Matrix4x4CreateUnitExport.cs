@@ -30,11 +30,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var extracts = new GltfInteractivityExportNode[4];
             for (int i = 0; i < 4; i++)
             {
-                extracts[i] = unitExporter.CreateNode(new Math_Extract4Node());
+                extracts[i] = unitExporter.CreateNode<Math_Extract4Node>();
                 extracts[i].ValueIn(Math_Extract4Node.IdValueIn).MapToInputPort(unit.valueInputs[i]);
             }
 
-            var createMatrix = unitExporter.CreateNode(new Math_Combine4x4Node());
+            var createMatrix = unitExporter.CreateNode<Math_Combine4x4Node>();
 
             int index = 0;
 

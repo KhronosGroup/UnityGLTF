@@ -39,7 +39,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             if (unitExporter.unit is SetMember setMember)
             {
-                var node = unitExporter.CreateNode(new Pointer_SetNode());
+                var node = unitExporter.CreateNode<Pointer_SetNode>();
                 target = setMember.target;
                 unitExporter.MapInputPortToSocketName(setMember.assign, Pointer_SetNode.IdFlowIn, node);
                 unitExporter.MapOutFlowConnectionWhenValid(setMember.assigned, Pointer_SetNode.IdFlowOut, node);
@@ -90,7 +90,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     return false;
                 }
 
-                var node = unitExporter.CreateNode(new Pointer_SetNode());
+                var node = unitExporter.CreateNode<Pointer_SetNode>();
                 node.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(invokeMember.enter);
                 node.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(invokeMember.exit);
 

@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
            var unit = unitExporter.unit as Unity.VisualScripting.SetMember;
            
-           var setScale = unitExporter.CreateNode(new Pointer_SetNode());
+           var setScale = unitExporter.CreateNode<Pointer_SetNode>();
            
            PointersHelperVS.SetupPointerTemplateAndTargetInput(setScale, PointersHelper.IdPointerNodeIndex,
                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale", GltfTypes.Float3);

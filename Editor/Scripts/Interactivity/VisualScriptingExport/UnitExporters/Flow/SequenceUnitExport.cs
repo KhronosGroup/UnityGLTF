@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             GltfInteractivityExportNode node;
             if (!coroutine)
             {
-                node = unitExporter.CreateNode(new Flow_SequenceNode());
+                node = unitExporter.CreateNode<Flow_SequenceNode>();
                 unitExporter.MapInputPortToSocketName(unit.enter, Flow_SequenceNode.IdFlowIn, node);
                 if (unit.multiOutputs.Count > 0)
                 {
@@ -42,10 +42,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             else
             {
-                node = unitExporter.CreateNode(new Flow_SequenceNode());
+                node = unitExporter.CreateNode<Flow_SequenceNode>();
                 node.FlowIn(Flow_SequenceNode.IdFlowIn).MapToControlInput(unit.enter);
 
-                var multiGate = unitExporter.CreateNode(new Flow_MultiGateNode());
+                var multiGate = unitExporter.CreateNode<Flow_MultiGateNode>();
                 multiGate.Configuration[Flow_MultiGateNode.IdConfigIsLoop].Value = false;
                 multiGate.Configuration[Flow_MultiGateNode.IdConfigIsRandom].Value = false;
 
@@ -66,7 +66,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
 
                         awaiterNode.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = 1;
-                        var outputSequ = unitExporter.CreateNode(new Flow_SequenceNode());
+                        var outputSequ = unitExporter.CreateNode<Flow_SequenceNode>();
                         multiGate.FlowOut(index.ToString())
                             .ConnectToFlowDestination(outputSequ.FlowIn(Flow_SequenceNode.IdFlowIn));
                         outputSequ.FlowOut("0").MapToControlOutput(output);
