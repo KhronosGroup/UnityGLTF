@@ -207,6 +207,17 @@ namespace UnityGLTF
 		Vector2 ClearcoatNormalTextureScale { get; set; }
 		int ClearcoatNormalTextureTexCoord { get; set; }
 	}
+	
+	public interface IAnisotropyMap
+	{
+		Texture anisotropyTexture { get; set; }
+		Vector2 anisotropyTextureOffset { get; set; }
+		double anisotropyTextureRotation { get; set; }
+		Vector2 anisotropyTextureScale { get; set; }
+		int anisotropyTextureTexCoord { get; set; }
+		double anisotropyStrength { get; set; }
+		double anisotropyRotation { get; set; }
+	}
 
 	public interface IUnlitUniformMap : IUniformMap
 	{
