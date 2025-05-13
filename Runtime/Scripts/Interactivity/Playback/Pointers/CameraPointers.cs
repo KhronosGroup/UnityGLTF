@@ -17,8 +17,9 @@ namespace UnityGLTF.Interactivity.Playback
         public Pointer<float> zFar;
         public Pointer<float> zNear;
 
-        public CameraPointers(Camera cam)
+        public CameraPointers(in CameraData data)
         {
+            var cam = data.unityCamera;
             // Unity does not allow you to set the width of the orthographic window directly.
             // cam.orthographicSize is the YMag and the width is then that value multiplied by your aspect ratio.
             orthographicXMag = new Pointer<float>()

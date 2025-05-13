@@ -1,4 +1,5 @@
 using GLTF.Schema;
+using System;
 using UnityEngine;
 using UnityGLTF.Plugins;
 
@@ -7,10 +8,13 @@ namespace UnityGLTF.Interactivity.Playback
     public class InteractivityImportContext : GLTFImportPluginContext
     {
         internal readonly InteractivityImportPlugin settings;
+        private PointerResolver _pointerResolver;
+        private GLTFImportContext _context;
 
-        public InteractivityImportContext(InteractivityImportPlugin interactivityLoader)
+        public InteractivityImportContext(InteractivityImportPlugin interactivityLoader, GLTFImportContext context)
         {
             settings = interactivityLoader;
+            _context = context;
         }
 
         /// <summary>
@@ -18,6 +22,7 @@ namespace UnityGLTF.Interactivity.Playback
         /// </summary>
         public override void OnBeforeImport()
         {
+            _pointerResolver = new();
             Util.Log($"InteractivityImportContext::OnBeforeImport Complete");
         }
 
@@ -32,6 +37,7 @@ namespace UnityGLTF.Interactivity.Playback
         public override void OnAfterImportRoot(GLTFRoot gltfRoot)
         {
             Util.Log($"InteractivityImportContext::OnAfterImportRoot Complete: {gltfRoot.ToString()}");
+            _pointerResolver.CreateScenePointers(gltfRoot);
         }
 
         public override void OnBeforeImportScene(GLTFScene scene)
@@ -42,11 +48,25 @@ namespace UnityGLTF.Interactivity.Playback
         public override void OnAfterImportNode(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
         {
             Util.Log($"InteractivityImportContext::OnAfterImportNode Complete: {node.ToString()}");
+            _pointerResolver.RegisterNode(node, nodeIndex, nodeObject);
         }
 
-        public override void OnAfterImportMaterial(GLTFMaterial material, int materialIndex, Material materialObject)
+        public override void OnAfterImportMesh(GLTFMesh mesh, int meshIndex, Mesh meshObject)
+        {
+            Util.Log($"InteractivityImportContext::OnAfterImportMesh Complete: {mesh.ToString()}");
+            _pointerResolver.RegisterMesh(mesh, meshIndex, meshObject);
+        }
+
+        public override void OnAfterImportMaterialWithVertexColors(GLTFMaterial material, int materialIndex, Material materialObject)
         {
             Util.Log($"InteractivityImportContext::OnAfterImportMaterial Complete: {material.ToString()}");
+            _pointerResolver.RegisterMaterial(material, materialIndex, materialObject);
+        }
+
+        public override void OnAfterImportCamera(GLTFCamera camera, int cameraIndex, Camera cameraObject)
+        {
+            Util.Log($"InteractivityImportContext::OnAfterImportCamera Complete: {camera.ToString()}");
+            _pointerResolver.RegisterCamera(camera, cameraIndex, cameraObject);
         }
 
         public override void OnAfterImportTexture(GLTFTexture texture, int textureIndex, Texture textureObject)
@@ -59,9 +79,57 @@ namespace UnityGLTF.Interactivity.Playback
             Util.Log($"InteractivityImportContext::OnAfterImportScene Complete: {scene.Extensions}");
         }
 
-        public override void OnAfterImport()
+        public override void OnLoadComplete(GameObject sceneObject)
         {
             Util.Log($"InteractivityImportContext::OnAfterImport Complete");
+
+            var extensions = _context.SceneImporter.Root?.Extensions;
+
+            if (extensions == null)
+            {
+                Util.Log("Extensions are null.");
+                return;
+            }
+
+            if (!extensions.TryGetValue(InteractivityGraphExtension.EXTENSION_NAME, out IExtension extensionValue))
+            {
+                Util.Log("Extensions does not contain interactivity.");
+                return;
+            }
+
+            if (extensionValue is not InteractivityGraphExtension interactivityGraph)
+            {
+                Util.Log("Extensions does not contain a graph.");
+                return;
+            }
+
+            try
+            {
+                _pointerResolver.CreatePointers();
+
+                var defaultGraphIndex = interactivityGraph.extensionData.defaultGraphIndex;
+                // Can be used to inject a graph created from code in a hacky way for testing.
+                //interactivityGraph.extensionData.graphs[defaultGraphIndex] = TestGraph.CreateTestGraph();
+                var defaultGraph = interactivityGraph.extensionData.graphs[defaultGraphIndex];
+                var eng = new BehaviourEngine(defaultGraph, _pointerResolver);
+
+                AnimationWrapper animationWrapper = null;
+                var animationComponents = sceneObject.GetComponents<Animation>();
+                if (animationComponents != null && animationComponents.Length > 0)
+                {
+                    animationWrapper = sceneObject.AddComponent<AnimationWrapper>();
+                    eng.SetAnimationWrapper(animationWrapper, animationComponents[0]);
+                }
+
+                var eventWrapper = sceneObject.AddComponent<EventWrapper>();
+
+                eventWrapper.SetData(eng, interactivityGraph.extensionData);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return;
+            }
         }
     }
 

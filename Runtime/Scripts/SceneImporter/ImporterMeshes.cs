@@ -124,7 +124,12 @@ namespace UnityGLTF
 			
 			if (unityData.Vertices != null)
 				Statistics.VertexCount += unityData.Vertices.Length;
-			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
+			var unityMesh = await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
+
+			foreach (var plugin in Context.Plugins)
+			{
+				plugin.OnAfterImportMesh(mesh, meshIndex, unityMesh);
+			}
 		}
 
 		private async Task CreateMeshMaterials(GLTFMesh mesh)
@@ -670,10 +675,11 @@ namespace UnityGLTF
 		/// <param name="meshIndex"></param>
 		/// <param name="meshName"></param>
 		/// <returns></returns>
-		protected async Task ConstructUnityMesh(UnityMeshData unityMeshData, int meshIndex, string meshName)
+		protected async Task<Mesh> ConstructUnityMesh(UnityMeshData unityMeshData, int meshIndex, string meshName)
 		{
-			if (_assetCache.MeshCache[meshIndex].LoadedMesh != null)
-				return;
+			var cache = _assetCache.MeshCache[meshIndex];
+			if (cache.LoadedMesh != null)
+				return cache.LoadedMesh;
 
 			await YieldOnTimeoutAndThrowOnLowMemory();
 			Mesh mesh = new Mesh
@@ -729,6 +735,8 @@ namespace UnityGLTF
 			
 			// Free up some memory
 			unityMeshData.Clear();
+
+			return mesh;
 		}
 
 		private void AddBlendShapesToMesh(UnityMeshData unityMeshData, int meshIndex, Mesh mesh)
