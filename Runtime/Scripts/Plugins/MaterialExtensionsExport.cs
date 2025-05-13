@@ -97,7 +97,7 @@ namespace UnityGLTF.Plugins
 			var usesSheen = material.IsKeywordEnabled("_SHEEN_ON");
 			var usesAnisotropy = material.IsKeywordEnabled("_ANISOTROPY_ON") || material.GetFloat("_ANISOTROPY") > 0.5f;
 			
-			if (usesAnisotropy && settings.KHR_materials_transmission)
+			if (hasNonDefaultIor && settings.KHR_materials_transmission)
 			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();
@@ -114,7 +114,7 @@ namespace UnityGLTF.Plugins
 					vi.ior = material.GetFloat(ior);
 			}
 			
-			if (hasNonDefaultIor && settings.KHR_materials_anisotropy)
+			if (usesAnisotropy && settings.KHR_materials_anisotropy)
 			{
 				if (materialnode.Extensions == null)
 					materialnode.Extensions = new Dictionary<string, IExtension>();

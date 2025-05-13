@@ -636,7 +636,6 @@ namespace UnityGLTF
 	    {
 		    get => _material.GetFloat("anisotropyStrength");
 		    set => _material.SetFloat("anisotropyStrength", (float) value);
-		    
 	    }
 
 	    public double anisotropyRotation
@@ -660,14 +659,14 @@ namespace UnityGLTF
 
 	    public Vector2 anisotropyTextureOffset
 	    {
-		    get => _material.GetTextureOffset("anisotropyTextureOffset");
-		    set => _material.SetTextureOffset("anisotropyTextureOffset", value);
+		    get => _material.GetTextureOffset("anisotropyTexture");
+		    set => _material.SetTextureOffset("anisotropyTexture", value);
 	    }
 
 	    public Vector2 anisotropyTextureScale
 	    {
-		    get => _material.GetTextureScale("anisotropyTextureScale");
-		    set => _material.SetTextureScale("anisotropyTextureScale", value);
+		    get => _material.GetTextureScale("anisotropyTexture");
+		    set => _material.SetTextureScale("anisotropyTexture", value);
 	    }
 
 	    public int anisotropyTextureTexCoord

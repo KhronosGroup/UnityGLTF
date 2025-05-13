@@ -51,9 +51,9 @@ namespace GLTF.Schema
 			if (extensionToken != null)
 			{
 				var extension = new KHR_materials_anisotropy();
-				extension.anisotropyRotation       = extensionToken.Value[nameof(KHR_materials_anisotropy.anisotropyRotation)]?.Value<float>() ?? 0f;
-				extension.anisotropyStrength  = extensionToken.Value[nameof(KHR_materials_anisotropy.anisotropyStrength)]?.Value<float>() ?? 0f;
-				extension.anisotropyTexture      = extensionToken.Value[nameof(KHR_materials_anisotropy.anisotropyTexture)]?.DeserializeAsTexture(root);
+				extension.anisotropyRotation = extensionToken.Value[nameof(KHR_materials_anisotropy.anisotropyRotation)]?.Value<float>() ?? 0f;
+				extension.anisotropyStrength = extensionToken.Value[nameof(KHR_materials_anisotropy.anisotropyStrength)]?.Value<float>() ?? 0f;
+				extension.anisotropyTexture  = extensionToken.Value[nameof(KHR_materials_anisotropy.anisotropyTexture)]?.DeserializeAsTexture(root);
 				return extension;
 			}
 
