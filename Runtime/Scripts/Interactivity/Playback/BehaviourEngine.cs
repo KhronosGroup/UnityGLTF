@@ -25,10 +25,10 @@ namespace UnityGLTF.Interactivity.Playback
 
         public readonly PointerResolver pointerResolver;
 
-        public BehaviourEngine(Graph graph, GLTFSceneImporter importer)
+        public BehaviourEngine(Graph graph, PointerResolver pointerResolver)
         {
             this.graph = graph;
-            pointerResolver = importer != null ? new PointerResolver(importer) : null;
+            this.pointerResolver = pointerResolver;
 
             for (int i = 0; i < graph.nodes.Count; i++)
             {
@@ -118,7 +118,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             animationWrapper = wrapper;
             wrapper.SetData(this, animation);
-            pointerResolver.RegisterAnimations(wrapper);
+            pointerResolver.CreateAnimationPointers(wrapper);
         }
 
         public void PlayAnimation(in AnimationPlayData data)

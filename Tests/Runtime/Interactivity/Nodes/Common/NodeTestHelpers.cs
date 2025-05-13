@@ -381,8 +381,12 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
         protected static BehaviourEngine CreateBehaviourEngineForGraph(Graph g, Action<int, Dictionary<string, IProperty>> onEventFired, GLTFSceneImporter importer, bool startPlayback)
         {
-            BehaviourEngine eng = new BehaviourEngine(g, importer);
+            // Because we are adding interactivity graphs to non-interactive glbs in the tests for animations/pointers we need to build the pointer resolver manually.
+            var pointerResolver = CreatePointerResolver(importer);
 
+            BehaviourEngine eng = new BehaviourEngine(g, pointerResolver);
+
+            // Animation wrapper/pointers need to be manually built as well, usually happens in the InteractivityImporterContext.
             AddAnimationSupportIfApplicable(eng, importer);
 
             if (onEventFired != null)
@@ -392,6 +396,47 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 eng.StartPlayback();
 
             return eng;
+        }
+
+        private static PointerResolver CreatePointerResolver(GLTFSceneImporter importer)
+        {
+            if (importer == null)
+                return null;
+
+            var pointerResolver = new PointerResolver();
+
+            pointerResolver.CreateScenePointers(importer.Root);
+
+            var meshes = importer.MeshCache;
+            var materials = importer.MaterialCache;
+            var nodes = importer.NodeCache;
+
+            for (int i = 0; i < meshes.Length; i++)
+            {
+                pointerResolver.RegisterMesh(importer.Root.Meshes[i], i, meshes[i].LoadedMesh);
+            }
+
+            for (int i = 0; i < materials.Length; i++)
+            {
+                pointerResolver.RegisterMaterial(importer.Root.Materials[i], i, materials[i].UnityMaterialWithVertexColor);
+            }
+
+            var cameraIndex = 0;
+
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                pointerResolver.RegisterNode(importer.Root.Nodes[i], i, nodes[i]);
+
+                if (nodes[i].TryGetComponent(out Camera camera))
+                {
+                    pointerResolver.RegisterCamera(importer.Root.Cameras[cameraIndex], cameraIndex, camera);
+                    cameraIndex++;
+                }
+            }
+
+            pointerResolver.CreatePointers();
+
+            return pointerResolver;
         }
 
         private static void AddAnimationSupportIfApplicable(BehaviourEngine eng, GLTFSceneImporter importer)

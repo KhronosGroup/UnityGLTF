@@ -11,14 +11,14 @@ namespace UnityGLTF.Interactivity.Playback
         public ReadOnlyPointer<int> nodesLength;
         public ReadOnlyPointer<int> scenesLength;
 
-        public ScenePointers(GLTFSceneImporter importer)
+        public ScenePointers(GLTF.Schema.GLTFRoot root)
         {
-            animationsLength = new ReadOnlyPointer<int>(() => importer.Root.Animations.Count);
-            camerasLength = new ReadOnlyPointer<int>(() => importer.Root.Cameras.Count);
-            materialsLength = new ReadOnlyPointer<int>(() => importer.Root.Materials.Count);
-            meshesLength = new ReadOnlyPointer<int>(() => importer.Root.Meshes.Count);
-            nodesLength = new ReadOnlyPointer<int>(() => importer.Root.Nodes.Count);
-            scenesLength = new ReadOnlyPointer<int>(() => importer.Root.Scenes.Count);
+            animationsLength = new ReadOnlyPointer<int>(() => root.Animations.Count);
+            camerasLength = new ReadOnlyPointer<int>(() => root.Cameras.Count);
+            materialsLength = new ReadOnlyPointer<int>(() => root.Materials.Count);
+            meshesLength = new ReadOnlyPointer<int>(() => root.Meshes.Count);
+            nodesLength = new ReadOnlyPointer<int>(() => root.Nodes.Count);
+            scenesLength = new ReadOnlyPointer<int>(() => root.Scenes.Count);
         }
     }
 }
