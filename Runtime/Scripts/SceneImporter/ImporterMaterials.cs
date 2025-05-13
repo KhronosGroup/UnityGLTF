@@ -967,6 +967,16 @@ namespace UnityGLTF
 					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
 				}
 			}
+			
+			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_anisotropy_Factory.EXTENSION_NAME))
+			{
+				var ansiDef = (KHR_materials_anisotropy)def.Extensions[KHR_materials_anisotropy_Factory.EXTENSION_NAME];
+				if (ansiDef.anisotropyTexture != null)
+				{
+					var textureId = ansiDef.anisotropyTexture.Index;
+					tasks.Add(ConstructImageBuffer(textureId.Value, textureId.Id));
+				}
+			}
 
 			if (def.Extensions != null && def.Extensions.ContainsKey(KHR_materials_clearcoat_Factory.EXTENSION_NAME))
 			{
