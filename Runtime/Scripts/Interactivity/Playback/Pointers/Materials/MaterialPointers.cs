@@ -46,8 +46,9 @@ namespace UnityGLTF.Interactivity.Playback.Materials
 
         public Material material { get; private set; }
 
-        public MaterialPointers(Material mat)
+        public MaterialPointers(in MaterialData data)
         {
+            var mat = data.unityMaterial;
             material = mat;
 
             alphaCutoff = PointerHelpers.CreateFloatPointer(mat, alphaCutoffHash);

@@ -20,8 +20,10 @@ namespace UnityGLTF.Interactivity.Playback
         public Pointer<float>[] weights;
         public GameObject gameObject;
 
-        public NodePointers(GameObject go, GLTF.Schema.Node schema)
+        public NodePointers(in NodeData data)
         {
+            var go = data.unityObject;
+            var schema = data.node;
             gameObject = go;
 
             // Unity coordinate system differs from the GLTF one.

@@ -7,7 +7,8 @@
         "Unity.Mathematics",
         "UnityGLTFScripts",
         "UnityGLTF.Interactivity.Playback",
-        "UnityGLTF.Interactivity.Playback.Common"
+        "UnityGLTF.Interactivity.Playback.Common",
+        "GLTFSerialization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

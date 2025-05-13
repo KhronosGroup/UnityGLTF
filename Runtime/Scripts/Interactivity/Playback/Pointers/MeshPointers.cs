@@ -12,8 +12,9 @@ namespace UnityGLTF.Interactivity.Playback
         public ReadOnlyPointer<int> weightsLength;
         public Pointer<float>[] weights;
 
-        public MeshPointers(GLTFMesh mesh)
+        public MeshPointers(in MeshData data)
         {
+            var mesh = data.mesh;
             if(mesh.Weights == null || mesh.Weights.Count == 0)
             {
                 weightsLength = new ReadOnlyPointer<int>(() => 0);
