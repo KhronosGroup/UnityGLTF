@@ -40,6 +40,12 @@ namespace UnityGLTF
                 unityCamera.enabled = false;
 			
             nodeObj.transform.localRotation *= SchemaExtensions.InvertDirection;
+
+            foreach (var plugin in Context.Plugins)
+            {
+                plugin.OnAfterImportCamera(camera, node.Camera.Id, unityCamera);
+            }
+
             return true;
         }
     }

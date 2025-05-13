@@ -519,7 +519,12 @@ namespace UnityGLTF
 			
 			if (this.progress != null)
 				await Task.Yield();
-			
+
+			foreach (var plugin in Context.Plugins)
+			{
+				plugin.OnLoadComplete(LastLoadedScene);
+			}
+
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
