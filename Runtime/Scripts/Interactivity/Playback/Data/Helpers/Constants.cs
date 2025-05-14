@@ -38,7 +38,7 @@ namespace UnityGLTF.Interactivity.Playback
         public const string TIME_SINCE_LAST_TICK = "timeSinceLastTick";
         public const string EXPECTED = "expected";
         public const string ACTUAL = "actual";
-
+        public const string SEVERITY = "severity";
         public const string MESSAGE = "message";
         public const string NODE_INDEX = "nodeIndex";
         public const string DEFAULT = "default";
