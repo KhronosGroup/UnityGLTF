@@ -77,11 +77,6 @@ namespace UnityGLTF.Interactivity.Playback
         public override void OnAfterImportScene(GLTFScene scene, int sceneIndex, GameObject sceneObject)
         {
             Util.Log($"InteractivityImportContext::OnAfterImportScene Complete: {scene.Extensions}");
-        }
-
-        public override void OnLoadComplete(GameObject sceneObject)
-        {
-            Util.Log($"InteractivityImportContext::OnAfterImport Complete");
 
             var extensions = _context.SceneImporter.Root?.Extensions;
 
@@ -132,5 +127,4 @@ namespace UnityGLTF.Interactivity.Playback
             }
         }
     }
-
 }
