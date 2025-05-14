@@ -74,9 +74,5 @@ namespace UnityGLTF.Plugins
 		{
 
 		}
-
-		public virtual void OnLoadComplete(GameObject sceneObject)
-        {
-        }
     }
 }
