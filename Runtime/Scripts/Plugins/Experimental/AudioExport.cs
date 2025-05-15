@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using GLTF.Schema;
-using UnityEditor;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
 
 namespace UnityGLTF.Plugins
 {
@@ -11,7 +13,7 @@ namespace UnityGLTF.Plugins
     public class AudioExport: GLTFExportPlugin
     {
         public override bool EnabledByDefault => false;
-        public override string DisplayName => "KHR_audio_emitter";
+        public override string DisplayName => "KHR_audio_emitter (Editor Only)";
         public override string Description => "Exports positional and global audio sources";
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
@@ -218,5 +220,5 @@ namespace UnityGLTF.Plugins
             gltfRoot.Scenes[0].AddExtension(KHR_SceneAudioEmittersRef.ExtensionName, _sceneExtension);
         }
     }
-
 }
+#endif
