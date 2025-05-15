@@ -15,6 +15,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
     /// See https://github.com/KhronosGroup/UnityGLTF?tab=readme-ov-file#extensibility
     /// for the external documentation on how to extend UnityGLTF.
     /// </summary>
+    [NonRatifiedPlugin]
     public class VisualScriptingExportPlugin: GLTFExportPlugin
     {
         public override JToken AssetExtras 

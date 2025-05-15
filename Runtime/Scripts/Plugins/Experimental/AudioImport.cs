@@ -12,17 +12,17 @@ using UnityEditor;
 
 namespace UnityGLTF.Plugins
 {
+    [NonRatifiedPlugin]
     public class AudioImport : GLTFImportPlugin
     {
         public override bool EnabledByDefault => false;
-        public override string DisplayName => "KHR_audio";
+        public override string DisplayName => "KHR_audio_emitter";
         public override string Description => "Import positional and global audio sources (Wav, Mp3, Ogg)";
         
         public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
         {
             return new AudioImportContext(context);
         }
-
     }
     
 #if UNITY_EDITOR

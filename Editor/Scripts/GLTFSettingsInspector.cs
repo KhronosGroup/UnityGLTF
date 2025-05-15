@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -17,6 +18,7 @@ namespace UnityGLTF
 #if SHOW_SETTINGS_EDITOR
 	internal class GltfSettingsProvider : SettingsProvider
 	{
+		private const string DEFAULT_NON_RATIFIED_TOOLTIP = "This extension specification is not yet ratified. It may change in the future.";
 		internal static Action<GLTFSettings> OnAfterGUI;
 		private static GLTFSettings settings;
 		private SerializedProperty showDefaultReferenceNameWarning, showNamingRecommendationHint;
@@ -210,9 +212,29 @@ namespace UnityGLTF
 						EditorUtility.SetDirty(plugin);
 
 					var label = new GUIContent(displayName, plugin.Description);
+
+					
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 					var expanded2 = EditorGUILayout.Foldout(expanded, label);
 					var lastFoldoutRect = GUILayoutUtility.GetLastRect();
+
+					var expAttribute = plugin.GetType().GetCustomAttribute(typeof(NonRatifiedPluginAttribute), true);
+					if (expAttribute != null)
+					{
+				
+						var exp = expAttribute as NonRatifiedPluginAttribute;
+						var toolTip = exp.toolTip == null ? DEFAULT_NON_RATIFIED_TOOLTIP : exp.toolTip;
+						var explabel = new GUIContent("non-ratified" , toolTip);
+						var expLabelRect = lastFoldoutRect;
+						expLabelRect.x += 20 + GUI.skin.label.CalcSize(label).x;
+						expLabelRect.width = EditorStyles.miniButton.CalcSize(explabel).x+20;
+						GUI.backgroundColor = new Color(1f*4,0.5f*4,0f,1f);
+						GUI.contentColor = Color.black;
+						EditorGUI.LabelField(expLabelRect, explabel, EditorStyles.miniButton);
+						GUI.backgroundColor = Color.white;
+						GUI.contentColor = Color.white;
+					}
+					
 					// check for right click so we can show a context menu
 					EditorGUI.EndDisabledGroup();
 					if (Event.current.type == EventType.MouseDown && lastFoldoutRect.Contains(Event.current.mousePosition))

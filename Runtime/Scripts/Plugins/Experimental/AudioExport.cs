@@ -7,10 +7,11 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
+    [NonRatifiedPlugin]
     public class AudioExport: GLTFExportPlugin
     {
         public override bool EnabledByDefault => false;
-        public override string DisplayName => "KHR_audio";
+        public override string DisplayName => "KHR_audio_emitter";
         public override string Description => "Exports positional and global audio sources";
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
