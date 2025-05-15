@@ -16,67 +16,30 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public static void AddLog(UnitExporter unitExporter, LogLevel level, ValueInput messageInput, ControlInput enter, ControlOutput exit)
         {
-            var addGltfLog = unitExporter.vsExportContext.plugin.debugLogSetting.GltfLog;
-            var addBabylon = unitExporter.vsExportContext.plugin.debugLogSetting.BabylonLog;
-            var addADBE = unitExporter.vsExportContext.plugin.debugLogSetting.ADBEConsole;
-
-            if (!addBabylon && !addADBE && !addGltfLog)
+            string messagePrefix = "";
+            switch (level)
             {
-                UnitExportLogging.AddWarningLog(unitExporter.unit, "No debug log output selected for Debug.Log unit. Skipping export. See Project Settings > UnityGltf");
-                return;
+                case LogLevel.Warning:
+                    messagePrefix = "Warning: ";
+                    break;
+                case LogLevel.Error:
+                    messagePrefix = "Error: ";
+                    break;
             }
-            
-            var sequence_node = unitExporter.CreateNode<Flow_SequenceNode>();
-           
-            if (addGltfLog)
-            {
-                string messagePrefix = "";
-                switch (level)
-                {
-                    case LogLevel.Warning:
-                        messagePrefix = "Warning: ";
-                        break;
-                    case LogLevel.Error:
-                        messagePrefix = "Error: ";
-                        break;
-                }
-        
-                var gltf_Node = unitExporter.CreateNode<Debug_LogNode>();
-                if (unitExporter.IsInputLiteralOrDefaultValue(messageInput, out var message))
-                {
-                    gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + message;
-                }
-                else
-                {
-                    gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + "{0}";
-                    gltf_Node.ValueIn("0").MapToInputPort(messageInput);
-                }
-                
-                sequence_node.FlowOut("0").ConnectToFlowDestination(gltf_Node.FlowIn(Debug_LogNode.IdFlowIn));
-            }
-            
-            if (addADBE)
-            {
-                var adbe_node = unitExporter.CreateNode<ADBE_OutputConsoleNode>();
-
-                adbe_node.ValueIn(ADBE_OutputConsoleNode.IdMessage).MapToInputPort(messageInput);
-                sequence_node.FlowOut("1").ConnectToFlowDestination(adbe_node.FlowIn(ADBE_OutputConsoleNode.IdFlowIn));
-
-                unitExporter.vsExportContext.exporter.DeclareExtensionUsage(ADBE_OutputConsoleNode.EXTENSION_ID, false);
-            }
-
-            if (addBabylon)
-            {
-                var babylon_node = unitExporter.CreateNode<Babylon_LogNode>();
-             
-                babylon_node.ValueIn(Babylon_LogNode.IdMessage).MapToInputPort(messageInput);
-                sequence_node.FlowOut("2").ConnectToFlowDestination(babylon_node.FlowIn(Babylon_LogNode.IdFlowIn));
     
-                unitExporter.vsExportContext.exporter.DeclareExtensionUsage(Babylon_LogNode.EXTENSION_ID, false);
+            var gltf_Node = unitExporter.CreateNode<Debug_LogNode>();
+            if (unitExporter.IsInputLiteralOrDefaultValue(messageInput, out var message))
+            {
+                gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + message;
+            }
+            else
+            {
+                gltf_Node.Configuration[Debug_LogNode.IdConfigMessage].Value = messagePrefix + "{0}";
+                gltf_Node.ValueIn("0").MapToInputPort(messageInput);
             }
             
-            sequence_node.FlowOut("9").MapToControlOutput(exit);
-            sequence_node.FlowIn(Flow_SequenceNode.IdFlowIn).MapToControlInput(enter);
+            gltf_Node.FlowIn().MapToControlInput(enter);
+            gltf_Node.FlowOut().MapToControlOutput(exit);
         }
     }
 }

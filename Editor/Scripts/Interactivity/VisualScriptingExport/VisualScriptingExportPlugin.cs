@@ -17,15 +17,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
     /// </summary>
     public class VisualScriptingExportPlugin: GLTFExportPlugin
     {
-        [Serializable]
-        public class DebugLogSetting
-        {
-            [Header("Which Gltf Interactivity Log should be used")]
-            public bool GltfLog = true;
-            public bool ADBEConsole = true;
-            public bool BabylonLog = false;
-        }
-
         public override JToken AssetExtras 
         { 
             get => new JObject(
@@ -39,8 +30,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public override string DisplayName => GltfInteractivityExtension.ExtensionName + " (VisualScripting)";
         public override string Description => "Exports flow graph data for Visual Scripting ScriptMachines.";
         
-        public DebugLogSetting debugLogSetting = new DebugLogSetting();
-
         [Header("This settings should only be disabled for debugging purposes.")]
         public bool cleanUpAndOptimizeExportedGraph = true;
         
