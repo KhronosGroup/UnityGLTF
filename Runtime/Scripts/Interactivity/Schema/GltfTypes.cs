@@ -22,7 +22,7 @@ namespace UnityGLTF.Interactivity
         public const string Float3x3 = "float3x3";
         public const string Float4x4 = "float4x4";
         public const string IntArray = "int[]";
-        public const string String = "string";
+       // public const string String = "string";
         
         // List of mappings of the data types that can be used in the GLTF serialization.
         // TODO: change to Dict!
@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity
             new TypeMapping(Float4, new [] {typeof(Color), typeof(Color32), typeof(Vector4), typeof(Quaternion)}),
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
         //    new TypeMapping(String, new [] {typeof(string)}),
-            new TypeMapping("custom", new [] {typeof(string)}, "AMZN_interactivity_string"),
+        //    new TypeMapping("custom", new [] {typeof(string)}, "AMZN_interactivity_string"),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
         };
 
