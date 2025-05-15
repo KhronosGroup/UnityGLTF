@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 namespace UnityGLTF.Plugins
 {
+    [ExperimentalPlugin]
     public class CanvasExport : GLTFExportPlugin
     {
         public override string DisplayName => "Bake to Mesh: Canvas";

@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
+    [ExperimentalPlugin]
     public class MaterialVariantsPlugin: GLTFExportPlugin
     {
         public override string DisplayName => "KHR_materials_variants";

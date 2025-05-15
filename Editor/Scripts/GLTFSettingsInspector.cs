@@ -163,6 +163,8 @@ namespace UnityGLTF
 
 		private static Dictionary<Type, Editor> editorCache = new Dictionary<Type, Editor>();
 
+		private static GUIStyle _badgeStyle = null;
+		
 		internal static void OnPluginsGUI(IEnumerable<GLTFPlugin> plugins, bool allowDisabling = true)
 		{
 			var lastAssembly = "";
@@ -212,27 +214,21 @@ namespace UnityGLTF
 						EditorUtility.SetDirty(plugin);
 
 					var label = new GUIContent(displayName, plugin.Description);
-
 					
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
 					var expanded2 = EditorGUILayout.Foldout(expanded, label);
 					var lastFoldoutRect = GUILayoutUtility.GetLastRect();
 
-					var expAttribute = plugin.GetType().GetCustomAttribute(typeof(NonRatifiedPluginAttribute), true);
+					float batchOffsetX = EditorStyles.label.CalcSize(label).x + 20f;
+					var nonRatAttribute = plugin.GetType().GetCustomAttribute(typeof(NonRatifiedPluginAttribute), true);
+					if (nonRatAttribute != null)
+					{
+						batchOffsetX = DrawNonRatifiedBadge(nonRatAttribute, batchOffsetX);
+					}
+					var expAttribute = plugin.GetType().GetCustomAttribute(typeof(ExperimentalPluginAttribute), true);
 					if (expAttribute != null)
 					{
-				
-						var exp = expAttribute as NonRatifiedPluginAttribute;
-						var toolTip = exp.toolTip == null ? DEFAULT_NON_RATIFIED_TOOLTIP : exp.toolTip;
-						var explabel = new GUIContent("non-ratified" , toolTip);
-						var expLabelRect = lastFoldoutRect;
-						expLabelRect.x += 20 + GUI.skin.label.CalcSize(label).x;
-						expLabelRect.width = EditorStyles.miniButton.CalcSize(explabel).x+20;
-						GUI.backgroundColor = new Color(1f*4,0.5f*4,0f,1f);
-						GUI.contentColor = Color.black;
-						EditorGUI.LabelField(expLabelRect, explabel, EditorStyles.miniButton);
-						GUI.backgroundColor = Color.white;
-						GUI.contentColor = Color.white;
+						batchOffsetX = DrawExperimentalBadge(expAttribute, batchOffsetX);
 					}
 					
 					// check for right click so we can show a context menu
@@ -301,6 +297,45 @@ namespace UnityGLTF
 			}
 		}
 
+		private static float DrawBadge(string text, string toolTip, Color color, float offsetX)
+		{
+			if (_badgeStyle == null)
+			{
+				_badgeStyle = new GUIStyle(EditorStyles.objectFieldThumb);
+				_badgeStyle.fontSize = 11;
+				_badgeStyle.contentOffset = new Vector2(0, 0);
+				_badgeStyle.clipping = TextClipping.Overflow;
+				_badgeStyle.fixedHeight = 15f;
+			}
+			
+			var explabel = new GUIContent(text , toolTip);
+			var expLabelRect = GUILayoutUtility.GetLastRect();
+			
+			expLabelRect.x += offsetX;
+			expLabelRect.width = _badgeStyle.CalcSize(explabel).x+15;
+			expLabelRect.y += 2f;
+					
+			GUI.contentColor = color;
+			GUI.backgroundColor = color;
+			EditorGUI.LabelField(expLabelRect, explabel, _badgeStyle);
+			GUI.backgroundColor = Color.white;
+			GUI.contentColor = Color.white;
+			return offsetX + expLabelRect.width - 10f; 
+		}
+		
+		private static float DrawNonRatifiedBadge(Attribute expAttribute, float offsetX)
+		{
+			var exp = expAttribute as NonRatifiedPluginAttribute;
+			var toolTip = exp.toolTip == null ? DEFAULT_NON_RATIFIED_TOOLTIP : exp.toolTip;
+			return DrawBadge("non-ratified", toolTip, new Color(1f*2,0.5f*2,0f,1f), offsetX);
+		}
+		
+		private static float DrawExperimentalBadge(Attribute expAttribute, float offsetX)
+		{
+			var exp = expAttribute as ExperimentalPluginAttribute;
+			var toolTip = exp.toolTip == null ? null : exp.toolTip;
+			return DrawBadge("experimental", toolTip, new Color(1f*2f,0.7f,0f,1f), offsetX);
+		}
 	}
 
 	[CustomEditor(typeof(GLTFSettings))]

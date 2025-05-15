@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
+    [ExperimentalPlugin]
     public class BakeParticleSystem: GLTFExportPlugin
     {
         public override string DisplayName => "Bake to Mesh: Particle Systems";

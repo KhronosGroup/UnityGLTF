@@ -15,4 +15,18 @@ namespace UnityGLTF.Plugins
             this.toolTip = toolTip;
         }
     }
+    
+    /// <summary>
+    /// Marks a plugin as experiental.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class ExperimentalPluginAttribute : Attribute
+    {
+        public string toolTip;
+        
+        public ExperimentalPluginAttribute(string toolTip = null)
+        {
+            this.toolTip = toolTip;
+        }
+    }
 }
