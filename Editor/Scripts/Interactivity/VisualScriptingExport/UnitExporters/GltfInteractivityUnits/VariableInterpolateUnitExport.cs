@@ -1,12 +1,9 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEngine;
-using UnityGLTF.Interactivity.VisualScripting;
-using UnityGLTF.Interactivity.VisualScripting.Export;
 using UnityGLTF.Interactivity.Schema;
 
-namespace Editor.UnitExporters.GltfInteractivityUnits
+namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class VariableInterpolateUnitExport : IUnitExporter
     {

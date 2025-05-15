@@ -1,8 +1,6 @@
-using Editor.UnitExporters;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
