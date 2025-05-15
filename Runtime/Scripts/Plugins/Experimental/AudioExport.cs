@@ -20,12 +20,10 @@ namespace UnityGLTF.Plugins
     
     public class AudioExportContext: GLTFExportPluginContext
     {
-        private ExportContext _context;
         private List<AudioDescription> _audioSourceIds = new();
         private KHR_audio_emitter _audioExtension; 
         private KHR_SceneAudioEmittersRef _sceneExtension = null;
 
-        private bool _saveAudioToFile;
         private Dictionary<AudioSource, AudioEmitterId> _audioSourceToEmitter = new();
         private Dictionary<AudioSource, Node> _audioSourceToNode = new();
         
@@ -38,8 +36,6 @@ namespace UnityGLTF.Plugins
         
         public AudioExportContext(ExportContext context)
         {
-            _context = context;
-            _saveAudioToFile = false;
         }
 
         private AudioDescription AddAudioSource(AudioSource audioSource, out bool isNew)
@@ -219,7 +215,6 @@ namespace UnityGLTF.Plugins
                 return;
             
             gltfRoot.Scenes[0].AddExtension(KHR_SceneAudioEmittersRef.ExtensionName, _sceneExtension);
-
         }
     }
 
