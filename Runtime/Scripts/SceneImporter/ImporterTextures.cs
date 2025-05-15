@@ -218,7 +218,7 @@ namespace UnityGLTF
 		{
 			bool textureWillBeCompressed = false;
 #if UNITY_EDITOR
-			if (Context.SourceImporter != null)
+			if (Context.SourceImporter == null)
 #endif
 			{
 				if (_options.RuntimeTextureCompression != RuntimeTextureCompression.None)
@@ -274,7 +274,7 @@ namespace UnityGLTF
 				texture.filterMode = FilterMode.Bilinear;
 			}
 #if UNITY_EDITOR
-			if (Context.SourceImporter != null)
+			if (Context.SourceImporter == null)
 #endif
 			{
 				// Only when this import is not an Asset Import
