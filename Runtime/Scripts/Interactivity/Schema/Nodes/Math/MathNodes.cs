@@ -684,7 +684,7 @@ namespace UnityGLTF.Interactivity.Schema
         public override string Op { get; set; } = "math/abs";
     }
 
-    public class Math_LenghNode : GltfInteractivityNodeSchema
+    public class Math_LengthNode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/length";
 
