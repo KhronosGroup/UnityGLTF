@@ -79,7 +79,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         ListHelpersVS.CreateListNodes(unitExporter, objectList);
 
                         foreach (var v in varValue as IEnumerable)
-                            objectList.AddItem(v);
+                        {
+                            object value = v;
+                            if (v is GameObject go)
+                                value = unitExporter.Context.exporter.GetTransformIndex(go.transform);
+                            else if (v is Component component)
+                                value = unitExporter.Context.exporter.GetTransformIndex(component.transform);
+                            else if (v is Material materialValue)
+                                value = unitExporter.Context.exporter.GetMaterialIndex(materialValue);
+
+                            objectList.AddItem(value);
+                        }
                     }
                     
                     // We cancel here, since we don't want to create a gltf variable for the list
