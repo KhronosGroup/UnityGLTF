@@ -35,20 +35,30 @@ namespace UnityGLTF.Interactivity.Export
             node.Configuration["variable"].Value = id;
             return node;
         }
+
+        public static GltfInteractivityExportNode SetVariable(INodeExporter exporter, int id, ValueOutRef valueSource,
+            FlowOutRef fromFlow, FlowInRef targetFlowIn = null)
+        {
+            var node = SetVariable(exporter, id, out var value, out var flowIn, out var flowOut);
+            value.ConnectToSource(valueSource); 
+            fromFlow.ConnectToFlowDestination(flowIn);
+            if (targetFlowIn != null) 
+                flowOut.ConnectToFlowDestination(targetFlowIn);
+            
+            return node;
+        }
         
-        public static GltfInteractivityExportNode SetVariable(INodeExporter exporter, int id, ValueOutRef valueSource, FlowOutRef fromFlow, FlowInRef targetFlowIn = null)
+        public static GltfInteractivityExportNode SetVariable(INodeExporter exporter, int id, out ValueInRef value, out FlowInRef flowIn, out FlowOutRef flowOut)
         {
             var node = exporter.CreateNode<Variable_SetNode>();
             
             var variableType = exporter.Context.variables[id].Type;
-            fromFlow.ConnectToFlowDestination(node.FlowIn(Variable_SetNode.IdFlowIn));
-            
-            if (targetFlowIn != null) 
-                node.FlowOut(Variable_SetNode.IdFlowOut).ConnectToFlowDestination(targetFlowIn);
+            flowIn = node.FlowIn(Variable_SetNode.IdFlowIn);
+            flowOut = node.FlowOut(Variable_SetNode.IdFlowOut);
 
-            node.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueSource)
-                .SetType(TypeRestriction.LimitToType(variableType));
+            value = node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(variableType));
             node.Configuration["variable"].Value = id;
+            
             return node;
         }
         
