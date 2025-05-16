@@ -1002,9 +1002,9 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/pow";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
         public const string IdValueB = "b";
         
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
