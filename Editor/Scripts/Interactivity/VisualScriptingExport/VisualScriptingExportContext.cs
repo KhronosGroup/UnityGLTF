@@ -1,6 +1,7 @@
 //#define INTERACTIVITY_DEBUG_LOGS
 
 using System.Text;
+using UnityEngine.SceneManagement;
 using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
@@ -74,6 +75,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         internal Dictionary<InputPortGraph, InputPortGraph> graphBypasses = new Dictionary<InputPortGraph, InputPortGraph>(new InputportGraphComparer());
         internal List<ExportGraph> addedGraphs = new List<ExportGraph>();
         private List<VariableBasedList> addedVariableBasedLists = new List<VariableBasedList>();
+        private List<Scene> _scenes = new List<Scene>();
         
         internal ExportGraph currentGraphProcessing { get; private set; } = null;
     
@@ -82,6 +84,19 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public VisualScriptingExportContext(VisualScriptingExportPlugin plugin) 
         {
             this.plugin = plugin;
+        }
+        
+        private Scene GetCurrentScene()
+        {
+            return GameObject.GetScene(currentGraphProcessing.gameObject.GetInstanceID());
+        }
+        
+        private int GetSceneIndex(Scene scene)
+        {
+            if (!_scenes.Contains(scene))
+                _scenes.Add(scene);
+            
+            return _scenes.IndexOf(scene);
         }
 
         public VariableBasedListFromUnit GetListByCreator(IUnit listCreatorUnit)
@@ -161,7 +176,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     }
                     break;
                 case VariableKind.Scene:
-                    varDeclarations = Variables.ActiveScene;
+                    varDeclarations = Variables.Scene(GetCurrentScene());
+                    if (varDeclarations == null)
+                        varDeclarations = Variables.ActiveScene;
                     break;
                 case VariableKind.Application:
                     varDeclarations = Variables.Application;
@@ -210,7 +227,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     
                     break;
                 case VariableKind.Scene:
-                    varDeclarations = Variables.ActiveScene;
+                    // Get scene from where the GameObject lives
+                    var scene = GetCurrentScene();
+                    var sceneIndex = GetSceneIndex(scene);
+                    exportVarName = $"scene{sceneIndex}_{varName}";
+                    varDeclarations = Variables.Scene(scene);
                     break;
                 case VariableKind.Application:
                     varDeclarations = Variables.Application;
