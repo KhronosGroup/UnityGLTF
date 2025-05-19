@@ -970,11 +970,13 @@ namespace UnityGLTF
 			    loader.IsMultithreaded = true;
 
 			    // For backwards compatibility, _addColliders has replaced _generateColliders
+#pragma warning disable CS0618
 			    if (_generateColliders)
 			    {
 				    _addColliders = GLTFSceneImporter.ColliderType.Mesh;
 				    _generateColliders = false;
 			    }
+#pragma warning restore CS0618
 			    
 			    loader.Collider = _addColliders;
 
