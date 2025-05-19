@@ -260,7 +260,7 @@ class Convert_<OldShader>_to_GLTF
 		// Example:
 		// if (material.GetFloat(""_VERTEX_COLORS"") > 0.5f) material.EnableKeyword(""_VERTEX_COLORS_ON"");
 
-		ShaderGraphHelpers.ValidateMaterialKeywords(material);
+		GLTFMaterialHelper.ValidateMaterialKeywords(material);
 		return true;
 	}
 }
