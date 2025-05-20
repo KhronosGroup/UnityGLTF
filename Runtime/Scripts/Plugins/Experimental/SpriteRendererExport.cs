@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -28,17 +29,35 @@ namespace UnityGLTF.Plugins
                 // TODO No support for SpriteAtlas at the moment. This would require
                 // - understanding which sprite is from which atlas
                 // - extracting the sprite from the atlas and processing it further here
-
                 
                 var texture = sprite.texture;
                 
                 var mesh = new Mesh();
 
-                // access internal method "GetCurrentMeshData" from SpriteRenderer by reflection
-                var meshDataMethod = typeof(SpriteRenderer).GetMethod("GetCurrentMeshData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var meshDataArray = (Mesh.MeshDataArray) meshDataMethod.Invoke(renderer, null);
-                Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh, MeshUpdateFlags.Default);
+        
 
+                if (renderer.drawMode != SpriteDrawMode.Simple)
+                {
+                 // access internal method "GetCurrentMeshData" from SpriteRenderer by reflection
+                    var meshDataMethod = typeof(SpriteRenderer).GetMethod("GetCurrentMeshData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (meshDataMethod == null)
+                    {
+                        Debug.LogError("Exporting non-Simple SpriteDrawMode is not supported in this Unity version. Please use Unity 2023.2 or later.");
+                        return;
+                    }
+                    var meshDataArray = (Mesh.MeshDataArray) meshDataMethod.Invoke(renderer, null);
+                    Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh, MeshUpdateFlags.Default);
+                }
+                else
+                {
+                    var verts = sprite.vertices;
+                    var tris = sprite.triangles;
+                    var uvs = sprite.uv;
+                    mesh.vertices = verts.Select(v => new Vector3(v.x, v.y, 0)).ToArray();
+                    mesh.triangles = tris.Select(t => (int) t).ToArray();
+                    mesh.uv = uvs;
+                }
+                
                 var unlitMat = new Material(Shader.Find("UnityGLTF/UnlitGraph"));
                 unlitMat.hideFlags = HideFlags.DontSave;
                 unlitMat.SetTexture("baseColorTexture", texture);
