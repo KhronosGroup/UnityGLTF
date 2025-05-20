@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
+	[NonRatifiedPlugin]
 	public class LodsExport : GLTFExportPlugin
 	{
 		public override string DisplayName => "MSFT_lod";

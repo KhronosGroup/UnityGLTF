@@ -6,7 +6,6 @@ using UnityGLTF.Extensions;
 
 namespace UnityGLTF.Plugins
 {
-	[ExperimentalPlugin]
 	public class TextMeshGameObjectExport : GLTFExportPlugin
 	{
 		public override string DisplayName => "Bake to Mesh: TextMeshPro GameObjects";

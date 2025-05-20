@@ -18,7 +18,8 @@ namespace UnityGLTF
 #if SHOW_SETTINGS_EDITOR
 	internal class GltfSettingsProvider : SettingsProvider
 	{
-		private const string DefaultNonRatifiedTooltip = "This extension specification is not yet ratified. It may change in the future.";
+		private const string DefaultNonRatifiedTooltip = "This glTF extension is not yet ratified by the Khronos Group, and thus not an official part of glTF. This may change in the future.";
+		private const string DefaultExperimentalTooltip = "This plugin is experimental and may change in the future.";
 		private static readonly Color ExperimentalBadgeColor = new Color(1f, 0.7f, 0f, 1f);
 		private static readonly Color NonRatifiedBadgeColor = new Color(1f,1f,0f,1f);
 		
@@ -351,17 +352,16 @@ namespace UnityGLTF
 		{
 			var exp = expAttribute as NonRatifiedPluginAttribute;
 			if (exp == null) return offsetX;
-			var toolTip = exp.tooltip ?? DefaultNonRatifiedTooltip;
-			return DrawBadge("non-ratified", toolTip, NonRatifiedBadgeColor, offsetX);
+			var tooltip = exp.tooltip != null ? exp.tooltip + "\n" + DefaultNonRatifiedTooltip : DefaultNonRatifiedTooltip;
+			return DrawBadge("non-ratified", tooltip, NonRatifiedBadgeColor, offsetX);
 		}
 		
 		private static float DrawExperimentalBadge(Attribute expAttribute, float offsetX)
 		{
 			var exp = expAttribute as ExperimentalPluginAttribute;
 			if (exp == null) return offsetX;
-			var toolTip = exp.tooltip;
-			
-			return DrawBadge("experimental", toolTip, ExperimentalBadgeColor, offsetX);
+			var tooltip = exp.tooltip != null ? exp.tooltip + "\n" + DefaultExperimentalTooltip : DefaultExperimentalTooltip;
+			return DrawBadge("experimental", tooltip, ExperimentalBadgeColor, offsetX);
 		}
 	}
 

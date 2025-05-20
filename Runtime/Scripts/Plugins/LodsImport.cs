@@ -1,5 +1,6 @@
 namespace UnityGLTF.Plugins
 {
+    [NonRatifiedPlugin]
     public class LodsImport: GLTFImportPlugin
     {
         public override string DisplayName => "MSFT_lod";

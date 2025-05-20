@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace UnityGLTF.Plugins
 {
-    [ExperimentalPlugin]
     class SpriteRendererExport : GLTFExportPlugin
     {
         public override string DisplayName => "Bake to Mesh: Sprites";
@@ -37,15 +36,17 @@ namespace UnityGLTF.Plugins
                 mesh.uv = uvs;
 
                 var unlitMat = new Material(Shader.Find("UnityGLTF/UnlitGraph"));
+                unlitMat.hideFlags = HideFlags.DontSave;
                 unlitMat.SetTexture("baseColorTexture", texture);
                 unlitMat.SetColor("baseColorFactor", renderer.color.linear);
                 UnlitGraphMap map = new UnlitGraphMap(unlitMat);
                 map.AlphaMode = AlphaMode.BLEND;
 
-                var go = new GameObject("mesh");
+                var go = new GameObject("SpriteMesh");
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 go.AddComponent<MeshRenderer>().sharedMaterial = unlitMat;
                 go.transform.SetParent(transform, false);
+                go.hideFlags = HideFlags.DontSave;
 
                 _meshes.Add(go);
             }
@@ -54,8 +55,12 @@ namespace UnityGLTF.Plugins
             {
                 foreach (var mesh in _meshes)
                 {
-                    Destroy(mesh);
+                    if (Application.isPlaying)
+                        Destroy(mesh);
+                    else
+                        DestroyImmediate(mesh);
                 }
+                _meshes.Clear();
             }
         }
     }
