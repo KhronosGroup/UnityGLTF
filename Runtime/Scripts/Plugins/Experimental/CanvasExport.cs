@@ -10,7 +10,7 @@ namespace UnityGLTF.Plugins
     [ExperimentalPlugin]
     public class CanvasExport : GLTFExportPlugin
     {
-        public override string DisplayName => "Bake to Mesh: Canvas";
+        public override string DisplayName => "Bake to Mesh: Canvas UI";
         public override string Description => "Bakes UI Canvas components to meshes and materials. Render order is estimated by slight transform offsets; results might differ in viewers depending on how transparent objects are sorted.";
         public override bool EnabledByDefault => false;
         public override GLTFExportPluginContext CreateInstance(ExportContext context)

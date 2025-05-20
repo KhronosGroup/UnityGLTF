@@ -319,7 +319,7 @@ namespace UnityGLTF
 				_badgeStyle.contentOffset = new Vector2(0, 0);
 				_badgeStyle.clipping = TextClipping.Overflow;
 				_badgeStyle.fixedHeight = 15f;
-				_badgeStyle.border = new RectOffset(1, 1, 1, 1);
+				_badgeStyle.padding = new RectOffset(4, 4, 4, 4);
 			}
 			
 			var label = new GUIContent(text, tooltip);
