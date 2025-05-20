@@ -167,9 +167,7 @@ namespace UnityGLTF
 		public class PluginInfo
 		{
 			public string typeName;
-			public bool overrideEnabled;
 			public bool enabled;
-			public string jsonSettings;
 		}
 
         [Serializable]
@@ -259,40 +257,33 @@ namespace UnityGLTF
 	        }
 	        return dependencies.Distinct().ToArray();
         }
-
+        
         public override void OnImportAsset(AssetImportContext ctx)
         {
+	        // make a copy, and apply import override settings
 	        var settings = Instantiate(GLTFSettings.GetOrCreateSettings());
 
-	        if (_importPlugins.Count == 0)
+	        bool firstImport = _importPlugins.Count == 0;
+	        
+	        var missingPlugins = settings.ImportPlugins.Where( ip => !_importPlugins.Exists( i => i.typeName == ip.GetType().FullName));
+	        foreach (var missingPlugin in missingPlugins)
 	        {
-		        var missingPlugins = settings.ImportPlugins.Where( ip => !_importPlugins.Exists( i => i.typeName == ip.GetType().FullName));
-		        foreach (var missingPlugin in missingPlugins)
+		        var newPlugin = new PluginInfo
 		        {
-			        var newPlugin = new PluginInfo
-			        {
-				        typeName = missingPlugin.GetType().FullName,
-				        overrideEnabled = true,
-				        enabled = missingPlugin.Enabled,
-				        jsonSettings = JsonUtility.ToJson(missingPlugin)
-			        };
-			        _importPlugins.Add(newPlugin);
-		        }
+			        typeName = missingPlugin.GetType().FullName,
+			        enabled = missingPlugin.Enabled && firstImport,
+		        };
+		        _importPlugins.Add(newPlugin);
 	        }
 			
-	        // make a copy, and apply import override settings
 	        foreach (var importPlugin in _importPlugins)
 	        {
 		        var existing = settings.ImportPlugins.Find(x => x.GetType().FullName == importPlugin.typeName);
 		        
-		        if (importPlugin == null || !importPlugin.overrideEnabled) continue;
-		        
-		        if (existing)
-		        {
-			        existing.Enabled = importPlugin.enabled;
-			        JsonUtility.FromJsonOverwrite(importPlugin.jsonSettings, existing);
-		        }
+		        if (importPlugin == null) continue;
+		        existing.Enabled = importPlugin.enabled;
 	        }
+	        
 	        var context = new GLTFImportContext(ctx, settings) { ImportScaleFactor = _scaleFactor };
 
             GameObject gltfScene = null;
