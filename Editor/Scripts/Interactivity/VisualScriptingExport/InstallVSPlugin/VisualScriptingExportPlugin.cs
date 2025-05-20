@@ -1,9 +1,5 @@
 #if !HAVE_VISUAL_SCRIPTING
 
-using System;
-using UnityEngine;
-using UnityGLTF.Interactivity.Schema;
-
 namespace UnityGLTF.Interactivity.VisualScripting
 {
     using UnityGLTF;
@@ -24,7 +20,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         public override bool Enabled => false;
         
-        public override string DisplayName => GltfInteractivityExtension.ExtensionName + " (VisualScripting)";
+        public override string DisplayName => "KHR_Interactivity (VisualScripting)";
         public override string Description => "Exports flow graph data for Visual Scripting ScriptMachines.";
 
         public override string Warning => "Add the package \"com.unity.visualscripting\" to your project.";
