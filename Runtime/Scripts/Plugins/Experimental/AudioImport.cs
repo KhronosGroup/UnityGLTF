@@ -5,7 +5,6 @@ using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityGLTF.Plugins.Audio;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
