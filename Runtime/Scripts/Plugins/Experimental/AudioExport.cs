@@ -13,8 +13,8 @@ namespace UnityGLTF.Plugins
     public class AudioExport: GLTFExportPlugin
     {
         public override bool EnabledByDefault => false;
-        public override string DisplayName => "KHR_audio_emitter (Editor Only)";
-        public override string Description => "Exports positional and global audio sources";
+        public override string DisplayName => "KHR_audio_emitter";
+        public override string Description => "Exports positional and global audio sources. Only exporting from the editor is supported at this time.";
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
             return new AudioExportContext(context);

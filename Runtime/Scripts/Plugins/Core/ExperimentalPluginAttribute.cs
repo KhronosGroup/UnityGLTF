@@ -8,11 +8,11 @@ namespace UnityGLTF.Plugins
     [AttributeUsage(AttributeTargets.Class)]
     public class NonRatifiedPluginAttribute : Attribute
     {
-        public string toolTip;
+        public string tooltip;
         
-        public NonRatifiedPluginAttribute(string toolTip = null)
+        public NonRatifiedPluginAttribute(string tooltip = null)
         {
-            this.toolTip = toolTip;
+            this.tooltip = tooltip;
         }
     }
     
@@ -22,11 +22,11 @@ namespace UnityGLTF.Plugins
     [AttributeUsage(AttributeTargets.Class)]
     public class ExperimentalPluginAttribute : Attribute
     {
-        public string toolTip;
+        public string tooltip;
         
-        public ExperimentalPluginAttribute(string toolTip = null)
+        public ExperimentalPluginAttribute(string tooltip = null)
         {
-            this.toolTip = toolTip;
+            this.tooltip = tooltip;
         }
     }
 }

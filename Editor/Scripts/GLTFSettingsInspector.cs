@@ -18,7 +18,10 @@ namespace UnityGLTF
 #if SHOW_SETTINGS_EDITOR
 	internal class GltfSettingsProvider : SettingsProvider
 	{
-		private const string DEFAULT_NON_RATIFIED_TOOLTIP = "This extension specification is not yet ratified. It may change in the future.";
+		private const string DefaultNonRatifiedTooltip = "This extension specification is not yet ratified. It may change in the future.";
+		private static readonly Color ExperimentalBadgeColor = new Color(1f, 0.7f, 0f, 1f);
+		private static readonly Color NonRatifiedBadgeColor = new Color(1f,1f,0f,1f);
+		
 		internal static Action<GLTFSettings> OnAfterGUI;
 		private static GLTFSettings settings;
 		private SerializedProperty showDefaultReferenceNameWarning, showNamingRecommendationHint;
@@ -297,7 +300,7 @@ namespace UnityGLTF
 			}
 		}
 
-		private static float DrawBadge(string text, string toolTip, Color color, float offsetX)
+		private static float DrawBadge(string text, string tooltip, Color color, float offsetX)
 		{
 			if (_badgeStyle == null)
 			{
@@ -306,35 +309,39 @@ namespace UnityGLTF
 				_badgeStyle.contentOffset = new Vector2(0, 0);
 				_badgeStyle.clipping = TextClipping.Overflow;
 				_badgeStyle.fixedHeight = 15f;
+				_badgeStyle.border = new RectOffset(1, 1, 1, 1);
 			}
 			
-			var explabel = new GUIContent(text , toolTip);
-			var expLabelRect = GUILayoutUtility.GetLastRect();
+			var label = new GUIContent(text, tooltip);
+			var rect = GUILayoutUtility.GetLastRect();
 			
-			expLabelRect.x += offsetX;
-			expLabelRect.width = _badgeStyle.CalcSize(explabel).x+15;
-			expLabelRect.y += 2f;
+			rect.x += offsetX;
+			rect.width = _badgeStyle.CalcSize(label).x + 15;
+			rect.y += 2f;
 					
 			GUI.contentColor = color;
 			GUI.backgroundColor = color;
-			EditorGUI.LabelField(expLabelRect, explabel, _badgeStyle);
+			EditorGUI.LabelField(rect, label, _badgeStyle);
 			GUI.backgroundColor = Color.white;
 			GUI.contentColor = Color.white;
-			return offsetX + expLabelRect.width - 10f; 
+			return offsetX + rect.width - 10f; 
 		}
 		
 		private static float DrawNonRatifiedBadge(Attribute expAttribute, float offsetX)
 		{
 			var exp = expAttribute as NonRatifiedPluginAttribute;
-			var toolTip = exp.toolTip == null ? DEFAULT_NON_RATIFIED_TOOLTIP : exp.toolTip;
-			return DrawBadge("non-ratified", toolTip, new Color(1f*2,0.5f*2,0f,1f), offsetX);
+			if (exp == null) return offsetX;
+			var toolTip = exp.tooltip ?? DefaultNonRatifiedTooltip;
+			return DrawBadge("non-ratified", toolTip, NonRatifiedBadgeColor, offsetX);
 		}
 		
 		private static float DrawExperimentalBadge(Attribute expAttribute, float offsetX)
 		{
 			var exp = expAttribute as ExperimentalPluginAttribute;
-			var toolTip = exp.toolTip == null ? null : exp.toolTip;
-			return DrawBadge("experimental", toolTip, new Color(1f*2f,0.7f,0f,1f), offsetX);
+			if (exp == null) return offsetX;
+			var toolTip = exp.tooltip;
+			
+			return DrawBadge("experimental", toolTip, ExperimentalBadgeColor, offsetX);
 		}
 	}
 
