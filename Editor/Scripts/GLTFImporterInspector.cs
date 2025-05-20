@@ -471,46 +471,24 @@ namespace UnityGLTF
 				var hasWarning = plugin.Warning != null;
 				EditorGUI.BeginDisabledGroup(hasWarning);
 				var overridePlugin = overridePlugins.FirstOrDefault(x => x.typeName == pluginType);
-				var hasOverride = overridePlugin?.overrideEnabled ?? false;
-				var hasOverride2 = EditorGUILayout.ToggleLeft("", hasOverride, GUILayout.Width(16));
-				if (hasOverride2 != hasOverride)
+				if (overridePlugin == null)
 				{
-					hasOverride = hasOverride2;
-					// add or remove a ScriptableObject with the plugin
-					if (!hasOverride)
+					overridePlugin = new GLTFImporter.PluginInfo
 					{
-						if (overridePlugin != null) overridePlugin.overrideEnabled = false;
-					}
-					else
-					{
-						if (overridePlugin != null)
-						{
-							overridePlugin.overrideEnabled = true;
-						}
-						else
-						{
-							var newPlugin = new GLTFImporter.PluginInfo()
-							{
-								typeName = plugin.GetType().FullName,
-								enabled = plugin.Enabled,
-								overrideEnabled = true,
-							};
-							overridePlugin = newPlugin;
-							t._importPlugins.Add(newPlugin);
-						}
-					}
+						enabled = false,
+						typeName = pluginType,
+					};
+					t._importPlugins.Add(overridePlugin);
 					EditorUtility.SetDirty(t);
 				}
-				EditorGUI.BeginDisabledGroup(!hasOverride);
-				var currentlyEnabled = (overridePlugin != null && overridePlugin.overrideEnabled) ? overridePlugin.enabled : plugin.Enabled;
+		
+				var currentlyEnabled = overridePlugin.enabled;
 				var enabled = EditorGUILayout.ToggleLeft("", currentlyEnabled, GUILayout.Width(16));
 				if (enabled != currentlyEnabled)
 				{
-					currentlyEnabled = enabled;
 					overridePlugin.enabled = enabled;
 					EditorUtility.SetDirty(t);
 				}
-				EditorGUI.EndDisabledGroup();
 				EditorGUI.BeginDisabledGroup(false);
 				EditorGUILayout.LabelField(plugin.DisplayName);
 				EditorGUI.EndDisabledGroup();
