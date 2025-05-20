@@ -1,0 +1,22 @@
+{
+    "name": "UnityGLTF.Interactivity.VisualScriptingInstall",
+    "rootNamespace": "",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.9",
+            "define": "HAVE_VISUAL_SCRIPTING"
+        }
+    ],
+    "noEngineReferences": false
+}
