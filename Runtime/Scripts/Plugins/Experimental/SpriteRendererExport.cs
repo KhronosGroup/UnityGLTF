@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UnityGLTF.Plugins
 {
@@ -21,7 +21,7 @@ namespace UnityGLTF.Plugins
             {
                 var renderer = transform.GetComponent<SpriteRenderer>();
                 if (!renderer) return;
-
+                
                 var sprite = renderer.sprite;
                 if (!sprite) return;
                 
@@ -29,27 +29,15 @@ namespace UnityGLTF.Plugins
                 // - understanding which sprite is from which atlas
                 // - extracting the sprite from the atlas and processing it further here
 
-                // TODO DrawMode = Sliced or Tiled is not supported right now
                 
                 var texture = sprite.texture;
-                var verts = sprite.vertices;
-                var tris = sprite.triangles;
-                var uvs = sprite.uv;
-
-                if (renderer.drawMode == SpriteDrawMode.Sliced)
-                {
-                    (Vector2[] newVerts, ushort[] newTris, Vector2[] newUVs) = Generate9Slice(renderer, sprite);
-
-                    // Override the original arrays with our 9-slice data
-                    verts = newVerts;
-                    tris = newTris;
-                    uvs = newUVs;
-                }
                 
                 var mesh = new Mesh();
-                mesh.vertices = verts.Select(v => new Vector3(v.x, v.y, 0)).ToArray();
-                mesh.triangles = tris.Select(t => (int) t).ToArray();
-                mesh.uv = uvs;
+
+                // access internal method "GetCurrentMeshData" from SpriteRenderer by reflection
+                var meshDataMethod = typeof(SpriteRenderer).GetMethod("GetCurrentMeshData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var meshDataArray = (Mesh.MeshDataArray) meshDataMethod.Invoke(renderer, null);
+                Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh, MeshUpdateFlags.Default);
 
                 var unlitMat = new Material(Shader.Find("UnityGLTF/UnlitGraph"));
                 unlitMat.hideFlags = HideFlags.DontSave;
