@@ -10,7 +10,7 @@ namespace UnityGLTF.Plugins
         }
         
 #if !HAVE_KTX
-        public override bool PackageRequired => true;
+        public override bool PackageMissing => true;
 #endif
     }
     

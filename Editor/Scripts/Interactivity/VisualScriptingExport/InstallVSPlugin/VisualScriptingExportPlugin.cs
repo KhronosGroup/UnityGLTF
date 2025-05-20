@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public override string DisplayName => "KHR_Interactivity (VisualScripting)";
         public override string Description => "Exports flow graph data for Visual Scripting ScriptMachines.";
 
-        public override bool PackageRequired => true;
+        public override bool PackageMissing => true;
 
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
