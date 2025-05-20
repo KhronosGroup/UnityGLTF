@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
             var animationState = AnimatorHelper.GetAnimationState(target, stateName);
-            int animationId = unitExporter.vsExportContext.exporter.GetAnimationId(animationState.motion as AnimationClip, target.transform);
+            int animationId = unitExporter.vsExportContext.exporter.GetAnimationId(animationState.motion as AnimationClip, target.transform, animationState.speed);
 
             if (animationId == -1)
             {
