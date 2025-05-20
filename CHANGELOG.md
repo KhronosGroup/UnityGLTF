@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.16.1] - 2025-05-20
+- add: Visual Scripting variables work across multiple scenes now
+- add: partial `KHR_materials_anisotropy` roundtrip support. There is no visual support for it yet, but data is imported and exported correctly from `PBRGraph`.
+- add: experimental `KHR_audio_emitter support`. Please note that this extension is not yet ratified and implementation details may change. The plugin is disabled by default, enable it in `UnityGLTFSettings`.
+- add: Sprite mesh export support through "Bake to Mesh" plugin.
+- add: `KHR_interactivity` plugin now has a button to install the `com.unity.visualscripting` package
+- add: visual badges for non-ratified and experimental extension plugins
+- change: the Export API for `KHR_interactivity` is still undergoing heavy changes while the extension is being finalized.
+- change: removed the `KHR_audio` sample since it's now shipping with this package
+- fix: generated shader converter code doesn't use obsolete API anymore
+- fix: various fixes to visual scripting export support through `KHR_interactivity`
+- fix: fixed incorrect namespace that led to compilation errors in some specific cases
+- fix: wrong asset import check for textures, which led to non-compressed textures at runtime (Fixes #846)
+
 ## [2.16.0-pre.3] - 2025-04-15
 - fix: workaround for URP error in Unity 6+ with new Render Graph API (uncatchable and incorrect exception during on-demand rendering)
 - fix: issue when deduplicating shared meshes with different materials (#836)
