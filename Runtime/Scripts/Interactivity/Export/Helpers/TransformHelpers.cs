@@ -5,6 +5,9 @@ namespace UnityGLTF.Interactivity.Export
 {
     public class TransformHelpers
     {
+        public static string ActiveCameraPositionPointer = "/extensions/KHR_interactivity/activeCamera/position";
+        public static string ActiveCameraRotationPointer = "/extensions/KHR_interactivity/activeCamera/rotation";
+        
         public static void GetLocalScale(INodeExporter exporter, out ValueInRef target,
             out ValueOutRef scaleOutput)
         {
@@ -20,7 +23,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getPosition = exporter.CreateNode<Pointer_GetNode>();
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
-            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
+            PointersHelper.AddPointerConfig(getPosition, ActiveCameraPositionPointer, GltfTypes.Float3);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
             {
@@ -221,7 +224,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getRotation = exporter.CreateNode<Pointer_GetNode>();
             getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
-            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
+            PointersHelper.AddPointerConfig(getRotation, ActiveCameraRotationPointer, GltfTypes.Float4);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
             {
@@ -282,7 +285,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getPosition = exporter.CreateNode<Pointer_GetNode>();
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
-            PointersHelper.AddPointerConfig(getPosition, "/activeCamera/position", GltfTypes.Float3);
+            PointersHelper.AddPointerConfig(getPosition, ActiveCameraPositionPointer, GltfTypes.Float3);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
             {
@@ -338,7 +341,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getRotation = exporter.CreateNode<Pointer_GetNode>();
             getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
-            PointersHelper.AddPointerConfig(getRotation, "/activeCamera/rotation", GltfTypes.Float4);
+            PointersHelper.AddPointerConfig(getRotation, ActiveCameraRotationPointer, GltfTypes.Float4);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
             {
