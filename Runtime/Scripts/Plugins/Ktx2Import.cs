@@ -10,7 +10,7 @@ namespace UnityGLTF.Plugins
         }
         
 #if !HAVE_KTX
-        public override string Warning => "Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project for KTX2 texture support.";
+        public override bool PackageRequired => true;
 #endif
     }
     

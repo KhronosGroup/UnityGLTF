@@ -2,7 +2,8 @@
     "name": "UnityGLTF.Interactivity.VisualScriptingInstall",
     "rootNamespace": "",
     "references": [
-        "GUID:18d18f811ba286c49814567a3cfba688"
+        "GUID:18d18f811ba286c49814567a3cfba688",
+        "GUID:1a0324566af4ed544918d6837a1f4e11"
     ],
     "includePlatforms": [
         "Editor"

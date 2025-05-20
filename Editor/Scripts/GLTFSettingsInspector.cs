@@ -191,6 +191,10 @@ namespace UnityGLTF
 					EditorGUILayout.LabelField(new GUIContent(pluginAssembly), EditorStyles.miniLabel);
 				}
 				
+				editorCache.TryGetValue(plugin.GetType(), out var editor);
+				Editor.CreateCachedEditor(plugin, null, ref editor);
+				editorCache[plugin.GetType()] = editor;
+				
 				EditorGUI.indentLevel++;
 				var displayName = plugin.DisplayName ?? plugin.name;
 				if (string.IsNullOrEmpty(displayName))
@@ -222,16 +226,23 @@ namespace UnityGLTF
 					var expanded2 = EditorGUILayout.Foldout(expanded, label);
 					var lastFoldoutRect = GUILayoutUtility.GetLastRect();
 
-					float batchOffsetX = EditorStyles.label.CalcSize(label).x + 20f;
+					float badgeOffsetX = EditorStyles.label.CalcSize(label).x + 20f;
+					if (!string.IsNullOrEmpty(plugin.Warning))
+						badgeOffsetX += 20f;
+					
 					var nonRatAttribute = plugin.GetType().GetCustomAttribute(typeof(NonRatifiedPluginAttribute), true);
 					if (nonRatAttribute != null)
 					{
-						batchOffsetX = DrawNonRatifiedBadge(nonRatAttribute, batchOffsetX);
+						badgeOffsetX = DrawNonRatifiedBadge(nonRatAttribute, badgeOffsetX);
 					}
 					var expAttribute = plugin.GetType().GetCustomAttribute(typeof(ExperimentalPluginAttribute), true);
 					if (expAttribute != null)
 					{
-						batchOffsetX = DrawExperimentalBadge(expAttribute, batchOffsetX);
+						badgeOffsetX = DrawExperimentalBadge(expAttribute, badgeOffsetX);
+					}
+					if (editor is PackageInstallEditor && plugin.PackageMissing)
+					{
+						badgeOffsetX = DrawWarningBadge("needs package", "Requires a package to be installed. Fold out to install it.", badgeOffsetX);
 					}
 					
 					// check for right click so we can show a context menu
@@ -286,9 +297,7 @@ namespace UnityGLTF
 					if (!string.IsNullOrEmpty(plugin.Warning))
 						EditorGUILayout.HelpBox(plugin.Warning, MessageType.Info);
 					EditorGUI.BeginDisabledGroup(!plugin.Enabled);
-					editorCache.TryGetValue(plugin.GetType(), out var editor);
-					Editor.CreateCachedEditor(plugin, null, ref editor);
-					editorCache[plugin.GetType()] = editor;
+					
 					editor.OnInspectorGUI();
 					EditorGUI.EndDisabledGroup();
 					EditorGUI.indentLevel -= 1;
@@ -325,6 +334,17 @@ namespace UnityGLTF
 			GUI.backgroundColor = Color.white;
 			GUI.contentColor = Color.white;
 			return offsetX + rect.width - 10f; 
+		}
+		
+		
+		private static float DrawWarningBadge(string toolTip, float offsetX)
+		{
+			return DrawBadge("warning", toolTip, new Color(1f*2,1f*2,1f*2f,1f), offsetX);
+		}
+		
+		private static float DrawWarningBadge(string warningText, string toolTip, float offsetX)
+		{
+			return DrawBadge(warningText, toolTip, new Color(1f*2,1f*2,1f*2f,1f), offsetX);
 		}
 		
 		private static float DrawNonRatifiedBadge(Attribute expAttribute, float offsetX)

@@ -52,6 +52,9 @@ namespace UnityGLTF.Plugins
         public virtual bool EnabledByDefault => true;
         public virtual bool AlwaysEnabled => false;
         public virtual string Warning => null;
+        
+        public virtual bool PackageMissing => false;
+        
         [Obsolete("Use a custom Editor for this ScriptableObject instead if you want to override how it looks in the Inspector.")]
         public virtual void OnGUI() { }
     }

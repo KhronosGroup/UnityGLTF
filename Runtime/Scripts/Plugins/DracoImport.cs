@@ -10,7 +10,7 @@ namespace UnityGLTF.Plugins
         }
         
 #if !HAVE_DRACO
-        public override string Warning => "Add the package \"com.unity.cloud.draco\" to your project for Draco mesh compression support.";
+        public override bool PackageMissing => true;
 #endif
     }
 

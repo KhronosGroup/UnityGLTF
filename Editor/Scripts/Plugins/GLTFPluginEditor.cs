@@ -32,7 +32,7 @@ namespace UnityGLTF
             bool wasEnabled = GUI.enabled;
             GUI.enabled = true;
             var t = target as GLTFPlugin;
-            if (!t || string.IsNullOrEmpty(t.Warning))
+            if (!t || !t.PackageMissing)
             {
                 var rect = GUILayoutUtility.GetLastRect();
                 if (Event.current.type == EventType.ContextClick && rect.Contains(Event.current.mousePosition))

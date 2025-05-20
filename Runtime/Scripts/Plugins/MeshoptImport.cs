@@ -10,7 +10,7 @@ namespace UnityGLTF.Plugins
         }
                 
 #if !HAVE_MESHOPT_DECOMPRESS
-        public override string Warning => "Add the package \"com.unity.meshopt.decompress\" to your project for Meshopt compression support.";
+        public override bool PackageRequired => true;
 #endif
     }
     

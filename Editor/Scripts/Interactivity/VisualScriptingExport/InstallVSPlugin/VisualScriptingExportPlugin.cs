@@ -1,3 +1,5 @@
+using UnityEditor;
+
 #if !HAVE_VISUAL_SCRIPTING
 
 namespace UnityGLTF.Interactivity.VisualScripting
@@ -14,7 +16,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
     [NonRatifiedPlugin]
     public class VisualScriptingExportPlugin: GLTFExportPlugin
     {
-        
         // Disabled by default until Gltf Interactivity spec is ratified
         public override bool EnabledByDefault => false;
 
@@ -23,12 +24,19 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public override string DisplayName => "KHR_Interactivity (VisualScripting)";
         public override string Description => "Exports flow graph data for Visual Scripting ScriptMachines.";
 
-        public override string Warning => "Add the package \"com.unity.visualscripting\" to your project.";
+        public override bool PackageRequired => true;
 
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
             return null;
         }
+    }
+    
+        
+    [CustomEditor(typeof(VisualScriptingExportPlugin))]
+    internal class VisualScriptingExportEditor : PackageInstallEditor
+    {
+        protected override string PackageName => "com.unity.visualscripting";
     }
 }
 #endif
