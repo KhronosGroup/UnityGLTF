@@ -427,7 +427,7 @@ namespace UnityGLTF
 
 			// TODO add list of supported extensions and links to docs
 			// Gather list of all plugins
-			var registeredPlugins = GLTFSettings.GetDefaultSettings().ImportPlugins;
+			var registeredPlugins = GLTFSettings.GetOrCreateSettings().ImportPlugins;
 			var overridePlugins = t._importPlugins;
 
 			EditorGUILayout.Space();
@@ -468,7 +468,7 @@ namespace UnityGLTF
 							var newPlugin = new GLTFImporter.PluginInfo()
 							{
 								typeName = plugin.GetType().FullName,
-								enabled = plugin.EnabledByDefault,
+								enabled = plugin.Enabled,
 								overrideEnabled = true,
 							};
 							overridePlugin = newPlugin;
@@ -478,7 +478,7 @@ namespace UnityGLTF
 					EditorUtility.SetDirty(t);
 				}
 				EditorGUI.BeginDisabledGroup(!hasOverride);
-				var currentlyEnabled = (overridePlugin != null && overridePlugin.overrideEnabled) ? overridePlugin.enabled : plugin.EnabledByDefault;
+				var currentlyEnabled = (overridePlugin != null && overridePlugin.overrideEnabled) ? overridePlugin.enabled : plugin.Enabled;
 				var enabled = EditorGUILayout.ToggleLeft("", currentlyEnabled, GUILayout.Width(16));
 				if (enabled != currentlyEnabled)
 				{

@@ -262,13 +262,31 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-	        var settings = GLTFSettings.GetDefaultSettings();
-	        
+	        var settings = Instantiate(GLTFSettings.GetOrCreateSettings());
+
+	        if (_importPlugins.Count == 0)
+	        {
+		        var missingPlugins = settings.ImportPlugins.Where( ip => !_importPlugins.Exists( i => i.typeName == ip.GetType().FullName));
+		        foreach (var missingPlugin in missingPlugins)
+		        {
+			        var newPlugin = new PluginInfo
+			        {
+				        typeName = missingPlugin.GetType().FullName,
+				        overrideEnabled = true,
+				        enabled = missingPlugin.Enabled,
+				        jsonSettings = JsonUtility.ToJson(missingPlugin)
+			        };
+			        _importPlugins.Add(newPlugin);
+		        }
+	        }
+			
 	        // make a copy, and apply import override settings
 	        foreach (var importPlugin in _importPlugins)
 	        {
-		        if (importPlugin == null || !importPlugin.overrideEnabled) continue;
 		        var existing = settings.ImportPlugins.Find(x => x.GetType().FullName == importPlugin.typeName);
+		        
+		        if (importPlugin == null || !importPlugin.overrideEnabled) continue;
+		        
 		        if (existing)
 		        {
 			        existing.Enabled = importPlugin.enabled;
