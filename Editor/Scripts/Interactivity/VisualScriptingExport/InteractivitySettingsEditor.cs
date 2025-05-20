@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityGLTF.Interactivity.VisualScripting
 {
     [CustomEditor(typeof(VisualScriptingExportPlugin))]
-    public class InteractivitySettingsEditor : UnityEditor.Editor
+    public class InteractivitySettingsEditor : GLTFPluginEditor
     {
         public override void OnInspectorGUI()
         {
