@@ -6,8 +6,8 @@ namespace UnityGLTF.Interactivity.Schema
 
         [ConfigDescription]
         public const string IdConfigVariable = "variable";
-        [ConfigDescription]
-        public const string IdUseSlerp = "useSlerp";
+        [ConfigDescription(false)]
+        public const string IdConfigUseSlerp = "useSlerp";
         
         [FlowInSocketDescription]
         public const string IdFlowIn = "in";

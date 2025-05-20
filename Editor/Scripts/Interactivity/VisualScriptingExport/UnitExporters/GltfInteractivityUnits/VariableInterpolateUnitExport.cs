@@ -31,7 +31,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var useSlerp = false;
             var varId = unitExporter.vsExportContext.AddVariableIfNeeded(unit);
             node.Configuration[Variable_InterpolateNode.IdConfigVariable].Value = varId;
-            node.Configuration[Variable_InterpolateNode.IdUseSlerp].Value = useSlerp;
+            node.Configuration[Variable_InterpolateNode.IdConfigUseSlerp].Value = useSlerp;
             node.FlowIn(Variable_InterpolateNode.IdFlowIn).MapToControlInput(unit.assign);
             node.FlowOut(Variable_InterpolateNode.IdFlowOut).MapToControlOutput(unit.assigned);
             
