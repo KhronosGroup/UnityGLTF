@@ -7,8 +7,8 @@ namespace UnityGLTF
 {
     internal static class ChannelExporter
     {
-        [MenuItem("CONTEXT/MeshRenderer/UnityGLTF/Bake in UV space")]
-        private static void ExportChannelsUVSpace(MenuCommand command)
+        [MenuItem("CONTEXT/MeshRenderer/UnityGLTF/Bake in UV0 space")]
+        private static void ExportChannelsUV0Space(MenuCommand command)
         {
             var renderer = command.context as Renderer;
             if (!renderer) return;
@@ -17,6 +17,20 @@ namespace UnityGLTF
             for (var i = 0; i < materials.Length; i++)
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048);
+                SaveMaps(maps, materials[i]);
+            }
+        }
+        
+        [MenuItem("CONTEXT/MeshRenderer/UnityGLTF/Bake in UV1 space")]
+        private static void ExportChannelsUV1Space(MenuCommand command)
+        {
+            var renderer = command.context as Renderer;
+            if (!renderer) return;
+            
+            var materials = renderer.sharedMaterials;
+            for (var i = 0; i < materials.Length; i++)
+            {
+                var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048, 1);
                 SaveMaps(maps, materials[i]);
             }
         }
