@@ -39,32 +39,33 @@ namespace UnityGLTF
             return pbrMaps;
         }
 
-        public static PbrMaps BakePBRMaterial(Renderer renderer, int submesh, int width, int height)
+        public static PbrMaps BakePBRMaterial(Renderer renderer, int submesh, int width, int height, int uvChannel = 0)
         {
             var pbrMaps = new PbrMaps();
             foreach (var shader in PatchedShaders)
             {
-                if (!shader.Value) continue;
-                Object.DestroyImmediate(shader.Value);
+                var pair = shader.Value;
+                if (!pair.shader) continue;
+                Object.DestroyImmediate(pair.shader);
             }
             PatchedShaders.Clear();
 #if HAVE_URP
-            pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height);
-            pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height);
-            pbrMaps.metallic = Bake(renderer, submesh, DebugMaterialMode.Metallic, width, height);
-            pbrMaps.normal = Bake(renderer, submesh, DebugMaterialMode.NormalTangentSpace, width, height);
-            pbrMaps.occlusion = Bake(renderer, submesh, DebugMaterialMode.AmbientOcclusion, width, height);
-            pbrMaps.emission = Bake(renderer, submesh, DebugMaterialMode.Emission, width, height);
-            pbrMaps.smoothness = Bake(renderer, submesh, DebugMaterialMode.Smoothness, width, height);
-            pbrMaps.specular = Bake(renderer, submesh, DebugMaterialMode.Specular, width, height);
+            pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height, uvChannel);
+            pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height, uvChannel);
+            pbrMaps.metallic = Bake(renderer, submesh, DebugMaterialMode.Metallic, width, height, uvChannel);
+            pbrMaps.normal = Bake(renderer, submesh, DebugMaterialMode.NormalTangentSpace, width, height, uvChannel);
+            pbrMaps.occlusion = Bake(renderer, submesh, DebugMaterialMode.AmbientOcclusion, width, height, uvChannel);
+            pbrMaps.emission = Bake(renderer, submesh, DebugMaterialMode.Emission, width, height, uvChannel);
+            pbrMaps.smoothness = Bake(renderer, submesh, DebugMaterialMode.Smoothness, width, height, uvChannel);
+            pbrMaps.specular = Bake(renderer, submesh, DebugMaterialMode.Specular, width, height, uvChannel);
 #endif
             return pbrMaps;
         }
     
-        private static readonly Dictionary<Shader, Shader> PatchedShaders = new Dictionary<Shader, Shader>();
+        private static readonly Dictionary<Shader, (Shader shader, int uvChannel)> PatchedShaders = new Dictionary<Shader, (Shader shader, int uvChannel)>();
         
 #if HAVE_URP
-        public static Texture2D Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height)
+        public static Texture2D Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
         {
             // TODO: submeshes
             var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
@@ -78,13 +79,13 @@ namespace UnityGLTF
             
             if (!PatchedShaders.TryGetValue(material.shader, out var patched))
             {
-                var patchedShader = ShaderModifier.PatchShaderUVsToClipSpace(material.shader);
-                PatchedShaders[material.shader] = patchedShader;
+                var patchedShader = ShaderModifier.PatchShaderUVsToClipSpace(material.shader, uvChannel);
+                PatchedShaders[material.shader] = (patchedShader, uvChannel);
                 material.shader = patchedShader;
             }
             else
             {
-                material.shader = patched;
+                material.shader = patched.shader;
             }
           
             var cmd = new CommandBuffer();
