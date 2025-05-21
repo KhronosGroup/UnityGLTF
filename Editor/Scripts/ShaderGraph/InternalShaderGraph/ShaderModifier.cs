@@ -6,13 +6,16 @@ using UnityEngine;
 
 public static class ShaderModifier 
 {
-    public static Shader PatchShaderUVsToClipSpace(Shader shader)
+    public static Shader PatchShaderUVsToClipSpace(Shader shader, int uvChannel = 0)
     {
         var shaderSource = GetShaderSource(shader);
       
         var lastIndex = 0;
         var index = -1;
         var inserts = 0;
+        
+        var uvChannelName = $"texCoord{uvChannel}";
+        
         while (true)
         {
             lastIndex = index;
@@ -25,19 +28,18 @@ public static class ShaderModifier
 
             if (indexOfReturn != -1)
             {
-                var foundTexCoord = shaderSource.IndexOf("texCoord0", index, StringComparison.Ordinal);
+                var foundTexCoord = shaderSource.IndexOf(uvChannelName, index, StringComparison.Ordinal);
                 if (foundTexCoord != -1 && foundTexCoord < indexOfReturn)
                 {
                     // clip-space conversion
                     /* 
                     shaderSource = shaderSource.Insert(indexOfReturn - 1,
-                        "\nfloat4 p = output.texCoord0;" +
+                        "\nfloat4 p = output." + uvChannelName + ";" +
                         "p.w = 1; p.z = 0.999999; p.xy -= -1; p.z *= -1;" +
                         "output.positionCS = p;");
                     */
                     // world-space conversion
-                    shaderSource = shaderSource.Insert(indexOfReturn - 1,
-                        "\noutput.positionCS = TransformObjectToHClip(output.texCoord0);");
+                    shaderSource = shaderSource.Insert(indexOfReturn - 1, $"\noutput.positionCS = TransformObjectToHClip(output.{uvChannelName});");
                     inserts++;
                 }
             }
@@ -45,7 +47,7 @@ public static class ShaderModifier
             index = indexOfReturn;
         }
         
-        Debug.Log($"<color=#808080ff>Shader {shader.name}: found {inserts} to patch.</color>");
+        Debug.Log($"<color=#808080ff>Shader {shader.name}: found {inserts} to patch for {uvChannelName}.</color>");
         if (inserts < 1)
         {
             // For debugging, output the shader source to a file
