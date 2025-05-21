@@ -19,18 +19,18 @@ namespace UnityGLTF
             public Texture2D specular;
         }
 
-        public static PbrMaps BakePbrMataterial(Material material)
+        public static PbrMaps BakePBRMaterial(Material material, int width, int height)
         {
             var pbrMaps = new PbrMaps();
 #if HAVE_URP
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Albedo, out pbrMaps.albedo);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Alpha, out pbrMaps.alpha);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Metallic, out pbrMaps.metallic);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.NormalTangentSpace, out pbrMaps.normal);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.AmbientOcclusion, out pbrMaps.occlusion);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Emission, out pbrMaps.emission);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Smoothness, out pbrMaps.smoothness);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Specular, out pbrMaps.specular);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Albedo, width, height, out pbrMaps.albedo);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Alpha, width, height, out pbrMaps.alpha);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Metallic, width, height, out pbrMaps.metallic);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.NormalTangentSpace, width, height, out pbrMaps.normal);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.AmbientOcclusion, width, height, out pbrMaps.occlusion);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Emission, width, height, out pbrMaps.emission);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Smoothness, width, height, out pbrMaps.smoothness);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Specular, width, height, out pbrMaps.specular);
 #endif
             return pbrMaps;
         }
@@ -56,22 +56,46 @@ namespace UnityGLTF
             Shader.SetGlobalInteger("_DebugLightingFeatureFlags", 0);
         }
         
-        public static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, out Texture2D bakedTexture)
+        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out Texture2D bakedTexture)
         {
             var bakeMat = new Material(mat);
+            
+            var resetTextureTransforms = false;
+            if (resetTextureTransforms)
+            {
+                // reset texture transform properties
+                var props = new string[] {
+                    "Base_Tiling_Offset",
+                    "Global_Tiling_Offset",
+                    "_Detail_Tiling_Offset",
+                    "_Normal_Detail_Tiling_Offset",
+                    "_Normal_Tiling_Offset",
+                    "_Smoothness_Detail_Tiling_Offset",
+                    "_Smoothness_Tiling_Offset",
+                    "_Metallic_Tiling_Offset",
+                };
+                foreach (var prop in props)
+                {
+                    if (mat.HasProperty(prop))
+                    {
+                        bakeMat.SetColor(prop, new Color(1, 1, 0, 0));
+                    }
+                }
+            }
+            
             Shader.EnableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
             Shader.SetGlobalFloat("_DebugMaterialMode", (int)mode);
       
             DeactivateGlobalUrpDebugProperties();
             
-            bakedTexture = new Texture2D(1024, 1024, TextureFormat.RGBA32, false);
+            bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
             bakedTexture.Apply();
             
             // Render mesh with bakeMat to bakedTexture
-            RenderTexture renderTexture = RenderTexture.GetTemporary(1024, 1024, 0, RenderTextureFormat.ARGB32);
+            RenderTexture renderTexture = RenderTexture.GetTemporary(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32);
             Graphics.Blit(bakedTexture, renderTexture, bakeMat, 0);
            
             RenderTexture.active = renderTexture;

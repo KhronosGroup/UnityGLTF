@@ -20,7 +20,7 @@ namespace UnityGLTF
             var materials = renderer.sharedMaterials;
             foreach (var material in materials)
             {
-                var maps = MaterialBaker.BakePbrMataterial(material);
+                var maps = MaterialBaker.BakePBRMaterial(material, 2048, 2048);
 
                 var mergedAlbedoAndAlpha =
                     new Texture2D(maps.albedo.width, maps.albedo.height, TextureFormat.RGBA32, false);
@@ -110,6 +110,26 @@ namespace UnityGLTF
                 // TODO set Opaque/Transparent based on the original material
                 // TODO set alpha cutoff based on the original material
                 // TODO set double sided based on the original material
+                // TODO set texture tiling and offset based on the original material
+                // HACK for a specific material that stores tiling/offset in a color property
+                var applyTextureTransforms = false;
+                if (applyTextureTransforms)
+                {
+                    var baseColorTilingOffset = material.GetColor("Global_Tiling_Offset");
+                    GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", true);
+                    var tiling = new Vector2(baseColorTilingOffset.r, baseColorTilingOffset.g);
+                    var offset = new Vector2(baseColorTilingOffset.b, baseColorTilingOffset.a);
+                    newMaterial.SetTextureScale("baseColorTexture", tiling);
+                    newMaterial.SetTextureOffset("baseColorTexture", offset);
+                    newMaterial.SetTextureScale("normalTexture", tiling);
+                    newMaterial.SetTextureOffset("normalTexture", offset);
+                    newMaterial.SetTextureScale("metallicRoughnessTexture", tiling);
+                    newMaterial.SetTextureOffset("metallicRoughnessTexture", offset);
+                    newMaterial.SetTextureScale("emissiveTexture", tiling);
+                    newMaterial.SetTextureOffset("emissiveTexture", offset);
+                    newMaterial.SetTextureScale("occlusionTexture", tiling);
+                    newMaterial.SetTextureOffset("occlusionTexture", offset);
+                }
 
                 AssetDatabase.CreateAsset(newMaterial, Path.Combine(newDirectory, fileName + ".mat"));
                 AssetDatabase.SaveAssets();
@@ -201,9 +221,7 @@ namespace UnityGLTF
                     Debug.LogWarning("No material found at " + newMaterialPath);
                     continue;
                 }
-
-                Debug.Log("Loading material from " + newMaterialPath, newMaterial);
-
+                
                 newMaterials[i] = newMaterial;
             }
 
