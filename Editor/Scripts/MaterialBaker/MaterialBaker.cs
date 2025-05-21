@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 #if HAVE_URP
 using UnityEngine.Rendering.Universal;
@@ -36,29 +38,64 @@ namespace UnityGLTF
 #endif
             return pbrMaps;
         }
-    
+
+        public static PbrMaps BakePBRMaterial(Renderer renderer, int submesh, int width, int height)
+        {
+            var pbrMaps = new PbrMaps();
+            foreach (var shader in PatchedShaders)
+            {
+                if (!shader.Value) continue;
+                Object.DestroyImmediate(shader.Value);
+            }
+            PatchedShaders.Clear();
 #if HAVE_URP
+            pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height);
+            pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height);
+            pbrMaps.metallic = Bake(renderer, submesh, DebugMaterialMode.Metallic, width, height);
+            pbrMaps.normal = Bake(renderer, submesh, DebugMaterialMode.NormalTangentSpace, width, height);
+            pbrMaps.occlusion = Bake(renderer, submesh, DebugMaterialMode.AmbientOcclusion, width, height);
+            pbrMaps.emission = Bake(renderer, submesh, DebugMaterialMode.Emission, width, height);
+            pbrMaps.smoothness = Bake(renderer, submesh, DebugMaterialMode.Smoothness, width, height);
+            pbrMaps.specular = Bake(renderer, submesh, DebugMaterialMode.Specular, width, height);
+#endif
+            return pbrMaps;
+        }
+    
+        private static readonly Dictionary<Shader, Shader> PatchedShaders = new Dictionary<Shader, Shader>();
         
-        public static Texture2D Bake(Renderer renderer, DebugMaterialMode mode)
+#if HAVE_URP
+        public static Texture2D Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height)
         {
             // TODO: submeshes
             var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+            var materials = renderer.sharedMaterials;
+            var sourceMaterial = materials[submesh % materials.Length];
             
-            var rt = RenderTexture.GetTemporary(1024, 1024, 0, RenderTextureFormat.ARGB32);
-            var material = Object.Instantiate(renderer.sharedMaterial);
-        
-            var patchedShader = ShaderModifier.PatchShaderUVsToClipSpace(material.shader);
-            material.shader = patchedShader;
+            var rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            
+            var material = Object.Instantiate(sourceMaterial);
+            material.hideFlags = HideFlags.DontSave;
+            
+            if (!PatchedShaders.TryGetValue(material.shader, out var patched))
+            {
+                var patchedShader = ShaderModifier.PatchShaderUVsToClipSpace(material.shader);
+                PatchedShaders[material.shader] = patchedShader;
+                material.shader = patchedShader;
+            }
+            else
+            {
+                material.shader = patched;
+            }
           
             var cmd = new CommandBuffer();
             cmd.SetRenderTarget(rt);
             cmd.ClearRenderTarget(true, true, Color.blue);
             
             // Set cmd.SetViewProjectionMatrices to get the correct view projection matrix to the mesh
-            
+            cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(0, 1, 0, 1, -1, 1));
             cmd.EnableKeyword(new GlobalKeyword(ShaderKeywordStrings.DEBUG_DISPLAY));
-            cmd.SetGlobalFloat("_DebugMaterialMode", (int)mode);
-            cmd.DrawMesh(mesh, Matrix4x4.identity, material, 0, 0);
+            cmd.SetGlobalFloat("_DebugMaterialMode", (int) mode);
+            cmd.DrawMesh(mesh, Matrix4x4.identity, material, submesh, 0);
             Graphics.ExecuteCommandBuffer(cmd);
             //
             // cmd.Clear();
@@ -80,7 +117,7 @@ namespace UnityGLTF
            //  Graphics.DrawMeshNow( renderer.GetComponent<MeshFilter>().sharedMesh, Matrix4x4.identity, 0);
            //
             RenderTexture.active = rt;
-            var bakedTexture = new Texture2D(1024, 1024, TextureFormat.RGBA32, false);
+            var bakedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
@@ -95,8 +132,6 @@ namespace UnityGLTF
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
 
             return bakedTexture;
-            
-
         }
 
         private static void DeactivateGlobalUrpDebugProperties()
