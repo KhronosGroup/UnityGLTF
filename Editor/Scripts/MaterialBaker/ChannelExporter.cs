@@ -130,7 +130,8 @@ namespace UnityGLTF
                     newMaterial.SetTextureScale("occlusionTexture", tiling);
                     newMaterial.SetTextureOffset("occlusionTexture", offset);
                 }
-
+                
+                // TODO Create the material unless it already exists, seems we're losing GUIDs otherwise
                 AssetDatabase.CreateAsset(newMaterial, Path.Combine(newDirectory, fileName + ".mat"));
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
