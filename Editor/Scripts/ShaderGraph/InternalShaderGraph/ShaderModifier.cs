@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEditor.ShaderGraph;
 using UnityEngine;
@@ -11,11 +12,11 @@ public static class ShaderModifier
       
         var lastIndex = 0;
         var index = -1;
+        var inserts = 0;
         while (true)
         {
             lastIndex = index;
-            index = shaderSource.IndexOf("PackedVaryings PackVaryings (Varyings input)", lastIndex + 1,
-                StringComparison.Ordinal);
+            index = shaderSource.IndexOf("PackedVaryings PackVaryings (Varyings input)", lastIndex + 1, StringComparison.Ordinal);
 
             if (index == -1)
                 break;
@@ -25,19 +26,33 @@ public static class ShaderModifier
             if (indexOfReturn != -1)
             {
                 var foundTexCoord = shaderSource.IndexOf("texCoord0", index, StringComparison.Ordinal);
-                if (foundTexCoord == -1 && foundTexCoord < indexOfReturn)
+                if (foundTexCoord != -1 && foundTexCoord < indexOfReturn)
                 {
+                    // clip-space conversion
+                    /* 
                     shaderSource = shaderSource.Insert(indexOfReturn - 1,
                         "\nfloat4 p = output.texCoord0;" +
                         "p.w = 1; p.z = 0.999999; p.xy -= -1; p.z *= -1;" +
                         "output.positionCS = p;");
+                    */
+                    // world-space conversion
+                    shaderSource = shaderSource.Insert(indexOfReturn - 1,
+                        "\noutput.positionCS = TransformObjectToHClip(output.texCoord0);");
+                    inserts++;
                 }
             }
 
             index = indexOfReturn;
         }
-                    
-        return ShaderUtil.CreateShaderAsset(null, shaderSource, false);
+        
+        Debug.Log($"<color=#808080ff>Shader {shader.name}: found {inserts} to patch.</color>");
+        if (inserts < 1)
+        {
+            // For debugging, output the shader source to a file
+            var sourcePath = AssetDatabase.GetAssetPath(shader);
+            File.WriteAllText(sourcePath + ".txt", shaderSource);
+        }
+        return ShaderUtil.CreateShaderAsset(null, shaderSource, true);
     }
     
     public static string GetShaderSource(Shader shader)
