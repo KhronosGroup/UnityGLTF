@@ -17,7 +17,7 @@ namespace UnityGLTF
             for (var i = 0; i < materials.Length; i++)
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048);
-                SaveMaps(maps, materials[i]);
+                SaveMapsAndMaterial(maps, materials[i]);
             }
         }
         
@@ -31,7 +31,7 @@ namespace UnityGLTF
             for (var i = 0; i < materials.Length; i++)
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048, 1);
-                SaveMaps(maps, materials[i]);
+                SaveMapsAndMaterial(maps, materials[i], 1);
             }
         }
         
@@ -45,11 +45,11 @@ namespace UnityGLTF
             foreach (var material in materials)
             {
                 var maps = MaterialBaker.BakePBRMaterial(material, 2048, 2048);
-                SaveMaps(maps, material);
+                SaveMapsAndMaterial(maps, material);
             }
         }
 
-        private static void SaveMaps(MaterialBaker.PbrMaps maps, Material material)
+        private static void SaveMapsAndMaterial(MaterialBaker.PbrMaps maps, Material material, int uvChannel = 0)
         {
             var mergedAlbedoAndAlpha = new Texture2D(maps.albedo.width, maps.albedo.height, TextureFormat.RGBA32, false);
             var pixels = maps.albedo.GetPixels();
@@ -132,9 +132,21 @@ namespace UnityGLTF
             newMaterial.SetTexture("occlusionTexture", importedOrm);
 
             var mapper = new PBRGraphMap(newMaterial);
+            
+            // Ensure multiplicative defaults
             mapper.MetallicFactor = 1;
             mapper.RoughnessFactor = 1;
             mapper.EmissiveFactor = Color.white;
+            mapper.OcclusionTexStrength = 1;
+            mapper.BaseColorFactor = Color.white;
+            mapper.NormalTexScale = 1;
+            // Set desired UV channels – based on the space we baked into
+            mapper.BaseColorTexCoord = uvChannel;
+            mapper.NormalTexCoord = uvChannel;
+            mapper.EmissiveTexCoord = uvChannel;
+            mapper.OcclusionTexCoord = uvChannel;
+            mapper.MetallicRoughnessTexCoord = uvChannel;
+            
             // TODO set Opaque/Transparent based on the original material
             // TODO set alpha cutoff based on the original material
             // TODO set double sided based on the original material
