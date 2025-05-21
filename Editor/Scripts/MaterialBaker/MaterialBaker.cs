@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using Object = UnityEngine.Object;
 #if HAVE_URP
 using UnityEngine.Rendering.Universal;
 #endif
@@ -7,7 +9,7 @@ namespace UnityGLTF
 {
     public static class MaterialBaker
     {
-          public class PbrMaps
+        public class PbrMaps
         {
             public Texture2D albedo;
             public Texture2D alpha;
@@ -58,6 +60,20 @@ namespace UnityGLTF
         
         private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out Texture2D bakedTexture)
         {
+            bool isLinear = false;
+            switch (mode)
+            {
+                case DebugMaterialMode.Alpha:
+                case DebugMaterialMode.Smoothness:
+                case DebugMaterialMode.AmbientOcclusion:
+                case DebugMaterialMode.NormalWorldSpace:
+                case DebugMaterialMode.NormalTangentSpace:
+                case DebugMaterialMode.LightingComplexity:
+                case DebugMaterialMode.Metallic:
+                case DebugMaterialMode.SpriteMask:
+                    isLinear = true;
+                    break;
+            }
             var bakeMat = new Material(mat);
             
             var resetTextureTransforms = false;
@@ -88,14 +104,14 @@ namespace UnityGLTF
       
             DeactivateGlobalUrpDebugProperties();
             
-            bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false);
+            bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
             bakedTexture.Apply();
             
             // Render mesh with bakeMat to bakedTexture
-            RenderTexture renderTexture = RenderTexture.GetTemporary(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32);
+            RenderTexture renderTexture = RenderTexture.GetTemporary(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32, isLinear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
             Graphics.Blit(bakedTexture, renderTexture, bakeMat, 0);
            
             RenderTexture.active = renderTexture;
