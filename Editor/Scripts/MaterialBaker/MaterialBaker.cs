@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
@@ -92,7 +91,9 @@ namespace UnityGLTF
             cmd.SetRenderTarget(rt);
             cmd.ClearRenderTarget(true, true, Color.blue);
             
-            // Set cmd.SetViewProjectionMatrices to get the correct view projection matrix to the mesh
+            // TODO we probably need to find the UV extents of the source mesh and set the viewport accordingly; otherwise we end up with a wrong space here.
+            // We also might need to adjust the texture transform of the material to match the UV extents after baking,
+            // so we don't have to modify UV coordinates of the mesh.
             cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(0, 1, 0, 1, -1, 1));
             cmd.EnableKeyword(new GlobalKeyword(ShaderKeywordStrings.DEBUG_DISPLAY));
             cmd.SetGlobalFloat("_DebugMaterialMode", (int) mode);
