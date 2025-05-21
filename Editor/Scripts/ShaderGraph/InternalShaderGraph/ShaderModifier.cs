@@ -1,0 +1,65 @@
+using System;
+using UnityEditor;
+using UnityEditor.ShaderGraph;
+using UnityEngine;
+
+public static class ShaderModifier 
+{
+    public static Shader PatchShaderUVsToClipSpace(Shader shader)
+    {
+        var shaderSource = GetShaderSource(shader);
+      
+        var lastIndex = 0;
+        var index = -1;
+        while (true)
+        {
+            lastIndex = index;
+            index = shaderSource.IndexOf("PackedVaryings PackVaryings (Varyings input)", lastIndex + 1,
+                StringComparison.Ordinal);
+
+            if (index == -1)
+                break;
+
+            var indexOfReturn = shaderSource.IndexOf("return output;", index, StringComparison.Ordinal);
+            index = indexOfReturn;
+
+            if (indexOfReturn != -1)
+            {
+                shaderSource = shaderSource.Insert(indexOfReturn - 1,
+                    "\nfloat4 p = output.texCoord0;" +
+                    "p.w = 1; p.z = 0.999999; p.xy -= -1; p.z *= -1;" +
+                    "output.positionCS = p;");
+            }
+        }
+                    
+        return ShaderUtil.CreateShaderAsset(null, shaderSource, false);
+    }
+    
+    public static string GetShaderSource(Shader shader)
+    {
+        var shaderPath = UnityEditor.AssetDatabase.GetAssetPath(shader);
+        var assetCollection = new AssetCollection();
+        
+        // access private method "ShaderGraphImporter.GatherDependenciesFromSourceFile" by reflection
+        var shaderGraphImporterType = typeof(ShaderGraphImporter);
+        var gatherDependenciesMethod = shaderGraphImporterType.GetMethod("GatherDependenciesFromSourceFile", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        if (gatherDependenciesMethod == null)
+        {
+            Debug.LogError("GatherDependenciesFromSourceFile method not found");
+            return null;
+        }
+        
+        // call the method
+        var parameters = new object[] { shaderPath };
+        var dep = (string[]) gatherDependenciesMethod.Invoke(null, parameters);
+        foreach (var d in dep)
+        {
+            var assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(d);
+            if (assetType == typeof(SubGraphAsset)) 
+                assetCollection.AddAssetDependency(UnityEditor.AssetDatabase.GUIDFromAssetPath(d),AssetCollection.Flags.IsSubGraph );
+        }
+
+        return ShaderGraphImporter.GetShaderText(shaderPath, out _, assetCollection, out _);
+    }
+}
