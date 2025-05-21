@@ -1,0 +1,23 @@
+{
+    "name": "UnityGLTF.MaterialBaker",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ab67fb10353d84448ac887a7367cbda8",
+        "GUID:15fc0a57446b3144c949da3e2b9737a9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "HAVE_URP"
+        }
+    ],
+    "noEngineReferences": false
+}
