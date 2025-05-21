@@ -107,6 +107,7 @@ namespace UnityGLTF
                 var mapper = new PBRGraphMap(newMaterial);
                 mapper.MetallicFactor = 1;
                 mapper.RoughnessFactor = 1;
+                mapper.EmissiveFactor = Color.white;
                 // TODO set Opaque/Transparent based on the original material
                 // TODO set alpha cutoff based on the original material
                 // TODO set double sided based on the original material
