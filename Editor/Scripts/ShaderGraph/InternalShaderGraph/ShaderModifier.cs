@@ -21,15 +21,20 @@ public static class ShaderModifier
                 break;
 
             var indexOfReturn = shaderSource.IndexOf("return output;", index, StringComparison.Ordinal);
-            index = indexOfReturn;
 
             if (indexOfReturn != -1)
             {
-                shaderSource = shaderSource.Insert(indexOfReturn - 1,
-                    "\nfloat4 p = output.texCoord0;" +
-                    "p.w = 1; p.z = 0.999999; p.xy -= -1; p.z *= -1;" +
-                    "output.positionCS = p;");
+                var foundTexCoord = shaderSource.IndexOf("texCoord0", index, StringComparison.Ordinal);
+                if (foundTexCoord == -1 && foundTexCoord < indexOfReturn)
+                {
+                    shaderSource = shaderSource.Insert(indexOfReturn - 1,
+                        "\nfloat4 p = output.texCoord0;" +
+                        "p.w = 1; p.z = 0.999999; p.xy -= -1; p.z *= -1;" +
+                        "output.positionCS = p;");
+                }
             }
+
+            index = indexOfReturn;
         }
                     
         return ShaderUtil.CreateShaderAsset(null, shaderSource, false);
