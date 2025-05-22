@@ -20,11 +20,15 @@ namespace UnityGLTF
             public Texture2D emission;
             public Texture2D smoothness;
             public Texture2D specular;
+
+            public Material forMaterial;
+            public Mesh forMesh;
         }
 
         public static PbrMaps BakePBRMaterial(Material material, int width, int height)
         {
             var pbrMaps = new PbrMaps();
+            pbrMaps.forMaterial = material;
 #if HAVE_URP
             BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Albedo, width, height, out pbrMaps.albedo);
             BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Alpha, width, height, out pbrMaps.alpha);
@@ -41,6 +45,10 @@ namespace UnityGLTF
         public static PbrMaps BakePBRMaterial(Renderer renderer, int submesh, int width, int height, int uvChannel = 0)
         {
             var pbrMaps = new PbrMaps();
+            var materials = renderer.sharedMaterials;
+            pbrMaps.forMaterial = materials[submesh % materials.Length];
+            pbrMaps.forMesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+            
             foreach (var shader in PatchedShaders)
             {
                 var pair = shader.Value;
@@ -49,6 +57,7 @@ namespace UnityGLTF
             }
             PatchedShaders.Clear();
             MeshUVs.Clear();
+            
 #if HAVE_URP
             pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height, uvChannel);
             pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height, uvChannel);
