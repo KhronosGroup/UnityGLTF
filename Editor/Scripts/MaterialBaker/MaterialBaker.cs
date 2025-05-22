@@ -116,6 +116,16 @@ namespace UnityGLTF
             
             var minMaxX = minMax.minMaxX;
             var minMaxY = minMax.minMaxY;
+
+            // Regular case – UVs are in 0..1 range. We might not want to introduce texture transforms for this case.
+            if (minMaxX.x >= 0 && minMaxX.y <= 1 && minMaxY.x > 0 && minMaxY.y <= 1)
+            {
+                minMaxX.x = 0;
+                minMaxX.y = 1;
+                minMaxY.x = 0;
+                minMaxY.y = 1;
+            }
+            
             cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(minMaxX.x, minMaxX.y, minMaxY.x, minMaxY.y, -1, 1));
             cmd.EnableKeyword(new GlobalKeyword(ShaderKeywordStrings.DEBUG_DISPLAY));
             cmd.SetGlobalFloat("_DebugMaterialMode", (int) mode);
