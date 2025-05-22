@@ -26,6 +26,22 @@ namespace UnityGLTF
             
             var mode = Mode.WorldSpace;
             
+            // Add  Pass - Conservative mode
+            string passString = "Pass\n{";
+            int addedConservativeToPasses = 0;
+            int passIndex = 0;
+            while (true)
+            {
+                passIndex = shaderSource.IndexOf(passString, passIndex + 1, StringComparison.Ordinal);
+                if (passIndex == -1)
+                    break;
+
+                addedConservativeToPasses++;
+                shaderSource = shaderSource.Insert(passIndex+passString.Length, "\n Conservative True\n");
+            }
+            Debug.Log($"<color=#808080ff>Shader {shader.name}: found {addedConservativeToPasses} passes to patch for >Conservative True<.</color>");
+
+            
             while (true)
             {
                 lastIndex = index;
