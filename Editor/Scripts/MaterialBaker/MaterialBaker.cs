@@ -194,11 +194,16 @@ namespace UnityGLTF
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(rt);
 
-            
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
-
-            var offset = new Vector2(minMaxX.x, minMaxY.x);
-            var scale = new Vector2(minMaxX.y - minMaxX.x, minMaxY.y - minMaxY.x);
+            
+            float xSize = Mathf.Abs(minMaxX.y - minMaxX.x);
+            float ySize = Mathf.Abs(minMaxY.y - minMaxY.x);
+            
+            float xScale = 1f / xSize;
+            float yScale = 1f / ySize;
+            
+            var offset = new Vector2(-minMaxX.x * xScale, -minMaxY.x * yScale);
+            var scale = new Vector2(xScale, yScale);
             return new TextureWithTransform(bakedTexture, offset, scale);
         }
 
