@@ -77,12 +77,16 @@ namespace UnityGLTF
 #if HAVE_URP
         public static Texture2D Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
         {
+            DeactivateGlobalUrpDebugProperties();
+            
             // TODO: submeshes
             var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
             var materials = renderer.sharedMaterials;
             var sourceMaterial = materials[submesh % materials.Length];
             
-            var rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            var isLinear = IsDebugMaterialModeInLinear(mode);
+            
+            var rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, isLinear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
             
             var material = Object.Instantiate(sourceMaterial);
             material.hideFlags = HideFlags.DontSave;
@@ -100,6 +104,8 @@ namespace UnityGLTF
             }
           
             var cmd = new CommandBuffer();
+            GL.sRGBWrite = !isLinear;
+            
             cmd.SetRenderTarget(rt);
             cmd.ClearRenderTarget(true, true, Color.blue);
             
@@ -160,7 +166,7 @@ namespace UnityGLTF
            //  Graphics.DrawMeshNow( renderer.GetComponent<MeshFilter>().sharedMesh, Matrix4x4.identity, 0);
            //
             RenderTexture.active = rt;
-            var bakedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            var bakedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
@@ -195,8 +201,8 @@ namespace UnityGLTF
             Shader.SetGlobalFloat("_DebugLightingMode", 0);
             Shader.SetGlobalInteger("_DebugLightingFeatureFlags", 0);
         }
-        
-        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out Texture2D bakedTexture)
+
+        private static bool IsDebugMaterialModeInLinear(DebugMaterialMode mode)
         {
             bool isLinear = false;
             switch (mode)
@@ -212,6 +218,12 @@ namespace UnityGLTF
                     isLinear = true;
                     break;
             }
+            return isLinear;
+        }
+        
+        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out Texture2D bakedTexture)
+        {
+            bool isLinear = IsDebugMaterialModeInLinear(mode);
             var bakeMat = new Material(mat);
             
             var resetTextureTransforms = false;
@@ -247,6 +259,7 @@ namespace UnityGLTF
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
             bakedTexture.Apply();
+            GL.sRGBWrite = !isLinear;
             
             // Render mesh with bakeMat to bakedTexture
             RenderTexture renderTexture = RenderTexture.GetTemporary(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32, isLinear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
