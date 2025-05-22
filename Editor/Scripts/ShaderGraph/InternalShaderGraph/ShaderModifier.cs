@@ -55,6 +55,48 @@ namespace UnityGLTF
                 if (indexOfReturn != -1)
                 {
                     var foundTexCoord = shaderSource.IndexOf(uvChannelName, index, StringComparison.Ordinal);
+
+                    if (foundTexCoord == -1 || foundTexCoord > indexOfReturn)
+                    {
+                        // TexCoord to PackedVaryings Struct
+                        var shaderSourceUntilReturn = shaderSource.Substring(0, indexOfReturn);
+                        
+                        var structIndex = shaderSourceUntilReturn.LastIndexOf("struct PackedVaryings", shaderSourceUntilReturn.Length-1, StringComparison.Ordinal);
+                        if (structIndex == -1)
+                            continue;
+                       
+                        var structEndIndex = shaderSourceUntilReturn.IndexOf("}", structIndex, StringComparison.Ordinal); 
+                        var structLength = structEndIndex - structIndex;
+                        var structBlock = shaderSource.Substring(structIndex, structLength);
+                        
+                        bool structHasTex = structBlock.IndexOf($"float4 {uvChannelName}", StringComparison.Ordinal) != -1;
+                   
+                        if (!structHasTex)
+                        {
+                            int lastInterpolate = 0;
+                            int interpolateIndex = 0;
+                            do
+                            {
+                                interpolateIndex = structBlock.IndexOf(": INTERP", interpolateIndex, StringComparison.Ordinal);
+                                if (interpolateIndex == -1)
+                                    break;
+                                int interpLength = ": INTERP".Length;
+                                int lineEndIndex = structBlock.IndexOf(";", interpolateIndex, StringComparison.Ordinal);
+                                int interpNumberLength = lineEndIndex - interpolateIndex - interpLength;
+                                var interopNumber = structBlock.Substring(interpolateIndex + interpLength, interpNumberLength);
+                                var interopInt = int.Parse(interopNumber);
+                                lastInterpolate = Math.Max(lastInterpolate, interopInt);
+                                interpolateIndex = lineEndIndex + 1;
+                                
+                            } while (interpolateIndex != -1);
+                            
+                            shaderSource = shaderSource.Insert(structIndex + structLength - 1,
+                                $"\nfloat4 {uvChannelName} : INTERP{lastInterpolate+1};");
+                            foundTexCoord = structIndex + structLength - 1;
+                            inserts++;
+                        }
+                    }
+
                     if (foundTexCoord != -1 && foundTexCoord < indexOfReturn)
                     {
                         switch (mode) {
