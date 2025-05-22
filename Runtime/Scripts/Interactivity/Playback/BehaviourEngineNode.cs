@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using Unity.Properties;
 using UnityEngine;
 
 namespace UnityGLTF.Interactivity.Playback
@@ -103,17 +101,23 @@ namespace UnityGLTF.Interactivity.Playback
 
         public bool TryGetConfig<T>(string id, out T value)
         {
-            try
+            if (configuration.TryGetValue(id, out var config))
             {
-                value = ((Property<T>)Helpers.CreateProperty(typeof(T), configuration[id].value)).value;
-                return true;
+                try
+                {
+                    value = ((Property<T>)Helpers.CreateProperty(typeof(T), config.value)).value;
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                    value = default;
+                    return false;
+                }
             }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-                value = default;
-                return false;
-            }
+
+            value = default;
+            return false;
         }
     }
 }
