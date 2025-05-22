@@ -44,10 +44,11 @@ namespace UnityGLTF
             foreach (var shader in PatchedShaders)
             {
                 var pair = shader.Value;
-                if (!pair.shader) continue;
-                Object.DestroyImmediate(pair.shader);
+                if (!pair) continue;
+                Object.DestroyImmediate(pair);
             }
             PatchedShaders.Clear();
+            MeshUVs.Clear();
 #if HAVE_URP
             pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height, uvChannel);
             pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height, uvChannel);
@@ -61,7 +62,8 @@ namespace UnityGLTF
             return pbrMaps;
         }
     
-        private static readonly Dictionary<Shader, (Shader shader, int uvChannel)> PatchedShaders = new Dictionary<Shader, (Shader shader, int uvChannel)>();
+        private static readonly Dictionary<(Shader shader, int uvChannel), Shader> PatchedShaders = new Dictionary<(Shader shader, int uvChannel), Shader>();
+        private static readonly Dictionary<(Mesh mesh, int uvChannel), (Vector2 minMaxX, Vector2 minMaxY)> MeshUVs = new Dictionary<(Mesh mesh, int uvChannel), (Vector2 minMaxX, Vector2 minMaxY)>();
         
 #if HAVE_URP
         public static Texture2D Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
@@ -76,15 +78,16 @@ namespace UnityGLTF
             var material = Object.Instantiate(sourceMaterial);
             material.hideFlags = HideFlags.DontSave;
             
-            if (!PatchedShaders.TryGetValue(material.shader, out var patched))
+            var pair = (material.shader, uvChannel);
+            if (!PatchedShaders.TryGetValue(pair, out var patched))
             {
                 var patchedShader = ShaderModifier.PatchShaderUVsToClipSpace(material.shader, uvChannel);
-                PatchedShaders[material.shader] = (patchedShader, uvChannel);
+                PatchedShaders[pair] = patchedShader;
                 material.shader = patchedShader;
             }
             else
             {
-                material.shader = patched.shader;
+                material.shader = patched;
             }
           
             var cmd = new CommandBuffer();
@@ -94,7 +97,26 @@ namespace UnityGLTF
             // TODO we probably need to find the UV extents of the source mesh and set the viewport accordingly; otherwise we end up with a wrong space here.
             // We also might need to adjust the texture transform of the material to match the UV extents after baking,
             // so we don't have to modify UV coordinates of the mesh.
-            cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(0, 1, 0, 1, -1, 1));
+            var meshRangePair = (mesh, uvChannel);
+            if (!MeshUVs.TryGetValue(meshRangePair, out var minMax))
+            {
+                var meshUVs = mesh.uv;
+                var xRange = new Vector2(float.MaxValue, float.MinValue);
+                var yRange = new Vector2(float.MaxValue, float.MinValue);
+                foreach (var uv in meshUVs)
+                {
+                    xRange.x = Mathf.Min(xRange.x, uv.x);
+                    xRange.y = Mathf.Max(xRange.y, uv.x);
+                    yRange.x = Mathf.Min(yRange.x, uv.y);
+                    yRange.y = Mathf.Max(yRange.y, uv.y);
+                }
+                minMax = (xRange, yRange);
+                MeshUVs[meshRangePair] = minMax;
+            }
+            
+            var minMaxX = minMax.minMaxX;
+            var minMaxY = minMax.minMaxY;
+            cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(minMaxX.x, minMaxX.y, minMaxY.x, minMaxY.y, -1, 1));
             cmd.EnableKeyword(new GlobalKeyword(ShaderKeywordStrings.DEBUG_DISPLAY));
             cmd.SetGlobalFloat("_DebugMaterialMode", (int) mode);
             cmd.DrawMesh(mesh, Matrix4x4.identity, material, submesh, 0);
