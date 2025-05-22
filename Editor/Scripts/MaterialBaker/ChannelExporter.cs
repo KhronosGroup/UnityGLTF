@@ -17,7 +17,8 @@ namespace UnityGLTF
             for (var i = 0; i < materials.Length; i++)
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048);
-                SaveMapsAndMaterial(maps, materials[i]);
+                maps.forMaterial = materials[i];
+                SaveMaps(maps);
             }
         }
         
@@ -31,7 +32,7 @@ namespace UnityGLTF
             for (var i = 0; i < materials.Length; i++)
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048, 1);
-                SaveMapsAndMaterial(maps, materials[i], 1);
+                SaveMaps(maps, 1);
             }
         }
         
@@ -45,12 +46,15 @@ namespace UnityGLTF
             foreach (var material in materials)
             {
                 var maps = MaterialBaker.BakePBRMaterial(material, 2048, 2048);
-                SaveMapsAndMaterial(maps, material);
+                SaveMaps(maps);
             }
         }
 
-        private static void SaveMapsAndMaterial(MaterialBaker.PbrMaps maps, Material material, int uvChannel = 0)
+        private static void SaveMaps(MaterialBaker.PbrMaps maps, int uvChannel = 0)
         {
+            var material = maps.forMaterial;
+            var mesh = maps.forMesh;
+            
             var mergedAlbedoAndAlpha = new Texture2D(maps.albedo.width, maps.albedo.height, TextureFormat.RGBA32, false);
             var pixels = maps.albedo.GetPixels();
             var alphaPixels = maps.alpha.GetPixels();
@@ -84,16 +88,33 @@ namespace UnityGLTF
                 return;
             }
 
-            var newDirectory = Path.Combine(directory, fileName);
-            if (!Directory.Exists(newDirectory))
-            {
-                Directory.CreateDirectory(newDirectory);
-            }
+            var targetDirectory = "";
+            var directoryForMaterial = Path.Combine(directory, fileName);
+            if (!Directory.Exists(directoryForMaterial))
+                Directory.CreateDirectory(directoryForMaterial);
 
-            var baseColorPath = Path.Combine(newDirectory, fileName + "_baseColor.png");
-            var normalPath = Path.Combine(newDirectory, fileName + "_normal.png");
-            var emissionPath = Path.Combine(newDirectory, fileName + "_emission.png");
-            var ormPath = Path.Combine(newDirectory, fileName + "_orm.png");
+            if (mesh)
+            {
+                var meshPath = AssetDatabase.GetAssetPath(mesh);
+                var meshGuid = AssetDatabase.AssetPathToGUID(meshPath);
+                var meshName = $"{mesh.name} ({meshGuid})";
+                var directoryForMesh = Path.Combine(directoryForMaterial, meshName);
+                if (!Directory.Exists(directoryForMesh))
+                    Directory.CreateDirectory(directoryForMesh);
+                
+                targetDirectory = directoryForMesh;
+            }
+            else
+            {
+                targetDirectory = directoryForMaterial;
+            }
+            
+            var baseColorPath = Path.Combine(targetDirectory, fileName + "_baseColor.png");
+            var normalPath = Path.Combine(targetDirectory, fileName + "_normal.png");
+            var emissionPath = Path.Combine(targetDirectory, fileName + "_emission.png");
+            var ormPath = Path.Combine(targetDirectory, fileName + "_orm.png");
+            var materialPath = Path.Combine(targetDirectory, fileName + ".mat");
+            
             File.WriteAllBytes(baseColorPath, baseColor);
             File.WriteAllBytes(normalPath, normal);
             File.WriteAllBytes(emissionPath, emission);
@@ -123,8 +144,9 @@ namespace UnityGLTF
             var importedOrm = AssetDatabase.LoadAssetAtPath<Texture2D>(ormPath);
             var importedEmission = AssetDatabase.LoadAssetAtPath<Texture2D>(emissionPath);
 
-            // create new UnityGLTF/PBRGraph material with these textures
-            var newMaterial = new Material(Shader.Find("UnityGLTF/PBRGraph"));
+            var newMaterial = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (!newMaterial) newMaterial = new Material(Shader.Find("UnityGLTF/PBRGraph"));
+            
             newMaterial.SetTexture("baseColorTexture", importedBaseColor);
             newMaterial.SetTexture("normalTexture", importedNormal);
             newMaterial.SetTexture("metallicRoughnessTexture", importedOrm);
@@ -171,8 +193,8 @@ namespace UnityGLTF
                 newMaterial.SetTextureOffset("occlusionTexture", offset);
             }
             
-            // TODO Create the material unless it already exists, seems we're losing GUIDs otherwise
-            AssetDatabase.CreateAsset(newMaterial, Path.Combine(newDirectory, fileName + ".mat"));
+            if (!AssetDatabase.Contains(newMaterial))
+                AssetDatabase.CreateAsset(newMaterial, materialPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
