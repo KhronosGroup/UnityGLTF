@@ -7,9 +7,9 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class BehaviourEngine
     {
-        public readonly Graph graph;
+        public Graph graph { get; private set; }
         public readonly Dictionary<Node, BehaviourEngineNode> engineNodes = new();
-        public AnimationWrapper animationWrapper { get; private set; }
+        public GLTFInteractivityAnimationWrapper animationWrapper { get; private set; }
         public readonly PointerInterpolationManager pointerInterpolationManager = new();
         public readonly VariableInterpolationManager variableInterpolationManager = new();
         public readonly NodeDelayManager nodeDelayManager = new();
@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.Playback
         public event Action<int, Dictionary<string, IProperty>> onCustomEventFired;
         public event Action<Flow> onFlowTriggered;
 
-        public readonly PointerResolver pointerResolver;
+        public PointerResolver pointerResolver { get; private set; }
 
         public BehaviourEngine(Graph graph, PointerResolver pointerResolver)
         {
@@ -114,7 +114,7 @@ namespace UnityGLTF.Interactivity.Playback
             }
         }
 
-        public void SetAnimationWrapper(AnimationWrapper wrapper, Animation animation)
+        public void SetAnimationWrapper(GLTFInteractivityAnimationWrapper wrapper, Animation animation)
         {
             animationWrapper = wrapper;
             wrapper.SetData(this, animation);

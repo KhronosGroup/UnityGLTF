@@ -10,6 +10,7 @@ namespace UnityGLTF.Interactivity.Playback
         public const string EXTENSION_NAME = "KHR_interactivity";
 
         public KHR_interactivity extensionData { get; private set; }
+        public string json { get; private set; }
 
         private readonly GraphSerializer _serializer = new();
 
@@ -28,7 +29,8 @@ namespace UnityGLTF.Interactivity.Playback
             if (!extensionToken.Name.Equals(EXTENSION_NAME))
                 return;
 
-            extensionData = _serializer.Deserialize(extensionToken.Value.ToString());
+            json = extensionToken.Value.ToString();
+            extensionData = _serializer.Deserialize(json);
         }
 
         public JProperty Serialize()

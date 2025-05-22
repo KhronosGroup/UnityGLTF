@@ -37,7 +37,6 @@ namespace UnityGLTF.Interactivity.Playback
         public override void OnAfterImportRoot(GLTFRoot gltfRoot)
         {
             Util.Log($"InteractivityImportContext::OnAfterImportRoot Complete: {gltfRoot.ToString()}");
-            _pointerResolver.CreateScenePointers(gltfRoot);
         }
 
         public override void OnBeforeImportScene(GLTFScene scene)
@@ -100,6 +99,7 @@ namespace UnityGLTF.Interactivity.Playback
 
             try
             {
+                _pointerResolver.RegisterSceneData(_context.SceneImporter.Root);
                 _pointerResolver.CreatePointers();
 
                 var defaultGraphIndex = interactivityGraph.extensionData.defaultGraphIndex;
@@ -108,17 +108,25 @@ namespace UnityGLTF.Interactivity.Playback
                 var defaultGraph = interactivityGraph.extensionData.graphs[defaultGraphIndex];
                 var eng = new BehaviourEngine(defaultGraph, _pointerResolver);
 
-                AnimationWrapper animationWrapper = null;
+                GLTFInteractivityAnimationWrapper animationWrapper = null;
                 var animationComponents = sceneObject.GetComponents<Animation>();
                 if (animationComponents != null && animationComponents.Length > 0)
                 {
-                    animationWrapper = sceneObject.AddComponent<AnimationWrapper>();
+                    animationWrapper = sceneObject.AddComponent<GLTFInteractivityAnimationWrapper>();
                     eng.SetAnimationWrapper(animationWrapper, animationComponents[0]);
                 }
 
-                var eventWrapper = sceneObject.AddComponent<EventWrapper>();
+                var eventWrapper = sceneObject.AddComponent<GLTFInteractivityPlayback>();
 
                 eventWrapper.SetData(eng, interactivityGraph.extensionData);
+
+                if (!Application.isPlaying)
+                {
+                    var data = sceneObject.AddComponent<GLTFInteractivityData>();
+                    data.interactivityJson = interactivityGraph.json;
+                    data.animationWrapper = animationWrapper;
+                    data.pointerReferences = _pointerResolver;
+                }
             }
             catch (Exception e)
             {

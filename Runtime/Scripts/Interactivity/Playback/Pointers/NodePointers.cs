@@ -23,7 +23,6 @@ namespace UnityGLTF.Interactivity.Playback
         public NodePointers(in NodeData data)
         {
             var go = data.unityObject;
-            var schema = data.node;
             gameObject = go;
 
             // Unity coordinate system differs from the GLTF one.
@@ -74,11 +73,27 @@ namespace UnityGLTF.Interactivity.Playback
                 evaluator = null
             };
 
-            selectability = GetSelectabilityPointers(schema);
-            hoverability = GetHoverabilityPointers(schema);
+            var isSelectable = data.isSelectable;
 
-            if(go.TryGetComponent(out SkinnedMeshRenderer smr))
+            selectability = new Pointer<bool>()
             {
+                setter = (v) => isSelectable = v,
+                getter = () => isSelectable,
+                evaluator = null
+            };
+
+            var isHoverable = data.isHoverable;
+
+            hoverability = new Pointer<bool>()
+            {
+                setter = (v) => isHoverable = v,
+                getter = () => isHoverable,
+                evaluator = null
+            };
+
+            if (data.skinnedMeshRenderer != null)
+            {
+                var smr = data.skinnedMeshRenderer;
                 weightsLength = new ReadOnlyPointer<int>(() => smr.sharedMesh.blendShapeCount);
                 weights = new Pointer<float>[smr.sharedMesh.blendShapeCount];
 
@@ -97,62 +112,6 @@ namespace UnityGLTF.Interactivity.Playback
                 weightsLength = default;
                 weights = default;
             }
-        }
-
-        private static Pointer<bool> GetSelectabilityPointers(GLTF.Schema.Node schema)
-        {
-            Pointer<bool> selectability;
-
-            if (schema.Extensions != null && schema.Extensions.TryGetValue(GLTF.Schema.KHR_node_selectability_Factory.EXTENSION_NAME, out var extension))
-            {
-                var selectabilityExtension = extension as GLTF.Schema.KHR_node_selectability;
-
-                selectability = new Pointer<bool>()
-                {
-                    setter = (v) => selectabilityExtension.selectable = v,
-                    getter = () => selectabilityExtension.selectable,
-                    evaluator = null
-                };
-            }
-            else
-            {
-                selectability = new Pointer<bool>()
-                {
-                    setter = (v) => { },
-                    getter = () => true,
-                    evaluator = null
-                };
-            }
-
-            return selectability;
-        }
-
-        private static Pointer<bool> GetHoverabilityPointers(GLTF.Schema.Node schema)
-        {
-            Pointer<bool> hoverability;
-
-            if (schema.Extensions != null && schema.Extensions.TryGetValue(GLTF.Schema.KHR_node_hoverability_Factory.EXTENSION_NAME, out var extension))
-            {
-                var hoverabilityExtension = extension as GLTF.Schema.KHR_node_hoverability;
-
-                hoverability = new Pointer<bool>()
-                {
-                    setter = (v) => hoverabilityExtension.hoverable = v,
-                    getter = () => hoverabilityExtension.hoverable,
-                    evaluator = null
-                };
-            }
-            else
-            {
-                hoverability = new Pointer<bool>()
-                {
-                    setter = (v) => { },
-                    getter = () => true,
-                    evaluator = null
-                };
-            }
-
-            return hoverability;
         }
 
         public static IPointer ProcessNodePointer(StringSpanReader reader, BehaviourEngineNode engineNode, List<NodePointers> pointers)

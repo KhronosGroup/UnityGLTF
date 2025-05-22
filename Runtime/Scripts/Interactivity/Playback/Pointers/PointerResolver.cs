@@ -1,4 +1,3 @@
-using GLTF.Schema;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,62 +7,7 @@ using UnityGLTF.Interactivity.Playback.Materials;
 
 namespace UnityGLTF.Interactivity.Playback
 {
-    public struct MeshData
-    {
-        public GLTF.Schema.GLTFMesh mesh;
-        public int meshIndex;
-        public Mesh unityMesh;
-
-        public MeshData(GLTFMesh mesh, int meshIndex, Mesh unityMesh)
-        {
-            this.mesh = mesh;
-            this.meshIndex = meshIndex;
-            this.unityMesh = unityMesh;
-        }
-    }
-
-    public struct MaterialData
-    {
-        public GLTF.Schema.GLTFMaterial material;
-        public int materialIndex;
-        public Material unityMaterial;
-
-        public MaterialData(GLTFMaterial material, int materialIndex, Material unityMaterial)
-        {
-            this.material = material;
-            this.materialIndex = materialIndex;
-            this.unityMaterial = unityMaterial;
-        }
-    }
-
-    public struct CameraData
-    {
-        public GLTF.Schema.GLTFCamera camera;
-        public int cameraIndex;
-        public Camera unityCamera;
-
-        public CameraData(GLTFCamera camera, int cameraIndex, Camera unityCamera)
-        {
-            this.camera = camera;
-            this.cameraIndex = cameraIndex;
-            this.unityCamera = unityCamera;
-        }
-    }
-
-    public struct NodeData
-    {
-        public GLTF.Schema.Node node;
-        public int nodeIndex;
-        public GameObject unityObject;
-
-        public NodeData(GLTF.Schema.Node node, int nodeIndex, GameObject unityObject)
-        {
-            this.node = node;
-            this.nodeIndex = nodeIndex;
-            this.unityObject = unityObject;
-        }
-    }
-
+    [Serializable]
     public class PointerResolver
     {
         private readonly List<NodePointers> _nodePointers = new();
@@ -74,10 +18,11 @@ namespace UnityGLTF.Interactivity.Playback
         private ScenePointers _scenePointers;
         private readonly ActiveCameraPointers _activeCameraPointers = ActiveCameraPointers.CreatePointers();
 
-        private readonly List<MeshData> _meshes = new();
-        private readonly List<MaterialData> _materials = new();
-        private readonly List<CameraData> _cameras = new();
-        private readonly List<NodeData> _nodes = new();
+        [SerializeField] private List<MeshData> _meshes = new();
+        [SerializeField] private List<MaterialData> _materials = new();
+        [SerializeField] private List<CameraData> _cameras = new();
+        [SerializeField] private List<NodeData> _nodes = new();
+        [SerializeField] private SceneData _sceneData;
 
         public ReadOnlyCollection<NodePointers> nodePointers { get; private set; }
 
@@ -86,28 +31,56 @@ namespace UnityGLTF.Interactivity.Playback
             _meshes.Add(new MeshData(mesh, meshIndex, unityMesh));
         }
 
-        public void RegisterMaterial(GLTFMaterial material, int materialIndex, Material unityMaterial)
+        public void RegisterMaterial(GLTF.Schema.GLTFMaterial material, int materialIndex, Material unityMaterial)
         {
             _materials.Add(new MaterialData(material, materialIndex, unityMaterial));
         }
 
-        public void RegisterCamera(GLTFCamera camera, int cameraIndex, Camera unityCamera)
+        public void RegisterCamera(GLTF.Schema.GLTFCamera camera, int cameraIndex, Camera unityCamera)
         {
             _cameras.Add(new CameraData(camera, cameraIndex, unityCamera));
         }
 
         public void RegisterNode(GLTF.Schema.Node node, int nodeIndex, GameObject unityObject)
         {
-            _nodes.Add(new NodeData(node, nodeIndex, unityObject));
+            var selectable = true;
+            var hoverable = true;
+
+            if (node.Extensions != null)
+            {
+                if (node.Extensions.TryGetValue(GLTF.Schema.KHR_node_selectability_Factory.EXTENSION_NAME, out var extension))
+                {
+                    var selectabilityExtension = extension as GLTF.Schema.KHR_node_selectability;
+                    selectable = selectabilityExtension.selectable;
+                }
+
+                if (node.Extensions.TryGetValue(GLTF.Schema.KHR_node_hoverability_Factory.EXTENSION_NAME, out extension))
+                {
+                    var hoverabilityExtension = extension as GLTF.Schema.KHR_node_hoverability;
+                    hoverable = hoverabilityExtension.hoverable;
+                }
+            }
+
+            _nodes.Add(new NodeData(node, nodeIndex, unityObject, unityObject.GetComponent<SkinnedMeshRenderer>(), selectable, hoverable));
         }
 
-        public void CreateScenePointers(GLTF.Schema.GLTFRoot root)
+        public void RegisterSceneData(GLTF.Schema.GLTFRoot root)
         {
-            _scenePointers = new ScenePointers(root);
+            _sceneData = new()
+            {
+                animationCount = (root.Animations == null) ? 0 : root.Animations.Count,
+                cameraCount = (root.Cameras == null) ? 0 : root.Cameras.Count,
+                materialCount = (root.Materials == null) ? 0 : root.Materials.Count,
+                meshCount = (root.Meshes == null) ? 0 : root.Meshes.Count,
+                nodeCount = (root.Nodes == null) ? 0 : root.Nodes.Count,
+                sceneCount = (root.Scenes == null) ? 0 : root.Scenes.Count
+            };
         }
 
         public void CreatePointers()
         {
+            Util.Log("Creating all Pointers for GLTF.");
+
             _meshes.Sort((a, b) => a.meshIndex.CompareTo(b.meshIndex));
             _materials.Sort((a, b) => a.materialIndex.CompareTo(b.materialIndex));
             _cameras.Sort((a, b) => a.cameraIndex.CompareTo(b.cameraIndex));
@@ -117,19 +90,18 @@ namespace UnityGLTF.Interactivity.Playback
             CreateNodePointers();
             CreateCameraPointers();
             CreateMaterialPointers();
+            _scenePointers = new(_sceneData);
         }
 
         private void CreateMeshPointers()
         {
             for (int i = 0; i < _meshes.Count; i++)
             {
-                _meshPointers.Add(new MeshPointers(_meshes[i]));
+                _meshPointers.Add(new MeshPointers(_meshes[i], _nodes));
             }
-
-            _meshes.Clear();
         }
 
-        public void CreateAnimationPointers(AnimationWrapper wrapper)
+        public void CreateAnimationPointers(GLTFInteractivityAnimationWrapper wrapper)
         {
             for (int i = 0; i < wrapper.animationComponent.GetClipCount(); i++)
             {
@@ -146,7 +118,6 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             nodePointers = new(_nodePointers);
-            _nodes.Clear();
         }
 
         private void CreateCameraPointers()
@@ -156,8 +127,6 @@ namespace UnityGLTF.Interactivity.Playback
                 Util.Log($"Registered Camera {_cameras[i].cameraIndex}", _cameras[i].unityCamera.gameObject);
                 _cameraPointers.Add(new CameraPointers(_cameras[i]));
             }
-
-            _cameras.Clear();
         }
 
         private void CreateMaterialPointers()
@@ -166,8 +135,6 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 _materialPointers.Add(new MaterialPointers(_materials[i]));
             }
-
-            _materials.Clear();
         }
 
         public bool TryGetPointersOf(GameObject go, out NodePointers pointers)
