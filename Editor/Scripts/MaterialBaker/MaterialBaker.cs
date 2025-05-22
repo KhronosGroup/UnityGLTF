@@ -10,16 +10,42 @@ namespace UnityGLTF
 {
     public static class MaterialBaker
     {
+
+        public class TextureWithTransform
+        {
+            public Texture2D map = null;
+            public Vector2 offset = Vector2.zero;
+            public Vector2 scale = Vector2.one;
+            
+            public bool hasDefaultTransform { get => offset == Vector2.zero && scale == Vector2.one; }
+
+            public TextureWithTransform()
+            {
+            }
+            
+            public TextureWithTransform(Texture2D map)
+            {
+                this.map = map;
+            }
+            
+            public TextureWithTransform(Texture2D map, Vector2 offset, Vector2 scale)
+            {
+                this.map = map;
+                this.offset = offset;
+                this.scale = scale;
+            }
+        }
+        
         public class PbrMaps
         {
-            public Texture2D albedo;
-            public Texture2D alpha;
-            public Texture2D metallic;
-            public Texture2D normal;
-            public Texture2D occlusion;
-            public Texture2D emission;
-            public Texture2D smoothness;
-            public Texture2D specular;
+            public TextureWithTransform albedo;
+            public TextureWithTransform alpha;
+            public TextureWithTransform metallic;
+            public TextureWithTransform normal;
+            public TextureWithTransform occlusion;
+            public TextureWithTransform emission;
+            public TextureWithTransform smoothness;
+            public TextureWithTransform specular;
 
             public Material forMaterial;
             public Mesh forMesh;
@@ -75,7 +101,7 @@ namespace UnityGLTF
         private static readonly Dictionary<(Mesh mesh, int uvChannel), (Vector2 minMaxX, Vector2 minMaxY)> MeshUVs = new Dictionary<(Mesh mesh, int uvChannel), (Vector2 minMaxX, Vector2 minMaxY)>();
         
 #if HAVE_URP
-        public static Texture2D Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
+        public static TextureWithTransform Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
         {
             DeactivateGlobalUrpDebugProperties();
             
@@ -152,19 +178,6 @@ namespace UnityGLTF
             // Graphics.ExecuteCommandBuffer(cmd);
             //
       
-            
-           //  Graphics.SetRenderTarget(rt);
-           //  var rp = new RenderParams(material);
-           //  rp.receiveShadows = false;
-           //  rp.shadowCastingMode = ShadowCastingMode.Off;
-           //  
-           //  Shader.EnableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
-           //  Shader.SetGlobalFloat("_DebugMaterialMode", (int)mode);
-           //  
-           // // Graphics.RenderMesh(rp, renderer.GetComponent<MeshFilter>().sharedMesh, 0, Matrix4x4.identity);
-           //  material.SetPass(0);
-           //  Graphics.DrawMeshNow( renderer.GetComponent<MeshFilter>().sharedMesh, Matrix4x4.identity, 0);
-           //
             RenderTexture.active = rt;
             var bakedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
@@ -180,7 +193,9 @@ namespace UnityGLTF
             
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
 
-            return bakedTexture;
+            var offset = new Vector2(minMaxX.x, minMaxY.x);
+            var scale = new Vector2(minMaxX.y - minMaxX.x, minMaxY.y - minMaxY.x);
+            return new TextureWithTransform(bakedTexture, offset, scale);
         }
 
         private static void DeactivateGlobalUrpDebugProperties()
@@ -221,7 +236,7 @@ namespace UnityGLTF
             return isLinear;
         }
         
-        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out Texture2D bakedTexture)
+        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out TextureWithTransform baked)
         {
             bool isLinear = IsDebugMaterialModeInLinear(mode);
             var bakeMat = new Material(mat);
@@ -254,7 +269,8 @@ namespace UnityGLTF
       
             DeactivateGlobalUrpDebugProperties();
             
-            bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false, isLinear);
+            
+            var bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
@@ -269,6 +285,7 @@ namespace UnityGLTF
 
             // Read pixels from renderTexture and apply to bakedTexture
             bakedTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            baked = new TextureWithTransform(bakedTexture);
       
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(renderTexture);

@@ -55,17 +55,17 @@ namespace UnityGLTF
             var material = maps.forMaterial;
             var mesh = maps.forMesh;
             
-            var mergedAlbedoAndAlpha = new Texture2D(maps.albedo.width, maps.albedo.height, TextureFormat.RGBA32, false);
-            var pixels = maps.albedo.GetPixels();
-            var alphaPixels = maps.alpha.GetPixels();
+            var mergedAlbedoAndAlpha = new Texture2D(maps.albedo.map.width, maps.albedo.map.height, TextureFormat.RGBA32, false);
+            var pixels = maps.albedo.map.GetPixels();
+            var alphaPixels = maps.alpha.map.GetPixels();
             for (var i = 0; i < pixels.Length; i++)
                 pixels[i].a = alphaPixels[i].r;
             mergedAlbedoAndAlpha.SetPixels(pixels);
 
-            var orm = new Texture2D(maps.metallic.width, maps.metallic.height, TextureFormat.RGBA32, false);
-            var metallicPixels = maps.metallic.GetPixels();
-            var occlusionPixels = maps.occlusion.GetPixels();
-            var smoothnessPixels = maps.smoothness.GetPixels();
+            var orm = new Texture2D(maps.metallic.map.width, maps.metallic.map.height, TextureFormat.RGBA32, false);
+            var metallicPixels = maps.metallic.map.GetPixels();
+            var occlusionPixels = maps.occlusion.map.GetPixels();
+            var smoothnessPixels = maps.smoothness.map.GetPixels();
             for (var i = 0; i < metallicPixels.Length; i++)
             {
                 var metallicValue = metallicPixels[i].r;
@@ -75,8 +75,8 @@ namespace UnityGLTF
             }
 
             var baseColor = mergedAlbedoAndAlpha.EncodeToPNG();
-            var normal = maps.normal.EncodeToPNG();
-            var emission = maps.emission.EncodeToPNG();
+            var normal = maps.normal.map.EncodeToPNG();
+            var emission = maps.emission.map.EncodeToPNG();
             var ormTexture = orm.EncodeToPNG();
 
             var path = AssetDatabase.GetAssetPath(material);
@@ -174,6 +174,34 @@ namespace UnityGLTF
             // TODO set double sided based on the original material
             // TODO set texture tiling and offset based on the original material
             // HACK for a specific material that stores tiling/offset in a color property
+            
+            if (!maps.metallic.hasDefaultTransform)
+            {
+                mapper.MetallicRoughnessXOffset = maps.metallic.offset;
+                mapper.MetallicRoughnessXScale = maps.metallic.scale;
+            }
+            if (!maps.normal.hasDefaultTransform)
+            {
+                mapper.NormalXOffset = maps.normal.offset;
+                mapper.NormalXScale = maps.normal.scale;
+            }
+            if (!maps.emission.hasDefaultTransform)
+            {
+                mapper.EmissiveXOffset = maps.emission.offset;
+                mapper.EmissiveXScale = maps.emission.scale;
+            }
+            if (!maps.occlusion.hasDefaultTransform)
+            {
+                mapper.OcclusionXOffset = maps.occlusion.offset;
+                mapper.OcclusionXScale = maps.occlusion.scale;
+            }
+            if (!maps.albedo.hasDefaultTransform)
+            {
+                mapper.BaseColorXOffset = maps.albedo.offset;
+                mapper.BaseColorXScale = maps.albedo.scale;
+            }
+            
+            
             var applyTextureTransforms = false;
             if (applyTextureTransforms)
             {
