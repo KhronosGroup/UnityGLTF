@@ -175,32 +175,42 @@ namespace UnityGLTF
             // TODO set texture tiling and offset based on the original material
             // HACK for a specific material that stores tiling/offset in a color property
             
+            bool anyTextureTransform = false;
             if (!maps.metallic.hasDefaultTransform)
             {
                 mapper.MetallicRoughnessXOffset = maps.metallic.offset;
                 mapper.MetallicRoughnessXScale = maps.metallic.scale;
+                anyTextureTransform = true;
             }
             if (!maps.normal.hasDefaultTransform)
             {
                 mapper.NormalXOffset = maps.normal.offset;
                 mapper.NormalXScale = maps.normal.scale;
+                anyTextureTransform = true;
             }
             if (!maps.emission.hasDefaultTransform)
             {
                 mapper.EmissiveXOffset = maps.emission.offset;
                 mapper.EmissiveXScale = maps.emission.scale;
+                anyTextureTransform = true;
             }
             if (!maps.occlusion.hasDefaultTransform)
             {
                 mapper.OcclusionXOffset = maps.occlusion.offset;
                 mapper.OcclusionXScale = maps.occlusion.scale;
+                anyTextureTransform = true;
             }
             if (!maps.albedo.hasDefaultTransform)
             {
                 mapper.BaseColorXOffset = maps.albedo.offset;
                 mapper.BaseColorXScale = maps.albedo.scale;
+                anyTextureTransform = true;
             }
-            
+
+            if (anyTextureTransform)
+            {
+                newMaterial.EnableKeyword("_TEXTURE_TRANSFORM_ON");
+            }
             
             var applyTextureTransforms = false;
             if (applyTextureTransforms)
