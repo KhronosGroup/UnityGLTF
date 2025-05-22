@@ -117,6 +117,10 @@ namespace UnityGLTF
             var material = Object.Instantiate(sourceMaterial);
             material.hideFlags = HideFlags.DontSave;
             
+            // HACK: disable a view-dependant effect on a particular shader
+            if (material.HasFloat("_Fresnel_Normal_Overide"))
+                material.SetFloat("_Fresnel_Normal_Overide", 0f);
+            
             var pair = (material.shader, uvChannel);
             if (!PatchedShaders.TryGetValue(pair, out var patched))
             {
@@ -239,7 +243,10 @@ namespace UnityGLTF
         private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out TextureWithTransform baked)
         {
             bool isLinear = IsDebugMaterialModeInLinear(mode);
-            var bakeMat = new Material(mat);
+            var material = new Material(mat);
+            // HACK: disable a view-dependant effect on a particular shader
+            if (material.HasFloat("_Fresnel_Normal_Overide"))
+                material.SetFloat("_Fresnel_Normal_Overide", 0f);
             
             var resetTextureTransforms = false;
             if (resetTextureTransforms)
@@ -259,7 +266,7 @@ namespace UnityGLTF
                 {
                     if (mat.HasProperty(prop))
                     {
-                        bakeMat.SetColor(prop, new Color(1, 1, 0, 0));
+                        material.SetColor(prop, new Color(1, 1, 0, 0));
                     }
                 }
             }
@@ -279,7 +286,7 @@ namespace UnityGLTF
             
             // Render mesh with bakeMat to bakedTexture
             RenderTexture renderTexture = RenderTexture.GetTemporary(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32, isLinear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
-            Graphics.Blit(bakedTexture, renderTexture, bakeMat, 0);
+            Graphics.Blit(bakedTexture, renderTexture, material, 0);
            
             RenderTexture.active = renderTexture;
 
@@ -289,7 +296,7 @@ namespace UnityGLTF
       
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(renderTexture);
-            Object.DestroyImmediate(bakeMat);
+            Object.DestroyImmediate(material);
             
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
         }
