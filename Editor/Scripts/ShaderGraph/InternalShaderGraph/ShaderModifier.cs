@@ -99,6 +99,8 @@ namespace UnityGLTF
 
                     if (foundTexCoord != -1 && foundTexCoord < indexOfReturn)
                     {
+                        indexOfReturn = shaderSource.IndexOf("return output;", index, StringComparison.Ordinal);
+
                         switch (mode) {
                             case Mode.ClipSpace:
                                 shaderSource = shaderSource.Insert(indexOfReturn - 1,
