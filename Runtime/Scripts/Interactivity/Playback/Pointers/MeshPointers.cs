@@ -12,27 +12,54 @@ namespace UnityGLTF.Interactivity.Playback
         public ReadOnlyPointer<int> weightsLength;
         public Pointer<float>[] weights;
 
-        public MeshPointers(in MeshData data)
+        public MeshPointers(in MeshData data, IReadOnlyList<NodeData> nodes)
         {
-            var mesh = data.mesh;
-            if(mesh.Weights == null || mesh.Weights.Count == 0)
+            var skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer smr;
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                smr = nodes[i].skinnedMeshRenderer;
+                if (smr == null)
+                    continue;
+
+                if (smr.sharedMesh != data.unityMesh)
+                    continue;
+
+                skinnedMeshRenderers.Add(smr);
+            }
+
+            if(skinnedMeshRenderers.Count <= 0)
             {
                 weightsLength = new ReadOnlyPointer<int>(() => 0);
                 weights = new Pointer<float>[0];
                 return;
             }
 
-            weightsLength = new ReadOnlyPointer<int>(() => mesh.Weights.Count);
-            weights = new Pointer<float>[mesh.Weights.Count];
+            smr = skinnedMeshRenderers[0];
+            var blendShapeCount = data.unityMesh.blendShapeCount;
 
+            weightsLength = new ReadOnlyPointer<int>(() => blendShapeCount);
+            weights = new Pointer<float>[blendShapeCount];
+
+            // TODO: Figure out how this should play with node.weight modifications.
+            // Right now this will overwrite those completely.
             for (int i = 0; i < weights.Length; i++)
             {
                 weights[i] = new Pointer<float>()
                 {
-                    setter = (v) => { }, // TODO: Figure this out, Unity does not handle blend shapes like GLTF does so setting it directly on a mesh is difficult.
-                    getter = () => (float)mesh.Weights[i],
+                    setter = (v) => SetAllBlendShapeWeights(i,v),
+                    getter = () => smr.GetBlendShapeWeight(i),
                     evaluator = (a, b, t) => math.lerp(a, b, t)
                 };
+            }
+
+            void SetAllBlendShapeWeights(int index, float value)
+            {
+                for (int i = 0; i < skinnedMeshRenderers.Count; i++)
+                {
+                    skinnedMeshRenderers[i].SetBlendShapeWeight(index, value);
+                }
             }
         }
 

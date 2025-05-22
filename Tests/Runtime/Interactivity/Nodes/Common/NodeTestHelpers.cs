@@ -405,7 +405,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var pointerResolver = new PointerResolver();
 
-            pointerResolver.CreateScenePointers(importer.Root);
+            pointerResolver.RegisterSceneData(importer.Root);
 
             var meshes = importer.MeshCache;
             var materials = importer.MaterialCache;
@@ -444,7 +444,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             if (importer == null || importer.AnimationCache.IsNullOrEmpty())
                 return;
 
-            var animationWrapper = importer.SceneParent.gameObject.AddComponent<AnimationWrapper>();
+            var animationWrapper = importer.SceneParent.gameObject.AddComponent<GLTFInteractivityAnimationWrapper>();
             eng.SetAnimationWrapper(animationWrapper, importer.LastLoadedScene.GetComponents<Animation>()[0]);
         }
 
