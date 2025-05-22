@@ -29,7 +29,7 @@ namespace UnityGLTF.Interactivity.Playback
         }
     }
 
-    public class AnimationWrapper : MonoBehaviour
+    public class GLTFInteractivityAnimationWrapper : MonoBehaviour
     {
         public Animation animationComponent { get; private set; }
 

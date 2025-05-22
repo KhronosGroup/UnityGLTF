@@ -29,7 +29,7 @@ namespace UnityGLTF.Interactivity.Playback
             Util.Log($"InteractivityExportContext::AfterSceneExport ");
 
             if (exporter.RootTransforms == null) return;
-            EventWrapper wrapper = null;
+            GLTFInteractivityPlayback wrapper = null;
             Transform t;
 
             // This assumes that EventWrapper exists on one of the root transforms which I think must be true due to how we import.

@@ -12,7 +12,7 @@ namespace UnityGLTF.Interactivity.Playback
         public ReadOnlyPointer<float> minTime;
         public ReadOnlyPointer<float> maxTime;
 
-        public AnimationPointers(AnimationWrapper wrapper, int animationIndex)
+        public AnimationPointers(GLTFInteractivityAnimationWrapper wrapper, int animationIndex)
         {
             isPlaying = new ReadOnlyPointer<bool>(() => wrapper.IsAnimationPlaying(animationIndex));
             playhead = new ReadOnlyPointer<float>(() => wrapper.GetPlayhead(animationIndex));
