@@ -11,7 +11,7 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.LabelField("Handles all Unity event hooks for interactive GLTF playback.");
+            EditorGUILayout.LabelField("Handles the onStart and onTick events for this interactive GLTF.");
             EditorGUILayout.LabelField("Make sure colliders are enabled in the importer for hover/selection events.");
         }
     }
