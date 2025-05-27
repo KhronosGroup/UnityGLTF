@@ -281,6 +281,18 @@
         },
         {
             "m_Id": "3b9a6dfa91a44e5186c28dd828bf48df"
+        },
+        {
+            "m_Id": "4120bdb05cbb4b5389f2caacc87ea305"
+        },
+        {
+            "m_Id": "1167dc7bd10b4fcabff91364c9224e23"
+        },
+        {
+            "m_Id": "ec09b37a19a64a749c918d686211a7f0"
+        },
+        {
+            "m_Id": "bb22081c982e445081207913595a05e0"
         }
     ],
     "m_Keywords": [
@@ -6126,7 +6138,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
     "m_ObjectId": "0480ed265f294a5eb631f0f7670f543d",
     "m_Id": 0,
-    "m_DisplayName": "Sheen Color Map Tiling/Scale",
+    "m_DisplayName": "Sheen Color Map Tiling/Offset",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -7620,6 +7632,33 @@
         "m_SerializableColors": []
     },
     "m_SerializedDescriptor": "SurfaceDescription.Specular"
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector4ShaderProperty",
+    "m_ObjectId": "1167dc7bd10b4fcabff91364c9224e23",
+    "m_Guid": {
+        "m_GuidSerialized": "14948459-4b68-4336-ac79-1feaa2ba66a0"
+    },
+    "m_Name": "Clearcoat Normal Map Tiling/Offset",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Clearcoat Normal Map Tiling/Offset",
+    "m_DefaultReferenceName": "_Clearcoat_Normal_Map_Tiling_Offset",
+    "m_OverrideReferenceName": "clearcoatNormalTexture_ST",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 0.0,
+        "w": 0.0
+    }
 }
 
 {
@@ -11389,10 +11428,10 @@
     "m_Guid": {
         "m_GuidSerialized": "153d1dd7-3df3-45eb-993f-36aa22cd8c34"
     },
-    "m_Name": "Anisotropy Map Tiling/Scale",
+    "m_Name": "Anisotropy Map Tiling/Offset",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Anisotropy Map Tiling/Scale",
-    "m_DefaultReferenceName": "_Anisotropy_Map_Tiling_Scale",
+    "m_RefNameGeneratedByDisplayName": "Anisotropy Map Tiling/Offset",
+    "m_DefaultReferenceName": "_Anisotropy_Map_Tiling_Offset",
     "m_OverrideReferenceName": "anisotropyTexture_ST",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -11402,8 +11441,8 @@
     "hlslDeclarationOverride": 0,
     "m_Hidden": false,
     "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
+        "x": 1.0,
+        "y": 1.0,
         "z": 0.0,
         "w": 0.0
     }
@@ -13583,6 +13622,35 @@
 }
 
 {
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
+    "m_ObjectId": "4120bdb05cbb4b5389f2caacc87ea305",
+    "m_Guid": {
+        "m_GuidSerialized": "4883043f-95e8-4f31-a1e4-9527b3a00eb7"
+    },
+    "m_Name": "Clearcoat Normal Map",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Clearcoat Normal Map",
+    "m_DefaultReferenceName": "_Clearcoat_Normal_Map",
+    "m_OverrideReferenceName": "clearcoatNormalTexture",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": {
+        "m_SerializedTexture": "{\"texture\":{\"instanceID\":0}}",
+        "m_Guid": ""
+    },
+    "isMainTexture": false,
+    "useTilingAndOffset": true,
+    "m_Modifiable": true,
+    "m_DefaultType": 3
+}
+
+{
     "m_SGVersion": 1,
     "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
     "m_ObjectId": "417bfe74fb994ff8b15125f41148d8c6",
@@ -14038,10 +14106,10 @@
     "m_Guid": {
         "m_GuidSerialized": "b20b82ce-c983-4948-a0fc-4f5fa5967ff3"
     },
-    "m_Name": "Sheen Roughness Map TIling/Scale",
+    "m_Name": "Sheen Roughness Map TIling/Offset",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Sheen Roughness Map TIling/Scale",
-    "m_DefaultReferenceName": "_Sheen_Roughness_Map_TIling_Scale",
+    "m_RefNameGeneratedByDisplayName": "Sheen Roughness Map TIling/Offset",
+    "m_DefaultReferenceName": "_Sheen_Roughness_Map_TIling_Offset",
     "m_OverrideReferenceName": "sheenRoughnessTexture_ST",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -17460,10 +17528,10 @@
     "m_Guid": {
         "m_GuidSerialized": "37e62578-1ffd-4f69-ae04-28a806b32b39"
     },
-    "m_Name": "Sheen Color Map Tiling/Scale",
+    "m_Name": "Sheen Color Map Tiling/Offset",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Sheen Color Map Tiling/Scale",
-    "m_DefaultReferenceName": "_Sheen_Color_Map_Tiling_Scale",
+    "m_RefNameGeneratedByDisplayName": "Sheen Color Map Tiling/Offset",
+    "m_DefaultReferenceName": "_Sheen_Color_Map_Tiling_Offset",
     "m_OverrideReferenceName": "sheenColorTexture_ST",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -20379,7 +20447,7 @@
         "m_Guid": ""
     },
     "isMainTexture": false,
-    "useTilingAndOffset": false,
+    "useTilingAndOffset": true,
     "m_Modifiable": true,
     "m_DefaultType": 0
 }
@@ -26035,7 +26103,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
     "m_ObjectId": "a5cab5c29f704fc99631fd9336dd4238",
     "m_Id": 0,
-    "m_DisplayName": "Sheen Roughness Map TIling/Scale",
+    "m_DisplayName": "Sheen Roughness Map TIling/Offset",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -28354,6 +28422,33 @@
         "e31": 0.0,
         "e32": 0.0,
         "e33": 1.0
+    }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "bb22081c982e445081207913595a05e0",
+    "m_Guid": {
+        "m_GuidSerialized": "b1381fe0-6995-4c70-9e6b-71d395854b22"
+    },
+    "m_Name": "Clearcoat Normal Map UV",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Clearcoat Normal Map UV",
+    "m_DefaultReferenceName": "_Clearcoat_Normal_Map_UV",
+    "m_OverrideReferenceName": "clearcoatNormalTextureTexCoord",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 0,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
     }
 }
 
@@ -35066,6 +35161,33 @@
 }
 
 {
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "ec09b37a19a64a749c918d686211a7f0",
+    "m_Guid": {
+        "m_GuidSerialized": "4f74ed6c-1c96-4f3a-aed3-03f0314d144d"
+    },
+    "m_Name": "Clearcoat Normal Map Rotation",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Clearcoat Normal Map Rotation",
+    "m_DefaultReferenceName": "_Clearcoat_Normal_Map_Rotation",
+    "m_OverrideReferenceName": "clearcoatNormalTextureRotation",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_Value": 0.0,
+    "m_FloatType": 0,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    }
+}
+
+{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
     "m_ObjectId": "ec0cf97e6f8a45b6bc27980002dcfbc3",
@@ -35670,6 +35792,18 @@
         },
         {
             "m_Id": "14ec0a08cca146a98862d31183f587f4"
+        },
+        {
+            "m_Id": "4120bdb05cbb4b5389f2caacc87ea305"
+        },
+        {
+            "m_Id": "1167dc7bd10b4fcabff91364c9224e23"
+        },
+        {
+            "m_Id": "ec09b37a19a64a749c918d686211a7f0"
+        },
+        {
+            "m_Id": "bb22081c982e445081207913595a05e0"
         },
         {
             "m_Id": "758a2d34271948b5bbec3c69ff668cd6"
