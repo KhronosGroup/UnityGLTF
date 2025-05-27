@@ -116,9 +116,17 @@ namespace UnityGLTF.Interactivity.Playback
                     eng.SetAnimationWrapper(animationWrapper, animationComponents[0]);
                 }
 
-                var eventWrapper = sceneObject.AddComponent<GLTFInteractivityPlayback>();
+                var playback = sceneObject.AddComponent<GLTFInteractivityPlayback>();
 
-                eventWrapper.SetData(eng, interactivityGraph.extensionData);
+                playback.SetData(eng, interactivityGraph.extensionData);
+
+                var colliders = sceneObject.GetComponentsInChildren<Collider>(true);
+
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    var wrapper = colliders[i].gameObject.AddComponent<GLTFInteractivityEventWrapper>();
+                    wrapper.playback = playback;
+                }
 
                 if (!Application.isPlaying)
                 {
