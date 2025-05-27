@@ -40,7 +40,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             // TODO: Add support for stopPropagation once we understand what it actually does.
             // I've read that part of the spec a handful of times and still am not sure.
-            var t = args.hit.transform;
+            var t = args.go.transform;
             var go = t.gameObject;
             var nodeIndex = engine.pointerResolver.IndexOf(go);
 
