@@ -8,6 +8,8 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdFlowIn = "in";
         [FlowOutSocketDescription]
         public const string IdFlowOut = "out";
+        [FlowOutSocketDescription]
+        public const string IdFlowOutError = "err";
         
         [InputSocketDescription]
         public const string IdValue = "value";

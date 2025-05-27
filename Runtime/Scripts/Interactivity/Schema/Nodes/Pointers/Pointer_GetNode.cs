@@ -7,6 +7,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescription()]
         public const string IdValue = "value";
         
+        [OutputSocketDescription(GltfTypes.Bool)]
+        public const string IdIsValid = "isValid";
+        
         [ConfigDescription]
         public const string IdPointer = "pointer";
         [ConfigDescription]
