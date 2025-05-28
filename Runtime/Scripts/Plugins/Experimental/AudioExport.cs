@@ -6,21 +6,31 @@ using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 namespace UnityGLTF.Plugins
 {
     [NonRatifiedPlugin]
     public class AudioExport: GLTFExportPlugin
     {
+#if !UNITY_EDITOR
+        public override bool Enabled => false;
+#endif
         public override bool EnabledByDefault => false;
         public override string DisplayName => "KHR_audio_emitter";
         public override string Description => "Exports positional and global audio sources. Only exporting from the editor is supported at this time.";
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
+#if UNITY_EDITOR
             return new AudioExportContext(context);
+#else
+            Debug.LogWarning("Audio export is only supported in the Unity Editor.");
+            return null;    
+#endif
         }
     }
     
+#if UNITY_EDITOR 
     public class AudioExportContext: GLTFExportPluginContext
     {
         private List<AudioDescription> _audioSourceIds = new();
@@ -220,5 +230,5 @@ namespace UnityGLTF.Plugins
             gltfRoot.Scenes[0].AddExtension(KHR_SceneAudioEmittersRef.ExtensionName, _sceneExtension);
         }
     }
-}
 #endif
+}
