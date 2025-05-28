@@ -1,5 +1,6 @@
 using GLTF.Schema;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityGLTF.Plugins;
 
@@ -10,6 +11,8 @@ namespace UnityGLTF.Interactivity.Playback
         internal readonly InteractivityImportPlugin settings;
         private PointerResolver _pointerResolver;
         private GLTFImportContext _context;
+        private InteractivityGraphExtension _interactivityGraph;
+        private bool _hasSelectOrHoverNode;
 
         public InteractivityImportContext(InteractivityImportPlugin interactivityLoader, GLTFImportContext context)
         {
@@ -36,6 +39,49 @@ namespace UnityGLTF.Interactivity.Playback
         /// </summary>
         public override void OnAfterImportRoot(GLTFRoot gltfRoot)
         {
+            var extensions = _context.SceneImporter.Root?.Extensions;
+
+            if (extensions == null)
+            {
+                Util.Log("Extensions are null.");
+                return;
+            }
+
+            if (!extensions.TryGetValue(InteractivityGraphExtension.EXTENSION_NAME, out IExtension extensionValue))
+            {
+                Util.Log("Extensions does not contain interactivity.");
+                return;
+            }
+
+            if (extensionValue is not InteractivityGraphExtension interactivityGraph)
+            {
+                Util.Log("Extensions does not contain a graph.");
+                return;
+            }
+
+            Util.Log("Extensions contains interactivity.");
+
+            _interactivityGraph = interactivityGraph;
+
+            var graph = interactivityGraph.extensionData.graphs[interactivityGraph.extensionData.defaultGraphIndex];
+
+            for (int i = 0; i < graph.declarations.Count; i++)
+            {
+                switch(graph.declarations[i].op)
+                {
+                    case "event/onSelect":
+                    case "event/onHoverIn":
+                    case "event/onHoverOut":
+                        _hasSelectOrHoverNode = true;
+                        break;
+                }
+            }
+
+            if(!_hasSelectOrHoverNode)
+                return;
+
+            Util.Log("Select or hover node present.");
+
             Util.Log($"InteractivityImportContext::OnAfterImportRoot Complete: {gltfRoot.ToString()}");
         }
 
@@ -46,8 +92,43 @@ namespace UnityGLTF.Interactivity.Playback
 
         public override void OnAfterImportNode(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
         {
+            AddColliderIfNecessary(node, nodeIndex, nodeObject);
+       
             Util.Log($"InteractivityImportContext::OnAfterImportNode Complete: {node.ToString()}");
             _pointerResolver.RegisterNode(node, nodeIndex, nodeObject);
+        }
+
+        private void AddColliderIfNecessary(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
+        {
+            if (!_hasSelectOrHoverNode || nodeObject.TryGetComponent(out Collider collider))
+                return;
+
+            Mesh mesh = null;
+
+            if (nodeObject.TryGetComponent(out MeshFilter mf))
+                mesh = mf.sharedMesh;
+            else if (nodeObject.TryGetComponent(out SkinnedMeshRenderer smr))
+                mesh = smr.sharedMesh;
+
+            if (mesh == null)
+                return;
+
+            var selectable = true;
+            var hoverable = true;
+
+            if (node.Extensions != null)
+            {
+                if (node.Extensions.TryGetValue(GLTF.Schema.KHR_node_selectability_Factory.EXTENSION_NAME, out var selectableExtension))
+                    selectable = (selectableExtension as GLTF.Schema.KHR_node_selectability).selectable;
+
+                if (node.Extensions.TryGetValue(GLTF.Schema.KHR_node_hoverability_Factory.EXTENSION_NAME, out var hoverableExtension))
+                    hoverable = (hoverableExtension as GLTF.Schema.KHR_node_hoverability).hoverable;
+            }
+
+            if (!selectable && !hoverable)
+                return;
+            
+            nodeObject.AddComponent<BoxCollider>();
         }
 
         public override void OnAfterImportMesh(GLTFMesh mesh, int meshIndex, Mesh meshObject)
@@ -77,35 +158,18 @@ namespace UnityGLTF.Interactivity.Playback
         {
             Util.Log($"InteractivityImportContext::OnAfterImportScene Complete: {scene.Extensions}");
 
-            var extensions = _context.SceneImporter.Root?.Extensions;
-
-            if (extensions == null)
-            {
-                Util.Log("Extensions are null.");
+            if (_interactivityGraph == null)
                 return;
-            }
-
-            if (!extensions.TryGetValue(InteractivityGraphExtension.EXTENSION_NAME, out IExtension extensionValue))
-            {
-                Util.Log("Extensions does not contain interactivity.");
-                return;
-            }
-
-            if (extensionValue is not InteractivityGraphExtension interactivityGraph)
-            {
-                Util.Log("Extensions does not contain a graph.");
-                return;
-            }
 
             try
             {
                 _pointerResolver.RegisterSceneData(_context.SceneImporter.Root);
                 _pointerResolver.CreatePointers();
 
-                var defaultGraphIndex = interactivityGraph.extensionData.defaultGraphIndex;
+                var defaultGraphIndex = _interactivityGraph.extensionData.defaultGraphIndex;
                 // Can be used to inject a graph created from code in a hacky way for testing.
                 //interactivityGraph.extensionData.graphs[defaultGraphIndex] = TestGraph.CreateTestGraph();
-                var defaultGraph = interactivityGraph.extensionData.graphs[defaultGraphIndex];
+                var defaultGraph = _interactivityGraph.extensionData.graphs[defaultGraphIndex];
                 var eng = new BehaviourEngine(defaultGraph, _pointerResolver);
 
                 GLTFInteractivityAnimationWrapper animationWrapper = null;
@@ -118,7 +182,7 @@ namespace UnityGLTF.Interactivity.Playback
 
                 var playback = sceneObject.AddComponent<GLTFInteractivityPlayback>();
 
-                playback.SetData(eng, interactivityGraph.extensionData);
+                playback.SetData(eng, _interactivityGraph.extensionData);
 
                 var colliders = sceneObject.GetComponentsInChildren<Collider>(true);
 
@@ -128,10 +192,10 @@ namespace UnityGLTF.Interactivity.Playback
                     wrapper.playback = playback;
                 }
 
-                if (!Application.isPlaying)
+                if (_context.AssetContext != null)
                 {
                     var data = sceneObject.AddComponent<GLTFInteractivityData>();
-                    data.interactivityJson = interactivityGraph.json;
+                    data.interactivityJson = _interactivityGraph.json;
                     data.animationWrapper = animationWrapper;
                     data.pointerReferences = _pointerResolver;
                 }
