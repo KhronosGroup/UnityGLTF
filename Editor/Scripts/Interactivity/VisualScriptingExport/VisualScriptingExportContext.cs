@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Interactivity.VisualScripting.Export;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {
@@ -15,8 +16,6 @@ namespace UnityGLTF.Interactivity.VisualScripting
     using UnityEngine;
     using Unity.VisualScripting;
     using UnityGLTF;
-    using UnityGLTF.Plugins;
-    
     
     public class VisualScriptingExportContext: InteractivityExportContext
     {
@@ -78,12 +77,11 @@ namespace UnityGLTF.Interactivity.VisualScripting
         private List<Scene> _scenes = new List<Scene>();
         
         internal ExportGraph currentGraphProcessing { get; private set; } = null;
-    
-        public VisualScriptingExportPlugin plugin;
         
-        public VisualScriptingExportContext(VisualScriptingExportPlugin plugin) 
+        public bool cleanUpAndOptimizeExportedGraph = true;
+        
+        public VisualScriptingExportContext() 
         {
-            this.plugin = plugin;
         }
         
         private Scene GetCurrentScene()
@@ -431,7 +429,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             
             CheckForCircularFlows();
             
-            if (plugin.cleanUpAndOptimizeExportedGraph)
+            if (cleanUpAndOptimizeExportedGraph)
                 CleanUp();
             
             // Final Topological Sort
