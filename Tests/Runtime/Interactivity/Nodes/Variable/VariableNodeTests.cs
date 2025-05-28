@@ -168,25 +168,25 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 ), expected4x4
             );
 
-            sequence.AddFlow(boolBranch, ConstStrings.Numbers[0]);
-            sequence.AddFlow(intBranch, ConstStrings.Numbers[1]);
-            sequence.AddFlow(floatBranch, ConstStrings.Numbers[2]);
-            sequence.AddFlow(float2Branch, ConstStrings.Numbers[3]);
-            sequence.AddFlow(float3Branch, ConstStrings.Numbers[4]);
-            sequence.AddFlow(float4Branch, ConstStrings.Numbers[5]);
-            sequence.AddFlow(float2x2Branch, ConstStrings.Numbers[6]);
-            sequence.AddFlow(float3x3Branch, ConstStrings.Numbers[7]);
-            sequence.AddFlow(float4x4Branch, ConstStrings.Numbers[8]);
+            sequence.AddFlow(boolBranch, ConstStrings.GetNumberString(0));
+            sequence.AddFlow(intBranch, ConstStrings.GetNumberString(1));
+            sequence.AddFlow(floatBranch, ConstStrings.GetNumberString(2));
+            sequence.AddFlow(float2Branch, ConstStrings.GetNumberString(3));
+            sequence.AddFlow(float3Branch, ConstStrings.GetNumberString(4));
+            sequence.AddFlow(float4Branch, ConstStrings.GetNumberString(5));
+            sequence.AddFlow(float2x2Branch, ConstStrings.GetNumberString(6));
+            sequence.AddFlow(float3x3Branch, ConstStrings.GetNumberString(7));
+            sequence.AddFlow(float4x4Branch, ConstStrings.GetNumberString(8));
 
-            set.AddValue(ConstStrings.Numbers[0], expectedb);
-            set.AddValue(ConstStrings.Numbers[1], expectedi);
-            set.AddValue(ConstStrings.Numbers[2], expectedf);
-            set.AddValue(ConstStrings.Numbers[3], expected2);
-            set.AddValue(ConstStrings.Numbers[4], expected3);
-            set.AddValue(ConstStrings.Numbers[5], expected4);
-            set.AddValue(ConstStrings.Numbers[6], expected2x2);
-            set.AddValue(ConstStrings.Numbers[7], expected3x3);
-            set.AddValue(ConstStrings.Numbers[8], expected4x4);
+            set.AddValue(ConstStrings.GetNumberString(0), expectedb);
+            set.AddValue(ConstStrings.GetNumberString(1), expectedi);
+            set.AddValue(ConstStrings.GetNumberString(2), expectedf);
+            set.AddValue(ConstStrings.GetNumberString(3), expected2);
+            set.AddValue(ConstStrings.GetNumberString(4), expected3);
+            set.AddValue(ConstStrings.GetNumberString(5), expected4);
+            set.AddValue(ConstStrings.GetNumberString(6), expected2x2);
+            set.AddValue(ConstStrings.GetNumberString(7), expected3x3);
+            set.AddValue(ConstStrings.GetNumberString(8), expected4x4);
 
             set.AddConfiguration(ConstStrings.VARIABLES, new int[] {
                 boolIndex,

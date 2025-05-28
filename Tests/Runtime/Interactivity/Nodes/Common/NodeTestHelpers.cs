@@ -269,7 +269,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                         var f2Val = ((Property<float2>)expected.Value).value;
                         for (int i = 0; i < 2; i++)
                         {
-                            CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[i], f2Val[i], subGraph);
+                            CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(i), f2Val[i], subGraph);
                         }
                         break;
                     case Property<float3>:
@@ -277,7 +277,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                         var f3Val = ((Property<float3>)expected.Value).value;
                         for (int i = 0; i < 3; i++)
                         {
-                            CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[i], f3Val[i], subGraph);
+                            CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(i), f3Val[i], subGraph);
                         }
                         break;
                     case Property<float4>:
@@ -285,51 +285,51 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                         var f4Val = ((Property<float4>)expected.Value).value;
                         for (int i = 0; i < 4; i++)
                         {
-                            CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[i], f4Val[i], subGraph);
+                            CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(i), f4Val[i], subGraph);
                         }
                         break;
                     case Property<float2x2>:
                         node = CreateExtractNode(g, "math/extract2x2", opNode, out value, out node, expected);
                         var f2x2Val = ((Property<float2x2>)expected.Value).value;
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[0], f2x2Val.c0.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[1], f2x2Val.c0.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[2], f2x2Val.c1.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[3], f2x2Val.c1.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(0), f2x2Val.c0.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(1), f2x2Val.c0.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(2), f2x2Val.c1.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(3), f2x2Val.c1.y, subGraph);
                         break;
 
                     case Property<float3x3>:
                         node = CreateExtractNode(g, "math/extract3x3", opNode, out value, out node, expected);
                         var f3x3Val = ((Property<float3x3>)expected.Value).value;
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[0], f3x3Val.c0.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[1], f3x3Val.c0.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[2], f3x3Val.c0.z, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[3], f3x3Val.c1.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[4], f3x3Val.c1.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[5], f3x3Val.c1.z, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[6], f3x3Val.c2.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[7], f3x3Val.c2.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[8], f3x3Val.c2.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(0), f3x3Val.c0.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(1), f3x3Val.c0.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(2), f3x3Val.c0.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(3), f3x3Val.c1.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(4), f3x3Val.c1.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(5), f3x3Val.c1.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(6), f3x3Val.c2.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(7), f3x3Val.c2.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(8), f3x3Val.c2.z, subGraph);
                         break;
 
                     case Property<float4x4>:
                         node = CreateExtractNode(g, "math/extract4x4", opNode, out value, out node, expected);
                         var f4x4Val = ((Property<float4x4>)expected.Value).value;
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[0], f4x4Val.c0.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[1], f4x4Val.c0.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[2], f4x4Val.c0.z, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[3], f4x4Val.c0.w, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[4], f4x4Val.c1.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[5], f4x4Val.c1.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[6], f4x4Val.c1.z, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[7], f4x4Val.c1.w, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[8], f4x4Val.c2.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[9], f4x4Val.c2.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[10], f4x4Val.c2.z, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[11], f4x4Val.c2.w, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[12], f4x4Val.c3.x, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[13], f4x4Val.c3.y, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[14], f4x4Val.c3.z, subGraph);
-                        CreateSingleValueTestSubGraph(g, node, ConstStrings.Numbers[15], f4x4Val.c3.w, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(0), f4x4Val.c0.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(1), f4x4Val.c0.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(2), f4x4Val.c0.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(3), f4x4Val.c0.w, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(4), f4x4Val.c1.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(5), f4x4Val.c1.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(6), f4x4Val.c1.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(7), f4x4Val.c1.w, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(8), f4x4Val.c2.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(9), f4x4Val.c2.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(10), f4x4Val.c2.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(11), f4x4Val.c2.w, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(12), f4x4Val.c3.x, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(13), f4x4Val.c3.y, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(14), f4x4Val.c3.z, subGraph);
+                        CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(15), f4x4Val.c3.w, subGraph);
                         break;
 
                 }

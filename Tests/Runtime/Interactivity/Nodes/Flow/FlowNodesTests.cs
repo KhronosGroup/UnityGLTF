@@ -210,7 +210,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                     branch.AddFlow(complete, ConstStrings.TRUE);
                 }
 
-                sequenceNode.AddFlow(branch, ConstStrings.Numbers[i]);
+                sequenceNode.AddFlow(branch, ConstStrings.GetNumberString(i));
             }
 
             return g;
@@ -320,7 +320,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             for (int i = 0; i < outputFlowOrder.Length; i++)
             {
                 var subGraphEntry = CreateSwitchFlowSubGraph(g, outputFlowOrder[i], 1 << i, flowIndexVariableIndex, bitmaskVariableIndex);
-                switchNode.AddFlow(subGraphEntry, ConstStrings.Numbers[i]);
+                switchNode.AddFlow(subGraphEntry, ConstStrings.GetNumberString(i));
 
                 expected |= 1 << i;
             }
