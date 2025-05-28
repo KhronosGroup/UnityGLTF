@@ -36,6 +36,10 @@ namespace UnityGLTF.Interactivity.Playback
             foreach (var transform in exporter.RootTransforms)
             {
                 t = transform;
+
+                if (t.TryGetComponent(out wrapper))
+                    break;
+
                 while (t.parent != null)
                 {
                     if (t.parent.TryGetComponent(out wrapper))

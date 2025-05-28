@@ -684,7 +684,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float2>(v) });
             for (int i = 0; i < 2; i++)
             {
-                outputs.Add(ConstStrings.Numbers[i], new Property<float>(v[i]));
+                outputs.Add(ConstStrings.GetNumberString(i), new Property<float>(v[i]));
             }
 
             QueueTest("math/extract2", "Extract2", "Extract2", "Tests Extract2 operation.", CreateSelfContainedTestGraph("math/extract2", inputs, outputs, ComparisonType.Equals));
@@ -701,7 +701,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float3>(v) });
             for (int i = 0; i < 3; i++)
             {
-                outputs.Add(ConstStrings.Numbers[i], new Property<float>(v[i]));
+                outputs.Add(ConstStrings.GetNumberString(i), new Property<float>(v[i]));
             }
 
             QueueTest("math/extract3", "Extract3", "Extract3", "Tests Extract3 operation.", CreateSelfContainedTestGraph("math/extract3", inputs, outputs, ComparisonType.Equals));
@@ -717,7 +717,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float4>(v) });
             for (int i = 0; i < 4; i++)
             {
-                outputs.Add(ConstStrings.Numbers[i], new Property<float>(v[i]));
+                outputs.Add(ConstStrings.GetNumberString(i), new Property<float>(v[i]));
             }
 
             QueueTest("math/extract4", "Extract4", "Extract4", "Tests Extract4 operation.", CreateSelfContainedTestGraph("math/extract4", inputs, outputs, ComparisonType.Equals));
@@ -734,7 +734,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float2x2>(v) });
             for (int i = 0; i < 4; i++)
             {
-                outputs.Add(ConstStrings.Numbers[i], new Property<float>(v[i / 2][i % 2]));
+                outputs.Add(ConstStrings.GetNumberString(i), new Property<float>(v[i / 2][i % 2]));
             }
 
             QueueTest("math/extract2x2", "Extract2x2", "Extract2x2", "Tests Extract2x2 operation.", CreateSelfContainedTestGraph("math/extract2x2", inputs, outputs, ComparisonType.Equals));
@@ -751,7 +751,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float3x3>(v) });
             for (int i = 0; i < 9; i++)
             {
-                outputs.Add(ConstStrings.Numbers[i], new Property<float>(v[i / 3][i % 3]));
+                outputs.Add(ConstStrings.GetNumberString(i), new Property<float>(v[i / 3][i % 3]));
             }
 
             QueueTest("math/extract3x3", "Extract3x3", "Extract3x3", "Tests Extract3x3 operation.", CreateSelfContainedTestGraph("math/extract3x3", inputs, outputs, ComparisonType.Equals));
@@ -768,7 +768,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float4x4>(v) });
             for (int i = 0; i < 16; i++)
             {
-                outputs.Add(ConstStrings.Numbers[i], new Property<float>(v[i / 4][i % 4]));
+                outputs.Add(ConstStrings.GetNumberString(i), new Property<float>(v[i / 4][i % 4]));
             }
 
             QueueTest("math/extract4x4", "Extract4x4", "Extract4x4", "Tests Extract4x4 operation.", CreateSelfContainedTestGraph("math/extract4x4", inputs, outputs, ComparisonType.Equals));

@@ -56,7 +56,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             for (int i = 0; i < outputs - 1; i++)
             {
                 var subGraphEntry = CreateMultiGateFlowSubGraph(g, 1 << i, flowIndexVariableIndex, bitmaskVariableIndex);
-                multiGate.AddFlow(subGraphEntry, ConstStrings.Numbers[i]);
+                multiGate.AddFlow(subGraphEntry, ConstStrings.GetNumberString(i));
 
                 expected |= 1 << i;
             }
@@ -72,7 +72,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             eq.AddConnectedValue(ConstStrings.A, bitmaskGet);
             eq.AddValue(ConstStrings.B, expected);
 
-            multiGate.AddFlow(branch, ConstStrings.Numbers[outputs - 1]);
+            multiGate.AddFlow(branch, ConstStrings.GetNumberString(outputs - 1));
 
             var fail = g.CreateNode("event/send");
             var completed = g.CreateNode("event/send");
@@ -139,7 +139,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             for (int i = 0; i < outputs; i++)
             {
                 Node outFlowCounter = CreateVariableIncrementSubgraph(g, outFlowActivationsVariable);
-                multiGate.AddFlow(outFlowCounter, ConstStrings.Numbers[i]);
+                multiGate.AddFlow(outFlowCounter, ConstStrings.GetNumberString(i));
 
                 var lastIndexBranch = g.CreateNode("flow/branch");
                 var lastIndexEq = g.CreateNode("math/eq");
@@ -227,7 +227,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             for (int i = 0; i < outputs; i++)
             {
                 Node outFlowCounter = CreateVariableIncrementSubgraph(g, outFlowActivationsVariable);
-                multiGate.AddFlow(outFlowCounter, ConstStrings.Numbers[i]);
+                multiGate.AddFlow(outFlowCounter, ConstStrings.GetNumberString(i));
             }
 
             var completeBranch = g.CreateNode("flow/branch");

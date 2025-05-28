@@ -169,10 +169,10 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
                 fail.AddConfiguration(ConstStrings.EVENT, FAIL_EVENT_INDEX);
 
-                sequence.AddFlow(branch, ConstStrings.Numbers[i]);
+                sequence.AddFlow(branch, ConstStrings.GetNumberString(i));
             }
 
-            sequence.AddFlow(complete, ConstStrings.Numbers[values.Count]);
+            sequence.AddFlow(complete, ConstStrings.GetNumberString(values.Count));
 
             complete.AddConfiguration(ConstStrings.EVENT, COMPLETED_EVENT_INDEX);
 
@@ -252,10 +252,10 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
                 fail.AddConfiguration(ConstStrings.EVENT, FAIL_EVENT_INDEX);
 
-                sequence.AddFlow(branch, ConstStrings.Numbers[i]);
+                sequence.AddFlow(branch, ConstStrings.GetNumberString(i));
             }
 
-            sequence.AddFlow(complete, ConstStrings.Numbers[values.Count]);
+            sequence.AddFlow(complete, ConstStrings.GetNumberString(values.Count));
 
             complete.AddConfiguration(ConstStrings.EVENT, COMPLETED_EVENT_INDEX);
 

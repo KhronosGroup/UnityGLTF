@@ -274,8 +274,8 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             startDelay.AddFlow(setDelay);
             setDelay.AddFlow(sequence, ConstStrings.DONE);
 
-            sequence.AddFlow(throttle, ConstStrings.Numbers[0], ConstStrings.RESET);
-            sequence.AddFlow(branch, ConstStrings.Numbers[1]);
+            sequence.AddFlow(throttle, ConstStrings.GetNumberString(0), ConstStrings.RESET);
+            sequence.AddFlow(branch, ConstStrings.GetNumberString(1));
 
             branch.AddConnectedValue(ConstStrings.CONDITION, isNaN);
             isNaN.AddConnectedValue(ConstStrings.A, throttle, ConstStrings.LAST_REMAINING_TIME);

@@ -30,7 +30,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             for (int i = 0; i < inputs; i++)
             {
                 starts[i] = g.CreateNode("event/onStart");
-                starts[i].AddFlow(waitAll, ConstStrings.OUT, ConstStrings.Numbers[i]);
+                starts[i].AddFlow(waitAll, ConstStrings.OUT, ConstStrings.GetNumberString(i));
             }
 
             var completed = g.CreateNode("event/send");
@@ -91,14 +91,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             branch2.AddFlow(inputs2Log, ConstStrings.FALSE);
 
-            sequence.AddFlow(waitAll, ConstStrings.Numbers[0], ConstStrings.Numbers[0]);
-            sequence.AddFlow(waitAll, ConstStrings.Numbers[1], ConstStrings.Numbers[1]);
-            sequence.AddFlow(waitAll, ConstStrings.Numbers[2], ConstStrings.Numbers[2]);
-            sequence.AddFlow(branch1, ConstStrings.Numbers[3]);
-            sequence.AddFlow(waitAll, ConstStrings.Numbers[4], ConstStrings.RESET);
-            sequence.AddFlow(waitAll, ConstStrings.Numbers[5], ConstStrings.Numbers[3]);
-            sequence.AddFlow(waitAll, ConstStrings.Numbers[6], ConstStrings.Numbers[4]);
-            sequence.AddFlow(branch2, ConstStrings.Numbers[7]);
+            sequence.AddFlow(waitAll, ConstStrings.GetNumberString(0), ConstStrings.GetNumberString(0));
+            sequence.AddFlow(waitAll, ConstStrings.GetNumberString(1), ConstStrings.GetNumberString(1));
+            sequence.AddFlow(waitAll, ConstStrings.GetNumberString(2), ConstStrings.GetNumberString(2));
+            sequence.AddFlow(branch1, ConstStrings.GetNumberString(3));
+            sequence.AddFlow(waitAll, ConstStrings.GetNumberString(4), ConstStrings.RESET);
+            sequence.AddFlow(waitAll, ConstStrings.GetNumberString(5), ConstStrings.GetNumberString(3));
+            sequence.AddFlow(waitAll, ConstStrings.GetNumberString(6), ConstStrings.GetNumberString(4));
+            sequence.AddFlow(branch2, ConstStrings.GetNumberString(7));
 
             var completed = g.CreateNode("event/send");
             completed.AddConfiguration(ConstStrings.EVENT, COMPLETED_EVENT_INDEX);
