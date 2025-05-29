@@ -13,6 +13,7 @@ namespace UnityGLTF.Interactivity.Playback
         private GLTFImportContext _context;
         private InteractivityGraphExtension _interactivityGraph;
         private bool _hasSelectOrHoverNode;
+        private List<GameObject> _selectableOrHoverableObjects;
 
         public InteractivityImportContext(InteractivityImportPlugin interactivityLoader, GLTFImportContext context)
         {
@@ -25,6 +26,8 @@ namespace UnityGLTF.Interactivity.Playback
         /// </summary>
         public override void OnBeforeImport()
         {
+            _hasSelectOrHoverNode = false;
+            _selectableOrHoverableObjects = new();
             _pointerResolver = new();
             Util.Log($"InteractivityImportContext::OnBeforeImport Complete");
         }
@@ -92,29 +95,19 @@ namespace UnityGLTF.Interactivity.Playback
 
         public override void OnAfterImportNode(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
         {
-            AddColliderIfNecessary(node, nodeIndex, nodeObject);
+            CheckIfNodeIsInteractable(node, nodeIndex, nodeObject);
        
             Util.Log($"InteractivityImportContext::OnAfterImportNode Complete: {node.ToString()}");
             _pointerResolver.RegisterNode(node, nodeIndex, nodeObject);
         }
 
-        private void AddColliderIfNecessary(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
+        private void CheckIfNodeIsInteractable(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
         {
-            if (!_hasSelectOrHoverNode || nodeObject.TryGetComponent(out Collider collider))
+            if (!_hasSelectOrHoverNode)
                 return;
 
-            Mesh mesh = null;
-
-            if (nodeObject.TryGetComponent(out MeshFilter mf))
-                mesh = mf.sharedMesh;
-            else if (nodeObject.TryGetComponent(out SkinnedMeshRenderer smr))
-                mesh = smr.sharedMesh;
-
-            if (mesh == null)
-                return;
-
-            var selectable = true;
-            var hoverable = true;
+            var selectable = false;
+            var hoverable = false;
 
             if (node.Extensions != null)
             {
@@ -127,8 +120,8 @@ namespace UnityGLTF.Interactivity.Playback
 
             if (!selectable && !hoverable)
                 return;
-            
-            nodeObject.AddComponent<BoxCollider>();
+
+            _selectableOrHoverableObjects.Add(nodeObject);
         }
 
         public override void OnAfterImportMesh(GLTFMesh mesh, int meshIndex, Mesh meshObject)
@@ -160,6 +153,11 @@ namespace UnityGLTF.Interactivity.Playback
 
             if (_interactivityGraph == null)
                 return;
+
+            for (int i = 0; i < _selectableOrHoverableObjects.Count; i++)
+            {
+                AddCollidersToChildrenOfInteractableNode(_selectableOrHoverableObjects[i]);
+            }
 
             try
             {
@@ -205,6 +203,24 @@ namespace UnityGLTF.Interactivity.Playback
                 Debug.LogException(e);
                 return;
             }
+        }
+
+        private void AddCollidersToChildrenOfInteractableNode(GameObject nodeObject)
+        {
+            var meshFilters = nodeObject.GetComponentsInChildren<MeshFilter>();
+
+            if (meshFilters.Length <= 0)
+                return;
+
+            GameObject go;
+
+            for (int i = 0; i < meshFilters.Length; i++)
+            {
+                go = meshFilters[i].gameObject;
+
+                if (!go.TryGetComponent(out Collider collider))
+                    go.AddComponent<BoxCollider>();
+            }         
         }
     }
 }
