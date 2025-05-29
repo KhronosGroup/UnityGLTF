@@ -29,7 +29,7 @@ namespace UnityGLTF.Interactivity.Playback
             Util.Log($"InteractivityExportContext::AfterSceneExport ");
 
             if (exporter.RootTransforms == null) return;
-            GLTFInteractivityPlayback wrapper = null;
+            GLTFInteractivityPlayback playback = null;
             Transform t;
 
             // This assumes that EventWrapper exists on one of the root transforms which I think must be true due to how we import.
@@ -37,23 +37,23 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 t = transform;
 
-                if (t.TryGetComponent(out wrapper))
+                if (t.TryGetComponent(out playback))
                     break;
 
                 while (t.parent != null)
                 {
-                    if (t.parent.TryGetComponent(out wrapper))
+                    if (t.parent.TryGetComponent(out playback))
                         break;
 
                     t = t.parent;
                 }
             }
 
-            if (wrapper == null)
+            if (playback == null)
                 return;
 
             exporter.DeclareExtensionUsage(InteractivityGraphExtension.EXTENSION_NAME, true);
-            gltfRoot.AddExtension(InteractivityGraphExtension.EXTENSION_NAME, new InteractivityGraphExtension(wrapper.extensionData));
+            gltfRoot.AddExtension(InteractivityGraphExtension.EXTENSION_NAME, new InteractivityGraphExtension(playback.extensionData));
         }
         public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex)
         {
