@@ -24,6 +24,7 @@ namespace UnityGLTF.Interactivity.Playback
         [SerializeField] private List<NodeData> _nodes = new();
         [SerializeField] private SceneData _sceneData;
 
+        public IReadOnlyList<NodeData> nodes => _nodes;
         public ReadOnlyCollection<NodePointers> nodePointers { get; private set; }
 
         public void RegisterMesh(GLTF.Schema.GLTFMesh mesh, int meshIndex, Mesh unityMesh)
@@ -43,8 +44,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         public void RegisterNode(GLTF.Schema.Node node, int nodeIndex, GameObject unityObject)
         {
-            var selectable = true;
-            var hoverable = true;
+            var selectable = false;
+            var hoverable = false;
 
             if (node.Extensions != null)
             {
