@@ -53,7 +53,16 @@ namespace UnityGLTF.Interactivity.Playback
                 return;
 
             exporter.DeclareExtensionUsage(InteractivityGraphExtension.EXTENSION_NAME, true);
-            gltfRoot.AddExtension(InteractivityGraphExtension.EXTENSION_NAME, new InteractivityGraphExtension(playback.extensionData));
+
+            var extensionData = playback.extensionData;
+
+            if(extensionData == null && playback.gameObject.TryGetComponent(out GLTFInteractivityData data))
+            {
+                var serializer = new GraphSerializer();
+                extensionData = serializer.Deserialize(data.interactivityJson);
+            }
+
+            gltfRoot.AddExtension(InteractivityGraphExtension.EXTENSION_NAME, new InteractivityGraphExtension(extensionData));
         }
         public override void AfterTextureExport(GLTFSceneExporter exporter, GLTFSceneExporter.UniqueTexture texture, int index, GLTFTexture tex)
         {
