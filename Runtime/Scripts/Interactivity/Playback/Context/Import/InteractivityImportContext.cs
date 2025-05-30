@@ -156,7 +156,8 @@ namespace UnityGLTF.Interactivity.Playback
 
             for (int i = 0; i < _selectableOrHoverableObjects.Count; i++)
             {
-                AddCollidersToChildrenOfInteractableNode(_selectableOrHoverableObjects[i]);
+                AddCollidersToChildSkinnedMeshRenderers(_selectableOrHoverableObjects[i]);
+                AddCollidersToChildMeshRenderers(_selectableOrHoverableObjects[i]);
             }
 
             try
@@ -205,7 +206,28 @@ namespace UnityGLTF.Interactivity.Playback
             }
         }
 
-        private void AddCollidersToChildrenOfInteractableNode(GameObject nodeObject)
+        private void AddCollidersToChildSkinnedMeshRenderers(GameObject nodeObject)
+        {
+            var smrs = nodeObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+            if (smrs.Length <= 0)
+                return;
+
+            GameObject go;
+
+            for (int i = 0; i < smrs.Length; i++)
+            {
+                go = smrs[i].gameObject;
+
+                if (!go.TryGetComponent(out Collider collider))
+                {
+                    var mc = go.AddComponent<MeshCollider>();
+                    mc.sharedMesh = smrs[i].sharedMesh;
+                }
+            }
+        }
+
+        private void AddCollidersToChildMeshRenderers(GameObject nodeObject)
         {
             var meshFilters = nodeObject.GetComponentsInChildren<MeshFilter>();
 
@@ -219,7 +241,10 @@ namespace UnityGLTF.Interactivity.Playback
                 go = meshFilters[i].gameObject;
 
                 if (!go.TryGetComponent(out Collider collider))
-                    go.AddComponent<BoxCollider>();
+                {
+                    var mc = go.AddComponent<MeshCollider>();
+                    mc.sharedMesh = meshFilters[i].sharedMesh;
+                }
             }         
         }
     }
