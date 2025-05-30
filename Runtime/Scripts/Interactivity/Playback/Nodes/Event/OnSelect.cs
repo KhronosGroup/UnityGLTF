@@ -46,18 +46,21 @@ namespace UnityGLTF.Interactivity.Playback
             // TODO: Add support for stopPropagation once we understand what it actually does.
             // I've read that part of the spec a handful of times and still am not sure.
             var t = args.go.transform;
+
+            if (_parentNode != null)
+            {
+                if (!engine.pointerResolver.TryGetPointersOf(_parentNode.gameObject, out var pointers))
+                    return;
+
+                if (!pointers.selectability.getter())
+                    return;
+
+                if (!t.IsChildOf(_parentNode))
+                    return;
+            }
+
             var go = t.gameObject;
             var nodeIndex = engine.pointerResolver.IndexOf(go);
-
-            var shouldExecute = true;
-
-            // If there's a parent node provided in the config we need to check if what we hit was a child of it (or that specific object itself)
-            if (_parentNode != null)
-                shouldExecute = t.IsChildOf(_parentNode);
-
-            // Node was not a child of the nodeIndex from the config, so we shouldn't execute our flow or set any values.
-            if (!shouldExecute)
-                return;
 
             _selectedNodeIndex = nodeIndex;
             _selectionPoint = args.result.worldPosition;

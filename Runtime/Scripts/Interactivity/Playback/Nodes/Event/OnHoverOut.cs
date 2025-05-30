@@ -41,23 +41,24 @@ namespace UnityGLTF.Interactivity.Playback
             // TODO: Add support for stopPropagation once we understand what it actually does.
             // I've read that part of the spec a handful of times and still am not sure.
             var t = args.go.transform;
-            var go = t.gameObject;
-            var nodeIndex = engine.pointerResolver.IndexOf(go);
-
-            var shouldExecute = true;
 
             // If there's a parent node provided in the config we need to check if what we hit was a child of it (or that specific object itself)
             if (_parentNode != null)
-                shouldExecute = t.IsChildOf(_parentNode);
+            {
+                if (!engine.pointerResolver.TryGetPointersOf(_parentNode.gameObject, out var pointers))
+                    return;
 
-            // Node was not a child of the nodeIndex from the config, so we shouldn't execute our flow or set any values.
-            if (!shouldExecute)
-                return;
+                if (!pointers.hoverability.getter())
+                    return;
 
-            _hoverNodeIndex = nodeIndex;
-            _controllerIndex = args.controllerIndex;
+                if (!t.IsChildOf(_parentNode))
+                    return;
+            }
 
-            Util.Log($"OnHoverIn node {nodeIndex} corresponding to GO {go.name}", go);
+            var go = t.gameObject;
+            var nodeIndex = engine.pointerResolver.IndexOf(go);
+
+            Util.Log($"OnHoverOut node {nodeIndex} corresponding to GO {go.name}", go);
 
             TryExecuteFlow(ConstStrings.OUT);
         }
