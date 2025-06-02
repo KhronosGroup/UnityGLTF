@@ -944,7 +944,7 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_Rotate2dNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/rotate2d";
+        public override string Op { get; set; } = "math/rotate2D";
 
         [InputSocketDescription(GltfTypes.Float2)]
         public const string IdInputVector = "a";
@@ -958,16 +958,13 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_Rotate3dNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/rotate3d";
+        public override string Op { get; set; } = "math/rotate3D";
 
         [InputSocketDescription(GltfTypes.Float3)]
         public const string IdInputVector = "a";
 
-        [InputSocketDescription(GltfTypes.Float3)]
-        public const string IdInputAxis = "b";
-
-        [InputSocketDescription(GltfTypes.Float)]
-        public const string IdInputAngleRadians = "c";
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdInputQuaternion = "b";
 
         [OutputSocketDescription(GltfTypes.Float3)]
         public const string IdOutputResult = "value";
