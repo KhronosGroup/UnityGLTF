@@ -164,7 +164,16 @@ namespace UnityGLTF
             GL.sRGBWrite = !isLinear;
             
             cmd.SetRenderTarget(rt);
-            cmd.ClearRenderTarget(true, true, Color.blue);
+
+            switch (mode)
+            {
+                case DebugMaterialMode.NormalTangentSpace:
+                    cmd.ClearRenderTarget(true, true, new Color(0.5f, 0.5f, 1f, 1f));
+                    break;
+                default:
+                    cmd.ClearRenderTarget(true, true, Color.black);
+                    break;
+            }
             
             // TODO we probably need to find the UV extents of the source mesh and set the viewport accordingly; otherwise we end up with a wrong space here.
             // We also might need to adjust the texture transform of the material to match the UV extents after baking,
