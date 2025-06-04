@@ -318,23 +318,26 @@ namespace UnityGLTF
 
             GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", anyTextureTransform);
             
-            if (useTextureSpace)
-            {
-                var baseColorTilingOffset = material.GetColor("Global_Tiling_Offset");
-                GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", true);
-                var tiling = new Vector2(baseColorTilingOffset.r, baseColorTilingOffset.g);
-                var offset = new Vector2(baseColorTilingOffset.b, baseColorTilingOffset.a);
-                newMaterial.SetTextureScale("baseColorTexture", tiling);
-                newMaterial.SetTextureOffset("baseColorTexture", offset);
-                newMaterial.SetTextureScale("normalTexture", tiling);
-                newMaterial.SetTextureOffset("normalTexture", offset);
-                newMaterial.SetTextureScale("metallicRoughnessTexture", tiling);
-                newMaterial.SetTextureOffset("metallicRoughnessTexture", offset);
-                newMaterial.SetTextureScale("emissiveTexture", tiling);
-                newMaterial.SetTextureOffset("emissiveTexture", offset);
-                newMaterial.SetTextureScale("occlusionTexture", tiling);
-                newMaterial.SetTextureOffset("occlusionTexture", offset);
-            }
+            // if (useTextureSpace)
+            // {
+            //     if (material.HasColor("Global_Tiling_Offset"))
+            //     {
+            //         var baseColorTilingOffset = material.GetColor("Global_Tiling_Offset");
+            //         GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", true);
+            //         var tiling = new Vector2(baseColorTilingOffset.r, baseColorTilingOffset.g);
+            //         var offset = new Vector2(baseColorTilingOffset.b, baseColorTilingOffset.a);
+            //         newMaterial.SetTextureScale("baseColorTexture", tiling);
+            //         newMaterial.SetTextureOffset("baseColorTexture", offset);
+            //         newMaterial.SetTextureScale("normalTexture", tiling);
+            //         newMaterial.SetTextureOffset("normalTexture", offset);
+            //         newMaterial.SetTextureScale("metallicRoughnessTexture", tiling);
+            //         newMaterial.SetTextureOffset("metallicRoughnessTexture", offset);
+            //         newMaterial.SetTextureScale("emissiveTexture", tiling);
+            //         newMaterial.SetTextureOffset("emissiveTexture", offset);
+            //         newMaterial.SetTextureScale("occlusionTexture", tiling);
+            //         newMaterial.SetTextureOffset("occlusionTexture", offset);
+            //     }
+            // }
             
             if (!AssetDatabase.Contains(newMaterial))
                 AssetDatabase.CreateAsset(newMaterial, materialPath);
