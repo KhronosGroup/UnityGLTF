@@ -10,9 +10,8 @@ namespace UnityGLTF.Interactivity.Playback
         {
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.A, "Vector", new Type[]  { typeof(float3)}),
-                new NodeValue(ConstStrings.B, "Axis", new Type[]  { typeof(float3)}),
-                new NodeValue(ConstStrings.C, "Angle", new Type[]  { typeof(float)}),
+                new NodeValue(ConstStrings.A, "Vector to Rotate", new Type[]  { typeof(float3)}),
+                new NodeValue(ConstStrings.B, "Rotation Quaternion", new Type[]  { typeof(float4)}),
             };
 
             return (null, values);
@@ -22,7 +21,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.VALUE, "Value", new Type[]  { typeof(float3) }),
+                new NodeValue(ConstStrings.VALUE, "Rotated Vector", new Type[]  { typeof(float3) }),
             };
 
             return (null, values);

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using UnityGLTF.Interactivity.Playback.Extensions;
 
 namespace UnityGLTF.Interactivity.Playback.Tests
 {
@@ -898,18 +899,20 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestRotate3d()
         {
-            RotateTest3D("Rotate3D_NegativeZ_AroundY_ByPiOver2", "Rotate3D Test 1", "Tests a rotation in 3D.", "math/rotate3d", new float3(0.0f, 0.0f, -1.0f), new float3(0.0f, 1.0f, 0.0f), math.PI * 0.5f, new float3(-1.0f, 0.0f, 0.0f));
-            RotateTest3D("Rotate3D_X_AroundY_ByPi", "Rotate3D Test 2", "Tests a rotation in 3D.", "math/rotate3d", new float3(1.0f, 0.0f, 0.0f), new float3(0.0f, 1.0f, 0.0f), math.PI, new float3(-1.0f, 0.0f, 0.0f));
+            var q1 = quaternion.Euler(0f, math.PI, 0f).ToFloat4();
+            var q2 = quaternion.Euler(0f, math.PI/2, 0f).ToFloat4();
+
+            RotateTest3D("Rotate3D_NegativeZ_AroundY_ByPiOver2", "Rotate3D Test 1", "Tests a rotation in 3D.", "math/rotate3D", new float3(0.0f, 0.0f, -1.0f), q1, new float3(0.0f, 0.0f, 1.0f));
+            RotateTest3D("Rotate3D_X_AroundY_ByPi", "Rotate3D Test 2", "Tests a rotation in 3D.", "math/rotate3D", new float3(1.0f, 0.0f, 0.0f), q2, new float3(0.0f, 0.0f, -1.0f));
         }
 
-        private static void RotateTest3D<T, V>(string fileName, string testName, string testDescription, string nodeName, T a, T b, V c, T expected)
+        private static void RotateTest3D<T, V>(string fileName, string testName, string testDescription, string nodeName, T a, V b, T expected)
         {
             var inputs = new Dictionary<string, Value>();
             var outputs = new Dictionary<string, IProperty>();
 
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<T>(a) });
-            inputs.Add(ConstStrings.B, new Value() { id = ConstStrings.B, property = new Property<T>(b) });
-            inputs.Add(ConstStrings.C, new Value() { id = ConstStrings.C, property = new Property<V>(c) });
+            inputs.Add(ConstStrings.B, new Value() { id = ConstStrings.B, property = new Property<V>(b) });
             outputs.Add(ConstStrings.VALUE, new Property<T>(expected));
 
             QueueTest(nodeName, fileName, testName, testDescription, CreateSelfContainedTestGraph(nodeName, inputs, outputs, ComparisonType.Approximately));
@@ -918,8 +921,8 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestRotate2d()
         {
-            RotateTest2D("Rotate2D_Y_ByPiOver2", "Rotate2D Test 1", "Tests a rotation in 2D.", "math/rotate2d", new float2(0.0f, 1.0f), math.PI * 0.5f, new float2(-1.0f, 0.0f));
-            RotateTest2D("Rotate2D_NegativeX_ByPiOver2", "Rotate2D Test 2", "Tests a rotation in 2D.", "math/rotate2d", new float2(-1.0f, 0.0f), math.PI * 0.5f, new float2(0.0f, -1.0f));
+            RotateTest2D("Rotate2D_Y_ByPiOver2", "Rotate2D Test 1", "Tests a rotation in 2D.", "math/rotate2D", new float2(0.0f, 1.0f), math.PI * 0.5f, new float2(-1.0f, 0.0f));
+            RotateTest2D("Rotate2D_NegativeX_ByPiOver2", "Rotate2D Test 2", "Tests a rotation in 2D.", "math/rotate2D", new float2(-1.0f, 0.0f), math.PI * 0.5f, new float2(0.0f, -1.0f));
         }
 
         private static void RotateTest2D<T, V>(string fileName, string testName, string testDescription, string nodeName, T a, V b, T expected)

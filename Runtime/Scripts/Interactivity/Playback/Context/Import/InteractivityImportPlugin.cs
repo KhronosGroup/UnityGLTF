@@ -3,6 +3,7 @@ using UnityGLTF.Plugins;
 
 namespace UnityGLTF.Interactivity.Playback
 {
+    [NonRatifiedPlugin]
     public class InteractivityImportPlugin : GLTFImportPlugin
     {
         public override string DisplayName => "KHR_interactivity Playback Importer";
