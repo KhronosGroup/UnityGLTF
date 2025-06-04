@@ -254,6 +254,11 @@ namespace UnityGLTF
                     mapper.MetallicRoughnessXOffset = maps.occlusion.offset;
                     mapper.MetallicRoughnessXScale = maps.occlusion.scale;
                 }
+                else
+                {
+                    mapper.MetallicRoughnessXOffset = Vector2.zero;
+                    mapper.MetallicRoughnessXScale = Vector2.one;
+                }
                 anyTextureTransform = true;
             }
             if (hasNormal && !maps.normal.hasDefaultTransform)
@@ -262,29 +267,56 @@ namespace UnityGLTF
                 mapper.NormalXScale = maps.normal.scale;
                 anyTextureTransform = true;
             }
+            else
+            {
+                mapper.NormalXOffset = Vector2.zero;
+                mapper.NormalXScale = Vector2.one;
+            }
+            
             if (hasEmission && !maps.emission.hasDefaultTransform)
             {
                 mapper.EmissiveXOffset = maps.emission.offset;
                 mapper.EmissiveXScale = maps.emission.scale;
                 anyTextureTransform = true;
             }
+            else
+            {
+                mapper.EmissiveXOffset = Vector2.zero;
+                mapper.EmissiveXScale = Vector2.one;
+            }
+            
             if (hasOrm && !maps.occlusion.hasDefaultTransform)
             {
                 mapper.OcclusionXOffset = maps.occlusion.offset;
                 mapper.OcclusionXScale = maps.occlusion.scale;
                 anyTextureTransform = true;
             }
+            else
+            {
+                mapper.OcclusionXOffset = Vector2.zero;
+                mapper.OcclusionXScale = Vector2.one;
+            }
+            
             if (hasBaseColor && !maps.albedo.hasDefaultTransform)
             {
                 mapper.BaseColorXOffset = maps.albedo.offset;
                 mapper.BaseColorXScale = maps.albedo.scale;
                 anyTextureTransform = true;
             }
-
-            if (anyTextureTransform)
+            else
+            if (hasBaseColor && !maps.alpha.hasDefaultTransform)
             {
-                GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", true);
+                mapper.BaseColorXOffset = maps.alpha.offset;
+                mapper.BaseColorXScale = maps.alpha.scale;
+                anyTextureTransform = true;
             }
+            else
+            {
+                mapper.BaseColorXOffset = Vector2.zero;
+                mapper.BaseColorXScale = Vector2.one;
+            }
+
+            GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", anyTextureTransform);
             
             if (useTextureSpace)
             {
