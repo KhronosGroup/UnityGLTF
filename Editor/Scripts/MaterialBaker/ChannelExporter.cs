@@ -131,19 +131,21 @@ namespace UnityGLTF
 
             if (maps.metallic != null || maps.occlusion != null || maps.smoothness != null)
             {
-                var orm = new Texture2D(textureSize.width, textureSize.height, TextureFormat.RGBA32, false);
+                var orm = new Texture2D(textureSize.width, textureSize.height, TextureFormat.RGBA32, false, true);
                 var metallicPixels = maps.metallic?.map.GetPixels();
                 var occlusionPixels = maps.occlusion?.map.GetPixels();
                 var smoothnessPixels = maps.smoothness?.map.GetPixels();
                 var length = metallicPixels?.Length ?? occlusionPixels?.Length ?? smoothnessPixels?.Length ?? 0;
-                
+
+                var ormPixels = new Color[length];
                 for (var i = 0; i < length; i++)
                 {
                     var metallicValue = metallicPixels?[i].r ?? 0f;
                     var occlusionValue = occlusionPixels?[i].r ?? 0f;
                     var smoothnessValue = smoothnessPixels?[i].r ?? 0f;
-                    orm.SetPixel(i % orm.width, i / orm.width, new Color(occlusionValue, 1 - smoothnessValue, metallicValue));
+                    ormPixels[i] = new Color(occlusionValue, 1 - smoothnessValue, metallicValue);
                 }
+                orm.SetPixels(ormPixels);
                 
                 var ormTexture = orm.EncodeToPNG();
                 File.WriteAllBytes(ormPath, ormTexture);
