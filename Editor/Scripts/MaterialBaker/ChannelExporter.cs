@@ -245,14 +245,14 @@ namespace UnityGLTF
                 else
                 if (maps.smoothness != null && !maps.smoothness.hasDefaultTransform)
                 {
-                    mapper.MetallicRoughnessXOffset = maps.metallic.offset;
-                    mapper.MetallicRoughnessXScale = maps.metallic.scale;
+                    mapper.MetallicRoughnessXOffset = maps.smoothness.offset;
+                    mapper.MetallicRoughnessXScale = maps.smoothness.scale;
                 }
                 else
                 if (maps.occlusion != null && !maps.occlusion.hasDefaultTransform)
                 {
-                    mapper.MetallicRoughnessXOffset = maps.metallic.offset;
-                    mapper.MetallicRoughnessXScale = maps.metallic.scale;
+                    mapper.MetallicRoughnessXOffset = maps.occlusion.offset;
+                    mapper.MetallicRoughnessXScale = maps.occlusion.scale;
                 }
                 anyTextureTransform = true;
             }
