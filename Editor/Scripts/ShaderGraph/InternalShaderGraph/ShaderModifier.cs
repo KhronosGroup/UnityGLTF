@@ -118,6 +118,13 @@ namespace UnityGLTF
 
                 index = indexOfReturn;
             }
+
+            shaderSource = shaderSource.Replace("output.WorldSpaceViewDirection = GetWorldSpaceNormalizeViewDir(input.positionWS);",
+                "output.WorldSpaceViewDirection = output.WorldSpaceNormal;");
+            
+            shaderSource = shaderSource.Replace(
+                    "Out = pow((1.0 - saturate(dot(normalize(Normal), normalize(ViewDir)))), Power);",
+                    "Out = 0;");
             
             Debug.Log($"<color=#808080ff>Shader {shader.name}: found {inserts} to patch for {uvChannelName}.</color>");
             if (inserts < 1)
