@@ -181,7 +181,25 @@ namespace UnityGLTF
             var meshRangePair = (mesh, uvChannel);
             if (!MeshUVs.TryGetValue(meshRangePair, out var minMax))
             {
-                var meshUVs = mesh.uv;
+                Vector2[] meshUVs = null;
+                switch (uvChannel)
+                {
+                    case 0 : 
+                        meshUVs = mesh.uv;
+                        break;
+                    case 1 :
+                        meshUVs = mesh.uv2;
+                        break;
+                    case 2 :
+                        meshUVs = mesh.uv3;
+                        break;
+                    case 3 :
+                        meshUVs = mesh.uv4;
+                        break;
+                    case 4 :
+                        meshUVs = mesh.uv5;
+                        break;
+                }
                 var xRange = new Vector2(float.MaxValue, float.MinValue);
                 var yRange = new Vector2(float.MaxValue, float.MinValue);
                 foreach (var uv in meshUVs)
@@ -197,7 +215,8 @@ namespace UnityGLTF
             
             var minMaxX = minMax.minMaxX;
             var minMaxY = minMax.minMaxY;
-
+            Vector2 offset = Vector2.zero;
+            Vector2 scale = Vector2.one;
             // Regular case – UVs are in 0..1 range. We might not want to introduce texture transforms for this case.
             if (minMaxX.x >= 0 && minMaxX.y <= 1 && minMaxY.x > 0 && minMaxY.y <= 1)
             {
@@ -205,6 +224,16 @@ namespace UnityGLTF
                 minMaxX.y = 1;
                 minMaxY.x = 0;
                 minMaxY.y = 1;
+            }
+            else
+            {
+                float xSize = Mathf.Abs(minMaxX.y - minMaxX.x);
+                float ySize = Mathf.Abs(minMaxY.y - minMaxY.x);
+            
+                float xScale = 1f / xSize;
+                float yScale = 1f / ySize;
+                offset = new Vector2(-minMaxX.x * xScale, -minMaxY.x * yScale);
+                scale = new Vector2(xScale, yScale);
             }
             
             cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(minMaxX.x, minMaxX.y, minMaxY.x, minMaxY.y, -1, 1));
@@ -238,14 +267,6 @@ namespace UnityGLTF
                 return null;
             }
             
-            float xSize = Mathf.Abs(minMaxX.y - minMaxX.x);
-            float ySize = Mathf.Abs(minMaxY.y - minMaxY.x);
-            
-            float xScale = 1f / xSize;
-            float yScale = 1f / ySize;
-            
-            var offset = new Vector2(-minMaxX.x * xScale, -minMaxY.x * yScale);
-            var scale = new Vector2(xScale, yScale);
             return new TextureWithTransform(bakedTexture, offset, scale);
         }
 
