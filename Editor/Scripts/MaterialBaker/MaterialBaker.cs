@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
@@ -49,6 +50,28 @@ namespace UnityGLTF
 
             public Material forMaterial;
             public Mesh forMesh;
+
+            public (int width, int height) GetTextureSize()
+            {
+                if (albedo != null)
+                    return (albedo.map.width, albedo.map.height);
+                if (alpha != null)
+                    return (alpha.map.width, alpha.map.height);
+                if (metallic != null)
+                    return (metallic.map.width, metallic.map.height);
+                if (normal != null)
+                    return (normal.map.width, normal.map.height);
+                if (occlusion != null)
+                    return (occlusion.map.width, occlusion.map.height);
+                if (emission != null)
+                    return (emission.map.width, emission.map.height);
+                if (smoothness != null)
+                    return (smoothness.map.width, smoothness.map.height);
+                if (specular != null)
+                    return (specular.map.width, specular.map.height);
+
+                return (0, 0);
+            }
         }
 
         public static PbrMaps BakePBRMaterial(Material material, int width, int height)
@@ -101,6 +124,10 @@ namespace UnityGLTF
         private static readonly Dictionary<(Mesh mesh, int uvChannel), (Vector2 minMaxX, Vector2 minMaxY)> MeshUVs = new Dictionary<(Mesh mesh, int uvChannel), (Vector2 minMaxX, Vector2 minMaxY)>();
         
 #if HAVE_URP
+        /// <summary>
+        /// Bakes a texture from the given renderer's submesh using the specified debug material mode.
+        /// Returns null if the baked texture is empty.
+        /// </summary>
         public static TextureWithTransform Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
         {
             DeactivateGlobalUrpDebugProperties();
@@ -183,7 +210,7 @@ namespace UnityGLTF
             //
       
             RenderTexture.active = rt;
-            var bakedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false, isLinear);
+            var bakedTexture = new Texture2D(width, height, TextureFormat.RGB24, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
@@ -193,8 +220,14 @@ namespace UnityGLTF
       
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(rt);
-
+            
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
+
+            if (IsTextureEmpty(bakedTexture))
+            {
+                Object.DestroyImmediate(bakedTexture);
+                return null;
+            }
             
             float xSize = Mathf.Abs(minMaxX.y - minMaxX.x);
             float ySize = Mathf.Abs(minMaxY.y - minMaxY.x);
@@ -207,11 +240,25 @@ namespace UnityGLTF
             return new TextureWithTransform(bakedTexture, offset, scale);
         }
 
+        private static bool IsTextureEmpty(Texture2D texture, bool ignoreAlpha = true)
+        {
+            var pixelData = texture.GetPixelData<Color32>(0);
+            bool hasData = false;
+            for (int i = 0; i < pixelData.Length; i++)
+            {
+                hasData |= (!ignoreAlpha && pixelData[i].a != 0) || pixelData[i].r != 0 || pixelData[i].g != 0 || pixelData[i].b != 0;
+                if (hasData)
+                    break;
+            }
+
+            return !hasData;
+        }
+        
         private static void DeactivateGlobalUrpDebugProperties()
         {
             // See DebugHandler.cs in URP package
             
-           Shader.SetGlobalFloat("_DebugVertexAttributeMode", 0);
+            Shader.SetGlobalFloat("_DebugVertexAttributeMode", 0);
 
             Shader.SetGlobalInteger("_DebugMaterialValidationMode", 0);
 
@@ -243,6 +290,28 @@ namespace UnityGLTF
                     break;
             }
             return isLinear;
+        }
+
+        private static bool HasAlpha(DebugMaterialMode mode)
+        {
+            switch (mode)
+            {
+                case DebugMaterialMode.Albedo:
+                case DebugMaterialMode.Alpha:
+                case DebugMaterialMode.SpriteMask:
+                    return true;
+                case DebugMaterialMode.Specular:
+                case DebugMaterialMode.Smoothness:
+                case DebugMaterialMode.AmbientOcclusion:
+                case DebugMaterialMode.Emission:
+                case DebugMaterialMode.NormalWorldSpace:
+                case DebugMaterialMode.NormalTangentSpace:
+                case DebugMaterialMode.LightingComplexity:
+                case DebugMaterialMode.Metallic:
+                    return false;
+                default:
+                    return true;
+            }
         }
         
         private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out TextureWithTransform baked)
@@ -281,8 +350,7 @@ namespace UnityGLTF
       
             DeactivateGlobalUrpDebugProperties();
             
-            
-            var bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false, isLinear);
+            var bakedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
             bakedTexture.anisoLevel = 1;
@@ -297,13 +365,20 @@ namespace UnityGLTF
 
             // Read pixels from renderTexture and apply to bakedTexture
             bakedTexture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-            baked = new TextureWithTransform(bakedTexture);
       
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(renderTexture);
             Object.DestroyImmediate(material);
             
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
+
+            if (IsTextureEmpty(bakedTexture))
+            {
+                Object.DestroyImmediate(bakedTexture);
+                baked = null;
+            }
+            else
+                baked = new TextureWithTransform(bakedTexture);
         }
 #endif
     }
