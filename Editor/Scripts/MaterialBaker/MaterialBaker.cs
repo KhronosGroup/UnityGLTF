@@ -11,6 +11,7 @@ namespace UnityGLTF
 {
     public static class MaterialBaker
     {
+        private static Material _dilateMaterial;
 
         public class TextureWithTransform
         {
@@ -74,6 +75,23 @@ namespace UnityGLTF
             }
         }
 
+        private static void DilateMap(Texture source, RenderTexture target, Color backgroundColor)
+        {
+            if (!_dilateMaterial)
+            {
+                _dilateMaterial = new Material(Shader.Find("TextureBake/Dilate"));
+                if (!_dilateMaterial)
+                {
+                    Debug.LogError("Failed to create dilate material. Shader not found: TextureBake/Dilate");
+                    return;
+                }
+                
+            }
+            _dilateMaterial.SetColor("_BackgroundColor", backgroundColor);
+            _dilateMaterial.SetTexture("_MainTex", source);
+            Graphics.Blit(source, target, _dilateMaterial);
+        }
+        
         public static PbrMaps BakePBRMaterial(Material material, int width, int height)
         {
             var pbrMaps = new PbrMaps();
@@ -165,15 +183,14 @@ namespace UnityGLTF
             
             cmd.SetRenderTarget(rt);
 
+            Color backgroundColor = Color.black;
             switch (mode)
             {
                 case DebugMaterialMode.NormalTangentSpace:
-                    cmd.ClearRenderTarget(true, true, new Color(0.5f, 0.5f, 1f, 1f));
-                    break;
-                default:
-                    cmd.ClearRenderTarget(true, true, Color.black);
+                    backgroundColor = new Color(0.5f, 0.5f, 1f, 1f);
                     break;
             }
+            cmd.ClearRenderTarget(true, true, backgroundColor);
             
             // TODO we probably need to find the UV extents of the source mesh and set the viewport accordingly; otherwise we end up with a wrong space here.
             // We also might need to adjust the texture transform of the material to match the UV extents after baking,
@@ -246,8 +263,12 @@ namespace UnityGLTF
             // cmd.DisableKeyword(new GlobalKeyword(ShaderKeywordStrings.DEBUG_DISPLAY));
             // Graphics.ExecuteCommandBuffer(cmd);
             //
-      
-            RenderTexture.active = rt;
+            
+            var dilateRt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, isLinear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB);
+
+            DilateMap(rt, dilateRt, backgroundColor);
+            
+            RenderTexture.active = dilateRt;
             var bakedTexture = new Texture2D(width, height, TextureFormat.RGB24, false, isLinear);
             bakedTexture.wrapMode = TextureWrapMode.Repeat;
             bakedTexture.filterMode = FilterMode.Bilinear;
@@ -257,6 +278,7 @@ namespace UnityGLTF
             bakedTexture.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
       
             RenderTexture.active = null;
+            RenderTexture.ReleaseTemporary(dilateRt);
             RenderTexture.ReleaseTemporary(rt);
             
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
