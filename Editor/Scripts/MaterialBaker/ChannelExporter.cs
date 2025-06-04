@@ -19,7 +19,7 @@ namespace UnityGLTF
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048);
                 maps.forMaterial = materials[i];
-                SaveMaps(maps);
+                SaveMaps(maps, 0, false);
             }
         }
         
@@ -33,7 +33,7 @@ namespace UnityGLTF
             for (var i = 0; i < materials.Length; i++)
             {
                 var maps = MaterialBaker.BakePBRMaterial(renderer, i, 2048, 2048, 1);
-                SaveMaps(maps, 1);
+                SaveMaps(maps, 1, false);
             }
         }
         
@@ -51,7 +51,7 @@ namespace UnityGLTF
             }
         }
 
-        private static void SaveMaps(MaterialBaker.PbrMaps maps, int uvChannel = 0)
+        private static void SaveMaps(MaterialBaker.PbrMaps maps, int uvChannel = 0, bool useTextureSpace = true)
         {
             var material = maps.forMaterial;
             var mesh = maps.forMesh;
@@ -101,9 +101,7 @@ namespace UnityGLTF
             
             if (maps.albedo != null || maps.alpha != null)
             {
-                
-            
-                 var mergedAlbedoAndAlpha = new Texture2D(textureSize.width, textureSize.height, TextureFormat.RGBA32, false);
+                var mergedAlbedoAndAlpha = new Texture2D(textureSize.width, textureSize.height, TextureFormat.RGBA32, false);
 
                 Color[] pixels =  maps.albedo?.map.GetPixels();
                 Color[] alphaPixels = maps.alpha?.map.GetPixels();
@@ -215,11 +213,11 @@ namespace UnityGLTF
             var mapper = new PBRGraphMap(newMaterial);
             
             // Ensure multiplicative defaults
-            mapper.MetallicFactor = 1;
-            mapper.RoughnessFactor = 1;
-            mapper.EmissiveFactor = Color.white;
-            mapper.OcclusionTexStrength = 1;
-            mapper.BaseColorFactor = Color.white;
+            mapper.MetallicFactor = hasOrm ? 1f : 0f;;
+            mapper.RoughnessFactor = hasOrm ? 1f : 0f;
+            mapper.EmissiveFactor = hasEmission ? Color.white : Color.black;
+            mapper.OcclusionTexStrength =  hasOrm ? 1f : 0f;
+            mapper.BaseColorFactor = hasBaseColor ? Color.white : Color.black;
             mapper.NormalTexScale = 1;
             // Set desired UV channels – based on the space we baked into
             mapper.BaseColorTexCoord = uvChannel;
@@ -283,11 +281,10 @@ namespace UnityGLTF
 
             if (anyTextureTransform)
             {
-                newMaterial.EnableKeyword("_TEXTURE_TRANSFORM_ON");
+                GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", true);
             }
             
-            var applyTextureTransforms = false;
-            if (applyTextureTransforms)
+            if (useTextureSpace)
             {
                 var baseColorTilingOffset = material.GetColor("Global_Tiling_Offset");
                 GLTFMaterialHelper.SetKeyword(newMaterial, "_TEXTURE_TRANSFORM", true);
