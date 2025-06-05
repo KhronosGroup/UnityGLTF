@@ -48,6 +48,7 @@ namespace UnityGLTF
             public TextureWithTransform emission;
             public TextureWithTransform smoothness;
             public TextureWithTransform specular;
+            public TextureWithTransform mask;
 
             public Material forMaterial;
             public Mesh forMesh;
@@ -70,7 +71,9 @@ namespace UnityGLTF
                     return (smoothness.map.width, smoothness.map.height);
                 if (specular != null)
                     return (specular.map.width, specular.map.height);
-
+                if (mask != null)
+                    return (mask.map.width, mask.map.height);
+                
                 return (0, 0);
             }
         }
@@ -97,14 +100,16 @@ namespace UnityGLTF
             var pbrMaps = new PbrMaps();
             pbrMaps.forMaterial = material;
 #if HAVE_URP
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Albedo, width, height, out pbrMaps.albedo);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Alpha, width, height, out pbrMaps.alpha);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Metallic, width, height, out pbrMaps.metallic);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.NormalTangentSpace, width, height, out pbrMaps.normal);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.AmbientOcclusion, width, height, out pbrMaps.occlusion);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Emission, width, height, out pbrMaps.emission);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Smoothness, width, height, out pbrMaps.smoothness);
-            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Specular, width, height, out pbrMaps.specular);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.SpriteMask, width, height, out pbrMaps.mask);
+            var mask = pbrMaps.mask.map;
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Albedo, width, height, out pbrMaps.albedo, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Alpha, width, height, out pbrMaps.alpha, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Metallic, width, height, out pbrMaps.metallic, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.NormalTangentSpace, width, height, out pbrMaps.normal, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.AmbientOcclusion, width, height, out pbrMaps.occlusion, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Emission, width, height, out pbrMaps.emission, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Smoothness, width, height, out pbrMaps.smoothness, mask);
+            BakeUrpMaterialModeToTexture(material, DebugMaterialMode.Specular, width, height, out pbrMaps.specular, mask);
 #endif
             return pbrMaps;
         }
@@ -126,14 +131,16 @@ namespace UnityGLTF
             MeshUVs.Clear();
             
 #if HAVE_URP
-            pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height, uvChannel);
-            pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height, uvChannel);
-            pbrMaps.metallic = Bake(renderer, submesh, DebugMaterialMode.Metallic, width, height, uvChannel);
-            pbrMaps.normal = Bake(renderer, submesh, DebugMaterialMode.NormalTangentSpace, width, height, uvChannel);
-            pbrMaps.occlusion = Bake(renderer, submesh, DebugMaterialMode.AmbientOcclusion, width, height, uvChannel);
-            pbrMaps.emission = Bake(renderer, submesh, DebugMaterialMode.Emission, width, height, uvChannel);
-            pbrMaps.smoothness = Bake(renderer, submesh, DebugMaterialMode.Smoothness, width, height, uvChannel);
-            pbrMaps.specular = Bake(renderer, submesh, DebugMaterialMode.Specular, width, height, uvChannel);
+            pbrMaps.mask = Bake(renderer, submesh, DebugMaterialMode.SpriteMask, width, height, uvChannel);
+            var mask = pbrMaps.mask?.map;
+            pbrMaps.albedo = Bake(renderer, submesh, DebugMaterialMode.Albedo, width, height, uvChannel, mask);
+            pbrMaps.alpha = Bake(renderer, submesh, DebugMaterialMode.Alpha, width, height, uvChannel, mask);
+            pbrMaps.metallic = Bake(renderer, submesh, DebugMaterialMode.Metallic, width, height, uvChannel, mask);
+            pbrMaps.normal = Bake(renderer, submesh, DebugMaterialMode.NormalTangentSpace, width, height, uvChannel, mask);
+            pbrMaps.occlusion = Bake(renderer, submesh, DebugMaterialMode.AmbientOcclusion, width, height, uvChannel, mask);
+            pbrMaps.emission = Bake(renderer, submesh, DebugMaterialMode.Emission, width, height, uvChannel, mask);
+            pbrMaps.smoothness = Bake(renderer, submesh, DebugMaterialMode.Smoothness, width, height, uvChannel, mask);
+            pbrMaps.specular = Bake(renderer, submesh, DebugMaterialMode.Specular, width, height, uvChannel, mask);
 #endif
             return pbrMaps;
         }
@@ -146,12 +153,13 @@ namespace UnityGLTF
         /// Bakes a texture from the given renderer's submesh using the specified debug material mode.
         /// Returns null if the baked texture is empty.
         /// </summary>
-        public static TextureWithTransform Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel)
+        public static TextureWithTransform Bake(Renderer renderer, int submesh, DebugMaterialMode mode, int width, int height, int uvChannel, Texture2D mask = null)
         {
             DeactivateGlobalUrpDebugProperties();
             
             // TODO: submeshes
             var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+            var trs = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, renderer.transform.lossyScale);
             var materials = renderer.sharedMaterials;
             var sourceMaterial = materials[submesh % materials.Length];
             
@@ -188,6 +196,9 @@ namespace UnityGLTF
             {
                 case DebugMaterialMode.NormalTangentSpace:
                     backgroundColor = new Color(0.5f, 0.5f, 1f, 1f);
+                    break;
+                case DebugMaterialMode.SpriteMask:
+                    backgroundColor = Color.clear;
                     break;
             }
             cmd.ClearRenderTarget(true, true, backgroundColor);
@@ -257,6 +268,9 @@ namespace UnityGLTF
             cmd.EnableKeyword(new GlobalKeyword(ShaderKeywordStrings.DEBUG_DISPLAY));
             cmd.SetGlobalFloat("_DebugMaterialMode", (int) mode);
             cmd.DrawMesh(mesh, Matrix4x4.identity, material, submesh, 0);
+          
+          //  cmd.DrawMesh(mesh, trs, material, submesh, 0);
+            GL.sRGBWrite = !isLinear;
             Graphics.ExecuteCommandBuffer(cmd);
             //
             // cmd.Clear();
@@ -283,7 +297,7 @@ namespace UnityGLTF
             
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
 
-            if (IsTextureEmpty(bakedTexture))
+            if (IsTextureEmpty(bakedTexture, mask))
             {
                 Object.DestroyImmediate(bakedTexture);
                 return null;
@@ -291,13 +305,57 @@ namespace UnityGLTF
             
             return new TextureWithTransform(bakedTexture, offset, scale);
         }
+        
+        public static bool TextureHasSingleValue(Texture2D texture, out Color singleValue, Texture2D mask = null)
+        {
+            singleValue = Color.clear;
+            if (!texture)
+                return false;
+            
+            var pixelData = texture.GetPixels();
+            
+            var maskData = mask?.GetPixels();
 
-        private static bool IsTextureEmpty(Texture2D texture, bool ignoreAlpha = true)
+            Color? lastColor = null;
+            
+            for (int i = 0; i < pixelData.Length; i++)
+            {
+                if (maskData != null && maskData[i] == Color.black)
+                    continue; // skip masked pixels
+                
+                if (lastColor.HasValue && pixelData[i] != lastColor.Value)
+                {
+                    singleValue = Color.clear;
+                    return false; // found different color
+                }
+                else
+                {
+                    lastColor = pixelData[i];
+                }
+                
+            }
+            if (lastColor == null)
+            {
+                singleValue = Color.clear;
+                return false; // no pixels found
+            }
+            
+            singleValue = lastColor.Value;
+
+            return true;
+        }
+
+        private static bool IsTextureEmpty(Texture2D texture, bool ignoreAlpha = true, Texture2D mask = null)
         {
             var pixelData = texture.GetPixelData<Color32>(0);
+            var maskData = mask?.GetPixels();
+
             bool hasData = false;
             for (int i = 0; i < pixelData.Length; i++)
             {
+                if (maskData != null && maskData[i] == Color.black)
+                    continue; // skip masked pixels
+
                 hasData |= (!ignoreAlpha && pixelData[i].a != 0) || pixelData[i].r != 0 || pixelData[i].g != 0 || pixelData[i].b != 0;
                 if (hasData)
                     break;
@@ -366,7 +424,7 @@ namespace UnityGLTF
             }
         }
         
-        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out TextureWithTransform baked)
+        private static void BakeUrpMaterialModeToTexture(Material mat, DebugMaterialMode mode, int textureWidth, int textureHeight, out TextureWithTransform baked, Texture2D mask = null)
         {
             bool isLinear = IsDebugMaterialModeInLinear(mode);
             var material = new Material(mat);
@@ -424,7 +482,7 @@ namespace UnityGLTF
             
             Shader.DisableKeyword(ShaderKeywordStrings.DEBUG_DISPLAY);
 
-            if (IsTextureEmpty(bakedTexture))
+            if (IsTextureEmpty(bakedTexture, mask))
             {
                 Object.DestroyImmediate(bakedTexture);
                 baked = null;
