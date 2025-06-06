@@ -71,9 +71,7 @@ namespace UnityGLTF.Interactivity.Export
             mainGraph.CustomEvents = customEvents.ToArray();
             mainGraph.Declarations = opDeclarations.ToArray();
             
-            ActiveGltfRoot.AddExtension(GltfInteractivityExtension.ExtensionName, extension);
-            
-            exporter.DeclareExtensionUsage(GltfInteractivityExtension.ExtensionName);
+            InteractivityGraphMerging.AddOrMergeInteractivityExtension(ActiveGltfRoot, exporter, extension);
         }
         
         protected void TriggerOnBeforeSerialization()
