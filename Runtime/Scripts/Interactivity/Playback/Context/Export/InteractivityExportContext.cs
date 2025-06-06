@@ -12,7 +12,7 @@ namespace UnityGLTF.Interactivity.Playback
         private HashSet<Transform> _hoverable = new();
         private HashSet<Transform> _selectable = new();
         private GLTFInteractivityData _interactivityData;
-        private GLTFInteractivityPlayback _playback;
+        private HashSet<GLTFInteractivityPlayback> _playbacks;
 
         public override void AfterMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)
         {
@@ -45,21 +45,25 @@ namespace UnityGLTF.Interactivity.Playback
         }
         public override void BeforeNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, GLTF.Schema.Node node)
         {
-            if(_playback.engine != null && _playback.engine.pointerResolver.TryGetPointersOf(transform.gameObject, out var pointers))
+            foreach (var playback in _playbacks)
             {
-                if(pointers.selectability.getter())
-                    AddSelectabilityExtensionToNode(exporter, node);
+                if (playback.engine != null &&
+                    playback.engine.pointerResolver.TryGetPointersOf(transform.gameObject, out var pointers))
+                {
+                    if (pointers.selectability.getter())
+                        AddSelectabilityExtensionToNode(exporter, node);
 
-                if (pointers.hoverability.getter())
-                    AddHoverabilityExtensionToNode(exporter, node);
-            }
-            else if (_interactivityData != null)
-            {
-                if(_selectable.Contains(transform))
-                    AddSelectabilityExtensionToNode(exporter, node);
+                    if (pointers.hoverability.getter())
+                        AddHoverabilityExtensionToNode(exporter, node);
+                }
+                else if (_interactivityData != null)
+                {
+                    if (_selectable.Contains(transform))
+                        AddSelectabilityExtensionToNode(exporter, node);
 
-                if (_hoverable.Contains(transform))
-                    AddHoverabilityExtensionToNode(exporter, node);
+                    if (_hoverable.Contains(transform))
+                        AddHoverabilityExtensionToNode(exporter, node);
+                }
             }
 
             Util.Log($"InteractivityExportContext::BeforeNodeExport ");
@@ -67,7 +71,7 @@ namespace UnityGLTF.Interactivity.Playback
         public override void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
         {
             if (exporter.RootTransforms == null) return;
-            _playback = null;
+            _playbacks = new HashSet<GLTFInteractivityPlayback>();
             _interactivityData = null;
             Transform t;
 
@@ -75,47 +79,46 @@ namespace UnityGLTF.Interactivity.Playback
             foreach (var transform in exporter.RootTransforms)
             {
                 t = transform;
-
-                if (t.TryGetComponent(out _playback))
-                    break;
-
-                while (t.parent != null)
-                {
-                    if (t.parent.TryGetComponent(out _playback))
-                        break;
-
-                    t = t.parent;
-                }
+                var playbacks = t.GetComponentsInChildren<GLTFInteractivityPlayback>();
+                if (t != null)
+                    foreach (var p in playbacks)
+                        _playbacks.Add(p);
             }
 
-            if (_playback == null)
+            if (_playbacks.Count == 0)
                 return;
 
-            var extensionData = _playback.extensionData;
-
-            var hasData = _playback.gameObject.TryGetComponent(out _interactivityData);
-
-            if (extensionData == null)
+            foreach (var playback in _playbacks)
             {
-                if (!hasData)
-                    throw new InvalidOperationException("No valid extension data source found for interactive glb. Did you delete the data component before exporting?");
+                var extensionData = playback.extensionData;
 
-                var serializer = new GraphSerializer();
-                extensionData = serializer.Deserialize(_interactivityData.interactivityJson);
+                var hasData = playback.gameObject.TryGetComponent(out _interactivityData);
 
-                for (int i = 0; i < _interactivityData.pointerReferences.nodes.Count; i++)
+                if (extensionData == null)
                 {
-                    var node = _interactivityData.pointerReferences.nodes[i];
-                    if (node.isHoverable)
-                        _hoverable.Add(node.unityObject.transform);
+                    if (!hasData)
+                        throw new InvalidOperationException(
+                            "No valid extension data source found for interactive glb. Did you delete the data component before exporting?");
 
-                    if (node.isSelectable)
-                        _selectable.Add(node.unityObject.transform);
+                    var serializer = new GraphSerializer();
+                    extensionData = serializer.Deserialize(_interactivityData.interactivityJson);
+
+                    for (int i = 0; i < _interactivityData.pointerReferences.nodes.Count; i++)
+                    {
+                        var node = _interactivityData.pointerReferences.nodes[i];
+                        if (node.isHoverable)
+                            _hoverable.Add(node.unityObject.transform);
+
+                        if (node.isSelectable)
+                            _selectable.Add(node.unityObject.transform);
+                    }
                 }
-            }
 
-            exporter.DeclareExtensionUsage(InteractivityGraphExtension.EXTENSION_NAME, true);
-            gltfRoot.AddExtension(InteractivityGraphExtension.EXTENSION_NAME, new InteractivityGraphExtension(extensionData));
+
+                InteractivityGraphMerging.AddOrMergeInteractivityExtension(gltfRoot, exporter,
+                    new InteractivityGraphExtension(extensionData));
+            }
+            
             Util.Log($"InteractivityExportContext::BeforeSceneExport ");
         }
         public override void BeforeTextureExport(GLTFSceneExporter exporter, ref GLTFSceneExporter.UniqueTexture texture, string textureSlot)
