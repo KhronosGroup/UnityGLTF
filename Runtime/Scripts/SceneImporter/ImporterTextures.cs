@@ -225,17 +225,23 @@ namespace UnityGLTF
 					textureWillBeCompressed = true;
 			}
 
+			var makeNoLongerReadable = markGpuOnly && !textureWillBeCompressed;
 			switch (image.MimeType)
 			{
-				case "image/png":
 				case "image/jpeg":
+					var jpgData = data.ToArray();
+					texture.LoadImage(jpgData, makeNoLongerReadable);
+					break;
+				case "image/png":
 					//	NOTE: the second parameter of both LoadImage() and Apply() in this case block marks the texture non-readable, but we can't mark it until after we call Apply() after this switch block.
-                    var makeNoLongerReadable = markGpuOnly && !textureWillBeCompressed;
-                    var pngData = data.ToArray();
+					
+					var pngData = data.ToArray();
                     var pngColorType = pngData.Length > 25 ? pngData[25] : 0;
                     var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
-
-                    if (image.MimeType == "image/jpeg" || pngHasAlpha)
+#if !UNITY_EDITOR
+					texture.LoadImage(pngData, makeNoLongerReadable);
+#else
+                    if (Context.AssetContext == null || pngHasAlpha)
                     {
 					    texture.LoadImage(pngData, makeNoLongerReadable);
                     }
@@ -252,8 +258,8 @@ namespace UnityGLTF
 
                         texture.Apply(GenerateMipMapsForTextures, makeNoLongerReadable);
                     }
-
-                break;
+#endif
+					break;
 				case "image/exr":
 					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
 					break;
