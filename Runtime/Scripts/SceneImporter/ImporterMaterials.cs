@@ -828,6 +828,8 @@ namespace UnityGLTF
 			foreach (var plugin in Context.Plugins)
 			{
 				plugin.OnAfterImportMaterial(def, materialIndex, mapper.Material);
+				// TODO: Make a breaking change by adding the vert color material as an arg to OnAfterImportMaterial?
+				plugin.OnAfterImportMaterialWithVertexColors(def, materialIndex, vertColorMapper.Material);
 			}
 		}
 
