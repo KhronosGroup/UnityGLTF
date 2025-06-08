@@ -10,7 +10,7 @@ namespace UnityGLTF
 		// In this case they match the naming from the included Mixamo model on the left
 		// and the Unity equivalent name on the right.
 		// This does not need to be hard-coded.
-		public static Dictionary<string, string> HumanSkeletonNames = new Dictionary<string, string>()
+		static Dictionary<string, string> HumanSkeletonNames = new Dictionary<string, string>()
 		{
 			{"mixamorig:spine1", "Chest"},
 			{"mixamorig:head", "Head" },
@@ -170,9 +170,43 @@ namespace UnityGLTF
 			{"rightlegupper_jnt", "RightUpperLeg"},
 			{"rightleglower_jnt", "RightLowerLeg"},
 			{"rightfootball_jnt", "RightFoot"},
-			{"rightfoottoe_jnt", "RightToes"}			
+			{"rightfoottoe_jnt", "RightToes"},
 
-		};
+            // Simple bone names Unity's FBX importer can detect.
+            { "lefttoe", "LeftToes" },
+            { "righttoe", "RightToes" },
+            { "jaw", "Jaw" },
+            {"leftthumb1", "Left Thumb Proximal"},
+            {"leftthumb2", "Left Thumb Intermediate"},
+            {"leftthumb3", "Left Thumb Distal"},
+            {"leftindex1", "Left Index Proximal" },
+            {"leftindex2", "Left Index Intermediate"},
+            {"leftindex3", "Left Index Distal"},
+            {"leftmiddle1", "Left Middle Proximal"},
+            {"leftmiddle2", "Left Middle Intermediate"},
+            {"leftmiddle3", "Left Middle Distal"},
+            {"leftring1", "Left Ring Proximal"},
+            {"leftring2", "Left Ring Intermediate"},
+            {"leftring3", "Left Ring Distal"},
+            {"leftpinky1", "Left Little Proximal"},
+            {"leftpinky2", "Left Little Intermediate"},
+            {"leftpinky3", "Left Little Distal"},
+            {"rightthumb1", "Right Thumb Proximal"},
+            {"rightthumb2", "Right Thumb Intermediate"},
+            {"rightthumb3", "Right Thumb Distal"},
+            {"rightindex1", "Right Index Proximal"},
+            {"rightindex2", "Right Index Intermediate"},
+            {"rightindex3", "Right Index Distal"},
+            {"rightmiddle1", "Right Middle Proximal"},
+            {"rightmiddle2", "Right Middle Intermediate"},
+            {"rightmiddle3", "Right Middle Distal"},
+            {"rightring1", "Right Ring Proximal"},
+            {"rightring2", "Right Ring Intermediate"},
+            {"rightring3", "Right Ring Distal"},
+            {"rightpinky1", "Right Little Proximal"},
+            {"rightpinky2", "Right Little Intermediate"},
+            {"rightpinky3", "Right Little Distal"}
+        };
 
 		/// <summary>
 		/// Create a HumanDescription out of an avatar GameObject.
