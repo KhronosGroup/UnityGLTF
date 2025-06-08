@@ -300,7 +300,7 @@ namespace UnityGLTF
                     EditorGUILayout.BeginHorizontal();
                     var legendIconRect = GUILayoutUtility.GetRect(18, 18, GUILayout.Width(18), GUILayout.Height(18));
                     GUI.DrawTexture(legendIconRect, BoneAssignmentDotFrameDottedIcon, ScaleMode.ScaleToFit, true);
-                    GUILayout.Label("Optional bone", EditorStyles.miniLabel);
+                    GUILayout.Label("Optional Bone", EditorStyles.miniLabel);
                     EditorGUILayout.EndHorizontal();
 
                     selectedBoneGroupTab = GUILayout.Toolbar(selectedBoneGroupTab, boneGroupTabs);
