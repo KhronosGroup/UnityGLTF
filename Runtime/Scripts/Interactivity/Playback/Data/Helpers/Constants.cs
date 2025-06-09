@@ -31,6 +31,8 @@ namespace UnityGLTF.Interactivity.Playback
 
     public static class ConstStrings
     {
+        public const string AXIS = "axis";
+        public const string ANGLE = "angle";
         public const string REMAINING_INPUTS = "remainingInputs";
         public const string LAST_INDEX = "lastIndex";
         public const string LAST_REMAINING_TIME = "lastRemainingTime";
