@@ -100,8 +100,8 @@ namespace UnityGLTF
 			mapper.AlphaMode = def.AlphaMode;
 			mapper.AlphaCutoff = def.AlphaCutoff;
 			mapper.DoubleSided = def.DoubleSided;
-			mapper.Material.SetFloat("_BUILTIN_QueueControl", -1);
-			mapper.Material.SetFloat("_QueueControl", -1);
+			mapper.Material.SetFloat("_BUILTIN_QueueControl", 0);
+			mapper.Material.SetFloat("_QueueControl", 0);
 
 #if UNITY_EDITOR
 			if (Context.SourceImporter == null)
