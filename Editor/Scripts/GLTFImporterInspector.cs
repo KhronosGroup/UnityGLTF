@@ -136,6 +136,7 @@ namespace UnityGLTF
         {
             var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(importer.assetPath);
             boneTransforms.Clear();
+            assignedBoneNames.Clear();
 
             if (modelAsset)
             {
