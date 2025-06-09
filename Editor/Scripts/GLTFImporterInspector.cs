@@ -309,10 +309,10 @@ namespace UnityGLTF
 
                     for (var i = 0; i < allMecanimBonesCount; i++)
                     {
-                        var MecanimBoneName = HumanTrait.BoneName[i];
-                        if (boneGroupTabs[selectedBoneGroupTab] != boneGroups[MecanimBoneName])  continue;
+                        var mecanimBoneName = HumanTrait.BoneName[i];
+                        if (boneGroupTabs[selectedBoneGroupTab] != boneGroups[mecanimBoneName])  continue;
 
-                        assignedBoneNames.TryGetValue(MecanimBoneName, out string assignedBoneName);
+                        assignedBoneNames.TryGetValue(mecanimBoneName, out string assignedBoneName);
                         Transform transform = null;
                         if (!string.IsNullOrEmpty(assignedBoneName))
                         {
@@ -334,7 +334,7 @@ namespace UnityGLTF
                         }
                         else GUI.DrawTexture(iconRect, frameIcon, ScaleMode.ScaleToFit, true);
 
-                        GUILayout.Label(MecanimBoneName, GUILayout.Width(130));
+                        GUILayout.Label(mecanimBoneName, GUILayout.Width(130));
 
                         EditorGUI.BeginDisabledGroup(true);
                         EditorGUILayout.ObjectField(transform, typeof(Transform), true);
