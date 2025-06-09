@@ -24,7 +24,7 @@ namespace UnityGLTF
 				gameObject.transform.rotation *= Quaternion.Euler(0,180,0);
 		    
 		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
-		    avatar.name = "Avatar";
+		    avatar.name = gameObject.name+"Avatar";
 		    
 		    if (flipForward)
 			    gameObject.transform.rotation = previousRotation;
