@@ -1050,12 +1050,12 @@ namespace UnityGLTF.Interactivity.Schema
     public class Math_QuatFromAxisAngleNode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/quatFromAxisAngle";
-        
-        [InputSocketDescription(GltfTypes.Float3)]
-        public const string IdAxis = "axis";
 
         [InputSocketDescription(GltfTypes.Float)]
         public const string IdAngle = "angle";
+        
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdAxis = "axis";
 
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOutValue = "value";
@@ -1065,7 +1065,7 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/quatToAxisAngle";
         
-        [InputSocketDescription(GltfTypes.Float3)]
+        [InputSocketDescription(GltfTypes.Float4)]
         public const string IdValueA = "a";
 
         [OutputSocketDescription(GltfTypes.Float)]
