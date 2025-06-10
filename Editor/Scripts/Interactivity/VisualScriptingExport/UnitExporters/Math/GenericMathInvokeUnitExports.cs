@@ -65,6 +65,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), nameof(Matrix4x4.Determinant), new GenericInvokeMathInvokeUnitExporters<Math_DeterminantNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), nameof(Matrix4x4.Transpose), new GenericInvokeMathInvokeUnitExporters<Math_TransposeNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), nameof(Matrix4x4.Inverse), new GenericInvokeMathInvokeUnitExporters<Math_InverseNode>());
+
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Inverse), new GenericInvokeMathInvokeUnitExporters<Math_QuatConjugateNode>());
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Angle), new GenericInvokeMathInvokeUnitExporters<Math_QuatAngleBetweenNode>());
         }   
     }
     public class GenericInvokeMathInvokeUnitExporters<TSchema> : GenericInvokeUnitExport<TSchema> where TSchema : GltfInteractivityNodeSchema, new()
