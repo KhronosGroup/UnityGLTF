@@ -1007,4 +1007,85 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOutValue = "value";
     }
+    
+    public class Math_QuatConjugateNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatConjugate";
+        
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueA = "a";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOutValue = "value";
+    }
+    
+    public class Math_QuatMulNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatMul";
+        
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueA = "a";
+
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueB = "a";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOutValue = "value";
+    }
+    
+    public class Math_QuatAngleBetweenNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatAngleBetween";
+        
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueA = "a";
+
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueB = "a";
+
+        [OutputSocketDescription(GltfTypes.Float)]
+        public const string IdOutValue = "value";
+    }   
+    
+    public class Math_QuatFromAxisAngleNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatFromAxisAngle";
+        
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdAxis = "axis";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdAngle = "angle";
+
+        [OutputSocketDescription(GltfTypes.Float)]
+        public const string IdOutValue = "value";
+    }  
+    
+    public class Math_QuatToAxisAngleNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatToAxisAngle";
+        
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdValueA = "a";
+
+        [OutputSocketDescription(GltfTypes.Float)]
+        public const string IdOutAngle = "angle";
+
+        [OutputSocketDescription(GltfTypes.Float3)]
+        public const string IdOutAxis = "axis";
+    }  
+    
+    public class Math_QuatFromDirectionsNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatFromDirections";
+        
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdValueA = "a";
+
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdValueB = "b";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOutValue = "value";
+    }  
 }
