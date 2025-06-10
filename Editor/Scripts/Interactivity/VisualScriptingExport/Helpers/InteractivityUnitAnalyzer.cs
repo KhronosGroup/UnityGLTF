@@ -33,7 +33,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             if (!interactivityPlugin)
             {
-                var plugin = gltfSettings.ExportPlugins.FirstOrDefault(p => p.DisplayName.GetType().Name.Contains("VisualScriptingExportPlugin"));
+                var plugin = gltfSettings.ExportPlugins.FirstOrDefault(p => p.GetType().Name.Contains("VisualScriptingExportPlugin"));
                 if (plugin != null)
                     interactivityPlugin = plugin;
             }
