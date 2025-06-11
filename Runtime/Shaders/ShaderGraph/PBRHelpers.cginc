@@ -49,6 +49,16 @@ float3 Sample4Tap(float2 uv, float lod)
 }
 */
 
+#ifndef  UnityStereoTransformScreenSpaceTex
+float2 UnityStereoTransformScreenSpaceTex(float2 uv)
+{
+	#if defined(UNITY_SINGLE_PASS_STEREO) || defined(UNITY_STEREO_INSTANCING_ENABLED)
+	uv.x = uv.x * 0.5 + 0.5 * unity_StereoEyeIndex;
+	#endif
+	return uv;
+}
+#endif
+
 void SampleSceneColor_float(float2 uv, float lod, out float3 color)
 {
 	#if !UNITY_UV_STARTS_AT_TOP
