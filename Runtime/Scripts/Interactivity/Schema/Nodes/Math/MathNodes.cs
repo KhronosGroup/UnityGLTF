@@ -1027,7 +1027,7 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdValueA = "a";
 
         [InputSocketDescription(GltfTypes.Float4)]
-        public const string IdValueB = "a";
+        public const string IdValueB = "b";
 
         [OutputSocketDescription(GltfTypes.Float4)]
         public const string IdOutValue = "value";
@@ -1041,7 +1041,7 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdValueA = "a";
 
         [InputSocketDescription(GltfTypes.Float4)]
-        public const string IdValueB = "a";
+        public const string IdValueB = "b";
 
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOutValue = "value";
