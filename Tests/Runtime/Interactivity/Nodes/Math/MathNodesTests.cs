@@ -900,7 +900,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         public void TestRotate3d()
         {
             var q1 = quaternion.Euler(0f, math.PI, 0f).ToFloat4();
-            var q2 = quaternion.Euler(0f, math.PI/2, 0f).ToFloat4();
+            var q2 = quaternion.Euler(0f, math.PI / 2, 0f).ToFloat4();
 
             RotateTest3D("Rotate3D_NegativeZ_AroundY_ByPiOver2", "Rotate3D Test 1", "Tests a rotation in 3D.", "math/rotate3D", new float3(0.0f, 0.0f, -1.0f), q1, new float3(0.0f, 0.0f, 1.0f));
             RotateTest3D("Rotate3D_X_AroundY_ByPi", "Rotate3D Test 2", "Tests a rotation in 3D.", "math/rotate3D", new float3(1.0f, 0.0f, 0.0f), q2, new float3(0.0f, 0.0f, -1.0f));
@@ -992,6 +992,105 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var expected = math.degrees(a);
 
             TestNodeWithAllFloatNInputVariants("Deg", "Deg", "Tests math/deg with standard values.", "math/deg", a, expected);
+        }
+
+        [Test]
+        public void TestQuatConjugate()
+        {
+            var a = new float4(1f, -2f, 3f, 4f);
+            var e = new float4(-1f, 2f, -3f, 4f);
+
+            QueueTest("math/quatConjugate", "Quat_Conjugate", "Quaternion Conjugate", "Tests quaternion conjugate operation.", CreateSelfContainedTestGraph("math/quatConjugate", In(a), Out(e), ComparisonType.Equals));
+
+            var a2 = new float4(1f, 2f, float.PositiveInfinity, 4f);
+            var e2 = new float4(-1f, -2f, float.NegativeInfinity, 4f);
+            QueueTest("math/quatConjugate", "Quat_Conjugate_Inf", "Quaternion Conjugate w/ Infinity", "Tests quaternion conjugate operation with infinity.", CreateSelfContainedTestGraph("math/quatConjugate", In(a2), Out(e2), ComparisonType.Equals));
+
+            var a3 = new float4(float.NaN, float.NaN, float.NaN, float.NaN);
+            var e3 = new float4(float.NaN, float.NaN, float.NaN, float.NaN);
+            QueueTest("math/quatConjugate", "Quat_Conjugate_NaN", "Quaternion Conjugate w/ NaN", "Tests quaternion conjugate operation with NaN.", CreateSelfContainedTestGraph("math/quatConjugate", In(a3), Out(e3), ComparisonType.IsNaN));
+        }
+
+        [Test]
+        public void TestQuatMul()
+        {
+            QueueTest("math/quatMul", "Quat_Mul_Identity", "Quaternion Multiplication (Identity)", "Tests that identity quaternions multiplied together produce an identity quaternion.", QuatMulTest(new float4(0, 0, 0, 1),
+            new float4(0, 0, 0, 1),
+            new float4(0, 0, 0, 1)));
+
+            QueueTest("math/quatMul", "Quat_Mul_xy_z", "Quaternion Multiplication (x*y=z)", "Tests that x*y=z.", QuatMulTest(new float4(1, 0, 0, 0),
+            new float4(0, 1, 0, 0),
+            new float4(0, 0, 1, 0)));
+
+            QueueTest("math/quatMul", "Quat_Mul_yz_x", "Quaternion Multiplication (y*z=x)", "Tests that y*z=x.", QuatMulTest(new float4(0, 1, 0, 0),
+            new float4(0, 0, 1, 0),
+            new float4(1, 0, 0, 0)));
+
+            QueueTest("math/quatMul", "Quat_Mul_zx_y", "Quaternion Multiplication (z*x=y)", "Tests that z*x=y.", QuatMulTest(new float4(0, 0, 1, 0),
+            new float4(1, 0, 0, 0),
+            new float4(0, 1, 0, 0)));
+
+            QueueTest("math/quatMul", "Quat_Mul_xx_negx", "Quaternion Multiplication (x*x=-x)", "Tests that x*x=-x.", QuatMulTest(new float4(1, 0, 0, 0),
+           new float4(1, 0, 0, 0),
+           new float4(0, 0, 0, -1)));
+        }
+
+        private static (Graph, TestValues) QuatMulTest(float4 a, float4 b, float4 e)
+        {
+            return CreateSelfContainedTestGraph("math/quatMul", In(a, b), Out(e), ComparisonType.Equals);
+        }
+
+        [Test]
+        public void TestQuatAngleBetween()
+        {
+            var a = quaternion.Euler(math.PI * 0.5f, 0f, 0f).ToFloat4();
+            var b = quaternion.Euler(-math.PI * 0.5f, 0f, 0f).ToFloat4();
+
+            QueueTest("math/quatAngleBetween", "Quat_Angle_Between", "Quaternion Angle Between", "Tests quaternion angle between operation on the x axis only.", CreateSelfContainedTestGraph("math/quatAngleBetween", In(a, b), Out(math.PI), ComparisonType.Equals));
+
+            var a2 = quaternion.Euler(math.PI * 0.5f, 0f, 0f).ToFloat4();
+            var b2 = quaternion.Euler(-math.PI * 0.5f, 0f, math.PI * 0.5f).ToFloat4();
+
+            QueueTest("math/quatAngleBetween", "Quat_Angle_Between_xz", "Quaternion Angle Between (x/z rotations)", "Tests quaternion angle between operation with the xz axes.", CreateSelfContainedTestGraph("math/quatAngleBetween", In(a2, b2), Out(math.PI), ComparisonType.Equals));
+
+            var a3 = quaternion.Euler(math.PI * 0.5f, math.PI * 0.5f, 0f).ToFloat4();
+            var b3 = quaternion.Euler(-math.PI * 0.5f, 0f, 0f).ToFloat4();
+
+            QueueTest("math/quatAngleBetween", "Quat_Angle_Between_xy", "Quaternion Angle Between (x/y rotations)", "Tests quaternion angle between operation with the xy axes.", CreateSelfContainedTestGraph("math/quatAngleBetween", In(a3, b3), Out(math.PI), ComparisonType.Equals));
+        }
+
+        [Test]
+        public void TestQuatFromAxisAngle()
+        {
+            var axis = new float3(1f, 0f, 0f);
+            var angle = math.PI * 0.5f;
+            var expected = quaternion.Euler(math.PI * 0.5f, 0f, 0f).ToFloat4();
+
+            QueueTest("math/quatFromAxisAngle", "Quat_From_Axis_Angle_X", "Quaternion From Axis Angle X", "Tests quaternion from axis angle.", QuatFromAxisAngle(axis, angle, expected));
+
+            var axis2 = new float3(0f, 1f, 0f);
+            var angle2 = math.PI * 0.5f;
+            var expected2 = quaternion.Euler(0f, math.PI * 0.5f, 0f).ToFloat4();
+
+            QueueTest("math/quatFromAxisAngle", "Quat_From_Axis_Angle_Y", "Quaternion From Axis Angle Y", "Tests quaternion from axis angle.", QuatFromAxisAngle(axis2, angle2, expected2));
+
+            var axis3 = new float3(0f, 0f, 1f);
+            var angle3 = math.PI * 0.5f;
+            var expected3 = quaternion.Euler(0f, 0f, math.PI * 0.5f).ToFloat4();
+
+            QueueTest("math/quatFromAxisAngle", "Quat_From_Axis_Angle_Z", "Quaternion From Axis Angle Z", "Tests quaternion from axis angle.", QuatFromAxisAngle(axis3, angle3, expected3));
+        }
+
+        private static (Graph, TestValues) QuatFromAxisAngle(float3 axis, float angle, float4 expected)
+        {
+            var inputs = new Dictionary<string, Value>();
+            var outputs = new Dictionary<string, IProperty>();
+
+            inputs.Add(ConstStrings.AXIS, new Value() { id = ConstStrings.A, property = new Property<float3>(axis) });
+            inputs.Add(ConstStrings.ANGLE, new Value() { id = ConstStrings.B, property = new Property<float>(angle) });
+            outputs.Add(ConstStrings.VALUE, new Property<float4>(expected));
+
+            return CreateSelfContainedTestGraph("math/quatFromAxisAngle", inputs, outputs, ComparisonType.Equals);
         }
     }
 }
