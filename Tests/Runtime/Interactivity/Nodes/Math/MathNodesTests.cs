@@ -1030,7 +1030,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             new float4(1, 0, 0, 0),
             new float4(0, 1, 0, 0)));
 
-            QueueTest("math/quatMul", "Quat_Mul_xx_negx", "Quaternion Multiplication (x*x=-x)", "Tests that x*x=-x.", QuatMulTest(new float4(1, 0, 0, 0),
+            QueueTest("math/quatMul", "Quat_Mul_xx_negw", "Quaternion Multiplication (x*x=-w)", "Tests that x*x results in -w.", QuatMulTest(new float4(1, 0, 0, 0),
            new float4(1, 0, 0, 0),
            new float4(0, 0, 0, -1)));
         }
