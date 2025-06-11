@@ -1086,11 +1086,75 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var inputs = new Dictionary<string, Value>();
             var outputs = new Dictionary<string, IProperty>();
 
-            inputs.Add(ConstStrings.AXIS, new Value() { id = ConstStrings.A, property = new Property<float3>(axis) });
-            inputs.Add(ConstStrings.ANGLE, new Value() { id = ConstStrings.B, property = new Property<float>(angle) });
+            inputs.Add(ConstStrings.AXIS, new Value() { id = ConstStrings.AXIS, property = new Property<float3>(axis) });
+            inputs.Add(ConstStrings.ANGLE, new Value() { id = ConstStrings.ANGLE, property = new Property<float>(angle) });
             outputs.Add(ConstStrings.VALUE, new Property<float4>(expected));
 
             return CreateSelfContainedTestGraph("math/quatFromAxisAngle", inputs, outputs, ComparisonType.Equals);
+        }
+
+        [Test]
+        public void TestQuatToAxisAngle()
+        {
+            var axis = new float3(1f, 0f, 0f);
+            var angle = math.PI * 0.5f;
+            var q = quaternion.Euler(math.PI * 0.5f, 0f, 0f).ToFloat4();
+
+            QueueTest("math/quatToAxisAngle", "Quat_To_Axis_Angle_X", "Quaternion To Axis Angle X", "Tests quaternion to axis angle.", QuatToAxisAngle(q, axis, angle));
+
+            var axis2 = new float3(0f, 1f, 0f);
+            var angle2 = math.PI * 0.5f;
+            var q2 = quaternion.Euler(0f, math.PI * 0.5f, 0f).ToFloat4();
+
+            QueueTest("math/quatToAxisAngle", "Quat_To_Axis_Angle_Y", "Quaternion To Axis Angle Y", "Tests quaternion to axis angle.", QuatToAxisAngle(q2, axis2, angle2));
+
+            var axis3 = new float3(0f, 0f, 1f);
+            var angle3 = math.PI * 0.5f;
+            var q3 = quaternion.Euler(0f, 0f, math.PI * 0.5f).ToFloat4();
+
+            QueueTest("math/quatToAxisAngle", "Quat_To_Axis_Angle_Z", "Quaternion To Axis Angle Z", "Tests quaternion to axis angle.", QuatToAxisAngle(q3, axis3, angle3));
+        }
+
+        private static (Graph, TestValues) QuatToAxisAngle(float4 quaternion, float3 axis, float angle)
+        {
+            var inputs = new Dictionary<string, Value>();
+            var outputs = new Dictionary<string, IProperty>();
+
+            inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float4>(quaternion) });
+            outputs.Add(ConstStrings.AXIS, new Property<float3>(axis));
+            outputs.Add(ConstStrings.ANGLE, new Property<float>(angle));
+
+            return CreateSelfContainedTestGraph("math/quatToAxisAngle", inputs, outputs, ComparisonType.Equals);
+        }
+
+        [Test]
+        public void TestQuatFromDirections()
+        {
+            var a = new float3(1f, 0f, 0f);
+            var b = new float3(0f, 1f, 0f);
+
+            var q = quaternion.Euler(0f, 0f, math.PI * 0.5f).ToFloat4();
+
+            QueueTest("math/quatFromDirections", "Quat_From_Directions_XY", "Quaternion From Directions (XY)", "Tests quaternion from directions.", QuatFromDirections(a, b, q));
+
+            var a2 = new float3(0f, 1f, 0f);
+            var b2 = new float3(0f, 0f, 1f);
+
+            var q2 = quaternion.Euler(math.PI * 0.5f, 0f, 0f).ToFloat4();
+
+            QueueTest("math/quatFromDirections", "Quat_From_Directions_YZ", "Quaternion From Directions (YZ)", "Tests quaternion from directions.", QuatFromDirections(a2, b2, q2));
+
+            var a3 = new float3(0f, 0f, 1f);
+            var b3 = new float3(1f, 0f, 0f);
+
+            var q3 = quaternion.Euler(0f, math.PI * 0.5f, 0f).ToFloat4();
+
+            QueueTest("math/quatFromDirections", "Quat_From_Directions_ZX", "Quaternion From Directions (ZX)", "Tests quaternion from directions.", QuatFromDirections(a3, b3, q3));
+        }
+
+        private static (Graph, TestValues) QuatFromDirections(float3 a, float3 b, float4 expected)
+        {
+            return CreateSelfContainedTestGraph("math/quatFromDirections", In(a, b), Out(expected), ComparisonType.Equals);
         }
     }
 }
