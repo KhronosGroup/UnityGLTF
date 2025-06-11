@@ -227,6 +227,7 @@ namespace UnityGLTF.Plugins
                     }
 #endif
                     // Runtime loaded Gltf:
+#if HAVE_WEBREQUESTAUDIO
                     var tempFile = Path.Combine(Application.temporaryCachePath, "gltfAudioImport"+ mimeTypeFileExtension);
                     File.WriteAllBytes(tempFile, buffer.ToArray());
                     
@@ -253,6 +254,9 @@ namespace UnityGLTF.Plugins
                     clip.name = $"audio_{index:D3}";
                     
                     _audioClips.Add(index, clip);
+#else
+                    Debug.LogWarning($"Missing UnityWebRequestAudio Module! Audio import is not supported. Please enable the UnityWebRequestAudio Module in Package Manager to import audio files at runtime.");
+#endif
                 }
                 else
                 {
