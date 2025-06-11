@@ -275,9 +275,9 @@ namespace UnityGLTF.Plugins
             else
                 scene = _context.Root.Scenes[0];
             
-            if (scene == null)
+            if (scene == null || scene.Extensions == null)
                 return;
-
+            
             if (!scene.Extensions.TryGetValue(KHR_audio_emitter.ExtensionName, out var extension))
                 return;
             if (extension is KHR_SceneAudioEmittersRef audioEmitterRef)
@@ -320,6 +320,9 @@ namespace UnityGLTF.Plugins
 
         public override void OnAfterImportScene(GLTFScene scene, int sceneIndex, GameObject sceneObject)
         {
+            if (_audioExtension == null)
+                return;
+            
             AddGlobalEmitters(sceneObject);
             CreateAudioClips();
             AssignClips();
