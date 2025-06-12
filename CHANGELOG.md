@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.1] - 2025-06-12
+- fix: define UnityStereoTransformScreenSpaceTex when it doesn't exist (e.g. some HDRP configurations)
+
 ## [2.17.0] - 2025-06-12
 - add: Quaternion nodes for KHR_interactivity visual scripting export
 - add: Importing PNG files without alpha channel in the Editor now sets them as RGB instead of RGBA, leading to better compression and less memory usage (#858)
