@@ -521,7 +521,7 @@ namespace UnityGLTF
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("sheen", StringComparison.Ordinal));
 			}
-			if (targetMaterial.GetFloat("_ANISOTROPY") < 0.5f)
+			if (!targetMaterial.HasProperty("_ANISOTROPY") || !(targetMaterial.GetFloat("_ANISOTROPY") > 0.5f))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("anisotropy", StringComparison.Ordinal));
 			}
