@@ -560,11 +560,14 @@ namespace UnityGLTF
 				propertyList.RemoveAll(x => x.name == "alphaCutoff");
 			}
 			
-			// remove advanced properties that we want to draw a foldout for
+			// Remove advanced properties that we want to draw a foldout for
 			var overrideSurfaceMode = propertyList.FirstOrDefault(x => x.name == "_OverrideSurfaceMode");
 			var normalMapFormatXYZ = propertyList.FirstOrDefault(x => x.name == "_NormalMapFormatXYZ");
 			if (overrideSurfaceMode != null) propertyList.Remove(overrideSurfaceMode);
 			if (normalMapFormatXYZ != null) propertyList.Remove(normalMapFormatXYZ);
+			
+			// TODO Move non-visual properties down and mark them as such
+			
 			
 			// TODO we probably want full manual control, all this internal access is horrible...
 			// E.g. impossible to render inline texture properties...
