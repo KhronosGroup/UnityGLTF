@@ -1392,7 +1392,7 @@ namespace UnityGLTF
 					}
 				}
 
-				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid)
+				if (_options.AnimationMethod is AnimationMethod.Mecanim or AnimationMethod.MecanimHumanoid)
                 {
                     var animator = sceneObj.GetComponent<Animator>();
                     if (!animator) animator = sceneObj.AddComponent<Animator>();
