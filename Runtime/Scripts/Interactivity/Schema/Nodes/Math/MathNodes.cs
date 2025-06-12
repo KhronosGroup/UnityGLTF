@@ -1057,7 +1057,7 @@ namespace UnityGLTF.Interactivity.Schema
         [InputSocketDescription(GltfTypes.Float3)]
         public const string IdAxis = "axis";
 
-        [OutputSocketDescription(GltfTypes.Float)]
+        [OutputSocketDescription(GltfTypes.Float4)]
         public const string IdOutValue = "value";
     }  
     

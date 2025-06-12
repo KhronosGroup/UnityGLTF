@@ -22,9 +22,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var node = unitExporter.CreateNode<Math_QuatToAxisAngleNode>();
             node.ValueIn(Math_QuatToAxisAngleNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
-            
             node.ValueOut(Math_QuatToAxisAngleNode.IdOutAxis).MapToPort(unit.valueOutputs["&axis"]);
-            node.ValueOut(Math_QuatToAxisAngleNode.IdOutAngle).MapToPort(unit.valueOutputs["&angle"]);
+            
+            var degToRadNode = unitExporter.CreateNode<Math_RadNode>();
+            degToRadNode.ValueIn(Math_RadNode.IdInputA).ConnectToSource(node.ValueOut(Math_QuatToAxisAngleNode.IdOutAngle));
+            degToRadNode.FirstValueOut().MapToPort(unit.valueOutputs["&angle"]);
 
             return true;
         }
