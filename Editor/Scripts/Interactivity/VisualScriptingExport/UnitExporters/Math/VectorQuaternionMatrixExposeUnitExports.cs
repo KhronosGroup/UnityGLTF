@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -11,14 +12,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public class VectorQuaternionMatrixExposeUnitExports : IUnitExporter
     {
         private static readonly string[] VectorMemberIndex = new string[] { "x", "y", "z", "w" };
-
-        private static readonly string[] MatrixMemberIndex = new string[]
-        {
-            "m00", "m10", "m20", "m30", "m01", "m11", "m21", "m31", "m02", "m12", "m22", "m32", "m03", "m13", "m23",
-            "m33"
-        };
-
-
+        
         public Type unitType
         {
             get => typeof(Expose);
@@ -31,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             ExposeUnitExport.RegisterExposeConvert(typeof(Vector2), converter, "x", "y");
             ExposeUnitExport.RegisterExposeConvert(typeof(Vector3), converter, "x", "y", "z");
             ExposeUnitExport.RegisterExposeConvert(typeof(Vector4), converter, "x", "y", "z", "w");
-            var matrixMembers = MatrixMemberIndex.Concat(new string[] {nameof(Matrix4x4.lossyScale), nameof(Matrix4x4.rotation)}).ToArray();
+            var matrixMembers = MatrixHelpers.MatrixMemberIndex.Concat(new string[] {nameof(Matrix4x4.lossyScale), nameof(Matrix4x4.rotation)}).ToArray();
             ExposeUnitExport.RegisterExposeConvert(typeof(Matrix4x4), converter, matrixMembers);
 
             ExposeUnitExport.RegisterExposeConvert(typeof(Quaternion), converter, "x", "y", "z", "w");
@@ -48,8 +42,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 GetMemberUnitExport.RegisterMemberExporter(typeof(Quaternion), VectorMemberIndex[i], converter);
             }
 
-            for (int i = 0; i < MatrixMemberIndex.Length; i++)
-                GetMemberUnitExport.RegisterMemberExporter(typeof(Matrix4x4), MatrixMemberIndex[i], converter);
+            for (int i = 0; i < MatrixHelpers.MatrixMemberIndex.Length; i++)
+                GetMemberUnitExport.RegisterMemberExporter(typeof(Matrix4x4), MatrixHelpers.MatrixMemberIndex[i], converter);
         }
 
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
@@ -115,9 +109,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 if (isMatrix)
                 {
-                    for (int i = 0; i < MatrixMemberIndex.Length; i++)
+                    for (int i = 0; i < MatrixHelpers.MatrixMemberIndex.Length; i++)
                     {
-                        if (member.name == MatrixMemberIndex[i])
+                        if (member.name == MatrixHelpers.MatrixMemberIndex[i])
                         {
                             unitExporter.MapValueOutportToSocketName(port, i.ToString(), node);
                             break;

@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -12,13 +13,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         private static readonly string[] VectorMemberIndex = new string[] { "x", "y", "z", "w" };
         private static readonly string[] InputNames = new string[] {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p"};
-
-        
-        private static readonly string[] MatrixMemberIndex = new string[]
-        {
-            "m00", "m10", "m20", "m30", "m01", "m11", "m21", "m31", "m02", "m12", "m22", "m32", "m03", "m13", "m23",
-            "m33"
-        };
         
         [InitializeOnLoadMethod]
         private static void Register()
@@ -41,7 +35,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             SetMemberUnitExport.RegisterMemberExporter(typeof(Quaternion), nameof(Quaternion.w), new VectorQuaternionMatrixSetComponentsUnitExports(4, 3) );
 
             for (int i = 0; i < 16; i++)
-                SetMemberUnitExport.RegisterMemberExporter(typeof(Matrix4x4), MatrixMemberIndex[i], new VectorQuaternionMatrixSetComponentsUnitExports(16, i) );
+                SetMemberUnitExport.RegisterMemberExporter(typeof(Matrix4x4), MatrixHelpers.MatrixMemberIndex[i], new VectorQuaternionMatrixSetComponentsUnitExports(16, i) );
         }
 
         private int componentCount;
