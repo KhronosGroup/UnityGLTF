@@ -1399,6 +1399,11 @@ namespace UnityGLTF
 
                     animator.applyRootMotion = true;
                 }
+                else if (_options.AnimationMethod == AnimationMethod.Mecanim)
+                {
+                    var animator = sceneObj.GetComponent<Animator>();
+                    if (animator) animator.applyRootMotion = true;
+                }
 
 				CreatedObject = sceneObj;
 				InitializeGltfTopLevelObject();
