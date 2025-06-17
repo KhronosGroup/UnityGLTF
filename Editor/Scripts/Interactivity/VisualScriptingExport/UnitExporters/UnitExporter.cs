@@ -84,8 +84,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public readonly Dictionary<IUnitInputPort, List<NodeSocketName>> inputPortToSocketNameMapping =
             new Dictionary<IUnitInputPort, List<NodeSocketName>>();
 
-        public readonly Dictionary<IUnitOutputPort, NodeSocketName> outputPortToSocketNameByPort =
-            new Dictionary<IUnitOutputPort, NodeSocketName>();
+        public readonly Dictionary<IUnitOutputPort, List<NodeSocketName>> outputPortToSocketNameByPort =
+            new Dictionary<IUnitOutputPort, List<NodeSocketName>>();
         
         public readonly Dictionary<NodeSocketName, NodeSocketName> nodeInputPortToSocketNameMapping =
             new Dictionary<NodeSocketName, NodeSocketName>();
@@ -166,6 +166,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 IsTranslatable = false;
                 UnitExportLogging.AddErrorLog(unit, "Error initializing interactivity nodes: " + e.Message);
+                Debug.LogError(e.Message+ "\n" + e.StackTrace);
                 Console.WriteLine(e);
             }
             
@@ -233,16 +234,26 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             return null;
         }
-
-        public string GetOutputSocketName(IUnitOutputPort output, out GltfInteractivityExportNode node)
+        
+        public string GetFirstOutputSocketName(IUnitOutputPort output, out GltfInteractivityExportNode node)
         {
             node = null;
-            if (outputPortToSocketNameByPort.ContainsKey(output))
+            if (outputPortToSocketNameByPort.TryGetValue(output, out var list) && list.Count > 0)
             {
-                node = outputPortToSocketNameByPort[output].node;
-                return outputPortToSocketNameByPort[output].socketName;
+                node = list[0].node;
+                return list[0].socketName;
             }
-
+            
+            return null;
+        }
+        
+        public List<NodeSocketName> GetOutputSocketNameMap(IUnitOutputPort output)
+        {
+            if (outputPortToSocketNameByPort.TryGetValue(output, out var list) && list.Count > 0)
+            {
+                return list;
+            }
+            
             return null;
         }
         
@@ -279,17 +290,34 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public void ResolveConnections()
         {
-            void SetInputConnection(UnitExporter exportNode, List<NodeSocketName> toSockets, IUnitOutputPort port)
+            bool SetInputConnection(UnitExporter exportNode, List<NodeSocketName> toSockets, IUnitOutputPort port)
             {
-                var socketName = exportNode.GetOutputSocketName(port, out var sourceNode);
-                if (socketName != null)
+                var maps = exportNode.GetOutputSocketNameMap(port);
+                if (maps != null)
                 {
-                    foreach (var socket in toSockets)
+                    foreach (var m in maps)
                     {
-                        socket.node.ValueInConnection[socket.socketName].Node = sourceNode.Index;
-                        socket.node.ValueInConnection[socket.socketName].Socket = socketName;
+                        foreach (var socket in toSockets)
+                        {
+                            socket.node.ValueInConnection[socket.socketName].Node = m.node.Index;
+                            socket.node.ValueInConnection[socket.socketName].Socket = m.socketName;
+                        }
                     }
+
+                    return true;
                 }
+
+                return false;
+
+                // var socketName = exportNode.GetFirstOutputSocketName(port, out var sourceNode);
+                // if (socketName != null)
+                // {
+                //     foreach (var socket in toSockets)
+                //     {
+                //         socket.node.ValueInConnection[socket.socketName].Node = sourceNode.Index;
+                //         socket.node.ValueInConnection[socket.socketName].Socket = socketName;
+                //     }
+                // }
             }
 
             void SetOutFlowConnection(UnitExporter exportNode, List<GltfInteractivityUnitExporterNode.SocketData> toSockets,
@@ -312,7 +340,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 var inputPortGraph = Graph;
                 IUnitInputPort inputPort = input.Key;
                 inputPort = ResolveBypass(inputPort, ref inputPortGraph);
-   
+                bool resolved = false;
                 if (inputPort.hasValidConnection)
                 {
                     var firstConnection = inputPort.connections.First();
@@ -320,15 +348,26 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     if (inputPortGraph.nodes.ContainsKey(firstConnection.source.unit))
                     {
                         var sourcePort = firstConnection.source;
-                        SetInputConnection(inputPortGraph.nodes[sourcePort.unit], input.Value, sourcePort);
+                        resolved = SetInputConnection(inputPortGraph.nodes[sourcePort.unit], input.Value, sourcePort);
                     }
-                    else
+                    
+                    if (!resolved)
                     {
                         // Search in the graph for the node that has the output port, in case it's kind of a bypass.
                         foreach (var node in Graph.nodes)
                         {
                             if (node.Value.outputPortToSocketNameByPort.ContainsKey(firstConnection.source))
-                                SetInputConnection(node.Value, input.Value, firstConnection.source);
+                                resolved = SetInputConnection(node.Value, input.Value, firstConnection.source);
+                        }
+
+                        if (!resolved)
+                        {
+                            foreach (var graph in vsExportContext.addedGraphs)
+                                foreach (var node in graph.nodes)
+                                {
+                                    if (node.Value.outputPortToSocketNameByPort.ContainsKey(firstConnection.source))
+                                        SetInputConnection(node.Value, input.Value, firstConnection.source);
+                                }
                         }
                     }
                 }
@@ -498,7 +537,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         public void MapValueOutportToSocketName(IUnitOutputPort outputPort, string socketId, GltfInteractivityExportNode node)
         {
-            outputPortToSocketNameByPort.Add(outputPort, new NodeSocketName(socketId, node));
+            if (!outputPortToSocketNameByPort.TryGetValue(outputPort, out var portList))
+            {
+                portList = new List<NodeSocketName>();
+                outputPortToSocketNameByPort.Add(outputPort, portList);
+            }
+
+            portList.Add(new NodeSocketName(socketId, node));
         }
 
         public void MapInputPortToSocketName(IUnitInputPort valueInput, string socketId, GltfInteractivityExportNode node)
