@@ -39,6 +39,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             localPoint.MapToPort(invokeUnit.result);
             
+            unitExporter.ByPassFlow(invokeUnit.enter, invokeUnit.exit);
+
             return true;
         }
     }
