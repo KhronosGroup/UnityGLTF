@@ -236,6 +236,7 @@ namespace UnityGLTF.Interactivity.Export
                 out var convertedRotation);
             QuaternionHelpers.Invert(exporter, convertedRotation, out var invertedRotation);
             value = invertedRotation;
+            value.ExpectedType(ExpectedType.Float4);
         }
 
         public static void GetLocalRotation(INodeExporter exporter, out ValueInRef target, out ValueOutRef value)
@@ -439,9 +440,10 @@ namespace UnityGLTF.Interactivity.Export
                 return;
             }
 
-            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(), out worldRotation);
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, getRotation.FirstValueOut(), out var convertedRotation);
+            QuaternionHelpers.Invert(exporter, convertedRotation, out var invertedRotation);
+            worldRotation = invertedRotation;
             worldRotation.ExpectedType(ExpectedType.Float4);
-
         }
 
         public static void GetWorldRotation(INodeExporter exporter, out ValueInRef target,
