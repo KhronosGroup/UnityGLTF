@@ -56,12 +56,22 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             else
             {
                 // float Random and Max Inclusive
-                
-                var mixNode = unitExporter.CreateNode<Math_MixNode>();
-                mixNode.ValueIn("a").SetType(TypeRestriction.LimitToFloat).MapToInputPort(unit.valueInputs[0]);
-                mixNode.ValueIn("b").SetType(TypeRestriction.LimitToFloat).MapToInputPort(unit.valueInputs[1]);
-                mixNode.ValueIn("c").ConnectToSource(randomNode.FirstValueOut()).SetType(TypeRestriction.LimitToFloat);
-                mixNode.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
+
+                if (unitExporter.IsInputLiteralOrDefaultValue(unit.valueInputs[0], out var valueA)
+                    && unitExporter.IsInputLiteralOrDefaultValue(unit.valueInputs[1], out var valueB)
+                    && valueA is float a && valueB is float b && a == 0f && b == 1f)
+                {
+                    // Range is 0 to 1, we don't need a mix node here
+                    randomNode.FirstValueOut().MapToPort(unit.result);
+                }
+                else
+                {
+                    var mixNode = unitExporter.CreateNode<Math_MixNode>();
+                    mixNode.ValueIn("a").SetType(TypeRestriction.LimitToFloat).MapToInputPort(unit.valueInputs[0]);
+                    mixNode.ValueIn("b").SetType(TypeRestriction.LimitToFloat).MapToInputPort(unit.valueInputs[1]);
+                    mixNode.ValueIn("c").ConnectToSource(randomNode.FirstValueOut()).SetType(TypeRestriction.LimitToFloat);
+                    mixNode.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
+                }
             }
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);
