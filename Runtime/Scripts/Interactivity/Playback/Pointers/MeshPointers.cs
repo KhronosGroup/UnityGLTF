@@ -67,7 +67,8 @@ namespace UnityGLTF.Interactivity.Playback
         {
             reader.AdvanceToNextToken('/');
 
-            var nodeIndex = PointerResolver.GetIndexFromArgument(reader, engineNode);
+            if (!PointerResolver.TryGetIndexFromArgument(reader, engineNode, pointers, out int nodeIndex))
+                return PointerHelpers.InvalidPointer();
 
             var pointer = pointers[nodeIndex];
 
@@ -78,7 +79,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 var a when a.Is(Pointers.WEIGHTS) => ProcessWeightsPointer(reader, engineNode, pointer),
                 var a when a.Is(Pointers.WEIGHTS_LENGTH) => pointer.weightsLength,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 

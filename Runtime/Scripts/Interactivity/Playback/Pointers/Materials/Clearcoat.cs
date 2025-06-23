@@ -42,7 +42,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 // TODO: This property is not mentioned anywhere in the PBRGraph UnityGLTF shader so I didn't include it.
                 //var a when a.Is("clearcoatNormalTexture") => ,
 
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -58,7 +58,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 var a when a.Is("offset") => pointers.transformPointers.offset,
                 var a when a.Is("rotation") => pointers.transformPointers.rotation,
                 var a when a.Is("scale") => pointers.transformPointers.scale,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
     }

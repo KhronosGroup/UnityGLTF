@@ -78,7 +78,8 @@ namespace UnityGLTF.Interactivity.Playback.Materials
         {
             reader.AdvanceToNextToken('/');
 
-            var nodeIndex = PointerResolver.GetIndexFromArgument(reader, engineNode);
+            if (!PointerResolver.TryGetIndexFromArgument(reader, engineNode, pointers, out int nodeIndex))
+                return PointerHelpers.InvalidPointer();
 
             var pointer = pointers[nodeIndex];
 
@@ -94,7 +95,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 var a when a.Is("emissiveTexture") => ProcessEmissiveMapPointer(reader, pointer),
                 var a when a.Is("pbrMetallicRoughness") => ProcessPBRMetallicRoughnessPointer(reader, pointer),
                 var a when a.Is("extensions") => ProcessExtensionPointer(reader, pointer),
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -110,7 +111,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 var a when a.Is("metallicRoughnessTexture") => MetallicRoughnessPointers.ProcessExtensionsPointer(reader, matPointer.metallicRoughnessPointers),
                 var a when a.Is("metallicFactor") => matPointer.metallicRoughnessPointers.metallicFactor,
                 var a when a.Is("roughnessFactor") => matPointer.metallicRoughnessPointers.roughnessFactor,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -123,7 +124,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
             {
                 var a when a.Is("strength") => matPointer.occlusionPointers.occlusionStrength,
                 var a when a.Is("extensions") => OcclusionPointers.ProcessExtensionsPointer(reader, matPointer.occlusionPointers),
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -136,7 +137,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
             {
                 var a when a.Is("scale") => matPointer.normalPointers.normalScale,
                 var a when a.Is("extensions") => NormalPointers.ProcessExtensionsPointer(reader, matPointer.normalPointers),
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -148,7 +149,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
             return reader.AsReadOnlySpan() switch
             {
                 var a when a.Is("extensions") => EmissivePointers.ProcessExtensionsPointer(reader, matPointer.emissivePointers),
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -168,7 +169,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 var a when a.Is("KHR_materials_transmission") => TransmissionPointers.ProcessPointer(reader, matPointer),
                 var a when a.Is("KHR_materials_volume") => ThicknessPointers.ProcessPointer(reader, matPointer),
 
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
     }

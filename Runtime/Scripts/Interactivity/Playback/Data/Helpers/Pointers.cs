@@ -4,10 +4,18 @@ using System.Threading.Tasks;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace UnityGLTF.Interactivity.Playback.Materials
+namespace UnityGLTF.Interactivity.Playback
 {
     public static class PointerHelpers
     {
+        public static Pointer<int> InvalidPointer()
+        {
+            return new Pointer<int>()
+            {
+                invalid = true
+            };
+        }
+
         public static Pointer<T> CreatePointer<T>(Action<T> setter, Func<T> getter, Func<T, T, float, T> evaluator)
         {
             return new Pointer<T>()

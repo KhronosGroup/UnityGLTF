@@ -45,7 +45,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 var a when a.Is("translation") => translation,
                 var a when a.Is("rotation") => rotation,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
     }
