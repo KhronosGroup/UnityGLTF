@@ -912,7 +912,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var outputs = new Dictionary<string, IProperty>();
 
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<T>(a) });
-            inputs.Add(ConstStrings.B, new Value() { id = ConstStrings.B, property = new Property<V>(b) });
+            inputs.Add(ConstStrings.ROTATION, new Value() { id = ConstStrings.ROTATION, property = new Property<V>(b) });
             outputs.Add(ConstStrings.VALUE, new Property<T>(expected));
 
             QueueTest(nodeName, fileName, testName, testDescription, CreateSelfContainedTestGraph(nodeName, inputs, outputs, ComparisonType.Approximately));
@@ -931,7 +931,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var outputs = new Dictionary<string, IProperty>();
 
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<T>(a) });
-            inputs.Add(ConstStrings.B, new Value() { id = ConstStrings.B, property = new Property<V>(b) });
+            inputs.Add(ConstStrings.ANGLE, new Value() { id = ConstStrings.ANGLE, property = new Property<V>(b) });
             outputs.Add(ConstStrings.VALUE, new Property<T>(expected));
 
             QueueTest(nodeName, fileName, testName, testDescription, CreateSelfContainedTestGraph(nodeName, inputs, outputs, ComparisonType.Approximately));

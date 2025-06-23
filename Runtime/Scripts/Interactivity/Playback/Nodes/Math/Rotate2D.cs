@@ -13,7 +13,7 @@ namespace UnityGLTF.Interactivity.Playback
         public override IProperty GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
+            TryEvaluateValue(ConstStrings.ANGLE, out IProperty b);
 
             return a switch
             {
