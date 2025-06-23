@@ -37,7 +37,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 var a when a.Is("transmissionFactor") => matPointer.transmissionPointers.transmissionFactor,
                 var a when a.Is("transmissionTexture") => ProcessExtensionsPointer(reader, matPointer.transmissionPointers),
 
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -53,7 +53,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
                 var a when a.Is("offset") => pointers.transformPointers.offset,
                 var a when a.Is("rotation") => pointers.transformPointers.rotation,
                 var a when a.Is("scale") => pointers.transformPointers.scale,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
     }

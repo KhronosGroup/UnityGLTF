@@ -4,6 +4,7 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public interface IPointer
     {
+        public bool invalid { get; }
         public Type GetSystemType();
         public string GetTypeSignature();
     }
@@ -22,10 +23,12 @@ namespace UnityGLTF.Interactivity.Playback
 
     public struct ReadOnlyPointer<T> : IReadOnlyPointer<T>
     {
+        public bool invalid { get; set; }
         public Func<T> getter;
 
         public ReadOnlyPointer(Func<T> getter)
         {
+            invalid = false;
             this.getter = getter;
         }
 
@@ -55,6 +58,7 @@ namespace UnityGLTF.Interactivity.Playback
         public Action<T> setter;
         public Func<T> getter;
         public Func<T, T, float, T> evaluator;
+        public bool invalid { get; set; }
 
         public T GetValue()
         {

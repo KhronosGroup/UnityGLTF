@@ -27,6 +27,8 @@ namespace UnityGLTF.Interactivity.Playback
         public IReadOnlyList<NodeData> nodes => _nodes;
         public ReadOnlyCollection<NodePointers> nodePointers { get; private set; }
 
+        private Dictionary<string, IPointer> _pointerCache = new();
+
         public void RegisterMesh(GLTF.Schema.GLTFMesh mesh, int meshIndex, Mesh unityMesh)
         {
             _meshes.Add(new MeshData(mesh, meshIndex, unityMesh));
@@ -186,7 +188,7 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.MATERIALS_LENGTH) => _scenePointers.materialsLength,
                 var a when a.Is(Pointers.MESHES_LENGTH) => _scenePointers.meshesLength,
                 var a when a.Is(Pointers.NODES_LENGTH) => _scenePointers.nodesLength,
-                _ => throw new InvalidOperationException($"No valid pointer found with name {reader.ToString()}"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -207,6 +209,22 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             return nodeIndex;
+        }
+
+        public static bool TryGetIndexFromArgument<T>(StringSpanReader reader, BehaviourEngineNode engineNode, IReadOnlyList<T> list, out int index)
+        {
+            index = -1;
+            try
+            {
+                index = GetIndexFromArgument(reader, engineNode);
+            }
+            catch
+            {
+                Debug.LogWarning("Could not resolve index parameter in this pointer.");
+                return false;
+            }
+
+            return index >= 0 && index < list.Count;
         }
     }
 }

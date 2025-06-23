@@ -118,7 +118,8 @@ namespace UnityGLTF.Interactivity.Playback
         {
             reader.AdvanceToNextToken('/');
 
-            var nodeIndex = PointerResolver.GetIndexFromArgument(reader, engineNode);
+            if (!PointerResolver.TryGetIndexFromArgument(reader, engineNode, pointers, out int nodeIndex))
+                return PointerHelpers.InvalidPointer();
 
             var nodePointer = pointers[nodeIndex];
 
@@ -135,7 +136,7 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.EXTENSIONS) => ProcessExtensionPointer(reader, nodePointer),
                 var a when a.Is(Pointers.MATRIX) => nodePointer.matrix,
                 var a when a.Is(Pointers.GLOBAL_MATRIX) => nodePointer.globalMatrix,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 
@@ -150,7 +151,7 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(GLTF.Schema.KHR_node_selectability_Factory.EXTENSION_NAME) => nodePointer.selectability,
                 var a when a.Is(GLTF.Schema.KHR_node_visibility_Factory.EXTENSION_NAME) => nodePointer.visibility,
                 var a when a.Is(GLTF.Schema.KHR_node_hoverability_Factory.EXTENSION_NAME) => nodePointer.hoverability,
-                _ => throw new InvalidOperationException($"Extension {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
 

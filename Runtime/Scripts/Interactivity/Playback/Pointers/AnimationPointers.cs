@@ -25,7 +25,8 @@ namespace UnityGLTF.Interactivity.Playback
         {
             reader.AdvanceToNextToken('/');
 
-            var nodeIndex = PointerResolver.GetIndexFromArgument(reader, engineNode);
+            if (!PointerResolver.TryGetIndexFromArgument(reader, engineNode, pointers, out int nodeIndex))
+                return PointerHelpers.InvalidPointer();
 
             var pointer = pointers[nodeIndex];
 
@@ -41,7 +42,7 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.MAX_TIME) => pointer.maxTime,
                 var a when a.Is(Pointers.PLAYHEAD) => pointer.playhead,
                 var a when a.Is(Pointers.VIRTUAL_PLAYHEAD) => pointer.virtualPlayhead,
-                _ => throw new InvalidOperationException($"Property {reader.ToString()} is unsupported at this time!"),
+                _ => PointerHelpers.InvalidPointer(),
             };
         }
     }

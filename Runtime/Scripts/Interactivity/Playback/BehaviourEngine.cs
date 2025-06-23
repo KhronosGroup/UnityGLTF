@@ -103,15 +103,14 @@ namespace UnityGLTF.Interactivity.Playback
             try
             {
                 pointer = pointerResolver.GetPointer(pointerString, engineNode);
-                return true;
             }
             catch (Exception ex)
             {
-                Debug.LogWarning(ex);
+                Debug.LogException(ex); // Feeding in a really malformed pointerString could throw maybe?
 
-                pointer = default;
-                return false;
+                pointer = PointerHelpers.InvalidPointer();
             }
+            return !pointer.invalid;
         }
 
         public void SetAnimationWrapper(GLTFInteractivityAnimationWrapper wrapper, Animation animation)
