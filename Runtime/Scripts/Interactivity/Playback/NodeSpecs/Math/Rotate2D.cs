@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace UnityGLTF.Interactivity.Playback
 {
-    public class MathRotate3DSpec : NodeSpecifications
+    public class MathRotate2DSpec : NodeSpecifications
     {
         protected override (NodeFlow[] flows, NodeValue[] values) GenerateInputs()
         {
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.A, "Vector to Rotate", new Type[]  { typeof(float3)}),
-                new NodeValue(ConstStrings.ROTATION, "Rotation Quaternion", new Type[]  { typeof(float4)}),
+                new NodeValue(ConstStrings.A, "Vector to Rotate", new Type[]  { typeof(float2)}),
+                new NodeValue(ConstStrings.ANGLE, "Angle in Radians", new Type[]  { typeof(float)}),
             };
 
             return (null, values);
@@ -21,7 +21,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.VALUE, "Rotated Vector", new Type[]  { typeof(float3) }),
+                new NodeValue(ConstStrings.VALUE, "Rotated Vector", new Type[]  { typeof(float2) }),
             };
 
             return (null, values);

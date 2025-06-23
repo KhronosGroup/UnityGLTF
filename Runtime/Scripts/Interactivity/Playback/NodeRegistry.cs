@@ -271,7 +271,7 @@ namespace UnityGLTF.Interactivity.Playback
             ["math/normalize"] = new MathOneOperandSpec<float2, float3, float4>(),
             ["math/or"] = new MathTwoOperandsSpec<int, bool>(),
             ["math/pi"] = new MathConstantSpec(),
-            ["math/rotate2D"] = new MathTwoOperandsRetSpec<float2, float, float2>(),
+            ["math/rotate2D"] = new MathRotate2DSpec(),
             ["math/rotate3D"] = new MathRotate3DSpec(),
             ["math/round"] = new MathOneOperandFloatSpec(),
             ["math/sign"] = new MathOneOperandSpec<int, float, float2, float3, float4>(),
