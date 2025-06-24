@@ -12,7 +12,10 @@ namespace UnityGLTF.Interactivity.Playback
 
         public FlowFor(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            _index = Parser.ToInt(configuration[ConstStrings.INITIAL_INDEX].value);
+            if (!configuration.TryGetValue(ConstStrings.INITIAL_INDEX, out Configuration config))
+                return;
+
+            _index = ((Property<int>)config.property).value;
         }
 
         public override IProperty GetOutputValue(string socket)

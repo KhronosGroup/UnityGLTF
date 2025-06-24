@@ -105,7 +105,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 try
                 {
-                    value = ((Property<T>)Helpers.CreateProperty(typeof(T), config.value)).value;
+                    value = ((Property<T>)config.property).value;
                     return true;
                 }
                 catch (Exception e)
