@@ -144,7 +144,6 @@ namespace UnityGLTF.Interactivity.Playback
                 typeof(float2x2),
                 typeof(float3x3),
                 typeof(float4x4),
-                typeof(string),
             };
 
 
@@ -159,7 +158,6 @@ namespace UnityGLTF.Interactivity.Playback
                 new InteractivityType() { signature = "float2x2" },
                 new InteractivityType() { signature = "float3x3" },
                 new InteractivityType() { signature = "float4x4" },
-                new InteractivityType() { signature = "string" },
             };
         }
 
