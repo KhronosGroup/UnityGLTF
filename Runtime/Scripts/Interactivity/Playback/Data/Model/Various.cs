@@ -47,7 +47,8 @@ namespace UnityGLTF.Interactivity.Playback
     public class Configuration
     {
         public string id { get; set; }
-        public JArray value { get; set; }
+        public IProperty property { get; set; }
+        public bool parsedSuccessfully { get; set; }
     }
 
     public class InteractivityType

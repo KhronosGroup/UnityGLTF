@@ -104,12 +104,8 @@ namespace UnityGLTF.Interactivity.Playback
             writer.WritePropertyName(configuration.id);
 
             writer.WriteStartObject();
-            writer.WritePropertyName(ConstStrings.VALUE);
 
-            if (configuration.value is JArray array)
-                array.WriteTo(writer);
-            else
-                writer.WriteValue(configuration.value);
+            WriteConfigLiteral(writer, configuration.property);
 
             writer.WriteEndObject();
         }
@@ -241,6 +237,35 @@ namespace UnityGLTF.Interactivity.Playback
 
             writer.WritePropertyName(ConstStrings.TYPE);
             writer.WriteValue(type);
+        }
+
+        public static void WriteConfigLiteral(JsonWriter writer, IProperty property)
+        {
+            writer.WritePropertyName(ConstStrings.VALUE);
+            writer.WriteStartArray();
+
+            switch (property)
+            {
+                case Property<int> iProp:
+                    writer.WriteValue(iProp.value);
+                    break;
+                case Property<bool> bProp:
+                    writer.WriteValue(bProp.value);
+                    break;
+                case Property<int[]> p:
+                    for (int i = 0; i < p.value.Length; i++)
+                    {
+                        writer.WriteValue(p.value[i]);
+                    }
+                    break;
+                case Property<string> p:
+                    writer.WriteValue(p.value);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
+            writer.WriteEndArray();
         }
     }
 }

@@ -30,7 +30,7 @@ namespace UnityGLTF.Interactivity.Playback
             if (!configuration.TryGetValue(ConstStrings.NODE_INDEX, out Configuration config))
                 return;
 
-            var parentIndex = Parser.ToInt(config.value);
+            var parentIndex = ((Property<int>)config.property).value;
 
             _parentNode = engine.pointerResolver.nodePointers[parentIndex].gameObject.transform;
         }

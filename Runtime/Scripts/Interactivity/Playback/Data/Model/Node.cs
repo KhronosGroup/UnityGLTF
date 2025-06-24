@@ -161,24 +161,19 @@ namespace UnityGLTF.Interactivity.Playback
 
         public Configuration AddConfiguration<T>(string id, T value)
         {
-            return AddConfiguration(id, new JArray(value));
-        }
-
-        public Configuration AddConfiguration(string id, JArray value)
-        {
             for (int i = 0; i < configuration.Count; i++)
             {
                 if (!configuration[i].id.Equals(id))
                     continue;
 
-                configuration[i].value = value;
+                configuration[i].property = new Property<T>(value);
                 return configuration[i];
             }
 
             var config = new Configuration()
             {
                 id = id,
-                value = value,
+                property = new Property<T>(value)
             };
 
             configuration.Add(config);

@@ -33,7 +33,7 @@ namespace UnityGLTF.Interactivity.Playback
             if (!configuration.TryGetValue(ConstStrings.POINTER, out Configuration config))
                 return false;
 
-            var pointerPath = Parser.ToString(config.value);
+            var pointerPath = ((Property<string>)config.property).value;
 
             return TryGetPointer(pointerPath, out pointer);
         }
@@ -92,7 +92,7 @@ namespace UnityGLTF.Interactivity.Playback
 
             try
             {
-                index = Parser.ToInt(config.value);
+                index = ((Property<int>)config.property).value;
                 variable = engine.graph.variables[index];
             }
             catch (Exception e)

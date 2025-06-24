@@ -148,10 +148,12 @@ namespace UnityGLTF.Interactivity.Playback
 
             foreach (var v in jConfiguration)
             {
+                var parsedSuccessfully = TryGetPropertyFromConfigEntry(v.Key, v.Value[ConstStrings.VALUE] as JArray, out IProperty property);
                 configuration.Add(new Configuration()
                 {
                     id = v.Key,
-                    value = v.Value[ConstStrings.VALUE] as JArray
+                    property = property,
+                    parsedSuccessfully = parsedSuccessfully
                 });
             }
 
@@ -168,6 +170,40 @@ namespace UnityGLTF.Interactivity.Playback
                 positionX = double.Parse(jToken["positionX"].Value<string>()),
                 positionY = double.Parse(jToken["positionY"].Value<string>()),
             };
+        }
+
+        private static bool TryGetPropertyFromConfigEntry(string id, JArray value, out IProperty property)
+        {
+            try
+            {
+                property = id switch
+                {
+                    ConstStrings.POINTER => Helpers.CreateProperty(typeof(string), value),
+                    ConstStrings.MESSAGE => Helpers.CreateProperty(typeof(string), value),
+                    ConstStrings.VARIABLE => Helpers.CreateProperty(typeof(int), value),
+                    ConstStrings.USE_SLERP => Helpers.CreateProperty(typeof(bool), value),
+                    ConstStrings.IS_LOOP => Helpers.CreateProperty(typeof(bool), value),
+                    ConstStrings.IS_RANDOM => Helpers.CreateProperty(typeof(bool), value),
+                    ConstStrings.STOP_PROPAGATION => Helpers.CreateProperty(typeof(bool), value),
+                    ConstStrings.CASES => Helpers.CreateProperty(typeof(int[]), value),
+                    ConstStrings.VARIABLES => Helpers.CreateProperty(typeof(int[]), value),
+                    ConstStrings.INPUT_FLOWS => Helpers.CreateProperty(typeof(int), value),
+                    ConstStrings.INITIAL_INDEX => Helpers.CreateProperty(typeof(int), value),
+                    ConstStrings.TYPE => Helpers.CreateProperty(typeof(int), value),
+                    ConstStrings.NODE_INDEX => Helpers.CreateProperty(typeof(int), value),
+                    ConstStrings.EVENT => Helpers.CreateProperty(typeof(int), value),
+                    ConstStrings.SEVERITY => Helpers.CreateProperty(typeof(int), value),
+                    _ => throw new InvalidOperationException($"Config {id} is not supported!"),
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(ex.Message);
+                property = default;
+                return false;
+            }
+
+            return true;
         }
     }
 }
