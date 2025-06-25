@@ -50,6 +50,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
+        [OutputSocketDescription(GltfTypes.Bool)]
+        public const string IdIsValid = "isValid";
+        
         [InputSocketDescription(GltfTypes.Float2x2, GltfTypes.Float3x3, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
     }
@@ -503,6 +506,9 @@ namespace UnityGLTF.Interactivity.Schema
 
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
+
+        [OutputSocketDescription(GltfTypes.Bool)]
+        public const string IdIsValid = "isValid";
         
         [InputSocketDescription(GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
         public const string IdValueA = "a";
