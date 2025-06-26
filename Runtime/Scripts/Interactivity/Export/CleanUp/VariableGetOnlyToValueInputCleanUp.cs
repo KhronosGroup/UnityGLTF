@@ -20,6 +20,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var varGetNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_GetNode);
             var varSetNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_SetNode);
+            var varSetMultiNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_SetMultipleNode);
             var varSetIntNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_InterpolateNode);
 
             var varSetAndIntNodes = varSetNodes.Concat(varSetIntNodes);
@@ -29,8 +30,18 @@ namespace UnityGLTF.Interactivity.Export
             
             foreach (var variable in task.context.variables)
             {
-                if (!varSetAndIntNodes.Any(n => n.Configuration[Variable_SetNode.IdConfigVarIndex].Value.Equals(variable.Id)))
-                    varIdsToRemove.Add(task.context.variables.IndexOf(variable));
+                var varId = task.context.variables.IndexOf(variable);
+
+                var isInMulti = varSetMultiNodes.Any(n =>
+                {
+                    var arr = n.Configuration[Variable_SetMultipleNode.IdConfigVarIndices].Value as int[];
+                    return arr.Contains(varId);
+                });
+                if (isInMulti)
+                    continue;
+                
+                if (!varSetAndIntNodes.Any(n => n.Configuration[Variable_SetNode.IdConfigVarIndex].Value.Equals(varId)))
+                    varIdsToRemove.Add(varId);
             }
 
             foreach (var varGetNode in varGetNodes)

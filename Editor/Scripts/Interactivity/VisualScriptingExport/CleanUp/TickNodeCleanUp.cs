@@ -112,6 +112,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
                         // also remove isNaN check
                         var exporterNode = tickNodeExport2.Exporter.Nodes;
                         foreach (var n in exporterNode)
+                            n.ValueInConnection.Clear();
+
+                        foreach (var n in exporterNode)
                             task.RemoveNode(n);
                     }
                     else

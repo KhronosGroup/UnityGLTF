@@ -40,7 +40,11 @@ namespace UnityGLTF.Interactivity.Export
             {
                 float Gv(int socketNr)
                 {
-                    return (float)node.ValueInConnection[InputNames[socketNr]].Value;
+                    if (node.ValueInConnection[InputNames[socketNr]].Value is float)
+                        return (float)node.ValueInConnection[InputNames[socketNr]].Value;
+
+                    Debug.LogError("Value is not float: "+ node.ValueInConnection[InputNames[socketNr]].Value);
+                    return 0;
                 }
                 
                 if (node.Schema is Math_Combine2Node)
