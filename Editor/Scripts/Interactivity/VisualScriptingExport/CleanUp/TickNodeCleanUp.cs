@@ -63,6 +63,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
                    
                 if (tickNode is GltfInteractivityUnitExporterNode tickNodeExport)
                 {
+                    if (tickNodeExport.Exporter.exporter is not TimeUnitExports)
+                        continue;
                     var selectNode = tickNodeExport.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
                     if (selectNode != null)
                     {
