@@ -520,6 +520,32 @@ namespace UnityGLTF.Interactivity.Export
         public void RemoveNode(GltfInteractivityExportNode nodeToRemove)
         {
             var indexToRemove = nodesToSerialize.IndexOf(nodeToRemove);
+            if (indexToRemove == -1)
+            {
+                Debug.LogError("Can't remove Node, not found in list!");
+                return;
+            }
+            // Safety check if there exist any connection to the removed node
+            foreach (var n in nodesToSerialize)
+            {
+                foreach (var valueSocket in n.ValueInConnection)
+                {
+                    if (valueSocket.Value.Node == indexToRemove)
+                    {
+                        Debug.LogError("Trying to remove an node, which is referenced in a value connection. Schema: "+nodeToRemove.Schema.Op + ",  Referenced by " + n.Schema.Op);
+                        return;
+                    }
+                }
+                foreach (var flowSocket in n.FlowConnections)
+                {
+                    if (flowSocket.Value.Node == indexToRemove)
+                    {
+                        Debug.LogError("Trying to remove an node, which is referenced in a flow connection. Schema: "+nodeToRemove.Schema.Op + ",  Referenced by " + n.Schema.Op);
+                        return;
+                    }
+                }
+            }
+            
             if (indexToRemove == nodesToSerialize.Count - 1)
             {
                 // Just remove, no other indices are affected
@@ -534,6 +560,7 @@ namespace UnityGLTF.Interactivity.Export
               
             int indexToReplace = nodesToSerialize[indexToRemove].Index;
             nodesToSerialize[indexToRemove].Index = nodeToRemove.Index;
+            
             // Replace old index with new index of the inserted node
             foreach (var n in nodesToSerialize)
             {
