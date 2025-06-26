@@ -956,7 +956,7 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdInputVector = "a";
         
         [InputSocketDescription(GltfTypes.Float)]
-        public const string IdInputAngleRadians = "b";
+        public const string IdInputAngleRadians = "angle";
 
         [OutputSocketDescription(GltfTypes.Float2)]
         public const string IdOutputResult = "value";
@@ -970,7 +970,7 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdInputVector = "a";
 
         [InputSocketDescription(GltfTypes.Float4)]
-        public const string IdInputQuaternion = "b";
+        public const string IdInputQuaternion = "rotation";
 
         [OutputSocketDescription(GltfTypes.Float3)]
         public const string IdOutputResult = "value";
