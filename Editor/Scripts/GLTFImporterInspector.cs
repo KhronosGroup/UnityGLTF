@@ -164,6 +164,14 @@ namespace UnityGLTF
 				EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
 				EditorGUI.indentLevel--;
 			}
+            else if (animationMethod.enumValueIndex == (int)AnimationMethod.Mecanim)
+            {
+                var rootNodeName = serializedObject.FindProperty(nameof(GLTFImporter._nonHumanoidRootNodeName));
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(rootNodeName, new GUIContent("Root Node Name", "Transform name of the root motion transform. If empty no root motion is defined and you must take care of avatar movement yourself."));
+                EditorGUILayout.HelpBox("Enter just the name of the root node; not its path in hierarchy.", MessageType.Info);
+                EditorGUI.indentLevel--;
+            }
 			if (hasAnimationData && anim.enumValueIndex > 0)
 			{
 				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
