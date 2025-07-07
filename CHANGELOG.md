@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.2] - 2025-07-07
+- add: Better redundant node cleanup and precomputation for KHR_interactivity export
+- add: Interactivity nodes `Color.Create()`, `Random.insideUnitSphere`, `Random.onUnitSphere`
+- add: Interactivity nodes `Vector3.MoveTowards()`, `Vector3.Reflect()`, `Vector3.sqrMagnitude`
+- add: Interactivity nodes `Transform.forward`, `Transform.right`, `Transform.up`
+- add: Interactivity nodes `Transform.TransformPoint()`, `Transform.InverseTransformPoint()`, `Transform.GetPositionAndRotation()`, `Transform.SetPositionAndRotation()`
+- change: Interactivity specification changes from June 2025 (renaming of `rotate2d` and `rotate3d` inputs)
+- fix: Add Iridescence properties to material property map for roundtrip support
+- fix: Generate mipmaps for TextMeshPro textures on export
+- fix: Remove baseVertex offset from submesh descriptors when generating lightmap UVs (#668)
+- fix: Order of operations for `Transform.Rotate()` interactivity export
+- fix: `Matrix4x4` index access order for interactivity export
+- fix: Added `isValid` output for `math/inverse` and `math/normalize` schema
+
 ## [2.17.1] - 2025-06-12
 - fix: define UnityStereoTransformScreenSpaceTex when it doesn't exist (e.g. some HDRP configurations)
 
