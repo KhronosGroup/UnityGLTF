@@ -25,24 +25,8 @@ namespace UnityGLTF
 			if (oldShader.name.StartsWith("Hidden/UnityGLTF/PBRGraph") || oldShader.name.StartsWith("Hidden/UnityGLTF/UnlitGraph"))
 			{
 				material.shader = newShader;
-
-				var meta = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(material.shader)) as IUnityGltfShaderUpgradeMeta;
-				if (meta != null)
-				{
-					// Debug.Log("Updating shader from  " + material.shader + " to " + meta.SourceShader +
-					//           " (transparent: " + meta.IsTransparent + ", double sided: " + meta.IsDoublesided + ")");
-
-					var isUnlit = meta.SourceShader.name.Contains("Unlit");
-					material.shader = meta.SourceShader;
-
-					var mapper = isUnlit ? (IUniformMap) new UnlitMap(material) : new PBRGraphMap(material);
-					if (meta.IsTransparent)
-						mapper.AlphaMode = AlphaMode.BLEND;
-					if (meta.IsDoublesided)
-						mapper.DoubleSided = true;
-
-					EditorUtility.SetDirty(material);
-				}
+				
+				Debug.LogWarning($"Legacy UnityGLTF shader detected: {oldShader.name}. This shader can't be updated anymore with the current version of UnityGLTF. Please use UnityGLTF 2.17 or earlier and update the shaders there, then update UnityGLTF.", material);
 
 				return true;
 			}

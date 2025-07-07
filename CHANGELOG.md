@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.18.0] - Unreleased
+- change: Removed legacy shaders (pre-Unity 2019) and legacy Shader Graph override imports (pre-Unity 2020). Please use the `PBRGraph` and `UnlitGraph` shaders for new projects. Use UnityGLTF 2.17.x to upgrade legacy shaders before updating to 2.18.0. The removed shaders are "GLTF/PbrMetallicRoughness", "GLTF/PbrSpecularGlossiness", "UnityGLTF/PBRGraph-Double", "UnityGLTF/PBRGraph-Transparent", "UnityGLTF/PBRGraph-Transparent-Double", "UnityGLTF/UnlitGraph-Transparent", "UnityGLTF/UnlitGraph-Transparent-Double", "UnityGLTF/UnlitGraph-Double".
+
 ## [2.17.2] - 2025-07-07
 - add: Better redundant node cleanup and precomputation for KHR_interactivity export
 - add: Interactivity nodes `Color.Create()`, `Random.insideUnitSphere`, `Random.onUnitSphere`

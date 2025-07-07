@@ -4,8 +4,7 @@ namespace UnityGLTF
 {
 	public class SpecGlossMap : SpecGloss2StandardMap
 	{
-		public SpecGlossMap(int MaxLOD = 1000) : base("GLTF/PbrSpecularGlossiness", "0ffe2976cdefd434c8fcd886ffa69322", MaxLOD) { }
-		public SpecGlossMap(string shaderName, int MaxLOD = 1000) : base(shaderName, "0ffe2976cdefd434c8fcd886ffa69322", MaxLOD) { }
+		public SpecGlossMap(string shaderName, int MaxLOD = 1000) : base(shaderName, null, MaxLOD) { }
 		protected SpecGlossMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public override int NormalTexCoord

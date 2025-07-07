@@ -24,9 +24,9 @@ namespace UnityGLTF
 			if (!s && fallbackGuid != null)
 				s = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(UnityEditor.AssetDatabase.GUIDToAssetPath(fallbackGuid));
 #endif
-			if (s == null)
+			if (!s)
 			{
-				throw new ShaderNotFoundException(shaderName + " not found. Did you forget to add it to the build?");
+				throw new ShaderNotFoundException($"{shaderName} not found. Did you forget to add it to the build?");
 			}
 
 			s.maximumLOD = MaxLOD;

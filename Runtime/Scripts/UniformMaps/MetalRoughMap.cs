@@ -6,8 +6,7 @@ namespace UnityGLTF
 	{
 		private Vector2 metalRoughOffset = new Vector2(0, 0);
 
-		public MetalRoughMap(int MaxLOD = 1000) : base("GLTF/PbrMetallicRoughness", "9836e4430eb58204086d7d1440e16a4f", MaxLOD) { }
-		public MetalRoughMap(string shaderName, int MaxLOD = 1000) : base(shaderName, "9836e4430eb58204086d7d1440e16a4f", MaxLOD) { }
+		public MetalRoughMap(string shaderName, int MaxLOD = 1000) : base(shaderName, null, MaxLOD) { }
 		protected MetalRoughMap(Material m, int MaxLOD = 1000) : base(m, MaxLOD) { }
 
 		public override int NormalTexCoord

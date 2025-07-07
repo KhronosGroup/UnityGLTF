@@ -661,7 +661,6 @@ namespace UnityGLTF
 		public PbrMetallicRoughness ExportPBRMetallicRoughness(Material material)
 		{
 			var pbr = new PbrMetallicRoughness() { MetallicFactor = 0, RoughnessFactor = 1.0f };
-			var isGltfPbrMetallicRoughnessShader = material.shader.name.Equals("GLTF/PbrMetallicRoughness", StringComparison.Ordinal);
 			var isGlTFastShader = material.shader.name.Equals("glTF/PbrMetallicRoughness", StringComparison.Ordinal);
 
 			if (material.HasProperty("baseColorFactor"))
@@ -710,7 +709,7 @@ namespace UnityGLTF
 				}
 			}
 
-            var ignoreMetallicFactor = (material.IsKeywordEnabled("_METALLICGLOSSMAP") || material.IsKeywordEnabled("_METALLICSPECGLOSSMAP")) && !isGltfPbrMetallicRoughnessShader && !isGlTFastShader;
+            var ignoreMetallicFactor = (material.IsKeywordEnabled("_METALLICGLOSSMAP") || material.IsKeywordEnabled("_METALLICSPECGLOSSMAP")) && !isGlTFastShader;
             if (material.HasProperty("metallicFactor") && !ignoreMetallicFactor)
             {
 	            pbr.MetallicFactor = material.GetFloat("metallicFactor");
@@ -749,9 +748,6 @@ namespace UnityGLTF
 				var metallicGlossMap = material.HasProperty("_MetallicGlossMap") ? material.GetTexture("_MetallicGlossMap") : null;
 				float smoothness = material.GetFloat(smoothnessPropertyName);
 
-				// legacy workaround: the UnityGLTF shaders misuse "_Glossiness" as roughness but don't have a keyword for it.
-				if (isGltfPbrMetallicRoughnessShader)
-					smoothness = 1 - smoothness;
 				if (metallicGlossMap && material.HasProperty("_GlossMapScale") && material.IsKeywordEnabled("_METALLICGLOSSMAP"))
 					smoothness = material.GetFloat("_GlossMapScale");
 
@@ -804,7 +800,7 @@ namespace UnityGLTF
 						}
 					}
 					
-					var conversion = GetExportSettingsForSlot((isGltfPbrMetallicRoughnessShader || isGlTFastShader) ? TextureMapType.Linear : TextureMapType.MetallicGloss);
+					var conversion = GetExportSettingsForSlot(isGlTFastShader ? TextureMapType.Linear : TextureMapType.MetallicGloss);
 					if (needToBakeRoughnessIntoTexture)
 					{
 						conversion = new TextureExportSettings(conversion);
