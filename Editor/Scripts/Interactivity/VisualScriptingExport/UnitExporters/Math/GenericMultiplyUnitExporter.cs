@@ -81,8 +81,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     && valueTypeB == GltfTypes.TypeIndexByGltfSignature("float3"))
                 {
                     mulNode.SetSchema(new Math_Rotate3dNode(), false);
-                    mulNode.ValueIn("a").SetType(TypeRestriction.LimitToFloat4);
-                    mulNode.ValueIn("b").SetType(TypeRestriction.LimitToFloat3);
+                    mulNode.ValueIn("b").SetType(TypeRestriction.LimitToFloat4);
+                    mulNode.ValueIn("a").SetType(TypeRestriction.LimitToFloat3);
                     mulNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
                 }
                 else

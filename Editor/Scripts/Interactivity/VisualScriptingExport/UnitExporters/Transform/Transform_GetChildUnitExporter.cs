@@ -57,16 +57,19 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // When the input index is dynamic, we create a List of childs
             var childCount = target.transform.childCount;
             
-            var childList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, childCount,
-                GltfTypes.TypeIndex(typeof(int)), $"CHILD_LIST_FROM_TRANSFORM_{targetIndex}");
-            
-            ListHelpersVS.CreateListNodes(unitExporter, childList);
-            
-            for (int i = 0; i < childCount; i++)
+            var childList = unitExporter.vsExportContext.GetListByName($"CHILD_LIST_FROM_TRANSFORM_{targetIndex}");
+            if (childList == null)
             {
-                var childTransform = target.transform.GetChild(i);
-                var childIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(childTransform);
-                childList.AddItem(childIndex);
+                childList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, childCount,
+                    GltfTypes.TypeIndex(typeof(int)), $"CHILD_LIST_FROM_TRANSFORM_{targetIndex}");
+                
+                ListHelpersVS.CreateListNodes(unitExporter, childList);
+                for (int i = 0; i < childCount; i++)
+                {
+                    var childTransform = target.transform.GetChild(i);
+                    var childIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(childTransform);
+                    childList.AddItem(childIndex);
+                }
             }
             ListHelpersVS.GetItem(unitExporter, childList, unit.inputParameters[0], out var valueOutput);
             valueOutput.MapToPort(unit.result);

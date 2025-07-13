@@ -225,6 +225,7 @@ namespace UnityGLTF
 			}
 
 			var texture = new GLTFTexture();
+			if (_root.Textures == null) _root.Textures = new List<GLTFTexture>();
 
 			//If texture name not set give it a unique name using count
 			if (textureObj.name == "")
