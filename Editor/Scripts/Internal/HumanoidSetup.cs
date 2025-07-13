@@ -24,7 +24,7 @@ namespace UnityGLTF
 				gameObject.transform.rotation *= Quaternion.Euler(0,180,0);
 		    
 		    Avatar avatar = AvatarBuilder.BuildHumanAvatar(gameObject, description);
-		    avatar.name = "Avatar";
+		    avatar.name = gameObject.name+"Avatar";
 		    
 		    if (flipForward)
 			    gameObject.transform.rotation = previousRotation;
@@ -106,4 +106,31 @@ namespace UnityGLTF
 	    }
 #endif
 	}
+
+    //todo: XtroTheArctic: I don't know how to add a new script file to a local package. We can fix this during PR phase.
+    internal static class NonHumanoidSetup
+    {
+        internal static Avatar AddAvatarToGameObject(GameObject gameObject, bool flipForward, string RootNode)
+        {
+            var previousRotation = gameObject.transform.rotation;
+            if (flipForward)
+                gameObject.transform.rotation *= Quaternion.Euler(0, 180, 0);
+
+            Avatar avatar = AvatarBuilder.BuildGenericAvatar(gameObject, RootNode);
+            avatar.name = gameObject.name + "Avatar";
+
+            if (flipForward)
+                gameObject.transform.rotation = previousRotation;
+
+            if (!avatar.isValid || avatar.isHuman)
+            {
+                Object.DestroyImmediate(avatar);
+                return null;
+            }
+
+            var animator = gameObject.GetComponent<Animator>();
+            if (animator) animator.avatar = avatar;
+            return avatar;
+        }
+    }
 }

@@ -52,6 +52,7 @@ namespace UnityGLTF
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
 		public AnimationMethod AnimationMethod = AnimationMethod.Legacy;
+        public string NonHumanoidRootNodeName;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
 		public DeduplicateOptions DeduplicateResources = DeduplicateOptions.None;
@@ -1008,7 +1009,18 @@ namespace UnityGLTF
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
 
+            Bounds TransformBounds(Matrix4x4 matrix, Bounds bounds)
+            {
+                var extents = bounds.extents;
+                var ax = matrix.MultiplyVector(new Vector3(extents.x, 0, 0));
+                var ay = matrix.MultiplyVector(new Vector3(0, extents.y, 0));
+                var az = matrix.MultiplyVector(new Vector3(0, 0, extents.z));
+                var x = Mathf.Abs(ax.x) + Mathf.Abs(ay.x) + Mathf.Abs(az.x);
+                var y = Mathf.Abs(ax.y) + Mathf.Abs(ay.y) + Mathf.Abs(az.y);
+                var z = Mathf.Abs(ax.z) + Mathf.Abs(ay.z) + Mathf.Abs(az.z);
 
+                return new Bounds(matrix.MultiplyPoint3x4(bounds.center), new Vector3(x, y, z) * 2f);
+            }
 
 			async Task CreateNodeComponentsAndChilds(bool ignoreMesh = false, bool onlyMesh = false)
 			{
@@ -1048,8 +1060,10 @@ namespace UnityGLTF
 						if (node.Skin != null)
 							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
-						// morph target weights
-						if (weights != null)
+                        renderer.localBounds = renderer.rootBone == null ? unityMesh.bounds : TransformBounds(renderer.rootBone.worldToLocalMatrix * renderer.transform.localToWorldMatrix, unityMesh.bounds);
+
+                        // morph target weights
+                        if (weights != null)
 						{
 							for (int i = 0; i < weights.Count; ++i)
 							{
@@ -1392,7 +1406,7 @@ namespace UnityGLTF
 					}
 				}
 
-				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid)
+				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid || _options.AnimationMethod == AnimationMethod.Mecanim && !string.IsNullOrEmpty(_options.NonHumanoidRootNodeName))
                 {
                     var animator = sceneObj.GetComponent<Animator>();
                     if (!animator) animator = sceneObj.AddComponent<Animator>();
