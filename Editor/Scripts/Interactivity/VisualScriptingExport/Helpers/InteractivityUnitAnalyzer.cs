@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityGLTF.Interactivity.VisualScripting.Export;
+using UnityGLTF.Plugins;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {
@@ -15,7 +16,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
     public class InteractivityUnitAnalyzer: UnitAnalyser<IUnit>
     {
         private GLTFSettings gltfSettings;
-        private VisualScriptingExportPlugin interactivityPlugin;
+        private GLTFExportPlugin interactivityPlugin;
         
         public InteractivityUnitAnalyzer(GraphReference reference, IUnit target) : base(reference, target)
         {
@@ -32,9 +33,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
             if (!interactivityPlugin)
             {
-                var plugin = gltfSettings.ExportPlugins.FirstOrDefault(p => p is VisualScriptingExportPlugin);
+                var plugin = gltfSettings.ExportPlugins.FirstOrDefault(p => p.GetType().Name.Contains("VisualScriptingExportPlugin"));
                 if (plugin != null)
-                    interactivityPlugin = plugin as VisualScriptingExportPlugin;
+                    interactivityPlugin = plugin;
             }
 
             if (interactivityPlugin)

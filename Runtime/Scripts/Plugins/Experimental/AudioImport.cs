@@ -227,6 +227,7 @@ namespace UnityGLTF.Plugins
                     }
 #endif
                     // Runtime loaded Gltf:
+#if HAVE_WEBREQUESTAUDIO
                     var tempFile = Path.Combine(Application.temporaryCachePath, "gltfAudioImport"+ mimeTypeFileExtension);
                     File.WriteAllBytes(tempFile, buffer.ToArray());
                     
@@ -253,6 +254,9 @@ namespace UnityGLTF.Plugins
                     clip.name = $"audio_{index:D3}";
                     
                     _audioClips.Add(index, clip);
+#else
+                    Debug.LogWarning($"Missing UnityWebRequestAudio Module! Audio import is not supported. Please enable the UnityWebRequestAudio Module in Package Manager to import audio files at runtime.");
+#endif
                 }
                 else
                 {
@@ -271,9 +275,9 @@ namespace UnityGLTF.Plugins
             else
                 scene = _context.Root.Scenes[0];
             
-            if (scene == null)
+            if (scene == null || scene.Extensions == null)
                 return;
-
+            
             if (!scene.Extensions.TryGetValue(KHR_audio_emitter.ExtensionName, out var extension))
                 return;
             if (extension is KHR_SceneAudioEmittersRef audioEmitterRef)
@@ -316,6 +320,9 @@ namespace UnityGLTF.Plugins
 
         public override void OnAfterImportScene(GLTFScene scene, int sceneIndex, GameObject sceneObject)
         {
+            if (_audioExtension == null)
+                return;
+            
             AddGlobalEmitters(sceneObject);
             CreateAudioClips();
             AssignClips();

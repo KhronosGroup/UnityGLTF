@@ -1,13 +1,13 @@
 {
-    "name": "UnityGLTF.Interactivity.VisualScriptingInstall",
+    "name": "UnityGLTF.Interactivity.VisualScripting.ExportPlugin",
     "rootNamespace": "",
     "references": [
+        "GUID:d4cf44f888f7eac4e8981a7d5efb492d",
         "GUID:18d18f811ba286c49814567a3cfba688",
-        "GUID:1a0324566af4ed544918d6837a1f4e11"
+        "GUID:5144c6d6404c34f70b2d82609133a096",
+        "GUID:aed755414110e58448b02f5a77e42d6c"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

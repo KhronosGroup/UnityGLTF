@@ -10,7 +10,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
        [InitializeOnLoadMethod]
         public static void Register()
         {
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Vector2), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine2Node>());
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine3Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4Node>());
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4Node>());
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4x4Node>());
+            
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Sin), new GenericInvokeMathInvokeUnitExporters<Math_SinNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Cos), new GenericInvokeMathInvokeUnitExporters<Math_CosNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Tan), new GenericInvokeMathInvokeUnitExporters<Math_TanNode>());
@@ -41,7 +46,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(float), nameof(float.IsNaN), new GenericInvokeMathInvokeUnitExporters<Math_IsNaNNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(float), nameof(float.IsInfinity), new GenericInvokeMathInvokeUnitExporters<Math_IsInfNode>());
             
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine3Node>());
            
             // TODO: Slerp is not the same as Lerp, but for now we use the same node
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.SlerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
@@ -56,15 +60,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Clamp), new GenericInvokeMathInvokeUnitExporters<Math_ClampNode>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Atan2), new GenericInvokeMathInvokeUnitExporters<Math_Atan2Node>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Vector2), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine2Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Min), new GenericInvokeMathInvokeUnitExporters<Math_MinNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Max), new GenericInvokeMathInvokeUnitExporters<Math_MaxNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Equals), new GenericInvokeMathInvokeUnitExporters<Math_EqNode>());
 
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4x4Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), nameof(Matrix4x4.Determinant), new GenericInvokeMathInvokeUnitExporters<Math_DeterminantNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), nameof(Matrix4x4.Transpose), new GenericInvokeMathInvokeUnitExporters<Math_TransposeNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), nameof(Matrix4x4.Inverse), new GenericInvokeMathInvokeUnitExporters<Math_InverseNode>());
+
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Inverse), new GenericInvokeMathInvokeUnitExporters<Math_QuatConjugateNode>());
         }   
     }
     public class GenericInvokeMathInvokeUnitExporters<TSchema> : GenericInvokeUnitExport<TSchema> where TSchema : GltfInteractivityNodeSchema, new()

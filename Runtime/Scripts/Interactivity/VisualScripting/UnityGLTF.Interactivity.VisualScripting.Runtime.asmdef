@@ -1,7 +1,9 @@
 {
     "name": "UnityGLTF.Interactivity.VisualScripting.Runtime",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:18d18f811ba286c49814567a3cfba688"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

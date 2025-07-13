@@ -1,0 +1,28 @@
+{
+    "name": "UnityGLTF.Interactivity.VisualScripting.Inspector",
+    "rootNamespace": "",
+    "references": [
+        "GUID:5144c6d6404c34f70b2d82609133a096",
+        "GUID:1a0324566af4ed544918d6837a1f4e11",
+        "GUID:d4cf44f888f7eac4e8981a7d5efb492d",
+        "GUID:9e01efaa56ea4c94db37ab745cb8dae8",
+        "GUID:78eed79366eb2824c853b25847bba69b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.9",
+            "define": "HAVE_VISUAL_SCRIPTING"
+        }
+    ],
+    "noEngineReferences": false
+}

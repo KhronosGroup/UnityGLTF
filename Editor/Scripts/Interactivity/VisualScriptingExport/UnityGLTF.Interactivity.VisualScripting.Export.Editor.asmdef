@@ -15,7 +15,8 @@
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": [],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],

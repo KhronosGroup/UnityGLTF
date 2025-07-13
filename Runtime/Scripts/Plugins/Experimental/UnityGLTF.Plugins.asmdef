@@ -30,6 +30,11 @@
             "name": "Unity",
             "expression": "2022.3.11",
             "define": "UNITY_2022_3_11_OR_NEWER"
+        },
+        {
+            "name": "com.unity.modules.unitywebrequestaudio",
+            "expression": "",
+            "define": "HAVE_WEBREQUESTAUDIO"
         }
     ],
     "noEngineReferences": false

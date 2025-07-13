@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UnityGLTF.Plugins
 {
@@ -21,36 +22,42 @@ namespace UnityGLTF.Plugins
             {
                 var renderer = transform.GetComponent<SpriteRenderer>();
                 if (!renderer) return;
-
+                
                 var sprite = renderer.sprite;
                 if (!sprite) return;
                 
                 // TODO No support for SpriteAtlas at the moment. This would require
                 // - understanding which sprite is from which atlas
                 // - extracting the sprite from the atlas and processing it further here
-
-                // TODO DrawMode = Sliced or Tiled is not supported right now
                 
                 var texture = sprite.texture;
-                var verts = sprite.vertices;
-                var tris = sprite.triangles;
-                var uvs = sprite.uv;
-
-                if (renderer.drawMode == SpriteDrawMode.Sliced)
-                {
-                    (Vector2[] newVerts, ushort[] newTris, Vector2[] newUVs) = Generate9Slice(renderer, sprite);
-
-                    // Override the original arrays with our 9-slice data
-                    verts = newVerts;
-                    tris = newTris;
-                    uvs = newUVs;
-                }
                 
                 var mesh = new Mesh();
-                mesh.vertices = verts.Select(v => new Vector3(v.x, v.y, 0)).ToArray();
-                mesh.triangles = tris.Select(t => (int) t).ToArray();
-                mesh.uv = uvs;
 
+        
+
+                if (renderer.drawMode != SpriteDrawMode.Simple)
+                {
+                 // access internal method "GetCurrentMeshData" from SpriteRenderer by reflection
+                    var meshDataMethod = typeof(SpriteRenderer).GetMethod("GetCurrentMeshData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (meshDataMethod == null)
+                    {
+                        Debug.LogError("Exporting non-Simple SpriteDrawMode is not supported in this Unity version. Please use Unity 2023.2 or later.");
+                        return;
+                    }
+                    var meshDataArray = (Mesh.MeshDataArray) meshDataMethod.Invoke(renderer, null);
+                    Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh, MeshUpdateFlags.Default);
+                }
+                else
+                {
+                    var verts = sprite.vertices;
+                    var tris = sprite.triangles;
+                    var uvs = sprite.uv;
+                    mesh.vertices = verts.Select(v => new Vector3(v.x, v.y, 0)).ToArray();
+                    mesh.triangles = tris.Select(t => (int) t).ToArray();
+                    mesh.uv = uvs;
+                }
+                
                 var unlitMat = new Material(Shader.Find("UnityGLTF/UnlitGraph"));
                 unlitMat.hideFlags = HideFlags.DontSave;
                 unlitMat.SetTexture("baseColorTexture", texture);

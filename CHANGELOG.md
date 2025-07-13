@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.3] - 2025-07-13
+- fix: Restore accidentally removed using
+- fix: Prevent NullReferenceException when exporting textures via callback without other textures in the file
+
+## [2.17.2] - 2025-07-07
+- add: Better redundant node cleanup and precomputation for KHR_interactivity export
+- add: Interactivity nodes `Color.Create()`, `Random.insideUnitSphere`, `Random.onUnitSphere`
+- add: Interactivity nodes `Vector3.MoveTowards()`, `Vector3.Reflect()`, `Vector3.sqrMagnitude`
+- add: Interactivity nodes `Transform.forward`, `Transform.right`, `Transform.up`
+- add: Interactivity nodes `Transform.TransformPoint()`, `Transform.InverseTransformPoint()`, `Transform.GetPositionAndRotation()`, `Transform.SetPositionAndRotation()`
+- change: Interactivity specification changes from June 2025 (renaming of `rotate2d` and `rotate3d` inputs)
+- fix: Add Iridescence properties to material property map for roundtrip support
+- fix: Generate mipmaps for TextMeshPro textures on export
+- fix: Remove baseVertex offset from submesh descriptors when generating lightmap UVs (#668)
+- fix: Order of operations for `Transform.Rotate()` interactivity export
+- fix: `Matrix4x4` index access order for interactivity export
+- fix: Added `isValid` output for `math/inverse` and `math/normalize` schema
+
+## [2.17.1] - 2025-06-12
+- fix: define UnityStereoTransformScreenSpaceTex when it doesn't exist (e.g. some HDRP configurations)
+
+## [2.17.0] - 2025-06-12
+- add: Quaternion nodes for KHR_interactivity visual scripting export
+- add: Importing PNG files without alpha channel in the Editor now sets them as RGB instead of RGBA, leading to better compression and less memory usage (#858)
+- add: Add more bone names to Humanoid import for better compatibility with Unity's FBX importer (#862)
+- change: Implemented specification changes for KHR_interactivity from May 2025
+- change: Enabled `applyRootMotion` for humanoid animator to make it consistent with FBX importer (#868)
+- fix: Sprite Mesh export threw an exception in non-Simple sprite draw mode. Use Unity 2023.2+ for other sprite modes than "Simple".
+- fix: Audio plugin did not correctly check for existance of built-in Unity modules
+- fix: Runtime errors with serialization of editor-only components in some newer Unity versions
+- fix: Improved performance for extracting all materials from an editor-imported glTF file (#855)
+- fix: Marked baseColor and baseColorTexture as main color and main map so they work with Unity's `Material.color` and `Material.mainTexture` properties (#864)
+- fix: Use correct `Auto` queue value for imported materials (#866)
+
 ## [2.16.1] - 2025-05-20
 - add: Visual Scripting variables work across multiple scenes now
 - add: partial `KHR_materials_anisotropy` roundtrip support. There is no visual support for it yet, but data is imported and exported correctly from `PBRGraph`.

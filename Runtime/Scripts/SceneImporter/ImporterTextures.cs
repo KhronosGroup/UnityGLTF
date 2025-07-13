@@ -225,12 +225,40 @@ namespace UnityGLTF
 					textureWillBeCompressed = true;
 			}
 
+			var makeNoLongerReadable = markGpuOnly && !textureWillBeCompressed;
 			switch (image.MimeType)
 			{
-				case "image/png":
 				case "image/jpeg":
-					//	NOTE: the second parameter of LoadImage() marks non-readable, but we can't mark it until after we call Apply()
-					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
+					var jpgData = data.ToArray();
+					texture.LoadImage(jpgData, makeNoLongerReadable);
+					break;
+				case "image/png":
+					//	NOTE: the second parameter of both LoadImage() and Apply() in this case block marks the texture non-readable, but we can't mark it until after we call Apply() after this switch block.
+					
+					var pngData = data.ToArray();
+                    var pngColorType = pngData.Length > 25 ? pngData[25] : 0;
+                    var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
+#if !UNITY_EDITOR
+					texture.LoadImage(pngData, makeNoLongerReadable);
+#else
+                    if (Context.AssetContext == null || pngHasAlpha)
+                    {
+					    texture.LoadImage(pngData, makeNoLongerReadable);
+                    }
+                    else
+                    {
+                        texture.LoadImage(pngData, false);
+
+                        var name = texture.name;
+                        var pixels32 = texture.GetPixels32();
+
+                        texture = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, GenerateMipMapsForTextures, isLinear);
+                        texture.name = name;
+                        texture.SetPixels32(pixels32);
+
+                        texture.Apply(GenerateMipMapsForTextures, makeNoLongerReadable);
+                    }
+#endif
 					break;
 				case "image/exr":
 					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");

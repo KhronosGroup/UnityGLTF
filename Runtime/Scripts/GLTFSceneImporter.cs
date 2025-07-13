@@ -1393,10 +1393,12 @@ namespace UnityGLTF
 				}
 
 				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid)
-				{
-					if (!sceneObj.GetComponent<Animator>())
-						sceneObj.AddComponent<Animator>();
-				}
+                {
+                    var animator = sceneObj.GetComponent<Animator>();
+                    if (!animator) animator = sceneObj.AddComponent<Animator>();
+
+                    animator.applyRootMotion = true;
+                }
 
 				CreatedObject = sceneObj;
 				InitializeGltfTopLevelObject();

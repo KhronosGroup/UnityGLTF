@@ -421,6 +421,32 @@ namespace UnityGLTF
 				// TODO this also counts old remaps that are not used anymore
 				var remapCount = externalObjectMap.Values.Count(x => x is T);
 
+				void ExtractAssets(T[] subAssets, bool importImmediately)
+				{
+					var assetPath = AssetDatabase.GetAssetPath(subAssets[0]);
+					var assetImporter = AssetImporter.GetAtPath(assetPath);
+					foreach (var subAsset in subAssets)
+					{
+						if (!subAsset) return;
+						var filename = SanitizePath(subAsset.name);
+						var dirName = Path.GetDirectoryName(t.assetPath) + "/" + subDirectoryName;
+						if (!Directory.Exists(dirName))
+							Directory.CreateDirectory(dirName);
+						var destinationPath = dirName + "/" + filename + fileExtension;
+
+						var clone = Instantiate(subAsset);
+						AssetDatabase.CreateAsset(clone, destinationPath);
+
+						assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
+					}
+
+					if (importImmediately)
+					{
+						AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+						AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+					}
+				}
+				
 				void ExtractAsset(T subAsset, bool importImmediately)
 				{
 					if (!subAsset) return;
@@ -475,17 +501,15 @@ namespace UnityGLTF
 							var materials = new T[importedData.arraySize];
 							for (var i = 0; i < importedData.arraySize; i++)
 								materials[i] = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
-
-							for (var i = 0; i < materials.Length; i++)
-							{
-								if (!materials[i]) continue;
-								AssetDatabase.StartAssetEditing();
-								ExtractAsset(materials[i], false);
-								AssetDatabase.StopAssetEditing();
-								var assetPath = AssetDatabase.GetAssetPath(target);
-								AssetDatabase.WriteImportSettingsIfDirty(assetPath);
-								AssetDatabase.Refresh();
-							}
+							
+							var extract = materials.Where(m => m != null).ToArray();
+							AssetDatabase.StartAssetEditing();
+							ExtractAssets(extract, false);
+							AssetDatabase.StopAssetEditing();
+							var assetPath = AssetDatabase.GetAssetPath(target);
+							AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+							AssetDatabase.Refresh();
+							return;
 						}
 
 						EditorGUILayout.EndHorizontal();

@@ -12,7 +12,9 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IddPointerVisibility = "/nodes/{" + IdPointerNodeIndex +
                                                         "}/extensions/"+KHR_node_visibility_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_visibility.visible); 
         public static readonly string IdPointerSelectability = "/nodes/{" + IdPointerNodeIndex +
-                                                        "}/extensions/"+KHR_node_selectability_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_selectability.selectable); 
+                                                        "}/extensions/"+KHR_node_selectability_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_selectability.selectable);
+
+        public static readonly string IdPointerLightIndex = "lightIndex";
 
         public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
         {

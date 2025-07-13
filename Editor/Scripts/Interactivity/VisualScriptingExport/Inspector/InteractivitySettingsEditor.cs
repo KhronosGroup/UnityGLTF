@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace UnityGLTF.Interactivity.VisualScripting
 {
+#if HAVE_VISUAL_SCRIPTING
     [CustomEditor(typeof(VisualScriptingExportPlugin))]
     public class InteractivitySettingsEditor : GLTFPluginEditor
     {
@@ -16,4 +17,5 @@ namespace UnityGLTF.Interactivity.VisualScripting
                 SupportedUnitExports.LogSupportedUnits();
         }
     }
+#endif
 }
