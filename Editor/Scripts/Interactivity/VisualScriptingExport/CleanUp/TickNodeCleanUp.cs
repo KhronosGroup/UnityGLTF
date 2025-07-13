@@ -63,6 +63,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
                    
                 if (tickNode is GltfInteractivityUnitExporterNode tickNodeExport)
                 {
+                    if (tickNodeExport.Exporter.exporter is not TimeUnitExports)
+                        continue;
                     var selectNode = tickNodeExport.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
                     if (selectNode != null)
                     {
@@ -109,6 +111,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
                     {
                         // also remove isNaN check
                         var exporterNode = tickNodeExport2.Exporter.Nodes;
+                        foreach (var n in exporterNode)
+                            n.ValueInConnection.Clear();
+
                         foreach (var n in exporterNode)
                             task.RemoveNode(n);
                     }

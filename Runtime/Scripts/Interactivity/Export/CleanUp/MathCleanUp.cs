@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
@@ -95,11 +96,144 @@ namespace UnityGLTF.Interactivity.Export
 
             return false;
         }
-              
- 
+
+        private abstract class MathCalcAbstract
+        {
+            public abstract Type schema { get; }
+            public abstract Type[] inputTypes { get; }
+            public abstract object Result(GltfInteractivityNode node);
+
+            private static string[] InputKeys = new[] { "a", "b", "c", "d" }; 
+            
+            public bool InputTypesMatch(GltfInteractivityNode node)
+            {
+                if (node.ValueInConnection.Count != inputTypes.Length)
+                    return false;
+                for (int i = 0; i < inputTypes.Length; i++)
+                {
+                    var socket = node.ValueInConnection[InputKeys[i]];
+                    if (socket.Value == null)
+                        return false;
+                    if (socket.Value.GetType() != inputTypes[i])
+                        return false;
+                }
+
+                return true;
+            }
+        }
+        
+        private class MathCalc<TSchema, TInputA, TResult> : MathCalcAbstract where TSchema : GltfInteractivityNodeSchema
+        {
+            
+            public Func<TInputA, TResult> Op;
+            public override Type schema
+            {
+                get => typeof(TSchema);
+            }
+
+            public override Type[] inputTypes
+            {
+                get => new[] { typeof(TInputA)};
+            }
+
+            public override object Result(GltfInteractivityNode node)
+            {
+                return Op.Invoke((TInputA)node.ValueInConnection["a"].Value);
+            }
+        }
+
+        
+        private class MathCalc<TSchema, TInputA, TInputB, TResult> : MathCalcAbstract where TSchema : GltfInteractivityNodeSchema
+        {
+            
+            public Func<TInputA, TInputB, TResult> Op;
+            public override Type schema
+            {
+                get => typeof(TSchema);
+            }
+
+            public override Type[] inputTypes
+            {
+                get => new[] { typeof(TInputA), typeof(TInputB) };
+            }
+
+            public override object Result(GltfInteractivityNode node)
+            {
+                return Op.Invoke((TInputA)node.ValueInConnection["a"].Value, (TInputB)node.ValueInConnection["b"].Value);
+            }
+        }
+
+        private static MathCalcAbstract[] ops = new MathCalcAbstract[]
+        {
+            new MathCalc<Math_AddNode, float, float, float> { Op = (f, f1) => f + f1 },
+            new MathCalc<Math_AddNode, Vector2, Vector2, Vector2> { Op = (f, f1) => f + f1 },
+            new MathCalc<Math_AddNode, Vector3, Vector3, Vector3> { Op = (f, f1) => f + f1 },
+            new MathCalc<Math_AddNode, Vector4, Vector4, Vector4> { Op = (f, f1) => f + f1 },
+            new MathCalc<Math_SubNode, float, float, float> { Op = (f, f1) => f - f1 },
+            new MathCalc<Math_SubNode, Vector2, Vector2, Vector2> { Op = (f, f1) => f - f1 },
+            new MathCalc<Math_SubNode, Vector3, Vector3, Vector3> { Op = (f, f1) => f - f1 },
+            new MathCalc<Math_SubNode, Vector4, Vector4, Vector4> { Op = (f, f1) => f - f1 },
+            new MathCalc<Math_MulNode, float, float, float> { Op = (f, f1) => f * f1 },
+            new MathCalc<Math_MulNode, Vector2, Vector2, Vector2> { Op = (f, f1) => f * f1 },
+            new MathCalc<Math_DivNode, float, float, float> { Op = (f, f1) => f / f1 },
+            new MathCalc<Math_DotNode, Vector2, Vector2, float> { Op = Vector2.Dot},
+            new MathCalc<Math_DotNode, Vector3, Vector3, float> { Op = Vector3.Dot},
+            new MathCalc<Math_DotNode, Vector4, Vector4, float> { Op = Vector4.Dot},
+            new MathCalc<Math_DegNode, float, float> { Op = (f) => Mathf.Rad2Deg * f},
+            new MathCalc<Math_RadNode, float, float> { Op = (f) => Mathf.Deg2Rad * f},
+            new MathCalc<Math_ExpNode, float, float> { Op = Mathf.Exp},
+            new MathCalc<Math_PowNode, float, float, float> { Op = Mathf.Pow},
+            new MathCalc<Math_LengthNode, Vector2, float> { Op = (f) => f.magnitude},
+            new MathCalc<Math_LengthNode, Vector3, float> { Op = (f) => f.magnitude},
+            new MathCalc<Math_LengthNode, Vector4, float> { Op = (f) => f.magnitude},
+            new MathCalc<Math_SaturateNode, float, float> { Op = Mathf.Clamp01},
+            new MathCalc<Math_SqrtNode, float, float> { Op = Mathf.Sqrt},
+            new MathCalc<Math_SinNode, float, float> { Op = Mathf.Sin},
+            new MathCalc<Math_CosNode, float, float> { Op = Mathf.Cos},
+            new MathCalc<Math_TanNode, float, float> { Op = Mathf.Tan},
+            new MathCalc<Math_AtanNode, float, float> { Op = Mathf.Atan},
+            new MathCalc<Math_Atan2Node, float, float, float> { Op = Mathf.Atan2},
+            new MathCalc<Math_AsinNode, float, float> { Op = Mathf.Asin},
+        };
+        
+        private bool PreCalc(GltfInteractivityNode n, out object result)
+        {
+            result = null;
+            var opsFound = ops.Where(o => o.schema == n.Schema.GetType()).FirstOrDefault(o => o.InputTypesMatch(n));
+
+            if (opsFound == null)
+                return false;
+
+            result = opsFound.Result(n);
+            return true;
+        }
+        
         public void OnCleanUp(CleanUpTask task)
         {
             var nodes = task.context.Nodes;
+
+            // Removed all math nodes which has only static inputs > no need for runtime calculations
+            var allNodes = nodes.ToArray();
+            foreach (var node in allNodes)
+            {
+                bool anyConnection = node.ValueInConnection.Any(v => v.Value.Node != null && v.Value.Node != -1);
+                if (anyConnection)
+                    continue;
+
+                if (PreCalc(node, out var result))
+                {
+                    // Finding all nodes which has connection to this math node
+                    foreach (var n in nodes)
+                    {
+                        foreach (var valueSocket in n.ValueInConnection)
+                        {
+                            if (valueSocket.Value.Node == node.Index)
+                                n.SetValueInSocket(valueSocket.Key, result);
+                        }
+                    }
+                    task.RemoveNode(node);
+                }
+            }
             
             var addNodes = nodes.FindAll(node => node.Schema is Math_AddNode).ToArray();
             

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityGLTF.Interactivity.Export;
@@ -23,61 +24,97 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
-            // TODO: World Space conversion
-
             var unit = unitExporter.unit as Unity.VisualScripting.InvokeMember;
+            
+            bool selfRelative = true;
 
-            var getRotation = unitExporter.CreateNode<Pointer_GetNode>();
-            
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
-                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+            if (unit.valueInputs.Contains("%relativeTo"))
+            {
+                if (unitExporter.IsInputLiteralOrDefaultValue(unit.valueInputs["%relativeTo"], out var relativeToValue))
+                {
+                    if ((Space)relativeToValue == Space.World)
+                        selfRelative = false;
+                }
+            }
+            ValueOutRef objRotationRef;
 
-            var setRotation = unitExporter.CreateNode<Pointer_SetNode>();
+            void AddRotation(ValueOutRef rotation)
+            {
+                var mulQuatNode = unitExporter.CreateNode<Math_QuatMulNode>();
+                
+                if (selfRelative)
+                {
+                    mulQuatNode.ValueIn(Math_QuatMulNode.IdValueA).ConnectToSource(objRotationRef);
+                    mulQuatNode.ValueIn(Math_QuatMulNode.IdValueB).ConnectToSource(rotation);
+                    TransformHelpers.SetLocalRotation(unitExporter, out var targetRefSet, out var setRotationRef, out var setRotationFlowIn, out var setRotationFlowOut);
+                    targetRefSet.MapToInputPort(unit.target);
+                    setRotationRef.ConnectToSource(mulQuatNode.FirstValueOut());
+                    setRotationFlowIn.MapToControlInput(unit.enter);
+                    setRotationFlowOut.MapToControlOutput(unit.exit);
+                }
+                else
+                {
+                    mulQuatNode.ValueIn(Math_QuatMulNode.IdValueA).ConnectToSource(rotation);
+                    mulQuatNode.ValueIn(Math_QuatMulNode.IdValueB).ConnectToSource(objRotationRef);
+                    TransformHelpers.SetWorldRotation(unitExporter, out var targetRefSet, out var setRotationRef, out var setRotationFlowIn, out var setRotationFlowOut);
+                    targetRefSet.MapToInputPort(unit.target);
+                    setRotationRef.ConnectToSource(mulQuatNode.FirstValueOut());
+                    setRotationFlowIn.MapToControlInput(unit.enter);
+                    setRotationFlowOut.MapToControlOutput(unit.exit);
+                }
+            }
             
-            var relative = unit.validInputs.FirstOrDefault(vi => vi.key == "%relativeTo");
+            if (selfRelative)
+            {
+                TransformHelpers.GetLocalRotation(unitExporter, out var targetRef, out objRotationRef);
+                targetRef.MapToInputPort(unit.target);
+            }
+            else
+            {
+                TransformHelpers.GetWorldRotation(unitExporter, out var targetRef, out objRotationRef);
+                targetRef.MapToInputPort(unit.target);
+            }
             
-            if (unit.validInputs.Any(vi => vi.key == "%axis"))
+            if (unit.valueInputs.Contains("%axis"))
             {
                 // Axis / Angle Rotation
                 var axis = unit.validInputs.FirstOrDefault(vi => vi.key == "%axis");
                 var angle = unit.validInputs.FirstOrDefault(vi => vi.key == "%angle");
+
+                var deg2Rad = unitExporter.CreateNode<Math_RadNode>();
+                deg2Rad.ValueIn(Math_RadNode.IdInputA).MapToInputPort(angle);
                 
+                var axisAngelNode = unitExporter.CreateNode<Math_QuatFromAxisAngleNode>();
+                axisAngelNode.ValueIn(Math_QuatFromAxisAngleNode.IdAxis).MapToInputPort(axis);
+                axisAngelNode.ValueIn(Math_QuatFromAxisAngleNode.IdAngle).ConnectToSource(deg2Rad.FirstValueOut());
+
+                AddRotation(axisAngelNode.FirstValueOut());
+                return true;
             }
-            else
+
+            if (unit.valueInputs.Contains("%eulers"))
             {
-                // Euler Rotation
-                var add = unitExporter.CreateNode<Math_AddNode>();
-                
-                add.ValueIn(Math_AddNode.IdValueB).ConnectToSource(getRotation.ValueOut(Pointer_GetNode.IdValue));
-
-                if (unit.valueInputs.Any(vi => vi.type == typeof(Vector3)))
-                {
-                    // euler is a vector3
-                    add.ValueIn(Math_AddNode.IdValueA).MapToInputPort(unit.valueInputs.Skip(1).First());
-                }
-                else
-                {
-                    // euler is separate floats
-                    var combine3 = unitExporter.CreateNode<Math_Combine3Node>();
-                    combine3.ValueIn(Math_Combine3Node.IdValueA).MapToInputPort(unit.valueInputs[1]);
-                    combine3.ValueIn(Math_Combine3Node.IdValueB).MapToInputPort(unit.valueInputs[2]);
-                    combine3.ValueIn(Math_Combine3Node.IdValueC).MapToInputPort(unit.valueInputs[3]);
-                    
-                    add.ValueIn(Math_AddNode.IdValueA).ConnectToSource(combine3.FirstValueOut());
- 
-                }
-                  //  QuaternionHelpers.CreateQuaternionFromEuler();
-                setRotation.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(add.FirstValueOut());
+                QuaternionHelpers.CreateQuaternionFromEuler(unitExporter, out var xyzInputRef, out var euler);
+                xyzInputRef.MapToInputPort(unit.valueInputs["%eulers"]);
+                AddRotation(euler);
+                return true;
             }
-            //TODO: translate of non self
-            
-            setRotation.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
-            setRotation.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(unit.exit);
-            
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
-                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
 
-            return true;
+            if (unit.valueInputs.Contains("%xAngle"))
+            {
+                var combine3 = unitExporter.CreateNode<Math_Combine3Node>();
+                combine3.ValueIn(Math_Combine3Node.IdValueA).MapToInputPort(unit.valueInputs["%xAngle"]);
+                combine3.ValueIn(Math_Combine3Node.IdValueB).MapToInputPort(unit.valueInputs["%yAngle"]);
+                combine3.ValueIn(Math_Combine3Node.IdValueC).MapToInputPort(unit.valueInputs["%zAngle"]);
+
+                QuaternionHelpers.CreateQuaternionFromEuler(unitExporter, out var xyzInputRef, out var euler);
+                xyzInputRef.ConnectToSource(combine3.FirstValueOut());
+                
+                AddRotation(euler);
+                return true;
+            }
+
+            return false;
         }
     }
 }
