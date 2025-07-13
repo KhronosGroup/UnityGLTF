@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.3] - 2025-07-13
+- fix: Restore accidentally removed using
+- fix: Prevent NullReferenceException when exporting textures via callback without other textures in the file
+
 ## [2.17.2] - 2025-07-07
 - add: Better redundant node cleanup and precomputation for KHR_interactivity export
 - add: Interactivity nodes `Color.Create()`, `Random.insideUnitSphere`, `Random.onUnitSphere`
