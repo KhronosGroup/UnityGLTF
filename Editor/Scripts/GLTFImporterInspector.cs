@@ -429,7 +429,7 @@ namespace UnityGLTF
 					{
 						if (!subAsset) return;
 						var filename = SanitizePath(subAsset.name);
-						var dirName = Path.GetDirectoryName(t.assetPath) + "/" + subDirectoryName;
+						var dirName = Path.GetDirectoryName(importer.assetPath) + "/" + subDirectoryName;
 						if (!Directory.Exists(dirName))
 							Directory.CreateDirectory(dirName);
 						var destinationPath = dirName + "/" + filename + fileExtension;
