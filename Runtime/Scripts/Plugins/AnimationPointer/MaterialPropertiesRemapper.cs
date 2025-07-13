@@ -466,6 +466,30 @@ namespace UnityGLTF.Plugins
                 ExtensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME
             };
             AddMap(iridescenceFactor);
+            var iridescenceIor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+            {
+                PropertyNames = new[] { "iridescenceIor" },
+                GltfPropertyName =
+                    $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceIor)}",
+                ExtensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME
+            };
+            AddMap(iridescenceIor);
+            var iridescenceThicknessMinimum = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+            {
+                PropertyNames = new[] { "iridescenceThicknessMinimum" },
+                GltfPropertyName =
+                    $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMinimum)}",
+                ExtensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME
+            };
+            AddMap(iridescenceThicknessMinimum);
+            var iridescenceThicknessMaximum = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+            {
+                PropertyNames = new[] { "iridescenceThicknessMaximum" },
+                GltfPropertyName =
+                    $"extensions/{KHR_materials_iridescence_Factory.EXTENSION_NAME}/{nameof(KHR_materials_iridescence.iridescenceThicknessMaximum)}",
+                ExtensionName = KHR_materials_iridescence_Factory.EXTENSION_NAME
+            };
+            AddMap(iridescenceThicknessMaximum);
 
             // KHR_materials_specular
             var specularFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)

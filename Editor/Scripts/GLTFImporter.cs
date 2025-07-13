@@ -490,20 +490,40 @@ namespace UnityGLTF
                     }
                     if (_generateLightmapUVs)
                     {
-	                    var uv2 = mesh.uv2;
-	                    if (uv2 == null || uv2.Length < 1)
+	                    var hasTriangleTopology = true;
+	                    for (var i = 0; i < mesh.subMeshCount; i++)
+		                    hasTriangleTopology &= mesh.GetTopology(i) == MeshTopology.Triangles;
+	                    
+	                    if (hasTriangleTopology)
 	                    {
-		                    var hasTriangleTopology = true;
-		                    for (var i = 0; i < mesh.subMeshCount; i++)
-								hasTriangleTopology &= mesh.GetTopology(i) == MeshTopology.Triangles;
+		                    // Clean uv2 if it exists. This matches Unity's ModelImporter behavior. See https://github.com/KhronosGroup/UnityGLTF/issues/871
+		                    if (mesh.uv2 != null)
+			                    mesh.uv2 = null;
+		                    
+		                    // Unity's Unwrapping.GenerateSecondaryUVSet() does not work with submesh baseVertex offsets.
+		                    // So if we have any of those, we need to remove the baseVertex offsets first, otherwise we get garbage meshes.
+		                    // See https://github.com/KhronosGroup/UnityGLTF/issues/668
+		                    var count = mesh.subMeshCount;
+		                    if (count > 1)
+		                    {
+			                    for (var i = 0; i < count; i++)
+			                    {
+				                    var subMeshDescriptor = mesh.GetSubMesh(i);
+				                    if (subMeshDescriptor.baseVertex == 0) continue;
+				                    
+				                    // Read indices with applyBaseVertex = true and write them back without baseVertex offset
+				                    var indices = mesh.GetIndices(i, true);
+				                    mesh.SetIndices(indices, MeshTopology.Triangles, i, false, 0);
+				                    
+				                    // Update the descriptor
+				                    subMeshDescriptor.baseVertex = 0;
+				                    mesh.SetSubMesh(i, subMeshDescriptor, MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers | MeshUpdateFlags.DontResetBoneBounds);
+			                    }
+		                    }
 
-		                    // uv2 = Unwrapping.GeneratePerTriangleUV(mesh);
-		                    // mesh.SetUVs(1, uv2);
-
-		                    // There seems to be a bug in Unity's splitting code:
-		                    // for some meshes, the result is broken after splitting.
-		                    if (hasTriangleTopology)
-								Unwrapping.GenerateSecondaryUVSet(mesh);
+		                    // TODO We might want to be able to set the unwrap settings via the importer.
+		                    UnwrapParam.SetDefaults(out var unwrapSettings);
+							Unwrapping.GenerateSecondaryUVSet(mesh, unwrapSettings);
 	                    }
                     }
 

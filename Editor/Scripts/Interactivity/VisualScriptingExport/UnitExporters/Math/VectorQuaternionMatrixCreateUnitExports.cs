@@ -23,6 +23,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             CreateStructsUnitExport.RegisterCreateStructConvert(typeof(Vector4), new VectorQuaternionMatrixCreateUnitExports<Math_Combine4Node>());
             CreateStructsUnitExport.RegisterCreateStructConvert(typeof(Quaternion), new VectorQuaternionMatrixCreateUnitExports<Math_Combine4Node>());
             CreateStructsUnitExport.RegisterCreateStructConvert(typeof(Matrix4x4), new VectorQuaternionMatrixCreateUnitExports<Math_Combine4x4Node>());
+            CreateStructsUnitExport.RegisterCreateStructConvert(typeof(Color), new VectorQuaternionMatrixCreateUnitExports<Math_Combine4Node>());
         }
     }
     

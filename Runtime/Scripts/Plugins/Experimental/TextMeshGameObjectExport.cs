@@ -72,6 +72,10 @@ namespace UnityGLTF.Plugins
 				if (!rtCache.ContainsKey(existingTex))
 				{
 					var rt = new RenderTexture(existingTex.width * 2, existingTex.height * 2, 0, RenderTextureFormat.ARGB32);
+					rt.useMipMap = true;
+					rt.autoGenerateMips = false;
+					rt.filterMode = FilterMode.Bilinear;
+					rt.anisoLevel = 9;
 					
 					float outlineSoftness = 0;
 					if (material.HasProperty("_OutlineSoftness"))
@@ -81,9 +85,8 @@ namespace UnityGLTF.Plugins
 					}
 					// TODO figure out how to get this more smooth
 					Graphics.Blit(existingTex, rt, material);
+					rt.GenerateMips();
 					rtCache[existingTex] = rt;
-					rt.anisoLevel = 9;
-					rt.filterMode = FilterMode.Bilinear;
 					
 					if (material.HasProperty("_OutlineSoftness"))
 					{
