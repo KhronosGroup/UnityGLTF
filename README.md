@@ -1,3 +1,5 @@
+## This fork of UnityGLTF includes some bugfixes and new features which are not merged into the original repository yet despite being PR'd.
+
 # UnityGLTF <!-- omit from toc -->
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
