@@ -437,7 +437,7 @@ namespace UnityGLTF
 				// TODO check where the right place is to call OnBeforeImport as early as possible
 				foreach (var plugin in Context.Plugins)
 				{
-					plugin.OnBeforeImport();
+					await plugin.OnBeforeImportAsync();
 				}
 
 				if (_options.ThrowOnLowMemory)
@@ -465,14 +465,14 @@ namespace UnityGLTF
 				if (_gltfRoot == null)
 				{
 					foreach (var plugin in Context.Plugins)
-						plugin.OnBeforeImportRoot();
+						await plugin.OnBeforeImportRootAsync();
 					await LoadJson(_gltfFileName);
 					progressStatus.IsDownloaded = true;
 				}
 
 				foreach (var plugin in Context.Plugins)
 				{
-					plugin.OnAfterImportRoot(_gltfRoot);
+					await plugin.OnAfterImportRootAsync(_gltfRoot);
 				}
 
 				cancellationToken.ThrowIfCancellationRequested();
@@ -691,7 +691,7 @@ namespace UnityGLTF
 			try
 			{
 				foreach (var plugin in Context.Plugins)
-					plugin.OnBeforeImportScene(scene);
+					await plugin.OnBeforeImportSceneAsync(scene);
 			}
 			catch (Exception e)
 			{
@@ -739,7 +739,7 @@ namespace UnityGLTF
 			try
 			{
 				foreach (var plugin in Context.Plugins)
-					plugin.OnAfterImportScene(scene, sceneIndex, CreatedObject);
+					await plugin.OnAfterImportSceneAsync(scene, sceneIndex, CreatedObject);
 			}
 			catch (Exception e)
 			{
@@ -838,7 +838,7 @@ namespace UnityGLTF
 					try
 					{
 						foreach (var plugin in Context.Plugins)
-							plugin.OnAfterImportNode(node, nodeId, _assetCache.NodeCache[nodeId]);
+							await plugin.OnAfterImportNodeAsync(node, nodeId, _assetCache.NodeCache[nodeId]);
 					}
 					catch (Exception ex)
 					{
