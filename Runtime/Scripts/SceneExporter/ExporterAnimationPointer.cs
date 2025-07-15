@@ -95,11 +95,9 @@ namespace UnityGLTF
 					
 					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material, propertyName, out MaterialPointerPropertyMap map))
 					{
-						Debug.Log(LogType.Warning, "Unknown property name on Material " + material + ": " + propertyName);
-
-						return;
+						break;
 					}
-
+					
 					secondPropertyName = map.GltfSecondaryPropertyName;
 					propertyName = map.GltfPropertyName;
 					extensionName = map.ExtensionName;
