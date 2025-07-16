@@ -6,12 +6,16 @@ using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnityGLTF
 {
 	public partial class GLTFSceneImporter
 	{
 		internal static List<Texture> _runtimeNormalTextures = new List<Texture>();
+		internal List<object> _warnOnce = new List<object>();
 		
 		protected virtual async Task ConstructMaterial(GLTFMaterial def, int materialIndex)
 		{
@@ -112,7 +116,27 @@ namespace UnityGLTF
 			{
 				MatHelper.SetKeyword(mapper.Material, "_TEXTURE_TRANSFORM", true);
 			}
-
+			
+#if UNITY_EDITOR
+			var tempMapper = mapper;
+			
+			// Check if the material is valid – broken Shader Graphs import as single-pass magenta shaders...
+			var seemsToBeBroken = mapper.Material.shader?.passCount <= 1;
+			if (seemsToBeBroken)
+			{
+				var key = (mapper.Material.shader, Context?.SourceImporter);
+				if (!_warnOnce.Contains(key))
+				{
+					Debug.Log(LogType.Error, 
+						(object) $"glTF materials could not be correctly imported because there is an error with shader \"{mapper.Material.shader?.name}\". This is likely caused by Shader Graph keyword limits being too low; increase the Shader Variant Limit in \"Preferences > Shader Graph\", reimport the UnityGLTF package, and then reimport this file.\n\n", Context?.SourceImporter);
+					_warnOnce.Add(key);
+				}
+				// Set mapper to null so we're not trying to set any material properties and causing errors.
+				// We're restoring it right before creating the material.
+				mapper = null;
+			}
+#endif
+			
 			var mrMapper = mapper as IMetalRoughUniformMap;
 			if (def.PbrMetallicRoughness != null && mrMapper != null)
 			{
@@ -715,12 +739,13 @@ namespace UnityGLTF
 				{
 					TextureId textureId = def.NormalTexture.Index;
 					await ConstructTexture(textureId.Value, textureId.Id, !KeepCPUCopyOfTexture, true, true);
-					
-					uniformMapper.NormalTexture = _assetCache.TextureCache[textureId.Id].Texture;
+
+					var tex = _assetCache.TextureCache[textureId.Id].Texture;
+					uniformMapper.NormalTexture = tex;
 					uniformMapper.NormalTexCoord = def.NormalTexture.TexCoord;
 					uniformMapper.NormalTexScale = def.NormalTexture.Scale;
 
-					_runtimeNormalTextures.Add(uniformMapper.NormalTexture);
+					if (tex) _runtimeNormalTextures.Add(tex);
 					
 					var ext = GetTextureTransform(def.NormalTexture);
 					if (ext != null)
@@ -801,6 +826,12 @@ namespace UnityGLTF
 					uniformMapper.EmissiveFactor = uniformMapper.EmissiveFactor * emissiveExt.emissiveStrength;
 				}
 			}
+
+#if UNITY_EDITOR
+			// Restore the mapper if we had to remove it because the shader is broken...
+			if (mapper == null) mapper = tempMapper;
+#endif
+			
 			var vertColorMapper = mapper.Clone();
 			vertColorMapper.VertexColorsEnabled = true;
 
