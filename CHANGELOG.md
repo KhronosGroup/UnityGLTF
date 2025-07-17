@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.4] - 2025-07-17
+- fix: Exporting animation should not abort export for unknown properties
+- fix: Warn when UnityGLTF/PBRGraph can't be imported due to insufficient shader variant limit in Unity
+
 ## [2.17.3] - 2025-07-13
 - fix: Restore accidentally removed using
 - fix: Prevent NullReferenceException when exporting textures via callback without other textures in the file
