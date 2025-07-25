@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.5] - 2025-07-25
+- fix: Compiler error when TMP is not installed
+
 ## [2.17.4] - 2025-07-17
 - fix: Exporting animation should not abort export for unknown properties
 - fix: Warn when UnityGLTF/PBRGraph can't be imported due to insufficient shader variant limit in Unity
