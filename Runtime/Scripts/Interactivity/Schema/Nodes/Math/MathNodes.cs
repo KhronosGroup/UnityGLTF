@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_MatMulNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/matmul";
+        public override string Op { get; set; } = "math/matMul";
         
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
@@ -703,7 +703,7 @@ namespace UnityGLTF.Interactivity.Schema
 
     public class Math_IsNaNNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/isnan";
+        public override string Op { get; set; } = "math/isNaN";
 
         [OutputSocketDescription(GltfTypes.Bool)]
         public const string IdOut = "value";
@@ -769,7 +769,7 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_PiNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/pi";
+        public override string Op { get; set; } = "math/Pi";
 
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOut = "value";
@@ -778,7 +778,7 @@ namespace UnityGLTF.Interactivity.Schema
 
     public class Math_ENode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/e";
+        public override string Op { get; set; } = "math/E";
 
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOut = "value";
@@ -787,7 +787,7 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_InfNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/inf";
+        public override string Op { get; set; } = "math/Inf";
 
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOut = "value";
@@ -796,7 +796,7 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_NaNNode : GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/nan";
+        public override string Op { get; set; } = "math/NaN";
 
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOut = "value";
@@ -906,7 +906,7 @@ namespace UnityGLTF.Interactivity.Schema
     
     public class Math_IsInfNode: GltfInteractivityNodeSchema
     {
-        public override string Op { get; set; } = "math/isinf";
+        public override string Op { get; set; } = "math/isInf";
 
         [InputSocketDescription(GltfTypes.Float)]
         public const string IdInputA = "a";
