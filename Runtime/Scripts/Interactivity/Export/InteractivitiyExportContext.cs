@@ -815,6 +815,17 @@ namespace UnityGLTF.Interactivity.Export
                                 if (limitToType != valueType)
                                 {
 
+                                    if (socket.Value != null)
+                                    {
+                                        if (GltfTypes.TryToConvertValue(socket.Value,
+                                                socket.typeRestriction.limitToType, out var convertedValue))
+                                        {
+                                            socket.Value = convertedValue;
+                                            changed = true;
+                                            continue;
+                                        }
+                                    }
+                                    
                                     var conversionNode = AddTypeConversion(node, nodesToSerialize.Count,
                                         valueSocket.Key,
                                         valueType, limitToType);
@@ -844,6 +855,17 @@ namespace UnityGLTF.Interactivity.Export
                                     if (preferType == -1)
                                     {
                                         continue;
+                                    }
+                                    
+                                    if (socket.Value != null)
+                                    {
+                                        if (GltfTypes.TryToConvertValue(socket.Value,
+                                                GltfTypes.TypesMapping[fromInputPortType].GltfSignature, out var convertedValue))
+                                        {
+                                            socket.Value = convertedValue;
+                                            changed = true;
+                                            continue;
+                                        }
                                     }
 
                                     var conversionNode = AddTypeConversion(node, nodesToSerialize.Count,
