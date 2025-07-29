@@ -814,13 +814,21 @@ namespace UnityGLTF.Interactivity.Export
                                         .limitToType);
                                 if (limitToType != valueType)
                                 {
-                                    changed = true;
 
                                     var conversionNode = AddTypeConversion(node, nodesToSerialize.Count,
                                         valueSocket.Key,
                                         valueType, limitToType);
-                                    if (conversionNode != null)
+                                    if (conversionNode != null && conversionNode.Length > 0)
+                                    {
                                         nodesToSerialize.AddRange(conversionNode);
+                                        changed = true;
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
+                                            " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType] +
+                                            " but should be " + GltfTypes.TypesMapping[limitToType]);;
+                                    }
                                 }
                             }
                             else if (socket.typeRestriction.fromInputPort != null)
@@ -838,12 +846,20 @@ namespace UnityGLTF.Interactivity.Export
                                         continue;
                                     }
 
-                                    changed = true;
                                     var conversionNode = AddTypeConversion(node, nodesToSerialize.Count,
                                         valueSocket.Key,
                                         valueType, preferType);
-                                    if (conversionNode != null)
+                                    if (conversionNode != null && conversionNode.Length > 0)
+                                    {
+                                        changed = true;
                                         nodesToSerialize.AddRange(conversionNode);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
+                                                         " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType] +
+                                                         " but should be " + GltfTypes.TypesMapping[fromInputPortType]);;
+                                    }
                                 }
                             }
                         }
