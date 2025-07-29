@@ -23,9 +23,9 @@ namespace UnityGLTF.Interactivity.Schema
         
         [InputSocketDescription(GltfTypes.Float)]
         public const string IdDuration = "duration";
-        [InputSocketDescription(GltfTypes.Float)]
+        [InputSocketDescription(GltfTypes.Float2)]
         public const string IdPoint1 = "p1";
-        [InputSocketDescription(GltfTypes.Float)]
+        [InputSocketDescription(GltfTypes.Float2)]
         public const string IdPoint2 = "p2";
     }
 }
