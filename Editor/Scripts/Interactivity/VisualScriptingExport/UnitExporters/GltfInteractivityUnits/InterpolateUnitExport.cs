@@ -61,6 +61,25 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     originalValue.MapToInputPort(unit.input);
                 }
             }
+
+            if (unit.member.targetType == typeof(Material))
+            {
+                var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+                pointerId = PointersHelper.IdPointerMaterialIndex;
+                if (unit.member.name == "color")
+                {
+                     var gltfProperty =
+                     MaterialPointerHelper.GetPointer(unitExporter, "_Color", out var map);
+                    if (gltfProperty == null)
+                    {
+                        UnitExportLogging.AddErrorLog(unit, "color property name is not supported.");
+                        return false;
+                    }
+
+                    valueType = GltfTypes.Float4;
+                    pointerTemplate = materialTemplate + gltfProperty;
+                }
+            }
             
             if (string.IsNullOrEmpty(pointerTemplate))
             { 
