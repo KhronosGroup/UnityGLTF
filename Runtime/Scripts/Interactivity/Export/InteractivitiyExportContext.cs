@@ -837,8 +837,8 @@ namespace UnityGLTF.Interactivity.Export
                                     else
                                     {
                                         Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
-                                            " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType] +
-                                            " but should be " + GltfTypes.TypesMapping[limitToType]);;
+                                            " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType].GltfSignature +
+                                            " but should be " + GltfTypes.TypesMapping[limitToType].GltfSignature);;
                                     }
                                 }
                             }
@@ -852,7 +852,7 @@ namespace UnityGLTF.Interactivity.Export
                                 {
                                     var preferType =
                                         GltfTypes.PreferType(valueType, fromInputPortType);
-                                    if (preferType == -1)
+                                    if (preferType == -1 || preferType == valueType)
                                     {
                                         continue;
                                     }
@@ -879,8 +879,8 @@ namespace UnityGLTF.Interactivity.Export
                                     else
                                     {
                                         Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
-                                                         " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType] +
-                                                         " but should be " + GltfTypes.TypesMapping[fromInputPortType]);;
+                                                         " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType].GltfSignature +
+                                                         " but should be " + GltfTypes.TypesMapping[fromInputPortType].GltfSignature);;
                                     }
                                 }
                             }
