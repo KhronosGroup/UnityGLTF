@@ -821,6 +821,7 @@ namespace UnityGLTF.Interactivity.Export
                                                 socket.typeRestriction.limitToType, out var convertedValue))
                                         {
                                             socket.Value = convertedValue;
+                                            socket.Type = GltfTypes.TypeIndexByGltfSignature(socket.typeRestriction.limitToType);
                                             changed = true;
                                             continue;
                                         }
@@ -863,6 +864,7 @@ namespace UnityGLTF.Interactivity.Export
                                                 GltfTypes.TypesMapping[fromInputPortType].GltfSignature, out var convertedValue))
                                         {
                                             socket.Value = convertedValue;
+                                            socket.Type = fromInputPortType;
                                             changed = true;
                                             continue;
                                         }
