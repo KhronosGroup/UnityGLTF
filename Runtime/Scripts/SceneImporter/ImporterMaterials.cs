@@ -817,8 +817,9 @@ namespace UnityGLTF
 					}
 				}
 
-				// ??
-				uniformMapper.EmissiveFactor = QualitySettings.activeColorSpace == ColorSpace.Linear ? def.EmissiveFactor.ToUnityColorLinear() : def.EmissiveFactor.ToUnityColorLinear();
+				// Set emissive factor in correct color space
+				var emissiveFactor = QualitySettings.activeColorSpace == ColorSpace.Linear ? def.EmissiveFactor.ToUnityColorLinear() : def.EmissiveFactor.ToUnityColorLinear();
+				uniformMapper.EmissiveFactor = emissiveFactor;
 
 				var emissiveExt = GetEmissiveStrength(def);
 				if (emissiveExt != null && KHR_materials_emissive_strength)
