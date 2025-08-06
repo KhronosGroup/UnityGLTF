@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.6] - 2025-08-06
+- fix: order of export checks was wrong for `emissiveFactor` / `_EmissionColor`
+- fix: update to latest KHR_interactivity specification changes from July 2025
+- fix: prevent endless loop in KHR_interactivity type conversion in some edge cases
+- fix: correct input types for `p1` and `p2` in `pointer/interpolate` schema
+- add: support for member interpolation for `Material.mainColor`
+
 ## [2.17.5] - 2025-07-25
 - fix: Compiler error when TMP is not installed
 
