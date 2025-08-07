@@ -12,6 +12,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public Type unitType { get; }
         private TimeHelpers.GetTimeValueOption _valueOption;
 
+        public TimeHelpers.GetTimeValueOption ValueOption => _valueOption;
+        
         
         [InitializeOnLoadMethod]
         private static void Register()

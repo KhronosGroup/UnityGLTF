@@ -23,103 +23,91 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (tickNodes.Length <= 1)
                 return;
 
+            GltfInteractivityUnitExporterNode firstDeltaTimeNode = null;
+            GltfInteractivityUnitExporterNode firstTimeSinceStartNode = null;
             
             // Ensure the first OnTickNode is from a TimeUnitExports, so we have access to additional helper nodes, like isNaN check
             for (int i = 0; i < tickNodes.Length; i++)
             {
                 if (tickNodes[i] is GltfInteractivityUnitExporterNode exporterNode)
                 {
-                    if (exporterNode.Exporter.exporter is TimeUnitExports)
+                    if (exporterNode.Exporter.exporter is TimeUnitExports timeUnitExport)
                     {
-                        var tmp = tickNodes[i];
-                        tickNodes[i] = tickNodes[0];
-                        tickNodes[0] = tmp;
-                        break;
+                        if (timeUnitExport.ValueOption == TimeHelpers.GetTimeValueOption.DeltaTime
+                            && firstDeltaTimeNode == null)
+                            firstDeltaTimeNode = exporterNode;
+                        if (timeUnitExport.ValueOption == TimeHelpers.GetTimeValueOption.TimeSinceStartup
+                            && firstTimeSinceStartNode == null)
+                            firstTimeSinceStartNode = exporterNode;
+                            
                     }
                 }
-                
             }
-            var firstTickNode = tickNodes[0];
             
-            var firstTickNodeFlowOut = firstTickNode.FlowConnections[Event_OnTickNode.IdFlowOut];
+            GltfInteractivityExportNode firstDeltaTimeSelectNode = null;
+            GltfInteractivityExportNode firstTimeSinceStartSelectNode = null;
+            if (firstDeltaTimeNode != null)
+            {
+                firstDeltaTimeSelectNode = firstDeltaTimeNode.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
+            }
+            if (firstTimeSinceStartNode != null)
+            {
+                firstTimeSinceStartSelectNode = firstTimeSinceStartNode.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
+            }
 
-            GltfInteractivityNode firstTickNodeSelectNode = null;
-            
-            if (firstTickNode is GltfInteractivityUnitExporterNode firstTickNodeExport)
+            for (int i = 0; i < tickNodes.Length; i++)
             {
-                var selectNode = firstTickNodeExport.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
-                if (selectNode != null)
-                {
-                    firstTickNodeSelectNode = selectNode;
-                }
-            }
-            
-            for (int i = 1; i < tickNodes.Length; i++)
-            {
+                if (tickNodes[i] == firstDeltaTimeNode || tickNodes[i] == firstTimeSinceStartNode)
+                    continue; // skip the first tick node, which is used for delta time or time since startup
+
+                TimeHelpers.GetTimeValueOption timeValue = TimeHelpers.GetTimeValueOption.DeltaTime;
+
                 var tickNode = tickNodes[i];
-                bool dontDelete = false;
-                var flowOut = tickNode.FlowConnections[Event_OnTickNode.IdFlowOut];
                 GltfInteractivityNode tickNodeSelectNode = null;
-                   
-                if (tickNode is GltfInteractivityUnitExporterNode tickNodeExport)
-                {
-                    if (tickNodeExport.Exporter.exporter is not TimeUnitExports)
-                        continue;
-                    var selectNode = tickNodeExport.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
-                    if (selectNode != null)
-                    {
-                        tickNodeSelectNode = selectNode;
-                    }
-                }
-                
-                if (flowOut.Node != null && flowOut.Node.Value != -1)
-                {
-                    if (firstTickNodeFlowOut.Node == null || firstTickNodeFlowOut.Node.Value == -1)
-                    {
-                        firstTickNodeFlowOut.Node = flowOut.Node;
-                        firstTickNodeFlowOut.Socket = flowOut.Socket;
-                    }
-                    else
-                    {
-                        dontDelete = true;
-                    }
-                }
-                
+
+                if (tickNode is not GltfInteractivityUnitExporterNode tickNodeExport)
+                    continue;
+
+                if (tickNodeExport.Exporter.exporter is not TimeUnitExports timeUnitExport)
+                    continue;
+
+                timeValue = timeUnitExport.ValueOption;
+
+                var selectNode = tickNodeExport.Exporter.Nodes.FirstOrDefault(n => n.Schema is Math_SelectNode);
+                if (selectNode == null)
+                    continue;
+
+                tickNodeSelectNode = selectNode;
+
                 foreach (var node in nodes)
                 {
                     foreach (var socket in node.ValueInConnection)
                     {
-                        if (tickNodeSelectNode != null && firstTickNodeSelectNode != null)
+                        if (timeValue == TimeHelpers.GetTimeValueOption.DeltaTime && firstDeltaTimeNode != null && firstDeltaTimeSelectNode != null)
                         {
                             if (socket.Value.Node != null && socket.Value.Node.Value == tickNodeSelectNode.Index)
                             {
-                                socket.Value.Node = firstTickNodeSelectNode.Index;
+                                socket.Value.Node = firstDeltaTimeSelectNode.Index;
                             }
-                            
                         }
-                        else
-                        if (socket.Value.Node != null && socket.Value.Node.Value == tickNode.Index)
+
+                        if (timeValue == TimeHelpers.GetTimeValueOption.TimeSinceStartup && firstTimeSinceStartNode != null && firstTimeSinceStartSelectNode != null)
                         {
-                            socket.Value.Node = firstTickNode.Index;
+                            if (socket.Value.Node != null && socket.Value.Node.Value == tickNodeSelectNode.Index)
+                            {
+                                socket.Value.Node = firstTimeSinceStartSelectNode.Index;
+                            }
                         }
                     }
                 }
 
-                if (!dontDelete)
-                {
-                    if (tickNodeSelectNode != null && firstTickNodeSelectNode != null && tickNode is GltfInteractivityUnitExporterNode tickNodeExport2)
-                    {
-                        // also remove isNaN check
-                        var exporterNode = tickNodeExport2.Exporter.Nodes;
-                        foreach (var n in exporterNode)
-                            n.ValueInConnection.Clear();
+                // also remove isNaN check
+                var exporterNode = tickNodeExport.Exporter.Nodes;
+                foreach (var n in exporterNode)
+                    n.ValueInConnection.Clear();
 
-                        foreach (var n in exporterNode)
-                            task.RemoveNode(n);
-                    }
-                    else
-                        task.RemoveNode(tickNode);
-                }
+                foreach (var n in exporterNode)
+                    task.RemoveNode(n);
             }
         }
     }
