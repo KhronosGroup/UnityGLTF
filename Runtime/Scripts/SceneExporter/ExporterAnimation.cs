@@ -1229,6 +1229,22 @@ namespace UnityGLTF
 						var prop = kvp.Value;
 						if (prop.propertyType == typeof(Color))
 						{
+							// In case of colors, but Unity uses x,y,z,w for the channel names, we convert them to r,g,b,a
+							for (int i = 0; i < prop.curveName.Count; i++)
+							{
+								if (prop.curveName[i].EndsWith(".x", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".r";
+								
+								if (prop.curveName[i].EndsWith(".y", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".g";
+									
+								if (prop.curveName[i].EndsWith(".z", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".b";
+									
+								if (prop.curveName[i].EndsWith(".w", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".a";
+							}
+							
 							var memberName = prop.propertyName;
 							if (TryGetCurrentValue(prop.target, memberName, out var value))
 							{
