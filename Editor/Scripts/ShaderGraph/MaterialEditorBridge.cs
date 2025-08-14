@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,28 @@ namespace UnityGLTF
 		private static void ConnectGltfExporterToPbrGraphGUI()
 		{
 			PBRGraphGUI.ImmutableMaterialChanged += OnImmutableMaterialChanged;
+			PBRGraphGUI.IsMaterialEditable += IsMaterialEditable;
+		}
+		
+		internal static bool IsMaterialEditable(Material material)
+		{
+			if (!material) return false;
+			if (!AssetDatabase.Contains(material)) return false;
+
+			var assetPath = AssetDatabase.GetAssetPath(material);
+			if (!assetPath.EndsWith(".gltf", StringComparison.OrdinalIgnoreCase))
+			{
+				// If the material is not part of a GLTF asset, we don't want to edit it.
+				return false;
+			}
+			
+			var mainAssetType = AssetDatabase.GetMainAssetTypeAtPath(assetPath);
+			if (mainAssetType != typeof(Material) && mainAssetType != typeof(MaterialLibrary))
+			{
+				return false;
+			}
+
+			return true;
 		}
 		
 		internal static void OnImmutableMaterialChanged(Material material)

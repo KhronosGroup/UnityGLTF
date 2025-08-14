@@ -594,6 +594,23 @@ namespace UnityGLTF
 		public delegate void OnImmutableMaterialChanged(Material material);
 		public static event OnImmutableMaterialChanged ImmutableMaterialChanged;
 
+		public delegate bool IsMaterialEditableCallback(Material material);
+		public static event IsMaterialEditableCallback IsMaterialEditable;
+
+		internal static bool GetIsMaterialEditable(Material material)
+		{
+			
+			try
+			{
+				return IsMaterialEditable?.Invoke(material) ?? false;
+			}
+			catch (Exception e)
+			{
+				Debug.LogException(e);
+				return false;
+			}
+		}
+		
 		internal static void InvokeMaterialChangedEvent(Material material)
 		{
 			try
@@ -639,9 +656,9 @@ namespace UnityGLTF
 		{
 			if (CanEditCache.TryGetValue(materialEditorTarget, out var canEdit))
 				return canEdit;
-
-			// we can only edit this material if it's from a .gltf file right now. We're caching this here to avoid having to re-parse the file
-			canEdit = AssetDatabase.GetAssetPath(materialEditorTarget).EndsWith(".gltf", StringComparison.OrdinalIgnoreCase);
+			
+			canEdit = PBRGraphGUI.GetIsMaterialEditable(materialEditorTarget);
+			
 			CanEditCache.Add(materialEditorTarget, canEdit);
 			return canEdit;
 		}
