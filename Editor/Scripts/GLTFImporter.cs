@@ -107,6 +107,7 @@ namespace UnityGLTF
         [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _mecanimHumanoidFlip = false;
+        [SerializeField] internal string _nonHumanoidRootNodeName;
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
@@ -550,11 +551,17 @@ namespace UnityGLTF
 	            //     }
                 // }
 
-                if (gltfScene && _importAnimations == AnimationMethod.MecanimHumanoid)
+                if (gltfScene)
                 {
-	                var avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
-	                if (avatar)
-						ctx.AddObjectToAsset("avatar", avatar);
+                    Avatar avatar = null;
+
+                    if (_importAnimations == AnimationMethod.MecanimHumanoid)
+                        avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
+                    else if (_importAnimations == AnimationMethod.Mecanim)
+                        avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, false, _nonHumanoidRootNodeName);
+
+                    if (avatar)
+                        ctx.AddObjectToAsset("avatar", avatar);
                 }
 
                 var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
@@ -946,6 +953,7 @@ namespace UnityGLTF
 		    {
 			    DataLoader = new FileLoader(Path.GetDirectoryName(projectFilePath)),
 			    AnimationMethod = _importAnimations,
+                NonHumanoidRootNodeName = _nonHumanoidRootNodeName,
 			    AnimationLoopTime = _animationLoopTime,
 			    AnimationLoopPose = _animationLoopPose,
 			    ImportContext = context,
