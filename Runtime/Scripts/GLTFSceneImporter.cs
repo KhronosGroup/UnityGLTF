@@ -408,6 +408,8 @@ namespace UnityGLTF
 
 		public void Dispose()
 		{
+			if (_options.DataLoader is IDisposable disposable)
+				disposable.Dispose();
 			Cleanup();
 			DisposeNativeBuffers();
 		}
