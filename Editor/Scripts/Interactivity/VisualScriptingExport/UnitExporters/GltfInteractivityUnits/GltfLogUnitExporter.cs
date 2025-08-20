@@ -51,7 +51,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var log = unit as DebugLogGltf;
             var msg = log.message;
             
-            int paramCount = 0;
             int index = 0;
             while ((index = msg.IndexOf('{', index)) != -1)
             {

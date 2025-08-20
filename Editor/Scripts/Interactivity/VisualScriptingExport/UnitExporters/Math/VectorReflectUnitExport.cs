@@ -38,16 +38,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             dotMul.ValueIn(Math_MulNode.IdValueB).SetValue(-2f).SetType(TypeRestriction.LimitToFloat);
 
             GltfInteractivityExportNode numCombine = null;
-            GltfInteractivityExportNode normalExtract = null;
 
             if (unit.member.type == typeof(Vector2))
             {
                 numCombine = unitExporter.CreateNode<Math_Combine2Node>();
                 numCombine.ValueIn(Math_Combine2Node.IdValueA).ConnectToSource(dotMul.FirstValueOut());
                 numCombine.ValueIn(Math_Combine2Node.IdValueB).ConnectToSource(dotMul.FirstValueOut());
-
-                //  normalExtract = unitExporter.CreateNode<Math_Extract2Node>();
-                //    normalExtract.ValueIn(Math_Extract2Node.IdValueIn).MapToInputPort(inNormal);
             }
             else if (unit.member.type == typeof(Vector3))
             {
@@ -56,8 +52,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 numCombine.ValueIn(Math_Combine3Node.IdValueB).ConnectToSource(dotMul.FirstValueOut());
                 numCombine.ValueIn(Math_Combine3Node.IdValueC).ConnectToSource(dotMul.FirstValueOut());
             }
-
-
+            
             var numMul = unitExporter.CreateNode<Math_MulNode>();
             numMul.ValueIn(Math_MulNode.IdValueA).ConnectToSource(numCombine.FirstValueOut());
             numMul.ValueIn(Math_MulNode.IdValueB).MapToInputPort(inNormal);
