@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.7] - 2025-08-20
+- fix: Interactivity: wrong sockets after Tick nodes cleanup
+- fix: Interactivity: input type resolving for GenericMul-Unit export, when inputs comes from CustomEvent
+- fix: added missing ImportContext.SceneImporter assignment 
+
 ## [2.17.6] - 2025-08-06
 - fix: order of export checks was wrong for `emissiveFactor` / `_EmissionColor`
 - fix: update to latest KHR_interactivity specification changes from July 2025
