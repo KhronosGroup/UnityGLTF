@@ -191,7 +191,7 @@ namespace UnityGLTF.Interactivity.Playback
                     writer.WriteValue(p.value.c0.x);
                     writer.WriteValue(p.value.c0.y);
                     writer.WriteValue(p.value.c1.x);
-                    writer.WriteValue(p.value.c0.y);
+                    writer.WriteValue(p.value.c1.y);
                     type = typeIndexByType[typeof(float2x2)];
                     break;
                 case Property<float3x3> p:

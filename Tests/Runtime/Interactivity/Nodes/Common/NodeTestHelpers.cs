@@ -78,7 +78,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         protected const string TEST_GRAPH_SAVE_DIRECTORY = "TestGraphJson";
 
         protected bool _testSuccessful = false;
-        private readonly GraphSerializer _serializer = new(Newtonsoft.Json.Formatting.Indented);
+        private readonly GraphSerializer _serializer = new(Newtonsoft.Json.Formatting.None);
 
         protected string _testGraphDirectory;
         protected abstract string _subDirectory { get; }

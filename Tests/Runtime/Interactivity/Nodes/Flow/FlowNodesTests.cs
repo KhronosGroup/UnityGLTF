@@ -267,7 +267,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         {
             var start = g.CreateNode("event/onStart");
             var branch = g.CreateNode("flow/branch");
-            var isNaN = g.CreateNode("math/isnan");
+            var isNaN = g.CreateNode("math/isNaN");
             var failLog = g.CreateNode("debug/log");
             var fail = g.CreateNode("event/send");
 

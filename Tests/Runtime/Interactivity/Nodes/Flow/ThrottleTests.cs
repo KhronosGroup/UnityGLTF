@@ -267,7 +267,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var setDelay = g.CreateNode("flow/setDelay");
             var sequence = g.CreateNode("flow/sequence");
             var branch = g.CreateNode("flow/branch");
-            var isNaN = g.CreateNode("math/isnan");
+            var isNaN = g.CreateNode("math/isNaN");
 
             setDelay.AddValue(ConstStrings.DURATION, resetTime);
 
