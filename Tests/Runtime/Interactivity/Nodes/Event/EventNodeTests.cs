@@ -282,8 +282,8 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var onTick = g.CreateNode("event/onTick");
             var complete = g.CreateNode("event/send");
             var startAnd = g.CreateNode("math/and");
-            var isTimeSinceStartNaN = g.CreateNode("math/isnan");
-            var isTimeSinceLastTickNaN = g.CreateNode("math/isnan");
+            var isTimeSinceStartNaN = g.CreateNode("math/isNaN");
+            var isTimeSinceLastTickNaN = g.CreateNode("math/isNaN");
 
             failStart.AddConfiguration(ConstStrings.EVENT, FAIL_EVENT_INDEX);
             failLog.AddConfiguration(ConstStrings.MESSAGE, "Both timeSinceStart and timeSinceLastTick should be NaN before onTick activates its first out flow. timeSinceStart: {timeSinceStart}, timeSinceLastTick: {timeSinceLastTick}");
@@ -337,7 +337,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var firstTickBranch = g.CreateNode("flow/branch");
             var firstTickAnd = g.CreateNode("math/and");
-            var firstTickIsNaN = g.CreateNode("math/isnan");
+            var firstTickIsNaN = g.CreateNode("math/isNaN");
             var firstTickEq = g.CreateNode("math/eq");
 
             isFirstTickBranch.AddFlow(firstTickBranch, ConstStrings.TRUE);

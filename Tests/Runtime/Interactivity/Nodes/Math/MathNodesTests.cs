@@ -52,25 +52,25 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestE()
         {
-            QueueTest("math/e", "E_Constant", "Constant E", "Retrieves the value from math/e and checks that it is e.", CreateSelfContainedTestGraph("math/e", new(), Out(math.E), ComparisonType.Equals));
+            QueueTest("math/E", "E_Constant", "Constant E", "Retrieves the value from math/e and checks that it is e.", CreateSelfContainedTestGraph("math/E", new(), Out(math.E), ComparisonType.Equals));
         }
 
         [Test]
         public void TestPI()
         {
-            QueueTest("math/pi", "PI_Constant", "Constant PI", "Retrieves the value from math/pi and checks that it is pi.", CreateSelfContainedTestGraph("math/pi", new(), Out(math.PI), ComparisonType.Equals));
+            QueueTest("math/Pi", "PI_Constant", "Constant PI", "Retrieves the value from math/pi and checks that it is pi.", CreateSelfContainedTestGraph("math/Pi", new(), Out(math.PI), ComparisonType.Equals));
         }
 
         [Test]
         public void TestInf()
         {
-            QueueTest("math/inf", "Infinity_Constant", "Constant Inf", "Retrieves the value from math/ing and checks that it is infinity.", CreateSelfContainedTestGraph("math/inf", new(), Out(math.INFINITY), ComparisonType.IsInfinity));
+            QueueTest("math/Inf", "Infinity_Constant", "Constant Inf", "Retrieves the value from math/ing and checks that it is infinity.", CreateSelfContainedTestGraph("math/Inf", new(), Out(math.INFINITY), ComparisonType.IsInfinity));
         }
 
         [Test]
         public void TestNAN()
         {
-            QueueTest("math/nan", "NaN_Constant", "Constant NaN", "Retrieves the value from math/nan and checks that it is nan.", CreateSelfContainedTestGraph("math/nan", new(), Out(math.NAN), ComparisonType.IsNaN));
+            QueueTest("math/NaN", "NaN_Constant", "Constant NaN", "Retrieves the value from math/nan and checks that it is nan.", CreateSelfContainedTestGraph("math/NaN", new(), Out(math.NAN), ComparisonType.IsNaN));
         }
 
 
@@ -324,15 +324,15 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestIsNan()
         {
-            QueueTest("math/isnan", "IsNan_True", "IsNaN w/ NaN Value", "Tests isNaN returns true for a nan input.", CreateSelfContainedTestGraph("math/isnan", In((float)math.acos(-2.0)), Out(true), ComparisonType.Equals));
-            QueueTest("math/isnan", "IsNan_False", "IsNaN w/ Valid Float", "Tests that isNaN is false when the input is a number.", CreateSelfContainedTestGraph("math/isnan", In(10.0f), Out(false), ComparisonType.Equals));
+            QueueTest("math/isNaN", "IsNan_True", "IsNaN w/ NaN Value", "Tests isNaN returns true for a nan input.", CreateSelfContainedTestGraph("math/isNaN", In((float)math.acos(-2.0)), Out(true), ComparisonType.Equals));
+            QueueTest("math/isNaN", "IsNan_False", "IsNaN w/ Valid Float", "Tests that isNaN is false when the input is a number.", CreateSelfContainedTestGraph("math/isNaN", In(10.0f), Out(false), ComparisonType.Equals));
         }
 
         [Test]
         public void TestIsInf()
         {
-            QueueTest("math/isinf", "IsInf_True", "IsInf w/ Inf Value", "Tests isInf returns true for an infinite value.", CreateSelfContainedTestGraph("math/isinf", In(10.0f / 0.0f), Out(true), ComparisonType.Equals));
-            QueueTest("math/isinf", "IsInf_False", "IsInf w/ Non-Inf Value", "Tests isInf returns false for a non-infinite value.", CreateSelfContainedTestGraph("math/isinf", In(10.0f), Out(false), ComparisonType.Equals));
+            QueueTest("math/isInf", "IsInf_True", "IsInf w/ Inf Value", "Tests isInf returns true for an infinite value.", CreateSelfContainedTestGraph("math/isInf", In(10.0f / 0.0f), Out(true), ComparisonType.Equals));
+            QueueTest("math/isInf", "IsInf_False", "IsInf w/ Non-Inf Value", "Tests isInf returns false for a non-infinite value.", CreateSelfContainedTestGraph("math/isInf", In(10.0f), Out(false), ComparisonType.Equals));
         }
 
 
@@ -851,19 +851,19 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var mat41 = new float4x4(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f);
             var mat42 = new float4x4(1.0f, 2.0f, 3.0f, 4.0f, 4.0f, 3.0f, 2.0f, 1.0f, 5.0f, 6.0f, 7.0f, 8.0f, 8.0f, 7.0f, 6.0f, 5.0f);
             var matres = new float4x4(56.0f, 54.0f, 52.0f, 50.0f, 128.0f, 126.0f, 124.0f, 122.0f, 200.0f, 198.0f, 196.0f, 194.0f, 272.0f, 270.0f, 268.0f, 266.0f);
-            QueueTest("math/matmul", "MatMul_4x4", "MatMul 4x4", "Tests MatMul/4x4 operation.", CreateSelfContainedTestGraph("math/matmul", In(mat41, mat42), Out(matres), ComparisonType.Approximately));
+            QueueTest("math/matMul", "MatMul_4x4", "MatMul 4x4", "Tests MatMul/4x4 operation.", CreateSelfContainedTestGraph("math/matMul", In(mat41, mat42), Out(matres), ComparisonType.Approximately));
 
             // 3x3 Matrix Multiplication
             var mat31 = new float3x3(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f);
             var mat32 = new float3x3(1.0f, 2.0f, 3.0f, 3.0f, 2.0f, 1.0f, 6.0f, 4.0f, 5.0f);
             var matres2 = new float3x3(25.0f, 18.0f, 20.0f, 55.0f, 42.0f, 47.0f, 85.0f, 66.0f, 74.0f);
-            QueueTest("math/matmul", "MatMul_3x3", "MatMul 3x3", "Tests MatMul/3x3 operation.", CreateSelfContainedTestGraph("math/matmul", In(mat31, mat32), Out(matres2), ComparisonType.Approximately));
+            QueueTest("math/matMul", "MatMul_3x3", "MatMul 3x3", "Tests MatMul/3x3 operation.", CreateSelfContainedTestGraph("math/matMul", In(mat31, mat32), Out(matres2), ComparisonType.Approximately));
 
             // 2x2 Matrix Multiplication
             var mat21 = new float2x2(1.0f, 2.0f, 3.0f, 4.0f);
             var mat22 = new float2x2(1.0f, 2.0f, 2.0f, 1.0f);
             var matres3 = new float2x2(5.0f, 4.0f, 11.0f, 10.0f);
-            QueueTest("math/matmul", "MatMul_2x2", "MatMul 2x2", "Tests MatMul/2x2 operation.", CreateSelfContainedTestGraph("math/matmul", In(mat21, mat22), Out(matres3), ComparisonType.Approximately));
+            QueueTest("math/matMul", "MatMul_2x2", "MatMul 2x2", "Tests MatMul/2x2 operation.", CreateSelfContainedTestGraph("math/matMul", In(mat21, mat22), Out(matres3), ComparisonType.Approximately));
         }
 
         [Test]

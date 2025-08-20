@@ -505,7 +505,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var failOut = CreateFailSubGraph(g, "isValid Should be false for this test.");
 
-            var isnan = g.CreateNode("math/isnan");
+            var isnan = g.CreateNode("math/isNaN");
             var defaultBranch = g.CreateNode("flow/branch");
             var failDefault = CreateFailSubGraph(g, $"Output value should be the default for type {type}.");
 

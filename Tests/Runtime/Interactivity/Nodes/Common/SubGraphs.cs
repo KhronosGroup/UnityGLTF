@@ -67,7 +67,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
         public (Node inputNode, Node outputNode) CreateSubGraph(Graph g)
         {
-            var eq = g.CreateNode("math/isnan");
+            var eq = g.CreateNode("math/isNaN");
             var branch = g.CreateNode("flow/branch");
 
             var branchConditionValue = branch.AddValue(ConstStrings.CONDITION, true);
@@ -84,7 +84,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
         public (Node inputNode, Node outputNode) CreateSubGraph(Graph g)
         {
-            var eq = g.CreateNode("math/isinf");
+            var eq = g.CreateNode("math/isInf");
             var branch = g.CreateNode("flow/branch");
 
             var branchConditionValue = branch.AddValue(ConstStrings.CONDITION, true);
