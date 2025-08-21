@@ -17,10 +17,28 @@ namespace UnityGLTF
 		internal readonly List<IJsonPointerResolver> pointerResolvers = new List<IJsonPointerResolver>();
 		private readonly KHR_animation_pointer_Resolver animationPointerResolver = new KHR_animation_pointer_Resolver();
 
+		private readonly List<Material> _ignorePropertyRemapping = new List<Material>();
+		
 		public void RegisterResolver(IJsonPointerResolver resolver)
 		{
 			if (!pointerResolvers.Contains(resolver))
 				pointerResolvers.Add(resolver);
+		}
+		
+		/// <summary>
+		/// Skipping remapping of material properties for this material, to keep the original shader properties 
+		/// </summary>
+		/// <param name="material"></param>
+		public void MarkMaterialAsCustomShaderExport(Material material)
+		{
+			if (material == null) return;
+			_ignorePropertyRemapping.Add(material);
+		}
+
+		public bool ShouldMaterialPropertiesRemapped(Material material)
+		{
+			if (material == null) return true;
+			return !_ignorePropertyRemapping.Contains(material);
 		}
 		
 		/// <summary>
@@ -92,11 +110,12 @@ namespace UnityGLTF
 							Debug.Log(LogType.Error, "No MaterialPropertiesRemapper found in AnimationPointerExportContext. Skipping animation");
 						return;
 					}
+
+					if (!ShouldMaterialPropertiesRemapped(material))
+						break;
 					
 					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material, propertyName, out MaterialPointerPropertyMap map))
-					{
 						break;
-					}
 					
 					secondPropertyName = map.GltfSecondaryPropertyName;
 					propertyName = map.GltfPropertyName;
