@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.9] - 2025-08-25
+- add: `MarkMaterialAsCustomShaderExport` API to keep original property names in animations
+- change: Importer should always show buttons for Extract / Restore materials
+
 ## [2.17.8] - 2025-08-20
 - fix: Build error
 
