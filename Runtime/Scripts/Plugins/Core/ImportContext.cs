@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEditor;
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor.AssetImporters;
@@ -14,7 +15,7 @@ namespace UnityGLTF.Plugins
 		public readonly AssetImportContext AssetContext;
 		public string FilePath => AssetContext?.assetPath;
 		public readonly AssetImporter SourceImporter;
-		public float ImportScaleFactor = 1.0f;
+		public Vector3 ImportScaleFactor = Vector3.one;
 #endif
 
 		public readonly List<GLTFImportPluginContext> Plugins;

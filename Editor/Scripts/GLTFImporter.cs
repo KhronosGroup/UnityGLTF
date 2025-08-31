@@ -85,7 +85,9 @@ namespace UnityGLTF
 
 	    [Tooltip("Turn this off to create an explicit GameObject for the glTF scene. A scene root will always be created if there's more than one root node.")]
         [SerializeField] internal bool _removeEmptyRootObjects = true;
-        [SerializeField] internal float _scaleFactor = 1.0f; 
+        [SerializeField] internal float _scaleFactor = 1.0f;
+        [SerializeField] internal bool _useAxisScaleFactor = false;
+        [SerializeField] internal Vector3 _axisScaleFactor = Vector3.one;
         [Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
         [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
         [SerializeField] internal int _maximumLod = 300;
@@ -275,7 +277,12 @@ namespace UnityGLTF
 			        JsonUtility.FromJsonOverwrite(importPlugin.jsonSettings, existing);
 		        }
 	        }
-	        var context = new GLTFImportContext(ctx, settings) { ImportScaleFactor = _scaleFactor };
+
+	        if (!_useAxisScaleFactor)
+		    {
+			    _axisScaleFactor = new Vector3(_scaleFactor, _scaleFactor, _scaleFactor);
+		    }
+	        var context = new GLTFImportContext(ctx, settings) { ImportScaleFactor = _axisScaleFactor };
 
             GameObject gltfScene = null;
             AnimationClip[] animations = null;
@@ -438,14 +445,19 @@ namespace UnityGLTF
                 }
 
                 // scale all localPosition values if necessary
-                if (gltfScene && !Mathf.Approximately(_scaleFactor, 1))
-                {
-	                var transforms = gltfScene.GetComponentsInChildren<Transform>(true);
-	                foreach (var tr in transforms)
-	                {
-		                tr.localPosition *= _scaleFactor;
-	                }
-                }
+	            if (gltfScene)
+	            {
+		             if (!Mathf.Approximately(_axisScaleFactor.x, 1.0f) ||
+		                 !Mathf.Approximately(_axisScaleFactor.y, 1.0f) ||
+		                 !Mathf.Approximately(_axisScaleFactor.z, 1.0f))
+		             {
+			            var transforms = gltfScene.GetComponentsInChildren<Transform>(true);
+			            foreach (var tr in transforms)
+			            {
+				            tr.localPosition = Vector3.Scale(tr.localPosition, _axisScaleFactor);
+			            }
+		             }
+	            }
 
                 // Get meshes
                 var meshHash = new HashSet<Mesh>();
@@ -465,13 +477,15 @@ namespace UnityGLTF
 	                    return null;
                     meshHash.Add(mesh);
 
-                    if (!Mathf.Approximately(_scaleFactor, 1.0f))
+                    if (!Mathf.Approximately(_axisScaleFactor.x, 1.0f) ||
+                        !Mathf.Approximately(_axisScaleFactor.y, 1.0f) ||
+                        !Mathf.Approximately(_axisScaleFactor.z, 1.0f))
                     {
 	                    vertexBuffer.Clear();
 	                    mesh.GetVertices(vertexBuffer);
 	                    for (var i = 0; i < vertexBuffer.Count; ++i)
 	                    {
-	                        vertexBuffer[i] *= _scaleFactor;
+	                        vertexBuffer[i] = Vector3.Scale(vertexBuffer[i], _axisScaleFactor);
 	                    }
 	                    mesh.SetVertices(vertexBuffer);
 
@@ -481,7 +495,7 @@ namespace UnityGLTF
 		                    for (var i = 0; i < bindPoses.Length; ++i)
 		                    {
 			                    bindPoses[i].GetTRSProperties(out var p, out var q, out var s);
-			                    bindPoses[i].SetTRS(p * _scaleFactor, q, s);
+			                    bindPoses[i].SetTRS(Vector3.Scale(p, _axisScaleFactor), q, s);
 		                    }
 
 		                    mesh.bindposes = bindPoses;

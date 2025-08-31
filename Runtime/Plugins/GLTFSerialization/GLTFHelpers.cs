@@ -352,9 +352,9 @@ namespace GLTF
 			}
 		}
 
-		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes, float importScale = 1f)
+		public static void BuildTargetAttributes(ref Dictionary<string, AttributeAccessor> attributes, float3 importScale)
 		{
-			var hasScale = !Mathf.Approximately(importScale, 1f);
+			var hasScale = !Mathf.Approximately(importScale.x, 1f) || !Mathf.Approximately(importScale.y, 1f) || !Mathf.Approximately(importScale.z, 1f);
 			
 			foreach (var kvp in attributes)
 			{
@@ -368,8 +368,7 @@ namespace GLTF
 					case SemanticProperties.POSITION:
 						if (hasScale)
 						{
-							float3 conversionScale = new float3(importScale, importScale, importScale);
-							attributeAccessor.AccessorId.Value.AsFloat3ArrayConversion(ref resultArray, bufferViewCache, conversionScale, 0, normalize);
+							attributeAccessor.AccessorId.Value.AsFloat3ArrayConversion(ref resultArray, bufferViewCache, importScale, 0, normalize);
 						}
 						else
 							attributeAccessor.AccessorId.Value.AsFloat3Array(ref resultArray, bufferViewCache, 0, normalize);
