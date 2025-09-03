@@ -16,7 +16,6 @@ namespace UnityGLTF.Interactivity.Playback
 
             fromNode.onRemovedFromGraph += OnFromNodeRemovedFromGraph;
             toNode.onRemovedFromGraph += OnToNodeRemovedFromGraph;
-
         }
 
         private void OnFromNodeRemovedFromGraph()
