@@ -23,6 +23,7 @@ namespace UnityGLTF.Interactivity.Playback
                 new NodeValue(ConstStrings.TRANSLATION, "Translation", new Type[]  { typeof(float3) }),
                 new NodeValue(ConstStrings.ROTATION, "Rotation", new Type[]  { typeof(float4) }),
                 new NodeValue(ConstStrings.SCALE, "Scale", new Type[]  { typeof(float3) }),
+                new NodeValue(ConstStrings.IS_VALID, "Is Valid", new Type[]  { typeof(bool) }),
             };
 
             return (null, values);

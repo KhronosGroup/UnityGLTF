@@ -1156,5 +1156,153 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         {
             return CreateSelfContainedTestGraph("math/quatFromDirections", In(a, b), Out(expected), ComparisonType.Equals);
         }
+
+        [Test]
+        public void TestMatCompose()
+        {
+            var translation = new float3(1f, 2f, 3f);
+            var identity_rotation = new float4(0f, 0f, 0f, 1f);
+            var identity_scale = new float3(1f, 1f, 1f);
+            var expected_translation_only = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(translation.x, translation.y, translation.z, 1f));
+            QueueTest("math/matCompose", "MatCompose_Translation_Only", "MatCompose Translation Only", "Tests matCompose with a translation. Rotation and scale are identity vectors.", MatComposeTest(translation, identity_rotation, identity_scale, expected_translation_only));
+
+            var euler = new float3(47.3f, 27.2f, 14f);
+            var rotation = quaternion.Euler(euler).ToFloat4();
+            var expected_rotation_only = SpecTRSMatrix(float3.zero, rotation, identity_scale);
+            QueueTest("math/matCompose", "MatCompose_Rotation_Only", "MatCompose Rotation Only", "Tests matCompose with a rotation. Translation is zero and scale is one.", MatComposeTest(float3.zero, rotation, identity_scale, expected_rotation_only));
+
+            var scale = new float3(2f, 3f, 4f);
+            var expected_scale_only = new float4x4(new float4(scale.x, 0f, 0f, 0f), new float4(0f, scale.y, 0f, 0f), new float4(0f, 0f, scale.z, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matCompose", "MatCompose_Scale_Only", "MatCompose Scale Only", "Tests matCompose with a scale. Translation is zero and rotation is identity.", MatComposeTest(float3.zero, identity_rotation, scale, expected_scale_only));
+
+            var expected_tr = SpecTRSMatrix(translation, rotation, identity_scale);
+            QueueTest("math/matCompose", "MatCompose_Translation_Rotation", "MatCompose Translation Rotation", "Tests matCompose with a translation and rotation. Scale is one.", MatComposeTest(translation, rotation, identity_scale, expected_tr));
+
+            var expected_rs = SpecTRSMatrix(float3.zero, rotation, scale);
+            QueueTest("math/matCompose", "MatCompose_Rotation_Scale", "MatCompose Rotation Scale", "Tests matCompose with a rotation and scale. Translation is zero.", MatComposeTest(float3.zero, rotation, scale, expected_rs));
+
+            var expected_ts = SpecTRSMatrix(translation, identity_rotation, scale);
+            QueueTest("math/matCompose", "MatCompose_Translation_Scale", "MatCompose Translation Scale", "Tests matCompose with a translation and scale. Rotation is identity vector.", MatComposeTest(translation, identity_rotation, scale, expected_ts));
+
+            var expected_trs = SpecTRSMatrix(translation, rotation, scale);
+            QueueTest("math/matCompose", "MatCompose_Full_TRS", "MatCompose Full TRS", "Tests matCompose with a translation, rotation, and scale.", MatComposeTest(translation, rotation, scale, expected_trs));
+        }
+
+        private static (Graph, TestValues) MatComposeTest(float3 translation, float4 rotation, float3 scale, float4x4 expected)
+        {
+            var inputs = new Dictionary<string, Value>();
+            var outputs = new Dictionary<string, IProperty>();
+
+            inputs.Add(ConstStrings.TRANSLATION, new Value() { id = ConstStrings.TRANSLATION, property = new Property<float3>(translation) });
+            inputs.Add(ConstStrings.ROTATION, new Value() { id = ConstStrings.ROTATION, property = new Property<float4>(rotation) });
+            inputs.Add(ConstStrings.SCALE, new Value() { id = ConstStrings.SCALE, property = new Property<float3>(scale) });
+
+            outputs.Add(ConstStrings.VALUE, new Property<float4x4>(expected));
+
+            return CreateSelfContainedTestGraph("math/matCompose", inputs, outputs, ComparisonType.Equals);
+        }
+
+        private static float4x4 SpecTRSMatrix(float3 t, float4 r, float3 s)
+        {
+            var c00 = s.x * (1 - 2f * (r.y * r.y + r.z * r.z));
+            var c01 = s.x * (2f * (r.x * r.y + r.z * r.w));
+            var c02 = s.x * (2f * (r.x * r.z - r.y * r.w));
+            var c03 = 0f;
+
+            var c10 = s.y * (2f * (r.x * r.y - r.z * r.w));
+            var c11 = s.y * (1 - 2f * (r.x * r.x + r.z * r.z));
+            var c12 = s.y * (2f * (r.y * r.z + r.x * r.w));
+            var c13 = 0f;
+
+            var c20 = s.z * (2f * (r.x * r.z + r.y * r.w));
+            var c21 = s.z * (2f * (r.y * r.z - r.x * r.w));
+            var c22 = s.z * (1 - 2f * (r.x * r.x + r.y * r.y));
+            var c23 = 0f;
+
+            var c3 = new float4(t.x, t.y, t.z, 1f);
+
+            return new float4x4(new float4(c00, c01, c02, c03), new float4(c10, c11, c12, c13), new float4(c20, c21, c22, c23), c3);
+        }
+
+        [Test]
+        public void TestMatDecompose()
+        {
+            var translation = new float3(1f, 2f, 3f);
+            var identity_rotation = new float4(0f, 0f, 0f, 1f);
+            var identity_scale = new float3(1f, 1f, 1f);
+            var input_translation_only = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(translation.x, translation.y, translation.z, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Translation_Only", "MatDecompose Translation Only", "Tests matDecompose with a translation. Rotation and scale are identity vectors.", MatDecomposeTest(translation, identity_rotation, identity_scale, input_translation_only));
+
+            var euler = new float3(47.3f, 27.2f, 14f);
+            var rotation = quaternion.Euler(euler).ToFloat4();
+            var input_rotation_only = SpecTRSMatrix(float3.zero, rotation, identity_scale);
+            QueueTest("math/matDecompose", "MatDecompose_Rotation_Only", "MatDecompose Rotation Only", "Tests matDecompose with a rotation. Translation is zero and scale is one.", MatDecomposeTest(float3.zero, rotation, identity_scale, input_rotation_only));
+
+            var scale = new float3(2f, 3f, 4f);
+            var input_scale_only = new float4x4(new float4(scale.x, 0f, 0f, 0f), new float4(0f, scale.y, 0f, 0f), new float4(0f, 0f, scale.z, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Scale_Only", "MatDecompose Scale Only", "Tests matDecompose with a scale. Translation is zero and rotation is identity.", MatDecomposeTest(float3.zero, identity_rotation, scale, input_scale_only));
+
+            var input_tr = SpecTRSMatrix(translation, rotation, identity_scale);
+            QueueTest("math/matDecompose", "MatDecompose_Translation_Rotation", "MatDecompose Translation Rotation", "Tests matDecompose with a translation and rotation. Scale is one.", MatDecomposeTest(translation, rotation, identity_scale, input_tr));
+
+            var input_rs = SpecTRSMatrix(float3.zero, rotation, scale);
+            QueueTest("math/matDecompose", "MatDecompose_Rotation_Scale", "MatDecompose Rotation Scale", "Tests matDecompose with a rotation and scale. Translation is zero.", MatDecomposeTest(float3.zero, rotation, scale, input_rs));
+
+            var input_ts = SpecTRSMatrix(translation, identity_rotation, scale);
+            QueueTest("math/matDecompose", "MatDecompose_Translation_Scale", "MatDecompose Translation Scale", "Tests matDecompose with a translation and scale. Rotation is identity vector.", MatDecomposeTest(translation, identity_rotation, scale, input_ts));
+
+            var input_trs = SpecTRSMatrix(translation, rotation, scale);
+            QueueTest("math/matDecompose", "MatDecompose_Full_TRS", "MatDecompose Full TRS", "Tests matDecompose with a translation, rotation, and scale.", MatDecomposeTest(translation, rotation, scale, input_trs));
+
+            // Invalid matrix tests
+            var invalid_4th_row = new float4x4(new float4(1f, 0f, 0f, 1f), new float4(0f, 1f, 0f, 1f), new float4(0f, 0f, 1f, 1f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Invalid_4th_Row", "MatDecompose Invalid 4th Row", "Tests matDecompose with an invalid 4th row.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_4th_row, false));
+
+            var invalid_zero_scale_x = new float4x4(new float4(0f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_x", "MatDecompose Sx = 0", "Tests matDecompose with a zero x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_zero_scale_x, false));
+
+            var invalid_zero_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 0f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_y", "MatDecompose Sy = 0", "Tests matDecompose with a zero y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_zero_scale_y, false));
+
+            var invalid_zero_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 0f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_z", "MatDecompose Sz = 0", "Tests matDecompose with a zero z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_zero_scale_z, false));
+
+            var invalid_inf_scale_x = new float4x4(new float4(float.PositiveInfinity, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_x", "MatDecompose Sx = Inf", "Tests matDecompose with an infinite x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_x, false));
+
+            var invalid_inf_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.PositiveInfinity, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_y", "MatDecompose Sy = Inf", "Tests matDecompose with an infinite y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_y, false));
+
+            var invalid_inf_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.PositiveInfinity, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = Inf", "Tests matDecompose with an infinite z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_z, false));
+
+            var invalid_inf_scale_NaN_x = new float4x4(new float4(float.NaN, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_x", "MatDecompose Sx = NaN", "Tests matDecompose with a NaN x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_x, false));
+
+            var invalid_inf_scale_NaN_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.NaN, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_y", "MatDecompose Sy = NaN", "Tests matDecompose with a NaN y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_y, false));
+
+            var invalid_inf_scale_NaN_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.NaN, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = NaN", "Tests matDecompose with a NaN z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_z, false));
+
+            var invalid_scaled_det = new float4x4(new float4(3f, 5f, 1f, 0f), new float4(2f, 3f, 11f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Invalid_Scaled_Det", "MatDecompose Invalid Scaled Determinant", "Tests matDecompose with an invalid TRS that fails the scaled determinant portion of the test.", 
+                MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_scaled_det, false));
+        }
+
+        private static (Graph, TestValues) MatDecomposeTest(float3 translation, float4 rotation, float3 scale, float4x4 trs, bool isValid = true)
+        {
+            var inputs = new Dictionary<string, Value>();
+            var outputs = new Dictionary<string, IProperty>();
+
+            inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float4x4>(trs) });
+
+            outputs.Add(ConstStrings.TRANSLATION, new Property<float3>(translation));
+            outputs.Add(ConstStrings.ROTATION, new Property<float4>(rotation));
+            outputs.Add(ConstStrings.SCALE, new Property<float3>(scale));
+            outputs.Add(ConstStrings.IS_VALID, new Property<bool>(isValid));
+
+            return CreateSelfContainedTestGraph("math/matDecompose", inputs, outputs, ComparisonType.Equals);
+        }
     }
 }
