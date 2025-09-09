@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using UnityGLTF.Interactivity.Schema;
+using UnityEngine;
 
 namespace UnityGLTF.Interactivity.Export
 {
