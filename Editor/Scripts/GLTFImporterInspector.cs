@@ -81,7 +81,18 @@ namespace UnityGLTF
 			}
 			EditorGUILayout.LabelField("Scene", EditorStyles.boldLabel);
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._removeEmptyRootObjects)));
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
+			
+			var useAxisScaleFactorProp = serializedObject.FindProperty(nameof(GLTFImporter._useAxisScaleFactor));
+			EditorGUILayout.PropertyField(useAxisScaleFactorProp, new GUIContent("Use Independent Axis Scale"));
+			if (useAxisScaleFactorProp.boolValue)
+			{
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._axisScaleFactor)), new GUIContent("Scale Factor"));
+			}
+			else
+			{
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
+			}
+			
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importCamera)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._deduplicateResources)));
 			// EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._maximumLod)), new GUIContent("Maximum Shader LOD"));

@@ -520,7 +520,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 							// TODO technically this should be postprocessing in the ScriptedImporter instead,
 							// but performance is much better if we do it when constructing the clips
-							var factor = Context?.ImportScaleFactor ?? 1f;
+							var factor = Context?.ImportScaleFactor ?? Vector3.one;
 #endif
 							SetAnimationCurve(clip, relativePath, propertyNames, input, output,
 								samplerCache.Interpolation, typeof(Transform),
@@ -529,7 +529,7 @@ namespace UnityGLTF
 									var position = data.AsFloat3s[frame].ToUnityVector3Convert();
 #if UNITY_EDITOR
 									return new float[]
-										{ position.x * factor, position.y * factor, position.z * factor };
+										{ position.x * factor.x, position.y * factor.y, position.z * factor.z };
 #else
 											  return new float[] { position.x, position.y, position.z };
 #endif
