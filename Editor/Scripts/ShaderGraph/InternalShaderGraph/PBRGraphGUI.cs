@@ -54,6 +54,7 @@ namespace UnityGLTF
 
 			if (m_FirstTimeApply)
 			{
+				this.currentMaterialInfo.hasMesh = false;
 				OnOpenGUI(targetMat, materialEditor, properties);
 
 				if (MaterialModificationTracker.CanEdit(materialEditor.target as Material))
@@ -159,6 +160,7 @@ namespace UnityGLTF
 
 		private struct MaterialInfo
 		{
+			public bool hasMesh;
 			public bool hasColor;
 			public bool hasUV0;
 			public bool hasUV1;
@@ -260,6 +262,7 @@ namespace UnityGLTF
 				haveDrawnSomething = true;
 			}
 
+			currentMaterialInfo.hasMesh = false;
 			currentMaterialInfo.hasColor = true;
 			currentMaterialInfo.hasUV0 = true;
 			currentMaterialInfo.hasUV1 = true;
@@ -276,6 +279,7 @@ namespace UnityGLTF
 
 				if (mesh)
 				{
+					currentMaterialInfo.hasMesh = true;
 					currentMaterialInfo.hasColor = mesh.HasVertexAttribute(VertexAttribute.Color);
 					currentMaterialInfo.hasUV0 = mesh.HasVertexAttribute(VertexAttribute.TexCoord0);
 					currentMaterialInfo.hasUV1 = mesh.HasVertexAttribute(VertexAttribute.TexCoord1);
@@ -531,20 +535,32 @@ namespace UnityGLTF
 				propertyList.RemoveAll(x => x.name == "occlusionStrength" || (x.name.StartsWith("occlusionTexture", StringComparison.Ordinal) && x.name != "occlusionTexture"));
 			}
 			// remove UV-related properties
-			if (HasPropertyButNoTex(targetMaterial, "baseColorTexture") && HasPropertyButNoTex(targetMaterial,"metallicRoughnessTexture") && HasPropertyButNoTex(targetMaterial,"normalTexture") && HasPropertyButNoTex(targetMaterial,"emissiveTexture"))
+			if (HasPropertyButNoTex(targetMaterial, "baseColorTexture"))
 			{
 				propertyList.RemoveAll(x => x.name.StartsWith("baseColorTexture", StringComparison.Ordinal) && x.name != "baseColorTexture");
 			}
-			if (HasPropertyButNoTex(targetMaterial,"normalTexture"))
+			if (HasPropertyButNoTex(targetMaterial, "metallicRoughnessTexture"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("metallicRoughnessTexture", StringComparison.Ordinal) && x.name != "metallicRoughnessTexture");
+			}
+			if (HasPropertyButNoTex(targetMaterial, "normalTexture"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("normalTexture", StringComparison.Ordinal) && x.name != "normalTexture");
+			}
+			if (HasPropertyButNoTex(targetMaterial, "emissiveTexture"))
+			{
+				propertyList.RemoveAll(x => x.name.StartsWith("emissiveTexture", StringComparison.Ordinal) && x.name != "emissiveTexture");
+			}
+			if (HasPropertyButNoTex(targetMaterial, "normalTexture"))
 			{
 				propertyList.RemoveAll(x => x.name == "normalScale");
 			}
-			if (!currentMaterialInfo.hasUV0 && !currentMaterialInfo.hasUV1)
+			if (currentMaterialInfo.hasMesh && !currentMaterialInfo.hasUV0 && !currentMaterialInfo.hasUV1)
 			{
 				// hide all texture properties if no UVs
 				propertyList.RemoveAll(x => x.name.Contains("texture"));
 			}
-			if (!currentMaterialInfo.hasUV1 && currentMaterialInfo.occlusionTextureTexCoord == 0 && currentMaterialInfo.baseColorTextureTexCoord == 0)
+			if (currentMaterialInfo.hasMesh && !currentMaterialInfo.hasUV1 && currentMaterialInfo.occlusionTextureTexCoord == 0 && currentMaterialInfo.baseColorTextureTexCoord == 0)
 			{
 				propertyList.RemoveAll(x => x.name.EndsWith("TextureTexCoord", StringComparison.Ordinal));
 			}
