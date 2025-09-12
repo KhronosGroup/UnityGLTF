@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.10] - 2025-09-12
+- fix: `texcoord` export, previously it was only exported when `Texture Transforms` was enabled
+- fix: Texture export cache, now using the Texture `updateCount` to ensure we don't use an older version from cache
+- fix: PBRGraph inspector now shows UV coordinate properties more reliably
+
 ## [2.17.9] - 2025-08-25
 - add: `MarkMaterialAsCustomShaderExport` API to keep original property names in animations
 - change: Importer should always show buttons for Extract / Restore materials
