@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.17.11] - 2025-09-22
+- fix: blendshape runtime import, positions was getting scaled to zero
+
 ## [2.17.10] - 2025-09-12
 - fix: `texcoord` export, previously it was only exported when `Texture Transforms` was enabled
 - fix: Texture export cache, now using the Texture `updateCount` to ensure we don't use an older version from cache
