@@ -10,7 +10,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.VALUE, "Matrix", new Type[]  { typeof(float4x4) }),
+                new NodeValue(ConstStrings.A, "Matrix", new Type[]  { typeof(float4x4) }),
             };
 
             return (null, values);
