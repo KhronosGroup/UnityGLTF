@@ -809,7 +809,7 @@ namespace UnityGLTF
 
 		protected virtual void ConstructMeshTargets(MeshPrimitive primitive, int meshIndex, int primitiveIndex)
 		{
-			float scaleFactor = 0f;
+			float scaleFactor = 1f;
 			bool hasScale = false;
 #if UNITY_EDITOR
 			hasScale = Context != null && !Mathf.Approximately(Context.ImportScaleFactor, 1f);
