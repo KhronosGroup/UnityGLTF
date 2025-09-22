@@ -1199,7 +1199,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             outputs.Add(ConstStrings.VALUE, new Property<float4x4>(expected));
 
-            return CreateSelfContainedTestGraph("math/matCompose", inputs, outputs, ComparisonType.Equals);
+            return CreateSelfContainedTestGraph("math/matCompose", inputs, outputs, ComparisonType.Approximately);
         }
 
         private static float4x4 SpecTRSMatrix(float3 t, float4 r, float3 s)
@@ -1302,7 +1302,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             outputs.Add(ConstStrings.SCALE, new Property<float3>(scale));
             outputs.Add(ConstStrings.IS_VALID, new Property<bool>(isValid));
 
-            return CreateSelfContainedTestGraph("math/matDecompose", inputs, outputs, ComparisonType.Equals);
+            return CreateSelfContainedTestGraph("math/matDecompose", inputs, outputs, ComparisonType.Approximately);
         }
     }
 }

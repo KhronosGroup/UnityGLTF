@@ -252,7 +252,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             return (g, testValues);
         }
 
-        private static void GenerateGraphByExpectedValueType(Dictionary<string, IProperty> expectedResults, Graph g, Node opNode, ISubGraph subGraph)
+        private static void GenerateGraphByExpectedValueType(Dictionary<string, IProperty> expectedResults, Graph g, Node opNode, ISubGraph requestedSubGraph)
         {
             Value value;
             Node node;
@@ -268,8 +268,16 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var count = 0;
 
+            ISubGraph subGraph;
+
             foreach (var expected in expectedResults)
             {
+                subGraph = expected.Value switch
+                {
+                    Property<int> or Property<bool> => subGraphs[(int)ComparisonType.Equals],
+                    _ => requestedSubGraph,
+                };
+
                 if (subGraph is EqualSubGraph)
                 {
                     iteratorStartBranch = CreateSingleValueTestSubGraph(g, opNode, expected.Key, expected.Value, subGraph);
