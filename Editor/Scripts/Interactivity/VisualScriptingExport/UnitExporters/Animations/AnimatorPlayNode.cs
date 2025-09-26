@@ -70,12 +70,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             float endTime = clipLength;
             if (clip != null && clip.isLooping)
             {
-                startTime = isReversed ? -clipLength : 0;
+                startTime = isReversed ? clipLength : 0;
                 endTime = isReversed ? float.NegativeInfinity : float.PositiveInfinity;
             }
             else if (isReversed)
             {
-                startTime = -clipLength;
+                startTime = clipLength;
                 endTime = 0;
             }
             
