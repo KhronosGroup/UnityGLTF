@@ -901,8 +901,8 @@ namespace UnityGLTF
 						_clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
 
 					var curve = targetCurvesBinding[target];
-					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
-
+					var speedMultiplier = Mathf.Clamp(Mathf.Abs(speed), 0.01f, Mathf.Infinity) * Mathf.Sign(speed);
+					
 					// Initialize data
 					// Bake and populate animation data
 					float[] times = null;
@@ -1335,6 +1335,8 @@ namespace UnityGLTF
 
 		private bool BakePropertyAnimation(PropertyCurve prop, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values)
 		{
+			var isReverse = speedMultiplier < 0;
+			speedMultiplier = Mathf.Abs(speedMultiplier);
 			times = null;
 			values = null;
 
@@ -1459,6 +1461,12 @@ namespace UnityGLTF
 			}
 
 			times = _times.ToArray();
+			
+			if (isReverse)
+			{
+				_values.Reverse();
+			}
+			
 			values = _values.ToArray();
 
 			RemoveUnneededKeyframes(ref times, ref values);
