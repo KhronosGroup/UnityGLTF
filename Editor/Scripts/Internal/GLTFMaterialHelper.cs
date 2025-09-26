@@ -99,7 +99,8 @@ namespace UnityGLTF
 #endif
 			if (isImplicitBlendMode)
 			{
-				if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON"))
+				if (material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON")
+				    || material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION"))
 				{
 					// We want to enforce opaque rendering if
 					// - Transmission is enabled
