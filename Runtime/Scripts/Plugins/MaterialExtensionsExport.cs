@@ -88,6 +88,14 @@ namespace UnityGLTF.Plugins
 			if (!material) return;
 
 			var usesTransmission = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ON") || material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION");
+			if (materialnode.AlphaMode == AlphaMode.BLEND
+			    && material.HasFloat("_BlendModePreserveSpecular")
+			    && material.GetFloat("_BlendModePreserveSpecular") == 1)
+			{
+				usesTransmission = true;
+				
+			}
+			
 			var usesDispersion = material.IsKeywordEnabled("_VOLUME_TRANSMISSION_ANDDISPERSION");
 			var usesVolume = material.HasProperty("_VOLUME_ON") && material.GetFloat("_VOLUME_ON") > 0.5f;
 			var hasNonDefaultIor = material.HasProperty(ior) && !Mathf.Approximately(material.GetFloat(ior), KHR_materials_ior.DefaultIor);
@@ -152,6 +160,22 @@ namespace UnityGLTF.Plugins
 
 				if (material.HasProperty(transmissionFactor))
 					vt.transmissionFactor = material.GetFloat(transmissionFactor);
+				else
+				{
+					if (materialnode.PbrMetallicRoughness != null)
+					{
+						// Special case when we add transmission because of alpha mode blend with preserved specular
+						
+						vt.transmissionFactor = 1f - materialnode.PbrMetallicRoughness.BaseColorFactor.A;
+						if (!materialnode.Extensions.ContainsKey(KHR_materials_ior_Factory.EXTENSION_NAME))
+						{
+							var vi = new KHR_materials_ior();
+							materialnode.Extensions.Add(KHR_materials_ior_Factory.EXTENSION_NAME, vi);
+							exporter.DeclareExtensionUsage(KHR_materials_ior_Factory.EXTENSION_NAME, false);
+							vi.ior = 1;
+						}
+					}
+				}
 				if (material.HasProperty(transmissionTexture) && material.GetTexture(transmissionTexture))
 					vt.transmissionTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(transmissionTexture), nameof(transmissionTexture));
 
