@@ -270,7 +270,7 @@ namespace UnityGLTF
 	                rgDesc.autoGenerateMips = true;
 	                rgDesc.useMipMap = true;
 	                rgDesc.msaaSamples = MSAASamples.None;
-	                rgDesc.filterMode = FilterMode.Bilinear;
+	                rgDesc.filterMode = FilterMode.Trilinear;
 	                rgDesc.wrapMode = TextureWrapMode.Clamp;
 
 	                rgDesc.bindTextureMS = cameraData.cameraTargetDescriptor.bindMS;
