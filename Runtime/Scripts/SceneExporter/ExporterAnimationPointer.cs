@@ -81,6 +81,21 @@ namespace UnityGLTF
 			var channelTargetId = GetIndex(animatedObject);
 			if (channelTargetId < 0)
 			{
+				if (animatedObject != null && animatedObject is GameObject go &&
+				    (!go.activeSelf || !go.activeInHierarchy || go.CompareTag("EditorOnly")))
+				{
+					if (go.CompareTag("EditorOnly"))
+					{
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+						return;
+					}
+					if (!go.activeSelf || !go.activeInHierarchy)
+					{
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+						return;
+					}
+					
+				}
 				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
 				return;
 			}
