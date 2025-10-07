@@ -1227,6 +1227,14 @@ namespace UnityGLTF
 					foreach (var kvp in current.propertyCurves)
 					{
 						var prop = kvp.Value;
+						
+						void AddMissingCurve(string curveName, float constantValue)
+						{
+							var curve = CreateConstantCurve(constantValue, endTime);
+							prop.curve.Add(curve);
+							prop.curveName.Add(curveName);
+						}
+						
 						if (prop.propertyType == typeof(Color))
 						{
 							// In case of colors, but Unity uses x,y,z,w for the channel names, we convert them to r,g,b,a
@@ -1262,11 +1270,68 @@ namespace UnityGLTF
 								if (!hasBlueChannel) AddMissingCurve(memberName + ".b", col.b);
 								if (!hasAlphaChannel) AddMissingCurve(memberName + ".a", col.a);
 
-								void AddMissingCurve(string curveName, float constantValue)
+							}
+						}
+
+						if (prop.propertyType == typeof(Vector2))
+						{
+							if (prop.propertyName == "anchoredPosition" || prop.propertyName == "sizeDelta" || prop.propertyName == "pivot")
+							{
+								// Generate missing Vector2 curves (so a Vector2 always has keyframes for both channels)
+								var memberName = prop.propertyName;
+								if (TryGetCurrentValue(prop.target, memberName, out var value))
 								{
-									var curve = CreateConstantCurve(constantValue, endTime);
-									prop.curve.Add(curve);
-									prop.curveName.Add(curveName);
+									var vec = (Vector2)value;
+
+									var hasX = prop.FindIndex(v => v.EndsWith(".x")) >= 0;
+									var hasY = prop.FindIndex(v => v.EndsWith(".y")) >= 0;
+
+									if (!hasX) AddMissingCurve(memberName + ".x", vec.x);
+									if (!hasY) AddMissingCurve(memberName + ".y", vec.y);
+								}
+							}
+						}
+						
+						if (prop.propertyType == typeof(Vector3))
+						{
+							if (prop.propertyName == "localPosition" || prop.propertyName == "position" || prop.propertyName == "localScale" || prop.propertyName == "scale")
+							{
+								// Generate missing transform curves (so a transform always has keyframes for all 3 channels)
+								var memberName = prop.propertyName;
+								if (TryGetCurrentValue(prop.target, memberName, out var value))
+								{
+									var vec = (Vector3)value;
+
+									var hasX = prop.FindIndex(v => v.EndsWith(".x")) >= 0;
+									var hasY = prop.FindIndex(v => v.EndsWith(".y")) >= 0;
+									var hasZ = prop.FindIndex(v => v.EndsWith(".z")) >= 0;
+
+									if (!hasX) AddMissingCurve(memberName + ".x", vec.x);
+									if (!hasY) AddMissingCurve(memberName + ".y", vec.y);
+									if (!hasZ) AddMissingCurve(memberName + ".z", vec.z);
+								}
+							}
+						}
+						if (prop.propertyType == typeof(Vector4))
+						{
+							if (prop.propertyName == "localRotation" || prop.propertyName == "rotation")
+							{
+								// Generate missing rotation curves (so a rotation always has keyframes for all 4 channels)
+								var memberName = prop.propertyName;
+								if (TryGetCurrentValue(prop.target, memberName, out var value))
+								{
+									var vec = (Quaternion)value;
+
+									var hasX = prop.FindIndex(v => v.EndsWith(".x")) >= 0;
+									var hasY = prop.FindIndex(v => v.EndsWith(".y")) >= 0;
+									var hasZ = prop.FindIndex(v => v.EndsWith(".z")) >= 0;
+									var hasW = prop.FindIndex(v => v.EndsWith(".w")) >= 0;
+
+									if (!hasX) AddMissingCurve(memberName + ".x", vec.x);
+									if (!hasY) AddMissingCurve(memberName + ".y", vec.y);
+									if (!hasZ) AddMissingCurve(memberName + ".z", vec.z);
+									if (!hasW) AddMissingCurve(memberName + ".w", vec.w);
+
 								}
 							}
 						}
