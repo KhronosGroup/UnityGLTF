@@ -87,6 +87,16 @@
             "name": "com.unity.cloud.draco",
             "expression": "5.0.0",
             "define": "HAVE_DRACO_VERSION_5"
+        },
+        {
+            "name": "com.unity.cloud.ktx",
+            "expression": "3.5.0",
+            "define": "HAVE_KTX_VERSION_3_5"
+        },
+        {
+            "name": "com.unity.cloud.draco",
+            "expression": "5.2.0",
+            "define": "HAVE_DRACO_VERSION_5_2"
         }
     ],
     "noEngineReferences": false

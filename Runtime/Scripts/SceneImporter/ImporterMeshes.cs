@@ -300,8 +300,11 @@ namespace UnityGLTF
 					
 					if (dracoExtension.attributes.TryGetValue(SemanticProperties.POSITION, out var positionAttr))
 						attrMap.Add( VertexAttribute.Position, positionAttr);
-
+#if HAVE_DRACO_VERSION_5_2
+					decodeResult.decodeResults[i] = DracoDecoder.DecodeMesh( _assetCache.MeshCache[meshIndex].DracoMeshData[i], bufferViewData.AsReadOnly(), decodeSettings, attrMap);
+#else
 					decodeResult.decodeResults[i] = DracoDecoder.DecodeMesh( _assetCache.MeshCache[meshIndex].DracoMeshData[i], bufferViewData, decodeSettings, attrMap);
+#endif
 					
 #else
 					var draco = new DracoMeshLoader();
