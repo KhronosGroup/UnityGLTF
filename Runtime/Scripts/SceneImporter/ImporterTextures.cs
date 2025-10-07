@@ -276,7 +276,11 @@ namespace UnityGLTF
 #endif
 						var ktxTexture = new KtxUnity.KtxTexture();
 						
+#if HAVE_KTX_VERSION_3_5
+						var resultTextureData = await ktxTexture.LoadFromBytes(data.AsReadOnly(), isLinear, mipChain: GenerateMipMapsForTextures);
+#else
 						var resultTextureData = await ktxTexture.LoadFromBytes(data, isLinear, mipChain: GenerateMipMapsForTextures);
+#endif
 						texture = resultTextureData.texture;
 						texture.name = textureName;
 					}
