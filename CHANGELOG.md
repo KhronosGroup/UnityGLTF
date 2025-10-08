@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.18.0] - 2025-10-08
+- add: animation support for KHR_node_visibility extension
+- add: export support for URP/Lit materials with "Preserve Specular" enabled
+- fix: animation export: add missing value component curves
+- fix: RoughRefraction filterMode set to Trilinear in RenderGraph mode (fixes #884)
+- fix: missing queue setup when using dispersion (fixes #883)
+- fix: BakeAnimation on export when speed < 0
+- fix: Interactivity Animator.Play export: speed, starttime, endtime setup
+- fix: Interactivity Animator.play: changed start time to cliplength when reversed
+- change: removed obsolete warning for KTX > 3.5 and Draco > 5.2
+- change: clearer animation export warning when gameobject was not exported
+- change: updated README with logo
+
 ## [2.17.11] - 2025-09-22
 - fix: blendshape runtime import, positions was getting scaled to zero
 
