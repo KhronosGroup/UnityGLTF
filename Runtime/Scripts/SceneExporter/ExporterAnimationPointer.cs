@@ -113,6 +113,36 @@ namespace UnityGLTF
 			
 			switch (animatedObject)
 			{
+				case GameObject gameObject:
+					if (propertyName == "activeSelf")
+					{
+						if (!UseAnimationPointer)
+						{
+							Debug.LogWarning(null, $"GLTFExporter error: Cannot export GameObject.activeSelf animation without KHR_animation_pointer. Skipping", animatedObject);
+							return;
+						}
+						
+						var transformIndex = GetTransformIndex(gameObject.transform);
+						if (transformIndex == -1)
+						{
+							Debug.LogError(null, $"GLTFExporter error: Could not find transform for animated GameObject \"{gameObject}\". Skipping", animatedObject);
+							return;
+						}
+
+						var node = _root.Nodes[transformIndex];
+						if (node.Extensions == null || !node.Extensions.ContainsKey(KHR_node_visibility_Factory.EXTENSION_NAME))
+						{
+							var newExtension = new KHR_node_visibility();
+							newExtension.visible = true;
+							
+							node.AddExtension(KHR_node_visibility_Factory.EXTENSION_NAME, newExtension);
+							DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
+						}
+
+						propertyName = $"extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}";
+						extensionName = KHR_node_visibility_Factory.EXTENSION_NAME;
+					}
+					break;
 				case Material material:
 					// Debug.Log("material: " + material + ", propertyName: " + propertyName);
 					// mapping from known Unity property names to glTF property names
