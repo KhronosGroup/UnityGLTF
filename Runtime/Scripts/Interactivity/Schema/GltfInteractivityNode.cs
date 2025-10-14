@@ -45,6 +45,18 @@ namespace UnityGLTF.Interactivity.Schema
             socket.Node = targetNode.Index;
             socket.Socket = targetSocketId;
         }
+        
+        public void SetFlowOut(string socketId, int targetNode, string targetSocketId)
+        {
+            if (!FlowConnections.TryGetValue(socketId, out var socket))
+            {
+                socket = new FlowSocketData();
+                FlowConnections.Add(socketId, socket);
+            }
+
+            socket.Node = targetNode;
+            socket.Socket = targetSocketId;
+        }
 
         public virtual void SetSchema(GltfInteractivityNodeSchema schema, bool applySocketDescriptors, bool clearExistingSocketData = true)
         {
