@@ -108,7 +108,14 @@ namespace UnityGLTF
 			string secondPropertyName = null;
 			string extensionName = null;
 			var propertyType = values[0]?.GetType();
-
+			bool isBoolean = propertyType == typeof(bool);
+			if (TryGetCurrentValue(animatedObject, propertyName, out var currentValue))
+			{
+				// For bool, we always want to export as byte (0/1). Unity is using float for animation curves of bool properties.
+				if (currentValue is bool)
+					isBoolean = true;
+			}
+			
 			var animationPointerExportContext = _plugins.FirstOrDefault(x => x is AnimationPointerExportContext) as AnimationPointerExportContext;
 			
 			switch (animatedObject)
@@ -336,140 +343,156 @@ namespace UnityGLTF
 			bool actuallyNeedSecondSampler = true;
 
 			var val = values[0];
-			switch (val)
+			if (isBoolean)
 			{
-				case float _:
-					if (flipValueRange)
-					{
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
-					}
-					else if (valueMultiplier.HasValue)
-					{
-						var multiplier = valueMultiplier.Value;
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => ((float)e) * multiplier));
-					}
-					else
-					{
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
-
-						if (propertyName == "orthographic/ymag")
+				Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e >= 0.5f ? Byte.MaxValue : Byte.MinValue));
+			}
+			else
+			{
+				switch (val)
+				{
+					case float _:
+						if (flipValueRange)
 						{
-							Tsampler2.Output = Tsampler.Output;
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
 						}
-					}
-					break;
-				case float[] _:
-					// check that all entries have the same length using a for loop
-					var firstLength = ((float[])values[0]).Length;
-					for (var i = 1; i < values.Length; i++)
-					{
-						if (((float[])values[i]).Length == firstLength) continue;
-
-						Debug.Log(LogType.Error, "When animating float arrays, all array entries must have the same length. Skipping");
-						return;
-					}
-
-					// construct a float array of all the float arrays together
-					var floatArray = new float[values.Length * firstLength];
-
-					// copy the individual arrays into the float array using Array.Copy
-					for (int i = 0; i < values.Length; i++)
-						Array.Copy((float[])values[i], 0, floatArray, i * firstLength, firstLength);
-
-					// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
-					if (valueMultiplier.HasValue)
-					{
-						for (var i = 0; i < floatArray.Length; i++)
-							floatArray[i] *= valueMultiplier.Value;
-					}
-
-					Tsampler.Output = ExportAccessor(floatArray);
-					break;
-				case Vector2 _:
-					Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector2)e));
-					break;
-				case Vector3 _:
-					if (propertyName == "translation")
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e =>
+						else if (valueMultiplier.HasValue)
 						{
-							var v = (Vector3)e;
-							v.Scale(new Vector3(-1, 1, 1));
-							return v;
-						}));
-					else
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector3)e));
-					break;
-				case Vector4 _:
-					if (!isTextureTransform)
-					{
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector4)e));
-					}
-					else
-					{
-						var scales = new Vector2[values.Length];
-						var offsets = new Vector2[values.Length];
-						for (int i = 0; i < values.Length; i++)
-						{
-							DecomposeScaleOffset((Vector4) values[i], out var scale, out var offset);
-							scales[i] = scale;
-							offsets[i] = offset;
-						}
-						Tsampler.Output = ExportAccessor(scales);
-						Tsampler2.Output = ExportAccessor(offsets);
-					}
-					break;
-				case Quaternion _:
-					var animatedNode = _root.Nodes[channelTargetId];
-					var needsFlippedLookDirection = animatedNode.Light != null || animatedNode.Camera != null;
-					Tsampler.Output = ExportAccessorSwitchHandedness(Array.ConvertAll(values, e => (Quaternion)e), needsFlippedLookDirection); // Vec4 for rotations
-					break;
-				case Color _:
-					if (propertyName == "emissiveFactor" && secondPropertyName != null)
-					{
-						var colors = new Color[values.Length];
-						var strengths = new float[values.Length];
-						actuallyNeedSecondSampler = false;
-						var pluginSettings = (_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as MaterialExtensionsExportContext)?.settings;
-						var emissiveStrengthSupported = pluginSettings != null && pluginSettings.KHR_materials_emissive_strength;
-						if (emissiveStrengthSupported)
-						{
-							for (int i = 0; i < values.Length; i++)
-							{
-								DecomposeEmissionColor((Color) values[i], out var color, out var intensity);
-								colors[i] = color;
-								strengths[i] = intensity;
-								if (intensity > 1)
-									actuallyNeedSecondSampler = true;
-							}
+							var multiplier = valueMultiplier.Value;
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => ((float)e) * multiplier));
 						}
 						else
 						{
-							// clamp 0..1
-							for (int i = 0; i < values.Length; i++)
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e));
+
+							if (propertyName == "orthographic/ymag")
 							{
-								var c = (Color) values[i];
-								if (c.r > 1) c.r = 1;
-								if (c.g > 1) c.g = 1;
-								if (c.b > 1) c.b = 1;
-								colors[i] = c;
+								Tsampler2.Output = Tsampler.Output;
 							}
 						}
-						
-						Tsampler.Output = ExportAccessor(colors, false);
-						if (emissiveStrengthSupported)
-							Tsampler2.Output = ExportAccessor(strengths);
-					}
-					else
-					{
-						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e =>
+
+						break;
+					case float[] _:
+						// check that all entries have the same length using a for loop
+						var firstLength = ((float[])values[0]).Length;
+						for (var i = 1; i < values.Length; i++)
 						{
-							var c = (Color) e;
-							if (convertToLinearColor)
-								c = c.linear;
-							return c;
-						}), keepColorAlpha);
-					}
-					break;
+							if (((float[])values[i]).Length == firstLength) continue;
+
+							Debug.Log(LogType.Error,
+								"When animating float arrays, all array entries must have the same length. Skipping");
+							return;
+						}
+
+						// construct a float array of all the float arrays together
+						var floatArray = new float[values.Length * firstLength];
+
+						// copy the individual arrays into the float array using Array.Copy
+						for (int i = 0; i < values.Length; i++)
+							Array.Copy((float[])values[i], 0, floatArray, i * firstLength, firstLength);
+
+						// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
+						if (valueMultiplier.HasValue)
+						{
+							for (var i = 0; i < floatArray.Length; i++)
+								floatArray[i] *= valueMultiplier.Value;
+						}
+
+						Tsampler.Output = ExportAccessor(floatArray);
+						break;
+					case Vector2 _:
+						Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector2)e));
+						break;
+					case Vector3 _:
+						if (propertyName == "translation")
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e =>
+							{
+								var v = (Vector3)e;
+								v.Scale(new Vector3(-1, 1, 1));
+								return v;
+							}));
+						else
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector3)e));
+						break;
+					case Vector4 _:
+						if (!isTextureTransform)
+						{
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (Vector4)e));
+						}
+						else
+						{
+							var scales = new Vector2[values.Length];
+							var offsets = new Vector2[values.Length];
+							for (int i = 0; i < values.Length; i++)
+							{
+								DecomposeScaleOffset((Vector4)values[i], out var scale, out var offset);
+								scales[i] = scale;
+								offsets[i] = offset;
+							}
+
+							Tsampler.Output = ExportAccessor(scales);
+							Tsampler2.Output = ExportAccessor(offsets);
+						}
+
+						break;
+					case Quaternion _:
+						var animatedNode = _root.Nodes[channelTargetId];
+						var needsFlippedLookDirection = animatedNode.Light != null || animatedNode.Camera != null;
+						Tsampler.Output = ExportAccessorSwitchHandedness(Array.ConvertAll(values, e => (Quaternion)e),
+							needsFlippedLookDirection); // Vec4 for rotations
+						break;
+					case Color _:
+						if (propertyName == "emissiveFactor" && secondPropertyName != null)
+						{
+							var colors = new Color[values.Length];
+							var strengths = new float[values.Length];
+							actuallyNeedSecondSampler = false;
+							var pluginSettings =
+								(_plugins.FirstOrDefault(x => x is MaterialExtensionsExportContext) as
+									MaterialExtensionsExportContext)?.settings;
+							var emissiveStrengthSupported =
+								pluginSettings != null && pluginSettings.KHR_materials_emissive_strength;
+							if (emissiveStrengthSupported)
+							{
+								for (int i = 0; i < values.Length; i++)
+								{
+									DecomposeEmissionColor((Color)values[i], out var color, out var intensity);
+									colors[i] = color;
+									strengths[i] = intensity;
+									if (intensity > 1)
+										actuallyNeedSecondSampler = true;
+								}
+							}
+							else
+							{
+								// clamp 0..1
+								for (int i = 0; i < values.Length; i++)
+								{
+									var c = (Color)values[i];
+									if (c.r > 1) c.r = 1;
+									if (c.g > 1) c.g = 1;
+									if (c.b > 1) c.b = 1;
+									colors[i] = c;
+								}
+							}
+
+							Tsampler.Output = ExportAccessor(colors, false);
+							if (emissiveStrengthSupported)
+								Tsampler2.Output = ExportAccessor(strengths);
+						}
+						else
+						{
+							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e =>
+							{
+								var c = (Color)e;
+								if (convertToLinearColor)
+									c = c.linear;
+								return c;
+							}), keepColorAlpha);
+						}
+
+						break;
+				}
 			}
 
 			if (Tsampler.Output  != null) Tsampler.Output.Value.BufferView.Value.ByteStride  = 0;

@@ -372,8 +372,8 @@ namespace UnityGLTF
 											pointerData.primaryData = samplerCache.Output; 
 											pointerData.importAccessorContentConversion = (data, frame) =>
 											{
-												var v = data.primaryData.AccessorContent.AsFloats[frame];
-												return new float[] { v };
+												var v = data.primaryData.AccessorContent.AsBytes[frame];
+												return new float[] { v > 0 ? 1f : 0f};
 											};
 											break;
 										}

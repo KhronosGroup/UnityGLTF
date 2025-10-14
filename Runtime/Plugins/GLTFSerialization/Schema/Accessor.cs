@@ -621,7 +621,30 @@ namespace GLTF.Schema
 					throw new Exception("Unsupported component type.");
 			}
 		}
+		
+		public unsafe byte[] AsUByteArray(ref NumericArray contents, NativeArray<byte> bufferViewData, uint offset = 0)
+		{
+			if (contents.AsBytes != null)
+			{
+				return contents.AsBytes;
+			}
 
+			if (Type != GLTFAccessorAttributeType.SCALAR)
+			{
+				return null;
+			}
+
+			var arr = new byte[Count];
+			var totalByteOffset = ByteOffset + offset;
+
+			var bufferPointer = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr<byte>(bufferViewData);
+			for (uint idx = 0; idx < Count; idx++)
+				arr[idx] = GetUByteElement(bufferPointer, totalByteOffset + idx);
+
+			contents.AsBytes = arr;
+			return arr;
+		}
+		
 		public unsafe uint[] AsUIntArray(ref NumericArray contents, NativeArray<byte> bufferViewData, uint offset = 0)
 		{
 			if (contents.AsUInts != null)
@@ -1427,6 +1450,9 @@ namespace GLTF.Schema
 	[StructLayout(LayoutKind.Explicit)]
 	public struct NumericArray
 	{
+		[FieldOffset(0)]
+		public byte[] AsBytes;
+		
 		[FieldOffset(0)]
 		public uint[] AsUInts;
 		
