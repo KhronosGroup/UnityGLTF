@@ -109,6 +109,7 @@ namespace UnityGLTF
 			string extensionName = null;
 			var propertyType = values[0]?.GetType();
 			bool isBoolean = propertyType == typeof(bool);
+#if UNITY_EDITOR
 			if (TryGetCurrentValue(animatedObject, propertyName, out var currentValue))
 			{
 				// For bool, we always want to export as byte (0,255). Unity is using float for animation curves of bool properties.
@@ -118,6 +119,7 @@ namespace UnityGLTF
 					interpolation = InterpolationType.STEP;
 				}
 			}
+#endif
 			
 			var animationPointerExportContext = _plugins.FirstOrDefault(x => x is AnimationPointerExportContext) as AnimationPointerExportContext;
 			
