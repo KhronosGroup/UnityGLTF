@@ -915,9 +915,9 @@ namespace UnityGLTF
 						foreach (KeyValuePair<string, PropertyCurve> c in curves)
 						{
 							var prop = c.Value;
-							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
+							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values, out var interpolationType))
 							{
-								AddAnimationData(prop.target, prop.propertyName, animation, times, values);
+								AddAnimationData(prop.target, prop.propertyName, animation, times, values, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -932,9 +932,9 @@ namespace UnityGLTF
 						{
 							var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
 							trp2.curve.AddRange(curve.translationCurves);
-							if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
+							if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2, out var interpolationType))
 							{
-								AddAnimationData(targetTr, trp2.propertyName, animation, times, values2);
+								AddAnimationData(targetTr, trp2.propertyName, animation, times, values2, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -943,9 +943,9 @@ namespace UnityGLTF
 						{
 							var trp3 = new PropertyCurve(targetTr, "rotation") { propertyType = typeof(Quaternion) };
 							trp3.curve.AddRange(curve.rotationCurves.Where(x => x != null));
-							if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3))
+							if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3, out var interpolationType))
 							{
-								AddAnimationData(targetTr, trp3.propertyName, animation, times, values3);
+								AddAnimationData(targetTr, trp3.propertyName, animation, times, values3, interpolationType);
 								sampledAnimationData = true;
 							}
 
@@ -955,9 +955,9 @@ namespace UnityGLTF
 						{
 							var trp4 = new PropertyCurve(targetTr, "scale") { propertyType = typeof(Vector3) };
 							trp4.curve.AddRange(curve.scaleCurves);
-							if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4))
+							if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4, out var interpolationType))
 							{
-								AddAnimationData(targetTr, trp4.propertyName, animation, times, values4);
+								AddAnimationData(targetTr, trp4.propertyName, animation, times, values4, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -966,10 +966,10 @@ namespace UnityGLTF
 						{
 							var trp5 = new PropertyCurve(targetTr, "weights") { propertyType = typeof(float) };
 							trp5.curve.AddRange(curve.weightCurves.Values);
-							if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5))
+							if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5, out var interpolationType))
 							{
 								var targetComponent = targetTr.GetComponent<SkinnedMeshRenderer>();
-								AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5);
+								AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -1398,12 +1398,13 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private bool BakePropertyAnimation(PropertyCurve prop, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values)
+		private bool BakePropertyAnimation(PropertyCurve prop, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values, out InterpolationType interpolationType)
 		{
 			var isReverse = speedMultiplier < 0;
 			speedMultiplier = Mathf.Abs(speedMultiplier);
 			times = null;
 			values = null;
+			interpolationType = InterpolationType.LINEAR;
 
 			prop.SortCurves();
 			if (!prop.Validate()) return false;
@@ -1418,6 +1419,20 @@ namespace UnityGLTF
 			var keyframes = prop.curve.Select(x => x.keys).ToArray();
 			var keyframeIndex = new int[curveCount];
 			
+			// Check if all samples are constant
+			var allConstant = true;
+			for (int i = 0; i < keyframes.Length; i++)
+			{
+				var kf = keyframes[i];
+				for (var k = 0; k < kf.Length; k++)
+					allConstant |= float.IsInfinity(kf[k].inTangent);
+
+				if (!allConstant) break;
+			}
+
+			if (allConstant)
+				interpolationType = InterpolationType.STEP;
+			
 			// Assuming all the curves exist now
 			for (var i = 0; i < nbSamples; ++i)
 			{
@@ -1429,8 +1444,11 @@ namespace UnityGLTF
 						keyframeIndex[k]++;
 
 				var isConstant = false;
-				for (var k = 0; k < curveCount; k++)
-					isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
+				if (interpolationType != InterpolationType.STEP)
+				{
+					for (var k = 0; k < curveCount; k++)
+						isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
+				}
 
 				if (isConstant && _times.Count > 0)
 				{

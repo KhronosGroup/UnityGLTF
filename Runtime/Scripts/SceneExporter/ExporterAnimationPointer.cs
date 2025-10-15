@@ -62,7 +62,7 @@ namespace UnityGLTF
 		///		_exporter.GetRoot().Animations.Add(_animationA);
 		///	};
 		/// </code></example>
-		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values)
+		public void AddAnimationData(Object animatedObject, string propertyName, GLTFAnimation animation, float[] times, object[] values, InterpolationType interpolation = InterpolationType.LINEAR)
 		{
 			if (!animatedObject) return;
 			
@@ -111,9 +111,12 @@ namespace UnityGLTF
 			bool isBoolean = propertyType == typeof(bool);
 			if (TryGetCurrentValue(animatedObject, propertyName, out var currentValue))
 			{
-				// For bool, we always want to export as byte (0/1). Unity is using float for animation curves of bool properties.
+				// For bool, we always want to export as byte (0,255). Unity is using float for animation curves of bool properties.
 				if (currentValue is bool)
+				{
 					isBoolean = true;
+					interpolation = InterpolationType.STEP;
+				}
 			}
 			
 			var animationPointerExportContext = _plugins.FirstOrDefault(x => x is AnimationPointerExportContext) as AnimationPointerExportContext;
@@ -331,6 +334,7 @@ namespace UnityGLTF
 
 			AnimationSampler Tsampler = new AnimationSampler();
 			Tsampler.Input = timeAccessor;
+			Tsampler.Interpolation = interpolation;
 
 			// for cases where one property needs to be split up into multiple tracks
 			// example: emissiveFactor * emissiveStrength
@@ -340,12 +344,14 @@ namespace UnityGLTF
 			Tchannel2.Target = TchannelTarget2;
 			AnimationSampler Tsampler2 = new AnimationSampler();
 			Tsampler2.Input = timeAccessor;
+			Tsampler2.Interpolation = interpolation;
+			
 			bool actuallyNeedSecondSampler = true;
 
 			var val = values[0];
 			if (isBoolean)
 			{
-				Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e >= 0.5f ? Byte.MaxValue : Byte.MinValue));
+				Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => (float)e >= 0.5f ? (byte)1 : Byte.MinValue));
 			}
 			else
 			{
