@@ -1423,11 +1423,13 @@ namespace UnityGLTF
 			var allConstant = true;
 			for (int i = 0; i < keyframes.Length; i++)
 			{
+				if (!allConstant) break;
 				var kf = keyframes[i];
 				for (var k = 0; k < kf.Length; k++)
-					allConstant |= float.IsInfinity(kf[k].inTangent);
-
-				if (!allConstant) break;
+				{
+					if (!allConstant) break;
+					allConstant &= float.IsInfinity(kf[k].inTangent);
+				}
 			}
 
 			if (allConstant)
