@@ -60,6 +60,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
+                else if (unit.member.name == "localScale")
+                {
+                    pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale";
+                    valueType = GltfTypes.Float3;
+                }
             }
 
             if (unit.member.targetType == typeof(Material))
