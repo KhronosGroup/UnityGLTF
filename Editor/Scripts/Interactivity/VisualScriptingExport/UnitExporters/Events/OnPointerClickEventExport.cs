@@ -6,6 +6,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class OnPointerClickEventExport : GameObjectEvents<OnPointerClick, Event_OnSelectNode>
     {
+        protected override bool StopPropagationDefault
+        {
+            get => true;
+        }
+
         [InitializeOnLoadMethod]
         private static void Register()
         {
