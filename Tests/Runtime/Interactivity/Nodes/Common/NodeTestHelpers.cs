@@ -228,6 +228,66 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             QueueTest(nodeName, $"{fileName}-float4", $"{testName} (float4)", $"{testDescription}Tests this node's float4 operation.", CreateSelfContainedTestGraph(nodeName, In(a, b, c), Out(expected), subGraphType));
         }
 
+        protected static void TestNodeWithAllFloatNxNInputVariants(string fileName, string testName, string testDescription, string nodeName, float4x4 a, float4x4 expected, ComparisonType subGraphType = ComparisonType.Approximately)
+        {
+            QueueTest(nodeName, $"{fileName}-float-x", $"{testName} (float-x)", $"{testDescription} Uses the x-component of the first column of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.x), Out(expected.c0.x), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-y", $"{testName} (float-y)", $"{testDescription}Uses the y-component of the first column of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.y), Out(expected.c0.y), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-z", $"{testName} (float-z)", $"{testDescription}Uses the z-component of the first column of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.z), Out(expected.c0.z), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-w", $"{testName} (float-w)", $"{testDescription}Uses the w-component of the first column of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.w), Out(expected.c0.w), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float2-xy", $"{testName} (float2-xy)", $"{testDescription}Uses the xy-components of the first column of the float4x4 version of this test to test this node's float2 operation.", CreateSelfContainedTestGraph(nodeName, In(new float2(a.c0.x, a.c0.y)), Out(expected.c0.xy), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float2-zw", $"{testName} (float2-zw)", $"{testDescription}Uses the zw-components of the first column of the float4x4 version of this test to test this node's float2 operation.", CreateSelfContainedTestGraph(nodeName, In(new float2(a.c0.z, a.c0.w)), Out(expected.c0.zw), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float3-xyz", $"{testName} (float3-xyz)", $"{testDescription}Uses the xyz-components of the first column of the float4x4 version of this test to test this node's float3 operation.", CreateSelfContainedTestGraph(nodeName, In(new float3(a.c0.x, a.c0.y, a.c0.z)), Out(expected.c0.xyz), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float3-yzw", $"{testName} (float3-yzw)", $"{testDescription}Uses the yzw-components of the first column of the float4x4 version of this test to test this node's float3 operation.", CreateSelfContainedTestGraph(nodeName, In(new float3(a.c0.y, a.c0.z, a.c0.w)), Out(expected.c0.yzw), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float4", $"{testName} (float4)", $"{testDescription}Uses the first column of the float4x4 version of this test to test tis node's float4 operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0), Out(expected.c0), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float2x2", $"{testName} (float2x2)", $"{testDescription}Creates a 2x2 matrix from the upper left of the float4x4 matrix version of this test.", CreateSelfContainedTestGraph(nodeName, In(new float2x2(a.c0.xy, a.c1.xy)), Out(new float2x2(expected.c0.xy, expected.c1.xy)), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float3x3", $"{testName} (float3x3)", $"{testDescription}Creates a 3x3 matrix from the upper left of the float4x4 matrix version of this test.", CreateSelfContainedTestGraph(nodeName, In(new float3x3(a.c0.xyz, a.c1.xyz, a.c2.xyz)), Out(new float3x3(expected.c0.xyz, expected.c1.xyz, expected.c2.xyz)), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float4x4", $"{testName} (float4x4)", $"{testDescription}Float4x4 version of this test.", CreateSelfContainedTestGraph(nodeName, In(a), Out(expected), subGraphType));
+        }
+
+        protected static void TestNodeWithAllFloatNxNInputVariants(string fileName, string testName, string testDescription, string nodeName, float4x4 a, float4x4 b, float4x4 expected, ComparisonType subGraphType = ComparisonType.Approximately)
+        {
+            QueueTest(nodeName, $"{fileName}-float-x", $"{testName} (float-x)", $"{testDescription}Uses the x-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.x, b.c0.x), Out(expected.c0.x), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-y", $"{testName} (float-y)", $"{testDescription}Uses the y-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.y, b.c0.y), Out(expected.c0.y), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-z", $"{testName} (float-z)", $"{testDescription}Uses the z-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.z, b.c0.z), Out(expected.c0.z), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-w", $"{testName} (float-w)", $"{testDescription}Uses the w-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.w, b.c0.w), Out(expected.c0.w), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float2-xy", $"{testName} (float2-xy)", $"{testDescription}Uses the xy-components of the first columns of the float4x4 version of this test to test this node's float2 operation.", CreateSelfContainedTestGraph(nodeName, In(new float2(a.c0.x, a.c0.y), new float2(b.c0.x, b.c0.y)), Out(expected.c0.xy), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float2-zw", $"{testName} (float2-zw)", $"{testDescription}Uses the zw-components of the first columns of the float4x4 version of this test to test this node's float2 operation.", CreateSelfContainedTestGraph(nodeName, In(new float2(a.c0.z, a.c0.w), new float2(b.c0.z, b.c0.w)), Out(expected.c0.zw), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float3-xyz", $"{testName} (float3-xyz)", $"{testDescription}Uses the xyz-components of the first columns of the float4x4 version of this test to test this node's float3 operation.", CreateSelfContainedTestGraph(nodeName, In(new float3(a.c0.x, a.c0.y, a.c0.z), new float3(b.c0.x, b.c0.y, b.c0.z)), Out(expected.c0.xyz), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float3-yzw", $"{testName} (float3-yzw)", $"{testDescription}Uses the yzw-components of the first columns of the float4x4 version of this test to test this node's float3 operation.", CreateSelfContainedTestGraph(nodeName, In(new float3(a.c0.y, a.c0.z, a.c0.w), new float3(b.c0.y, b.c0.z, b.c0.w)), Out(expected.c0.yzw), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float4", $"{testName} (float4)", $"{testDescription}Uses the first columns of the float4x4 version of this test to test this node's float4 operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0, b.c0), Out(expected.c0), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float2x2", $"{testName} (float2x2)", $"{testDescription}Creates a 2x2 matrix from the upper left of the float4x4 matrices.", CreateSelfContainedTestGraph(nodeName, In(new float2x2(a.c0.xy, a.c1.xy), new float2x2(b.c0.xy, b.c1.xy)), Out(new float2x2(expected.c0.xy, expected.c1.xy)), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float3x3", $"{testName} (float3x3)", $"{testDescription}Creates a 3x3 matrix from the upper left of the float4x4 matrices.", CreateSelfContainedTestGraph(nodeName, In(new float3x3(a.c0.xyz, a.c1.xyz, a.c2.xyz), new float3x3(b.c0.xyz, b.c1.xyz, b.c2.xyz)), Out(new float3x3(expected.c0.xyz, expected.c1.xyz, expected.c2.xyz)), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float4x4", $"{testName} (float4x4)", $"{testDescription}Float4x4 version of this test.", CreateSelfContainedTestGraph(nodeName, In(a, b), Out(expected), subGraphType));
+        }
+
+        protected static void TestNodeWithAllFloatNxNInputVariants(string fileName, string testName, string testDescription, string nodeName, float4x4 a, float4x4 b, float4x4 c, float4x4 expected, ComparisonType subGraphType = ComparisonType.Approximately)
+        {
+            QueueTest(nodeName, $"{fileName}-float-x", $"{testName} (float-x)", $"{testDescription}Uses the x-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.x, b.c0.x, c.c0.x), Out(expected.c0.x), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-y", $"{testName} (float-y)", $"{testDescription}Uses the y-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.y, b.c0.y, c.c0.y), Out(expected.c0.y), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-z", $"{testName} (float-z)", $"{testDescription}Uses the z-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.z, b.c0.z, c.c0.z), Out(expected.c0.z), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float-w", $"{testName} (float-w)", $"{testDescription}Uses the w-components of the first columns of the float4x4 version of this test to test this node's float operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0.w, b.c0.w, c.c0.w), Out(expected.c0.w), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float2-xy", $"{testName} (float2-xy)", $"{testDescription}Uses the xy-components of the first columns of the float4x4 version of this test to test this node's float2 operation.", CreateSelfContainedTestGraph(nodeName, In(new float2(a.c0.x, a.c0.y), new float2(b.c0.x, b.c0.y), new float2(c.c0.x, c.c0.y)), Out(expected.c0.xy), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float2-zw", $"{testName} (float2-zw)", $"{testDescription}Uses the zw-components of the first columns of the float4x4 version of this test to test this node's float2 operation.", CreateSelfContainedTestGraph(nodeName, In(new float2(a.c0.z, a.c0.w), new float2(b.c0.z, b.c0.w), new float2(c.c0.z, c.c0.w)), Out(expected.c0.zw), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float3-xyz", $"{testName} (float3-xyz)", $"{testDescription}Uses the xyz-components of the first columns of the float4x4 version of this test to test this node's float3 operation.", CreateSelfContainedTestGraph(nodeName, In(new float3(a.c0.x, a.c0.y, a.c0.z), new float3(b.c0.x, b.c0.y, b.c0.z), new float3(c.c0.x, c.c0.y, c.c0.z)), Out(expected.c0.xyz), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float3-yzw", $"{testName} (float3-yzw)", $"{testDescription}Uses the yzw-components of the first columns of the float4x4 version of this test to test this node's float3 operation.", CreateSelfContainedTestGraph(nodeName, In(new float3(a.c0.y, a.c0.z, a.c0.w), new float3(b.c0.y, b.c0.z, b.c0.w), new float3(c.c0.y, c.c0.z, c.c0.w)), Out(expected.c0.yzw), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float4", $"{testName} (float4)", $"{testDescription}Uses the first columns of the float4x4 version of this test to test this node's float4 operation.", CreateSelfContainedTestGraph(nodeName, In(a.c0, b.c0, c.c0), Out(expected.c0), subGraphType));
+
+            QueueTest(nodeName, $"{fileName}-float2x2", $"{testName} (float2x2)", $"{testDescription}Creates a 2x2 matrix from the upper left of the float4x4 matrices.", CreateSelfContainedTestGraph(nodeName, In(new float2x2(a.c0.xy, a.c1.xy), new float2x2(b.c0.xy, b.c1.xy), new float2x2(c.c0.xy, c.c1.xy)), Out(new float2x2(expected.c0.xy, expected.c1.xy)), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float3x3", $"{testName} (float3x3)", $"{testDescription}Creates a 3x3 matrix from the upper left of the float4x4 matrices.", CreateSelfContainedTestGraph(nodeName, In(new float3x3(a.c0.xyz, a.c1.xyz, a.c2.xyz), new float3x3(b.c0.xyz, b.c1.xyz, b.c2.xyz), new float3x3(c.c0.xyz, c.c1.xyz, c.c2.xyz)), Out(new float3x3(expected.c0.xyz, expected.c1.xyz, expected.c2.xyz)), subGraphType));
+            QueueTest(nodeName, $"{fileName}-float4x4", $"{testName} (float4x4)", $"{testDescription}Float4x4 version of this test.", CreateSelfContainedTestGraph(nodeName, In(a, b, c), Out(expected), subGraphType));
+        }
+
 
         protected static (Graph, TestValues) CreateSelfContainedTestGraph(string nodeStr, Dictionary<string, Value> values, Dictionary<string, IProperty> expectedResults, ComparisonType subGraphType)
         {
