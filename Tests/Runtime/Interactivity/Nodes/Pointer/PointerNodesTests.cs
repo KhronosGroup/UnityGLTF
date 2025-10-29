@@ -328,16 +328,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             branch.AddFlow(failLog, ConstStrings.FALSE);
             complete.AddConfiguration(ConstStrings.EVENT, COMPLETED_EVENT_INDEX);
 
-            var outSet = g.CreateNode("variable/set");
             var outGet = g.CreateNode("variable/get");
             var outVar = g.AddVariable("outFlowActivated", false);
             var outVarIndex = g.IndexOfVariable(outVar);
             var outBranch = g.CreateNode("flow/branch");
             var outFail = CreateFailSubGraph(g, "Out flow did not trigger during this test.");
+            var outSet = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
-            outSet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
             outGet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
-            outSet.AddValue(ConstStrings.VALUE, true);
 
             outBranch.AddConnectedValue(ConstStrings.CONDITION, outGet);
             outBranch.AddFlow(branch, ConstStrings.TRUE);
@@ -432,15 +430,13 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var errFlowVar = g.AddVariable("errFlowActivated", false);
             var errFlowVarIndex = g.IndexOfVariable(errFlowVar);
-            var errFlowSet = g.CreateNode("variable/set");
+            var errFlowSet = NodeTestHelpers.CreateVariableSet(g, errFlowVarIndex, true);
             var errFlowGet = g.CreateNode("variable/get");
             var onTick = g.CreateNode("event/onTick");
             var ge = g.CreateNode("math/ge");
             var timeBranch = g.CreateNode("flow/branch");
             var doneBranch = g.CreateNode("flow/branch");
 
-            errFlowSet.AddValue(ConstStrings.VALUE, true);
-            errFlowSet.AddConfiguration(ConstStrings.VARIABLE, errFlowVarIndex);
             errFlowGet.AddConfiguration(ConstStrings.VARIABLE, errFlowVarIndex);
 
             onTick.AddFlow(timeBranch);

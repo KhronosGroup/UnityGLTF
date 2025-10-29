@@ -150,10 +150,10 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var varSetGet = g.CreateNode("variable/get");
             var add = g.CreateNode("math/add");
 
-            varSet.AddConfiguration(ConstStrings.VARIABLE, variableIndex);
+            varSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { variableIndex });
             varSetGet.AddConfiguration(ConstStrings.VARIABLE, variableIndex);
 
-            varSet.AddConnectedValue(ConstStrings.VALUE, add);
+            varSet.AddConnectedValue(ConstStrings.GetNumberString(0), add);
 
             add.AddValue(ConstStrings.B, 1);
             add.AddConnectedValue(ConstStrings.A, varSetGet);
@@ -359,9 +359,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
         private static Node CreateSwitchFlowSubGraph(Graph g, int nextFlowIndex, int bitmask, int flowIndexVariableIndex, int bitmaskVariableIndex)
         {
-            var setOutputFlow = g.CreateNode("variable/set");
-            setOutputFlow.AddConfiguration(ConstStrings.VARIABLE, flowIndexVariableIndex);
-            setOutputFlow.AddValue(ConstStrings.VALUE, nextFlowIndex);
+            var setOutputFlow = NodeTestHelpers.CreateVariableSet(g, flowIndexVariableIndex, nextFlowIndex);
 
             var bitmaskSet = g.CreateNode("variable/set");
             var add = g.CreateNode("math/add");
@@ -372,10 +370,10 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             setOutputFlow.AddFlow(bitmaskSet);
 
-            bitmaskSet.AddConfiguration(ConstStrings.VARIABLE, bitmaskVariableIndex);
+            bitmaskSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { bitmaskVariableIndex });
             bitmaskGet.AddConfiguration(ConstStrings.VARIABLE, bitmaskVariableIndex);
 
-            bitmaskSet.AddConnectedValue(ConstStrings.VALUE, add);
+            bitmaskSet.AddConnectedValue(ConstStrings.GetNumberString(0), add);
             add.AddValue(ConstStrings.A, bitmask);
             add.AddConnectedValue(ConstStrings.B, bitmaskGet);
             bitmaskSet.AddFlow(send);

@@ -102,10 +102,10 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             send.AddConfiguration(ConstStrings.EVENT, 2);
 
-            bitmaskSet.AddConfiguration(ConstStrings.VARIABLE, bitmaskVariableIndex);
+            bitmaskSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { bitmaskVariableIndex });
             bitmaskGet.AddConfiguration(ConstStrings.VARIABLE, bitmaskVariableIndex);
 
-            bitmaskSet.AddConnectedValue(ConstStrings.VALUE, add);
+            bitmaskSet.AddConnectedValue(ConstStrings.GetNumberString(0), add);
             add.AddValue(ConstStrings.A, bitmask);
             add.AddConnectedValue(ConstStrings.B, bitmaskGet);
             bitmaskSet.AddFlow(send);

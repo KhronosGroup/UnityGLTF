@@ -14,12 +14,6 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         protected override string _subDirectory => "Variable";
 
         [Test]
-        public void VariableGetAndSet_VariablesAllChangeToSetValuesAndGetReturnsThemCorrectly()
-        {
-            QueueTest("variable/set", GetCallerName(), "Variable Set & Get", "Creates a bool, int, float, float2, float3, float4, float2x2, float3x3, and float4x4 variable with an arbitrary default value, sets each to a different value, and uses a get node to check that they changed correctly.", CreateVariableGetAndSetGraph(new VariableSetSubGraph()));
-        }
-
-        [Test]
         public void VariableInterpolate_VariablesAllChangeToSetValuesAndGetReturnsThemCorrectly()
         {
             QueueTest("variable/interpolate", GetCallerName(), "Variable Interpolate Basic", "Creates variables for all floatN and floatNxN types with an arbitrary default value, and interpolates each to a different value. Test fails if err flow is activated, if the out flow does not activate before done flow, or if any of the values are incorrect after the done flow activates.", CreateVariableGetAndSetGraph(new VariableInterpolateSubGraph()));
@@ -44,21 +38,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         }
 
         [Test]
-        public void VariableSetMultiple_VariablesAllChangeToSetValuesAndGetReturnsThemCorrectly()
+        public void VariableSet_VariablesAllChangeToSetValuesAndGetReturnsThemCorrectly()
         {
-            QueueTest("variable/setMultiple", GetCallerName(), "Variable Set Multiple", "Creates a bool, int, float, float2, float3, float4, float2x2, float3x3, and float4x4 variable with an arbitrary default value, sets each to a different value, and uses a get node to check that they changed correctly. Sequence used for simplifying graph.", CreateVariableSetMultipleGraph());
+            QueueTest("variable/set", GetCallerName(), "Variable Set", "Creates a bool, int, float, float2, float3, float4, float2x2, float3x3, and float4x4 variable with an arbitrary default value, sets each to a different value, and uses a get node to check that they changed correctly. Sequence used for simplifying graph.", CreateVariableSetGraph());
         }
 
         private static Graph CreateVariableGetAndSetGraph(IVariableSubGraph subGraphGenerator)
         {
             var g = CreateGraphForTest();
-
-            if(subGraphGenerator is VariableSetSubGraph)
-            {
-                // Can't interpolate from false to true so only do that in the "variable/set" test.
-                subGraphGenerator.AppendVariableTestSubGraph(g, false, true);
-                subGraphGenerator.AppendVariableTestSubGraph(g, 0, 5);
-            }
             
             subGraphGenerator.AppendVariableTestSubGraph(g, 0f, 10f);
             subGraphGenerator.AppendVariableTestSubGraph(g, new float2(0f, 1f), new float2(2f, 3f));
@@ -130,12 +117,12 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             return (branch, variableIndex);
         }
 
-        private static Graph CreateVariableSetMultipleGraph()
+        private static Graph CreateVariableSetGraph()
         {
             var g = CreateGraphForTest();
 
             var onStartNode = g.CreateNode("event/onStart");
-            var set = g.CreateNode("variable/setMultiple");
+            var set = g.CreateNode("variable/set");
             var sequence = g.CreateNode("flow/sequence");
 
             onStartNode.AddFlow(set);
@@ -251,24 +238,6 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             public void AppendVariableTestSubGraph<T>(Graph g, T initialValue, T setValue);
         }
 
-        private class VariableSetSubGraph : IVariableSubGraph
-        {
-            public void AppendVariableTestSubGraph<T>(Graph g, T initialValue, T setValue)
-            {
-                (var branch, var variableIndex) = CreateCheckEqualitySubGraph(g, initialValue, setValue);
-
-                var onStartNode = g.CreateNode("event/onStart");
-
-                var set = g.CreateNode("variable/set");
-
-                set.AddConfiguration(ConstStrings.VARIABLE, variableIndex);
-                set.AddValue(ConstStrings.VALUE, setValue);
-
-                onStartNode.AddFlow(set);
-                set.AddFlow(branch);
-            }
-        }
-
         private class VariableInterpolateSubGraph : IVariableSubGraph
         {
             public void AppendVariableTestSubGraph<T>(Graph g, T initialValue, T setValue)
@@ -298,7 +267,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
                 var outTriggeredVar = g.AddVariable($"{interpolateType}InterpOutTriggered", false);
                 var outTriggeredVarIndex = g.IndexOfVariable(outTriggeredVar);
-                var outSet = g.CreateNode("variable/set");
+                var outSet = NodeTestHelpers.CreateVariableSet(g, outTriggeredVarIndex, true);
                 var outGet = g.CreateNode("variable/get");
                 var outBranch = g.CreateNode("flow/branch");
                 var outFail = g.CreateNode("event/send");
@@ -308,8 +277,6 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 outFailLog.AddConfiguration(ConstStrings.MESSAGE, $"Out flow did not activate on interpolate node for type {interpolateType} before done flow.");
                 outFailLog.AddFlow(outFail);
 
-                outSet.AddValue(ConstStrings.VALUE, true);
-                outSet.AddConfiguration(ConstStrings.VARIABLE, outTriggeredVarIndex);
                 outGet.AddConfiguration(ConstStrings.VARIABLE, outTriggeredVarIndex);
 
                 outBranch.AddConnectedValue(ConstStrings.CONDITION, outGet);

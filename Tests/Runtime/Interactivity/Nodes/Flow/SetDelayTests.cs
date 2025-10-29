@@ -42,10 +42,11 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var outVar = g.AddVariable("outTriggered", false);
             g.AddVariable("doneTriggered", false);
             g.AddVariable("testDuration", duration + extraExecutionTime);
+            var varIndex = g.IndexOfVariable(outVar);
 
             var onStartnode = g.CreateNode("event/onStart");
             var setDelayNode = g.CreateNode("flow/setDelay");
-            var outVarSet = g.CreateNode("variable/set");
+            var outVarSet = NodeTestHelpers.CreateVariableSet(g, varIndex, true);
             var outVarGet = g.CreateNode("variable/get");
             var errSendNode = g.CreateNode("event/send");
             var doneSendNode = g.CreateNode("event/send");
@@ -57,10 +58,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             errFlowLog.AddConfiguration(ConstStrings.MESSAGE, "Err flow triggered with valid duration value.");
             missedOutFlowLog.AddConfiguration(ConstStrings.MESSAGE, "Done flow triggered but out flow was never triggered.");
 
-            var varIndex = g.IndexOfVariable(outVar);
-            outVarSet.AddConfiguration(ConstStrings.VARIABLE, varIndex);
             outVarGet.AddConfiguration(ConstStrings.VARIABLE, varIndex);
-            outVarSet.AddValue(ConstStrings.VALUE, true);
 
             errSendNode.AddConfiguration(ConstStrings.EVENT, FAIL_EVENT_INDEX);
             failMissedOutFlow.AddConfiguration(ConstStrings.EVENT, FAIL_EVENT_INDEX);
@@ -117,9 +115,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             onTick.AddFlow(branch);
             branch.AddFlow(timeBranch, ConstStrings.FALSE);
-            var set = g.CreateNode("variable/set");
-            set.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
-            set.AddValue(ConstStrings.VALUE, true);
+            var set = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
             timeBranch.AddConnectedValue(ConstStrings.CONDITION, ge);
             timeBranch.AddFlow(set, ConstStrings.TRUE);
@@ -180,9 +176,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             onTick.AddFlow(branch);
             branch.AddFlow(timeBranch, ConstStrings.FALSE);
-            var set = g.CreateNode("variable/set");
-            set.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
-            set.AddValue(ConstStrings.VALUE, true);
+            var set = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
             cancelDelay.AddConnectedValue(ConstStrings.DELAY_INDEX, setDelay, ConstStrings.LAST_DELAY_INDEX);
             cancelDelay.AddFlow(set);
