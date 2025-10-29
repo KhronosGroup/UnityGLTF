@@ -10,7 +10,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             return new NodeConfiguration[]
             {
-                new NodeConfiguration(ConstStrings.VARIABLE, "Variable to set.", typeof(int)),
+                new NodeConfiguration(ConstStrings.VARIABLES, "Variables to set.", typeof(int[])),
             };
         }
 
@@ -21,12 +21,7 @@ namespace UnityGLTF.Interactivity.Playback
                 new NodeFlow(ConstStrings.IN, "The in flow.")
             };
 
-            var values = new NodeValue[]
-            {
-                new NodeValue(ConstStrings.VALUE, "Value to set.", new Type[]  { typeof(int), typeof(float), typeof(float2), typeof(float3), typeof(float4), typeof(float2x2), typeof(float3x3), typeof(float4x4)}),
-            };
-
-            return (flows, values);
+            return (flows, null);
         }
 
         protected override (NodeFlow[] flows, NodeValue[] values) GenerateOutputs()

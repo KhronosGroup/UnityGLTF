@@ -748,5 +748,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             return log;
         }
+
+        protected static Node CreateVariableSet<T>(Graph g, int variableIndex, T value)
+        {
+            var outSet = g.CreateNode("variable/set");
+
+            outSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { variableIndex });
+            outSet.AddValue(ConstStrings.GetNumberString(0), value);
+            return outSet;
+        }
     }
 }

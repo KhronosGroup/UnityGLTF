@@ -275,7 +275,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var onStartNodeTriggeredVariableIndex = g.IndexOfVariable(onStartNodeTriggeredVariable);
 
             var start = g.CreateNode("event/onStart");
-            var hasStartedSet = g.CreateNode("variable/set");
+            var hasStartedSet = NodeTestHelpers.CreateVariableSet(g, onStartNodeTriggeredVariableIndex, true);
             var branch = g.CreateNode("flow/branch");
             var failStart = g.CreateNode("event/send");
             var failLog = g.CreateNode("debug/log");
@@ -289,9 +289,6 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             failLog.AddConfiguration(ConstStrings.MESSAGE, "Both timeSinceStart and timeSinceLastTick should be NaN before onTick activates its first out flow. timeSinceStart: {timeSinceStart}, timeSinceLastTick: {timeSinceLastTick}");
             failLog.AddConnectedValue(ConstStrings.TIME_SINCE_START, onTick, ConstStrings.TIME_SINCE_START);
             failLog.AddConnectedValue(ConstStrings.TIME_SINCE_LAST_TICK, onTick, ConstStrings.TIME_SINCE_LAST_TICK);
-
-            hasStartedSet.AddConfiguration(ConstStrings.VARIABLE, onStartNodeTriggeredVariableIndex);
-            hasStartedSet.AddValue(ConstStrings.VALUE, true);
 
             start.AddFlow(hasStartedSet);
             hasStartedSet.AddFlow(branch);
@@ -328,9 +325,8 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var isFirstTickBranch = g.CreateNode("flow/branch");
             var isFirstTickGet = g.CreateNode("variable/get");
-            var isFirstTickSet = g.CreateNode("variable/set");
+            var isFirstTickSet = NodeTestHelpers.CreateVariableSet(g, isFirstTickVariableIndex, false);
             isFirstTickGet.AddConfiguration(ConstStrings.VARIABLE, isFirstTickVariableIndex);
-            isFirstTickSet.AddConfiguration(ConstStrings.VARIABLE, isFirstTickVariableIndex);
 
             hasStartedBranch.AddFlow(isFirstTickBranch, ConstStrings.TRUE);
             isFirstTickBranch.AddConnectedValue(ConstStrings.CONDITION, isFirstTickGet);
@@ -360,7 +356,6 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             firstTickFailLog.AddFlow(firstTickFail);
 
-            isFirstTickSet.AddValue(ConstStrings.VALUE, false);
             firstTickBranch.AddFlow(isFirstTickSet, ConstStrings.TRUE);
             firstTickBranch.AddFlow(firstTickFailLog, ConstStrings.FALSE);
 

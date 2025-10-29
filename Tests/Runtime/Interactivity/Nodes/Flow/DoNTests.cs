@@ -90,6 +90,12 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             Graph g = CreateGraphForTest();
 
             var resetVariable = g.AddVariable("hasResetOnce", false);
+            var currentCountVariable = g.AddVariable(ConstStrings.CURRENT_COUNT, COUNTER_VARIABLE_INITIAL_VALUE);
+            var totalCountVariable = g.AddVariable(TOTAL_COUNT, COUNTER_VARIABLE_INITIAL_VALUE);
+
+            var resetVariableIndex = g.IndexOfVariable(resetVariable);
+            var currentCountVarIndex = g.IndexOfVariable(currentCountVariable);
+            var totalCountVarIndex = g.IndexOfVariable(totalCountVariable);
 
             var start = g.CreateNode("event/onStart");
             var startTrigger = g.CreateNode("event/send");
@@ -105,12 +111,12 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var currentCountGet = g.CreateNode("variable/get");
             var loopBodyBranch = g.CreateNode("flow/branch");
             var resetBranch = g.CreateNode("flow/branch");
-            var resetSet = g.CreateNode("variable/set");
+            var resetSet = NodeTestHelpers.CreateVariableSet(g, resetVariableIndex, true);
             var loopEq = g.CreateNode("math/eq");
             var resetGet = g.CreateNode("variable/get");
             var resetOrFinishBranch = g.CreateNode("flow/branch");
             var resetTrigger = g.CreateNode("event/send");
-            var resetCounterVariable = g.CreateNode("variable/set");
+            var resetCounterVariable = NodeTestHelpers.CreateVariableSet(g, currentCountVarIndex, COUNTER_VARIABLE_INITIAL_VALUE);
             var totalCountGet = g.CreateNode("variable/get");
             var totalCountBranch = g.CreateNode("flow/branch");
             var totalCountEq = g.CreateNode("math/eq");
@@ -121,18 +127,13 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             completedFailLog.AddConnectedValue(ConstStrings.ACTUAL, totalCountGet);
 
-            resetSet.AddConfiguration(ConstStrings.VARIABLE, g.IndexOfVariable(resetVariable));
-            resetGet.AddConfiguration(ConstStrings.VARIABLE, g.IndexOfVariable(resetVariable));
-
-            var currentCountVariable = g.AddVariable(ConstStrings.CURRENT_COUNT, COUNTER_VARIABLE_INITIAL_VALUE);
-            var totalCountVariable = g.AddVariable(TOTAL_COUNT, COUNTER_VARIABLE_INITIAL_VALUE);
+            resetGet.AddConfiguration(ConstStrings.VARIABLE, resetVariableIndex);
 
             Node varSet = CreateVariableIncrementSubgraph(g, currentCountVariable);
             Node totalCountSet = CreateVariableIncrementSubgraph(g, totalCountVariable);
 
-            currentCountGet.AddConfiguration(ConstStrings.VARIABLE, g.IndexOfVariable(ConstStrings.CURRENT_COUNT));
-            resetCounterVariable.AddConfiguration(ConstStrings.VARIABLE, g.IndexOfVariable(ConstStrings.CURRENT_COUNT));
-            totalCountGet.AddConfiguration(ConstStrings.VARIABLE, g.IndexOfVariable(TOTAL_COUNT));
+            currentCountGet.AddConfiguration(ConstStrings.VARIABLE, currentCountVarIndex);
+            totalCountGet.AddConfiguration(ConstStrings.VARIABLE, totalCountVarIndex);
 
             triggerReceive.AddFlow(doNNode);
             resetReceive.AddFlow(doNNode, ConstStrings.OUT, ConstStrings.RESET);
@@ -167,9 +168,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             totalCountBranch.AddFlow(completedFailLog, ConstStrings.FALSE);
             completedFailLog.AddFlow(failTotalSend);
             resetSet.AddFlow(resetCounterVariable);
-            resetSet.AddValue(ConstStrings.VALUE, true);
 
-            resetCounterVariable.AddValue(ConstStrings.VALUE, COUNTER_VARIABLE_INITIAL_VALUE);
             resetCounterVariable.AddFlow(resetSend);
             resetSend.AddFlow(resetTrigger);
 

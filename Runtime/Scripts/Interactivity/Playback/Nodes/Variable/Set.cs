@@ -6,11 +6,11 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class VariableSet : BehaviourEngineNode
     {
-        private Variable _graphVariable;
-        private IProperty _newValue;
+        private int[] _variableIndices;
 
         public VariableSet(BehaviourEngine engine, Node node) : base(engine, node)
         {
+            // TODO: ValidateConfiguration allocates for the int array, could move that here but it would break runtime edits.
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -18,36 +18,42 @@ namespace UnityGLTF.Interactivity.Playback
             if (validationResult != ValidationResult.Valid)
                 throw new InvalidOperationException();
 
-            Util.Log($"Setting Variable {_graphVariable.id} to {_newValue.ToString()}");
+            int index;
+            Variable variable;
 
-            engine.variableInterpolationManager.StopInterpolation(_graphVariable);
+            for (int i = 0; i < _variableIndices.Length; i++)
+            {
+                index = _variableIndices[i];
 
-            _graphVariable.property = _newValue;
+                if (!TryEvaluateValue(ConstStrings.GetNumberString(i), out IProperty value))
+                    continue;
+
+                variable = engine.graph.variables[index];
+
+                engine.variableInterpolationManager.StopInterpolation(variable);
+
+                Util.Log($"SetMultiple: Setting Variable {variable.id} to {value.ToString()}");
+
+                variable.property = value;
+            }
 
             TryExecuteFlow(ConstStrings.OUT);
         }
 
         public override bool ValidateConfiguration(string socket)
         {
-            if (!TryGetConfig(ConstStrings.VARIABLE, out int variableIndex))
+            if (!TryGetConfig(ConstStrings.VARIABLES, out _variableIndices))
                 return false;
 
-            try
+            var variableCount = engine.graph.variables.Count;
+
+            for (int i = 0; i < _variableIndices.Length; i++)
             {
-                _graphVariable = engine.graph.variables[variableIndex];
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-                return false;
+                if (_variableIndices[i] < 0 || _variableIndices[i] >= variableCount)
+                    return false;
             }
 
             return true;
-        }
-
-        public override bool ValidateValues(string socket)
-        {
-            return TryEvaluateValue(ConstStrings.VALUE, out _newValue);
         }
     }
 }

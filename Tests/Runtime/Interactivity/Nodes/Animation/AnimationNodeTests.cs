@@ -150,7 +150,6 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             complete.AddConfiguration(ConstStrings.EVENT, COMPLETED_EVENT_INDEX);
 
             onStartNode.AddFlow(animation);
-
             var values = GetDefaultAnimationStartValues();
 
             foreach(var value in values)
@@ -160,16 +159,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             var failErr = CreateFailSubGraph(g, "Err flow should not activate in this test.");
 
-            var outSet = g.CreateNode("variable/set");
             var outGet = g.CreateNode("variable/get");
             var outVar = g.AddVariable("outFlowActivated", false);
             var outVarIndex = g.IndexOfVariable(outVar);
             var outBranch = g.CreateNode("flow/branch");
             var outFail = CreateFailSubGraph(g, "Out flow did not trigger during this test.");
+            var outSet = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
-            outSet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
             outGet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
-            outSet.AddValue(ConstStrings.VALUE, true);
 
             outBranch.AddConnectedValue(ConstStrings.CONDITION, outGet);
             outBranch.AddFlow(complete, ConstStrings.TRUE);
@@ -269,16 +266,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             donege.AddConnectedValue(ConstStrings.A, onTick2, ConstStrings.TIME_SINCE_START);
             donege.AddValue(ConstStrings.B, TEST_DURATION);
 
-            var outSet = g.CreateNode("variable/set");
             var outGet = g.CreateNode("variable/get");
             var outVar = g.AddVariable("outFlowActivated", false);
             var outVarIndex = g.IndexOfVariable(outVar);
             var outBranch = g.CreateNode("flow/branch");
             var outFail = CreateFailSubGraph(g, "Out flow did not trigger during this test.");
+            var outSet = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
-            outSet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
             outGet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
-            outSet.AddValue(ConstStrings.VALUE, true);
 
             outBranch.AddConnectedValue(ConstStrings.CONDITION, outGet);
             outBranch.AddFlow(complete, ConstStrings.TRUE);
@@ -319,16 +314,14 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             stop.AddValue(ConstStrings.STOP_TIME, STOP_TIME);
             stop.AddValue(ConstStrings.ANIMATION, values[ConstStrings.ANIMATION]);
 
-            var outSet = g.CreateNode("variable/set");
             var outGet = g.CreateNode("variable/get");
             var outVar = g.AddVariable("outFlowActivated", false);
             var outVarIndex = g.IndexOfVariable(outVar);
             var outBranch = g.CreateNode("flow/branch");
             var outFail = CreateFailSubGraph(g, "Out flow did not trigger during this test.");
+            var outSet = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
-            outSet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
             outGet.AddConfiguration(ConstStrings.VARIABLE, outVarIndex);
-            outSet.AddValue(ConstStrings.VALUE, true);
 
             outBranch.AddConnectedValue(ConstStrings.CONDITION, outGet);
             outBranch.AddFlow(complete, ConstStrings.TRUE);
