@@ -80,7 +80,22 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             QueueTest("math/abs", "Abs_Negative", "Absolute Negative", "Tests getting the absolute value of a negative number.", CreateSelfContainedTestGraph("math/abs", In(-2), Out(2), ComparisonType.Equals));
             QueueTest("math/abs", "Abs_Positive", "Absolute Positive", "Tests getting the absolute value of a positive number.", CreateSelfContainedTestGraph("math/abs", In(9), Out(9), ComparisonType.Equals));
 
-            TestNodeWithAllFloatNInputVariants("Abs", "Absolute", "Tests math/abs node with standard values.", "math/abs", new float4(-2f, 2f, -9.15f, 0f), new float4(2f, 2f, 9.15f, 0f));
+            var a = new float4x4(
+                new float4(-2f, 2f, -9.15f, 0f),
+                new float4(3.5f, -4f, 0f, -7.25f),
+                new float4(-1f, -8.2f, 6f, 2f),
+                new float4(0f, 9f, -5.5f, -3f)
+            );
+
+            var expected = new float4x4(
+                new float4(2f, 2f, 9.15f, 0f),
+                new float4(3.5f, 4f, 0f, 7.25f),
+                new float4(1f, 8.2f, 6f, 2f),
+                new float4(0f, 9f, 5.5f, 3f)
+            );
+
+
+            TestNodeWithAllFloatNxNInputVariants("Abs", "Absolute", "Tests math/abs node with standard values.", "math/abs", a, expected);
         }
 
         [Test]
@@ -94,36 +109,123 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             QueueTest("math/sign", "Sign_Int_Negative", "Int Negative", "Tests Sign/Int/Negative operation.", CreateSelfContainedTestGraph("math/sign", In(-12), Out(-1), ComparisonType.Equals));
             QueueTest("math/sign", "Sign_Int_Zero", "Int Zero", "Tests Sign/Int/Zero operation.", CreateSelfContainedTestGraph("math/sign", In(0), Out(0), ComparisonType.Equals));
 
-            TestNodeWithAllFloatNInputVariants("Sign", "Sign", "Tests math/sign node with standard values.", "math/sign", new float4(32.0f, -12.0f, 0.0f, 5.0f), new float4(1.0f, -1.0f, 0.0f, 1.0f));
+            var a = new float4x4(
+                new float4(-2f, 2f, -9.15f, 0f),
+                new float4(3.5f, -4f, 0f, -7.25f),
+                new float4(-1f, -8.2f, 6f, 2f),
+                new float4(0f, 9f, -5.5f, -3f)
+            );
+
+            var expected = new float4x4(
+                new float4(-1f, 1f, -1f, 0f),
+                new float4(1f, -1f, 0f, -1f),
+                new float4(-1f, -1f, 1f, 1f),
+                new float4(0f, 1f, -1f, -1f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Sign", "Sign", "Tests math/sign node with standard values.", "math/sign", a, expected);
         }
 
         [Test]
         public void TestFloor()
         {
-            TestNodeWithAllFloatNInputVariants("Floor", "Floor", "Tests math/floor node with standard values.", "math/floor", new float4(3.87f, 3.14f, -3.14f, -3.87f), new float4(3f, 3f, -4f, -4f));
+            var a = new float4x4(
+                new float4(3.87f, 3.14f, -3.14f, -3.87f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(3f, 3f, -4f, -4f),
+                new float4(3f, -5f, 0f, -8f),
+                new float4(-2f, -9f, 6f, 2f),
+                new float4(0f, 9f, -6f, -4f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Floor", "Floor", "Tests math/floor node with standard values.", "math/floor", a, expected);
         }
 
         [Test]
         public void TestTrunc()
         {
-            TestNodeWithAllFloatNInputVariants("Trunc", "Truncate", "Tests math/trunc node with standard values.", "math/trunc", new float4(3.87f, 3.14f, -3.14f, -3.87f), new float4(3f, 3f, -3f, -3f));
+            var a = new float4x4(
+                new float4(3.87f, 3.14f, -3.14f, -3.87f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(3f, 3f, -3f, -3f),
+                new float4(3f, -4f, 0f, -7f),
+                new float4(-1f, -8f, 6f, 2f),
+                new float4(0f, 9f, -5f, -3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Trunc", "Truncate", "Tests math/trunc node with standard values.", "math/trunc", a, expected);
         }
 
         [Test]
         public void TestCeil()
         {
-            TestNodeWithAllFloatNInputVariants("Ceil", "Ceiling", "Tests math/ceil node with standard values.", "math/ceil", new float4(3.87f, 3.14f, -3.14f, -3.87f), new float4(4f, 4f, -3f, -3f));
+            var a = new float4x4(
+                new float4(3.87f, 3.14f, -3.14f, -3.87f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(4f, 4f, -3f, -3f),
+                new float4(4f, -4f, 1f, -7f),
+                new float4(-1f, -8f, 7f, 2f),
+                new float4(0f, 10f, -5f, -3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Ceil", "Ceiling", "Tests math/ceil node with standard values.", "math/ceil", a, expected);
+        }
+
+        [Test]
+        public void TestRound()
+        {
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.5f),
+                new float4(3.5f, -4.8f, 0.1f, -7.5f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.5f, -5.5f, -3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(-2f, 3f, -9f, 0f),
+                new float4(4f, -5f, 0f, -8f),
+                new float4(-1f, -8f, 7f, 2f),
+                new float4(0f, 10f, -6f, -3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Round", "Rounding", "Tests math/round node with standard values.", "math/round", a, expected);
         }
 
         [Test]
         public void TestAdd()
         {
-            var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
-            var b = new float4(-34.0f, 22f, -11f, 70.0f);
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var b = new float4x4(
+                new float4(1.0f, -2.0f, 3.0f, 0.5f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, 5.5f, 3.3f)
+            );
 
             var expected = a + b;
 
-            TestNodeWithAllFloatNInputVariants("Add", "Add", "Tests math/add node with standard values.", "math/add", a, b, expected);
+            TestNodeWithAllFloatNxNInputVariants("Add", "Add", "Tests math/add node with standard values.", "math/add", a, b, expected);
             QueueTest("math/add", "Add_Positive", "Add Positive", "Tests adding with positive values.", CreateSelfContainedTestGraph("math/add", In(5, 15), Out(20), ComparisonType.Equals));
             QueueTest("math/add", "Add_Negative", "Add Negative", "Tests adding a negative value.", CreateSelfContainedTestGraph("math/add", In(5, -15), Out(-10), ComparisonType.Equals));
             QueueTest("math/add", "Add_ZeroOperand", "Add B Zero", "Tests adding 0.", CreateSelfContainedTestGraph("math/add", In(5, 0), Out(5), ComparisonType.Equals));
@@ -133,12 +235,23 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestSub()
         {
-            var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
-            var b = new float4(-34.0f, 22f, -11f, 70.0f);
+            var a = new float4x4(
+                new float4(34.0f, 41.0f, 30.0f, 70.0f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var b = new float4x4(
+                new float4(-34.0f, 22f, -11f, 70.0f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, 5.5f, 3.3f)
+            );
 
             var expected = a - b;
 
-            TestNodeWithAllFloatNInputVariants("Sub", "Subtract", "Tests math/sub node with standard values.", "math/sub", a, b, expected);
+            TestNodeWithAllFloatNxNInputVariants("Sub", "Subtract", "Tests math/sub node with standard values.", "math/sub", a, b, expected);
             QueueTest("math/sub", "Sub_Positive", "Subtract Positive", "Tests subtracting a positive number.", CreateSelfContainedTestGraph("math/sub", In(5, 15), Out(-10), ComparisonType.Equals));
             QueueTest("math/sub", "Sub_Negative", "Subtract Negative", "Tests subtracting a negative number.", CreateSelfContainedTestGraph("math/sub", In(5, -15), Out(20), ComparisonType.Equals));
             QueueTest("math/sub", "Sub_ZeroOperand", "Subtract B Zerio", "Tests subtracting 0.", CreateSelfContainedTestGraph("math/sub", In(5, 0), Out(5), ComparisonType.Equals));
@@ -148,12 +261,23 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestMul()
         {
-            var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
-            var b = new float4(-34.0f, 22f, -11f, 70.0f);
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var b = new float4x4(
+                new float4(1.0f, -2.0f, 3.0f, 0.5f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, 5.5f, 3.3f)
+            );
 
             var expected = a * b;
 
-            TestNodeWithAllFloatNInputVariants("Mul", "Multiply", "Tests math/mul node with standard values.", "math/mul", a, b, expected);
+            TestNodeWithAllFloatNxNInputVariants("Mul", "Multiply", "Tests math/mul node with standard values.", "math/mul", a, b, expected);
             QueueTest("math/mul", "Mul_Positive", "Multiply Positive", "Tests Mul/Positive operation.", CreateSelfContainedTestGraph("math/mul", In(1, 15), Out(15), ComparisonType.Equals));
             QueueTest("math/mul", "Mul_ZeroOperand_Negative", "Multiply 0 By A Number", "Multiplies zero by a number.", CreateSelfContainedTestGraph("math/mul", In(0, -15), Out(0), ComparisonType.Equals));
             QueueTest("math/mul", "Mul_ZeroOperand_Positive", "Multiply A Number By 0", "Multiplies a number by zero.", CreateSelfContainedTestGraph("math/mul", In(5, 0), Out(0), ComparisonType.Equals));
@@ -162,10 +286,21 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestDiv()
         {
-            var a = new float4(5f, 5f, 12.4f, -12.4f);
-            var b = new float4(1f, 12f, -55f, -12.4f);
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var b = new float4x4(
+                new float4(1.0f, -2.0f, 3.0f, 0.5f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.1f, -9.9f, 5.5f, 3.3f)
+            );
             var expected = a / b;
-            TestNodeWithAllFloatNInputVariants("Div", "Divide", "Tests math/div node with standard values.", "math/div", a, b, expected);
+            TestNodeWithAllFloatNxNInputVariants("Div", "Divide", "Tests math/div node with standard values.", "math/div", a, b, expected);
             QueueTest("math/div", "Div_ByZero", "Divide By Zero", "Divides a number by zero.", CreateSelfContainedTestGraph("math/div", In(5f, 0f), Out(float.PositiveInfinity), ComparisonType.IsInfinity));
             QueueTest("math/div", "Div_ByPositiveInfinity", "Divide By Infinity", "Divides a number by infinity.", CreateSelfContainedTestGraph("math/div", In(5f, float.PositiveInfinity), Out(0f), ComparisonType.Equals));
         }
@@ -173,13 +308,25 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestRem()
         {
-            var a = new float4(5f, 5f, 12.4f, -12.4f);
-            var b = new float4(1f, 12f, -55f, -12.4f);
+            var a = new float4x4(
+               new float4(5f, 5f, 12.4f, -12.4f),
+               new float4(3.5f, -4.8f, 0.1f, -7.25f),
+               new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+               new float4(0.0f, 9.9f, -5.5f, -3.3f)
+           );
+
+            var b = new float4x4(
+                new float4(1f, 12f, -55f, -12.4f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.1f, -9.9f, 5.5f, 3.3f)
+            );
+
             var expected = a % b;
 
             QueueTest("math/rem", "Rem_DivideByZero", "Remainder", "Tests that the remainder of a number divided by zero is NaN.", CreateSelfContainedTestGraph("math/rem", In(5.0f, 0.0f), Out(math.NAN), ComparisonType.IsNaN));
             QueueTest("math/rem", "Rem_DivideByInfinity", "Remainder", "Tests that the remainder of a number divided by infinity is the original number.", CreateSelfContainedTestGraph("math/rem", In(5.0f, float.PositiveInfinity), Out(5.0f), ComparisonType.Equals));
-            TestNodeWithAllFloatNInputVariants("Rem", "Remainder", "Tests math/rem node with standard values.", "math/rem", a, b, expected);
+            TestNodeWithAllFloatNxNInputVariants("Rem", "Remainder", "Tests math/rem node with standard values.", "math/rem", a, b, expected);
             QueueTest("math/rem", "Rem_Int_Positive", "Remainder Int Positive", "Tests the remainder operation with an integer.", CreateSelfContainedTestGraph("math/rem", In(5, 4), Out(1), ComparisonType.Equals));
             QueueTest("math/rem", "Rem_Int_Equal", "Remainder Int Equal", "Tests that the remainder of a number divided by itself is 0.", CreateSelfContainedTestGraph("math/rem", In(5, 5), Out(0), ComparisonType.Equals));
         }
@@ -187,7 +334,28 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestMin()
         {
-            TestNodeWithAllFloatNInputVariants("Min", "Minimum", "Tests math/min node with standard values.", "math/min", new float4(12.0f, 16.0f, -32.0f, 7.0f), new float4(3.0f, 0.0f, 14.0f, 14.0f), new float4(3.0f, 0.0f, -32.0f, 7.0f));
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var b = new float4x4(
+                new float4(1.0f, -2.0f, 3.0f, 0.5f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, 5.5f, 3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(-2.3f, -2.0f, -9.15f, 0.5f),
+                new float4(-1.5f, -4.8f, -0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, -5.5f, -3.3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Min", "Minimum", "Tests math/min node with standard values.", "math/min", a, b, expected);
 
             QueueTest("math/min", "Min_Int_Positive", "Minimum Integer", "Tests math/min with an integer.", CreateSelfContainedTestGraph("math/min", In(100, 10), Out(10), ComparisonType.Equals));
         }
@@ -195,7 +363,28 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestMax()
         {
-            TestNodeWithAllFloatNInputVariants("Max", "Maximum", "Tests math/max with standard values.", "math/max", new float4(12.0f, 16.0f, -32.0f, 7.0f), new float4(3.0f, 0.0f, 14.0f, 14.0f), new float4(12.0f, 16.0f, 14.0f, 14.0f));
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var b = new float4x4(
+                new float4(1.0f, -2.0f, 3.0f, 0.5f),
+                new float4(-1.5f, 4.2f, -0.1f, 7.25f),
+                new float4(1.1f, 0.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, 5.5f, 3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(1.0f, 2.7f, 3.0f, 0.9f),
+                new float4(3.5f, 4.2f, 0.1f, 7.25f),
+                new float4(1.1f, 0.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, 5.5f, 3.3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Max", "Maximum", "Tests math/max with standard values.", "math/max", a, b, expected);
 
             QueueTest("math/max", "Max_Int_Positive", "Maximum", "Tests math/max with an integer", CreateSelfContainedTestGraph("math/max", In(100, 10), Out(100), ComparisonType.Equals));
         }
@@ -203,26 +392,89 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestClamp()
         {
-            var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
-            var b = new float4(30.0f, 40.0f, 50.0f, 60.0f);
-            var c = new float4(92.0f, 43.0f, 59.0f, 90.0f);
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
 
-            var expected = math.clamp(a, b, c);
+            var b = new float4x4(
+                new float4(-1f, 0f, -5f, 0f),
+                new float4(0f, -3f, 0f, -5f),
+                new float4(-2f, -10f, 1f, 1f),
+                new float4(0f, 5f, -6f, -4f)
+            );
 
-            TestNodeWithAllFloatNInputVariants("Clamp", "Clamp Values", "Tests math/clamp with standard values.", "math/clamp", a, b, c, expected);
+            var c = new float4x4(
+                new float4(1f, 3f, 0f, 1f),
+                new float4(4f, 0f, 1f, 0f),
+                new float4(0f, -5f, 7f, 3f),
+                new float4(0f, 10f, -1f, 0f)
+            );
+
+            var expected = new float4x4(
+                new float4(-1f, 2.7f, -5f, 0.9f),
+                new float4(3.5f, -3f, 0.1f, -5f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Clamp", "Clamp Values", "Tests math/clamp with standard values.", "math/clamp", a, b, c, expected);
         }
 
         [Test]
         public void TestSaturate()
         {
-            var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
-            TestNodeWithAllFloatNInputVariants("Saturate", "Saturate", "Tests math/saturate with standard values.", "math/saturate", a, math.saturate(a));
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -0.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, 0.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(0f, 1f, 0f, 0.9f),
+                new float4(1f, 0f, 0.1f, 0f),
+                new float4(0f, 0.2f, 1f, 1f),
+                new float4(0f, 1f, 0f, 0f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Saturate", "Saturate", "Tests math/saturate with standard values.", "math/saturate", a, expected);
         }
 
         [Test]
         public void TestMix()
         {
-            TestNodeWithAllFloatNInputVariants("Mix", "Mix", "Tests math/mix with standard values.", "math/mix", new float4(1.0f, 2.0f, 3.0f, 4.0f), new float4(9.0f, 10.0f, 11.0f, 12.0f), new float4(1.0f, 0.25f, 0.5f, 0.0f), new float4(9.0f, 4.0f, 7.0f, 4.0f));
+            var a = new float4x4(
+                new float4(-2.0f, 2.0f, -9.0f, 0.0f),
+                new float4(3.0f, -4.0f, 0.0f, -7.0f),
+                new float4(-1.0f, -8.0f, 6.0f, 2.0f),
+                new float4(0.0f, 9.0f, -5.0f, -3.0f)
+            );
+
+            var b = new float4x4(
+                new float4(2.0f, -2.0f, 9.0f, 1.0f),
+                new float4(-3.0f, 4.0f, 0.0f, 7.0f),
+                new float4(1.0f, 8.0f, -6.0f, -2.0f),
+                new float4(0.0f, -9.0f, 5.0f, 3.0f)
+            );
+
+            var c = new float4x4(
+                new float4(0.0f, 0.5f, 2.0f, 1.0f),
+                new float4(0.5f, 0.0f, 0.5f, 0.25f),
+                new float4(0.75f, 0.25f, 0.5f, 0.0f),
+                new float4(0.0f, 1.0f, 0.5f, 0.75f)
+            );
+
+            var expected = new float4x4(
+                new float4(-2.0f, 0.0f, 27.0f, 1.0f),
+                new float4(0.0f, -4.0f, 0.0f, -3.5f),
+                new float4(0.5f, -4.0f, 0.0f, 2.0f),
+                new float4(0.0f, -9.0f, 0.0f, 1.5f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Mix", "Mix", "Tests math/mix with standard values.", "math/mix", a, b, c, expected);
         }
 
         [Test]
@@ -966,14 +1218,41 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestFract()
         {
+            var a = new float4x4(
+               new float4(15.4f, -10.1f, 12.39f, -32.33f),
+               new float4(3.5f, -4.8f, 0.1f, -7.25f),
+               new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+               new float4(0.0f, 9.9f, -5.5f, -3.3f)
+           );
 
-            TestNodeWithAllFloatNInputVariants("Fract", "Fract", "Tests math/fract with standard values.", "math/fract", new float4(15.4f, -10.1f, 12.39f, -32.33f), new float4(0.4f, 0.9f, 0.39f, 0.67f));
+            var expected = new float4x4(
+                new float4(0.4f, 0.9f, 0.39f, 0.67f),
+                new float4(0.5f, 0.2f, 0.1f, 0.75f),
+                new float4(0.9f, 0.8f, 0.99f, 0.0f),
+                new float4(0.0f, 0.9f, 0.5f, 0.7f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Fract", "Fract", "Tests math/fract with standard values.", "math/fract", a, expected);
         }
 
         [Test]
         public void TestNeg()
         {
-            TestNodeWithAllFloatNInputVariants("Neg", "Neg", "Tests math/neg with standard values.", "math/neg", new float4(15.4f, -10.1f, 12.39f, -32.33f), new float4(-15.4f, 10.1f, -12.39f, 32.33f));
+            var a = new float4x4(
+                new float4(-2.3f, 2.7f, -9.15f, 0.9f),
+                new float4(3.5f, -4.8f, 0.1f, -7.25f),
+                new float4(-1.1f, -8.2f, 6.99f, 2.0f),
+                new float4(0.0f, 9.9f, -5.5f, -3.3f)
+            );
+
+            var expected = new float4x4(
+                new float4(2.3f, -2.7f, 9.15f, -0.9f),
+                new float4(-3.5f, 4.8f, -0.1f, 7.25f),
+                new float4(1.1f, 8.2f, -6.99f, -2.0f),
+                new float4(0.0f, -9.9f, 5.5f, 3.3f)
+            );
+
+            TestNodeWithAllFloatNxNInputVariants("Neg", "Neg", "Tests math/neg with standard values.", "math/neg", a, expected);
         }
 
         [Test]
@@ -1286,7 +1565,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = NaN", "Tests matDecompose with a NaN z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_z, false));
 
             var invalid_scaled_det = new float4x4(new float4(3f, 5f, 1f, 0f), new float4(2f, 3f, 11f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Invalid_Scaled_Det", "MatDecompose Invalid Scaled Determinant", "Tests matDecompose with an invalid TRS that fails the scaled determinant portion of the test.", 
+            QueueTest("math/matDecompose", "MatDecompose_Invalid_Scaled_Det", "MatDecompose Invalid Scaled Determinant", "Tests matDecompose with an invalid TRS that fails the scaled determinant portion of the test.",
                 MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_scaled_det, false));
         }
 
