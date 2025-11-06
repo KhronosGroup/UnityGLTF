@@ -410,11 +410,11 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueC = "c";
     }
     
@@ -425,11 +425,11 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueC = "c";
     }
     
@@ -453,9 +453,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
     
@@ -466,9 +466,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
     
@@ -479,9 +479,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
     
@@ -492,10 +492,10 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, 
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, 
             GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float2x2, GltfTypes.Float3x3, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, 
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, 
             GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float2x2, GltfTypes.Float3x3, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
@@ -521,9 +521,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
     
@@ -534,9 +534,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
     
@@ -570,12 +570,12 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/and";
 
-        [OutputSocketDescription(GltfTypes.Bool)]
+        [OutputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdOut = "value";
         
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdValueA = "a";
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdValueB = "b";
     }
     
@@ -583,12 +583,12 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/or";
 
-        [OutputSocketDescription(GltfTypes.Bool)]
+        [OutputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdOut = "value";
         
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdValueA = "a";
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdValueB = "b";
     }
     
@@ -596,12 +596,12 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/xor";
 
-        [OutputSocketDescription(GltfTypes.Bool)]
+        [OutputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdOut = "value";
         
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdValueA = "a";
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdValueB = "b";
     }
     
@@ -609,10 +609,37 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/not";
 
-        [OutputSocketDescription(GltfTypes.Bool)]
+        [OutputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
         public const string IdOut = "value";
         
-        [InputSocketDescription(GltfTypes.Bool)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Int)]
+        public const string IdValueA = "a";
+    }
+    
+    public abstract class AbstractSameOneInOneOutNodeWithMatrixTypes : GltfInteractivityNodeSchema
+    {
+        [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
+        public const string IdOut = "value";
+        
+        [InputSocketDescription(GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
+        public const string IdValueA = "a";
+    }
+    
+    public abstract class AbstractSameOneInOneOutNodeWithMatrixAndIntTypes : GltfInteractivityNodeSchema
+    {
+        [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
+        public const string IdOut = "value";
+        
+        [InputSocketDescription(GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
+        public const string IdValueA = "a";
+    }
+    
+    public abstract class AbstractSameOneInOneOutNodeWithInt : GltfInteractivityNodeSchema
+    {
+        [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
+        public const string IdOut = "value";
+        
+        [InputSocketDescription(GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
         public const string IdValueA = "a";
     }
     
@@ -675,17 +702,17 @@ namespace UnityGLTF.Interactivity.Schema
         public override string Op { get; set; } = "math/sqrt";
     }
     
-    public class Math_SignNode : AbstractSameOneInOneOutNode
+    public class Math_SignNode : AbstractSameOneInOneOutNodeWithInt
     {
         public override string Op { get; set; } = "math/sign";
     }
     
-    public class Math_SaturateNode : AbstractSameOneInOneOutNode
+    public class Math_SaturateNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/saturate";
     }
     
-    public class Math_AbsNode : AbstractSameOneInOneOutNode
+    public class Math_AbsNode : AbstractSameOneInOneOutNodeWithMatrixAndIntTypes
     {
         public override string Op { get; set; } = "math/abs";
     }
@@ -712,17 +739,17 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdValueA = "a";
     }
     
-    public class Math_TruncNode : AbstractSameOneInOneOutNode
+    public class Math_TruncNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/trunc";
     }
 
-    public class Math_FractNode : AbstractSameOneInOneOutNode
+    public class Math_FractNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/fract";
     }
     
-    public class Math_NegNode : AbstractSameOneInOneOutNode
+    public class Math_NegNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/neg";
     }
@@ -824,15 +851,9 @@ namespace UnityGLTF.Interactivity.Schema
     }
 
 
-    public class Math_CeilNode : GltfInteractivityNodeSchema
+    public class Math_CeilNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/ceil";
-        
-        [InputSocketDescription(GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3)]
-        public const string IdInputA = "a";
-        
-        [OutputSocketDescriptionWithTypeDependencyFromInput(IdInputA)]
-        public const string IdValueResult = "value";
     }
 
     public class Math_EqNode : GltfInteractivityNodeSchema
@@ -854,15 +875,9 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdValueB = "b";
     }
 
-    public class Math_FloorNode : GltfInteractivityNodeSchema
+    public class Math_FloorNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/floor";
-
-        [InputSocketDescription(GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3)]
-        public const string IdInputA = "a";
-        
-        [OutputSocketDescriptionWithTypeDependencyFromInput(IdInputA)]
-        public const string IdValueResult = "value";
     }
 
     public class Math_AddNode : GltfInteractivityNodeSchema
@@ -872,9 +887,9 @@ namespace UnityGLTF.Interactivity.Schema
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
         public const string IdOut = "value";
         
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueB, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueA = "a";
-        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort(IdValueA, GltfTypes.Int, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Float4x4)]
         public const string IdValueB = "b";
     }
 
@@ -976,14 +991,9 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOutputResult = "value";
     }
     
-    public class Math_RoundNode : GltfInteractivityNodeSchema
+    public class Math_RoundNode : AbstractSameOneInOneOutNodeWithMatrixTypes
     {
         public override string Op { get; set; } = "math/round";
-
-        [InputSocketDescription(GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)]
-        public const string IdInputA = "a";
-        [OutputSocketDescriptionWithTypeDependencyFromInput(IdInputA)]
-        public const string IdValueResult = "value";
     }
     
     public class Math_SelectNode : GltfInteractivityNodeSchema

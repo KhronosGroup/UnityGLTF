@@ -25,12 +25,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             var floatToIntNode = unitExporter.CreateNode<Type_FloatToIntNode>();
 
-            ceilNode.ValueIn(Math_CeilNode.IdInputA).MapToInputPort(unit.valueInputs[0]);
+            ceilNode.ValueIn(Math_CeilNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
 
             floatToIntNode.ValueIn(Type_FloatToIntNode.IdInputA)
-                .ConnectToSource(ceilNode.ValueOut(Math_CeilNode.IdValueResult));
+                .ConnectToSource(ceilNode.ValueOut(Math_CeilNode.IdOut));
             
-            floatToIntNode.ValueOut(Math_CeilNode.IdValueResult).MapToPort(unit.result);
+            floatToIntNode.ValueOut(Math_CeilNode.IdOut).MapToPort(unit.result);
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
