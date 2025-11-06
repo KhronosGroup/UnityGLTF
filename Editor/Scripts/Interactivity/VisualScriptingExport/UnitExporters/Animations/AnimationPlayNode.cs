@@ -75,8 +75,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = 1f;
             node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
-            node.ValueInConnection[Animation_StartNode.IdValueEndtime].Value =
-                (clip != null && !clip.isLooping) ? clip.length : float.PositiveInfinity;
+            if (clip != null && !clip.isLooping)
+            {
+                var animationLength = AnimationHelper.GetAnimationLength(unitExporter, animationId);
+                node.ValueIn(Animation_StartNode.IdValueEndtime).ConnectToSource(animationLength);
+
+            }
+            else
+                node.ValueIn(Animation_StartNode.IdValueEndtime).SetValue(float.PositiveInfinity);
             
             unitExporter.MapInputPortToSocketName(unit.enter, Animation_StartNode.IdFlowIn, node);
             // There should only be one output flow from the Animator.Play node
