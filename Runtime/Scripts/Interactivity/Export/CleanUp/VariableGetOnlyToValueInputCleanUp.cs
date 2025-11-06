@@ -19,11 +19,9 @@ namespace UnityGLTF.Interactivity.Export
         public void OnCleanUp(CleanUpTask task)
         {
             var varGetNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_GetNode);
-            var varSetNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_SetNode);
-            var varSetMultiNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_SetMultipleNode);
+            var varSetMultiNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_SetNode);
             var varSetIntNodes = task.context.Nodes.FindAll(node => node.Schema is Variable_InterpolateNode);
 
-            var varSetAndIntNodes = varSetNodes.Concat(varSetIntNodes);
             
             var varIdsToRemove = new HashSet<int>();
             var varGetNodesToRemove = new List<GltfInteractivityExportNode>();
@@ -34,13 +32,13 @@ namespace UnityGLTF.Interactivity.Export
 
                 var isInMulti = varSetMultiNodes.Any(n =>
                 {
-                    var arr = n.Configuration[Variable_SetMultipleNode.IdConfigVarIndices].Value as int[];
+                    var arr = n.Configuration[Variable_SetNode.IdConfigVarIndices].Value as int[];
                     return arr.Contains(varId);
                 });
                 if (isInMulti)
                     continue;
                 
-                if (!varSetAndIntNodes.Any(n => n.Configuration[Variable_SetNode.IdConfigVarIndex].Value.Equals(varId)))
+                if (!varSetIntNodes.Any(n => n.Configuration[Variable_InterpolateNode.IdConfigVariable].Value.Equals(varId)))
                     varIdsToRemove.Add(varId);
             }
 

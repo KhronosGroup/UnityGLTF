@@ -11,6 +11,7 @@ namespace UnityGLTF.Interactivity.Export
             var varType = exporter.Context.variables[id].Type;
             node.OutputValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(varType);
             node.Configuration["variable"].Value = id;
+            
             value = node.FirstValueOut();
             return node;
         }
@@ -18,8 +19,8 @@ namespace UnityGLTF.Interactivity.Export
         public static GltfInteractivityExportNode SetVariable(INodeExporter exporter, int id)
         {
             var node = exporter.CreateNode<Variable_SetNode>();
-            node.Configuration["variable"].Value = id;
-            node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(exporter.Context.variables[id].Type));
+            node.Configuration[Variable_SetNode.IdConfigVarIndices].Value = new int[] {id};
+            node.ValueIn("0").SetType(TypeRestriction.LimitToType(exporter.Context.variables[id].Type));
             return node;
         }
 
@@ -30,9 +31,10 @@ namespace UnityGLTF.Interactivity.Export
             var variableType = exporter.Context.variables[id].Type;
             flowIn = node.FlowIn(Variable_SetNode.IdFlowIn);
             flowOut = node.FlowOut(Variable_SetNode.IdFlowOut);
-            node.ValueIn(Variable_SetNode.IdInputValue).SetValue(value).SetType(TypeRestriction.LimitToType(variableType));
 
-            node.Configuration["variable"].Value = id;
+            node.Configuration[Variable_SetNode.IdConfigVarIndices].Value = new int[] {id};
+
+            node.ValueIn("0").SetValue(value).SetType(TypeRestriction.LimitToType(variableType));
             return node;
         }
 
@@ -55,9 +57,10 @@ namespace UnityGLTF.Interactivity.Export
             var variableType = exporter.Context.variables[id].Type;
             flowIn = node.FlowIn(Variable_SetNode.IdFlowIn);
             flowOut = node.FlowOut(Variable_SetNode.IdFlowOut);
-
-            value = node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(variableType));
-            node.Configuration["variable"].Value = id;
+            
+            value = node.ValueIn("0").SetType(TypeRestriction.LimitToType(variableType));
+            
+            node.Configuration[Variable_SetNode.IdConfigVarIndices].Value = new int[] {id};
             
             return node;
         }

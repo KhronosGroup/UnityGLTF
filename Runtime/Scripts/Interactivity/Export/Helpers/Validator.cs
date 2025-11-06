@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
@@ -69,14 +70,29 @@ namespace UnityGLTF.Interactivity.Export
                     }
                 }
                 
-                if (node.Schema.Op == "variable/set" || node.Schema.Op == "variable/get")
+                if (node.Schema.Op == "variable/get")
                 {
-                    if (node.Configuration.TryGetValue(Variable_SetNode.IdConfigVarIndex, out var varConfig))
+                    if (node.Configuration.TryGetValue(Variable_GetNode.IdConfigVarIndex, out var varConfig))
                     {
                         if (varConfig.Value == null)
-                            NodeAppendLine(node, $"Variable Node has no Variable Index");
+                            NodeAppendLine(node, $"Variable Get Node has no Variable Index");
                         if (varConfig.Value != null && (int)varConfig.Value == -1)
-                            NodeAppendLine(node, $"Variable Node has invalid Variable Index: -1");
+                            NodeAppendLine(node, $"Variable Get Node has invalid Variable Index: -1");
+                    }
+                }
+                
+                if (node.Schema.Op == "variable/set")
+                {
+                    if (node.Configuration.TryGetValue(Variable_SetNode.IdConfigVarIndices, out var varConfig))
+                    {
+                        if (varConfig.Value == null)
+                            NodeAppendLine(node, $"Variable Set Node has no Variable Index");
+                        else
+                        if (varConfig.Value != null && !(varConfig.Value is int[]))
+                            NodeAppendLine(node, $"Variable Set Node has invalid config value type. Should be a int[]. Current Type: {varConfig.Value.GetType().Name}");
+                        else
+                        if (varConfig.Value != null && (varConfig.Value as int[]).Contains(-1))
+                            NodeAppendLine(node, $"Variable Set Node contains invalid Variable Index: -1");
                     }
                 }
 

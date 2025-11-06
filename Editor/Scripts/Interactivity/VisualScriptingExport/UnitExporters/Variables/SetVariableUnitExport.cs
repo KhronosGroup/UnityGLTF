@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -20,19 +21,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var unit = unitExporter.unit as SetVariable;
             
-            var node = unitExporter.CreateNode<Variable_SetNode>();
             
             var variableIndex = unitExporter.vsExportContext.AddVariableIfNeeded(unit);
+            var node = VariablesHelpers.SetVariable(unitExporter, variableIndex, out var valueSocket, out var flowIn, out var flowOut);
 
             var variableType = unitExporter.vsExportContext.variables[variableIndex].Type;
             unitExporter.MapOutFlowConnectionWhenValid(unit.assigned, Variable_SetNode.IdFlowOut, node);
             
             node.Configuration["variable"].Value = variableIndex;
-            
-            unitExporter.MapInputPortToSocketName(unit.input, Variable_SetNode.IdInputValue, node);
-            unitExporter.MapInputPortToSocketName(unit.assign, Variable_SetNode.IdFlowIn, node);
 
-            node.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(variableType));
+            valueSocket.MapToInputPort(unit.input);
+            flowIn.MapToControlInput(unit.assign);
+
             bool inputIsLiteral = !unit.input.hasDefaultValue && unit.input.hasValidConnection &&
                                   (unit.input.connections.First().source.unit is Literal 
                                   || unit.input.connections.First().source.unit is Null);
@@ -45,7 +45,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 var getVarNode = unitExporter.CreateNode<Variable_GetNode>();
                 
-                getVarNode.Configuration["variable"].Value = variableIndex;
+                getVarNode.Configuration[Variable_GetNode.IdConfigVarIndex].Value = variableIndex;
                 unitExporter.MapValueOutportToSocketName(unit.output, Variable_GetNode.IdOutputValue, getVarNode);
 
                 getVarNode.OutputValueSocket[Variable_GetNode.IdOutputValue].expectedType = ExpectedType.GtlfType(variableType);

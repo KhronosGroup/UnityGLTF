@@ -21,7 +21,7 @@ namespace UnityGLTF.Interactivity.Export
             var startSequ = exporter.CreateNode<Flow_SequenceNode>();
             flowIn = startSequ.FlowIn(Flow_SequenceNode.IdFlowIn);
 
-            var setStartIndexVar = VariablesHelpers.SetVariable(exporter, indexVar);
+            var setStartIndexVar = VariablesHelpers.SetVariable(exporter, indexVar, out startIndex, out _, out _);
             var branch = exporter.CreateNode<Flow_BranchNode>();
 
             startSequ.FlowOut("1").ConnectToFlowDestination(setStartIndexVar.FlowIn(Variable_SetNode.IdFlowIn));
@@ -30,8 +30,6 @@ namespace UnityGLTF.Interactivity.Export
             completed = branch.FlowOut(Flow_BranchNode.IdFlowOutFalse);
             loopBodyOut = branch.FlowOut(Flow_BranchNode.IdFlowOutTrue);
 
-
-            startIndex = setStartIndexVar.ValueIn(Variable_SetNode.IdInputValue);
 
             var ascendingCondition = exporter.CreateNode<Math_LeNode>();
             startIndex = startIndex.Link(ascendingCondition.ValueIn("a"));
@@ -45,8 +43,8 @@ namespace UnityGLTF.Interactivity.Export
             step = addNode.ValueIn("b").SetType(TypeRestriction.LimitToInt);
             addNode.FirstValueOut().ExpectedType(ExpectedType.Int);
 
-            var setCurrentIndexVar = VariablesHelpers.SetVariable(exporter, indexVar);
-            setCurrentIndexVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(addNode.FirstValueOut());
+            var setCurrentIndexVar = VariablesHelpers.SetVariable(exporter, indexVar, out var setCurrentIndexVarSocket, out _, out _);
+            setCurrentIndexVarSocket.ConnectToSource(addNode.FirstValueOut());
 
             var sequence = exporter.CreateNode<Flow_SequenceNode>();
 
@@ -83,14 +81,12 @@ namespace UnityGLTF.Interactivity.Export
                 "ForLoopIndex" + System.Guid.NewGuid().ToString(), 0, GltfTypes.Int);
 
             var whileNode = exporter.CreateNode<Flow_WhileNode>();
-            var setStartIndexVar = VariablesHelpers.SetVariable(exporter, indexVar);
+            var setStartIndexVar = VariablesHelpers.SetVariable(exporter, indexVar, out startIndex, out _, out _);
 
             flowIn = setStartIndexVar.FlowIn(Variable_SetNode.IdFlowIn);
             setStartIndexVar.FlowOut(Variable_SetNode.IdFlowOut)
                 .ConnectToFlowDestination(whileNode.FlowIn(Flow_WhileNode.IdFlowIn));
             completed = whileNode.FlowOut(Flow_WhileNode.IdCompleted);
-
-            startIndex = setStartIndexVar.ValueIn(Variable_SetNode.IdInputValue);
 
             var ascendingCondition = exporter.CreateNode<Math_LeNode>();
             startIndex = startIndex.Link(ascendingCondition.ValueIn("a"));
@@ -104,8 +100,8 @@ namespace UnityGLTF.Interactivity.Export
             step = addNode.ValueIn("b").SetType(TypeRestriction.LimitToInt);
             addNode.FirstValueOut().ExpectedType(ExpectedType.Int);
 
-            var setCurrentIndexVar = VariablesHelpers.SetVariable(exporter, indexVar);
-            setCurrentIndexVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(addNode.FirstValueOut());
+            var setCurrentIndexVar = VariablesHelpers.SetVariable(exporter, indexVar, out var setCurrentIndexVarSocket, out _, out _);
+            setCurrentIndexVarSocket.ConnectToSource(addNode.FirstValueOut());
 
             var sequence = exporter.CreateNode<Flow_SequenceNode>();
             whileNode.FlowOut(Flow_WhileNode.IdLoopBody)
@@ -136,8 +132,6 @@ namespace UnityGLTF.Interactivity.Export
             bool waitForTrue,
             out FlowOutRef flowOutWhenDone)
         {
-            var setVarStart = exporter.CreateNode<Variable_SetNode>();
-            var setVarFinish = exporter.CreateNode<Variable_SetNode>();
             var getVar = exporter.CreateNode<Variable_GetNode>();
             var varId = exporter.Context.AddVariableWithIdIfNeeded("waitWhile" + System.Guid.NewGuid(), false,
                 GltfTypes.Bool);
@@ -145,12 +139,13 @@ namespace UnityGLTF.Interactivity.Export
             var branch = exporter.CreateNode<Flow_BranchNode>();
             var waitingBranch = exporter.CreateNode<Flow_BranchNode>();
 
-            setVarStart.Configuration[Variable_SetNode.IdConfigVarIndex].Value = varId;
-            setVarFinish.Configuration[Variable_SetNode.IdConfigVarIndex].Value = varId;
-            setVarFinish.ValueIn(Variable_SetNode.IdInputValue).SetValue(false);
-            setVarStart.ValueIn(Variable_SetNode.IdInputValue).SetValue(true);
+            var setVarStart =  VariablesHelpers.SetVariable(exporter, varId, out var setVarStartSocket, out _, out _);
+            setVarStartSocket.SetValue(true);
+            
+            var setVarFinish =  VariablesHelpers.SetVariable(exporter, varId, out var setVarFinishSocket, out _, out _);
+            setVarFinishSocket.SetValue(false);
 
-            getVar.Configuration[Variable_SetNode.IdConfigVarIndex].Value = varId;
+            getVar.Configuration[Variable_GetNode.IdConfigVarIndex].Value = varId;
 
             flowIn = setVarStart.FlowIn(Variable_SetNode.IdFlowIn);
             setVarStart.FlowOut(Variable_SetNode.IdFlowOut)

@@ -41,9 +41,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             for (int i = 0; i < unit.branchCount; i++)
             {
-                var setVar = VariablesHelpersVS.SetVariable(unitExporter, varIndex, unit.valueInputs[i], unit.controlInputs[i], unit.exit);
+                var setVar = VariablesHelpers.SetVariable(unitExporter, varIndex, out var setVarSocket, out var setVarFlowIn, out var setVarFlowOut);
                 setVarNodes.Add(setVar);
-                setVar.ValueIn(Variable_SetNode.IdInputValue).socket.Value.Type = -1;
+                setVarFlowIn.MapToControlInput(unit.controlInputs[i]);
+                setVarFlowOut.MapToControlOutput(unit.exit);
+                setVarSocket.MapToInputPort(unit.valueInputs[i]);
+                setVarSocket.socket.Value.Type = -1;
             }
 
             void PostTypeResolving(bool lastTry = false)
@@ -51,7 +54,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 int typeIndex = -1;
                 foreach (var setVarNode in setVarNodes)
                 {
-                    typeIndex = unitExporter.vsExportContext.GetValueTypeForInput(setVarNode, Variable_SetNode.IdInputValue);
+                    typeIndex = unitExporter.vsExportContext.GetValueTypeForInput(setVarNode, setVarNode.FirstValueIn().socket.Key);
                     if (typeIndex != -1)
                         break;
                 }
@@ -69,7 +72,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 getVar.ValueOut(Variable_GetNode.IdOutputValue).ExpectedType(ExpectedType.GtlfType(typeIndex));
                 foreach (var n in setVarNodes)
                 {
-                    n.ValueIn(Variable_SetNode.IdInputValue).SetType(TypeRestriction.LimitToType(typeIndex));
+                    n.FirstValueIn().SetType(TypeRestriction.LimitToType(typeIndex));
                 }
             }
             

@@ -1,6 +1,7 @@
 using System;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -37,22 +38,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // Once.After flow to Branch when true
             branch.FlowOut(Flow_BranchNode.IdFlowOutTrue).MapToControlOutput(once.after);
 
-            var setVar = unitExporter.CreateNode<Variable_SetNode>();
-
-            setVar.Configuration["variable"].Value = varIndex;
-            setVar.ValueInConnection[Variable_SetNode.IdInputValue].Value = true;
+            var setVar = VariablesHelpers.SetVariable(unitExporter, varIndex, out var setVarSocket, out var setVarFlowIn, out var setVarFlowOut);
+            setVarSocket.SetValue(true);
             // Set OnceVariable to true when Branch is false 
-            branch.FlowOut(Flow_BranchNode.IdFlowOutFalse).ConnectToFlowDestination(setVar.FlowIn(Variable_SetNode.IdFlowIn));
+            branch.FlowOut(Flow_BranchNode.IdFlowOutFalse).ConnectToFlowDestination(setVarFlowIn);
             // Map once.once out flow to SetVariable outflow
-            setVar.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(once.once);
+            setVarFlowOut.MapToControlOutput(once.once);
             
             if (once.reset.hasAnyConnection)
             {
-                var resetVar = unitExporter.CreateNode<Variable_SetNode>();
-                
-                resetVar.Configuration["variable"].Value = varIndex;
-                resetVar.ValueInConnection[Variable_SetNode.IdInputValue].Value = false;
-                resetVar.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(once.reset);
+                var resetVar = VariablesHelpers.SetVariable(unitExporter, varIndex, out var setVarResetSocket, out var setVarResetFlowIn, out var setVarResetFlowOut);
+                setVarResetSocket.SetValue(false);
+                setVarResetFlowIn.MapToControlInput(once.reset);
             }
             return true;
         }
