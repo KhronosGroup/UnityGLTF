@@ -20,7 +20,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var node = exporter.CreateNode<Variable_SetNode>();
             node.Configuration[Variable_SetNode.IdConfigVarIndices].Value = new int[] {id};
-            node.ValueIn("0").SetType(TypeRestriction.LimitToType(exporter.Context.variables[id].Type));
+            node.ValueIn(id.ToString()).SetType(TypeRestriction.LimitToType(exporter.Context.variables[id].Type));
             return node;
         }
 
@@ -34,7 +34,7 @@ namespace UnityGLTF.Interactivity.Export
 
             node.Configuration[Variable_SetNode.IdConfigVarIndices].Value = new int[] {id};
 
-            node.ValueIn("0").SetValue(value).SetType(TypeRestriction.LimitToType(variableType));
+            node.ValueIn(id.ToString()).SetValue(value).SetType(TypeRestriction.LimitToType(variableType));
             return node;
         }
 
@@ -58,7 +58,7 @@ namespace UnityGLTF.Interactivity.Export
             flowIn = node.FlowIn(Variable_SetNode.IdFlowIn);
             flowOut = node.FlowOut(Variable_SetNode.IdFlowOut);
             
-            value = node.ValueIn("0").SetType(TypeRestriction.LimitToType(variableType));
+            value = node.ValueIn(id.ToString()).SetType(TypeRestriction.LimitToType(variableType));
             
             node.Configuration[Variable_SetNode.IdConfigVarIndices].Value = new int[] {id};
             
