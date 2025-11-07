@@ -28,15 +28,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var variableType = unitExporter.vsExportContext.variables[variableIndex].Type;
             unitExporter.MapOutFlowConnectionWhenValid(unit.assigned, Variable_SetNode.IdFlowOut, node);
             
-            node.Configuration["variable"].Value = variableIndex;
-
             valueSocket.MapToInputPort(unit.input);
             flowIn.MapToControlInput(unit.assign);
 
             bool inputIsLiteral = !unit.input.hasDefaultValue && unit.input.hasValidConnection &&
                                   (unit.input.connections.First().source.unit is Literal 
                                   || unit.input.connections.First().source.unit is Null);
-                 
             
             if ( (inputIsLiteral || (unit.input.hasDefaultValue  && !unit.input.hasValidConnection && !unit.input.hasAnyConnection)) && unit.output.hasValidConnection)
             {
