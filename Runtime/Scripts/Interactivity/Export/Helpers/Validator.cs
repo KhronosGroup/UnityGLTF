@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions; // added for placeholder parsing
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
@@ -55,6 +56,44 @@ namespace UnityGLTF.Interactivity.Export
                     if (flowSocket.Value.Node == -1)
                     {
                         NodeAppendLine(node, $"Flow Socket <{flowSocket.Key}> has invalid Node Index (-1)");
+                    }
+                }
+
+                if (node.Schema.Op == "debug/log")
+                {
+                    if (node.Configuration.ContainsKey(Debug_LogNode.IdConfigMessage))
+                    {
+                        if (node.Configuration[Debug_LogNode.IdConfigMessage].Value == null)
+                            NodeAppendLine(node, $"Debug Log Node has no Message");
+                        else
+                        {
+                            var templateStr = node.Configuration[Debug_LogNode.IdConfigMessage].Value;
+                            // Extract placeholders in the form {placeholder} from the template string and validate they exist as value socket keys
+                            if (templateStr is string template)
+                            {
+                                var matches = Regex.Matches(template, @"\{([^{}]+)\}");
+                                foreach (Match m in matches)
+                                {
+                                    var placeholder = m.Groups[1].Value.Trim();
+                                    if (string.IsNullOrEmpty(placeholder))
+                                        continue; // ignore empty braces
+                                    if (!node.ValueInConnection.ContainsKey(placeholder))
+                                    {
+                                        NodeAppendLine(node, $"Debug Log template placeholder '{{{placeholder}}}' has no matching ValueIn socket");
+                                    }
+                                    else
+                                    {
+                                        var socket = node.ValueInConnection[placeholder];
+                                        if (socket.Node == null && socket.Value == null)
+                                            NodeAppendLine(node, $"Debug Log template placeholder '{{{placeholder}}}' socket has neither connection nor default value");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                NodeAppendLine(node, $"Debug Log Node Message config is not a string (Type={templateStr.GetType().Name})");
+                            }
+                        }
                     }
                 }
 
