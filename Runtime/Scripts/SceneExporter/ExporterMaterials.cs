@@ -141,9 +141,8 @@ namespace UnityGLTF
 					break;
 			}
 
-			material.DoubleSided = (materialObj.HasProperty("_Cull") && materialObj.GetInt("_Cull") == (int)CullMode.Off) ||
-			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off) ||
-			                       (materialObj.shader.name.EndsWith("-Double")); // workaround for exporting shaders that are set to double-sided on 2020.3
+			var baseMap = new PBRGraphMap(materialObj);
+			material.DoubleSided =  baseMap.DoubleSided || (materialObj.shader.name.EndsWith("-Double")); // workaround for exporting shaders that are set to double-sided on 2020.3
 
 			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("_EmissiveColorMap"))
 			{
