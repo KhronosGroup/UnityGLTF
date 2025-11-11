@@ -7,7 +7,9 @@ namespace UnityGLTF.Interactivity.Export
     {
         public static string ActiveCameraPositionPointer = "/extensions/KHR_interactivity/activeCamera/position";
         public static string ActiveCameraRotationPointer = "/extensions/KHR_interactivity/activeCamera/rotation";
-        
+        public static string ActiveCameraGlobalMatrix = "/extensions/KHR_interactivity/activeCamera/globalMatrix";
+        public static string ActiveCameraMatrix = "/extensions/KHR_interactivity/activeCamera/matrix";
+
         public static void GetLocalScale(INodeExporter exporter, out ValueInRef target,
             out ValueOutRef scaleOutput)
         {
@@ -324,22 +326,17 @@ namespace UnityGLTF.Interactivity.Export
 
             worldPosition = convertedOutput;
         }
-        
-        public static void GetWorldPointFromLocalPoint(INodeExporter exporter, out ValueInRef target, out ValueInRef localPoint,
+
+        public static void GetWorldPointFromLocalPoint(INodeExporter exporter, ValueOutRef worldMatrix,
+            out ValueInRef localPoint,
             out ValueOutRef worldPoint)
         {
-            var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
-            worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
-            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
-
             var trs = exporter.CreateNode<Math_MatComposeNode>();
             if (exporter.Context.addUnityGltfSpaceConversion)
             {
-                SpaceConversionHelpers.AddSpaceConversion(exporter, out var unvconvertedLocalPoint,
+                SpaceConversionHelpers.AddSpaceConversion(exporter, out var unconvertedLocalPoint,
                     out var localPointConverted);
-                localPoint = unvconvertedLocalPoint;
+                localPoint = unconvertedLocalPoint;
                 trs.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(localPointConverted);
             }
             else
@@ -349,7 +346,7 @@ namespace UnityGLTF.Interactivity.Export
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
             
             var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(worldMatrix.FirstValueOut());
+            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(worldMatrix);
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
             
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
@@ -367,8 +364,21 @@ namespace UnityGLTF.Interactivity.Export
 
             worldPoint = convertedOutput;
         }
+        
+        public static void GetWorldPointFromLocalPoint(INodeExporter exporter, out ValueInRef target, out ValueInRef localPoint,
+            out ValueOutRef worldPoint)
+        {
+            var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
+            worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
+                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
 
-       public static void GetLocalPointFromWorldPoint(INodeExporter exporter, out ValueInRef target, out ValueInRef worldPoint,
+          GetWorldPointFromLocalPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
+        }
+
+        public static void GetLocalPointFromWorldPoint(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef worldPoint,
             out ValueOutRef localPoint)
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
@@ -377,8 +387,14 @@ namespace UnityGLTF.Interactivity.Export
                 "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
             target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
             
+            GetLocalPointFromWorldPoint(exporter, worldMatrix.FirstValueOut(), out worldPoint, out localPoint);   
+        }
+        
+       public static void GetLocalPointFromWorldPoint(INodeExporter exporter, ValueOutRef worldMatrix, out ValueInRef worldPoint,
+            out ValueOutRef localPoint)
+        {
             var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
-            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(worldMatrix.FirstValueOut());
+            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(worldMatrix);
             
             var trs = exporter.CreateNode<Math_MatComposeNode>();
             if (exporter.Context.addUnityGltfSpaceConversion)
