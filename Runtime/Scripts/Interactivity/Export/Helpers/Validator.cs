@@ -23,7 +23,7 @@ namespace UnityGLTF.Interactivity.Export
                             message += $" (config: {config.Key}={config.Value.Value})";
                 }
                 
-                sb.AppendLine($"Node Index {node.Index} with Schema={node.Schema.Op}: {message}");
+                sb.AppendLine($"Node Index {node.Index} with Schema={node.Schema.Op}: {message} "+node.AdditionalDebugString);
             }
             
             foreach (var node in context.Nodes)

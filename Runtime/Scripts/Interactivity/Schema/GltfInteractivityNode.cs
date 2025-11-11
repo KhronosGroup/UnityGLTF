@@ -24,6 +24,11 @@ namespace UnityGLTF.Interactivity.Schema
         
         public Dictionary<string, string> MetaData = new Dictionary<string, string>();
 
+        public virtual string AdditionalDebugString
+        {
+            get => "";
+        }
+        
         public void RemoveUnconnectedFlows()
         {
             var keys = FlowConnections.Keys.ToList();
