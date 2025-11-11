@@ -1035,6 +1035,20 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOutValue = "value";
     }
     
+    public class Math_QuatFromUpForwardNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatFromUpForward";
+        
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdUp = "up";
+
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdForward = "forward";
+        
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOutValue = "value";
+    }
+    
     public class Math_QuatMulNode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/quatMul";
