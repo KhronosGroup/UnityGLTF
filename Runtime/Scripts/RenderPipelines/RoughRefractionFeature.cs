@@ -21,8 +21,9 @@ namespace UnityGLTF
 #if !UNITY_2022_3_OR_NEWER
 	    [SerializeField]
 #endif
+#if !UNITY_6000_2_OR_NEWER
 		private Downsampling downsampling = Downsampling.None;
-
+#endif
 	    class CustomRenderPass : CopyColorPass
 	    {
 	        public Downsampling m_DownsamplingMethod;
@@ -205,7 +206,7 @@ namespace UnityGLTF
 #endif
 	    }
 	    
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_2022_3_OR_NEWER && !UNITY_6000_2_OR_NEWER
 		public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
 		{
 #pragma warning disable 618

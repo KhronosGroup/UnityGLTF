@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
@@ -540,33 +541,33 @@ namespace UnityGLTF
 							else if(mat)
 							{
 								var found = false;
-								var shaderPropertyCount = ShaderUtil.GetPropertyCount(mat.shader);
+								var shaderPropertyCount = mat.shader.GetPropertyCount();
 								// var shaderPropertyNames = Enumerable.Range(0, shaderPropertyCount).Select(x => ShaderUtil.GetPropertyName(mat.shader, x));
 
 								for (var i = 0; i < shaderPropertyCount; i++)
 								{
 									if (found) break;
-									var name = ShaderUtil.GetPropertyName(mat.shader, i);
+									var name = mat.shader.GetPropertyName(i);
 									if (!memberName.EndsWith(name, StringComparison.Ordinal)) continue;
 									found = true;
-									var materialProperty = ShaderUtil.GetPropertyType(mat.shader, i);
+									var materialProperty = mat.shader.GetPropertyType(i);
 									switch (materialProperty)
 									{
-										case ShaderUtil.ShaderPropertyType.Color:
+										case ShaderPropertyType.Color:
 											prop.propertyType = typeof(Color);
 											break;
-										case ShaderUtil.ShaderPropertyType.Vector:
+										case ShaderPropertyType.Vector:
 											prop.propertyType = typeof(Vector4);
 											break;
-										case ShaderUtil.ShaderPropertyType.Float:
-										case ShaderUtil.ShaderPropertyType.Range:
+										case ShaderPropertyType.Float:
+										case ShaderPropertyType.Range:
 											prop.propertyType = typeof(float);
 											break;
-										case ShaderUtil.ShaderPropertyType.TexEnv:
+										case ShaderPropertyType.Texture:
 											prop.propertyType = typeof(Texture);
 											break;
 #if UNITY_2021_1_OR_NEWER
-										case ShaderUtil.ShaderPropertyType.Int:
+										case ShaderPropertyType.Int:
 											prop.propertyType = typeof(int);
 											break;
 #endif
