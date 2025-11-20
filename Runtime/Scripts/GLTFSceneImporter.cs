@@ -526,7 +526,7 @@ namespace UnityGLTF
 			
 			if (this.progress != null)
 				await Task.Yield();
-			
+
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
