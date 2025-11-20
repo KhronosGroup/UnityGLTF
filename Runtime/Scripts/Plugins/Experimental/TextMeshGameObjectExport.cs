@@ -47,6 +47,24 @@ namespace UnityGLTF.Plugins
 			if (tmp == null) return;
 			
 			tmp.ForceMeshUpdate();
+			
+#if UNITY_6000_0_OR_NEWER
+			/*
+			 FROM TMP_MeshInfo.cs:
+			 UV0 contains the following information
+			 X, Y are the UV coordinates of the glyph in the atlas texture.
+		     Z is the texture index in the texture atlas array 
+			 W is the SDF Scale where a negative value represents bold text
+			*/
+			
+			// Change all UV0 from Vector4 to Vector2 in tmp.mesh, gltf only supports Vector2
+			var mesh = tmp.mesh;
+			var uvs = mesh.uv;
+			mesh.uv = uvs;
+#endif
+
+
+
 #endif
 		}
 		
