@@ -206,7 +206,6 @@ A lot of Visual Scripting nodes are already supported. To see the full list of s
 
 ### Unsupported
 - String manipulation (not supported by the KHR_interactivity extension)
-- Quaternion math operations are currently missing (not yet in the KHR_interactivity specification)
 - Some nodes have additional limitations. You can see these in the Script Graph:  
   ![image](https://github.com/user-attachments/assets/011618d4-623e-4aa9-b343-bdbeb06df141)
 
