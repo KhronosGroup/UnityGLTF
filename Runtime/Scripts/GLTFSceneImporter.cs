@@ -404,7 +404,10 @@ namespace UnityGLTF
 						return;
 					}
 					_options.DataLoader = new UnityWebRequestLoader(URIHelper.GetDirectoryName(_gltfFileName));
-					_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
+					if (File.Exists(_gltfFileName))
+						_gltfFileName = Path.GetFileName(_gltfFileName);
+					else
+						_gltfFileName = URIHelper.GetFileFromUri(new Uri(_gltfFileName));
 				}
 				else
 					_options.DataLoader = LegacyLoaderWrapper.Wrap(_options.ExternalDataLoader);
