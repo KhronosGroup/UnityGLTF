@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityGLTF.Interactivity.Export;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
@@ -107,7 +108,19 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                                     if (secondGetMember.member.ToString() == "RaycastResult.worldPosition")
                                     {
                                         if (node.OutputValueSocket.ContainsKey(HitLocationId))
-                                            unitExporter.MapValueOutportToSocketName(secondGetMember.value, HitLocationId, node);
+                                        {
+                                            if (!unitExporter.Context.addUnityGltfSpaceConversion)
+                                            {
+                                                unitExporter.MapValueOutportToSocketName(secondGetMember.value, HitLocationId, node);
+                                            }
+                                            else
+                                            {
+                                                SpaceConversionHelpers.AddSpaceConversion(unitExporter, out var vector3Input, out var convertedVector3Socket);
+                                                vector3Input.ConnectToSource(node.ValueOut(HitLocationId));
+                                                convertedVector3Socket.MapToPort(secondGetMember.value);
+                                            }
+
+                                        }
                                     }
                                     if (secondGetMember.member.ToString() == "RaycastResult.gameObject")
                                     {
@@ -128,7 +141,18 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                         if (expose.valueOutputs.TryGetValue("position", out var pointerPositionOutput)
                             && node.OutputValueSocket.ContainsKey(HitLocationId))
-                            unitExporter.MapValueOutportToSocketName(pointerPositionOutput, HitLocationId, node);
+                        {
+                            if (!unitExporter.Context.addUnityGltfSpaceConversion)
+                            {
+                                unitExporter.MapValueOutportToSocketName(pointerPositionOutput, HitLocationId, node);
+                            }
+                            else
+                            {
+                                SpaceConversionHelpers.AddSpaceConversion(unitExporter, out var vector3Input, out var convertedVector3Socket);
+                                vector3Input.ConnectToSource(node.ValueOut(HitLocationId));
+                                convertedVector3Socket.MapToPort(pointerPositionOutput);
+                            }
+                        }
                         
                         if (expose.valueOutputs.TryGetValue("pointerId", out var pointerIdOutput)
                             && node.OutputValueSocket.ContainsKey(ControllerIndexId))
