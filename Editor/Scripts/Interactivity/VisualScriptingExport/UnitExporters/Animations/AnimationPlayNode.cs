@@ -75,7 +75,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = 1f;
             node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
-            if (clip != null && !clip.isLooping)
+            if (clip != null && !clip.isLooping && clip.wrapMode != WrapMode.Loop)
             {
                 var animationLength = AnimationHelper.GetAnimationLength(unitExporter, animationId);
                 node.ValueIn(Animation_StartNode.IdValueEndtime).ConnectToSource(animationLength);
