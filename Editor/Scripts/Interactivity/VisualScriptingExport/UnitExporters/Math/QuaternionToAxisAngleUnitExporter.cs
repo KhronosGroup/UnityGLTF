@@ -28,6 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             degToRadNode.ValueIn(Math_RadNode.IdInputA).ConnectToSource(node.ValueOut(Math_QuatToAxisAngleNode.IdOutAngle));
             degToRadNode.FirstValueOut().MapToPort(unit.valueOutputs["&angle"]);
 
+            unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
         }
     }

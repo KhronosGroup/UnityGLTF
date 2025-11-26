@@ -28,6 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 node.ValueIn(Math_QuatFromUpForwardNode.IdUp).SetValue(Vector3.up);
             node.ValueOut(Math_QuatFromUpForwardNode.IdOutValue).MapToPort(unit.result);
 
+            unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
         }
     }

@@ -25,6 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.ValueIn(Math_QuatFromAxisAngleNode.IdAxis).MapToInputPort(unit.valueInputs[1]);
             node.ValueOut(Math_QuatFromAxisAngleNode.IdOutValue).MapToPort(unit.result);
 
+            unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
         }
     }

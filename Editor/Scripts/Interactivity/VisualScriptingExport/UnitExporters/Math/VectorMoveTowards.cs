@@ -184,6 +184,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             selectNode.ValueIn(Math_SelectNode.IdCondition).ConnectToSource(orNode.FirstValueOut());
             
             selectDeltaZeroNode.FirstValueOut().MapToPort(result);
+            
+            if (invokeUnit != null)
+                unitExporter.ByPassFlow(invokeUnit.enter, invokeUnit.exit);
+
             return true;
         }
     }
