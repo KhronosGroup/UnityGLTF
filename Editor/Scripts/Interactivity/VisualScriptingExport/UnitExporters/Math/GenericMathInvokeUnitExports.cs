@@ -48,7 +48,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
            
             // TODO: Slerp is not the same as Lerp, but for now we use the same node
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.SlerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.SlerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_QuatSlerpNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.SlerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.LerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
