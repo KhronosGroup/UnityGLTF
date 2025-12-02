@@ -1437,6 +1437,118 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         }
 
         [Test]
+        public void TestQuatFromUpForward()
+        {
+            var forward0 = math.normalize(new float3(1.0f, 2.0f, 3.0f));
+            var up0 = new float3(0.0f, 1.0f, 0.0f);
+            var q0 = quaternion.LookRotation(forward0, up0).ToFloat4();
+
+            QueueTest("math/quatFromUpForward", "Quat_From_UpForward_Unit_Up", "Quaternion From Up Forward w/ Unit Up", "Tests quaternion from up forward with a unit up vector and arbitrary forward vector.", QuatFromUpForward(up0, forward0, q0));
+
+            var forward1 = math.normalize(new float3(-3.2f, 2.3f, -1.3f));
+            var up1 = math.normalize(new float3(1.0f, -3.2f, -1.5f));
+            var q1 = quaternion.LookRotation(forward1, up1).ToFloat4();
+
+            QueueTest("math/quatFromUpForward", "Quat_From_UpForward1", "Quaternion From Up Forward 1", "Tests quaternion from up forward with arbitrary Up/Forward vectors.", QuatFromUpForward(up1, forward1, q1));
+
+            var forward2 = math.normalize(new float3(-2.6f, -5.2f, -1.1f));
+            var up2 = math.normalize(new float3(-4.2f, -1.2f, -4.5f));
+            var q2 = quaternion.LookRotation(forward2, up2).ToFloat4();
+
+            QueueTest("math/quatFromUpForward", "Quat_From_UpForward2", "Quaternion From Up Forward 2", "Tests quaternion from up forward with arbitrary Up/Forward vectors.", QuatFromUpForward(up2, forward2, q2));
+
+            var forward3 = math.normalize(new float3(1.3f, 2.1f, 3.4f));
+            var up3 = math.normalize(new float3(0.2f, -1.0f, 0.3f));
+            var q3 = quaternion.LookRotation(forward3, up3).ToFloat4();
+
+            QueueTest("math/quatFromUpForward", "Quat_From_UpForward3", "Quaternion From Up Forward 3", "Tests quaternion from up forward with arbitrary Up/Forward vectors.", QuatFromUpForward(up3, forward3, q3));
+        }
+
+        private static (Graph, TestValues) QuatFromUpForward(float3 up, float3 forward, float4 expected)
+        {
+            var inputs = new Dictionary<string, Value>();
+
+            inputs.Add(ConstStrings.UP, new Value() { id = ConstStrings.UP, property = new Property<float3>(up) });
+            inputs.Add(ConstStrings.FORWARD, new Value() { id = ConstStrings.FORWARD, property = new Property<float3>(forward) });
+
+            return CreateSelfContainedTestGraph("math/quatFromUpForward", inputs, Out(expected), ComparisonType.Equals);
+        }
+
+        [Test]
+        public void TestQuatSlerp()
+        {
+            var a0 = math.normalize(new float4(1.0f, 2.0f, 3.0f, 4.0f));
+            var b0 = math.normalize(new float4(5.0f, 6.0f, 7.0f, 8.0f));
+            var c0 = 0f;
+            var q0 = a0;
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_c_0", "Quaternion Slerp w/ c = 0", "Tests quaternion slerp with c = 0.", QuatSlerp(a0, b0, c0, q0, ComparisonType.Equals));
+
+            var a1 = math.normalize(new float4(1.0f, 2.0f, 3.0f, 4.0f));
+            var b1 = math.normalize(new float4(5.0f, 6.0f, 7.0f, 8.0f));
+            var c1 = 1f;
+            var q1 = b1;
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_c_1", "Quaternion Slerp w/ c = 1", "Tests quaternion slerp with c = 1.", QuatSlerp(a1, b1, c1, q1, ComparisonType.Equals));
+
+            var a2 = new float4(0.3270836f, 0.8449658f, -0.1090279f, 0.4088545f);
+            var b2 = new float4(-0.05623216f, 0.731018f, -0.6747859f, -0.08434824f);
+            var c2 = 0.3f;
+            var q2 = new float4(0.2261014f, 0.8806396f, -0.3100654f, 0.2778693f);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp", "Quaternion Slerp", "Tests quaternion slerp with c = 0.3.", QuatSlerp(a2, b2, c2, q2));
+
+            var c3 = -4.3f;
+            var q3 = new float4(-0.4676181f, -0.5321988f, -0.3789966f, -0.5953646f);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_Negative_c", "Quaternion Slerp w/ c < 0", "Tests quaternion slerp with c = -4.3.", QuatSlerp(a2, b2, c3, q3));
+
+            var c4 = 5.1f;
+            var q4 = new float4(0.2596942f, -0.4369303f, 0.7902023f, 0.34239f);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_C_Over_1", "Quaternion Slerp w/ c > 1", "Tests quaternion slerp with c = 5.1.", QuatSlerp(a2, b2, c4, q4));
+
+            var a5 = new float4(0.182574f, 0.365148f, 0.547723f, 0.730297f);
+            var b5 = new float4(-0.379049f, -0.454859f, -0.530669f, -0.606478f);
+            var c5 = 0.5f;
+            var q5 = new float4(0.2830232f, 0.4132327f, 0.5434428f, 0.6736518f);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_Negative_D", "Quaternion Slerp w/ d < 0", "Tests quaternion slerp with a/b inputs that lead to the negative d branch of its logic.", QuatSlerp(a5, b5, c5, q5));
+
+            var a6 = new float4(0.25f, 0.25f, 0.25f, 0.25f);
+            var b6 = new float4(1f, 1f, 1f, 1f);
+            var c6 = 0.25f;
+            var q6 = new float4(0.4375f, 0.4375f, 0.4375f, 0.4375f);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_D_Eq_1", "Quaternion Slerp w/ d == 1", "Tests quaternion slerp with a/b inputs that lead to the d == 1 branch of its logic.", QuatSlerp(a6, b6, c6, q6));
+
+            var a7 = new float4(math.NAN, 0.25f, 0.25f, 0.25f);
+            var b7 = new float4(1f, 1f, 1f, 1f);
+            var c7 = 0.25f;
+            var q7 = new float4(math.NAN, math.NAN, math.NAN, math.NAN);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_NaN", "Quaternion Slerp w/ NaN", "Tests quaternion slerp with an a input containing NaN.", QuatSlerp(a7, b7, c7, q7, ComparisonType.IsNaN));
+
+            var a8 = new float4(math.INFINITY, 0.25f, 0.25f, 0.25f);
+            var b8 = new float4(1f, 1f, 1f, 1f);
+            var c8 = 0.25f;
+            var q8 = new float4(math.INFINITY, math.INFINITY, math.INFINITY, math.INFINITY);
+
+            QueueTest("math/quatSlerp", "Quat_Slerp_Inf", "Quaternion Slerp w/ Infinity", "Tests quaternion slerp with an a input containing infinity.", QuatSlerp(a8, b8, c8, q8, ComparisonType.IsNaN));
+        }
+
+        private static (Graph, TestValues) QuatSlerp(float4 a, float4 b, float c, float4 expected, ComparisonType comparisonType = ComparisonType.Approximately)
+        {
+            var inputs = new Dictionary<string, Value>();
+
+            inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float4>(a) });
+            inputs.Add(ConstStrings.B, new Value() { id = ConstStrings.B, property = new Property<float4>(b) });
+            inputs.Add(ConstStrings.C, new Value() { id = ConstStrings.C, property = new Property<float>(c) });
+
+            return CreateSelfContainedTestGraph("math/quatSlerp", inputs, Out(expected), comparisonType);
+        }
+
+        [Test]
         public void TestMatCompose()
         {
             var translation = new float3(1f, 2f, 3f);

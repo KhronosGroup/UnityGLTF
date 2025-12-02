@@ -145,4 +145,53 @@ namespace UnityGLTF.Interactivity.Playback
             return (null, values);
         }
     }
+
+    public class MathQuatFromUpForwardSpec : NodeSpecifications
+    {
+        protected override (NodeFlow[] flows, NodeValue[] values) GenerateInputs()
+        {
+            var values = new NodeValue[]
+            {
+                new NodeValue(ConstStrings.UP, "Up direction.", new Type[]  { typeof(float3) }),
+                new NodeValue(ConstStrings.FORWARD, "Forward direction.", new Type[]  { typeof(float3) }),
+            };
+
+            return (null, values);
+        }
+
+        protected override (NodeFlow[] flows, NodeValue[] values) GenerateOutputs()
+        {
+            var values = new NodeValue[]
+            {
+                new NodeValue(ConstStrings.VALUE, "Rotation quaternion.", new Type[]  { typeof(float4) }),
+            };
+
+            return (null, values);
+        }
+    }
+
+    public class MathQuatSlerpSpec : NodeSpecifications
+    {
+        protected override (NodeFlow[] flows, NodeValue[] values) GenerateInputs()
+        {
+            var values = new NodeValue[]
+            {
+                new NodeValue(ConstStrings.A, "From quaternion.", new Type[]  { typeof(float4) }),
+                new NodeValue(ConstStrings.B, "To quaternion.", new Type[]  { typeof(float4) }),
+                new NodeValue(ConstStrings.C, "Unclamped interpolation coefficient.", new Type[]  { typeof(float) }),
+            };
+
+            return (null, values);
+        }
+
+        protected override (NodeFlow[] flows, NodeValue[] values) GenerateOutputs()
+        {
+            var values = new NodeValue[]
+            {
+                new NodeValue(ConstStrings.VALUE, "Interpolated quaternion.", new Type[]  { typeof(float4) }),
+            };
+
+            return (null, values);
+        }
+    }
 }
