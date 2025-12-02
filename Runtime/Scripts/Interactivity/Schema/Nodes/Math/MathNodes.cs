@@ -1035,6 +1035,36 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOutValue = "value";
     }
     
+    public class Math_QuatSlerpNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatSlerp";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOut = "value";
+        
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueA = "a";
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueB = "b";
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdValueC = "c";
+    }
+    
+    public class Math_SlerpNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/slerp";
+
+        [OutputSocketDescription(GltfTypes.Float3)]
+        public const string IdOut = "value";
+        
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdValueA = "a";
+        [InputSocketDescription(GltfTypes.Float3)]
+        public const string IdValueB = "b";
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdValueC = "c";
+    }
+    
     public class Math_QuatFromUpForwardNode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/quatFromUpForward";
