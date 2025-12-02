@@ -49,18 +49,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return;
             }
             
-            var typeRestr = TypeRestriction.LimitToType(gltfType);
-            var expType = ExpectedType.GtlfType(gltfType);
-            
             var saturateNode = unitExporter.CreateNode<Math_SaturateNode>();
-            saturateNode.ValueIn("a").MapToInputPort(unit.valueInputs[2]).SetType(typeRestr);
-            saturateNode.FirstValueOut().ExpectedType(expType);
+            saturateNode.ValueIn("a").MapToInputPort(unit.valueInputs[2]).SetType(TypeRestriction.LimitToFloat3);
+            saturateNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            var mixNode = unitExporter.CreateNode<Math_MixNode>();
-            mixNode.ValueIn("a").MapToInputPort(unit.valueInputs[0]).SetType(typeRestr);
-            mixNode.ValueIn("b").MapToInputPort(unit.valueInputs[1]).SetType(typeRestr);
-            mixNode.ValueIn("c").ConnectToSource(saturateNode.FirstValueOut()).SetType(typeRestr);
-            mixNode.FirstValueOut().MapToPort(unit.valueOutputs[0]).ExpectedType(expType);
+            var mixNode = unitExporter.CreateNode<Math_SlerpNode>();
+            mixNode.ValueIn("a").MapToInputPort(unit.valueInputs[0]);
+            mixNode.ValueIn("b").MapToInputPort(unit.valueInputs[1]);
+            mixNode.ValueIn("c").ConnectToSource(saturateNode.FirstValueOut());
+            mixNode.FirstValueOut().MapToPort(unit.valueOutputs[0]);
         }
     }
         
@@ -75,8 +72,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), nameof(Vector4.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4")));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4")));
             
-            // TODO: correct Slerp, currently we use Mix  
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.Slerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float3")));
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.Slerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float3"), true));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Slerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4"), true));
         }
 
