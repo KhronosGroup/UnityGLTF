@@ -79,6 +79,8 @@ namespace UnityGLTF.Interactivity.Playback
         public const string END_TIME = "endTime";
         public const string CANCEL = "cancel";
         public const string CURRENT_COUNT = "currentCount";
+        public const string UP = "up";
+        public const string FORWARD = "forward";
 
         public const string VARIABLES = "variables";
         public const string VARIABLE = "variable";
