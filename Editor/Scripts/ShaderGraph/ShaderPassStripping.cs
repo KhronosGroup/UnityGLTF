@@ -33,8 +33,7 @@ namespace UnityGLTF
         
         public ShaderPassStripping()
         {
-            if (GLTFSettings.TryGetSettings(out var s))
-                settings = s.shaderStrippingSettings;
+            settings = GLTFSettings.GetOrCreateSettings()?.shaderStrippingSettings;
         }
 
         private bool ShouldStripPass(ShaderSnippetData snippet)
