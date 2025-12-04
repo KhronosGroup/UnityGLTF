@@ -51,6 +51,9 @@ namespace UnityGLTF
         public void OnProcessShader(
             Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> data)
         {
+            if (settings == null)
+                return;
+            
             if (!settings.stripPassesFromAllShaders && !shader.name.Contains("UnityGLTF/PBRGraph"))
                 return;
             
