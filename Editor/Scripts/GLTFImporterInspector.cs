@@ -544,7 +544,8 @@ namespace UnityGLTF
 					sb[i] = '_';
 				}
 			}
-			return sb.ToString();
+
+			return sb.ToString().TrimStart(' ');
 		}
 
 		private static Editor cachedMateriaLibraryEditor;
