@@ -57,7 +57,8 @@ The library is designed to be easy to extend with additional extensions to the g
   - [Default Importer Selection](#default-importer-selection)
 - [Animation Import](#animation-import)
 - [Extensibility](#extensibility)
-  - [Example for custom plugin](#example-for-custom-plugin)
+  - [Example for custom export plugin](#example-for-custom-export-plugin)
+  - [Example for custom import plugin](#example-for-custom-import-plugin)
 - [Known Issues](#known-issues)
 - [Contributing](#contributing)
   - [Unity Package](#unity-package)
@@ -457,7 +458,7 @@ If your plugin reads/writes custom extension data, you need to also implement `G
 > [!WARNING] 
 > `ShouldNodeExport` callback: Using this callback requires understanding of how glTF works. For example, if you filter out some bones of a skeleton on export, the result might not be valid glTF or might not display what you expect. Use with caution
 
-### Example for custom plugin
+### Example for custom export plugin
 ```csharp
 public class MyExportPlugin : GLTFExportPlugin
 {
@@ -480,6 +481,30 @@ public class MyExportPluginContext: GLTFExportPluginContext
 }
 ```
 
+### Example for custom import plugin
+```csharp
+public class MyImportPlugin: GLTFImportPlugin
+{
+    public override string DisplayName => "My Import Plugin";
+    public override string Description => "";
+    
+    public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
+    {
+        return new MyImportPluginContext();
+    }
+}
+
+public class MyImportPluginContext: GLTFImportPluginContext
+{
+    public override void OnAfterImportScene(GLTFScene scene, int sceneIndex, GameObject sceneObject)
+    {
+        // Set all to static
+        var objs = sceneObject.GetComponentsInChildren<Transform>();
+        foreach (var obj in objs)
+            obj.gameObject.isStatic = true;
+    }
+}
+```
 
 > 🏗️ Under construction. You can take a look at `MaterialVariantsPlugin.cs` for an example.
 
