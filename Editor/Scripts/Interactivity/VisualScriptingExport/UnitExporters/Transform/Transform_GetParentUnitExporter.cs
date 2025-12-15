@@ -8,11 +8,8 @@ using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
-    public class Transform_GetParentUnitExporter : IUnitExporter, IUnitExporterFeedback
+    public class Transform_GetParentUnitExporter : IUnitExporter
     {
-        private const string WARNING_TEXT =
-            "Export is currently only supported with a literal/default input or a This as input.";
-        
         public Type unitType { get => typeof(GetMember); }
         
         [InitializeOnLoadMethod]
@@ -25,34 +22,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as GetMember;
-        
-            GameObject target = UnitsHelper.GetGameObjectFromValueInput(unit.target, unit.defaultValues, unitExporter.vsExportContext);
-
-            if (target ==null)
-            {
-                UnitExportLogging.AddErrorLog(unit, "Could not resolve target GameObject.");
-                return false;
-            }
             
-            int targetIndex = unitExporter.vsExportContext.exporter.GetTransformIndex(target.transform);
-            if (targetIndex == -1)
-            {
-                UnitExportLogging.AddErrorLog(unit, "Could not resolve target GameObject.");
-                return false;
-            }
-            
-            var varId = unitExporter.vsExportContext.AddVariableWithIdIfNeeded("_PARENT_TRANSFORM_"+targetIndex.ToString(), targetIndex, VariableKind.Scene, typeof(int));
-            VariablesHelpers.GetVariable(unitExporter, varId, out var socket);
-            socket.MapToPort(unit.value).ExpectedType(ExpectedType.Int);
-            
+            var getPointer = unitExporter.CreateNode<Pointer_GetNode>();
+            getPointer.FirstValueOut().ExpectedType(ExpectedType.Int);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getPointer, PointersHelper.IdPointerNodeIndex, "/nodes/{"+PointersHelper.IdPointerNodeIndex+"}/parent", GltfTypes.Int);
+            getPointer.ValueIn(PointersHelper.IdPointerNodeIndex).MapToInputPort(unit.target);
+            getPointer.ValueOut(Pointer_GetNode.IdValue).MapToPort(unit.value);
+       
             return true;
-        }
-
-        public UnitLogs GetFeedback(IUnit unit)
-        {
-            var logs = new UnitLogs();
-            logs.infos.Add(WARNING_TEXT);
-            return logs;
         }
     }
 }
