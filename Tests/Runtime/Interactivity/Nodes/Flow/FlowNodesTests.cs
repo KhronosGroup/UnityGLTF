@@ -153,7 +153,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             varSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { variableIndex });
             varSetGet.AddConfiguration(ConstStrings.VARIABLE, variableIndex);
 
-            varSet.AddConnectedValue(ConstStrings.GetNumberString(0), add);
+            varSet.AddConnectedValue(ConstStrings.GetNumberString(variableIndex), add);
 
             add.AddValue(ConstStrings.B, 1);
             add.AddConnectedValue(ConstStrings.A, varSetGet);
@@ -373,7 +373,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             bitmaskSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { bitmaskVariableIndex });
             bitmaskGet.AddConfiguration(ConstStrings.VARIABLE, bitmaskVariableIndex);
 
-            bitmaskSet.AddConnectedValue(ConstStrings.GetNumberString(0), add);
+            bitmaskSet.AddConnectedValue(ConstStrings.GetNumberString(bitmaskVariableIndex), add);
             add.AddValue(ConstStrings.A, bitmask);
             add.AddConnectedValue(ConstStrings.B, bitmaskGet);
             bitmaskSet.AddFlow(send);

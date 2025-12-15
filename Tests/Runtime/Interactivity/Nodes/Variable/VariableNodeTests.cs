@@ -165,15 +165,15 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             sequence.AddFlow(float3x3Branch, ConstStrings.GetNumberString(7));
             sequence.AddFlow(float4x4Branch, ConstStrings.GetNumberString(8));
 
-            set.AddValue(ConstStrings.GetNumberString(0), expectedb);
-            set.AddValue(ConstStrings.GetNumberString(1), expectedi);
-            set.AddValue(ConstStrings.GetNumberString(2), expectedf);
-            set.AddValue(ConstStrings.GetNumberString(3), expected2);
-            set.AddValue(ConstStrings.GetNumberString(4), expected3);
-            set.AddValue(ConstStrings.GetNumberString(5), expected4);
-            set.AddValue(ConstStrings.GetNumberString(6), expected2x2);
-            set.AddValue(ConstStrings.GetNumberString(7), expected3x3);
-            set.AddValue(ConstStrings.GetNumberString(8), expected4x4);
+            set.AddValue(ConstStrings.GetNumberString(boolIndex), expectedb);
+            set.AddValue(ConstStrings.GetNumberString(intIndex), expectedi);
+            set.AddValue(ConstStrings.GetNumberString(floatIndex), expectedf);
+            set.AddValue(ConstStrings.GetNumberString(float2Index), expected2);
+            set.AddValue(ConstStrings.GetNumberString(float3Index), expected3);
+            set.AddValue(ConstStrings.GetNumberString(float4Index), expected4);
+            set.AddValue(ConstStrings.GetNumberString(float2x2Index), expected2x2);
+            set.AddValue(ConstStrings.GetNumberString(float3x3Index), expected3x3);
+            set.AddValue(ConstStrings.GetNumberString(float4x4Index), expected4x4);
 
             set.AddConfiguration(ConstStrings.VARIABLES, new int[] {
                 boolIndex,

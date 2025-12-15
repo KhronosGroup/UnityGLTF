@@ -592,7 +592,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         public void TestSelect()
         {
             QueueTest("math/select", "Select_True", "Select True Condition", "Tests that input A is returned when condition is true.", MathSelectTest(10.0f, 20.0f, true, 10.0f));
-            QueueTest("math/select", "Select_True", "Select True Condition", "Tests that input B is returned when condition is false.", MathSelectTest(10.0f, 20.0f, false, 20.0f));
+            QueueTest("math/select", "Select_False", "Select False Condition", "Tests that input B is returned when condition is false.", MathSelectTest(10.0f, 20.0f, false, 20.0f));
         }
 
         private static (Graph, TestValues) MathSelectTest<T>(T a, T b, bool condition, T expected)
@@ -1121,9 +1121,9 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestAnd()
         {
-            QueueTest("math/and", "And_Boolean_False", "And Boolean True, False", "Tests true & false = false.", CreateSelfContainedTestGraph("math/and", In(true, false), Out(false), ComparisonType.Equals));
-            QueueTest("math/and", "And_Boolean_False", "And Boolean False, False", "Tests false & true = false.", CreateSelfContainedTestGraph("math/and", In(false, false), Out(false), ComparisonType.Equals));
-            QueueTest("math/and", "And_Boolean_True", "And Boolean True, True", "Tests true & true = true.", CreateSelfContainedTestGraph("math/and", In(true, true), Out(true), ComparisonType.Equals));
+            QueueTest("math/and", "And_Boolean_True_False", "And Boolean True, False", "Tests true & false = false.", CreateSelfContainedTestGraph("math/and", In(true, false), Out(false), ComparisonType.Equals));
+            QueueTest("math/and", "And_Boolean_False_False", "And Boolean False, False", "Tests false & true = false.", CreateSelfContainedTestGraph("math/and", In(false, false), Out(false), ComparisonType.Equals));
+            QueueTest("math/and", "And_Boolean_True_True", "And Boolean True, True", "Tests true & true = true.", CreateSelfContainedTestGraph("math/and", In(true, true), Out(true), ComparisonType.Equals));
 
             QueueTest("math/and", "And_Integer", "And Integer", "Tests int & operation.", CreateSelfContainedTestGraph("math/and", In(3, 8), Out(3 & 8), ComparisonType.Equals));
         }
@@ -1131,9 +1131,9 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestOr()
         {
-            QueueTest("math/or", "Or_Boolean_True", "Or Boolean True, False", "Tests true | false = true.", CreateSelfContainedTestGraph("math/or", In(true, false), Out(true), ComparisonType.Equals));
-            QueueTest("math/or", "Or_Boolean_False", "Or Boolean False, False", "Tests false | false = false.", CreateSelfContainedTestGraph("math/or", In(false, false), Out(false), ComparisonType.Equals));
-            QueueTest("math/or", "Or_Boolean_True", "Or Boolean True, True", "Tests true | true = true.", CreateSelfContainedTestGraph("math/or", In(true, true), Out(true), ComparisonType.Equals));
+            QueueTest("math/or", "Or_Boolean_True_False", "Or Boolean True, False", "Tests true | false = true.", CreateSelfContainedTestGraph("math/or", In(true, false), Out(true), ComparisonType.Equals));
+            QueueTest("math/or", "Or_Boolean_False_False", "Or Boolean False, False", "Tests false | false = false.", CreateSelfContainedTestGraph("math/or", In(false, false), Out(false), ComparisonType.Equals));
+            QueueTest("math/or", "Or_Boolean_True_True", "Or Boolean True, True", "Tests true | true = true.", CreateSelfContainedTestGraph("math/or", In(true, true), Out(true), ComparisonType.Equals));
 
             QueueTest("math/or", "Or_Integer", "Or Integer", "Tests int | operation.", CreateSelfContainedTestGraph("math/or", In(3, 8), Out(3 | 8), ComparisonType.Equals));
         }
@@ -1141,11 +1141,11 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestXor()
         {
-            QueueTest("math/xor", "Xor_Boolean_True", "Xor Boolean True", "Tests true ^ false = true.", CreateSelfContainedTestGraph("math/xor", In(true, false), Out(true), ComparisonType.Equals));
-            QueueTest("math/xor", "Xor_Boolean_False", "Xor Boolean False", "Tests false ^ false = false.", CreateSelfContainedTestGraph("math/xor", In(false, false), Out(false), ComparisonType.Equals));
-            QueueTest("math/xor", "Xor_Boolean_False", "Xor Boolean False", "Tests true ^ true = false.", CreateSelfContainedTestGraph("math/xor", In(true, true), Out(false), ComparisonType.Equals));
+            QueueTest("math/xor", "Xor_Boolean_True_False", "Xor Boolean True", "Tests true ^ false = true.", CreateSelfContainedTestGraph("math/xor", In(true, false), Out(true), ComparisonType.Equals));
+            QueueTest("math/xor", "Xor_Boolean_False_False", "Xor Boolean False", "Tests false ^ false = false.", CreateSelfContainedTestGraph("math/xor", In(false, false), Out(false), ComparisonType.Equals));
+            QueueTest("math/xor", "Xor_Boolean_True_True", "Xor Boolean False", "Tests true ^ true = false.", CreateSelfContainedTestGraph("math/xor", In(true, true), Out(false), ComparisonType.Equals));
 
-            QueueTest("math/xor", "Xor_Integer", "XorInteger", "Tests int ^ operation.", CreateSelfContainedTestGraph("math/xor", In(3, 8), Out(3 ^ 8), ComparisonType.Equals));
+            QueueTest("math/xor", "Xor_Integer", "Xor Integer", "Tests int ^ operation.", CreateSelfContainedTestGraph("math/xor", In(3, 8), Out(3 ^ 8), ComparisonType.Equals));
         }
 
         [Test]
@@ -1668,13 +1668,13 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = Inf", "Tests matDecompose with an infinite z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_z, false));
 
             var invalid_inf_scale_NaN_x = new float4x4(new float4(float.NaN, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_x", "MatDecompose Sx = NaN", "Tests matDecompose with a NaN x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_x, false));
+            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_x", "MatDecompose Sx = NaN", "Tests matDecompose with a NaN x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_x, false));
 
             var invalid_inf_scale_NaN_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.NaN, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_y", "MatDecompose Sy = NaN", "Tests matDecompose with a NaN y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_y, false));
+            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_y", "MatDecompose Sy = NaN", "Tests matDecompose with a NaN y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_y, false));
 
             var invalid_inf_scale_NaN_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.NaN, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = NaN", "Tests matDecompose with a NaN z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_z, false));
+            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_z", "MatDecompose Sz = NaN", "Tests matDecompose with a NaN z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_z, false));
 
             var invalid_scaled_det = new float4x4(new float4(3f, 5f, 1f, 0f), new float4(2f, 3f, 11f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
             QueueTest("math/matDecompose", "MatDecompose_Invalid_Scaled_Det", "MatDecompose Invalid Scaled Determinant", "Tests matDecompose with an invalid TRS that fails the scaled determinant portion of the test.",
