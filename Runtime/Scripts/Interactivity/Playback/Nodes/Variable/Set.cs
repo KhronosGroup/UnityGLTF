@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 index = _variableIndices[i];
 
-                if (!TryEvaluateValue(ConstStrings.GetNumberString(i), out IProperty value))
+                if (!TryEvaluateValue(ConstStrings.GetNumberString(index), out IProperty value))
                     continue;
 
                 variable = engine.graph.variables[index];

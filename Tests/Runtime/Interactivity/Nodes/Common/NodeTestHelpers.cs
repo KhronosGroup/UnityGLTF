@@ -155,7 +155,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                             graphs = new List<Graph>() { test.graph },
                             defaultGraphIndex = 0
                         };
-                        using (var stream = File.OpenWrite($"{_testGraphDirectory}/{test.fileName}.json"))
+                        using (var stream = File.Create($"{_testGraphDirectory}/{test.fileName}.json"))
                         using (var writer = new StreamWriter(stream))
                         {
                             writer.NewLine = "\n"; // Use Unix line endings
@@ -754,7 +754,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var outSet = g.CreateNode("variable/set");
 
             outSet.AddConfiguration(ConstStrings.VARIABLES, new int[] { variableIndex });
-            outSet.AddValue(ConstStrings.GetNumberString(0), value);
+            outSet.AddValue(ConstStrings.GetNumberString(variableIndex), value);
             return outSet;
         }
     }
