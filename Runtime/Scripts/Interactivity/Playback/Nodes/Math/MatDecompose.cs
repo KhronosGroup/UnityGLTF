@@ -18,57 +18,66 @@ namespace UnityGLTF.Interactivity.Playback
             if (a is not Property<float4x4> mProp)
                 throw new InvalidOperationException($"Type of value a must be Matrix4x4 but a {a.GetTypeSignature()} was passed in!");
 
-            var translation = float3.zero;
-            var rotation = new float4(0f, 0f, 0f, 1f);
-            var scale = new float3(1f, 1f, 1f);
-            var isValid = IsMatrixDecomposable(mProp.value);
+            var m = mProp.value;
 
-            if(isValid)
-                mProp.value.Decompose(out translation, out rotation, out scale);
+            if (!LastRowIsValid(m)) return DefaultOutputValues(id);
+
+            var sx = math.length(m.c0.xyz);
+            var sy = math.length(m.c1.xyz);
+            var sz = math.length(m.c2.xyz);
+            float3 scale = new float3(sx, sy, sz);
+
+            if (!ScaleIsFinite(scale)) return DefaultOutputValues(id);
+            
+            var B = new float3x3(m.c0.xyz / sx, m.c1.xyz / sy, m.c2.xyz / sz);
+            var detB = math.determinant(B);
+            
+            if(!ScaledDeterminateIsOne(detB)) return DefaultOutputValues(id);
+
+            var translation = m.c3.xyz;
+
+            if (detB < 0f)
+            {
+                scale *= -1f;
+                B *= -1f;
+            }
+
+            var rotation = new quaternion(B).value;
 
             return id switch
             {
                 ConstStrings.TRANSLATION => new Property<float3>(translation),
                 ConstStrings.ROTATION => new Property<float4>(rotation),
                 ConstStrings.SCALE => new Property<float3>(scale),
-                ConstStrings.IS_VALID => new Property<bool>(isValid),
+                ConstStrings.IS_VALID => new Property<bool>(true),
                 _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
             };
         }
 
-        private static bool IsMatrixDecomposable(in float4x4 m)
+        private static IProperty DefaultOutputValues(string id)
         {
-            if (!LastRowIsValid(m))
-                return false;
-
-            if (!ScaleIsFinite(m, out var s))
-                return false;
-
-            if (!ScaledDeterminateIsOne(m, s))
-                return false;
-
-            return true;
+            return id switch
+            {
+                ConstStrings.TRANSLATION => new Property<float3>(float3.zero),
+                ConstStrings.ROTATION => new Property<float4>(new float4(0f, 0f, 0f, 1f)),
+                ConstStrings.SCALE => new Property<float3>(new float3(1f, 1f, 1f)),
+                ConstStrings.IS_VALID => new Property<bool>(false),
+                _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
+            };
         }
 
         private static bool LastRowIsValid(in float4x4 m)
         {
-            return m.c0.w == 0f && m.c1.w == 0f && m.c2.w == 0f && m.c3.w == 1f;
+            return m.c0.w == 0f && m.c1.w == 0f && m.c2.w == 0f && Mathf.Approximately(m.c3.w, 1f);
         }
 
-        private static bool ScaleIsFinite(in float4x4 m, out float3 s)
+        private static bool ScaleIsFinite(float3 s)
         {
-            s = float3.zero;
-            s.x = math.sqrt(m.c0.x * m.c0.x + m.c0.y * m.c0.y + m.c0.z * m.c0.z);
-
             if (InfiniteZeroOrNaN(s.x))
                 return false;
 
-            s.y = math.sqrt(m.c1.x * m.c1.x + m.c1.y * m.c1.y + m.c1.z * m.c1.z);
-
             if (InfiniteZeroOrNaN(s.y))
                 return false;
-
-            s.z = math.sqrt(m.c2.x * m.c2.x + m.c2.y * m.c2.y + m.c2.z * m.c2.z);
 
             if (InfiniteZeroOrNaN(s.z))
                 return false;
@@ -78,14 +87,12 @@ namespace UnityGLTF.Interactivity.Playback
 
         private static bool InfiniteZeroOrNaN(float v)
         {
-            return v == 0 || math.isinf(v) || math.isnan(v);
+            return v == 0f || math.isinf(v) || math.isnan(v);
         }
 
-        private static bool ScaledDeterminateIsOne(in float4x4 m, in float3 s)
+        private static bool ScaledDeterminateIsOne(float detB)
         {
-            var b = new float3x3(new float4x4(m.c0 / s.x, m.c1 / s.y, m.c2 / s.z, m.c3));
-
-            return Mathf.Approximately(math.abs(math.determinant(b)), 1f);
+            return Mathf.Approximately(math.abs(detB), 1f);
         }
     }
 }
