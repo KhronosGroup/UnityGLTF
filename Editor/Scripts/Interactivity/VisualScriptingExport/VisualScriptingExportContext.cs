@@ -70,6 +70,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public delegate void OnUnitNodesCreatedDelegate(List<GltfInteractivityExportNode> nodes);
         public event OnUnitNodesCreatedDelegate OnUnitNodesCreated;
+        public event OnUnitNodesCreatedDelegate OnUnitNodesCreatedStage2;
         
         internal Dictionary<InputPortGraph, InputPortGraph> graphBypasses = new Dictionary<InputPortGraph, InputPortGraph>(new InputportGraphComparer());
         internal List<ExportGraph> addedGraphs = new List<ExportGraph>();
@@ -418,6 +419,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             }
             
             OnUnitNodesCreated?.Invoke(nodesToSerialize);
+            OnUnitNodesCreatedStage2?.Invoke(nodesToSerialize);
             
             RemoveUnconnectedNodes();
 

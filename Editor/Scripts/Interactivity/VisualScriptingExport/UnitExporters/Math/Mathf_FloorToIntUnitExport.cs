@@ -25,8 +25,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var floatToIntNode = unitExporter.CreateNode<Type_FloatToIntNode>();
    
-            floorNode.ValueIn(Math_FloorNode.IdInputA).MapToInputPort(unit.valueInputs[0]);
-            floatToIntNode.ValueIn(Type_FloatToIntNode.IdInputA).ConnectToSource(floorNode.ValueOut(Math_FloorNode.IdValueResult));
+            floorNode.ValueIn(Math_FloorNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
+            floatToIntNode.ValueIn(Type_FloatToIntNode.IdInputA).ConnectToSource(floorNode.ValueOut(Math_FloorNode.IdOut));
 
             unitExporter.MapValueOutportToSocketName(unit.result, Type_FloatToIntNode.IdValueResult, floatToIntNode);
             unitExporter.ByPassFlow(unit.enter, unit.exit);

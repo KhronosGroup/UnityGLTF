@@ -141,9 +141,8 @@ namespace UnityGLTF
 					break;
 			}
 
-			material.DoubleSided = (materialObj.HasProperty("_Cull") && materialObj.GetInt("_Cull") == (int)CullMode.Off) ||
-			                       (materialObj.HasProperty("_CullMode") && materialObj.GetInt("_CullMode") == (int)CullMode.Off) ||
-			                       (materialObj.shader.name.EndsWith("-Double")); // workaround for exporting shaders that are set to double-sided on 2020.3
+			var baseMap = new PBRGraphMap(materialObj);
+			material.DoubleSided =  baseMap.DoubleSided || (materialObj.shader.name.EndsWith("-Double")); // workaround for exporting shaders that are set to double-sided on 2020.3
 
 			if (materialObj.IsKeywordEnabled("_EMISSION") || materialObj.IsKeywordEnabled("EMISSION") || materialObj.HasProperty("emissiveTexture") || materialObj.HasProperty("_EmissiveTexture") || materialObj.HasProperty("_EmissiveColorMap"))
 			{
@@ -176,8 +175,8 @@ namespace UnityGLTF
 					}
 					else
 					{
-						var c = materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
-							materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
+						var c = materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
+							materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
 							materialObj.GetColor("_EmissiveFactor");
 						DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);
 					}
@@ -374,10 +373,6 @@ namespace UnityGLTF
 						
 						material.OcclusionTexture = ExportOcclusionTextureInfo(occTex, TextureMapType.Occlusion, materialObj, sharedTextureId);
 						ExportTextureTransform(material.OcclusionTexture, materialObj, propName);
-						material.OcclusionTexture.TexCoord = materialObj.HasProperty("occlusionTextureTexCoord") ?
-							Mathf.RoundToInt(materialObj.GetFloat("occlusionTextureTexCoord")) :
-							materialObj.HasProperty("_OcclusionTextureTexCoord") ?
-								Mathf.RoundToInt(materialObj.GetFloat("_OcclusionTextureTexCoord")) : 0;
 					}
 					else
 					{
@@ -460,13 +455,36 @@ namespace UnityGLTF
         }
 #endif
 
-		private void ExportTextureTransform(TextureInfo def, Material mat, string texName)
+		private int GetUvChannel(Material mat, string texName)
 		{
-			if (def == null) return;
+			if (mat == null) return 0;
+
+			var uvProp = texName + "TexCoord";
+#if UNITY_2021_1_OR_NEWER
+			if (mat.HasFloat(uvProp))
+#else
+			if (mat.HasProperty(uvProp)
+#if UNITY_2019_1_OR_NEWER
+				&& CheckForPropertyInShader(mat.shader, uvProp, ShaderPropertyType.Float)
+#endif
+			)
+#endif
+				return Mathf.RoundToInt(mat.GetFloat(uvProp));
+
+			return 0;
+		}
+
+		private bool ExportTextureTransform(TextureInfo def, Material mat, string texName)
+		{
+			if (def == null) return false;
 
 			// early out if texture transform is explicitly disabled
 			if (mat.HasProperty("_TEXTURE_TRANSFORM") && !mat.IsKeywordEnabled("_TEXTURE_TRANSFORM_ON"))
-				return;
+			{
+				// even without texture transform, set the uv channel in case the user has modified it (normally the slider is not visible in the inspector but if texture transform was enabled, uv modified and then disabled the uv channel setting will still be used by Unity and should then be exported)
+				def.TexCoord = GetUvChannel(mat, texName);
+				return false;
+			}
 
 			Vector2 offset = mat.GetTextureOffset(texName);
 			Vector2 scale = mat.GetTextureScale(texName);
@@ -488,16 +506,7 @@ namespace UnityGLTF
 #endif
 				rotation = mat.GetFloat(rotProp);
 
-#if UNITY_2021_1_OR_NEWER
-			if (mat.HasFloat(uvProp))
-#else
-			if (mat.HasProperty(uvProp)
-#if UNITY_2019_1_OR_NEWER
-				&& CheckForPropertyInShader(mat.shader, uvProp, ShaderPropertyType.Float)
-#endif
-			)
-#endif
-				uvChannel = mat.GetFloat(uvProp);
+			uvChannel = GetUvChannel(mat, texName);
 
 
 
@@ -586,6 +595,8 @@ namespace UnityGLTF
 				new GLTF.Math.Vector2(scale.x, scale.y),
 				 (int)uvChannel
 			);
+
+			return true;
 		}
 
 		public NormalTextureInfo ExportNormalTextureInfo(

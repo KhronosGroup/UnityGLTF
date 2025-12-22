@@ -212,10 +212,10 @@ namespace UnityGLTF
 	    {
 		    get { return
 #if UNITY_2019_3_OR_NEWER
-			    !GraphicsSettings.currentRenderPipeline ?
+			    (!GraphicsSettings.currentRenderPipeline && _material.HasProperty(cullModePropIdBuiltin)) ?
 			    _material.GetInt(cullModePropIdBuiltin) == (int)CullMode.Off :
 #endif
-				_material.GetInt(cullPropId) == (int)CullMode.Off; }
+				_material.HasProperty(cullPropId) && _material.GetInt(cullPropId) == (int)CullMode.Off; }
 		    set { SetDoubleSided(_material, value); }
 	    }
 

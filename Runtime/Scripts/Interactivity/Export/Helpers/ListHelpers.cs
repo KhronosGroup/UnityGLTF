@@ -81,10 +81,10 @@ namespace UnityGLTF.Interactivity.Export
 
             step.SetValue(-1);
             // Increase Count
-            var setCountVar = VariablesHelpers.SetVariable(exporter, list.CountVarId);
+            var setCountVar = VariablesHelpers.SetVariable(exporter, list.CountVarId, out var setCountVarSocket, out _, out _);
             flowIn = setCountVar.FlowIn(Variable_SetNode.IdFlowIn);
             setCountVar.FlowOut(Variable_SetNode.IdFlowOut).ConnectToFlowDestination(forFlowIn);
-            setCountVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(addCount.FirstValueOut());
+            setCountVarSocket.ConnectToSource(addCount.FirstValueOut());
 
             // Index of item that will be move to current Index
             var indexMinusOne = exporter.CreateNode<Math_SubNode>();
@@ -119,8 +119,8 @@ namespace UnityGLTF.Interactivity.Export
             addCount.ValueIn("b").SetValue(1);
             addCount.FirstValueOut().ExpectedType(ExpectedType.Int);
 
-            var setCountVar = VariablesHelpers.SetVariable(exporter, list.CountVarId);
-            setCountVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(addCount.FirstValueOut());
+            var setCountVar = VariablesHelpers.SetVariable(exporter, list.CountVarId, out var setCountVarSocket, out _, out _);
+            setCountVarSocket.ConnectToSource(addCount.FirstValueOut());
             flowIn = setCountVar.FlowIn(Variable_SetNode.IdFlowIn);
 
             var index = exporter.CreateNode<Math_SubNode>();
@@ -146,8 +146,8 @@ namespace UnityGLTF.Interactivity.Export
                 CreateSetItemListNodes(exporter, list);
 
             var sequence = exporter.CreateNode<Flow_SequenceNode>();
-            var setIndex = VariablesHelpers.SetVariable(exporter, list.CurrentIndexVarId);
-            var setValue = VariablesHelpers.SetVariable(exporter, list.ValueToSetVarId);
+            var setIndex = VariablesHelpers.SetVariable(exporter, list.CurrentIndexVarId, out indexInput, out _, out _);
+            var setValue = VariablesHelpers.SetVariable(exporter, list.ValueToSetVarId, out valueInput, out _, out _);
 
             flowIn = sequence.FlowIn(Flow_SequenceNode.IdFlowIn);
             sequence.FlowOut("0").ConnectToFlowDestination(setIndex.FlowIn(Variable_SetNode.IdFlowIn));
@@ -157,9 +157,6 @@ namespace UnityGLTF.Interactivity.Export
                 .ConnectToFlowDestination(setValue.FlowIn(Variable_SetNode.IdFlowIn));
 
             setValue.FlowOut(Variable_SetNode.IdFlowOut).ConnectToFlowDestination(list.setValueFlowIn);
-
-            indexInput = setIndex.ValueIn(Variable_SetNode.IdInputValue);
-            valueInput = setValue.ValueIn(Variable_SetNode.IdInputValue);
         }
 
         private static void CreateSetItemListNodes(INodeExporter exporter, VariableBasedList list)
@@ -215,8 +212,8 @@ namespace UnityGLTF.Interactivity.Export
             forLoop.FlowOut(Flow_ForLoopNode.IdLoopBody).ConnectToFlowDestination(setItemFlowIn);
 
             // Set new Count
-            var setCountVar = VariablesHelpers.SetVariable(exporter, list.CountVarId);
-            setCountVar.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(countMinusOne.FirstValueOut());
+            var setCountVar = VariablesHelpers.SetVariable(exporter, list.CountVarId, out var setCountVarSocket, out _, out _);
+            setCountVarSocket.ConnectToSource(countMinusOne.FirstValueOut());
             forLoop.FlowOut(Flow_ForLoopNode.IdCompleted)
                 .ConnectToFlowDestination(setCountVar.FlowIn(Variable_SetNode.IdFlowIn));
 

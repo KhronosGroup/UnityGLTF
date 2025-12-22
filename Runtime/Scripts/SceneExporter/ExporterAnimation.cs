@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using GLTF.Schema;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 using Object = UnityEngine.Object;
@@ -540,33 +541,33 @@ namespace UnityGLTF
 							else if(mat)
 							{
 								var found = false;
-								var shaderPropertyCount = ShaderUtil.GetPropertyCount(mat.shader);
+								var shaderPropertyCount = mat.shader.GetPropertyCount();
 								// var shaderPropertyNames = Enumerable.Range(0, shaderPropertyCount).Select(x => ShaderUtil.GetPropertyName(mat.shader, x));
 
 								for (var i = 0; i < shaderPropertyCount; i++)
 								{
 									if (found) break;
-									var name = ShaderUtil.GetPropertyName(mat.shader, i);
+									var name = mat.shader.GetPropertyName(i);
 									if (!memberName.EndsWith(name, StringComparison.Ordinal)) continue;
 									found = true;
-									var materialProperty = ShaderUtil.GetPropertyType(mat.shader, i);
+									var materialProperty = mat.shader.GetPropertyType(i);
 									switch (materialProperty)
 									{
-										case ShaderUtil.ShaderPropertyType.Color:
+										case ShaderPropertyType.Color:
 											prop.propertyType = typeof(Color);
 											break;
-										case ShaderUtil.ShaderPropertyType.Vector:
+										case ShaderPropertyType.Vector:
 											prop.propertyType = typeof(Vector4);
 											break;
-										case ShaderUtil.ShaderPropertyType.Float:
-										case ShaderUtil.ShaderPropertyType.Range:
+										case ShaderPropertyType.Float:
+										case ShaderPropertyType.Range:
 											prop.propertyType = typeof(float);
 											break;
-										case ShaderUtil.ShaderPropertyType.TexEnv:
+										case ShaderPropertyType.Texture:
 											prop.propertyType = typeof(Texture);
 											break;
 #if UNITY_2021_1_OR_NEWER
-										case ShaderUtil.ShaderPropertyType.Int:
+										case ShaderPropertyType.Int:
 											prop.propertyType = typeof(int);
 											break;
 #endif
@@ -901,8 +902,8 @@ namespace UnityGLTF
 						_clipAndSpeedAndPathToExportedTransform.Add((clip, speed, target), targetTr);
 
 					var curve = targetCurvesBinding[target];
-					var speedMultiplier = Mathf.Clamp(speed, 0.01f, Mathf.Infinity);
-
+					var speedMultiplier = Mathf.Clamp(Mathf.Abs(speed), 0.01f, Mathf.Infinity) * Mathf.Sign(speed);
+					
 					// Initialize data
 					// Bake and populate animation data
 					float[] times = null;
@@ -915,9 +916,9 @@ namespace UnityGLTF
 						foreach (KeyValuePair<string, PropertyCurve> c in curves)
 						{
 							var prop = c.Value;
-							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values))
+							if (BakePropertyAnimation(prop, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values, out var interpolationType))
 							{
-								AddAnimationData(prop.target, prop.propertyName, animation, times, values);
+								AddAnimationData(prop.target, prop.propertyName, animation, times, values, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -932,9 +933,9 @@ namespace UnityGLTF
 						{
 							var trp2 = new PropertyCurve(targetTr, "translation") { propertyType = typeof(Vector3) };
 							trp2.curve.AddRange(curve.translationCurves);
-							if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2))
+							if (BakePropertyAnimation(trp2, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values2, out var interpolationType))
 							{
-								AddAnimationData(targetTr, trp2.propertyName, animation, times, values2);
+								AddAnimationData(targetTr, trp2.propertyName, animation, times, values2, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -943,9 +944,9 @@ namespace UnityGLTF
 						{
 							var trp3 = new PropertyCurve(targetTr, "rotation") { propertyType = typeof(Quaternion) };
 							trp3.curve.AddRange(curve.rotationCurves.Where(x => x != null));
-							if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3))
+							if (BakePropertyAnimation(trp3, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values3, out var interpolationType))
 							{
-								AddAnimationData(targetTr, trp3.propertyName, animation, times, values3);
+								AddAnimationData(targetTr, trp3.propertyName, animation, times, values3, interpolationType);
 								sampledAnimationData = true;
 							}
 
@@ -955,9 +956,9 @@ namespace UnityGLTF
 						{
 							var trp4 = new PropertyCurve(targetTr, "scale") { propertyType = typeof(Vector3) };
 							trp4.curve.AddRange(curve.scaleCurves);
-							if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4))
+							if (BakePropertyAnimation(trp4, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values4, out var interpolationType))
 							{
-								AddAnimationData(targetTr, trp4.propertyName, animation, times, values4);
+								AddAnimationData(targetTr, trp4.propertyName, animation, times, values4, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -966,10 +967,10 @@ namespace UnityGLTF
 						{
 							var trp5 = new PropertyCurve(targetTr, "weights") { propertyType = typeof(float) };
 							trp5.curve.AddRange(curve.weightCurves.Values);
-							if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5))
+							if (BakePropertyAnimation(trp5, clip.length, AnimationBakingFramerate, speedMultiplier, out times, out var values5, out var interpolationType))
 							{
 								var targetComponent = targetTr.GetComponent<SkinnedMeshRenderer>();
-								AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5);
+								AddAnimationData(targetComponent, trp5.propertyName, animation, times, values5, interpolationType);
 								sampledAnimationData = true;
 							}
 						}
@@ -1227,8 +1228,32 @@ namespace UnityGLTF
 					foreach (var kvp in current.propertyCurves)
 					{
 						var prop = kvp.Value;
+						
+						void AddMissingCurve(string curveName, float constantValue)
+						{
+							var curve = CreateConstantCurve(constantValue, endTime);
+							prop.curve.Add(curve);
+							prop.curveName.Add(curveName);
+						}
+						
 						if (prop.propertyType == typeof(Color))
 						{
+							// In case of colors, but Unity uses x,y,z,w for the channel names, we convert them to r,g,b,a
+							for (int i = 0; i < prop.curveName.Count; i++)
+							{
+								if (prop.curveName[i].EndsWith(".x", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".r";
+								
+								if (prop.curveName[i].EndsWith(".y", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".g";
+									
+								if (prop.curveName[i].EndsWith(".z", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".b";
+									
+								if (prop.curveName[i].EndsWith(".w", StringComparison.Ordinal))
+									prop.curveName[i] = prop.curveName[i].Substring(0, prop.curveName[i].Length - 2)+ ".a";
+							}
+							
 							var memberName = prop.propertyName;
 							if (TryGetCurrentValue(prop.target, memberName, out var value))
 							{
@@ -1246,11 +1271,68 @@ namespace UnityGLTF
 								if (!hasBlueChannel) AddMissingCurve(memberName + ".b", col.b);
 								if (!hasAlphaChannel) AddMissingCurve(memberName + ".a", col.a);
 
-								void AddMissingCurve(string curveName, float constantValue)
+							}
+						}
+
+						if (prop.propertyType == typeof(Vector2))
+						{
+							if (prop.propertyName == "anchoredPosition" || prop.propertyName == "sizeDelta" || prop.propertyName == "pivot")
+							{
+								// Generate missing Vector2 curves (so a Vector2 always has keyframes for both channels)
+								var memberName = prop.propertyName;
+								if (TryGetCurrentValue(prop.target, memberName, out var value))
 								{
-									var curve = CreateConstantCurve(constantValue, endTime);
-									prop.curve.Add(curve);
-									prop.curveName.Add(curveName);
+									var vec = (Vector2)value;
+
+									var hasX = prop.FindIndex(v => v.EndsWith(".x")) >= 0;
+									var hasY = prop.FindIndex(v => v.EndsWith(".y")) >= 0;
+
+									if (!hasX) AddMissingCurve(memberName + ".x", vec.x);
+									if (!hasY) AddMissingCurve(memberName + ".y", vec.y);
+								}
+							}
+						}
+						
+						if (prop.propertyType == typeof(Vector3))
+						{
+							if (prop.propertyName == "localPosition" || prop.propertyName == "position" || prop.propertyName == "localScale" || prop.propertyName == "scale")
+							{
+								// Generate missing transform curves (so a transform always has keyframes for all 3 channels)
+								var memberName = prop.propertyName;
+								if (TryGetCurrentValue(prop.target, memberName, out var value))
+								{
+									var vec = (Vector3)value;
+
+									var hasX = prop.FindIndex(v => v.EndsWith(".x")) >= 0;
+									var hasY = prop.FindIndex(v => v.EndsWith(".y")) >= 0;
+									var hasZ = prop.FindIndex(v => v.EndsWith(".z")) >= 0;
+
+									if (!hasX) AddMissingCurve(memberName + ".x", vec.x);
+									if (!hasY) AddMissingCurve(memberName + ".y", vec.y);
+									if (!hasZ) AddMissingCurve(memberName + ".z", vec.z);
+								}
+							}
+						}
+						if (prop.propertyType == typeof(Vector4))
+						{
+							if (prop.propertyName == "localRotation" || prop.propertyName == "rotation")
+							{
+								// Generate missing rotation curves (so a rotation always has keyframes for all 4 channels)
+								var memberName = prop.propertyName;
+								if (TryGetCurrentValue(prop.target, memberName, out var value))
+								{
+									var vec = (Quaternion)value;
+
+									var hasX = prop.FindIndex(v => v.EndsWith(".x")) >= 0;
+									var hasY = prop.FindIndex(v => v.EndsWith(".y")) >= 0;
+									var hasZ = prop.FindIndex(v => v.EndsWith(".z")) >= 0;
+									var hasW = prop.FindIndex(v => v.EndsWith(".w")) >= 0;
+
+									if (!hasX) AddMissingCurve(memberName + ".x", vec.x);
+									if (!hasY) AddMissingCurve(memberName + ".y", vec.y);
+									if (!hasZ) AddMissingCurve(memberName + ".z", vec.z);
+									if (!hasW) AddMissingCurve(memberName + ".w", vec.w);
+
 								}
 							}
 						}
@@ -1317,10 +1399,13 @@ namespace UnityGLTF
 			return curve;
 		}
 
-		private bool BakePropertyAnimation(PropertyCurve prop, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values)
+		private bool BakePropertyAnimation(PropertyCurve prop, float length, float bakingFramerate, float speedMultiplier, out float[] times, out object[] values, out InterpolationType interpolationType)
 		{
+			var isReverse = speedMultiplier < 0;
+			speedMultiplier = Mathf.Abs(speedMultiplier);
 			times = null;
 			values = null;
+			interpolationType = InterpolationType.LINEAR;
 
 			prop.SortCurves();
 			if (!prop.Validate()) return false;
@@ -1335,6 +1420,22 @@ namespace UnityGLTF
 			var keyframes = prop.curve.Select(x => x.keys).ToArray();
 			var keyframeIndex = new int[curveCount];
 			
+			// Check if all samples are constant
+			var allConstant = true;
+			for (int i = 0; i < keyframes.Length; i++)
+			{
+				if (!allConstant) break;
+				var kf = keyframes[i];
+				for (var k = 0; k < kf.Length; k++)
+				{
+					if (!allConstant) break;
+					allConstant &= float.IsInfinity(kf[k].inTangent);
+				}
+			}
+
+			if (allConstant)
+				interpolationType = InterpolationType.STEP;
+			
 			// Assuming all the curves exist now
 			for (var i = 0; i < nbSamples; ++i)
 			{
@@ -1346,8 +1447,11 @@ namespace UnityGLTF
 						keyframeIndex[k]++;
 
 				var isConstant = false;
-				for (var k = 0; k < curveCount; k++)
-					isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
+				if (interpolationType != InterpolationType.STEP)
+				{
+					for (var k = 0; k < curveCount; k++)
+						isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
+				}
 
 				if (isConstant && _times.Count > 0)
 				{
@@ -1443,6 +1547,12 @@ namespace UnityGLTF
 			}
 
 			times = _times.ToArray();
+			
+			if (isReverse)
+			{
+				_values.Reverse();
+			}
+			
 			values = _values.ToArray();
 
 			RemoveUnneededKeyframes(ref times, ref values);

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using GLTF.Schema;
-using TMPro;
 using UnityEngine;
 using UnityGLTF.Extensions;
+#if HAVE_TMPRO
+using TMPro;
+#endif
 
 namespace UnityGLTF.Plugins
 {
@@ -40,10 +42,12 @@ namespace UnityGLTF.Plugins
 		public override void BeforeNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform,
 			Node node)
 		{
+#if HAVE_TMPRO
 			var tmp = transform.GetComponent<TextMeshPro>();
 			if (tmp == null) return;
 			
 			tmp.ForceMeshUpdate();
+#endif
 		}
 		
 		public override bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode)

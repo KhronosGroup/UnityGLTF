@@ -170,6 +170,116 @@ namespace UnityGLTF.Interactivity
             return null;
         }
         
+        public static bool TryToConvertValue(object value, string toTypeSignature, out object convertedValue)
+        {
+            if (value == null)
+            {
+                convertedValue = GetNullByType(toTypeSignature);
+                return true;
+            }
+
+            if (value is int intValue)
+            {
+                switch (toTypeSignature)
+                {
+                    case "float":
+                        convertedValue = (float)intValue;
+                        return true;
+                    case "bool":
+                        convertedValue = intValue != 0;
+                        return true;
+                    case "int":
+                        convertedValue = intValue;
+                        return true;
+                    case "float2":
+                        convertedValue = new Vector2(intValue, intValue);
+                        return true;
+                    case "float3":
+                        convertedValue = new Vector3(intValue, intValue, intValue);
+                        return true;
+                    case "float4":
+                        convertedValue = new Vector4(intValue, intValue, intValue, intValue); 
+                        return true;
+                }
+            }
+
+            if (value is float floatValue)
+            {
+                switch (toTypeSignature)
+                {
+                    case "float":
+                        convertedValue = floatValue;
+                        return true;
+                    case "bool":
+                        convertedValue = floatValue != 0f;
+                        return true;
+                    case "int":
+                        convertedValue = Mathf.RoundToInt(floatValue);
+                        return true;
+                    case "float2":
+                        convertedValue = new Vector2(floatValue, floatValue);
+                        return true;
+                    case "float3":
+                        convertedValue = new Vector3(floatValue, floatValue, floatValue);
+                        return true;
+                    case "float4":
+                        convertedValue = new Vector4(floatValue, floatValue, floatValue, floatValue);
+                        return true;
+                }
+            }
+            
+            if (value is bool boolValue)
+            {
+                switch (toTypeSignature)
+                {
+                    case "float":
+                        convertedValue = boolValue ? 1f : 0f;
+                        return true;
+                    case "int":
+                        convertedValue = boolValue ? 1 : 0;
+                        return true;
+                    case "float2":
+                        floatValue = boolValue ? 1f : 0f;
+                        convertedValue = new Vector2(floatValue, floatValue);
+                        return true;
+                    case "float3":
+                        floatValue = boolValue ? 1f : 0f;
+                        convertedValue = new Vector3(floatValue, floatValue, floatValue);
+                        return true;
+                    case "float4":
+                        floatValue = boolValue ? 1f : 0f;
+                        convertedValue = new Vector4(floatValue, floatValue, floatValue, floatValue);
+                        return true;
+                }
+            }
+            
+            if (value is Vector2 v2Value)
+            {
+                switch (toTypeSignature)
+                {
+                    case "float3":
+                        convertedValue = new Vector3(v2Value.x, v2Value.y, 0);
+                        return true;
+                    case "float4":
+                        convertedValue = new Vector4(v2Value.x, v2Value.y, 0, 0);
+                        return true;
+                }
+            }
+
+            if (value is Vector3 v3Value)
+            {
+                switch (toTypeSignature)
+                {
+                    case "float4":
+                        convertedValue = new Vector4(v3Value.x, v3Value.y, v3Value.z, 0);
+                        return true;
+                }
+            }
+
+            convertedValue = value;
+            return false;
+        }
+        
         public static int TypeIndex(Type type)
         {
             for (int i = 0; i < TypesMapping.Length; i++)

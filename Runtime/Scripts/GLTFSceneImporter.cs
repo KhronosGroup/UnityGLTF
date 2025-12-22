@@ -298,6 +298,8 @@ namespace UnityGLTF
 		public GLTFSceneImporter(GLTFRoot rootNode, Stream gltfStream, ImportOptions options) : this(options)
 		{
 			_gltfRoot = rootNode;
+			if (options.ImportContext != null)
+				options.ImportContext.SceneImporter = this;
 
 			if (gltfStream != null)
 			{
@@ -321,6 +323,9 @@ namespace UnityGLTF
 		/// </example>
 		public GLTFSceneImporter(Stream gltfStream, ImportOptions options) : this(options)
 		{
+			if (options.ImportContext != null)
+				options.ImportContext.SceneImporter = this;
+
 			if (gltfStream != null)
 			{
 				_gltfStream = new GLBStream { Stream = gltfStream, StartPosition = gltfStream.Position };
@@ -409,6 +414,8 @@ namespace UnityGLTF
 
 		public void Dispose()
 		{
+			if (_options.DataLoader is IDisposable disposable)
+				disposable.Dispose();
 			Cleanup();
 			DisposeNativeBuffers();
 		}

@@ -483,10 +483,10 @@ namespace UnityGLTF
 				SessionState.SetBool(remapFoldoutKey, remapFoldout);
 				if (remapFoldout)
 				{
-					if (remapCount > 0)
-					{
-						EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.BeginHorizontal();
 
+					using (new EditorGUI.DisabledScope(remapCount == 0))
+					{
 						if (GUILayout.Button("Restore all " + subDirectoryName))
 						{
 							for (var i = 0; i < importedData.arraySize; i++)
@@ -503,25 +503,27 @@ namespace UnityGLTF
                                 importer.RemoveRemap(oldRemap.Key);
 							}
 						}
-
-						if (typeof(T) == typeof(Material) && GUILayout.Button("Extract all " + subDirectoryName))
-						{
-							var materials = new T[importedData.arraySize];
-							for (var i = 0; i < importedData.arraySize; i++)
-								materials[i] = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
-							
-							var extract = materials.Where(m => m != null).ToArray();
-							AssetDatabase.StartAssetEditing();
-							ExtractAssets(extract, false);
-							AssetDatabase.StopAssetEditing();
-							var assetPath = AssetDatabase.GetAssetPath(target);
-							AssetDatabase.WriteImportSettingsIfDirty(assetPath);
-							AssetDatabase.Refresh();
-							return;
-						}
-
-						EditorGUILayout.EndHorizontal();
 					}
+
+					if (typeof(T) == typeof(Material) && GUILayout.Button("Extract all " + subDirectoryName))
+					{
+						var materials = new T[importedData.arraySize];
+						for (var i = 0; i < importedData.arraySize; i++)
+							materials[i] = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
+
+						var extract = materials.Where(m => m != null).ToArray();
+						AssetDatabase.StartAssetEditing();
+						ExtractAssets(extract, false);
+						AssetDatabase.StopAssetEditing();
+						var assetPath = AssetDatabase.GetAssetPath(target);
+						AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+						AssetDatabase.Refresh();
+						return;
+					}
+
+					EditorGUILayout.EndHorizontal();
+					EditorGUILayout.Space();
+
 
 					for (var i = 0; i < importedData.arraySize; i++)
 					{

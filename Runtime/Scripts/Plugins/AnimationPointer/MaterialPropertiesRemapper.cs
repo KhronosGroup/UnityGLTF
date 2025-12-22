@@ -359,7 +359,9 @@ namespace UnityGLTF.Plugins
             
             var emissiveFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
             {
-                PropertyNames = new[] { "_EmissionColor", "_EmissiveFactor", "emissiveFactor" },
+                // Note: Order changed because in some URP versions Shader Graph declares an extra _EmissionColor property
+                // but we want to use the emissiveFactor property.
+                PropertyNames = new[] { "emissiveFactor", "_EmissiveFactor", "_EmissionColor" },
                 GltfPropertyName = "emissiveFactor",
                 GltfSecondaryPropertyName =
                     $"extensions/{KHR_materials_emissive_strength_Factory.EXTENSION_NAME}/{nameof(KHR_materials_emissive_strength.emissiveStrength)}",

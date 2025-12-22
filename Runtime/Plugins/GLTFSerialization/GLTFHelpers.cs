@@ -410,7 +410,10 @@ namespace GLTF
 					switch (attributeAccessor.AccessorId.Value.Type)
 					{
 						case GLTFAccessorAttributeType.SCALAR:
-							attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache);
+							if (attributeAccessor.AccessorId.Value.ComponentType == GLTFComponentType.UnsignedByte)
+								attributeAccessor.AccessorId.Value.AsUByteArray(ref resultArray, bufferViewCache);
+							else
+								attributeAccessor.AccessorId.Value.AsFloatArray(ref resultArray, bufferViewCache);
 							break;
 						case GLTFAccessorAttributeType.VEC2:
 							attributeAccessor.AccessorId.Value.AsFloat2Array(ref resultArray, bufferViewCache);

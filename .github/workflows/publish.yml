@@ -1,0 +1,25 @@
+name: Release Workflow
+on:
+  push:
+    branches:
+      - 'release/package'
+
+jobs:
+  run-release-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+        
+      - name: Publish to npm
+        id: publish
+        run: npx --yes needle-publish-helper@stable publish "." --webhook "${{ secrets.WEBHOOK_URL }}" --registry "${{ secrets.PACKAGE_REGISTRY_URL }}" --access-token "${{ secrets.NPM_TOKEN }}" --create-tag release/ --llm-api-key "${{ secrets.LLM_API_KEY }}"

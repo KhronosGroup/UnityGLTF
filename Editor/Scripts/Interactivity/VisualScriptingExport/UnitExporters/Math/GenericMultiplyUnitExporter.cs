@@ -72,7 +72,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             mulNode.FirstValueOut().MapToPort(unit.product);
             
             // We need to check later - when its available - the input type of the node,
-            unitExporter.vsExportContext.OnUnitNodesCreated += nodes =>
+            unitExporter.vsExportContext.OnUnitNodesCreatedStage2 += nodes =>
             {
                 var valueTypeA = unitExporter.vsExportContext.GetValueTypeForInput(mulNode, "a");
                 var valueTypeB = unitExporter.vsExportContext.GetValueTypeForInput(mulNode, "b");
@@ -81,8 +81,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     && valueTypeB == GltfTypes.TypeIndexByGltfSignature("float3"))
                 {
                     mulNode.SetSchema(new Math_Rotate3dNode(), false);
-                    mulNode.ValueIn("b").SetType(TypeRestriction.LimitToFloat4);
-                    mulNode.ValueIn("a").SetType(TypeRestriction.LimitToFloat3);
+                    var oldSocketA = mulNode.ValueIn("a");
+                    var oldSocketB = mulNode.ValueIn("b");
+                    mulNode.ValueInConnection.Clear();
+                    
+                    mulNode.ValueIn(Math_Rotate3dNode.IdInputQuaternion);
+                    mulNode.ValueIn(Math_Rotate3dNode.IdInputVector);
+                        
+                    mulNode.ValueInConnection[Math_Rotate3dNode.IdInputQuaternion] = oldSocketA.socket.Value;
+                    mulNode.ValueInConnection[Math_Rotate3dNode.IdInputVector] = oldSocketB.socket.Value;
                     mulNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
                 }
                 else

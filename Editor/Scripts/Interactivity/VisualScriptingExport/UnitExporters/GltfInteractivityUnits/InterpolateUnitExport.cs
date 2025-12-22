@@ -60,6 +60,30 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
+                else if (unit.member.name == "localScale")
+                {
+                    pointerTemplate = "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale";
+                    valueType = GltfTypes.Float3;
+                }
+            }
+
+            if (unit.member.targetType == typeof(Material))
+            {
+                var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+                pointerId = PointersHelper.IdPointerMaterialIndex;
+                if (unit.member.name == "color")
+                {
+                     var gltfProperty =
+                     MaterialPointerHelper.GetPointer(unitExporter, "_Color", out var map);
+                    if (gltfProperty == null)
+                    {
+                        UnitExportLogging.AddErrorLog(unit, "color property name is not supported.");
+                        return false;
+                    }
+
+                    valueType = GltfTypes.Float4;
+                    pointerTemplate = materialTemplate + gltfProperty;
+                }
             }
             
             if (string.IsNullOrEmpty(pointerTemplate))

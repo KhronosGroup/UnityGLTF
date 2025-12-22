@@ -34,10 +34,20 @@ namespace UnityGLTF.Cache
 			}
 		}
 
+#if UNITY_EDITOR
+		private static string GetPath(Object asset, string seed)
+		{
+			if (asset is Texture tex)
+				seed += $"_{tex.updateCount}";
+			
+			return CacheDirectory + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed;
+		}
+#endif
+
 		public static bool TryGetBytes(Object asset, string seed, out byte[] bytes)
 		{
 #if UNITY_EDITOR
-			var path = CacheDirectory + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed;
+			var path = GetPath(asset, seed);
 			if (File.Exists(path))
 			{
 				bytes = File.ReadAllBytes(path);
@@ -54,7 +64,7 @@ namespace UnityGLTF.Cache
 #if UNITY_EDITOR
 			var dir = CacheDirectory;
 			Directory.CreateDirectory(dir);
-			var path = dir + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed;
+			var path = GetPath(asset, seed);
 			// Debug.Log($"Writing {bytes.Length} bytes to cache: {path}");
 			File.WriteAllBytes(path, bytes);
 #endif

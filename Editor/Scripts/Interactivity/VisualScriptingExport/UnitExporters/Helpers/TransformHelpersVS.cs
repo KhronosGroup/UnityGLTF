@@ -1,10 +1,52 @@
 using Unity.VisualScripting;
+using UnityEngine;
 using UnityGLTF.Interactivity.Export;
+using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class TransformHelpersVS : TransformHelpers
     {
+        public static void GetWorldPointFromLocalPoint(INodeExporter exporter, ValueInput target,
+            out ValueInRef localPoint,
+            out ValueOutRef worldPoint)
+        {
+            if (UnitsHelper.IsMainCameraInInput(target))
+            {
+                var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
+                worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+                PointersHelper.AddPointerConfig(worldMatrix, ActiveCameraGlobalMatrix, GltfTypes.Float4x4);
+                
+                GetWorldPointFromLocalPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
+            }
+            else
+            {
+                GetWorldPointFromLocalPoint(exporter, out var targetInput, out localPoint, out worldPoint);
+                targetInput.MapToInputPort(target);
+                return;
+            }
+        }
+        
+        public static void GetLocalPointFromWorldPoint(INodeExporter exporter, ValueInput target,
+            out ValueInRef localPoint,
+            out ValueOutRef worldPoint)
+        {
+            if (UnitsHelper.IsMainCameraInInput(target))
+            {
+                var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
+                worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+                PointersHelper.AddPointerConfig(worldMatrix, ActiveCameraGlobalMatrix, GltfTypes.Float4x4);
+                
+                GetLocalPointFromWorldPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
+            }
+            else
+            {
+                GetLocalPointFromWorldPoint(exporter, out var targetInput, out localPoint, out worldPoint);
+                targetInput.MapToInputPort(target);
+                return;
+            }
+        }
+        
         public static void GetLocalScale(UnitExporter unitExporter, ValueInput target,
             out ValueOutRef scaleOutput)
         {
