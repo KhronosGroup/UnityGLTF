@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions; // added for placeholder parsing
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
@@ -21,7 +23,7 @@ namespace UnityGLTF.Interactivity.Export
                             message += $" (config: {config.Key}={config.Value.Value})";
                 }
                 
-                sb.AppendLine($"Node Index {node.Index} with Schema={node.Schema.Op}: {message}");
+                sb.AppendLine($"Node Index {node.Index} with Schema={node.Schema.Op}: {message} "+node.AdditionalDebugString);
             }
             
             foreach (var node in context.Nodes)
@@ -57,6 +59,44 @@ namespace UnityGLTF.Interactivity.Export
                     }
                 }
 
+                if (node.Schema.Op == "debug/log")
+                {
+                    if (node.Configuration.ContainsKey(Debug_LogNode.IdConfigMessage))
+                    {
+                        if (node.Configuration[Debug_LogNode.IdConfigMessage].Value == null)
+                            NodeAppendLine(node, $"Debug Log Node has no Message");
+                        else
+                        {
+                            var templateStr = node.Configuration[Debug_LogNode.IdConfigMessage].Value;
+                            // Extract placeholders in the form {placeholder} from the template string and validate they exist as value socket keys
+                            if (templateStr is string template)
+                            {
+                                var matches = Regex.Matches(template, @"\{([^{}]+)\}");
+                                foreach (Match m in matches)
+                                {
+                                    var placeholder = m.Groups[1].Value.Trim();
+                                    if (string.IsNullOrEmpty(placeholder))
+                                        continue; // ignore empty braces
+                                    if (!node.ValueInConnection.ContainsKey(placeholder))
+                                    {
+                                        NodeAppendLine(node, $"Debug Log template placeholder '{{{placeholder}}}' has no matching ValueIn socket");
+                                    }
+                                    else
+                                    {
+                                        var socket = node.ValueInConnection[placeholder];
+                                        if (socket.Node == null && socket.Value == null)
+                                            NodeAppendLine(node, $"Debug Log template placeholder '{{{placeholder}}}' socket has neither connection nor default value");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                NodeAppendLine(node, $"Debug Log Node Message config is not a string (Type={templateStr.GetType().Name})");
+                            }
+                        }
+                    }
+                }
+
                 if (node.Schema.Op == "pointer/set" || node.Schema.Op == "pointer/get")
                 {
                     if (node.ValueInConnection.TryGetValue(PointersHelper.IdPointerNodeIndex, out var valueSocket))
@@ -69,14 +109,29 @@ namespace UnityGLTF.Interactivity.Export
                     }
                 }
                 
-                if (node.Schema.Op == "variable/set" || node.Schema.Op == "variable/get")
+                if (node.Schema.Op == "variable/get")
                 {
-                    if (node.Configuration.TryGetValue(Variable_SetNode.IdConfigVarIndex, out var varConfig))
+                    if (node.Configuration.TryGetValue(Variable_GetNode.IdConfigVarIndex, out var varConfig))
                     {
                         if (varConfig.Value == null)
-                            NodeAppendLine(node, $"Variable Node has no Variable Index");
+                            NodeAppendLine(node, $"Variable Get Node has no Variable Index");
                         if (varConfig.Value != null && (int)varConfig.Value == -1)
-                            NodeAppendLine(node, $"Variable Node has invalid Variable Index: -1");
+                            NodeAppendLine(node, $"Variable Get Node has invalid Variable Index: -1");
+                    }
+                }
+                
+                if (node.Schema.Op == "variable/set")
+                {
+                    if (node.Configuration.TryGetValue(Variable_SetNode.IdConfigVarIndices, out var varConfig))
+                    {
+                        if (varConfig.Value == null)
+                            NodeAppendLine(node, $"Variable Set Node has no Variable Index");
+                        else
+                        if (varConfig.Value != null && !(varConfig.Value is int[]))
+                            NodeAppendLine(node, $"Variable Set Node has invalid config value type. Should be a int[]. Current Type: {varConfig.Value.GetType().Name}");
+                        else
+                        if (varConfig.Value != null && (varConfig.Value as int[]).Contains(-1))
+                            NodeAppendLine(node, $"Variable Set Node contains invalid Variable Index: -1");
                     }
                 }
 

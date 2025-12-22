@@ -415,7 +415,7 @@ public partial class GLTFSceneExporter
 			}
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 1);
 
 			accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
@@ -427,7 +427,7 @@ public partial class GLTFSceneExporter
 			accessor.Min = new List<double> { min };
 			accessor.Max = new List<double> { max };
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 1);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 

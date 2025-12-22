@@ -31,7 +31,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 var gltfProperty = MaterialPointerHelper.GetPointer(unitExporter, (string)floatPropertyName, out var map);
                 if (gltfProperty == null)
                 {
-                    UnitExportLogging.AddErrorLog(unit, "color property name is not supported.");
+                    UnitExportLogging.AddErrorLog(unit, "float property name is not supported.");
                     return false;
                 }
 
@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             else
             {
-                UnitExportLogging.AddErrorLog(unit, "color property name is not a literal or default value, which is not supported.");
+                UnitExportLogging.AddErrorLog(unit, "float property name is not a literal or default value, which is not supported.");
                 return false;
             } 
             

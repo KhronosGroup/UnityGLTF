@@ -104,6 +104,14 @@ namespace UnityGLTF.Interactivity.Export
             throw new System.Exception("No default 'out' socket found in output flow sockets. Schema: " + Schema.Op);
         }
         
+        public ValueInRef FirstValueIn()
+        {
+            var firstItem = ValueInConnection.FirstOrDefault();
+            if (firstItem.Value == null)
+                return null;
+            
+            return new ValueInRef(this,  firstItem);
+        }
         
         public ValueOutRef FirstValueOut()
         {

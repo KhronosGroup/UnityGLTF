@@ -1,4 +1,4 @@
-# UnityGLTF <!-- omit from toc -->
+<img src="https://github.com/KhronosGroup/UnityGLTF/blob/e3797354f8d729156062265cbac98804a109d8f0/unitygltf-logo.png" width="200" /> 
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
 ![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2021.3%E2%80%936000.0%2B-brightgreen)
@@ -57,7 +57,8 @@ The library is designed to be easy to extend with additional extensions to the g
   - [Default Importer Selection](#default-importer-selection)
 - [Animation Import](#animation-import)
 - [Extensibility](#extensibility)
-  - [Example for custom plugin](#example-for-custom-plugin)
+  - [Example for custom export plugin](#example-for-custom-export-plugin)
+  - [Example for custom import plugin](#example-for-custom-import-plugin)
 - [Known Issues](#known-issues)
 - [Contributing](#contributing)
   - [Unity Package](#unity-package)
@@ -206,7 +207,6 @@ A lot of Visual Scripting nodes are already supported. To see the full list of s
 
 ### Unsupported
 - String manipulation (not supported by the KHR_interactivity extension)
-- Quaternion math operations are currently missing (not yet in the KHR_interactivity specification)
 - Some nodes have additional limitations. You can see these in the Script Graph:  
   ![image](https://github.com/user-attachments/assets/011618d4-623e-4aa9-b343-bdbeb06df141)
 
@@ -458,7 +458,7 @@ If your plugin reads/writes custom extension data, you need to also implement `G
 > [!WARNING] 
 > `ShouldNodeExport` callback: Using this callback requires understanding of how glTF works. For example, if you filter out some bones of a skeleton on export, the result might not be valid glTF or might not display what you expect. Use with caution
 
-### Example for custom plugin
+### Example for custom export plugin
 ```csharp
 public class MyExportPlugin : GLTFExportPlugin
 {
@@ -481,6 +481,30 @@ public class MyExportPluginContext: GLTFExportPluginContext
 }
 ```
 
+### Example for custom import plugin
+```csharp
+public class MyImportPlugin: GLTFImportPlugin
+{
+    public override string DisplayName => "My Import Plugin";
+    public override string Description => "";
+    
+    public override GLTFImportPluginContext CreateInstance(GLTFImportContext context)
+    {
+        return new MyImportPluginContext();
+    }
+}
+
+public class MyImportPluginContext: GLTFImportPluginContext
+{
+    public override void OnAfterImportScene(GLTFScene scene, int sceneIndex, GameObject sceneObject)
+    {
+        // Set all to static
+        var objs = sceneObject.GetComponentsInChildren<Transform>();
+        foreach (var obj in objs)
+            obj.gameObject.isStatic = true;
+    }
+}
+```
 
 > 🏗️ Under construction. You can take a look at `MaterialVariantsPlugin.cs` for an example.
 

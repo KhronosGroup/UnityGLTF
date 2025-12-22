@@ -814,13 +814,33 @@ namespace UnityGLTF.Interactivity.Export
                                         .limitToType);
                                 if (limitToType != valueType)
                                 {
-                                    changed = true;
 
+                                    if (socket.Value != null)
+                                    {
+                                        if (GltfTypes.TryToConvertValue(socket.Value,
+                                                socket.typeRestriction.limitToType, out var convertedValue))
+                                        {
+                                            socket.Value = convertedValue;
+                                            socket.Type = GltfTypes.TypeIndexByGltfSignature(socket.typeRestriction.limitToType);
+                                            changed = true;
+                                            continue;
+                                        }
+                                    }
+                                    
                                     var conversionNode = AddTypeConversion(node, nodesToSerialize.Count,
                                         valueSocket.Key,
                                         valueType, limitToType);
-                                    if (conversionNode != null)
+                                    if (conversionNode != null && conversionNode.Length > 0)
+                                    {
                                         nodesToSerialize.AddRange(conversionNode);
+                                        changed = true;
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
+                                            " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType].GltfSignature +
+                                            " but should be " + GltfTypes.TypesMapping[limitToType].GltfSignature);;
+                                    }
                                 }
                             }
                             else if (socket.typeRestriction.fromInputPort != null)
@@ -833,17 +853,37 @@ namespace UnityGLTF.Interactivity.Export
                                 {
                                     var preferType =
                                         GltfTypes.PreferType(valueType, fromInputPortType);
-                                    if (preferType == -1)
+                                    if (preferType == -1 || preferType == valueType)
                                     {
                                         continue;
                                     }
+                                    
+                                    if (socket.Value != null)
+                                    {
+                                        if (GltfTypes.TryToConvertValue(socket.Value,
+                                                GltfTypes.TypesMapping[fromInputPortType].GltfSignature, out var convertedValue))
+                                        {
+                                            socket.Value = convertedValue;
+                                            socket.Type = fromInputPortType;
+                                            changed = true;
+                                            continue;
+                                        }
+                                    }
 
-                                    changed = true;
                                     var conversionNode = AddTypeConversion(node, nodesToSerialize.Count,
                                         valueSocket.Key,
                                         valueType, preferType);
-                                    if (conversionNode != null)
+                                    if (conversionNode != null && conversionNode.Length > 0)
+                                    {
+                                        changed = true;
                                         nodesToSerialize.AddRange(conversionNode);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
+                                                         " in node: " + node.Schema.Op + ". Has Type " + GltfTypes.TypesMapping[valueType].GltfSignature +
+                                                         " but should be " + GltfTypes.TypesMapping[fromInputPortType].GltfSignature);;
+                                    }
                                 }
                             }
                         }

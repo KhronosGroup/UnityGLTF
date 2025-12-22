@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.18.5] - 2025-11-20
+- fix: deprecation warnings in Unity 6.2+
+
+## [2.18.4] - 2025-11-19
+- change: Interactivity spec changes
+- fix: BuiltRP material double side export
+
+## [2.18.3] - 2025-10-16
+- fix: animation step detection logic error
+
+## [2.18.2] - 2025-10-15
+- fix: Unity Build error
+
+## [2.18.1] - 2025-10-15
+- fix: visibility animation tracks changed to unsigned byte data type (0 = false, >0 = true) and STEP interpolationtype
+- add: Interactivity: merging on export of onSelect, onHoverIn and onHoverOut with same target (spec allows only once per target) 
+
+## [2.18.0] - 2025-10-08
+- add: animation support for KHR_node_visibility extension
+- add: export support for URP/Lit materials with "Preserve Specular" enabled
+- fix: animation export: add missing value component curves
+- fix: RoughRefraction filterMode set to Trilinear in RenderGraph mode (fixes #884)
+- fix: missing queue setup when using dispersion (fixes #883)
+- fix: BakeAnimation on export when speed < 0
+- fix: Interactivity Animator.Play export: speed, starttime, endtime setup
+- fix: Interactivity Animator.play: changed start time to cliplength when reversed
+- change: removed obsolete warning for KTX > 3.5 and Draco > 5.2
+- change: clearer animation export warning when gameobject was not exported
+- change: updated README with logo
+
+## [2.17.11] - 2025-09-22
+- fix: blendshape runtime import, positions was getting scaled to zero
+
+## [2.17.10] - 2025-09-12
+- fix: `texcoord` export, previously it was only exported when `Texture Transforms` was enabled
+- fix: Texture export cache, now using the Texture `updateCount` to ensure we don't use an older version from cache
+- fix: PBRGraph inspector now shows UV coordinate properties more reliably
+
+## [2.17.9] - 2025-08-25
+- add: `MarkMaterialAsCustomShaderExport` API to keep original property names in animations
+- change: Importer should always show buttons for Extract / Restore materials
+
+## [2.17.8] - 2025-08-20
+- fix: Build error
+
+## [2.17.7] - 2025-08-20
+- fix: Interactivity: wrong sockets after Tick nodes cleanup
+- fix: Interactivity: input type resolving for GenericMul-Unit export, when inputs comes from CustomEvent
+- fix: added missing ImportContext.SceneImporter assignment 
+
+## [2.17.6] - 2025-08-06
+- fix: order of export checks was wrong for `emissiveFactor` / `_EmissionColor`
+- fix: update to latest KHR_interactivity specification changes from July 2025
+- fix: prevent endless loop in KHR_interactivity type conversion in some edge cases
+- fix: correct input types for `p1` and `p2` in `pointer/interpolate` schema
+- add: support for member interpolation for `Material.mainColor`
+
+## [2.17.5] - 2025-07-25
+- fix: Compiler error when TMP is not installed
+
+## [2.17.4] - 2025-07-17
+- fix: Exporting animation should not abort export for unknown properties
+- fix: Warn when UnityGLTF/PBRGraph can't be imported due to insufficient shader variant limit in Unity
+
 ## [2.17.3] - 2025-07-13
 - fix: Restore accidentally removed using
 - fix: Prevent NullReferenceException when exporting textures via callback without other textures in the file

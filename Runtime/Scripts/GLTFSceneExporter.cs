@@ -541,6 +541,7 @@ namespace UnityGLTF
 		private GLTFSettings settings => _exportContext.settings;
 		private bool ExportNames => settings.ExportNames;
 		private bool ExportAnimations => settings.ExportAnimations;
+		public bool BakeAnimationSpeed => settings.BakeAnimationSpeed;
 
 		#endregion
 

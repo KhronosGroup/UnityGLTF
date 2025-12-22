@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GLTF.Schema;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -45,7 +46,10 @@ namespace UnityGLTF.Extensions
 					ResolveComponent:
 						reg.path = "/nodes/" + id + "/" + reg.propertyBinding;
 						var componentPath = reg.path;
-
+					
+						if (componentPath.Contains(KHR_node_visibility_Factory.EXTENSION_NAME))
+							break;
+					
 						var anyOtherResolverWasAbleToResolve = false;
 						foreach (var res in exporter.pointerResolvers)
 						{

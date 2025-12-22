@@ -24,6 +24,11 @@ namespace UnityGLTF.Interactivity.Schema
         
         public Dictionary<string, string> MetaData = new Dictionary<string, string>();
 
+        public virtual string AdditionalDebugString
+        {
+            get => "";
+        }
+        
         public void RemoveUnconnectedFlows()
         {
             var keys = FlowConnections.Keys.ToList();
@@ -43,6 +48,18 @@ namespace UnityGLTF.Interactivity.Schema
             }
 
             socket.Node = targetNode.Index;
+            socket.Socket = targetSocketId;
+        }
+        
+        public void SetFlowOut(string socketId, int targetNode, string targetSocketId)
+        {
+            if (!FlowConnections.TryGetValue(socketId, out var socket))
+            {
+                socket = new FlowSocketData();
+                FlowConnections.Add(socketId, socket);
+            }
+
+            socket.Node = targetNode;
             socket.Socket = targetSocketId;
         }
 

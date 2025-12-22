@@ -22,10 +22,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             var invokeUnit = unitExporter.unit as InvokeMember;
             
-            TransformHelpers.GetWorldPointFromLocalPoint(unitExporter, out var targetRef, out var localPointSocket, out var worldPointSocket);
-
-            targetRef.MapToInputPort(invokeUnit.target);
-
+            TransformHelpersVS.GetWorldPointFromLocalPoint(unitExporter, invokeUnit.target, out var localPointSocket, out var worldPointSocket);
+            
             if (invokeUnit.valueInputs.Count > 2)
             {
                 var combine = unitExporter.CreateNode<Math_Combine3Node>();

@@ -358,6 +358,27 @@ namespace UnityGLTF
 							switch (rootType)
 							{
 								case "nodes":
+									var nodeExtension = pointerHierarchy.FindNext(PointerPath.PathElement.Extension);
+									if (nodeExtension != null)
+									{
+										var extensionPath = nodeExtension.ExtractPath();
+										if (extensionPath == "extensions/KHR_node_visibility/visible")
+										{
+											pointerData = new AnimationPointerData();
+											pointerData.targetNodeIds = new int[] {rootIndex.index};
+											nodeIds = pointerData.targetNodeIds;
+											pointerData.unityPropertyNames = new string[1] { "m_IsActive" };
+											pointerData.targetType = typeof(GameObject);
+											pointerData.primaryData = samplerCache.Output; 
+											pointerData.importAccessorContentConversion = (data, frame) =>
+											{
+												var v = data.primaryData.AccessorContent.AsBytes[frame];
+												return new float[] { v > 0 ? 1f : 0f};
+											};
+											break;
+										}
+									}
+
 									var pointerPropertyElement = pointerHierarchy.FindNext(PointerPath.PathElement.Property);
 									if (pointerPropertyElement == null)
 										continue;

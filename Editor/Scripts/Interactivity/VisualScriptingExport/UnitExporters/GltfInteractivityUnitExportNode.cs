@@ -72,6 +72,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
     public class GltfInteractivityUnitExporterNode : GltfInteractivityExportNode
     {
         public UnitExporter Exporter { get; private set; }
+        
+        public override string AdditionalDebugString { get => $" Unit={Exporter.unit.GetType().Name} Graph-GameObject={Exporter.Graph.gameObject}"; }
+
         /// <summary>
         /// The constructor takes in a Schema to which the data should be validated against.
         /// </summary>

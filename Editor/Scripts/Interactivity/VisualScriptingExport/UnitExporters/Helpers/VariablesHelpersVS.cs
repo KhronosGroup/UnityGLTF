@@ -8,41 +8,28 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     {
         public static GltfInteractivityExportNode SetVariableStaticValue(INodeExporter unitExporter, int id, object value, ControlInput flowIn, ControlOutput flowOut)
         {
-            var node = unitExporter.CreateNode<Variable_SetNode>();
-            
-            var variableType = unitExporter.Context.variables[id].Type;
-            node.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(flowIn);
-            node.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(flowOut);
-            node.ValueIn(Variable_SetNode.IdInputValue).SetValue(value).SetType(TypeRestriction.LimitToType(variableType));
-
-            node.Configuration["variable"].Value = id;
+            var node = SetVariableStaticValue(unitExporter, id, value, out var flowInSocket, out var flowOutScoket); 
+            flowInSocket.MapToControlInput(flowIn);
+            flowOutScoket.MapToControlOutput(flowOut);
             return node;
         }
         
-        
         public static GltfInteractivityExportNode SetVariable(INodeExporter unitExporter, int id, ValueInput value, ControlInput flowIn, ControlOutput flowOut)
         {
-            var node = unitExporter.CreateNode<Variable_SetNode>();
+            var node = SetVariable(unitExporter, id, out var valueSocket, out var flowInSocket, out var flowOutSocket);
+            flowInSocket.MapToControlInput(flowIn);
+            flowOutSocket.MapToControlOutput(flowOut);
+            valueSocket.MapToInputPort(value);
             
-            var variableType = unitExporter.Context.variables[id].Type;
-            node.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(flowIn);
-            node.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(flowOut);
-            node.ValueIn(Variable_SetNode.IdInputValue).MapToInputPort(value).SetType(TypeRestriction.LimitToType(variableType));
-
-            node.Configuration["variable"].Value = id;
             return node;
         }
         
         public static GltfInteractivityExportNode SetVariable(INodeExporter unitExporter, int id, ValueOutRef valueSource, ControlInput flowIn, ControlOutput flowOut)
         {
-            var node = unitExporter.CreateNode<Variable_SetNode>();
-            
-            var variableType = unitExporter.Context.variables[id].Type;
-            node.FlowIn(Variable_SetNode.IdFlowIn).MapToControlInput(flowIn);
-            node.FlowOut(Variable_SetNode.IdFlowOut).MapToControlOutput(flowOut);
-            node.ValueIn(Variable_SetNode.IdInputValue).ConnectToSource(valueSource)
-                .SetType(TypeRestriction.LimitToType(variableType));
-            node.Configuration["variable"].Value = id;
+            var node = SetVariable(unitExporter, id, out var valueSocket, out var flowInSocket, out var flowOutSocket);
+            flowInSocket.MapToControlInput(flowIn);
+            flowOutSocket.MapToControlOutput(flowOut);
+            valueSocket.ConnectToSource(valueSource);
             return node;
         }
         
