@@ -269,12 +269,11 @@ namespace UnityGLTF.Interactivity.Schema
                 }
                 else if (value is Matrix4x4 m4)
                 {
-                    // TODO check if this is the correct row-column order
                     valueObject.Add(new JProperty("value", new JArray(
-                        m4.m00, m4.m01, m4.m02, m4.m03,
-                        m4.m10, m4.m11, m4.m12, m4.m13,
-                        m4.m20, m4.m21, m4.m22, m4.m23,
-                        m4.m30, m4.m31, m4.m32, m4.m33)));
+                        m4.m00, m4.m10, m4.m20, m4.m30,
+                        m4.m01, m4.m11, m4.m21, m4.m31,
+                        m4.m02, m4.m12, m4.m22, m4.m32,
+                        m4.m03, m4.m13, m4.m23, m4.m33)));
                 }
                 else if (value is Vector4 v4)
                 {
