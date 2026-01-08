@@ -964,6 +964,7 @@ namespace UnityGLTF
 			    BlendShapeFrameWeight = _blendShapeFrameWeight,
 			    CameraImport = _importCamera,
 			    DeduplicateResources = _deduplicateResources,
+                ScaleFactor = _scaleFactor,
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))
