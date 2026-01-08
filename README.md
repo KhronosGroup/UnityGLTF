@@ -1,4 +1,4 @@
-## This fork of UnityGLTF includes some bugfixes and new features which are not merged into the original repository yet despite being PR'd.
+## This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
 
 <img src="https://github.com/KhronosGroup/UnityGLTF/blob/e3797354f8d729156062265cbac98804a109d8f0/unitygltf-logo.png" width="200" /> 
 
