@@ -165,7 +165,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                     }
                 });
 #endif
-
+                UnityEngine.Debug.Log($"Running test: {test.title}");
                 // Actually run test.
                 var eng = CreateBehaviourEngineForGraph(test.graph, OnCustomEventFired, test.importer, startPlayback: true);
 
@@ -289,7 +289,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         }
 
 
-        protected static (Graph, TestValues) CreateSelfContainedTestGraph(string nodeStr, Dictionary<string, Value> values, Dictionary<string, IProperty> expectedResults, ComparisonType subGraphType)
+        protected static (Graph, TestValues) CreateSelfContainedTestGraph(string nodeStr, Dictionary<string, Value> values, Dictionary<string, IProperty> expectedResults, ComparisonType subGraphType, bool treatFloat4AsQuaternion = false)
         {
             Graph g = CreateGraphForTest();
 
@@ -301,7 +301,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 opNode.AddValue(value.Key, value.Value);
             }
 
-            GenerateGraphByExpectedValueType(expectedResults, g, opNode, subGraph);
+            GenerateGraphByExpectedValueType(expectedResults, g, opNode, subGraph, treatFloat4AsQuaternion);
 
             var testValues = new TestValues()
             {
@@ -312,7 +312,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             return (g, testValues);
         }
 
-        private static void GenerateGraphByExpectedValueType(Dictionary<string, IProperty> expectedResults, Graph g, Node opNode, ISubGraph requestedSubGraph)
+        private static void GenerateGraphByExpectedValueType(Dictionary<string, IProperty> expectedResults, Graph g, Node opNode, ISubGraph requestedSubGraph, bool treatFloat4AsQuaternion)
         {
             Value value;
             Node node;
@@ -374,18 +374,45 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
                             break;
                         case Property<float4>:
-                            node = CreateExtractNode(g, "math/extract4", opNode, out value, out node, expected);
-                            var f4Val = ((Property<float4>)expected.Value).value;
-                            iteratorStartBranch = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(0), f4Val[0], subGraph);
-                            var f4b1 = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(1), f4Val[1], subGraph);
-                            var f4b2 = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(2), f4Val[2], subGraph);
 
-                            iteratorEndBranch = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(3), f4Val[3], subGraph);
+                            if (treatFloat4AsQuaternion)
+                            {
+                                var fail = g.CreateNode("event/send");
+                                var failLog = g.CreateNode("debug/log");
 
-                            iteratorStartBranch.AddFlow(f4b1, ConstStrings.TRUE);
-                            f4b1.AddFlow(f4b2, ConstStrings.TRUE);
-                            f4b2.AddFlow(iteratorEndBranch, ConstStrings.TRUE);
+                                fail.AddConfiguration(ConstStrings.EVENT, FAIL_EVENT_INDEX);
 
+                                failLog.AddConfiguration(ConstStrings.MESSAGE, $"Quaternion" + ", Expected: {expected}, Actual: {actual}");
+                                var f4Val = ((Property<float4>)expected.Value).value;
+                                (var subIn, var subOut) = QuaternionSubGraph.CreateSubGraph(g, 0.001f, f4Val);
+
+                                var subAValue = subIn.AddValue(ConstStrings.A, 0);
+                                subAValue.TryConnectToSocket(opNode, expected.Key);
+
+                                subOut.AddFlow(failLog, ConstStrings.FALSE, ConstStrings.IN);
+
+                                failLog.AddFlow(fail, ConstStrings.OUT, ConstStrings.IN);
+                                failLog.AddValue(ConstStrings.EXPECTED, f4Val);
+                                var failLogActualValue = failLog.AddValue(ConstStrings.ACTUAL, 0);
+                                failLogActualValue.TryConnectToSocket(opNode, expected.Key);
+
+                                iteratorStartBranch = subOut;
+                                iteratorEndBranch = subOut;
+                            }
+                            else
+                            {
+                                node = CreateExtractNode(g, "math/extract4", opNode, out value, out node, expected);
+                                var f4Val = ((Property<float4>)expected.Value).value;
+                                iteratorStartBranch = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(0), f4Val[0], subGraph);
+                                var f4b1 = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(1), f4Val[1], subGraph);
+                                var f4b2 = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(2), f4Val[2], subGraph);
+
+                                iteratorEndBranch = CreateSingleValueTestSubGraph(g, node, ConstStrings.GetNumberString(3), f4Val[3], subGraph);
+
+                                iteratorStartBranch.AddFlow(f4b1, ConstStrings.TRUE);
+                                f4b1.AddFlow(f4b2, ConstStrings.TRUE);
+                                f4b2.AddFlow(iteratorEndBranch, ConstStrings.TRUE);
+                            }
                             break;
                         case Property<float2x2>:
                             node = CreateExtractNode(g, "math/extract2x2", opNode, out value, out node, expected);

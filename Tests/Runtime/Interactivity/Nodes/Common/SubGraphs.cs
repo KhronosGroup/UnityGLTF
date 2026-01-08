@@ -1,3 +1,5 @@
+using Unity.Mathematics;
+
 namespace UnityGLTF.Interactivity.Playback.Tests
 {
     public enum ComparisonType
@@ -42,6 +44,37 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             absAValue.TryConnectToSocket(sub, ConstStrings.VALUE);
 
             return (sub, branch);
+        }
+    }
+
+    public static class QuaternionSubGraph
+    {
+        private const float EQUIVALENT_QUAT_DOT_PRODUCT = 1f;
+
+        public static (Node inputNode, Node outputNode) CreateSubGraph(Graph g, float tolerance, float4 expected)
+        {
+            // In flow order
+            var norm = g.CreateNode("math/normalize");
+            var dot = g.CreateNode("math/dot");
+            var abs = g.CreateNode("math/abs");
+            var sub = g.CreateNode("math/sub");
+            var le = g.CreateNode("math/le");
+            var branch = g.CreateNode("flow/branch");
+
+            dot.AddConnectedValue(ConstStrings.A, norm);
+            dot.AddValue(ConstStrings.B, expected);
+
+            abs.AddConnectedValue(ConstStrings.A, dot);
+
+            sub.AddValue(ConstStrings.A, EQUIVALENT_QUAT_DOT_PRODUCT);
+            sub.AddConnectedValue(ConstStrings.B, abs);
+
+            le.AddConnectedValue(ConstStrings.A, sub);
+            le.AddValue(ConstStrings.B, tolerance);
+
+            branch.AddConnectedValue(ConstStrings.CONDITION, le);
+
+            return (norm, branch);
         }
     }
 
