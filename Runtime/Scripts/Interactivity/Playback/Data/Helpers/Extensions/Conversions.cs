@@ -30,6 +30,16 @@ namespace UnityGLTF.Interactivity.Playback.Extensions
             return new Color(v.x, v.y, v.z, v.w);
         }
 
+        /// <summary>
+        /// Converts from the Unity to GLTF coordinate system for a quaternion and returns it as a float4.
+        /// </summary>
+        /// <param name="q">Unity coordinate system quaternion.</param>
+        /// <returns>GLTF coordinate system float4 representing quaternion.</returns>
+        public static float4 ToGLTFFloat4(this quaternion q)
+        {
+            return q.value;
+        }
+
         public static float4 ToFloat4(this quaternion q)
         {
             return q.value;

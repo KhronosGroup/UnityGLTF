@@ -1558,7 +1558,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             QueueTest("math/matCompose", "MatCompose_Translation_Only", "MatCompose Translation Only", "Tests matCompose with a translation. Rotation and scale are identity vectors.", MatComposeTest(translation, identity_rotation, identity_scale, expected_translation_only));
 
             var euler = new float3(47.3f, 27.2f, 14f);
-            var rotation = quaternion.Euler(euler).ToFloat4();
+            var rotation = quaternion.Euler(euler).ToGLTFFloat4();
             var expected_rotation_only = SpecTRSMatrix(float3.zero, rotation, identity_scale);
             QueueTest("math/matCompose", "MatCompose_Rotation_Only", "MatCompose Rotation Only", "Tests matCompose with a rotation. Translation is zero and scale is one.", MatComposeTest(float3.zero, rotation, identity_scale, expected_rotation_only));
 
@@ -1627,6 +1627,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var euler = new float3(47.3f, 27.2f, 14f);
             var rotation = quaternion.Euler(euler).ToFloat4();
             var input_rotation_only = SpecTRSMatrix(float3.zero, rotation, identity_scale);
+
             QueueTest("math/matDecompose", "MatDecompose_Rotation_Only", "MatDecompose Rotation Only", "Tests matDecompose with a rotation. Translation is zero and scale is one.", MatDecomposeTest(float3.zero, rotation, identity_scale, input_rotation_only));
 
             var scale = new float3(2f, 3f, 4f);
@@ -1693,7 +1694,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             outputs.Add(ConstStrings.SCALE, new Property<float3>(scale));
             outputs.Add(ConstStrings.IS_VALID, new Property<bool>(isValid));
 
-            return CreateSelfContainedTestGraph("math/matDecompose", inputs, outputs, ComparisonType.Approximately);
+            return CreateSelfContainedTestGraph("math/matDecompose", inputs, outputs, ComparisonType.Approximately, true);
         }
     }
 }
