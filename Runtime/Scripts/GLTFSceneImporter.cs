@@ -62,11 +62,12 @@ namespace UnityGLTF
 		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
 		public RuntimeTextureCompression RuntimeTextureCompression = RuntimeTextureCompression.None;
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
+        public float ScaleFactor = 1;
 
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
 #else
-		public GLTFImportContext ImportContext = new GLTFImportContext(GLTFSettings.GetOrCreateSettings());
+        public GLTFImportContext ImportContext = new GLTFImportContext(GLTFSettings.GetOrCreateSettings());
 #endif
 
 		[NonSerialized]
@@ -1008,19 +1009,6 @@ namespace UnityGLTF
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
 
-            Bounds TransformBounds(Matrix4x4 matrix, Bounds bounds)
-            {
-                var extents = bounds.extents;
-                var ax = matrix.MultiplyVector(new Vector3(extents.x, 0, 0));
-                var ay = matrix.MultiplyVector(new Vector3(0, extents.y, 0));
-                var az = matrix.MultiplyVector(new Vector3(0, 0, extents.z));
-                var x = Mathf.Abs(ax.x) + Mathf.Abs(ay.x) + Mathf.Abs(az.x);
-                var y = Mathf.Abs(ax.y) + Mathf.Abs(ay.y) + Mathf.Abs(az.y);
-                var z = Mathf.Abs(ax.z) + Mathf.Abs(ay.z) + Mathf.Abs(az.z);
-
-                return new Bounds(matrix.MultiplyPoint3x4(bounds.center), new Vector3(x, y, z) * 2f);
-            }
-
 			async Task CreateNodeComponentsAndChilds(bool ignoreMesh = false, bool onlyMesh = false)
 			{
 				// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
@@ -1059,7 +1047,21 @@ namespace UnityGLTF
 						if (node.Skin != null)
 							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
-                        renderer.localBounds = renderer.rootBone == null ? unityMesh.bounds : TransformBounds(renderer.rootBone.worldToLocalMatrix * renderer.transform.localToWorldMatrix, unityMesh.bounds);
+                        // calculate SkinnedMeshRenderer local bounds by applying bone transforms to make it consistent with Unity's FBX importer effectively fixing: https://github.com/KhronosGroup/UnityGLTF/issues/876
+                        if (renderer.rootBone == null) renderer.localBounds = unityMesh.bounds;
+                        else
+                        {
+                            var bakedMesh = new Mesh();
+                            renderer.BakeMesh(bakedMesh, true);
+
+                            var bounds = TransformBounds(renderer.rootBone.worldToLocalMatrix * renderer.transform.localToWorldMatrix, bakedMesh.bounds);
+                            bounds.center *= _options.ScaleFactor;
+                            bounds.size *= _options.ScaleFactor;
+
+                            renderer.localBounds = bounds;
+
+                            Object.DestroyImmediate(bakedMesh);
+                        }
 
                         // morph target weights
                         if (weights != null)
@@ -1219,8 +1221,21 @@ namespace UnityGLTF
 			progressStatus.NodeLoaded++;
 			progress?.Report(progressStatus);
 		}
-		
-		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
+
+        Bounds TransformBounds(Matrix4x4 matrix, Bounds bounds)
+        {
+            var extents = bounds.extents;
+            var ax = matrix.MultiplyVector(new Vector3(extents.x, 0, 0));
+            var ay = matrix.MultiplyVector(new Vector3(0, extents.y, 0));
+            var az = matrix.MultiplyVector(new Vector3(0, 0, extents.z));
+            var x = Mathf.Abs(ax.x) + Mathf.Abs(ay.x) + Mathf.Abs(az.x);
+            var y = Mathf.Abs(ax.y) + Mathf.Abs(ay.y) + Mathf.Abs(az.y);
+            var z = Mathf.Abs(ax.z) + Mathf.Abs(ay.z) + Mathf.Abs(az.z);
+
+            return new Bounds(matrix.MultiplyPoint3x4(bounds.center), new Vector3(x, y, z) * 2f);
+        }
+
+        private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
