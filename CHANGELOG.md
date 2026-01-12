@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.18.7] - 2026-01-12
+- add: Interactivity: add slerp nodes
+- change: Interactivity: replaced custom solution for child and parent methods to object model pointers
+- fix: obsolete warning for 'GameObject.GetScene' in U6.3+
+- fix: ShaderPassStripping to use GetOrCreate GltfSettings (in case setting asset not exists yet)
+- fix: Interactivity: changed matrix serialization to coloumn major order
+- fix: material/texture extraction with leading spaces in name
+
 ## [2.18.6] - 2025-11-25
 - add: Interactivity VS export: added support for `AnimationClip.length`
 - fix: Interactivity VS export: added missing space conversion to `RaycastResult.worldPosition`
