@@ -87,7 +87,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         private Scene GetCurrentScene()
         {
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_6000_3_OR_NEWER            
+            return GameObject.GetScene(currentGraphProcessing.gameObject.GetEntityId());
+#elif UNITY_2022_3_OR_NEWER
             return GameObject.GetScene(currentGraphProcessing.gameObject.GetInstanceID());
 #else
             return SceneManager.GetActiveScene();
