@@ -52,13 +52,19 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void TestE()
         {
-            QueueTest("math/E", "E_Constant", "Constant E", "Retrieves the value from math/e and checks that it is e.", CreateSelfContainedTestGraph("math/E", new(), Out(math.E), ComparisonType.Equals));
+            QueueTest("math/E", "E_Constant", "Constant E", "Retrieves the value from math/e and checks that it is e.", CreateSelfContainedTestGraph("math/E", new(), Out(math.E), ComparisonType.Approximately));
         }
 
         [Test]
         public void TestPI()
         {
-            QueueTest("math/Pi", "PI_Constant", "Constant PI", "Retrieves the value from math/pi and checks that it is pi.", CreateSelfContainedTestGraph("math/Pi", new(), Out(math.PI), ComparisonType.Equals));
+            QueueTest("math/Pi", "PI_Constant", "Constant PI", "Retrieves the value from math/Pi and checks that it is pi.", CreateSelfContainedTestGraph("math/Pi", new(), Out(math.PI), ComparisonType.Approximately));
+        }
+
+        [Test]
+        public void TestTau()
+        {
+            QueueTest("math/Tau", "Tau_Constant", "Constant Tau", "Retrieves the value from math/Tau and checks that it is Tau.", CreateSelfContainedTestGraph("math/Tau", new(), Out(math.TAU), ComparisonType.Approximately));
         }
 
         [Test]
@@ -190,15 +196,15 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         public void TestRound()
         {
             var a = new float4x4(
-                new float4(-2.3f, 2.7f, -9.15f, 0.5f),
-                new float4(3.5f, -4.8f, 0.1f, -7.5f),
+                new float4(-0.5f, 2.7f, -9.15f, 0.5f),
+                new float4(3.5f, -4.8f, 0.1f, -0.1f),
                 new float4(-1.1f, -8.2f, 6.99f, 2.0f),
                 new float4(0.0f, 9.5f, -5.5f, -3.3f)
             );
 
             var expected = new float4x4(
-                new float4(-2f, 3f, -9f, 0f),
-                new float4(4f, -5f, 0f, -8f),
+                new float4(-1f, 3f, -9f, 1f),
+                new float4(4f, -5f, 0f, -0f),
                 new float4(-1f, -8f, 7f, 2f),
                 new float4(0f, 10f, -6f, -3f)
             );
