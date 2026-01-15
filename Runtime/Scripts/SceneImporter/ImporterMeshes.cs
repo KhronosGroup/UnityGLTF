@@ -1404,58 +1404,113 @@ namespace UnityGLTF
 			return result;
 		}
 
-		private void CheckForMeshDuplicates()
-		{
-			if (_gltfRoot.Meshes == null)
-				return;
-			
-			Dictionary<int, int> meshDuplicates = new Dictionary<int, int>();
-
-			for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
-			{
-				if (meshDuplicates.ContainsKey(meshIndex))
-				    continue;
-				
-				for (int i = meshIndex+1; i < _gltfRoot.Meshes.Count; i++)
-				{
-					
-					if (i == meshIndex)
-						continue;
-					if (_assetCache.MeshCache[i] == null)
-						continue;
-
-					if (_assetCache.UnityMeshDataCache[i] == null
-					    || _assetCache.UnityMeshDataCache[meshIndex] == null)
-						continue;
-
-					if (_assetCache.UnityMeshDataCache[i] == _assetCache.UnityMeshDataCache[meshIndex])
-						continue;
-					
-					var meshIsEqual = _assetCache.UnityMeshDataCache[i]
-						.IsEqual(_assetCache.UnityMeshDataCache[meshIndex]);
-					
-					if (meshIsEqual)
-						meshDuplicates[i] = meshIndex;
-				}
-			}
-
-			foreach (var dm in meshDuplicates)
-			{
-				_assetCache.UnityMeshDataCache[dm.Key] = _assetCache.UnityMeshDataCache[dm.Value];
-				
-				// if (_gltfRoot.Nodes == null) continue;
-				// for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
-				// {
-				// 	if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
-				// 	{
-				// 		if (_gltfRoot.Nodes[i].Weights == null && _gltfRoot.Meshes[dm.Value].Weights != null)
-				// 			_gltfRoot.Nodes[i].Weights = _gltfRoot.Meshes[_gltfRoot.Nodes[i].Mesh.Id].Weights;
-				// 		
-				// 		
-				// 		_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
-				// 	}
-				// }
-			}
-		}
+		// private void CheckForMeshDuplicates(Mesh[] meshes)
+		// {
+		// 	Dictionary<int, long> meshHashes = MeshHashUtility.ComputeMeshHashes(meshes);
+		// 	
+		// 	
+		// 	
+		// 	if (_assetCache == null || _assetCache.MeshCache == null)
+		// 		return;
+		// 	
+		// 	// Collect all meshes for batch hashing
+		// 	var meshesToHash = new Mesh[_assetCache.MeshCache.Length];
+		// 	for (int meshIndex = 0; meshIndex < _assetCache.MeshCache.Length; meshIndex++)
+		// 	{
+		// 		if (_assetCache.MeshCache[meshIndex] != null)
+		// 		{
+		// 			meshesToHash[meshIndex] = _assetCache.MeshCache[meshIndex].LoadedMesh;
+		// 		}
+		// 	}
+		//
+		// 	// Compute hashes for all meshes using Burst-accelerated Jobs
+		//
+		// 	// Find duplicates by comparing hashes
+		// 	Dictionary<int, int> meshDuplicates = new Dictionary<int, int>();
+		//
+		// 	for (int meshIndex = 0; meshIndex < _assetCache.MeshCache.Length; meshIndex++)
+		// 	{
+		// 		if (!meshHashes.TryGetValue(meshIndex, out var currentHash))
+		// 			continue;
+		//
+		// 		// Skip if already marked as duplicate
+		// 		if (meshDuplicates.ContainsKey(meshIndex))
+		// 			continue;
+		// 					
+		// 		for (int i = meshIndex + 1; i < _assetCache.MeshCache.Length; i++)
+		// 		{
+		// 			// Skip if already marked as duplicate
+		// 			if (meshDuplicates.ContainsKey(i))
+		// 				continue;
+		// 			
+		// 			if (!meshHashes.TryGetValue(i, out var otherHash))
+		// 				continue;
+		//
+		// 			// Compare using pre-computed hashes - fast O(1) comparison!
+		// 			bool meshIsEqual = currentHash == otherHash;
+		// 			
+		// 			if (meshIsEqual)
+		// 				meshDuplicates[i] = meshIndex;
+		// 		}
+		//
+		// 	}
+		// 	
+		// 	// if (_gltfRoot.Meshes == null)
+		// 	// 	return;
+		// 	//
+		// 	// Dictionary<int, int> meshDuplicates = new Dictionary<int, int>();
+		// 	//
+		// 	// for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
+		// 	// {
+		// 	// 	if (meshDuplicates.ContainsKey(meshIndex))
+		// 	// 	    continue;
+		// 	// 	
+		// 	// 	for (int i = meshIndex+1; i < _gltfRoot.Meshes.Count; i++)
+		// 	// 	{
+		// 	// 		
+		// 	// 		if (i == meshIndex)
+		// 	// 			continue;
+		// 	// 		if (_assetCache.MeshCache[i] == null)
+		// 	// 			continue;
+		// 	//
+		// 	// 		if (_assetCache.UnityMeshDataCache[i] == null
+		// 	// 		    || _assetCache.UnityMeshDataCache[meshIndex] == null)
+		// 	// 			continue;
+		// 	//
+		// 	// 		if (_assetCache.UnityMeshDataCache[i] == _assetCache.UnityMeshDataCache[meshIndex])
+		// 	// 			continue;
+		// 	// 		
+		// 	// 		var meshIsEqual = _assetCache.UnityMeshDataCache[i]
+		// 	// 			.IsEqual(_assetCache.UnityMeshDataCache[meshIndex]);
+		// 	// 		
+		// 	// 		if (meshIsEqual)
+		// 	// 			meshDuplicates[i] = meshIndex;
+		// 	// 	}
+		// 	// }
+		//
+		// 	int duplicateCount = meshDuplicates.Count;
+		// 	
+		// 	foreach (var dm in meshDuplicates)
+		// 	{
+		// 		_assetCache.UnityMeshDataCache[dm.Key].Clear();
+		// 		_assetCache.UnityMeshDataCache[dm.Key] = _assetCache.UnityMeshDataCache[dm.Value];
+		//
+		//
+		// 		// if (_gltfRoot.Nodes == null) continue;
+		// 		// for (int i = 0; i < _gltfRoot.Nodes.Count; i++)
+		// 		// {
+		// 		// 	if (_gltfRoot.Nodes[i].Mesh != null && _gltfRoot.Nodes[i].Mesh.Id == dm.Key)
+		// 		// 	{
+		// 		// 		if (_gltfRoot.Nodes[i].Weights == null && _gltfRoot.Meshes[dm.Value].Weights != null)
+		// 		// 			_gltfRoot.Nodes[i].Weights = _gltfRoot.Meshes[_gltfRoot.Nodes[i].Mesh.Id].Weights;
+		// 		// 		
+		// 		// 		
+		// 		// 		_gltfRoot.Nodes[i].Mesh.Id = dm.Value;
+		// 		// 	}
+		// 		// }
+		// 	}
+		// 	
+		// 	Debug.Log($"Removed {duplicateCount} duplicate meshes from scene from total {_gltfRoot.Meshes.Count} meshes");
+		// }
 	}
 }

@@ -723,15 +723,11 @@ namespace UnityGLTF
 			{
 				if (IsMultithreaded)
 				{
-					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
-						await Task.Run(CheckForMeshDuplicates, cancellationToken);
 					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Textures))
 						await Task.Run(CheckForDuplicateImages, cancellationToken);
 				}
 				else
 				{
-					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
-						CheckForMeshDuplicates();
 					if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Textures))
 						CheckForDuplicateImages();
 				}
@@ -739,6 +735,55 @@ namespace UnityGLTF
 			
 			await ConstructScene(scene, showSceneObj, cancellationToken);
 			
+			if (_options.DeduplicateResources != DeduplicateOptions.None)
+			{
+				if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
+				{
+					var meshfilters = CreatedObject.GetComponentsInChildren<MeshFilter>();
+					var smr = CreatedObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+					
+					var meshes = meshfilters.Select(m => m.sharedMesh).Concat(smr.Select(s => s.sharedMesh)).Distinct().ToArray();
+					
+					var meshHashes = MeshHashUtility.ComputeMeshHashes(meshes);
+					
+					var groups = meshHashes.GroupBy(kv => kv.Value).ToDictionary( kv => kv.Key, kv => kv.ToList());
+					var usedHashes = new List<long>();
+
+					// Assign for each mesh-hash with group-count > 1, the first mesh of this hash-group
+					int deduplicated = 0;
+					foreach (var m in meshfilters)
+					{
+						var hash = meshHashes[m.sharedMesh];
+						var hashGroup = groups[hash];
+						if (hashGroup.Count > 1)
+						{
+							deduplicated++;
+							m.sharedMesh = hashGroup[0].Key;
+							usedHashes.Add(hash);
+						}
+					}
+
+					foreach (var s in smr)
+					{
+						var hash = meshHashes[s.sharedMesh];
+						var hashGroup = groups[hash];
+						if (hashGroup.Count > 1)
+						{
+							deduplicated++;
+							s.sharedMesh = hashGroup[0].Key;
+							usedHashes.Add(hash);
+						}
+					}
+
+					// Destroy all deduplicated meshes 
+					foreach (var hash in usedHashes)
+						foreach (var mesh in groups[hash].Skip(1))
+							Object.DestroyImmediate(mesh.Key);
+					
+					//Debug.Log($"Deduplicated {deduplicated} meshes");
+					
+				}
+			}
 			if (SceneParent != null && CreatedObject)
 			{
 				CreatedObject.transform.SetParent(SceneParent, false);
