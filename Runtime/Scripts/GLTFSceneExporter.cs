@@ -1049,16 +1049,32 @@ namespace UnityGLTF
 				scene.Name = name;
 			}
 
-			if(_exportContext.TreatEmptyRootAsScene)
+			// If we have a single root object, we may want to either collapse it into the
+			// glTF scene on export, or include a flag to mark it as the single root node.
+			if (rootObjTransforms.Length == 1)
 			{
-				// if we're exporting with a single object selected, that object can be the scene root, no need for an extra root node.
-				if (rootObjTransforms.Length == 1 && rootObjTransforms[0].GetComponents<Component>().Length == 1) // single root with a single transform
+				if (_exportContext.TreatEmptyRootAsScene && rootObjTransforms[0].GetComponents<Component>().Length == 1)
 				{
+					// If the single selected object is empty and `TreatEmptyRootAsScene` is `true`, treat
+					// it as the glTF scene itself, and its children become the glTF scene's root nodes.
 					var firstRoot = rootObjTransforms[0];
 					var newRoots = new Transform[firstRoot.childCount];
 					for (int i = 0; i < firstRoot.childCount; i++)
 						newRoots[i] = firstRoot.GetChild(i);
 					rootObjTransforms = newRoots;
+				}
+				else
+				{
+					bool isTransformIdentity = rootObjTransforms[0].localPosition == Vector3.zero &&
+						rootObjTransforms[0].localRotation == Quaternion.identity &&
+						rootObjTransforms[0].localScale == Vector3.one;
+					if (isTransformIdentity)
+					{
+						// Flag the scene as having a single root node, so that any importer which recognizes
+						// the flag can skip generating an extra unnecessary root node for the glTF scene itself.
+						// UnityGLTF already does this implicitly on import, but this makes it explicit for other importers.
+						DeclareExtensionUsage("GODOT_single_root");
+					}
 				}
 			}
 
