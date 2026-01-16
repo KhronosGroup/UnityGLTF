@@ -9,6 +9,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -226,7 +227,7 @@ namespace UnityGLTF
 		/// </summary>
 		public List<Object> GenericObjectReferences { get; private set; } = new List<Object>();
 
-		private Dictionary<Stream, NativeArray<byte>> _nativeBuffers = new Dictionary<Stream, NativeArray<byte>>(); 
+		private Dictionary<Stream, (NativeArray<byte> array, ulong gcHandle)> _nativeBuffers = new Dictionary<Stream, (NativeArray<byte> array, ulong gcHandle)>(); 
 #if HAVE_MESHOPT_DECOMPRESS
 		private List<NativeArray<byte>> meshOptNativeBuffers = new List<NativeArray<byte>>();
 #endif
@@ -366,12 +367,30 @@ namespace UnityGLTF
 		{
 			if (_nativeBuffers.TryGetValue(stream, out var buffer))
 			{
-				return buffer;
+				return buffer.array;
 			}
 
+			stream.Position = 0;
+			
+			if (stream is MemoryStream memoryStream)
+			{
+				// To safe memory footprint, we try to create a NativeArray without Allocation directly from the MemoryStream buffer.
+				// This 
+				if (memoryStream.TryGetBuffer(out var memStreamBuffer))
+				{
+					unsafe
+					{
+						var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out var gcHandle);
+						var nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count,
+							Allocator.None);
+						_nativeBuffers.Add(stream,new (nativeBuffer, gcHandle));
+						return nativeBuffer;
+					}
+				}
+			}
+			
 			var buf = new byte[stream.Length];
 
-			stream.Position = 0;
 			long remainingSize = stream.Length;
 			while (remainingSize != 0)
 			{
@@ -387,7 +406,7 @@ namespace UnityGLTF
 			
 			var newNativeBuffer = new NativeArray<byte>(buf, Allocator.Persistent);
 			
-			_nativeBuffers.Add(stream,newNativeBuffer);
+			_nativeBuffers.Add(stream,new (newNativeBuffer,0));
 			
 			return newNativeBuffer;
 		}
@@ -1528,8 +1547,11 @@ namespace UnityGLTF
 		{
 			foreach (var buffer in _nativeBuffers)
 			{
-				if (buffer.Value.IsCreated)
-					buffer.Value.Dispose();
+				if (buffer.Value.array.IsCreated)
+					buffer.Value.array.Dispose();
+
+				if (buffer.Value.gcHandle != 0)
+					UnsafeUtility.ReleaseGCObject(buffer.Value.gcHandle);
 			}			
 			_nativeBuffers.Clear();
 			
