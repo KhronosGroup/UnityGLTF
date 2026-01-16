@@ -360,6 +360,16 @@ namespace UnityGLTF
 
 					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkOffset, bufferContents.bufferData, out NativeArray<byte> bufferViewData);
 
+#if HAVE_MESHOPT_DECOMPRESS_VERSION_0_2
+					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(meshOptReturnValues.GetSubArray(bufferViewIndex, 1),
+							arr,
+							meshOpt.count,
+							(int)meshOpt.bufferView.ByteStride,
+							bufferViewData.AsReadOnly(),
+							meshOpt.mode,
+							meshOpt.filter
+						);
+#else
 					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(
 						new NativeSlice<int>(meshOptReturnValues,bufferViewIndex,1),
 							arr,
@@ -369,6 +379,7 @@ namespace UnityGLTF
 							meshOpt.mode,
 							meshOpt.filter
 						);
+#endif
 
 					jobHandlesList.Add(jobHandle);
 					meshOptBufferViews[bufferViewIndex] = arr;
@@ -448,6 +459,9 @@ namespace UnityGLTF
 		/// <returns></returns>
 		protected async Task ConstructUnityMesh(GLTFMesh gltfMesh, DecodeResult[] decodeResults, Mesh.MeshDataArray meshes, int meshIndex, string meshName)
 		{
+			if (_assetCache.MeshCache[meshIndex].LoadedMesh != null)
+				return;
+			
 			uint verticesLength = 0;
 			for (int i = 0; i < meshes.Length; i++)
 				verticesLength+= (uint)meshes[i].vertexCount;
