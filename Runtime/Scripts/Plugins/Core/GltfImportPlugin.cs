@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using GLTF.Schema;
 using UnityEngine;
 
@@ -49,6 +50,18 @@ namespace UnityGLTF.Plugins
 		{
 		}
 
+		public virtual void OnAfterImportMaterialWithVertexColors(GLTFMaterial material, int materialIndex, Material materialObject)
+		{
+		}
+
+		public virtual void OnAfterImportMesh(GLTFMesh mesh, int meshIndex, Mesh meshObject)
+		{
+		}
+
+		public virtual void OnAfterImportCamera(GLTFCamera camera, int cameraIndex, Camera cameraObject)
+		{
+		}
+
 		public virtual void OnAfterImportTexture(GLTFTexture texture, int textureIndex, Texture textureObject)
 		{
 		}
@@ -61,5 +74,5 @@ namespace UnityGLTF.Plugins
 		{
 
 		}
-	}
+    }
 }

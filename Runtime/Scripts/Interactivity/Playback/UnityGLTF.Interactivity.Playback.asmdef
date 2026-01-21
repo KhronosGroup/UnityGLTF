@@ -1,0 +1,24 @@
+{
+    "name": "UnityGLTF.Interactivity.Playback",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:18d18f811ba286c49814567a3cfba688",
+        "GUID:2bafac87e7f4b9b418d9448d219b01ab",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:b5e009300cbc0584fa5c0fa797ef4c5f",
+        "GUID:d58a4b8a1f92baa4f8100941944470f7",
+        "GUID:40f39bff7bc9be34182ebe488fcf8228",
+        "GUID:68550284b645f4b9894995579f34290a",
+        "GUID:dd1f961792bcc4bf8956b57bbb54bd60"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
