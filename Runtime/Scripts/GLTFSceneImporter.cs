@@ -53,6 +53,7 @@ namespace UnityGLTF
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
 		public AnimationMethod AnimationMethod = AnimationMethod.Legacy;
+        public string NonHumanoidRootNodeName;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
 		public DeduplicateOptions DeduplicateResources = DeduplicateOptions.None;
@@ -1466,7 +1467,7 @@ namespace UnityGLTF
 					}
 				}
 
-				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid)
+				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid || _options.AnimationMethod == AnimationMethod.Mecanim && !string.IsNullOrEmpty(_options.NonHumanoidRootNodeName))
                 {
                     var animator = sceneObj.GetComponent<Animator>();
                     if (!animator) animator = sceneObj.AddComponent<Animator>();
