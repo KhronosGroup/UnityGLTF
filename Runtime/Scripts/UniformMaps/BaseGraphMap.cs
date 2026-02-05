@@ -147,7 +147,7 @@ namespace UnityGLTF
 	    static readonly int k_AlphaClipBuiltin = Shader.PropertyToID("_BUILTIN_AlphaClip");
 	    static readonly int k_Surface = Shader.PropertyToID("_Surface");
 	    static readonly int k_SurfaceBuiltin = Shader.PropertyToID("_BUILTIN_Surface");
-	    static readonly int k_AlphaDstBlendPropId = Shader.PropertyToID("_AlphaDstBlend");
+	    static readonly int k_AlphaDstBlendPropId = Shader.PropertyToID("_DstBlendAlpha");
 	    static readonly int k_ZTestGBufferPropId = Shader.PropertyToID("_ZTestGBuffer");
 	    static readonly int srcBlendPropId = Shader.PropertyToID("_SrcBlend");
 	    static readonly int dstBlendPropId = Shader.PropertyToID("_DstBlend");
