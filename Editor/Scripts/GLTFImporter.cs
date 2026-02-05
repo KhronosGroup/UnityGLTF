@@ -25,6 +25,7 @@ using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF;
 using UnityEditor.Build;
+using UnityEngine.Serialization;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
@@ -88,6 +89,8 @@ namespace UnityGLTF
         [SerializeField] internal float _scaleFactor = 1.0f; 
         [Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
         [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
+        [SerializeField] internal DeduplicatedStatistics _deduplicatedStatistics;
+        
         [SerializeField] internal int _maximumLod = 300;
         [SerializeField] internal bool _readWriteEnabled = true;
         
@@ -1010,7 +1013,7 @@ namespace UnityGLTF
 
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
-
+			    _deduplicatedStatistics = loader.LastImportDeduplicationStatistics;
 			    _gltfAsset = loader.Root.Asset?.ToString(true);
 			    importer = loader;
 		    }

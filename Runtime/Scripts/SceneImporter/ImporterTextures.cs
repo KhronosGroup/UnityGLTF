@@ -127,13 +127,22 @@ namespace UnityGLTF
         
         private void CheckForDuplicateImages()
         {
-	        var hashes = CollectImageHashes();
-	        var reverseHashes = new Dictionary<int, int>();
+	        var hashes = CollectImageHashes(); // Image index -> hash
+	        if (_deduplicatedStatistics == null)
+		        _deduplicatedStatistics = new DeduplicatedStatistics();
+	        
+	        _deduplicatedStatistics.textureCountBefore = _gltfRoot.Images?.Count ?? 0;
+	        
+	        var reverseHashes = new Dictionary<int, int>(); // Hash -> Image index
 	        foreach (var h in hashes)
 		        reverseHashes[h.Value] = h.Key;
 	        
-	        _imageDeduplicationLinks = new Dictionary<int, int>();
-	        foreach (var h in hashes)
+	        _deduplicatedStatistics.textureCountAfter = reverseHashes.Count;
+	        
+	        // create mapping of image index to the first image index with the same hash, so that we can redirect to the already loaded texture later when we load the textures
+	        
+	        _imageDeduplicationLinks = new Dictionary<int, int>(); // Org Image ID -> distinct Image ID
+	        foreach (var h in hashes)  
 		        _imageDeduplicationLinks[h.Key] = reverseHashes[h.Value];
         }
         

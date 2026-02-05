@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
@@ -31,6 +32,18 @@ namespace UnityGLTF
 		None = 0,
 		Meshes = 1,
 		Textures = 2,
+	}
+	
+	[Serializable]
+	public class DeduplicatedStatistics
+	{
+		public int meshCountBefore;
+		public int meshCountAfter;
+		public int textureCountBefore;
+		public int textureCountAfter;
+		
+		public int MeshesRemoved => meshCountBefore - meshCountAfter;
+		public int TexturesRemoved => textureCountBefore - textureCountAfter;
 	}
 
 	public enum RuntimeTextureCompression
@@ -163,6 +176,9 @@ namespace UnityGLTF
 		public int Timeout = 8;
 
 		private bool _isMultithreaded;
+		
+		internal DeduplicatedStatistics LastImportDeduplicationStatistics => _deduplicatedStatistics;
+
 
 		/// <summary>
 		/// Use Multithreading or not.
@@ -286,7 +302,9 @@ namespace UnityGLTF
 
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 
-		protected ColorSpace _activeColorSpace; 
+		protected ColorSpace _activeColorSpace;
+		
+		protected DeduplicatedStatistics _deduplicatedStatistics;
 		
 		public GLTFSceneImporter(string gltfFileName, ImportOptions options) : this(options)
 		{
@@ -758,10 +776,14 @@ namespace UnityGLTF
 			{
 				if (_options.DeduplicateResources.HasFlag(DeduplicateOptions.Meshes))
 				{
+					if (_deduplicatedStatistics == null)
+						_deduplicatedStatistics = new DeduplicatedStatistics();
+					
 					var meshfilters = CreatedObject.GetComponentsInChildren<MeshFilter>();
 					var smr = CreatedObject.GetComponentsInChildren<SkinnedMeshRenderer>();
 					
 					var meshes = meshfilters.Select(m => m.sharedMesh).Concat(smr.Select(s => s.sharedMesh)).Distinct().ToArray();
+					_deduplicatedStatistics.meshCountBefore = meshes.Length;
 					
 					var meshHashes = MeshHashUtility.ComputeMeshHashes(meshes);
 					
@@ -769,14 +791,12 @@ namespace UnityGLTF
 					var usedHashes = new List<long>();
 
 					// Assign for each mesh-hash with group-count > 1, the first mesh of this hash-group
-					int deduplicated = 0;
 					foreach (var m in meshfilters)
 					{
 						var hash = meshHashes[m.sharedMesh];
 						var hashGroup = groups[hash];
 						if (hashGroup.Count > 1)
 						{
-							deduplicated++;
 							m.sharedMesh = hashGroup[0].Key;
 							usedHashes.Add(hash);
 						}
@@ -788,17 +808,23 @@ namespace UnityGLTF
 						var hashGroup = groups[hash];
 						if (hashGroup.Count > 1)
 						{
-							deduplicated++;
 							s.sharedMesh = hashGroup[0].Key;
 							usedHashes.Add(hash);
 						}
 					}
 
+					int deduplicated = 0;
 					// Destroy all deduplicated meshes 
 					foreach (var hash in usedHashes)
-						foreach (var mesh in groups[hash].Skip(1))
-							Object.DestroyImmediate(mesh.Key);
+					foreach (var mesh in groups[hash].Skip(1))
+					{
+						if (mesh.Key == null)
+							continue;
+						deduplicated++;
+						Object.DestroyImmediate(mesh.Key);
+					}
 					
+					_deduplicatedStatistics.meshCountAfter = deduplicated;
 					//Debug.Log($"Deduplicated {deduplicated} meshes");
 					
 				}
