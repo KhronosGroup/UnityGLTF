@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.18.8] - 2026-02-05
+- add: deduplication statistic (Importer)
+- add: meshOpt 0.2 support
+- add: validation for node translation, rotation and scale on import: in case of invalid values (NaN, infinte), using zeros as fallback.
+- changed: mesh deduplication speedup with Jobs
+- fix: reduced memory footprint on importing
+
 ## [2.18.7] - 2026-01-12
 - add: Interactivity: add slerp nodes
 - change: Interactivity: replaced custom solution for child and parent methods to object model pointers
