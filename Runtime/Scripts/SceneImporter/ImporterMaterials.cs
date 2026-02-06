@@ -389,6 +389,9 @@ namespace UnityGLTF
 					}
 
 					mapper.Material.renderQueue = 3000;
+#if UNITY_VISIONOS
+					mapper.AlphaMode = AlphaMode.BLEND;
+#endif
 					bool hasDispersion = false;
 					if (transmissionMapper is IDispersionMap dispersionMapper)
 					{
@@ -420,6 +423,9 @@ namespace UnityGLTF
 				var volume = GetVolume(def);
 				if (volume != null)
 				{
+#if UNITY_VISIONOS
+					mapper.AlphaMode = AlphaMode.BLEND;
+#endif
 					volumeMapper.AttenuationColor = QualitySettings.activeColorSpace == ColorSpace.Linear ? volume.attenuationColor.ToUnityColorLinear() : volume.attenuationColor.ToUnityColorRaw();
 					volumeMapper.AttenuationDistance = volume.attenuationDistance;
 					volumeMapper.ThicknessFactor = volume.thicknessFactor;

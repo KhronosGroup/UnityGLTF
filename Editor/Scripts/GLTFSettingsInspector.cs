@@ -167,6 +167,7 @@ namespace UnityGLTF
 			foreach (var plugin in plugins
 				         .OrderBy(x =>
 				         {
+							if (!x) return "ZZZ";
 					         var displayName = x.GetType().Assembly.GetName().Name;
 					         if (displayName == "UnityGLTFScripts") displayName = "____";
 					         return displayName;

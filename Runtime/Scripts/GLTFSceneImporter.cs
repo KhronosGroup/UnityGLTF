@@ -30,6 +30,13 @@ namespace UnityGLTF
 		Meshes = 1,
 		Textures = 2,
 	}
+
+	public enum RuntimeTextureCompression
+	{
+		None,
+		LowQuality ,
+		HighQuality,
+	}
 	
 	public class ImportOptions
 	{
@@ -52,7 +59,7 @@ namespace UnityGLTF
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool ImportBlendShapeNames = true;
 		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
-
+		public RuntimeTextureCompression RuntimeTextureCompression = RuntimeTextureCompression.None;
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
 
 #if UNITY_EDITOR
@@ -502,7 +509,10 @@ namespace UnityGLTF
 			}
 			_gltfStream.Stream.Close();
 			DisposeNativeBuffers();
-
+			
+			if (this.progress != null)
+				await Task.Yield();
+			
 			onLoadComplete?.Invoke(LastLoadedScene, null);
 		}
 
@@ -949,6 +959,16 @@ namespace UnityGLTF
 			return null;
 		}
 		
+		private bool ShouldBeVisible(Node node, GameObject nodeObj)
+		{
+			if (node.Extensions != null && node.Extensions.TryGetValue(KHR_node_visibility_Factory.EXTENSION_NAME, out var ext))
+			{
+				return (ext as KHR_node_visibility).visible;
+			}
+			else
+				return true;
+		}
+		
 		protected virtual async Task ConstructNode(Node node, int nodeIndex, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -1054,7 +1074,7 @@ namespace UnityGLTF
 
 				if (onlyMesh)
 				{
-					nodeObj.SetActive(true);
+					nodeObj.SetActive(ShouldBeVisible(node, nodeObj));
 					return;
 				}
 				
@@ -1118,8 +1138,7 @@ namespace UnityGLTF
 						inbetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
 					}
 				}
-				
-				nodeObj.SetActive(true);
+				nodeObj.SetActive( ShouldBeVisible(node, nodeObj));
 			}
 						
 			var instancesTRS = await GetInstancesTRS(node);
@@ -1130,6 +1149,7 @@ namespace UnityGLTF
 			}
 			else
 			{
+				var shouldBeVisible = ShouldBeVisible(node, nodeObj);
 				await CreateNodeComponentsAndChilds(true);
 				var instanceParentNode = new GameObject("Instances");
 				instanceParentNode.transform.SetParent(nodeObj.transform, false);
@@ -1163,7 +1183,7 @@ namespace UnityGLTF
 					nodeObj.transform.localScale = instancesTRS[i].Item3;
 					nodeObj.name = $"Instance {i.ToString()}";
 				}
-				instanceParentNode.gameObject.SetActive(true);
+				instanceParentNode.gameObject.SetActive(shouldBeVisible);
 			}
 			
 			progressStatus.NodeLoaded++;

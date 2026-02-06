@@ -15,6 +15,7 @@ namespace UnityGLTF.Plugins
     {
         public virtual void BeforeSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) {}
         public virtual void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot) {}
+        public virtual bool ShouldNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform) => true;
         public virtual void BeforeNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node) {}
         public virtual void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Transform transform, Node node) {}
         public virtual bool BeforeMaterialExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot, Material material, GLTFMaterial materialNode) => false;

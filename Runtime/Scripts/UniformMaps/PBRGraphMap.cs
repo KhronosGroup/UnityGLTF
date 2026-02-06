@@ -4,7 +4,7 @@ namespace UnityGLTF
 {
 	public class PBRGraphMap : BaseGraphMap, IMetalRoughUniformMap, IVolumeMap, ITransmissionMap, IIORMap, IIridescenceMap, ISpecularMap, IClearcoatMap, IDispersionMap, ISheenMap
 	{
-		private const string PBRGraphGuid = "478ce3626be7a5f4ea58d6b13f05a2e4";
+		internal const string PBRGraphGuid = "478ce3626be7a5f4ea58d6b13f05a2e4";
 
 		public PBRGraphMap() : this("UnityGLTF/PBRGraph") {}
 

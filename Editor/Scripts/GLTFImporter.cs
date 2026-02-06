@@ -195,6 +195,10 @@ namespace UnityGLTF
         private static string[] GatherDependenciesFromSourceFile(string path)
         {
 	        var dependencies = new List<string>();
+	        
+	        // Add shader dependencies to ensure they're imported first
+	        dependencies.Add(AssetDatabase.GUIDToAssetPath(PBRGraphMap.PBRGraphGuid));
+	        dependencies.Add(AssetDatabase.GUIDToAssetPath(UnlitGraphMap.UnlitGraphGuid));
 
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
 	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
@@ -431,7 +435,7 @@ namespace UnityGLTF
                 // scale all localPosition values if necessary
                 if (gltfScene && !Mathf.Approximately(_scaleFactor, 1))
                 {
-	                var transforms = gltfScene.GetComponentsInChildren<Transform>();
+	                var transforms = gltfScene.GetComponentsInChildren<Transform>(true);
 	                foreach (var tr in transforms)
 	                {
 		                tr.localPosition *= _scaleFactor;
@@ -443,8 +447,8 @@ namespace UnityGLTF
                 var meshFilters = new List<(GameObject gameObject, Mesh sharedMesh)>();
                 if (gltfScene)
                 {
-		            meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>().Select(x => (x.gameObject, x.sharedMesh)).ToList();
-	                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>().Select(x => (x.gameObject, x.sharedMesh)));
+		            meshFilters = gltfScene.GetComponentsInChildren<MeshFilter>(true).Select(x => (x.gameObject, x.sharedMesh)).ToList();
+	                meshFilters.AddRange(gltfScene.GetComponentsInChildren<SkinnedMeshRenderer>(true).Select(x => (x.gameObject, x.sharedMesh)));
                 }
 
                 var vertexBuffer = new List<Vector3>();
@@ -534,7 +538,7 @@ namespace UnityGLTF
 						ctx.AddObjectToAsset("avatar", avatar);
                 }
 
-                var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>() : Array.Empty<Renderer>();
+                var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
 
                 if (_importMaterials)
                 {
@@ -702,8 +706,7 @@ namespace UnityGLTF
 		                        if (_textureCompression != GLTFImporterTextureCompressionQuality.None)
 		                        {
 			                        // platform-dependant texture compression
-			                        var buildTargetName = BuildPipeline.GetBuildTargetName(ctx.selectedBuildTarget);
-			                        var format = TextureImporterHelper.GetAutomaticFormat(tex, buildTargetName);
+			                        var format = TextureImporterHelper.GetAutomaticFormat(tex, ctx.selectedBuildTarget);
 			                        var convertedFormat = (TextureFormat)(int)format;
 			                        if ((int)convertedFormat > -1)
 			                        {

@@ -115,7 +115,12 @@ namespace UnityGLTF
 	                descriptor.height /= 4;
 	            }
 #if UNITY_2022_3_OR_NEWER
+
+#if UNITY_6000_0_OR_NEWER
+		        RenderingUtils.ReAllocateHandleIfNeeded(ref m_destination, descriptor, FilterMode.Trilinear, TextureWrapMode.Clamp, name: CAMERA_OPAQUE_TEXTURENAME);
+#else
 		        RenderingUtils.ReAllocateIfNeeded(ref m_destination, descriptor, FilterMode.Trilinear, TextureWrapMode.Clamp, name: CAMERA_OPAQUE_TEXTURENAME);
+#endif
 		        base.Setup(m_source, m_destination, this.m_DownsamplingMethod);
 		        cmd.SetGlobalTexture(m_destination.name, m_destination.nameID);
 #else

@@ -238,6 +238,11 @@ namespace UnityGLTF.Plugins
             }
         }
         
+        public bool GetMapByUnityProperty(string unityPropertyName, out MaterialPointerPropertyMap map)
+        {
+            return exportMaps.TryGetValue(unityPropertyName, out map);
+        }
+        
         public bool GetMapFromUnityMaterial(Material mat, string unityPropertyName, out MaterialPointerPropertyMap map)
         {
             map = null;

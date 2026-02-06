@@ -91,13 +91,11 @@ namespace UnityGLTF
 			}
 #endif
 
-			var firstPrim = mesh.Primitives.Count > 0 ?  mesh.Primitives[0] : null;
 			cancellationToken.ThrowIfCancellationRequested();
-
-
+			
 			var meshCache = _assetCache.MeshCache[meshIndex];
 
-			var unityData = CreateUnityMeshData(mesh, meshIndex, firstPrim);
+			var unityData = CreateUnityMeshData(mesh, meshIndex);
 			
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
 			{
@@ -159,8 +157,7 @@ namespace UnityGLTF
 				int meshIndex = i;
 				var mesh = _gltfRoot.Meshes[meshIndex];
 				var meshCache = _assetCache.MeshCache[meshIndex];
-				var unityData = CreateUnityMeshData(mesh, meshIndex,
-					mesh.Primitives.Count > 0 ? mesh.Primitives[0] : null);
+				var unityData = CreateUnityMeshData(mesh, meshIndex);
 				for (int primIndex = 0; primIndex < mesh.Primitives.Count; ++primIndex)
 				{
 					var primitive = mesh.Primitives[primIndex];
@@ -504,8 +501,7 @@ namespace UnityGLTF
 
 			await YieldOnTimeoutAndThrowOnLowMemory();
 
-			var firstPrim = gltfMesh.Primitives[0];
-			var unityMeshData = CreateUnityMeshData(gltfMesh, meshIndex, firstPrim, true);
+			var unityMeshData = CreateUnityMeshData(gltfMesh, meshIndex, true);
 
 			uint vertOffset = 0;
 			var meshCache = _assetCache.MeshCache[meshIndex];
@@ -544,7 +540,7 @@ namespace UnityGLTF
 
 #endif
 
-		private UnityMeshData CreateUnityMeshData(GLTFMesh gltfMesh, int meshIndex, MeshPrimitive firstPrim, bool onlyMorphTargets = false)
+		private UnityMeshData CreateUnityMeshData(GLTFMesh gltfMesh, int meshIndex, bool onlyMorphTargets = false)
 		{
 			if (_assetCache.UnityMeshDataCache[meshIndex] != null)
 			{
@@ -564,13 +560,30 @@ namespace UnityGLTF
 
 			for (int i = 0; i < unityMeshData.subMeshDataCreated.Length; i++)
 				unityMeshData.subMeshDataCreated[i] = false;
-			
-			
-			if (firstPrim.Targets != null)
+
+			var attributes = new HashSet<string>();
+			bool hasTargets = false;
+			int targetCount = 0;
+			foreach (var prim in gltfMesh.Primitives)
 			{
-				unityMeshData.MorphTargetVertices = new Vector3[firstPrim.Targets.Count][];
-				unityMeshData.MorphTargetNormals = new Vector3[firstPrim.Targets.Count][];
-				unityMeshData.MorphTargetTangents = new Vector3[firstPrim.Targets.Count][];
+				if (prim.Targets != null)
+				{
+					hasTargets = true;
+					targetCount = prim.Targets.Count;
+				}
+				
+				if (prim.Attributes == null)
+					continue;
+				
+				foreach (var attribute in prim.Attributes)
+					attributes.Add(attribute.Key);
+			}
+			
+			if (hasTargets)
+			{
+				unityMeshData.MorphTargetVertices = new Vector3[targetCount][];
+				unityMeshData.MorphTargetNormals = new Vector3[targetCount][];
+				unityMeshData.MorphTargetTangents = new Vector3[targetCount][];
 
 				foreach (var prim in gltfMesh.Primitives)
 				{
@@ -605,28 +618,28 @@ namespace UnityGLTF
 			if (!onlyMorphTargets)
 			{
 				unityMeshData.Vertices = new Vector3[verticesLength];
-				unityMeshData.Normals = firstPrim.Attributes.ContainsKey(SemanticProperties.NORMAL)
+				unityMeshData.Normals = attributes.Contains(SemanticProperties.NORMAL)
 					? new Vector3[verticesLength]
 					: null;
-				unityMeshData.Tangents = firstPrim.Attributes.ContainsKey(SemanticProperties.TANGENT)
+				unityMeshData.Tangents = attributes.Contains(SemanticProperties.TANGENT)
 					? new Vector4[verticesLength]
 					: null;
-				unityMeshData.Uv1 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_0)
+				unityMeshData.Uv1 = attributes.Contains(SemanticProperties.TEXCOORD_0)
 					? new Vector2[verticesLength]
 					: null;
-				unityMeshData.Uv2 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_1)
+				unityMeshData.Uv2 = attributes.Contains(SemanticProperties.TEXCOORD_1)
 					? new Vector2[verticesLength]
 					: null;
-				unityMeshData.Uv3 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_2)
+				unityMeshData.Uv3 = attributes.Contains(SemanticProperties.TEXCOORD_2)
 					? new Vector2[verticesLength]
 					: null;
-				unityMeshData.Uv4 = firstPrim.Attributes.ContainsKey(SemanticProperties.TEXCOORD_3)
+				unityMeshData.Uv4 = attributes.Contains(SemanticProperties.TEXCOORD_3)
 					? new Vector2[verticesLength]
 					: null;
-				unityMeshData.Colors = firstPrim.Attributes.ContainsKey(SemanticProperties.COLOR_0)
+				unityMeshData.Colors = attributes.Contains(SemanticProperties.COLOR_0)
 					? new Color[verticesLength]
 					: null;
-				unityMeshData.BoneWeights = firstPrim.Attributes.ContainsKey(SemanticProperties.WEIGHTS_0)
+				unityMeshData.BoneWeights = attributes.Contains(SemanticProperties.WEIGHTS_0)
 					? new BoneWeight[verticesLength]
 					: null;
 			}

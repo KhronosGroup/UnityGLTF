@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityGLTF.Cache;
+using UnityEngine.Serialization;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
 #if WINDOWS_UWP 
@@ -22,7 +23,7 @@ namespace UnityGLTF
 	{
 		public string GLTFUri = null;
 		public bool Multithreaded = true;
-		public bool AppendStreamingAssets = true;
+		[FormerlySerializedAs("AppendStreamingAssets")] public bool LoadFromStreamingAssets = true;
 		public bool PlayAnimationOnLoad = true;
 		[Tooltip("Hide the scene object during load, then activate it when complete")]
 		public bool HideSceneObjDuringLoad = false;
@@ -61,12 +62,18 @@ namespace UnityGLTF
 		}
 
 		[Header("Import Settings")]
+		public RuntimeTextureCompression TextureCompression = RuntimeTextureCompression.None;
 		public GLTFImporterNormals ImportNormals = GLTFImporterNormals.Import;
 		public GLTFImporterNormals ImportTangents = GLTFImporterNormals.Import;
 		public bool SwapUVs = false;
 		[Tooltip("Blend shape frame weight import multiplier. Default is 1. For compatibility with some FBX animations you may need to use 100.")]
 		public BlendShapeFrameWeightSetting blendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
-
+		[Tooltip("When enabled, the CPU copy of the mesh will be kept in memory after the mesh has been uploaded to the GPU. This is useful if you want to modify the mesh at runtime.")]
+		public bool KeepCPUCopyOfMesh = true;
+		[Tooltip("When enabled, the CPU copy of the texture will be kept in memory after the texture has been uploaded to the GPU. This is useful if you want to modify the texture at runtime.")]
+		public bool KeepCPUCopyOfTexture = true;
+		
+		
 		private async void Start()
 		{
 			if (!loadOnStart) return;
@@ -97,7 +104,8 @@ namespace UnityGLTF
 				AsyncCoroutineHelper = gameObject.GetComponent<AsyncCoroutineHelper>() ?? gameObject.AddComponent<AsyncCoroutineHelper>(),
 				ImportNormals = ImportNormals,
 				ImportTangents = ImportTangents,
-				SwapUVs = SwapUVs
+				SwapUVs = SwapUVs,
+				RuntimeTextureCompression = TextureCompression,
 			};
 			
 			var settings = GLTFSettings.GetOrCreateSettings();
@@ -109,7 +117,7 @@ namespace UnityGLTF
 				if (!Factory) Factory = ScriptableObject.CreateInstance<DefaultImporterFactory>();
 
                 string fullPath;
-                if (AppendStreamingAssets)
+                if (LoadFromStreamingAssets)
 	                fullPath = Path.Combine(Application.streamingAssetsPath, GLTFUri.TrimStart(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }));
                 else
 	                fullPath = GLTFUri;
@@ -127,7 +135,9 @@ namespace UnityGLTF
 				sceneImporter.Timeout = Timeout;
 				sceneImporter.IsMultithreaded = Multithreaded;
 				sceneImporter.CustomShaderName = shaderOverride ? shaderOverride.name : null;
-
+				sceneImporter.KeepCPUCopyOfTexture = KeepCPUCopyOfTexture;
+				sceneImporter.KeepCPUCopyOfMesh = KeepCPUCopyOfMesh;
+				
 				// for logging progress
 				await sceneImporter.LoadSceneAsync(
 					showSceneObj:!HideSceneObjDuringLoad,
