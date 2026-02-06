@@ -71,6 +71,17 @@ namespace UnityGLTF
 			{
 				if (Context.TryGetPlugin<DracoImportContext>(out _))
 				{
+					// Check if a mesh with the same combination of primitive attributes was already loaded, and reuse it if possible. 
+					var meshAttribHashDraco = mesh.GetHashFromPrimitiveAttributes();
+					if (_meshesByAttributeHash.TryGetValue(meshAttribHashDraco, out var unityMesh))
+					{
+						foreach (var primitive in mesh.Primitives)
+							await CreateMaterials(primitive);
+						
+						_assetCache.MeshCache[meshIndex].LoadedMesh = unityMesh;
+						return;
+					}
+					
 					await PrepareDracoMesh(mesh, meshIndex);
 					var dracoTask = ConstructDracoMesh(mesh, meshIndex, cancellationToken);
 					await Task.WhenAll( dracoTask.decodeResults);
@@ -79,6 +90,8 @@ namespace UnityGLTF
 						_assetCache.MeshCache[meshIndex].DracoMeshDecodeResult[i] = dracoTask.decodeResults[i].Result;
 					}
 					await BuildUnityDracoMesh(mesh, meshIndex);
+					
+					_meshesByAttributeHash.Add(meshAttribHashDraco, _assetCache.MeshCache[meshIndex].LoadedMesh);
 					return;
 				}
 				else
@@ -96,7 +109,22 @@ namespace UnityGLTF
 			cancellationToken.ThrowIfCancellationRequested();
 			
 			var meshCache = _assetCache.MeshCache[meshIndex];
+			var gltfMesh = _gltfRoot.Meshes[meshIndex];
+			// Check if a mesh with the same combination of primitive attributes was already loaded, and reuse it if possible. 
+			var meshAttribHash = meshCache.GetHashFromPrimitiveAttributes();
+			if (_meshesByAttributeHash.ContainsKey(meshAttribHash))
+			{
+				// In case of shared meshes, we still need to create the materials for each primitive, because different primitives can reference different materials.
+				for (int i = 0; i < mesh.Primitives.Count; ++i)
+				{
+					var primitive = mesh.Primitives[i];
+					await CreateMaterials(primitive);
+				}
+				meshCache.LoadedMesh = _meshesByAttributeHash[meshAttribHash];
 
+				return;
+			}
+			
 			var unityData = CreateUnityMeshData(mesh, meshIndex);
 			
 			for (int i = 0; i < mesh.Primitives.Count; ++i)
@@ -124,7 +152,10 @@ namespace UnityGLTF
 			
 			if (unityData.Vertices != null)
 				Statistics.VertexCount += unityData.Vertices.Length;
+			
 			await ConstructUnityMesh(unityData, meshIndex, mesh.Name);
+			_meshesByAttributeHash[meshAttribHash] = _assetCache.MeshCache[meshIndex].LoadedMesh;
+			
 		}
 
 		private async Task CreateMeshMaterials(GLTFMesh mesh)
@@ -168,8 +199,17 @@ namespace UnityGLTF
 			if (_gltfRoot.Meshes == null)
 				return;
 			
+			var meshAttrHashes = new Dictionary<int, UnityMeshData>();
+			
 			for (int i = 0; i < _gltfRoot.Meshes.Count(); i++)
 			{
+				var hash = _gltfRoot.Meshes[i].GetHashFromPrimitiveAttributes();
+				if (meshAttrHashes.TryGetValue(hash, out var existingUnityMeshData))
+				{
+					_assetCache.UnityMeshDataCache[i] = existingUnityMeshData;
+					continue;
+				}
+				
 				int meshIndex = i;
 				var mesh = _gltfRoot.Meshes[meshIndex];
 				var meshCache = _assetCache.MeshCache[meshIndex];
@@ -184,6 +224,7 @@ namespace UnityGLTF
 					ConvertAttributeAccessorsToUnityTypes(primCache, unityData,
 						unityData.subMeshVertexOffset[primIndex], primIndex);
 				}
+				meshAttrHashes.Add(hash, unityData);
 			}
 		}
 		
@@ -1028,22 +1069,39 @@ namespace UnityGLTF
 				}
 #endif
 			}
-
 #if HAVE_DRACO
 			if (Context.TryGetPlugin<DracoImportContext>(out _))
 			{
+
+				
+				var dracoMeshAttrHashes = new Dictionary<int, DracoDecodeResult>();
 
 				List<DracoDecodeResult> dracoDecodeResults = new List<DracoDecodeResult>();
 				for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
 				{
 					var gltfMesh = _gltfRoot.Meshes[meshIndex];
+
+					var meshHash = gltfMesh.GetHashFromPrimitiveAttributes();
+					// When we allready decoded a mesh with the same attribute layout, we can reuse the draco decode results and skip decoding this mesh
+					if (dracoMeshAttrHashes.TryGetValue(meshHash, out var existingDracoResult))
+					{
+						var resultCopy = new DracoDecodeResult();
+						resultCopy.decodeResults = existingDracoResult.decodeResults;
+						resultCopy.meshIndex = meshIndex;
+						dracoDecodeResults.Add(resultCopy);
+						continue;
+					}
+					
 					var anyHadDraco = gltfMesh.Primitives.Any(p =>
 						p.Extensions != null &&
 						p.Extensions.ContainsKey(KHR_draco_mesh_compression_Factory.EXTENSION_NAME));
 
 					if (anyHadDraco)
 					{
-						dracoDecodeResults.Add(ConstructDracoMesh(gltfMesh, meshIndex, CancellationToken.None));
+						var result = ConstructDracoMesh(gltfMesh, meshIndex, CancellationToken.None);
+						dracoMeshAttrHashes.Add(meshHash, result);
+						
+						dracoDecodeResults.Add(result);
 					}
 				}
 
@@ -1072,9 +1130,16 @@ namespace UnityGLTF
 #endif
 			void BuildMeshesAttributes()
 			{
+			
+				var meshAttrHashes = new HashSet<int>();
+	
 				for (int meshIndex = 0; meshIndex < _gltfRoot.Meshes.Count; meshIndex++)
 				{
 					var gltfMesh = _gltfRoot.Meshes[meshIndex];
+					var meshHash = gltfMesh.GetHashFromPrimitiveAttributes();
+					if (meshAttrHashes.Contains(meshHash))
+						continue;
+
 					for (int primIndex = 0; primIndex < gltfMesh.Primitives.Count; primIndex++)
 					{
 						var primCache = _assetCache.MeshCache[meshIndex].Primitives[primIndex];

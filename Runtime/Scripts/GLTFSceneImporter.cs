@@ -297,6 +297,8 @@ namespace UnityGLTF
 		protected AssetCache _assetCache;
 		protected bool _isRunning = false;
 		
+		private Dictionary<int, Mesh> _meshesByAttributeHash = new Dictionary<int, Mesh>();
+		
 		protected ImportProgress progressStatus = default(ImportProgress);
 		protected IProgress<ImportProgress> progress = null;
 
@@ -824,7 +826,7 @@ namespace UnityGLTF
 						Object.DestroyImmediate(mesh.Key);
 					}
 					
-					_deduplicatedStatistics.meshCountAfter = deduplicated;
+					_deduplicatedStatistics.meshCountAfter = _deduplicatedStatistics.meshCountBefore - deduplicated;
 					//Debug.Log($"Deduplicated {deduplicated} meshes");
 					
 				}
