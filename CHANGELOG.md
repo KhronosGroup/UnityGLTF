@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.18.9] - 2026-02-09
+- fix: 'BaseGraphMap' was using wrong property name, changed to '_DstBlendAlpha'
+- fix: import of meshes with same attributes but different materials, are now properly deduplicated instead of being imported as separate meshes
+- fix: support for Unity 2021.3
+
 ## [2.18.8] - 2026-02-05
 - add: deduplication statistic (Importer)
 - add: meshOpt 0.2 support
