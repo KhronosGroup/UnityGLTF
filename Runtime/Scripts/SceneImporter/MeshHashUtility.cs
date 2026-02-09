@@ -183,8 +183,11 @@ namespace UnityGLTF
                 // Count how many buffers we'll hash
                 int streamCount = mesh.vertexBufferCount;
                 bool hasIndices = meshData.indexFormat == IndexFormat.UInt16 ? meshData.GetIndexData<ushort>().Length > 0 : meshData.GetIndexData<uint>().Length > 0;
+#if UNITY_2022_1_OR_NEWER
                 bool hasBindPoses = mesh.bindposeCount > 0;
-                
+#else
+                bool hasBindPoses = mesh.bindposes.Length > 0;
+#endif                
                 int maxBuffers = streamCount + (hasIndices ? 1 : 0) + (hasBindPoses ? 1 : 0);
                 
                 if (maxBuffers == 0)
