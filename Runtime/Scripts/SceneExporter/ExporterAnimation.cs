@@ -68,7 +68,8 @@ namespace UnityGLTF
                 // make sure the default state is the first clip
                 if (animatorController && animatorController.layers.Length > 0)
                 {
-	                var defaultState = animatorController.layers[0].stateMachine.defaultState;
+	                var stateMachine = animatorController.layers[0].stateMachine;
+	                var defaultState = stateMachine ? stateMachine.defaultState : null;
 	                if (defaultState) {
 						var defaultMotion = defaultState.motion;
 						if (defaultMotion is AnimationClip clip && clip)
@@ -119,10 +120,14 @@ namespace UnityGLTF
 				yield break;
 
 			if (!animatorController)
+			{
 				yield return new AnimatorState() { name = clip.name, speed = 1f };
+				yield break;
+			}
 
 			foreach (var layer in animatorController.layers)
 			{
+				if (!layer.stateMachine) continue;
 				foreach (var state in layer.stateMachine.states)
 				{
 					// find a matching clip in the animator

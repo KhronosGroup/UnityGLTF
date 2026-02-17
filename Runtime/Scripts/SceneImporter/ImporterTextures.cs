@@ -39,13 +39,14 @@ namespace UnityGLTF
 		private async Task CreateNotReferencedTexture(int index)
 		{
 			if (Root.Textures == null) return;
-			if (Root.Textures[index].Source != null
-			    && Root.Images?.Count > 0
-			    && Root.Images.Count > Root.Textures[index].Source.Id
-			    && string.IsNullOrEmpty(Root.Textures[index].Source.Value.Uri))
+			var texture = Root.Textures[index];
+			var sourceId = GetTextureSourceId(texture);
+			if (Root.Images?.Count > 0
+			    && sourceId >= 0 && sourceId < Root.Images.Count
+			    && string.IsNullOrEmpty(Root.Images[sourceId].Uri))
 			{
-				await ConstructImageBuffer(Root.Textures[index], index);
-				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true, false);
+				await ConstructImageBuffer(texture, index);
+				await ConstructTexture(texture, index, !KeepCPUCopyOfTexture, true, false);
 			}
 		}
 
