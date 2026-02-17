@@ -1,4 +1,5 @@
-﻿using GLTF.Schema;
+﻿using System;
+using GLTF.Schema;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -11,6 +12,7 @@ namespace UnityGLTF
 		protected BaseGraphMap(Material mat)
 		{
 			_material = mat;
+			_alphaMode = DetectAlphaMode(mat);
 		}
 
 		protected BaseGraphMap(string shaderName, string fallbackGuid)
@@ -33,6 +35,50 @@ namespace UnityGLTF
 		internal Material _material;
 
 	    private AlphaMode _alphaMode;
+	    protected static AlphaMode DetectAlphaMode(Material material)
+	    {
+	    	if (!material) return AlphaMode.OPAQUE;
+
+	    	var renderType = material.GetTag("RenderType", true, "");
+	    	switch (renderType)
+	    	{
+	    		case "TransparentCutout": return AlphaMode.MASK;
+	    		case "Transparent":
+	    		case "Fade": return AlphaMode.BLEND;
+	    		default:
+	#if UNITY_2019_3_OR_NEWER
+	    			var isBirp = !GraphicsSettings.currentRenderPipeline;
+	#else
+	    			var isBirp = true;
+	#endif
+	    			var alphaClip = (material.HasProperty(k_AlphaClip) && material.GetFloat(k_AlphaClip) > 0.5f)
+	    			                 || (material.HasProperty(k_AlphaClipBuiltin) && material.GetFloat(k_AlphaClipBuiltin) > 0.5f)
+	    			                 || material.IsKeywordEnabled("_ALPHATEST_ON")
+	    			                 || material.IsKeywordEnabled("_BUILTIN_ALPHATEST_ON")
+	    			                 || material.IsKeywordEnabled("_BUILTIN_AlphaClip");
+
+	    			var isTransparentSurface = (material.HasProperty(k_Surface) && material.GetFloat(k_Surface) > 0.5f)
+	    			                          || (material.HasProperty(k_SurfaceBuiltin) && material.GetFloat(k_SurfaceBuiltin) > 0.5f)
+	    			                          || material.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
+	    			                          || material.IsKeywordEnabled("_BUILTIN_SURFACE_TYPE_TRANSPARENT")
+	    			                          || material.IsKeywordEnabled("_ALPHABLEND_ON")
+	    			                          || material.IsKeywordEnabled("_BUILTIN_ALPHABLEND_ON")
+	    			                          || material.IsKeywordEnabled("_ALPHAPREMULTIPLY_ON")
+	    			                          || material.IsKeywordEnabled("_BUILTIN_ALPHAPREMULTIPLY_ON");
+
+	    			var queueTag = material.GetTag("Queue", true, "");
+	    			if (queueTag.IndexOf("Transparent", StringComparison.OrdinalIgnoreCase) >= 0)
+	    				return AlphaMode.BLEND;
+	    			if (queueTag.IndexOf("AlphaTest", StringComparison.OrdinalIgnoreCase) >= 0)
+	    				return AlphaMode.MASK;
+
+	    			if (alphaClip || material.renderQueue == (int)RenderQueue.AlphaTest)
+	    				return AlphaMode.MASK;
+	    			if (isTransparentSurface || material.renderQueue >= (int)RenderQueue.Transparent)
+	    				return AlphaMode.BLEND;
+	    			return AlphaMode.OPAQUE;
+	    	}
+	    }
 	    public virtual AlphaMode AlphaMode
 	    {
 		    get { return _alphaMode; }
