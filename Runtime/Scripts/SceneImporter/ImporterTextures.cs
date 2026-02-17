@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
@@ -199,6 +200,9 @@ namespace UnityGLTF
 		protected async Task ConstructImageBuffer(GLTFTexture texture, int textureIndex)
 		{
 			int sourceId = GetTextureSourceId(texture);
+			if (sourceId == -1)
+				return;
+			
 			if (_assetCache.ImageStreamCache[sourceId] == null)
 			{
 				GLTFImage image = _gltfRoot.Images[sourceId];
@@ -498,11 +502,17 @@ namespace UnityGLTF
 				return ((KHR_texture_basisu)texture.Extensions[KHR_texture_basisu.EXTENSION_NAME]).source.Id;
 			}
 			
-			int id = texture.Source?.Id ?? 0;
+			int id = texture.Source?.Id ?? -1;
 			if (_imageDeduplicationLinks != null)
 			{
 				if (_imageDeduplicationLinks.TryGetValue(id, out int replacedId))
 					id = replacedId;
+			}
+
+			if (id == -1)
+			{
+				string exts = texture.Extensions != null ? string.Join(", ", texture.Extensions.Keys) : "No extensions";
+				Debug.LogWarning($"Unsupported texture source for texture {texture.Name} with Extensions: {exts} (File: {_gltfFileName})", this);
 			}
 			
 			return id;
@@ -594,9 +604,20 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
-			if (_assetCache.TextureCache[textureIndex].Texture == null)
+			if (_assetCache.TextureCache[textureIndex]?.Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
+				if (sourceId == -1)
+				{
+
+					_assetCache.TextureCache[textureIndex] = new TextureCacheData
+					{
+						Texture = Texture2D.redTexture,
+						TextureDefinition = texture,
+					};
+				    return;
+				}
+				
 				GLTFImage image = _gltfRoot.Images[sourceId];
 				
 				bool isFirstInstance = _assetCache.ImageCache[sourceId] == null;
