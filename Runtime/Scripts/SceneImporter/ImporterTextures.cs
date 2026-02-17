@@ -6,6 +6,7 @@ using GLTF;
 using GLTF.Schema;
 using GLTF.Utilities;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
@@ -419,10 +420,35 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					using (var memoryStreamData = new NativeArray<byte>(memoryStream.ToArray(), Allocator.TempJob))
+					
+					// To safe memory footprint, we try to create a NativeArray without Allocation directly from the MemoryStream buffer.
+					if (memoryStream.TryGetBuffer(out var memStreamBuffer))
 					{
-						texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly, isLinear);
+						NativeArray<byte> nativeBuffer;
+						ulong gcHandle;
+						unsafe
+						{
+							var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out gcHandle);
+							nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
+						}
+						try
+						{
+							texture = await CheckMimeTypeAndLoadImage(image, texture, nativeBuffer, markGpuOnly,
+								isLinear);
+						}
+						finally
+						{
+							UnsafeUtility.ReleaseGCObject(gcHandle);
+						}
 					}
+					else
+					{
+						using (var memoryStreamData = new NativeArray<byte>(memoryStream. ToArray(), Allocator.TempJob))
+							texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly, isLinear);
+						
+					}
+					
+					
 				}
 			}
 			else if (stream != null)
