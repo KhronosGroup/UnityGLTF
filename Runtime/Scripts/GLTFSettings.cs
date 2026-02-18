@@ -306,6 +306,12 @@ namespace UnityGLTF
 #endif
 	    }
 
+	    private void OnEnable()
+	    {
+		    RegisterPlugins(this);
+	    }
+
+
 	    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 	    private static void ClearStatics()
 	    {
