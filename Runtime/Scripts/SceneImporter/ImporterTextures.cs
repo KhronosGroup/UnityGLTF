@@ -330,12 +330,16 @@ namespace UnityGLTF
 						texture.name = textureName;
 					}
 					else
-#endif
 					{
-						Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project to import KTX2 textures.");
+						// Ktx2 import disabled
 						await Task.CompletedTask;
 						texture = null;
 					}
+#else
+					Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project to import KTX2 textures.");
+					await Task.CompletedTask;
+					texture = null;
+#endif
 					break;
 				default:
 					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
