@@ -13,6 +13,10 @@ using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
+
+#if HAVE_WEBP
+using WebP;
+#endif
 using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
@@ -277,6 +281,32 @@ namespace UnityGLTF
 					break;
 				case "image/exr":
 					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
+				case "image/webp":
+#if HAVE_WEBP
+					if (Context.TryGetPlugin<WebPImportContext>(out _))
+					{
+						var webPData = data.ToArray();
+
+						texture.LoadWebP(webPData, out var webPError, makeNoLongerReadable: makeNoLongerReadable);
+
+						if (webPError != Error.Success)
+						{
+							Debug.LogError($"Webp Load Error for texture {texture.name}:" + webPError.ToString(), this);
+						}
+					}
+					else
+					{
+						// webp import disabled
+						await Task.CompletedTask;
+						texture = null;
+					}
+#else
+
+					Debug.Log(LogType.Warning,
+						$"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a WebP file using the KHR_texture_webp extension. Add the package \"com.netpyoung.webp\" version v0.3.22+ to your project to import WebP textures.");
+					await Task.CompletedTask;
+					texture = null;
+#endif
 					break;
 				case "image/ktx2":
 					string textureName = texture.name;
@@ -497,9 +527,15 @@ namespace UnityGLTF
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
+			// TODO: we should probably unify the extension handling here and not have special cases in multiple places
 			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
 			{
 				return ((KHR_texture_basisu)texture.Extensions[KHR_texture_basisu.EXTENSION_NAME]).source.Id;
+			}
+			
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(EXT_texture_webp.EXTENSION_NAME))
+			{
+				return ((EXT_texture_webp)texture.Extensions[EXT_texture_webp.EXTENSION_NAME]).source.Id;
 			}
 			
 			int id = texture.Source?.Id ?? -1;

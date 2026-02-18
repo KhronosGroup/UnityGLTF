@@ -12,7 +12,8 @@
         "Unity.Meshopt.Decompress",
         "Unity.Collections",
         "Unity.Mathematics",
-        "Unity.Burst"
+        "Unity.Burst",
+        "unity.webp"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -103,6 +104,11 @@
             "name": "com.unity.meshopt.decompress",
             "expression": "0.2.0-exp.1",
             "define": "HAVE_MESHOPT_DECOMPRESS_VERSION_0_2"
+        },
+        {
+            "name": "com.netpyoung.webp",
+            "expression": "0.3.22",
+            "define": "HAVE_WEBP"
         }
     ],
     "noEngineReferences": false

@@ -46,6 +46,7 @@ namespace GLTF.Schema
 			{ KHR_node_hoverability_Factory.EXTENSION_NAME, new KHR_node_hoverability_Factory()},
 			{ KHR_audio_emitterFactory.EXTENSION_NAME, new KHR_audio_emitterFactory()},
 			{ KHR_materials_anisotropy_Factory.EXTENSION_NAME, new KHR_materials_anisotropy_Factory()},
+			{ EXT_texture_webp_Factory.EXTENSION_NAME, new EXT_texture_webp_Factory()},
 		};
 
 		private static DefaultExtensionFactory _defaultExtensionFactory = new DefaultExtensionFactory();
