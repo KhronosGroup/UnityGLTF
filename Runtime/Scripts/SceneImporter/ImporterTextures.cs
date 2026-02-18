@@ -512,7 +512,7 @@ namespace UnityGLTF
 			if (id == -1)
 			{
 				string exts = texture.Extensions != null ? string.Join(", ", texture.Extensions.Keys) : "No extensions";
-				Debug.LogWarning($"Unsupported texture source for texture {texture.Name} with Extensions: {exts} (File: {_gltfFileName})", this);
+				Debug.LogError($"Unsupported texture source for texture {texture.Name} with Extensions: {exts} (File: {_gltfFileName})", this);
 			}
 			
 			return id;
@@ -612,7 +612,7 @@ namespace UnityGLTF
 
 					_assetCache.TextureCache[textureIndex] = new TextureCacheData
 					{
-						Texture = Texture2D.redTexture,
+						Texture = null,
 						TextureDefinition = texture,
 					};
 				    return;
