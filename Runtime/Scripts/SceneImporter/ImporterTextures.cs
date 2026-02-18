@@ -280,7 +280,25 @@ namespace UnityGLTF
 #endif
 					break;
 				case "image/exr":
-					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
+#if UNITY_6000_0_OR_NEWER
+					if (Context.TryGetPlugin<ExrImportContext>(out _))
+					{
+#if UNITY_2022_3_OR_NEWER
+						texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+#else
+						texture.LoadImage(data.ToArray(), makeNoLongerReadable);
+#endif
+					}
+					else
+					{
+						// exr import disabled
+						await Task.CompletedTask;
+						texture = null;
+					}
+#else
+					Debug.LogError($"EXR images are not supported before Unity 6. The texture {texture.name} won't be imported. File: {_gltfFileName}", this);
+#endif
+					break;
 				case "image/webp":
 #if HAVE_WEBP
 					if (Context.TryGetPlugin<WebPImportContext>(out _))
@@ -301,9 +319,7 @@ namespace UnityGLTF
 						texture = null;
 					}
 #else
-
-					Debug.Log(LogType.Warning,
-						$"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a WebP file using the KHR_texture_webp extension. Add the package \"com.netpyoung.webp\" version v0.3.22+ to your project to import WebP textures.");
+					Debug.LogError($"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a WebP file using the KHR_texture_webp extension. Add the package \"com.netpyoung.webp\" version v0.3.22+ to your project to import WebP textures.", this);
 					await Task.CompletedTask;
 					texture = null;
 #endif
