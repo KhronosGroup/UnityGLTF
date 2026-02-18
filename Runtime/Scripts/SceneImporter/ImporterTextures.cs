@@ -321,7 +321,7 @@ namespace UnityGLTF
 						texture = null;
 					}
 #else
-					Debug.LogError($"EXR images are not supported before Unity 6. The texture {texture.name} won't be imported. File: {_gltfFileName}", this);
+					Debug.LogWarning($"EXR images are not supported before Unity 6. The texture {texture.name} won't be imported. File: {_gltfFileName}", this);
 #endif
 					break;
 				case "image/webp":
