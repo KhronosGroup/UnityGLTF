@@ -248,18 +248,45 @@ namespace UnityGLTF
 			switch (image.MimeType)
 			{
 				case "image/jpeg":
-					var jpgData = data.ToArray();
-					texture.LoadImage(jpgData, makeNoLongerReadable);
+#if UNITY_2022_3_OR_NEWER
+					texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+#else
+					texture.LoadImage(data.ToArray(), makeNoLongerReadable);
+#endif
 					break;
 				case "image/png":
 					//	NOTE: the second parameter of both LoadImage() and Apply() in this case block marks the texture non-readable, but we can't mark it until after we call Apply() after this switch block.
 					
+#if UNITY_2022_3_OR_NEWER // ReadOnlySpan support was added to LoadImage in Unity 2022.3, but we still need to call ToArray() for older versions, so we can't use it in the whole method yet.
+					
+					var pngColorType = data.AsReadOnlySpan().Length > 25 ? data.AsReadOnlySpan()[25] : 0;
+					var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
+	#if !UNITY_EDITOR
+					texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+	#else
+					if (Context.AssetContext == null || pngHasAlpha)
+					{
+						texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+					}
+					else
+					{
+						texture.LoadImage(data.AsReadOnlySpan(), false);
+						var name = texture.name;
+						var pixels32 = texture.GetPixels32();
+						texture = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, GenerateMipMapsForTextures, isLinear);
+						texture.name = name;
+						texture.SetPixels32(pixels32);
+						texture.Apply(GenerateMipMapsForTextures, makeNoLongerReadable);
+					}
+	#endif
+#else // Non-ReadOnlySpan fallback for older Unity versions
+
 					var pngData = data.ToArray();
                     var pngColorType = pngData.Length > 25 ? pngData[25] : 0;
                     var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
-#if !UNITY_EDITOR
+	#if !UNITY_EDITOR
 					texture.LoadImage(pngData, makeNoLongerReadable);
-#else
+	#else
                     if (Context.AssetContext == null || pngHasAlpha)
                     {
 					    texture.LoadImage(pngData, makeNoLongerReadable);
@@ -267,16 +294,14 @@ namespace UnityGLTF
                     else
                     {
                         texture.LoadImage(pngData, false);
-
                         var name = texture.name;
                         var pixels32 = texture.GetPixels32();
-
                         texture = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, GenerateMipMapsForTextures, isLinear);
                         texture.name = name;
                         texture.SetPixels32(pixels32);
-
                         texture.Apply(GenerateMipMapsForTextures, makeNoLongerReadable);
                     }
+	#endif
 #endif
 					break;
 				case "image/exr":
@@ -358,7 +383,11 @@ namespace UnityGLTF
 #endif
 					break;
 				default:
+#if UNITY_2022_3_OR_NEWER
+					texture.LoadImage(data.AsReadOnlySpan(), markGpuOnly && !textureWillBeCompressed);
+#else
 					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
+#endif
 					break;
 			}
 
@@ -556,6 +585,11 @@ namespace UnityGLTF
 			if (texture.Extensions != null && texture.Extensions.ContainsKey(EXT_texture_webp.EXTENSION_NAME))
 			{
 				return ((EXT_texture_webp)texture.Extensions[EXT_texture_webp.EXTENSION_NAME]).source.Id;
+			}
+			
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(EXT_texture_exr.EXTENSION_NAME))
+			{
+				return ((EXT_texture_exr)texture.Extensions[EXT_texture_exr.EXTENSION_NAME]).source.Id;
 			}
 			
 			int id = texture.Source?.Id ?? -1;
