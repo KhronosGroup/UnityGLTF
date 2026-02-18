@@ -105,7 +105,7 @@ namespace UnityGLTF
         protected override string PackageName => "com.unity.cloud.ktx";
     }
     
-    [CustomEditor(typeof(WebPImport))]
+    [CustomEditor(typeof(WebpImport))]
     internal class WebPImportEditor : PackageInstallEditor
     {
         protected override string PackageName => "https://github.com/netpyoung/unity.webp.git?path=unity_project/Assets/unity.webp";

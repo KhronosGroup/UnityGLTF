@@ -1,6 +1,6 @@
 namespace UnityGLTF.Plugins
 {
-    public class WebPImport: GLTFImportPlugin
+    public class WebpImport: GLTFImportPlugin
     {
         public override string DisplayName => "EXT_texture_webp";
         public override string Description => "Import textures using the WebP compression format.";
