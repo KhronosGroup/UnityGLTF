@@ -29,4 +29,19 @@ namespace UnityGLTF.Plugins
             this.tooltip = tooltip;
         }
     }
+    
+    /// <summary>
+    /// Marks a plugin as unsupported in the current version of Unity. 
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class UnsupportedUnityVersionPluginAttribute : Attribute
+    {
+        public string requiredVersion;
+        
+        public UnsupportedUnityVersionPluginAttribute(string requiredVersion = null)
+        {
+            this.requiredVersion = requiredVersion;
+        }
+    }
+
 }

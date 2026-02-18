@@ -20,8 +20,10 @@ namespace UnityGLTF
 	{
 		private const string DefaultNonRatifiedTooltip = "This glTF extension is not yet ratified by the Khronos Group, and thus not an official part of glTF. This may change in the future.";
 		private const string DefaultExperimentalTooltip = "This plugin is experimental and may change in the future.";
+		private const string DefaultUnsupportedUnityVersTooltip = "This Unity Version is not supported by the plugin.";
 		private static readonly Color ExperimentalBadgeColor = new Color(1f, 0.7f, 0f, 1f);
 		private static readonly Color NonRatifiedBadgeColor = new Color(1f,1f,0f,1f);
+		private static readonly Color UnsupportedUnityVersBadgeColor = new Color(1f,0.6f,0.6f,1f);
 		
 		internal static Action<GLTFSettings> OnAfterGUI;
 		private static GLTFSettings settings;
@@ -241,6 +243,13 @@ namespace UnityGLTF
 					{
 						badgeOffsetX = DrawExperimentalBadge(expAttribute, badgeOffsetX);
 					}
+
+					var versAttribute = plugin.GetType().GetCustomAttribute(typeof(UnsupportedUnityVersionPluginAttribute), true);
+					if (versAttribute != null)
+					{
+						badgeOffsetX = DrawUnsupportedUnityVersionBadge(versAttribute, badgeOffsetX);
+					}
+					
 					if (editor is PackageInstallEditor && plugin.PackageMissing)
 					{
 						badgeOffsetX = DrawWarningBadge("needs package", "Requires a package to be installed. Fold out to install it.", badgeOffsetX);
@@ -355,6 +364,15 @@ namespace UnityGLTF
 			var tooltip = exp.tooltip != null ? exp.tooltip + "\n" + DefaultNonRatifiedTooltip : DefaultNonRatifiedTooltip;
 			return DrawBadge("non-ratified", tooltip, NonRatifiedBadgeColor, offsetX);
 		}
+
+		private static float DrawUnsupportedUnityVersionBadge(Attribute attribute, float offsetX)
+		{
+			var attr = attribute as UnsupportedUnityVersionPluginAttribute;
+			if (attr == null) return offsetX;
+			var text = attr.requiredVersion != null ? attr.requiredVersion + "\n" + DefaultUnsupportedUnityVersTooltip : DefaultUnsupportedUnityVersTooltip;
+			return DrawBadge("needs "+attr.requiredVersion, text, UnsupportedUnityVersBadgeColor, offsetX);
+		}
+		
 		
 		private static float DrawExperimentalBadge(Attribute expAttribute, float offsetX)
 		{
