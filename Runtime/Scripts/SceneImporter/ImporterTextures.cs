@@ -248,7 +248,7 @@ namespace UnityGLTF
 			switch (image.MimeType)
 			{
 				case "image/jpeg":
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 					texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
 #else
 					texture.LoadImage(data.ToArray(), makeNoLongerReadable);
@@ -257,7 +257,7 @@ namespace UnityGLTF
 				case "image/png":
 					//	NOTE: the second parameter of both LoadImage() and Apply() in this case block marks the texture non-readable, but we can't mark it until after we call Apply() after this switch block.
 					
-#if UNITY_2022_3_OR_NEWER // ReadOnlySpan support was added to LoadImage in Unity 2022.3, but we still need to call ToArray() for older versions, so we can't use it in the whole method yet.
+#if UNITY_6000_0_OR_NEWER // ReadOnlySpan support was added to LoadImage in Unity 6+, but we still need to call ToArray() for older versions, so we can't use it in the whole method yet.
 					
 					var pngColorType = data.AsReadOnlySpan().Length > 25 ? data.AsReadOnlySpan()[25] : 0;
 					var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
@@ -308,7 +308,7 @@ namespace UnityGLTF
 #if UNITY_6000_0_OR_NEWER
 					if (Context.TryGetPlugin<ExrImportContext>(out _))
 					{
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 						texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
 #else
 						texture.LoadImage(data.ToArray(), makeNoLongerReadable);
@@ -383,7 +383,7 @@ namespace UnityGLTF
 #endif
 					break;
 				default:
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 					texture.LoadImage(data.AsReadOnlySpan(), markGpuOnly && !textureWillBeCompressed);
 #else
 					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
