@@ -23,7 +23,7 @@ namespace UnityGLTF
 		private const string DefaultUnsupportedUnityVersTooltip = "This Unity Version is not supported by the plugin.";
 		private static readonly Color ExperimentalBadgeColor = new Color(1f, 0.7f, 0f, 1f);
 		private static readonly Color NonRatifiedBadgeColor = new Color(1f,1f,0f,1f);
-		private static readonly Color UnsupportedUnityVersBadgeColor = new Color(1f,0.6f,0.6f,1f);
+		private static readonly Color UnsupportedUnityVersBadgeColor = new Color(1f*2,1f*2,1f*2f,1f);
 		
 		internal static Action<GLTFSettings> OnAfterGUI;
 		private static GLTFSettings settings;
