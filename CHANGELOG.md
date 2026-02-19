@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.20.0] - 2026-02-19
+- add: import support for webP textures (requires package https://github.com/netpyoung/unity.webp)
+- add: import support for exr textures (requires Unity 6+)
+- change: using span arrays for more efficient data handling in texture loading
+- fix: plugin list in default GLTF settings asset was not updating when plugins were added or removed
+- fix: unsupported texture extensions was using first image instead of skipping the texture, which caused incorrect texture imports in some cases
+- fix: animator and statemachine export
+- fix: safeguards againts empty bufferview data
+
 ## [2.18.9] - 2026-02-09
 - fix: 'BaseGraphMap' was using wrong property name, changed to '_DstBlendAlpha'
 - fix: import of meshes with same attributes but different materials, are now properly deduplicated instead of being imported as separate meshes
