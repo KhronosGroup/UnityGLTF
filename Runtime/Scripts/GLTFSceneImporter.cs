@@ -401,8 +401,11 @@ namespace UnityGLTF
 					unsafe
 					{
 						var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out var gcHandle);
-						var nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count,
-							Allocator.None);
+						var nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+						NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+						
 						_nativeBuffers.Add(stream,new (nativeBuffer, gcHandle));
 						return nativeBuffer;
 					}

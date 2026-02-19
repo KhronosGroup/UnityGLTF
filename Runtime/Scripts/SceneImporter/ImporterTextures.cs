@@ -513,6 +513,10 @@ namespace UnityGLTF
 						{
 							var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out gcHandle);
 							nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+							NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+
 						}
 						try
 						{
