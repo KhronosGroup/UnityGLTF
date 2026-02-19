@@ -112,6 +112,6 @@ namespace UnityGLTF
     [CustomEditor(typeof(WebpImport))]
     internal class WebPImportEditor : PackageInstallEditor
     {
-        protected override string PackageName => "https://github.com/netpyoung/unity.webp.git?path=unity_project/Assets/unity.webp";
+        protected override string PackageName => "https://github.com/netpyoung/unity.webp.git?path=unity_project/Assets/unity.webp#0.3.22";
     }
 }
