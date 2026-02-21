@@ -23,13 +23,87 @@ namespace UnityGLTF
 	[CanEditMultipleObjects]
 	internal class GLTFImporterInspector : UnityGLTFTabbedEditor
 	{
-		private string[] _importNormalsNames;
-		
-		public override void OnEnable()
+        static Texture BoneAssignmentDotIcon;
+        static Texture BoneAssignmentDotFrameIcon;
+        static Texture BoneAssignmentDotFrameDottedIcon;
+
+        static string[] boneGroupTabs = { "Body", "Head", "Left Hand", "Right Hand" };
+        static new Dictionary<string, string> boneGroups = new()
+        {
+            { "Hips", "Body" },
+            { "Spine", "Body" },
+            { "Chest", "Body" },
+            { "UpperChest", "Body" },
+            { "Neck", "Body" },
+            { "LeftUpperLeg", "Body" },
+            { "RightUpperLeg", "Body" },
+            { "LeftLowerLeg", "Body" },
+            { "RightLowerLeg", "Body" },
+            { "LeftFoot", "Body" },
+            { "RightFoot", "Body" },
+            { "LeftToes", "Body" },
+            { "RightToes", "Body" },
+            { "LeftShoulder", "Body" },
+            { "LeftUpperArm", "Body" },
+            { "LeftLowerArm", "Body" },
+            { "LeftHand", "Body" },
+            { "RightShoulder", "Body" },
+            { "RightUpperArm", "Body" },
+            { "RightLowerArm", "Body" },
+            { "RightHand", "Body" },
+
+            { "Head", "Head" },
+            { "Jaw", "Head" },
+            { "LeftEye", "Head" },
+            { "RightEye", "Head" },
+
+            { "Left Thumb Proximal", "Left Hand" },
+            { "Left Thumb Intermediate", "Left Hand" },
+            { "Left Thumb Distal", "Left Hand" },
+            { "Left Index Proximal", "Left Hand" },
+            { "Left Index Intermediate", "Left Hand" },
+            { "Left Index Distal", "Left Hand" },
+            { "Left Middle Proximal", "Left Hand" },
+            { "Left Middle Intermediate", "Left Hand" },
+            { "Left Middle Distal", "Left Hand" },
+            { "Left Ring Proximal", "Left Hand" },
+            { "Left Ring Intermediate", "Left Hand" },
+            { "Left Ring Distal", "Left Hand" },
+            { "Left Little Proximal", "Left Hand" },
+            { "Left Little Intermediate", "Left Hand" },
+            { "Left Little Distal", "Left Hand" },
+
+            { "Right Thumb Proximal", "Right Hand" },
+            { "Right Thumb Intermediate", "Right Hand" },
+            { "Right Thumb Distal", "Right Hand" },
+            { "Right Index Proximal", "Right Hand" },
+            { "Right Index Intermediate", "Right Hand" },
+            { "Right Index Distal", "Right Hand" },
+            { "Right Middle Proximal", "Right Hand" },
+            { "Right Middle Intermediate", "Right Hand" },
+            { "Right Middle Distal", "Right Hand" },
+            { "Right Ring Proximal", "Right Hand" },
+            { "Right Ring Intermediate", "Right Hand" },
+            { "Right Ring Distal", "Right Hand" },
+            { "Right Little Proximal", "Right Hand" },
+            { "Right Little Intermediate", "Right Hand" },
+            { "Right Little Distal", "Right Hand" },
+        };
+
+        private string[] _importNormalsNames;
+        GLTFImporter importer;
+        readonly Dictionary<string, Transform> boneTransforms = new();
+        readonly Dictionary<string, string> assignedBoneNames = new();
+        Avatar avatar;
+        int selectedBoneGroupTab = 0;
+
+        public override void OnEnable()
 		{
 			if (!this) return;
 
-			var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
+            importer = target as GLTFImporter;
+
+            var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
 			if (m_HasSceneData.boolValue)
 				AddTab(new GLTFAssetImporterTab(this, "Model", ModelInspectorGUI));
 
@@ -43,34 +117,64 @@ namespace UnityGLTF
 			AddTab(new GLTFAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
 			AddTab(new GLTFAssetImporterTab(this, "Info", AssetInfoInspectorGUI));
 
-			base.OnEnable();
+            BoneAssignmentDotIcon = (Texture)EditorGUIUtility.Load("DotFill");
+            BoneAssignmentDotFrameIcon = (Texture)EditorGUIUtility.Load("DotFrame");
+            BoneAssignmentDotFrameDottedIcon = (Texture)EditorGUIUtility.Load("DotFrameDotted");
+
+            var animationMethod = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
+            if (animationMethod.enumValueIndex == (int)AnimationMethod.MecanimHumanoid)
+            {
+                avatar = AssetDatabase.LoadAssetAtPath<Avatar>(importer.assetPath);
+
+                if (avatar && avatar.isHuman && avatar.isValid) PopulateBoneInfo();
+            }
+
+            base.OnEnable();
 		}
 
-		public override void OnInspectorGUI()
+        void PopulateBoneInfo()
+        {
+            var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(importer.assetPath);
+            boneTransforms.Clear();
+            assignedBoneNames.Clear();
+
+            if (modelAsset)
+            {
+                foreach (var transform in modelAsset.GetComponentsInChildren<Transform>(true))
+                {
+                    boneTransforms[transform.name] = transform;
+                }
+
+                foreach (var bone in avatar.humanDescription.human)
+                {
+                    assignedBoneNames[bone.humanName] = bone.boneName;
+                }
+            }
+        }
+
+        public override void OnInspectorGUI()
 		{
-			var t = target as GLTFImporter;
-			TextureWarningsGUI(t);
+			TextureWarningsGUI();
 			EditorGUILayout.Space();
 			base.OnInspectorGUI();
 		}
 
-		private void TextureWarningsGUI(GLTFImporter t)
+		private void TextureWarningsGUI()
 		{
-			if (!t)	return;
-			if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(t))
+			if (!importer)	return;
+			if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(importer))
 			{
 				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
 				if (GUILayout.Button("Fix All"))
 				{
-					GLTFImporterHelper.FixTextureImportSettings(t);
+					GLTFImporterHelper.FixTextureImportSettings(importer);
 				}
 			}
 		}
 
 		private void ModelInspectorGUI()
 		{
-			var t = target as GLTFImporter;
-			if (!t) return;
+			if (!importer) return;
 
 			// serializedObject.Update();
 			if (_importNormalsNames == null)
@@ -103,7 +207,7 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._readWriteEnabled)), new GUIContent("Read/Write"));
 
 #pragma warning disable 0618	
-			if (t._generateColliders)
+			if (importer._generateColliders)
 			{
 				serializedObject.FindProperty(nameof(GLTFImporter._addColliders)).enumValueIndex =
 					(int)GLTFSceneImporter.ColliderType.Mesh;
@@ -155,59 +259,113 @@ namespace UnityGLTF
 		}
 		private static readonly GUIContent RemapTexturesToggleContent = new GUIContent("Experimental", "(experimental) Remap textures inside the glTF to textures that are already in your project.");
 
-		private void AnimationInspectorGUI()
-		{
-			var t = target as GLTFImporter;
-			if (!t) return;
+        private void AnimationInspectorGUI()
+        {
+            if (!importer) return;
 
-			var hasAnimationData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasAnimationData)).boolValue;
+            var hasAnimationData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasAnimationData)).boolValue;
 
-			if (!hasAnimationData)
-			{
-				EditorGUILayout.HelpBox("File doesn't contain animation data.", MessageType.None);
-			}
-			
-			var anim = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
-			EditorGUILayout.PropertyField(anim, new GUIContent("Animation Type"));
-			if (anim.enumValueIndex == (int)AnimationMethod.MecanimHumanoid)
-			{
-				var flip = serializedObject.FindProperty(nameof(GLTFImporter._mecanimHumanoidFlip));
-				EditorGUI.indentLevel++;
-				EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
-				EditorGUI.indentLevel--;
-			}
-			if (hasAnimationData && anim.enumValueIndex > 0)
-			{
-				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
-				EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
-				if (loopTime.boolValue)
-				{
-					EditorGUI.indentLevel++;
-					EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._animationLoopPose)), new GUIContent("Loop Pose"));
-					EditorGUI.indentLevel--;
-				}
-			}
-			
-			// show animations for clip import editing
-			var animations = serializedObject.FindProperty("m_Animations");
-			if (animations.arraySize > 0)
-			{
-				EditorGUILayout.Space();
-				EditorGUILayout.PropertyField(animations, new GUIContent("Animations"), true);
-			}
+            if (!hasAnimationData)
+            {
+                EditorGUILayout.HelpBox("File doesn't contain animation data.", MessageType.None);
+            }
 
-			// warn if Humanoid rig import has failed
-			if (!HasModified() && anim.enumValueIndex == (int) AnimationMethod.MecanimHumanoid && !AssetDatabase.LoadAssetAtPath<Avatar>(t.assetPath))
-			{
-				EditorGUILayout.Separator();
-				EditorGUILayout.HelpBox("The model doesn't contain a valid Humanoid rig. See the console for more information.", MessageType.Error);
-			}
-		}
+            var animationMethod = serializedObject.FindProperty(nameof(GLTFImporter._importAnimations));
+            EditorGUILayout.PropertyField(animationMethod, new GUIContent("Animation Type"));
+            if (animationMethod.enumValueIndex == (int)AnimationMethod.MecanimHumanoid)
+            {
+                var flip = serializedObject.FindProperty(nameof(GLTFImporter._mecanimHumanoidFlip));
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
+                EditorGUI.indentLevel--;
+            }
+            if (hasAnimationData && animationMethod.enumValueIndex > 0)
+            {
+                var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
+                EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
+                if (loopTime.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._animationLoopPose)), new GUIContent("Loop Pose"));
+                    EditorGUI.indentLevel--;
+                }
+            }
+
+            // show animations for clip import editing
+            var animations = serializedObject.FindProperty("m_Animations");
+            if (animations.arraySize > 0)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.PropertyField(animations, new GUIContent("Animations"), true);
+            }
+
+            if (animationMethod.enumValueIndex == (int)AnimationMethod.MecanimHumanoid)
+            {
+                // List all bones and any assigned gameobjects.
+                if (avatar && avatar.isHuman && avatar.isValid)
+                {
+                    var humanBones = avatar.humanDescription.human;
+                    var allMecanimBonesCount = HumanTrait.BoneName.Length;
+                    EditorGUILayout.Separator();
+                    EditorGUILayout.LabelField("Avatar Bones", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Assigned Bones:", humanBones.Length + "/" + allMecanimBonesCount);
+
+                    EditorGUILayout.BeginHorizontal();
+                    var legendIconRect = GUILayoutUtility.GetRect(18, 18, GUILayout.Width(18), GUILayout.Height(18));
+                    GUI.DrawTexture(legendIconRect, BoneAssignmentDotFrameDottedIcon, ScaleMode.ScaleToFit, true);
+                    GUILayout.Label("Optional Bone", EditorStyles.miniLabel);
+                    EditorGUILayout.EndHorizontal();
+
+                    selectedBoneGroupTab = GUILayout.Toolbar(selectedBoneGroupTab, boneGroupTabs);
+
+                    EditorGUI.indentLevel++;
+
+                    for (var i = 0; i < allMecanimBonesCount; i++)
+                    {
+                        var mecanimBoneName = HumanTrait.BoneName[i];
+                        if (boneGroupTabs[selectedBoneGroupTab] != boneGroups[mecanimBoneName])  continue;
+
+                        assignedBoneNames.TryGetValue(mecanimBoneName, out string assignedBoneName);
+                        Transform transform = null;
+                        if (!string.IsNullOrEmpty(assignedBoneName))
+                        {
+                            boneTransforms.TryGetValue(assignedBoneName, out transform);
+                        }
+
+                        EditorGUILayout.BeginHorizontal();
+
+                        var iconRect = GUILayoutUtility.GetRect(18, 18, GUILayout.Width(18), GUILayout.Height(18));
+                        var frameIcon = HumanTrait.RequiredBone(i) ? BoneAssignmentDotFrameIcon : BoneAssignmentDotFrameDottedIcon;
+
+                        if (transform)
+                        {
+                            var originalColor = GUI.color;
+                            GUI.color = Color.green;
+                            GUI.DrawTexture(iconRect, frameIcon, ScaleMode.ScaleToFit, true);
+                            GUI.DrawTexture(iconRect, BoneAssignmentDotIcon, ScaleMode.ScaleToFit, true);
+                            GUI.color = originalColor;
+                        }
+                        else GUI.DrawTexture(iconRect, frameIcon, ScaleMode.ScaleToFit, true);
+
+                        GUILayout.Label(mecanimBoneName, GUILayout.Width(130));
+
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.ObjectField(transform, typeof(Transform), true);
+                        EditorGUI.EndDisabledGroup();
+
+                        EditorGUILayout.EndHorizontal();
+                    }
+
+                    EditorGUI.indentLevel--;
+                }
+                // warn if Humanoid rig import has failed
+                else EditorGUILayout.HelpBox("The model doesn't contain a valid Humanoid rig. See the console for more information.", MessageType.Error);
+            }
+        }
 
 		private void MaterialInspectorGUI()
 		{
-			var t = target as GLTFImporter;
-			if (!t) return;
+			if (!importer) return;
 
 			var importMaterialsProp = serializedObject.FindProperty(nameof(GLTFImporter._importMaterials));
 			EditorGUILayout.PropertyField(importMaterialsProp);
@@ -222,7 +380,7 @@ namespace UnityGLTF
 			var importedMaterials = serializedObject.FindProperty("m_Materials");
 			if (importedMaterials.arraySize > 0)
 			{
-				RemappingUI<Material>(t, importedMaterials, "Materials", ".mat");
+				RemappingUI<Material>(importedMaterials, "Materials", ".mat");
 			}
 
 			// There's a bunch of known edge cases with texture remapping that can go wrong,
@@ -233,7 +391,7 @@ namespace UnityGLTF
 			var importedTextures = serializedObject.FindProperty("m_Textures");
 			if (EnableTextureRemapping && importedTextures.arraySize > 0)
 			{
-				RemappingUI<Texture>(t, importedTextures, "Textures", ".asset");
+				RemappingUI<Texture>(importedTextures, "Textures", ".asset");
 			}
 
 			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));
@@ -264,14 +422,14 @@ namespace UnityGLTF
 			EditorGUILayout.Separator();
 		}
 
-		private void RemappingUI<T>(GLTFImporter t, SerializedProperty importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
+		private void RemappingUI<T>(SerializedProperty importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
 		{
 			// extract and remap materials
 			if (importedData != null && importedData.serializedObject != null)
 			{
 				EditorGUI.indentLevel++;
 
-				var externalObjectMap = t.GetExternalObjectMap();
+				var externalObjectMap = importer.GetExternalObjectMap();
 				// TODO this also counts old remaps that are not used anymore
 				var remapCount = externalObjectMap.Values.Count(x => x is T);
 
@@ -283,7 +441,7 @@ namespace UnityGLTF
 					{
 						if (!subAsset) return;
 						var filename = SanitizePath(subAsset.name);
-						var dirName = Path.GetDirectoryName(t.assetPath) + "/" + subDirectoryName;
+						var dirName = Path.GetDirectoryName(importer.assetPath) + "/" + subDirectoryName;
 						if (!Directory.Exists(dirName))
 							Directory.CreateDirectory(dirName);
 						var destinationPath = dirName + "/" + filename + fileExtension;
@@ -305,7 +463,7 @@ namespace UnityGLTF
 				{
 					if (!subAsset) return;
 					var filename = SanitizePath(subAsset.name);
-					var dirName = Path.GetDirectoryName(t.assetPath) + "/" + subDirectoryName;
+					var dirName = Path.GetDirectoryName(importer.assetPath) + "/" + subDirectoryName;
 					if (!Directory.Exists(dirName))
 						Directory.CreateDirectory(dirName);
 					var destinationPath = dirName + "/" + filename + fileExtension;
@@ -339,14 +497,14 @@ namespace UnityGLTF
 							{
 								var mat = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
 								if (!mat) continue;
-								t.RemoveRemap(new AssetImporter.SourceAssetIdentifier(mat));
+                                importer.RemoveRemap(new AssetImporter.SourceAssetIdentifier(mat));
 							}
 
 							// also remove all old remaps
 							var oldRemaps = externalObjectMap.Where(x => x.Value is T).ToList();
 							foreach (var oldRemap in oldRemaps)
 							{
-								t.RemoveRemap(oldRemap.Key);
+                                importer.RemoveRemap(oldRemap.Key);
 							}
 						}
 					}
@@ -384,9 +542,9 @@ namespace UnityGLTF
 						if (EditorGUI.EndChangeCheck())
 						{
 							if (newObj && newObj != mat)
-								t.AddRemap(id, newObj);
+                                importer.AddRemap(id, newObj);
 							else
-								t.RemoveRemap(id);
+                                importer.RemoveRemap(id);
 						}
 
 						if (!remap)
@@ -401,7 +559,7 @@ namespace UnityGLTF
 						{
 							if (GUILayout.Button("Restore", GUILayout.Width(60)))
 							{
-								t.RemoveRemap(id);
+                                importer.RemoveRemap(id);
 #if UNITY_2022_2_OR_NEWER
 								SaveChanges();
 #else
@@ -425,8 +583,7 @@ namespace UnityGLTF
 		private static GUIStyle _richTextWordWrap;
 		private void AssetInfoInspectorGUI()
 		{
-			var t = target as GLTFImporter;
-			if (!t) return;
+			if (!importer) return;
 			var assetProp = serializedObject.FindProperty(nameof(GLTFImporter._gltfAsset));
 			if (assetProp == null)
 				return;
@@ -439,15 +596,15 @@ namespace UnityGLTF
 				_richTextWordWrap = style;
 			}
 			
-			if (string.IsNullOrEmpty(t._gltfAsset))
+			if (string.IsNullOrEmpty(importer._gltfAsset))
 			{
 				EditorGUILayout.LabelField("<i>No asset information included in file</i>", _richTextWordWrap);
 				return;
 			}
 			
 			EditorGUILayout.Space();
-			var rect = GUILayoutUtility.GetRect(new GUIContent(t._gltfAsset), _richTextWordWrap);
-			EditorGUI.SelectableLabel(rect, t._gltfAsset, _richTextWordWrap);
+			var rect = GUILayoutUtility.GetRect(new GUIContent(importer._gltfAsset), _richTextWordWrap);
+			EditorGUI.SelectableLabel(rect, importer._gltfAsset, _richTextWordWrap);
 			
 			EditorGUILayout.Space();
 			EditorGUI.BeginDisabledGroup(true);
@@ -457,8 +614,7 @@ namespace UnityGLTF
 
 		private void ExtensionInspectorGUI()
 		{
-			var t = target as GLTFImporter;
-			if (!t) return;
+			if (!importer) return;
 
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions in file"));
 			EditorGUI.EndDisabledGroup();
@@ -466,7 +622,7 @@ namespace UnityGLTF
 			// TODO add list of supported extensions and links to docs
 			// Gather list of all plugins
 			var registeredPlugins = GLTFSettings.GetDefaultSettings().ImportPlugins;
-			var overridePlugins = t._importPlugins;
+			var overridePlugins = importer._importPlugins;
 
 			EditorGUILayout.Space();
 			EditorGUILayout.LabelField("Available Import Plugins", EditorStyles.boldLabel);
@@ -510,10 +666,10 @@ namespace UnityGLTF
 								overrideEnabled = true,
 							};
 							overridePlugin = newPlugin;
-							t._importPlugins.Add(newPlugin);
+                            importer._importPlugins.Add(newPlugin);
 						}
 					}
-					EditorUtility.SetDirty(t);
+					EditorUtility.SetDirty(importer);
 				}
 				EditorGUI.BeginDisabledGroup(!hasOverride);
 				var currentlyEnabled = (overridePlugin != null && overridePlugin.overrideEnabled) ? overridePlugin.enabled : plugin.EnabledByDefault;
@@ -522,7 +678,7 @@ namespace UnityGLTF
 				{
 					currentlyEnabled = enabled;
 					overridePlugin.enabled = enabled;
-					EditorUtility.SetDirty(t);
+					EditorUtility.SetDirty(importer);
 				}
 				EditorGUI.EndDisabledGroup();
 				EditorGUI.BeginDisabledGroup(false);
@@ -532,7 +688,7 @@ namespace UnityGLTF
 				EditorGUILayout.EndHorizontal();
 				// This assumes that the display name of a Plugin matches what extension it operates on.
 				// It's not correct for Plugins that operate on multiple extensions, or none at all.
-				if (hasWarning && t._extensions?.Find(x => x.name == plugin.DisplayName) != null)
+				if (hasWarning && importer._extensions?.Find(x => x.name == plugin.DisplayName) != null)
 				{
 					EditorGUILayout.HelpBox(plugin.Warning, MessageType.Warning);
 					editorCache.TryGetValue(plugin.GetType(), out var editor);
