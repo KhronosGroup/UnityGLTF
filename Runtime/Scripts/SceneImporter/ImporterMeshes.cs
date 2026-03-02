@@ -824,6 +824,7 @@ namespace UnityGLTF
 					BufferId bufferIdPair = null;
 					if (targetAttribute.Value.Value.Sparse == null)
 					{
+						if(targetAttribute.Value.Value == null) continue;
 						bufferIdPair = targetAttribute.Value.Value.BufferView.Value.Buffer;
 					}
 					else
