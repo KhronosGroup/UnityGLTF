@@ -19,8 +19,9 @@ namespace UnityGLTF.Loader
 		{
 			var path = Path.Combine(dir, relativeFilePath).Replace("\\","/");
 			
-			if (File.Exists(Path.GetFullPath(path)))
-				path = "file://" + Path.GetFullPath(path);
+			var fullPath = Path.GetFullPath(path);
+			if (File.Exists(fullPath))
+				path = fullPath;
 			var request = UnityWebRequest.Get(new Uri(path));
 			// request.downloadHandler = new DownloadStreamHandler(new byte[1024 * 1024]);
 			var asyncOperation = request.SendWebRequest();
