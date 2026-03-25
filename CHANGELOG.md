@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.19.2] - 2026-03-25
+- fix: file paths with spaces and plus in name results in not found errors
+- fix: GLTFSetting asset > plugins subasset creation in import mode
+- fix: safety checks for draco import
+- change: reduced memory footprint on texture import for non-memory-streams
+
 ## [2.19.1] - 2026-02-19
 - add: import support for webP textures (requires package https://github.com/netpyoung/unity.webp)
 - add: import support for exr textures (requires Unity 6+)
