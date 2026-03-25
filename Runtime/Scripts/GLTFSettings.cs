@@ -380,8 +380,23 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 					    if (AssetDatabase.Contains(settings))
 					    {
-							AssetDatabase.AddObjectToAsset(newInstance, settings);
-							EditorUtility.SetDirty(settings);
+						    if (AssetDatabase.IsAssetImportWorkerProcess())
+						    {
+							    EditorApplication.delayCall += () =>
+							    {
+								    if (settings)
+								    {
+									    AssetDatabase.AddObjectToAsset(newInstance, settings);
+									    EditorUtility.SetDirty(settings);
+								    }
+							    };
+							    
+						    }
+						    else
+						    {
+								AssetDatabase.AddObjectToAsset(newInstance, settings);
+								EditorUtility.SetDirty(settings);
+						    }
 					    }
 #endif
 				    }
