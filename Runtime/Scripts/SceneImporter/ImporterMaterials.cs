@@ -220,6 +220,14 @@ namespace UnityGLTF
 			var KHR_materials_anisotropy = settings && settings.KHR_materials_anisotropy;
 			// ReSharper restore InconsistentNaming
 			
+			var isHDRP = false;
+			var renderPipelineAsset =  UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+			if (renderPipelineAsset)
+			{ 
+				var renderPipeline = renderPipelineAsset.GetType().Name;
+				isHDRP = renderPipeline == "HighDefinitionRenderPipelineAsset" || renderPipeline == "HDRenderPipelineAsset";
+			}
+		
 			var sgMapper = mapper as ISpecGlossUniformMap;
 			if (sgMapper != null && KHR_materials_pbrSpecularGlossiness)
 			{
@@ -422,6 +430,12 @@ namespace UnityGLTF
 			if (transmissionMapper != null && KHR_materials_transmission)
 			{
 				var transmission = GetTransmission(def);
+
+				// TODO: maybe find a better solution.
+				// currently to avoid the creation of transmission materials when it's actually not using it
+				if (transmission != null && transmission.transmissionFactor == 0f && isHDRP)
+					transmission = null;
+				
 				if (transmission != null)
 				{
 					transmissionMapper.TransmissionFactor = transmission.transmissionFactor;
@@ -449,7 +463,9 @@ namespace UnityGLTF
 						}
 					}
 
-					mapper.Material.renderQueue = 3000;
+					if (!isHDRP)
+						mapper.Material.renderQueue = 3000;
+			
 #if UNITY_VISIONOS
 					mapper.AlphaMode = AlphaMode.BLEND;
 #endif
@@ -513,7 +529,8 @@ namespace UnityGLTF
 						}
 					}
 
-					mapper.Material.renderQueue = 3000;
+					if (!isHDRP)
+						mapper.Material.renderQueue = 3000;
 					mapper.Material.SetFloat("_VOLUME_ON", 1f);
 				}
 			}

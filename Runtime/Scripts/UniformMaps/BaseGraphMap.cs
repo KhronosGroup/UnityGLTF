@@ -88,6 +88,8 @@ namespace UnityGLTF
 			    {
 				    _material.SetOverrideTag("RenderType", "TransparentCutout");
 				    _material.SetFloat("_Mode", 1);
+				    _material.SetFloat("_SurfaceType", 0);
+
 				    _material.SetInt("_SrcBlend", (int)BlendMode.One);
 				    _material.SetInt("_DstBlend", (int)BlendMode.Zero);
 				    _material.SetInt("_BUILTIN_SrcBlend", (int)BlendMode.One);
@@ -114,6 +116,8 @@ namespace UnityGLTF
 			    {
 				    _material.SetOverrideTag("RenderType", "Transparent");
 				    _material.SetFloat("_Mode", 2);
+				    _material.SetFloat("_SurfaceType", 1);
+
 				    _material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
 				    _material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
 				    _material.SetInt("_BUILTIN_SrcBlend", (int)BlendMode.SrcAlpha);
@@ -139,6 +143,7 @@ namespace UnityGLTF
 			    {
 				    _material.SetOverrideTag("RenderType", "Opaque");
 				    _material.SetFloat("_Mode", 0);
+				    _material.SetFloat("_SurfaceType", 0);
 				    _material.SetInt("_SrcBlend", (int)BlendMode.One);
 				    _material.SetInt("_DstBlend", (int)BlendMode.Zero);
 				    _material.SetInt("_BUILTIN_SrcBlend", (int)BlendMode.One);
@@ -154,6 +159,8 @@ namespace UnityGLTF
 				    _material.DisableKeyword("_BUILTIN_ALPHABLEND_ON");
 				    _material.DisableKeyword("_BUILTIN_ALPHAPREMULTIPLY_ON");
 				    _material.renderQueue = (int)RenderQueue.Geometry;
+
+				    SetShaderModeOpaque(_material);
 			    }
 
 			    _alphaMode = value;
@@ -217,6 +224,29 @@ namespace UnityGLTF
 	    const string k_ShaderPassTransparentBackface = "TransparentBackface";
 	    const string k_ShaderPassRayTracingPrepass = "RayTracingPrepass";
 	    const string k_ShaderPassDepthOnlyPass = "DepthOnly";
+
+	    protected void SetShaderModeOpaque(Material material)
+	    {
+		    material.SetOverrideTag(TAG_RENDER_TYPE, TAG_RENDER_TYPE_OPAQUE);
+		    material.DisableKeyword(KW_SURFACE_TYPE_TRANSPARENT);
+		    material.DisableKeyword(KW_SURFACE_TYPE_TRANSPARENT_BUILTIN);
+		    material.DisableKeyword(KW_DISABLE_SSR_TRANSPARENT);
+		    material.DisableKeyword(KW_ENABLE_FOG_ON_TRANSPARENT);
+		    material.DisableKeyword(KW_ALPHACLIP_ON_BUILTIN);
+		    material.SetShaderPassEnabled(k_ShaderPassTransparentDepthPrepass, true);
+		    material.SetShaderPassEnabled(k_ShaderPassTransparentDepthPostpass, true);
+		    material.SetShaderPassEnabled(k_ShaderPassTransparentBackface, true);
+		    material.SetShaderPassEnabled(k_ShaderPassRayTracingPrepass, true);
+		    material.SetShaderPassEnabled(k_ShaderPassDepthOnlyPass, true);
+		    material.SetFloat(srcBlendPropId, (int)BlendMode.One);
+		    material.SetFloat(dstBlendPropId, (int)BlendMode.Zero);
+		    material.SetFloat(k_ZTestGBufferPropId, (int)CompareFunction.LessEqual); //4
+		    material.SetFloat(k_AlphaDstBlendPropId, (int)BlendMode.Zero);
+		    material.SetFloat(k_Surface, 0);
+		    material.SetFloat(k_SurfaceBuiltin, 0);
+		    material.SetFloat(zWritePropId, 1);
+		    material.SetFloat(alphaToMask, 0);
+	    }
 
 	    protected void SetShaderModeBlend(Material material)
 	    {
