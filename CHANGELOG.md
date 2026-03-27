@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.19.3] - 2026-03-27
+- fix: HDRP material import setup for opaque materials
+- change: HDRP only > ignoring transmission when transmission-factor is 0 
+
 ## [2.19.2] - 2026-03-25
 - fix: file paths with spaces and plus in name results in not found errors
 - fix: GLTFSetting asset > plugins subasset creation in import mode
