@@ -67,7 +67,7 @@ namespace UnityGLTF
 			};
 
 			// Register nodes for animation parsing (could be disabled if animation is disabled)
-			_exportedCameras.Add(unityCamera.GetInstanceID(), _root.Cameras.Count);
+			_exportedCameras.Add(GetExportedObjectKey(unityCamera), _root.Cameras.Count);
 			_root.Cameras.Add(camera);
 
 			return id;

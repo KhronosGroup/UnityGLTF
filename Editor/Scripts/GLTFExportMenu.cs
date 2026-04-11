@@ -622,14 +622,14 @@ namespace UnityGLTF
 
 			var importAction = ScriptableObject.CreateInstance<AdjustImporterAction>();
 			importAction.fileContent = content;
-			ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, importAction, filename, null, (string) null);
+			ProjectWindowUtil.StartNameEditingIfProjectWindowExists(EntityId.None, importAction, filename, null, (string) null);
 		}
 
 		// Based on DoCreateAssetWithContent.cs
-		private class AdjustImporterAction : EndNameEditAction
+		private class AdjustImporterAction : AssetCreationEndAction
 		{
 			public string fileContent;
-			public override void Action(int instanceId, string pathName, string resourceFile)
+			public override void Action(EntityId entityId, string pathName, string resourceFile)
 			{
 				var templateContent = SetLineEndings(fileContent, EditorSettings.lineEndingsForNewScripts);
 				File.WriteAllText(Path.GetFullPath(pathName), templateContent);

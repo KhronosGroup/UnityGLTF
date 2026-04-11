@@ -704,9 +704,9 @@ namespace UnityGLTF
 			if (obj == null) return "null";
 
 			if (obj is Component tr)
-				return $"{tr.name} (InstanceID: {tr.GetInstanceID()}, Type: {tr.GetType()})";
+				return $"{tr.name} (EntityId: {GetObjectIdLabel(tr)}, Type: {tr.GetType()})";
 			if (obj is GameObject go)
-				return $"{go.name} (InstanceID: {go.GetInstanceID()})";
+				return $"{go.name} (EntityId: {GetObjectIdLabel(go)})";
 
 			return obj.ToString();
 		}
@@ -1589,25 +1589,25 @@ namespace UnityGLTF
 
 		public int GetTransformIndex(Transform transform)
 		{
-			if (transform && _exportedTransforms.TryGetValue(transform.GetInstanceID(), out var index)) return index;
+			if (transform && _exportedTransforms.TryGetValue(GetExportedObjectKey(transform), out var index)) return index;
 			return -1;
 		}
 
 		public int GetMaterialIndex(Material mat)
 		{
-			if (mat && _exportedMaterials.TryGetValue(mat.GetInstanceID(), out var index)) return index;
+			if (mat && _exportedMaterials.TryGetValue(GetExportedObjectKey(mat), out var index)) return index;
 			return -1;
 		}
 
 		public int GetLightIndex(Light light)
 		{
-			if (light && _exportedLights.TryGetValue(light.GetInstanceID(), out var index)) return index;
+			if (light && _exportedLights.TryGetValue(GetExportedObjectKey(light), out var index)) return index;
 			return -1;
 		}
 
 		public int GetCameraIndex(Camera cam)
 		{
-			if (cam && _exportedCameras.TryGetValue(cam.GetInstanceID(), out var index)) return index;
+			if (cam && _exportedCameras.TryGetValue(GetExportedObjectKey(cam), out var index)) return index;
 			return -1;
 		}
 
