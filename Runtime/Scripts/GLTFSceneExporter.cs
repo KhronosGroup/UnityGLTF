@@ -153,6 +153,16 @@ namespace UnityGLTF
 		private List<GLTFExportPluginContext> _plugins = new List<GLTFExportPluginContext>();
 
 		public IReadOnlyList<GLTFExportPluginContext> Plugins => _plugins;
+
+		private static int GetExportedObjectKey(UnityEngine.Object obj)
+		{
+			return obj ? obj.GetEntityId().GetHashCode() : 0;
+		}
+
+		private static string GetObjectIdLabel(UnityEngine.Object obj)
+		{
+			return obj ? obj.GetEntityId().ToString() : "None";
+		}
 		
 		public struct TextureMapType
 		{
@@ -1086,7 +1096,8 @@ namespace UnityGLTF
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
-			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
+			int transformKey = GetExportedObjectKey(nodeTransform);
+			if (_exportedTransforms.TryGetValue(transformKey, out var existingNodeId))
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
 			foreach (var plugin in _plugins)
@@ -1158,7 +1169,7 @@ namespace UnityGLTF
 			};
 
 			// Register nodes for animation parsing (could be disabled if animation is disabled)
-			_exportedTransforms.Add(nodeTransform.GetInstanceID(), _root.Nodes.Count);
+			_exportedTransforms.Add(transformKey, _root.Nodes.Count);
 
 			_root.Nodes.Add(node);
 
@@ -1387,7 +1398,7 @@ namespace UnityGLTF
 			if (materialObj == DefaultMaterial)
 				materialKey = 0;
 			else if (materialObj)
-				materialKey = materialObj.GetInstanceID();
+				materialKey = GetExportedObjectKey(materialObj);
 
 			if (_exportedMaterials.TryGetValue(materialKey, out var id))
 			{

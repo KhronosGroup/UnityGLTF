@@ -86,17 +86,17 @@ namespace UnityGLTF
 				{
 					if (go.CompareTag("EditorOnly"))
 					{
-						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (EntityId: {GetObjectIdLabel(animatedObject)})", animatedObject);
 						return;
 					}
 					if (!go.activeSelf || !go.activeInHierarchy)
 					{
-						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (EntityId: {GetObjectIdLabel(animatedObject)})", animatedObject);
 						return;
 					}
 					
 				}
-				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (EntityId: {GetObjectIdLabel(animatedObject)})", animatedObject);
 				return;
 			}
 

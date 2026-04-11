@@ -24,6 +24,7 @@ namespace UnityGLTF
 #if !UNITY_6000_2_OR_NEWER
 		private Downsampling downsampling = Downsampling.None;
 #endif
+#if !UNITY_6000_4_OR_NEWER
 	    class CustomRenderPass : CopyColorPass
 	    {
 	        public Downsampling m_DownsamplingMethod;
@@ -129,8 +130,11 @@ namespace UnityGLTF
 #endif
 	        }
 	    }
+#endif
 
+#if !UNITY_6000_4_OR_NEWER
 	    private CustomRenderPass m_RoughRefractionPassNonRG;
+#endif
 #if UNITY_2023_3_OR_NEWER
 	    private bool usingRenderGraph = false;
 #endif
@@ -143,11 +147,16 @@ namespace UnityGLTF
 	    public override void Create()
 	    {
 #if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_4_OR_NEWER
+		    usingRenderGraph = true;
+#else
 		    var renderGraphSettings = GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>();
 		    usingRenderGraph = !renderGraphSettings.enableRenderCompatibilityMode;
+#endif
 		    if (!usingRenderGraph)
 		    {
 #endif
+#if !UNITY_6000_4_OR_NEWER
 #if UNITY_2022_3_OR_NEWER
 			    if (m_RoughRefractionPassNonRG == null)
 			    {
@@ -155,6 +164,7 @@ namespace UnityGLTF
 			    }
 #else
 				m_OpaqueColor.Init(CAMERA_OPAQUE_TEXTURENAME);
+#endif
 #endif
 
 #if UNITY_2023_3_OR_NEWER
@@ -178,10 +188,12 @@ namespace UnityGLTF
 			    return;
 		    
 #if UNITY_2022_3_OR_NEWER
+#if !UNITY_6000_4_OR_NEWER
 		    if (m_RoughRefractionPassNonRG != null)
 		    {
 				renderer.EnqueuePass(m_RoughRefractionPassNonRG);
 		    }
+#endif
 #if UNITY_2023_3_OR_NEWER
 		    else
 		    if (usingRenderGraph && m_RoughRefractionPassRG != null)
@@ -206,7 +218,7 @@ namespace UnityGLTF
 #endif
 	    }
 	    
-#if UNITY_2022_3_OR_NEWER && !UNITY_6000_2_OR_NEWER
+#if UNITY_2022_3_OR_NEWER && !UNITY_6000_2_OR_NEWER && !UNITY_6000_4_OR_NEWER
 		public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
 		{
 #pragma warning disable 618

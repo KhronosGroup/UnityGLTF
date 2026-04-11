@@ -44,7 +44,7 @@ namespace UnityGLTF
 					Debug.LogWarning("Skin has null bone at index " + i + ": " + skin, skin);
 					continue;
 				}
-				var nodeId = skin.bones[i].GetInstanceID();
+				var nodeId = GetExportedObjectKey(skin.bones[i]);
 				if (!_exportedTransforms.ContainsKey(nodeId))
 				{
 					allBoneTransformNodesHaveBeenExported = false;
@@ -66,7 +66,7 @@ namespace UnityGLTF
 					continue;
 				}
 
-				var nodeId = skin.bones[i].GetInstanceID();
+				var nodeId = GetExportedObjectKey(skin.bones[i]);
 
 				gltfSkin.Joints.Add(
 					new NodeId
@@ -130,7 +130,7 @@ namespace UnityGLTF
 				}
 			}
 
-			_root.Nodes[_exportedTransforms[transform.GetInstanceID()]].Skin = new SkinId() { Id = _root.Skins.Count, Root = _root };
+			_root.Nodes[_exportedTransforms[GetExportedObjectKey(transform)]].Skin = new SkinId() { Id = _root.Skins.Count, Root = _root };
 			_root.Skins.Add(gltfSkin);
 
 			exportSkinFromNodeMarker.End();
