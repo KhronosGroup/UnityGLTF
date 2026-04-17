@@ -9,12 +9,14 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerMeshIndex = "meshIndex";
         public static readonly string IdPointerMaterialIndex = "materialIndex";
         public static readonly string IdPointerAnimationIndex = "animationIndex";
-        public static readonly string IddPointerVisibility = "/nodes/{" + IdPointerNodeIndex +
-                                                        "}/extensions/"+KHR_node_visibility_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_visibility.visible); 
-        public static readonly string IdPointerSelectability = "/nodes/{" + IdPointerNodeIndex +
-                                                        "}/extensions/"+KHR_node_selectability_Factory.EXTENSION_NAME+"/"+nameof(KHR_node_selectability.selectable);
-
+        public static readonly string IdPointerVisibility = $"{IdPointerNode}extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
+        public static readonly string IdPointerSelectability = $"{IdPointerNode}/extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
         public static readonly string IdPointerLightIndex = "lightIndex";
+        
+        public static readonly string IdPointerMaterial = $"/materials/{{{IdPointerMaterialIndex}}}/"; 
+        public static readonly string IdPointerMesh = $"/meshes/{{{IdPointerMeshIndex}}}/"; 
+        public static readonly string IdPointerNode = $"/nodes/{{{IdPointerNodeIndex}}}/"; 
+        public static readonly string IdPointerLight = $"/extensions/KHR_lights_punctual/lights/{{{IdPointerLightIndex}}}/"; 
 
         public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
         {

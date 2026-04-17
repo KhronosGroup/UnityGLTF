@@ -16,8 +16,7 @@ namespace UnityGLTF.Interactivity.Export
             var getScale = exporter.CreateNode<Pointer_GetNode>();
             scaleOutput = getScale.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/scale", GltfTypes.Float3);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode + "scale", GltfTypes.Float3);
             target = getScale.ValueIn(PointersHelper.IdPointerNodeIndex);
         }
 
@@ -44,8 +43,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getPosition = exporter.CreateNode<Pointer_GetNode>();
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
-            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode + "translation", GltfTypes.Float3);
             target = getPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
@@ -74,8 +72,7 @@ namespace UnityGLTF.Interactivity.Export
         {
             var setPosition = exporter.CreateNode<Pointer_SetNode>();
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode + "translation", GltfTypes.Float3);
             target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex).SetType(TypeRestriction.LimitToInt);
             flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
             flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
@@ -117,13 +114,13 @@ namespace UnityGLTF.Interactivity.Export
             var setPosition = exporter.CreateNode<Pointer_SetNode>();
 
             PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/translation", GltfTypes.Float3);
+                PointersHelper.IdPointerNode + "translation", GltfTypes.Float3);
 
             target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
 
             var localToWorldMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex, 
+                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex).Link(target);
 
             var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
@@ -131,7 +128,7 @@ namespace UnityGLTF.Interactivity.Export
 
             var localMatrix = exporter.CreateNode<Pointer_GetNode>();
             PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
+                PointersHelper.IdPointerNode + "matrix", GltfTypes.Float4x4);
             target = localMatrix.ValueIn(PointersHelper.IdPointerNodeIndex).Link(target);
 
             var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
@@ -183,12 +180,12 @@ namespace UnityGLTF.Interactivity.Export
             var setRotation = exporter.CreateNode<Pointer_SetNode>();
 
             PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+                PointersHelper.IdPointerNode + "rotation", GltfTypes.Float4);
             target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
 
             var localToWorldMatrix = exporter.CreateNode<Pointer_GetNode>();
             PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+                 PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = target.Link(localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex));
 
             var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
@@ -196,7 +193,7 @@ namespace UnityGLTF.Interactivity.Export
 
             var localMatrix = exporter.CreateNode<Pointer_GetNode>();
             PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/matrix", GltfTypes.Float4x4);
+                PointersHelper.IdPointerNode + "matrix", GltfTypes.Float4x4);
             target = target.Link(localMatrix.ValueIn(PointersHelper.IdPointerNodeIndex));
 
             var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
@@ -246,7 +243,7 @@ namespace UnityGLTF.Interactivity.Export
             var getRotation = exporter.CreateNode<Pointer_GetNode>();
             getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
             PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+                PointersHelper.IdPointerNode + "rotation", GltfTypes.Float4);
 
             target = getRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
 
@@ -268,7 +265,7 @@ namespace UnityGLTF.Interactivity.Export
             var setRotation = exporter.CreateNode<Pointer_SetNode>();
 
             PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/rotation", GltfTypes.Float4);
+                PointersHelper.IdPointerNode + "rotation", GltfTypes.Float4);
             target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
             flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
             flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
@@ -308,7 +305,7 @@ namespace UnityGLTF.Interactivity.Export
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+                 PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
 
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
@@ -371,7 +368,7 @@ namespace UnityGLTF.Interactivity.Export
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
 
           GetWorldPointFromLocalPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
@@ -384,7 +381,7 @@ namespace UnityGLTF.Interactivity.Export
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
             
             GetLocalPointFromWorldPoint(exporter, worldMatrix.FirstValueOut(), out worldPoint, out localPoint);   
@@ -436,7 +433,7 @@ namespace UnityGLTF.Interactivity.Export
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
 
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
@@ -468,7 +465,7 @@ namespace UnityGLTF.Interactivity.Export
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/globalMatrix", GltfTypes.Float4x4);
+                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
             target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
 
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
