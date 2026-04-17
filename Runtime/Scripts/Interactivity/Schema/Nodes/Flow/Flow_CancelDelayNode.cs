@@ -9,7 +9,7 @@ namespace UnityGLTF.Interactivity.Schema
         [FlowOutSocketDescription]
         public const string IdFlowOut = "out";
         
-        [InputSocketDescription(GltfTypes.Int)]
-        public const string IdDelayIndex = "delayIndex";
+        [InputSocketDescription(GltfTypes.Ref)]
+        public const string IdDelay = "delay";
     }
 }
