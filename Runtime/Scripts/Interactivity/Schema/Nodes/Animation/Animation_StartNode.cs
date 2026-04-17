@@ -20,8 +20,8 @@ namespace UnityGLTF.Interactivity.Schema
         [FlowOutSocketDescription()]
         public const string IdFlowDone = "done";
         
-        [InputSocketDescription(GltfTypes.Int)]
-        public const string IdValueAnimation = "animation";
+        [InputSocketDescription(GltfTypes.Ref)]
+        public const string IdValueAnimationRef = "animation";
         
         [InputSocketDescription(GltfTypes.Float)]
         public const string IdValueSpeed = "speed";

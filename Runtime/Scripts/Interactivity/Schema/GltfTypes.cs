@@ -22,22 +22,23 @@ namespace UnityGLTF.Interactivity
         public const string Float3x3 = "float3x3";
         public const string Float4x4 = "float4x4";
         public const string IntArray = "int[]";
-       // public const string String = "string";
+        public const string Ref = "ref";
+        // public const string String = "string";
         
         // List of mappings of the data types that can be used in the GLTF serialization.
         // TODO: change to Dict!
         public static readonly TypeMapping[] TypesMapping =
         {
-            new TypeMapping(Bool,  new [] {typeof(bool), typeof(Boolean)}),
+            new TypeMapping(Bool, new [] {typeof(bool), typeof(Boolean)}),
             new TypeMapping(Int, new [] {typeof(int), typeof(long), typeof(GameObject), typeof(Material), typeof(Transform)}),
             new TypeMapping(Float, new [] {typeof(float), typeof(double), typeof(Single), typeof(Double)}),
             new TypeMapping(Float2, new [] {typeof(Vector2)}),
             new TypeMapping(Float3, new [] {typeof(Vector3)}),
             new TypeMapping(Float4, new [] {typeof(Color), typeof(Color32), typeof(Vector4), typeof(Quaternion)}),
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
-        //    new TypeMapping(String, new [] {typeof(string)}),
-        //    new TypeMapping("custom", new [] {typeof(string)}, "AMZN_interactivity_string"),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
+            // Ref type should be last here. GameObject, Transform and Material are already mapped to int because they will be translated to the gltf object ids
+            new TypeMapping(Ref, new [] {typeof(object), typeof(UnityEngine.Object)}),
         };
 
         public static int GetComponentCount(int typeIndex)
@@ -85,6 +86,8 @@ namespace UnityGLTF.Interactivity
                     return new Vector4(float.NaN, float.NaN, float.NaN, float.NaN);
                 case Float4x4:
                     return new Matrix4x4();
+                case Ref:
+                    return null;
                 default:
                     return null;
             }

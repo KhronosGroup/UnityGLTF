@@ -9,5 +9,9 @@ namespace UnityGLTF.Interactivity.Schema
         
         [FlowOutSocketDescription]
         public const string IdFlowOut = "out";
+        
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdEventOut = "event";
+
     }
 }
