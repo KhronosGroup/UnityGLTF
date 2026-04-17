@@ -24,14 +24,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getMesh = unitExporter.CreateNode<Pointer_GetNode>();
          
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getMesh, PointersHelper.IdPointerNodeIndex, 
-                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/mesh", GltfTypes.Int);
+                unit.target, PointersHelper.IdPointerNode + "mesh", GltfTypes.Int);
             
             var getMaterial = unitExporter.CreateNode<Pointer_GetNode>();
             getMaterial.ValueIn(PointersHelper.IdPointerMeshIndex).ConnectToSource(getMesh.ValueOut(Pointer_GetNode.IdValue));
             
             // TODO: support multiple materials/primitives
             PointersHelper.SetupPointerTemplateAndTargetInput(getMaterial, PointersHelper.IdPointerMeshIndex,
-                "/meshes/{" + PointersHelper.IdPointerMeshIndex + "}/primitives/0/material", GltfTypes.Int);
+                PointersHelper.IdPointerMesh + "primitives/0/material", GltfTypes.Int);
 
             getMaterial.ValueOut(Pointer_GetNode.IdValue).MapToPort(unit.value);
         

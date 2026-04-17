@@ -19,8 +19,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as MaterialColorInterpolate;
-            
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+
+            var materialTemplate = PointersHelper.IdPointerMaterial;
             var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
             
             var valueType = GltfTypes.Float4;

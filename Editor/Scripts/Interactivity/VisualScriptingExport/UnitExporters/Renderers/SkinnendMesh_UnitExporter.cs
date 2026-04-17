@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var setWeight = unitExporter.CreateNode<Pointer_SetNode>();
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeIndex,
-                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/weights/{weightIndex}", GltfTypes.Float);
+                unit.target,  PointersHelper.IdPointerNode + "weights/[weightIndex]", GltfTypes.Float);
 
             setWeight.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
             setWeight.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(unit.exit);
@@ -53,7 +53,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             getWeight.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeIndex,
-                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/weights/{weightIndex}", GltfTypes.Float);
+                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/weights/[weightIndex]", GltfTypes.Float);
             getWeight.ValueIn("weightIndex").MapToInputPort(unit.valueInputs["%index"]);
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);
