@@ -56,8 +56,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
-            node.ValueInConnection[Animation_StartNode.IdValueAnimation].Value = animationId;
-            node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = Mathf.Abs(animationState.speed);
+            var clipRef = AnimationHelper.GetAnimationClipRef(unitExporter, animationId);
+
+            node.ValueIn(Animation_StartNode.IdValueAnimationRef).ConnectToSource(clipRef);
+            node.ValueIn(Animation_StartNode.IdValueSpeed).SetValue(Mathf.Abs(animationState.speed));
 
             // TODO: Get from clip start from state cycleOffset
            
@@ -112,9 +114,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (stopAnimationId == -1)
                     continue;
                 
+                var stopClipRef = AnimationHelper.GetAnimationClipRef(unitExporter, stopAnimationId);
+
                 var stopNode = unitExporter.CreateNode<Animation_StopNode>();
-                stopNode.ValueIn(Animation_StopNode.IdValueAnimation)
-                    .SetValue(stopAnimationId);
+                stopNode.ValueIn(Animation_StopNode.IdValueAnimationRef).ConnectToSource(stopClipRef);
 
                 var sequFlowId =$"{index.ToString("D3")}_stopAnim_{stopAnimationId}";
                 index++;
