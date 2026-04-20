@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (unit.target == null)
                 return false;
             
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = PointersHelper.IdPointerMaterial;
             string template = "";
             bool oneMinus = false;
             if (unitExporter.IsInputLiteralOrDefaultValue(unit.inputParameters[0], out var floatPropertyName))

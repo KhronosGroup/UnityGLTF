@@ -26,7 +26,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             
             
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = PointersHelper.IdPointerMaterial;
             var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
             
             if (unit is GetMember getMember)

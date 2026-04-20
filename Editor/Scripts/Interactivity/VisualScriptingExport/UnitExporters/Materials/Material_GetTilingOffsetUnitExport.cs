@@ -32,7 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             ValueInput target = null;
             
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = PointersHelper.IdPointerMaterial;
             var template = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/" + property;
             var scaleTemplate = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale";
 
