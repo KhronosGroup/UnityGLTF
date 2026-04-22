@@ -124,7 +124,6 @@ namespace UnityGLTF
         [SerializeField, Multiline] internal string _gltfAsset = default;
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;
-        [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
 
         // asset remapping
         [SerializeField] internal Material[] m_Materials = new Material[0];
