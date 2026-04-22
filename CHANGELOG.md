@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.19.4] - 2026-04-22
+- fix: Unity 6.3+ api changes for Shader/Material propertyType
+- fix: Unity 6.4+ warnings for `GetInstanceId` (changed to GetEntityId)
+- fix: RoughRefractionFeature for Unity 6.4+ with new Render Graph API (new separate file)
+- fix: removed unused field in GLTFImporter (causing warnings in Unity 6.6)
+
 ## [2.19.3] - 2026-03-27
 - fix: HDRP material import setup for opaque materials
 - change: HDRP only > ignoring transmission when transmission-factor is 0 
