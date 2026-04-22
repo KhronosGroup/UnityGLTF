@@ -1086,7 +1086,7 @@ namespace UnityGLTF
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
-			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
+			if (_exportedTransforms.TryGetValue(GetObjectId(nodeTransform), out var existingNodeId))
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
 			foreach (var plugin in _plugins)
@@ -1158,7 +1158,7 @@ namespace UnityGLTF
 			};
 
 			// Register nodes for animation parsing (could be disabled if animation is disabled)
-			_exportedTransforms.Add(nodeTransform.GetInstanceID(), _root.Nodes.Count);
+			_exportedTransforms.Add(GetObjectId(nodeTransform), _root.Nodes.Count);
 
 			_root.Nodes.Add(node);
 
@@ -1387,7 +1387,7 @@ namespace UnityGLTF
 			if (materialObj == DefaultMaterial)
 				materialKey = 0;
 			else if (materialObj)
-				materialKey = materialObj.GetInstanceID();
+				materialKey = GetObjectId(materialObj);
 
 			if (_exportedMaterials.TryGetValue(materialKey, out var id))
 			{

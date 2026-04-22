@@ -166,10 +166,13 @@ namespace UnityGLTF
                 img.image = preview;
                 if (!preview)
                 {
-                    var instanceId = mat.GetInstanceID();
                     void WaitForPreview()
                     {
-                        if (AssetPreview.IsLoadingAssetPreview(instanceId)) return;
+#if UNITY_6000_4_OR_NEWER
+                        if (AssetPreview.IsLoadingAssetPreview(mat.GetEntityId())) return;
+#else
+                        if (AssetPreview.IsLoadingAssetPreview(mat.GetInstanceID())) return;
+#endif                    
                         EditorApplication.update -= WaitForPreview;
                         img.image = AssetPreview.GetAssetPreview(mat);
                     }

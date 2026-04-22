@@ -387,7 +387,7 @@ namespace UnityGLTF
 
         private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
         {
-	        var key = materialObj ? materialObj.GetInstanceID() : 0;
+	        var key = materialObj ? GetObjectId(materialObj) : 0;
 	        if(!_exportedMaterials.ContainsKey(key))
 				_exportedMaterials.Add(key, _root.Materials.Count);
 

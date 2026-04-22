@@ -86,17 +86,29 @@ namespace UnityGLTF
 				{
 					if (go.CompareTag("EditorOnly"))
 					{
+#if UNITY_6000_4_OR_NEWER
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 						return;
 					}
 					if (!go.activeSelf || !go.activeInHierarchy)
 					{
+#if UNITY_6000_4_OR_NEWER
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 						return;
 					}
 					
 				}
+#if UNITY_6000_4_OR_NEWER
+				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 				return;
 			}
 

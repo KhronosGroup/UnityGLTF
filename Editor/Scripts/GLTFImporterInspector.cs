@@ -150,8 +150,13 @@ namespace UnityGLTF
 		private const string TextureRemappingKey = nameof(GLTFImporterInspector) + "_TextureRemapping";
 		private bool EnableTextureRemapping
 		{
+#if UNITY_6000_4_OR_NEWER
+			get => SessionState.GetBool(TextureRemappingKey + target.GetEntityId(), false);
+			set => SessionState.SetBool(TextureRemappingKey + target.GetEntityId(), value);
+#else
 			get => SessionState.GetBool(TextureRemappingKey + target.GetInstanceID(), false);
 			set => SessionState.SetBool(TextureRemappingKey + target.GetInstanceID(), value);
+#endif
 		}
 		private static readonly GUIContent RemapTexturesToggleContent = new GUIContent("Experimental", "(experimental) Remap textures inside the glTF to textures that are already in your project.");
 
