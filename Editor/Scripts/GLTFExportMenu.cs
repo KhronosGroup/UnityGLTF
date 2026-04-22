@@ -622,9 +622,31 @@ namespace UnityGLTF
 
 			var importAction = ScriptableObject.CreateInstance<AdjustImporterAction>();
 			importAction.fileContent = content;
+#if UNITY_6000_5_OR_NEWER
+			ProjectWindowUtil.StartNameEditingIfProjectWindowExists(new EntityId(), importAction, filename, null, (string) null);
+#else
 			ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, importAction, filename, null, (string) null);
+#endif
 		}
 
+#if UNITY_6000_5_OR_NEWER
+		private class AdjustImporterAction : AssetCreationEndAction
+		{
+			public string fileContent;
+
+			public override void Action(EntityId entityId, string pathName, string resourceFile)
+			{
+				var templateContent = SetLineEndings(fileContent, EditorSettings.lineEndingsForNewScripts);
+				File.WriteAllText(Path.GetFullPath(pathName), templateContent);
+				AssetDatabase.ImportAsset(pathName);
+				// This is why we're not using ProjectWindowUtil.CreateAssetWithContent directly:
+				// We want glTF materials created with UnityGLTF to also use UnityGLTF for importing.
+				AssetDatabase.SetImporterOverride<GLTFImporter>(pathName);
+				var asset = AssetDatabase.LoadAssetAtPath(pathName, typeof (UnityEngine.Object));
+				ProjectWindowUtil.ShowCreatedAsset(asset);
+			}
+		}
+#else
 		// Based on DoCreateAssetWithContent.cs
 		private class AdjustImporterAction : EndNameEditAction
 		{
@@ -641,6 +663,7 @@ namespace UnityGLTF
 				ProjectWindowUtil.ShowCreatedAsset(asset);
 			}
 		}
+#endif
 		
 		// Unmodified from ProjectWindowUtil.cs:SetLineEndings (internal)
 		private static string SetLineEndings(string content, LineEndingsMode lineEndingsMode)
