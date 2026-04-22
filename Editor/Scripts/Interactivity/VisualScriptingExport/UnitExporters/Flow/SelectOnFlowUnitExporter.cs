@@ -34,7 +34,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             int typeIndex = 0;
             
             // using VariableKind.Scene, because we already generated a unique name for the variable
-            var varIndex = unitExporter.vsExportContext.AddVariableWithIdIfNeeded($"SelectOnFlowValue_{GUID.Generate().ToString()}", null, VariableKind.Scene, typeIndex);
+#if UNITY_6000_3_OR_NEWER
+            var newGUID = UnityEngine.GUID.Generate().ToString();
+#else
+            var newGUID = GUID.Generate().ToString();
+#endif
+            var varIndex = unitExporter.vsExportContext.AddVariableWithIdIfNeeded($"SelectOnFlowValue_{newGUID}", null, VariableKind.Scene, typeIndex);
 
             var getVar = VariablesHelpers.GetVariable(unitExporter, varIndex, out var getVarValue);
             getVarValue.MapToPort(unit.selection);
