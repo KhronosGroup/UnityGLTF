@@ -73,7 +73,6 @@ namespace UnityGLTF.Interactivity.Export
                     {
                         if (RefResolver.TryRefToStaticJson(exporter, v.Value, out var jsonPointer))
                         {
-                            Debug.Log("Resolve var "+ ((Object)v.Value).name+ " reference to " + jsonPointer);
                             v.Value = jsonPointer;
                             v.Type = refTypeIndex;
                         }
