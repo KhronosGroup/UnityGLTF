@@ -17,8 +17,8 @@ namespace UnityGLTF.Interactivity.Export
         
         public void OnCleanUp(CleanUpTask task)
         {
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/[" + PointersHelper.IdPointerNodeIndex + "]/globalMatrix", PointersHelper.IdPointerNodeIndex);
-            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, "/nodes/[" + PointersHelper.IdPointerNodeIndex + "]/matrix", PointersHelper.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, PointersHelper.IdPointerTemplNodeByIndex + "globalMatrix", PointersHelper.IdPointerNodeIndex);
+            PointerGetDeduplicationCleanUp.MergeSameGetPointersNodes(task, PointersHelper.IdPointerTemplNodeByIndex + "matrix", PointersHelper.IdPointerNodeIndex);
             
             var decompose = task.context.Nodes.FindAll(node => node.Schema is Math_MatDecomposeNode).ToArray();
             

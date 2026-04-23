@@ -147,19 +147,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         /// <summary>
         /// Get the value of a variable from a VariableUnit.
-        /// Materials and GameObjects Values will be converted to their respective indices.
         /// </summary>
         public object GetVariableValue(IUnifiedVariableUnit unit, out string varName, out string cSharpVarType, bool checkTypeIsSupported = true)
         {
             var rawValue = GetVariableValueRaw(unit, out varName, out cSharpVarType, checkTypeIsSupported);
-            
-            if (rawValue is GameObject gameObjectValue)
-                rawValue = exporter.GetTransformIndex(gameObjectValue.transform);
-            else if (rawValue is Component component)
-                rawValue = exporter.GetTransformIndex(component.transform);
-            else if (rawValue is Material materialValue)
-                rawValue = exporter.GetMaterialIndex(materialValue);
-
             return rawValue;
         }
         

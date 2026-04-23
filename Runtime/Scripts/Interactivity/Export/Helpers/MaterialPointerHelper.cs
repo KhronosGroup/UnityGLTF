@@ -34,9 +34,9 @@ namespace UnityGLTF.Interactivity.Export
             out ValueInRef targetMaterial, out ValueInRef uvOffset, out ValueOutRef convertedUvOffset)
         {
             var getScale = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerMaterialIndex,
+            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerMaterialRef,
                 pointerToTextureTransformScale, GltfTypes.Float2);
-            targetMaterial = getScale.ValueIn(PointersHelper.IdPointerMaterialIndex);
+            targetMaterial = getScale.ValueIn(PointersHelper.IdPointerMaterialRef);
 
             ConvertUv(exporter, out uvOffset, out convertedUvOffset, getScale);
         }

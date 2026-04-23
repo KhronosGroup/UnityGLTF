@@ -37,7 +37,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 unitExporter.MapOutFlowConnectionWhenValid(setMember.assigned, Pointer_SetNode.IdFlowOut, node);
 
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef,
                     setMember.target, template, GltfTypes.Float4);
             }
             else if (unit is InvokeMember invokeMember)
