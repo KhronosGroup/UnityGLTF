@@ -10,5 +10,8 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOutTimeSinceStart = "timeSinceStart";
         [OutputSocketDescription(GltfTypes.Float)]
         public const string IdOutTimeSinceLastTick = "timeSinceLastTick";
+        
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdEvent = "event";
     }
 }
