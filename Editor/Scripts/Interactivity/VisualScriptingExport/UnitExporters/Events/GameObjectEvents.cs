@@ -17,7 +17,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             get => typeof(TVisualGraphUnit);
         }
 
-        protected virtual bool StopPropagationDefault => false;
 
         protected virtual string NodeRefId => Event_OnSelectNode.IdValueSelectedNodeRef;
         protected virtual string HitLocationId => Event_OnSelectNode.IdValueLocalHitLocation;
@@ -56,11 +55,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.Configuration["nodeIndex"].Value = targetIndex;
             OnTargetNodeConfigured(unitExporter, targetIndex);
             
-            // Config for stop propagation will just default to False. We don't have an equivalent
-            // parameter in Unity Visual Scripting so we will default to preventing the selection
-            // event from being propagated up the hierarchy.
-            node.Configuration["stopPropagation"].Value = StopPropagationDefault;
-
             node.FlowOut("out").MapToControlOutput(triggerOutput);
             
             // Resolve PointerEventData in out connections

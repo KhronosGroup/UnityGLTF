@@ -10,9 +10,6 @@ namespace UnityGLTF.Interactivity.Schema
         [ConfigDescription]
         public const string IdConfigNodeIndex = "nodeIndex";
         
-        [ConfigDescription]
-        public const string IdConfigStopPropagation = "stopPropagation";
-        
         [FlowOutSocketDescription()]
         public const string IdFlowOut = "out";
         
