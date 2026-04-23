@@ -41,10 +41,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             foreach (var arg in unit.arguments)
             {
                 var argId = arg.key;
-                var argTypeIndex = GltfTypes.TypeIndex(arg.type);
+                var argTypeIndex = -1;
                 var eventValue = new GltfInteractivityUnitExporterNode.EventValues { Type = argTypeIndex };
                 args.Add(argId, eventValue);
-
                 node.ValueIn(argId).MapToInputPort(arg);
             }
             var index = unitExporter.vsExportContext.AddEventIfNeeded(unit, args);
