@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             foreach (var arg in unit.argumentPorts)
             {
                 var argId = arg.key;
-                var argTypeIndex = GltfTypes.TypeIndex(arg.type);
+                var argTypeIndex = -1;
                 var newArg = new GltfInteractivityUnitExporterNode.EventValues { Type = argTypeIndex };
                 args.Add(argId, newArg);
                 // TODO: adding default values?
