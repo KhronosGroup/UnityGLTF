@@ -321,7 +321,7 @@ namespace UnityGLTF.Interactivity.Export
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }
         
-        public void AddSelectabilityExtensionToAllNode()
+        public void AddSelectabilityExtensionToAllNodes()
         {
             foreach (var node in ActiveGltfRoot.Nodes)
             {
