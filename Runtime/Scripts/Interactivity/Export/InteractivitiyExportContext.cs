@@ -63,14 +63,25 @@ namespace UnityGLTF.Interactivity.Export
             int refTypeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             foreach (var v in variables)
             {
-                if (v.Type == refTypeIndex)
+                if (v.Value == null)
+                    continue;
+
+                var valueTypeIndex = GltfTypes.TypeIndex(v.Value.GetType());
+                if (v.Type == refTypeIndex || valueTypeIndex == refTypeIndex)
                 {
-                    if (v.Value != null && v.Value.GetType() != typeof(string))
+                    if (v.Value.GetType() != typeof(string))
                     {
                         if (RefResolver.TryRefToStaticJson(exporter, v.Value, out var jsonPointer))
                         {
                             Debug.Log("Resolve var "+ ((Object)v.Value).name+ " reference to " + jsonPointer);
                             v.Value = jsonPointer;
+                            v.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            v.Value = null;
+                            v.Type = refTypeIndex;
                         }
                     }
                 }
@@ -85,10 +96,42 @@ namespace UnityGLTF.Interactivity.Export
                     {
                         if (RefResolver.TryRefToStaticJson(exporter, vIn.Value.Value, out var jsonPointer))
                         {
-                            Debug.Log("Resolve node input " + ((Object)vIn.Value.Value).name + " reference to " +
-                                      jsonPointer);
                             vIn.Value.Value = jsonPointer;
+                            vIn.Value.Type = refTypeIndex;
                         }
+                        else
+                        { 
+                            // Reference not found in export context
+                            vIn.Value.Value = null;
+                            vIn.Value.Type = refTypeIndex;
+                        }
+                    }
+                }
+            }
+
+            foreach (var cEvent in customEvents)
+            {
+                foreach (var values in cEvent.Values)
+                {
+                    if (values.Value == null || values.Value.Value == null)
+                        continue;
+
+                    var value = values.Value.Value;
+                    var mapping = GltfTypes.GetTypeMapping(value.GetType());
+                    if (mapping.GltfSignature == GltfTypes.Ref)
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, value, out var jsonPointer))
+                        {
+                            values.Value.Value = jsonPointer;
+                            values.Value.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            values.Value.Value = null;
+                            values.Value.Type = refTypeIndex;
+                        }
+
                     }
                 }
             }
