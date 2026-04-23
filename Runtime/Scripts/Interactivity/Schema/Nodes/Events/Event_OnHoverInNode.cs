@@ -16,8 +16,8 @@ namespace UnityGLTF.Interactivity.Schema
         [FlowOutSocketDescription()]
         public const string IdFlowOut = "out";
         
-        [OutputSocketDescription(GltfTypes.Int)]
-        public const string IdOutHoverNodeIndex = "hoverNodeIndex";
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdOutHoverNodeRef = "hoveredNode";
         
         [OutputSocketDescription(GltfTypes.Int)]
         public const string IdOutControllerIndex = "controllerIndex";
