@@ -30,7 +30,7 @@ namespace UnityGLTF.Interactivity
         public static readonly TypeMapping[] TypesMapping =
         {
             new TypeMapping(Bool, new [] {typeof(bool), typeof(Boolean)}),
-            new TypeMapping(Int, new [] {typeof(int), typeof(long), typeof(GameObject), typeof(Material), typeof(Transform)}),
+            new TypeMapping(Int, new [] {typeof(int), typeof(long)}),
             new TypeMapping(Float, new [] {typeof(float), typeof(double), typeof(Single), typeof(Double)}),
             new TypeMapping(Float2, new [] {typeof(Vector2)}),
             new TypeMapping(Float3, new [] {typeof(Vector3)}),
@@ -38,7 +38,7 @@ namespace UnityGLTF.Interactivity
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
             // Ref type should be last here. GameObject, Transform and Material are already mapped to int because they will be translated to the gltf object ids
-            new TypeMapping(Ref, new [] {typeof(object), typeof(UnityEngine.Object)}),
+            new TypeMapping(Ref, new [] {typeof(object), typeof(GameObject), typeof(Material), typeof(Transform), typeof(UnityEngine.Object)}),
         };
 
         public static int GetComponentCount(int typeIndex)

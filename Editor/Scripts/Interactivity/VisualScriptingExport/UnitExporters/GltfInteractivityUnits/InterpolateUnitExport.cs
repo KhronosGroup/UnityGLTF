@@ -30,47 +30,47 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var valueType = GltfTypes.Float;
             if (unitExporter.Context.addUnityGltfSpaceConversion && unit.member.targetType == typeof(Transform))
             {
-                pointerId = PointersHelper.IdPointerNodeIndex;
+                pointerId = PointersHelper.IdPointerNodeRef;
                 // TODO: transform space conversion for targetValue!!!
                 if (unit.member.name == "localPosition")
                 {
-                    pointerTemplate = PointersHelper.IdPointerNode + "translation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "translation";
                     valueType = GltfTypes.Float3;
                     SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 if (unit.member.name == "position")
                 {
-                    pointerTemplate = PointersHelper.IdPointerNode + "translation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "translation";
                     valueType = GltfTypes.Float3;
                     SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 else if (unit.member.name == "localRotation")
                 {
-                    pointerTemplate = PointersHelper.IdPointerNode + "rotation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "rotation";
                     valueType = GltfTypes.Float4;
                     SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 else if (unit.member.name == "rotation")
                 {
-                    pointerTemplate = PointersHelper.IdPointerNode + "rotation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "rotation";
                     valueType = GltfTypes.Float4;
                     SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 else if (unit.member.name == "localScale")
                 {
-                    pointerTemplate = PointersHelper.IdPointerNode + "scale";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "scale";
                     valueType = GltfTypes.Float3;
                 }
             }
 
             if (unit.member.targetType == typeof(Material))
             {
-                var materialTemplate = PointersHelper.IdPointerMaterial;
-                pointerId = PointersHelper.IdPointerMaterialIndex;
+                var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
+                pointerId = PointersHelper.IdPointerMaterialRef;
                 if (unit.member.name == "color")
                 {
                      var gltfProperty =

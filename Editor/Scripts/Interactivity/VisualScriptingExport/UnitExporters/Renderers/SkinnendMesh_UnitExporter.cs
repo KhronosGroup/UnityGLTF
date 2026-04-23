@@ -24,8 +24,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var setWeight = unitExporter.CreateNode<Pointer_SetNode>();
             
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeIndex,
-                unit.target,  PointersHelper.IdPointerNode + "weights/[weightIndex]", GltfTypes.Float);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeRef,
+                unit.target,  PointersHelper.IdPointerTemplNodeByRef + "weights/[weightIndex]", GltfTypes.Float);
 
             setWeight.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
             setWeight.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(unit.exit);
@@ -52,8 +52,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getWeight = unitExporter.CreateNode<Pointer_GetNode>();
             getWeight.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
             
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeIndex,
-                unit.target,  PointersHelper.IdPointerNode + "weights/[weightIndex]", GltfTypes.Float);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeRef,
+                unit.target,  PointersHelper.IdPointerTemplNodeByRef + "weights/[weightIndex]", GltfTypes.Float);
             getWeight.ValueIn("weightIndex").MapToInputPort(unit.valueInputs["%index"]);
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);
@@ -78,8 +78,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getWeightCount = unitExporter.CreateNode<Pointer_GetNode>();
             getWeightCount.FirstValueOut().ExpectedType(ExpectedType.Int).MapToPort(unit.value);
             
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshIndex,
-                unit.target, PointersHelper.IdPointerMesh + "weights.length", GltfTypes.Int);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshRef,
+                unit.target, PointersHelper.IdPointerTemplMeshByRef + "weights.length", GltfTypes.Int);
             
             return true;
         }

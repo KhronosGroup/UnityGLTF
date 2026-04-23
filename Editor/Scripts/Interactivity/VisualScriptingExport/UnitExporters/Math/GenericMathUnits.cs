@@ -11,8 +11,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
          [InitializeOnLoadMethod]
         public static void Register()
         {
-            UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_EqNode>(typeof(Equal)));
-
             UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(GenericSubtract)));
             UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(ScalarSubtract)));
             UnitExporterRegistry.RegisterExporter(new GenericMathUnitExporters<Math_SubNode>(typeof(Vector2Subtract)));

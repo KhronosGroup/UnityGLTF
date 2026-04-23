@@ -16,8 +16,8 @@ namespace UnityGLTF.Interactivity.Export
             var getScale = exporter.CreateNode<Pointer_GetNode>();
             scaleOutput = getScale.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode + "scale", GltfTypes.Float3);
-            target = getScale.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getScale, PointersHelper.IdPointerNodeRef, PointersHelper.IdPointerTemplNodeByRef + "scale", GltfTypes.Float3);
+            target = getScale.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
         }
 
         public static void GetLocalPositionFromMainCamera(INodeExporter exporter, out ValueOutRef positionOutput)
@@ -43,8 +43,8 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getPosition = exporter.CreateNode<Pointer_GetNode>();
             getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
-            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode + "translation", GltfTypes.Float3);
-            target = getPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getPosition, PointersHelper.IdPointerNodeRef, PointersHelper.IdPointerTemplNodeByRef + "translation", GltfTypes.Float3);
+            target = getPosition.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
             {
@@ -72,8 +72,8 @@ namespace UnityGLTF.Interactivity.Export
         {
             var setPosition = exporter.CreateNode<Pointer_SetNode>();
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode + "translation", GltfTypes.Float3);
-            target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex).SetType(TypeRestriction.LimitToInt);
+            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeRef, PointersHelper.IdPointerTemplNodeByRef + "translation", GltfTypes.Float3);
+            target = setPosition.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
             flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
             flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
 
@@ -113,23 +113,23 @@ namespace UnityGLTF.Interactivity.Export
         {
             var setPosition = exporter.CreateNode<Pointer_SetNode>();
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "translation", GltfTypes.Float3);
+            PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "translation", GltfTypes.Float3);
 
-            target = setPosition.ValueIn(PointersHelper.IdPointerNodeIndex);
+            target = setPosition.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             var localToWorldMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex, 
-                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex).Link(target);
+            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeRef, 
+                PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeRef).Link(target);
 
             var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
             inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
 
             var localMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "matrix", GltfTypes.Float4x4);
-            target = localMatrix.ValueIn(PointersHelper.IdPointerNodeIndex).Link(target);
+            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "matrix", GltfTypes.Float4x4);
+            target = localMatrix.ValueIn(PointersHelper.IdPointerNodeRef).Link(target);
 
             var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
@@ -179,22 +179,22 @@ namespace UnityGLTF.Interactivity.Export
         {
             var setRotation = exporter.CreateNode<Pointer_SetNode>();
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "rotation", GltfTypes.Float4);
-            target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "rotation", GltfTypes.Float4);
+            target = setRotation.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             var localToWorldMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeIndex,
-                 PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = target.Link(localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex));
+            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeRef,
+                 PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = target.Link(localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeRef));
 
             var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
             inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
 
             var localMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "matrix", GltfTypes.Float4x4);
-            target = target.Link(localMatrix.ValueIn(PointersHelper.IdPointerNodeIndex));
+            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "matrix", GltfTypes.Float4x4);
+            target = target.Link(localMatrix.ValueIn(PointersHelper.IdPointerNodeRef));
 
             var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
@@ -242,10 +242,10 @@ namespace UnityGLTF.Interactivity.Export
         {
             var getRotation = exporter.CreateNode<Pointer_GetNode>();
             getRotation.OutputValueSocket[Pointer_GetNode.IdValue].expectedType = ExpectedType.GtlfType("float4");
-            PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "rotation", GltfTypes.Float4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getRotation, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "rotation", GltfTypes.Float4);
 
-            target = getRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+            target = getRotation.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             if (!exporter.Context.addUnityGltfSpaceConversion)
             {
@@ -264,9 +264,9 @@ namespace UnityGLTF.Interactivity.Export
         {
             var setRotation = exporter.CreateNode<Pointer_SetNode>();
 
-            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "rotation", GltfTypes.Float4);
-            target = setRotation.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "rotation", GltfTypes.Float4);
+            target = setRotation.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
             flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
             flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
 
@@ -304,9 +304,9 @@ namespace UnityGLTF.Interactivity.Export
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                 PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeRef,
+                 PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
@@ -367,9 +367,9 @@ namespace UnityGLTF.Interactivity.Export
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeRef);
 
           GetWorldPointFromLocalPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
         }
@@ -380,9 +380,9 @@ namespace UnityGLTF.Interactivity.Export
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeRef);
             
             GetLocalPointFromWorldPoint(exporter, worldMatrix.FirstValueOut(), out worldPoint, out localPoint);   
         }
@@ -432,9 +432,9 @@ namespace UnityGLTF.Interactivity.Export
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
@@ -464,9 +464,9 @@ namespace UnityGLTF.Interactivity.Export
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
             worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeIndex,
-                PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
-            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeIndex);
+            PointersHelper.SetupPointerTemplateAndTargetInput(worldMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
+            target = worldMatrix.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             var decompose = exporter.CreateNode<Math_MatDecomposeNode>();
             decompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(worldMatrix.FirstValueOut());
@@ -485,3 +485,4 @@ namespace UnityGLTF.Interactivity.Export
         }
     }
 }
+

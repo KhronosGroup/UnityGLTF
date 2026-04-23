@@ -5,9 +5,9 @@
         public override string Op { get; set; } = "ref/eq";
 
         [InputSocketDescription(GltfTypes.Ref)]
-        public const string IdA = "a";
+        public const string IdValueA = "a";
         [InputSocketDescription(GltfTypes.Ref)]
-        public const string IdB = "b";     
+        public const string IdValueB = "b";     
         [OutputSocketDescription(GltfTypes.Bool)]
         public const string IdOutValue = "value";
         

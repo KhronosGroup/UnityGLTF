@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             // Regular pointer/set
             
-            var materialTemplate = PointersHelper.IdPointerMaterial;
+            var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
             var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
             
             if (unit is SetMember setMember)
@@ -71,7 +71,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]).SetType(TypeRestriction.LimitToFloat4);
          
-                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef,
                         invokeMember.target, template, GltfTypes.Float4);
                 }
                 else
@@ -86,7 +86,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     combine.ValueIn("c").ConnectToSource(extract.ValueOut("2"));
                     
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(combine.FirstValueOut());
-                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+                    PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef,
                         invokeMember.target, template, GltfTypes.Float3);
                 }
             }
