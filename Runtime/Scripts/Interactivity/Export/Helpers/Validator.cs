@@ -107,6 +107,16 @@ namespace UnityGLTF.Interactivity.Export
                         if (valueSocket.Value != null && valueSocket.Node == null && (int)valueSocket.Value == -1)
                             NodeAppendLine(node, $"Node Pointer Node has invalid nodeIndex Value: -1");
                     }
+                    if (node.ValueInConnection.TryGetValue(PointersHelper.IdPointerNodeRef, out var valueSocketRef))
+                    {
+                        
+                        if (valueSocketRef.Value != null && GltfTypes.GetTypeMapping(valueSocketRef.Value.GetType())?.GltfSignature != GltfTypes.Ref)
+                            if (valueSocketRef.Value is not string)
+                                NodeAppendLine(node, $"Node Pointer Node has invalid nodeRef Type: {valueSocketRef.Value.GetType().Name}");
+                        else
+                        if (valueSocketRef.Value == null && valueSocketRef.Node == null )
+                            NodeAppendLine(node, $"Node Pointer Node has no connection and NULL as nodeRef Value!");
+                    }
                 }
                 
                 if (node.Schema.Op == "variable/get")

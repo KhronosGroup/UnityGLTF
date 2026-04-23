@@ -33,7 +33,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // Regular pointer/set
             ValueInput target = null;
 
-            var materialTemplate = PointersHelper.IdPointerMaterial;
+            var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
             var template = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/" + property;
             var scaleTemplate = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale";
             
@@ -55,7 +55,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 }
                 
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, materialTemplate + template, GltfTypes.Float2);
             }
             else if (unitExporter.unit is InvokeMember invokeMember)
             {
@@ -104,7 +104,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]);
                 }
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, materialTemplate + template, GltfTypes.Float2);
             }
             
             return true;

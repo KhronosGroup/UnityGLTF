@@ -439,6 +439,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             // Final Topological Sort
             TopologicalSort();  
             
+            ResolveRefToStaticPointer();
+            
             CollectOpDeclarations();
             
             TriggerOnBeforeSerialization();

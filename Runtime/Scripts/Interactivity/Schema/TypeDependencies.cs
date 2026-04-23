@@ -7,37 +7,43 @@ namespace UnityGLTF.Interactivity.Schema
 
         public static ExpectedType Float
         {
-            get => GtlfType("float");
+            get => GtlfType(GltfTypes.Float);
         }
         
         public static ExpectedType Float2
         {
-            get =>  GtlfType("float2");
+            get =>  GtlfType(GltfTypes.Float2);
         }
         
         public static ExpectedType Float3
         {
-            get =>  GtlfType("float3");
+            get =>  GtlfType(GltfTypes.Float3);
         }
         
         public static ExpectedType Float4
         {
-            get =>  GtlfType("float4");
+            get =>  GtlfType(GltfTypes.Float4);
         }
         
         public static ExpectedType Int
         {
-            get =>  GtlfType("int");
+            get =>  GtlfType(GltfTypes.Int);
         }
         
         public static ExpectedType Bool
         {
-            get =>  GtlfType("bool");
+            get =>  GtlfType(GltfTypes.Bool);
         }
+
+        public static ExpectedType Ref
+        {
+            get =>  GtlfType(GltfTypes.Ref);
+        }
+
         
         public static ExpectedType Float4x4
         {
-            get =>  GtlfType("float4x4");
+            get =>  GtlfType(GltfTypes.Float4x4);
         }
         
         public static ExpectedType FromInputSocket(string socketName)
@@ -89,37 +95,43 @@ namespace UnityGLTF.Interactivity.Schema
 
         public static TypeRestriction LimitToBool
         {
-            get => LimitToType("bool");
+            get => LimitToType(GltfTypes.Bool);
         }
+        
+        public static TypeRestriction LimitToRef
+        {
+            get => LimitToType(GltfTypes.Ref);
+        }
+
         
         public static TypeRestriction LimitToFloat
         {
-            get => LimitToType("float");
+            get => LimitToType(GltfTypes.Float);
         }
         
         public static TypeRestriction LimitToInt
         {
-            get => LimitToType("int");
+            get => LimitToType(GltfTypes.Int);
         }
         
         public static TypeRestriction LimitToFloat2
         {
-            get => LimitToType("float2");
+            get => LimitToType(GltfTypes.Float2);
         }
         
         public static TypeRestriction LimitToFloat3
         {
-            get => LimitToType("float3");
+            get => LimitToType(GltfTypes.Float3);
         }
         
         public static TypeRestriction LimitToFloat4
         {
-            get => LimitToType("float4");
+            get => LimitToType(GltfTypes.Float4);
         }
         
         public static TypeRestriction LimitToFloat4x4
         {
-            get => LimitToType("float4x4");
+            get => LimitToType(GltfTypes.Float4x4);
         }
         
         private TypeRestriction()

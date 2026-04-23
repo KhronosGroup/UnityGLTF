@@ -26,8 +26,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var getPointer = unitExporter.CreateNode<Pointer_GetNode>();
             getPointer.FirstValueOut().ExpectedType(ExpectedType.Int);
-            PointersHelper.SetupPointerTemplateAndTargetInput(getPointer, PointersHelper.IdPointerNodeIndex, PointersHelper.IdPointerNode+"children/[childIndex]", GltfTypes.Int);
-            getPointer.ValueIn(PointersHelper.IdPointerNodeIndex).MapToInputPort(unit.target);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getPointer, PointersHelper.IdPointerNodeRef, PointersHelper.IdPointerTemplNodeByRef+"children/", GltfTypes.Ref);
+            getPointer.ValueIn(PointersHelper.IdPointerNodeRef).MapToInputPort(unit.target);
             getPointer.ValueIn("childIndex").MapToInputPort(unit.inputParameters[0]);
             getPointer.ValueOut(Pointer_GetNode.IdValue).MapToPort(unit.result);
             unitExporter.ByPassFlow(unit.enter, unit.exit);

@@ -31,7 +31,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var node = unitExporter.CreateNode<Event_ReceiveNode>();
             
             var args = new Dictionary<string, GltfInteractivityUnitExporterNode.EventValues>();
-            args.Add("targetNodeIndex", new GltfInteractivityUnitExporterNode.EventValues {Type = GltfTypes.TypeIndexByGltfSignature("int") });
+            args.Add("targetNodeRef", new GltfInteractivityUnitExporterNode.EventValues {Type = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref) });
 
             foreach (var arg in unit.argumentPorts)
             {
@@ -45,13 +45,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             var index = unitExporter.vsExportContext.AddEventIfNeeded(unit, args);
             node.Configuration["event"].Value = index;
-            node.ValueOut("targetNodeIndex").ExpectedType(ExpectedType.Int);
+            node.ValueOut("targetNodeRef").ExpectedType(ExpectedType.Ref);
 
             // Setup target Node checks
-            var eqIdNode = unitExporter.CreateNode<Math_EqNode>();
-            eqIdNode.ValueIn(Math_EqNode.IdValueA).ConnectToSource(node.ValueOut("targetNodeIndex")).SetType(TypeRestriction.LimitToInt);
+            var eqIdNode = unitExporter.CreateNode<Ref_EqNode>();
+            eqIdNode.ValueIn(Ref_EqNode.IdValueA).ConnectToSource(node.ValueOut("targetNodeRef")).SetType(TypeRestriction.LimitToRef);
             var currentGameObject = unitExporter.vsExportContext.currentGraphProcessing.gameObject;
-            eqIdNode.ValueIn(Math_EqNode.IdValueB).MapToInputPort(unit.target);
+            eqIdNode.ValueIn(Ref_EqNode.IdValueB).MapToInputPort(unit.target);
             
             var branchNode = unitExporter.CreateNode<Flow_BranchNode>();
             branchNode.ValueIn(Flow_BranchNode.IdCondition).ConnectToSource(eqIdNode.FirstValueOut());

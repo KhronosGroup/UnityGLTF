@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using GLTF.Schema;
+using Interactivity.Schema;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Plugins;
@@ -48,11 +49,49 @@ namespace UnityGLTF.Interactivity.Export
             // Final Topological Sort
             TopologicalSort();  
             
+            ResolveRefToStaticPointer();
+            
             CollectOpDeclarations();
 
             TriggerOnBeforeSerialization();
             
             ApplyInteractivityExtension();
+        }
+
+        protected virtual void ResolveRefToStaticPointer()
+        {
+            int refTypeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            foreach (var v in variables)
+            {
+                if (v.Type == refTypeIndex)
+                {
+                    if (v.Value != null && v.Value.GetType() != typeof(string))
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, v.Value, out var jsonPointer))
+                        {
+                            Debug.Log("Resolve var "+ ((Object)v.Value).name+ " reference to " + jsonPointer);
+                            v.Value = jsonPointer;
+                        }
+                    }
+                }
+            }
+
+            foreach (var n in nodesToSerialize)
+            {
+                foreach (var vIn in n.ValueInConnection)
+                {
+                    if (vIn.Value.Value != null && vIn.Value.Type == refTypeIndex &&
+                        vIn.Value.Value.GetType() != typeof(string))
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, vIn.Value.Value, out var jsonPointer))
+                        {
+                            Debug.Log("Resolve node input " + ((Object)vIn.Value.Value).name + " reference to " +
+                                      jsonPointer);
+                            vIn.Value.Value = jsonPointer;
+                        }
+                    }
+                }
+            }
         }
         
         protected virtual void ApplyInteractivityExtension()
@@ -84,26 +123,22 @@ namespace UnityGLTF.Interactivity.Export
 
         public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
         {
-            if (originalValue is GameObject gameObject)
+            convertedValue = originalValue;
+            if (originalValue is Transform transform)
             {
-                var gameObjectNodeIndex =
-                    exporter.GetTransformIndex(gameObject.transform);
-
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            }
+            else if (originalValue is GameObject gameObject)
+            {
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else if (originalValue is Component component)
             {
-                var gameObjectNodeIndex =
-                    exporter.GetTransformIndex(component.transform);
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else if (originalValue is Material material)
             {
-                var materialIndex = exporter.ExportMaterial(material).Id;
-                convertedValue = materialIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else
             {

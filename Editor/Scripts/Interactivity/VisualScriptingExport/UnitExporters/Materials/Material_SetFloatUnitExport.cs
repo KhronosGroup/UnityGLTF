@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (unit.target == null)
                 return false;
             
-            var materialTemplate = PointersHelper.IdPointerMaterial;
+            var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
             string template = "";
             bool oneMinus = false;
             if (unitExporter.IsInputLiteralOrDefaultValue(unit.inputParameters[0], out var floatPropertyName))
@@ -58,7 +58,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             else
                 node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(unit.inputParameters[1]).SetType(TypeRestriction.LimitToFloat);
  
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef,
                 unit.target, template, GltfTypes.Float);
             
             return true;

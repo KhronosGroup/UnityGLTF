@@ -24,8 +24,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var getMatrix = unitExporter.CreateNode<Pointer_GetNode>();
             getMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
             
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeIndex,
-                getMemberUnit.target, PointersHelper.IdPointerNode + "globalMatrix", GltfTypes.Float4x4);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeRef,
+                getMemberUnit.target, PointersHelper.IdPointerTemplNodeByRef + "globalMatrix", GltfTypes.Float4x4);
 
             var inverse = unitExporter.CreateNode<Math_InverseNode>();
             inverse.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(getMatrix.FirstValueOut());

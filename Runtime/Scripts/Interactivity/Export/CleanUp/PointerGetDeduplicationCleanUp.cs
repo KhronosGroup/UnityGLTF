@@ -32,6 +32,7 @@ namespace UnityGLTF.Interactivity.Export
                 
                 var glNode1Socket = glNode1.ValueInConnection[pointerInputName];
                 
+                
                 foreach (var glNode2 in pointerNodes)
                 {
                     if (glNode2.Index == -1 || glNode1 == glNode2)
@@ -46,7 +47,8 @@ namespace UnityGLTF.Interactivity.Export
                         && glNode1Socket.Node.Value == glNode2Socket.Node.Value
                         && glNode1Socket.Socket == glNode2Socket.Socket)
                         isSameValueInput = true;
-                    else if (glNode1Socket.Value != null && glNode2Socket.Value != null && (int)glNode1Socket.Value == (int)glNode2Socket.Value)
+                    else if (glNode1Socket.Value != null && glNode2Socket.Value != null &&
+                             glNode1Socket.Value == glNode2Socket.Value)
                         isSameValueInput = true;
 
                     if (isSameValueInput)
