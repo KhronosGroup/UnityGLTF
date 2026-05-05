@@ -6,6 +6,17 @@ namespace UnityGLTF.Interactivity
     using System.Linq;
     using Newtonsoft.Json.Linq;
     using UnityEngine;
+
+
+    public class StaticRefPointer 
+    {
+        public string pointer = ""; // Null by default
+        
+        public StaticRefPointer(string pointer = "")
+        {
+            this.pointer = pointer;
+        }
+    }
     
     /// <summary>
     /// </summary>
@@ -38,7 +49,7 @@ namespace UnityGLTF.Interactivity
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
             // Ref type should be last here. GameObject, Transform and Material are already mapped to int because they will be translated to the gltf object ids
-            new TypeMapping(Ref, new [] {typeof(object), typeof(GameObject), typeof(Material), typeof(Transform), typeof(UnityEngine.Object)}),
+            new TypeMapping(Ref, new [] {typeof(object), typeof(GameObject), typeof(Material), typeof(Transform), typeof(UnityEngine.Object), typeof(StaticRefPointer)}),
         };
 
         public static int GetComponentCount(int typeIndex)

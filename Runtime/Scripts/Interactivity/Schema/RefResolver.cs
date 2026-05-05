@@ -18,6 +18,9 @@ namespace UnityGLTF.Interactivity.Export
             
             switch (value)
             {
+                case StaticRefPointer staticRef:
+                    staticJson = staticRef.pointer;
+                    return true;
                 case GameObject go:
                     var goIndex = sceneExporter.GetTransformIndex(go.transform);
                     if (goIndex == -1)
