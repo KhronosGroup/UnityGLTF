@@ -257,7 +257,12 @@ namespace UnityGLTF.Interactivity.Schema
             {
                 if (value == null)
                     return;
-                
+
+                if (value is StaticRefPointer staticRef)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(staticRef.pointer)));
+                }
+                else
                 if (value is Color color)
                 {
                     valueObject.Add(new JProperty("value", new JArray(color.r, color.g, color.b, color.a)));
