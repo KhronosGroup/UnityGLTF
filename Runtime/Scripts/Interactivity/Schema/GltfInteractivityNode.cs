@@ -87,7 +87,7 @@ namespace UnityGLTF.Interactivity.Schema
                 {
                     ValueInConnection.Add(descriptor.Key, new ValueSocketData()
                     {
-                        Type = GltfTypes.TypeIndexByGltfSignature(descriptor.Value.SupportedTypes[0]),
+                        Type = -1, // Setting to undefined(-1), so type resolving on later stages can better determine if this type is finally true
                         typeRestriction = descriptor.Value.typeRestriction
                     });
                 }
