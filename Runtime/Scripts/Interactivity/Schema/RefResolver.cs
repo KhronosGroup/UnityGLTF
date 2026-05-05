@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityGLTF;
 
-namespace Interactivity.Schema
+namespace UnityGLTF.Interactivity.Export
 {
     public static class RefResolver
     {

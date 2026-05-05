@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using GLTF.Schema;
-using Interactivity.Schema;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 using UnityGLTF.Plugins;
