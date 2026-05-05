@@ -98,7 +98,7 @@ namespace UnityGLTF.Interactivity
                 case Float4x4:
                     return new Matrix4x4();
                 case Ref:
-                    return null;
+                    return new StaticRefPointer();
                 default:
                     return null;
             }

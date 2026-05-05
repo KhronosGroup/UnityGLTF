@@ -457,7 +457,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             if (inputPort.hasValidConnection && inputPort.connections.First().source.unit is Null)
             {
-                value = -1;
+                value = null;
                 return true;
             }
             
