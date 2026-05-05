@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.UI;
 using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.Export
