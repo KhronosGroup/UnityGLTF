@@ -802,7 +802,16 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOut = "value";
     }
 
+    
+    public class Math_TauNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/Tau";
+        
+        [OutputSocketDescription(GltfTypes.Float)]
+        public const string IdOut = "value";
+    }
 
+    
     public class Math_ENode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/E";
