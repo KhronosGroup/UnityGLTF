@@ -116,7 +116,13 @@ namespace UnityGLTF.Interactivity.Export
 
                     var value = values.Value.Value;
                     var mapping = GltfTypes.GetTypeMapping(value.GetType());
-                    if (mapping.GltfSignature == GltfTypes.Ref)
+                    var isRefType = values.Value.Type != GltfTypes.TypeIndex(GltfTypes.Ref);
+                    if (!isRefType &&  mapping == null)
+                    {
+                        Debug.LogError("Trying to resolve a reference to static json, but the type is not supported: " + value.GetType().Name);
+                        continue;
+                    }
+                    if (isRefType || mapping.GltfSignature == GltfTypes.Ref)
                     {
                         if (RefResolver.TryRefToStaticJson(exporter, value, out var jsonPointer))
                         {
@@ -524,9 +530,17 @@ namespace UnityGLTF.Interactivity.Export
             
             foreach (var variable in variables.Where( v => v.Type != -1))
                 variable.Type = typesIndexReplacement[variable.Type];
-            
+
+            var alreadyUpdated = new HashSet<GltfInteractivityNode.EventValues>();
+            // In case EventValues instances are shared betweens multiple events, we use a hashset here
             foreach (var customEventValue in customEvents.SelectMany(c => c.Values))
-                customEventValue.Value.Type = typesIndexReplacement[customEventValue.Value.Type];
+            {
+                if (!alreadyUpdated.Contains(customEventValue.Value))
+                {
+                    customEventValue.Value.Type = typesIndexReplacement[customEventValue.Value.Type];
+                    alreadyUpdated.Add(customEventValue.Value);
+                }
+            }
 
             foreach (var declaration in opDeclarations.Where(d => d.inputValueSockets != null).SelectMany(d => d.inputValueSockets.Values)
                          .Concat(opDeclarations.Where(d => d.outputValueSockets != null).SelectMany(d => d.outputValueSockets.Values)))
