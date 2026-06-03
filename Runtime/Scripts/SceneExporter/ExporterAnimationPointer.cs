@@ -182,9 +182,14 @@ namespace UnityGLTF
 
 					if (!ShouldMaterialPropertiesRemapped(material))
 						break;
-					
-					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material, propertyName, out MaterialPointerPropertyMap map))
-						break;
+
+					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material,
+						    propertyName, out MaterialPointerPropertyMap map))
+					{
+						// We skip this property entirely if we don't have a mapping for it.'
+						// Also for Texture Transforms: when no Texture is assigned, we skip here too.
+						return;
+					}
 					
 					secondPropertyName = map.GltfSecondaryPropertyName;
 					propertyName = map.GltfPropertyName;
