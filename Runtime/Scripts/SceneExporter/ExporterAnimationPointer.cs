@@ -186,6 +186,18 @@ namespace UnityGLTF
 					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material,
 						    propertyName, out MaterialPointerPropertyMap map))
 					{
+						if (animationPointerExportContext.materialPropertiesRemapper.GetMapByUnityProperty(
+							    propertyName, out MaterialPointerPropertyMap existingMap))
+						{
+							var isTexTransform = existingMap.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform;
+
+							Debug.Log(LogType.Warning,
+								$"Animation property skipped: {propertyName} on material {material} - missing property "
+								+ (isTexTransform ? "or no texture assigned" : ""));
+						}
+						else
+							Debug.Log(LogType.Warning, $"Animation property skipped: {propertyName} on material {material} - no mapping found ");
+						
 						// We skip this property entirely if we don't have a mapping for it.'
 						// Also for Texture Transforms: when no Texture is assigned, we skip here too.
 						return;
