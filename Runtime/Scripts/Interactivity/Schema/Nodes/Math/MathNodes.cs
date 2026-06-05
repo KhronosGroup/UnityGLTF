@@ -1156,5 +1156,23 @@ namespace UnityGLTF.Interactivity.Schema
 
         [OutputSocketDescription(GltfTypes.Float4)]
         public const string IdOutValue = "value";
-    }  
+    }
+
+    public class Math_SmoothStep : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/smoothStep";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("b", GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)] 
+        public const string IdA = "a";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("a", GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)] 
+        public const string IdB = "b";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("a", GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)] 
+        public const string IdInterpolate = "c";
+
+        
+        [OutputSocketDescriptionWithTypeDependencyFromInput("a")]
+        public const string IdOutValue = "value";
+    }
 }
