@@ -1063,12 +1063,12 @@ namespace UnityGLTF.Interactivity.Schema
     {
         public override string Op { get; set; } = "math/slerp";
 
-        [OutputSocketDescription(GltfTypes.Float3)]
+        [OutputSocketDescriptionWithTypeDependencyFromInput("a")]
         public const string IdOut = "value";
         
-        [InputSocketDescription(GltfTypes.Float3)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("b", GltfTypes.Float2, GltfTypes.Float3)]
         public const string IdValueA = "a";
-        [InputSocketDescription(GltfTypes.Float3)]
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("a", GltfTypes.Float2, GltfTypes.Float3)]
         public const string IdValueB = "b";
         [InputSocketDescription(GltfTypes.Float)]
         public const string IdValueC = "c";
