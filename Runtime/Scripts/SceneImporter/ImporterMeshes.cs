@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -540,8 +540,8 @@ namespace UnityGLTF
 				bonesPerVertexCount += subMeshes[i].GetBonesPerVertex().Length;
 			}
 			
-			// Custom combine all boneweights and bonePerVertex of sub meshes and apply to final combined mesh 
-			// >> Bug(?) in CombineMeshes that does not proper copy bone weights and bones per vertex  
+			// Custom combine all bone weights and bonePerVertex of sub meshes and apply to final combined mesh
+			// >> Bug(?) in CombineMeshes that does not proper copy bone weights and bones per vertex
 			NativeArray<BoneWeight1> allBoneWeights = new NativeArray<BoneWeight1>(boneWeightCount, Allocator.TempJob);
 			NativeArray<byte> allBonesPerVertex = new NativeArray<byte>(bonesPerVertexCount, Allocator.TempJob);
 			int currentArrayPositionBoneWeights = 0;
@@ -1082,7 +1082,7 @@ namespace UnityGLTF
 					var gltfMesh = _gltfRoot.Meshes[meshIndex];
 
 					var meshHash = gltfMesh.GetHashFromPrimitiveAttributes();
-					// When we allready decoded a mesh with the same attribute layout, we can reuse the draco decode results and skip decoding this mesh
+					// When we already decoded a mesh with the same attribute layout, we can reuse the draco decode results and skip decoding this mesh
 					if (dracoMeshAttrHashes.TryGetValue(meshHash, out var existingDracoResult))
 					{
 						var resultCopy = new DracoDecodeResult();
@@ -1182,7 +1182,7 @@ namespace UnityGLTF
 
 					if (primitive.Targets != null)
 					{
-						// read mesh primitive targets into assetcache
+						// read mesh primitive targets into asset cache
 						await ConstructMeshTargetsPrepareBuffers(primitive, meshIndex, i);
 						ConstructMeshTargets(primitive, meshIndex, i);
 					}

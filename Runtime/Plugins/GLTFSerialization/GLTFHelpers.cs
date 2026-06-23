@@ -442,7 +442,7 @@ namespace GLTF
 
 		/// <summary>
 		/// Merges the right root into the left root
-		/// This function combines all of the lists of objects on each glTF root together and updates the relative indicies
+		/// This function combines all of the lists of objects on each glTF root together and updates the relative indices
 		/// All properties all merged except Asset and Default, which will stay "mergeToRoot"'s value
 		/// </summary>
 		/// <param name="mergeToRoot">The node to merge into</param>
@@ -475,7 +475,7 @@ namespace GLTF
 			// merge extensions
 			MergeExtensions(mergeToRoot, mergeFromRootCopy);
 
-			// merge accessors, buffers, and bufferviews
+			// merge accessors, buffers, and buffer views
 			MergeAccessorsBufferViewsAndBuffers(mergeToRoot, mergeFromRootCopy, previousGLTFSize);
 
 			// merge materials, samplers, images, and textures

@@ -55,7 +55,7 @@ public partial class GLTFSceneExporter
 
 	/// <summary>
 	/// Calculates the number of bytes of padding required to align the
-	/// size of a buffer with some multiple of byteAllignment.
+	/// size of a buffer with some multiple of byteAlignment.
 	/// </summary>
 	/// <param name="currentSize">The current size of the buffer.</param>
 	/// <param name="byteAlignment">The number of bytes to align with.</param>
@@ -254,10 +254,10 @@ public partial class GLTFSceneExporter
 #else
 			foreach (var vec in arr)
 			{
-				_bufferWriter.Write(vect.x);
-				_bufferWriter.Write(vect.y);
-				_bufferWriter.Write(vect.z);
-				_bufferWriter.Write(vect.w);
+				_bufferWriter.Write(vec.x);
+				_bufferWriter.Write(vec.y);
+				_bufferWriter.Write(vec.z);
+				_bufferWriter.Write(vec.w);
 			}
 #endif
 			exportAccessorBufferWriteMarker.End();
@@ -799,7 +799,7 @@ public partial class GLTFSceneExporter
 		///
 		/// </summary>
 		/// <param name="baseAccessor"></param>
-		/// <param name="baseData">The data is treated as "additive" (e.g. blendshapes) when baseData != null</param>
+		/// <param name="baseData">The data is treated as "additive" (e.g. blend shapes) when baseData != null</param>
 		/// <param name="arr"></param>
 		/// <returns></returns>
 		/// <exception cref="Exception"></exception>

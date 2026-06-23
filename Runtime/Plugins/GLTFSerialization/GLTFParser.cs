@@ -135,7 +135,7 @@ namespace GLTF
 			ParseGLBHeader(stream);
 			List<ChunkInfo> allChunks = new List<ChunkInfo>();
 
-			// we only need to search for top two chunks (the JSON and binary chunks are guarenteed to be the top two chunks)
+			// we only need to search for top two chunks (the JSON and binary chunks are guaranteed to be the top two chunks)
 			// other chunks can be in the file but we do not care about them
 			for (int i = 0; i < 2; ++i)
 			{
