@@ -103,7 +103,7 @@ namespace UnityGLTF
 			NumericArray output,
 			InterpolationType mode,
 			Type curveType,
-			ValuesConvertion getConvertedValues)
+			ValuesConversion getConvertedValues)
 		{
 			var channelCount = propertyNames.Length;
 			var frameCount = input.AsFloats.Length;
