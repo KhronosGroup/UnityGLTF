@@ -876,7 +876,7 @@ namespace UnityGLTF
 
 			animationPointerResolver?.Resolve(this);
 
-			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+			_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 
 			gltfSerializationMarker.Begin();
 			_root.Serialize(jsonWriter, true);
@@ -887,7 +887,7 @@ namespace UnityGLTF
 			jsonWriter.Flush();
 
 			// align to 4-byte boundary to comply with spec.
-			AlignToBoundary(jsonStream);
+			AlignToBoundary(jsonStream, (byte)'_');
 			AlignToBoundary(binStream, 0x00);
 
 			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
@@ -985,7 +985,7 @@ namespace UnityGLTF
 			{
 				AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 				_buffer.Uri = fileName + ".bin";
-				_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+				_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 			}
 			else
 			{

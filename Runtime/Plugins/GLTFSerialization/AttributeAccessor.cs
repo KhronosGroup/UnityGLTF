@@ -9,7 +9,7 @@ namespace GLTF
 		public NumericArray AccessorContent { get; set; }
 		
 		public NativeArray<byte> bufferData { get; set; }
-		public uint Offset { get; set; }
+		public long Offset { get; set; }
 
 		public AttributeAccessor()
 		{

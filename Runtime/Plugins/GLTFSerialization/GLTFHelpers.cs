@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
@@ -522,7 +522,7 @@ namespace GLTF
 			LoadBufferView(attributeAccessor.AccessorId.Value.BufferView?.Value, attributeAccessor.Offset, attributeAccessor.bufferData, out bufferViewCache);
 		}
 		
-		internal static void LoadBufferView(BufferView bufferView, uint Offset, NativeArray<byte> nativeBuffer, out NativeArray<byte> bufferViewCache)
+		internal static void LoadBufferView(BufferView bufferView, long Offset, NativeArray<byte> nativeBuffer, out NativeArray<byte> bufferViewCache)
 		{
 			// The bufferView can be null for sparse buffers with just a count.
 			// In that case, this is a buffer padded with zeros, so we can just return the nativeBuffer.
@@ -532,7 +532,7 @@ namespace GLTF
 				return;
 			}
 			
-			uint totalOffset = bufferView.ByteOffset + Offset;
+			long totalOffset = bufferView.ByteOffset + Offset;
 			bufferViewCache = nativeBuffer.GetSubArray((int)totalOffset, (int)bufferView.ByteLength);
 		}
 		
