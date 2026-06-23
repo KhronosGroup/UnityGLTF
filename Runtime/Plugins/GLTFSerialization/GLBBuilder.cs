@@ -15,8 +15,9 @@ namespace GLTF
 		/// <param name="root">The glTF root to turn into a GLBObject</param>
 		/// <param name="glbOutStream">Output stream to write the GLB to</param>
 		/// <param name="loader">Loader for loading external components from GLTFRoot. The loader will receive uris and return the stream to the resource</param>
+		/// <param name="glbVersion">The GLB binary format version to output.</param>
 		/// <returns>A constructed GLBObject</returns>
-		private static GLBObject ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader)
+		private static GLBObject ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader, uint glbVersion = 2)
 		{
 			if (root == null) throw new ArgumentNullException(nameof(root));
 			if (glbOutStream == null) throw new ArgumentNullException(nameof(glbOutStream));
@@ -26,27 +27,28 @@ namespace GLTF
 			{
 				root.Serialize(sw, true);
 				sw.Flush();
-
-				long proposedFileLength = gltfJsonStream.Length + GLBHeader.GLB2_FILE_HEADER_SIZE + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
-				if (gltfJsonStream.Length > uint.MaxValue)
+				GLBHeader glbHeader = new GLBHeader
 				{
-					throw new ArgumentException("Serialized root cannot exceed uint.MaxValue", nameof(root));
+					Version = glbVersion,
+				};
+				long proposedFileLength = gltfJsonStream.Length + glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize();
+				// If the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
+				if (glbHeader.Version == 2 && proposedFileLength > uint.MaxValue)
+				{
+					glbHeader.Version = 3;
+					proposedFileLength = gltfJsonStream.Length + glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize();
 				}
-				uint proposedLengthAsUint = (uint)proposedFileLength;
-				glbOutStream.SetLength(proposedLengthAsUint);
+				glbHeader.FileLength = proposedFileLength;
+				glbOutStream.SetLength(proposedFileLength);
 				GLBObject glbObject = new GLBObject
 				{
-					Header = new GLBHeader
-					{
-						FileLength = proposedLengthAsUint,
-						Version = 2
-					},
+					Header = glbHeader,
 					Root = root,
 					Stream = glbOutStream,
 					JsonChunkInfo = new GLBChunkInfo
 					{
-						Length = (uint)gltfJsonStream.Length,
-						StartPosition = GLBHeader.GLB2_FILE_HEADER_SIZE,
+						Length = gltfJsonStream.Length,
+						StartPosition = glbHeader.GetFileHeaderSize(),
 						Type = GLBChunkFormat.JSON
 					}
 				};
@@ -91,7 +93,7 @@ namespace GLTF
 			inputGLBStream.Position = 4 + inputGLBStreamStartPosition;
 			GLBHeader glbHeader = GLTFParser.ParseGLBHeader(inputGLBStream);
 
-			inputGLBStream.Position = GLBHeader.GLB2_FILE_HEADER_SIZE + inputGLBStreamStartPosition;
+			inputGLBStream.Position = glbHeader.GetFileHeaderSize() + inputGLBStreamStartPosition;
 			List<GLBChunkInfo> allChunks = GLTFParser.FindChunks(inputGLBStream);
 			GLBChunkInfo jsonChunkInfo = new GLBChunkInfo
 			{
@@ -167,25 +169,29 @@ namespace GLTF
 
 		private static GLBObject _ConstructFromEmptyStream(Stream inStream, long streamStartPosition)
 		{
+			// Only support GLB version 2 for the empty stream case.
+			GLBHeader glbHeader = new GLBHeader
+			{
+				Version = 2
+			};
+			glbHeader.FileLength = glbHeader.GetFileHeaderSize();
 			GLBObject glbObject = new GLBObject
 			{
 				Stream = inStream,
+				Header = glbHeader,
 				JsonChunkInfo = new GLBChunkInfo
 				{
 					Length = 0,
-					StartPosition = GLBHeader.GLB2_FILE_HEADER_SIZE,
-					Type = GLBChunkFormat.JSON
+					StartPosition = glbHeader.GetFileHeaderSize(),
+					Type = GLBChunkFormat.JSON,
+					Encoding = 0
 				},
 				BinaryChunkInfo = new GLBChunkInfo
 				{
 					Length = 0,
-					StartPosition = GLBHeader.GLB2_FILE_HEADER_SIZE + GLBHeader.GLB2_CHUNK_HEADER_SIZE,
-					Type = GLBChunkFormat.BIN
-				},
-				Header = new GLBHeader
-				{
-					FileLength = GLBHeader.GLB2_FILE_HEADER_SIZE,
-					Version = 2
+					StartPosition = glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize(),
+					Type = GLBChunkFormat.BIN,
+					Encoding = 0
 				},
 				StreamStartPosition = streamStartPosition
 			};
@@ -198,7 +204,6 @@ namespace GLTF
 		/// The GLBObject stream will be updated to be the output stream. Callers are responsible for handling Stream lifetime
 		/// </summary>
 		/// <param name="glb">The GLB to flush to the output stream and update</param>
-		/// <param name="newRoot">Optional root to replace the one in the glb</param>
 		/// <returns>A GLBObject that is based upon outStream</returns>
 		public static void UpdateStream(GLBObject glb)
 		{
@@ -210,12 +215,15 @@ namespace GLTF
 			{
 				glb.Root.Serialize(sw, true);   // todo: this could out of memory exception
 				sw.Flush();
-
-				if (gltfJsonStream.Length > int.MaxValue)
+				GLBHeader glbHeader = glb.Header; // Be sure to write this back in if it was updated.
+				// If the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
+				if (glbHeader.Version == 2 && gltfJsonStream.Length > uint.MaxValue)
 				{
-					// todo: make this a non generic exception
-					throw new Exception("JSON chunk of GLB has exceeded maximum allowed size (4 GB)");
+					glbHeader.Version = 3;
+					glb.Header = glbHeader;
 				}
+				long fileHeaderSize = glbHeader.GetFileHeaderSize();
+				long chunkHeaderSize = glbHeader.GetChunkHeaderSize();
 
 				// realloc of out of space
 				if (glb.JsonChunkInfo.Length < gltfJsonStream.Length)
@@ -229,18 +237,22 @@ namespace GLTF
 					// we have not yet initialized a json chunk before
 					if (glb.JsonChunkInfo.Length == 0)
 					{
-						amountToAddToFile += GLBHeader.GLB2_CHUNK_HEADER_SIZE;
-						glb.SetJsonChunkStartPosition(GLBHeader.GLB2_FILE_HEADER_SIZE);
+						amountToAddToFile += fileHeaderSize;
+						glb.SetJsonChunkStartPosition(chunkHeaderSize);
  					}
 
-					// new proposed length = proposedJsonBufferSize - currentJsonBufferSize + totalFileLength
-					long proposedFileLength = amountToAddToFile + glb.Header.FileLength;
-					if (proposedFileLength > uint.MaxValue)
+					long proposedFileLength = amountToAddToFile + glbHeader.FileLength;
+					// If the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
+					if (glbHeader.Version == 2 && proposedFileLength > uint.MaxValue)
 					{
-						throw new Exception("GLB has exceeded max allowed size (4 GB)");
+						amountToAddToFile -= fileHeaderSize;
+						glbHeader.Version = 3;
+						glb.Header = glbHeader;
+						fileHeaderSize = glbHeader.GetFileHeaderSize();
+						chunkHeaderSize = glbHeader.GetChunkHeaderSize();
+						amountToAddToFile += fileHeaderSize;
+						glb.SetJsonChunkStartPosition(chunkHeaderSize);
 					}
-
-					uint proposedLengthAsUint = (uint)proposedFileLength;
 
 					try
 					{
@@ -256,14 +268,13 @@ namespace GLTF
 						throw;
 					}
 
-					long newBinaryChunkDataStartPosition =
-						GLBHeader.GLB2_FILE_HEADER_SIZE + GLBHeader.GLB2_CHUNK_HEADER_SIZE + proposedJsonChunkLength;
+					long newBinaryChunkDataStartPosition = fileHeaderSize + chunkHeaderSize + proposedJsonChunkLength;
 				
 					glb.Stream.Position = glb.BinaryChunkInfo.StartPosition;
 					glb.SetBinaryChunkStartPosition(newBinaryChunkDataStartPosition);
 					if (glb.BinaryChunkInfo.Length > 0)
 					{
-						long lengthToCopy = glb.BinaryChunkInfo.Length + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
+						long lengthToCopy = glb.BinaryChunkInfo.Length + chunkHeaderSize;
 
 						// todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
 						glb.Stream.CopyToSelf((int)newBinaryChunkDataStartPosition,
@@ -271,8 +282,8 @@ namespace GLTF
 					}
 
 					// write out new GLB length
-					glb.SetFileLength(proposedLengthAsUint);
-					WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
+					glb.SetFileLength(proposedFileLength);
+					WriteHeader(glb.Stream, glbHeader, glb.StreamStartPosition);
 
 					// write out new JSON header
 					glb.SetJsonChunkLength(proposedJsonChunkLength);
@@ -280,7 +291,7 @@ namespace GLTF
 				}
 
 				// clear the buffer
-				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
+				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + chunkHeaderSize;
 				long amountToCopy = glb.JsonChunkInfo.Length;
 				while (amountToCopy != 0)
 				{
@@ -293,7 +304,7 @@ namespace GLTF
 
 				// write new JSON data
 				gltfJsonStream.Position = 0;
-				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
+				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + chunkHeaderSize;
 				gltfJsonStream.CopyTo(glb.Stream);
 				glb.Stream.Flush();
 			}
@@ -311,10 +322,10 @@ namespace GLTF
 		public static BufferViewId AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView = true, long streamStartPosition = 0, string bufferViewName = null)
 		{
 			if (glb == null) throw new ArgumentNullException(nameof(glb));
-			if(glb.Root == null && bufferViewName == null) throw new ArgumentException("glb Root and new root cannot be null", nameof(glb));
-			if(glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
-			if(binaryData == null) throw new ArgumentNullException(nameof(binaryData));
-			if(binaryData.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(binaryData));
+			if (glb.Root == null && bufferViewName == null) throw new ArgumentException("glb Root and new root cannot be null", nameof(glb));
+			if (glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
+			if (binaryData == null) throw new ArgumentNullException(nameof(binaryData));
+			if (glb.Header.Version == 2 && binaryData.Length > uint.MaxValue) throw new ArgumentException("Stream cannot be larger than uint.MaxValue", nameof(binaryData));
 
 			return _AddBinaryData(glb, binaryData, createBufferView, streamStartPosition, bufferViewName);
 		}
@@ -328,12 +339,13 @@ namespace GLTF
 			long newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLength;
 			long newGLBSize = glb.Header.FileLength + blobLength;
 			long blobWritePosition = glb.Header.FileLength;
+			long chunkHeaderSize = glb.Header.GetChunkHeaderSize();
 
 			// there was an existing file that had no binary chunk info previously
 			if (glb.BinaryChunkInfo.Length == 0)
 			{
-				newGLBSize += GLBHeader.GLB2_CHUNK_HEADER_SIZE;
-				blobWritePosition += GLBHeader.GLB2_CHUNK_HEADER_SIZE;
+				newGLBSize += chunkHeaderSize;
+				blobWritePosition += chunkHeaderSize;
 				glb.SetBinaryChunkStartPosition(glb.Header.FileLength);  // if 0, then appends chunk info at the end
 			}
 
@@ -397,7 +409,8 @@ namespace GLTF
 			int previousBufferViewsCount = mergeTo.Root.BufferViews?.Count ?? 0;
 			long previousBufferSize = mergeTo.BinaryChunkInfo.Length;
 			GLTFHelpers.MergeGLTF(mergeTo.Root, mergeFrom.Root);
-			_AddBinaryData(mergeTo, mergeFrom.Stream, false, mergeFrom.BinaryChunkInfo.StartPosition + GLBHeader.GLB2_CHUNK_HEADER_SIZE);
+			long toChunkHeaderSize = mergeTo.Header.GetChunkHeaderSize();
+			_AddBinaryData(mergeTo, mergeFrom.Stream, false, mergeFrom.BinaryChunkInfo.StartPosition + toChunkHeaderSize);
 			long bufferSizeDiff =
 				mergeTo.BinaryChunkInfo.Length -
 				previousBufferSize; // calculate buffer size change to update the byte offsets of the appended buffer views
@@ -438,7 +451,7 @@ namespace GLTF
 						--bufferView.Buffer.Id;
 					}
 
-					glb.SetFileLength(glb.Header.FileLength - GLBHeader.GLB2_CHUNK_HEADER_SIZE);
+					glb.SetFileLength(glb.Header.FileLength - glb.Header.GetChunkHeaderSize());
 				}
 				else
 				{
@@ -510,7 +523,15 @@ namespace GLTF
 			stream.Position = streamStartPosition;
 			byte[] magicNumber = BitConverter.GetBytes(GLBHeader.GLTF_MAGIC_NUMBER);
 			byte[] version = BitConverter.GetBytes(glbHeader.Version);
-			byte[] length = BitConverter.GetBytes(glbHeader.FileLength);
+			byte[] length;
+			if (glbHeader.Version == 2)
+			{
+				length = BitConverter.GetBytes((uint)glbHeader.FileLength);
+			}
+			else
+			{
+				length = BitConverter.GetBytes((ulong)glbHeader.FileLength);
+			}
 
 			stream.Write(magicNumber, 0, magicNumber.Length);
 			stream.Write(version, 0, version.Length);
