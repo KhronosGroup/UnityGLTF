@@ -40,7 +40,7 @@
 		/// <param name="bufferSize">Size of array to use for each copy</param>
 		public static void CopyToSelf(this Stream source, int destinationOffset, uint amountToCopy)
 		{
-			if (destinationOffset <= source.Position) throw new NotImplementedException("desintation offset must be larger than source offset");
+			if (destinationOffset <= source.Position) throw new NotImplementedException("destination offset must be larger than source offset");
 
 			int highwaterMark = 0;
 			long initialOffset = source.Position;
