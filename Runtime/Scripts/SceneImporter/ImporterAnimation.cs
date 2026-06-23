@@ -66,7 +66,7 @@ namespace UnityGLTF
 				{
 					AccessorId = samplerDef.Input,
 					bufferData = inputBufferCacheData?.bufferData ?? default,
-					Offset = inputBufferCacheData?.ChunkOffset ?? 0,
+					Offset = inputBufferCacheData?.ChunkDataOffset ?? 0,
 				};
 
 				samplers[i].Input = attributeAccessor;
@@ -78,7 +78,7 @@ namespace UnityGLTF
 				{
 					AccessorId = samplerDef.Output,
 					bufferData = outputBufferCacheData?.bufferData ?? default,
-					Offset = outputBufferCacheData?.ChunkOffset ?? 0,
+					Offset = outputBufferCacheData?.ChunkDataOffset ?? 0,
 				};
 
 				samplers[i].Output = attributeAccessor;
