@@ -726,7 +726,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLB(string path, string fileName)
+		public void SaveGLB(string path, string fileName, int glbVersion)
 		{
 			var fullPath = GetFileName(path, fileName, ".glb");
 			var dirName = Path.GetDirectoryName(fullPath);
@@ -736,7 +736,7 @@ namespace UnityGLTF
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
 			{
-				SaveGLBToStream(glbFile, fileName);
+				SaveGLBToStream(glbFile, fileName, glbVersion);
 			}
 
 			if (!_shouldUseInternalBufferForImages)
@@ -751,12 +751,12 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="sceneName"></param>
 		/// <returns></returns>
-		public byte[] SaveGLBToByteArray(string sceneName)
+		public byte[] SaveGLBToByteArray(string sceneName, int glbVersion)
 		{
 			_shouldUseInternalBufferForImages = true;
 			using (var stream = new MemoryStream())
 			{
-				SaveGLBToStream(stream, sceneName);
+				SaveGLBToStream(stream, sceneName, glbVersion);
 				return stream.ToArray();
 			}
 		}
@@ -766,7 +766,8 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLBToStream(Stream stream, string sceneName)
+		/// <param name="glbVersion">The preferred GLB binary format version (-1, 2 or 3). -1 means auto: It will try 2, but the file exceeds 4 GiB, it will automatically upgrade to 3.</param>
+		public void SaveGLBToStream(Stream stream, string sceneName, int glbVersion)
 		{
 			exportGltfMarker.Begin();
 
@@ -816,32 +817,68 @@ namespace UnityGLTF
 			_bufferWriter.Flush();
 			jsonWriter.Flush();
 
-			// align to 4-byte boundary to comply with spec.
-			AlignToBoundary(jsonStream, (byte)'_');
-			AlignToBoundary(binStream, 0x00);
-
-			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
-				jsonStream.Length + SectionHeaderSize + binStream.Length);
+			GLTF.GLBHeader glbHeader = new GLTF.GLBHeader
+			{
+				Version = (uint)(glbVersion == -1 ? 2 : glbVersion)
+			};
+			// Align chunks to 4-byte or 8-byte boundary to comply with spec.
+			AlignToBoundary(jsonStream, (byte)' ', glbHeader.GetAlignment());
+			AlignToBoundary(binStream, 0x00, glbHeader.GetAlignment());
+			long glbLength = jsonStream.Length + binStream.Length + glbHeader.GetFileHeaderSize() + (glbHeader.GetChunkHeaderSize() * 2);
+			// If automatic, and the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
+			if (glbVersion == -1 && glbLength > uint.MaxValue)
+			{
+				glbHeader.Version = 3;
+				AlignToBoundary(jsonStream, (byte)' ', glbHeader.GetAlignment());
+				AlignToBoundary(binStream, 0x00, glbHeader.GetAlignment());
+				glbLength = jsonStream.Length + binStream.Length + glbHeader.GetFileHeaderSize() + (glbHeader.GetChunkHeaderSize() * 2);
+			}
 
 			BinaryWriter writer = new BinaryWriter(stream);
 
-			// write header
+			// Write file header (12 or 16 bytes depending on GLB version).
 			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
-			writer.Write(Version);
-			writer.Write(glbLength);
+			writer.Write(glbHeader.Version);
+			if (glbHeader.Version == 2)
+			{
+				writer.Write((uint)glbLength);
+			}
+			else
+			{
+				writer.Write((ulong)glbLength);
+			}
 
+			// Write JSON chunk header (8 or 16 bytes depending on GLB version).
 			gltfWriteJsonStreamMarker.Begin();
-			// write JSON chunk header.
-			writer.Write((int)jsonStream.Length);
-			writer.Write(MagicJson);
+			if (glbHeader.Version == 2)
+			{
+				writer.Write((uint)jsonStream.Length);
+				writer.Write((uint)GLTF.GLBChunkFormat.JSON);
+			}
+			else
+			{
+				writer.Write((uint)GLTF.GLBChunkFormat.JSON);
+				writer.Write((uint)0); // Plain chunk encoding.
+				writer.Write((ulong)jsonStream.Length);
+			}
 
 			jsonStream.Position = 0;
 			CopyStream(jsonStream, writer);
 			gltfWriteJsonStreamMarker.End();
 
+			// Write binary chunk header (8 or 16 bytes depending on GLB version).
 			gltfWriteBinaryStreamMarker.Begin();
-			writer.Write((int)binStream.Length);
-			writer.Write(MagicBin);
+			if (glbHeader.Version == 2)
+			{
+				writer.Write((uint)binStream.Length);
+				writer.Write((uint)GLTF.GLBChunkFormat.BIN);
+			}
+			else
+			{
+				writer.Write((uint)GLTF.GLBChunkFormat.BIN);
+				writer.Write((uint)0); // Plain chunk encoding.
+				writer.Write((ulong)binStream.Length);
+			}
 
 			binStream.Position = 0;
 			CopyStream(binStream, writer);

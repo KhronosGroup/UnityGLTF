@@ -17,7 +17,7 @@ namespace GLTF
 		/// <param name="loader">Loader for loading external components from GLTFRoot. The loader will receive uris and return the stream to the resource</param>
 		/// <param name="glbVersion">The GLB binary format version to output.</param>
 		/// <returns>A constructed GLBObject</returns>
-		private static GLBObject ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader, uint glbVersion = 2)
+		private static GLBObject ConstructFromGLTF(GLTFRoot root, Stream glbOutStream, Func<string, Stream> loader, int glbVersion)
 		{
 			if (root == null) throw new ArgumentNullException(nameof(root));
 			if (glbOutStream == null) throw new ArgumentNullException(nameof(glbOutStream));
@@ -29,11 +29,11 @@ namespace GLTF
 				sw.Flush();
 				GLBHeader glbHeader = new GLBHeader
 				{
-					Version = glbVersion,
+					Version = (uint)(glbVersion == -1 ? 2 : glbVersion)
 				};
 				long proposedFileLength = gltfJsonStream.Length + glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize();
-				// If the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
-				if (glbHeader.Version == 2 && proposedFileLength > uint.MaxValue)
+				// If automatic, and the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
+				if (glbVersion == -1 && proposedFileLength > uint.MaxValue)
 				{
 					glbHeader.Version = 3;
 					proposedFileLength = gltfJsonStream.Length + glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize();
@@ -158,7 +158,7 @@ namespace GLTF
 				}
 				if (!root.IsGLB)
 				{
-					return ConstructFromGLTF(root, glbOutStream, loader);
+					return ConstructFromGLTF(root, glbOutStream, loader, 2);
 				}
 
 				return ConstructFromGLB(root, inStream, glbOutStream, streamStartPosition);
