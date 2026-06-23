@@ -43,10 +43,10 @@ public partial class GLTFSceneExporter
 	/// space (' ').</param>
 	/// <param name="boundary">The boundary to align with, in bytes.
 	/// </param>
-	private static void AlignToBoundary(Stream stream, byte pad = (byte)' ', uint boundary = 4)
+	private static void AlignToBoundary(Stream stream, byte pad, long boundary = 4)
 	{
-		uint currentLength = (uint)stream.Length;
-		uint newLength = CalculateAlignment(currentLength, boundary);
+		long currentLength = stream.Length;
+		long newLength = CalculateAlignment(currentLength, boundary);
 		for (int i = 0; i < newLength - currentLength; i++)
 		{
 			stream.WriteByte(pad);
@@ -60,7 +60,7 @@ public partial class GLTFSceneExporter
 	/// <param name="currentSize">The current size of the buffer.</param>
 	/// <param name="byteAlignment">The number of bytes to align with.</param>
 	/// <returns></returns>
-	public static uint CalculateAlignment(uint currentSize, uint byteAlignment)
+	public static long CalculateAlignment(long currentSize, long byteAlignment)
 	{
 		return (currentSize + byteAlignment - 1) / byteAlignment * byteAlignment;
 	}
@@ -70,7 +70,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorUintArrayMarker.Begin();
 
-			var count = (uint)arr.Length;
+			long count = (long)arr.Length;
 
 			if (count == 0)
 			{
@@ -133,7 +133,7 @@ public partial class GLTFSceneExporter
 			accessor.Max = new List<double> { maxX, maxY, maxZ, maxW };
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
 			foreach (var vec in arr)
@@ -145,9 +145,9 @@ public partial class GLTFSceneExporter
 			}
 			exportAccessorBufferWriteMarker.End();
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
-			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
 			var id = new AccessorId
 			{
@@ -168,7 +168,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorVector4ArrayMarker.Begin();
 
-			var count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -246,7 +246,7 @@ public partial class GLTFSceneExporter
 			accessor.Max = new List<double> { maxX, maxY, maxZ, maxW };
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
 #if USE_FAST_BINARY_WRITER
@@ -262,9 +262,9 @@ public partial class GLTFSceneExporter
 #endif
 			exportAccessorBufferWriteMarker.End();
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
-			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
 			var id = new AccessorId
 			{
@@ -284,7 +284,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorMatrix4x4ArrayMarker.Begin();
 
-			var count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -299,7 +299,7 @@ public partial class GLTFSceneExporter
 			// Dont serialize min/max for matrices
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
 			foreach (var mat in arr)
@@ -316,9 +316,9 @@ public partial class GLTFSceneExporter
 			}
 			exportAccessorBufferWriteMarker.End();
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
-			accessor.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
 			var id = new AccessorId
 			{
@@ -339,7 +339,7 @@ public partial class GLTFSceneExporter
 		/// <returns>
 		/// The accessor id.You can get the actual accessor via val.Root.Accessors[val.Id].
 		/// </returns>
-		public AccessorId ExportAccessor(byte[] data, uint count, GLTFAccessorAttributeType type, GLTFComponentType componentType, List<double> min, List<double> max)
+		public AccessorId ExportAccessor(byte[] data, long count, GLTFAccessorAttributeType type, GLTFComponentType componentType, List<double> min, List<double> max)
 		{
 			exportAccessorMarker.Begin();
 			exportAccessorByteArrayMarker.Begin();
@@ -355,7 +355,7 @@ public partial class GLTFSceneExporter
 			accessor.ComponentType = componentType;
 			
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 			
 			foreach (var v in data)
 			{
@@ -365,7 +365,7 @@ public partial class GLTFSceneExporter
 			accessor.Min = min;
 			accessor.Max = max;
 			
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 			
 			var id = new AccessorId
@@ -386,7 +386,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorByteArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -415,7 +415,7 @@ public partial class GLTFSceneExporter
 			}
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 1);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 1);
 
 			accessor.ComponentType = GLTFComponentType.UnsignedByte;
 
@@ -427,7 +427,7 @@ public partial class GLTFSceneExporter
 			accessor.Min = new List<double> { min };
 			accessor.Max = new List<double> { max };
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 1);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 1);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -449,7 +449,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorFloatArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -480,7 +480,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMinMaxMarker.End();
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, sizeof(float));
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, sizeof(float));
 
 			exportAccessorBufferWriteMarker.Begin();
 			accessor.ComponentType = GLTFComponentType.Float;
@@ -498,7 +498,7 @@ public partial class GLTFSceneExporter
 			accessor.Min = new List<double> { min };
 			accessor.Max = new List<double> { max };
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -520,7 +520,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			if (isIndices) exportAccessorIntArrayIndicesMarker.Begin(); else exportAccessorIntArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -549,7 +549,7 @@ public partial class GLTFSceneExporter
 			}
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			// From the spec:
 			// Values of the index accessor must not include the maximum value for the given component type,
@@ -615,7 +615,7 @@ public partial class GLTFSceneExporter
 			accessor.Min = new List<double> { min };
 			accessor.Max = new List<double> { max };
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -637,7 +637,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorVector2ArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -680,7 +680,7 @@ public partial class GLTFSceneExporter
 			accessor.Max = new List<double> { maxX, maxY };
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			foreach (var vec in arr)
 			{
@@ -688,7 +688,7 @@ public partial class GLTFSceneExporter
 				_bufferWriter.Write(vec.y);
 			}
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -710,7 +710,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorVector3ArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -763,7 +763,7 @@ public partial class GLTFSceneExporter
 			accessor.Max = new List<double> { maxX, maxY, maxZ };
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
 #if USE_FAST_BINARY_WRITER
@@ -778,7 +778,7 @@ public partial class GLTFSceneExporter
 #endif
 			exportAccessorBufferWriteMarker.End();
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength, sizeof(float) * 3);
 
@@ -807,7 +807,7 @@ public partial class GLTFSceneExporter
 		{
 			exportSparseAccessorMarker.Begin();
 
-			uint dataCount = (uint) arr.Length;
+			long dataCount = (long)arr.Length;
 			if (dataCount == 0)
 			{
 				throw new Exception("Accessors can not have a count of 0.");
@@ -856,7 +856,7 @@ public partial class GLTFSceneExporter
 			}
 
 			// we need to calculate the min/max of the entire new data array
-			uint count = (uint) arr.Length;
+			long count = (long)arr.Length;
 
 			var firstElement = baseData != null ? (baseData[0] + arr[0]) : arr[0];
 			float minX = firstElement.x;
@@ -901,7 +901,7 @@ public partial class GLTFSceneExporter
 
 			// write indices
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffsetIndices = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffsetIndices = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			// Debug.Log("Storing " + indices.Count + " sparse indices + values");
 
@@ -910,7 +910,7 @@ public partial class GLTFSceneExporter
 				_bufferWriter.Write(index);
 			}
 
-			uint byteLengthIndices = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffsetIndices, 4);
+			long byteLengthIndices = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffsetIndices, 4);
 
 			sparse.Indices = new AccessorSparseIndices();
 			// TODO should be properly using the smallest possible component type
@@ -919,7 +919,7 @@ public partial class GLTFSceneExporter
 
 			// write values
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
 			foreach (var i in indices)
@@ -931,7 +931,7 @@ public partial class GLTFSceneExporter
 			}
 			exportAccessorBufferWriteMarker.End();
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			sparse.Values = new AccessorSparseValues();
 			sparse.Values.BufferView = ExportBufferView(byteOffset, byteLength);
@@ -956,7 +956,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorVector4ArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -1027,7 +1027,7 @@ public partial class GLTFSceneExporter
 			accessor.Max = new List<double> { maxX, maxY, maxZ, maxW };
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			exportAccessorBufferWriteMarker.Begin();
 #if USE_FAST_BINARY_WRITER
@@ -1043,7 +1043,7 @@ public partial class GLTFSceneExporter
 #endif
 			exportAccessorBufferWriteMarker.End();
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -1065,7 +1065,7 @@ public partial class GLTFSceneExporter
 			exportAccessorMarker.Begin();
 			exportAccessorColorArrayMarker.Begin();
 
-			uint count = (uint)arr.Length;
+			long count = arr.Length;
 
 			if (count == 0)
 			{
@@ -1136,7 +1136,7 @@ public partial class GLTFSceneExporter
 			}
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			if(exportAlphaChannel)
 			{
@@ -1158,7 +1158,7 @@ public partial class GLTFSceneExporter
 				}
 			}
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
 
 			accessor.BufferView = ExportBufferView(byteOffset, byteLength);
 
@@ -1177,13 +1177,13 @@ public partial class GLTFSceneExporter
 
 		public BufferViewId ExportBufferView(byte[] bytes) {
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 			_bufferWriter.Write(bytes);
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
-			return ExportBufferView((uint)byteOffset, (uint)byteLength);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
+			return ExportBufferView(byteOffset, byteLength);
 		}
 
-		private BufferViewId ExportBufferView(uint byteOffset, uint byteLength, uint byteStride = 0)
+		private BufferViewId ExportBufferView(long byteOffset, long byteLength, uint byteStride = 0)
 		{
 			var bufferView = new BufferView
 			{

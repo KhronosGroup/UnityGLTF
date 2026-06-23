@@ -38,27 +38,29 @@
 		/// <param name="destinationOffset">Offset into stream to copy</param>
 		/// <param name="amountToCopy">Amount of stream to copy</param>
 		/// <param name="bufferSize">Size of array to use for each copy</param>
-		public static void CopyToSelf(this Stream source, int destinationOffset, uint amountToCopy)
+		public static void CopyToSelf(this Stream source, long destinationOffset, long amountToCopy)
 		{
 			if (destinationOffset <= source.Position) throw new NotImplementedException("destination offset must be larger than source offset");
 
-			int highwaterMark = 0;
+			long highwaterMark = 0;
 			long initialOffset = source.Position;
 			try
 			{
-				int read;
+				long read;
+				// This value is limited to `_CopyBuffer.Length` aka `_DefaultCopyBufferSize`,
+				// which is limited to C#'s 32-bit managed arrays, so it should be a 32-bit integer.
 				int amountToRead;
 				while ((source.Position = initialOffset + amountToCopy - (amountToRead = (int)Math.Min(_CopyBuffer.Length, amountToCopy))) >= 0 && (read = source.Read(_CopyBuffer, 0, amountToRead)) != 0)
 				{
 					if (read > highwaterMark) highwaterMark = read;
 					source.Position = destinationOffset + amountToCopy - read;
-					source.Write(_CopyBuffer, 0, read);
-					amountToCopy -= (uint)read;
+					source.Write(_CopyBuffer, 0, (int)read);
+					amountToCopy -= read;
 				}
 			}
 			finally
 			{
-				Array.Clear(_CopyBuffer, 0, highwaterMark); // clear only the most we used
+				Array.Clear(_CopyBuffer, 0, (int)highwaterMark); // clear only the most we used
 			}
 		}
 	}

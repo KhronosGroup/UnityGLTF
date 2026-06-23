@@ -19,7 +19,7 @@ namespace GLTF.Schema
 		/// The length of the buffer in bytes.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public uint ByteLength;
+		public long ByteLength;
 
 		public GLTFBuffer()
 		{
@@ -46,7 +46,7 @@ namespace GLTF.Schema
 						buffer.Uri = reader.ReadAsString();
 						break;
 					case "byteLength":
-						buffer.ByteLength = reader.ReadDoubleAsUInt32();
+						buffer.ByteLength = (long)reader.ReadDoubleAsUInt64();
 						break;
 					default:
 						buffer.DefaultPropertyDeserializer(root, reader);

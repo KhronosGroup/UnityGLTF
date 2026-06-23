@@ -8,7 +8,7 @@ namespace UnityGLTF.Cache
 		/// <summary>
 		/// The offset in the stream where the chunk data starts, past the chunk header.
 		/// </summary>
-		public uint ChunkDataOffset { get; set; }
+		public long ChunkDataOffset { get; set; }
 		public System.IO.Stream Stream { get; set; }
 
 		public NativeArray<byte> bufferData { get; set; }
