@@ -30,7 +30,7 @@ namespace GLTF
 				long proposedLength = gltfJsonStream.Length + GLTFParser.HEADER_SIZE + GLTFParser.CHUNK_HEADER_SIZE;
 				if (gltfJsonStream.Length > uint.MaxValue)
 				{
-					throw new ArgumentException("Serialized root cannot exceed uint.maxvalue", nameof(root));
+					throw new ArgumentException("Serialized root cannot exceed uint.MaxValue", nameof(root));
 				}
 				uint proposedLengthAsUint = (uint)proposedLength;
 				glbOutStream.SetLength(proposedLengthAsUint);
@@ -195,7 +195,7 @@ namespace GLTF
 
 		/// <summary>
 		/// Saves out the GLBObject to its own stream
-		/// The GLBObject stream will be updated to be the output stream. Callers are reponsible for handling Stream lifetime
+		/// The GLBObject stream will be updated to be the output stream. Callers are responsible for handling Stream lifetime
 		/// </summary>
 		/// <param name="glb">The GLB to flush to the output stream and update</param>
 		/// <param name="newRoot">Optional root to replace the one in the glb</param>
@@ -233,7 +233,7 @@ namespace GLTF
 						glb.SetJsonChunkStartPosition(GLTFParser.HEADER_SIZE);
  					}
 
-					// new proposed length = propsoedJsonBufferSize - currentJsonBufferSize + totalFileLength
+					// new proposed length = proposedJsonBufferSize - currentJsonBufferSize + totalFileLength
 					long proposedLength = amountToAddToFile + glb.Header.FileLength;
 					if (proposedLength > uint.MaxValue)
 					{
@@ -392,8 +392,8 @@ namespace GLTF
 			if (mergeFrom == null) throw new ArgumentNullException(nameof(mergeFrom));
 			
 			// 1) merge json
-			// 2) copy mergefrom binary data to mergeto binary data
-			// 3) Fix up bufferviews to be the new offset
+			// 2) copy merge from binary data to merge to binary data
+			// 3) Fix up buffer views to be the new offset
 			int previousBufferViewsCount = mergeTo.Root.BufferViews?.Count ?? 0;
 			uint previousBufferSize = mergeTo.BinaryChunkInfo.Length;
 			GLTFHelpers.MergeGLTF(mergeTo.Root, mergeFrom.Root);

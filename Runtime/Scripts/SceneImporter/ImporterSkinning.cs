@@ -19,7 +19,7 @@ namespace UnityGLTF
 			var boneCount = skin.Joints.Count;
 			Transform[] bones = new Transform[boneCount];
 
-			// TODO: build bindpose arrays only once per skin, instead of once per node
+			// TODO: build bind pose arrays only once per skin, instead of once per node
 			float4x4[] gltfBindPoses = null;
 			if (skin.InverseBindMatrices != null)
 			{

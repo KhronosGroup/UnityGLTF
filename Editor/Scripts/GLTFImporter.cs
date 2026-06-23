@@ -201,7 +201,7 @@ namespace UnityGLTF
 	        // public float endTime;
 		}
 
-#if !UNIYT_2020_2_OR_NEWER
+#if !UNITY_2020_2_OR_NEWER
 	    private class NonReorderableAttribute : Attribute {}
 #endif
 
@@ -813,7 +813,7 @@ namespace UnityGLTF
                         foreach (var mat in materials)
                         {
 	                        if (!mat) continue;
-	                        // ensure materials that are overriden aren't shown in the hierarchy.
+	                        // ensure materials that are overridden aren't shown in the hierarchy.
 	                        var si = new SourceAssetIdentifier(mat);
 	                        if (map.TryGetValue(si, out var remappedMaterial) && remappedMaterial)
 		                        mat.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
