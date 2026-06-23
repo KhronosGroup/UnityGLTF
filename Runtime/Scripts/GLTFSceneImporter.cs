@@ -896,7 +896,7 @@ namespace UnityGLTF
 		public NativeArray<byte> GetBufferViewData(BufferView bufferView)
 		{
 			GetBufferData(bufferView.Buffer).Wait();
-			GLTFHelpers.LoadBufferView(bufferView, _assetCache.BufferCache[bufferView.Buffer.Id].ChunkOffset, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
+			GLTFHelpers.LoadBufferView(bufferView, _assetCache.BufferCache[bufferView.Buffer.Id].ChunkDataOffset, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
 			return bufferViewCache;
 		}
 
@@ -1016,7 +1016,7 @@ namespace UnityGLTF
 					{
 						AccessorId = accessorId,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = (uint)bufferData.ChunkDataOffset
 					};					
 					GLTFHelpers.LoadBufferView(accessor.BufferView.Value, attrAccessor.Offset, attrAccessor.bufferData, out var bufferViewCache);
 					NumericArray resultArray = attrAccessor.AccessorContent;
@@ -1382,11 +1382,11 @@ namespace UnityGLTF
 				var bufferCacheData = new BufferCacheData
 				{
 					bufferData = new NativeArray<byte>((int)buffer.ByteLength, Allocator.Persistent),
-					ChunkOffset = 0
+					ChunkDataOffset = 0
 				};
 
 				meshOptNativeBuffers.Add(bufferCacheData.bufferData);
-				_assetCache.BufferCache[bufferIndex] = bufferCacheDate;
+				_assetCache.BufferCache[bufferIndex] = bufferCacheData;
 				return;
 			}
 #else
@@ -1563,11 +1563,11 @@ namespace UnityGLTF
 
 		protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
 		{
-			GLTFParser.SeekToBinaryChunk(_gltfStream.Stream, bufferIndex, _gltfStream.StartPosition);  // sets stream to correct start position
+			GLTFParser.SeekToBinaryChunkData(_gltfStream.Stream, bufferIndex, _gltfStream.StartPosition);  // sets stream to correct start position
 			return new BufferCacheData
 			{
 				Stream = _gltfStream.Stream,
-				ChunkOffset = (uint)_gltfStream.Stream.Position,
+				ChunkDataOffset = (uint)_gltfStream.Stream.Position,
 				bufferData = GetOrCreateNativeBuffer(_gltfStream.Stream),
 			};
 		}

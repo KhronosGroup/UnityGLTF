@@ -29,7 +29,7 @@ namespace UnityGLTF
 				{
 					AccessorId = skin.InverseBindMatrices,
 					bufferData = bufferData.bufferData,
-					Offset = bufferData.ChunkOffset
+					Offset = bufferData.ChunkDataOffset
 				};
 
 				GLTFHelpers.BuildBindPoseSamplers(ref attributeAccessor);
