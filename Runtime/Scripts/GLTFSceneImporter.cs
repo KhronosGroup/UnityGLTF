@@ -1561,7 +1561,9 @@ namespace UnityGLTF
 
 		protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
 		{
-			GLTFParser.SeekToBinaryChunkData(_gltfStream.Stream, bufferIndex, _gltfStream.StartPosition);  // sets stream to correct start position
+			int binaryChunkIndex = bufferIndex + 1; // Chunk 0 is the JSON chunk, chunk 1 is buffer 0.
+			GLBChunkInfo chunkInfo = GLTFParser.SeekToBinaryChunkData(_gltfStream.Stream, binaryChunkIndex, _gltfStream.StartPosition);  // sets stream to correct start position
+			GLTFParser.ThrowIfUnsupportedChunkEncoding(chunkInfo);
 			return new BufferCacheData
 			{
 				Stream = _gltfStream.Stream,
