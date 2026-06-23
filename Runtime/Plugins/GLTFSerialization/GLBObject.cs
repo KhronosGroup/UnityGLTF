@@ -18,8 +18,10 @@ namespace GLTF
 		public uint Version { get; set; }
 		public long FileLength { get; set; }
 
-		public static readonly uint GLB2_FILE_HEADER_SIZE = 12;
-		public static readonly uint GLB2_CHUNK_HEADER_SIZE = 8;
+		public long GetFileHeaderSize() => Version == 2 ? 12 : 16;
+		public long GetChunkHeaderSize() => Version == 2 ? 8 : 16;
+		public long GetAlignment() => Version == 2 ? 4 : 8;
+		public long GetAlignmentBitmask() => Version == 2 ? 3 : 7;
 
 		/// <summary>
 		/// ASCII string "glTF" in little-endian order.
@@ -35,6 +37,7 @@ namespace GLTF
 		public long StartPosition;
 		public long Length;
 		public GLBChunkFormat Type;
+		public uint Encoding;
 	}
 
 	/// <summary>
