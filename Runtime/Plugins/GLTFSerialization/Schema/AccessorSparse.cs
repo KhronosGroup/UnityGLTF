@@ -9,7 +9,7 @@ namespace GLTF.Schema
 		/// Number of entries stored in the sparse array.
 		/// <minimum>1</minimum>
 		/// </summary>
-		public int Count;
+		public long Count;
 
 		/// <summary>
 		/// Index array of size `count` that points to those accessor attributes that

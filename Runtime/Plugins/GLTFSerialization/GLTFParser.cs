@@ -147,8 +147,24 @@ namespace GLTF
 		{
 			var uintSize = sizeof(uint);
 			byte[] headerBuffer = new byte[uintSize];
-			stream.Read(headerBuffer, 0, uintSize);
+			int bytesRead = stream.Read(headerBuffer, 0, uintSize);
+			if (bytesRead != uintSize)
+			{
+				throw new EndOfStreamException("Unexpected end of stream while reading uint32.");
+			}
 			return BitConverter.ToUInt32(headerBuffer, 0);
+		}
+
+		private static ulong GetUInt64(Stream stream)
+		{
+			var ulongSize = sizeof(ulong);
+			byte[] headerBuffer = new byte[ulongSize];
+			int bytesRead = stream.Read(headerBuffer, 0, ulongSize);
+			if (bytesRead != ulongSize)
+			{
+				throw new EndOfStreamException("Unexpected end of stream while reading uint64.");
+			}
+			return BitConverter.ToUInt64(headerBuffer, 0);
 		}
 	}
 }

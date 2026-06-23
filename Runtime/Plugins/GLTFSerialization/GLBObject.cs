@@ -16,7 +16,7 @@ namespace GLTF
 	public struct GLBHeader
 	{
 		public uint Version { get; set; }
-		public uint FileLength { get; set; }
+		public long FileLength { get; set; }
 
 		public static readonly uint GLB2_FILE_HEADER_SIZE = 12;
 		public static readonly uint GLB2_CHUNK_HEADER_SIZE = 8;
@@ -33,7 +33,7 @@ namespace GLTF
 	public struct GLBChunkInfo
 	{
 		public long StartPosition;
-		public uint Length;
+		public long Length;
 		public GLBChunkFormat Type;
 	}
 
@@ -89,7 +89,7 @@ namespace GLTF
 		{
 		}
 
-		internal void SetFileLength(uint newHeaderLength)
+		internal void SetFileLength(long newHeaderLength)
 		{
 			_glbHeader.FileLength = newHeaderLength;
 		}
@@ -99,7 +99,7 @@ namespace GLTF
 			_jsonChunkInfo.StartPosition = startPosition;
 		}
 
-		internal void SetJsonChunkLength(uint jsonChunkLength)
+		internal void SetJsonChunkLength(long jsonChunkLength)
 		{
 			_jsonChunkInfo.Length = jsonChunkLength;
 		}
@@ -109,7 +109,7 @@ namespace GLTF
 			_binaryChunkInfo.StartPosition = startPosition;
 		}
 
-		internal void SetBinaryChunkLength(uint binaryChunkLength)
+		internal void SetBinaryChunkLength(long binaryChunkLength)
 		{
 			_binaryChunkInfo.Length = binaryChunkLength;
 			if (Root.Buffers == null)
