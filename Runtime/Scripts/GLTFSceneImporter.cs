@@ -1565,7 +1565,7 @@ namespace UnityGLTF
 			return new BufferCacheData
 			{
 				Stream = _gltfStream.Stream,
-				ChunkDataOffset = (uint)_gltfStream.Stream.Position,
+				ChunkDataOffset = _gltfStream.Stream.Position,
 				bufferData = GetOrCreateNativeBuffer(_gltfStream.Stream),
 			};
 		}

@@ -181,9 +181,9 @@ namespace UnityGLTF
 				if (!accessorIds.ContainsKey(acc.Id))
 				{
 					accessorIds.Add(acc.Id, acc);
-					totalVertCount += acc.Value.Count;
+					totalVertCount += (uint)acc.Value.Count;
 					vOffset = lastVertOffset;
-					lastVertOffset += acc.Value.Count;
+					lastVertOffset += (uint)acc.Value.Count;
 				}
 
 				vertOffsetBySubMesh[primIndex] = vOffset;
@@ -850,7 +850,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = _assetCache.BufferCache[bufferID].bufferData,
-						Offset = (uint)_assetCache.BufferCache[bufferID].ChunkDataOffset
+						Offset = _assetCache.BufferCache[bufferID].ChunkDataOffset
 					};
 
 					// if this buffer isn't sparse, we're done here
@@ -910,7 +910,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkDataOffset
+						Offset = bufferData.ChunkDataOffset
 					};
 					GLTFHelpers.LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value,
 						sparseValues.Offset, sparseValues.bufferData, out NativeArray<byte> bufferViewCache1);
@@ -922,7 +922,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkDataOffset,
+						Offset = bufferData.ChunkDataOffset,
 					};
 					GLTFHelpers.LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value,
 						sparseIndices.Offset, sparseIndices.bufferData, out NativeArray<byte> bufferViewCache2);
@@ -1218,7 +1218,7 @@ namespace UnityGLTF
 					{
 						AccessorId = attributePair.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkDataOffset
+						Offset = bufferData.ChunkDataOffset
 					};
 				}
 				
@@ -1233,7 +1233,7 @@ namespace UnityGLTF
 						{
 							AccessorId = attributePair.Value,
 							bufferData = sparseBufferData.bufferData,
-							Offset = (uint)sparseBufferData.ChunkDataOffset
+							Offset = sparseBufferData.ChunkDataOffset
 						};
 
 						var sparseIndicesBufferId = sparse.Indices.BufferView.Value.Buffer;
@@ -1242,7 +1242,7 @@ namespace UnityGLTF
 						{
 							AccessorId = attributePair.Value,
 							bufferData = sparseIndicesBufferData.bufferData,
-							Offset = (uint)sparseIndicesBufferData.ChunkDataOffset
+							Offset = sparseIndicesBufferData.ChunkDataOffset
 						};
 
 						primData.SparseAccessors[attributePair.Key] = (sparseIndices, sparseValues);
@@ -1261,7 +1261,7 @@ namespace UnityGLTF
 					{
 						AccessorId = primitive.Indices,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkDataOffset
+						Offset = bufferData.ChunkDataOffset
 					};
 				}
 			}
@@ -1281,7 +1281,7 @@ namespace UnityGLTF
 			uint vertexCount = 0;
 			if (meshAttributes.TryGetValue(SemanticProperties.POSITION, out var attribute))
 			{
-				vertexCount = attribute.AccessorId.Value.Count;
+				vertexCount = (uint)attribute.AccessorId.Value.Count;
 			}
 
 			int[] indices = null;

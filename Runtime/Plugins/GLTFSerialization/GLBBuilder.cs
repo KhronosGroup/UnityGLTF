@@ -220,11 +220,11 @@ namespace GLTF
 				// realloc of out of space
 				if (glb.JsonChunkInfo.Length < gltfJsonStream.Length)
 				{
-					uint proposedJsonChunkLength = (uint)System.Math.Min((long)gltfJsonStream.Length * 2, uint.MaxValue); // allocate double what is required
+					long proposedJsonChunkLength = System.Math.Min((long)gltfJsonStream.Length * 2, (long)uint.MaxValue); // allocate double what is required
 					proposedJsonChunkLength = CalculateAlignment(proposedJsonChunkLength, 4);
 					
 					// chunks must be 4 byte aligned
-					uint amountToAddToFile = proposedJsonChunkLength - glb.JsonChunkInfo.Length;
+					long amountToAddToFile = proposedJsonChunkLength - glb.JsonChunkInfo.Length;
 
 					// we have not yet initialized a json chunk before
 					if (glb.JsonChunkInfo.Length == 0)
@@ -263,7 +263,7 @@ namespace GLTF
 					glb.SetBinaryChunkStartPosition(newBinaryChunkDataStartPosition);
 					if (glb.BinaryChunkInfo.Length > 0)
 					{
-						uint lengthToCopy = glb.BinaryChunkInfo.Length + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
+						long lengthToCopy = glb.BinaryChunkInfo.Length + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
 
 						// todo: we need to be able to copy while doing it with smaller buffers. Also int is smaller than uint, so this is not standards compliant.
 						glb.Stream.CopyToSelf((int)newBinaryChunkDataStartPosition,
@@ -281,12 +281,12 @@ namespace GLTF
 
 				// clear the buffer
 				glb.Stream.Position = glb.JsonChunkInfo.StartPosition + GLBHeader.GLB2_CHUNK_HEADER_SIZE;
-				uint amountToCopy = glb.JsonChunkInfo.Length;
+				long amountToCopy = glb.JsonChunkInfo.Length;
 				while (amountToCopy != 0)
 				{
-					int currAmountToCopy = (int)System.Math.Min(amountToCopy, int.MaxValue);
+					long currAmountToCopy = System.Math.Min(amountToCopy, (long)int.MaxValue);
 					byte[] filler =
-						Encoding.ASCII.GetBytes(new string(' ', currAmountToCopy));
+						Encoding.ASCII.GetBytes(new string(' ', (int)currAmountToCopy));
 					glb.Stream.Write(filler, 0, filler.Length);
 					amountToCopy -= (uint)currAmountToCopy;
 				}
@@ -324,10 +324,10 @@ namespace GLTF
 			binaryData.Position = streamStartPosition;
 
 			// Append new binary chunk to end
-			uint blobLengthAsUInt = CalculateAlignment((uint)(binaryData.Length - streamStartPosition), 4);
-			uint newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLengthAsUInt;
-			uint newGLBSize = glb.Header.FileLength + blobLengthAsUInt;
-			uint blobWritePosition = glb.Header.FileLength;
+			long blobLength = CalculateAlignment(binaryData.Length - streamStartPosition, 4);
+			long newBinaryBufferSize = glb.BinaryChunkInfo.Length + blobLength;
+			long newGLBSize = glb.Header.FileLength + blobLength;
+			long blobWritePosition = glb.Header.FileLength;
 
 			// there was an existing file that had no binary chunk info previously
 			if (glb.BinaryChunkInfo.Length == 0)
@@ -337,7 +337,7 @@ namespace GLTF
 				glb.SetBinaryChunkStartPosition(glb.Header.FileLength);  // if 0, then appends chunk info at the end
 			}
 
-			glb.Stream.SetLength(glb.Header.FileLength + blobLengthAsUInt);
+			glb.Stream.SetLength(glb.Header.FileLength + blobLength);
 			glb.Stream.Position = blobWritePosition;    // assuming the end of the file is the end of the binary chunk
 			binaryData.CopyTo(glb.Stream);              // make sure this doesn't supersize it
 
@@ -359,8 +359,8 @@ namespace GLTF
 						Id = 0,
 						Root = glb.Root
 					},
-					ByteLength = blobLengthAsUInt, // figure out whether glb size is wrong or if documentation is unclear
-					ByteOffset = glb.BinaryChunkInfo.Length - blobLengthAsUInt,
+					ByteLength = blobLength, // figure out whether glb size is wrong or if documentation is unclear
+					ByteOffset = glb.BinaryChunkInfo.Length - blobLength,
 					Name = bufferViewName
 				};
 
@@ -395,10 +395,10 @@ namespace GLTF
 			// 2) copy merge from binary data to merge to binary data
 			// 3) Fix up buffer views to be the new offset
 			int previousBufferViewsCount = mergeTo.Root.BufferViews?.Count ?? 0;
-			uint previousBufferSize = mergeTo.BinaryChunkInfo.Length;
+			long previousBufferSize = mergeTo.BinaryChunkInfo.Length;
 			GLTFHelpers.MergeGLTF(mergeTo.Root, mergeFrom.Root);
 			_AddBinaryData(mergeTo, mergeFrom.Stream, false, mergeFrom.BinaryChunkInfo.StartPosition + GLBHeader.GLB2_CHUNK_HEADER_SIZE);
-			uint bufferSizeDiff =
+			long bufferSizeDiff =
 				mergeTo.BinaryChunkInfo.Length -
 				previousBufferSize; // calculate buffer size change to update the byte offsets of the appended buffer views
 
@@ -427,9 +427,9 @@ namespace GLTF
 			int id = bufferViewId.Id;
 			if (bufferViewToRemove.ByteOffset + bufferViewToRemove.ByteLength == glb.BinaryChunkInfo.Length)
 			{
-				uint bufferViewLengthAsUint = bufferViewToRemove.ByteLength;
-				glb.SetFileLength(glb.Header.FileLength - bufferViewLengthAsUint);
-				glb.SetBinaryChunkLength(glb.BinaryChunkInfo.Length - bufferViewLengthAsUint);
+				long bufferViewLength = bufferViewToRemove.ByteLength;
+				glb.SetFileLength(glb.Header.FileLength - bufferViewLength);
+				glb.SetBinaryChunkLength(glb.BinaryChunkInfo.Length - bufferViewLength);
 				if (glb.BinaryChunkInfo.Length == 0)
 				{
 					glb.Root.Buffers.RemoveAt(0);
@@ -527,7 +527,7 @@ namespace GLTF
 			stream.Write(typeBytes, 0, lengthBytes.Length);
 		}
 
-		public static uint CalculateAlignment(uint currentSize, uint byteAlignment)
+		public static long CalculateAlignment(long currentSize, long byteAlignment)
 		{
 			return (currentSize + byteAlignment - 1) / byteAlignment * byteAlignment;
 		}
