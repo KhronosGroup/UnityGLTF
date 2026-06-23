@@ -5,37 +5,8 @@ using System.IO;
 
 namespace GLTF
 {
-	public enum ChunkFormat : uint
-	{
-		JSON = 0x4e4f534a,
-		BIN = 0x004e4942
-	}
-
-	/// <summary>
-	/// Information containing parsed GLB Header
-	/// </summary>
-	public struct GLBHeader
-	{
-		public uint Version { get; set; }
-		public uint FileLength { get; set; }
-	}
-
-	/// <summary>
-	/// Infomration that contains parsed chunk
-	/// </summary>
-	public struct ChunkInfo
-	{
-		public long StartPosition;
-		public uint Length;
-		public ChunkFormat Type;
-	}
-	
 	public class GLTFParser
 	{
-		public static readonly uint HEADER_SIZE = 12;
-		public static readonly uint CHUNK_HEADER_SIZE = 8;
-		public static readonly uint MAGIC_NUMBER = 0x46546c67;
-
 		public static void ParseJson(Stream stream, out GLTFRoot gltfRoot, long startPosition = 0)
 		{
 			stream.Position = startPosition;
@@ -44,7 +15,7 @@ namespace GLTF
 			// Check for binary format magic bytes
 			if (isGLB)
 			{
-				ParseJsonChunk(stream, startPosition);
+				ParseJsonChunkAndFileHeader(stream, startPosition);
 			}
 			else
 			{
@@ -57,10 +28,10 @@ namespace GLTF
 		
 		// todo: this needs reimplemented. There is no such thing as a binary chunk index, and the chunk may not be in 0, 1, 2 order
 		// Moves stream position to binary chunk location
-		public static ChunkInfo SeekToBinaryChunk(Stream stream, int binaryChunkIndex, long startPosition = 0)
+		public static GLBChunkInfo SeekToBinaryChunkData(Stream stream, int binaryChunkIndex, long startPosition = 0)
 		{
-			stream.Position = startPosition + 4;	 // start after magic number chunk
-			GLBHeader header = ParseGLBHeader(stream);
+			stream.Position = startPosition + 4; // Start after "glTF" magic number.
+			GLBHeader glbHeader = ParseGLBHeader(stream);
 			uint chunkOffset = 12;   // sizeof(GLBHeader) + magic number
 			uint chunkLength = 0;
 			for (int i = 0; i < binaryChunkIndex + 2; ++i)
@@ -72,17 +43,17 @@ namespace GLTF
 			}
 
 			// Load Binary Chunk
-			if (chunkOffset + chunkLength <= header.FileLength)
+			if (chunkOffset + chunkLength <= glbHeader.FileLength)
 			{
-				ChunkFormat chunkType = (ChunkFormat)GetUInt32(stream);
-				if (chunkType != ChunkFormat.BIN)
+				GLBChunkFormat chunkType = (GLBChunkFormat)GetUInt32(stream);
+				if (chunkType != GLBChunkFormat.BIN)
 				{
 					throw new GLTFHeaderInvalidException("Second chunk must be of type BIN if present");
 				}
 
-				return new ChunkInfo
+				return new GLBChunkInfo
 				{
-					StartPosition = stream.Position - CHUNK_HEADER_SIZE,
+					StartPosition = stream.Position - GLBHeader.GLB2_CHUNK_HEADER_SIZE,
 					Length = chunkLength,
 					Type = chunkType
 				};
@@ -92,11 +63,11 @@ namespace GLTF
 			// Be aware that File length does not match header when MeshOpt compression is used!
 			//throw new GLTFHeaderInvalidException("File length does not match chunk header.");
 
-			return new ChunkInfo
+			return new GLBChunkInfo
 			{
-				StartPosition = stream.Position - CHUNK_HEADER_SIZE,
+				StartPosition = stream.Position - GLBHeader.GLB2_CHUNK_HEADER_SIZE,
 				Length = chunkLength,
-				Type = ChunkFormat.BIN
+				Type = GLBChunkFormat.BIN
 			};
 		}
 
@@ -114,26 +85,26 @@ namespace GLTF
 
 		public static bool IsGLB(Stream stream)
 		{
-			return GetUInt32(stream) == 0x46546c67;  // 0
+			return GetUInt32(stream) == GLBHeader.GLTF_MAGIC_NUMBER;
 		}
 
-		public static ChunkInfo ParseChunkInfo(Stream stream)
+		public static GLBChunkInfo ParseChunkInfo(Stream stream)
 		{
-			ChunkInfo chunkInfo = new ChunkInfo
+			GLBChunkInfo chunkInfo = new GLBChunkInfo
 			{
 				StartPosition = stream.Position
 			};
 
 			chunkInfo.Length = GetUInt32(stream);					// 12
-			chunkInfo.Type = (ChunkFormat)GetUInt32(stream);		// 16
+			chunkInfo.Type = (GLBChunkFormat)GetUInt32(stream);		// 16
 			return chunkInfo;
 		}
 
-		public static List<ChunkInfo> FindChunks(Stream stream, long startPosition = 0)
+		public static List<GLBChunkInfo> FindChunks(Stream stream, long startPosition = 0)
 		{
-			stream.Position = startPosition + 4;     // start after magic number bytes (4 bytes past)
+			stream.Position = startPosition + 4; // Start after "glTF" magic number.
 			ParseGLBHeader(stream);
-			List<ChunkInfo> allChunks = new List<ChunkInfo>();
+			List<GLBChunkInfo> allChunks = new List<GLBChunkInfo>();
 
 			// we only need to search for top two chunks (the JSON and binary chunks are guaranteed to be the top two chunks)
 			// other chunks can be in the file but we do not care about them
@@ -144,7 +115,7 @@ namespace GLTF
 					break;
 				}
 
-				ChunkInfo chunkInfo = ParseChunkInfo(stream);
+				GLBChunkInfo chunkInfo = ParseChunkInfo(stream);
 				allChunks.Add(chunkInfo);
 				stream.Position += chunkInfo.Length;
 			}
@@ -152,21 +123,21 @@ namespace GLTF
 			return allChunks;
 		}
 
-		private static void ParseJsonChunk(Stream stream, long startPosition)
+		private static void ParseJsonChunkAndFileHeader(Stream stream, long startPosition)
 		{
-			GLBHeader header = ParseGLBHeader(stream);  // 4, 8
-			if (header.Version != 2)
+			GLBHeader glbHeader = ParseGLBHeader(stream);  // 4, 8
+			if (glbHeader.Version != 2)
 			{
 				throw new GLTFHeaderInvalidException("Unsupported glTF version");
 			};
 
-			if (header.FileLength > (stream.Length - startPosition))
+			if (glbHeader.FileLength > (stream.Length - startPosition))
 			{
-				throw new GLTFHeaderInvalidException("File length does not match header.");
+				throw new GLTFHeaderInvalidException("File length does not match GLB file header declared length.");
 			}
 
-			ChunkInfo chunkInfo = ParseChunkInfo(stream);
-			if (chunkInfo.Type != ChunkFormat.JSON)
+			GLBChunkInfo chunkInfo = ParseChunkInfo(stream);
+			if (chunkInfo.Type != GLBChunkFormat.JSON)
 			{
 				throw new GLTFHeaderInvalidException("First chunk must be of type JSON");
 			}

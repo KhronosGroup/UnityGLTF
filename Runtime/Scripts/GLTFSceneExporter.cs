@@ -424,7 +424,6 @@ namespace UnityGLTF
 		
 		private Material _normalChannelMaterial;
 
-		private const uint MagicGLTF = 0x46546C67;
 		private const uint Version = 2;
 		private const uint MagicJson = 0x4E4F534A;
 		private const uint MagicBin = 0x004E4942;
@@ -827,7 +826,7 @@ namespace UnityGLTF
 			BinaryWriter writer = new BinaryWriter(stream);
 
 			// write header
-			writer.Write(MagicGLTF);
+			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
 			writer.Write(Version);
 			writer.Write(glbLength);
 

@@ -292,7 +292,7 @@ namespace UnityGLTF
 					BufferCacheData bufferContents =
 						_assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id];
 
-					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkOffset,
+					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkDataOffset,
 						bufferContents.bufferData, out NativeArray<byte> bufferViewData);
 
 					int weightsAttributeId = -1;
@@ -399,7 +399,7 @@ namespace UnityGLTF
 
 					BufferCacheData bufferContents = _assetCache.BufferCache[meshOpt.bufferView.Buffer.Id];
 
-					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkOffset, bufferContents.bufferData, out NativeArray<byte> bufferViewData);
+					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkDataOffset, bufferContents.bufferData, out NativeArray<byte> bufferViewData);
 
 #if HAVE_MESHOPT_DECOMPRESS_VERSION_0_2
 					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(meshOptReturnValues.GetSubArray(bufferViewIndex, 1),
@@ -850,7 +850,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = _assetCache.BufferCache[bufferID].bufferData,
-						Offset = (uint)_assetCache.BufferCache[bufferID].ChunkOffset
+						Offset = (uint)_assetCache.BufferCache[bufferID].ChunkDataOffset
 					};
 
 					// if this buffer isn't sparse, we're done here
@@ -910,7 +910,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = (uint)bufferData.ChunkDataOffset
 					};
 					GLTFHelpers.LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value,
 						sparseValues.Offset, sparseValues.bufferData, out NativeArray<byte> bufferViewCache1);
@@ -922,7 +922,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset,
+						Offset = (uint)bufferData.ChunkDataOffset,
 					};
 					GLTFHelpers.LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value,
 						sparseIndices.Offset, sparseIndices.bufferData, out NativeArray<byte> bufferViewCache2);
@@ -1218,7 +1218,7 @@ namespace UnityGLTF
 					{
 						AccessorId = attributePair.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = (uint)bufferData.ChunkDataOffset
 					};
 				}
 				
@@ -1233,7 +1233,7 @@ namespace UnityGLTF
 						{
 							AccessorId = attributePair.Value,
 							bufferData = sparseBufferData.bufferData,
-							Offset = (uint)sparseBufferData.ChunkOffset
+							Offset = (uint)sparseBufferData.ChunkDataOffset
 						};
 
 						var sparseIndicesBufferId = sparse.Indices.BufferView.Value.Buffer;
@@ -1242,7 +1242,7 @@ namespace UnityGLTF
 						{
 							AccessorId = attributePair.Value,
 							bufferData = sparseIndicesBufferData.bufferData,
-							Offset = (uint)sparseIndicesBufferData.ChunkOffset
+							Offset = (uint)sparseIndicesBufferData.ChunkDataOffset
 						};
 
 						primData.SparseAccessors[attributePair.Key] = (sparseIndices, sparseValues);
@@ -1261,7 +1261,7 @@ namespace UnityGLTF
 					{
 						AccessorId = primitive.Indices,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = (uint)bufferData.ChunkDataOffset
 					};
 				}
 			}
