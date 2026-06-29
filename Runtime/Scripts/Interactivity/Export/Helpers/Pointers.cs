@@ -32,9 +32,14 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerTemplMaterialByRef = $"/materials/{{{IdPointerMaterialRef}}}/"; 
         public static readonly string IdPointerTemplMeshByRef = $"/meshes/{{{IdPointerMeshRef}}}/"; 
         public static readonly string IdPointerTemplNodeByRef = $"/nodes/{{{IdPointerNodeRef}}}/"; 
-        public static readonly string IdPointerTemplLightByRef = $"/extensions/KHR_lights_punctual/lights/{{{IdPointerLightRef}}}/"; 
+        public static readonly string IdPointerTemplLightByRef = $"/extensions/KHR_lights_punctual/lights/{{{IdPointerLightRef}}}/";
 
-        
+        public static readonly string IdPointerDelayRef = "delayRef";
+        public static readonly string IdPointerTemplDelayByRef = $"/extensions/KHR_interactivity/delays/{{{IdPointerDelayRef}}}/";
+
+        public static readonly string IdPointerEventRef = "eventRef";
+        public static readonly string IdPointerTemplEventByRef = $"/extensions/KHR_interactivity/events/{{{IdPointerEventRef}}}/";
+
         
         public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
         {
