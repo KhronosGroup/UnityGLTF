@@ -116,8 +116,8 @@ namespace UnityGLTF.Interactivity.Export
 
                     var value = values.Value.Value;
                     var mapping = GltfTypes.GetTypeMapping(value.GetType());
-                    var isRefType = values.Value.Type != GltfTypes.TypeIndex(GltfTypes.Ref);
-                    if (!isRefType &&  mapping == null)
+                    var isRefType = values.Value.Type == GltfTypes.TypeIndex(GltfTypes.Ref);
+                    if (isRefType && mapping == null)
                     {
                         Debug.LogError("Trying to resolve a reference to static json, but the type is not supported: " + value.GetType().Name);
                         continue;
