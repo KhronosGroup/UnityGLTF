@@ -65,15 +65,23 @@ namespace UnityGLTF.Interactivity.Export
         {
             var nodes = nodesToSerialize.ToArray();
             
-            void ReplaceInputWithNode(GltfInteractivityNode.ValueSocketData socket, GltfInteractivityNodeSchema schema)
+            void ReplaceInputWithNode(GltfInteractivityNode.ValueSocketData socket, params GltfInteractivityNodeSchema[] schema)
             {
-                var nanNode = new GltfInteractivityExportNode(schema);
-                nanNode.Index = nodesToSerialize.Count;
-                nodesToSerialize.Add(nanNode);
+                var lastSocket = socket;
+                foreach (var s in schema)
+                {
+                    var node = new GltfInteractivityExportNode(s);
+                    node.Index = nodesToSerialize.Count;
+                    nodesToSerialize.Add(node);
+                    
+                    lastSocket.Node = node.Index;
+                    lastSocket.Socket = "value";
+                    lastSocket.Value = null;
+
+                    if (node.ValueInConnection.ContainsKey("a"))
+                        lastSocket = node.ValueInConnection["a"];
+                }
                 
-                socket.Node = nanNode.Index;
-                socket.Socket = "value";
-                socket.Value = null;
             }
             
             foreach (var v in nodes)
@@ -87,7 +95,10 @@ namespace UnityGLTF.Interactivity.Export
                                 ReplaceInputWithNode(input.Value, new Math_NaNNode());
                             if (float.IsPositiveInfinity(f))
                                 ReplaceInputWithNode(input.Value, new Math_InfNode());
-                            
+                            if (float.IsNegativeInfinity(f))
+                            {
+                                ReplaceInputWithNode(input.Value, new Math_NegNode(), new Math_InfNode());
+                            }
                         }
                     }
             }
