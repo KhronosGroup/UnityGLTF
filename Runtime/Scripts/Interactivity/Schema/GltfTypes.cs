@@ -8,16 +8,120 @@ namespace UnityGLTF.Interactivity
     using UnityEngine;
 
 
-    public class StaticRefPointer 
+    public class StaticRefPointer
     {
         public string pointer = ""; // Null by default
-        
+
         public StaticRefPointer(string pointer = "")
         {
             this.pointer = pointer;
         }
     }
-    
+
+    /// <summary>
+    /// A 2x2 float matrix (column-major). Unity has no native 2x2 type, so this lightweight
+    /// struct represents the glTF interactivity "float2x2" value. Element order matches the
+    /// glTF / Unity convention: index 0..3 = column 0 (rows 0,1), column 1 (rows 0,1).
+    /// </summary>
+    public struct GltfFloat2x2
+    {
+        public float m0, m1, m2, m3;
+
+        public GltfFloat2x2(float m0, float m1, float m2, float m3)
+        {
+            this.m0 = m0; this.m1 = m1; this.m2 = m2; this.m3 = m3;
+        }
+
+        public float this[int index]
+        {
+            get
+            {
+                switch (index)
+                {
+                    case 0: return m0;
+                    case 1: return m1;
+                    case 2: return m2;
+                    case 3: return m3;
+                    default: throw new System.IndexOutOfRangeException("Float2x2 index out of range: " + index);
+                }
+            }
+            set
+            {
+                switch (index)
+                {
+                    case 0: m0 = value; break;
+                    case 1: m1 = value; break;
+                    case 2: m2 = value; break;
+                    case 3: m3 = value; break;
+                    default: throw new System.IndexOutOfRangeException("Float2x2 index out of range: " + index);
+                }
+            }
+        }
+
+        public static GltfFloat2x2 NaN => new GltfFloat2x2(float.NaN, float.NaN, float.NaN, float.NaN);
+
+        public override string ToString() => $"float2x2({m0}, {m1}, {m2}, {m3})";
+    }
+
+    /// <summary>
+    /// A 3x3 float matrix (column-major), representing the glTF interactivity "float3x3" value.
+    /// Index 0..8 = column 0 (rows 0,1,2), column 1 (rows 0,1,2), column 2 (rows 0,1,2).
+    /// </summary>
+    public struct GltfFloat3x3
+    {
+        public float m0, m1, m2, m3, m4, m5, m6, m7, m8;
+
+        public GltfFloat3x3(float m0, float m1, float m2, float m3, float m4, float m5, float m6, float m7, float m8)
+        {
+            this.m0 = m0; this.m1 = m1; this.m2 = m2;
+            this.m3 = m3; this.m4 = m4; this.m5 = m5;
+            this.m6 = m6; this.m7 = m7; this.m8 = m8;
+        }
+
+        public float this[int index]
+        {
+            get
+            {
+                switch (index)
+                {
+                    case 0: return m0;
+                    case 1: return m1;
+                    case 2: return m2;
+                    case 3: return m3;
+                    case 4: return m4;
+                    case 5: return m5;
+                    case 6: return m6;
+                    case 7: return m7;
+                    case 8: return m8;
+                    default: throw new System.IndexOutOfRangeException("Float3x3 index out of range: " + index);
+                }
+            }
+            set
+            {
+                switch (index)
+                {
+                    case 0: m0 = value; break;
+                    case 1: m1 = value; break;
+                    case 2: m2 = value; break;
+                    case 3: m3 = value; break;
+                    case 4: m4 = value; break;
+                    case 5: m5 = value; break;
+                    case 6: m6 = value; break;
+                    case 7: m7 = value; break;
+                    case 8: m8 = value; break;
+                    default: throw new System.IndexOutOfRangeException("Float3x3 index out of range: " + index);
+                }
+            }
+        }
+
+        public static GltfFloat3x3 NaN => new GltfFloat3x3(
+            float.NaN, float.NaN, float.NaN,
+            float.NaN, float.NaN, float.NaN,
+            float.NaN, float.NaN, float.NaN);
+
+        public override string ToString() => $"float3x3({m0}, {m1}, {m2}, {m3}, {m4}, {m5}, {m6}, {m7}, {m8})";
+    }
+
     /// <summary>
     /// </summary>
     [Serializable]
@@ -46,9 +150,10 @@ namespace UnityGLTF.Interactivity
             new TypeMapping(Float2, new [] {typeof(Vector2)}),
             new TypeMapping(Float3, new [] {typeof(Vector3)}),
             new TypeMapping(Float4, new [] {typeof(Color), typeof(Color32), typeof(Vector4), typeof(Quaternion)}),
+            new TypeMapping(Float2x2, new [] {typeof(GltfFloat2x2)}),
+            new TypeMapping(Float3x3, new [] {typeof(GltfFloat3x3)}),
             new TypeMapping(Float4x4, new [] {typeof(Matrix4x4)}),
             new TypeMapping(IntArray, new [] {typeof(int[])}),
-            // Ref type should be last here. GameObject, Transform and Material are already mapped to int because they will be translated to the gltf object ids
             new TypeMapping(Ref, new [] {typeof(object), typeof(GameObject), typeof(Material), typeof(Transform), typeof(UnityEngine.Object), typeof(StaticRefPointer)}),
         };
 
@@ -67,6 +172,10 @@ namespace UnityGLTF.Interactivity
                     return 3;
                 case Float4:
                     return 4;
+                case Float2x2:
+                    return 4;
+                case Float3x3:
+                    return 9;
                 case Float4x4:
                     return 16;
                 default:
@@ -95,6 +204,10 @@ namespace UnityGLTF.Interactivity
                     return new Vector3(float.NaN, float.NaN, float.NaN);
                 case Float4:
                     return new Vector4(float.NaN, float.NaN, float.NaN, float.NaN);
+                case Float2x2:
+                    return GltfFloat2x2.NaN;
+                case Float3x3:
+                    return GltfFloat3x3.NaN;
                 case Float4x4:
                     return new Matrix4x4();
                 case Ref:

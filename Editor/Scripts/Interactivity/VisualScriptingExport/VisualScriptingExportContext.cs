@@ -431,6 +431,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             TopologicalSort();  
             
             ResolveRefToStaticPointer();
+            ReplaceSpecialValuesWithNodes();
             
             CollectOpDeclarations();
             

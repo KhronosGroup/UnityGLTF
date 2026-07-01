@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityGLTF.Interactivity;
 
 namespace UnityGLTF.Interactivity.Schema
 {
@@ -279,6 +280,18 @@ namespace UnityGLTF.Interactivity.Schema
                         m4.m01, m4.m11, m4.m21, m4.m31,
                         m4.m02, m4.m12, m4.m22, m4.m32,
                         m4.m03, m4.m13, m4.m23, m4.m33)));
+                }
+                else if (value is GltfFloat2x2 f2x2)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(
+                        f2x2.m0, f2x2.m1, f2x2.m2, f2x2.m3)));
+                }
+                else if (value is GltfFloat3x3 f3x3)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(
+                        f3x3.m0, f3x3.m1, f3x3.m2,
+                        f3x3.m3, f3x3.m4, f3x3.m5,
+                        f3x3.m6, f3x3.m7, f3x3.m8)));
                 }
                 else if (value is Vector4 v4)
                 {

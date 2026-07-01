@@ -49,6 +49,7 @@ namespace UnityGLTF.Interactivity.Export
             TopologicalSort();  
             
             ResolveRefToStaticPointer();
+            ReplaceSpecialValuesWithNodes();
             
             CollectOpDeclarations();
 
@@ -57,6 +58,41 @@ namespace UnityGLTF.Interactivity.Export
             ApplyInteractivityExtension();
         }
 
+        /// <summary>
+        /// Replace float.positiveInfinite, NaN etc with nodes that can be serialized to JSON. This is needed because JSON does not support these values.
+        /// </summary>
+        protected virtual void ReplaceSpecialValuesWithNodes()
+        {
+            var nodes = nodesToSerialize.ToArray();
+            
+            void ReplaceInputWithNode(GltfInteractivityNode.ValueSocketData socket, GltfInteractivityNodeSchema schema)
+            {
+                var nanNode = new GltfInteractivityExportNode(schema);
+                nanNode.Index = nodesToSerialize.Count;
+                nodesToSerialize.Add(nanNode);
+                
+                socket.Node = nanNode.Index;
+                socket.Socket = "value";
+                socket.Value = null;
+            }
+            
+            foreach (var v in nodes)
+            {
+                foreach (var input in v.ValueInConnection)
+                    if (input.Value.Value != null && input.Value.Node == null)
+                    {
+                        if (input.Value.Value is float f)
+                        {
+                            if (float.IsNaN(f))
+                                ReplaceInputWithNode(input.Value, new Math_NaNNode());
+                            if (float.IsPositiveInfinity(f))
+                                ReplaceInputWithNode(input.Value, new Math_InfNode());
+                            
+                        }
+                    }
+            }
+        }
+        
         protected virtual void ResolveRefToStaticPointer()
         {
             int refTypeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
