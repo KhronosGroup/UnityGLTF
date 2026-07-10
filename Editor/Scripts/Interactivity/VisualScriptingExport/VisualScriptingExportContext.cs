@@ -427,11 +427,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (cleanUpAndOptimizeExportedGraph)
                 CleanUp();
             
+            ReplaceSpecialValuesWithNodes();
+            
             // Final Topological Sort
             TopologicalSort();  
             
             ResolveRefToStaticPointer();
-            ReplaceSpecialValuesWithNodes();
             
             CollectOpDeclarations();
             

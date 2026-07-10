@@ -45,11 +45,11 @@ namespace UnityGLTF.Interactivity.Export
             
             CleanUp();
             
+            ReplaceSpecialValuesWithNodes();
             // Final Topological Sort
             TopologicalSort();  
             
             ResolveRefToStaticPointer();
-            ReplaceSpecialValuesWithNodes();
             
             CollectOpDeclarations();
 
