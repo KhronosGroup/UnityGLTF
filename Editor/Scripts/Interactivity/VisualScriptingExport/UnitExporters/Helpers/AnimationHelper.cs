@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public static ValueOutRef GetAnimationClipRef(UnitExporter unitExporter, int animationId)
         {
             var pointerLength = unitExporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(pointerLength, "index", "/animations/[index]/", GltfTypes.Ref);
+            PointersHelper.SetupPointerTemplateAndTargetInput(pointerLength, "index", "/animations/[index]", GltfTypes.Ref);
             pointerLength.ValueIn("index").SetValue(animationId);
             return pointerLength.FirstValueOut();
             
