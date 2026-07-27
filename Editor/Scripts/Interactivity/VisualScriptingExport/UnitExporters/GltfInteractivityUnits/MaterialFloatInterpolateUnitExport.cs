@@ -42,7 +42,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     flipNode.ValueIn("b").MapToInputPort(unit.targetValue);
                     convertedValue = flipNode.ValueOut("out").ExpectedType(ExpectedType.Float);
                 }
-                template = materialTemplate + gltfProperty;
+                template = materialTemplate + "/" + gltfProperty;
             }
             else
             {

@@ -21,7 +21,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var unit = unitExporter.unit as MaterialColorInterpolate;
 
             var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
-            var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
+            var template = materialTemplate+ "/pbrMetallicRoughness/baseColorFactor";
             
             var valueType = GltfTypes.Float4;
             
@@ -35,7 +35,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
 
                 valueType = map.ExportKeepColorAlpha ? GltfTypes.Float4 : GltfTypes.Float3;
-                template = materialTemplate + gltfProperty;
+                template = materialTemplate + "/" + gltfProperty;
             }
             else
             {

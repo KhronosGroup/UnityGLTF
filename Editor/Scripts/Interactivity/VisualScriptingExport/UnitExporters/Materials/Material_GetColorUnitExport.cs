@@ -27,7 +27,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             
             var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
-            var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
+            var template = materialTemplate+ "/pbrMetallicRoughness/baseColorFactor";
             
             if (unit is GetMember getMember)
             {
@@ -52,7 +52,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     }
 
                     hasAlpha = map.ExportKeepColorAlpha;
-                    template = materialTemplate + gltfProperty;
+                    template = materialTemplate + "/"+ gltfProperty;
                 }
                 else
                 {

@@ -53,7 +53,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             getWeight.FirstValueOut().ExpectedType(ExpectedType.Float).MapToPort(unit.result);
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeight, PointersHelper.IdPointerNodeRef,
-                unit.target,  PointersHelper.IdPointerTemplNodeByRef + "weights/[weightIndex]", GltfTypes.Float);
+                unit.target,  PointersHelper.IdPointerTemplNodeByRef + "/weights/[weightIndex]", GltfTypes.Float);
             getWeight.ValueIn("weightIndex").MapToInputPort(unit.valueInputs["%index"]);
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);
@@ -79,7 +79,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             getWeightCount.FirstValueOut().ExpectedType(ExpectedType.Int).MapToPort(unit.value);
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshRef,
-                unit.target, PointersHelper.IdPointerTemplMeshByRef + "weights.length", GltfTypes.Int);
+                unit.target, PointersHelper.IdPointerTemplMeshByRef + "/weights.length", GltfTypes.Int);
             
             return true;
         }

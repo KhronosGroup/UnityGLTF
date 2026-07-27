@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     UnitExportLogging.AddErrorLog(unit, "float property name is not supported.");
                     return false;
                 }
-                template = materialTemplate + gltfProperty;
+                template = materialTemplate + "/" + gltfProperty;
                 oneMinus = map.ExportFlipValueRange;
             }
             else

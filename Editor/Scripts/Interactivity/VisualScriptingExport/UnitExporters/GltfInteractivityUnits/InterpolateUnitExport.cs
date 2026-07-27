@@ -34,35 +34,35 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 // TODO: transform space conversion for targetValue!!!
                 if (unit.member.name == "localPosition")
                 {
-                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "translation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/translation";
                     valueType = GltfTypes.Float3;
                     SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 if (unit.member.name == "position")
                 {
-                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "translation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/translation";
                     valueType = GltfTypes.Float3;
                     SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 else if (unit.member.name == "localRotation")
                 {
-                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "rotation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/rotation";
                     valueType = GltfTypes.Float4;
                     SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 else if (unit.member.name == "rotation")
                 {
-                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "rotation";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/rotation";
                     valueType = GltfTypes.Float4;
                     SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
                     originalValue.MapToInputPort(unit.input);
                 }
                 else if (unit.member.name == "localScale")
                 {
-                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "scale";
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/scale";
                     valueType = GltfTypes.Float3;
                 }
             }
@@ -82,7 +82,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     }
 
                     valueType = GltfTypes.Float4;
-                    pointerTemplate = materialTemplate + gltfProperty;
+                    pointerTemplate = materialTemplate + "/" + gltfProperty;
                 }
             }
             

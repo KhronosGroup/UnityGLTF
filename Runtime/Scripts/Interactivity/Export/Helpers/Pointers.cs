@@ -11,10 +11,10 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerAnimationIndex = "animationIndex";
         public static readonly string IdPointerLightIndex = "lightIndex";
         
-        public static readonly string IdPointerTemplMaterialByIndex = $"/materials/[{IdPointerMaterialIndex}]/"; 
-        public static readonly string IdPointerTemplMeshByIndex = $"/meshes/[{IdPointerMeshIndex}]/"; 
-        public static readonly string IdPointerTemplNodeByIndex = $"/nodes/[{IdPointerNodeIndex}]/"; 
-        public static readonly string IdPointerTemplLightByIndex = $"/extensions/KHR_lights_punctual/lights/[{IdPointerLightIndex}]/"; 
+        public static readonly string IdPointerTemplMaterialByIndex = $"/materials/[{IdPointerMaterialIndex}]"; 
+        public static readonly string IdPointerTemplMeshByIndex = $"/meshes/[{IdPointerMeshIndex}]"; 
+        public static readonly string IdPointerTemplNodeByIndex = $"/nodes/[{IdPointerNodeIndex}]"; 
+        public static readonly string IdPointerTemplLightByIndex = $"/extensions/KHR_lights_punctual/lights/[{IdPointerLightIndex}]"; 
 
         public static readonly string IdPointerNodeRef = "nodeRef";
         public static readonly string IdPointerMeshRef = "meshRef";
@@ -33,10 +33,10 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerEventRef = "eventRef";
         public static readonly string IdPointerTemplEventByRef = $"/extensions/KHR_interactivity/events/{{{IdPointerEventRef}}}";
 
-        public static readonly string IdPointerVisibility = $"{IdPointerTemplNodeByIndex}extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
-        public static readonly string IdPointerSelectability = $"{IdPointerTemplNodeByIndex}extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
-        public static readonly string IdPointerVisibilityRef = $"{IdPointerTemplNodeByRef}extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
-        public static readonly string IdPointerSelectabilityRef = $"{IdPointerTemplNodeByRef}extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
+        public static readonly string IdPointerVisibility = $"{IdPointerTemplNodeByIndex}/extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
+        public static readonly string IdPointerSelectability = $"{IdPointerTemplNodeByIndex}/extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
+        public static readonly string IdPointerVisibilityRef = $"{IdPointerTemplNodeByRef}/extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
+        public static readonly string IdPointerSelectabilityRef = $"{IdPointerTemplNodeByRef}/extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
 
         
         public static void AddPointerTemplateValueInput(GltfInteractivityNode node, string pointerId, int? index = null)
