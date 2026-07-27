@@ -21,8 +21,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
 #if !UNITY_EDITOR
         public override bool Enabled => false;
 #endif
-        // Disabled by default until Gltf Interactivity spec is ratified
-        public override bool EnabledByDefault => false;
+        
+        public override bool EnabledByDefault => true;
 
 #if !HAVE_VISUAL_SCRIPTING   
         public override bool PackageMissing => true;
