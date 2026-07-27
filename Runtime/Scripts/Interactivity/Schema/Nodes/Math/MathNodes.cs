@@ -1158,6 +1158,27 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOutValue = "value";
     }
 
+    public class Math_QuatFromAnglesNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatFromAngles";
+
+        // Rotation order. One of "xyz", "xzy", "yxz", "yzx", "zxy" or "zyx". Defaults to "yxz".
+        [ConfigDescription("yxz")]
+        public const string IdConfigOrder = "order";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdX = "x";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdY = "y";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdZ = "z";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOutValue = "value";
+    }
+
     public class Math_SmoothStep : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/smoothStep";
