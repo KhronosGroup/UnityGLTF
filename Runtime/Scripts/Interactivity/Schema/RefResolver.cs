@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.Export
                         LogMissingError();
                         return false;
                     }
-                    staticJson = $"/nodes/{goIndex}/";
+                    staticJson = $"/nodes/{goIndex}";
                     return true;
                 case Transform tr:
                     var transformIndex = sceneExporter.GetTransformIndex(tr);
@@ -37,7 +37,7 @@ namespace UnityGLTF.Interactivity.Export
                         LogMissingError();
                         return false;
                     }
-                    staticJson = $"/nodes/{transformIndex}/";
+                    staticJson = $"/nodes/{transformIndex}";
                     return true;
                 case Material mat:
                     var materialIndex = sceneExporter.GetMaterialIndex(mat);
@@ -46,7 +46,7 @@ namespace UnityGLTF.Interactivity.Export
                         LogMissingError();
                         return false;
                     }
-                    staticJson = $"/materials/{materialIndex}/";
+                    staticJson = $"/materials/{materialIndex}";
                     return true;
                 case Mesh mesh:
                     Debug.LogError("Resolving a Mesh reference to static json pointer is not supported!", mesh);
@@ -59,7 +59,7 @@ namespace UnityGLTF.Interactivity.Export
                         LogMissingError();
                         return false;
                     }
-                    staticJson = $"/nodes/{goOfCompIndex}/";
+                    staticJson = $"/nodes/{goOfCompIndex}";
                     return true;
             }
 

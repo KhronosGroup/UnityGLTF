@@ -196,6 +196,7 @@ namespace UnityGLTF.Interactivity.Export
         protected virtual void ApplyInteractivityExtension()
         {
             // TODO: Add support for multiple graphs and/or check if a graph already exists
+            Validator.ValidateData(this);
             
             GltfInteractivityExtension extension = new GltfInteractivityExtension();
             GltfInteractivityGraph mainGraph = new GltfInteractivityGraph();
@@ -203,7 +204,6 @@ namespace UnityGLTF.Interactivity.Export
             mainGraph.Nodes = nodesToSerialize.ToArray();
             mainGraph.Types = CollectAndFilterUsedTypes();
             
-            Validator.ValidateData(this);
             
             mainGraph.Variables = variables.ToArray();
             mainGraph.CustomEvents = customEvents.ToArray();

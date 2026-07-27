@@ -22,16 +22,16 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerAnimationRef = "animationRef";
         public static readonly string IdPointerLightRef = "lightRef";
 
-        public static readonly string IdPointerTemplMaterialByRef = $"/materials/{{{IdPointerMaterialRef}}}/"; 
-        public static readonly string IdPointerTemplMeshByRef = $"/meshes/{{{IdPointerMeshRef}}}/"; 
-        public static readonly string IdPointerTemplNodeByRef = $"/nodes/{{{IdPointerNodeRef}}}/"; 
-        public static readonly string IdPointerTemplLightByRef = $"/extensions/KHR_lights_punctual/lights/{{{IdPointerLightRef}}}/";
+        public static readonly string IdPointerTemplMaterialByRef = $"/materials/{{{IdPointerMaterialRef}}}"; 
+        public static readonly string IdPointerTemplMeshByRef = $"/meshes/{{{IdPointerMeshRef}}}"; 
+        public static readonly string IdPointerTemplNodeByRef = $"/nodes/{{{IdPointerNodeRef}}}"; 
+        public static readonly string IdPointerTemplLightByRef = $"/extensions/KHR_lights_punctual/lights/{{{IdPointerLightRef}}}";
 
         public static readonly string IdPointerDelayRef = "delayRef";
-        public static readonly string IdPointerTemplDelayByRef = $"/extensions/KHR_interactivity/delays/{{{IdPointerDelayRef}}}/";
+        public static readonly string IdPointerTemplDelayByRef = $"/extensions/KHR_interactivity/delays/{{{IdPointerDelayRef}}}";
 
         public static readonly string IdPointerEventRef = "eventRef";
-        public static readonly string IdPointerTemplEventByRef = $"/extensions/KHR_interactivity/events/{{{IdPointerEventRef}}}/";
+        public static readonly string IdPointerTemplEventByRef = $"/extensions/KHR_interactivity/events/{{{IdPointerEventRef}}}";
 
         public static readonly string IdPointerVisibility = $"{IdPointerTemplNodeByIndex}extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
         public static readonly string IdPointerSelectability = $"{IdPointerTemplNodeByIndex}extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
