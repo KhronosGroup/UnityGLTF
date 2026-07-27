@@ -16,15 +16,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
     /// for the external documentation on how to extend UnityGLTF.
     /// </summary>
     ///
-    [NonRatifiedPlugin]
     public class VisualScriptingExportPlugin: GLTFExportPlugin
     {
-        public override JToken AssetExtras 
-        { 
-            get => new JObject(
-                    new JProperty("Spec.Version URL", "https://github.com/KhronosGroup/glTF/blob/d9bfdb08f0c09c125f588783921d9edceb7ee78c/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc"),
-                    new JProperty("Spec.Version Date", "2025-03-10"));
-        }
 #if !UNITY_EDITOR
         public override bool Enabled => false;
 #endif
