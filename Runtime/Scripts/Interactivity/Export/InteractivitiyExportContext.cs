@@ -37,6 +37,7 @@ namespace UnityGLTF.Interactivity.Export
             
             TriggerInterfaceExportCallbacks();
             
+            AddSelectabilityExtensionToInvisibleNodes();
             // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
             TopologicalSort();
             CheckForImplicitValueConversions();
@@ -358,22 +359,34 @@ namespace UnityGLTF.Interactivity.Export
 
             exporter.DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
         }
-        
-        public void AddSelectabilityExtensionToNode(int nodeIndex)
+
+        public void AddSelectabilityExtensionToNode(int nodeIndex, bool initValue = true)
         {
             if (nodeIndex == -1)
                 return;
+            
+            AddSelectabilityExtensionToNode(ActiveGltfRoot.Nodes[nodeIndex], initValue);
+        }
 
-            var nodeExtensions = ActiveGltfRoot.Nodes[nodeIndex].Extensions;
+        
+        public void AddSelectabilityExtensionToNode(Node node, bool initValue = true)
+        {
+            if (node == null)
+                return;
+
+            var nodeExtensions = node.Extensions;
             if (nodeExtensions == null)
             {
                 nodeExtensions = new Dictionary<string, IExtension>();
-                ActiveGltfRoot.Nodes[nodeIndex].Extensions = nodeExtensions;
+                node.Extensions = nodeExtensions;
             }
-            if (!nodeExtensions.ContainsKey(KHR_node_selectability_Factory.EXTENSION_NAME))
+            if (!nodeExtensions.TryGetValue(KHR_node_selectability_Factory.EXTENSION_NAME, out var nodeExtension))
             {
-                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability());
+                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability() { selectable = initValue });
             }
+            else
+                (nodeExtension as KHR_node_selectability).selectable = initValue;
+            
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }
         
@@ -1077,7 +1090,7 @@ namespace UnityGLTF.Interactivity.Export
             return -1;
         }
         
-        public  int GetValueTypeForInput(GltfInteractivityNode node, string socketName, HashSet<GltfInteractivityNode.ValueSocketData> visited = null)
+        public int GetValueTypeForInput(GltfInteractivityNode node, string socketName, HashSet<GltfInteractivityNode.ValueSocketData> visited = null)
         {
             if (visited == null)
                 visited = new HashSet<GltfInteractivityNode.ValueSocketData>();
@@ -1275,6 +1288,21 @@ namespace UnityGLTF.Interactivity.Export
                 }
 
                 node.OpDeclaration = opIndex;
+            }
+        }
+        
+        protected void AddSelectabilityExtensionToInvisibleNodes()
+        {
+            // Ensure initial invisible nodes also gets unselectable 
+            
+            foreach (var node in this.exporter.GetRoot().Nodes)
+            {
+                if (node.Extensions != null && node.Extensions.TryGetValue(KHR_node_visibility_Factory.EXTENSION_NAME, out var nodeVisibilityExtension))
+                {
+                    var visible = (nodeVisibilityExtension as KHR_node_visibility).visible;
+                    if (!visible)
+                        AddSelectabilityExtensionToNode(node, visible);
+                }
             }
         }
     }

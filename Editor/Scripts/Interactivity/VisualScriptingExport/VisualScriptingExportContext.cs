@@ -417,6 +417,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             RemoveUnconnectedNodes();
 
             TriggerInterfaceExportCallbacks();
+
+            AddSelectabilityExtensionToInvisibleNodes();
             
             // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
             TopologicalSort();
