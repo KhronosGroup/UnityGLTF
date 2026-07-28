@@ -102,10 +102,20 @@ namespace Unity.VisualScripting
             return s;
         }
 
-        public static object BezierInterpolate(Vector2 pointAValue, Vector2 pointBValue, object currentValue, object targetValue, float f)
+        /// <summary>
+        /// Maps an input progress to the eased output progress, the same way CSS cubic-bezier() does.
+        /// This is the mapping <see cref="BezierInterpolate"/> applies before lerping, exposed so that
+        /// editor previews show exactly what the runtime evaluates.
+        /// </summary>
+        public static float EvaluateEasing(Vector2 pointAValue, Vector2 pointBValue, float f)
         {
             var s = SolveForCurveParameter(f, pointAValue.x, pointBValue.x);
-            f = BezierAxis(s, pointAValue.y, pointBValue.y);
+            return BezierAxis(s, pointAValue.y, pointBValue.y);
+        }
+
+        public static object BezierInterpolate(Vector2 pointAValue, Vector2 pointBValue, object currentValue, object targetValue, float f)
+        {
+            f = EvaluateEasing(pointAValue, pointBValue, f);
             if (currentValue is Vector2 currentVector2)
             {
                 return Vector2.Lerp(currentVector2, (Vector2)targetValue , f);
