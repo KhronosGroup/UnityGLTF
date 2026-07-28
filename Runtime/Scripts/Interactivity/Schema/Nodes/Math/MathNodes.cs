@@ -100,9 +100,6 @@ namespace UnityGLTF.Interactivity.Schema
         
         [OutputSocketDescription(GltfTypes.Float3)]
         public const string IdOutputScale = "scale";
-        
-        [OutputSocketDescription(GltfTypes.Bool)]
-        public const string IdOutputIsValid = "isValid";
     }
     
     public class Math_Transform_Float2Node : GltfInteractivityNodeSchema
