@@ -298,6 +298,7 @@ namespace UnityGLTF
 	    }
 	    
 	    private static bool ExportBinary => settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.Glb;
+	    private static bool EmbedTexturesInBuffer => settings.EditorExportFileFormat == GLTFSettings.ExportFileFormat.GltfEmbeddedTextures;
 	    private const int Priority = 34;
 
 		[MenuItem(MenuPrefix + ExportGlb + " &SPACE", true, Priority)]
@@ -515,7 +516,7 @@ namespace UnityGLTF
 				if (binary)
 					exporter.SaveGLB(path, sceneName);
 				else
-					exporter.SaveGLTFandBin(path, sceneName);
+					exporter.SaveGLTFandBin(path, sceneName, true, EmbedTexturesInBuffer);
 
 				Debug.Log("Exported to " + resultFile);
 				EditorUtility.RevealInFinder(resultFile);

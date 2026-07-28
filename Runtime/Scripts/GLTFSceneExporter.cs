@@ -859,12 +859,14 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the GLTF and binary files</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true)
+		/// <param name="exportTextures">Write textures as separate files next to the .gltf. Ignored when <paramref name="embedTexturesInBuffer"/> is true.</param>
+		/// <param name="embedTexturesInBuffer">Store textures and other resources as buffer views inside the .bin file instead of writing them as separate files.</param>
+		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true, bool embedTexturesInBuffer = false)
 		{
 			exportGltfMarker.Begin();
 
 			exportGltfInitMarker.Begin();
-			_shouldUseInternalBufferForImages = false;
+			_shouldUseInternalBufferForImages = embedTexturesInBuffer;
 			var toLower = fileName.ToLowerInvariant();
 			if (toLower.EndsWith(".gltf"))
 				fileName = fileName.Substring(0, fileName.Length - 5);

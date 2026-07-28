@@ -131,6 +131,9 @@ namespace UnityGLTF
 		    /** glTF JSON + separate binary buffers and textures */
 		    [InspectorName("glTF (.gltf + .bin + textures)")]
 		    Gltf,
+		    /** glTF JSON + separate binary buffer that also contains the textures */
+		    [InspectorName("glTF with embedded textures (.gltf + .bin)")]
+		    GltfEmbeddedTextures,
 	    }
 	    
 	    public ExportFileFormat EditorExportFileFormat = ExportFileFormat.Glb;
