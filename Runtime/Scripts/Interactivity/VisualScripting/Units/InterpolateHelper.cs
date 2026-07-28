@@ -55,34 +55,57 @@ namespace Unity.VisualScripting
             return true;
         }
         
-        private static Vector2 CubicBezier(float t, Vector2 p0, Vector2 p1)
+        // Evaluates one axis of a cubic Bezier with the implicit end points P0 = 0 and P3 = 1.
+        private static float BezierAxis(float s, float c1, float c2)
         {
-            return CubicBezier(t,
-                new Vector2(0f, 0f),
-                new Vector2(p0.x, p0.y),
-                new Vector2(p1.x, p1.y),
-                new Vector2(1f, 1f));
+            float u = 1f - s;
+            return 3f * u * u * s * c1 + 3f * u * s * s * c2 + s * s * s;
         }
-        
-        private static Vector2 CubicBezier (float t, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)
+
+        private static float BezierAxisDerivative(float s, float c1, float c2)
         {
-            float u = 1 - t;
-            float tt = t * t;
-            float uu = u * u;
-            float uuu = uu * u;
-            float ttt = tt * t;
+            float u = 1f - s;
+            return 3f * u * u * c1 + 6f * u * s * (c2 - c1) + 3f * s * s * (1f - c2);
+        }
 
-            Vector2 p = new Vector2(0, 0);
-            p.x = uuu * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + ttt * p3.x;
-            p.y = uuu * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + ttt * p3.y;
+        // Maps an input progress x to the curve parameter s by solving X(s) == x, as CSS
+        // cubic-bezier() easing requires. KHR_interactivity constrains p1.x and p2.x to [0, 1],
+        // which keeps X monotonic on [0, 1] and therefore invertible.
+        private static float SolveForCurveParameter(float x, float c1, float c2)
+        {
+            float s = x;
+            for (int i = 0; i < 8; i++)
+            {
+                float error = BezierAxis(s, c1, c2) - x;
+                if (Mathf.Abs(error) < 1e-6f)
+                    return s;
 
-            return p;
+                float derivative = BezierAxisDerivative(s, c1, c2);
+                if (Mathf.Abs(derivative) < 1e-6f)
+                    break;
+
+                s -= error / derivative;
+            }
+
+            // Newton-Raphson did not converge (near-flat slope), fall back to bisection.
+            float low = 0f;
+            float high = 1f;
+            for (int i = 0; i < 32; i++)
+            {
+                s = (low + high) * 0.5f;
+                if (BezierAxis(s, c1, c2) < x)
+                    low = s;
+                else
+                    high = s;
+            }
+
+            return s;
         }
 
         public static object BezierInterpolate(Vector2 pointAValue, Vector2 pointBValue, object currentValue, object targetValue, float f)
         {
-            var bezier = CubicBezier(f, pointAValue, pointBValue);
-            f = bezier.y;
+            var s = SolveForCurveParameter(f, pointAValue.x, pointBValue.x);
+            f = BezierAxis(s, pointAValue.y, pointBValue.y);
             if (currentValue is Vector2 currentVector2)
             {
                 return Vector2.Lerp(currentVector2, (Vector2)targetValue , f);
