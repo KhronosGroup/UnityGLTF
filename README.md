@@ -172,11 +172,6 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ## glTF Interactivity
 ### Visual Scripting Graph Exporter
 
-This plugin allows you to export VisualScripting Graphs as KHR_interactivity graphs in glTF files.
-> [!NOTE]  
-> Because the specification of KHR_interactivity is still in development, the plugin is disabled by default. To enable it, go to `Project Settings > UnityGLTF > Export` and enable the 'KHR_interactivity (VisualScripting)' plugin.
-Please keep in mind that until ratification of the extension, exported glTF files with the KHR_interactivity extension might be outdated and not valid anymore with new specification updates.
-
 ### Features
 
 A wide range of nodes are supported for export. Additionally, many features that Unity's Visual Scripting has, but that are lacking in the KHR_interactivity extension, are "flattened" on export into compatible graph logic. For example, scoped variables get exported as variables with unique names, so that there are no conflicts in the exported graph. This allows a lot of flexibility for building complex graphs in the Unity editor, while still being able to export to a glTF file. 
