@@ -33,9 +33,21 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             // Regular pointer/set
             ValueInput target = null;
 
+            string CombinePointers(string a, string b)
+            {
+                if (string.IsNullOrEmpty(a))
+                    return b;
+                if (string.IsNullOrEmpty(b))
+                    return b;
+
+                if (a.EndsWith("/") || b.StartsWith("/"))
+                    return a + b;
+                return $"{a}/{b}";
+            }
+
             var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
-            var template = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/" + property;
-            var scaleTemplate = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale";
+            var template = "/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/" + property;
+            var scaleTemplate = "/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale";
             
             if (unitExporter.unit is SetMember setMember)
             {
@@ -46,7 +58,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 if (isOffset)
                 {
-                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target,  CombinePointers(materialTemplate, scaleTemplate), out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.MapToInputPort(setMember.input);
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(uvOffSetOut);
                 }
@@ -55,7 +67,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.MapInputPortToSocketName(setMember.input, Pointer_SetNode.IdValue, node);
                 }
                 
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target,  CombinePointers(materialTemplate, template), GltfTypes.Float2);
             }
             else if (unitExporter.unit is InvokeMember invokeMember)
             {
@@ -96,7 +108,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                 if (isOffset)
                 {
-                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, CombinePointers(materialTemplate, scaleTemplate), out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.MapToInputPort(invokeMember.inputParameters[1]);
                     node.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(uvOffSetOut);
                 }
@@ -104,7 +116,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     node.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(invokeMember.inputParameters[1]);
                 }
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, CombinePointers(materialTemplate, template), GltfTypes.Float2);
             }
             
             return true;
