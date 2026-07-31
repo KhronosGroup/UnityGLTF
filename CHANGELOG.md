@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.20.0] - 2026-07-31
+- add: `KHR_interactivity` export is now an official part of UnityGLTF: the Visual Scripting export plugin is enabled by default and no longer marked as non-ratified. 
+- add: export support for embedded textures in .gltf+.bin exports (option, default = false)
+- add: Anim.Pointer: warning logs for unresolved properties
+- change: skipping non-exportable animation material properties entirely
+- fix: Mixamo left hand finger bone detection for pinky3 and middle2
+
 ## [2.19.5] - 2026-04-29
 - fix: compiler error in Unity 6.3 > wrong ifdef
 
