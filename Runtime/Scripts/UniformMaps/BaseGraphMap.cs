@@ -174,12 +174,29 @@ namespace UnityGLTF
 		    material.SetFloat(cullPropId, mode);
 		    material.SetFloat(cullModePropId, mode);
 		    material.SetFloat(cullModePropIdBuiltin, mode);
+
+		    // HDRP: _CullMode only covers the depth/GBuffer/shadow passes, the forward pass reads
+		    // _CullModeForward. Backface shading additionally needs the _DOUBLESIDED_ON keyword,
+		    // otherwise backfaces keep the frontface normal and turn out unlit/black.
+		    material.SetFloat(cullModeForwardPropId, mode);
+		    if (doubleSided)
+		    {
+			    material.EnableKeyword(KW_DOUBLESIDED_ON);
+			    material.SetVector(k_DoubleSidedConstants, k_DoubleSidedConstantsFlip);
+		    }
+		    else
+		    {
+			    material.DisableKeyword(KW_DOUBLESIDED_ON);
+		    }
 	    }
 
 	    public static readonly int cutoffPropId = Shader.PropertyToID("_Cutoff");
 
 	    protected void SetAlphaModeMask(Material material, bool isMask) {
-		    material.SetFloat(cutoffPropId, isMask ? 1 : 0);
+		    // _Cutoff has to receive the actual glTF alphaCutoff – it used to be hardcoded to 1,
+		    // which clipped away everything that wasn't fully opaque.
+		    var cutoff = material.HasProperty(alphaCutoffPropId) ? material.GetFloat(alphaCutoffPropId) : 0.5f;
+		    material.SetFloat(cutoffPropId, isMask ? cutoff : 0);
 	// #if USING_HDRP_10_OR_NEWER || USING_URP_12_OR_NEWER
 	        material.EnableKeyword(KW_ALPHATEST_ON);
 	        material.EnableKeyword(KW_ALPHATEST_ON_BUILTIN);
@@ -188,14 +205,25 @@ namespace UnityGLTF
 	// #endif
 		    material.SetFloat(k_AlphaClip, 1);
 		    material.SetFloat(k_AlphaClipBuiltin, 1);
+		    // HDRP drives _ALPHATEST_ON and the render queue offset from this toggle
+		    material.SetFloat(k_AlphaCutoffEnable, isMask ? 1 : 0);
 		    if (isMask) material.EnableKeyword(KW_ALPHACLIP_ON_BUILTIN);
 		    else material.DisableKeyword(KW_ALPHACLIP_ON_BUILTIN);
 		    material.SetFloat(alphaToMask, isMask ? 1 : 0);
 	    }
 
+	    // HDRP backface normal handling, read in ShaderPass.template via _DoubleSidedConstants.
+	    // The shader default is Mirror (1,1,-1,0), which only flips the geometric normal. glTF flips
+	    // normal, tangent and bitangent, so the normal map has to be flipped too – HDRP's "Flip" mode.
+	    static readonly Vector4 k_DoubleSidedConstantsFlip = new Vector4(-1f, -1f, -1f, 0f);
+
 	    static readonly int cullPropId = Shader.PropertyToID("_Cull");
 	    static readonly int cullModePropId = Shader.PropertyToID("_CullMode");
+	    static readonly int cullModeForwardPropId = Shader.PropertyToID("_CullModeForward");
 	    static readonly int cullModePropIdBuiltin = Shader.PropertyToID("_BUILTIN_CullMode");
+	    static readonly int k_DoubleSidedConstants = Shader.PropertyToID("_DoubleSidedConstants");
+	    static readonly int k_AlphaCutoffEnable = Shader.PropertyToID("_AlphaCutoffEnable");
+	    static readonly int alphaCutoffPropId = Shader.PropertyToID("alphaCutoff");
 	    static readonly int k_AlphaClip = Shader.PropertyToID("_AlphaClip");
 	    static readonly int k_AlphaClipBuiltin = Shader.PropertyToID("_BUILTIN_AlphaClip");
 	    static readonly int k_Surface = Shader.PropertyToID("_Surface");
@@ -219,6 +247,7 @@ namespace UnityGLTF
 	    const string KW_ENABLE_FOG_ON_TRANSPARENT = "_ENABLE_FOG_ON_TRANSPARENT";
 	    const string KW_SURFACE_TYPE_TRANSPARENT = "_SURFACE_TYPE_TRANSPARENT";
 	    const string KW_SURFACE_TYPE_TRANSPARENT_BUILTIN = "_BUILTIN_SURFACE_TYPE_TRANSPARENT";
+	    const string KW_DOUBLESIDED_ON = "_DOUBLESIDED_ON";
 	    const string k_ShaderPassTransparentDepthPrepass = "TransparentDepthPrepass";
 	    const string k_ShaderPassTransparentDepthPostpass = "TransparentDepthPostpass";
 	    const string k_ShaderPassTransparentBackface = "TransparentBackface";
@@ -246,6 +275,7 @@ namespace UnityGLTF
 		    material.SetFloat(k_SurfaceBuiltin, 0);
 		    material.SetFloat(zWritePropId, 1);
 		    material.SetFloat(alphaToMask, 0);
+		    material.SetFloat(k_AlphaCutoffEnable, 0);
 	    }
 
 	    protected void SetShaderModeBlend(Material material)
@@ -268,18 +298,22 @@ namespace UnityGLTF
 		    material.SetFloat(k_SurfaceBuiltin, 1);
 		    material.SetFloat(zWritePropId, 0);
 		    material.SetFloat(alphaToMask, 0);
+		    material.SetFloat(k_AlphaCutoffEnable, 0);
 	    }
 
 	    public double AlphaCutoff
 	    {
-		    get => _material.GetFloat("alphaCutoff");
+		    get => _material.GetFloat(alphaCutoffPropId);
 		    set
 		    {
-				_material.SetFloat("alphaCutoff", (float) value);
+				_material.SetFloat(alphaCutoffPropId, (float) value);
+			    // keep the BiRP/URP cutoff property in sync when the mode was already set to MASK
+			    if (_alphaMode == AlphaMode.MASK)
+				    _material.SetFloat(cutoffPropId, (float) value);
 #if !UNITY_2021_2_OR_NEWER
 			    // PBRGraph/UnlitGraph always have alphaCutoff on 2020.x, so we need to set it to 0 for non-masked modes
 				if (_alphaMode != AlphaMode.MASK)
-				    _material.SetFloat("alphaCutoff", 0f);
+				    _material.SetFloat(alphaCutoffPropId, 0f);
 #endif
 		    }
 	    }

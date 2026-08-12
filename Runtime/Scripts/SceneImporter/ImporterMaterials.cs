@@ -101,8 +101,11 @@ namespace UnityGLTF
 			}
 
 			mapper.Material.name = def.Name;
-			mapper.AlphaMode = def.AlphaMode;
+			// AlphaCutoff has to be assigned before AlphaMode: switching to MASK configures the
+			// cutout render state from the current cutoff value (_Cutoff, _AlphaCutoffEnable, ...),
+			// so setting it afterwards would leave those at their defaults.
 			mapper.AlphaCutoff = def.AlphaCutoff;
+			mapper.AlphaMode = def.AlphaMode;
 			mapper.DoubleSided = def.DoubleSided;
 			mapper.Material.SetFloat("_BUILTIN_QueueControl", 0);
 			mapper.Material.SetFloat("_QueueControl", 0);
