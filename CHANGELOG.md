@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.20.1] - 2026-08-12
+- fix: HDRP double sided material import
+- fix: HDRP alpha cutoff material import
+
 ## [2.20.0] - 2026-07-31
 - add: `KHR_interactivity` export is now an official part of UnityGLTF: the Visual Scripting export plugin is enabled by default and no longer marked as non-ratified. 
 - add: export support for embedded textures in .gltf+.bin exports (option, default = false)
