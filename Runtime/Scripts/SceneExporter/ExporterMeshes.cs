@@ -424,8 +424,11 @@ namespace UnityGLTF
 				// to the values in this frame) and then any weight between 50-100 would be relevant to the weights in
 				// the second frame.  See Post 20 for more info:
 				// https://forum.unity3d.com/threads/is-there-some-method-to-add-blendshape-in-editor.298002/#post-2015679
-				var frameWeight = meshObj.GetBlendShapeFrameWeight(blendShapeIndex, 0);
-				weights.Add(smr.GetBlendShapeWeight(blendShapeIndex) / frameWeight);
+				// We normalize against the *last* frame's weight because that's the frame ExportBlendShapes
+				// exports the deltas from (glTF only supports a single frame per morph target).
+				var frameCount = meshObj.GetBlendShapeFrameCount(blendShapeIndex);
+				var frameWeight = meshObj.GetBlendShapeFrameWeight(blendShapeIndex, frameCount - 1);
+				weights.Add(frameWeight != 0f ? smr.GetBlendShapeWeight(blendShapeIndex) / frameWeight : 0);
 			}
 
 			return weights;
