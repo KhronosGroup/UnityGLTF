@@ -1,4 +1,4 @@
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_4_OR_NEWER && HAVE_URP
 
 // RenderGraph Version for Unity 6.4+
 
