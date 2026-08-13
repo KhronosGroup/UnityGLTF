@@ -114,6 +114,9 @@ namespace UnityGLTF
 
 			bool flipValueRange = false;
 			float? valueMultiplier = null;
+			// Multiplier per component of an animated value (e.g. one per blend shape weight),
+			// used when the components of a single channel need different conversion factors.
+			float[] perComponentValueMultiplier = null;
 			bool isTextureTransform = false;
 			bool keepColorAlpha = true;
 			bool convertToLinearColor = false;
@@ -290,11 +293,6 @@ namespace UnityGLTF
 					}
 					break;
 				case SkinnedMeshRenderer skinnedMesh:
-					// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
-					// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
-					var minBlendShapeFrameWeight = 0.0f;
-					var maxBlendShapeFrameWeight = 0.0f;
-
 					var sharedMesh = skinnedMesh.sharedMesh;
 					if (!sharedMesh)
 					{
@@ -302,18 +300,24 @@ namespace UnityGLTF
 						return;
 					}
 
+					// glTF morph target weights are 0..1 while Unity weights go from 0 to the weight of the shape's
+					// last frame. ExportBlendShapes exports the deltas of that last frame, so each shape needs to be
+					// normalized against its own final frame weight – those can differ between shapes of one mesh.
 					var shapeCount = sharedMesh.blendShapeCount;
+					var maxBlendShapeFrameWeight = 0.0f;
+					var shapeMultipliers = new float[shapeCount];
 					for (int index = 0; index < shapeCount; ++index)
 					{
 						var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
-						for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
-						{
-							var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
-							minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
-							maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
-						}
+						var lastFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, blendShapeFrameCount - 1);
+						shapeMultipliers[index] = lastFrameWeight != 0f ? 1.0f / lastFrameWeight : 1.0f;
+						maxBlendShapeFrameWeight = Mathf.Max(lastFrameWeight, maxBlendShapeFrameWeight);
 					}
 
+					if (shapeCount > 0)
+						perComponentValueMultiplier = shapeMultipliers;
+
+					// Fallback for callers that don't pass one value per blend shape (AddAnimationData is public API)
 					if (maxBlendShapeFrameWeight != 0)
 						valueMultiplier = 1.0f / maxBlendShapeFrameWeight;
 
@@ -393,6 +397,16 @@ namespace UnityGLTF
 						{
 							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
 						}
+						// Morph target weights arrive here as one float per target and keyframe,
+						// so the components repeat with the number of targets.
+						else if (perComponentValueMultiplier != null && values.Length % perComponentValueMultiplier.Length == 0)
+						{
+							var componentCount = perComponentValueMultiplier.Length;
+							var multipliedValues = new float[values.Length];
+							for (var i = 0; i < values.Length; i++)
+								multipliedValues[i] = (float)values[i] * perComponentValueMultiplier[i % componentCount];
+							Tsampler.Output = ExportAccessor(multipliedValues);
+						}
 						else if (valueMultiplier.HasValue)
 						{
 							var multiplier = valueMultiplier.Value;
@@ -429,7 +443,12 @@ namespace UnityGLTF
 							Array.Copy((float[])values[i], 0, floatArray, i * firstLength, firstLength);
 
 						// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
-						if (valueMultiplier.HasValue)
+						if (perComponentValueMultiplier != null && perComponentValueMultiplier.Length == firstLength)
+						{
+							for (var i = 0; i < floatArray.Length; i++)
+								floatArray[i] *= perComponentValueMultiplier[i % firstLength];
+						}
+						else if (valueMultiplier.HasValue)
 						{
 							for (var i = 0; i < floatArray.Length; i++)
 								floatArray[i] *= valueMultiplier.Value;
