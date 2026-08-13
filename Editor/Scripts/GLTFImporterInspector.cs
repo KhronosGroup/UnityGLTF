@@ -160,6 +160,43 @@ namespace UnityGLTF
 		}
 		private static readonly GUIContent RemapTexturesToggleContent = new GUIContent("Experimental", "(experimental) Remap textures inside the glTF to textures that are already in your project.");
 
+		private static readonly GUIContent PerClipLoopSettingsContent = new GUIContent("Loop Settings Per Clip",
+			"Enable to set Loop Time and Loop Pose for each animation clip separately in the Animations list below. Clips start out with the settings above; while this is off, all clips use them.");
+
+		private static readonly GUIContent AnimationsListContent = new GUIContent("Animations");
+
+		/// <summary>
+		/// Draws the list of imported animation clips. Same as drawing the array property directly, but with a
+		/// header for the per-clip columns – and without the array size field, since the list can't be edited.
+		/// </summary>
+		private static void AnimationClipListGUI(SerializedProperty animations)
+		{
+			animations.isExpanded = EditorGUILayout.Foldout(animations.isExpanded, AnimationsListContent, true);
+			if (!animations.isExpanded) return;
+
+			EditorGUI.indentLevel++;
+			AnimationClipImportInfoDrawer.HeaderGUI(animations);
+			for (var i = 0; i < animations.arraySize; i++)
+				EditorGUILayout.PropertyField(animations.GetArrayElementAtIndex(i));
+			EditorGUI.indentLevel--;
+		}
+
+		/// <summary>
+		/// Copies the importer-wide loop settings to all clips. Called when per-clip editing is turned on, so that
+		/// the values shown in the list are the ones that are currently applied to the clips.
+		/// </summary>
+		private static void CopyLoopSettingsToClips(SerializedProperty animations, bool loopTime, bool loopPose)
+		{
+			if (animations == null) return;
+
+			for (var i = 0; i < animations.arraySize; i++)
+			{
+				var clipInfo = animations.GetArrayElementAtIndex(i);
+				clipInfo.FindPropertyRelative(nameof(GLTFImporter.AnimationClipImportInfo.loopTime)).boolValue = loopTime;
+				clipInfo.FindPropertyRelative(nameof(GLTFImporter.AnimationClipImportInfo.loopPose)).boolValue = loopPose;
+			}
+		}
+
 		private void AnimationInspectorGUI()
 		{
 			var t = target as GLTFImporter;
@@ -181,24 +218,40 @@ namespace UnityGLTF
 				EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
 				EditorGUI.indentLevel--;
 			}
+
+			var animations = serializedObject.FindProperty(GLTFImporter.AnimationsPropertyName);
 			if (hasAnimationData && anim.enumValueIndex > 0)
 			{
 				var loopTime = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopTime));
-				EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
-				if (loopTime.boolValue)
+				var loopPose = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopPose));
+				var perClipLoopSettings = serializedObject.FindProperty(nameof(GLTFImporter._animationLoopSettingsPerClip));
+
+				// when set per clip, the loop settings are edited in the Animations list below
+				if (!perClipLoopSettings.boolValue)
 				{
-					EditorGUI.indentLevel++;
-					EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._animationLoopPose)), new GUIContent("Loop Pose"));
-					EditorGUI.indentLevel--;
+					EditorGUILayout.PropertyField(loopTime, new GUIContent("Loop Time"));
+					if (loopTime.boolValue)
+					{
+						EditorGUI.indentLevel++;
+						EditorGUILayout.PropertyField(loopPose, new GUIContent("Loop Pose"));
+						EditorGUI.indentLevel--;
+					}
+				}
+
+				EditorGUI.BeginChangeCheck();
+				EditorGUILayout.PropertyField(perClipLoopSettings, PerClipLoopSettingsContent);
+				if (EditorGUI.EndChangeCheck() && perClipLoopSettings.boolValue)
+				{
+					CopyLoopSettingsToClips(animations, loopTime.boolValue, loopPose.boolValue);
+					animations.isExpanded = true; // the settings are edited there now, so make sure the list is visible
 				}
 			}
-			
+
 			// show animations for clip import editing
-			var animations = serializedObject.FindProperty("m_Animations");
 			if (animations.arraySize > 0)
 			{
 				EditorGUILayout.Space();
-				EditorGUILayout.PropertyField(animations, new GUIContent("Animations"), true);
+				AnimationClipListGUI(animations);
 			}
 
 			// warn if Humanoid rig import has failed
@@ -591,6 +644,139 @@ namespace UnityGLTF
 					return false;
 				return true;
 			}
+		}
+	}
+
+	/// <summary>
+	/// Draws a single entry of the importer's animation clip list: the clip name, and – when
+	/// "Loop Settings Per Clip" is enabled – the Loop Time / Loop Pose settings for that clip.
+	/// </summary>
+	[CustomPropertyDrawer(typeof(GLTFImporter.AnimationClipImportInfo))]
+	internal class AnimationClipImportInfoDrawer : PropertyDrawer
+	{
+		private const string LoopTimeTooltip = "Make this clip loop seamlessly.";
+		private const string LoopPoseTooltip = "Blend the pose of the last frame into the first frame of this clip.";
+
+		private static readonly GUIContent ClipHeaderContent = new GUIContent("Clip");
+		private static readonly GUIContent LoopTimeHeaderContent = new GUIContent("Loop Time", LoopTimeTooltip);
+		private static readonly GUIContent LoopPoseHeaderContent = new GUIContent("Loop Pose", LoopPoseTooltip);
+		private static readonly GUIContent LoopTimeToggleContent = new GUIContent("", LoopTimeTooltip);
+		private static readonly GUIContent LoopPoseToggleContent = new GUIContent("", LoopPoseTooltip);
+
+		private const float ColumnWidth = 72f;
+		private const float SeparatorHeight = 1f;
+
+		private static readonly Color SeparatorColor = EditorGUIUtility.isProSkin
+			? new Color(1f, 1f, 1f, 0.1f)
+			: new Color(0f, 0f, 0f, 0.15f);
+
+		/// <summary>
+		/// Draws the column header for the per-clip settings. Does nothing when the loop settings aren't set per clip,
+		/// since then the list only shows the clip names.
+		/// </summary>
+		internal static void HeaderGUI(SerializedProperty animations)
+		{
+			if (!PerClipLoopSettingsEnabled(animations)) return;
+
+			var position = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + SeparatorHeight);
+			using (new IndentScope(ref position))
+			{
+				var contentRect = DrawSeparator(position);
+				GetColumnRects(contentRect, out var nameRect, out var loopTimeRect, out var loopPoseRect);
+				EditorGUI.LabelField(nameRect, ClipHeaderContent, EditorStyles.miniBoldLabel);
+				EditorGUI.LabelField(loopTimeRect, LoopTimeHeaderContent, EditorStyles.miniBoldLabel);
+				EditorGUI.LabelField(loopPoseRect, LoopPoseHeaderContent, EditorStyles.miniBoldLabel);
+			}
+		}
+
+		public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+		{
+			return EditorGUIUtility.singleLineHeight + SeparatorHeight;
+		}
+
+		public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+		{
+			var nameProperty = property.FindPropertyRelative(nameof(GLTFImporter.AnimationClipImportInfo.name));
+			var clipName = nameProperty != null && !string.IsNullOrEmpty(nameProperty.stringValue)
+				? nameProperty.stringValue
+				: label.text;
+			var clipLabel = new GUIContent(clipName, clipName);
+
+			var loopTime = property.FindPropertyRelative(nameof(GLTFImporter.AnimationClipImportInfo.loopTime));
+			var loopPose = property.FindPropertyRelative(nameof(GLTFImporter.AnimationClipImportInfo.loopPose));
+			// when the loop settings don't come from this clip there's nothing to edit here, only the name is shown
+			var perClipLoopSettings = PerClipLoopSettingsEnabled(property) && loopTime != null && loopPose != null;
+
+			using (new IndentScope(ref position))
+			{
+				var contentRect = DrawSeparator(position);
+				if (!perClipLoopSettings)
+				{
+					EditorGUI.LabelField(contentRect, clipLabel);
+					return;
+				}
+
+				GetColumnRects(contentRect, out var nameRect, out var loopTimeRect, out var loopPoseRect);
+				EditorGUI.LabelField(nameRect, clipLabel);
+				ToggleField(loopTimeRect, LoopTimeToggleContent, loopTime);
+				using (new EditorGUI.DisabledScope(!loopTime.boolValue))
+					ToggleField(loopPoseRect, LoopPoseToggleContent, loopPose);
+			}
+		}
+
+		/// <summary>
+		/// Draws the separator line at the bottom of a row and returns the remaining rect for the row content.
+		/// </summary>
+		private static Rect DrawSeparator(Rect position)
+		{
+			var separatorRect = new Rect(position.x, position.yMax - SeparatorHeight, position.width, SeparatorHeight);
+			EditorGUI.DrawRect(separatorRect, SeparatorColor);
+
+			position.height -= SeparatorHeight;
+			return position;
+		}
+
+		private static bool PerClipLoopSettingsEnabled(SerializedProperty property)
+		{
+			var perClipLoopSettings = property.serializedObject.FindProperty(nameof(GLTFImporter._animationLoopSettingsPerClip));
+			return perClipLoopSettings != null && perClipLoopSettings.boolValue;
+		}
+
+		private static void GetColumnRects(Rect position, out Rect nameRect, out Rect loopTimeRect, out Rect loopPoseRect)
+		{
+			nameRect = new Rect(position.x, position.y, Mathf.Max(position.width - ColumnWidth * 2f, 40f), position.height);
+			loopTimeRect = new Rect(nameRect.xMax, position.y, ColumnWidth, position.height);
+			loopPoseRect = new Rect(loopTimeRect.xMax, position.y, ColumnWidth, position.height);
+		}
+
+		private static void ToggleField(Rect rect, GUIContent content, SerializedProperty property)
+		{
+			// keep the clickable area at the checkbox, the columns are wider than that
+			rect.width = EditorGUIUtility.singleLineHeight;
+
+			EditorGUI.BeginChangeCheck();
+			EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
+			var value = EditorGUI.ToggleLeft(rect, content, property.boolValue);
+			EditorGUI.showMixedValue = false;
+			if (EditorGUI.EndChangeCheck())
+				property.boolValue = value;
+		}
+
+		/// <summary>
+		/// Applies the current indentation to a rect and resets it, so that the columns can be laid out manually.
+		/// </summary>
+		private struct IndentScope : IDisposable
+		{
+			private readonly int _indentLevel;
+
+			public IndentScope(ref Rect position)
+			{
+				position = EditorGUI.IndentedRect(position);
+				_indentLevel = EditorGUI.indentLevel;
+				EditorGUI.indentLevel = 0;
+			}
+
+			public void Dispose() => EditorGUI.indentLevel = _indentLevel;
 		}
 	}
 
