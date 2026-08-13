@@ -529,7 +529,7 @@ namespace UnityGLTF
 
 		                    // TODO We might want to be able to set the unwrap settings via the importer.
 		                    UnwrapParam.SetDefaults(out var unwrapSettings);
-							Unwrapping.GenerateSecondaryUVSet(mesh, unwrapSettings);
+							LightmapUVGeneration.GenerateSecondaryUVSet(mesh, unwrapSettings);
 	                    }
                     }
 
