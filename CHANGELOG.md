@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.21.0] - 2026-08-14
+- add: Asset Importer > loop settings can now be set per animation clip
+- add: lightmap UV generation support for meshes with blend shapes
+- fix: compile error in Unity 6.4 non-URP projects
+- fix: `ReadOnlySpan` texture loading is now guarded to Unity 6.1+ 
+
 ## [2.20.1] - 2026-08-12
 - fix: HDRP double sided material import
 - fix: HDRP alpha cutoff material import
