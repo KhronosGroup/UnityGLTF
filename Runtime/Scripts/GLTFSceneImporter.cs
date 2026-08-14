@@ -62,7 +62,6 @@ namespace UnityGLTF
 		public CameraImportOption CameraImport = CameraImportOption.ImportAndCameraDisabled;
 		public RuntimeTextureCompression RuntimeTextureCompression = RuntimeTextureCompression.None;
 		public BlendShapeFrameWeightSetting BlendShapeFrameWeight = new BlendShapeFrameWeightSetting(BlendShapeFrameWeightSetting.MultiplierOption.Multiplier1);
-        public float ScaleFactor = 1;
 
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
@@ -1054,9 +1053,15 @@ namespace UnityGLTF
                             var bakedMesh = new Mesh();
                             renderer.BakeMesh(bakedMesh, true);
 
+#if UNITY_EDITOR
+                            var scaleFactor = _options.ImportContext?.ImportScaleFactor ?? 1; 
+#else 
+                            float scaleFactor = 1f; 
+#endif
+
                             var bounds = TransformBounds(renderer.rootBone.worldToLocalMatrix * renderer.transform.localToWorldMatrix, bakedMesh.bounds);
-                            bounds.center *= _options.ScaleFactor;
-                            bounds.size *= _options.ScaleFactor;
+                            bounds.center *= scaleFactor;
+                            bounds.size *= scaleFactor;
 
                             renderer.localBounds = bounds;
 
