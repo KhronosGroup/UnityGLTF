@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -165,7 +165,7 @@ namespace UnityGLTF
 		        BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
 		        if (bufferContents.bufferData.IsCreated)
 		        {
-			        bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+			        bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkDataOffset;
 			        stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
 		        }
 	        }
@@ -874,7 +874,7 @@ namespace UnityGLTF
 			var data = new byte[bufferView.ByteLength];
 
 			var bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-			bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+			bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkDataOffset;
 			bufferContents.Stream.Read(data, 0, data.Length);
 			texture.LoadImage(data);
 

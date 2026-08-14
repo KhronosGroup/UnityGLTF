@@ -544,7 +544,7 @@ namespace UnityGLTF
 		    image.MimeType = PNGMimeType;
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			bool wasAbleToExport = false;
 			bool textureHasAlpha = true;
@@ -703,8 +703,8 @@ namespace UnityGLTF
 			// 	Debug.LogWarning("Validation Warning: " + "Image has non-power-of-two dimensions: " + texture.width + "x" + texture.height + ".", texture);
 			// }
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
-			image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
+			image.BufferView = ExportBufferView(byteOffset, byteLength);
 
 			if (ExportNames)
 			{
