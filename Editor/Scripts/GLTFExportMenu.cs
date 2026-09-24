@@ -510,11 +510,14 @@ namespace UnityGLTF
 			{
 				var sceneName = batch.sceneName;
 				var ext = binary ? ".glb" : ".gltf";
+				bool allowExporting64BitGLB = settings.AllowExporting64BitGLB;
 				var resultFile = GLTFSceneExporter.GetFileName(path, sceneName, ext);
 				settings.SaveFolderPath = path;
+				// Prefer saving as GLB version 2 for compatibility.
+				int glbVersion = allowExporting64BitGLB ? -1 : 2; // -1 means "auto".
 				
 				if (binary)
-					exporter.SaveGLB(path, sceneName);
+					exporter.SaveGLB(path, sceneName, glbVersion);
 				else
 					exporter.SaveGLTFandBin(path, sceneName, true, EmbedTexturesInBuffer);
 

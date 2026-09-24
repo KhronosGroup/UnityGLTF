@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -181,9 +181,9 @@ namespace UnityGLTF
 				if (!accessorIds.ContainsKey(acc.Id))
 				{
 					accessorIds.Add(acc.Id, acc);
-					totalVertCount += acc.Value.Count;
+					totalVertCount += (uint)acc.Value.Count;
 					vOffset = lastVertOffset;
-					lastVertOffset += acc.Value.Count;
+					lastVertOffset += (uint)acc.Value.Count;
 				}
 
 				vertOffsetBySubMesh[primIndex] = vOffset;
@@ -292,7 +292,7 @@ namespace UnityGLTF
 					BufferCacheData bufferContents =
 						_assetCache.BufferCache[dracoExtension.bufferView.Value.Buffer.Id];
 
-					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkOffset,
+					GLTFHelpers.LoadBufferView(dracoExtension.bufferView.Value, bufferContents.ChunkDataOffset,
 						bufferContents.bufferData, out NativeArray<byte> bufferViewData);
 
 					int weightsAttributeId = -1;
@@ -399,7 +399,7 @@ namespace UnityGLTF
 
 					BufferCacheData bufferContents = _assetCache.BufferCache[meshOpt.bufferView.Buffer.Id];
 
-					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkOffset, bufferContents.bufferData, out NativeArray<byte> bufferViewData);
+					GLTFHelpers.LoadBufferView(meshOpt.bufferView, bufferContents.ChunkDataOffset, bufferContents.bufferData, out NativeArray<byte> bufferViewData);
 
 #if HAVE_MESHOPT_DECOMPRESS_VERSION_0_2
 					var jobHandle = Meshoptimizer.Decode.DecodeGltfBuffer(meshOptReturnValues.GetSubArray(bufferViewIndex, 1),
@@ -540,8 +540,8 @@ namespace UnityGLTF
 				bonesPerVertexCount += subMeshes[i].GetBonesPerVertex().Length;
 			}
 			
-			// Custom combine all boneweights and bonePerVertex of sub meshes and apply to final combined mesh 
-			// >> Bug(?) in CombineMeshes that does not proper copy bone weights and bones per vertex  
+			// Custom combine all bone weights and bonePerVertex of sub meshes and apply to final combined mesh
+			// >> Bug(?) in CombineMeshes that does not proper copy bone weights and bones per vertex
 			NativeArray<BoneWeight1> allBoneWeights = new NativeArray<BoneWeight1>(boneWeightCount, Allocator.TempJob);
 			NativeArray<byte> allBonesPerVertex = new NativeArray<byte>(bonesPerVertexCount, Allocator.TempJob);
 			int currentArrayPositionBoneWeights = 0;
@@ -850,7 +850,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = _assetCache.BufferCache[bufferID].bufferData,
-						Offset = (uint)_assetCache.BufferCache[bufferID].ChunkOffset
+						Offset = _assetCache.BufferCache[bufferID].ChunkDataOffset
 					};
 
 					// if this buffer isn't sparse, we're done here
@@ -910,7 +910,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = bufferData.ChunkDataOffset
 					};
 					GLTFHelpers.LoadBufferView(sparseValues.AccessorId.Value.Sparse.Values.BufferView.Value,
 						sparseValues.Offset, sparseValues.bufferData, out NativeArray<byte> bufferViewCache1);
@@ -922,7 +922,7 @@ namespace UnityGLTF
 					{
 						AccessorId = targetAttribute.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset,
+						Offset = bufferData.ChunkDataOffset,
 					};
 					GLTFHelpers.LoadBufferView(sparseIndices.AccessorId.Value.Sparse.Indices.BufferView.Value,
 						sparseIndices.Offset, sparseIndices.bufferData, out NativeArray<byte> bufferViewCache2);
@@ -1082,7 +1082,7 @@ namespace UnityGLTF
 					var gltfMesh = _gltfRoot.Meshes[meshIndex];
 
 					var meshHash = gltfMesh.GetHashFromPrimitiveAttributes();
-					// When we allready decoded a mesh with the same attribute layout, we can reuse the draco decode results and skip decoding this mesh
+					// When we already decoded a mesh with the same attribute layout, we can reuse the draco decode results and skip decoding this mesh
 					if (dracoMeshAttrHashes.TryGetValue(meshHash, out var existingDracoResult))
 					{
 						var resultCopy = new DracoDecodeResult();
@@ -1182,7 +1182,7 @@ namespace UnityGLTF
 
 					if (primitive.Targets != null)
 					{
-						// read mesh primitive targets into assetcache
+						// read mesh primitive targets into asset cache
 						await ConstructMeshTargetsPrepareBuffers(primitive, meshIndex, i);
 						ConstructMeshTargets(primitive, meshIndex, i);
 					}
@@ -1218,7 +1218,7 @@ namespace UnityGLTF
 					{
 						AccessorId = attributePair.Value,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = bufferData.ChunkDataOffset
 					};
 				}
 				
@@ -1233,7 +1233,7 @@ namespace UnityGLTF
 						{
 							AccessorId = attributePair.Value,
 							bufferData = sparseBufferData.bufferData,
-							Offset = (uint)sparseBufferData.ChunkOffset
+							Offset = sparseBufferData.ChunkDataOffset
 						};
 
 						var sparseIndicesBufferId = sparse.Indices.BufferView.Value.Buffer;
@@ -1242,7 +1242,7 @@ namespace UnityGLTF
 						{
 							AccessorId = attributePair.Value,
 							bufferData = sparseIndicesBufferData.bufferData,
-							Offset = (uint)sparseIndicesBufferData.ChunkOffset
+							Offset = sparseIndicesBufferData.ChunkDataOffset
 						};
 
 						primData.SparseAccessors[attributePair.Key] = (sparseIndices, sparseValues);
@@ -1261,7 +1261,7 @@ namespace UnityGLTF
 					{
 						AccessorId = primitive.Indices,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = bufferData.ChunkDataOffset
 					};
 				}
 			}
@@ -1281,7 +1281,7 @@ namespace UnityGLTF
 			uint vertexCount = 0;
 			if (meshAttributes.TryGetValue(SemanticProperties.POSITION, out var attribute))
 			{
-				vertexCount = attribute.AccessorId.Value.Count;
+				vertexCount = (uint)attribute.AccessorId.Value.Count;
 			}
 
 			int[] indices = null;

@@ -424,14 +424,13 @@ namespace UnityGLTF
 		
 		private Material _normalChannelMaterial;
 
-		private const uint MagicGLTF = 0x46546C67;
 		private const uint Version = 2;
 		private const uint MagicJson = 0x4E4F534A;
 		private const uint MagicBin = 0x004E4942;
 		private const int GLTFHeaderSize = 12;
 		private const int SectionHeaderSize = 8;
 
-		private bool _visbilityPluginEnabled = false;
+		private bool _visibilityPluginEnabled = false;
 		
 		public struct UniqueTexture : IEquatable<UniqueTexture>
 		{
@@ -706,8 +705,8 @@ namespace UnityGLTF
 					_root.Asset.PluginExtras.Add(plugin.DisplayName, plugin.AssetExtras);
 			}
 			
-			_visbilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
-			if (_visbilityPluginEnabled && !settings.ExportDisabledGameObjects)
+			_visibilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
+			if (_visibilityPluginEnabled && !settings.ExportDisabledGameObjects)
 			{
 				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
 			}
@@ -727,7 +726,7 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLB(string path, string fileName)
+		public void SaveGLB(string path, string fileName, int glbVersion)
 		{
 			var fullPath = GetFileName(path, fileName, ".glb");
 			var dirName = Path.GetDirectoryName(fullPath);
@@ -737,7 +736,7 @@ namespace UnityGLTF
 
 			using (FileStream glbFile = new FileStream(fullPath, FileMode.Create))
 			{
-				SaveGLBToStream(glbFile, fileName);
+				SaveGLBToStream(glbFile, fileName, glbVersion);
 			}
 
 			if (!_shouldUseInternalBufferForImages)
@@ -752,12 +751,12 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="sceneName"></param>
 		/// <returns></returns>
-		public byte[] SaveGLBToByteArray(string sceneName)
+		public byte[] SaveGLBToByteArray(string sceneName, int glbVersion)
 		{
 			_shouldUseInternalBufferForImages = true;
 			using (var stream = new MemoryStream())
 			{
-				SaveGLBToStream(stream, sceneName);
+				SaveGLBToStream(stream, sceneName, glbVersion);
 				return stream.ToArray();
 			}
 		}
@@ -767,7 +766,8 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the binary file</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLBToStream(Stream stream, string sceneName)
+		/// <param name="glbVersion">The preferred GLB binary format version (-1, 2 or 3). -1 means auto: It will try 2, but the file exceeds 4 GiB, it will automatically upgrade to 3.</param>
+		public void SaveGLBToStream(Stream stream, string sceneName, int glbVersion)
 		{
 			exportGltfMarker.Begin();
 
@@ -807,7 +807,7 @@ namespace UnityGLTF
 
 			animationPointerResolver?.Resolve(this);
 
-			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+			_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 
 			gltfSerializationMarker.Begin();
 			_root.Serialize(jsonWriter, true);
@@ -817,32 +817,68 @@ namespace UnityGLTF
 			_bufferWriter.Flush();
 			jsonWriter.Flush();
 
-			// align to 4-byte boundary to comply with spec.
-			AlignToBoundary(jsonStream);
-			AlignToBoundary(binStream, 0x00);
-
-			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
-				jsonStream.Length + SectionHeaderSize + binStream.Length);
+			GLTF.GLBHeader glbHeader = new GLTF.GLBHeader
+			{
+				Version = (uint)(glbVersion == -1 ? 2 : glbVersion)
+			};
+			// Align chunks to 4-byte or 8-byte boundary to comply with spec.
+			AlignToBoundary(jsonStream, (byte)' ', glbHeader.GetAlignment());
+			AlignToBoundary(binStream, 0x00, glbHeader.GetAlignment());
+			long glbLength = jsonStream.Length + binStream.Length + glbHeader.GetFileHeaderSize() + (glbHeader.GetChunkHeaderSize() * 2);
+			// If automatic, and the file length would be too big for GLB version 2, automatically upgrade to GLB version 3.
+			if (glbVersion == -1 && glbLength > uint.MaxValue)
+			{
+				glbHeader.Version = 3;
+				AlignToBoundary(jsonStream, (byte)' ', glbHeader.GetAlignment());
+				AlignToBoundary(binStream, 0x00, glbHeader.GetAlignment());
+				glbLength = jsonStream.Length + binStream.Length + glbHeader.GetFileHeaderSize() + (glbHeader.GetChunkHeaderSize() * 2);
+			}
 
 			BinaryWriter writer = new BinaryWriter(stream);
 
-			// write header
-			writer.Write(MagicGLTF);
-			writer.Write(Version);
-			writer.Write(glbLength);
+			// Write file header (12 or 16 bytes depending on GLB version).
+			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
+			writer.Write(glbHeader.Version);
+			if (glbHeader.Version == 2)
+			{
+				writer.Write((uint)glbLength);
+			}
+			else
+			{
+				writer.Write((ulong)glbLength);
+			}
 
+			// Write JSON chunk header (8 or 16 bytes depending on GLB version).
 			gltfWriteJsonStreamMarker.Begin();
-			// write JSON chunk header.
-			writer.Write((int)jsonStream.Length);
-			writer.Write(MagicJson);
+			if (glbHeader.Version == 2)
+			{
+				writer.Write((uint)jsonStream.Length);
+				writer.Write((uint)GLTF.GLBChunkFormat.JSON);
+			}
+			else
+			{
+				writer.Write((uint)GLTF.GLBChunkFormat.JSON);
+				writer.Write((uint)0); // Plain chunk encoding.
+				writer.Write((ulong)jsonStream.Length);
+			}
 
 			jsonStream.Position = 0;
 			CopyStream(jsonStream, writer);
 			gltfWriteJsonStreamMarker.End();
 
+			// Write binary chunk header (8 or 16 bytes depending on GLB version).
 			gltfWriteBinaryStreamMarker.Begin();
-			writer.Write((int)binStream.Length);
-			writer.Write(MagicBin);
+			if (glbHeader.Version == 2)
+			{
+				writer.Write((uint)binStream.Length);
+				writer.Write((uint)GLTF.GLBChunkFormat.BIN);
+			}
+			else
+			{
+				writer.Write((uint)GLTF.GLBChunkFormat.BIN);
+				writer.Write((uint)0); // Plain chunk encoding.
+				writer.Write((ulong)binStream.Length);
+			}
 
 			binStream.Position = 0;
 			CopyStream(binStream, writer);
@@ -915,7 +951,7 @@ namespace UnityGLTF
 			{
 				AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 				_buffer.Uri = fileName + ".bin";
-				_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+				_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 			}
 			else
 			{
@@ -990,14 +1026,14 @@ namespace UnityGLTF
 				"LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
 			};
 
-			var sanitisedNamePart = Regex.Replace(filename, invalidReStr, "_");
+			var sanitizedNamePart = Regex.Replace(filename, invalidReStr, "_");
 			foreach (var reservedWord in reservedWords)
 			{
 				var reservedWordPattern = string.Format("^{0}\\.", reservedWord);
-				sanitisedNamePart = Regex.Replace(sanitisedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
+				sanitizedNamePart = Regex.Replace(sanitizedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
 			}
 
-			return sanitisedNamePart;
+			return sanitizedNamePart;
 		}
 
 		public void DeclareExtensionUsage(string extension, bool isRequired=false)
@@ -1098,7 +1134,7 @@ namespace UnityGLTF
 			
 			var node = new Node();
 
-			if (_visbilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
+			if (_visibilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
 			{
 				DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
 				node.AddExtension(KHR_node_visibility_Factory.EXTENSION_NAME, new KHR_node_visibility { visible = false });
@@ -1112,7 +1148,7 @@ namespace UnityGLTF
 			// TODO think more about how this callback is used – could e.g. be modifying the hierarchy,
 			// and we would want to prevent exporting children of this node.
 			// Could also be that we want to add a mesh based on some condition
-			// (e.g. merged childs, procedural geometry, etc.)
+			// (e.g. merged children, procedural geometry, etc.)
 			beforeNodeExportMarker.Begin();
 			foreach (var plugin in _plugins)
 				plugin?.BeforeNodeExport(this, _root, nodeTransform, node);
@@ -1207,41 +1243,41 @@ namespace UnityGLTF
 			// children that are not primitives get added as child nodes
 			if (nonPrimitives.Length > 0)
 			{
-				var parentOfChilds = node;
+				var parentOfChildren = node;
 
 				// when we're exporting a light or camera, we add an implicit node as first child of the camera/light node.
 				// this ensures that child objects and animations etc. "just work".
 				if (needsInvertedLookDirection)
 				{
-					var inbetween = new Node();
+					var inBetween = new Node();
 
 					if (ExportNames)
 					{
-						inbetween.Name = nodeTransform.name + "-flipped";
+						inBetween.Name = nodeTransform.name + "-flipped";
 					}
 
-					inbetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
+					inBetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
 
-					var inbetweenId = new NodeId
+					var inBetweenId = new NodeId
 					{
 						Id = _root.Nodes.Count,
 						Root = _root
 					};
 
-					_root.Nodes.Add(inbetween);
+					_root.Nodes.Add(inBetween);
 
 					node.Children = new List<NodeId>(1);
-					node.Children.Add(inbetweenId);
+					node.Children.Add(inBetweenId);
 
-					parentOfChilds = inbetween;
+					parentOfChildren = inBetween;
 				}
 
-				parentOfChilds.Children = new List<NodeId>(nonPrimitives.Length);
+				parentOfChildren.Children = new List<NodeId>(nonPrimitives.Length);
 				foreach (var child in nonPrimitives)
 				{
 					if (!ShouldExportTransform(child.transform)) continue;
 					var childNode = ExportNode(child.transform);
-					if (childNode != null) parentOfChilds.Children.Add(childNode);
+					if (childNode != null) parentOfChildren.Children.Add(childNode);
 				}
 			}
 

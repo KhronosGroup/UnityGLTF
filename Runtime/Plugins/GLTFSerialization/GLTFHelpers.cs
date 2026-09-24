@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using GLTF.Schema;
@@ -442,7 +442,7 @@ namespace GLTF
 
 		/// <summary>
 		/// Merges the right root into the left root
-		/// This function combines all of the lists of objects on each glTF root together and updates the relative indicies
+		/// This function combines all of the lists of objects on each glTF root together and updates the relative indices
 		/// All properties all merged except Asset and Default, which will stay "mergeToRoot"'s value
 		/// </summary>
 		/// <param name="mergeToRoot">The node to merge into</param>
@@ -475,7 +475,7 @@ namespace GLTF
 			// merge extensions
 			MergeExtensions(mergeToRoot, mergeFromRootCopy);
 
-			// merge accessors, buffers, and bufferviews
+			// merge accessors, buffers, and buffer views
 			MergeAccessorsBufferViewsAndBuffers(mergeToRoot, mergeFromRootCopy, previousGLTFSize);
 
 			// merge materials, samplers, images, and textures
@@ -522,7 +522,7 @@ namespace GLTF
 			LoadBufferView(attributeAccessor.AccessorId.Value.BufferView?.Value, attributeAccessor.Offset, attributeAccessor.bufferData, out bufferViewCache);
 		}
 		
-		internal static void LoadBufferView(BufferView bufferView, uint Offset, NativeArray<byte> nativeBuffer, out NativeArray<byte> bufferViewCache)
+		internal static void LoadBufferView(BufferView bufferView, long Offset, NativeArray<byte> nativeBuffer, out NativeArray<byte> bufferViewCache)
 		{
 			// The bufferView can be null for sparse buffers with just a count.
 			// In that case, this is a buffer padded with zeros, so we can just return the nativeBuffer.
@@ -532,7 +532,7 @@ namespace GLTF
 				return;
 			}
 			
-			uint totalOffset = bufferView.ByteOffset + Offset;
+			long totalOffset = bufferView.ByteOffset + Offset;
 			bufferViewCache = nativeBuffer.GetSubArray((int)totalOffset, (int)bufferView.ByteLength);
 		}
 		

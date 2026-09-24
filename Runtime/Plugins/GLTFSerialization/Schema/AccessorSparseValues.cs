@@ -15,7 +15,7 @@ namespace GLTF.Schema
 		/// The offset relative to the start of the bufferView in bytes. Must be aligned.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public int ByteOffset = 0;
+		public long ByteOffset = 0;
 
 		public AccessorSparseValues()
 		{
