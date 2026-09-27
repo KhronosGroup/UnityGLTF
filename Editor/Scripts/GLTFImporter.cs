@@ -226,38 +226,35 @@ namespace UnityGLTF
 
 			        if (externalObjectsIndent < 0)
 			        {
-				        if (!trimmed.StartsWith("externalObjects:", StringComparison.Ordinal))
-					        continue;
-				        if (trimmed.EndsWith("{}", StringComparison.Ordinal) || trimmed.EndsWith("[]", StringComparison.Ordinal))
-					        break;
-				        externalObjectsIndent = indent;
+				        if (!trimmed.StartsWith("externalObjects:", StringComparison.Ordinal)) continue;
+				        
+                        if (trimmed.EndsWith("{}", StringComparison.Ordinal) || trimmed.EndsWith("[]", StringComparison.Ordinal)) break;
+				        
+                        externalObjectsIndent = indent;
+
 				        continue;
 			        }
 
-			        if (trimmed.Length == 0)
-				        continue;
-			        if (indent <= externalObjectsIndent && !trimmed.StartsWith("-", StringComparison.Ordinal))
-				        break;
+			        if (trimmed.Length == 0) continue;
+
+			        if (indent <= externalObjectsIndent && !trimmed.StartsWith("-", StringComparison.Ordinal)) break;
 
 			        var guidStart = trimmed.IndexOf("guid:", StringComparison.Ordinal);
-			        if (guidStart < 0)
-				        continue;
+			        if (guidStart < 0) continue;
 
 			        guidStart += "guid:".Length;
 			        var guidEnd = trimmed.IndexOf(',', guidStart);
 			        var guid = (guidEnd >= 0 ? trimmed.Substring(guidStart, guidEnd - guidStart) : trimmed.Substring(guidStart)).Trim();
-			        if (guid.Length != 32)
-				        continue;
+
+			        if (guid.Length != 32) continue;
 
 			        var dependencyPath = AssetDatabase.GUIDToAssetPath(guid);
-			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, path, StringComparison.OrdinalIgnoreCase))
-				        dependencies.Add(dependencyPath);
+			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, path, StringComparison.OrdinalIgnoreCase)) dependencies.Add(dependencyPath);
 		        }
 	        }
 
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
-	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
-		        return dependencies.Distinct().ToArray();
+	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return dependencies.Distinct().ToArray();
 	        
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
