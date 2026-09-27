@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.21.0+x0] - 2026-07-06
+## [2.21.0+x1] - 2026-09-27
 - This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
 
 ## [2.21.0] - 2026-08-14
