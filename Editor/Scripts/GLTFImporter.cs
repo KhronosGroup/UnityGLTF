@@ -213,7 +213,8 @@ namespace UnityGLTF
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(UnlitGraphMap.UnlitGraphGuid));
 
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
-	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return dependencies.ToArray();
+	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
+		        return dependencies.ToArray();
 	        
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
