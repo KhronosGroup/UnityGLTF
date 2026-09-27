@@ -11,6 +11,7 @@ namespace UnityGLTF.Interactivity.Export
         public static void ValidateData(InteractivityExportContext context)
         {
             var sb = new StringBuilder();
+            int refTypeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             
             void NodeAppendLine(GltfInteractivityNode node, string message)
             {
@@ -48,6 +49,31 @@ namespace UnityGLTF.Interactivity.Export
                     else if (valueSocket.Value.Node == -1)
                     {
                         NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Node Index (-1)");
+                    }
+                    
+                    if (valueSocket.Value.Value != null && valueSocket.Value.Type == refTypeIndex && valueSocket.Value.Value is string refString)
+                    {
+                        if (!string.IsNullOrEmpty(refString) && refString.EndsWith("/"))
+                        {
+                            NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Ref Value (ends with '/'): {refString}");
+                        }
+                    }
+                    if (valueSocket.Value.Value != null && valueSocket.Value.Value is StaticRefPointer staticRefPointer)
+                    {
+                        if (!string.IsNullOrEmpty(staticRefPointer.pointer) && staticRefPointer.pointer.EndsWith("/"))
+                        {
+                            NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Ref Value (ends with '/'): {staticRefPointer.pointer}");
+                        }
+
+                        if (!string.IsNullOrEmpty(staticRefPointer.pointer) && !staticRefPointer.pointer.StartsWith("/"))
+                        {
+                            NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Ref Value (does not start with '/'): {staticRefPointer.pointer}");
+                        }
+                        
+                        if (!string.IsNullOrEmpty(staticRefPointer.pointer) && staticRefPointer.pointer.Contains("//"))
+                        {
+                            NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Ref Value (contains '//'): {staticRefPointer.pointer}");
+                        }
                     }
                 }
                 
@@ -97,7 +123,7 @@ namespace UnityGLTF.Interactivity.Export
                     }
                 }
 
-                if (node.Schema.Op == "pointer/set" || node.Schema.Op == "pointer/get")
+                if (node.Schema.Op == "pointer/set" || node.Schema.Op == "pointer/get" || node.Schema.Op == "pointer/interpolate")
                 {
                     if (node.ValueInConnection.TryGetValue(PointersHelper.IdPointerNodeIndex, out var valueSocket))
                     {
@@ -107,6 +133,37 @@ namespace UnityGLTF.Interactivity.Export
                         if (valueSocket.Value != null && valueSocket.Node == null && (int)valueSocket.Value == -1)
                             NodeAppendLine(node, $"Node Pointer Node has invalid nodeIndex Value: -1");
                     }
+                    if (node.ValueInConnection.TryGetValue(PointersHelper.IdPointerNodeRef, out var valueSocketRef))
+                    {
+                        if (valueSocketRef.Value != null &&
+                            GltfTypes.GetTypeMapping(valueSocketRef.Value.GetType())?.GltfSignature != GltfTypes.Ref)
+                        {
+                            if (valueSocketRef.Value is not string)
+                                NodeAppendLine(node, $"Node Pointer Node has invalid nodeRef Type: {valueSocketRef.Value.GetType().Name}");
+                        }
+                        else
+                        if (valueSocketRef.Value == null && valueSocketRef.Node == null )
+                            NodeAppendLine(node, $"Node Pointer Node has no connection and NULL as nodeRef Value!");
+                    }
+                    if (node.Configuration.TryGetValue(Pointer_SetNode.IdPointer, out var templateConfig))
+                    {
+                        if (templateConfig.Value == null)
+                            NodeAppendLine(node, $" {node.Schema.Op} Node has no pointer config value");
+                        else if (templateConfig.Value != null && !(templateConfig.Value is string))
+                            NodeAppendLine(node, $" {node.Schema.Op} Node has invalid Template Type. Should be a string. Current Type: {templateConfig.Value.GetType().Name}");
+                        else if (templateConfig.Value is string configValue && !string.IsNullOrEmpty(configValue) && configValue.EndsWith("/"))
+                            NodeAppendLine(node, $" {node.Schema.Op} Node has invalid Template Value (ends with '/'): {configValue}");
+                        else if (templateConfig.Value is string configValue2 && !string.IsNullOrEmpty(configValue2) && !configValue2.StartsWith("/"))
+                            NodeAppendLine(node, $" {node.Schema.Op} Node has invalid Template Value (starts with '/'): {configValue2}");
+                        else if (templateConfig.Value is string configValue3 && !string.IsNullOrEmpty(configValue3) && configValue3.Contains("//"))
+                            NodeAppendLine(node, $" {node.Schema.Op} Node has invalid Template Value (contains '//'): {configValue3}");
+                        
+                    }
+                    else
+                    {
+                        NodeAppendLine(node, $" {node.Schema.Op} Node has no pointer config");
+                    }
+                    
                 }
                 
                 if (node.Schema.Op == "variable/get")

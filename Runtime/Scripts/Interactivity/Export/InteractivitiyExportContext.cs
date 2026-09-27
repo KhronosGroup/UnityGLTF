@@ -37,6 +37,7 @@ namespace UnityGLTF.Interactivity.Export
             
             TriggerInterfaceExportCallbacks();
             
+            AddSelectabilityExtensionToInvisibleNodes();
             // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
             TopologicalSort();
             CheckForImplicitValueConversions();
@@ -45,8 +46,11 @@ namespace UnityGLTF.Interactivity.Export
             
             CleanUp();
             
+            ReplaceSpecialValuesWithNodes();
             // Final Topological Sort
             TopologicalSort();  
+            
+            ResolveRefToStaticPointer();
             
             CollectOpDeclarations();
 
@@ -54,10 +58,146 @@ namespace UnityGLTF.Interactivity.Export
             
             ApplyInteractivityExtension();
         }
+
+        /// <summary>
+        /// Replace float.positiveInfinite, NaN etc with nodes that can be serialized to JSON. This is needed because JSON does not support these values.
+        /// </summary>
+        protected virtual void ReplaceSpecialValuesWithNodes()
+        {
+            var nodes = nodesToSerialize.ToArray();
+            
+            void ReplaceInputWithNode(GltfInteractivityNode.ValueSocketData socket, params GltfInteractivityNodeSchema[] schema)
+            {
+                var lastSocket = socket;
+                foreach (var s in schema)
+                {
+                    var node = new GltfInteractivityExportNode(s);
+                    node.Index = nodesToSerialize.Count;
+                    nodesToSerialize.Add(node);
+                    
+                    lastSocket.Node = node.Index;
+                    lastSocket.Socket = "value";
+                    lastSocket.Value = null;
+
+                    if (node.ValueInConnection.ContainsKey("a"))
+                        lastSocket = node.ValueInConnection["a"];
+                }
+                
+            }
+            
+            foreach (var v in nodes)
+            {
+                foreach (var input in v.ValueInConnection)
+                    if (input.Value.Value != null && input.Value.Node == null)
+                    {
+                        if (input.Value.Value is float f)
+                        {
+                            if (float.IsNaN(f))
+                                ReplaceInputWithNode(input.Value, new Math_NaNNode());
+                            if (float.IsPositiveInfinity(f))
+                                ReplaceInputWithNode(input.Value, new Math_InfNode());
+                            if (float.IsNegativeInfinity(f))
+                            {
+                                ReplaceInputWithNode(input.Value, new Math_NegNode(), new Math_InfNode());
+                            }
+                        }
+                    }
+            }
+        }
+        
+        protected virtual void ResolveRefToStaticPointer()
+        {
+            int refTypeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            foreach (var v in variables)
+            {
+                if (v.Value == null)
+                    continue;
+
+                var valueTypeIndex = GltfTypes.TypeIndex(v.Value.GetType());
+                if (v.Type == refTypeIndex || valueTypeIndex == refTypeIndex)
+                {
+                    if (v.Value.GetType() != typeof(string))
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, v.Value, out var jsonPointer))
+                        {
+                            v.Value = jsonPointer;
+                            v.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            v.Value = null;
+                            v.Type = refTypeIndex;
+                        }
+                    }
+                }
+            }
+
+            foreach (var n in nodesToSerialize)
+            {
+                foreach (var vIn in n.ValueInConnection)
+                {
+                    if (vIn.Value.Value != null && vIn.Value.Type == refTypeIndex &&
+                        vIn.Value.Value.GetType() != typeof(string))
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, vIn.Value.Value, out var jsonPointer))
+                        {
+                            vIn.Value.Value = jsonPointer;
+                            vIn.Value.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            vIn.Value.Value = null;
+                            vIn.Value.Type = refTypeIndex;
+                        }
+                    }
+                }
+            }
+
+            foreach (var cEvent in customEvents)
+            {
+                foreach (var values in cEvent.Values)
+                {
+                    if (values.Value == null || values.Value.Value == null)
+                        continue;
+
+                    var value = values.Value.Value;
+                    var mapping = GltfTypes.GetTypeMapping(value.GetType());
+                    var isRefType = values.Value.Type == GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+                    if (isRefType && mapping == null)
+                    {
+                        //Debug.LogError("Trying to resolve a reference to static json, but the type is not supported: " + value.GetType().Name);
+                        continue;
+                    }
+
+                    if (mapping == null)
+                    {
+                        continue;
+                    }
+                    if (isRefType || mapping.GltfSignature == GltfTypes.Ref)
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, value, out var jsonPointer))
+                        {
+                            values.Value.Value = jsonPointer;
+                            values.Value.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            values.Value.Value = null;
+                            values.Value.Type = refTypeIndex;
+                        }
+
+                    }
+                }
+            }
+        }
         
         protected virtual void ApplyInteractivityExtension()
         {
             // TODO: Add support for multiple graphs and/or check if a graph already exists
+            Validator.ValidateData(this);
             
             GltfInteractivityExtension extension = new GltfInteractivityExtension();
             GltfInteractivityGraph mainGraph = new GltfInteractivityGraph();
@@ -65,7 +205,6 @@ namespace UnityGLTF.Interactivity.Export
             mainGraph.Nodes = nodesToSerialize.ToArray();
             mainGraph.Types = CollectAndFilterUsedTypes();
             
-            Validator.ValidateData(this);
             
             mainGraph.Variables = variables.ToArray();
             mainGraph.CustomEvents = customEvents.ToArray();
@@ -84,26 +223,22 @@ namespace UnityGLTF.Interactivity.Export
 
         public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
         {
-            if (originalValue is GameObject gameObject)
+            convertedValue = originalValue;
+            if (originalValue is Transform transform)
             {
-                var gameObjectNodeIndex =
-                    exporter.GetTransformIndex(gameObject.transform);
-
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            }
+            else if (originalValue is GameObject gameObject)
+            {
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else if (originalValue is Component component)
             {
-                var gameObjectNodeIndex =
-                    exporter.GetTransformIndex(component.transform);
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else if (originalValue is Material material)
             {
-                var materialIndex = exporter.ExportMaterial(material).Id;
-                convertedValue = materialIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else
             {
@@ -224,26 +359,38 @@ namespace UnityGLTF.Interactivity.Export
 
             exporter.DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
         }
-        
-        public void AddSelectabilityExtensionToNode(int nodeIndex)
+
+        public void AddSelectabilityExtensionToNode(int nodeIndex, bool initValue = true)
         {
             if (nodeIndex == -1)
                 return;
+            
+            AddSelectabilityExtensionToNode(ActiveGltfRoot.Nodes[nodeIndex], initValue);
+        }
 
-            var nodeExtensions = ActiveGltfRoot.Nodes[nodeIndex].Extensions;
+        
+        public void AddSelectabilityExtensionToNode(Node node, bool initValue = true)
+        {
+            if (node == null)
+                return;
+
+            var nodeExtensions = node.Extensions;
             if (nodeExtensions == null)
             {
                 nodeExtensions = new Dictionary<string, IExtension>();
-                ActiveGltfRoot.Nodes[nodeIndex].Extensions = nodeExtensions;
+                node.Extensions = nodeExtensions;
             }
-            if (!nodeExtensions.ContainsKey(KHR_node_selectability_Factory.EXTENSION_NAME))
+            if (!nodeExtensions.TryGetValue(KHR_node_selectability_Factory.EXTENSION_NAME, out var nodeExtension))
             {
-                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability());
+                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability() { selectable = initValue });
             }
+            else
+                (nodeExtension as KHR_node_selectability).selectable = initValue;
+            
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }
         
-        public void AddSelectabilityExtensionToAllNode()
+        public void AddSelectabilityExtensionToAllNodes()
         {
             foreach (var node in ActiveGltfRoot.Nodes)
             {
@@ -448,9 +595,17 @@ namespace UnityGLTF.Interactivity.Export
             
             foreach (var variable in variables.Where( v => v.Type != -1))
                 variable.Type = typesIndexReplacement[variable.Type];
-            
+
+            var alreadyUpdated = new HashSet<GltfInteractivityNode.EventValues>();
+            // In case EventValues instances are shared betweens multiple events, we use a hashset here
             foreach (var customEventValue in customEvents.SelectMany(c => c.Values))
-                customEventValue.Value.Type = typesIndexReplacement[customEventValue.Value.Type];
+            {
+                if (!alreadyUpdated.Contains(customEventValue.Value))
+                {
+                    customEventValue.Value.Type = typesIndexReplacement[customEventValue.Value.Type];
+                    alreadyUpdated.Add(customEventValue.Value);
+                }
+            }
 
             foreach (var declaration in opDeclarations.Where(d => d.inputValueSockets != null).SelectMany(d => d.inputValueSockets.Values)
                          .Concat(opDeclarations.Where(d => d.outputValueSockets != null).SelectMany(d => d.outputValueSockets.Values)))
@@ -935,7 +1090,7 @@ namespace UnityGLTF.Interactivity.Export
             return -1;
         }
         
-        public  int GetValueTypeForInput(GltfInteractivityNode node, string socketName, HashSet<GltfInteractivityNode.ValueSocketData> visited = null)
+        public int GetValueTypeForInput(GltfInteractivityNode node, string socketName, HashSet<GltfInteractivityNode.ValueSocketData> visited = null)
         {
             if (visited == null)
                 visited = new HashSet<GltfInteractivityNode.ValueSocketData>();
@@ -1133,6 +1288,21 @@ namespace UnityGLTF.Interactivity.Export
                 }
 
                 node.OpDeclaration = opIndex;
+            }
+        }
+        
+        protected void AddSelectabilityExtensionToInvisibleNodes()
+        {
+            // Ensure initial invisible nodes also gets unselectable 
+            
+            foreach (var node in this.exporter.GetRoot().Nodes)
+            {
+                if (node.Extensions != null && node.Extensions.TryGetValue(KHR_node_visibility_Factory.EXTENSION_NAME, out var nodeVisibilityExtension))
+                {
+                    var visible = (nodeVisibilityExtension as KHR_node_visibility).visible;
+                    if (!visible)
+                        AddSelectabilityExtensionToNode(node, visible);
+                }
             }
         }
     }

@@ -30,6 +30,47 @@ namespace UnityGLTF.Cache
 		public Mesh.MeshDataArray DracoMeshData { get; set; }
 		public DecodeResult[] DracoMeshDecodeResult { get; set; }
 #endif
+
+		public int GetHashFromPrimitiveAttributes()
+		{
+			if (Primitives == null)
+				return 0;
+			var hash = new Hash128();
+			foreach (var primitive in Primitives)
+			{
+				if (primitive.Attributes != null)
+				{
+					foreach (var attribute in primitive.Attributes)
+					{
+						hash.Append(attribute.Key);
+						hash.Append(attribute.Value.AccessorId.Id);
+					}
+				}
+
+				if (primitive.Targets != null)
+				{
+					foreach (var target in primitive.Targets)
+					{
+						foreach (var attribute in target)
+						{
+							hash.Append(attribute.Key);
+							hash.Append(attribute.Value.AccessorId.Id);
+						}
+					}
+				}
+
+				if (primitive.SparseAccessors != null)
+				{
+					foreach (var sparseAccessor in primitive.SparseAccessors)
+					{
+						hash.Append(sparseAccessor.Key);
+						hash.Append(sparseAccessor.Value.sparseIndices.AccessorId.Id);
+						hash.Append(sparseAccessor.Value.sparseValues.AccessorId.Id);
+					}
+				}
+			}
+			return hash.GetHashCode();
+		}
 		
 		/// <summary>
 		/// Unloads the meshes in this cache.

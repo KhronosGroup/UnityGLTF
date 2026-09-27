@@ -68,7 +68,8 @@ namespace UnityGLTF
                 // make sure the default state is the first clip
                 if (animatorController && animatorController.layers.Length > 0)
                 {
-	                var defaultState = animatorController.layers[0].stateMachine.defaultState;
+	                var stateMachine = animatorController.layers[0].stateMachine;
+	                var defaultState = stateMachine ? stateMachine.defaultState : null;
 	                if (defaultState) {
 						var defaultMotion = defaultState.motion;
 						if (defaultMotion is AnimationClip clip && clip)
@@ -119,10 +120,14 @@ namespace UnityGLTF
 				yield break;
 
 			if (!animatorController)
+			{
 				yield return new AnimatorState() { name = clip.name, speed = 1f };
+				yield break;
+			}
 
 			foreach (var layer in animatorController.layers)
 			{
+				if (!layer.stateMachine) continue;
 				foreach (var state in layer.stateMachine.states)
 				{
 					// find a matching clip in the animator
@@ -697,12 +702,17 @@ namespace UnityGLTF
 		private static string LogObject(object obj)
 		{
 			if (obj == null) return "null";
-
+#if UNITY_6000_4_OR_NEWER
+			if (obj is Component tr)
+				return $"{tr.name} (EntityID: {tr.GetEntityId()}, Type: {tr.GetType()})";
+			if (obj is GameObject go)
+				return $"{go.name} (EntityID: {go.GetEntityId()})";
+#else
 			if (obj is Component tr)
 				return $"{tr.name} (InstanceID: {tr.GetInstanceID()}, Type: {tr.GetType()})";
 			if (obj is GameObject go)
 				return $"{go.name} (InstanceID: {go.GetInstanceID()})";
-
+#endif
 			return obj.ToString();
 		}
 
@@ -1582,27 +1592,36 @@ namespace UnityGLTF
 			return -1;
 		}
 
+		private int GetObjectId(Object obj)
+		{
+#if UNITY_6000_4_OR_NEWER
+			return obj.GetEntityId().GetHashCode();
+#else
+			return obj.GetInstanceID();
+#endif
+		}
+		
 		public int GetTransformIndex(Transform transform)
 		{
-			if (transform && _exportedTransforms.TryGetValue(transform.GetInstanceID(), out var index)) return index;
+			if (transform && _exportedTransforms.TryGetValue(GetObjectId(transform), out var index)) return index;
 			return -1;
 		}
 
 		public int GetMaterialIndex(Material mat)
 		{
-			if (mat && _exportedMaterials.TryGetValue(mat.GetInstanceID(), out var index)) return index;
+			if (mat && _exportedMaterials.TryGetValue(GetObjectId(mat), out var index)) return index;
 			return -1;
 		}
 
 		public int GetLightIndex(Light light)
 		{
-			if (light && _exportedLights.TryGetValue(light.GetInstanceID(), out var index)) return index;
+			if (light && _exportedLights.TryGetValue(GetObjectId(light), out var index)) return index;
 			return -1;
 		}
 
 		public int GetCameraIndex(Camera cam)
 		{
-			if (cam && _exportedCameras.TryGetValue(cam.GetInstanceID(), out var index)) return index;
+			if (cam && _exportedCameras.TryGetValue(GetObjectId(cam), out var index)) return index;
 			return -1;
 		}
 

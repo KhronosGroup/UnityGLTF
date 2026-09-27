@@ -46,6 +46,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var lengthNode = unitExporter.CreateNode<Math_LengthNode>();
             lengthNode.ValueIn("a").ConnectToSource(subNode.FirstValueOut()).SetType(TypeRestriction.LimitToFloat3);
             lengthNode.FirstValueOut().MapToPort(unitExporter.unit.valueOutputs[0]);
+
+            if (unitExporter.unit is InvokeMember unit)
+                unitExporter.ByPassFlow(unit.enter, unit.exit);
+
             return true;
         }
     }

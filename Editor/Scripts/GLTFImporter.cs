@@ -25,6 +25,7 @@ using Object = UnityEngine.Object;
 using UnityGLTF.Loader;
 using GLTF;
 using UnityEditor.Build;
+using UnityEngine.Serialization;
 using UnityGLTF.Extensions;
 using UnityGLTF.Plugins;
 #if UNITY_2020_2_OR_NEWER
@@ -88,6 +89,8 @@ namespace UnityGLTF
         [SerializeField] internal float _scaleFactor = 1.0f; 
         [Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
         [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
+        [SerializeField] internal DeduplicatedStatistics _deduplicatedStatistics;
+        
         [SerializeField] internal int _maximumLod = 300;
         [SerializeField] internal bool _readWriteEnabled = true;
         
@@ -111,6 +114,8 @@ namespace UnityGLTF
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
+        [Tooltip("Set Loop Time and Loop Pose individually for each animation clip. Clips start out with the settings above; while this is off, all clips use them.")]
+        [SerializeField] internal bool _animationLoopSettingsPerClip = false;
         [SerializeField] internal bool _importMaterials = true;
         [SerializeField] internal bool _enableGpuInstancing = false;
         [SerializeField] internal bool _texturesReadWriteEnabled = true;
@@ -122,7 +127,6 @@ namespace UnityGLTF
         [SerializeField, Multiline] internal string _gltfAsset = default;
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;
-        [SerializeField] internal HumanDescription m_HumanDescription = new HumanDescription();
 
         // asset remapping
         [SerializeField] internal Material[] m_Materials = new Material[0];
@@ -132,6 +136,7 @@ namespace UnityGLTF
         [SerializeField] internal bool m_HasMaterialData = true;
         [SerializeField] internal bool m_HasTextureData = true;
         [SerializeField] [NonReorderable] private AnimationClipImportInfo[] m_Animations = new AnimationClipImportInfo[0];
+        internal const string AnimationsPropertyName = nameof(m_Animations);
 
 		// Import messages (extensions, warnings, errors, ...)
         [NonReorderable] [SerializeField] internal List<ExtensionInfo> _extensions;
@@ -187,9 +192,11 @@ namespace UnityGLTF
 	        [HideInInspector]
 	        public string name;
 
+	        public bool loopTime;
+	        public bool loopPose;
+
 	        // TODO cutting ain't trivial. One would need to create new keyframes by linear interpolation so that the result is still the same
 	        // public AnimationClip sourceClip;
-	        // public bool loopTime;
 	        // public float startTime;
 	        // public float endTime;
 		}
@@ -206,9 +213,48 @@ namespace UnityGLTF
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(PBRGraphMap.PBRGraphGuid));
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(UnlitGraphMap.UnlitGraphGuid));
 
+	        // Remapped objects are serialized in the importer meta file. Their target artifacts must be imported first,
+	        // otherwise GetExternalObjectMap() can temporarily return a null target during a clean/full reimport.
+	        var metaPath = path + ".meta";
+	        if (File.Exists(metaPath))
+	        {
+		        var externalObjectsIndent = -1;
+		        foreach (var line in File.ReadLines(metaPath))
+		        {
+			        var trimmed = line.TrimStart();
+			        var indent = line.Length - trimmed.Length;
+
+			        if (externalObjectsIndent < 0)
+			        {
+				        if (!trimmed.StartsWith("externalObjects:", StringComparison.Ordinal)) continue;
+				        
+                        if (trimmed.EndsWith("{}", StringComparison.Ordinal) || trimmed.EndsWith("[]", StringComparison.Ordinal)) break;
+				        
+                        externalObjectsIndent = indent;
+
+				        continue;
+			        }
+
+			        if (trimmed.Length == 0) continue;
+
+			        if (indent <= externalObjectsIndent && !trimmed.StartsWith("-", StringComparison.Ordinal)) break;
+
+			        var guidStart = trimmed.IndexOf("guid:", StringComparison.Ordinal);
+			        if (guidStart < 0) continue;
+
+			        guidStart += "guid:".Length;
+			        var guidEnd = trimmed.IndexOf(',', guidStart);
+			        var guid = (guidEnd >= 0 ? trimmed.Substring(guidStart, guidEnd - guidStart) : trimmed.Substring(guidStart)).Trim();
+
+			        if (guid.Length != 32) continue;
+
+			        var dependencyPath = AssetDatabase.GUIDToAssetPath(guid);
+			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, path, StringComparison.OrdinalIgnoreCase)) dependencies.Add(dependencyPath);
+		        }
+	        }
+
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
-	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
-		        return dependencies.ToArray();
+	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return dependencies.Distinct().ToArray();
 	        
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
@@ -523,7 +569,7 @@ namespace UnityGLTF
 
 		                    // TODO We might want to be able to set the unwrap settings via the importer.
 		                    UnwrapParam.SetDefaults(out var unwrapSettings);
-							Unwrapping.GenerateSecondaryUVSet(mesh, unwrapSettings);
+							LightmapUVGeneration.GenerateSecondaryUVSet(mesh, unwrapSettings);
 	                    }
                     }
 
@@ -532,6 +578,13 @@ namespace UnityGLTF
 
                     return mesh;
                 }).Where(x => x).ToArray();
+
+                // Collect the per-clip import settings and apply them to the clips.
+                // This has to happen before the clips are added to the asset so that the
+                // resulting sub assets already contain the final clip settings.
+                m_HasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
+                m_Animations = CollectAnimationClipImportInfo(animations);
+                ApplyAnimationClipImportInfo(animations);
 
                 if (animations != null)
                 {
@@ -780,33 +833,6 @@ namespace UnityGLTF
                     m_HasSceneData = gltfScene;
                     m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
                     m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
-                    m_HasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
-                    var newAnimations = new AnimationClipImportInfo[animations != null ? animations.Length : 0];
-                    if (animations != null)
-                    {
-	                    for (var i = 0; i < animations.Length; ++i)
-	                    {
-		                    // get previous import info if it exists
-		                    // TODO won't work if there are multiple animations with the same name in the source
-		                    // We need to find the source instance index (e.g. 3rd time a clip is named "DoSomething")
-		                    // And then find the matching name index (also the 3rd occurrence of "DoSomething" in m_Animations)
-		                    var prev = Array.Find(m_Animations, x => x.name == animations[i].name);
-		                    if (prev != null)
-		                    {
-			                    newAnimations[i] = prev;
-		                    }
-		                    else
-		                    {
-			                    var newClipInfo = new AnimationClipImportInfo();
-			                    newClipInfo.name = animations[i].name;
-			                    // newClipInfo.startTime = 0;
-			                    // newClipInfo.endTime = animations[i].length;
-			                    // newClipInfo.loopTime = true;
-			                    newAnimations[i] = newClipInfo;
-		                    }
-	                    }
-                    }
-                    m_Animations = newAnimations;
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
@@ -910,6 +936,79 @@ namespace UnityGLTF
 		}
 		        
 
+        /// <summary>
+        /// Creates the import settings for all imported clips, keeping the settings of clips that were already
+        /// imported before (matched by name). The resulting array has the same order as <paramref name="animations"/>.
+        /// </summary>
+        private AnimationClipImportInfo[] CollectAnimationClipImportInfo(AnimationClip[] animations)
+        {
+	        var result = new AnimationClipImportInfo[animations?.Length ?? 0];
+	        if (animations == null)
+		        return result;
+
+	        for (var i = 0; i < animations.Length; ++i)
+	        {
+		        var clipName = animations[i] ? animations[i].name : "";
+
+		        // get previous import info if it exists
+		        // TODO won't work if there are multiple animations with the same name in the source
+		        // We need to find the source instance index (e.g. 3rd time a clip is named "DoSomething")
+		        // And then find the matching name index (also the 3rd occurrence of "DoSomething" in m_Animations)
+		        var info = m_Animations != null ? Array.Find(m_Animations, x => x != null && x.name == clipName) : null;
+		        var isNewClip = info == null;
+		        if (isNewClip)
+		        {
+			        info = new AnimationClipImportInfo();
+			        info.name = clipName;
+			        // info.startTime = 0;
+			        // info.endTime = animations[i].length;
+		        }
+
+		        // While loop settings aren't edited per clip they just mirror the importer-wide settings – that way
+		        // turning the option on doesn't change the import result, no matter if the clip infos come from an
+		        // older version of this importer (where the per-clip values existed but were never applied) or not.
+		        // Clips that show up for the first time start out with the importer-wide settings as well.
+		        if (isNewClip || !_animationLoopSettingsPerClip)
+		        {
+			        info.loopTime = _animationLoopTime;
+			        info.loopPose = _animationLoopPose;
+		        }
+
+		        result[i] = info;
+	        }
+
+	        return result;
+        }
+
+        /// <summary>
+        /// Applies the per-clip import settings from <see cref="m_Animations"/> to the imported clips.
+        /// </summary>
+        private void ApplyAnimationClipImportInfo(AnimationClip[] animations)
+        {
+	        if (animations == null || m_Animations == null)
+		        return;
+
+	        // When loop settings aren't edited per clip the clips already have the correct settings
+	        // applied by the GLTFSceneImporter, so there's nothing to do here.
+	        if (!_animationLoopSettingsPerClip)
+		        return;
+
+	        for (var i = 0; i < animations.Length && i < m_Animations.Length; ++i)
+	        {
+		        var clip = animations[i];
+		        var info = m_Animations[i];
+		        if (!clip || info == null) continue;
+
+		        var settings = AnimationUtility.GetAnimationClipSettings(clip);
+		        settings.loopTime = info.loopTime;
+		        settings.loopBlend = info.loopPose;
+		        AnimationUtility.SetAnimationClipSettings(clip, settings);
+
+		        if (_importAnimations == AnimationMethod.Legacy)
+			        clip.wrapMode = info.loopTime ? WrapMode.Loop : WrapMode.Default;
+	        }
+        }
+
         private const string ColorSpaceDependency = nameof(GLTFImporter) + "_" + nameof(PlayerSettings.colorSpace);
         private const string NormalMapEncodingDependency = nameof(GLTFImporter) + "_normalMapEncoding";
 
@@ -964,7 +1063,6 @@ namespace UnityGLTF
 			    BlendShapeFrameWeight = _blendShapeFrameWeight,
 			    CameraImport = _importCamera,
 			    DeduplicateResources = _deduplicateResources,
-                ScaleFactor = _scaleFactor,
 		    };
 
 		    using (var stream = File.OpenRead(projectFilePath))
@@ -1019,7 +1117,7 @@ namespace UnityGLTF
 
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
-
+			    _deduplicatedStatistics = loader.LastImportDeduplicationStatistics;
 			    _gltfAsset = loader.Root.Asset?.ToString(true);
 			    importer = loader;
 		    }

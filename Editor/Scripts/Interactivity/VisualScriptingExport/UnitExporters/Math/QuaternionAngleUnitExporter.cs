@@ -28,6 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             degToRadNode.ValueIn(Math_RadNode.IdInputA).ConnectToSource(node.FirstValueOut());
             degToRadNode.FirstValueOut().MapToPort(unit.result);
             
+            unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
         }
     }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using GLTF.Extensions;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace GLTF.Schema
 {
@@ -25,6 +26,40 @@ namespace GLTF.Schema
 		public List<double> Weights;
 
 		public List<string> TargetNames;
+		
+		public int GetHashFromPrimitiveAttributes()
+		{
+			if (Primitives == null)
+				return 0;
+			var hash = new Hash128();
+			foreach (var primitive in Primitives)
+			{
+				if (primitive.Attributes != null)
+				{
+					foreach (var attribute in primitive.Attributes)
+					{
+						hash.Append(attribute.Key);
+						hash.Append(attribute.Value.Id);
+					}
+				}
+
+				if (primitive.Targets != null)
+				{
+					foreach (var target in primitive.Targets)
+					{
+						foreach (var attribute in target)
+						{
+							hash.Append(attribute.Key);
+							hash.Append(attribute.Value.Id);
+						}
+					}
+				}
+
+				if (primitive.Indices != null)
+					hash.Append(primitive.Indices.Id);
+			}
+			return hash.GetHashCode();
+		}
 
 		public GLTFMesh()
 		{

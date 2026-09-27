@@ -25,8 +25,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
      
             var getMesh = unitExporter.CreateNode<Pointer_GetNode>();
          
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(getMesh, PointersHelper.IdPointerNodeIndex, 
-                unit.target, "/nodes/{" + PointersHelper.IdPointerNodeIndex + "}/mesh", GltfTypes.Int);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getMesh, PointersHelper.IdPointerNodeRef, 
+                unit.target, PointersHelper.IdPointerTemplNodeByRef + "/mesh", GltfTypes.Ref);
 
             getMesh.FirstValueOut().MapToPort(unit.value);
             

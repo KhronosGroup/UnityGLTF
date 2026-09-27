@@ -4,8 +4,78 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.18.5+x3] - 2026-07-06
+## [2.21.0+x1] - 2026-09-27
 - This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
+
+## [2.21.0] - 2026-08-14
+- add: Asset Importer > loop settings can now be set per animation clip
+- add: lightmap UV generation support for meshes with blend shapes
+- fix: compile error in Unity 6.4 non-URP projects
+- fix: `ReadOnlySpan` texture loading is now guarded to Unity 6.1+ 
+
+## [2.20.1] - 2026-08-12
+- fix: HDRP double sided material import
+- fix: HDRP alpha cutoff material import
+
+## [2.20.0] - 2026-07-31
+- add: `KHR_interactivity` export is now an official part of UnityGLTF: the Visual Scripting export plugin is enabled by default and no longer marked as non-ratified. 
+- add: export support for embedded textures in .gltf+.bin exports (option, default = false)
+- add: Anim.Pointer: warning logs for unresolved properties
+- change: skipping non-exportable animation material properties entirely
+- fix: Mixamo left hand finger bone detection for pinky3 and middle2
+
+## [2.19.5] - 2026-04-29
+- fix: compiler error in Unity 6.3 > wrong ifdef
+
+## [2.19.4] - 2026-04-22
+- fix: Unity 6.3+ api changes for Shader/Material propertyType
+- fix: Unity 6.4+ warnings for `GetInstanceId` (changed to GetEntityId)
+- fix: RoughRefractionFeature for Unity 6.4+ with new Render Graph API (new separate file)
+- fix: removed unused field in GLTFImporter (causing warnings in Unity 6.6)
+
+## [2.19.3] - 2026-03-27
+- fix: HDRP material import setup for opaque materials
+- change: HDRP only > ignoring transmission when transmission-factor is 0 
+
+## [2.19.2] - 2026-03-25
+- fix: file paths with spaces and plus in name results in not found errors
+- fix: GLTFSetting asset > plugins subasset creation in import mode
+- fix: safety checks for draco import
+- change: reduced memory footprint on texture import for non-memory-streams
+
+## [2.19.1] - 2026-02-19
+- add: import support for webP textures (requires package https://github.com/netpyoung/unity.webp)
+- add: import support for exr textures (requires Unity 6+)
+- change: using span arrays for more efficient data handling in texture loading
+- fix: plugin list in default GLTF settings asset was not updating when plugins were added or removed
+- fix: unsupported texture extensions was using first image instead of skipping the texture, which caused incorrect texture imports in some cases
+- fix: animator and statemachine export
+- fix: safeguards againts empty bufferview data
+
+## [2.18.9] - 2026-02-09
+- fix: 'BaseGraphMap' was using wrong property name, changed to '_DstBlendAlpha'
+- fix: import of meshes with same attributes but different materials, are now properly deduplicated instead of being imported as separate meshes
+- fix: support for Unity 2021.3
+
+## [2.18.8] - 2026-02-05
+- add: deduplication statistic (Importer)
+- add: meshOpt 0.2 support
+- add: validation for node translation, rotation and scale on import: in case of invalid values (NaN, infinte), using zeros as fallback.
+- changed: mesh deduplication speedup with Jobs
+- fix: reduced memory footprint on importing
+
+## [2.18.7] - 2026-01-12
+- add: Interactivity: add slerp nodes
+- change: Interactivity: replaced custom solution for child and parent methods to object model pointers
+- fix: obsolete warning for 'GameObject.GetScene' in U6.3+
+- fix: ShaderPassStripping to use GetOrCreate GltfSettings (in case setting asset not exists yet)
+- fix: Interactivity: changed matrix serialization to coloumn major order
+- fix: material/texture extraction with leading spaces in name
+
+## [2.18.6] - 2025-11-25
+- add: Interactivity VS export: added support for `AnimationClip.length`
+- fix: Interactivity VS export: added missing space conversion to `RaycastResult.worldPosition`
+- fix: `WebRequestDataLoader` changed URI handling for local files    
 
 ## [2.18.5] - 2025-11-20
 - fix: deprecation warnings in Unity 6.2+

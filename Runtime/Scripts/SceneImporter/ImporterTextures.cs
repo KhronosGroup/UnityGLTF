@@ -1,16 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
 using GLTF.Utilities;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityGLTF.Cache;
 using UnityGLTF.Extensions;
 using UnityGLTF.Loader;
 using UnityGLTF.Plugins;
+
+#if HAVE_WEBP
+using WebP;
+#endif
 using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
@@ -39,13 +45,14 @@ namespace UnityGLTF
 		private async Task CreateNotReferencedTexture(int index)
 		{
 			if (Root.Textures == null) return;
-			if (Root.Textures[index].Source != null
-			    && Root.Images?.Count > 0
-			    && Root.Images.Count > Root.Textures[index].Source.Id
-			    && string.IsNullOrEmpty(Root.Textures[index].Source.Value.Uri))
+			var texture = Root.Textures[index];
+			var sourceId = GetTextureSourceId(texture);
+			if (Root.Images?.Count > 0
+			    && sourceId >= 0 && sourceId < Root.Images.Count
+			    && string.IsNullOrEmpty(Root.Images[sourceId].Uri))
 			{
-				await ConstructImageBuffer(Root.Textures[index], index);
-				await ConstructTexture(Root.Textures[index], index, !KeepCPUCopyOfTexture, true, false);
+				await ConstructImageBuffer(texture, index);
+				await ConstructTexture(texture, index, !KeepCPUCopyOfTexture, true, false);
 			}
 		}
 
@@ -127,13 +134,22 @@ namespace UnityGLTF
         
         private void CheckForDuplicateImages()
         {
-	        var hashes = CollectImageHashes();
-	        var reverseHashes = new Dictionary<int, int>();
+	        var hashes = CollectImageHashes(); // Image index -> hash
+	        if (_deduplicatedStatistics == null)
+		        _deduplicatedStatistics = new DeduplicatedStatistics();
+	        
+	        _deduplicatedStatistics.textureCountBefore = _gltfRoot.Images?.Count ?? 0;
+	        
+	        var reverseHashes = new Dictionary<int, int>(); // Hash -> Image index
 	        foreach (var h in hashes)
 		        reverseHashes[h.Value] = h.Key;
 	        
-	        _imageDeduplicationLinks = new Dictionary<int, int>();
-	        foreach (var h in hashes)
+	        _deduplicatedStatistics.textureCountAfter = reverseHashes.Count;
+	        
+	        // create mapping of image index to the first image index with the same hash, so that we can redirect to the already loaded texture later when we load the textures
+	        
+	        _imageDeduplicationLinks = new Dictionary<int, int>(); // Org Image ID -> distinct Image ID
+	        foreach (var h in hashes)  
 		        _imageDeduplicationLinks[h.Key] = reverseHashes[h.Value];
         }
         
@@ -188,6 +204,9 @@ namespace UnityGLTF
 		protected async Task ConstructImageBuffer(GLTFTexture texture, int textureIndex)
 		{
 			int sourceId = GetTextureSourceId(texture);
+			if (sourceId == -1)
+				return;
+			
 			if (_assetCache.ImageStreamCache[sourceId] == null)
 			{
 				GLTFImage image = _gltfRoot.Images[sourceId];
@@ -229,18 +248,45 @@ namespace UnityGLTF
 			switch (image.MimeType)
 			{
 				case "image/jpeg":
-					var jpgData = data.ToArray();
-					texture.LoadImage(jpgData, makeNoLongerReadable);
+#if UNITY_6000_1_OR_NEWER
+					texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+#else
+					texture.LoadImage(data.ToArray(), makeNoLongerReadable);
+#endif
 					break;
 				case "image/png":
 					//	NOTE: the second parameter of both LoadImage() and Apply() in this case block marks the texture non-readable, but we can't mark it until after we call Apply() after this switch block.
 					
+#if UNITY_6000_1_OR_NEWER // ReadOnlySpan support was added to LoadImage in Unity 6.1+, but we still need to call ToArray() for older versions, so we can't use it in the whole method yet.
+					
+					var pngColorType = data.AsReadOnlySpan().Length > 25 ? data.AsReadOnlySpan()[25] : 0;
+					var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
+	#if !UNITY_EDITOR
+					texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+	#else
+					if (Context.AssetContext == null || pngHasAlpha)
+					{
+						texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+					}
+					else
+					{
+						texture.LoadImage(data.AsReadOnlySpan(), false);
+						var name = texture.name;
+						var pixels32 = texture.GetPixels32();
+						texture = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, GenerateMipMapsForTextures, isLinear);
+						texture.name = name;
+						texture.SetPixels32(pixels32);
+						texture.Apply(GenerateMipMapsForTextures, makeNoLongerReadable);
+					}
+	#endif
+#else // Non-ReadOnlySpan fallback for older Unity versions
+
 					var pngData = data.ToArray();
                     var pngColorType = pngData.Length > 25 ? pngData[25] : 0;
                     var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
-#if !UNITY_EDITOR
+	#if !UNITY_EDITOR
 					texture.LoadImage(pngData, makeNoLongerReadable);
-#else
+	#else
                     if (Context.AssetContext == null || pngHasAlpha)
                     {
 					    texture.LoadImage(pngData, makeNoLongerReadable);
@@ -248,20 +294,60 @@ namespace UnityGLTF
                     else
                     {
                         texture.LoadImage(pngData, false);
-
                         var name = texture.name;
                         var pixels32 = texture.GetPixels32();
-
                         texture = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, GenerateMipMapsForTextures, isLinear);
                         texture.name = name;
                         texture.SetPixels32(pixels32);
-
                         texture.Apply(GenerateMipMapsForTextures, makeNoLongerReadable);
                     }
+	#endif
 #endif
 					break;
 				case "image/exr":
-					Debug.Log(LogType.Warning, $"EXR images are not supported. The texture {texture.name} won't be imported. File: {_gltfFileName}");
+#if UNITY_6000_0_OR_NEWER
+					if (Context.TryGetPlugin<ExrImportContext>(out _))
+					{
+#if UNITY_6000_1_OR_NEWER
+						texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
+#else
+						texture.LoadImage(data.ToArray(), makeNoLongerReadable);
+#endif
+					}
+					else
+					{
+						// exr import disabled
+						await Task.CompletedTask;
+						texture = null;
+					}
+#else
+					Debug.LogWarning($"EXR images are not supported before Unity 6. The texture {texture.name} won't be imported. File: {_gltfFileName}", this);
+#endif
+					break;
+				case "image/webp":
+#if HAVE_WEBP
+					if (Context.TryGetPlugin<WebPImportContext>(out _))
+					{
+						var webPData = data.ToArray();
+
+						texture.LoadWebP(webPData, out var webPError, makeNoLongerReadable: makeNoLongerReadable);
+
+						if (webPError != Error.Success)
+						{
+							Debug.LogError($"Webp Load Error for texture {texture.name}:" + webPError.ToString(), this);
+						}
+					}
+					else
+					{
+						// webp import disabled
+						await Task.CompletedTask;
+						texture = null;
+					}
+#else
+					Debug.LogError($"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a WebP file using the KHR_texture_webp extension. Add the package \"com.netpyoung.webp\" version v0.3.22+ to your project to import WebP textures.", this);
+					await Task.CompletedTask;
+					texture = null;
+#endif
 					break;
 				case "image/ktx2":
 					string textureName = texture.name;
@@ -285,15 +371,23 @@ namespace UnityGLTF
 						texture.name = textureName;
 					}
 					else
-#endif
 					{
-						Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project to import KTX2 textures.");
+						// Ktx2 import disabled
 						await Task.CompletedTask;
 						texture = null;
 					}
+#else
+					Debug.Log(LogType.Warning, $"Can't import texture \"{image.Name}\" from \"{_gltfFileName}\" because it is a KTX2 file using the KHR_texture_basisu extension. Add the package \"com.unity.cloud.ktx\" version v1.3+ to your project to import KTX2 textures.");
+					await Task.CompletedTask;
+					texture = null;
+#endif
 					break;
 				default:
+#if UNITY_6000_1_OR_NEWER
+					texture.LoadImage(data.AsReadOnlySpan(), markGpuOnly && !textureWillBeCompressed);
+#else
 					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
+#endif
 					break;
 			}
 
@@ -409,10 +503,39 @@ namespace UnityGLTF
 				using (MemoryStream memoryStream = stream as MemoryStream)
 				{
 					await YieldOnTimeoutAndThrowOnLowMemory();
-					using (var memoryStreamData = new NativeArray<byte>(memoryStream.ToArray(), Allocator.TempJob))
+					
+					// To safe memory footprint, we try to create a NativeArray without Allocation directly from the MemoryStream buffer.
+					if (memoryStream.TryGetBuffer(out var memStreamBuffer))
 					{
-						texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly, isLinear);
+						NativeArray<byte> nativeBuffer;
+						ulong gcHandle;
+						unsafe
+						{
+							var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out gcHandle);
+							nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+							NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+
+						}
+						try
+						{
+							texture = await CheckMimeTypeAndLoadImage(image, texture, nativeBuffer, markGpuOnly,
+								isLinear);
+						}
+						finally
+						{
+							UnsafeUtility.ReleaseGCObject(gcHandle);
+						}
 					}
+					else
+					{
+						using (var memoryStreamData = new NativeArray<byte>(memoryStream. ToArray(), Allocator.TempJob))
+							texture = await CheckMimeTypeAndLoadImage(image, texture, memoryStreamData, markGpuOnly, isLinear);
+						
+					}
+					
+					
 				}
 			}
 			else if (stream != null)
@@ -427,9 +550,25 @@ namespace UnityGLTF
 				
 				stream.Read(buffer, 0, (int)stream.Length);
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				using (NativeArray<byte> bufferNative = new NativeArray<byte>(buffer, Allocator.TempJob))
+
+				NativeArray<byte> nativeBuffer;
+				ulong gcHandle;
+				unsafe
 				{
-					texture = await CheckMimeTypeAndLoadImage(image, texture, bufferNative, markGpuOnly, isLinear);
+					
+					var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(buffer, out gcHandle);
+					nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, buffer.Length, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+					NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+				}
+				try
+				{
+					texture = await CheckMimeTypeAndLoadImage(image, texture, nativeBuffer, markGpuOnly, isLinear);
+				}
+				finally
+				{
+					UnsafeUtility.ReleaseGCObject(gcHandle);
 				}
 			}
 
@@ -457,16 +596,33 @@ namespace UnityGLTF
 
 		protected virtual int GetTextureSourceId(GLTFTexture texture)
 		{
+			// TODO: we should probably unify the extension handling here and not have special cases in multiple places
 			if (texture.Extensions != null && texture.Extensions.ContainsKey(KHR_texture_basisu.EXTENSION_NAME))
 			{
 				return ((KHR_texture_basisu)texture.Extensions[KHR_texture_basisu.EXTENSION_NAME]).source.Id;
 			}
 			
-			int id = texture.Source?.Id ?? 0;
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(EXT_texture_webp.EXTENSION_NAME))
+			{
+				return ((EXT_texture_webp)texture.Extensions[EXT_texture_webp.EXTENSION_NAME]).source.Id;
+			}
+			
+			if (texture.Extensions != null && texture.Extensions.ContainsKey(EXT_texture_exr.EXTENSION_NAME))
+			{
+				return ((EXT_texture_exr)texture.Extensions[EXT_texture_exr.EXTENSION_NAME]).source.Id;
+			}
+			
+			int id = texture.Source?.Id ?? -1;
 			if (_imageDeduplicationLinks != null)
 			{
 				if (_imageDeduplicationLinks.TryGetValue(id, out int replacedId))
 					id = replacedId;
+			}
+
+			if (id == -1)
+			{
+				string exts = texture.Extensions != null ? string.Join(", ", texture.Extensions.Keys) : "No extensions";
+				Debug.LogError($"Unsupported texture source for texture {texture.Name} with Extensions: {exts} (File: {_gltfFileName})", this);
 			}
 			
 			return id;
@@ -558,9 +714,20 @@ namespace UnityGLTF
 
 		protected virtual async Task ConstructTexture(GLTFTexture texture, int textureIndex, bool markGpuOnly, bool isLinear, bool isNormal)
 		{
-			if (_assetCache.TextureCache[textureIndex].Texture == null)
+			if (_assetCache.TextureCache[textureIndex]?.Texture == null)
 			{
 				int sourceId = GetTextureSourceId(texture);
+				if (sourceId == -1)
+				{
+
+					_assetCache.TextureCache[textureIndex] = new TextureCacheData
+					{
+						Texture = null,
+						TextureDefinition = texture,
+					};
+				    return;
+				}
+				
 				GLTFImage image = _gltfRoot.Images[sourceId];
 				
 				bool isFirstInstance = _assetCache.ImageCache[sourceId] == null;

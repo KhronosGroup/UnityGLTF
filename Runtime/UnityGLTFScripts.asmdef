@@ -11,11 +11,13 @@
         "Draco",
         "Unity.Meshopt.Decompress",
         "Unity.Collections",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Burst",
+        "unity.webp"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": true,
     "precompiledReferences": [
         "Newtonsoft.Json.dll"
@@ -97,6 +99,26 @@
             "name": "com.unity.cloud.draco",
             "expression": "5.2.0",
             "define": "HAVE_DRACO_VERSION_5_2"
+        },
+        {
+            "name": "com.unity.meshopt.decompress",
+            "expression": "0.2.0-exp.1",
+            "define": "HAVE_MESHOPT_DECOMPRESS_VERSION_0_2"
+        },
+        {
+            "name": "com.netpyoung.webp",
+            "expression": "0.3.22",
+            "define": "HAVE_WEBP"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "HAVE_HDRP"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "HAVE_URP"
         }
     ],
     "noEngineReferences": false

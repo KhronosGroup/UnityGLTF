@@ -131,6 +131,9 @@ namespace UnityGLTF
 		    /** glTF JSON + separate binary buffers and textures */
 		    [InspectorName("glTF (.gltf + .bin + textures)")]
 		    Gltf,
+		    /** glTF JSON + separate binary buffer that also contains the textures */
+		    [InspectorName("glTF with embedded textures (.gltf + .bin)")]
+		    GltfEmbeddedTextures,
 	    }
 	    
 	    public ExportFileFormat EditorExportFileFormat = ExportFileFormat.Glb;
@@ -306,6 +309,12 @@ namespace UnityGLTF
 #endif
 	    }
 
+	    private void OnEnable()
+	    {
+		    RegisterPlugins(this);
+	    }
+
+
 	    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 	    private static void ClearStatics()
 	    {
@@ -374,8 +383,23 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 					    if (AssetDatabase.Contains(settings))
 					    {
-							AssetDatabase.AddObjectToAsset(newInstance, settings);
-							EditorUtility.SetDirty(settings);
+						    if (AssetDatabase.IsAssetImportWorkerProcess())
+						    {
+							    EditorApplication.delayCall += () =>
+							    {
+								    if (settings)
+								    {
+									    AssetDatabase.AddObjectToAsset(newInstance, settings);
+									    EditorUtility.SetDirty(settings);
+								    }
+							    };
+							    
+						    }
+						    else
+						    {
+								AssetDatabase.AddObjectToAsset(newInstance, settings);
+								EditorUtility.SetDirty(settings);
+						    }
 					    }
 #endif
 				    }

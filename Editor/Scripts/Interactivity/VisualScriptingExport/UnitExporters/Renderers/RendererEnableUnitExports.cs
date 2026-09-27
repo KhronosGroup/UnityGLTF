@@ -27,8 +27,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             VisibleExtensionHelper.AddExtension(unitExporter, unit, visibleNode);
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(visibleNode,
-                PointersHelper.IdPointerNodeIndex,
-                unit.target, VisibleExtensionHelper.PointerTemplate,
+                PointersHelper.IdPointerNodeRef,
+                unit.target, VisibleExtensionHelper.PointerTemplateRef,
                 GltfTypes.Bool);
             visibleNode.ValueOut(Pointer_GetNode.IdValue).MapToPort(unit.value);
             return true;
@@ -54,8 +54,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             selectableNode.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.assign);
             PointersHelperVS.SetupPointerTemplateAndTargetInput(selectableNode,
-                PointersHelper.IdPointerNodeIndex,
-                unit.target, VisibleExtensionHelper.PointerTemplate,
+                PointersHelper.IdPointerNodeRef,
+                unit.target, VisibleExtensionHelper.PointerTemplateRef,
                 GltfTypes.Bool);
             selectableNode.ValueIn(Pointer_SetNode.IdValue).MapToInputPort(unit.input);
             

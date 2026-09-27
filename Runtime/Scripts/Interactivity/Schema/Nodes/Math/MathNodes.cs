@@ -100,9 +100,6 @@ namespace UnityGLTF.Interactivity.Schema
         
         [OutputSocketDescription(GltfTypes.Float3)]
         public const string IdOutputScale = "scale";
-        
-        [OutputSocketDescription(GltfTypes.Bool)]
-        public const string IdOutputIsValid = "isValid";
     }
     
     public class Math_Transform_Float2Node : GltfInteractivityNodeSchema
@@ -802,7 +799,16 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOut = "value";
     }
 
+    
+    public class Math_TauNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/Tau";
+        
+        [OutputSocketDescription(GltfTypes.Float)]
+        public const string IdOut = "value";
+    }
 
+    
     public class Math_ENode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/E";
@@ -1035,6 +1041,36 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdOutValue = "value";
     }
     
+    public class Math_QuatSlerpNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatSlerp";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOut = "value";
+        
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueA = "a";
+        [InputSocketDescription(GltfTypes.Float4)]
+        public const string IdValueB = "b";
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdValueC = "c";
+    }
+    
+    public class Math_SlerpNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/slerp";
+
+        [OutputSocketDescriptionWithTypeDependencyFromInput("a")]
+        public const string IdOut = "value";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("b", GltfTypes.Float2, GltfTypes.Float3)]
+        public const string IdValueA = "a";
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("a", GltfTypes.Float2, GltfTypes.Float3)]
+        public const string IdValueB = "b";
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdValueC = "c";
+    }
+    
     public class Math_QuatFromUpForwardNode : GltfInteractivityNodeSchema
     {
         public override string Op { get; set; } = "math/quatFromUpForward";
@@ -1117,5 +1153,44 @@ namespace UnityGLTF.Interactivity.Schema
 
         [OutputSocketDescription(GltfTypes.Float4)]
         public const string IdOutValue = "value";
-    }  
+    }
+
+    public class Math_QuatFromAnglesNode : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/quatFromAngles";
+
+        // Rotation order. One of "xyz", "xzy", "yxz", "yzx", "zxy" or "zyx". Defaults to "yxz".
+        [ConfigDescription("yxz")]
+        public const string IdConfigOrder = "order";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdX = "x";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdY = "y";
+
+        [InputSocketDescription(GltfTypes.Float)]
+        public const string IdZ = "z";
+
+        [OutputSocketDescription(GltfTypes.Float4)]
+        public const string IdOutValue = "value";
+    }
+
+    public class Math_SmoothStep : GltfInteractivityNodeSchema
+    {
+        public override string Op { get; set; } = "math/smoothStep";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("b", GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)] 
+        public const string IdA = "a";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("a", GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)] 
+        public const string IdB = "b";
+        
+        [InputSocketDescriptionWithTypeDependencyFromOtherPort("a", GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4)] 
+        public const string IdInterpolate = "c";
+
+        
+        [OutputSocketDescriptionWithTypeDependencyFromInput("a")]
+        public const string IdOutValue = "value";
+    }
 }

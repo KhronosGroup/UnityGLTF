@@ -86,17 +86,29 @@ namespace UnityGLTF
 				{
 					if (go.CompareTag("EditorOnly"))
 					{
+#if UNITY_6000_4_OR_NEWER
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 						return;
 					}
 					if (!go.activeSelf || !go.activeInHierarchy)
 					{
+#if UNITY_6000_4_OR_NEWER
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 						return;
 					}
 					
 				}
+#if UNITY_6000_4_OR_NEWER
+				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 				return;
 			}
 
@@ -170,9 +182,26 @@ namespace UnityGLTF
 
 					if (!ShouldMaterialPropertiesRemapped(material))
 						break;
-					
-					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material, propertyName, out MaterialPointerPropertyMap map))
-						break;
+
+					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material,
+						    propertyName, out MaterialPointerPropertyMap map))
+					{
+						if (animationPointerExportContext.materialPropertiesRemapper.GetMapByUnityProperty(
+							    propertyName, out MaterialPointerPropertyMap existingMap))
+						{
+							var isTexTransform = existingMap.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform;
+
+							Debug.Log(LogType.Warning,
+								$"Animation property skipped: {propertyName} on material {material} - missing property "
+								+ (isTexTransform ? "or no texture assigned" : ""));
+						}
+						else
+							Debug.Log(LogType.Warning, $"Animation property skipped: {propertyName} on material {material} - no mapping found ");
+						
+						// We skip this property entirely if we don't have a mapping for it.'
+						// Also for Texture Transforms: when no Texture is assigned, we skip here too.
+						return;
+					}
 					
 					secondPropertyName = map.GltfSecondaryPropertyName;
 					propertyName = map.GltfPropertyName;

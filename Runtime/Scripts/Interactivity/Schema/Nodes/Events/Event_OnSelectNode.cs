@@ -15,12 +15,10 @@ namespace UnityGLTF.Interactivity.Schema
         
         [ConfigDescription]
         public const string IdConfigNodeIndex = "nodeIndex";
-        [ConfigDescription]
-        public const string IdConfigStopPropagation = "stopPropagation";
         [FlowOutSocketDescription]
         public const string IdFlowOut = "out";
-        [OutputSocketDescription(GltfTypes.Int)]
-        public const string IdValueSelectedNodeIndex = "selectedNodeIndex";
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdValueSelectedNodeRef = "selectedNode";
         [OutputSocketDescription(GltfTypes.Float3)]
         public const string IdValueSelectionRayOrigin = "selectionRayOrigin";
         [OutputSocketDescription(GltfTypes.Float3)]

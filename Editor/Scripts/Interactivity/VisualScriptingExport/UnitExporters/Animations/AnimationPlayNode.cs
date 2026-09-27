@@ -70,12 +70,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
 
+            var clipRef = AnimationHelper.GetAnimationClipRef(unitExporter, animationId);
             var node = unitExporter.CreateNode<Animation_StartNode>();
-            node.ValueInConnection[Animation_StartNode.IdValueAnimation].Value = animationId;
+            node.ValueIn(Animation_StartNode.IdValueAnimationRef).ConnectToSource(clipRef);
             node.ValueInConnection[Animation_StartNode.IdValueSpeed].Value = 1f;
             node.ValueInConnection[Animation_StartNode.IdValueStartTime].Value = 0.0f;
 
-            if (clip != null && !clip.isLooping)
+            if (clip != null && !clip.isLooping && clip.wrapMode != WrapMode.Loop)
             {
                 var animationLength = AnimationHelper.GetAnimationLength(unitExporter, animationId);
                 node.ValueIn(Animation_StartNode.IdValueEndtime).ConnectToSource(animationLength);

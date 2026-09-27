@@ -1,3 +1,7 @@
+> [!WARNING]
+> The default branch is for development only (**NOT STABLE**). Do not use the bare repository URL as a package, because Unity Package Manager will install the default development branch. Use the stable `live` branch (or a release tag) instead:
+> `https://github.com/XtroTheArctic/UnityGLTF.git#live`
+
 ## This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
 
 <img src="https://github.com/KhronosGroup/UnityGLTF/blob/e3797354f8d729156062265cbac98804a109d8f0/unitygltf-logo.png" width="200" /> 
@@ -69,22 +73,18 @@ The library is designed to be easy to extend with additional extensions to the g
 
 ## Installation
 
-You can install this package from the Needle Package Registry with a one-click installer:  
+Install this package from git using UPM (Unity Package Manager).
 
-1. Download [UnityGLTF Package Installer](https://package-installer.glitch.me/v1/installer/Needle/org.khronos.unitygltf?registry=https://packages.needle.tools)
-2. Drop the downloaded .unitypackage into Unity and follow the steps.
-
-You can also install this package from git, compatible with UPM (Unity Package Manager).
 1. Open `Window > Package Manager`
 2. Click <kbd>+</kbd>
 3. Select <kbd>Add Package from git URL</kbd>
-4. Paste
+4. Paste:
    ```
-   https://github.com/XtroTheArctic/UnityGLTF.git
+   https://github.com/XtroTheArctic/UnityGLTF.git#live
    ```
 5. Click <kbd>Add</kbd>.
 
-> **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
+> **Note:** To target a specific version, replace `#live` with a release tag or a specific commit.
 > Example: `https://github.com/XtroTheArctic/UnityGLTF.git#release/2.18.5+x1`.
 
 ## Unity Version and Render Pipeline Compatibility
@@ -149,7 +149,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - [KHR_node_visibility](https://github.com/KhronosGroup/glTF/blob/fbe806836526cdd8cd99ed3770b1c56df56c6863/extensions/2.0/Khronos/KHR_node_visibility/README.md) (GameObject active state) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 - [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
 - [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
-- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting export as interactivity graph) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting export as interactivity graph)
 
 ### Import only
 
@@ -162,7 +162,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ### Export only
 
 - [KHR_materials_variants](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_variants/README.md)
-- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/interactivity/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting Graph exporter) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting Graph exporter)
 - Timeline recorder track for exporting animations in the editor and at runtime
 - Lossless keyframe optimization on export
 - All 2D textures can be exported, RenderTextures included – they're baked at export.
@@ -175,9 +175,6 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ### Visual Scripting Graph Exporter
 
 This plugin allows you to export VisualScripting Graphs as KHR_interactivity graphs in glTF files.
-> [!NOTE]  
-> Because the specification of KHR_interactivity is still in development, the plugin is disabled by default. To enable it, go to `Project Settings > UnityGLTF > Export` and enable the 'KHR_interactivity (VisualScripting)' plugin.
-Please keep in mind that until ratification of the extension, exported glTF files with the KHR_interactivity extension might be outdated and not valid anymore with new specification updates.
 
 ### Features
 
@@ -530,14 +527,14 @@ UnityGLTF is currently maintained by
 
 > 🏗️ Under construction. Feel free to raise an issue if you have questions.
 
-### [Unity Package](https://github.com/XtroTheArctic/UnityGLTF/tree/mainx/)
+### [Unity Package](https://github.com/XtroTheArctic/UnityGLTF/tree/live/)
 
 - **Unity Version**
   Be sure that the Unity release you have installed on your local machine is *at least* 2021.3.
 - **Project Components**
   The Unity project offers two main functionalities: importing and exporting GLTF assets. These functionalities are primarily implemented in `GLTFSceneImporter` and `GLTFSceneExporter`.
 
-### [GLTFSerializer](https://github.com/XtroTheArctic/UnityGLTF/tree/mainx/Runtime/Plugins/GLTFSerialization)
+### [GLTFSerializer](https://github.com/XtroTheArctic/UnityGLTF/tree/live/Runtime/Plugins/GLTFSerialization)
 
 - **Basic Rundown**: The GLTFSerializer facilitates serialization of the Unity asset model, and deserialization of GLTF assets.
 

@@ -6,10 +6,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public class OnSelectMouseUpEventExport : GameObjectEvents<OnMouseUp, Event_OnSelectNode>
     {
-        protected override bool StopPropagationDefault
-        {
-            get => true;
-        }
         
         [InitializeOnLoadMethod]
         private static void Register()

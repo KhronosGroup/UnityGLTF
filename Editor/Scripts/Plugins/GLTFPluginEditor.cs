@@ -65,7 +65,11 @@ namespace UnityGLTF
                 IndentedButton.margin = new RectOffset(EditorGUI.indentLevel * 16, 0, 0, 0);
             }
             
-            if (GUILayout.Button("Install " + PackageName, IndentedButton))
+            var packageDisplayName = PackageName;
+            if (packageDisplayName.Contains("github.com"))
+                packageDisplayName = "from GitHub";
+            
+            if (GUILayout.Button( new GUIContent( "Install " + packageDisplayName, PackageName), IndentedButton))
             {
                 isInstalling = true;
                 var request = Client.Add(PackageName);
@@ -103,5 +107,11 @@ namespace UnityGLTF
     internal class Ktx2ImportEditor : PackageInstallEditor
     {
         protected override string PackageName => "com.unity.cloud.ktx";
+    }
+    
+    [CustomEditor(typeof(WebpImport))]
+    internal class WebPImportEditor : PackageInstallEditor
+    {
+        protected override string PackageName => "https://github.com/netpyoung/unity.webp.git?path=unity_project/Assets/unity.webp#0.3.22";
     }
 }

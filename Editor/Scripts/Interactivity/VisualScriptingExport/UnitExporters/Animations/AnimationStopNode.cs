@@ -70,9 +70,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return false;
             }
             
-            var node = unitExporter.CreateNode<Animation_StopNode>();
-            node.ValueInConnection[Animation_StopNode.IdValueAnimation].Value = animationId;
+            var clipRef = AnimationHelper.GetAnimationClipRef(unitExporter, animationId);
 
+            var node = unitExporter.CreateNode<Animation_StopNode>();
+            node.ValueIn(Animation_StopNode.IdValueAnimationRef).ConnectToSource(clipRef);
             
             unitExporter.MapInputPortToSocketName(unit.enter, Animation_StopNode.IdFlowIn, node);
             // There should only be one output flow from the Animator.Play node

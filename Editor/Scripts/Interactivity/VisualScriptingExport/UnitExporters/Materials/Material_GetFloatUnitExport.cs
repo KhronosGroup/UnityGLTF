@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             if (unit.target == null)
                 return false;
             
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
             string template = "";
             bool oneMinus = false;
             
@@ -36,7 +36,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     UnitExportLogging.AddErrorLog(unit, "float property name is not supported.");
                     return false;
                 }
-                template = materialTemplate + gltfProperty;
+                template = materialTemplate + "/" + gltfProperty;
                 oneMinus = map.ExportFlipValueRange;
             }
             else
@@ -60,7 +60,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 node.FirstValueOut().MapToPort(unit.result).ExpectedType(ExpectedType.Float);
 
  
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex,
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef,
                 unit.target, template, GltfTypes.Float);
             return true;
         }

@@ -87,7 +87,9 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         private Scene GetCurrentScene()
         {
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_6000_3_OR_NEWER            
+            return GameObject.GetScene(currentGraphProcessing.gameObject.GetEntityId());
+#elif UNITY_2022_3_OR_NEWER
             return GameObject.GetScene(currentGraphProcessing.gameObject.GetInstanceID());
 #else
             return SceneManager.GetActiveScene();
@@ -145,19 +147,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         /// <summary>
         /// Get the value of a variable from a VariableUnit.
-        /// Materials and GameObjects Values will be converted to their respective indices.
         /// </summary>
         public object GetVariableValue(IUnifiedVariableUnit unit, out string varName, out string cSharpVarType, bool checkTypeIsSupported = true)
         {
             var rawValue = GetVariableValueRaw(unit, out varName, out cSharpVarType, checkTypeIsSupported);
-            
-            if (rawValue is GameObject gameObjectValue)
-                rawValue = exporter.GetTransformIndex(gameObjectValue.transform);
-            else if (rawValue is Component component)
-                rawValue = exporter.GetTransformIndex(component.transform);
-            else if (rawValue is Material materialValue)
-                rawValue = exporter.GetMaterialIndex(materialValue);
-
             return rawValue;
         }
         
@@ -424,6 +417,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             RemoveUnconnectedNodes();
 
             TriggerInterfaceExportCallbacks();
+
+            AddSelectabilityExtensionToInvisibleNodes();
             
             // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
             TopologicalSort();
@@ -434,8 +429,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (cleanUpAndOptimizeExportedGraph)
                 CleanUp();
             
+            ReplaceSpecialValuesWithNodes();
+            
             // Final Topological Sort
             TopologicalSort();  
+            
+            ResolveRefToStaticPointer();
             
             CollectOpDeclarations();
             

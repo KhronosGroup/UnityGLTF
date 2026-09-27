@@ -32,7 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             ValueInput target = null;
             
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
+            var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
             var template = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/" + property;
             var scaleTemplate = "pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale";
 
@@ -52,7 +52,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     unitExporter.MapValueOutportToSocketName(getMember.value, Pointer_GetNode.IdValue, node);
                 }
                 
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, materialTemplate + "/" + template, GltfTypes.Float2);
             }
             else if (unitExporter.unit is InvokeMember invokeMember)
             {
@@ -89,11 +89,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 var node = unitExporter.CreateNode<Pointer_GetNode>();
                 unitExporter.ByPassFlow(invokeMember.enter, invokeMember.exit);
-                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, target, materialTemplate + template, GltfTypes.Float2);
+                PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, target, materialTemplate + "/" + template, GltfTypes.Float2);
                 
                 if (isOffset)
                 {
-                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
+                    MaterialPointerHelperVS.ConvertUvOffsetToGltf(unitExporter, target, materialTemplate + "/" + scaleTemplate, out var uvOffsetIn, out var uvOffSetOut);
                     uvOffsetIn.ConnectToSource(node.FirstValueOut());
                     uvOffSetOut.MapToPort(invokeMember.result);
                 }

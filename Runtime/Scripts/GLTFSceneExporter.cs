@@ -859,12 +859,14 @@ namespace UnityGLTF
 		/// </summary>
 		/// <param name="path">File path for saving the GLTF and binary files</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true)
+		/// <param name="exportTextures">Write textures as separate files next to the .gltf. Ignored when <paramref name="embedTexturesInBuffer"/> is true.</param>
+		/// <param name="embedTexturesInBuffer">Store textures and other resources as buffer views inside the .bin file instead of writing them as separate files.</param>
+		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true, bool embedTexturesInBuffer = false)
 		{
 			exportGltfMarker.Begin();
 
 			exportGltfInitMarker.Begin();
-			_shouldUseInternalBufferForImages = false;
+			_shouldUseInternalBufferForImages = embedTexturesInBuffer;
 			var toLower = fileName.ToLowerInvariant();
 			if (toLower.EndsWith(".gltf"))
 				fileName = fileName.Substring(0, fileName.Length - 5);
@@ -1086,7 +1088,7 @@ namespace UnityGLTF
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
-			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
+			if (_exportedTransforms.TryGetValue(GetObjectId(nodeTransform), out var existingNodeId))
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
 			foreach (var plugin in _plugins)
@@ -1158,7 +1160,7 @@ namespace UnityGLTF
 			};
 
 			// Register nodes for animation parsing (could be disabled if animation is disabled)
-			_exportedTransforms.Add(nodeTransform.GetInstanceID(), _root.Nodes.Count);
+			_exportedTransforms.Add(GetObjectId(nodeTransform), _root.Nodes.Count);
 
 			_root.Nodes.Add(node);
 
@@ -1387,7 +1389,7 @@ namespace UnityGLTF
 			if (materialObj == DefaultMaterial)
 				materialKey = 0;
 			else if (materialObj)
-				materialKey = materialObj.GetInstanceID();
+				materialKey = GetObjectId(materialObj);
 
 			if (_exportedMaterials.TryGetValue(materialKey, out var id))
 			{

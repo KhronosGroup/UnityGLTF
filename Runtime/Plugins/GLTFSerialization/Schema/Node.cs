@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using GLTF.Extensions;
-using GLTF.Math;
 using Newtonsoft.Json;
+using UnityEngine;
+using Matrix4x4 = GLTF.Math.Matrix4x4;
+using Quaternion = GLTF.Math.Quaternion;
+using Vector3 = GLTF.Math.Vector3;
 
 namespace GLTF.Schema
 {
@@ -131,6 +134,31 @@ namespace GLTF.Schema
 			}
 		}
 
+		private static float ValidateValue(float f)
+		{
+			if (!float.IsNormal(f))
+				return 0;
+			
+			return f;
+		}
+
+		private static Vector3 ValidateValue(Vector3 v3)
+		{
+			v3.X = ValidateValue(v3.X);
+			v3.Y = ValidateValue(v3.Y);
+			v3.Z = ValidateValue(v3.Z);
+			return v3;
+		}
+
+		private static Quaternion ValidateValue(Quaternion q)
+		{
+			q.X = ValidateValue(q.X);
+			q.Y = ValidateValue(q.Y);
+			q.Z = ValidateValue(q.Z);
+			q.W = ValidateValue(q.W);
+			return q;
+		}
+		
 		public static Node Deserialize(GLTFRoot root, JsonReader reader)
 		{
 			var node = new Node();
@@ -165,15 +193,15 @@ namespace GLTF.Schema
 						break;
 					case "rotation":
 						node.UseTRS = true;
-						node.Rotation = reader.ReadAsQuaternion();
+						node.Rotation = ValidateValue(reader.ReadAsQuaternion());
 						break;
 					case "scale":
 						node.UseTRS = true;
-						node.Scale = reader.ReadAsVector3();
+						node.Scale = ValidateValue(reader.ReadAsVector3());
 						break;
 					case "translation":
 						node.UseTRS = true;
-						node.Translation = reader.ReadAsVector3();
+						node.Translation = ValidateValue(reader.ReadAsVector3());
 						break;
 					case "weights":
 						node.Weights = reader.ReadDoubleList();
