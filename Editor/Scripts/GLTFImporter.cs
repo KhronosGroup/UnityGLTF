@@ -212,48 +212,8 @@ namespace UnityGLTF
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(PBRGraphMap.PBRGraphGuid));
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(UnlitGraphMap.UnlitGraphGuid));
 
-	        // Remapped objects are serialized in the importer meta file. Their target artifacts must be imported first,
-	        // otherwise GetExternalObjectMap() can temporarily return a null target during a clean/full reimport.
-	        var metaPath = path + ".meta";
-	        if (File.Exists(metaPath))
-	        {
-		        var externalObjectsIndent = -1;
-		        foreach (var line in File.ReadLines(metaPath))
-		        {
-			        var trimmed = line.TrimStart();
-			        var indent = line.Length - trimmed.Length;
-
-			        if (externalObjectsIndent < 0)
-			        {
-				        if (!trimmed.StartsWith("externalObjects:", StringComparison.Ordinal)) continue;
-				        
-                        if (trimmed.EndsWith("{}", StringComparison.Ordinal) || trimmed.EndsWith("[]", StringComparison.Ordinal)) break;
-				        
-                        externalObjectsIndent = indent;
-
-				        continue;
-			        }
-
-			        if (trimmed.Length == 0) continue;
-
-			        if (indent <= externalObjectsIndent && !trimmed.StartsWith("-", StringComparison.Ordinal)) break;
-
-			        var guidStart = trimmed.IndexOf("guid:", StringComparison.Ordinal);
-			        if (guidStart < 0) continue;
-
-			        guidStart += "guid:".Length;
-			        var guidEnd = trimmed.IndexOf(',', guidStart);
-			        var guid = (guidEnd >= 0 ? trimmed.Substring(guidStart, guidEnd - guidStart) : trimmed.Substring(guidStart)).Trim();
-
-			        if (guid.Length != 32) continue;
-
-			        var dependencyPath = AssetDatabase.GUIDToAssetPath(guid);
-			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, path, StringComparison.OrdinalIgnoreCase)) dependencies.Add(dependencyPath);
-		        }
-	        }
-
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
-	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return dependencies.Distinct().ToArray();
+	        if (!path.ToLowerInvariant().EndsWith(".gltf")) return dependencies.ToArray();
 	        
 	        // read minimal JSON, check if there's a bin buffer, and load that.
 	        // all other assets should be "proper assets" and be found by the asset database, but we're not importing .bin
@@ -308,6 +268,22 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
+	        var serializedImporter = new SerializedObject(this);
+	        var externalObjects = serializedImporter.FindProperty("m_ExternalObjects");
+	        if (externalObjects != null)
+	        {
+		        for (var i = 0; i < externalObjects.arraySize; i++)
+		        {
+			        var externalObject = externalObjects.GetArrayElementAtIndex(i).FindPropertyRelative("second");
+#if UNITY_6000_4_OR_NEWER
+			        var dependencyPath = AssetDatabase.GetAssetPath(externalObject.objectReferenceEntityIdValue);
+#else
+			        var dependencyPath = AssetDatabase.GetAssetPath(externalObject.objectReferenceInstanceIDValue);
+#endif
+			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, ctx.assetPath, StringComparison.OrdinalIgnoreCase)) ctx.DependsOnArtifact(dependencyPath);
+		        }
+	        }
+
 	        var settings = GLTFSettings.GetDefaultSettings();
 	        
 	        // make a copy, and apply import override settings
