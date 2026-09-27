@@ -1,3 +1,5 @@
+## This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
+
 <img src="https://github.com/KhronosGroup/UnityGLTF/blob/e3797354f8d729156062265cbac98804a109d8f0/unitygltf-logo.png" width="200" /> 
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
@@ -78,12 +80,12 @@ You can also install this package from git, compatible with UPM (Unity Package M
 3. Select <kbd>Add Package from git URL</kbd>
 4. Paste
    ```
-   https://github.com/KhronosGroup/UnityGLTF.git
+   https://github.com/XtroTheArctic/UnityGLTF.git
    ```
 5. Click <kbd>Add</kbd>.
 
 > **Note**: If you want to target a specific version, append `#release/<some-tag>` or a specific commit to the URL above.
-> Example: `https://github.com/KhronosGroup/UnityGLTF.git#release/2.14.1`.
+> Example: `https://github.com/XtroTheArctic/UnityGLTF.git#release/2.18.5+x1`.
 
 ## Unity Version and Render Pipeline Compatibility
 
@@ -525,14 +527,14 @@ UnityGLTF is currently maintained by
 
 > 🏗️ Under construction. Feel free to raise an issue if you have questions.
 
-### [Unity Package](https://github.com/KhronosGroup/UnityGLTF/tree/master/)
+### [Unity Package](https://github.com/XtroTheArctic/UnityGLTF/tree/mainx/)
 
 - **Unity Version**
   Be sure that the Unity release you have installed on your local machine is *at least* 2021.3.
 - **Project Components**
   The Unity project offers two main functionalities: importing and exporting GLTF assets. These functionalities are primarily implemented in `GLTFSceneImporter` and `GLTFSceneExporter`.
 
-### [GLTFSerializer](https://github.com/KhronosGroup/UnityGLTF/tree/master/Runtime/Plugins/GLTFSerialization)
+### [GLTFSerializer](https://github.com/XtroTheArctic/UnityGLTF/tree/mainx/Runtime/Plugins/GLTFSerialization)
 
 - **Basic Rundown**: The GLTFSerializer facilitates serialization of the Unity asset model, and deserialization of GLTF assets.
 
