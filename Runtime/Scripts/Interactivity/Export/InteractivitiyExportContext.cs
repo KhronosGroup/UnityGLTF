@@ -48,7 +48,7 @@ namespace UnityGLTF.Interactivity.Export
             
             ReplaceSpecialValuesWithNodes();
             // Final Topological Sort
-            TopologicalSort();  
+            TopologicalSort(includeFlows: true);
             
             ResolveRefToStaticPointer();
             
@@ -209,7 +209,9 @@ namespace UnityGLTF.Interactivity.Export
             mainGraph.Variables = variables.ToArray();
             mainGraph.CustomEvents = customEvents.ToArray();
             mainGraph.Declarations = opDeclarations.ToArray();
-            
+
+            Validator.ValidateSpecification(extension);
+
             ActiveGltfRoot.AddExtension(GltfInteractivityExtension.ExtensionName, extension);
             
             exporter.DeclareExtensionUsage(GltfInteractivityExtension.ExtensionName);
@@ -425,10 +427,16 @@ namespace UnityGLTF.Interactivity.Export
             }
         }
         
-        protected void TopologicalSort()
+        /// <param name="includeFlows">
+        /// false: only value connections are considered (source before consumer), e.g. to resolve types.
+        /// true: final order required by the specification, where value inputs must reference nodes with a lower index
+        /// AND output flows must point to nodes with a higher index. Remaining cycles over value and flow
+        /// connections are broken by routing a flow through a custom event.
+        /// </param>
+        protected void TopologicalSort(bool includeFlows = false)
         {
             // Resort the nodes after resolving the connections
-            var sorted = PostTopologicalSort();
+            var sorted = includeFlows ? SortByValuesAndFlows() : PostTopologicalSort();
             var newIndices = new Dictionary<int, int>(); // Key = Old Index, Value = New Index
             
             int newIndex = 0;
@@ -460,6 +468,136 @@ namespace UnityGLTF.Interactivity.Export
             nodesToSerialize.Sort((a, b) => a.Index.CompareTo(b.Index));
         }
         
+        private struct SortEdge
+        {
+            public int From;
+            public int To;
+            /// <summary> Flow socket id of the From node, null for value connections. </summary>
+            public string FlowSocket;
+        }
+
+        private List<SortEdge>[] CollectSortEdges()
+        {
+            var count = nodesToSerialize.Count;
+            var edges = new List<SortEdge>[count];
+            for (int i = 0; i < count; i++)
+                edges[i] = new List<SortEdge>();
+
+            bool IsValid(int? index) => index.HasValue && index.Value >= 0 && index.Value < count;
+
+            foreach (var node in nodesToSerialize)
+            {
+                foreach (var valueSocket in node.ValueInConnection)
+                    if (IsValid(valueSocket.Value.Node))
+                        edges[valueSocket.Value.Node.Value].Add(new SortEdge { From = valueSocket.Value.Node.Value, To = node.Index });
+
+                foreach (var flowSocket in node.FlowConnections)
+                    if (IsValid(flowSocket.Value.Node))
+                        edges[node.Index].Add(new SortEdge { From = node.Index, To = flowSocket.Value.Node.Value, FlowSocket = flowSocket.Key });
+            }
+            return edges;
+        }
+
+        /// <summary>
+        /// Kahn's algorithm over value and flow connections. Among the nodes that are ready, the one with the lowest
+        /// current index comes first, so the order stays as close as possible to the current one.
+        /// </summary>
+        /// <returns>false if the connections contain a cycle; <paramref name="sorted"/> then misses the nodes on or behind it.</returns>
+        private bool TrySortByValuesAndFlows(List<SortEdge>[] edges, out LinkedList<int> sorted)
+        {
+            var count = nodesToSerialize.Count;
+            var inDegree = new int[count];
+            foreach (var edge in edges.SelectMany(e => e))
+                inDegree[edge.To]++;
+
+            var ready = new SortedSet<int>(Enumerable.Range(0, count).Where(i => inDegree[i] == 0));
+            sorted = new LinkedList<int>();
+            while (ready.Count > 0)
+            {
+                var node = ready.Min;
+                ready.Remove(node);
+                sorted.AddLast(node);
+                foreach (var edge in edges[node])
+                    if (--inDegree[edge.To] == 0)
+                        ready.Add(edge.To);
+            }
+            return sorted.Count == count;
+        }
+
+        private LinkedList<int> SortByValuesAndFlows()
+        {
+            while (true)
+            {
+                var edges = CollectSortEdges();
+                if (TrySortByValuesAndFlows(edges, out var sorted))
+                    return sorted;
+
+                var flowEdge = FindFlowEdgeInCycle(edges, new HashSet<int>(Enumerable.Range(0, nodesToSerialize.Count).Except(sorted)));
+                if (!flowEdge.HasValue)
+                {
+                    Debug.LogError("Interactivity export: value connections form a cycle, nodes can't be ordered as required by the specification.");
+                    return PostTopologicalSort();
+                }
+
+                // Only happens when a node triggers a node whose output value it (indirectly) reads.
+                var edge = flowEdge.Value;
+                var source = nodesToSerialize[edge.From];
+                Debug.LogWarning($"Interactivity export: flow \"{edge.FlowSocket}\" of node {edge.From} ({source.Schema.Op}) " +
+                                 $"to node {edge.To} ({nodesToSerialize[edge.To].Schema.Op}) is part of a value/flow cycle " +
+                                 "and is routed through a custom event, so the target runs asynchronously.");
+                RouteFlowThroughEvent(source, source.FlowConnections[edge.FlowSocket]);
+            }
+        }
+
+        /// <summary> Finds a cycle between the given nodes and returns a flow connection on it (value connections can't be rerouted). </summary>
+        private static SortEdge? FindFlowEdgeInCycle(List<SortEdge>[] edges, HashSet<int> nodes)
+        {
+            // 0 = not visited, 1 = on the current path, 2 = done
+            var state = new Dictionary<int, int>();
+            var path = new List<SortEdge>();
+
+            SortEdge? Visit(int node)
+            {
+                state[node] = 1;
+                foreach (var edge in edges[node])
+                {
+                    if (!nodes.Contains(edge.To))
+                        continue;
+                    state.TryGetValue(edge.To, out var targetState);
+                    if (targetState == 1)
+                    {
+                        // Cycle: the edges on the path from edge.To to node, plus this edge
+                        var flowEdge = path.SkipWhile(e => e.From != edge.To).Append(edge)
+                            .Where(e => e.FlowSocket != null).Cast<SortEdge?>().FirstOrDefault();
+                        if (flowEdge.HasValue)
+                            return flowEdge;
+                        // Value-only cycle; keep searching for a cycle with a flow connection
+                        continue;
+                    }
+                    if (targetState == 0)
+                    {
+                        path.Add(edge);
+                        var result = Visit(edge.To);
+                        if (result.HasValue)
+                            return result;
+                        path.RemoveAt(path.Count - 1);
+                    }
+                }
+                state[node] = 2;
+                return null;
+            }
+
+            foreach (var node in nodes)
+            {
+                if (state.ContainsKey(node))
+                    continue;
+                var result = Visit(node);
+                if (result.HasValue)
+                    return result;
+            }
+            return null;
+        }
+
         protected LinkedList<int> PostTopologicalSort()
         {
             var sorted = new LinkedList<int>();
@@ -554,7 +692,12 @@ namespace UnityGLTF.Interactivity.Export
                     if (valueSocket.Value.Value != null)
                     {
                         if (valueSocket.Value.Type == -1)
-                            valueSocket.Value.Type = GltfTypes.TypeIndex(valueSocket.Value.GetType());
+                            valueSocket.Value.Type = GltfTypes.TypeIndex(valueSocket.Value.Value.GetType());
+                        usedTypeIndices.Add(valueSocket.Value.Type);
+                    }
+                    else if (valueSocket.Value.Node == null && valueSocket.Value.Type != -1)
+                    {
+                        // Type-default value, serialized with its type only
                         usedTypeIndices.Add(valueSocket.Value.Type);
                     }
                 
@@ -590,7 +733,8 @@ namespace UnityGLTF.Interactivity.Export
                     }
                 }
                 foreach (var valueSocket in node.ValueInConnection)
-                    if (valueSocket.Value.Value != null && valueSocket.Value.Type != -1)
+                    if ((valueSocket.Value.Value != null || valueSocket.Value.Node == null) && valueSocket.Value.Type != -1
+                        && typesIndexReplacement.ContainsKey(valueSocket.Value.Type))
                         valueSocket.Value.Type = typesIndexReplacement[valueSocket.Value.Type];
             }
             
@@ -640,24 +784,7 @@ namespace UnityGLTF.Interactivity.Export
                             if (Visit(connection.Value.Node.Value))
                             {
                                 // Add Events because of cyclic dependency
-                                var eventId = AddEventWithIdIfNeeded($"CyclicDependency{connection.Value.Node.ToString()}from{node.ToString()}");
-                       
-                                var triggerEventNode = new GltfInteractivityExportNode(new Event_SendNode());
-                                triggerEventNode.Index = nodesToSerialize.Count;
-                                triggerEventNode.Configuration["event"].Value = eventId;
-                                nodesToSerialize.Add(triggerEventNode);
-                                
-                                var receiveEventNode = new GltfInteractivityExportNode(new Event_ReceiveNode());
-                                receiveEventNode.Index = nodesToSerialize.Count;
-                                receiveEventNode.Configuration["event"].Value = eventId;
-                                nodesToSerialize.Add(receiveEventNode);
-
-                                var receiveFlowOut = receiveEventNode.FlowConnections[Event_ReceiveNode.IdFlowOut];
-                                receiveFlowOut.Node = connection.Value.Node;
-                                receiveFlowOut.Socket = connection.Value.Socket;    
-
-                                connection.Value.Node = triggerEventNode.Index;
-                                connection.Value.Socket = Event_SendNode.IdFlowIn;
+                                RouteFlowThroughEvent(currentNode, connection.Value);
                             }
                         }
                     }
@@ -671,6 +798,32 @@ namespace UnityGLTF.Interactivity.Export
             foreach (var node in nodesToSerialize.ToArray())
                 Visit(node.Index);
 
+        }
+
+        /// <summary>
+        /// Replaces the flow connection with event/send → event/receive using a new custom event, which breaks cycles.
+        /// Custom events are processed asynchronously, so the flow target no longer runs within the current flow.
+        /// </summary>
+        private void RouteFlowThroughEvent(GltfInteractivityExportNode sourceNode, GltfInteractivityNode.FlowSocketData connection)
+        {
+            var eventId = AddEventWithIdIfNeeded($"CyclicDependency{connection.Node.ToString()}from{sourceNode.Index.ToString()}");
+
+            var triggerEventNode = new GltfInteractivityExportNode(new Event_SendNode());
+            triggerEventNode.Index = nodesToSerialize.Count;
+            triggerEventNode.Configuration["event"].Value = eventId;
+            nodesToSerialize.Add(triggerEventNode);
+
+            var receiveEventNode = new GltfInteractivityExportNode(new Event_ReceiveNode());
+            receiveEventNode.Index = nodesToSerialize.Count;
+            receiveEventNode.Configuration["event"].Value = eventId;
+            nodesToSerialize.Add(receiveEventNode);
+
+            var receiveFlowOut = receiveEventNode.FlowConnections[Event_ReceiveNode.IdFlowOut];
+            receiveFlowOut.Node = connection.Node;
+            receiveFlowOut.Socket = connection.Socket;
+
+            connection.Node = triggerEventNode.Index;
+            connection.Socket = Event_SendNode.IdFlowIn;
         }
         
         public void RemoveNode(GltfInteractivityExportNode nodeToRemove)

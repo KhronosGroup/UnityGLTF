@@ -21,29 +21,21 @@ namespace UnityGLTF.Interactivity.Schema
         
         public JObject SerializeObject()
         {
-            JObject jo = new JObject
+            JObject jo = new JObject();
+
+            // Empty arrays must be omitted
+            void AddArray(string name, IEnumerable<JObject> items)
             {
-                new JProperty("types",
-                    new JArray(
-                        from type in Types
-                        select type.SerializeObject())),
-                new JProperty("variables",
-                    new JArray(
-                        from variable in Variables
-                        select variable.SerializeObject())),
-                new JProperty("events",
-                    new JArray(
-                        from customEvent in CustomEvents
-                        select customEvent.SerializeObject())),
-                new JProperty("declarations",
-                    new JArray(
-                        from declaration in Declarations
-                        select declaration.SerializeObject())),
-                new JProperty("nodes",
-                    new JArray(
-                        from node in Nodes
-                        select node.SerializeObject()))
-            };
+                var array = new JArray(items);
+                if (array.Count > 0)
+                    jo.Add(name, array);
+            }
+
+            AddArray("types", from type in Types select type.SerializeObject());
+            AddArray("variables", from variable in Variables select variable.SerializeObject());
+            AddArray("events", from customEvent in CustomEvents select customEvent.SerializeObject());
+            AddArray("declarations", from declaration in Declarations select declaration.SerializeObject());
+            AddArray("nodes", from node in Nodes select node.SerializeObject());
 
             return jo;
         }
@@ -73,7 +65,8 @@ namespace UnityGLTF.Interactivity.Schema
                 {
                     jObject.Add(new JProperty("extension", extension));
 
-                    if (inputValueSockets != null)
+                    // Empty socket objects must be omitted
+                    if (inputValueSockets != null && inputValueSockets.Count > 0)
                     {
                         var inputSockets = new JObject();
                         foreach (var socket in inputValueSockets)
@@ -86,7 +79,7 @@ namespace UnityGLTF.Interactivity.Schema
                         jObject.Add("inputValueSockets", inputSockets);
                     }
 
-                    if (outputValueSockets != null)
+                    if (outputValueSockets != null && outputValueSockets.Count > 0)
                     {
                         var outputSockets = new JObject();
                         foreach (var socket in outputValueSockets)

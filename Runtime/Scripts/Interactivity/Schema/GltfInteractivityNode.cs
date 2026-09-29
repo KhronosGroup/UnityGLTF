@@ -146,35 +146,41 @@ namespace UnityGLTF.Interactivity.Schema
         
         public virtual JObject SerializeObject()
         {
-            var configs = new JObject();
-            foreach (var config in Configuration)
-                configs.Add(config.Key, config.Value.SerializeObject());
-            
-            var values = new JObject();
-            foreach (var value in ValueInConnection)
-                values.Add(value.Key, value.Value.SerializeObject());
-
-            var flows = new JObject();
-            foreach (var flow in FlowConnections)
-                if (flow.Value.Node != null)
-                    flows.Add(flow.Key, flow.Value.SerializeObject());
-
-            
-            JObject jo = new JObject
+            JObject jo = new JObject()
             {
-                new JProperty("declaration", OpDeclaration),
-                new JProperty("configuration",configs),
-                new JProperty("values", values),
-                new JProperty("flows", flows),
+                new JProperty("declaration", OpDeclaration)
             };
+            
+            // Empty objects are not allowed by the specification, so configuration, values and flows are only
+            // written when they have at least one entry.
+            var serializedConfigs = Configuration
+                .Where(kvp => !string.IsNullOrEmpty(kvp.Key) && kvp.Value != null && kvp.Value.HasValue)
+                .ToList();
+            if (serializedConfigs.Count > 0)
+            {
+                var configs = new JObject();
+                foreach (var config in serializedConfigs)
+                    configs.Add(config.Key, config.Value.SerializeObject());
 
-            // Remove all empty arrays in the first level of the JSON Object
-            jo.SelectTokens("$.*")
-              .OfType<JArray>()
-              .Where(x => x.Type == JTokenType.Array && !x.HasValues)
-              .Select(a => a.Parent)
-              .ToList()
-              .ForEach(a => a.Remove());
+                jo.Add("configuration", configs);
+            }
+
+            if (ValueInConnection.Count > 0)
+            {
+                var values = new JObject();
+                foreach (var value in ValueInConnection)
+                    values.Add(value.Key, value.Value.SerializeObject());
+                jo.Add("values", values);
+            }
+
+            var connectedFlows = FlowConnections.Where(flow => flow.Value.Node != null).ToList();
+            if (connectedFlows.Count > 0)
+            {
+                var flows = new JObject();
+                foreach (var flow in connectedFlows)
+                    flows.Add(flow.Key, flow.Value.SerializeObject());
+                jo.Add("flows", flows);
+            }
 
             return jo;
         }
@@ -183,6 +189,12 @@ namespace UnityGLTF.Interactivity.Schema
         {
             // data field holds index in list of types supported in the extension
             public object Value = null;
+
+            /// <summary>
+            /// False for unset values and empty arrays: configuration values must be non-empty arrays, so these
+            /// are omitted, which selects the default configuration of the operation (e.g. no cases for flow/switch).
+            /// </summary>
+            public bool HasValue => Value != null && !(Value is System.Array array && array.Length == 0);
 
             public JObject SerializeObject()
             {
@@ -244,11 +256,14 @@ namespace UnityGLTF.Interactivity.Schema
         {
             public JObject SerializeObject()
             {
-                return new JObject
+                var jObject = new JObject
                 {
-                    new JProperty("node", Node),
-                    new JProperty("socket", Socket)
+                    new JProperty("node", Node)
                 };
+                // Optional, "in" when omitted
+                if (Socket != null)
+                    jObject.Add(new JProperty("socket", Socket));
+                return jObject;
             }
         }
         
@@ -373,6 +388,11 @@ namespace UnityGLTF.Interactivity.Schema
                     valueObject.Add(new JProperty("type", Type));
 
                     ValueSerializer.Serialize(Value, valueObject);
+                }
+                else if (Node == null && Type != -1)
+                {
+                    // Type-default value (e.g. NaN for float): the type is required
+                    valueObject.Add(new JProperty("type", Type));
                 }
 
                 return valueObject;

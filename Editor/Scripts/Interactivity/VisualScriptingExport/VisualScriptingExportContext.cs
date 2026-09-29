@@ -432,7 +432,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
             ReplaceSpecialValuesWithNodes();
             
             // Final Topological Sort
-            TopologicalSort();  
+            TopologicalSort(includeFlows: true);
             
             ResolveRefToStaticPointer();
             

@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions; // added for placeholder parsing
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityGLTF.Interactivity.Schema;
 
@@ -222,7 +223,35 @@ namespace UnityGLTF.Interactivity.Export
             if (sb.Length == 0)
                 return;
             
+
             Debug.LogError($"Validation Errors Found: "+ System.Environment.NewLine + sb.ToString());
+        }
+
+        /// <summary>
+        /// Checks the serialized extension against the structural rules of the KHR_interactivity specification
+        /// (see <see cref="GraphSpecValidator"/>) and logs the violations grouped by rule.
+        /// </summary>
+        public static void ValidateSpecification(GltfInteractivityExtension extension)
+        {
+            const int examplesPerRule = 5;
+
+            var issues = GraphSpecValidator.Validate((JObject)extension.Serialize().Value);
+            if (issues.Count == 0)
+                return;
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"KHR_interactivity specification violations found ({issues.Count}). Conformant implementations will reject this graph:");
+            foreach (var rule in issues.GroupBy(i => (i.Severity, i.Rule)).OrderBy(g => g.Key.Severity).ThenByDescending(g => g.Count()))
+            {
+                var severity = rule.Key.Severity == GraphSpecValidator.Severity.RejectExtension ? "reject extension" : "reject graph";
+                sb.AppendLine($"[{severity}] {rule.Count()}x {rule.Key.Rule}");
+                foreach (var issue in rule.Take(examplesPerRule))
+                    sb.AppendLine($"    at {issue.Location}");
+                if (rule.Count() > examplesPerRule)
+                    sb.AppendLine($"    ... and {rule.Count() - examplesPerRule} more");
+            }
+
+            Debug.LogError(sb.ToString());
         }
     }
 }
