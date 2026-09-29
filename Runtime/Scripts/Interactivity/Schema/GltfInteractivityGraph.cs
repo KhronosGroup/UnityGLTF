@@ -108,7 +108,7 @@ namespace UnityGLTF.Interactivity.Schema
         /// <summary> Variables hold data or references accessible to the behavior graph.</summary>
         public class Variable
         {
-            public string Id = string.Empty;
+            public string Name = string.Empty;
             public int Type = -1;
             public object Value;
 
@@ -116,9 +116,11 @@ namespace UnityGLTF.Interactivity.Schema
             {
                 var jObject = new JObject
                 {
-                    new JProperty("id", Id),
                     new JProperty("type", Type),
                 };
+                if (!string.IsNullOrEmpty(Name))
+                    jObject.Add(new JProperty("name", Name));
+                
                 GltfInteractivityNode.ValueSerializer.Serialize(Value, jObject);
 
                 return jObject;
@@ -129,19 +131,31 @@ namespace UnityGLTF.Interactivity.Schema
         public class CustomEvent
         {
             public string Id = string.Empty;
+            public string Name = string.Empty;
             public Dictionary<string, GltfInteractivityNode.EventValues> Values = new Dictionary<string, GltfInteractivityNode.EventValues>();
 
             public JObject SerializeObject()
             {
-                var values = new JObject();
-                foreach (var value in Values)
-                    values.Add(value.Key, value.Value.SerializeObject());
+                var jObject = new JObject();
 
-                return new JObject
+                // Without id, the event is internal to the graph
+                if (!string.IsNullOrEmpty(Id))
+                    jObject.Add(new JProperty("id", Id));
+                
+                if (!string.IsNullOrEmpty(Name))
+                    jObject.Add(new JProperty("name", Name));
+
+
+                // Empty objects must be omitted
+                if (Values != null && Values.Count > 0)
                 {
-                    new JProperty("id", Id),
-                    new JProperty("values", values)
-                };
+                    var values = new JObject();
+                    foreach (var value in Values)
+                        values.Add(value.Key, value.Value.SerializeObject());
+                    jObject.Add(new JProperty("values", values));
+                }
+
+                return jObject;
             }
         }
     }

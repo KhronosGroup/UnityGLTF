@@ -207,7 +207,7 @@ namespace UnityGLTF.Interactivity.Export
             foreach (var variable in context.variables)
             {
                 if (variable.Type == -1)
-                    sb.AppendLine($"Variable with Id >{variable.Id}< has invalid Type (-1)");
+                    sb.AppendLine($"Variable with Id >{variable.Name}< has invalid Type (-1)");
             }
             
             foreach (var customEvent in context.customEvents)
@@ -215,7 +215,7 @@ namespace UnityGLTF.Interactivity.Export
                 foreach (var customEventValue in customEvent.Values)
                 {
                     if (customEventValue.Value.Type == -1)
-                        sb.AppendLine($"Custom Event with Id >{customEvent.Id}< with Value >{customEventValue.Key}< has invalid Value Type (-1)");
+                        sb.AppendLine($"Custom Event with Id >{customEvent.Id}< (Name: {customEvent.Name}) with Value >{customEventValue.Key}< has invalid Value Type (-1)");
                 }
             }
             

@@ -271,12 +271,12 @@ namespace UnityGLTF.Interactivity.Export
                 return -1;
             }
             
-            var index = variables.FindIndex(v => v.Id == id);
+            var index = variables.FindIndex(v => v.Name == id);
             if (index != -1)
                 return index;
 
             GltfInteractivityGraph.Variable newVariable = new GltfInteractivityGraph.Variable();
-            newVariable.Id = id;
+            newVariable.Name = id;
             
             newVariable.Type = gltfTypeIndex;
             
@@ -296,6 +296,7 @@ namespace UnityGLTF.Interactivity.Export
 
             GltfInteractivityGraph.CustomEvent newEvent = new GltfInteractivityGraph.CustomEvent();
             newEvent.Id = id;
+            newEvent.Name = id;
 
             if (arguments != null)
                 newEvent.Values = arguments;
