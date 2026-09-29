@@ -90,13 +90,14 @@ namespace UnityGLTF.Interactivity.Export
                 foreach (var input in v.ValueInConnection)
                     if (input.Value.Value != null && input.Value.Node == null)
                     {
-                        if (input.Value.Value is float f)
+                        double? special = input.Value.Value is float f ? f : input.Value.Value is double d ? d : (double?)null;
+                        if (special.HasValue)
                         {
-                            if (float.IsNaN(f))
+                            if (double.IsNaN(special.Value))
                                 ReplaceInputWithNode(input.Value, new Math_NaNNode());
-                            if (float.IsPositiveInfinity(f))
+                            if (double.IsPositiveInfinity(special.Value))
                                 ReplaceInputWithNode(input.Value, new Math_InfNode());
-                            if (float.IsNegativeInfinity(f))
+                            if (double.IsNegativeInfinity(special.Value))
                             {
                                 ReplaceInputWithNode(input.Value, new Math_NegNode(), new Math_InfNode());
                             }

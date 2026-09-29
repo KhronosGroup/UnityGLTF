@@ -269,6 +269,27 @@ namespace UnityGLTF.Interactivity.Schema
         
         public static class ValueSerializer
         {
+            // Newtonsoft (on Unity's Mono) writes negative zero as "0.0", which loses the sign.
+            // It is written as a raw JSON number instead, so -0 survives the round trip.
+            private static object Num(double value)
+            {
+                if (value == 0 && System.BitConverter.DoubleToInt64Bits(value) < 0)
+                    return new JRaw("-0.0");
+                return value;
+            }
+
+            private static object Num(float value)
+            {
+                if (value == 0 && System.BitConverter.DoubleToInt64Bits(value) < 0)
+                    return new JRaw("-0.0");
+                return value;
+            }
+
+            private static JArray Nums(params float[] values)
+            {
+                return new JArray(values.Select(Num).ToArray());
+            }
+
             public static void Serialize(object value, JObject valueObject)
             {
                 if (value == null)
@@ -281,16 +302,16 @@ namespace UnityGLTF.Interactivity.Schema
                 else
                 if (value is Color color)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(color.r, color.g, color.b, color.a)));
+                    valueObject.Add(new JProperty("value", Nums(color.r, color.g, color.b, color.a)));
                 }
                 else if (value is Color32 color32)
                 {
                     Color col = color32;
-                    valueObject.Add(new JProperty("value", new JArray(col.r, col.g, col.b, col.a)));
+                    valueObject.Add(new JProperty("value", Nums(col.r, col.g, col.b, col.a)));
                 }
                 else if (value is Matrix4x4 m4)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(
+                    valueObject.Add(new JProperty("value", Nums(
                         m4.m00, m4.m10, m4.m20, m4.m30,
                         m4.m01, m4.m11, m4.m21, m4.m31,
                         m4.m02, m4.m12, m4.m22, m4.m32,
@@ -298,31 +319,31 @@ namespace UnityGLTF.Interactivity.Schema
                 }
                 else if (value is GltfFloat2x2 f2x2)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(
+                    valueObject.Add(new JProperty("value", Nums(
                         f2x2.m0, f2x2.m1, f2x2.m2, f2x2.m3)));
                 }
                 else if (value is GltfFloat3x3 f3x3)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(
+                    valueObject.Add(new JProperty("value", Nums(
                         f3x3.m0, f3x3.m1, f3x3.m2,
                         f3x3.m3, f3x3.m4, f3x3.m5,
                         f3x3.m6, f3x3.m7, f3x3.m8)));
                 }
                 else if (value is Vector4 v4)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(v4.x, v4.y, v4.z, v4.w)));
+                    valueObject.Add(new JProperty("value", Nums(v4.x, v4.y, v4.z, v4.w)));
                 }
                 else if (value is Vector3 v3)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(v3.x, v3.y, v3.z)));
+                    valueObject.Add(new JProperty("value", Nums(v3.x, v3.y, v3.z)));
                 }
                 else if (value is Vector2 v2)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(v2.x, v2.y)));
+                    valueObject.Add(new JProperty("value", Nums(v2.x, v2.y)));
                 }
                 else if (value is Quaternion q)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(q.x, q.y, q.z, q.w)));
+                    valueObject.Add(new JProperty("value", Nums(q.x, q.y, q.z, q.w)));
                 }
                 else if (value is bool b)
                 {
@@ -338,7 +359,15 @@ namespace UnityGLTF.Interactivity.Schema
                 }
                 else if (value is float f)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(f)));
+                    valueObject.Add(new JProperty("value", new JArray(Num(f))));
+                }
+                else if (value is double d)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(Num(d))));
+                }
+                else if (value is double[] doubles)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(doubles.Select(Num).ToArray())));
                 }
                 else
                 {

@@ -441,12 +441,26 @@ namespace UnityGLTF.Interactivity.Export
             return array;
         }
 
-        private static bool IsNumber(JToken token) => token != null && (token.Type == JTokenType.Integer || token.Type == JTokenType.Float);
+        private static bool IsNumber(JToken token) => TryGetNumber(token, out _);
+
+        // Raw tokens are numbers written verbatim by the ValueSerializer (e.g. negative zero)
+        private static bool TryGetNumber(JToken token, out double value)
+        {
+            value = 0;
+            if (token == null)
+                return false;
+            if (token.Type == JTokenType.Integer || token.Type == JTokenType.Float)
+            {
+                value = (double)token;
+                return true;
+            }
+            return token.Type == JTokenType.Raw && token is JValue raw
+                && double.TryParse(raw.Value as string, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value);
+        }
 
         private static bool IsIntegral(JToken token, double min, double max)
         {
-            if (!IsNumber(token)) return false;
-            var d = (double)token;
+            if (!TryGetNumber(token, out var d)) return false;
             return d == System.Math.Floor(d) && d >= min && d <= max;
         }
 
