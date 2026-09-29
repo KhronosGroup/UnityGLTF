@@ -236,8 +236,8 @@ namespace UnityGLTF.Interactivity.Schema
                 {
                     new JProperty("type", Type),
                 };
-                ValueSerializer.Serialize(Value, valueObject);
-                
+                ValueSerializer.SerializeDefinitionValue(Value, valueObject, "Event value");
+
                 return valueObject;
             }
             
@@ -288,6 +288,63 @@ namespace UnityGLTF.Interactivity.Schema
             private static JArray Nums(params float[] values)
             {
                 return new JArray(values.Select(Num).ToArray());
+            }
+
+            /// <summary>
+            /// The components of a float based value (float, floatN, floatNxN) in JSON order (matrices column-major),
+            /// or null for other values.
+            /// </summary>
+            public static double[] FloatComponents(object value)
+            {
+                switch (value)
+                {
+                    case float f: return new double[] { f };
+                    case double d: return new[] { d };
+                    case Vector2 v2: return new double[] { v2.x, v2.y };
+                    case Vector3 v3: return new double[] { v3.x, v3.y, v3.z };
+                    case Vector4 v4: return new double[] { v4.x, v4.y, v4.z, v4.w };
+                    case Quaternion q: return new double[] { q.x, q.y, q.z, q.w };
+                    case Color c: return new double[] { c.r, c.g, c.b, c.a };
+                    case GltfFloat2x2 m2: return new double[] { m2.m0, m2.m1, m2.m2, m2.m3 };
+                    case GltfFloat3x3 m3: return new double[] { m3.m0, m3.m1, m3.m2, m3.m3, m3.m4, m3.m5, m3.m6, m3.m7, m3.m8 };
+                    case Matrix4x4 m4:
+                        return new double[]
+                        {
+                            m4.m00, m4.m10, m4.m20, m4.m30,
+                            m4.m01, m4.m11, m4.m21, m4.m31,
+                            m4.m02, m4.m12, m4.m22, m4.m32,
+                            m4.m03, m4.m13, m4.m23, m4.m33,
+                        };
+                    default: return null;
+                }
+            }
+
+            /// <summary> NaN and infinity have no JSON representation (Newtonsoft would write them as strings). </summary>
+            public static bool HasNonFiniteComponents(object value)
+            {
+                var components = FloatComponents(value);
+                return components != null && components.Any(c => double.IsNaN(c) || double.IsInfinity(c));
+            }
+
+            /// <summary> All components NaN: the type-default value of every float type, written by omitting "value". </summary>
+            public static bool IsTypeDefaultNaN(object value)
+            {
+                var components = FloatComponents(value);
+                return components != null && components.All(double.IsNaN);
+            }
+
+            /// <summary>
+            /// Serializes the value of a variable or event value socket. These can't be computed by nodes, so an all-NaN
+            /// value is written as the type-default (no "value"); other NaN/infinity components can't be written.
+            /// </summary>
+            public static void SerializeDefinitionValue(object value, JObject valueObject, string owner)
+            {
+                if (IsTypeDefaultNaN(value))
+                    return;
+                if (HasNonFiniteComponents(value))
+                    Debug.LogError($"{owner}: initial value {value} contains NaN or infinity, which JSON can't represent. " +
+                                   "Use a finite value or set it from a node (math/nan, math/inf) at runtime.");
+                Serialize(value, valueObject);
             }
 
             public static void Serialize(object value, JObject valueObject)

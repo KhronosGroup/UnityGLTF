@@ -114,7 +114,7 @@ namespace UnityGLTF.Interactivity.Schema
                 if (!string.IsNullOrEmpty(Name))
                     jObject.Add(new JProperty("name", Name));
                 
-                GltfInteractivityNode.ValueSerializer.Serialize(Value, jObject);
+                GltfInteractivityNode.ValueSerializer.SerializeDefinitionValue(Value, jObject, $"Variable \"{Name}\"");
 
                 return jObject;
             }

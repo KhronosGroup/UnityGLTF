@@ -85,24 +85,91 @@ namespace UnityGLTF.Interactivity.Export
                 
             }
             
+            void ReplaceScalar(GltfInteractivityNode.ValueSocketData socket, double value)
+            {
+                if (double.IsNaN(value))
+                    ReplaceInputWithNode(socket, new Math_NaNNode());
+                else if (double.IsPositiveInfinity(value))
+                    ReplaceInputWithNode(socket, new Math_InfNode());
+                else if (double.IsNegativeInfinity(value))
+                    ReplaceInputWithNode(socket, new Math_NegNode(), new Math_InfNode());
+            }
+
+            // JSON has no NaN or infinity, so inline values containing them are computed by nodes instead
             foreach (var v in nodes)
             {
                 foreach (var input in v.ValueInConnection)
-                    if (input.Value.Value != null && input.Value.Node == null)
+                {
+                    var socket = input.Value;
+                    if (socket.Value == null || socket.Node != null || !GltfInteractivityNode.ValueSerializer.HasNonFiniteComponents(socket.Value))
+                        continue;
+
+                    var components = GltfInteractivityNode.ValueSerializer.FloatComponents(socket.Value);
+                    if (components.Length == 1)
                     {
-                        double? special = input.Value.Value is float f ? f : input.Value.Value is double d ? d : (double?)null;
-                        if (special.HasValue)
-                        {
-                            if (double.IsNaN(special.Value))
-                                ReplaceInputWithNode(input.Value, new Math_NaNNode());
-                            if (double.IsPositiveInfinity(special.Value))
-                                ReplaceInputWithNode(input.Value, new Math_InfNode());
-                            if (double.IsNegativeInfinity(special.Value))
-                            {
-                                ReplaceInputWithNode(input.Value, new Math_NegNode(), new Math_InfNode());
-                            }
-                        }
+                        ReplaceScalar(socket, components[0]);
+                        continue;
                     }
+
+                    if (GltfInteractivityNode.ValueSerializer.IsTypeDefaultNaN(socket.Value) && socket.Type != -1)
+                    {
+                        // All components NaN is the type-default value: written as { "type": T } without "value"
+                        socket.Value = null;
+                        continue;
+                    }
+
+                    // Some components are NaN or infinity: combine the vector/matrix from float inputs
+                    var combine = CreateCombineNode(socket.Value, out var componentSocketIds);
+                    if (combine == null)
+                    {
+                        Debug.LogError($"Inline value {socket.Value} of node {v.Schema.Op} contains NaN or infinity and can't be written to JSON.");
+                        continue;
+                    }
+                    combine.Index = nodesToSerialize.Count;
+                    nodesToSerialize.Add(combine);
+                    socket.Node = combine.Index;
+                    socket.Socket = "value";
+                    socket.Value = null;
+
+                    for (int i = 0; i < components.Length; i++)
+                    {
+                        var componentSocket = combine.ValueInConnection[componentSocketIds[i]];
+                        if (double.IsNaN(components[i]) || double.IsInfinity(components[i]))
+                            ReplaceScalar(componentSocket, components[i]);
+                        else
+                            combine.SetValueInSocket(componentSocketIds[i], (float)components[i]);
+                    }
+                }
+            }
+        }
+
+        private static GltfInteractivityExportNode CreateCombineNode(object value, out string[] inputIds)
+        {
+            switch (value)
+            {
+                case Vector2 _:
+                    inputIds = new[] { Math_Combine2Node.IdValueA, Math_Combine2Node.IdValueB };
+                    return new GltfInteractivityExportNode(new Math_Combine2Node());
+                case Vector3 _:
+                    inputIds = new[] { Math_Combine3Node.IdValueA, Math_Combine3Node.IdValueB, Math_Combine3Node.IdValueC };
+                    return new GltfInteractivityExportNode(new Math_Combine3Node());
+                case Vector4 _:
+                case Quaternion _:
+                case Color _:
+                    inputIds = new[] { Math_Combine4Node.IdValueA, Math_Combine4Node.IdValueB, Math_Combine4Node.IdValueC, Math_Combine4Node.IdValueD };
+                    return new GltfInteractivityExportNode(new Math_Combine4Node());
+                case GltfFloat2x2 _:
+                    inputIds = Math_Combine2x2Node.IdInputs;
+                    return new GltfInteractivityExportNode(new Math_Combine2x2Node());
+                case GltfFloat3x3 _:
+                    inputIds = Math_Combine3x3Node.IdInputs;
+                    return new GltfInteractivityExportNode(new Math_Combine3x3Node());
+                case Matrix4x4 _:
+                    inputIds = Math_Combine4x4Node.IdInputs;
+                    return new GltfInteractivityExportNode(new Math_Combine4x4Node());
+                default:
+                    inputIds = null;
+                    return null;
             }
         }
         

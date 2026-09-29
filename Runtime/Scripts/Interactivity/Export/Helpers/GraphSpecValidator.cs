@@ -441,7 +441,8 @@ namespace UnityGLTF.Interactivity.Export
             return array;
         }
 
-        private static bool IsNumber(JToken token) => TryGetNumber(token, out _);
+        // NaN and infinity are float tokens in memory, but JSON has no such numbers: Newtonsoft writes them as strings
+        private static bool IsNumber(JToken token) => TryGetNumber(token, out var value) && !double.IsNaN(value) && !double.IsInfinity(value);
 
         // Raw tokens are numbers written verbatim by the ValueSerializer (e.g. negative zero)
         private static bool TryGetNumber(JToken token, out double value)

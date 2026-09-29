@@ -42,8 +42,11 @@ namespace UnityGLTF.Interactivity.Export
                 {
                     if (valueSocket.Value.Node == null)
                     {
-                        if (valueSocket.Value.Value == null)
+                        // A type without a value is the type-default value (e.g. all-NaN vectors)
+                        if (valueSocket.Value.Value == null && valueSocket.Value.Type == -1)
                             NodeAppendLine(node, $"Socket <{valueSocket.Key}> has no connection and no Value");
+                        else if (valueSocket.Value.Value == null)
+                            continue;
                         else if (valueSocket.Value.Type == -1)
                             NodeAppendLine(node, $"Socket <{valueSocket.Key}> has invalid Type (-1). Value-Type: {valueSocket.Value.Value.GetType().Name}");
                     }
