@@ -762,40 +762,37 @@ namespace UnityGLTF.Interactivity.Export
      
         protected void CheckForCircularFlows()
         {
-            var visited = new Dictionary<int, bool>(nodesToSerialize.Count);
-            
+            // true = on the current DFS path, false = fully processed. Processed nodes must not be
+            // visited again: re-walking them enumerates every flow *path* instead of every node,
+            // which is exponential for graphs where branches join again (e.g. branch -> A/B -> C
+            // repeated in a chain) and makes the export appear to hang.
+            var onPath = new Dictionary<int, bool>(nodesToSerialize.Count);
+
+            // Returns true if the node is on the current path, i.e. the connection leading to it closes a cycle.
             bool Visit(int node)
             {
-                if (visited.TryGetValue(node, out var alreadyVisited))
-                {
-                    if (alreadyVisited)
-                        return true;
-                }
-                
-                if (!alreadyVisited)
-                {
-                    visited[node] = true;
+                if (onPath.TryGetValue(node, out var isOnPath))
+                    return isOnPath;
 
-                    // Get the dependencies from incoming connections and ignore self-references
-                    var currentNode = nodesToSerialize[node];
-                    foreach (var connection in currentNode.FlowConnections)
+                onPath[node] = true;
+
+                var currentNode = nodesToSerialize[node];
+                foreach (var connection in currentNode.FlowConnections.ToArray())
+                {
+                    if (connection.Value.Node != null && connection.Value.Node.HasValue && connection.Value.Node.Value < nodesToSerialize.Count)
                     {
-                        if (connection.Value.Node != null && connection.Value.Node.HasValue && connection.Value.Node.Value < nodesToSerialize.Count)
+                        if (Visit(connection.Value.Node.Value))
                         {
-                            if (Visit(connection.Value.Node.Value))
-                            {
-                                // Add Events because of cyclic dependency
-                                RouteFlowThroughEvent(currentNode, connection.Value);
-                            }
+                            // Add Events because of cyclic dependency
+                            RouteFlowThroughEvent(currentNode, connection.Value);
                         }
                     }
-
-                    visited[node] = false;
                 }
 
+                onPath[node] = false;
                 return false;
             }
-            
+
             foreach (var node in nodesToSerialize.ToArray())
                 Visit(node.Index);
 
