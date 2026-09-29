@@ -746,7 +746,7 @@ namespace UnityGLTF.Interactivity.Schema
         public override string Op { get; set; } = "math/fract";
     }
     
-    public class Math_NegNode : AbstractSameOneInOneOutNodeWithMatrixTypes
+    public class Math_NegNode : AbstractSameOneInOneOutNodeWithMatrixAndIntTypes
     {
         public override string Op { get; set; } = "math/neg";
     }
