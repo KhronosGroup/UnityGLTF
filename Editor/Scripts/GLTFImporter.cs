@@ -269,6 +269,22 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
+	        var serializedImporter = new SerializedObject(this);
+	        var externalObjects = serializedImporter.FindProperty("m_ExternalObjects");
+	        if (externalObjects != null)
+	        {
+		        for (var i = 0; i < externalObjects.arraySize; i++)
+		        {
+			        var externalObject = externalObjects.GetArrayElementAtIndex(i).FindPropertyRelative("second");
+#if UNITY_6000_4_OR_NEWER
+			        var dependencyPath = AssetDatabase.GetAssetPath(externalObject.objectReferenceEntityIdValue);
+#else
+			        var dependencyPath = AssetDatabase.GetAssetPath(externalObject.objectReferenceInstanceIDValue);
+#endif
+			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, ctx.assetPath, StringComparison.OrdinalIgnoreCase)) ctx.DependsOnArtifact(dependencyPath);
+		        }
+	        }
+
 	        var settings = GLTFSettings.GetDefaultSettings();
 	        
 	        // make a copy, and apply import override settings
