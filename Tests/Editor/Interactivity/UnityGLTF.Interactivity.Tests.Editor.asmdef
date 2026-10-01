@@ -3,7 +3,11 @@
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow.Editor",
+        "Unity.VisualScripting.Core.Editor"
     ],
     "includePlatforms": [
         "Editor"
