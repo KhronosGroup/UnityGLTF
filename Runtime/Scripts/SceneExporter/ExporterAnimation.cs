@@ -1734,7 +1734,8 @@ namespace UnityGLTF
 					var isIdentical = ArrayRangeEquals(values, arraySize, lastExportedIndex * arraySize, (i - 1) * arraySize, i * arraySize, (i + 1) * arraySize);
 					if (!isIdentical)
 					{
-						Array.Copy(values, (i - 1) * arraySize, singleFrameWeights, 0, arraySize);
+						lastExportedIndex = i;
+						Array.Copy(values, i * arraySize, singleFrameWeights, 0, arraySize);
 						v2.AddRange(singleFrameWeights);
 						t2.Add(times[i]);
 					}
@@ -1744,8 +1745,8 @@ namespace UnityGLTF
 
 				var max = times.Length - 1;
 				t2.Add(times[max]);
-				var skipped = values.Skip((max - 1) * arraySize).ToArray();
-				v2.AddRange(skipped.Take(arraySize));
+				Array.Copy(values, max * arraySize, singleFrameWeights, 0, arraySize);
+				v2.AddRange(singleFrameWeights);
 			}
 
 			times = t2.ToArray();

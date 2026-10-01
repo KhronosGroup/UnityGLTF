@@ -56,11 +56,12 @@ public partial class RigImportTests
 	/// Exports a hierarchy with an Animator playing the clip, imports the exported file and returns the imported clip.
 	/// Fails if the importer reports keyframe times that are not increasing.
 	/// </summary>
-	private static AnimationClip ExportClipAndReimport(AnimationClip clip, string fileName)
+	private static AnimationClip ExportClipAndReimport(AnimationClip clip, string fileName, System.Action<GameObject> setupMover = null)
 	{
 		var root = new GameObject("Root");
 		var mover = new GameObject("Mover");
 		mover.transform.SetParent(root.transform, false);
+		setupMover?.Invoke(mover);
 		var controller = new AnimatorController { name = "Export" };
 		controller.AddLayer("Base Layer");
 		controller.layers[0].stateMachine.AddState(clip.name).motion = clip;
@@ -138,6 +139,48 @@ public partial class RigImportTests
 		finally
 		{
 			Object.DestroyImmediate(clip);
+		}
+	}
+
+	[Test]
+	public void Export_BlendShapeAnimation_KeepsTiming()
+	{
+		// Morph target weights of meshes with more than one morph target used to be exported one frame late
+		var mesh = Object.Instantiate(Resources.GetBuiltinResource<Mesh>("Cube.fbx"));
+		mesh.name = "Cube";
+		mesh.AddBlendShapeFrame("Grow", 100, mesh.vertices.Select(v => v * 0.5f).ToArray(), null, null);
+		mesh.AddBlendShapeFrame("Shrink", 100, mesh.vertices.Select(v => v * -0.5f).ToArray(), null, null);
+		var clip = new AnimationClip { name = "Grow" };
+		try
+		{
+			clip.SetCurve("Mover", typeof(SkinnedMeshRenderer), "blendShape.Grow", AnimationCurve.Linear(0, 0, 1, 100));
+			var imported = ExportClipAndReimport(clip, "Export_BlendShape", mover =>
+			{
+				var renderer = mover.AddComponent<SkinnedMeshRenderer>();
+				renderer.sharedMesh = mesh;
+				renderer.sharedMaterial = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Material.mat");
+			});
+
+			// glTF animates all weights of a mesh together, the animated one is the one that changes
+			var curve = AnimationUtility.GetCurveBindings(imported)
+				.Where(b => b.propertyName.StartsWith("blendShape."))
+				.Select(b => AnimationUtility.GetEditorCurve(imported, b))
+				.OrderByDescending(c => c.Evaluate(1))
+				.FirstOrDefault();
+			Assert.IsNotNull(curve, "Blend shape curve missing after export and import");
+			// The importer may use a different weight range, so compare relative to the end value
+			var end = curve.Evaluate(1);
+			Assert.Greater(end, 0);
+			for (var frame = 0; frame <= ExportFrameRate; frame++)
+			{
+				var time = frame / ExportFrameRate;
+				Assert.AreEqual(time, curve.Evaluate(time) / end, 0.01f, $"Blend shape weight at {time:F3}s");
+			}
+		}
+		finally
+		{
+			Object.DestroyImmediate(clip);
+			Object.DestroyImmediate(mesh);
 		}
 	}
 
