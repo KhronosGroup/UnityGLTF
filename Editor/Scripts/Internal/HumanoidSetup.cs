@@ -50,7 +50,15 @@ namespace UnityGLTF
 		    skeletonBones = Array.Empty<SkeletonBone>();
 		    hasTranslationDoF = false;
 
-		    _SetupHumanSkeleton?.Invoke(null, new object[]
+		    // Internal API: up to Unity 6.5 it is (GameObject, ref HumanBone[], out SkeletonBone[], out bool).
+		    // Unity 6.6 changed it to (GameObject, IntPtr humanDescriptionPtr, out bool), which we can't call - skip it then.
+		    // Skipping changes nothing: the method only works on a copy of the model and returns its results through
+		    // the parameters, which are not read back here (they stay in the object[] passed to Invoke).
+		    var parameters = _SetupHumanSkeleton?.GetParameters();
+		    if (parameters == null || parameters.Length != 4 || parameters[1].ParameterType != typeof(HumanBone[]).MakeByRefType())
+			    return;
+
+		    _SetupHumanSkeleton.Invoke(null, new object[]
 		    {
 			    modelPrefab,
 			    humanBoneMappingArray,
