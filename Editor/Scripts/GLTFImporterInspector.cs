@@ -358,11 +358,12 @@ namespace UnityGLTF
 			{
 				_rootNodeCacheModel = model;
 				_rootNodeCacheName = current;
-				_rootNodeCacheMatches = model.GetComponentsInChildren<Transform>(true).Count(t => t.name == current);
+				// The avatar builder only searches below the root
+				_rootNodeCacheMatches = model.GetComponentsInChildren<Transform>(true).Count(t => t != model.transform && t.name == current);
 			}
 
 			if (_rootNodeCacheMatches == 0)
-				EditorGUILayout.HelpBox($"No transform named \"{current}\" found in the imported hierarchy. The avatar will be built without a root motion node.", MessageType.Warning);
+				EditorGUILayout.HelpBox($"No transform named \"{current}\" found below the root of the imported hierarchy. The avatar will be built without a root motion node.", MessageType.Warning);
 			else if (_rootNodeCacheMatches > 1)
 				EditorGUILayout.HelpBox($"{_rootNodeCacheMatches} transforms are named \"{current}\". The root motion node is matched by name, so this is ambiguous – rename the nodes in the source file to make them unique.", MessageType.Warning);
 		}

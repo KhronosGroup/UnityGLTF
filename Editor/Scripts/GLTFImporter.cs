@@ -110,7 +110,7 @@ namespace UnityGLTF
         [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _mecanimHumanoidFlip = false;
-        [SerializeField] internal string _nonHumanoidRootNodeName;
+        [SerializeField] internal string _nonHumanoidRootNodeName = "";
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
@@ -599,7 +599,13 @@ namespace UnityGLTF
 					// Only create a generic avatar when it's used: for the file's own animations, or for root motion
 					// with clips from other files. Otherwise every static model would get an unused avatar sub-asset.
 					else if (_importAnimations == AnimationMethod.Mecanim && (m_HasAnimationData || !string.IsNullOrEmpty(_nonHumanoidRootNodeName)))
-						avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, false, _nonHumanoidRootNodeName);
+					{
+						avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, _nonHumanoidRootNodeName, out var rootNodeFound);
+						if (!rootNodeFound)
+							ctx.LogImportWarning($"Root node \"{_nonHumanoidRootNodeName}\" was not found below the root \"{gltfScene.name}\". The avatar is created without a root motion node.");
+						else if (avatar)
+							NonHumanoidSetup.AddRootMotionCurves(gltfScene, _nonHumanoidRootNodeName, animations);
+					}
 
 					if (avatar)
 						ctx.AddObjectToAsset("avatar", avatar);
