@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityGLTF;
 
 /// <summary>
@@ -153,6 +155,66 @@ public partial class RigImportTests
 		finally
 		{
 			Object.DestroyImmediate(clip);
+		}
+	}
+
+	[Test]
+	public void Export_MissingBone_KeepsJointOrder()
+	{
+		// https://github.com/KhronosGroup/UnityGLTF/issues/873: a deleted bone used to be dropped from the joints,
+		// shifting all following joints and leaving more inverse bind matrices than joints
+		var path = Import(HumanoidArmature, AnimationMethod.Mecanim);
+		var model = LoadModel(path);
+		var exportPath = $"{TempFolder}/Export_MissingBone.glb";
+
+		var instance = Object.Instantiate(model);
+		instance.name = model.name;
+		var settings = ScriptableObject.CreateInstance<GLTFSettings>();
+		string[] expectedBones;
+		int missingIndex;
+		try
+		{
+			var skin = instance.GetComponentInChildren<SkinnedMeshRenderer>();
+			Assert.IsNotNull(skin, "Test asset has no SkinnedMeshRenderer");
+			var bones = skin.bones;
+
+			// Delete a leaf bone that is not the last one, so the following joints would shift
+			missingIndex = System.Array.FindIndex(bones, b => b.childCount == 0 && b != skin.rootBone);
+			Assert.That(missingIndex, Is.InRange(0, bones.Length - 2), "Test asset has no leaf bone before the last bone");
+			expectedBones = bones.Select(b => AnimationUtility.CalculateTransformPath(b, instance.transform)).ToArray();
+			Object.DestroyImmediate(bones[missingIndex].gameObject);
+			Assert.IsFalse(skin.bones[missingIndex], "Deleted bone should be a missing reference");
+			var maxJointIndex = skin.sharedMesh.boneWeights.Max(w => Mathf.Max(w.boneIndex0, w.boneIndex1, w.boneIndex2, w.boneIndex3));
+
+			settings.UseMainCameraVisibility = false;
+			var exporter = new GLTFSceneExporter(instance.transform, new ExportContext(settings));
+			LogAssert.Expect(LogType.Warning, new Regex($"null bone at index {missingIndex}"));
+			File.WriteAllBytes(exportPath, exporter.SaveGLBToByteArray(Path.GetFileNameWithoutExtension(exportPath)));
+
+			var gltfSkin = exporter.GetRoot().Skins.Single();
+			Assert.AreEqual(bones.Length, gltfSkin.Joints.Count, "Joint count");
+			CollectionAssert.AllItemsAreUnique(gltfSkin.Joints.Select(j => j.Id), "Joints of a skin have to be unique");
+			Assert.AreEqual(gltfSkin.Joints.Count, (int)gltfSkin.InverseBindMatrices.Value.Count, "Inverse bind matrix count must match the joint count");
+			Assert.Less(maxJointIndex, gltfSkin.Joints.Count, "JOINTS_0 references a joint that doesn't exist");
+		}
+		finally
+		{
+			Object.DestroyImmediate(instance);
+			Object.DestroyImmediate(settings);
+		}
+
+		AssetDatabase.ImportAsset(exportPath, ImportAssetOptions.ForceSynchronousImport);
+		Reimport(exportPath, AnimationMethod.Mecanim);
+		var reimported = LoadModel(exportPath);
+		var reimportedSkin = reimported.GetComponentInChildren<SkinnedMeshRenderer>();
+		Assert.IsNotNull(reimportedSkin, "Skin missing after export and import");
+		var actualBones = reimportedSkin.bones.Select(b => AnimationUtility.CalculateTransformPath(b, reimported.transform)).ToArray();
+		Assert.AreEqual(expectedBones.Length, actualBones.Length, "Bone count after export and import");
+		for (var i = 0; i < expectedBones.Length; i++)
+		{
+			// The missing bone's slot is filled with a stand-in, every other joint has to stay at its index
+			if (i == missingIndex) continue;
+			Assert.AreEqual(expectedBones[i], actualBones[i], $"Bone {i} after export and import");
 		}
 	}
 
