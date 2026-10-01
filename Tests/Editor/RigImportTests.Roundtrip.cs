@@ -223,11 +223,11 @@ public partial class RigImportTests
 	/// <summary>
 	/// Exports an instance of the imported model, then imports the exported file with the same settings.
 	/// </summary>
-	private static string ExportAndReimport(string path, AnimationMethod method, string rootNodeName)
+	internal static string ExportAndReimport(string path, AnimationMethod method, string rootNodeName)
 	{
 		var model = LoadModel(path);
 		var clips = LoadClips(path);
-		var exportPath = $"{TempFolder}/{Path.GetFileNameWithoutExtension(path)}_{method}_{rootNodeName}_Roundtrip.glb";
+		var exportPath = $"{path.Substring(0, path.LastIndexOf('/'))}/{Path.GetFileNameWithoutExtension(path)}_{method}_{rootNodeName}_Roundtrip.glb";
 
 		var instance = Object.Instantiate(model);
 		instance.name = model.name;
@@ -264,13 +264,13 @@ public partial class RigImportTests
 		return exportPath;
 	}
 
-	private static Dictionary<string, Transform> TransformsByPath(GameObject model)
+	internal static Dictionary<string, Transform> TransformsByPath(GameObject model)
 	{
 		return model.GetComponentsInChildren<Transform>(true)
 			.ToDictionary(t => AnimationUtility.CalculateTransformPath(t, model.transform), t => t);
 	}
 
-	private static void AssertHierarchyEqual(string expectedPath, string actualPath)
+	internal static void AssertHierarchyEqual(string expectedPath, string actualPath)
 	{
 		var expected = TransformsByPath(LoadModel(expectedPath));
 		var actual = TransformsByPath(LoadModel(actualPath));
@@ -288,7 +288,7 @@ public partial class RigImportTests
 		}
 	}
 
-	private static void AssertMeshesEqual(string expectedPath, string actualPath)
+	internal static void AssertMeshesEqual(string expectedPath, string actualPath)
 	{
 		var expected = TransformsByPath(LoadModel(expectedPath));
 		var actual = TransformsByPath(LoadModel(actualPath));
@@ -332,7 +332,7 @@ public partial class RigImportTests
 		}
 	}
 
-	private static void AssertAnimationsEqual(string expectedPath, string actualPath)
+	internal static void AssertAnimationsEqual(string expectedPath, string actualPath)
 	{
 		var expectedClips = LoadClips(expectedPath).ToDictionary(c => c.name);
 		var actualClips = LoadClips(actualPath).ToDictionary(c => c.name);
@@ -389,7 +389,7 @@ public partial class RigImportTests
 		}
 	}
 
-	private static void AssertAvatarsEqual(string expectedPath, string actualPath)
+	internal static void AssertAvatarsEqual(string expectedPath, string actualPath)
 	{
 		var expected = LoadAvatar(expectedPath);
 		var actual = LoadAvatar(actualPath);

@@ -65,7 +65,7 @@ public partial class RigImportTests
 	/// <summary>
 	/// Sets the import settings of an asset in the temp folder and reimports it.
 	/// </summary>
-	private static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true)
+	internal static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true)
 	{
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
 		Assert.IsNotNull(importer, $"{path} is not imported with the {nameof(GLTFImporter)}");
@@ -80,16 +80,16 @@ public partial class RigImportTests
 		importer.SaveAndReimport();
 	}
 
-	private static GameObject LoadModel(string path)
+	internal static GameObject LoadModel(string path)
 	{
 		var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
 		Assert.IsTrue(model, $"No model imported at {path}");
 		return model;
 	}
 
-	private static Avatar LoadAvatar(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Avatar>().SingleOrDefault();
+	internal static Avatar LoadAvatar(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Avatar>().SingleOrDefault();
 
-	private static AnimationClip[] LoadClips(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().ToArray();
+	internal static AnimationClip[] LoadClips(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().ToArray();
 
 	private static void AssertClipBindingsResolve(string path)
 	{
