@@ -301,6 +301,110 @@ namespace UnityGLTF
 			}
 		}
 
+		private static readonly GUIContent RootNodeContent = new GUIContent("Root Node Name",
+			"Transform name of the root motion transform. If empty no root motion is defined and you must take care of avatar movement yourself.");
+
+		private GameObject _rootNodeCacheModel;
+		private string _rootNodeCacheName;
+		private int _rootNodeCacheMatches;
+		private string _pendingRootNodeName;
+
+		private const float RootNodeDropdownWidth = 18;
+
+		/// <summary>
+		/// Draws the root motion node as a text field, with a dropdown button next to it that shows the hierarchy of the
+		/// imported model (with submenus for children) to pick a node from.
+		/// Only the transform name is stored, since that's what the generic avatar is built from.
+		/// </summary>
+		private void RootNodeGUI(SerializedProperty rootNodeName)
+		{
+			var model = AssetDatabase.LoadAssetAtPath<GameObject>(importer.assetPath);
+			if (!model || serializedObject.isEditingMultipleObjects)
+			{
+				// No imported hierarchy to pick from (or several importers selected) – only the text field
+				EditorGUILayout.PropertyField(rootNodeName, RootNodeContent);
+				return;
+			}
+
+			if (_pendingRootNodeName != null)
+			{
+				// Leave text editing first, otherwise a focused field keeps showing its edit buffer instead of the picked name
+				GUI.FocusControl(null);
+				EditorGUIUtility.editingTextField = false;
+				rootNodeName.stringValue = _pendingRootNodeName;
+				_pendingRootNodeName = null;
+			}
+
+			var rect = EditorGUILayout.GetControlRect();
+			var fieldRect = new Rect(rect.x, rect.y, rect.width - RootNodeDropdownWidth - 2, rect.height);
+			var buttonRect = new Rect(rect.xMax - RootNodeDropdownWidth, rect.y, RootNodeDropdownWidth, rect.height);
+
+			EditorGUI.PropertyField(fieldRect, rootNodeName, RootNodeContent);
+
+			var current = rootNodeName.stringValue;
+			if (EditorGUI.DropdownButton(buttonRect, GUIContent.none, FocusType.Passive, EditorStyles.miniPullDown))
+			{
+				var menu = new GenericMenu();
+				menu.AddItem(new GUIContent("None"), string.IsNullOrEmpty(current), () => SetRootNodeName(""));
+				menu.AddSeparator("");
+				foreach (Transform child in model.transform)
+					AddRootNodeMenuItems(menu, child, "", current);
+				menu.DropDown(buttonRect);
+			}
+
+			if (string.IsNullOrEmpty(current)) return;
+
+			if (_rootNodeCacheModel != model || _rootNodeCacheName != current)
+			{
+				_rootNodeCacheModel = model;
+				_rootNodeCacheName = current;
+				_rootNodeCacheMatches = model.GetComponentsInChildren<Transform>(true).Count(t => t.name == current);
+			}
+
+			if (_rootNodeCacheMatches == 0)
+				EditorGUILayout.HelpBox($"No transform named \"{current}\" found in the imported hierarchy. The avatar will be built without a root motion node.", MessageType.Warning);
+			else if (_rootNodeCacheMatches > 1)
+				EditorGUILayout.HelpBox($"{_rootNodeCacheMatches} transforms are named \"{current}\". The root motion node is matched by name, so this is ambiguous – rename the nodes in the source file to make them unique.", MessageType.Warning);
+		}
+
+		private void AddRootNodeMenuItems(GenericMenu menu, Transform transform, string menuPath, string current)
+		{
+			// "/" in a name would create a submenu, so replace it with a look-alike character for display
+			var displayName = string.IsNullOrEmpty(transform.name) ? "<unnamed>" : transform.name.Replace('/', '∕');
+			var isSelected = transform.name == current;
+
+			if (transform.childCount == 0)
+			{
+				AddRootNodeMenuItem(menu, menuPath + displayName, transform.name, isSelected);
+				return;
+			}
+
+			// A node with children becomes a submenu; the node itself is the first entry inside it
+			var subMenuPath = menuPath + displayName + "/";
+			AddRootNodeMenuItem(menu, subMenuPath + displayName, transform.name, isSelected);
+			menu.AddSeparator(subMenuPath);
+			foreach (Transform child in transform)
+				AddRootNodeMenuItems(menu, child, subMenuPath, current);
+		}
+
+		private void AddRootNodeMenuItem(GenericMenu menu, string menuPath, string nodeName, bool isSelected)
+		{
+			if (string.IsNullOrEmpty(nodeName))
+				menu.AddDisabledItem(new GUIContent(menuPath));
+			else
+				menu.AddItem(new GUIContent(menuPath), isSelected, () => SetRootNodeName(nodeName));
+		}
+
+		/// <summary>
+		/// Called from the dropdown menu, which runs outside of the inspector GUI pass.
+		/// The value is applied in the next GUI pass, where the text field can be unfocused first.
+		/// </summary>
+		private void SetRootNodeName(string nodeName)
+		{
+			_pendingRootNodeName = nodeName;
+			Repaint();
+		}
+
 		private void AnimationInspectorGUI()
 		{
 			if (!importer) return;
@@ -321,14 +425,13 @@ namespace UnityGLTF
 				EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
 				EditorGUI.indentLevel--;
 			}
-            else if (animationMethod.enumValueIndex == (int)AnimationMethod.Mecanim)
-            {
-                var rootNodeName = serializedObject.FindProperty(nameof(GLTFImporter._nonHumanoidRootNodeName));
-                EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(rootNodeName, new GUIContent("Root Node Name", "Transform name of the root motion transform. If empty no root motion is defined and you must take care of avatar movement yourself."));
-                EditorGUILayout.HelpBox("Enter just the name of the root node; not its path in hierarchy.", MessageType.Info);
-                EditorGUI.indentLevel--;
-            }
+			else if (animationMethod.enumValueIndex == (int)AnimationMethod.Mecanim)
+			{
+				EditorGUI.indentLevel++;
+				RootNodeGUI(serializedObject.FindProperty(nameof(GLTFImporter._nonHumanoidRootNodeName)));
+				EditorGUILayout.HelpBox("Enter just the name of the root node; not its path in hierarchy.", MessageType.Info);
+				EditorGUI.indentLevel--;
+			}
 
 			var animations = serializedObject.FindProperty(GLTFImporter.AnimationsPropertyName);
 			if (hasAnimationData && animationMethod.enumValueIndex > 0)
