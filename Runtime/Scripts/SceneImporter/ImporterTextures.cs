@@ -743,24 +743,32 @@ namespace UnityGLTF
 				if (texture.Sampler != null)
 				{
 					var sampler = texture.Sampler.Value;
-					switch (sampler.MinFilter)
+					// Unity has one filter mode for magnification and minification: magFilter decides if the texture is pixelated,
+					// minFilter if mipmaps are blended. A sampler without minFilter has NEAREST_MIPMAP_LINEAR (the default),
+					// which together with the default magFilter LINEAR is a smooth texture, not a pixelated one.
+					if (sampler.MagFilter == MagFilterMode.Nearest)
 					{
-						case MinFilterMode.Nearest:
-						case MinFilterMode.NearestMipmapNearest:
-						case MinFilterMode.NearestMipmapLinear:
-							desiredFilterMode = FilterMode.Point;
-							break;
-						case MinFilterMode.Linear:
-						case MinFilterMode.LinearMipmapNearest:
-							desiredFilterMode = FilterMode.Bilinear;
-							break;
-						case MinFilterMode.LinearMipmapLinear:
-							desiredFilterMode = FilterMode.Trilinear;
-							break;
-						default:
-							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
-							desiredFilterMode = FilterMode.Bilinear;
-							break;
+						desiredFilterMode = FilterMode.Point;
+					}
+					else
+					{
+						switch (sampler.MinFilter)
+						{
+							case MinFilterMode.Nearest:
+							case MinFilterMode.NearestMipmapNearest:
+							case MinFilterMode.Linear:
+							case MinFilterMode.LinearMipmapNearest:
+								desiredFilterMode = FilterMode.Bilinear;
+								break;
+							case MinFilterMode.NearestMipmapLinear:
+							case MinFilterMode.LinearMipmapLinear:
+								desiredFilterMode = FilterMode.Trilinear;
+								break;
+							default:
+								Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
+								desiredFilterMode = FilterMode.Bilinear;
+								break;
+						}
 					}
 
 					TextureWrapMode UnityWrapMode(GLTF.Schema.WrapMode gltfWrapMode)
