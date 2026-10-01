@@ -581,18 +581,20 @@ namespace UnityGLTF
 	            //     }
                 // }
 
-                if (gltfScene)
-                {
-                    Avatar avatar = null;
+				if (gltfScene)
+				{
+					Avatar avatar = null;
 
-                    if (_importAnimations == AnimationMethod.MecanimHumanoid)
-                        avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
-                    else if (_importAnimations == AnimationMethod.Mecanim)
-                        avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, false, _nonHumanoidRootNodeName);
+					if (_importAnimations == AnimationMethod.MecanimHumanoid)
+						avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
+					// Only create a generic avatar when it's used: for the file's own animations, or for root motion
+					// with clips from other files. Otherwise every static model would get an unused avatar sub-asset.
+					else if (_importAnimations == AnimationMethod.Mecanim && (m_HasAnimationData || !string.IsNullOrEmpty(_nonHumanoidRootNodeName)))
+						avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, false, _nonHumanoidRootNodeName);
 
-                    if (avatar)
-                        ctx.AddObjectToAsset("avatar", avatar);
-                }
+					if (avatar)
+						ctx.AddObjectToAsset("avatar", avatar);
+				}
 
                 var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
 
