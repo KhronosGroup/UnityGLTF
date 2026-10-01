@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using GLTF.Schema;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityGLTF;
 using Object = UnityEngine.Object;
+using WrapMode = GLTF.Schema.WrapMode;
 
 /// <summary>
 /// Import and export of texture sampler settings (filter and wrap modes). The test file is generated: one textured quad per case,
@@ -66,7 +69,60 @@ public class TextureSamplerTests
 		Assert.AreEqual(c.WrapV, texture.wrapModeV, "Wrap mode V");
 	}
 
+	[TestCase(TextureWrapMode.Clamp, TextureWrapMode.Repeat, WrapMode.ClampToEdge, WrapMode.Repeat)]
+	[TestCase(TextureWrapMode.Repeat, TextureWrapMode.Mirror, WrapMode.Repeat, WrapMode.MirroredRepeat)]
+	[TestCase(TextureWrapMode.Mirror, TextureWrapMode.Clamp, WrapMode.MirroredRepeat, WrapMode.ClampToEdge)]
+	[TestCase(TextureWrapMode.Clamp, TextureWrapMode.Clamp, WrapMode.ClampToEdge, WrapMode.ClampToEdge)]
+	public void Export_WritesWrapModesPerAxis(TextureWrapMode u, TextureWrapMode v, WrapMode expectedS, WrapMode expectedT)
+	{
+		var root = new GameObject("Root");
+		var objects = new List<Object> { root };
+		var settings = ScriptableObject.CreateInstance<GLTFSettings>();
+		settings.UseMainCameraVisibility = false;
+		objects.Add(settings);
+		try
+		{
+			// A second texture with the same U but a different V, so samplers can't be shared by mistake
+			var other = v == TextureWrapMode.Repeat ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+			AddTexturedQuad(root, "Tested", u, v, objects);
+			AddTexturedQuad(root, "Other", u, other, objects);
+
+			var exporter = new GLTFSceneExporter(root.transform, new ExportContext(settings));
+			exporter.SaveGLBToByteArray("Samplers");
+
+			Sampler SamplerOf(string materialName)
+			{
+				var material = exporter.GetRoot().Materials.Single(m => m.Name == materialName);
+				return material.PbrMetallicRoughness.BaseColorTexture.Index.Value.Sampler.Value;
+			}
+			var sampler = SamplerOf("Tested");
+			Assert.AreEqual(expectedS, sampler.WrapS, "wrapS");
+			Assert.AreEqual(expectedT, sampler.WrapT, "wrapT");
+			Assert.AreNotEqual(sampler.WrapT, SamplerOf("Other").WrapT, "Textures with different wrap modes share a sampler");
+		}
+		finally
+		{
+			foreach (var o in objects) Object.DestroyImmediate(o);
+		}
+	}
+
 	#region Helpers
+
+	private static void AddTexturedQuad(GameObject root, string name, TextureWrapMode u, TextureWrapMode v, List<Object> objects)
+	{
+		var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+		quad.name = name;
+		quad.transform.SetParent(root.transform, false);
+		var texture = new Texture2D(4, 4) { name = name, wrapModeU = u, wrapModeV = v };
+		texture.SetPixels(Enumerable.Repeat(Color.white, 16).ToArray());
+		texture.Apply();
+		var renderer = quad.GetComponent<Renderer>();
+		// Copy of the render pipeline's default material, so the test works with every pipeline
+		var material = new Material(renderer.sharedMaterial) { name = name, mainTexture = texture };
+		renderer.sharedMaterial = material;
+		objects.Add(texture);
+		objects.Add(material);
+	}
 
 	private static Texture LoadTexture(string path, string materialName)
 	{
