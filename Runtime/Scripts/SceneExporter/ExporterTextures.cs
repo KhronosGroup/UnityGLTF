@@ -653,7 +653,7 @@ namespace UnityGLTF
 				var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
 				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
 
-				var cacheKey = uniqueTexture.GetHashCode().ToString();
+				var cacheKey = GetImageCacheKey(uniqueTexture, image.MimeType, canExportAsJpeg ? $"quality{settings.DefaultJpegQuality}" : null);
 				if (settings.UseCaching && ExportCache.TryGetBytes(texture, cacheKey, out var bytes))
 				{
 					_bufferWriter.Write(bytes);
@@ -773,6 +773,17 @@ namespace UnityGLTF
 					return hashCode;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Key for encoded images in the export cache. The encoded bytes depend on the image format and the settings of its encoder,
+		/// so both are part of the key, e.g. ("image/jpeg", "quality90"). Other formats (WebP, KTX2, ...) pass their own mime type and settings.
+		/// </summary>
+		private static string GetImageCacheKey(UniqueTexture uniqueTexture, string mimeType, string encoderSettings = null)
+		{
+			// The key is part of a file name, so "image/jpeg" becomes "image-jpeg"
+			var key = $"{uniqueTexture.GetHashCode()}_{mimeType.Replace('/', '-')}";
+			return string.IsNullOrEmpty(encoderSettings) ? key : $"{key}_{encoderSettings}";
 		}
 
 		private Dictionary<SamplerRelevantTextureData, int> _textureSettingsToSamplerIndices =
