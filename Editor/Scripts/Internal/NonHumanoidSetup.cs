@@ -58,10 +58,21 @@ namespace UnityGLTF
 			// Sampling the clips changes the pose, so remember it
 			var transforms = root.GetComponentsInChildren<Transform>(true);
 			var pose = transforms.Select(t => (t.localPosition, t.localRotation, t.localScale)).ToArray();
+			void RestorePose()
+			{
+				for (var i = 0; i < transforms.Length; i++)
+				{
+					transforms[i].localPosition = pose[i].localPosition;
+					transforms[i].localRotation = pose[i].localRotation;
+					transforms[i].localScale = pose[i].localScale;
+				}
+			}
 
 			foreach (var clip in clips)
 			{
 				if (!clip) continue;
+				// A clip only sets the properties it animates, so start each clip from the original pose
+				RestorePose();
 
 				// Keys of everything that moves the root node: its own transform curves and those of its parents
 				var times = new SortedSet<float>();
@@ -113,12 +124,7 @@ namespace UnityGLTF
 				}
 			}
 
-			for (var i = 0; i < transforms.Length; i++)
-			{
-				transforms[i].localPosition = pose[i].localPosition;
-				transforms[i].localRotation = pose[i].localRotation;
-				transforms[i].localScale = pose[i].localScale;
-			}
+			RestorePose();
 		}
 	}
 }
