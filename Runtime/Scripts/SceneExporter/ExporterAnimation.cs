@@ -1646,7 +1646,33 @@ namespace UnityGLTF
 			}
 		}
 
+		/// <summary>
+		/// Splits an HDR emission color into a color with components up to 1 and a strength (KHR_materials_emissive_strength).
+		/// Emission colors are HDR color properties, which Unity passes to shaders without color space conversion,
+		/// so they are already linear like glTF's emissiveFactor: color = input / max, strength = max.
+		/// </summary>
 		private static void DecomposeEmissionColor(Color input, out Color output, out float intensity)
+		{
+			output = input;
+			output.a = Mathf.Clamp01(output.a);
+			intensity = Mathf.Max(input.r, input.g, input.b);
+			if (intensity > 1)
+			{
+				output.r /= intensity;
+				output.g /= intensity;
+				output.b /= intensity;
+			}
+			else
+			{
+				intensity = 1;
+			}
+		}
+
+		/// <summary>
+		/// The previous decomposition, still used for Standard and URP materials in Gamma color space,
+		/// where these shaders treat emission colors differently (see ExportMaterial).
+		/// </summary>
+		private static void DecomposeEmissionColorGammaColorSpace(Color input, out Color output, out float intensity)
 		{
 			var emissiveAmount = input.linear;
 			var maxEmissiveAmount = Mathf.Max(emissiveAmount.r, emissiveAmount.g, emissiveAmount.b);
