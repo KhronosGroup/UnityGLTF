@@ -371,7 +371,12 @@ namespace UnityGLTF
                     var t = gltfScene.transform;
                     var existingAnimator = t.GetComponent<Animator>();
                     var hadAnimator = (bool)existingAnimator;
+                    // Keep the animator settings, since the animator gets destroyed and re-added on the new root below
                     var existingAvatar = existingAnimator ? existingAnimator.avatar : default;
+                    var existingController = existingAnimator ? existingAnimator.runtimeAnimatorController : default;
+                    var existingApplyRootMotion = existingAnimator && existingAnimator.applyRootMotion;
+                    var existingUpdateMode = existingAnimator ? existingAnimator.updateMode : default;
+                    var existingCullingMode = existingAnimator ? existingAnimator.cullingMode : default;
                     var rootIsAnimated = false;
                     if (existingAnimator)
                     {
@@ -417,6 +422,10 @@ namespace UnityGLTF
 	                    {
 		                    var newAnimator = gltfScene.AddComponent<Animator>();
 		                    newAnimator.avatar = existingAvatar;
+		                    newAnimator.runtimeAnimatorController = existingController;
+		                    newAnimator.applyRootMotion = existingApplyRootMotion;
+		                    newAnimator.updateMode = existingUpdateMode;
+		                    newAnimator.cullingMode = existingCullingMode;
 	                    }
 
 	                    // Re-target animation clips - when we strip the root, all animations also change and have a different path now.
