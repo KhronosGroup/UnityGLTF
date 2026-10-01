@@ -1447,10 +1447,13 @@ namespace UnityGLTF
 				interpolationType = InterpolationType.STEP;
 			
 			// Assuming all the curves exist now
-			for (var i = 0; i < nbSamples; ++i)
+			// nbSamples is the number of intervals, so there is one more sample than that (the last one at the end of the clip).
+			// A clip without length only has the one sample.
+			var lastSample = length > 0 ? nbSamples : 0;
+			for (var i = 0; i <= lastSample; ++i)
 			{
 				var time = i * deltaTime;
-				if (i == nbSamples - 1) time = length;
+				if (i == lastSample) time = length;
 
 				for (var k = 0; k < curveCount; k++)
 					while (keyframeIndex[k] < keyframes[k].Length - 1 && keyframes[k][keyframeIndex[k]].time < time)
@@ -1463,12 +1466,21 @@ namespace UnityGLTF
 						isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
 				}
 
-				if (isConstant && _times.Count > 0)
+				if (isConstant && _times.Count > 0 && i == lastSample)
+				{
+					// The previous interval already holds its value until just before the end, only the end value is missing
+					var lastTime = _times[_times.Count - 1];
+					if (lastTime < time / speedMultiplier)
+					{
+						_times.Add(time / speedMultiplier);
+						if (!AddValue(time)) return false;
+					}
+				}
+				else if (isConstant && _times.Count > 0)
 				{
 					var lastTime = _times[_times.Count - 1];
 					var t0 = lastTime + 0.0001f;
-					if (i != nbSamples - 1)
-						time += deltaTime * 0.999f;
+					time += deltaTime * 0.999f;
 					_times.Add(t0 / speedMultiplier);
 					_times.Add(time / speedMultiplier);
 					var success = AddValue(time);
