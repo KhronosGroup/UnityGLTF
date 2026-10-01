@@ -21,6 +21,9 @@ public partial class RigImportTests
 	// Matches AnimationBakingFramerate in ExporterAnimation.cs
 	private const float ExportFrameRate = 30;
 
+	// Spike exactly at the second-to-last 30 fps frame (29/30s) of a 1s clip
+	private const string AnimationEndOfClip = "Animation_EndOfClip.glb";
+
 	public static IEnumerable<TestCaseData> RoundtripCases()
 	{
 		yield return new TestCaseData(RootMotionEmptyRoot, AnimationMethod.Mecanim, "Root");
@@ -32,6 +35,7 @@ public partial class RigImportTests
 		yield return new TestCaseData(HumanoidAPose, AnimationMethod.MecanimHumanoid, "");
 		yield return new TestCaseData(HumanoidUnrealNames, AnimationMethod.MecanimHumanoid, "");
 		yield return new TestCaseData(HumanoidArmature, AnimationMethod.Mecanim, "Hips");
+		yield return new TestCaseData(AnimationEndOfClip, AnimationMethod.Mecanim, "");
 	}
 
 	[TestCaseSource(nameof(RoundtripCases))]
@@ -44,6 +48,112 @@ public partial class RigImportTests
 		AssertMeshesEqual(path, roundtripPath);
 		AssertAnimationsEqual(path, roundtripPath);
 		AssertAvatarsEqual(path, roundtripPath);
+	}
+
+	/// <summary>
+	/// Exports a hierarchy with an Animator playing the clip, imports the exported file and returns the imported clip.
+	/// Fails if the importer reports keyframe times that are not increasing.
+	/// </summary>
+	private static AnimationClip ExportClipAndReimport(AnimationClip clip, string fileName)
+	{
+		var root = new GameObject("Root");
+		var mover = new GameObject("Mover");
+		mover.transform.SetParent(root.transform, false);
+		var controller = new AnimatorController { name = "Export" };
+		controller.AddLayer("Base Layer");
+		controller.layers[0].stateMachine.AddState(clip.name).motion = clip;
+		root.AddComponent<Animator>().runtimeAnimatorController = controller;
+		var settings = ScriptableObject.CreateInstance<GLTFSettings>();
+		settings.UseMainCameraVisibility = false;
+
+		var path = $"{TempFolder}/{fileName}.glb";
+		try
+		{
+			var exporter = new GLTFSceneExporter(root.transform, new ExportContext(settings));
+			File.WriteAllBytes(path, exporter.SaveGLBToByteArray(fileName));
+		}
+		finally
+		{
+			Object.DestroyImmediate(root);
+			Object.DestroyImmediate(controller);
+			Object.DestroyImmediate(settings);
+		}
+
+		var notIncreasing = new List<string>();
+		void OnLog(string message, string stackTrace, LogType type)
+		{
+			if (message.Contains("not increasing")) notIncreasing.Add(message);
+		}
+		Application.logMessageReceived += OnLog;
+		try
+		{
+			AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+			Reimport(path, AnimationMethod.Mecanim);
+		}
+		finally
+		{
+			Application.logMessageReceived -= OnLog;
+		}
+		Assert.IsEmpty(notIncreasing, "Exported keyframe times are not increasing");
+
+		var imported = LoadClips(path).SingleOrDefault(c => c.name == clip.name);
+		Assert.IsNotNull(imported, $"Clip \"{clip.name}\" missing after export and import");
+		return imported;
+	}
+
+	private static void SetPositionCurves(AnimationClip clip, AnimationCurve x)
+	{
+		var end = x.keys.Last().time;
+		AnimationCurve Zero() => end > 0 ? AnimationCurve.Constant(0, end, 0) : new AnimationCurve(new Keyframe(0, 0));
+		clip.SetCurve("Mover", typeof(Transform), "m_LocalPosition.x", x);
+		clip.SetCurve("Mover", typeof(Transform), "m_LocalPosition.y", Zero());
+		clip.SetCurve("Mover", typeof(Transform), "m_LocalPosition.z", Zero());
+	}
+
+	[Test]
+	public void Export_StepAtEndOfClip_KeepsValuesAndIncreasingTimes()
+	{
+		// Linear first, then steps right before the end (constant tangents): uses the exporter's step handling up to the last sample
+		var x = new AnimationCurve(new Keyframe(0, 0), new Keyframe(0.5f, 1), new Keyframe(0.99f, 5), new Keyframe(1, 5));
+		for (var i = 0; i < x.length; i++)
+			AnimationUtility.SetKeyRightTangentMode(x, i, AnimationUtility.TangentMode.Linear);
+		AnimationUtility.SetKeyLeftTangentMode(x, 0, AnimationUtility.TangentMode.Linear);
+		AnimationUtility.SetKeyLeftTangentMode(x, 1, AnimationUtility.TangentMode.Linear);
+		AnimationUtility.SetKeyLeftTangentMode(x, 2, AnimationUtility.TangentMode.Constant);
+		AnimationUtility.SetKeyLeftTangentMode(x, 3, AnimationUtility.TangentMode.Constant);
+
+		var clip = new AnimationClip { name = "StepAtEnd" };
+		try
+		{
+			SetPositionCurves(clip, x);
+			var imported = ExportClipAndReimport(clip, "Export_StepAtEnd");
+			var curve = AnimationUtility.GetEditorCurve(imported, EditorCurveBinding.FloatCurve("Mover", typeof(Transform), "m_LocalPosition.x"));
+			Assert.AreEqual(1f, imported.length, CurveTolerance);
+			Assert.AreEqual(0.5f, curve.Evaluate(0.25f), 0.01f, "Linear part");
+			Assert.AreEqual(1f, curve.Evaluate(0.9f), 0.01f, "Value before the step");
+			Assert.AreEqual(5f, curve.Evaluate(1f), 0.01f, "Value after the step, at the end of the clip");
+		}
+		finally
+		{
+			Object.DestroyImmediate(clip);
+		}
+	}
+
+	[Test]
+	public void Export_ZeroLengthClip_HasSingleKey()
+	{
+		var clip = new AnimationClip { name = "SinglePose" };
+		try
+		{
+			SetPositionCurves(clip, new AnimationCurve(new Keyframe(0, 2)));
+			var imported = ExportClipAndReimport(clip, "Export_SinglePose");
+			var curve = AnimationUtility.GetEditorCurve(imported, EditorCurveBinding.FloatCurve("Mover", typeof(Transform), "m_LocalPosition.x"));
+			Assert.AreEqual(2f, curve.Evaluate(0), CurveTolerance);
+		}
+		finally
+		{
+			Object.DestroyImmediate(clip);
+		}
 	}
 
 	#region Roundtrip helpers
