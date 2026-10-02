@@ -1667,43 +1667,47 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             var input_trs = SpecTRSMatrix(translation, rotation, scale);
             QueueTest("math/matDecompose", "MatDecompose_Full_TRS", "MatDecompose Full TRS", "Tests matDecompose with a translation, rotation, and scale.", MatDecomposeTest(translation, rotation, scale, input_trs));
 
-            // Invalid matrix tests
-            var invalid_4th_row = new float4x4(new float4(1f, 0f, 0f, 1f), new float4(0f, 1f, 0f, 1f), new float4(0f, 0f, 1f, 1f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Invalid_4th_Row", "MatDecompose Invalid 4th Row", "Tests matDecompose with an invalid 4th row.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_4th_row, false));
+            // The fourth row is ignored.
+            var ignored_4th_row = new float4x4(new float4(1f, 0f, 0f, 1f), new float4(0f, 1f, 0f, 1f), new float4(0f, 0f, 1f, 1f), new float4(translation.x, translation.y, translation.z, 5f));
+            QueueTest("math/matDecompose", "MatDecompose_Ignored_4th_Row", "MatDecompose Ignored 4th Row", "Tests that matDecompose ignores the 4th row.", MatDecomposeTest(translation, identity_rotation, identity_scale, ignored_4th_row));
 
-            var invalid_zero_scale_x = new float4x4(new float4(0f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_x", "MatDecompose Sx = 0", "Tests matDecompose with a zero x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_zero_scale_x, false));
+            // A zero, infinite, or NaN column length is returned as the scale with an identity rotation.
+            var zero_scale_x = new float4x4(new float4(0f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(translation.x, translation.y, translation.z, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_x", "MatDecompose Sx = 0", "Tests matDecompose with a zero x scale.", MatDecomposeTest(translation, identity_rotation, new float3(0f, 1f, 1f), zero_scale_x));
 
-            var invalid_zero_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 0f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_y", "MatDecompose Sy = 0", "Tests matDecompose with a zero y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_zero_scale_y, false));
+            var zero_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 0f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_y", "MatDecompose Sy = 0", "Tests matDecompose with a zero y scale.", MatDecomposeTest(float3.zero, identity_rotation, new float3(1f, 0f, 1f), zero_scale_y));
 
-            var invalid_zero_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 0f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_z", "MatDecompose Sz = 0", "Tests matDecompose with a zero z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_zero_scale_z, false));
+            var zero_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 0f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Zero_Scale_z", "MatDecompose Sz = 0", "Tests matDecompose with a zero z scale.", MatDecomposeTest(float3.zero, identity_rotation, new float3(1f, 1f, 0f), zero_scale_z));
 
-            var invalid_inf_scale_x = new float4x4(new float4(float.PositiveInfinity, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_x", "MatDecompose Sx = Inf", "Tests matDecompose with an infinite x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_x, false));
+            // Approximate comparison cannot match infinite or NaN scales, so only translation and rotation are checked.
+            var inf_scale_x = new float4x4(new float4(float.PositiveInfinity, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(translation.x, translation.y, translation.z, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_x", "MatDecompose Sx = Inf", "Tests matDecompose with an infinite x scale.", MatDecomposeTest(translation, identity_rotation, null, inf_scale_x));
 
-            var invalid_inf_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.PositiveInfinity, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_y", "MatDecompose Sy = Inf", "Tests matDecompose with an infinite y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_y, false));
+            var inf_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.PositiveInfinity, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_y", "MatDecompose Sy = Inf", "Tests matDecompose with an infinite y scale.", MatDecomposeTest(float3.zero, identity_rotation, null, inf_scale_y));
 
-            var invalid_inf_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.PositiveInfinity, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = Inf", "Tests matDecompose with an infinite z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_z, false));
+            var inf_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.PositiveInfinity, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Inf_Scale_z", "MatDecompose Sz = Inf", "Tests matDecompose with an infinite z scale.", MatDecomposeTest(float3.zero, identity_rotation, null, inf_scale_z));
 
-            var invalid_inf_scale_NaN_x = new float4x4(new float4(float.NaN, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_x", "MatDecompose Sx = NaN", "Tests matDecompose with a NaN x scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_x, false));
+            var NaN_scale_x = new float4x4(new float4(float.NaN, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(translation.x, translation.y, translation.z, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_x", "MatDecompose Sx = NaN", "Tests matDecompose with a NaN x scale.", MatDecomposeTest(translation, identity_rotation, null, NaN_scale_x));
 
-            var invalid_inf_scale_NaN_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.NaN, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_y", "MatDecompose Sy = NaN", "Tests matDecompose with a NaN y scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_y, false));
+            var NaN_scale_y = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, float.NaN, 0f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_y", "MatDecompose Sy = NaN", "Tests matDecompose with a NaN y scale.", MatDecomposeTest(float3.zero, identity_rotation, null, NaN_scale_y));
 
-            var invalid_inf_scale_NaN_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.NaN, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_z", "MatDecompose Sz = NaN", "Tests matDecompose with a NaN z scale.", MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_inf_scale_NaN_z, false));
+            var NaN_scale_z = new float4x4(new float4(1f, 0f, 0f, 0f), new float4(0f, 1f, 0f, 0f), new float4(0f, 0f, float.NaN, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_NaN_Scale_z", "MatDecompose Sz = NaN", "Tests matDecompose with a NaN z scale.", MatDecomposeTest(float3.zero, identity_rotation, null, NaN_scale_z));
 
-            var invalid_scaled_det = new float4x4(new float4(3f, 5f, 1f, 0f), new float4(2f, 3f, 11f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
-            QueueTest("math/matDecompose", "MatDecompose_Invalid_Scaled_Det", "MatDecompose Invalid Scaled Determinant", "Tests matDecompose with an invalid TRS that fails the scaled determinant portion of the test.",
-                MatDecomposeTest(float3.zero, identity_rotation, identity_scale, invalid_scaled_det, false));
+            // Shear: the rotation is implementation-defined, so only translation and scale are checked.
+            // The determinant is negative, so the x scale is negated.
+            var sheared = new float4x4(new float4(3f, 5f, 1f, 0f), new float4(2f, 3f, 11f, 0f), new float4(0f, 0f, 1f, 0f), new float4(0f, 0f, 0f, 1f));
+            QueueTest("math/matDecompose", "MatDecompose_Shear", "MatDecompose Shear", "Tests matDecompose with a sheared matrix that is not decomposable into rotation and scale.",
+                MatDecomposeTest(float3.zero, null, new float3(-math.sqrt(35f), math.sqrt(134f), 1f), sheared));
         }
 
-        private static (Graph, TestValues) MatDecomposeTest(float3 translation, float4 rotation, float3 scale, float4x4 trs, bool isValid = true)
+        private static (Graph, TestValues) MatDecomposeTest(float3 translation, float4? rotation, float3? scale, float4x4 trs)
         {
             var inputs = new Dictionary<string, Value>();
             var outputs = new Dictionary<string, IProperty>();
@@ -1711,9 +1715,10 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             inputs.Add(ConstStrings.A, new Value() { id = ConstStrings.A, property = new Property<float4x4>(trs) });
 
             outputs.Add(ConstStrings.TRANSLATION, new Property<float3>(translation));
-            outputs.Add(ConstStrings.ROTATION, new Property<float4>(rotation));
-            outputs.Add(ConstStrings.SCALE, new Property<float3>(scale));
-            outputs.Add(ConstStrings.IS_VALID, new Property<bool>(isValid));
+            if (rotation.HasValue)
+                outputs.Add(ConstStrings.ROTATION, new Property<float4>(rotation.Value));
+            if (scale.HasValue)
+                outputs.Add(ConstStrings.SCALE, new Property<float3>(scale.Value));
 
             return CreateSelfContainedTestGraph("math/matDecompose", inputs, outputs, ComparisonType.Approximately, true);
         }

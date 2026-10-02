@@ -13,7 +13,6 @@ namespace UnityGLTF.Interactivity.Playback
         private GLTFImportContext _context;
         private InteractivityGraphExtension _interactivityGraph;
         private bool _hasSelectOrHoverNode;
-        private List<GameObject> _selectableOrHoverableObjects;
 
         public InteractivityImportContext(InteractivityImportPlugin interactivityLoader, GLTFImportContext context)
         {
@@ -27,7 +26,6 @@ namespace UnityGLTF.Interactivity.Playback
         public override void OnBeforeImport()
         {
             _hasSelectOrHoverNode = false;
-            _selectableOrHoverableObjects = new();
             _pointerResolver = new();
             Util.Log($"InteractivityImportContext::OnBeforeImport Complete");
         }
@@ -99,33 +97,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         public override void OnAfterImportNode(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
         {
-            CheckIfNodeIsInteractable(node, nodeIndex, nodeObject);
-       
             Util.Log($"InteractivityImportContext::OnAfterImportNode Complete: {node.ToString()}");
             _pointerResolver.RegisterNode(node, nodeIndex, nodeObject);
-        }
-
-        private void CheckIfNodeIsInteractable(GLTF.Schema.Node node, int nodeIndex, GameObject nodeObject)
-        {
-            if (!_hasSelectOrHoverNode)
-                return;
-
-            var selectable = false;
-            var hoverable = false;
-
-            if (node.Extensions != null)
-            {
-                if (node.Extensions.TryGetValue(GLTF.Schema.KHR_node_selectability_Factory.EXTENSION_NAME, out var selectableExtension))
-                    selectable = (selectableExtension as GLTF.Schema.KHR_node_selectability).selectable;
-
-                if (node.Extensions.TryGetValue(GLTF.Schema.KHR_node_hoverability_Factory.EXTENSION_NAME, out var hoverableExtension))
-                    hoverable = (hoverableExtension as GLTF.Schema.KHR_node_hoverability).hoverable;
-            }
-
-            if (!selectable && !hoverable)
-                return;
-
-            _selectableOrHoverableObjects.Add(nodeObject);
         }
 
         public override void OnAfterImportMesh(GLTFMesh mesh, int meshIndex, Mesh meshObject)
@@ -158,10 +131,12 @@ namespace UnityGLTF.Interactivity.Playback
             if (_interactivityGraph == null)
                 return;
 
-            for (int i = 0; i < _selectableOrHoverableObjects.Count; i++)
+            // Selection and hover rays are tested against each node's own geometry, and every node is selectable
+            // and hoverable unless it or an ancestor says otherwise, so every mesh needs an exact collider.
+            if (_hasSelectOrHoverNode)
             {
-                AddCollidersToChildSkinnedMeshRenderers(_selectableOrHoverableObjects[i]);
-                AddCollidersToChildMeshRenderers(_selectableOrHoverableObjects[i]);
+                AddCollidersToChildSkinnedMeshRenderers(sceneObject);
+                AddCollidersToChildMeshRenderers(sceneObject);
             }
 
             try
@@ -194,6 +169,10 @@ namespace UnityGLTF.Interactivity.Playback
 
                 for (int i = 0; i < colliders.Length; i++)
                 {
+                    // A node may have both an importer collider and an exact one; one wrapper per object avoids double events.
+                    if (colliders[i].TryGetComponent(out GLTFInteractivityEventWrapper _))
+                        continue;
+
                     var wrapper = colliders[i].gameObject.AddComponent<GLTFInteractivityEventWrapper>();
                     wrapper.playback = playback;
                 }
@@ -226,7 +205,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 go = smrs[i].gameObject;
 
-                if (!go.TryGetComponent(out Collider collider))
+                if (!GLTFInteractivityEventWrapper.HasExactCollider(go))
                 {
                     var mc = go.AddComponent<MeshCollider>();
                     mc.sharedMesh = smrs[i].sharedMesh;
@@ -247,7 +226,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 go = meshFilters[i].gameObject;
 
-                if (!go.TryGetComponent(out Collider collider))
+                if (!GLTFInteractivityEventWrapper.HasExactCollider(go))
                 {
                     var mc = go.AddComponent<MeshCollider>();
                     mc.sharedMesh = meshFilters[i].sharedMesh;

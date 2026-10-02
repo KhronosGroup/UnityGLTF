@@ -1,6 +1,8 @@
 using System;
 using Unity.Mathematics;
 using UnityEngine;
+using static UnityGLTF.Interactivity.Playback.MathMax;
+using static UnityGLTF.Interactivity.Playback.MathMin;
 
 namespace UnityGLTF.Interactivity.Playback
 {
@@ -10,36 +12,22 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
+        // Spec: min(max(a, 0), 1) using math/min and math/max, so NaN propagates (math.saturate returns 0).
         public override IProperty GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.A, out IProperty a);
 
             return a switch
             {
-                Property<float> aProp => new Property<float>(math.saturate(aProp.value)),
-                Property<float2> aProp => new Property<float2>(math.saturate(aProp.value)),
-                Property<float3> aProp => new Property<float3>(math.saturate(aProp.value)),
-                Property<float4> aProp => new Property<float4>(math.saturate(aProp.value)),
-                Property<float2x2> aProp => new Property<float2x2>(saturate(aProp.value)),
-                Property<float3x3> aProp => new Property<float3x3>(saturate(aProp.value)),
-                Property<float4x4> aProp => new Property<float4x4>(saturate(aProp.value)),
+                Property<float> aProp => new Property<float>(Min(Max(aProp.value, 0f), 1f)),
+                Property<float2> aProp => new Property<float2>(Min(Max(aProp.value, float2.zero), new float2(1f))),
+                Property<float3> aProp => new Property<float3>(Min(Max(aProp.value, float3.zero), new float3(1f))),
+                Property<float4> aProp => new Property<float4>(Min(Max(aProp.value, float4.zero), new float4(1f))),
+                Property<float2x2> aProp => new Property<float2x2>(Min(Max(aProp.value, float2x2.zero), new float2x2(1f))),
+                Property<float3x3> aProp => new Property<float3x3>(Min(Max(aProp.value, float3x3.zero), new float3x3(1f))),
+                Property<float4x4> aProp => new Property<float4x4>(Min(Max(aProp.value, float4x4.zero), new float4x4(1f))),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
-        }
-
-        private static float2x2 saturate(float2x2 a)
-        {
-            return new float2x2(math.saturate(a.c0), math.saturate(a.c1));
-        }
-
-        private static float3x3 saturate(float3x3 a)
-        {
-            return new float3x3(math.saturate(a.c0), math.saturate(a.c1), math.saturate(a.c2));
-        }
-
-        private static float4x4 saturate(float4x4 a)
-        {
-            return new float4x4(math.saturate(a.c0), math.saturate(a.c1), math.saturate(a.c2), math.saturate(a.c3));
         }
     }
 }

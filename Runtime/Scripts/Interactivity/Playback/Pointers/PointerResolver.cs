@@ -46,8 +46,9 @@ namespace UnityGLTF.Interactivity.Playback
 
         public void RegisterNode(GLTF.Schema.Node node, int nodeIndex, GameObject unityObject)
         {
-            var selectable = false;
-            var hoverable = false;
+            // KHR_node_selectability / KHR_node_hoverability: a node without the extension is selectable and hoverable.
+            var selectable = true;
+            var hoverable = true;
 
             if (node.Extensions != null)
             {

@@ -9,8 +9,9 @@ namespace UnityGLTF.Interactivity.Playback
 
     public class InteractivityExportContext : GLTFExportPluginContext
     {
-        private HashSet<Transform> _hoverable = new();
-        private HashSet<Transform> _selectable = new();
+        // Selectable and hoverable are the defaults, so only nodes that are not get the extensions.
+        private HashSet<Transform> _unhoverable = new();
+        private HashSet<Transform> _unselectable = new();
         private GLTFInteractivityData _interactivityData;
         private GLTFInteractivityPlayback _playback;
 
@@ -47,19 +48,19 @@ namespace UnityGLTF.Interactivity.Playback
         {
             if(_playback.engine != null && _playback.engine.pointerResolver.TryGetPointersOf(transform.gameObject, out var pointers))
             {
-                if(pointers.selectability.getter())
-                    AddSelectabilityExtensionToNode(exporter, node);
+                if (!pointers.selectability.getter())
+                    AddSelectabilityExtensionToNode(exporter, node, false);
 
-                if (pointers.hoverability.getter())
-                    AddHoverabilityExtensionToNode(exporter, node);
+                if (!pointers.hoverability.getter())
+                    AddHoverabilityExtensionToNode(exporter, node, false);
             }
             else if (_interactivityData != null)
             {
-                if(_selectable.Contains(transform))
-                    AddSelectabilityExtensionToNode(exporter, node);
+                if (_unselectable.Contains(transform))
+                    AddSelectabilityExtensionToNode(exporter, node, false);
 
-                if (_hoverable.Contains(transform))
-                    AddHoverabilityExtensionToNode(exporter, node);
+                if (_unhoverable.Contains(transform))
+                    AddHoverabilityExtensionToNode(exporter, node, false);
             }
 
             Util.Log($"InteractivityExportContext::BeforeNodeExport ");
@@ -106,11 +107,11 @@ namespace UnityGLTF.Interactivity.Playback
                 for (int i = 0; i < _interactivityData.pointerReferences.nodes.Count; i++)
                 {
                     var node = _interactivityData.pointerReferences.nodes[i];
-                    if (node.isHoverable)
-                        _hoverable.Add(node.unityObject.transform);
+                    if (!node.isHoverable)
+                        _unhoverable.Add(node.unityObject.transform);
 
-                    if (node.isSelectable)
-                        _selectable.Add(node.unityObject.transform);
+                    if (!node.isSelectable)
+                        _unselectable.Add(node.unityObject.transform);
                 }
             }
 
@@ -123,7 +124,7 @@ namespace UnityGLTF.Interactivity.Playback
             Util.Log($"InteractivityExportContext::BeforeTextureExport ");
         }
 
-        public static void AddHoverabilityExtensionToNode(GLTFSceneExporter exporter, GLTF.Schema.Node node)
+        public static void AddHoverabilityExtensionToNode(GLTFSceneExporter exporter, GLTF.Schema.Node node, bool hoverable)
         {
             var nodeExtensions = node.Extensions;
             if (nodeExtensions == null)
@@ -133,12 +134,12 @@ namespace UnityGLTF.Interactivity.Playback
             }
             if (!nodeExtensions.ContainsKey(KHR_node_hoverability_Factory.EXTENSION_NAME))
             {
-                nodeExtensions.Add(KHR_node_hoverability_Factory.EXTENSION_NAME, new KHR_node_hoverability());
+                nodeExtensions.Add(KHR_node_hoverability_Factory.EXTENSION_NAME, new KHR_node_hoverability() { hoverable = hoverable });
             }
             exporter.DeclareExtensionUsage(KHR_node_hoverability_Factory.EXTENSION_NAME, false);
         }
 
-        public void AddSelectabilityExtensionToNode(GLTFSceneExporter exporter, GLTF.Schema.Node node)
+        public void AddSelectabilityExtensionToNode(GLTFSceneExporter exporter, GLTF.Schema.Node node, bool selectable)
         {
             var nodeExtensions = node.Extensions;
             if (nodeExtensions == null)
@@ -148,7 +149,7 @@ namespace UnityGLTF.Interactivity.Playback
             }
             if (!nodeExtensions.ContainsKey(KHR_node_selectability_Factory.EXTENSION_NAME))
             {
-                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability());
+                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability() { selectable = selectable });
             }
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }

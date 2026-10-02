@@ -18,81 +18,48 @@ namespace UnityGLTF.Interactivity.Playback
             if (a is not Property<float4x4> mProp)
                 throw new InvalidOperationException($"Type of value a must be Matrix4x4 but a {a.GetTypeSignature()} was passed in!");
 
-            var m = mProp.value;
-
-            if (!LastRowIsValid(m)) return DefaultOutputValues(id);
-
-            var sx = math.length(m.c0.xyz);
-            var sy = math.length(m.c1.xyz);
-            var sz = math.length(m.c2.xyz);
-            float3 scale = new float3(sx, sy, sz);
-
-            if (!ScaleIsFinite(scale)) return DefaultOutputValues(id);
-            
-            var B = new float3x3(m.c0.xyz / sx, m.c1.xyz / sy, m.c2.xyz / sz);
-            var detB = math.determinant(B);
-            
-            if(!ScaledDeterminateIsOne(detB)) return DefaultOutputValues(id);
-
-            var translation = m.c3.xyz;
-
-            if (detB < 0f)
-            {
-                scale *= -1f;
-                B *= -1f;
-            }
-
-            var rotation = new quaternion(B).value;
+            Decompose(mProp.value, out var translation, out var rotation, out var scale);
 
             return id switch
             {
                 ConstStrings.TRANSLATION => new Property<float3>(translation),
                 ConstStrings.ROTATION => new Property<float4>(rotation),
                 ConstStrings.SCALE => new Property<float3>(scale),
-                ConstStrings.IS_VALID => new Property<bool>(true),
                 _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
             };
         }
 
-        private static IProperty DefaultOutputValues(string id)
+        // Follows the spec steps: the fourth row is ignored, degenerate scales give an identity rotation,
+        // and shear is left in place.
+        public static void Decompose(in float4x4 m, out float3 translation, out float4 rotation, out float3 scale)
         {
-            return id switch
+            translation = m.c3.xyz;
+
+            var sx = math.length(m.c0.xyz);
+            var sy = math.length(m.c1.xyz);
+            var sz = math.length(m.c2.xyz);
+            scale = new float3(sx, sy, sz);
+
+            if (InfiniteZeroOrNaN(sx) || InfiniteZeroOrNaN(sy) || InfiniteZeroOrNaN(sz))
             {
-                ConstStrings.TRANSLATION => new Property<float3>(float3.zero),
-                ConstStrings.ROTATION => new Property<float4>(new float4(0f, 0f, 0f, 1f)),
-                ConstStrings.SCALE => new Property<float3>(new float3(1f, 1f, 1f)),
-                ConstStrings.IS_VALID => new Property<bool>(false),
-                _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
-            };
-        }
+                rotation = new float4(0f, 0f, 0f, 1f);
+                return;
+            }
 
-        private static bool LastRowIsValid(in float4x4 m)
-        {
-            return m.c0.w == 0f && m.c1.w == 0f && m.c2.w == 0f && Mathf.Approximately(m.c3.w, 1f);
-        }
+            var B = new float3x3(m.c0.xyz / sx, m.c1.xyz / sy, m.c2.xyz / sz);
 
-        private static bool ScaleIsFinite(float3 s)
-        {
-            if (InfiniteZeroOrNaN(s.x))
-                return false;
+            if (math.determinant(B) < 0f)
+            {
+                scale.x = -scale.x;
+                B.c0 = -B.c0;
+            }
 
-            if (InfiniteZeroOrNaN(s.y))
-                return false;
-
-            if (InfiniteZeroOrNaN(s.z))
-                return false;
-
-            return true;
+            rotation = math.normalize(new quaternion(B).value);
         }
 
         private static bool InfiniteZeroOrNaN(float v)
         {
             return v == 0f || math.isinf(v) || math.isnan(v);
-        }
-
-        private static bool ScaledDeterminateIsOne(float detB)
-        {
-            return Mathf.Approximately(math.abs(detB), 1f);
         }
     }
 }
