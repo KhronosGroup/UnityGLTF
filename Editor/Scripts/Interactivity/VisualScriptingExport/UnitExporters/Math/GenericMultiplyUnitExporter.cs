@@ -29,7 +29,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 if (input.type == typeof(T))
                     return true;
-                if (input.type == typeof(object))
+                // object typed ports (e.g. Generic Multiply's own inputs) say nothing about the type,
+                // so keep looking at the default value or the connected source
+                if (input.type != typeof(object) && !input.type.IsAssignableFrom(typeof(T)))
                     return false;
 
                 if (input.hasDefaultValue)

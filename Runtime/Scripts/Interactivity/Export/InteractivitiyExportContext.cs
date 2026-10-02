@@ -891,13 +891,13 @@ namespace UnityGLTF.Interactivity.Export
             connection.Socket = Event_SendNode.IdFlowIn;
         }
         
-        public void RemoveNode(GltfInteractivityExportNode nodeToRemove)
+        public bool RemoveNode(GltfInteractivityExportNode nodeToRemove)
         {
             var indexToRemove = nodesToSerialize.IndexOf(nodeToRemove);
             if (indexToRemove == -1)
             {
                 Debug.LogError("Can't remove Node, not found in list!");
-                return;
+                return false;
             }
             // Safety check if there exist any connection to the removed node
             foreach (var n in nodesToSerialize)
@@ -907,7 +907,7 @@ namespace UnityGLTF.Interactivity.Export
                     if (valueSocket.Value.Node == indexToRemove)
                     {
                         Debug.LogError("Trying to remove an node, which is referenced in a value connection. Schema: "+nodeToRemove.Schema.Op + ",  Referenced by " + n.Schema.Op);
-                        return;
+                        return false;
                     }
                 }
                 foreach (var flowSocket in n.FlowConnections)
@@ -915,7 +915,7 @@ namespace UnityGLTF.Interactivity.Export
                     if (flowSocket.Value.Node == indexToRemove)
                     {
                         Debug.LogError("Trying to remove an node, which is referenced in a flow connection. Schema: "+nodeToRemove.Schema.Op + ",  Referenced by " + n.Schema.Op);
-                        return;
+                        return false;
                     }
                 }
             }
@@ -924,7 +924,7 @@ namespace UnityGLTF.Interactivity.Export
             {
                 // Just remove, no other indices are affected
                 nodesToSerialize.RemoveAt(indexToRemove);
-                return;
+                return true;
             }
                 
             nodesToSerialize.RemoveAt(indexToRemove);
@@ -949,6 +949,7 @@ namespace UnityGLTF.Interactivity.Export
                         flowSocket.Value.Node = nodeToRemove.Index;
                 }
             }
+            return true;
         }
         
         protected void RemoveNodes(IReadOnlyList<GltfInteractivityExportNode> nodesToRemove)
@@ -1137,6 +1138,20 @@ namespace UnityGLTF.Interactivity.Export
             return newNodes.ToArray();
         }
 
+        /// <summary>
+        /// Scalar type the value should be converted to when <paramref name="supportedTypes"/> does not accept it
+        /// (float preferred, then int, then bool), or null if there is no scalar conversion.
+        /// </summary>
+        private static string PreferredScalarConversion(string fromSignature, string[] supportedTypes)
+        {
+            if (fromSignature != GltfTypes.Int && fromSignature != GltfTypes.Float && fromSignature != GltfTypes.Bool)
+                return null;
+            foreach (var candidate in new[] { GltfTypes.Float, GltfTypes.Int, GltfTypes.Bool })
+                if (candidate != fromSignature && System.Array.IndexOf(supportedTypes, candidate) >= 0)
+                    return candidate;
+            return null;
+        }
+
         public void CheckForImplicitValueConversions()
         {
             var changed = true;
@@ -1259,6 +1274,46 @@ namespace UnityGLTF.Interactivity.Export
                                                          " but should be " + GltfTypes.TypesMapping[fromInputPortType].GltfSignature);;
                                     }
                                 }
+                            }
+                        }
+                        else if (socket != null && socket.typeRestriction == null
+                                 && node.Schema.InputValueSockets.TryGetValue(valueSocket.Key, out var socketDescriptor)
+                                 && socketDescriptor.SupportedTypes != null
+                                 && socketDescriptor.SupportedTypes.Length < GltfTypes.allTypes.Length)
+                        {
+                            // No explicit restriction from the exporter, but the operation only accepts some types
+                            // (e.g. math/sin: float..float4). Convert scalars that are not accepted, e.g. int -> float.
+                            var valueType = GetValueTypeForInput(node, valueSocket.Key);
+                            if (valueType == -1)
+                                continue;
+                            var valueSignature = GltfTypes.TypesMapping[valueType].GltfSignature;
+                            if (System.Array.IndexOf(socketDescriptor.SupportedTypes, valueSignature) >= 0)
+                                continue;
+
+                            var targetSignature = PreferredScalarConversion(valueSignature, socketDescriptor.SupportedTypes);
+                            if (targetSignature == null)
+                                continue; // nothing sensible to convert to, the spec validator reports it
+
+                            if (socket.Value != null && GltfTypes.TryToConvertValue(socket.Value, targetSignature, out var convertedValue))
+                            {
+                                socket.Value = convertedValue;
+                                socket.Type = GltfTypes.TypeIndexByGltfSignature(targetSignature);
+                                changed = true;
+                                continue;
+                            }
+
+                            var conversionNode = AddTypeConversion(node, nodesToSerialize.Count, valueSocket.Key,
+                                valueType, GltfTypes.TypeIndexByGltfSignature(targetSignature));
+                            if (conversionNode != null && conversionNode.Length > 0)
+                            {
+                                changed = true;
+                                nodesToSerialize.AddRange(conversionNode);
+                            }
+                            else
+                            {
+                                Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
+                                                 " in node: " + node.Schema.Op + ". Has Type " + valueSignature +
+                                                 " but should be one of " + string.Join(", ", socketDescriptor.SupportedTypes));
                             }
                         }
                     }
