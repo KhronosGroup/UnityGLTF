@@ -53,12 +53,13 @@ ScriptedImporter:
 
 '
   optimizeGameObjects: 0
-  materials: []
+  materials:
+  - {instanceID: 0}
   textures: []
   hasSceneData: 1
   hasAnimationData: 1
   hasMaterialData: 1
-  hasTextureData: 1
+  hasTextureData: 0
   animations:
   - name: Walk
     loopTime: 1
@@ -68,5 +69,5 @@ ScriptedImporter:
     loopPose: 0
   _extensions: []
   _textures: []
-  _mainAssetIdentifier: 
+  _mainAssetIdentifier: scenes/Humanoid_Mixamo
   _importPlugins: []
