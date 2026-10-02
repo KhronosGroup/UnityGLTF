@@ -48,7 +48,9 @@ public class SampleModelTests
 		"BoxAnimated",
 		"InterpolationTest",
 		"AnimatedMorphCube",
+		"AnimatedMorphSphere",
 		"MorphPrimitivesTest",
+		"MorphStressTest",
 		"SuzanneMorphSparse",
 		// Geometry and hierarchy
 		"Box",
