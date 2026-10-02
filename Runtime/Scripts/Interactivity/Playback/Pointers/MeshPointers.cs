@@ -46,10 +46,12 @@ namespace UnityGLTF.Interactivity.Playback
             // Right now this will overwrite those completely.
             for (int i = 0; i < weights.Length; i++)
             {
+                // Copy the loop variable so each closure keeps its own blend shape index.
+                var index = i;
                 weights[i] = new Pointer<float>()
                 {
-                    setter = (v) => SetAllBlendShapeWeights(i,v),
-                    getter = () => smr.GetBlendShapeWeight(i),
+                    setter = (v) => SetAllBlendShapeWeights(index, v),
+                    getter = () => smr.GetBlendShapeWeight(index),
                     evaluator = (a, b, t) => math.lerp(a, b, t)
                 };
             }
@@ -88,7 +90,8 @@ namespace UnityGLTF.Interactivity.Playback
             reader.AdvanceToNextToken('/');
 
             // Path so far: /meshes/{}/weights/
-            var weightIndex = PointerResolver.GetIndexFromArgument(reader, engineNode);
+            if (!PointerResolver.TryGetIndexFromArgument(reader, engineNode, pointer.weights, out var weightIndex))
+                return PointerHelpers.InvalidPointer();
 
             return pointer.weights[weightIndex];
         }

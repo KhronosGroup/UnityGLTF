@@ -15,7 +15,7 @@ namespace UnityGLTF.Interactivity.Playback
 
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.ANIMATION, "Animation index.", new Type[]  { typeof(int) }),
+                new NodeValue(ConstStrings.ANIMATION, "Animation reference.", new Type[]  { typeof(Ref) }),
                 new NodeValue(ConstStrings.START_TIME, "Start time in seconds.", new Type[]  { typeof(float) }),
                 new NodeValue(ConstStrings.END_TIME, "End time in seconds.", new Type[]  { typeof(float) }),
                 new NodeValue(ConstStrings.SPEED, "Speed multiplier.", new Type[]  { typeof(float) }),

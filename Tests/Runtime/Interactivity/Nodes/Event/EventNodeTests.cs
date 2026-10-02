@@ -8,7 +8,7 @@ using UnityEngine.TestTools;
 
 namespace UnityGLTF.Interactivity.Playback.Tests
 {
-    public class EventNodeTests : NodeTestHelpers
+    public partial class EventNodeTests : NodeTestHelpers
     {
         protected override string _subDirectory => "Event";
 

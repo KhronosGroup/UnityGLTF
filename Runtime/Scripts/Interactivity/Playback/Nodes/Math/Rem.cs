@@ -17,7 +17,8 @@ namespace UnityGLTF.Interactivity.Playback
 
             return a switch
             {
-                Property<int> aInt when b is Property<int> bInt => new Property<int>(aInt.value % bInt.value),
+                // Zero divisor gives 0; b == -1 avoids the int.MinValue % -1 overflow trap (the result is 0).
+                Property<int> aInt when b is Property<int> bInt => new Property<int>(bInt.value == 0 || bInt.value == -1 ? 0 : aInt.value % bInt.value),
                 Property<float> aFloat when b is Property<float> bFloat => new Property<float>(aFloat.value % bFloat.value),
                 Property<float2> aVec2 when b is Property<float2> bVec2 => new Property<float2>(aVec2.value % bVec2.value),
                 Property<float3> aVec3 when b is Property<float3> bVec3 => new Property<float3>(aVec3.value % bVec3.value),

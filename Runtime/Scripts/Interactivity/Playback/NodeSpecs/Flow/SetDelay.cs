@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.Playback
             };
 
             var values = new NodeValue[]{
-                new NodeValue(ConstStrings.LAST_DELAY_INDEX, "Last unique delay index from this node", new System.Type[] { typeof(int) })
+                new NodeValue(ConstStrings.LAST_DELAY, "Reference to the delay scheduled by the last successful activation.", new System.Type[] { typeof(Ref) })
             };
             return (flows, values);
         }

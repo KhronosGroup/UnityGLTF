@@ -64,9 +64,13 @@ namespace UnityGLTF.Interactivity.Playback
 
             Util.Log("Extensions contains interactivity.");
 
-            _interactivityGraph = interactivityGraph;
+            if (!interactivityGraph.extensionData.TryGetDefaultGraph(out var graph))
+            {
+                Debug.LogWarning($"KHR_interactivity: the default graph is invalid, the asset is treated as having no interactivity.\n{string.Join("\n", interactivityGraph.extensionData.errors)}");
+                return;
+            }
 
-            var graph = interactivityGraph.extensionData.graphs[interactivityGraph.extensionData.defaultGraphIndex];
+            _interactivityGraph = interactivityGraph;
 
             for (int i = 0; i < graph.declarations.Count; i++)
             {
@@ -165,11 +169,14 @@ namespace UnityGLTF.Interactivity.Playback
                 _pointerResolver.RegisterSceneData(_context.SceneImporter.Root);
                 _pointerResolver.CreatePointers();
 
-                var defaultGraphIndex = _interactivityGraph.extensionData.defaultGraphIndex;
-                // Can be used to inject a graph created from code in a hacky way for testing.
-                //interactivityGraph.extensionData.graphs[defaultGraphIndex] = TestGraph.CreateTestGraph();
-                var defaultGraph = _interactivityGraph.extensionData.graphs[defaultGraphIndex];
+                _interactivityGraph.extensionData.TryGetDefaultGraph(out var defaultGraph);
                 var eng = new BehaviourEngine(defaultGraph, _pointerResolver);
+
+                if (!eng.isValid)
+                {
+                    Debug.LogWarning($"KHR_interactivity: the graph was rejected, the asset is treated as having no interactivity.\n{string.Join("\n", defaultGraph.errors)}");
+                    return;
+                }
 
                 GLTFInteractivityAnimationWrapper animationWrapper = null;
                 var animationComponents = sceneObject.GetComponents<Animation>();

@@ -59,8 +59,8 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             }
 
             var g = GenerateAnimationInvalidInputTestGraph("animation/stop",
-                new Dictionary<string, IProperty>() { ["animation"] = new Property<int>(-1) },
-                new Dictionary<string, IProperty>() { ["animation"] = new Property<int>(9999) }
+                new Dictionary<string, IProperty>() { ["animation"] = new Property<Ref>(Ref.Null) },
+                new Dictionary<string, IProperty>() { ["animation"] = new Property<Ref>(Ref.Gltf("/animations", 9999)) }
             );
 
             QueueTest("animation/stop", GetCallerName(), "Animation Stop Invalid Input Values", "Test fails if out flow is activated for any incorrect input or if the err flow fails to trigger for all invalid inputs.", g, importer.Result);
@@ -89,9 +89,9 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             }
 
             var g = GenerateAnimationInvalidInputTestGraph("animation/stopAt",
-                new Dictionary<string, IProperty>() { ["animation"] = new Property<int>(-1), ["stopTime"] = new Property<float>(0.5f) },
-                new Dictionary<string, IProperty>() { ["animation"] = new Property<int>(9999), ["stopTime"] = new Property<float>(0.5f) },
-                new Dictionary<string, IProperty>() { ["animation"] = new Property<int>(0), ["stopTime"] = new Property<float>(float.NaN) }
+                new Dictionary<string, IProperty>() { ["animation"] = new Property<Ref>(Ref.Null), ["stopTime"] = new Property<float>(0.5f) },
+                new Dictionary<string, IProperty>() { ["animation"] = new Property<Ref>(Ref.Gltf("/animations", 9999)), ["stopTime"] = new Property<float>(0.5f) },
+                new Dictionary<string, IProperty>() { ["animation"] = new Property<Ref>(Ref.Gltf("/animations", 0)), ["stopTime"] = new Property<float>(float.NaN) }
             );
 
             QueueTest("animation/stopAt", GetCallerName(), "Animation StopAt Invalid Input Values", "Test fails if out flow is activated for any incorrect input or if the err flow fails to trigger for all invalid inputs.", g, importer.Result);
@@ -108,8 +108,8 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 yield return null;
             }
 
-            var negativeAnimation = GetDefaultAnimationStartValues();negativeAnimation["animation"] = new Property<int>(-1);
-            var outOfRangeAnimation = GetDefaultAnimationStartValues(); outOfRangeAnimation["animation"] = new Property<int>(9999);
+            var negativeAnimation = GetDefaultAnimationStartValues();negativeAnimation["animation"] = new Property<Ref>(Ref.Null);
+            var outOfRangeAnimation = GetDefaultAnimationStartValues(); outOfRangeAnimation["animation"] = new Property<Ref>(Ref.Gltf("/animations", 9999));
             var startTimeNaN = GetDefaultAnimationStartValues(); startTimeNaN["startTime"] = new Property<float>(float.NaN);
             var startTimeInf = GetDefaultAnimationStartValues(); startTimeInf["startTime"] = new Property<float>(float.PositiveInfinity);
             var endTimeNaN = GetDefaultAnimationStartValues(); endTimeNaN["endTime"] = new Property<float>(float.NaN);
@@ -133,7 +133,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         {
             return new Dictionary<string, IProperty>()
             {
-                ["animation"] = new Property<int>(0),
+                ["animation"] = new Property<Ref>(Ref.Gltf("/animations", 0)),
                 ["startTime"] = new Property<float>(0f),
                 ["endTime"] = new Property<float>(0.7f),
                 ["speed"] = new Property<float>(1f),
@@ -386,6 +386,71 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             node.AddFlow(logFailOut, ConstStrings.OUT);
             node.AddFlow(logFailDone, ConstStrings.DONE);
             return node;
+        }
+
+        [UnityTest]
+        public IEnumerator AnimationStopAt_AnimationNotPlaying_OutActivates()
+        {
+            var importer = LoadTestModel(TEST_GLB);
+            while (!importer.IsCompleted)
+            {
+                yield return null;
+            }
+
+            QueueTest("animation/stopAt", GetCallerName(), "Animation StopAt Not Playing", "Schedules stopping an animation that is not playing. Test fails if the err flow activates or the out flow does not.", CreateStopAtNotPlayingGraph(), importer.Result);
+        }
+
+        [UnityTest]
+        public IEnumerator AnimationStart_RestartWhilePlaying_PreviousDoneNotActivated()
+        {
+            var importer = LoadTestModel(TEST_GLB);
+            while (!importer.IsCompleted)
+            {
+                yield return null;
+            }
+
+            QueueTest("animation/start", GetCallerName(), "Animation Restart", "Starts an animation and immediately starts it again from a second node. Test fails if the first node's done flow activates or the second node's done flow does not.", CreateAnimationRestartGraph(), importer.Result);
+        }
+
+        private static Graph CreateStopAtNotPlayingGraph()
+        {
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var stopAt = g.CreateNode("animation/stopAt");
+            stopAt.AddValue(ConstStrings.ANIMATION, Ref.Gltf("/animations", 0));
+            stopAt.AddValue(ConstStrings.STOP_TIME, 0.5f);
+            start.AddFlow(stopAt);
+
+            stopAt.AddFlow(CreateFailSubGraph(g, "The err flow activated for a valid animation that is not playing."), ConstStrings.ERR);
+            stopAt.AddFlow(CreateCompleteNode(g), ConstStrings.OUT);
+
+            return g;
+        }
+
+        private static Graph CreateAnimationRestartGraph()
+        {
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var first = g.CreateNode("animation/start");
+            var second = g.CreateNode("animation/start");
+
+            foreach (var value in GetDefaultAnimationStartValues())
+            {
+                first.AddValue(value.Key, value.Value);
+                second.AddValue(value.Key, value.Value);
+            }
+
+            start.AddFlow(first);
+            first.AddFlow(second, ConstStrings.OUT);
+
+            first.AddFlow(CreateFailSubGraph(g, "The err flow of the first animation/start node activated."), ConstStrings.ERR);
+            second.AddFlow(CreateFailSubGraph(g, "The err flow of the second animation/start node activated."), ConstStrings.ERR);
+            first.AddFlow(CreateFailSubGraph(g, "The done flow of the replaced animation entry activated."), ConstStrings.DONE);
+            second.AddFlow(CreateCompleteNode(g), ConstStrings.DONE);
+
+            return g;
         }
     }
 }

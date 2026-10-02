@@ -1,6 +1,5 @@
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace UnityGLTF.Interactivity.Playback
 {
@@ -8,30 +7,52 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public static List<Customevent> GetEvents(JObject jObj, List<System.Type> systemTypes)
         {
-            var jEvents = jObj[ConstStrings.EVENTS].Children();
-            var events = new List<Customevent>(jEvents.Count());
+            var events = new List<Customevent>();
+            var externalIds = new HashSet<string>();
+            var index = 0;
 
-            foreach (var v in jEvents)
+            foreach (var v in GraphJson.OptionalArray(jObj, ConstStrings.EVENTS, "graph"))
             {
+                var context = $"events[{index}]";
+                GraphJson.AsObject(v, context);
+
+                var id = GraphJson.OptionalString(v, ConstStrings.ID, context);
+
+                if (id != null && !externalIds.Add(id))
+                    GraphJson.Reject($"{context}: event id \"{id}\" is used by more than one event.");
+
                 events.Add(new Customevent()
                 {
-                    id = v[ConstStrings.ID].Value<string>(),
-                    values = GetEventValues(v[ConstStrings.VALUES] as JObject, systemTypes)
+                    id = id,
+                    name = GraphJson.OptionalString(v, ConstStrings.NAME, context),
+                    values = GetEventValues(GraphJson.OptionalObject(v, ConstStrings.VALUES, context), systemTypes, context)
                 });
+
+                index++;
             }
 
             return events;
         }
 
-        private static List<EventValue> GetEventValues(JObject jValues, List<System.Type> systemTypes)
+        private static List<EventValue> GetEventValues(JObject jValues, List<System.Type> systemTypes, string context)
         {
-            var valueCount = jValues.Count;
-            var values = new List<EventValue>(valueCount);
+            var values = new List<EventValue>();
+
+            if (jValues == null)
+                return values;
 
             foreach (var kvp in jValues)
             {
-                var typeIndex = kvp.Value[ConstStrings.TYPE].Value<int>();
-                values.Add(new EventValue(kvp.Key, Helpers.GetDefaultProperty(typeIndex, systemTypes)));
+                var valueContext = $"{context}.values.{kvp.Key}";
+
+                if (kvp.Key == ConstStrings.EVENT)
+                    GraphJson.Reject($"{context}: custom events cannot define a value socket named \"event\".");
+
+                GraphJson.AsObject(kvp.Value, valueContext);
+                var typeIndex = GraphJson.RequiredIndex(kvp.Value, ConstStrings.TYPE, systemTypes.Count, valueContext);
+                var initial = GraphJson.ParseValue(systemTypes[typeIndex], GraphJson.OptionalValueArray(kvp.Value, valueContext), valueContext);
+
+                values.Add(new EventValue(kvp.Key, initial));
             }
 
             return values;

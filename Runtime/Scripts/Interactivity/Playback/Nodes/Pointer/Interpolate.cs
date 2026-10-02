@@ -1,26 +1,39 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityGLTF.Interactivity.Playback.Extensions;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public class PointerInterpolate : BehaviourEngineNode
     {
-        private IPointer _pointer;
-        private IProperty _interpGoal;
-        private float _duration;
-        private float2 _p1, _p2;
+        private readonly PointerAccess _access;
 
         public PointerInterpolate(BehaviourEngine engine, Node node) : base(engine, node)
         {
+            PointerAccess.TryCreate(this, out _access);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
-            if(validationResult != ValidationResult.Valid)
+            // Step 1: evaluate all input values.
+            if (_access == null ||
+                !TryEvaluateValue(ConstStrings.VALUE, out IProperty target) ||
+                !TryEvaluateValue(ConstStrings.DURATION, out float duration) ||
+                !TryEvaluateValue(ConstStrings.P1, out float2 p1) ||
+                !TryEvaluateValue(ConstStrings.P2, out float2 p2))
+            {
+                TryExecuteFlow(ConstStrings.ERR);
+                return;
+            }
+
+            // Steps 2-4: parameters, resolution, type and mutability.
+            if (!_access.TryResolve(this, out var pointer, out var effectivePointer) || PointerHelpers.IsReadOnly(pointer))
+            {
+                TryExecuteFlow(ConstStrings.ERR);
+                return;
+            }
+
+            // Steps 5-6: duration and control points.
+            if (!InterpolationRules.IsValidDuration(duration) || !InterpolationRules.IsValidControlPoint(p1) || !InterpolationRules.IsValidControlPoint(p2))
             {
                 TryExecuteFlow(ConstStrings.ERR);
                 return;
@@ -28,67 +41,46 @@ namespace UnityGLTF.Interactivity.Playback
 
             var data = new PointerInterpolateData()
             {
-                pointer = _pointer,
-                startTime = Time.time,
-                duration = _duration,
-                endValue = _interpGoal,
-                cp1 = _p1,
-                cp2 = _p2,
+                pointerKey = effectivePointer,
+                pointer = pointer,
+                startTime = engine.time,
+                duration = duration,
+                endValue = target,
+                cp1 = p1,
+                cp2 = p2,
                 done = () => TryExecuteFlow(ConstStrings.DONE)
             };
 
             try
             {
                 engine.pointerInterpolationManager.StartInterpolation(ref data);
-
-                TryExecuteFlow(ConstStrings.OUT);
             }
-            catch(InterpolatorException ex)
+            catch (InterpolatorException ex)
             {
-                Debug.LogWarning(ex);
+                Debug.LogWarning(ex.Message);
                 TryExecuteFlow(ConstStrings.ERR);
+                return;
             }
+
+            TryExecuteFlow(ConstStrings.OUT);
+        }
+    }
+
+    /// <summary>Input checks shared by pointer/interpolate and variable/interpolate.</summary>
+    internal static class InterpolationRules
+    {
+        public static bool IsValidDuration(float duration)
+        {
+            return !float.IsNaN(duration) && !float.IsInfinity(duration) && duration >= 0;
         }
 
-        public override bool ValidateConfiguration(string socket)
+        /// <summary>Both components must be finite; only the X component is restricted to [0, 1].</summary>
+        public static bool IsValidControlPoint(float2 cp)
         {
-            return TryGetPointerFromConfiguration(out _pointer) && 
-                _pointer is not IReadOnlyPointer;
-        }
-
-        public override bool ValidateValues(string socket)
-        {
-            return TryEvaluateValue(ConstStrings.VALUE, out _interpGoal) && 
-                TryEvaluateValue(ConstStrings.DURATION, out _duration) &&
-                DurationIsValid(_duration) &&
-                TryEvaluateValue(ConstStrings.P1, out _p1) &&
-                ControlPointIsValid(_p1) &&
-                TryEvaluateValue(ConstStrings.P2, out _p2) &&
-                ControlPointIsValid(_p2);
-        }
-
-        private static bool DurationIsValid(float duration)
-        {
-            if (float.IsNaN(duration) || float.IsInfinity(duration) || duration < 0)
+            if (!math.all(math.isfinite(cp)))
                 return false;
 
-            return true;
-        }
-
-        private static bool ControlPointIsValid(float2 cp)
-        {
-            if (IsInvalid(cp.x))
-                return false;
-
-            if (IsInvalid(cp.y))
-                return false;
-
-            return true;
-
-            bool IsInvalid(float v)
-            {
-                return float.IsNaN(v) || float.IsInfinity(v) || v < 0 || v > 1;
-            }
+            return cp.x >= 0f && cp.x <= 1f;
         }
     }
 }

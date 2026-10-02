@@ -8,9 +8,9 @@ namespace UnityGLTF.Interactivity.Playback
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
-            TryEvaluateValue(ConstStrings.DELAY_INDEX, out int index);
-
-            engine.nodeDelayManager.CancelDelayByIndex(index);
+            // Null or invalid delay references must not cause runtime errors.
+            if (TryEvaluateValue(ConstStrings.DELAY, out Ref delay))
+                engine.nodeDelayManager.CancelDelay(delay);
 
             TryExecuteFlow(ConstStrings.OUT);
         }

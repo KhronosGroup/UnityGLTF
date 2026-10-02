@@ -776,6 +776,120 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             return log;
         }
 
+        protected static IProperty P<T>(T value) => new Property<T>(value);
+
+        /// <summary>Named input values of mixed types for <see cref="CreateSelfContainedTestGraph"/>.</summary>
+        protected static Dictionary<string, Value> Inputs(params (string id, IProperty value)[] inputs)
+        {
+            var result = new Dictionary<string, Value>();
+
+            foreach (var (id, value) in inputs)
+            {
+                result.Add(id, new Value() { id = id, property = value });
+            }
+
+            return result;
+        }
+
+        /// <summary>Named expected outputs of mixed types for <see cref="CreateSelfContainedTestGraph"/>.</summary>
+        protected static Dictionary<string, IProperty> Outputs(params (string id, IProperty value)[] outputs)
+        {
+            var result = new Dictionary<string, IProperty>();
+
+            foreach (var (id, value) in outputs)
+            {
+                result.Add(id, value);
+            }
+
+            return result;
+        }
+
+        /// <summary>The operation node created by <see cref="CreateSelfContainedTestGraph"/>, e.g. to add configuration.</summary>
+        protected static Node OperationNode((Graph graph, TestValues values) test) => test.graph.nodes[0];
+
+        protected static Node CreateCompleteNode(Graph g)
+        {
+            var complete = g.CreateNode("event/send");
+            complete.AddConfiguration(ConstStrings.EVENT, COMPLETED_EVENT_INDEX);
+            return complete;
+        }
+
+        /// <summary>
+        /// A flow/branch on a bool output whose "false" flow logs <paramref name="failMessage"/> and fails the test.
+        /// Connect the returned branch's "true" flow to continue.
+        /// </summary>
+        protected static Node CreateAssertTrue(Graph g, Node condition, string conditionSocket, string failMessage)
+        {
+            var branch = g.CreateNode("flow/branch");
+            branch.AddConnectedValue(ConstStrings.CONDITION, condition, conditionSocket);
+            branch.AddFlow(CreateFailSubGraph(g, failMessage), ConstStrings.FALSE);
+            return branch;
+        }
+
+        protected static Node CreateAssertTrue(Graph g, Node condition, string failMessage)
+        {
+            return CreateAssertTrue(g, condition, ConstStrings.VALUE, failMessage);
+        }
+
+        /// <summary>math/eq comparing an output socket with an inline value.</summary>
+        protected static Node CreateEquals<T>(Graph g, Node source, string socket, T expected)
+        {
+            var eq = g.CreateNode("math/eq");
+            eq.AddConnectedValue(ConstStrings.A, source, socket);
+            eq.AddValue(ConstStrings.B, expected);
+            return eq;
+        }
+
+        /// <summary>ref/eq comparing two reference output sockets.</summary>
+        protected static Node CreateRefEquals(Graph g, Node a, string aSocket, Node b, string bSocket)
+        {
+            var eq = g.CreateNode("ref/eq");
+            eq.AddConnectedValue(ConstStrings.A, a, aSocket);
+            eq.AddConnectedValue(ConstStrings.B, b, bSocket);
+            return eq;
+        }
+
+        /// <summary>ref/eq comparing a reference output socket with the null reference.</summary>
+        protected static Node CreateIsNullRef(Graph g, Node a, string aSocket)
+        {
+            var eq = g.CreateNode("ref/eq");
+            eq.AddConnectedValue(ConstStrings.A, a, aSocket);
+            eq.AddValue(ConstStrings.B, Ref.Null);
+            return eq;
+        }
+
+        protected static Node CreateNot(Graph g, Node source, string socket = ConstStrings.VALUE)
+        {
+            var not = g.CreateNode("math/not");
+            not.AddConnectedValue(ConstStrings.A, source, socket);
+            return not;
+        }
+
+        protected static Node CreateVariableGet(Graph g, int variableIndex)
+        {
+            var get = g.CreateNode("variable/get");
+            get.AddConfiguration(ConstStrings.VARIABLE, variableIndex);
+            return get;
+        }
+
+        /// <summary>variable/set whose value comes from another node's output socket.</summary>
+        protected static Node CreateVariableSetFrom(Graph g, int variableIndex, Node source, string socket = ConstStrings.VALUE)
+        {
+            var set = g.CreateNode("variable/set");
+            set.AddConfiguration(ConstStrings.VARIABLES, new int[] { variableIndex });
+            set.AddConnectedValue(ConstStrings.GetNumberString(variableIndex), source, socket);
+            return set;
+        }
+
+        /// <summary>Nodes that add <paramref name="amount"/> to an int variable; returns the variable/set node.</summary>
+        protected static Node CreateIncrement(Graph g, int variableIndex, int amount = 1)
+        {
+            var add = g.CreateNode("math/add");
+            add.AddConnectedValue(ConstStrings.A, CreateVariableGet(g, variableIndex));
+            add.AddValue(ConstStrings.B, amount);
+            return CreateVariableSetFrom(g, variableIndex, add);
+        }
+
         protected static Node CreateVariableSet<T>(Graph g, int variableIndex, T value)
         {
             var outSet = g.CreateNode("variable/set");

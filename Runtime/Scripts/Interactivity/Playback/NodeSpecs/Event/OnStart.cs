@@ -1,3 +1,5 @@
+using System;
+
 namespace UnityGLTF.Interactivity.Playback
 {
     public class EventOnStartSpec : NodeSpecifications
@@ -9,7 +11,12 @@ namespace UnityGLTF.Interactivity.Playback
                 new NodeFlow(ConstStrings.OUT, "The flow to trigger when the session starts.")
             };
 
-            return (flows, null);
+            var values = new NodeValue[]
+            {
+                new NodeValue(ConstStrings.EVENT, "The event reference.", new Type[] { typeof(Ref) }),
+            };
+
+            return (flows, values);
         }
     }
 }

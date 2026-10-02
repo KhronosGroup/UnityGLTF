@@ -31,7 +31,13 @@ namespace UnityGLTF.Interactivity.Playback
             var pointer = pointers[nodeIndex];
 
             reader.AdvanceToNextToken('/');
+            if (!reader.AsReadOnlySpan().Is(Pointers.EXTENSIONS))
+                return PointerHelpers.InvalidPointer();
+
             reader.AdvanceToNextToken('/');
+            if (!reader.AsReadOnlySpan().Is(InteractivityGraphExtension.EXTENSION_NAME))
+                return PointerHelpers.InvalidPointer();
+
             reader.AdvanceToNextToken('/');
 
             // Path so far: /animations/{}/extensions/KHR_interactivity

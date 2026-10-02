@@ -1,59 +1,49 @@
-using System;
-using System.Threading;
-using UnityEngine;
+using System.Collections.Generic;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public class VariableSet : BehaviourEngineNode
     {
-        private int[] _variableIndices;
+        private readonly List<int> _variableIndices = new();
+        private IProperty[] _evaluated;
 
         public VariableSet(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            // TODO: ValidateConfiguration allocates for the int array, could move that here but it would break runtime edits.
+            // Unique indices in configuration order; graph validation guarantees they're in range.
+            if (TryGetConfig(ConstStrings.VARIABLES, out int[] indices) && indices != null)
+            {
+                foreach (var index in indices)
+                {
+                    if (index >= 0 && index < engine.graph.variables.Count && !_variableIndices.Contains(index))
+                        _variableIndices.Add(index);
+                }
+            }
+
+            _evaluated = new IProperty[_variableIndices.Count];
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
-            if (validationResult != ValidationResult.Valid)
-                throw new InvalidOperationException();
-
-            int index;
-            Variable variable;
-
-            for (int i = 0; i < _variableIndices.Length; i++)
+            // 1. Evaluate all input values before setting anything, so inputs that read
+            //    one of the variables being set observe its old value.
+            for (int i = 0; i < _variableIndices.Count; i++)
             {
-                index = _variableIndices[i];
+                TryEvaluateValue(ConstStrings.GetNumberString(_variableIndices[i]), out _evaluated[i]);
+            }
 
-                if (!TryEvaluateValue(ConstStrings.GetNumberString(index), out IProperty value))
+            // 2. Cancel interpolations and assign.
+            for (int i = 0; i < _variableIndices.Count; i++)
+            {
+                if (_evaluated[i] == null)
                     continue;
 
-                variable = engine.graph.variables[index];
-
+                var variable = engine.graph.variables[_variableIndices[i]];
                 engine.variableInterpolationManager.StopInterpolation(variable);
-
-                Util.Log($"SetMultiple: Setting Variable {variable.id} to {value.ToString()}");
-
-                variable.property = value;
+                variable.property = _evaluated[i];
+                Util.Log($"variable/set: setting variable {variable.id} to {_evaluated[i]}");
             }
 
             TryExecuteFlow(ConstStrings.OUT);
-        }
-
-        public override bool ValidateConfiguration(string socket)
-        {
-            if (!TryGetConfig(ConstStrings.VARIABLES, out _variableIndices))
-                return false;
-
-            var variableCount = engine.graph.variables.Count;
-
-            for (int i = 0; i < _variableIndices.Length; i++)
-            {
-                if (_variableIndices[i] < 0 || _variableIndices[i] >= variableCount)
-                    return false;
-            }
-
-            return true;
         }
     }
 }

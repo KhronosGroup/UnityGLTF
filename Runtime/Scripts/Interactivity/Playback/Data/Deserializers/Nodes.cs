@@ -1,209 +1,260 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.Pool;
+using System.Globalization;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public static class NodesDeserializer
     {
-        private struct NodePair
-        {
-            public Node node;
-            public JToken jToken;
-        }
-
         public static List<Node> GetNodes(JObject jObj, List<Type> types, List<Declaration> declarations)
         {
-            var jNodes = jObj[ConstStrings.NODES].Children();
+            var jNodes = new List<JToken>(GraphJson.OptionalArray(jObj, ConstStrings.NODES, "graph"));
+            var nodes = new List<Node>(jNodes.Count);
 
-            var nodeCount = jNodes.Count();
-
-            var nodes = new List<Node>(nodeCount);
-
-            var nodePairs = ListPool<NodePair>.Get();
-
-            Node node;
-
-            try
+            for (int i = 0; i < jNodes.Count; i++)
             {
-                foreach (var jToken in jNodes)
+                var context = $"nodes[{i}]";
+                var jNode = GraphJson.AsObject(jNodes[i], context);
+                var declaration = declarations[GraphJson.RequiredIndex(jNode, ConstStrings.DECLARATION, declarations.Count, context)];
+
+                nodes.Add(new Node()
                 {
-                    var declarationIndex = jToken[ConstStrings.DECLARATION].Value<int>();
-
-                    node = new Node()
-                    {
-                        type = declarations[declarationIndex].op,
-                        metadata = GetMetadata(jToken[ConstStrings.METADATA]),
-                        configuration = GetConfiguration(jToken[ConstStrings.CONFIGURATION])
-                    };
-
-                    nodes.Add(node);
-                    nodePairs.Add(new NodePair()
-                    {
-                        node = node,
-                        jToken = jToken
-                    });
-                }
-
-                foreach (var nodePair in nodePairs)
-                {
-                    nodePair.node.values = GetValues(nodePair.jToken[ConstStrings.VALUES], nodes, types);
-                    nodePair.node.flows = GetFlows(nodePair.node, nodePair.jToken[ConstStrings.FLOWS], nodes);
-                }
+                    type = declaration.op,
+                    declaration = declaration,
+                    metadata = GetMetadata(jNode),
+                    configuration = GetConfiguration(GraphJson.OptionalObject(jNode, ConstStrings.CONFIGURATION, context), context)
+                });
             }
-            finally
+
+            // Values and flows refer to other nodes so they're resolved once every node exists.
+            for (int i = 0; i < jNodes.Count; i++)
             {
-                ListPool<NodePair>.Release(nodePairs);
+                var context = $"nodes[{i}]";
+                nodes[i].values = GetValues(GraphJson.OptionalObject(jNodes[i], ConstStrings.VALUES, context), nodes, i, types, context);
+                nodes[i].flows = GetFlows(nodes[i], GraphJson.OptionalObject(jNodes[i], ConstStrings.FLOWS, context), nodes, i, context);
             }
 
             return nodes;
         }
 
-        private static List<Flow> GetFlows(Node fromNode, JToken jToken, List<Node> nodes)
+        private static List<Flow> GetFlows(Node fromNode, JObject jFlows, List<Node> nodes, int nodeIndex, string context)
         {
-            var count = jToken.Count();
-            var flows = new List<Flow>(count);
-            var jFlows = jToken as JObject;
+            var flows = new List<Flow>();
+
+            if (jFlows == null)
+                return flows;
 
             foreach (var v in jFlows)
             {
-                var jToNode = v.Value[ConstStrings.NODE];
-                var jToSocket = v.Value[ConstStrings.SOCKET];
+                var flowContext = $"{context}.flows.{v.Key}";
+                GraphJson.AsObject(v.Value, flowContext);
 
-                // Ignore this flow if it's empty/not connected.
-                if (jToNode == null || jToSocket == null)
-                    continue;
+                var targetIndex = GraphJson.RequiredIndex(v.Value, ConstStrings.NODE, nodes.Count, flowContext);
 
-                var fromSocket = v.Key;
-                var toNode = nodes[v.Value[ConstStrings.NODE].Value<int>()];
-                var toSocket = v.Value[ConstStrings.SOCKET].Value<string>();
+                // Output flows may only point forward, which guarantees flow sockets do not form loops.
+                if (targetIndex <= nodeIndex)
+                    GraphJson.Reject($"{flowContext}: node {targetIndex} must be greater than the current node index {nodeIndex}.");
 
-                flows.Add(new Flow(
-                    fromNode,
-                    fromSocket,
-                    toNode,
-                    toSocket));
+                var toSocket = GraphJson.OptionalString(v.Value, ConstStrings.SOCKET, flowContext) ?? ConstStrings.IN;
+
+                flows.Add(new Flow(fromNode, v.Key, nodes[targetIndex], toSocket));
             }
 
             return flows;
         }
 
-        private static List<Value> GetValues(JToken jToken, List<Node> nodes, List<Type> types)
+        private static List<Value> GetValues(JObject jValues, List<Node> nodes, int nodeIndex, List<Type> types, string context)
         {
-            var count = jToken.Count();
-            var values = new List<Value>(count);
-            var jValues = jToken as JObject;
+            var values = new List<Value>();
+
+            if (jValues == null)
+                return values;
 
             foreach (var kvp in jValues)
             {
-                var jType = kvp.Value[ConstStrings.TYPE];
-                var jNode = kvp.Value[ConstStrings.NODE];
-                var jSocket = kvp.Value[ConstStrings.SOCKET];
-                var jValue = kvp.Value[ConstStrings.VALUE];
+                var valueContext = $"{context}.values.{kvp.Key}";
+                var jSocket = GraphJson.AsObject(kvp.Value, valueContext);
 
-                int type = Constants.INVALID_TYPE_INDEX;
-                Node node = null;
-                var socket = Constants.EMPTY_SOCKET_STRING;
-                IProperty value = null;
+                var jNode = jSocket[ConstStrings.NODE];
+                var jValue = jSocket[ConstStrings.VALUE];
+                var jType = jSocket[ConstStrings.TYPE];
+
+                if (jNode != null && jValue != null)
+                    GraphJson.Reject($"{valueContext}: \"node\" and \"value\" cannot both be defined.");
+
+                Type declaredType = null;
 
                 if (jType != null)
-                {
-                    type = jType.Value<int>();
-
-                    Assert.IsNotNull(jValue);
-
-                    value = Helpers.CreateProperty(types[type], jValue as JArray);
-                }
+                    declaredType = types[GraphJson.Index(jType, types.Count, $"{valueContext}: \"type\"")];
 
                 if (jNode != null)
-                    node = nodes[jNode.Value<int>()];
+                {
+                    // Value references may only point backward, which guarantees value sockets do not form loops.
+                    var sourceIndex = GraphJson.Index(jNode, nodeIndex, $"{valueContext}: \"node\"");
 
-                if (jSocket != null)
-                    socket = jSocket.Value<string>();
+                    values.Add(new Value()
+                    {
+                        id = kvp.Key,
+                        node = nodes[sourceIndex],
+                        socket = GraphJson.OptionalString(jSocket, ConstStrings.SOCKET, valueContext) ?? ConstStrings.VALUE,
+                        declaredType = declaredType
+                    });
 
+                    continue;
+                }
+
+                if (declaredType == null)
+                    GraphJson.Reject($"{valueContext}: \"type\" is required for inline and type-default values.");
+
+                // A missing "value" array means the type-default value.
                 values.Add(new Value()
                 {
                     id = kvp.Key,
-                    property = value,
-                    node = node,
-                    socket = socket
+                    property = GraphJson.ParseValue(declaredType, GraphJson.OptionalValueArray(jSocket, valueContext), valueContext),
+                    declaredType = declaredType
                 });
-
-                Util.Log($"Created property {kvp.Key} connected to node {node?.type} and socket {socket} with type {type}");
             }
 
             return values;
         }
 
-        private static List<Configuration> GetConfiguration(JToken jToken)
+        private static List<Configuration> GetConfiguration(JObject jConfiguration, string context)
         {
-            var jConfiguration = jToken as JObject;
+            var configuration = new List<Configuration>();
 
-            var count = jConfiguration.Count;
-            var configuration = new List<Configuration>(count);
+            if (jConfiguration == null)
+                return configuration;
 
             foreach (var v in jConfiguration)
             {
-                var parsedSuccessfully = TryGetPropertyFromConfigEntry(v.Key, v.Value[ConstStrings.VALUE] as JArray, out IProperty property);
+                var raw = (v.Value as JObject)?[ConstStrings.VALUE] as JArray;
+                var parsedSuccessfully = TryGetPropertyFromConfigEntry(v.Key, raw, out IProperty property);
+
+                if (!parsedSuccessfully)
+                    Util.LogWarning($"{context}: configuration \"{v.Key}\" is missing, unknown or invalid.");
+
                 configuration.Add(new Configuration()
                 {
                     id = v.Key,
                     property = property,
-                    parsedSuccessfully = parsedSuccessfully
+                    parsedSuccessfully = parsedSuccessfully,
+                    raw = raw
                 });
             }
 
             return configuration;
         }
 
-        private static Metadata GetMetadata(JToken jToken)
+        private static Metadata GetMetadata(JToken jNode)
         {
+            // Older exports wrote a top-level "metadata" object; newer ones keep it in "extras".
+            var jToken = jNode[ConstStrings.METADATA] ?? jNode["extras"]?[ConstStrings.METADATA];
+
             if (jToken == null)
                 return new Metadata();
 
             return new Metadata()
             {
-                positionX = double.Parse(jToken["positionX"].Value<string>()),
-                positionY = double.Parse(jToken["positionY"].Value<string>()),
+                positionX = ReadDouble(jToken["positionX"]),
+                positionY = ReadDouble(jToken["positionY"]),
             };
+
+            static double ReadDouble(JToken t)
+            {
+                if (t == null)
+                    return 0;
+
+                if (t.Type == JTokenType.String)
+                    return double.TryParse(t.Value<string>(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0;
+
+                return t.Type == JTokenType.Float || t.Type == JTokenType.Integer ? t.Value<double>() : 0;
+            }
         }
 
+        /// <summary>
+        /// Configuration values are implicitly typed by the operation; the type is looked up by property name.
+        /// Returns false when the property is unknown or its value does not match the expected configuration type.
+        /// </summary>
         private static bool TryGetPropertyFromConfigEntry(string id, JArray value, out IProperty property)
         {
-            try
-            {
-                property = id switch
-                {
-                    ConstStrings.POINTER => Helpers.CreateProperty(typeof(string), value),
-                    ConstStrings.MESSAGE => Helpers.CreateProperty(typeof(string), value),
-                    ConstStrings.VARIABLE => Helpers.CreateProperty(typeof(int), value),
-                    ConstStrings.USE_SLERP => Helpers.CreateProperty(typeof(bool), value),
-                    ConstStrings.IS_LOOP => Helpers.CreateProperty(typeof(bool), value),
-                    ConstStrings.IS_RANDOM => Helpers.CreateProperty(typeof(bool), value),
-                    ConstStrings.STOP_PROPAGATION => Helpers.CreateProperty(typeof(bool), value),
-                    ConstStrings.CASES => Helpers.CreateProperty(typeof(int[]), value),
-                    ConstStrings.VARIABLES => Helpers.CreateProperty(typeof(int[]), value),
-                    ConstStrings.INPUT_FLOWS => Helpers.CreateProperty(typeof(int), value),
-                    ConstStrings.INITIAL_INDEX => Helpers.CreateProperty(typeof(int), value),
-                    ConstStrings.TYPE => Helpers.CreateProperty(typeof(int), value),
-                    ConstStrings.NODE_INDEX => Helpers.CreateProperty(typeof(int), value),
-                    ConstStrings.EVENT => Helpers.CreateProperty(typeof(int), value),
-                    ConstStrings.SEVERITY => Helpers.CreateProperty(typeof(int), value),
-                    _ => throw new InvalidOperationException($"Config {id} is not supported!"),
-                };
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning(ex.Message);
-                property = default;
+            property = null;
+
+            if (value == null)
                 return false;
+
+            var type = GetConfigurationType(id);
+
+            if (type == null)
+                return false;
+
+            if (type == typeof(int))
+            {
+                if (value.Count != 1 || !Helpers.IsExactInt32(value[0]))
+                    return false;
+
+                property = new Property<int>((int)value[0].Value<double>());
+                return true;
             }
 
+            if (type == typeof(int[]))
+            {
+                if (value.Count < 1)
+                    return false;
+
+                var arr = new int[value.Count];
+
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    if (!Helpers.IsExactInt32(value[i]))
+                        return false;
+
+                    arr[i] = (int)value[i].Value<double>();
+                }
+
+                property = new Property<int[]>(arr);
+                return true;
+            }
+
+            if (type == typeof(bool))
+            {
+                if (value.Count != 1 || value[0].Type != JTokenType.Boolean)
+                    return false;
+
+                property = new Property<bool>(value[0].Value<bool>());
+                return true;
+            }
+
+            if (value.Count != 1 || value[0].Type != JTokenType.String)
+                return false;
+
+            property = new Property<string>(value[0].Value<string>());
             return true;
+        }
+
+        /// <summary>Configuration type for each configuration property name used by supported operations.</summary>
+        public static Type GetConfigurationType(string id)
+        {
+            return id switch
+            {
+                ConstStrings.POINTER => typeof(string),
+                ConstStrings.MESSAGE => typeof(string),
+                ConstStrings.ORDER => typeof(string),
+                ConstStrings.VARIABLE => typeof(int),
+                ConstStrings.TYPE => typeof(int),
+                ConstStrings.EVENT => typeof(int),
+                ConstStrings.SEVERITY => typeof(int),
+                ConstStrings.INPUT_FLOWS => typeof(int),
+                ConstStrings.INITIAL_INDEX => typeof(int),
+                ConstStrings.NODE_INDEX => typeof(int),
+                ConstStrings.CASES => typeof(int[]),
+                ConstStrings.VARIABLES => typeof(int[]),
+                ConstStrings.USE_SLERP => typeof(bool),
+                ConstStrings.IS_LOOP => typeof(bool),
+                ConstStrings.IS_RANDOM => typeof(bool),
+                ConstStrings.STOP_PROPAGATION => typeof(bool),
+                _ => null,
+            };
         }
     }
 }

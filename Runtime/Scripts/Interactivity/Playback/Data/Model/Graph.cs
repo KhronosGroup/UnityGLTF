@@ -14,6 +14,16 @@ namespace UnityGLTF.Interactivity.Playback
         public List<InteractivityType> types { get; set; } = new();
         public List<Declaration> declarations { get; set; } = new();
 
+        /// <summary>False when the graph was rejected during deserialization or validation.</summary>
+        public bool isValid { get; set; } = true;
+        public List<string> errors { get; set; } = new();
+
+        public void Reject(string error)
+        {
+            isValid = false;
+            errors.Add(error);
+        }
+
         public event Action<Node> onNodeAdded;
         public event Action<Variable> onVariableAdded;
         public event Action<Customevent> onEventAdded;
@@ -144,6 +154,7 @@ namespace UnityGLTF.Interactivity.Playback
                 typeof(float2x2),
                 typeof(float3x3),
                 typeof(float4x4),
+                typeof(Ref),
             };
 
 
@@ -158,6 +169,7 @@ namespace UnityGLTF.Interactivity.Playback
                 new InteractivityType() { signature = "float2x2" },
                 new InteractivityType() { signature = "float3x3" },
                 new InteractivityType() { signature = "float4x4" },
+                new InteractivityType() { signature = "ref" },
             };
         }
 

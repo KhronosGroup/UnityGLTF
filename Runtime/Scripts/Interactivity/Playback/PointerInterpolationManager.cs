@@ -7,21 +7,28 @@ using UnityGLTF.Interactivity.Playback.Extensions;
 
 namespace UnityGLTF.Interactivity.Playback
 {
+    /// <summary>One entry of the spec's "pointer interpolation state dynamic array".</summary>
     public struct PointerInterpolateData
     {
+        /// <summary>The effective JSON pointer; entries are unique per pointer.</summary>
+        public string pointerKey;
         public IPointer pointer;
-        public float startTime;
-        public float duration;
+        public double startTime;
+        public double duration;
         public IProperty endValue;
         public float2 cp1;
         public float2 cp2;
         public Action done;
         public IInterpolator interpolator;
+        internal int id;
     }
 
-    public interface IInterpolator 
+    public interface IInterpolator
     {
-        public bool Interpolate(float t);
+        /// <summary>Applies the value at eased progress <paramref name="q"/>, which may be outside [0, 1].</summary>
+        public void Interpolate(float q);
+        /// <summary>Sets the exact target value.</summary>
+        public void Finish();
     }
 
     public class InterpolatorException : Exception
@@ -40,61 +47,64 @@ namespace UnityGLTF.Interactivity.Playback
             public T from;
             public T to;
 
-            public bool Interpolate(float t)
-            {
-                var end = t >= 1f;
-
-                t = end ? 1f : t;
-
-                setter(evaluator(from, to, t));
-
-                return end;
-            }
+            public void Interpolate(float q) => setter(evaluator(from, to, q));
+            public void Finish() => setter(to);
         }
 
-        private Dictionary<IPointer, PointerInterpolateData> _interpolationsInProgress = new();
+        private readonly Dictionary<string, PointerInterpolateData> _interpolationsInProgress = new();
+        private int _nextId;
 
-        public void OnTick()
+        public int activeInterpolationCount => _interpolationsInProgress.Count;
+
+        public void OnTick(double now)
         {
-            // Avoiding iterating over a changing collection by grabbing a pooled dictionary.
-            var temp = DictionaryPool<IPointer, PointerInterpolateData>.Get();
+            // Snapshot first: done flows may start or stop other interpolations.
+            var temp = ListPool<PointerInterpolateData>.Get();
             try
             {
                 foreach (var interp in _interpolationsInProgress)
                 {
-                    temp.Add(interp.Key, interp.Value);
+                    temp.Add(interp.Value);
                 }
 
-                foreach (var anim in temp)
+                foreach (var data in temp)
                 {
-                    DoInterpolate(anim.Value);
+                    if (!_interpolationsInProgress.TryGetValue(data.pointerKey, out var current) || current.id != data.id)
+                        continue;
+
+                    DoInterpolate(current, now);
                 }
             }
             finally
             {
-                DictionaryPool<IPointer, PointerInterpolateData>.Release(temp);
+                ListPool<PointerInterpolateData>.Release(temp);
             }
         }
 
-        private void DoInterpolate(PointerInterpolateData data)
+        private void DoInterpolate(PointerInterpolateData data, double now)
         {
-            var t = (Time.time - data.startTime) / data.duration;
+            var t = (now - data.startTime) / data.duration;
 
-            var finished = data.interpolator.Interpolate(t);
+            if (t <= 0)
+                return;
 
-            if (finished)
+            if (double.IsNaN(t) || t >= 1)
             {
-                Util.Log($"Finished interpolating.");
-
-                _interpolationsInProgress.Remove(data.pointer);
-                data.done();
+                data.interpolator.Finish();
+                _interpolationsInProgress.Remove(data.pointerKey);
+                data.done?.Invoke();
+                return;
             }
+
+            data.interpolator.Interpolate(Helpers.Ease((float)t, data.cp1, data.cp2));
         }
 
+        /// <summary>
+        /// Adds an entry for the pointer, replacing any entry with the same effective pointer.
+        /// Throws <see cref="InterpolatorException"/> when the value type does not match the pointer.
+        /// </summary>
         public void StartInterpolation(ref PointerInterpolateData data)
         {
-            _interpolationsInProgress.Remove(data.pointer); // Stop any in-progress interpolations for this pointer.
-
             var interpolator = data.endValue switch
             {
                 Property<float> property => GetInterpolator(property, data),
@@ -109,15 +119,17 @@ namespace UnityGLTF.Interactivity.Playback
             };
 
             data.interpolator = interpolator;
+            data.id = _nextId++;
 
-            _interpolationsInProgress.Add(data.pointer, data);
+            _interpolationsInProgress.Remove(data.pointerKey);
+            _interpolationsInProgress.Add(data.pointerKey, data);
 
             Util.Log($"Starting Interpolation: Start Time {data.startTime}, Duration: {data.duration}");
         }
 
-        public bool StopInterpolation(IPointer pointer)
+        public bool StopInterpolation(string pointerKey)
         {
-            return _interpolationsInProgress.Remove(pointer); // Stop any in-progress interpolations for this pointer.
+            return pointerKey != null && _interpolationsInProgress.Remove(pointerKey);
         }
 
         private IInterpolator Processfloat3(Property<float3> property, PointerInterpolateData data)
@@ -125,9 +137,7 @@ namespace UnityGLTF.Interactivity.Playback
             return data.pointer switch
             {
                 Pointer<float3> => GetInterpolator(property, data),
-                Pointer<Color> => GetInterpolator(new Property<Color>(property.value.ToColor()), data),
                 Pointer<Color3> => GetInterpolator(new Property<Color3>(property.value.ToColor()), data),
-                Pointer<quaternion> => GetInterpolator(new Property<quaternion>(quaternion.Euler(property.value)), data),
 
                 _ => throw new InterpolatorException($"Pointer type {data.pointer.GetSystemType()} is not supported for this float3 property."),
             };
@@ -139,6 +149,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 Pointer<float4> => GetInterpolator(property, data),
                 Pointer<Color> => GetInterpolator(new Property<Color>(property.value.ToColor()), data),
+                // Quaternion pointers use their slerp evaluator, as the spec requires for rotations.
                 Pointer<quaternion> => GetInterpolator(new Property<quaternion>(property.value.ToQuaternion()), data),
 
                 _ => throw new InterpolatorException($"Pointer type {data.pointer.GetSystemType()} is not supported for this float4 property."),
@@ -147,20 +158,16 @@ namespace UnityGLTF.Interactivity.Playback
 
         private IInterpolator GetInterpolator<T>(Property<T> property, in PointerInterpolateData data)
         {
-            var p = (Pointer<T>)data.pointer;
-            var cp1 = data.cp1;
-            var cp2 = data.cp2;
-            var evaluator = new Func<T, T, float, T>((a, b, t) => p.evaluator(a, b, Helpers.CubicBezier(t, cp1, cp2).y));
+            if (data.pointer is not Pointer<T> p || p.evaluator == null)
+                throw new InterpolatorException($"Pointer type {data.pointer.GetSystemType()} cannot be interpolated to {typeof(T)}.");
 
-            var interpolator = new Interpolator<T>()
+            return new Interpolator<T>()
             {
                 setter = p.setter,
-                evaluator = evaluator,
+                evaluator = p.evaluator,
                 from = p.getter(),
                 to = property.value
             };
-
-            return interpolator;
         }
     }
 }

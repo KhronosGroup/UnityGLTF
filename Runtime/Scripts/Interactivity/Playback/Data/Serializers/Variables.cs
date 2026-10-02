@@ -8,27 +8,28 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public static void WriteJson(JsonWriter writer, List<Variable> variables, Dictionary<Type, int> typeIndexByType)
         {
-            writer.WritePropertyName("variables");
+            if (variables.Count == 0)
+                return;
+
+            writer.WritePropertyName(ConstStrings.VARIABLES);
             writer.WriteStartArray();
 
             for (int i = 0; i < variables.Count; i++)
             {
-                WriteVariable(writer, variables[i], typeIndexByType);
+                writer.WriteStartObject();
+
+                if (!string.IsNullOrEmpty(variables[i].id))
+                {
+                    writer.WritePropertyName(ConstStrings.NAME);
+                    writer.WriteValue(variables[i].id);
+                }
+
+                LiteralSerializer.WriteTypedValueOrDefault(writer, variables[i].initialValue, typeIndexByType, $"variables[{i}]");
+
+                writer.WriteEndObject();
             }
 
             writer.WriteEndArray();
-        }
-
-        private static void WriteVariable(JsonWriter writer, Variable variable, Dictionary<Type, int> typeIndexByType)
-        {
-            writer.WriteStartObject();
-
-            writer.WritePropertyName(ConstStrings.ID);
-            writer.WriteValue(variable.id);
-
-            NodesSerializer.WriteValueLiteral(writer, variable.initialValue, typeIndexByType);
-
-            writer.WriteEndObject();
         }
     }
 }

@@ -275,5 +275,67 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             return g;
         }
+
+        [Test]
+        public void MultiGate_IsRandom_EachOutputActivatesOnceThenStops()
+        {
+            QueueTest("flow/multiGate", GetCallerName(), "MultiGate IsRandom", "Activates a random, non-looping multiGate with 5 outputs 8 times. Test fails if any output activates more or less than once.", CreateMultiGateRandomGraph(5, 8));
+        }
+
+        [Test]
+        public void MultiGate_NoOutputs_InFlowDoesNothing()
+        {
+            QueueTest("flow/multiGate", GetCallerName(), "MultiGate No Outputs", "Activates a multiGate with no output flows. Test fails if lastIndex is not -1 afterwards.", CreateMultiGateNoOutputsGraph());
+        }
+
+        private static Graph CreateMultiGateRandomGraph(int outputs, int activations)
+        {
+            var g = CreateGraphForTest();
+            var bitmaskVar = g.IndexOfVariable(g.AddVariable("bitmask", 0));
+
+            var start = g.CreateNode("event/onStart");
+            var loop = g.CreateNode("flow/for");
+            loop.AddValue(ConstStrings.START_INDEX, 0);
+            loop.AddValue(ConstStrings.END_INDEX, activations);
+            start.AddFlow(loop);
+
+            var multiGate = g.CreateNode("flow/multiGate");
+            multiGate.AddConfiguration(ConstStrings.IS_RANDOM, true);
+            multiGate.AddConfiguration(ConstStrings.IS_LOOP, false);
+            loop.AddFlow(multiGate, ConstStrings.LOOP_BODY);
+
+            // Each output adds its own bit; an output running twice would carry into another bit.
+            for (int i = 0; i < outputs; i++)
+            {
+                multiGate.AddFlow(CreateIncrement(g, bitmaskVar, 1 << i), ConstStrings.GetNumberString(i));
+            }
+
+            var expected = (1 << outputs) - 1;
+            var check = CreateAssertTrue(g, CreateEquals(g, CreateVariableGet(g, bitmaskVar), ConstStrings.VALUE, expected), $"Expected every output to run exactly once (bitmask {expected}).");
+            loop.AddFlow(check, ConstStrings.COMPLETED);
+            check.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
+
+        private static Graph CreateMultiGateNoOutputsGraph()
+        {
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var sequence = g.CreateNode("flow/sequence");
+            start.AddFlow(sequence);
+
+            var multiGate = g.CreateNode("flow/multiGate");
+            multiGate.AddConfiguration(ConstStrings.IS_RANDOM, false);
+            multiGate.AddConfiguration(ConstStrings.IS_LOOP, true);
+            sequence.AddFlow(multiGate, "0");
+
+            var check = CreateAssertTrue(g, CreateEquals(g, multiGate, ConstStrings.LAST_INDEX, -1), "lastIndex should stay -1 when there are no output flows.");
+            sequence.AddFlow(check, "1");
+            check.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
     }
 }

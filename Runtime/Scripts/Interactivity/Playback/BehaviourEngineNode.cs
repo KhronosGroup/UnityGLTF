@@ -56,6 +56,29 @@ namespace UnityGLTF.Interactivity.Playback
 
         protected virtual void Execute(string socket, ValidationResult validationResult) { }
         public virtual IProperty GetOutputValue(string socket) => null;
+
+        private readonly Dictionary<string, IProperty> _retainedOutputs = new();
+        private int _retainedEpoch = -1;
+
+        /// <summary>
+        /// Output values retained until a node with flow sockets executes (engine flow epoch changes).
+        /// Nodes compute values on first access per epoch; repeated reads return the same value.
+        /// </summary>
+        public IProperty GetRetainedOutputValue(string socket)
+        {
+            if (_retainedEpoch != engine.flowEpoch)
+            {
+                _retainedOutputs.Clear();
+                _retainedEpoch = engine.flowEpoch;
+            }
+
+            if (_retainedOutputs.TryGetValue(socket, out var value))
+                return value;
+
+            value = GetOutputValue(socket);
+            _retainedOutputs[socket] = value;
+            return value;
+        }
         public virtual bool ValidateConfiguration(string socket) => true;
         public virtual bool ValidateFlows(string socket) => true;
         public virtual bool ValidateValues(string socket) => true;
@@ -101,19 +124,12 @@ namespace UnityGLTF.Interactivity.Playback
 
         public bool TryGetConfig<T>(string id, out T value)
         {
-            if (configuration.TryGetValue(id, out var config))
+            // Graphs built in code may set a property without going through JSON parsing,
+            // so a non-null property of the right type is accepted even if parsedSuccessfully is false.
+            if (configuration.TryGetValue(id, out var config) && config.property is Property<T> typed)
             {
-                try
-                {
-                    value = ((Property<T>)config.property).value;
-                    return true;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                    value = default;
-                    return false;
-                }
+                value = typed.value;
+                return true;
             }
 
             value = default;

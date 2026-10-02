@@ -117,5 +117,34 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             return g;
         }
+
+        [Test]
+        public void WaitAll_InvalidInputFlows_UsesDefaultConfiguration()
+        {
+            QueueTest("flow/waitAll", "WaitAll_InputFlowsAbove64", "WaitAll inputFlows Above 64", "inputFlows is 65, so the default configuration (no input flows) is used. Test fails if remainingInputs is not 0 or an output flow activates when input 0 is activated.", CreateWaitAllInvalidConfigurationGraph(65));
+            QueueTest("flow/waitAll", "WaitAll_InputFlowsNegative", "WaitAll inputFlows Negative", "inputFlows is -1, so the default configuration (no input flows) is used. Test fails if remainingInputs is not 0 or an output flow activates when input 0 is activated.", CreateWaitAllInvalidConfigurationGraph(-1));
+        }
+
+        private static Graph CreateWaitAllInvalidConfigurationGraph(int inputFlows)
+        {
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var sequence = g.CreateNode("flow/sequence");
+            start.AddFlow(sequence);
+
+            var waitAll = g.CreateNode("flow/waitAll");
+            waitAll.AddConfiguration(ConstStrings.INPUT_FLOWS, inputFlows);
+            waitAll.AddFlow(CreateFailSubGraph(g, "The out flow activated although the default configuration has no input flows."), ConstStrings.OUT);
+            waitAll.AddFlow(CreateFailSubGraph(g, "The completed flow activated although the default configuration has no input flows."), ConstStrings.COMPLETED);
+
+            sequence.AddFlow(waitAll, "0", "0");
+
+            var check = CreateAssertTrue(g, CreateEquals(g, waitAll, ConstStrings.REMAINING_INPUTS, 0), "remainingInputs should be 0 in the default configuration.");
+            sequence.AddFlow(check, "1");
+            check.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
     }
 }

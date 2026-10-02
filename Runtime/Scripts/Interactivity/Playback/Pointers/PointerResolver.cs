@@ -76,9 +76,50 @@ namespace UnityGLTF.Interactivity.Playback
                 materialCount = (root.Materials == null) ? 0 : root.Materials.Count,
                 meshCount = (root.Meshes == null) ? 0 : root.Meshes.Count,
                 nodeCount = (root.Nodes == null) ? 0 : root.Nodes.Count,
-                sceneCount = (root.Scenes == null) ? 0 : root.Scenes.Count
+                sceneCount = (root.Scenes == null) ? 0 : root.Scenes.Count,
+                skinCount = root.Skins?.Count ?? 0,
+                textureCount = root.Textures?.Count ?? 0,
+                imageCount = root.Images?.Count ?? 0,
+                samplerCount = root.Samplers?.Count ?? 0,
+                accessorCount = root.Accessors?.Count ?? 0,
+                bufferViewCount = root.BufferViews?.Count ?? 0,
+                bufferCount = root.Buffers?.Count ?? 0,
+                assetVersion = root.Asset?.Version,
+                extensionsUsed = root.ExtensionsUsed != null ? new List<string>(root.ExtensionsUsed) : new List<string>(),
             };
         }
+
+        /// <summary>
+        /// Whether a static glTF reference such as "/animations/1" addresses an object in the asset.
+        /// Non-glTF references (delays, events) are runtime objects and are not checked here.
+        /// </summary>
+        public bool RefExists(Ref r)
+        {
+            if (r.kind != RefKind.Gltf)
+                return !r.isNull;
+
+            var count = r.collection switch
+            {
+                "/animations" => Math.Max(_sceneData.animationCount, _animationPointers.Count),
+                "/cameras" => Math.Max(_sceneData.cameraCount, _cameras.Count),
+                "/materials" => Math.Max(_sceneData.materialCount, _materials.Count),
+                "/meshes" => Math.Max(_sceneData.meshCount, _meshes.Count),
+                "/nodes" => Math.Max(_sceneData.nodeCount, _nodes.Count),
+                "/scenes" => _sceneData.sceneCount,
+                "/skins" => _sceneData.skinCount,
+                "/textures" => _sceneData.textureCount,
+                "/images" => _sceneData.imageCount,
+                "/samplers" => _sceneData.samplerCount,
+                "/accessors" => _sceneData.accessorCount,
+                "/bufferViews" => _sceneData.bufferViewCount,
+                "/buffers" => _sceneData.bufferCount,
+                _ => 0,
+            };
+
+            return r.id >= 0 && r.id < count;
+        }
+
+        public SceneData sceneData => _sceneData;
 
         public void CreatePointers()
         {
@@ -168,9 +209,16 @@ namespace UnityGLTF.Interactivity.Playback
             return -1;
         }
 
+        /// <summary>
+        /// Resolves an effective (fully substituted) JSON pointer. Template parameters are substituted beforehand
+        /// by <see cref="PointerTemplate.TryGenerate"/>, so every path segment here is a literal or a plain index.
+        /// </summary>
         public IPointer GetPointer(string pointerString, BehaviourEngineNode engineNode)
         {
             Util.Log($"Getting pointer: {pointerString}");
+
+            if (string.IsNullOrEmpty(pointerString) || pointerString[0] != '/')
+                return PointerHelpers.InvalidPointer();
 
             var reader = new StringSpanReader(pointerString);
 
@@ -180,10 +228,10 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 var a when a.Is("nodes") => NodePointers.ProcessNodePointer(reader, engineNode, _nodePointers),
                 var a when a.Is("materials") => MaterialPointers.ProcessMaterialPointer(reader, engineNode, _materialPointers),
-                var a when a.Is("activeCamera") => _activeCameraPointers.ProcessActiveCameraPointer(reader),
                 var a when a.Is("cameras") => CameraPointers.ProcessCameraPointer(reader, engineNode, _cameraPointers),
                 var a when a.Is("meshes") => MeshPointers.ProcessPointer(reader, engineNode, _meshPointers),
                 var a when a.Is("animations") => AnimationPointers.ProcessPointer(reader, engineNode, _animationPointers),
+                var a when a.Is(Pointers.EXTENSIONS) => InteractivityExtensionPointers.Process(reader, engineNode?.engine, _activeCameraPointers, _sceneData),
                 var a when a.Is(Pointers.ANIMATIONS_LENGTH) => _scenePointers.animationsLength,
                 var a when a.Is(Pointers.MATERIALS_LENGTH) => _scenePointers.materialsLength,
                 var a when a.Is(Pointers.MESHES_LENGTH) => _scenePointers.meshesLength,
@@ -192,37 +240,19 @@ namespace UnityGLTF.Interactivity.Playback
             };
         }
 
+        /// <summary>Parses the current path segment as a canonical, non-negative array index.</summary>
         public static int GetIndexFromArgument(StringSpanReader reader, BehaviourEngineNode engineNode)
         {
-            int nodeIndex;
+            if (!Ref.TryParseCanonicalIndex(reader.AsReadOnlySpan(), out var index))
+                throw new FormatException($"\"{reader.ToString()}\" is not an array index.");
 
-            if (reader[0] == '{')
-            {
-                reader.Slice('{', '}');
-                // Can't access the values dictionary with a Span, prevents this from being 0 allocation.
-                var property = (Property<int>)engineNode.engine.ParseValue(engineNode.values[reader.ToString()]);
-                nodeIndex = property.value;
-            }
-            else
-            {
-                nodeIndex = int.Parse(reader.AsReadOnlySpan());
-            }
-
-            return nodeIndex;
+            return index;
         }
 
         public static bool TryGetIndexFromArgument<T>(StringSpanReader reader, BehaviourEngineNode engineNode, IReadOnlyList<T> list, out int index)
         {
-            index = -1;
-            try
-            {
-                index = GetIndexFromArgument(reader, engineNode);
-            }
-            catch
-            {
-                Debug.LogWarning("Could not resolve index parameter in this pointer.");
+            if (!Ref.TryParseCanonicalIndex(reader.AsReadOnlySpan(), out index))
                 return false;
-            }
 
             return index >= 0 && index < list.Count;
         }

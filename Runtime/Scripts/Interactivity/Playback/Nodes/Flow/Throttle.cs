@@ -5,8 +5,8 @@ namespace UnityGLTF.Interactivity.Playback
     public class FlowThrottle : BehaviourEngineNode
     {
         private float _duration;
-        private float _timestamp;
-        private float _elapsed;
+        private double _timestamp;
+        private double _elapsed;
         private float _lastRemainingTime = float.NaN;
 
         public FlowThrottle(BehaviourEngine engine, Node node) : base(engine, node)
@@ -35,7 +35,7 @@ namespace UnityGLTF.Interactivity.Playback
                 return;
             }
 
-            _elapsed = Time.time - _timestamp;
+            _elapsed = engine.time - _timestamp;
 
             if (_duration <= _elapsed)
             {
@@ -43,12 +43,12 @@ namespace UnityGLTF.Interactivity.Playback
                 return;
             }
             
-            _lastRemainingTime = _duration - _elapsed;
+            _lastRemainingTime = (float)(_duration - _elapsed);
         }
 
         private void ExecuteOutFlow()
         {
-            _timestamp = Time.time;
+            _timestamp = engine.time;
             _lastRemainingTime = 0;
             TryExecuteFlow(ConstStrings.OUT);
         }

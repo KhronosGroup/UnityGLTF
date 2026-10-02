@@ -15,7 +15,7 @@ namespace UnityGLTF.Interactivity.Playback
 
             var values = new NodeValue[]
             {
-                new NodeValue(ConstStrings.ANIMATION, "Animation index.", new Type[]  { typeof(int) }),
+                new NodeValue(ConstStrings.ANIMATION, "Animation reference.", new Type[]  { typeof(Ref) }),
             };
 
             return (flows, values);

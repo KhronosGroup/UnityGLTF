@@ -68,8 +68,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         private static bool eq(float a, float b)
         {
-            // IEEE standard used for this spec says that inf==inf so we have to make sure that's true.
-            return Mathf.Approximately(a,b) || (float.IsInfinity(a) && float.IsInfinity(b));
+            // Exact IEEE-754 comparison: NaN is never equal, +0 equals -0, +Inf equals only +Inf.
+            return a == b;
         }
     }
 }

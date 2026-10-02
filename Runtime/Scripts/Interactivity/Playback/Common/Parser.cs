@@ -97,19 +97,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         public static float2x2 ToFloat2x2(JArray jArray)
         {
-            const int MATRIX_SIZE = 4;
-
             if (jArray == null)
-            {
-                var m = new float2x2();
-
-                for (int i = 0; i < MATRIX_SIZE; i++)
-                {
-                    m[i] = float.NaN;
-                }
-
-                return m;
-            }
+                return new float2x2(float.NaN);
 
             // GLTF floatNxN are column-major and Unity.Mathematics floatNxN are ROW-MAJOR so we need to be careful.
             var c0 = new Vector2(v(0), v(1));
@@ -126,20 +115,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         public static float3x3 ToFloat3x3(JArray jArray)
         {
-            const int MATRIX_SIZE = 9;
-
-
             if (jArray == null)
-            {
-                var m = new float3x3();
-
-                for (int i = 0; i < MATRIX_SIZE; i++)
-                {
-                    m[i] = float.NaN;
-                }
-
-                return m;
-            }
+                return new float3x3(float.NaN);
 
             // GLTF floatNxN are column-major and Unity.Mathematics floatNxN are ROW-MAJOR so we need to be careful.
             var c0 = new float3(v(0), v(1), v(2));
@@ -157,19 +134,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         public static float4x4 ToFloat4x4(JArray jArray)
         {
-            const int MATRIX_SIZE = 16;
-
             if (jArray == null)
-            {
-                var m = new float4x4();
-
-                for (int i = 0; i < MATRIX_SIZE; i++)
-                {
-                    m[i] = float.NaN;
-                }
-
-                return m;
-            }
+                return new float4x4(float.NaN);
 
             // Unity Matrix4x4 and GLTF both use Column-Major matrices so we can do a 1:1 transfer.
             // Unity.Mathematics.float4x4 is ROW-MAJOR so we need to be careful.

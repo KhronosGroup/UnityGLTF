@@ -5,7 +5,7 @@ using UnityGLTF.Interactivity.Playback.Extensions;
 
 namespace UnityGLTF.Interactivity.Playback.Tests
 {
-    public class MathNodesTests : NodeTestHelpers
+    public partial class MathNodesTests : NodeTestHelpers
     {
         protected override string _subDirectory => "Math";
 
@@ -309,6 +309,9 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             TestNodeWithAllFloatNxNInputVariants("Div", "Divide", "Tests math/div node with standard values.", "math/div", a, b, expected);
             QueueTest("math/div", "Div_ByZero", "Divide By Zero", "Divides a number by zero.", CreateSelfContainedTestGraph("math/div", In(5f, 0f), Out(float.PositiveInfinity), ComparisonType.IsInfinity));
             QueueTest("math/div", "Div_ByPositiveInfinity", "Divide By Infinity", "Divides a number by infinity.", CreateSelfContainedTestGraph("math/div", In(5f, float.PositiveInfinity), Out(0f), ComparisonType.Equals));
+            QueueTest("math/div", "Div_Int_ByZero", "Divide Int By Zero", "Tests that integer division by zero returns 0.", CreateSelfContainedTestGraph("math/div", In(5, 0), Out(0), ComparisonType.Equals));
+            QueueTest("math/div", "Div_Int_Overflow", "Divide Int Overflow", "Tests that -2147483648 / -1 wraps to -2147483648.", CreateSelfContainedTestGraph("math/div", In(int.MinValue, -1), Out(int.MinValue), ComparisonType.Equals));
+            QueueTest("math/div", "Div_Int_TruncatesTowardZero", "Divide Int Truncates", "Tests that integer division truncates toward zero: -7 / 2 = -3.", CreateSelfContainedTestGraph("math/div", In(-7, 2), Out(-3), ComparisonType.Equals));
         }
 
         [Test]
@@ -335,6 +338,9 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             TestNodeWithAllFloatNxNInputVariants("Rem", "Remainder", "Tests math/rem node with standard values.", "math/rem", a, b, expected);
             QueueTest("math/rem", "Rem_Int_Positive", "Remainder Int Positive", "Tests the remainder operation with an integer.", CreateSelfContainedTestGraph("math/rem", In(5, 4), Out(1), ComparisonType.Equals));
             QueueTest("math/rem", "Rem_Int_Equal", "Remainder Int Equal", "Tests that the remainder of a number divided by itself is 0.", CreateSelfContainedTestGraph("math/rem", In(5, 5), Out(0), ComparisonType.Equals));
+            QueueTest("math/rem", "Rem_Int_ByZero", "Remainder Int By Zero", "Tests that the integer remainder of a division by zero is 0.", CreateSelfContainedTestGraph("math/rem", In(5, 0), Out(0), ComparisonType.Equals));
+            QueueTest("math/rem", "Rem_Int_Overflow", "Remainder Int Overflow", "Tests that -2147483648 % -1 is 0.", CreateSelfContainedTestGraph("math/rem", In(int.MinValue, -1), Out(0), ComparisonType.Equals));
+            QueueTest("math/rem", "Rem_Int_NegativeDividend", "Remainder Int Negative Dividend", "Tests that the remainder takes the sign of the dividend: -7 % 2 = -1.", CreateSelfContainedTestGraph("math/rem", In(-7, 2), Out(-1), ComparisonType.Equals));
         }
 
         [Test]
@@ -487,6 +493,11 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         public void TestEq()
         {
             QueueTest("math/eq", "Eq_X_Comparison_Infinity", "Eq Inf == Inf", "Tests that infinity == infinity in this implementation.", CreateSelfContainedTestGraph("math/eq", In(float.PositiveInfinity, float.PositiveInfinity), Out(true), ComparisonType.Equals));
+            QueueTest("math/eq", "Eq_PositiveNegativeInfinity", "Eq Inf == -Inf", "Tests that positive infinity is not equal to negative infinity.", CreateSelfContainedTestGraph("math/eq", In(float.PositiveInfinity, float.NegativeInfinity), Out(false), ComparisonType.Equals));
+            QueueTest("math/eq", "Eq_PositiveNegativeZero", "Eq 0 == -0", "Tests that positive zero equals negative zero.", CreateSelfContainedTestGraph("math/eq", In(0f, -0f), Out(true), ComparisonType.Equals));
+            QueueTest("math/eq", "Eq_NaN", "Eq NaN == NaN", "Tests that NaN is not equal to itself.", CreateSelfContainedTestGraph("math/eq", In(float.NaN, float.NaN), Out(false), ComparisonType.Equals));
+            QueueTest("math/eq", "Eq_NaN_Component", "Eq Float3 With NaN Component", "Tests that vectors with a NaN component are not equal.", CreateSelfContainedTestGraph("math/eq", In(new float3(1f, float.NaN, 2f), new float3(1f, float.NaN, 2f)), Out(false), ComparisonType.Equals));
+            QueueTest("math/eq", "Eq_NearlyEqual", "Eq Nearly Equal Floats", "Tests that equality is exact: 1 and the next float above 1 are not equal.", CreateSelfContainedTestGraph("math/eq", In(1f, 1.0000001f), Out(false), ComparisonType.Equals));
 
             var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
             var b = new float4(30.0f, 40.0f, 50.0f, 60.0f);
@@ -855,9 +866,13 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         public void TestNormalize()
         {
             var a = new float4(34.0f, 41.0f, 30.0f, 70.0f);
-            QueueTest("math/normalize", "Normalize_XY", "Normalize float2", "Tests normalize with a float2 input.", CreateSelfContainedTestGraph("math/normalize", In(a.xy), Out(math.normalize(a.xy)), ComparisonType.Equals));
-            QueueTest("math/normalize", "Normalize_XYZ", "Normalize float3", "Tests normalize with a float3 input.", CreateSelfContainedTestGraph("math/normalize", In(a.xyz), Out(math.normalize(a.xyz)), ComparisonType.Equals));
-            QueueTest("math/normalize", "Normalize_XYZW", "Normalize float4", "Tests normalize with a float4 input.", CreateSelfContainedTestGraph("math/normalize", In(a), Out(math.normalize(a)), ComparisonType.Equals));
+            QueueTest("math/normalize", "Normalize_XY", "Normalize float2", "Tests normalize with a float2 input.", CreateSelfContainedTestGraph("math/normalize", In(a.xy), Out(a.xy / math.length(a.xy)), ComparisonType.Equals));
+            QueueTest("math/normalize", "Normalize_XYZ", "Normalize float3", "Tests normalize with a float3 input.", CreateSelfContainedTestGraph("math/normalize", In(a.xyz), Out(a.xyz / math.length(a.xyz)), ComparisonType.Equals));
+            QueueTest("math/normalize", "Normalize_XYZW", "Normalize float4", "Tests normalize with a float4 input.", CreateSelfContainedTestGraph("math/normalize", In(a), Out(a / math.length(a)), ComparisonType.Equals));
+            QueueTest("math/normalize", "Normalize_IsValid", "Normalize isValid", "Tests that isValid is true for a vector with a positive finite length.", CreateSelfContainedTestGraph("math/normalize", In(new float3(3f, 4f, 0f)), Outputs((ConstStrings.VALUE, P(new float3(0.6f, 0.8f, 0f))), (ConstStrings.IS_VALID, P(true))), ComparisonType.Approximately));
+            QueueTest("math/normalize", "Normalize_ZeroVector", "Normalize Zero Vector", "Tests that a zero vector gives isValid = false and a zero vector value.", CreateSelfContainedTestGraph("math/normalize", In(float3.zero), Outputs((ConstStrings.VALUE, P(float3.zero)), (ConstStrings.IS_VALID, P(false))), ComparisonType.Equals));
+            QueueTest("math/normalize", "Normalize_InfiniteLength", "Normalize Infinite Length", "Tests that a vector with an infinite component gives isValid = false and a zero vector value.", CreateSelfContainedTestGraph("math/normalize", In(new float2(float.PositiveInfinity, 1f)), Outputs((ConstStrings.VALUE, P(float2.zero)), (ConstStrings.IS_VALID, P(false))), ComparisonType.Equals));
+            QueueTest("math/normalize", "Normalize_NaN", "Normalize NaN", "Tests that a vector with a NaN component gives isValid = false and a zero vector value.", CreateSelfContainedTestGraph("math/normalize", In(new float4(float.NaN, 1f, 2f, 3f)), Outputs((ConstStrings.VALUE, P(float4.zero)), (ConstStrings.IS_VALID, P(false))), ComparisonType.Equals));
         }
 
         [Test]

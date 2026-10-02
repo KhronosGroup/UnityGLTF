@@ -33,6 +33,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             return id switch
             {
+                ConstStrings.SELECTED_NODE => new Property<Ref>(_selectedNodeIndex >= 0 ? Ref.Gltf("/nodes", _selectedNodeIndex) : Ref.Null),
                 ConstStrings.SELECTED_NODE_INDEX =>  new Property<int>(_selectedNodeIndex),
                 ConstStrings.SELECTION_POINT =>      new Property<float3>(_selectionPoint),
                 ConstStrings.SELECTION_RAY_ORIGIN => new Property<float3>(_selectionRayOrigin),

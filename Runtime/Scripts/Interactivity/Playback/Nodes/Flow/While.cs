@@ -4,8 +4,6 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class FlowWhile : BehaviourEngineNode
     {
-        private bool _condition;
-
         public FlowWhile(BehaviourEngine engine, Node node) : base(engine, node)
         {
         }
@@ -15,18 +13,14 @@ namespace UnityGLTF.Interactivity.Playback
             if (socket != ConstStrings.IN)
                 throw new ArgumentException($"Only condition input socket for this node is \"{ConstStrings.IN}\"");
 
-            while (_condition)
+            while (TryEvaluateValue(ConstStrings.CONDITION, out bool condition) && condition)
             {
                 TryExecuteFlow(ConstStrings.LOOP_BODY);
-                TryEvaluateValue(ConstStrings.CONDITION, out _condition);
+                // Self-activation of "in": retained output values must be recomputed.
+                engine.NotifySelfActivation();
             }
 
             TryExecuteFlow(ConstStrings.COMPLETED);
-        }
-
-        public override bool ValidateValues(string socket)
-        {
-            return TryEvaluateValue(ConstStrings.CONDITION, out _condition);
         }
     }
 }

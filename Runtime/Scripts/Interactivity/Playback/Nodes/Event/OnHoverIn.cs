@@ -39,6 +39,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             return id switch
             {
+                ConstStrings.HOVER_NODE => new Property<Ref>(_hoverNodeIndex >= 0 ? Ref.Gltf("/nodes", _hoverNodeIndex) : Ref.Null),
                 ConstStrings.HOVER_NODE_INDEX => new Property<int>(_hoverNodeIndex),
                 ConstStrings.CONTROLLER_INDEX => new Property<int>(_controllerIndex),
                 _ => throw new InvalidOperationException($"Socket {id} is not valid for this node!"),

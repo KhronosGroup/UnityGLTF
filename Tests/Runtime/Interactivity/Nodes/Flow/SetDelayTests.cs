@@ -33,7 +33,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             const float DURATION = 0.75f;
             const float CANCEL_TIME = 0.5f;
             const float EXTRA_EXECUTION_TIME = 0.15f;
-            QueueTest("flow/cancelDelay", GetCallerName(), "CancelDelay", "Delay is activated and then cancelDelay node activates with delayIndex = lastDelayIndex from the setDelay node after a short delay. Test fails if the setDelay node done output flow triggers during a 1s long test.", CreateCancelDelayGraph(DURATION, CANCEL_TIME, EXTRA_EXECUTION_TIME));
+            QueueTest("flow/cancelDelay", GetCallerName(), "CancelDelay", "Delay is activated and then cancelDelay node activates with delay = lastDelay from the setDelay node after a short delay. Test fails if the setDelay node done output flow triggers during a 1s long test.", CreateCancelDelayGraph(DURATION, CANCEL_TIME, EXTRA_EXECUTION_TIME));
         }
 
         private Graph CreateSetDelayGraph(float duration, float extraExecutionTime)
@@ -178,7 +178,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             branch.AddFlow(timeBranch, ConstStrings.FALSE);
             var set = NodeTestHelpers.CreateVariableSet(g, outVarIndex, true);
 
-            cancelDelay.AddConnectedValue(ConstStrings.DELAY_INDEX, setDelay, ConstStrings.LAST_DELAY_INDEX);
+            cancelDelay.AddConnectedValue(ConstStrings.DELAY, setDelay, ConstStrings.LAST_DELAY);
             cancelDelay.AddFlow(set);
 
             var completedBranch = g.CreateNode("flow/branch");
@@ -228,6 +228,73 @@ namespace UnityGLTF.Interactivity.Playback.Tests
             setDelay.AddFlow(logFailOut);
             setDelay.AddFlow(logFailDone, ConstStrings.DONE);
             return setDelay;
+        }
+
+        [Test]
+        public void SetDelay_LastDelay_NullBeforeActivationAndAfterCancel()
+        {
+            QueueTest("flow/setDelay", GetCallerName(), "SetDelay lastDelay", "Test fails if lastDelay is not null before the first activation, is null after a successful activation, or is not null after the cancel input flow is activated.", CreateLastDelayGraph());
+        }
+
+        [Test]
+        public void CancelDelay_NullDelay_OutFlowActivates()
+        {
+            QueueTest("flow/cancelDelay", GetCallerName(), "CancelDelay Null Delay", "Cancels a null delay reference while another delay is scheduled. Test fails if the out flow does not activate or the scheduled delay is cancelled.", CreateCancelNullDelayGraph());
+        }
+
+        private static Graph CreateLastDelayGraph()
+        {
+            const float LONG_DURATION = 30f;
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var sequence = g.CreateNode("flow/sequence");
+            start.AddFlow(sequence);
+
+            var delay = g.CreateNode("flow/setDelay");
+            delay.AddValue(ConstStrings.DURATION, LONG_DURATION);
+            delay.AddFlow(CreateFailSubGraph(g, "The done flow activated for a cancelled delay."), ConstStrings.DONE);
+
+            var nullBefore = CreateAssertTrue(g, CreateIsNullRef(g, delay, ConstStrings.LAST_DELAY), "lastDelay should be null before the first activation.");
+            var setAfter = CreateAssertTrue(g, CreateNot(g, CreateIsNullRef(g, delay, ConstStrings.LAST_DELAY)), "lastDelay should not be null after a successful activation.");
+            var nullAfterCancel = CreateAssertTrue(g, CreateIsNullRef(g, delay, ConstStrings.LAST_DELAY), "lastDelay should be null after the cancel input flow is activated.");
+
+            sequence.AddFlow(nullBefore, "0");
+            sequence.AddFlow(delay, "1");
+            sequence.AddFlow(setAfter, "2");
+            sequence.AddFlow(delay, "3", ConstStrings.CANCEL);
+            sequence.AddFlow(nullAfterCancel, "4");
+            nullAfterCancel.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
+
+        private static Graph CreateCancelNullDelayGraph()
+        {
+            const float SHORT_DURATION = 0.1f;
+            var g = CreateGraphForTest();
+            var outActivated = g.IndexOfVariable(g.AddVariable("cancelOutActivated", false));
+
+            var start = g.CreateNode("event/onStart");
+            var sequence = g.CreateNode("flow/sequence");
+            start.AddFlow(sequence);
+
+            var delay = g.CreateNode("flow/setDelay");
+            delay.AddValue(ConstStrings.DURATION, SHORT_DURATION);
+
+            var cancel = g.CreateNode("flow/cancelDelay");
+            cancel.AddValue(ConstStrings.DELAY, Ref.Null);
+            cancel.AddFlow(CreateVariableSet(g, outActivated, true));
+
+            sequence.AddFlow(delay, "0");
+            sequence.AddFlow(cancel, "1");
+
+            // The scheduled delay must still complete, and only after cancelDelay's out flow ran.
+            var check = CreateAssertTrue(g, CreateVariableGet(g, outActivated), "The out flow of cancelDelay did not activate for a null delay.");
+            delay.AddFlow(check, ConstStrings.DONE);
+            check.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
         }
     }
 }

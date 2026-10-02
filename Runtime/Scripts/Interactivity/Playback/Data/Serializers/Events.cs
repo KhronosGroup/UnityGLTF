@@ -8,49 +8,52 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public static void WriteJson(JsonWriter writer, List<Customevent> events, Dictionary<Type, int> typeIndexByType)
         {
+            if (events.Count == 0)
+                return;
+
             writer.WritePropertyName(ConstStrings.EVENTS);
             writer.WriteStartArray();
 
             for (int i = 0; i < events.Count; i++)
             {
-                WriteEvent(writer, events[i], typeIndexByType);
+                WriteEvent(writer, events[i], typeIndexByType, $"events[{i}]");
             }
 
             writer.WriteEndArray();
         }
 
-        private static void WriteEvent(JsonWriter writer, Customevent customevent, Dictionary<Type, int> typeIndexByType)
+        private static void WriteEvent(JsonWriter writer, Customevent customevent, Dictionary<Type, int> typeIndexByType, string context)
         {
             writer.WriteStartObject();
 
-            writer.WritePropertyName(ConstStrings.ID);
-            writer.WriteValue(customevent.id);
-
-            WriteEventValues(writer, customevent.values, typeIndexByType);
-
-            writer.WriteEndObject();
-        }
-
-        private static void WriteEventValues(JsonWriter writer, List<EventValue> values, Dictionary<Type, int> typeIndexByType)
-        {
-            writer.WritePropertyName(ConstStrings.VALUES);
-            writer.WriteStartObject();
-
-            for (int i = 0; i < values.Count; i++)
+            // Events without an id are internal to the graph.
+            if (!string.IsNullOrEmpty(customevent.id))
             {
-                WriteEventValue(writer, values[i], typeIndexByType);
+                writer.WritePropertyName(ConstStrings.ID);
+                writer.WriteValue(customevent.id);
             }
 
-            writer.WriteEndObject();
-        }
+            if (!string.IsNullOrEmpty(customevent.name))
+            {
+                writer.WritePropertyName(ConstStrings.NAME);
+                writer.WriteValue(customevent.name);
+            }
 
-        private static void WriteEventValue(JsonWriter writer, EventValue eventValue, Dictionary<Type, int> typeIndexByType)
-        {
-            writer.WritePropertyName(eventValue.id);
+            if (customevent.values != null && customevent.values.Count > 0)
+            {
+                writer.WritePropertyName(ConstStrings.VALUES);
+                writer.WriteStartObject();
 
-            writer.WriteStartObject();
+                foreach (var value in customevent.values)
+                {
+                    writer.WritePropertyName(value.id);
+                    writer.WriteStartObject();
+                    LiteralSerializer.WriteTypedValueOrDefault(writer, value.property, typeIndexByType, $"{context}.values.{value.id}");
+                    writer.WriteEndObject();
+                }
 
-            NodesSerializer.WriteValueLiteral(writer, eventValue.property, typeIndexByType);
+                writer.WriteEndObject();
+            }
 
             writer.WriteEndObject();
         }

@@ -5,6 +5,7 @@ using UnityEngine.Pool;
 
 namespace UnityGLTF.Interactivity.Playback
 {
+    /// <summary>One entry of the spec's "animation state dynamic array".</summary>
     public struct AnimationPlayData
     {
         public int index;
@@ -12,7 +13,8 @@ namespace UnityGLTF.Interactivity.Playback
         public float endTime;
         public float stopTime;
         public float speed;
-        public float unityStartTime;
+        /// <summary>Entry creation timestamp, in engine time.</summary>
+        public double unityStartTime;
         public Action endDone;
         public Action stopDone;
     }
@@ -33,21 +35,25 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public Animation animationComponent { get; private set; }
 
-        private AnimationData _currentAnimation;
-
         private readonly Dictionary<int, AnimationPlayData> _animationsInProgress = new();
         private AnimationData[] _animations;
 
         private BehaviourEngine _engine;
 
+        public int animationCount => _animations?.Length ?? 0;
+
         public void SetData(BehaviourEngine behaviourEngine, Animation animationComponent)
         {
             if (_engine != null)
-                _engine.onTick -= OnTick;
+                _engine.onAnimationUpdate -= OnTick;
 
             _engine = behaviourEngine;
-            _engine.onTick += OnTick;
+            _engine.onAnimationUpdate += OnTick;
             this.animationComponent = animationComponent;
+
+            // Graph-controlled animations must not play automatically.
+            animationComponent.playAutomatically = false;
+            animationComponent.Stop();
 
             var clipCount = animationComponent.GetClipCount();
             _animations = new AnimationData[clipCount];
@@ -57,48 +63,55 @@ namespace UnityGLTF.Interactivity.Playback
             foreach (AnimationState state in animationComponent)
             {
                 state.speed = 0f;
+                state.enabled = false;
                 _animations[j++] = new AnimationData(state);
             }
         }
 
+        public bool IsValidAnimationIndex(int index)
+        {
+            return _animations != null && index >= 0 && index < _animations.Length;
+        }
+
         private void OnTick()
         {
-            // Avoiding iterating over a changing collection by grabbing a pooled dictionary.
-            var temp = DictionaryPool<int, AnimationPlayData>.Get();
+            // Avoiding iterating over a changing collection by grabbing a pooled list.
+            var temp = ListPool<AnimationPlayData>.Get();
             try
             {
                 foreach (var anim in _animationsInProgress)
                 {
-                    temp.Add(anim.Key, anim.Value);
+                    temp.Add(anim.Value);
                 }
 
                 foreach (var anim in temp)
                 {
-                    SampleAnimation(anim.Value);
+                    // An earlier "done" flow may have restarted or stopped this animation.
+                    if (!_animationsInProgress.TryGetValue(anim.index, out var current) || current.unityStartTime != anim.unityStartTime)
+                        continue;
+
+                    SampleAnimation(current);
                 }
             }
             finally
             {
-                DictionaryPool<int, AnimationPlayData>.Release(temp);
+                ListPool<AnimationPlayData>.Release(temp);
             }
         }
 
-        // This logic path hurts my soul but it's taken directly from the spec.
-        // A lot harder to follow than what we had before.
-        private bool SampleAnimation(AnimationPlayData a)
+        // Follows the "On each asset animation update" steps of animation/start.
+        private void SampleAnimation(AnimationPlayData a)
         {
-            float r, T;
-
-            T = _animations[a.index].anim.length;
+            float r;
+            var T = _animations[a.index].anim.length;
 
             if (a.startTime == a.endTime)
             {
-                r = a.startTime;
-                CompleteAnimation(r, a.endDone);
-                return false;
+                CompleteAnimation(a.startTime, a.endDone);
+                return;
             }
 
-            var scaledElapsedTime = (Time.time - a.unityStartTime) * a.speed;
+            var scaledElapsedTime = (float)((_engine.time - a.unityStartTime) * a.speed);
 
             if (a.startTime > a.endTime)
                 scaledElapsedTime *= -1;
@@ -110,10 +123,9 @@ namespace UnityGLTF.Interactivity.Playback
 
             if (c1 || c2)
             {
-                r = a.stopTime;
                 Util.Log($"Stopping Animation {a.index}.");
-                CompleteAnimation(r, a.stopDone);
-                return false;
+                CompleteAnimation(a.stopTime, a.stopDone);
+                return;
             }
 
             var c3 = a.startTime < a.endTime && r >= a.endTime;
@@ -121,53 +133,55 @@ namespace UnityGLTF.Interactivity.Playback
 
             if (c3 || c4)
             {
-                r = a.endTime;
                 Util.Log($"Done Animation {a.index}.");
-                CompleteAnimation(r, a.endDone);
-                return false;
+                CompleteAnimation(a.endTime, a.endDone);
+                return;
             }
 
             SampleAnimationAtTime(r);
 
-            return true;
-
-            float GetTimeStamp(float r)
+            float GetTimeStamp(float requested)
             {
-                var s = r > 0 ? Mathf.Ceil((r - T) / T) : Mathf.Floor(r / T);
-                return T == 0 ? 0 : r - s * T;
+                if (T == 0)
+                    return 0;
+
+                var s = requested > 0 ? Mathf.Ceil((requested - T) / T) : Mathf.Floor(requested / T);
+                return requested - s * T;
             }
 
-            void SampleAnimationAtTime(float r)
+            void SampleAnimationAtTime(float requested)
             {
-                var t = GetTimeStamp(r);
-                _animations[a.index].playhead = t;
-                _animations[a.index].virtualPlayhead = r;
-                _animations[a.index].anim.time = t;
+                var t = GetTimeStamp(requested);
+                var data = _animations[a.index];
+                data.playhead = t;
+                data.virtualPlayhead = requested;
+                data.anim.enabled = true;
+                data.anim.weight = 1f;
+                data.anim.time = t;
                 animationComponent.Sample();
             }
 
-            void CompleteAnimation(float t, Action callback)
+            void CompleteAnimation(float requested, Action callback)
             {
-                SampleAnimationAtTime(t);
+                SampleAnimationAtTime(requested);
+                // Remove the entry before activating "done" so the flow can restart the animation.
                 StopAnimation(a.index);
-                callback();
+                callback?.Invoke();
             }
         }
 
         public void PlayAnimation(in AnimationPlayData data)
         {
-            StopAnimation(data.index);
-
+            // Replacing an entry must not activate the previous entry's done flows.
+            _animationsInProgress.Remove(data.index);
             _animationsInProgress.Add(data.index, data);
-
-            _currentAnimation = _animations[data.index];
-            animationComponent.clip = _currentAnimation.anim.clip;
-            animationComponent.Play();
         }
 
+        /// <summary>Schedules stopping; does nothing if the animation is not playing.</summary>
         internal void StopAnimationAt(int animationIndex, float stopTime, Action callback)
         {
-            var anim = _animationsInProgress[animationIndex];
+            if (!_animationsInProgress.TryGetValue(animationIndex, out var anim))
+                return;
 
             anim.stopTime = stopTime;
             anim.stopDone = callback;
@@ -175,9 +189,13 @@ namespace UnityGLTF.Interactivity.Playback
             _animationsInProgress[animationIndex] = anim;
         }
 
+        /// <summary>Stops immediately; animated properties keep their current values.</summary>
         internal void StopAnimation(int index)
         {
             _animationsInProgress.Remove(index);
+
+            if (IsValidAnimationIndex(index))
+                _animations[index].anim.enabled = false;
         }
 
         public bool IsAnimationPlaying(int index)

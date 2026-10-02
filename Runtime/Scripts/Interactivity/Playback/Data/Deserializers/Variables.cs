@@ -1,7 +1,6 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace UnityGLTF.Interactivity.Playback
 {
@@ -9,41 +8,37 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public static List<Variable> GetVariables(JObject jObj, List<Type> types)
         {
-            var jVariables = jObj[ConstStrings.VARIABLES].Children();
+            var variables = new List<Variable>();
+            var index = 0;
 
-            var variables = new List<Variable>(jVariables.Count());
-
-            foreach (var v in jVariables)
+            foreach (var v in GraphJson.OptionalArray(jObj, ConstStrings.VARIABLES, "graph"))
             {
-                variables.Add(CreateVariable(v, types));
+                variables.Add(CreateVariable(v, types, $"variables[{index}]"));
+                index++;
             }
 
             return variables;
         }
 
-        private static Variable CreateVariable(JToken token, List<Type> types)
+        private static Variable CreateVariable(JToken token, List<Type> types, string context)
         {
+            GraphJson.AsObject(token, context);
 
-            // ID is not part of the spec but it's a nice to have.
-            // Needle exporter uses id for this field.
-            var id = "";
-            JToken jId = token[ConstStrings.ID];
+            // "name" is the spec property. "id" is accepted for graphs written by older exporters.
+            var name = GraphJson.OptionalString(token, ConstStrings.NAME, context);
 
-            // React app uses name for this field.
-            if (jId == null)
-                jId = token[ConstStrings.NAME];
+            if (name == null && token[ConstStrings.ID]?.Type == JTokenType.String)
+                name = token[ConstStrings.ID].Value<string>();
 
-            if(jId != null)
-                id = jId.Value<string>();
-
-            var typeIndex = token[ConstStrings.TYPE].Value<int>();
-            var valueArray = token[ConstStrings.VALUE] as JArray;
+            var typeIndex = GraphJson.RequiredIndex(token, ConstStrings.TYPE, types.Count, context);
+            var valueArray = GraphJson.OptionalValueArray(token, context);
+            var type = types[typeIndex];
 
             return new Variable()
             {
-                id = id,
-                property = Helpers.CreateProperty(types[typeIndex], valueArray),
-                initialValue = Helpers.CreateProperty(types[typeIndex], valueArray),
+                id = name ?? string.Empty,
+                property = GraphJson.ParseValue(type, valueArray, context),
+                initialValue = GraphJson.ParseValue(type, valueArray, context),
             };
         }
     }

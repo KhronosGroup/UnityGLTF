@@ -1,12 +1,13 @@
 using System;
-using UnityEngine;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public class FlowSetDelay : BehaviourEngineNode
     {
-        private float _duration;
-        private int _lastDelayIndex = -1;
+        /// <summary>Durations above this are treated as not convertible to the engine time type.</summary>
+        public const double MAX_DURATION_SECONDS = 1e9;
+
+        private Ref _lastDelay = Ref.Null;
 
         public FlowSetDelay(BehaviourEngine engine, Node node) : base(engine, node)
         {
@@ -17,19 +18,21 @@ namespace UnityGLTF.Interactivity.Playback
             switch (socket)
             {
                 case ConstStrings.CANCEL:
+                    _lastDelay = Ref.Null;
                     engine.nodeDelayManager.CancelDelaysFromNode(this);
-                    _lastDelayIndex = -1;
                     break;
 
                 case ConstStrings.IN:
-                    if (validationResult != ValidationResult.Valid)
-                    { 
+                    if (!TryEvaluateValue(ConstStrings.DURATION, out float duration) ||
+                        float.IsNaN(duration) || float.IsInfinity(duration) || duration < 0 || duration > MAX_DURATION_SECONDS ||
+                        engine.nodeDelayManager.activeDelayCount >= InteractivityExtensionPointers.MAX_ACTIVE_DELAYS)
+                    {
                         TryExecuteFlow(ConstStrings.ERR);
                         return;
                     }
 
-                    Util.Log($"Executing delay with duration of {_duration}s");
-                    _lastDelayIndex = engine.nodeDelayManager.AddDelayNode(this, _duration, () => TryExecuteFlow(ConstStrings.DONE));
+                    Util.Log($"Executing delay with duration of {duration}s");
+                    _lastDelay = engine.nodeDelayManager.AddDelay(this, engine.time + duration, () => TryExecuteFlow(ConstStrings.DONE));
 
                     TryExecuteFlow(ConstStrings.OUT);
                     break;
@@ -39,20 +42,9 @@ namespace UnityGLTF.Interactivity.Playback
             }
         }
 
-        public override bool ValidateValues(string socket)
-        {
-            if (!TryEvaluateValue(ConstStrings.DURATION, out _duration))
-                return false;
-
-            if (double.IsNaN(_duration) || double.IsInfinity(_duration) || _duration < 0)
-                return false;
-
-            return true;
-        }
-
         public override IProperty GetOutputValue(string socket)
         {
-            return new Property<int>(_lastDelayIndex);
+            return new Property<Ref>(_lastDelay);
         }
     }
 }

@@ -25,9 +25,19 @@ namespace UnityGLTF.Interactivity.Playback
             var serializer = new GraphSerializer();
             var interactivityExtension = serializer.Deserialize(data.interactivityJson);
 
-            var defaultGraphIndex = interactivityExtension.defaultGraphIndex;
-            var defaultGraph = interactivityExtension.graphs[defaultGraphIndex];
+            if (!interactivityExtension.TryGetDefaultGraph(out var defaultGraph))
+            {
+                Debug.LogWarning($"{name}: the default KHR_interactivity graph is invalid, interactivity is disabled.");
+                return;
+            }
+
             var eng = new BehaviourEngine(defaultGraph, data.pointerReferences);
+
+            if (!eng.isValid)
+            {
+                Debug.LogWarning($"{name}: the KHR_interactivity graph was rejected, interactivity is disabled.\n{string.Join("\n", defaultGraph.errors)}");
+                return;
+            }
 
             var animationComponents = GetComponents<Animation>();
             if (animationComponents != null && animationComponents.Length > 0)
@@ -44,14 +54,18 @@ namespace UnityGLTF.Interactivity.Playback
         private void Start()
         {
             if (engine == null)
-                throw new InvalidOperationException($"No valid BehaviourEngine to play back for {name}!");
+            {
+                Debug.LogWarning($"No valid BehaviourEngine to play back for {name}.");
+                enabled = false;
+                return;
+            }
 
             engine.StartPlayback();
         }
 
         private void Update()
         {
-            engine.Tick();
+            engine?.Tick();
         }
     }
 }

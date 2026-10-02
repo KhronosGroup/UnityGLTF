@@ -2,36 +2,58 @@ using System;
 
 namespace UnityGLTF.Interactivity.Playback
 {
+    /// <summary>
+    /// Stand-in for unsupported operations: input flows are ignored, output flows never activate,
+    /// and output values are constant type-defaults.
+    /// </summary>
     public class NoOp : BehaviourEngineNode
     {
-        private Declaration _declaration;
+        private readonly Declaration _declaration;
 
         public NoOp(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            _declaration = FindDeclaration(node.type, engine.graph);
+            _declaration = node.declaration ?? FindDeclaration(node.type, engine.graph);
         }
 
         public override IProperty GetOutputValue(string id)
         {
             Util.Log($"Checking NoOP node for value {id}");
 
-            var value = FindValueSocket(id);
+            if (TryGetDeclaredOutputType(id, out var typeIndex))
+                return engine.graph.GetDefaultPropertyForType(typeIndex);
 
-            return engine.graph.GetDefaultPropertyForType(value.type);
+            // Core operations don't list their sockets in the declaration, so fall back to the operation's spec.
+            if (NodeRegistry.nodeSpecs.TryGetValue(node.type, out var spec))
+            {
+                var outputs = spec.GetOutputs().values;
+
+                for (int i = 0; outputs != null && i < outputs.Length; i++)
+                {
+                    if (outputs[i].id == id && outputs[i].types != null && outputs[i].types.Length > 0)
+                        return Helpers.GetDefaultProperty(outputs[i].types[0]);
+                }
+            }
+
+            throw new InvalidOperationException($"No value socket {id} is known for the unsupported operation {node.type}.");
         }
 
-        private ValueSocket FindValueSocket(string id)
+        private bool TryGetDeclaredOutputType(string id, out int typeIndex)
         {
-            if (_declaration.outputValueSockets == null || _declaration.outputValueSockets.Count <= 0)
-                throw new InvalidOperationException($"Attempting to find value socket {id} on this NoOp node when it has no output value sockets!");
+            typeIndex = -1;
+
+            if (_declaration?.outputValueSockets == null)
+                return false;
 
             for (int i = 0; i < _declaration.outputValueSockets.Count; i++)
             {
                 if (_declaration.outputValueSockets[i].name.Equals(id))
-                    return _declaration.outputValueSockets[i];
+                {
+                    typeIndex = _declaration.outputValueSockets[i].type;
+                    return true;
+                }
             }
 
-            throw new InvalidOperationException($"No value socket found for {id}!");
+            return false;
         }
 
         private static Declaration FindDeclaration(string op, Graph graph)
@@ -42,7 +64,7 @@ namespace UnityGLTF.Interactivity.Playback
                     return graph.declarations[i];
             }
 
-            throw new InvalidOperationException($"No declaration found for operation {op}!");
+            return null;
         }
     }
 }

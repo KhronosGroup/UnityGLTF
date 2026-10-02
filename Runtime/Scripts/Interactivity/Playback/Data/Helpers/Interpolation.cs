@@ -16,6 +16,44 @@ namespace UnityGLTF.Interactivity.Playback
             return 3f * t * omt * omt * cp0 + 3f * t * t * omt * cp1 + t * t * t * (new float2(1f,1f));
         }
 
+        /// <summary>
+        /// The easing function of variable/interpolate and pointer/interpolate: q = f_y(f_x^-1(t)) for the cubic
+        /// Bezier with P0 = (0,0), P3 = (1,1) and control points P1, P2 whose X coordinates are in [0, 1].
+        /// </summary>
+        public static float Ease(float t, float2 p1, float2 p2)
+        {
+            if (t <= 0f)
+                return 0f;
+
+            if (t >= 1f)
+                return 1f;
+
+            // x(u) is monotonic on [0, 1] because the X control points are in [0, 1], so bisection always converges.
+            double lo = 0, hi = 1, u = t;
+
+            for (int i = 0; i < 64; i++)
+            {
+                u = 0.5 * (lo + hi);
+                var x = BezierComponent(u, p1.x, p2.x);
+
+                if (Math.Abs(x - t) < 1e-9)
+                    break;
+
+                if (x < t)
+                    lo = u;
+                else
+                    hi = u;
+            }
+
+            return (float)BezierComponent(u, p1.y, p2.y);
+        }
+
+        private static double BezierComponent(double u, double c1, double c2)
+        {
+            var omu = 1 - u;
+            return 3 * omu * omu * u * c1 + 3 * omu * u * u * c2 + u * u * u;
+        }
+
         public static float4 nlerp(float4 q1, float4 q2, float t)
         {
             float dt = math.dot(q1, q2);

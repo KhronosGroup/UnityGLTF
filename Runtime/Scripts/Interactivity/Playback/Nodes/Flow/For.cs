@@ -1,21 +1,16 @@
 using System;
-using System.Threading;
-using UnityEngine;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public class FlowFor : BehaviourEngineNode
     {
-        private int _startIndex;
-        private int _endIndex;
         private int _index;
 
         public FlowFor(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            if (!configuration.TryGetValue(ConstStrings.INITIAL_INDEX, out Configuration config))
-                return;
-
-            _index = ((Property<int>)config.property).value;
+            // Default configuration: initialIndex is zero.
+            if (!TryGetConfig(ConstStrings.INITIAL_INDEX, out _index))
+                _index = 0;
         }
 
         public override IProperty GetOutputValue(string socket)
@@ -28,26 +23,20 @@ namespace UnityGLTF.Interactivity.Playback
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
-            Util.Log($"Starting a loop with start index {_startIndex} and end index {_endIndex} from initial value {_index}");
+            if (!TryEvaluateValue(ConstStrings.START_INDEX, out int startIndex))
+                return;
 
-            _index = _startIndex;
+            _index = startIndex;
 
-            while(_index < _endIndex)
+            // endIndex is re-evaluated before every iteration.
+            while (TryEvaluateValue(ConstStrings.END_INDEX, out int endIndex) && _index < endIndex)
             {
                 TryExecuteFlow(ConstStrings.LOOP_BODY);
                 _index++;
+                engine.NotifySelfActivation();
             }
 
             TryExecuteFlow(ConstStrings.COMPLETED);
-        }
-
-        public override bool ValidateValues(string socket)
-        {
-            if (!TryEvaluateValue(ConstStrings.START_INDEX, out _startIndex) ||
-            !TryEvaluateValue(ConstStrings.END_INDEX, out _endIndex))
-                return false;
-
-            return true;
         }
     }
 }

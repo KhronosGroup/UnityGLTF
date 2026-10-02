@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace UnityGLTF.Interactivity.Playback
 {
@@ -19,39 +20,112 @@ namespace UnityGLTF.Interactivity.Playback
 
             writer.WriteEndArray();
             writer.WritePropertyName(ConstStrings.GRAPH);
-            writer.WriteValue(0); // TODO: Default graph selection for users?
+            writer.WriteValue(value.defaultGraphIndex);
             writer.WriteEndObject();
         }
 
         private void WriteGraph(JsonWriter writer, Graph graph)
         {
+            // Order nodes and synthesize constants first, since that determines which types are needed.
+            var plan = NodesSerializer.BuildPlan(graph.nodes);
+            var types = TypesSerializer.WithRequiredTypes(graph.types, GetRequiredTypes(graph, plan));
+            var typeIndexByType = TypesSerializer.GetSystemTypeByIndexDictionary(types);
+            var declarations = DeclarationsSerializer.GetDeclarations(plan, typeIndexByType);
+
+            // Empty arrays are omitted, as in the core glTF specification.
             writer.WriteStartObject();
-            var typeIndexByType = TypesSerializer.GetSystemTypeByIndexDictionary(graph);
-            var declarations = DeclarationsSerializer.GetDeclarations(graph.nodes, typeIndexByType);
-            TypesSerializer.WriteJson(writer, graph.types);
+            TypesSerializer.WriteJson(writer, types);
             VariablesSerializer.WriteJson(writer, graph.variables, typeIndexByType);
             EventsSerializer.WriteJson(writer, graph.customEvents, typeIndexByType);
             DeclarationsSerializer.WriteJson(writer, declarations);
-            NodesSerializer.WriteJson(writer, graph.nodes, declarations, typeIndexByType);
+            NodesSerializer.WriteJson(writer, plan, declarations, typeIndexByType);
             writer.WriteEndObject();
+        }
+
+        private static IEnumerable<System.Type> GetRequiredTypes(Graph graph, NodesSerializer.Plan plan)
+        {
+            foreach (var v in graph.variables)
+                yield return v.initialValue.GetSystemType();
+
+            foreach (var e in graph.customEvents)
+            {
+                if (e.values == null)
+                    continue;
+
+                foreach (var v in e.values)
+                    yield return v.property.GetSystemType();
+            }
+
+            foreach (var t in NodesSerializer.GetInlineTypes(plan))
+                yield return t;
+
+            foreach (var e in plan.nodes)
+            {
+                foreach (var t in DeclarationsSerializer.GetRequiredTypes(e.op))
+                    yield return t;
+            }
         }
 
         public override KHR_interactivity ReadJson(JsonReader reader, System.Type objectType, KHR_interactivity existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             JObject jObj = JObject.Load(reader);
 
-            var jGraphs = jObj[ConstStrings.GRAPHS];
-
             var interactivity = new KHR_interactivity();
 
-            foreach (JObject jGraph in jGraphs)
+            if (jObj[ConstStrings.GRAPHS] is not JArray jGraphs)
             {
-                interactivity.graphs.Add(GenerateGraph(jGraph));
+                interactivity.isValid = false;
+                interactivity.errors.Add("\"graphs\" must be an array.");
+                return interactivity;
             }
 
-            interactivity.defaultGraphIndex = jObj[ConstStrings.GRAPH].Value<int>();
+            for (int i = 0; i < jGraphs.Count; i++)
+            {
+                // Graphs are isolated: one invalid graph does not invalidate the others.
+                interactivity.graphs.Add(GenerateGraphOrRejected(jGraphs[i], i));
+            }
+
+            var jGraph = jObj[ConstStrings.GRAPH];
+
+            if (jGraph == null)
+            {
+                interactivity.defaultGraphIndex = 0;
+            }
+            else if (Helpers.IsExactInt32(jGraph) && jGraph.Value<double>() >= 0 && jGraph.Value<double>() < jGraphs.Count)
+            {
+                interactivity.defaultGraphIndex = (int)jGraph.Value<double>();
+            }
+            else
+            {
+                interactivity.isValid = false;
+                interactivity.errors.Add($"\"graph\" must be a non-negative integer less than {jGraphs.Count}.");
+            }
+
+            if (interactivity.isValid && interactivity.graphs.Count == 0)
+            {
+                interactivity.isValid = false;
+                interactivity.errors.Add("\"graphs\" is empty.");
+            }
 
             return interactivity;
+        }
+
+        private static Graph GenerateGraphOrRejected(JToken jGraph, int index)
+        {
+            try
+            {
+                if (jGraph is not JObject jObj)
+                    throw new InteractivityGraphException("A graph must be a JSON object.");
+
+                return GenerateGraph(jObj);
+            }
+            catch (Exception e) when (e is InteractivityGraphException || e is FormatException || e is InvalidCastException || e is OverflowException)
+            {
+                var graph = new Graph();
+                graph.Reject($"graphs[{index}]: {e.Message}");
+                UnityEngine.Debug.LogWarning($"KHR_interactivity graph {index} was rejected: {e.Message}");
+                return graph;
+            }
         }
 
         private static Graph GenerateGraph(JObject jObj)

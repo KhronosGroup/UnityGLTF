@@ -1,77 +1,109 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public struct NodeDelayData
     {
-        public int delayIndex;
+        public Ref delay;
         public FlowSetDelay sourceNode;
-        public float finishTime;
+        public double activationTime;
         public Action doneCallback;
     }
 
+    /// <summary>
+    /// The graph-wide "dynamic array of activation references" used by flow/setDelay and flow/cancelDelay.
+    /// </summary>
     public class NodeDelayManager
     {
-        private List<NodeDelayData> _delayedNodes = new();
-        private int _currentDelayIndex = -1;
+        private readonly List<NodeDelayData> _delays = new();
+        private int _nextDelayId = 1;
 
-        public void OnTick()
+        public int activeDelayCount => _delays.Count;
+
+        public void OnTick(double now)
         {
-            // Avoiding iterating over a changing collection by grabbing a pooled list.
-            var temp = ListPool<NodeDelayData>.Get();
+            // Snapshot due delays first: done flows may schedule or cancel other delays.
+            var due = ListPool<NodeDelayData>.Get();
             try
             {
-                for (int i = 0; i < _delayedNodes.Count; i++)
+                for (int i = 0; i < _delays.Count; i++)
                 {
-                    if (Time.time >= _delayedNodes[i].finishTime)
-                        temp.Add(_delayedNodes[i]);
+                    if (now >= _delays[i].activationTime)
+                        due.Add(_delays[i]);
                 }
 
-                for (int i = 0; i < temp.Count; i++)
+                due.Sort((a, b) => a.activationTime != b.activationTime ? a.activationTime.CompareTo(b.activationTime) : a.delay.id.CompareTo(b.delay.id));
+
+                for (int i = 0; i < due.Count; i++)
                 {
-                    temp[i].doneCallback();
-                    _delayedNodes.Remove(temp[i]);
+                    // Skip activations cancelled by an earlier done flow in this same tick.
+                    if (!Remove(due[i].delay))
+                        continue;
+
+                    due[i].doneCallback();
                 }
             }
             finally
             {
-                ListPool<NodeDelayData>.Release(temp);
+                ListPool<NodeDelayData>.Release(due);
             }
         }
 
-        public int AddDelayNode(FlowSetDelay sourceNode, float duration, Action doneCallback)
+        /// <summary>Schedules a delayed activation and returns its unique, non-null reference.</summary>
+        public Ref AddDelay(FlowSetDelay sourceNode, double activationTime, Action doneCallback)
         {
-            _currentDelayIndex++;
+            var delay = Ref.Delay(_nextDelayId++);
 
-            _delayedNodes.Add(new NodeDelayData()
+            _delays.Add(new NodeDelayData()
             {
-                delayIndex = _currentDelayIndex,
+                delay = delay,
                 sourceNode = sourceNode,
-                finishTime = Time.time + duration,
+                activationTime = activationTime,
                 doneCallback = doneCallback
             });
 
-            return _currentDelayIndex;
+            return delay;
         }
 
-        public void CancelDelayByIndex(int delayIndex)
+        public bool IsActive(Ref delay)
         {
-            for (int i = 0; i < _delayedNodes.Count; i++)
-            {
-                if (_delayedNodes[i].delayIndex != delayIndex)
-                    continue;
+            if (delay.kind != RefKind.Delay)
+                return false;
 
-                _delayedNodes.RemoveAt(i);
-                return;
+            for (int i = 0; i < _delays.Count; i++)
+            {
+                if (_delays[i].delay == delay)
+                    return true;
             }
+
+            return false;
+        }
+
+        /// <summary>Cancels a scheduled activation. Null or unknown references are ignored.</summary>
+        public bool CancelDelay(Ref delay)
+        {
+            return Remove(delay);
         }
 
         public void CancelDelaysFromNode(FlowSetDelay sourceNode)
         {
-            _delayedNodes.RemoveAll(e => e.sourceNode == sourceNode);
+            _delays.RemoveAll(e => e.sourceNode == sourceNode);
+        }
+
+        private bool Remove(Ref delay)
+        {
+            for (int i = 0; i < _delays.Count; i++)
+            {
+                if (_delays[i].delay != delay)
+                    continue;
+
+                _delays.RemoveAt(i);
+                return true;
+            }
+
+            return false;
         }
     }
 }

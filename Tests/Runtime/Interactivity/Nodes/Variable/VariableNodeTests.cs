@@ -289,5 +289,105 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 outBranch.AddFlow(outFailLog, ConstStrings.FALSE);
             }
         }
+
+        [Test]
+        public void VariableSet_SwapTwoVariables_InputsEvaluatedBeforeSetting()
+        {
+            QueueTest("variable/set", GetCallerName(), "Variable Set Swap", "A single variable/set node sets a = b and b = a. Test fails unless the values are swapped, which requires every input to be evaluated before any variable is set.", CreateVariableSwapGraph());
+        }
+
+        [Test]
+        public void VariableInterpolate_ControlPointYOutsideUnitRange_Completes()
+        {
+            QueueTest("variable/interpolate", GetCallerName(), "Variable Interpolate Overshooting Control Points", "Uses control points with Y outside [0, 1], which is valid. Test fails if the err flow activates or the variable does not reach the target value.", CreateInterpolateOvershootGraph());
+        }
+
+        [Test]
+        public void VariableInterpolate_VariableSetDuringInterpolation_StopsInterpolation()
+        {
+            QueueTest("variable/interpolate", GetCallerName(), "Variable Set Stops Interpolation", "Sets the variable right after starting an interpolation. Test fails if the done flow activates or the variable doesn't keep the set value.", CreateSetStopsInterpolationGraph());
+        }
+
+        private static Graph CreateVariableSwapGraph()
+        {
+            var g = CreateGraphForTest();
+            var a = g.IndexOfVariable(g.AddVariable("a", 1));
+            var b = g.IndexOfVariable(g.AddVariable("b", 2));
+
+            var start = g.CreateNode("event/onStart");
+            var swap = g.CreateNode("variable/set");
+            swap.AddConfiguration(ConstStrings.VARIABLES, new int[] { a, b });
+            swap.AddConnectedValue(ConstStrings.GetNumberString(a), CreateVariableGet(g, b));
+            swap.AddConnectedValue(ConstStrings.GetNumberString(b), CreateVariableGet(g, a));
+            start.AddFlow(swap);
+
+            var checkA = CreateAssertTrue(g, CreateEquals(g, CreateVariableGet(g, a), ConstStrings.VALUE, 2), "Variable a should be 2 after the swap.");
+            var checkB = CreateAssertTrue(g, CreateEquals(g, CreateVariableGet(g, b), ConstStrings.VALUE, 1), "Variable b should be 1 after the swap.");
+            swap.AddFlow(checkA);
+            checkA.AddFlow(checkB, ConstStrings.TRUE);
+            checkB.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
+
+        private static Graph CreateInterpolateOvershootGraph()
+        {
+            const float TARGET = 10f;
+            var g = CreateGraphForTest();
+            var x = g.IndexOfVariable(g.AddVariable("x", 0f));
+
+            var start = g.CreateNode("event/onStart");
+            var interpolate = g.CreateNode("variable/interpolate");
+            interpolate.AddConfiguration(ConstStrings.VARIABLE, x);
+            interpolate.AddConfiguration(ConstStrings.USE_SLERP, false);
+            interpolate.AddValue(ConstStrings.VALUE, TARGET);
+            interpolate.AddValue(ConstStrings.DURATION, 0.25f);
+            interpolate.AddValue(ConstStrings.P1, new float2(0.3f, -0.5f));
+            interpolate.AddValue(ConstStrings.P2, new float2(0.7f, 1.5f));
+            start.AddFlow(interpolate);
+
+            interpolate.AddFlow(CreateFailSubGraph(g, "The err flow activated for control points with Y outside [0, 1]."), ConstStrings.ERR);
+
+            var check = CreateAssertTrue(g, CreateEquals(g, CreateVariableGet(g, x), ConstStrings.VALUE, TARGET), "The variable did not reach the target value.");
+            interpolate.AddFlow(check, ConstStrings.DONE);
+            check.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
+
+        private static Graph CreateSetStopsInterpolationGraph()
+        {
+            const float CHECK_TIME = 1f;
+            var g = CreateGraphForTest();
+            var x = g.IndexOfVariable(g.AddVariable("x", 0f));
+
+            var start = g.CreateNode("event/onStart");
+            var interpolate = g.CreateNode("variable/interpolate");
+            interpolate.AddConfiguration(ConstStrings.VARIABLE, x);
+            interpolate.AddConfiguration(ConstStrings.USE_SLERP, false);
+            interpolate.AddValue(ConstStrings.VALUE, 10f);
+            interpolate.AddValue(ConstStrings.DURATION, 0.25f);
+            interpolate.AddValue(ConstStrings.P1, P1);
+            interpolate.AddValue(ConstStrings.P2, P2);
+            start.AddFlow(interpolate);
+
+            interpolate.AddFlow(CreateVariableSet(g, x, 5f));
+            interpolate.AddFlow(CreateFailSubGraph(g, "The done flow activated although variable/set removed the interpolation."), ConstStrings.DONE);
+
+            // After the interpolation would have finished, the variable must still hold the set value.
+            var tick = g.CreateNode("event/onTick");
+            var late = g.CreateNode("math/ge");
+            late.AddConnectedValue(ConstStrings.A, tick, ConstStrings.TIME_SINCE_START);
+            late.AddValue(ConstStrings.B, CHECK_TIME);
+            var timeBranch = g.CreateNode("flow/branch");
+            timeBranch.AddConnectedValue(ConstStrings.CONDITION, late);
+            tick.AddFlow(timeBranch);
+
+            var check = CreateAssertTrue(g, CreateEquals(g, CreateVariableGet(g, x), ConstStrings.VALUE, 5f), "The variable should keep the value from variable/set.");
+            timeBranch.AddFlow(check, ConstStrings.TRUE);
+            check.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
     }
 }

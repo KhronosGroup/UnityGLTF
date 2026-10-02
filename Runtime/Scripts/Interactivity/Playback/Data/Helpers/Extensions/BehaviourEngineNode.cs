@@ -75,10 +75,10 @@ namespace UnityGLTF.Interactivity.Playback
         {
             value = default;
 
-            if (!TryEvaluateValue(valueId, out IProperty property))
+            if (!TryEvaluateValue(valueId, out IProperty property) || property is not Property<T> typed)
                 return false;
 
-            value = ((Property<T>)property).value;
+            value = typed.value;
             return true;
         }
 

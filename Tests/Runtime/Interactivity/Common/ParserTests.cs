@@ -104,7 +104,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
         [Test]
         public void ParserTestString()
         {
-            var expected = "/nodes/{nodeIndex}/extensions/KHR_node_selectability/selectable";
+            var expected = "/nodes/[nodeIndex]/extensions/KHR_node_selectability/selectable";
             var array = new JArray();
             array.Add(expected);
 

@@ -9,6 +9,25 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public List<Graph> graphs { get; set; } = new();
         public int defaultGraphIndex { get; set; }
+
+        /// <summary>False when the extension object itself is invalid, e.g. the "graph" property is out of range.</summary>
+        public bool isValid { get; set; } = true;
+        public List<string> errors { get; set; } = new();
+
+        /// <summary>
+        /// Returns the default graph if the extension object and that graph are both valid.
+        /// Implementations may treat the asset as having no interactivity otherwise.
+        /// </summary>
+        public bool TryGetDefaultGraph(out Graph graph)
+        {
+            graph = null;
+
+            if (!isValid || defaultGraphIndex < 0 || defaultGraphIndex >= graphs.Count)
+                return false;
+
+            graph = graphs[defaultGraphIndex];
+            return graph.isValid;
+        }
     }
 
     public class Declaration
@@ -49,6 +68,8 @@ namespace UnityGLTF.Interactivity.Playback
         public string id { get; set; }
         public IProperty property { get; set; }
         public bool parsedSuccessfully { get; set; }
+        /// <summary>The raw JSON "value" array, kept for operation-specific validation. Null for graphs built in code.</summary>
+        [JsonIgnore] public JArray raw { get; set; }
     }
 
     public class InteractivityType

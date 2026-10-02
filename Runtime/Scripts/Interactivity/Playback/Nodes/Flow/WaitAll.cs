@@ -1,3 +1,5 @@
+using System;
+
 namespace UnityGLTF.Interactivity.Playback
 {
     public class FlowWaitAll : BehaviourEngineNode
@@ -9,7 +11,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         public FlowWaitAll(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            if (!TryGetConfig(ConstStrings.INPUT_FLOWS, out _inputFlows))
+            // Invalid, negative or >64 values use the default configuration (zero input flows).
+            if (!TryGetConfig(ConstStrings.INPUT_FLOWS, out _inputFlows) || _inputFlows < 0 || _inputFlows > 64)
                 _inputFlows = 0;
 
             _remainingInputs = _inputFlows;
@@ -25,7 +28,9 @@ namespace UnityGLTF.Interactivity.Playback
                 return;
             }
 
-            var index = int.Parse(socket); // Throws if an unexpected socket id is passed in that isn't in the spec.
+            // Ids are canonical decimal numbers below inputFlows; anything else is not an input flow of this node.
+            if (!Ref.TryParseCanonicalIndex(socket.AsSpan(), out var index) || index >= _inputFlows)
+                return;
 
             if(!_activated[index])
                 _remainingInputs--;

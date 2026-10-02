@@ -380,5 +380,118 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             return setOutputFlow;
         }
+
+        [Test]
+        public void FlowSwitch_SelectionNotInCases_DefaultActivates()
+        {
+            QueueTest("flow/switch", GetCallerName(), "Switch Socket Not In Cases", "Selection 2 has a connected output flow but is not in the cases configuration. Test fails if that flow activates or the default flow does not.", CreateSwitchSocketNotInCasesGraph());
+        }
+
+        [Test]
+        public void FlowSwitch_CaseNotConnected_DefaultDoesNotActivate()
+        {
+            QueueTest("flow/switch", GetCallerName(), "Switch Unconnected Case", "Selection 2 is in the cases configuration but its output flow is unconnected. Test fails if the default flow activates.", CreateSwitchUnconnectedCaseGraph());
+        }
+
+        [Test]
+        public void For_EndIndexChangesDuringLoop_EndIndexReevaluatedEachIteration()
+        {
+            QueueTest("flow/for", GetCallerName(), "For Changing End Index", "The loop body decrements the variable used as endIndex, starting at 5. Test fails if the loop body does not run exactly 3 times.", CreateForChangingEndIndexGraph());
+        }
+
+        [Test]
+        public void For_RandomValue_ChangesBetweenIterations()
+        {
+            QueueTest("math/random", GetCallerName(), "Random Changes Between Iterations", "Reads math/random in each of 10 loop iterations. Test fails if the value read in an iteration equals the value from the previous iteration.", CreateRandomPerIterationGraph(10));
+        }
+
+        private static Graph CreateSwitchSocketNotInCasesGraph()
+        {
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var sw = g.CreateNode("flow/switch");
+            sw.AddConfiguration(ConstStrings.CASES, new int[] { 1 });
+            sw.AddValue(ConstStrings.SELECTION, 2);
+            start.AddFlow(sw);
+
+            sw.AddFlow(CreateFailSubGraph(g, "An output flow not listed in cases was activated."), "2");
+            sw.AddFlow(CreateCompleteNode(g), ConstStrings.DEFAULT);
+
+            return g;
+        }
+
+        private static Graph CreateSwitchUnconnectedCaseGraph()
+        {
+            var g = CreateGraphForTest();
+
+            var start = g.CreateNode("event/onStart");
+            var sequence = g.CreateNode("flow/sequence");
+            start.AddFlow(sequence);
+
+            var sw = g.CreateNode("flow/switch");
+            sw.AddConfiguration(ConstStrings.CASES, new int[] { 1, 2 });
+            sw.AddValue(ConstStrings.SELECTION, 2);
+            sw.AddFlow(CreateFailSubGraph(g, "The default flow activated for a selection listed in cases."), ConstStrings.DEFAULT);
+
+            sequence.AddFlow(sw, "0");
+            sequence.AddFlow(CreateCompleteNode(g), "1");
+
+            return g;
+        }
+
+        private static Graph CreateForChangingEndIndexGraph()
+        {
+            const int EXPECTED_ITERATIONS = 3;
+            var g = CreateGraphForTest();
+
+            var endVar = g.IndexOfVariable(g.AddVariable("end", 5));
+            var countVar = g.IndexOfVariable(g.AddVariable("iterations", 0));
+
+            var start = g.CreateNode("event/onStart");
+            var loop = g.CreateNode("flow/for");
+            loop.AddValue(ConstStrings.START_INDEX, 0);
+            loop.AddConnectedValue(ConstStrings.END_INDEX, CreateVariableGet(g, endVar));
+            start.AddFlow(loop);
+
+            // end: 5 -> 4 -> 3 -> 2 while index goes 0 -> 1 -> 2 -> 3, so the loop stops after 3 iterations.
+            var sub = g.CreateNode("math/sub");
+            sub.AddConnectedValue(ConstStrings.A, CreateVariableGet(g, endVar));
+            sub.AddValue(ConstStrings.B, 1);
+            var decrementEnd = CreateVariableSetFrom(g, endVar, sub);
+            loop.AddFlow(decrementEnd, ConstStrings.LOOP_BODY);
+            decrementEnd.AddFlow(CreateIncrement(g, countVar));
+
+            var countCheck = CreateAssertTrue(g, CreateEquals(g, CreateVariableGet(g, countVar), ConstStrings.VALUE, EXPECTED_ITERATIONS), $"The loop body did not run {EXPECTED_ITERATIONS} times.");
+            loop.AddFlow(countCheck, ConstStrings.COMPLETED);
+            countCheck.AddFlow(CreateCompleteNode(g), ConstStrings.TRUE);
+
+            return g;
+        }
+
+        private static Graph CreateRandomPerIterationGraph(int iterations)
+        {
+            var g = CreateGraphForTest();
+            var previousVar = g.IndexOfVariable(g.AddVariable("previous", float.NaN));
+
+            var start = g.CreateNode("event/onStart");
+            var loop = g.CreateNode("flow/for");
+            loop.AddValue(ConstStrings.START_INDEX, 0);
+            loop.AddValue(ConstStrings.END_INDEX, iterations);
+            start.AddFlow(loop);
+
+            var random = g.CreateNode("math/random");
+            var same = g.CreateNode("math/eq");
+            same.AddConnectedValue(ConstStrings.A, random);
+            same.AddConnectedValue(ConstStrings.B, CreateVariableGet(g, previousVar));
+
+            var changed = CreateAssertTrue(g, CreateNot(g, same), "math/random returned the same value in two consecutive loop iterations.");
+            loop.AddFlow(changed, ConstStrings.LOOP_BODY);
+            changed.AddFlow(CreateVariableSetFrom(g, previousVar, random), ConstStrings.TRUE);
+
+            loop.AddFlow(CreateCompleteNode(g), ConstStrings.COMPLETED);
+
+            return g;
+        }
     }
 }

@@ -9,6 +9,12 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public static BehaviourEngineNode CreateBehaviourEngineNode(BehaviourEngine engine, Node node)
         {
+            if (node.declaration != null && !SpecOperations.IsSupported(node.declaration))
+            {
+                Debug.LogWarning($"Declaration {node.declaration.op} ({node.declaration.extension}) is unsupported, creating a NoOp node.");
+                return new NoOp(engine, node);
+            }
+
             if (!nodeTypes.TryGetValue(node.type, out var creationMethod))
             {
                 // Using Debug.Log here instead of Util.Log since this should be a message that shows up in prod.
@@ -32,6 +38,7 @@ namespace UnityGLTF.Interactivity.Playback
             ["event/onTick"] = (engine, node) => new EventOnTick(engine, node),
             ["event/receive"] = (engine, node) => new EventReceive(engine, node),
             ["event/send"] = (engine, node) => new EventSend(engine, node),
+            ["event/stopPropagation"] = (engine, node) => new EventStopPropagation(engine, node),
             ["flow/branch"] = (engine, node) => new FlowBranch(engine, node),
             ["flow/cancelDelay"] = (engine, node) => new FlowCancelDelay(engine, node),
             ["flow/doN"] = (engine, node) => new FlowDoN(engine, node),
@@ -152,6 +159,12 @@ namespace UnityGLTF.Interactivity.Playback
             ["math/transpose"] = (engine, node) => new MathTranspose(engine, node),
             ["math/trunc"] = (engine, node) => new MathTrunc(engine, node),
             ["math/xor"] = (engine, node) => new MathXor(engine, node),
+            ["math/smoothStep"] = (engine, node) => new MathSmoothStep(engine, node),
+            ["math/slerp"] = (engine, node) => new MathSlerp(engine, node),
+            ["math/quatFromAngles"] = (engine, node) => new MathQuatFromAngles(engine, node),
+            ["math/rgbToOkLCh"] = (engine, node) => new MathRgbToOkLCh(engine, node),
+            ["math/rgbFromOkLCh"] = (engine, node) => new MathRgbFromOkLCh(engine, node),
+            ["ref/eq"] = (engine, node) => new RefEq(engine, node),
 
         };
 
@@ -164,6 +177,7 @@ namespace UnityGLTF.Interactivity.Playback
             // ["event/onHoverIn"] = new EventOnHoverInSpec(),
             // ["event/onHoverOut"] = new EventOnHoverOutSpec(),
             ["event/onStart"] = new EventOnStartSpec(),
+            ["event/stopPropagation"] = new EventStopPropagationSpec(),
             ["event/send"] = new EventSendSpec(),
             // ["event/onSelect"] = new EventOnSelectSpec(),
             ["event/onTick"] = new EventOnTickSpec(),
@@ -201,8 +215,6 @@ namespace UnityGLTF.Interactivity.Playback
             ["math/div"] = new MathTwoOperandsSpec(),
             ["math/E"] = new MathConstantSpec(),
             ["math/eq"] = new MathTwoOperandsRetSpec<bool, int, float, float2, float3, float4, bool>(),
-            ["math/supereq"] = new MathTwoOperandsRetSpec<bool, int, float, float2, float3, float4, bool>(),
-            ["math/approxeq"] = new MathTwoOperandsRetSpec<bool, int, float, float2, float3, float4, bool>(),
             ["math/extract2"] = new MathExtractSpec<float2>(),
             ["math/extract3"] = new MathExtractSpec<float3>(),
             ["math/extract4"] = new MathExtractSpec<float4>(),
@@ -290,6 +302,12 @@ namespace UnityGLTF.Interactivity.Playback
             ["variable/get"] = new VariableGetSpec(),
             ["variable/set"] = new VariableSetSpec(),
             ["variable/interpolate"] = new VariableInterpolateSpec(),
+            ["math/smoothStep"] = new MathSmoothStepSpec(),
+            ["math/slerp"] = new MathSlerpSpec(),
+            ["math/quatFromAngles"] = new MathQuatFromAnglesSpec(),
+            ["math/rgbToOkLCh"] = new MathRgbToOkLChSpec(),
+            ["math/rgbFromOkLCh"] = new MathRgbFromOkLChSpec(),
+            ["ref/eq"] = new RefEqSpec(),
         };
     }
 }

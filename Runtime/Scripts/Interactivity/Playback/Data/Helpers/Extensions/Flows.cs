@@ -9,8 +9,16 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public static int CompareTo(this Flow a, Flow b)
         {
-            var unitsA = a.fromSocket.AsSpan();
-            var unitsB = b.fromSocket.AsSpan();
+            return CompareSocketIds(a.fromSocket, b.fromSocket);
+        }
+
+        /// <summary>
+        /// Socket order from the spec: lexicographic over UTF-16 code units, shorter id first on a shared prefix.
+        /// </summary>
+        public static int CompareSocketIds(string a, string b)
+        {
+            var unitsA = a.AsSpan();
+            var unitsB = b.AsSpan();
 
             var lengthA = unitsA.Length;
             var lengthB = unitsB.Length;
@@ -26,7 +34,7 @@ namespace UnityGLTF.Interactivity.Playback
                     return 1;
             }
 
-            return 0;
+            return lengthA.CompareTo(lengthB);
         }
     }
 }

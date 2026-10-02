@@ -9,6 +9,8 @@ namespace UnityGLTF.Interactivity.Playback
     public class Node
     {
         public string type { get; internal set; }
+        /// <summary>The declaration this node was created from; null for nodes created in code.</summary>
+        public Declaration declaration { get; internal set; }
         public List<Value> values { get; internal set; } = new();
         public List<Configuration> configuration { get; internal set; } = new();
         public List<Flow> flows { get; internal set; } = new();
@@ -181,6 +183,22 @@ namespace UnityGLTF.Interactivity.Playback
             return config;
         }
 
+        /// <summary>Returns a configuration value when it is present and was parsed with type <typeparamref name="T"/>.</summary>
+        public bool TryGetConfiguration<T>(string id, out T value)
+        {
+            for (int i = 0; i < configuration.Count; i++)
+            {
+                if (configuration[i].id == id && configuration[i].property is Property<T> typed)
+                {
+                    value = typed.value;
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
+        }
+
         public void SetPositionMetadata(double x, double y)
         {
             metadata.positionX = x;
@@ -243,6 +261,8 @@ namespace UnityGLTF.Interactivity.Playback
                 AddValue(valueData.id, float3x3.zero);
             else if (type == typeof(float4x4))
                 AddValue(valueData.id, float4x4.zero);
+            else if (type == typeof(Ref))
+                AddValue(valueData.id, Ref.Null);
             else
                 throw new InvalidOperationException($"No default value available for {type}");
         }

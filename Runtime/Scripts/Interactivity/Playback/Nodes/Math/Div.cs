@@ -17,7 +17,7 @@ namespace UnityGLTF.Interactivity.Playback
 
             return a switch
             {
-                Property<int> aInt when b is Property<int> bInt => new Property<int>(aInt.value / bInt.value),
+                Property<int> aInt when b is Property<int> bInt => new Property<int>(Divide(aInt.value, bInt.value)),
                 Property<float> aFloat when b is Property<float> bFloat => new Property<float>(aFloat.value / bFloat.value),
                 Property<float2> aVec2 when b is Property<float2> bVec2 => new Property<float2>(aVec2.value / bVec2.value),
                 Property<float3> aVec3 when b is Property<float3> bVec3 => new Property<float3>(aVec3.value / bVec3.value),
@@ -27,6 +27,18 @@ namespace UnityGLTF.Interactivity.Playback
                 Property<float4x4> aProp when b is Property<float4x4> bProp => new Property<float4x4>(aProp.value / bProp.value),
                 _ => throw new InvalidOperationException($"No supported type found for input A: {a.GetTypeSignature()} or input type did not match B: {b.GetTypeSignature()}."),
             };
+        }
+
+        /// <summary>Truncating integer division; zero divisor gives 0 and int.MinValue / -1 wraps to int.MinValue.</summary>
+        public static int Divide(int a, int b)
+        {
+            if (b == 0)
+                return 0;
+
+            if (b == -1)
+                return unchecked(-a);
+
+            return a / b;
         }
     }
 }

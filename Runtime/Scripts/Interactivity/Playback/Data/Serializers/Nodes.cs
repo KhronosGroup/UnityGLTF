@@ -2,270 +2,408 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Unity.Mathematics;
-using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public static class NodesSerializer
     {
-        public static void WriteJson(JsonWriter writer, List<Node> nodes, Dictionary<string, DeclarationsSerializer.DeclarationData> declarations, Dictionary<Type, int> typeIndexByType)
+        /// <summary>A node as it will be written, either from the graph or synthesized for a non-finite constant.</summary>
+        public sealed class EmitNode
         {
-            writer.WritePropertyName(ConstStrings.NODES);
-            writer.WriteStartArray();
+            public string op;
+            public Node source;
+            public readonly List<(string id, EmitValue value)> values = new();
+            public double rank;
+            internal int index;
+        }
+
+        /// <summary>Nodes in write order plus the mapping from graph nodes to their emitted entries.</summary>
+        public sealed class Plan
+        {
+            public readonly List<EmitNode> nodes;
+            public readonly Dictionary<Node, EmitNode> byNode;
+
+            public Plan(List<EmitNode> nodes, Dictionary<Node, EmitNode> byNode)
+            {
+                this.nodes = nodes;
+                this.byNode = byNode;
+            }
+        }
+
+        public sealed class EmitValue
+        {
+            public IProperty inline;
+            public EmitNode node;
+            public string socket;
+            public Type declaredType;
+        }
+
+        /// <summary>
+        /// Builds the list of nodes in an order valid for JSON: value sources come before their readers and
+        /// flow targets come after their sources. Inline values JSON can't represent (infinities, partial NaNs)
+        /// are replaced by synthesized math/Inf, math/NaN, math/neg and math/combine* nodes.
+        /// </summary>
+        public static Plan BuildPlan(List<Node> nodes)
+        {
+            var emitted = new List<EmitNode>();
+            var byNode = new Dictionary<Node, EmitNode>(nodes.Count);
 
             for (int i = 0; i < nodes.Count; i++)
             {
-                WriteNode(writer, nodes, i, declarations, typeIndexByType);
+                var e = new EmitNode { op = nodes[i].type, source = nodes[i], rank = i };
+                byNode[nodes[i]] = e;
+                emitted.Add(e);
+            }
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var e = byNode[nodes[i]];
+
+                foreach (var v in nodes[i].values)
+                {
+                    if (v.node != null)
+                    {
+                        e.values.Add((v.id, new EmitValue { node = byNode[v.node], socket = v.socket, declaredType = v.declaredType }));
+                        continue;
+                    }
+
+                    if (LiteralSerializer.TryGetFloatComponents(v.property, out var components) &&
+                        !LiteralSerializer.AllFinite(components) && !LiteralSerializer.AllNaN(components))
+                    {
+                        var constant = SynthesizeConstant(v.property, components, e.rank, emitted);
+                        e.values.Add((v.id, new EmitValue { node = constant, socket = ConstStrings.VALUE }));
+                        continue;
+                    }
+
+                    e.values.Add((v.id, new EmitValue { inline = v.property }));
+                }
+            }
+
+            return new Plan(TopologicalOrder(emitted, byNode), byNode);
+        }
+
+        private static EmitNode SynthesizeConstant(IProperty property, float[] components, double consumerRank, List<EmitNode> emitted)
+        {
+            var rank = consumerRank - 0.5;
+
+            if (property is Property<float>)
+                return SynthesizeScalar(components[0], rank, emitted);
+
+            var op = property switch
+            {
+                Property<float2> => "math/combine2",
+                Property<float3> => "math/combine3",
+                Property<float4> => "math/combine4",
+                Property<float2x2> => "math/combine2x2",
+                Property<float3x3> => "math/combine3x3",
+                _ => "math/combine4x4",
+            };
+
+            var combine = new EmitNode { op = op, rank = rank };
+
+            // Combine inputs a, b, c... take components in JSON order (XYZW / column-major).
+            for (int i = 0; i < components.Length; i++)
+            {
+                var c = components[i];
+                var value = float.IsNaN(c) || float.IsInfinity(c)
+                    ? new EmitValue { node = SynthesizeScalar(c, rank - 0.25, emitted), socket = ConstStrings.VALUE }
+                    : new EmitValue { inline = new Property<float>(c) };
+
+                combine.values.Add((ConstStrings.Letters[i], value));
+            }
+
+            emitted.Add(combine);
+            return combine;
+        }
+
+        private static EmitNode SynthesizeScalar(float value, double rank, List<EmitNode> emitted)
+        {
+            if (float.IsNaN(value))
+                return Add(new EmitNode { op = "math/NaN", rank = rank });
+
+            var inf = Add(new EmitNode { op = "math/Inf", rank = rank - 0.01 });
+
+            if (value > 0)
+                return inf;
+
+            var neg = new EmitNode { op = "math/neg", rank = rank };
+            neg.values.Add((ConstStrings.A, new EmitValue { node = inf, socket = ConstStrings.VALUE }));
+            return Add(neg);
+
+            EmitNode Add(EmitNode n)
+            {
+                emitted.Add(n);
+                return n;
+            }
+        }
+
+        private static List<EmitNode> TopologicalOrder(List<EmitNode> emitted, Dictionary<Node, EmitNode> byNode)
+        {
+            var successors = new Dictionary<EmitNode, List<EmitNode>>();
+            var inDegree = new Dictionary<EmitNode, int>();
+
+            foreach (var e in emitted)
+            {
+                successors[e] = new List<EmitNode>();
+                inDegree[e] = 0;
+            }
+
+            void AddEdge(EmitNode from, EmitNode to)
+            {
+                successors[from].Add(to);
+                inDegree[to]++;
+            }
+
+            foreach (var e in emitted)
+            {
+                foreach (var (_, v) in e.values)
+                {
+                    if (v.node != null)
+                        AddEdge(v.node, e);
+                }
+
+                if (e.source == null)
+                    continue;
+
+                foreach (var f in e.source.flows)
+                {
+                    AddEdge(e, byNode[f.toNode]);
+                }
+            }
+
+            // Kahn's algorithm, preferring the original node order among ready nodes.
+            var ready = new List<EmitNode>();
+            foreach (var e in emitted)
+            {
+                if (inDegree[e] == 0)
+                    ready.Add(e);
+            }
+
+            var ordered = new List<EmitNode>(emitted.Count);
+
+            while (ready.Count > 0)
+            {
+                var best = 0;
+                for (int i = 1; i < ready.Count; i++)
+                {
+                    if (ready[i].rank < ready[best].rank)
+                        best = i;
+                }
+
+                var next = ready[best];
+                ready.RemoveAt(best);
+                next.index = ordered.Count;
+                ordered.Add(next);
+
+                foreach (var s in successors[next])
+                {
+                    if (--inDegree[s] == 0)
+                        ready.Add(s);
+                }
+            }
+
+            if (ordered.Count != emitted.Count)
+                throw new InvalidOperationException("The graph contains a cycle of value references and flows and cannot be serialized.");
+
+            return ordered;
+        }
+
+        public static void WriteJson(JsonWriter writer, Plan plan, Dictionary<string, DeclarationsSerializer.DeclarationData> declarations, Dictionary<Type, int> typeIndexByType)
+        {
+            if (plan.nodes.Count == 0)
+                return;
+
+            writer.WritePropertyName(ConstStrings.NODES);
+            writer.WriteStartArray();
+
+            foreach (var e in plan.nodes)
+            {
+                WriteNode(writer, e, plan, declarations, typeIndexByType);
             }
 
             writer.WriteEndArray();
         }
 
-        private static void WriteNode(JsonWriter writer, List<Node> nodes, int nodeIndex, Dictionary<string, DeclarationsSerializer.DeclarationData> declarations, Dictionary<Type, int> typeIndexByType)
+        private static void WriteNode(JsonWriter writer, EmitNode e, Plan plan, Dictionary<string, DeclarationsSerializer.DeclarationData> declarations, Dictionary<Type, int> typeIndexByType)
         {
-            var node = nodes[nodeIndex];
-
             writer.WriteStartObject();
 
             writer.WritePropertyName(ConstStrings.DECLARATION);
-            writer.WriteValue(declarations[node.type].index);
+            writer.WriteValue(declarations[e.op].index);
 
-            WriteConfiguration(writer, node.configuration);
-            WriteValues(writer, nodes, nodeIndex, typeIndexByType);
-            WriteFlows(writer, nodes, nodeIndex);
-            WriteMetadata(writer, node.metadata);
+            if (e.source != null)
+                WriteConfiguration(writer, e.source.configuration);
+
+            WriteValues(writer, e, typeIndexByType);
+
+            if (e.source != null)
+            {
+                WriteFlows(writer, e.source.flows, plan);
+                WriteMetadata(writer, e.source.metadata);
+            }
 
             writer.WriteEndObject();
         }
 
         private static void WriteMetadata(JsonWriter writer, Metadata metadata)
         {
+            if (metadata == null || (metadata.positionX == 0 && metadata.positionY == 0))
+                return;
+
+            // Editor-only data lives in "extras" so it doesn't add non-spec properties.
+            writer.WritePropertyName("extras");
+            writer.WriteStartObject();
             writer.WritePropertyName(ConstStrings.METADATA);
             writer.WriteStartObject();
-
             writer.WritePropertyName("positionX");
-            writer.WriteValue(metadata.positionX.ToString());
-
+            writer.WriteValue(metadata.positionX);
             writer.WritePropertyName("positionY");
-            writer.WriteValue(metadata.positionY.ToString());
-
+            writer.WriteValue(metadata.positionY);
+            writer.WriteEndObject();
             writer.WriteEndObject();
         }
 
-        private static void WriteFlows(JsonWriter writer, List<Node> nodes, int nodeIndex)
+        private static void WriteFlows(JsonWriter writer, List<Flow> flows, Plan plan)
         {
-            var flows = nodes[nodeIndex].flows;
+            if (flows.Count == 0)
+                return;
 
             writer.WritePropertyName(ConstStrings.FLOWS);
             writer.WriteStartObject();
 
-            for (int i = 0; i < flows.Count; i++)
+            foreach (var flow in flows)
             {
-                WriteFlow(writer, nodes, flows[i]);
+                writer.WritePropertyName(flow.fromSocket);
+                writer.WriteStartObject();
+                writer.WritePropertyName(ConstStrings.NODE);
+                writer.WriteValue(plan.byNode[flow.toNode].index);
+                writer.WritePropertyName(ConstStrings.SOCKET);
+                writer.WriteValue(flow.toSocket);
+                writer.WriteEndObject();
             }
 
             writer.WriteEndObject();
         }
 
-        private static void WriteFlow(JsonWriter writer, List<Node> nodes, Flow flow)
-        {
-            writer.WritePropertyName(flow.fromSocket);
-            writer.WriteStartObject();
-
-            writer.WritePropertyName(ConstStrings.NODE);
-
-            var targetNodeIndex = nodes.IndexOf(flow.toNode);
-            Assert.AreNotEqual(targetNodeIndex, -1);
-            writer.WriteValue(targetNodeIndex);
-
-            writer.WritePropertyName(ConstStrings.SOCKET);
-            writer.WriteValue(flow.toSocket);
-
-            writer.WriteEndObject();
-        }
 
         private static void WriteConfiguration(JsonWriter writer, List<Configuration> configuration)
         {
-            writer.WritePropertyName(ConstStrings.CONFIGURATION);
-            writer.WriteStartObject();
+            var written = false;
 
-            for (int i = 0; i < configuration.Count; i++)
+            foreach (var config in configuration)
             {
-                WriteConfigurationEntry(writer, configuration[i]);
+                if (!TryGetWritableConfig(config, out var property, out var raw))
+                    continue;
+
+                if (!written)
+                {
+                    writer.WritePropertyName(ConstStrings.CONFIGURATION);
+                    writer.WriteStartObject();
+                    written = true;
+                }
+
+                writer.WritePropertyName(config.id);
+                writer.WriteStartObject();
+
+                if (property != null)
+                {
+                    LiteralSerializer.WriteConfigLiteral(writer, property);
+                }
+                else
+                {
+                    writer.WritePropertyName(ConstStrings.VALUE);
+                    raw.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
             }
 
-            writer.WriteEndObject();
+            if (written)
+                writer.WriteEndObject();
         }
 
-        private static void WriteConfigurationEntry(JsonWriter writer, Configuration configuration)
+        private static bool TryGetWritableConfig(Configuration config, out IProperty property, out JArray raw)
         {
-            writer.WritePropertyName(configuration.id);
+            property = null;
+            raw = null;
 
-            writer.WriteStartObject();
+            switch (config.property)
+            {
+                case Property<int>:
+                case Property<bool>:
+                case Property<string>:
+                case Property<int[]>:
+                    property = config.property;
+                    return true;
+                // Placeholder created by Node.AddDefaultData, or an unparsed value read from JSON.
+                case Property<JArray> placeholder when placeholder.value != null && placeholder.value.Count > 0:
+                    raw = placeholder.value;
+                    return true;
+            }
 
-            WriteConfigLiteral(writer, configuration.property);
+            if (config.raw != null)
+            {
+                raw = config.raw;
+                return true;
+            }
 
-            writer.WriteEndObject();
+            return false;
         }
 
-        private static void WriteValues(JsonWriter writer, List<Node> nodes, int nodeIndex, Dictionary<Type, int> typeIndexByType)
+        private static void WriteValues(JsonWriter writer, EmitNode e, Dictionary<Type, int> typeIndexByType)
         {
-            var values = nodes[nodeIndex].values;
+            if (e.values.Count == 0)
+                return;
 
             writer.WritePropertyName(ConstStrings.VALUES);
             writer.WriteStartObject();
 
-            for (int i = 0; i < values.Count; i++)
+            foreach (var (id, v) in e.values)
             {
-                WriteValue(writer, nodes, values[i], typeIndexByType);
-            }
+                writer.WritePropertyName(id);
+                writer.WriteStartObject();
 
-            writer.WriteEndObject();
-        }
+                if (v.node != null)
+                {
+                    writer.WritePropertyName(ConstStrings.NODE);
+                    writer.WriteValue(v.node.index);
 
-        private static void WriteValue(JsonWriter writer, List<Node> nodes, Value value, Dictionary<Type, int> typeIndexByType)
-        {
-            writer.WritePropertyName(value.id);
-            writer.WriteStartObject();
-
-            if (value.node != null)
-            {
-                writer.WritePropertyName(ConstStrings.NODE);
-                var targetNodeIndex = nodes.IndexOf(value.node);
-                Assert.AreNotEqual(targetNodeIndex, -1);
-                writer.WriteValue(targetNodeIndex);
-
-                writer.WritePropertyName(ConstStrings.SOCKET);
-                writer.WriteValue(value.socket);
-            }
-            else
-            {
-                WriteValueLiteral(writer, value.property, typeIndexByType);
-            }
-
-            writer.WriteEndObject();
-        }
-
-        public static void WriteValueLiteral(JsonWriter writer, IProperty property, Dictionary<Type, int> typeIndexByType)
-        {
-            writer.WritePropertyName(ConstStrings.VALUE);
-            writer.WriteStartArray();
-
-            var type = Constants.INVALID_TYPE_INDEX;
-
-            switch (property)
-            {
-                case Property<int> iProp:
-                    writer.WriteValue(iProp.value);
-                    type = typeIndexByType[typeof(int)];
-                    break;
-                case Property<float> fProp:
-                    writer.WriteValue(fProp.value);
-                    type = typeIndexByType[typeof(float)];
-                    break;
-                case Property<bool> bProp:
-                    writer.WriteValue(bProp.value);
-                    type = typeIndexByType[typeof(bool)];
-                    break;
-                case Property<float2> f2Prop:
-                    writer.WriteValue(f2Prop.value.x);
-                    writer.WriteValue(f2Prop.value.y);
-                    type = typeIndexByType[typeof(float2)];
-                    break;
-                case Property<float3> f3Prop:
-                    writer.WriteValue(f3Prop.value.x);
-                    writer.WriteValue(f3Prop.value.y);
-                    writer.WriteValue(f3Prop.value.z);
-                    type = typeIndexByType[typeof(float3)];
-                    break;
-                case Property<float4> f4Prop:
-                    writer.WriteValue(f4Prop.value.x);
-                    writer.WriteValue(f4Prop.value.y);
-                    writer.WriteValue(f4Prop.value.z);
-                    writer.WriteValue(f4Prop.value.w);
-                    type = typeIndexByType[typeof(float4)];
-                    break;
-                case Property<float2x2> p:
-                    writer.WriteValue(p.value.c0.x);
-                    writer.WriteValue(p.value.c0.y);
-                    writer.WriteValue(p.value.c1.x);
-                    writer.WriteValue(p.value.c1.y);
-                    type = typeIndexByType[typeof(float2x2)];
-                    break;
-                case Property<float3x3> p:
-                    writer.WriteValue(p.value.c0.x);
-                    writer.WriteValue(p.value.c0.y);
-                    writer.WriteValue(p.value.c0.z);
-                    writer.WriteValue(p.value.c1.x);
-                    writer.WriteValue(p.value.c1.y);
-                    writer.WriteValue(p.value.c1.z);
-                    writer.WriteValue(p.value.c2.x);
-                    writer.WriteValue(p.value.c2.y);
-                    writer.WriteValue(p.value.c2.z);
-                    type = typeIndexByType[typeof(float3x3)];
-                    break;
-                case Property<float4x4> p:
-                    writer.WriteValue(p.value.c0.x);
-                    writer.WriteValue(p.value.c0.y);
-                    writer.WriteValue(p.value.c0.z);
-                    writer.WriteValue(p.value.c0.w);
-                    writer.WriteValue(p.value.c1.x);
-                    writer.WriteValue(p.value.c1.y);
-                    writer.WriteValue(p.value.c1.z);
-                    writer.WriteValue(p.value.c1.w);
-                    writer.WriteValue(p.value.c2.x);
-                    writer.WriteValue(p.value.c2.y);
-                    writer.WriteValue(p.value.c2.z);
-                    writer.WriteValue(p.value.c2.w);
-                    writer.WriteValue(p.value.c3.x);
-                    writer.WriteValue(p.value.c3.y);
-                    writer.WriteValue(p.value.c3.z);
-                    writer.WriteValue(p.value.c3.w);
-                    type = typeIndexByType[typeof(float4x4)];
-                    break;
-                case Property<string> p:
-                    writer.WriteValue(p.value);
-                    type = typeIndexByType[typeof(string)];
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-
-            writer.WriteEndArray();
-
-            writer.WritePropertyName(ConstStrings.TYPE);
-            writer.WriteValue(type);
-        }
-
-        public static void WriteConfigLiteral(JsonWriter writer, IProperty property)
-        {
-            writer.WritePropertyName(ConstStrings.VALUE);
-            writer.WriteStartArray();
-
-            switch (property)
-            {
-                case Property<int> iProp:
-                    writer.WriteValue(iProp.value);
-                    break;
-                case Property<bool> bProp:
-                    writer.WriteValue(bProp.value);
-                    break;
-                case Property<int[]> p:
-                    for (int i = 0; i < p.value.Length; i++)
+                    if (v.socket != ConstStrings.VALUE)
                     {
-                        writer.WriteValue(p.value[i]);
+                        writer.WritePropertyName(ConstStrings.SOCKET);
+                        writer.WriteValue(v.socket);
                     }
-                    break;
-                case Property<string> p:
-                    writer.WriteValue(p.value);
-                    break;
-                default:
-                    throw new NotImplementedException();
+
+                    if (v.declaredType != null && typeIndexByType.TryGetValue(v.declaredType, out var t))
+                    {
+                        writer.WritePropertyName(ConstStrings.TYPE);
+                        writer.WriteValue(t);
+                    }
+                }
+                else
+                {
+                    LiteralSerializer.WriteTypedValueOrDefault(writer, v.inline, typeIndexByType, $"node {e.index} ({e.op}) value \"{id}\"");
+                }
+
+                writer.WriteEndObject();
             }
 
-            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        /// <summary>Value types used by inline values in the plan, for building the types array.</summary>
+        public static IEnumerable<Type> GetInlineTypes(Plan plan)
+        {
+            foreach (var e in plan.nodes)
+            {
+                foreach (var (_, v) in e.values)
+                {
+                    if (v.inline != null)
+                        yield return v.inline.GetSystemType();
+                }
+            }
         }
     }
 }

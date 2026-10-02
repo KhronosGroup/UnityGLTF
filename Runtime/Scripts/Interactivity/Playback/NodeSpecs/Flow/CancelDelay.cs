@@ -10,7 +10,7 @@ namespace UnityGLTF.Interactivity.Playback
         };
 
             var values = new NodeValue[]{
-                new NodeValue(ConstStrings.DELAY_INDEX, "Index of the delay to cancel.", new System.Type[] { typeof(int) }),
+                new NodeValue(ConstStrings.DELAY, "Reference to the delay to cancel.", new System.Type[] { typeof(Ref) }),
         };
             return (flows, values);
         }

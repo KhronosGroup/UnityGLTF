@@ -15,6 +15,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 new NodeValue(ConstStrings.TIME_SINCE_START, "Relative time in seconds since the graph execution start.", new Type[]  { typeof(float) }),
                 new NodeValue(ConstStrings.TIME_SINCE_LAST_TICK, "Relative time in seconds since the last tick occurred.", new Type[]  { typeof(float) }),
+                new NodeValue(ConstStrings.EVENT, "The event reference.", new Type[]  { typeof(Ref) }),
             };
 
             return (flows, values);

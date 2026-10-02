@@ -79,5 +79,15 @@ namespace UnityGLTF.Interactivity.Playback
         public int meshCount;
         public int nodeCount;
         public int sceneCount;
+        public int skinCount;
+        public int textureCount;
+        public int imageCount;
+        public int samplerCount;
+        public int accessorCount;
+        public int bufferViewCount;
+        public int bufferCount;
+        /// <summary>The asset.version string of the glTF JSON, e.g. "2.0".</summary>
+        public string assetVersion;
+        public List<string> extensionsUsed;
     }
 }

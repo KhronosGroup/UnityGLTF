@@ -9,6 +9,11 @@ namespace UnityGLTF.Interactivity.Playback
         public string id { get; set; }
         public Node node { get; set; } = null;
         public string socket { get; set; } = Constants.EMPTY_SOCKET_STRING;
+        /// <summary>
+        /// The type given by the JSON "type" property. For inline values it matches the property type.
+        /// For node references it is optional and must match the referenced output socket type.
+        /// </summary>
+        public System.Type declaredType { get; set; }
 
         public event Action<Value> onConnectionChanged;
 

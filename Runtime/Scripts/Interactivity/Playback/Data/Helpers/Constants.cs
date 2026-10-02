@@ -81,6 +81,16 @@ namespace UnityGLTF.Interactivity.Playback
         public const string CURRENT_COUNT = "currentCount";
         public const string UP = "up";
         public const string FORWARD = "forward";
+        public const string ORDER = "order";
+        public const string R = "r";
+        public const string X = "x";
+        public const string Y = "y";
+        public const string Z = "z";
+        public const string SELECTED_NODE = "selectedNode";
+        public const string HOVER_NODE = "hoverNode";
+        public const string STOP_IMMEDIATE = "stopImmediate";
+        public const string LAST_DELAY = "lastDelay";
+        public const string DELAY = "delay";
 
         public const string VARIABLES = "variables";
         public const string VARIABLE = "variable";
@@ -127,7 +137,7 @@ namespace UnityGLTF.Interactivity.Playback
 
         public static string GetNumberString(int i)
         {
-            if (i > 0 && i < _numbers.Length)
+            if (i >= 0 && i < _numbers.Length)
                 return _numbers[i];
 
             return i.ToString();
