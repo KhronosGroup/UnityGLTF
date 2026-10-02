@@ -147,7 +147,7 @@ namespace UnityGLTF.Interactivity.Playback
             ["math/sinh"] = (engine, node) => new MathSinH(engine, node),
             ["math/switch"] = (engine, node) => new MathSwitch(engine, node),
             ["math/tanh"] = (engine, node) => new MathTanH(engine, node),
-            ["math/tau"] = (engine, node) => new MathTau(engine, node),
+            ["math/Tau"] = (engine, node) => new MathTau(engine, node),
             ["math/transform"] = (engine, node) => new MathTransform(engine, node),
             ["math/transpose"] = (engine, node) => new MathTranspose(engine, node),
             ["math/trunc"] = (engine, node) => new MathTrunc(engine, node),
