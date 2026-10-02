@@ -24,7 +24,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             for (int i = 0; i < MATERIAL_POINTERS.Length; i++)
             {
-                var pointer = MATERIAL_POINTERS[i].pointer.Replace('/', '_');
+                var pointer = MATERIAL_POINTERS[i].pointer.Replace('/', '_').Replace("{nodeIndex}", "0");
                 QueueTest("pointer/interpolate", $"InterpolateAndGetPointer{pointer}", $"Pointer Interpolate {pointer}", $"Tests that pointer/interpolate and pointer/get work for {pointer}.", CreatePointerInterpolateGraph(MATERIAL_POINTERS[i].pointer, MATERIAL_POINTERS[i].type), importer.Result);
             }
         }
@@ -174,7 +174,7 @@ namespace UnityGLTF.Interactivity.Playback.Tests
 
             for (int i = 0; i < MATERIAL_POINTERS.Length; i++)
             {
-                var pointer = MATERIAL_POINTERS[i].pointer.Replace('/', '_');
+                var pointer = MATERIAL_POINTERS[i].pointer.Replace('/', '_').Replace("{nodeIndex}", "0");
                 QueueTest("pointer/set", $"SetAndGetPointer{pointer}", $"Pointer Set/Get {pointer}", $"Tests that pointer/set and pointer/get work for {pointer}.", CreatePointerSetGraph(MATERIAL_POINTERS[i].pointer, MATERIAL_POINTERS[i].type), importer.Result);
             }
         }
