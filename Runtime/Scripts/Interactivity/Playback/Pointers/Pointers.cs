@@ -53,6 +53,42 @@ namespace UnityGLTF.Interactivity.Playback
         }
     }
 
+    /// <summary>
+    /// Read-only Object Model property holding the index of another glTF object, such as /nodes/{}/children/{}.
+    /// The Object Model types these as int; a pointer/get configured with the ref type reads them as a reference
+    /// into <see cref="collection"/>, so the result can feed {} template parameters directly.
+    /// </summary>
+    public struct ObjectIndexPointer : IReadOnlyPointer<int>
+    {
+        public bool invalid { get; set; }
+        /// <summary>The JSON pointer of the array the index refers to, e.g. "/nodes".</summary>
+        public string collection;
+        public int index;
+
+        public ObjectIndexPointer(string collection, int index)
+        {
+            invalid = false;
+            this.collection = collection;
+            this.index = index;
+        }
+
+        public ReadOnlyPointer<Ref> AsRef()
+        {
+            var r = Ref.Gltf(collection, index);
+            return new ReadOnlyPointer<Ref>(() => r);
+        }
+
+        public Type GetSystemType()
+        {
+            return typeof(int);
+        }
+
+        public string GetTypeSignature()
+        {
+            return Helpers.GetSignatureBySystemType(typeof(int));
+        }
+    }
+
     public struct Pointer<T> : IPointer<T>
     {
         public Action<T> setter;

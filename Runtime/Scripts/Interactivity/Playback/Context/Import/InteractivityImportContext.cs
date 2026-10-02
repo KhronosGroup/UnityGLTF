@@ -141,7 +141,9 @@ namespace UnityGLTF.Interactivity.Playback
 
             try
             {
-                _pointerResolver.RegisterSceneData(_context.SceneImporter.Root);
+                var importer = _context.SceneImporter;
+                _pointerResolver.RegisterSceneData(importer.Root);
+                _pointerResolver.RegisterMissingMeshesAndMaterials(importer.Root, i => i < importer.MeshCache.Length ? importer.MeshCache[i]?.LoadedMesh : null);
                 _pointerResolver.CreatePointers();
 
                 _interactivityGraph.extensionData.TryGetDefaultGraph(out var defaultGraph);
@@ -192,6 +194,22 @@ namespace UnityGLTF.Interactivity.Playback
             }
         }
 
+        // Mesh colliders need triangles; line and point meshes (e.g. debug lines) cannot be hit by a ray anyway.
+        private static bool IsTriangleMesh(Mesh mesh)
+        {
+            if (mesh == null || mesh.subMeshCount == 0)
+                return false;
+
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                var topology = mesh.GetTopology(i);
+                if (topology != MeshTopology.Triangles && topology != MeshTopology.Quads)
+                    return false;
+            }
+
+            return true;
+        }
+
         private void AddCollidersToChildSkinnedMeshRenderers(GameObject nodeObject)
         {
             var smrs = nodeObject.GetComponentsInChildren<SkinnedMeshRenderer>();
@@ -205,7 +223,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 go = smrs[i].gameObject;
 
-                if (!GLTFInteractivityEventWrapper.HasExactCollider(go))
+                if (IsTriangleMesh(smrs[i].sharedMesh) && !GLTFInteractivityEventWrapper.HasExactCollider(go))
                 {
                     var mc = go.AddComponent<MeshCollider>();
                     mc.sharedMesh = smrs[i].sharedMesh;
@@ -226,7 +244,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 go = meshFilters[i].gameObject;
 
-                if (!GLTFInteractivityEventWrapper.HasExactCollider(go))
+                if (IsTriangleMesh(meshFilters[i].sharedMesh) && !GLTFInteractivityEventWrapper.HasExactCollider(go))
                 {
                     var mc = go.AddComponent<MeshCollider>();
                     mc.sharedMesh = meshFilters[i].sharedMesh;

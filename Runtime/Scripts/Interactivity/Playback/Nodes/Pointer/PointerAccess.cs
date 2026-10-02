@@ -75,6 +75,12 @@ namespace UnityGLTF.Interactivity.Playback
             if (!node.engine.TryGetPointer(effectivePointer, node, out pointer))
                 return false;
 
+            if (pointer is ObjectIndexPointer objectIndex && type == typeof(Ref))
+            {
+                pointer = objectIndex.AsRef();
+                return true;
+            }
+
             return PointerHelpers.GetSpecType(pointer) == type;
         }
     }

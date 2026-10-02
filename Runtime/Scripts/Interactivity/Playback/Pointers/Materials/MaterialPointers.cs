@@ -83,6 +83,9 @@ namespace UnityGLTF.Interactivity.Playback.Materials
 
             var pointer = pointers[nodeIndex];
 
+            if (pointer.material == null)
+                return PointerHelpers.InvalidPointer();
+
             reader.AdvanceToNextToken('/');
 
             // Path so far: /materials/{}/

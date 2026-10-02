@@ -11,9 +11,16 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public ReadOnlyPointer<int> weightsLength;
         public Pointer<float>[] weights;
+        /// <summary>Material index of each primitive, -1 when a primitive has no material.</summary>
+        public int[] primitiveMaterials;
 
         public MeshPointers(in MeshData data, IReadOnlyList<NodeData> nodes)
         {
+            var primitives = data.mesh?.Primitives;
+            primitiveMaterials = new int[primitives?.Count ?? 0];
+            for (int i = 0; i < primitiveMaterials.Length; i++)
+                primitiveMaterials[i] = primitives[i].Material?.Id ?? -1;
+
             var skinnedMeshRenderers = new List<SkinnedMeshRenderer>();
             SkinnedMeshRenderer smr;
 
@@ -81,8 +88,28 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 var a when a.Is(Pointers.WEIGHTS) => ProcessWeightsPointer(reader, engineNode, pointer),
                 var a when a.Is(Pointers.WEIGHTS_LENGTH) => pointer.weightsLength,
+                var a when a.Is(Pointers.PRIMITIVES_LENGTH) => new ReadOnlyPointer<int>(() => pointer.primitiveMaterials.Length),
+                var a when a.Is(Pointers.PRIMITIVES) => ProcessPrimitivePointer(reader, pointer),
                 _ => PointerHelpers.InvalidPointer(),
             };
+        }
+
+        private static IPointer ProcessPrimitivePointer(StringSpanReader reader, MeshPointers pointer)
+        {
+            reader.AdvanceToNextToken('/');
+
+            // Path so far: /meshes/{}/primitives/
+            if (!Ref.TryParseCanonicalIndex(reader.AsReadOnlySpan(), out var primitiveIndex) || primitiveIndex >= pointer.primitiveMaterials.Length)
+                return PointerHelpers.InvalidPointer();
+
+            reader.AdvanceToNextToken('/');
+
+            // Path so far: /meshes/{}/primitives/{}/
+            if (!reader.AsReadOnlySpan().Is(Pointers.MATERIAL))
+                return PointerHelpers.InvalidPointer();
+
+            var material = pointer.primitiveMaterials[primitiveIndex];
+            return material >= 0 ? new ObjectIndexPointer("/materials", material) : PointerHelpers.InvalidPointer();
         }
 
         private static IPointer ProcessWeightsPointer(StringSpanReader reader, BehaviourEngineNode engineNode, MeshPointers pointer)

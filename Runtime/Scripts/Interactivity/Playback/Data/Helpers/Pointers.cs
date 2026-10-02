@@ -48,6 +48,7 @@ namespace UnityGLTF.Interactivity.Playback
                 ReadOnlyPointer<float3x3> p => new Property<float3x3>(p.GetValue()),
                 ReadOnlyPointer<float4x4> p => new Property<float4x4>(p.GetValue()),
                 ReadOnlyPointer<Ref> p => new Property<Ref>(p.GetValue()),
+                ObjectIndexPointer p => new Property<int>(p.index),
                 Pointer<bool> p => new Property<bool>(p.GetValue()),
                 Pointer<int> p => new Property<int>(p.GetValue()),
                 Pointer<float> p => new Property<float>(p.GetValue()),

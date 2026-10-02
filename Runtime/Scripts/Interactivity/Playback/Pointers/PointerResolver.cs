@@ -39,6 +39,27 @@ namespace UnityGLTF.Interactivity.Playback
             _materials.Add(new MaterialData(material, materialIndex, unityMaterial));
         }
 
+        /// <summary>
+        /// Pointers address meshes and materials by glTF index, so every index needs an entry. The importer skips
+        /// OnAfterImportMesh for meshes it deduplicates and never builds materials no mesh uses; this fills those gaps.
+        /// </summary>
+        public void RegisterMissingMeshesAndMaterials(GLTF.Schema.GLTFRoot root, Func<int, Mesh> loadedMesh)
+        {
+            var meshes = root?.Meshes;
+            for (int i = 0; meshes != null && i < meshes.Count; i++)
+            {
+                if (!_meshes.Exists(m => m.meshIndex == i))
+                    _meshes.Add(new MeshData(meshes[i], i, loadedMesh(i)));
+            }
+
+            var materials = root?.Materials;
+            for (int i = 0; materials != null && i < materials.Count; i++)
+            {
+                if (!_materials.Exists(m => m.materialIndex == i))
+                    _materials.Add(new MaterialData(materials[i], i, null));
+            }
+        }
+
         public void RegisterCamera(GLTF.Schema.GLTFCamera camera, int cameraIndex, Camera unityCamera)
         {
             _cameras.Add(new CameraData(camera, cameraIndex, unityCamera));
@@ -156,10 +177,22 @@ namespace UnityGLTF.Interactivity.Playback
 
         private void CreateNodePointers()
         {
+            // /nodes/{}/parent is the node that lists this one in its children array; roots have none.
+            var parents = new Dictionary<int, int>();
+            for (int i = 0; i < _nodes.Count; i++)
+            {
+                var children = _nodes[i].node?.Children;
+                if (children == null)
+                    continue;
+
+                for (int c = 0; c < children.Count; c++)
+                    parents[children[c].Id] = _nodes[i].nodeIndex;
+            }
+
             for (int i = 0; i < _nodes.Count; i++)
             {
                 Util.Log($"Registered Node Pointer {_nodes[i].nodeIndex}", _nodes[i].unityObject);
-                _nodePointers.Add(new NodePointers(_nodes[i]));
+                _nodePointers.Add(new NodePointers(_nodes[i], parents.TryGetValue(_nodes[i].nodeIndex, out var parent) ? parent : -1));
             }
 
             nodePointers = new(_nodePointers);
@@ -178,7 +211,8 @@ namespace UnityGLTF.Interactivity.Playback
         {
             for (int i = 0; i < _materials.Count; i++)
             {
-                _materialPointers.Add(new MaterialPointers(_materials[i]));
+                // A material that was never built has no Unity material; keep its slot so later indices line up.
+                _materialPointers.Add(_materials[i].unityMaterial != null ? new MaterialPointers(_materials[i]) : default);
             }
         }
 

@@ -19,11 +19,23 @@ namespace UnityGLTF.Interactivity.Playback
         public ReadOnlyPointer<int> weightsLength;
         public Pointer<float>[] weights;
         public GameObject gameObject;
+        // Read-only structure from the glTF JSON: child node indices, mesh index (-1 if none), parent index (-1 for roots).
+        public int[] children;
+        public int mesh;
+        public int parent;
 
-        public NodePointers(in NodeData data)
+        public NodePointers(in NodeData data, int parent = -1)
         {
             var go = data.unityObject;
             gameObject = go;
+
+            var childIds = data.node?.Children;
+            children = new int[childIds?.Count ?? 0];
+            for (int i = 0; i < children.Length; i++)
+                children[i] = childIds[i].Id;
+
+            mesh = data.node?.Mesh?.Id ?? -1;
+            this.parent = parent;
 
             // Unity coordinate system differs from the GLTF one.
             // Unity is left-handed with y-up and z-forward.
@@ -138,8 +150,23 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.EXTENSIONS) => ProcessExtensionPointer(reader, nodePointer),
                 var a when a.Is(Pointers.MATRIX) => nodePointer.matrix,
                 var a when a.Is(Pointers.GLOBAL_MATRIX) => nodePointer.globalMatrix,
+                var a when a.Is(Pointers.CHILDREN_LENGTH) => new ReadOnlyPointer<int>(() => nodePointer.children.Length),
+                var a when a.Is(Pointers.CHILDREN) => ProcessChildrenPointer(reader, nodePointer),
+                var a when a.Is(Pointers.MESH) => nodePointer.mesh >= 0 ? new ObjectIndexPointer("/meshes", nodePointer.mesh) : PointerHelpers.InvalidPointer(),
+                var a when a.Is(Pointers.PARENT) => nodePointer.parent >= 0 ? new ObjectIndexPointer("/nodes", nodePointer.parent) : PointerHelpers.InvalidPointer(),
                 _ => PointerHelpers.InvalidPointer(),
             };
+        }
+
+        private static IPointer ProcessChildrenPointer(StringSpanReader reader, NodePointers nodePointer)
+        {
+            reader.AdvanceToNextToken('/');
+
+            // Path so far: /nodes/{}/children/
+            if (!Ref.TryParseCanonicalIndex(reader.AsReadOnlySpan(), out var childIndex) || childIndex >= nodePointer.children.Length)
+                return PointerHelpers.InvalidPointer();
+
+            return new ObjectIndexPointer("/nodes", nodePointer.children[childIndex]);
         }
 
         private static IPointer ProcessExtensionPointer(StringSpanReader reader, NodePointers nodePointer)

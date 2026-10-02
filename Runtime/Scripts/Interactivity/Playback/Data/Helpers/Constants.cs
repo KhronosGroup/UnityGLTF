@@ -26,6 +26,13 @@ namespace UnityGLTF.Interactivity.Playback
         public const string VIRTUAL_PLAYHEAD = "virtualPlayhead";
         public const string MIN_TIME = "minTime";
         public const string MAX_TIME = "maxTime";
+        public const string CHILDREN = "children";
+        public const string CHILDREN_LENGTH = "children.length";
+        public const string MESH = "mesh";
+        public const string PARENT = "parent";
+        public const string PRIMITIVES = "primitives";
+        public const string PRIMITIVES_LENGTH = "primitives.length";
+        public const string MATERIAL = "material";
 
     }
 
