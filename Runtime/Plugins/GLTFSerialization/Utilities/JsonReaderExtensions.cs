@@ -8,5 +8,10 @@ namespace GLTF.Utilities
 		{
 			return  (uint)System.Math.Round(reader.ReadAsDouble().Value);
 		}
+
+		public static ulong ReadDoubleAsUInt64(this JsonReader reader)
+		{
+			return (ulong)System.Math.Round(reader.ReadAsDouble().Value);
+		}
 	}
 }
