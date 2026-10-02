@@ -613,6 +613,51 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdValueA = "a";
     }
     
+    public abstract class AbstractIntShiftNode : GltfInteractivityNodeSchema
+    {
+        [OutputSocketDescription(GltfTypes.Int)]
+        public const string IdOut = "value";
+
+        [InputSocketDescription(GltfTypes.Int)]
+        public const string IdValueA = "a";
+        [InputSocketDescription(GltfTypes.Int)]
+        public const string IdValueB = "b";
+    }
+
+    public class Math_AsrNode : AbstractIntShiftNode
+    {
+        public override string Op { get; set; } = "math/asr";
+    }
+
+    public class Math_LslNode : AbstractIntShiftNode
+    {
+        public override string Op { get; set; } = "math/lsl";
+    }
+
+    public abstract class AbstractIntBitCountNode : GltfInteractivityNodeSchema
+    {
+        [OutputSocketDescription(GltfTypes.Int)]
+        public const string IdOut = "value";
+
+        [InputSocketDescription(GltfTypes.Int)]
+        public const string IdValueA = "a";
+    }
+
+    public class Math_ClzNode : AbstractIntBitCountNode
+    {
+        public override string Op { get; set; } = "math/clz";
+    }
+
+    public class Math_CtzNode : AbstractIntBitCountNode
+    {
+        public override string Op { get; set; } = "math/ctz";
+    }
+
+    public class Math_PopcntNode : AbstractIntBitCountNode
+    {
+        public override string Op { get; set; } = "math/popcnt";
+    }
+
     public abstract class AbstractSameOneInOneOutNodeWithMatrixTypes : GltfInteractivityNodeSchema
     {
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdValueA)]
