@@ -7,7 +7,8 @@
         "Unity.VisualScripting.Flow",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow.Editor",
-        "Unity.VisualScripting.Core.Editor"
+        "Unity.VisualScripting.Core.Editor",
+        "UnityGLTF.Interactivity.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -16,7 +17,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "nunit.framework.dll"
+        "nunit.framework.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

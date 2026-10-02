@@ -1,14 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using UnityGLTF.Interactivity.Schema;
 
 namespace UnityGLTF.Interactivity.Export
 {
     /// <summary>
     /// Checks the serialized KHR_interactivity extension object against the structural rules of the specification
-    /// (JSON schema, "Validation (Informative)" section and the JSON Syntax chapter). Operation specific rules
-    /// (socket names, supported types per operation) are not covered.
+    /// (JSON schema, "Validation (Informative)" section and the JSON Syntax chapter), plus the value types on
+    /// connections: the type flowing into an input socket is inferred from its source and checked against the
+    /// types the operation accepts (taken from UnityGLTF's node schemas). Socket names are not checked.
     /// Works on JSON only, so it also catches problems introduced by the serialization itself.
     /// </summary>
     public static class GraphSpecValidator
@@ -224,6 +227,10 @@ namespace UnityGLTF.Interactivity.Export
                 return;
             assert(graph["declarations"] != null, "nodes require the declarations array", at);
 
+            // inferred type of every (node, output socket); inputs only reference lower node indices,
+            // so one pass in node order is enough
+            var outputTypes = new Dictionary<(int node, string socket), string>();
+
             for (int i = 0; i < nodes.Count; i++)
             {
                 if (!(nodes[i] is JObject node)) { assert(false, "node must be an object", $"{at}.nodes[{i}]"); continue; }
@@ -275,7 +282,10 @@ namespace UnityGLTF.Interactivity.Export
                 }
 
                 if (op != null)
+                {
                     ValidateOperationConfiguration(op, node, variables, events, types, location, reject);
+                    ValidateValueTypes(op, i, node, variables, events, types, outputTypes, location, reject);
+                }
 
                 if (node.TryGetValue("flows", out var flowsToken))
                 {
@@ -390,6 +400,151 @@ namespace UnityGLTF.Interactivity.Export
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Infers the input types of a node from their sources, checks them against the types the operation
+        /// accepts and records the node's output types for the nodes that follow.
+        /// </summary>
+        private static void ValidateValueTypes(string op, int nodeIndex, JObject node, JArray variables, JArray events,
+            List<string> types, Dictionary<(int node, string socket), string> outputTypes, string location, Check reject)
+        {
+            var configuration = node["configuration"] as JObject;
+            JArray Config(string id) => (configuration?[id] as JObject)?["value"] as JArray;
+            string TypeAt(JToken index) => IsIndex(index) && (int)index < types.Count ? types[(int)index] : null;
+            string VariableType(JToken index) => IsIndex(index) && (int)index < (variables?.Count ?? 0)
+                ? TypeAt((variables[(int)index] as JObject)?["type"]) : null;
+            JObject EventValues()
+            {
+                var index = Config("event")?.FirstOrDefault();
+                return IsIndex(index) && (int)index < (events?.Count ?? 0) ? (events[(int)index] as JObject)?["values"] as JObject : null;
+            }
+
+            var inputTypes = new Dictionary<string, string>();
+            foreach (var property in (node["values"] as JObject)?.Properties() ?? Enumerable.Empty<JProperty>())
+            {
+                if (!(property.Value is JObject socket))
+                    continue;
+                string type = null;
+                if (socket.TryGetValue("node", out var source))
+                {
+                    var sourceSocket = socket["socket"]?.Type == JTokenType.String ? (string)socket["socket"] : "value";
+                    if (IsIndex(source))
+                        outputTypes.TryGetValue(((int)source, sourceSocket), out type);
+                }
+                else
+                    type = TypeAt(socket["type"]);
+                if (type != null)
+                    inputTypes[property.Name] = type;
+            }
+
+            void Expect(string socketName, string expected, string what)
+            {
+                if (expected != null && inputTypes.TryGetValue(socketName, out var actual) && actual != expected)
+                    reject(false, $"{op}: input \"{socketName}\" is {actual}, but {what} is {expected}", location);
+            }
+
+            // operations whose value sockets are defined by the configuration
+            switch (op)
+            {
+                case "variable/set":
+                    foreach (var index in Config("variables") ?? new JArray())
+                        Expect(index.ToString(), VariableType(index), "the variable");
+                    break;
+                case "pointer/set":
+                case "pointer/interpolate":
+                    Expect("value", TypeAt(Config("type")?.FirstOrDefault()), "the pointer type");
+                    break;
+                case "event/send":
+                    foreach (var value in EventValues()?.Properties() ?? Enumerable.Empty<JProperty>())
+                        Expect(value.Name, TypeAt((value.Value as JObject)?["type"]), "the event value");
+                    break;
+            }
+
+            var schema = SchemaFor(op);
+            if (schema != null)
+            {
+                foreach (var input in schema.InputValueSockets)
+                {
+                    if (!inputTypes.TryGetValue(input.Key, out var actual))
+                        continue;
+                    var supported = input.Value.SupportedTypes;
+                    if (supported != null && supported.Length > 0 && supported.Length < GltfTypes.allTypes.Length
+                        && Array.IndexOf(supported, actual) < 0)
+                        reject(false, $"{op}: input \"{input.Key}\" does not accept {actual} (expects {string.Join(" | ", supported)})", location);
+
+                    var sameAs = input.Value.typeRestriction?.fromInputPort;
+                    if (sameAs != null && string.CompareOrdinal(input.Key, sameAs) < 0
+                        && inputTypes.TryGetValue(sameAs, out var otherType) && otherType != actual)
+                        reject(false, $"{op}: inputs \"{input.Key}\" and \"{sameAs}\" must have the same type", location);
+                }
+            }
+
+            // output types
+            switch (op)
+            {
+                case "variable/get":
+                    var variable = VariableType(Config("variable")?.FirstOrDefault());
+                    if (variable != null) outputTypes[(nodeIndex, "value")] = variable;
+                    break;
+                case "pointer/get":
+                    var pointerType = TypeAt(Config("type")?.FirstOrDefault());
+                    if (pointerType != null) outputTypes[(nodeIndex, "value")] = pointerType;
+                    break;
+                case "event/receive":
+                    foreach (var value in EventValues()?.Properties() ?? Enumerable.Empty<JProperty>())
+                    {
+                        var valueType = TypeAt((value.Value as JObject)?["type"]);
+                        if (valueType != null) outputTypes[(nodeIndex, value.Name)] = valueType;
+                    }
+                    break;
+            }
+
+            if (schema == null)
+                return;
+            foreach (var output in schema.OutputValueSockets)
+            {
+                if (outputTypes.ContainsKey((nodeIndex, output.Key)))
+                    continue;
+                string type = null;
+                var expected = output.Value.expectedType;
+                if (expected?.typeIndex != null && expected.typeIndex.Value >= 0 && expected.typeIndex.Value < GltfTypes.TypesMapping.Length)
+                    type = GltfTypes.TypesMapping[expected.typeIndex.Value].GltfSignature;
+                else if (expected?.fromInputPort != null)
+                    inputTypes.TryGetValue(expected.fromInputPort, out type);
+                else if (output.Value.SupportedTypes != null && output.Value.SupportedTypes.Length == 1)
+                    type = output.Value.SupportedTypes[0];
+                if (type != null)
+                    outputTypes[(nodeIndex, output.Key)] = type;
+            }
+        }
+
+        private static Dictionary<string, GltfInteractivityNodeSchema> schemasByOp;
+
+        /// <summary> UnityGLTF's node schema for an operation, or null if UnityGLTF does not know it. </summary>
+        private static GltfInteractivityNodeSchema SchemaFor(string op)
+        {
+            if (schemasByOp == null)
+            {
+                var schemas = new Dictionary<string, GltfInteractivityNodeSchema>();
+                foreach (var type in typeof(GltfInteractivityNodeSchema).Assembly.GetTypes())
+                {
+                    if (type.IsAbstract || !typeof(GltfInteractivityNodeSchema).IsAssignableFrom(type) || type.GetConstructor(Type.EmptyTypes) == null)
+                        continue;
+                    try
+                    {
+                        var schema = (GltfInteractivityNodeSchema)Activator.CreateInstance(type);
+                        if (!string.IsNullOrEmpty(schema.Op) && !schemas.ContainsKey(schema.Op))
+                            schemas.Add(schema.Op, schema);
+                    }
+                    catch (Exception)
+                    {
+                        // schemas that can not be created standalone are simply not checked
+                    }
+                }
+                schemasByOp = schemas;
+            }
+            return schemasByOp.TryGetValue(op, out var result) ? result : null;
         }
 
         /// <summary>
