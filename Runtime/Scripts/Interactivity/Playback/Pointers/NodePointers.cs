@@ -28,6 +28,8 @@ namespace UnityGLTF.Interactivity.Playback
         {
             var go = data.unityObject;
             gameObject = go;
+            // Cached: GameObject.transform is a native call, and these closures run every tick during interpolation.
+            var tr = go != null ? go.transform : null;
 
             var childIds = data.node?.Children;
             children = new int[childIds?.Count ?? 0];
@@ -43,36 +45,36 @@ namespace UnityGLTF.Interactivity.Playback
             // Handedness is easiest to swap here though we could do it during deserialization for performance.
             translation = new Pointer<float3>()
             {
-                setter = (v) => go.transform.localPosition = v.SwapHandedness(),
-                getter = () => go.transform.localPosition.SwapHandedness(),
+                setter = (v) => tr.localPosition = v.SwapHandedness(),
+                getter = () => tr.localPosition.SwapHandedness(),
                 evaluator = (a, b, t) => math.lerp(a, b, t)
             };
 
             rotation = new Pointer<quaternion>()
             {
-                setter = (v) => go.transform.localRotation = ((Quaternion)v).SwapHandedness(),
-                getter = () => go.transform.localRotation.SwapHandedness(),
+                setter = (v) => tr.localRotation = ((Quaternion)v).SwapHandedness(),
+                getter = () => tr.localRotation.SwapHandedness(),
                 evaluator = (a, b, t) => math.slerp(a, b, t)
             };
 
             scale = new Pointer<float3>()
             {
-                setter = (v) => go.transform.localScale = v,
-                getter = () => go.transform.localScale,
+                setter = (v) => tr.localScale = v,
+                getter = () => tr.localScale,
                 evaluator = (a, b, t) => math.lerp(a, b, t)
             };
 
             matrix = new Pointer<float4x4>()
             {
-                setter = (v) => go.transform.SetWorldMatrix(v, worldSpace: false, rightHanded: true),
-                getter = () => go.transform.GetWorldMatrix(worldSpace: false, rightHanded: true),
+                setter = (v) => tr.SetWorldMatrix(v, worldSpace: false, rightHanded: true),
+                getter = () => tr.GetWorldMatrix(worldSpace: false, rightHanded: true),
                 evaluator = (a, b, t) => a.LerpToComponentwise(b, t) // Spec has floatNxN lerp componentwise.
             };
 
             globalMatrix = new Pointer<float4x4>()
             {
-                setter = (v) => go.transform.SetWorldMatrix(v, worldSpace: true, rightHanded: true),
-                getter = () => go.transform.GetWorldMatrix(worldSpace: true, rightHanded: true),
+                setter = (v) => tr.SetWorldMatrix(v, worldSpace: true, rightHanded: true),
+                getter = () => tr.GetWorldMatrix(worldSpace: true, rightHanded: true),
                 evaluator = (a, b, t) => a.LerpToComponentwise(b, t) // Spec has floatNxN lerp componentwise.
             };
 

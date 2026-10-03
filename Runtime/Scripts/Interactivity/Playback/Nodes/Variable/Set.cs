@@ -5,7 +5,7 @@ namespace UnityGLTF.Interactivity.Playback
     public class VariableSet : BehaviourEngineNode
     {
         private readonly List<int> _variableIndices = new();
-        private readonly string[] _sockets;
+        private readonly int[] _inputs;
         private readonly Variant[] _evaluated;
 
         public VariableSet(BehaviourEngine engine, Node node) : base(engine, node)
@@ -21,9 +21,9 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             _evaluated = new Variant[_variableIndices.Count];
-            _sockets = new string[_variableIndices.Count];
-            for (int i = 0; i < _sockets.Length; i++)
-                _sockets[i] = ConstStrings.GetNumberString(_variableIndices[i]);
+            _inputs = new int[_variableIndices.Count];
+            for (int i = 0; i < _inputs.Length; i++)
+                _inputs[i] = GetInputIndex(ConstStrings.GetNumberString(_variableIndices[i]));
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -32,7 +32,7 @@ namespace UnityGLTF.Interactivity.Playback
             //    one of the variables being set observe its old value.
             for (int i = 0; i < _variableIndices.Count; i++)
             {
-                TryEvaluateValue(_sockets[i], out _evaluated[i]);
+                TryEvaluateValue(_inputs[i], out _evaluated[i]);
             }
 
             // 2. Cancel interpolations and assign.

@@ -3,10 +3,21 @@ namespace UnityGLTF.Interactivity.Playback
     public class EventSend : BehaviourEngineNode
     {
         private readonly int _eventIndex = -1;
+        /// <summary>Input index of each value the custom event defines, or -1 when the node has no such socket.</summary>
+        private readonly int[] _valueInputs = System.Array.Empty<int>();
 
         public EventSend(BehaviourEngine engine, Node node) : base(engine, node)
         {
             TryGetConfig(ConstStrings.EVENT, out _eventIndex);
+
+            if (_eventIndex < 0 || _eventIndex >= engine.graph.customEvents.Count)
+                return;
+
+            var definition = engine.graph.customEvents[_eventIndex].values;
+            _valueInputs = new int[definition?.Count ?? 0];
+
+            for (int i = 0; i < _valueInputs.Length; i++)
+                _valueInputs[i] = GetInputIndex(definition[i].id);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -18,8 +29,7 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             // Only the sockets defined by the custom event are sent; extra input sockets are ignored.
-            var definition = engine.graph.customEvents[_eventIndex].values;
-            var count = definition?.Count ?? 0;
+            var count = _valueInputs.Length;
 
             engine.RentEventPayload(count, out var values, out var provided);
 
@@ -27,7 +37,7 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 for (int i = 0; i < count; i++)
                 {
-                    if (TryEvaluateValue(definition[i].id, out Variant value))
+                    if (TryEvaluateValue(_valueInputs[i], out Variant value))
                     {
                         values[i] = value;
                         provided[i] = true;

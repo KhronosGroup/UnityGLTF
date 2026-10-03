@@ -24,12 +24,14 @@ namespace UnityGLTF.Interactivity.Playback
     {
         private readonly BehaviourEngine _engine;
 
-        // Insertion-ordered entries; a variable has at most one.
-        private readonly List<VariableInterpolateData> _active = new();
-        private readonly List<VariableInterpolateData> _snapshot = new();
+        // Insertion-ordered entries; a variable has at most one. Ids increase with insertion,
+        // so the entries are also sorted by id. An array rather than a List so entries are updated in place.
+        private VariableInterpolateData[] _active = new VariableInterpolateData[8];
+        private int _count;
+        private readonly List<int> _snapshot = new();
         private int _nextId;
 
-        public int activeInterpolationCount => _active.Count;
+        public int activeInterpolationCount => _count;
 
         public VariableInterpolationManager(BehaviourEngine engine)
         {
@@ -38,18 +40,18 @@ namespace UnityGLTF.Interactivity.Playback
 
         public void OnTick(double now)
         {
-            // Snapshot first: done flows may start or stop other interpolations.
+            // Snapshot ids first: done flows may start or stop other interpolations.
             _snapshot.Clear();
-            _snapshot.AddRange(_active);
+
+            for (int i = 0; i < _count; i++)
+                _snapshot.Add(_active[i].id);
 
             for (int i = 0; i < _snapshot.Count; i++)
             {
-                var index = IndexOf(_snapshot[i].variableIndex);
+                var index = IndexOfId(_snapshot[i]);
 
-                if (index < 0 || _active[index].id != _snapshot[i].id)
-                    continue;
-
-                DoInterpolate(index, now);
+                if (index >= 0)
+                    DoInterpolate(index, now);
             }
 
             _snapshot.Clear();
@@ -57,7 +59,7 @@ namespace UnityGLTF.Interactivity.Playback
 
         private void DoInterpolate(int index, double now)
         {
-            var data = _active[index];
+            ref var data = ref _active[index];
             var t = (now - data.startTime) / data.duration;
 
             if (t <= 0)
@@ -66,8 +68,9 @@ namespace UnityGLTF.Interactivity.Playback
             if (double.IsNaN(t) || t >= 1)
             {
                 _engine.SetVariable(data.variableIndex, data.endValue);
-                _active.RemoveAt(index);
-                data.done?.Invoke();
+                var done = data.done;
+                RemoveAt(index);
+                done?.Invoke();
                 return;
             }
 
@@ -92,31 +95,66 @@ namespace UnityGLTF.Interactivity.Playback
             data.id = _nextId++;
 
             StopInterpolation(data.variableIndex);
-            _active.Add(data);
+
+            if (_count == _active.Length)
+                Array.Resize(ref _active, _count * 2);
+
+            _active[_count++] = data;
 
             Util.Log($"Starting Variable Interpolation: Start Time {data.startTime}, Duration: {data.duration}");
         }
 
         public bool StopInterpolation(int variableIndex)
         {
-            var index = IndexOf(variableIndex);
-
-            if (index < 0)
-                return false;
-
-            _active.RemoveAt(index);
-            return true;
+            return RemoveAt(IndexOf(variableIndex));
         }
 
         private int IndexOf(int variableIndex)
         {
-            for (int i = 0; i < _active.Count; i++)
+            for (int i = 0; i < _count; i++)
             {
                 if (_active[i].variableIndex == variableIndex)
                     return i;
             }
 
             return -1;
+        }
+
+        /// <summary>Binary search: entries stay sorted by id because new ones are appended and removals keep order.</summary>
+        private int IndexOfId(int id)
+        {
+            int lo = 0, hi = _count - 1;
+
+            while (lo <= hi)
+            {
+                var mid = (lo + hi) >> 1;
+                var midId = _active[mid].id;
+
+                if (midId == id)
+                    return mid;
+
+                if (midId < id)
+                    lo = mid + 1;
+                else
+                    hi = mid - 1;
+            }
+
+            return -1;
+        }
+
+        private bool RemoveAt(int index)
+        {
+            if (index < 0)
+                return false;
+
+            _count--;
+
+            if (index < _count)
+                Array.Copy(_active, index + 1, _active, index, _count - index);
+
+            // Release the delegate held by the vacated slot.
+            _active[_count] = default;
+            return true;
         }
 
         /// <summary>Component-wise linear interpolation of any float-based value; float4 uses slerp when requested.</summary>

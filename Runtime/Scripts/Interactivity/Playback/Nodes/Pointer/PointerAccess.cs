@@ -18,6 +18,8 @@ namespace UnityGLTF.Interactivity.Playback
 
         private readonly int[] _ints;
         private readonly Ref[] _refs;
+        /// <summary>Input index of each template parameter on the owning node.</summary>
+        private readonly int[] _parameterInputs;
 
         /// <summary>Pointers whose validity depends on runtime state, so a cached resolution is re-checked on every access.</summary>
         private enum Liveness : byte { Static, Delay, Event }
@@ -66,13 +68,17 @@ namespace UnityGLTF.Interactivity.Playback
         private readonly IPointer _virtualPointer;
         private Ref _virtualCurrent;
 
-        private PointerAccess(PointerTemplate template, Type type, int typeIndex)
+        private PointerAccess(BehaviourEngineNode node, PointerTemplate template, Type type, int typeIndex)
         {
             this.template = template;
             this.type = type;
             this.typeIndex = typeIndex;
             _ints = new int[template.parameters.Count];
             _refs = new Ref[template.parameters.Count];
+            _parameterInputs = new int[template.parameters.Count];
+
+            for (int i = 0; i < _parameterInputs.Length; i++)
+                _parameterInputs[i] = node.GetInputIndex(template.parameters[i].id);
 
             if (template.parameters.Count == 1 && template.parameters[0].isReference)
             {
@@ -102,7 +108,7 @@ namespace UnityGLTF.Interactivity.Playback
             if (!node.TryGetConfig(ConstStrings.TYPE, out int typeIndex) || typeIndex < 0 || typeIndex >= types.Count)
                 return false;
 
-            access = new PointerAccess(template, Helpers.GetSystemType(types[typeIndex]), typeIndex);
+            access = new PointerAccess(node, template, Helpers.GetSystemType(types[typeIndex]), typeIndex);
             return true;
         }
 
@@ -121,13 +127,13 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 if (parameters[i].isReference)
                 {
-                    if (!node.TryEvaluateValue(parameters[i].id, out Ref r) || r.isNull)
+                    if (!node.TryEvaluateValue(_parameterInputs[i], out Ref r) || r.isNull)
                         return false;
                     _refs[i] = r;
                 }
                 else
                 {
-                    if (!node.TryEvaluateValue(parameters[i].id, out int v) || v < 0)
+                    if (!node.TryEvaluateValue(_parameterInputs[i], out int v) || v < 0)
                         return false;
                     _ints[i] = v;
                 }

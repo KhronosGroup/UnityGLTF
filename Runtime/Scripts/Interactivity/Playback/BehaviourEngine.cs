@@ -13,6 +13,9 @@ namespace UnityGLTF.Interactivity.Playback
     /// </summary>
     internal readonly struct InputBinding
     {
+        /// <summary>An input whose source node is not part of the engine; it never has a value.</summary>
+        public static readonly InputBinding Unbound = new(-1, null, null);
+
         public readonly int slot;
         public readonly BehaviourEngineNode source;
         public readonly string socket;
@@ -21,6 +24,21 @@ namespace UnityGLTF.Interactivity.Playback
         {
             this.slot = slot;
             this.source = source;
+            this.socket = socket;
+        }
+    }
+
+    /// <summary>A compiled output flow: the flow and the engine node and (interned) input socket it activates.</summary>
+    internal readonly struct FlowTarget
+    {
+        public readonly Flow flow;
+        public readonly BehaviourEngineNode node;
+        public readonly string socket;
+
+        public FlowTarget(Flow flow, BehaviourEngineNode node, string socket)
+        {
+            this.flow = flow;
+            this.node = node;
             this.socket = socket;
         }
     }
@@ -130,7 +148,10 @@ namespace UnityGLTF.Interactivity.Playback
             return Task.Run(() => new BehaviourEngine(graph, pointerResolver), cancellationToken);
         }
 
-        /// <summary>Assigns a store slot to every variable, inline constant and consumed output socket.</summary>
+        /// <summary>
+        /// Assigns a store slot to every variable, inline constant and consumed output socket,
+        /// and resolves every output flow to the engine node it activates.
+        /// </summary>
         private void Compile()
         {
             var slotCount = 0;
@@ -152,21 +173,31 @@ namespace UnityGLTF.Interactivity.Playback
                     {
                         var slot = slotCount++;
                         _constants.Add((slot, value));
-                        node.inputs[value.id] = new InputBinding(slot, null, null);
+                        node.inputBindings[i] = new InputBinding(slot, null, null);
                         continue;
                     }
 
                     if (!engineNodes.TryGetValue(value.node, out var source))
                         continue;
 
-                    var key = (source, value.socket);
+                    // Interned so the source's GetOutputValue switch matches its ConstStrings cases by reference.
+                    var socket = BehaviourEngineNode.Intern(value.socket);
+                    var key = (source, socket);
                     if (!_outputSlots.TryGetValue(key, out var outputSlot))
                     {
                         outputSlot = slotCount++;
                         _outputSlots.Add(key, outputSlot);
                     }
 
-                    node.inputs[value.id] = new InputBinding(outputSlot, source, value.socket);
+                    node.inputBindings[i] = new InputBinding(outputSlot, source, socket);
+                }
+
+                var flows = kvp.Key.flows;
+
+                for (int i = 0; i < flows.Count; i++)
+                {
+                    engineNodes.TryGetValue(flows[i].toNode, out var target);
+                    node.flowTargets[i] = new FlowTarget(flows[i], target, BehaviourEngineNode.Intern(flows[i].toSocket));
                 }
             }
 
@@ -268,12 +299,19 @@ namespace UnityGLTF.Interactivity.Playback
         {
             Assert.IsNotNull(flow.toNode);
 
-            var node = engineNodes[flow.toNode];
+            ExecuteFlow(new FlowTarget(flow, engineNodes[flow.toNode], BehaviourEngineNode.Intern(flow.toSocket)));
+        }
+
+        internal void ExecuteFlow(in FlowTarget target)
+        {
+            // Same failure as the dictionary lookup this replaces, for a flow to a node outside the engine.
+            if (target.node == null)
+                throw new KeyNotFoundException($"Flow target node {target.flow.toNode?.type} is not part of this engine.");
 
             flowEpoch++;
-            onFlowTriggered?.Invoke(flow);
+            onFlowTriggered?.Invoke(target.flow);
 
-            node.ValidateAndExecute(flow.toSocket);
+            target.node.ValidateAndExecute(target.socket);
         }
 
         /// <summary>
@@ -285,14 +323,26 @@ namespace UnityGLTF.Interactivity.Playback
             flowEpoch++;
         }
 
-        /// <summary>Reads an input: a constant, or the source's output retained for the current flow epoch.</summary>
-        internal Variant Read(in InputBinding binding)
+        /// <summary>
+        /// Reads an input: a constant, or the source's output retained for the current flow epoch.
+        /// Writes through <paramref name="value"/> rather than returning it, which saves copies of the 68-byte <see cref="Variant"/>.
+        /// </summary>
+        /// <returns>False when the input is unbound or has no value.</returns>
+        internal bool TryRead(in InputBinding binding, out Variant value)
         {
+            if (binding.slot < 0)
+            {
+                value = default;
+                return false;
+            }
+
             if (binding.source == null || store.GetStamp(binding.slot) == flowEpoch)
-                return store[binding.slot];
+            {
+                value = store[binding.slot];
+                return !value.isNone;
+            }
 
             var epoch = flowEpoch;
-            Variant value;
 
             try
             {
@@ -306,14 +356,17 @@ namespace UnityGLTF.Interactivity.Playback
 
             store[binding.slot] = value;
             store.SetStamp(binding.slot, epoch);
-            return value;
+            return !value.isNone;
         }
 
         /// <summary>The retained value of an output socket, computing it if no input consumes that socket.</summary>
         internal Variant ReadOutput(BehaviourEngineNode node, string socket)
         {
             if (_outputSlots.TryGetValue((node, socket), out var slot))
-                return Read(new InputBinding(slot, node, socket));
+            {
+                TryRead(new InputBinding(slot, node, socket), out var value);
+                return value;
+            }
 
             return node.GetOutputValue(socket);
         }

@@ -7,7 +7,8 @@ namespace UnityGLTF.Interactivity.Playback
     {
         private readonly bool _isRandom;
         private readonly bool _isLoop;
-        private readonly Flow[] _orderedFlows;
+        /// <summary>Indices of the output flows in socket order.</summary>
+        private readonly int[] _orderedFlows;
         private readonly bool[] _used;
         private int _lastIndex = -1;
 
@@ -16,8 +17,10 @@ namespace UnityGLTF.Interactivity.Playback
         public FlowMultiGate(BehaviourEngine engine, Node node) : base(engine, node)
         {
             // Output flows are indexed in socket order.
-            _orderedFlows = node.flows.ToArray();
-            Array.Sort(_orderedFlows, (a, b) => a.CompareTo(b));
+            _orderedFlows = new int[node.flows.Count];
+            for (int i = 0; i < _orderedFlows.Length; i++)
+                _orderedFlows[i] = i;
+            Array.Sort(_orderedFlows, (a, b) => node.flows[a].CompareTo(node.flows[b]));
             _used = new bool[_orderedFlows.Length];
 
             // If either property is missing or not a boolean, both use the default configuration (false).
@@ -51,7 +54,7 @@ namespace UnityGLTF.Interactivity.Playback
 
                     _used[i] = true;
                     _lastIndex = i;
-                    engine.ExecuteFlow(_orderedFlows[i]);
+                    TryExecuteFlow(_orderedFlows[i]);
                     break;
 
                 default:

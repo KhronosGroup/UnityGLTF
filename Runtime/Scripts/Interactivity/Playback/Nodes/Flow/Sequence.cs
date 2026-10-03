@@ -1,30 +1,30 @@
 using System;
-using System.Threading;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     public class FlowSequence : BehaviourEngineNode
     {
-        private readonly Flow[] _orderedFlows;
+        /// <summary>Indices of the output flows in socket order.</summary>
+        private readonly int[] _orderedFlows;
 
         public FlowSequence(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            _orderedFlows = new Flow[node.flows.Count];
+            _orderedFlows = new int[node.flows.Count];
 
             for (int i = 0; i < _orderedFlows.Length; i++)
             {
-                _orderedFlows[i] = node.flows[i];
+                _orderedFlows[i] = i;
                 Util.Log($"{node.flows[i].fromSocket}");
             }
 
-            Array.Sort(_orderedFlows, (a, b) => a.CompareTo(b));
+            Array.Sort(_orderedFlows, (a, b) => node.flows[a].CompareTo(node.flows[b]));
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
-            for (int i = 0; i < node.flows.Count; i++)
+            for (int i = 0; i < _orderedFlows.Length; i++)
             {
-                engine.ExecuteFlow(_orderedFlows[i]);
+                TryExecuteFlow(_orderedFlows[i]);
             }
         }
     }

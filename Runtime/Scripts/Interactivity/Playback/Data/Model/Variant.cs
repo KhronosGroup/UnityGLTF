@@ -36,8 +36,8 @@ namespace UnityGLTF.Interactivity.Playback
         [FieldOffset(4)] private int _i;
         [FieldOffset(4)] private Ref _ref;
 
-        public VariantType type => _type;
-        public bool isNone => _type == VariantType.None;
+        public readonly VariantType type => _type;
+        public readonly bool isNone => _type == VariantType.None;
 
         // Factories.
         public static Variant FromBool(bool v) { var r = new Variant { _type = VariantType.Bool }; r._i = v ? 1 : 0; return r; }
@@ -56,26 +56,26 @@ namespace UnityGLTF.Interactivity.Playback
         public static Variant FromColumns(VariantType type, in float4x4 columns) { var r = new Variant { _type = type }; r._m = columns; return r; }
 
         // Accessors. They do not check the type; callers switch on <see cref="type"/> first.
-        public bool Bool => _i != 0;
-        public int Int => _i;
-        public float Float => _m.c0.x;
-        public float2 Float2 => _m.c0.xy;
-        public float3 Float3 => _m.c0.xyz;
-        public float4 Float4 => _m.c0;
-        public float2x2 Float2x2 => new float2x2(_m.c0.xy, _m.c1.xy);
-        public float3x3 Float3x3 => new float3x3(_m.c0.xyz, _m.c1.xyz, _m.c2.xyz);
-        public float4x4 Float4x4 => _m;
-        public Ref Ref => _ref;
-        public string String => VariantStrings.Get(_i);
+        public readonly bool Bool => _i != 0;
+        public readonly int Int => _i;
+        public readonly float Float => _m.c0.x;
+        public readonly float2 Float2 => _m.c0.xy;
+        public readonly float3 Float3 => _m.c0.xyz;
+        public readonly float4 Float4 => _m.c0;
+        public readonly float2x2 Float2x2 => new float2x2(_m.c0.xy, _m.c1.xy);
+        public readonly float3x3 Float3x3 => new float3x3(_m.c0.xyz, _m.c1.xyz, _m.c2.xyz);
+        public readonly float4x4 Float4x4 => _m;
+        public readonly Ref Ref => _ref;
+        public readonly string String => VariantStrings.Get(_i);
 
         /// <summary>The raw float lanes, for component-wise operations on any float-based type.</summary>
-        public float4x4 columns => _m;
+        public readonly float4x4 columns => _m;
 
-        public bool isFloatBased => _type >= VariantType.Float && _type <= VariantType.Float4x4;
-        public bool isMatrix => _type >= VariantType.Float2x2 && _type <= VariantType.Float4x4;
+        public readonly bool isFloatBased => _type >= VariantType.Float && _type <= VariantType.Float4x4;
+        public readonly bool isMatrix => _type >= VariantType.Float2x2 && _type <= VariantType.Float4x4;
 
         /// <summary>Number of float4 columns that carry lanes of this type: 1 for scalars and vectors, N for NxN matrices.</summary>
-        public int columnCount => _type switch
+        public readonly int columnCount => _type switch
         {
             VariantType.Float2x2 => 2,
             VariantType.Float3x3 => 3,
@@ -83,7 +83,7 @@ namespace UnityGLTF.Interactivity.Playback
             _ => 1,
         };
 
-        public bool TryGet<T>(out T value) => VariantTraits<T>.tryGet(in this, out value);
+        public readonly bool TryGet<T>(out T value) => VariantTraits<T>.tryGet(in this, out value);
 
         public static Variant From<T>(T value) => VariantTraits<T>.from(value);
 
@@ -121,9 +121,9 @@ namespace UnityGLTF.Interactivity.Playback
             _ => null,
         };
 
-        public Type GetSystemType() => SystemTypeOf(_type);
+        public readonly Type GetSystemType() => SystemTypeOf(_type);
 
-        public string GetTypeSignature() => _type == VariantType.None ? "none" : Helpers.GetSignatureBySystemType(GetSystemType());
+        public readonly string GetTypeSignature() => _type == VariantType.None ? "none" : Helpers.GetSignatureBySystemType(GetSystemType());
 
         /// <summary>Type-default values as defined by the "Custom Variable Types" section of the spec.</summary>
         public static Variant Default(VariantType t) => t switch
@@ -162,7 +162,7 @@ namespace UnityGLTF.Interactivity.Playback
         };
 
         /// <summary>Boxes the value. Allocates; only for API boundaries such as <see cref="Variable.property"/>.</summary>
-        public IProperty ToProperty() => _type switch
+        public readonly IProperty ToProperty() => _type switch
         {
             VariantType.Bool => new Property<bool>(Bool),
             VariantType.Int => new Property<int>(Int),
@@ -178,7 +178,7 @@ namespace UnityGLTF.Interactivity.Playback
             _ => null,
         };
 
-        public bool Equals(Variant other)
+        public readonly bool Equals(Variant other)
         {
             if (_type != other._type)
                 return false;
@@ -200,12 +200,12 @@ namespace UnityGLTF.Interactivity.Playback
             };
         }
 
-        public override bool Equals(object obj) => obj is Variant v && Equals(v);
+        public readonly override bool Equals(object obj) => obj is Variant v && Equals(v);
 
-        public override int GetHashCode() => HashCode.Combine(_type, _m.GetHashCode());
+        public readonly override int GetHashCode() => HashCode.Combine(_type, _m.GetHashCode());
 
         /// <summary>Same text as the boxed property would produce; used by debug/log.</summary>
-        public override string ToString() => _type switch
+        public readonly override string ToString() => _type switch
         {
             VariantType.Bool => Bool.ToString(),
             VariantType.Int => Int.ToString(),

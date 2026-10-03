@@ -28,8 +28,34 @@ namespace UnityGLTF.Interactivity.Playback
             if (t >= 1f)
                 return 1f;
 
+            // Control points on the diagonal make y(u) == x(u), so q == t.
+            if (p1.x == p1.y && p2.x == p2.y)
+                return t;
+
+            // Newton's method usually converges in a few steps; it runs every tick for every active interpolation.
+            double u = t;
+
+            for (int i = 0; i < 8; i++)
+            {
+                var error = BezierComponent(u, p1.x, p2.x) - t;
+
+                if (Math.Abs(error) < 1e-9)
+                    return (float)BezierComponent(u, p1.y, p2.y);
+
+                var slope = BezierDerivative(u, p1.x, p2.x);
+
+                if (Math.Abs(slope) < 1e-6)
+                    break;
+
+                u -= error / slope;
+
+                if (u < 0 || u > 1)
+                    break;
+            }
+
             // x(u) is monotonic on [0, 1] because the X control points are in [0, 1], so bisection always converges.
-            double lo = 0, hi = 1, u = t;
+            double lo = 0, hi = 1;
+            u = t;
 
             for (int i = 0; i < 64; i++)
             {
@@ -52,6 +78,12 @@ namespace UnityGLTF.Interactivity.Playback
         {
             var omu = 1 - u;
             return 3 * omu * omu * u * c1 + 3 * omu * u * u * c2 + u * u * u;
+        }
+
+        private static double BezierDerivative(double u, double c1, double c2)
+        {
+            var omu = 1 - u;
+            return 3 * omu * omu * c1 + 6 * omu * u * (c2 - c1) + 3 * u * u * (1 - c2);
         }
 
         public static float4 nlerp(float4 q1, float4 q2, float t)

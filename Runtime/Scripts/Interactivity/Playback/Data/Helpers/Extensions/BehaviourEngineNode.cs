@@ -82,6 +82,17 @@ namespace UnityGLTF.Interactivity.Playback
             return v.TryGet(out value);
         }
 
+        public bool TryEvaluateValue<T>(int inputIndex, out T value)
+        {
+            if (!TryEvaluateValue(inputIndex, out Variant v))
+            {
+                value = default;
+                return false;
+            }
+
+            return v.TryGet(out value);
+        }
+
         public bool TryGetVariableFromConfiguration(out Variable variable, out int index)
         {
             variable = null;

@@ -7,7 +7,8 @@ namespace UnityGLTF.Interactivity.Playback
     {
         /// <summary>Output flow socket ids generated from the "cases" configuration.</summary>
         private readonly HashSet<int> _cases;
-        private readonly Dictionary<int, string> _caseSockets = new();
+        /// <summary>Flow index of each case socket, or -1 when the socket is not connected.</summary>
+        private readonly Dictionary<int, int> _caseFlows = new();
 
         public FlowSwitch(BehaviourEngine engine, Node node) : base(engine, node)
         {
@@ -15,7 +16,7 @@ namespace UnityGLTF.Interactivity.Playback
             _cases = new HashSet<int>(GraphValidator.GetSwitchCases(node));
 
             foreach (var c in _cases)
-                _caseSockets[c] = c.ToString(CultureInfo.InvariantCulture);
+                _caseFlows[c] = GetFlowIndex(c.ToString(CultureInfo.InvariantCulture));
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -27,7 +28,7 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             // A case present in the configuration activates its socket, if connected, and never "default".
-            TryExecuteFlow(_caseSockets[selection]);
+            TryExecuteFlow(_caseFlows[selection]);
         }
     }
 }
