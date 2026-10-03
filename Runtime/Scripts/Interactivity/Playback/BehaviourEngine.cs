@@ -101,8 +101,17 @@ namespace UnityGLTF.Interactivity.Playback
         private double _firstTickTime;
         private double _lastTickTime;
         private int _nextEventId = 1;
-        private readonly HashSet<Ref> _immediatelyStoppedEvents = new();
-        private readonly HashSet<Ref> _transitivelyStoppedEvents = new();
+        /// <summary>Stop flags of an event occurrence whose handlers are running.</summary>
+        private struct DispatchState
+        {
+            public Ref eventRef;
+            public bool transitivelyStopped;
+            public bool immediatelyStopped;
+        }
+
+        // Event occurrences being dispatched, innermost last; nested custom events push more. Stop flags only matter
+        // while their occurrence dispatches, so they are dropped with it and nothing accumulates across ticks.
+        private readonly List<DispatchState> _dispatching = new();
 
         private readonly List<(int slot, Value value)> _constants = new();
         private readonly Dictionary<(BehaviourEngineNode node, string socket), int> _outputSlots = new();
@@ -243,7 +252,16 @@ namespace UnityGLTF.Interactivity.Playback
                 node.OnEngineReady();
 
             startEvent = CreateEventReference();
-            onStart?.Invoke();
+            BeginDispatch(startEvent);
+
+            try
+            {
+                onStart?.Invoke();
+            }
+            finally
+            {
+                EndDispatch();
+            }
         }
 
         public void Tick()
@@ -277,7 +295,16 @@ namespace UnityGLTF.Interactivity.Playback
 
             _lastTickTime = now;
             tickEvent = CreateEventReference();
-            onTick?.Invoke();
+            BeginDispatch(tickEvent);
+
+            try
+            {
+                onTick?.Invoke();
+            }
+            finally
+            {
+                EndDispatch();
+            }
         }
 
         public void Select(in RayArgs args)
@@ -414,6 +441,7 @@ namespace UnityGLTF.Interactivity.Playback
             // when a handler sends a nested event.
             var previous = lastCustomEvent;
             lastCustomEvent = CreateEventReference();
+            BeginDispatch(lastCustomEvent);
 
             try
             {
@@ -424,6 +452,7 @@ namespace UnityGLTF.Interactivity.Playback
             }
             finally
             {
+                EndDispatch();
                 lastCustomEvent = previous;
             }
         }
@@ -506,20 +535,59 @@ namespace UnityGLTF.Interactivity.Playback
         /// <summary>
         /// event/stopPropagation. Transitive activations (scene graph propagation) are always cancelled;
         /// <paramref name="immediate"/> also cancels handlers for the same event that have not run yet.
+        /// Has no effect on an event whose dispatch has finished, since nothing is left to cancel.
         /// </summary>
         public void StopPropagation(Ref eventRef, bool immediate)
         {
             if (!IsEventReference(eventRef))
                 return;
 
-            _transitivelyStoppedEvents.Add(eventRef);
+            var index = IndexOfDispatch(eventRef);
 
-            if (immediate)
-                _immediatelyStoppedEvents.Add(eventRef);
+            if (index < 0)
+                return;
+
+            var state = _dispatching[index];
+            state.transitivelyStopped = true;
+            state.immediatelyStopped |= immediate;
+            _dispatching[index] = state;
         }
 
-        public bool IsImmediatelyStopped(Ref eventRef) => _immediatelyStoppedEvents.Contains(eventRef);
-        public bool IsTransitivelyStopped(Ref eventRef) => _transitivelyStoppedEvents.Contains(eventRef);
+        /// <summary>True while the event is dispatching after a stopPropagation with stopImmediate.</summary>
+        public bool IsImmediatelyStopped(Ref eventRef)
+        {
+            var index = IndexOfDispatch(eventRef);
+            return index >= 0 && _dispatching[index].immediatelyStopped;
+        }
+
+        /// <summary>True while the event is dispatching after any stopPropagation.</summary>
+        public bool IsTransitivelyStopped(Ref eventRef)
+        {
+            var index = IndexOfDispatch(eventRef);
+            return index >= 0 && _dispatching[index].transitivelyStopped;
+        }
+
+        private void BeginDispatch(Ref eventRef)
+        {
+            _dispatching.Add(new DispatchState { eventRef = eventRef });
+        }
+
+        private void EndDispatch()
+        {
+            _dispatching.RemoveAt(_dispatching.Count - 1);
+        }
+
+        private int IndexOfDispatch(Ref eventRef)
+        {
+            // Innermost first: that is usually the event being stopped. The list is as deep as event nesting.
+            for (int i = _dispatching.Count - 1; i >= 0; i--)
+            {
+                if (_dispatching[i].eventRef == eventRef)
+                    return i;
+            }
+
+            return -1;
+        }
 
         public bool TryGetPointer(string pointerString, BehaviourEngineNode engineNode, out IPointer pointer)
         {
