@@ -1,0 +1,157 @@
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Unity.Mathematics;
+using UnityEngine;
+
+namespace UnityGLTF.Interactivity.Playback
+{
+    public static partial class Helpers
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 CubicBezier(float t, float2 cp0, float2 cp1)
+        {
+            var omt = 1 - t;
+            return 3f * t * omt * omt * cp0 + 3f * t * t * omt * cp1 + t * t * t * (new float2(1f,1f));
+        }
+
+        /// <summary>
+        /// The easing function of variable/interpolate and pointer/interpolate: q = f_y(f_x^-1(t)) for the cubic
+        /// Bezier with P0 = (0,0), P3 = (1,1) and control points P1, P2 whose X coordinates are in [0, 1].
+        /// </summary>
+        public static float Ease(float t, float2 p1, float2 p2)
+        {
+            if (t <= 0f)
+                return 0f;
+
+            if (t >= 1f)
+                return 1f;
+
+            // Control points on the diagonal make y(u) == x(u), so q == t.
+            if (p1.x == p1.y && p2.x == p2.y)
+                return t;
+
+            // Newton's method usually converges in a few steps; it runs every tick for every active interpolation.
+            double u = t;
+
+            for (int i = 0; i < 8; i++)
+            {
+                var error = BezierComponent(u, p1.x, p2.x) - t;
+
+                if (Math.Abs(error) < 1e-9)
+                    return (float)BezierComponent(u, p1.y, p2.y);
+
+                var slope = BezierDerivative(u, p1.x, p2.x);
+
+                if (Math.Abs(slope) < 1e-6)
+                    break;
+
+                u -= error / slope;
+
+                if (u < 0 || u > 1)
+                    break;
+            }
+
+            // x(u) is monotonic on [0, 1] because the X control points are in [0, 1], so bisection always converges.
+            double lo = 0, hi = 1;
+            u = t;
+
+            for (int i = 0; i < 64; i++)
+            {
+                u = 0.5 * (lo + hi);
+                var x = BezierComponent(u, p1.x, p2.x);
+
+                if (Math.Abs(x - t) < 1e-9)
+                    break;
+
+                if (x < t)
+                    lo = u;
+                else
+                    hi = u;
+            }
+
+            return (float)BezierComponent(u, p1.y, p2.y);
+        }
+
+        private static double BezierComponent(double u, double c1, double c2)
+        {
+            var omu = 1 - u;
+            return 3 * omu * omu * u * c1 + 3 * omu * u * u * c2 + u * u * u;
+        }
+
+        private static double BezierDerivative(double u, double c1, double c2)
+        {
+            var omu = 1 - u;
+            return 3 * omu * omu * c1 + 6 * omu * u * (c2 - c1) + 3 * u * u * (1 - c2);
+        }
+
+        public static float4 nlerp(float4 q1, float4 q2, float t)
+        {
+            float dt = math.dot(q1, q2);
+            if (dt < 0.0f)
+            {
+                q2 = -q2;
+            }
+            
+            return math.normalize(math.lerp(q1, q2, t));
+        }
+
+        public static float4 Slerpfloat4(float4 q1, float4 q2, float t)
+        {
+            float dt = math.dot(q1, q2);
+            if (dt < 0.0f)
+            {
+                dt = -dt;
+                q2 = -q2;
+            }
+
+            if (dt < 0.9995f)
+            {
+                float angle = math.acos(dt);
+                float s = math.rsqrt(1.0f - dt * dt);    // 1.0f / sin(angle)
+                float w1 = math.sin(angle * (1.0f - t)) * s;
+                float w2 = math.sin(angle * t) * s;
+                return q1 * w1 + q2 * w2;
+            }
+            else
+            {
+                // if the angle is small, use linear interpolation
+                return nlerp(q1, q2, t);
+            }
+        }
+
+        public static float2x2 LerpComponentwise(float2x2 from, float2x2 to, float t)
+        {
+            var c0 = math.lerp(from.c0, to.c0, t);
+            var c1 = math.lerp(from.c1, to.c1, t);
+
+            var m = new float2x2(c0, c1);
+
+            return m;
+        }
+
+        public static float3x3 LerpComponentwise(float3x3 from, float3x3 to, float t)
+        {
+            var c0 = math.lerp(from.c0, to.c0, t);
+            var c1 = math.lerp(from.c1, to.c1, t);
+            var c2 = math.lerp(from.c2, to.c2, t);
+
+            var m = new float3x3(c0, c1, c2);
+
+            return m;
+        }
+
+        public static float4x4 LerpComponentwise(float4x4 from, float4x4 to, float t)
+        {
+            var c0 = math.lerp(from.c0, to.c0, t);
+            var c1 = math.lerp(from.c1, to.c1, t);
+            var c2 = math.lerp(from.c2, to.c2, t);
+            var c3 = math.lerp(from.c3, to.c3, t);
+
+            var m = new float4x4(c0, c1, c2, c3);
+
+            return m;
+        }
+    }
+}

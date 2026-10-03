@@ -1,0 +1,49 @@
+using System;
+
+namespace UnityGLTF.Interactivity.Playback
+{
+    public class FlowDoN : BehaviourEngineNode
+    {
+        private int _nTimes;
+        private int _currentCount = 0;
+
+        public FlowDoN(BehaviourEngine engine, Node node) : base(engine, node)
+        {
+        }
+
+        public override bool HasInputFlow(string socket)
+        {
+            return socket == ConstStrings.IN || socket == ConstStrings.RESET;
+        }
+
+        protected override void Execute(string socket, ValidationResult validationResult)
+        {
+            switch (socket)
+            {
+                case ConstStrings.RESET:
+                    _currentCount = 0;
+                    break;
+                case ConstStrings.IN:
+                    if (_currentCount < _nTimes)
+                    {
+                        _currentCount++;
+                        Util.Log($"Incrementing currentCount to {_currentCount} for an output that can be run {_nTimes} times");
+                        TryExecuteFlow(ConstStrings.OUT);
+                    }
+                    break;
+                default:
+                    throw new InvalidOperationException($"Socket {socket} is not a valid input on this DoN node!");
+            }
+        }
+
+        public override bool ValidateValues(string socket)
+        {
+            return TryEvaluateValue(ConstStrings.N, out _nTimes);
+        }
+
+        public override Variant GetOutputValue(string socket)
+        {
+            return Variant.FromInt(_currentCount);
+        }
+    }
+}

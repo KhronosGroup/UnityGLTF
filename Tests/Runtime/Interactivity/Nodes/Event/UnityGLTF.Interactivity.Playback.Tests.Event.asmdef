@@ -1,0 +1,27 @@
+{
+    "name": "UnityGLTF.Interactivity.Playback.Tests.Event",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.Mathematics",
+        "UnityGLTFScripts",
+        "UnityGLTF.Interactivity.Playback",
+        "UnityGLTF.Interactivity.Playback.Common",
+        "UnityGLTF.Interactivity.Playback.Tests.Common"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
