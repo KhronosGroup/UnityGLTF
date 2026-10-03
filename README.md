@@ -2,7 +2,7 @@
 > The default branch is for development only (**NOT STABLE**). Do not use the bare repository URL as a package, because Unity Package Manager will install the default development branch. Use the stable `live` branch (or a release tag) instead:
 > `https://github.com/XtroTheArctic/UnityGLTF.git#live`
 
-## This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
+## ~~This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.~~
 
 <img src="https://github.com/KhronosGroup/UnityGLTF/blob/e3797354f8d729156062265cbac98804a109d8f0/unitygltf-logo.png" width="200" /> 
 
