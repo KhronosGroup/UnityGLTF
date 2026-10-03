@@ -89,8 +89,22 @@ namespace UnityGLTF.Interactivity.Playback
             _nodes.Add(new NodeData(node, nodeIndex, unityObject, unityObject.GetComponent<SkinnedMeshRenderer>(), selectable, hoverable));
         }
 
-        public void RegisterSceneData(GLTF.Schema.GLTFRoot root)
+        /// <param name="sceneIndex">The scene the importer presented; -1 means the asset's default scene, as the importer chooses it.</param>
+        public void RegisterSceneData(GLTF.Schema.GLTFRoot root, int sceneIndex = -1)
         {
+            var sceneCount = root.Scenes?.Count ?? 0;
+
+            if (sceneIndex < 0 || sceneIndex >= sceneCount)
+                sceneIndex = root.Scene != null ? root.Scene.Id : (sceneCount > 0 ? 0 : -1);
+
+            var sceneNodes = new List<IndexList>(sceneCount);
+            for (int i = 0; i < sceneCount; i++)
+                sceneNodes.Add(new IndexList(ToIndices(root.Scenes[i].Nodes)));
+
+            var skins = new List<SkinData>(root.Skins?.Count ?? 0);
+            for (int i = 0; i < (root.Skins?.Count ?? 0); i++)
+                skins.Add(new SkinData(ToIndices(root.Skins[i].Joints), root.Skins[i].Skeleton?.Id ?? -1));
+
             _sceneData = new()
             {
                 animationCount = (root.Animations == null) ? 0 : root.Animations.Count,
@@ -108,7 +122,18 @@ namespace UnityGLTF.Interactivity.Playback
                 bufferCount = root.Buffers?.Count ?? 0,
                 assetVersion = root.Asset?.Version,
                 extensionsUsed = root.ExtensionsUsed != null ? new List<string>(root.ExtensionsUsed) : new List<string>(),
+                scene = sceneIndex,
+                sceneNodes = sceneNodes,
+                skins = skins,
             };
+        }
+
+        private static int[] ToIndices(List<GLTF.Schema.NodeId> ids)
+        {
+            var indices = new int[ids?.Count ?? 0];
+            for (int i = 0; i < indices.Length; i++)
+                indices[i] = ids[i].Id;
+            return indices;
         }
 
         /// <summary>
@@ -181,12 +206,12 @@ namespace UnityGLTF.Interactivity.Playback
             var parents = new Dictionary<int, int>();
             for (int i = 0; i < _nodes.Count; i++)
             {
-                var children = _nodes[i].node?.Children;
+                var children = _nodes[i].children;
                 if (children == null)
                     continue;
 
-                for (int c = 0; c < children.Count; c++)
-                    parents[children[c].Id] = _nodes[i].nodeIndex;
+                for (int c = 0; c < children.Length; c++)
+                    parents[children[c]] = _nodes[i].nodeIndex;
             }
 
             for (int i = 0; i < _nodes.Count; i++)
@@ -212,7 +237,7 @@ namespace UnityGLTF.Interactivity.Playback
             for (int i = 0; i < _materials.Count; i++)
             {
                 // A material that was never built has no Unity material; keep its slot so later indices line up.
-                _materialPointers.Add(_materials[i].unityMaterial != null ? new MaterialPointers(_materials[i]) : default);
+                _materialPointers.Add(_materials[i].unityMaterial != null ? new MaterialPointers(_materials[i]) : MaterialPointers.CreateUnbuilt(_materials[i]));
             }
         }
 
@@ -271,6 +296,12 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.MATERIALS_LENGTH) => _scenePointers.materialsLength,
                 var a when a.Is(Pointers.MESHES_LENGTH) => _scenePointers.meshesLength,
                 var a when a.Is(Pointers.NODES_LENGTH) => _scenePointers.nodesLength,
+                var a when a.Is(Pointers.CAMERAS_LENGTH) => _scenePointers.camerasLength,
+                var a when a.Is(Pointers.SCENES_LENGTH) => _scenePointers.scenesLength,
+                var a when a.Is(Pointers.SKINS_LENGTH) => _scenePointers.skinsLength,
+                var a when a.Is(Pointers.SCENE) => _sceneData.scene >= 0 ? new ObjectIndexPointer("/scenes", _sceneData.scene) : PointerHelpers.InvalidPointer(),
+                var a when a.Is(Pointers.SCENES) => ScenePointers.ProcessScenePointer(reader, _sceneData),
+                var a when a.Is(Pointers.SKINS) => ScenePointers.ProcessSkinPointer(reader, _sceneData),
                 _ => PointerHelpers.InvalidPointer(),
             };
         }

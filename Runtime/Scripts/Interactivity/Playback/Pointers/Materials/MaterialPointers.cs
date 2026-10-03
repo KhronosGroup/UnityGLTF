@@ -27,6 +27,8 @@ namespace UnityGLTF.Interactivity.Playback.Materials
         public Pointer<float> attenuationDistance;
         public Pointer<Color3> attenuationColor;
         public Pointer<float> dispersion;
+        /// <summary>Read-only glTF doubleSided; available even for materials the importer never built.</summary>
+        public ReadOnlyPointer<bool> doubleSided;
 
         public BaseColorPointers baseColorPointers;
         public ClearcoatPointers clearcoatPointers;
@@ -56,6 +58,7 @@ namespace UnityGLTF.Interactivity.Playback.Materials
             attenuationDistance = PointerHelpers.CreateFloatPointer(mat, attenuationDistanceHash);
             attenuationColor = PointerHelpers.CreateColorRGBPointer(mat, attenuationColorHash);
             dispersion = PointerHelpers.CreateFloatPointer(mat, dispersionHash);
+            doubleSided = CreateDoubleSidedPointer(data);
 
             baseColorPointers = new(mat);
             clearcoatPointers = new(mat);
@@ -74,6 +77,18 @@ namespace UnityGLTF.Interactivity.Playback.Materials
             transmissionPointers = new(mat);
         }
 
+        /// <summary>Pointers for a material the importer never built: only its static glTF properties are available.</summary>
+        public static MaterialPointers CreateUnbuilt(in MaterialData data)
+        {
+            return new MaterialPointers { doubleSided = CreateDoubleSidedPointer(data) };
+        }
+
+        private static ReadOnlyPointer<bool> CreateDoubleSidedPointer(in MaterialData data)
+        {
+            var value = data.doubleSided;
+            return new ReadOnlyPointer<bool>(() => value);
+        }
+
         public static IPointer ProcessMaterialPointer(StringSpanReader reader, BehaviourEngineNode engineNode, List<MaterialPointers> pointers)
         {
             reader.AdvanceToNextToken('/');
@@ -83,12 +98,15 @@ namespace UnityGLTF.Interactivity.Playback.Materials
 
             var pointer = pointers[nodeIndex];
 
-            if (pointer.material == null)
-                return PointerHelpers.InvalidPointer();
-
             reader.AdvanceToNextToken('/');
 
             // Path so far: /materials/{}/
+            if (reader.AsReadOnlySpan().Is(Pointers.DOUBLE_SIDED))
+                return pointer.doubleSided;
+
+            if (pointer.material == null)
+                return PointerHelpers.InvalidPointer();
+
             return reader.AsReadOnlySpan() switch
             {
                 var a when a.Is("alphaCutoff") => pointer.alphaCutoff,

@@ -142,7 +142,7 @@ namespace UnityGLTF.Interactivity.Playback
             try
             {
                 var importer = _context.SceneImporter;
-                _pointerResolver.RegisterSceneData(importer.Root);
+                _pointerResolver.RegisterSceneData(importer.Root, sceneIndex);
                 _pointerResolver.RegisterMissingMeshesAndMaterials(importer.Root, i => i < importer.MeshCache.Length ? importer.MeshCache[i]?.LoadedMesh : null);
                 _pointerResolver.CreatePointers();
 

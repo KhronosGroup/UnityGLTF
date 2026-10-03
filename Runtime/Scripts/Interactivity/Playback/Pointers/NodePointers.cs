@@ -20,9 +20,11 @@ namespace UnityGLTF.Interactivity.Playback
         public ReadOnlyPointer<int> weightsLength;
         public Pointer<float>[] weights;
         public GameObject gameObject;
-        // Read-only structure from the glTF JSON: child node indices, mesh index (-1 if none), parent index (-1 for roots).
+        // Read-only structure from the glTF JSON: child node indices, then mesh, skin, camera and parent indices (-1 if none).
         public int[] children;
         public int mesh;
+        public int skin;
+        public int camera;
         public int parent;
 
         public NodePointers(in NodeData data, int parent = -1)
@@ -32,12 +34,11 @@ namespace UnityGLTF.Interactivity.Playback
             // Cached: GameObject.transform is a native call, and these closures run every tick during interpolation.
             var tr = go != null ? go.transform : null;
 
-            var childIds = data.node?.Children;
-            children = new int[childIds?.Count ?? 0];
-            for (int i = 0; i < children.Length; i++)
-                children[i] = childIds[i].Id;
-
-            mesh = data.node?.Mesh?.Id ?? -1;
+            // Data serialized before the structure was recorded leaves it unknown: no children, mesh, skin or camera.
+            children = data.hasStructure ? data.children ?? System.Array.Empty<int>() : System.Array.Empty<int>();
+            mesh = data.hasStructure ? data.mesh : -1;
+            skin = data.hasStructure ? data.skin : -1;
+            camera = data.hasStructure ? data.camera : -1;
             this.parent = parent;
 
             // Unity coordinate system differs from the GLTF one.
@@ -146,6 +147,8 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.CHILDREN_LENGTH) => new ReadOnlyPointer<int>(() => nodePointer.children.Length),
                 var a when a.Is(Pointers.CHILDREN) => ProcessChildrenPointer(reader, nodePointer),
                 var a when a.Is(Pointers.MESH) => nodePointer.mesh >= 0 ? new ObjectIndexPointer("/meshes", nodePointer.mesh) : PointerHelpers.InvalidPointer(),
+                var a when a.Is(Pointers.SKIN) => nodePointer.skin >= 0 ? new ObjectIndexPointer("/skins", nodePointer.skin) : PointerHelpers.InvalidPointer(),
+                var a when a.Is(Pointers.CAMERA) => nodePointer.camera >= 0 ? new ObjectIndexPointer("/cameras", nodePointer.camera) : PointerHelpers.InvalidPointer(),
                 var a when a.Is(Pointers.PARENT) => nodePointer.parent >= 0 ? new ObjectIndexPointer("/nodes", nodePointer.parent) : PointerHelpers.InvalidPointer(),
                 _ => PointerHelpers.InvalidPointer(),
             };

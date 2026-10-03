@@ -33,6 +33,19 @@ namespace UnityGLTF.Interactivity.Playback
         public const string PRIMITIVES = "primitives";
         public const string PRIMITIVES_LENGTH = "primitives.length";
         public const string MATERIAL = "material";
+        public const string CAMERAS_LENGTH = "cameras.length";
+        public const string SCENES_LENGTH = "scenes.length";
+        public const string SKINS_LENGTH = "skins.length";
+        public const string SCENE = "scene";
+        public const string SCENES = "scenes";
+        public const string SKINS = "skins";
+        public const string SKIN = "skin";
+        public const string CAMERA = "camera";
+        public const string NODES = "nodes";
+        public const string JOINTS = "joints";
+        public const string JOINTS_LENGTH = "joints.length";
+        public const string SKELETON = "skeleton";
+        public const string DOUBLE_SIDED = "doubleSided";
 
     }
 
