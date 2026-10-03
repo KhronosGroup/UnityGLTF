@@ -36,9 +36,9 @@ namespace UnityGLTF.Interactivity.Playback
             return TryEvaluateValue(ConstStrings.N, out _nTimes);
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override Variant GetOutputValue(string socket)
         {
-            return new Property<int>(_currentCount);
+            return Variant.FromInt(_currentCount);
         }
     }
 }

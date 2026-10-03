@@ -11,16 +11,16 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            return a switch
+            return a.type switch
             {
-                Property<float> floatProp => new Property<float>(MathF.Cbrt(floatProp.value)),
-                Property<float2> float2Prop => new Property<float2>(Cbrt(float2Prop.value)),
-                Property<float3> float3Prop => new Property<float3>(Cbrt(float3Prop.value)),
-                Property<float4> float4Prop => new Property<float4>(Cbrt(float4Prop.value)),
+                VariantType.Float => Variant.FromFloat(MathF.Cbrt(a.Float)),
+                VariantType.Float2 => Variant.FromFloat2(Cbrt(a.Float2)),
+                VariantType.Float3 => Variant.FromFloat3(Cbrt(a.Float3)),
+                VariantType.Float4 => Variant.FromFloat4(Cbrt(a.Float4)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

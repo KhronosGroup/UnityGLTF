@@ -147,9 +147,12 @@ namespace UnityGLTF.Interactivity.Playback
                 _pointerResolver.CreatePointers();
 
                 _interactivityGraph.extensionData.TryGetDefaultGraph(out var defaultGraph);
-                var eng = new BehaviourEngine(defaultGraph, _pointerResolver);
 
-                if (!eng.isValid)
+                // An editor asset import only validates: the prefab rebuilds its engine from GLTFInteractivityData at runtime,
+                // and an engine created here would hold native memory that is never released.
+                var isAssetImport = _context.AssetContext != null;
+
+                if (isAssetImport && !GraphValidator.Validate(defaultGraph))
                 {
                     Debug.LogWarning($"KHR_interactivity: the graph was rejected, the asset is treated as having no interactivity.\n{string.Join("\n", defaultGraph.errors)}");
                     return;
@@ -158,14 +161,21 @@ namespace UnityGLTF.Interactivity.Playback
                 GLTFInteractivityAnimationWrapper animationWrapper = null;
                 var animationComponents = sceneObject.GetComponents<Animation>();
                 if (animationComponents != null && animationComponents.Length > 0)
-                {
                     animationWrapper = sceneObject.AddComponent<GLTFInteractivityAnimationWrapper>();
-                    eng.SetAnimationWrapper(animationWrapper, animationComponents[0]);
-                }
 
                 var playback = sceneObject.AddComponent<GLTFInteractivityPlayback>();
 
-                playback.SetData(eng, _interactivityGraph.extensionData);
+                if (!isAssetImport)
+                {
+                    // Validation and compilation run off the main thread; playback starts once they finish.
+                    var engineTask = BehaviourEngine.CreateAsync(defaultGraph, _pointerResolver);
+
+                    playback.SetDataAsync(engineTask, _interactivityGraph.extensionData, eng =>
+                    {
+                        if (animationWrapper != null)
+                            eng.SetAnimationWrapper(animationWrapper, animationComponents[0]);
+                    });
+                }
 
                 var colliders = sceneObject.GetComponentsInChildren<Collider>(true);
 

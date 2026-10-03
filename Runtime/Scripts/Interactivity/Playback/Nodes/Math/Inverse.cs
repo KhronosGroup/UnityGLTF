@@ -10,24 +10,24 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
             bool isValid;
 
-            IProperty prop = a switch
+            Variant prop = a.type switch
             {
-                Property<float2x2> aProp => new Property<float2x2>(Inverse(aProp.value, out isValid)),
-                Property<float3x3> aProp => new Property<float3x3>(Inverse(aProp.value, out isValid)),
-                Property<float4x4> aProp => new Property<float4x4>(Inverse(aProp.value, out isValid)),
+                VariantType.Float2x2 => Variant.FromFloat2x2(Inverse(a.Float2x2, out isValid)),
+                VariantType.Float3x3 => Variant.FromFloat3x3(Inverse(a.Float3x3, out isValid)),
+                VariantType.Float4x4 => Variant.FromFloat4x4(Inverse(a.Float4x4, out isValid)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
 
             return id switch
             {
                 ConstStrings.VALUE => prop,
-                ConstStrings.IS_VALID => new Property<bool>(isValid),
+                ConstStrings.IS_VALID => Variant.FromBool(isValid),
                 _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
             };
         }

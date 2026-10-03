@@ -6,18 +6,21 @@ namespace UnityGLTF.Interactivity.Playback
     public class VariableInterpolate : BehaviourEngineNode
     {
         private readonly Variable _variable;
+        private readonly int _variableIndex = -1;
         private readonly bool _slerp;
+        private readonly System.Action _done;
 
         public VariableInterpolate(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            TryGetVariableFromConfiguration(out _variable, out _);
+            TryGetVariableFromConfiguration(out _variable, out _variableIndex);
             TryGetConfig(ConstStrings.USE_SLERP, out _slerp);
+            _done = () => TryExecuteFlow(ConstStrings.DONE);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
             if (_variable == null ||
-                !TryEvaluateValue(ConstStrings.VALUE, out IProperty target) ||
+                !TryEvaluateValue(ConstStrings.VALUE, out Variant target) ||
                 !TryEvaluateValue(ConstStrings.DURATION, out float duration) ||
                 !TryEvaluateValue(ConstStrings.P1, out float2 p1) ||
                 !TryEvaluateValue(ConstStrings.P2, out float2 p2) ||
@@ -31,14 +34,14 @@ namespace UnityGLTF.Interactivity.Playback
 
             var data = new VariableInterpolateData()
             {
-                variable = _variable,
+                variableIndex = _variableIndex,
                 startTime = engine.time,
                 duration = duration,
                 endValue = target,
                 cp1 = p1,
                 cp2 = p2,
                 slerp = _slerp,
-                done = () => TryExecuteFlow(ConstStrings.DONE)
+                done = _done
             };
 
             try

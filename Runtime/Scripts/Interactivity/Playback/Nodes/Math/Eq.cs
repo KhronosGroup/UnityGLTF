@@ -10,22 +10,22 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
 
-            return a switch
+            return a.type switch
             {
-                Property<bool> aProp when b is Property<bool> bProp => new Property<bool>(aProp.value == bProp.value),
-                Property<int> aInt when b is Property<int> bInt => new Property<bool>(aInt.value == bInt.value),
-                Property<float> aFloat when b is Property<float> bFloat => new Property<bool>(eq(aFloat.value,bFloat.value)),
-                Property<float2> pA when b is Property<float2> pB => new Property<bool>(AllEqual(pA.value, pB.value)),
-                Property<float3> pA when b is Property<float3> pB => new Property<bool>(AllEqual(pA.value, pB.value)),
-                Property<float4> pA when b is Property<float4> pB => new Property<bool>(AllEqual(pA.value, pB.value)),
-                Property<float2x2> pA when b is Property<float2x2> pB => new Property<bool>(AllEqual(pA.value, pB.value)),
-                Property<float3x3> pA when b is Property<float3x3> pB => new Property<bool>(AllEqual(pA.value, pB.value)),
-                Property<float4x4> pA when b is Property<float4x4> pB => new Property<bool>(AllEqual(pA.value, pB.value)),
+                VariantType.Bool when b.type == VariantType.Bool => Variant.FromBool(a.Bool == b.Bool),
+                VariantType.Int when b.type == VariantType.Int => Variant.FromBool(a.Int == b.Int),
+                VariantType.Float when b.type == VariantType.Float => Variant.FromBool(eq(a.Float,b.Float)),
+                VariantType.Float2 when b.type == VariantType.Float2 => Variant.FromBool(AllEqual(a.Float2, b.Float2)),
+                VariantType.Float3 when b.type == VariantType.Float3 => Variant.FromBool(AllEqual(a.Float3, b.Float3)),
+                VariantType.Float4 when b.type == VariantType.Float4 => Variant.FromBool(AllEqual(a.Float4, b.Float4)),
+                VariantType.Float2x2 when b.type == VariantType.Float2x2 => Variant.FromBool(AllEqual(a.Float2x2, b.Float2x2)),
+                VariantType.Float3x3 when b.type == VariantType.Float3x3 => Variant.FromBool(AllEqual(a.Float3x3, b.Float3x3)),
+                VariantType.Float4x4 when b.type == VariantType.Float4x4 => Variant.FromBool(AllEqual(a.Float4x4, b.Float4x4)),
                 _ => throw new InvalidOperationException($"No supported type found or input types did not match. Types were A: {a.GetTypeSignature()}, B: {b.GetTypeSignature()}"),
             };
         }

@@ -13,22 +13,22 @@ namespace UnityGLTF.Interactivity.Playback
         }
 
         // Spec: min(max(a, min(b, c)), max(b, c)), which tolerates b > c and propagates NaN (math.clamp does neither).
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
-            TryEvaluateValue(ConstStrings.C, out IProperty c);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
+            TryEvaluateValue(ConstStrings.C, out Variant c);
 
-            return a switch
+            return a.type switch
             {
-                Property<int> aProp when b is Property<int> bProp && c is Property<int> cProp => new Property<int>(math.min(math.max(aProp.value, math.min(bProp.value, cProp.value)), math.max(bProp.value, cProp.value))),
-                Property<float> aProp when b is Property<float> bProp && c is Property<float> cProp => new Property<float>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
-                Property<float2> aProp when b is Property<float2> bProp && c is Property<float2> cProp => new Property<float2>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
-                Property<float3> aProp when b is Property<float3> bProp && c is Property<float3> cProp => new Property<float3>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
-                Property<float4> aProp when b is Property<float4> bProp && c is Property<float4> cProp => new Property<float4>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
-                Property<float2x2> aProp when b is Property<float2x2> bProp && c is Property<float2x2> cProp => new Property<float2x2>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
-                Property<float3x3> aProp when b is Property<float3x3> bProp && c is Property<float3x3> cProp => new Property<float3x3>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
-                Property<float4x4> aProp when b is Property<float4x4> bProp && c is Property<float4x4> cProp => new Property<float4x4>(Min(Max(aProp.value, Min(bProp.value, cProp.value)), Max(bProp.value, cProp.value))),
+                VariantType.Int when b.type == VariantType.Int && c.type == VariantType.Int => Variant.FromInt(math.min(math.max(a.Int, math.min(b.Int, c.Int)), math.max(b.Int, c.Int))),
+                VariantType.Float when b.type == VariantType.Float && c.type == VariantType.Float => Variant.FromFloat(Min(Max(a.Float, Min(b.Float, c.Float)), Max(b.Float, c.Float))),
+                VariantType.Float2 when b.type == VariantType.Float2 && c.type == VariantType.Float2 => Variant.FromFloat2(Min(Max(a.Float2, Min(b.Float2, c.Float2)), Max(b.Float2, c.Float2))),
+                VariantType.Float3 when b.type == VariantType.Float3 && c.type == VariantType.Float3 => Variant.FromFloat3(Min(Max(a.Float3, Min(b.Float3, c.Float3)), Max(b.Float3, c.Float3))),
+                VariantType.Float4 when b.type == VariantType.Float4 && c.type == VariantType.Float4 => Variant.FromFloat4(Min(Max(a.Float4, Min(b.Float4, c.Float4)), Max(b.Float4, c.Float4))),
+                VariantType.Float2x2 when b.type == VariantType.Float2x2 && c.type == VariantType.Float2x2 => Variant.FromFloat2x2(Min(Max(a.Float2x2, Min(b.Float2x2, c.Float2x2)), Max(b.Float2x2, c.Float2x2))),
+                VariantType.Float3x3 when b.type == VariantType.Float3x3 && c.type == VariantType.Float3x3 => Variant.FromFloat3x3(Min(Max(a.Float3x3, Min(b.Float3x3, c.Float3x3)), Max(b.Float3x3, c.Float3x3))),
+                VariantType.Float4x4 when b.type == VariantType.Float4x4 && c.type == VariantType.Float4x4 => Variant.FromFloat4x4(Min(Max(a.Float4x4, Min(b.Float4x4, c.Float4x4)), Max(b.Float4x4, c.Float4x4))),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

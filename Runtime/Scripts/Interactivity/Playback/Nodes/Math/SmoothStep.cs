@@ -8,18 +8,18 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public MathSmoothStep(BehaviourEngine engine, Node node) : base(engine, node) { }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
-            TryEvaluateValue(ConstStrings.C, out IProperty c);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
+            TryEvaluateValue(ConstStrings.C, out Variant c);
 
-            return a switch
+            return a.type switch
             {
-                Property<float> pa when b is Property<float> pb && c is Property<float> pc => new Property<float>(Step(pa.value, pb.value, pc.value)),
-                Property<float2> pa when b is Property<float2> pb && c is Property<float2> pc => new Property<float2>(Step(pa.value, pb.value, pc.value)),
-                Property<float3> pa when b is Property<float3> pb && c is Property<float3> pc => new Property<float3>(Step(pa.value, pb.value, pc.value)),
-                Property<float4> pa when b is Property<float4> pb && c is Property<float4> pc => new Property<float4>(Step(pa.value, pb.value, pc.value)),
+                VariantType.Float when b.type == VariantType.Float && c.type == VariantType.Float => Variant.FromFloat(Step(a.Float, b.Float, c.Float)),
+                VariantType.Float2 when b.type == VariantType.Float2 && c.type == VariantType.Float2 => Variant.FromFloat2(Step(a.Float2, b.Float2, c.Float2)),
+                VariantType.Float3 when b.type == VariantType.Float3 && c.type == VariantType.Float3 => Variant.FromFloat3(Step(a.Float3, b.Float3, c.Float3)),
+                VariantType.Float4 when b.type == VariantType.Float4 && c.type == VariantType.Float4 => Variant.FromFloat4(Step(a.Float4, b.Float4, c.Float4)),
                 _ => throw new InvalidOperationException("math/smoothStep requires a, b and c of the same floatN type."),
             };
         }

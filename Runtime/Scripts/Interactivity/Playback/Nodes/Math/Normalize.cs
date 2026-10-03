@@ -9,24 +9,24 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
             // A zero, NaN or infinite length gives isValid = false and a zero vector.
             bool valid;
-            IProperty value = a switch
+            Variant value = a.type switch
             {
-                Property<float2> p => new Property<float2>(Normalize(p.value, math.length(p.value), out valid)),
-                Property<float3> p => new Property<float3>(Normalize(p.value, math.length(p.value), out valid)),
-                Property<float4> p => new Property<float4>(Normalize(p.value, math.length(p.value), out valid)),
+                VariantType.Float2 => Variant.FromFloat2(Normalize(a.Float2, math.length(a.Float2), out valid)),
+                VariantType.Float3 => Variant.FromFloat3(Normalize(a.Float3, math.length(a.Float3), out valid)),
+                VariantType.Float4 => Variant.FromFloat4(Normalize(a.Float4, math.length(a.Float4), out valid)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
 
             return id switch
             {
                 ConstStrings.VALUE => value,
-                ConstStrings.IS_VALID => new Property<bool>(valid),
+                ConstStrings.IS_VALID => Variant.FromBool(valid),
                 _ => throw new InvalidOperationException($"Socket {id} is not valid for this node!"),
             };
         }

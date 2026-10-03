@@ -10,16 +10,16 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
 
-            return a switch
+            return a.type switch
             {
-                Property<float2x2> aProp when b is Property<float2x2> bProp => new Property<float2x2>(math.mul(aProp.value, bProp.value)),
-                Property<float3x3> aProp when b is Property<float3x3> bProp => new Property<float3x3>(math.mul(aProp.value, bProp.value)),
-                Property<float4x4> aProp when b is Property<float4x4> bProp => new Property<float4x4>(math.mul(aProp.value, bProp.value)),
+                VariantType.Float2x2 when b.type == VariantType.Float2x2 => Variant.FromFloat2x2(math.mul(a.Float2x2, b.Float2x2)),
+                VariantType.Float3x3 when b.type == VariantType.Float3x3 => Variant.FromFloat3x3(math.mul(a.Float3x3, b.Float3x3)),
+                VariantType.Float4x4 when b.type == VariantType.Float4x4 => Variant.FromFloat4x4(math.mul(a.Float4x4, b.Float4x4)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

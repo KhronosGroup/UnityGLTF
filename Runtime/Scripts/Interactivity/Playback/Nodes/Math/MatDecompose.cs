@@ -11,20 +11,20 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            if (a is not Property<float4x4> mProp)
+            if (a.type != VariantType.Float4x4)
                 throw new InvalidOperationException($"Type of value a must be Matrix4x4 but a {a.GetTypeSignature()} was passed in!");
 
-            Decompose(mProp.value, out var translation, out var rotation, out var scale);
+            Decompose(a.Float4x4, out var translation, out var rotation, out var scale);
 
             return id switch
             {
-                ConstStrings.TRANSLATION => new Property<float3>(translation),
-                ConstStrings.ROTATION => new Property<float4>(rotation),
-                ConstStrings.SCALE => new Property<float3>(scale),
+                ConstStrings.TRANSLATION => Variant.FromFloat3(translation),
+                ConstStrings.ROTATION => Variant.FromFloat4(rotation),
+                ConstStrings.SCALE => Variant.FromFloat3(scale),
                 _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
             };
         }

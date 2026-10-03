@@ -34,7 +34,7 @@ namespace UnityGLTF.Interactivity.Playback
                         due.Add(_delays[i]);
                 }
 
-                due.Sort((a, b) => a.activationTime != b.activationTime ? a.activationTime.CompareTo(b.activationTime) : a.delay.id.CompareTo(b.delay.id));
+                due.Sort(ActivationOrder.instance);
 
                 for (int i = 0; i < due.Count; i++)
                 {
@@ -89,7 +89,22 @@ namespace UnityGLTF.Interactivity.Playback
 
         public void CancelDelaysFromNode(FlowSetDelay sourceNode)
         {
-            _delays.RemoveAll(e => e.sourceNode == sourceNode);
+            for (int i = _delays.Count - 1; i >= 0; i--)
+            {
+                if (_delays[i].sourceNode == sourceNode)
+                    _delays.RemoveAt(i);
+            }
+        }
+
+        /// <summary>Activation time, then creation order. A cached comparer, since List.Sort(Comparison) allocates a wrapper per call.</summary>
+        private sealed class ActivationOrder : IComparer<NodeDelayData>
+        {
+            public static readonly ActivationOrder instance = new();
+
+            public int Compare(NodeDelayData a, NodeDelayData b)
+            {
+                return a.activationTime != b.activationTime ? a.activationTime.CompareTo(b.activationTime) : a.delay.id.CompareTo(b.delay.id);
+            }
         }
 
         private bool Remove(Ref delay)

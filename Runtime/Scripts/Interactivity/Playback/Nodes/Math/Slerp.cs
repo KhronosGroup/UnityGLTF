@@ -10,16 +10,16 @@ namespace UnityGLTF.Interactivity.Playback
 
         public MathSlerp(BehaviourEngine engine, Node node) : base(engine, node) { }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
             TryEvaluateValue(ConstStrings.C, out float c);
 
-            return a switch
+            return a.type switch
             {
-                Property<float2> pa when b is Property<float2> pb => new Property<float2>(Slerp(pa.value, pb.value, c)),
-                Property<float3> pa when b is Property<float3> pb => new Property<float3>(Slerp(pa.value, pb.value, c)),
+                VariantType.Float2 when b.type == VariantType.Float2 => Variant.FromFloat2(Slerp(a.Float2, b.Float2, c)),
+                VariantType.Float3 when b.type == VariantType.Float3 => Variant.FromFloat3(Slerp(a.Float3, b.Float3, c)),
                 _ => throw new InvalidOperationException("math/slerp requires a and b of the same float2 or float3 type."),
             };
         }

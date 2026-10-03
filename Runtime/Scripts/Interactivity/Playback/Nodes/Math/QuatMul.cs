@@ -11,14 +11,14 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
 
-            return a switch
+            return a.type switch
             {
-                Property<float4> aProp when  b is Property<float4> bProp => new Property<float4>(Multiply(aProp.value, bProp.value)),
+                VariantType.Float4 when  b.type == VariantType.Float4 => Variant.FromFloat4(Multiply(a.Float4, b.Float4)),
                 _ => throw new InvalidOperationException($"No supported type found for input A: {a.GetTypeSignature()} or input type did not match B: {b.GetTypeSignature()}."),
             };
         }

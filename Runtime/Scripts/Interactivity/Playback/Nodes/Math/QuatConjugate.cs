@@ -11,13 +11,13 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            return a switch
+            return a.type switch
             {
-                Property<float4> aProp => new Property<float4>(Conjugate(aProp.value)),
+                VariantType.Float4 => Variant.FromFloat4(Conjugate(a.Float4)),
                 _ => throw new InvalidOperationException($"Input A is a {a.GetTypeSignature()} and not a float4!"),
             };
         }

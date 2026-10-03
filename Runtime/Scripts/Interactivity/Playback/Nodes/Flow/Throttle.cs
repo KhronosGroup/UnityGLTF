@@ -53,9 +53,9 @@ namespace UnityGLTF.Interactivity.Playback
             TryExecuteFlow(ConstStrings.OUT);
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override Variant GetOutputValue(string socket)
         {
-            return new Property<float>(_lastRemainingTime);
+            return Variant.FromFloat(_lastRemainingTime);
         }
     }
 }

@@ -15,6 +15,7 @@ namespace UnityGLTF.Interactivity.Playback
         private float3 _selectionRayOrigin = new float3(float.NaN, float.NaN, float.NaN);
         private int _controllerIndex = -1;
 
+        private int _parentIndex = -1;
         private Transform _parentNode = null;
 
         public EventOnSelect(BehaviourEngine engine, Node node) : base(engine, node)
@@ -24,20 +25,25 @@ namespace UnityGLTF.Interactivity.Playback
             if (!configuration.TryGetValue(ConstStrings.NODE_INDEX, out Configuration config))
                 return;
 
-            var parentIndex = ((Property<int>)config.property).value;
-
-            _parentNode = engine.pointerResolver.nodePointers[parentIndex].gameObject.transform;
+            _parentIndex = ((Property<int>)config.property).value;
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override void OnEngineReady()
+        {
+            // Unity objects are resolved on the main thread; the constructor may run on a worker thread.
+            if (_parentIndex >= 0)
+                _parentNode = engine.pointerResolver.nodePointers[_parentIndex].gameObject.transform;
+        }
+
+        public override Variant GetOutputValue(string id)
         {
             return id switch
             {
-                ConstStrings.SELECTED_NODE => new Property<Ref>(_selectedNodeIndex >= 0 ? Ref.Gltf("/nodes", _selectedNodeIndex) : Ref.Null),
-                ConstStrings.SELECTED_NODE_INDEX =>  new Property<int>(_selectedNodeIndex),
-                ConstStrings.SELECTION_POINT =>      new Property<float3>(_selectionPoint),
-                ConstStrings.SELECTION_RAY_ORIGIN => new Property<float3>(_selectionRayOrigin),
-                ConstStrings.CONTROLLER_INDEX => new Property<int>(_controllerIndex),
+                ConstStrings.SELECTED_NODE => Variant.FromRef(_selectedNodeIndex >= 0 ? Ref.Gltf("/nodes", _selectedNodeIndex) : Ref.Null),
+                ConstStrings.SELECTED_NODE_INDEX =>  Variant.FromInt(_selectedNodeIndex),
+                ConstStrings.SELECTION_POINT =>      Variant.FromFloat3(_selectionPoint),
+                ConstStrings.SELECTION_RAY_ORIGIN => Variant.FromFloat3(_selectionRayOrigin),
+                ConstStrings.CONTROLLER_INDEX => Variant.FromInt(_controllerIndex),
                 _ => throw new InvalidOperationException($"Socket {id} is not valid for this node!"),
             };
         }

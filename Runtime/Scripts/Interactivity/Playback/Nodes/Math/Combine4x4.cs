@@ -9,27 +9,27 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            Span<Property<float>> v = stackalloc Property<float>[16];
+            Span<float> v = stackalloc float[16];
 
             for (int i = 0; i < v.Length; i++)
             {
                 TryEvaluateValue(ConstStrings.Letters[i], out var prop);
 
-                if (prop is not Property<float> aFloat)
+                if (prop.type != VariantType.Float)
                     throw new InvalidOperationException($"Input {ConstStrings.Letters[i]} is not a float!");
 
-                v[i] = (Property<float>)prop;
+                v[i] = prop.Float;
             }
 
-            var c0 = new float4(v[0].value, v[1].value, v[2].value, v[3].value);
-            var c1 = new float4(v[4].value, v[5].value, v[6].value, v[7].value);
-            var c2 = new float4(v[8].value, v[9].value, v[10].value, v[11].value);
-            var c3 = new float4(v[12].value, v[13].value, v[14].value, v[15].value);
+            var c0 = new float4(v[0], v[1], v[2], v[3]);
+            var c1 = new float4(v[4], v[5], v[6], v[7]);
+            var c2 = new float4(v[8], v[9], v[10], v[11]);
+            var c3 = new float4(v[12], v[13], v[14], v[15]);
 
 
-            return new Property<float4x4>(new float4x4(c0, c1, c2, c3));
+            return Variant.FromFloat4x4(new float4x4(c0, c1, c2, c3));
         }
     }
 }

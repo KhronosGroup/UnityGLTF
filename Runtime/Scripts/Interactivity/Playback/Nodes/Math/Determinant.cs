@@ -10,15 +10,15 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            return a switch
+            return a.type switch
             {
-                Property<float2x2> aProp => new Property<float>(math.determinant(aProp.value)),
-                Property<float3x3> aProp => new Property<float>(math.determinant(aProp.value)),
-                Property<float4x4> aProp => new Property<float>(math.determinant(aProp.value)),
+                VariantType.Float2x2 => Variant.FromFloat(math.determinant(a.Float2x2)),
+                VariantType.Float3x3 => Variant.FromFloat(math.determinant(a.Float3x3)),
+                VariantType.Float4x4 => Variant.FromFloat(math.determinant(a.Float4x4)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

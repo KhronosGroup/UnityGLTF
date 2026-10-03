@@ -1,70 +1,63 @@
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine.Pool;
 
 namespace UnityGLTF.Interactivity.Playback
 {
     /// <summary>One entry of the spec's "variable interpolation state dynamic array".</summary>
     public struct VariableInterpolateData
     {
-        public Variable variable;
+        public int variableIndex;
         public double startTime;
         public double duration;
-        public IProperty endValue;
+        public Variant endValue;
         public float2 cp1;
         public float2 cp2;
+        /// <summary>Invoked when the interpolation completes. Nodes create this delegate once, not per activation.</summary>
         public Action done;
-        public IInterpolator interpolator;
         public bool slerp;
+        internal Variant from;
         internal int id;
     }
 
     public class VariableInterpolationManager
     {
-        private struct Interpolator<T> : IInterpolator
-        {
-            public Variable variable;
-            public Func<T, T, float, T> evaluator;
-            public T from;
-            public T to;
+        private readonly BehaviourEngine _engine;
 
-            public void Interpolate(float q) => variable.property = new Property<T>(evaluator(from, to, q));
-            public void Finish() => variable.property = new Property<T>(to);
-        }
-
-        private readonly Dictionary<Variable, VariableInterpolateData> _interpolationsInProgress = new();
+        // Insertion-ordered entries; a variable has at most one.
+        private readonly List<VariableInterpolateData> _active = new();
+        private readonly List<VariableInterpolateData> _snapshot = new();
         private int _nextId;
 
-        public int activeInterpolationCount => _interpolationsInProgress.Count;
+        public int activeInterpolationCount => _active.Count;
+
+        public VariableInterpolationManager(BehaviourEngine engine)
+        {
+            _engine = engine;
+        }
 
         public void OnTick(double now)
         {
             // Snapshot first: done flows may start or stop other interpolations.
-            var temp = ListPool<VariableInterpolateData>.Get();
-            try
-            {
-                foreach (var interp in _interpolationsInProgress)
-                {
-                    temp.Add(interp.Value);
-                }
+            _snapshot.Clear();
+            _snapshot.AddRange(_active);
 
-                foreach (var data in temp)
-                {
-                    if (!_interpolationsInProgress.TryGetValue(data.variable, out var current) || current.id != data.id)
-                        continue;
-
-                    DoInterpolate(current, now);
-                }
-            }
-            finally
+            for (int i = 0; i < _snapshot.Count; i++)
             {
-                ListPool<VariableInterpolateData>.Release(temp);
+                var index = IndexOf(_snapshot[i].variableIndex);
+
+                if (index < 0 || _active[index].id != _snapshot[i].id)
+                    continue;
+
+                DoInterpolate(index, now);
             }
+
+            _snapshot.Clear();
         }
 
-        private void DoInterpolate(VariableInterpolateData data, double now)
+        private void DoInterpolate(int index, double now)
         {
+            var data = _active[index];
             var t = (now - data.startTime) / data.duration;
 
             if (t <= 0)
@@ -72,60 +65,74 @@ namespace UnityGLTF.Interactivity.Playback
 
             if (double.IsNaN(t) || t >= 1)
             {
-                data.interpolator.Finish();
-                _interpolationsInProgress.Remove(data.variable);
+                _engine.SetVariable(data.variableIndex, data.endValue);
+                _active.RemoveAt(index);
                 data.done?.Invoke();
                 return;
             }
 
-            data.interpolator.Interpolate(Helpers.Ease((float)t, data.cp1, data.cp2));
+            _engine.SetVariable(data.variableIndex, Lerp(data.from, data.endValue, Helpers.Ease((float)t, data.cp1, data.cp2), data.slerp));
         }
 
+        /// <summary>
+        /// Adds an entry for the variable, replacing any existing one.
+        /// Throws <see cref="InterpolatorException"/> when the target type does not match the variable or cannot be interpolated.
+        /// </summary>
         public void StartInterpolation(ref VariableInterpolateData data)
         {
-            data.interpolator = GetInterpolator(data);
+            var current = _engine.GetVariable(data.variableIndex);
+
+            if (!current.isFloatBased)
+                throw new InterpolatorException($"Interpolation has not been defined for type {current.GetTypeSignature()}!");
+
+            if (data.endValue.type != current.type)
+                throw new InterpolatorException($"Interpolation target type {data.endValue.GetTypeSignature()} does not match variable type {current.GetTypeSignature()}.");
+
+            data.from = current;
             data.id = _nextId++;
 
-            _interpolationsInProgress.Remove(data.variable);
-            _interpolationsInProgress.Add(data.variable, data);
+            StopInterpolation(data.variableIndex);
+            _active.Add(data);
 
             Util.Log($"Starting Variable Interpolation: Start Time {data.startTime}, Duration: {data.duration}");
         }
 
-        public bool StopInterpolation(Variable variable)
+        public bool StopInterpolation(int variableIndex)
         {
-            return _interpolationsInProgress.Remove(variable);
+            var index = IndexOf(variableIndex);
+
+            if (index < 0)
+                return false;
+
+            _active.RemoveAt(index);
+            return true;
         }
 
-        private static IInterpolator GetInterpolator(in VariableInterpolateData data)
+        private int IndexOf(int variableIndex)
         {
-            return data.variable.property switch
+            for (int i = 0; i < _active.Count; i++)
             {
-                Property<float> => Create<float>(math.lerp, data),
-                Property<float2> => Create<float2>(math.lerp, data),
-                Property<float3> => Create<float3>(math.lerp, data),
-                Property<float4> when data.slerp => Create<float4>(Helpers.Slerpfloat4, data),
-                Property<float4> => Create<float4>(math.lerp, data),
-                Property<float2x2> => Create<float2x2>(Helpers.LerpComponentwise, data),
-                Property<float3x3> => Create<float3x3>(Helpers.LerpComponentwise, data),
-                Property<float4x4> => Create<float4x4>(Helpers.LerpComponentwise, data),
+                if (_active[i].variableIndex == variableIndex)
+                    return i;
+            }
 
-                _ => throw new InterpolatorException($"Interpolation has not been defined for type {data.variable.property.GetTypeSignature()}!"),
-            };
+            return -1;
         }
 
-        private static IInterpolator Create<T>(Func<T, T, float, T> evaluator, in VariableInterpolateData data)
+        /// <summary>Component-wise linear interpolation of any float-based value; float4 uses slerp when requested.</summary>
+        private static Variant Lerp(in Variant a, in Variant b, float t, bool slerp)
         {
-            if (data.endValue is not Property<T> end || data.variable.property is not Property<T> from)
-                throw new InterpolatorException($"Interpolation target type does not match variable type {typeof(T)}.");
+            if (slerp && a.type == VariantType.Float4)
+                return Variant.FromFloat4(Helpers.Slerpfloat4(a.Float4, b.Float4, t));
 
-            return new Interpolator<T>()
-            {
-                variable = data.variable,
-                evaluator = evaluator,
-                from = from.value,
-                to = end.value
-            };
+            var ca = a.columns;
+            var cb = b.columns;
+
+            return Variant.FromColumns(a.type, new float4x4(
+                math.lerp(ca.c0, cb.c0, t),
+                math.lerp(ca.c1, cb.c1, t),
+                math.lerp(ca.c2, cb.c2, t),
+                math.lerp(ca.c3, cb.c3, t)));
         }
     }
 }

@@ -11,11 +11,11 @@ namespace UnityGLTF.Interactivity.Playback
 
         // The engine retains output values until a flow activation, so a new value is
         // generated only on the first access after each flow activation.
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             // NextDouble is in [0, 1); the float cast can round up to 1, which the spec excludes.
             var v = (float)_rng.NextDouble();
-            return new Property<float>(v >= 1f ? 0f : v);
+            return Variant.FromFloat(v >= 1f ? 0f : v);
         }
     }
 }

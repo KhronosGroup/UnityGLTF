@@ -1,21 +1,44 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace UnityGLTF.Interactivity.Playback
 {
-    public class BehaviourEngine
+    /// <summary>
+    /// Where an input value socket reads from: a store slot, filled either by an inline constant
+    /// (<see cref="source"/> is null) or by the retained output <see cref="socket"/> of <see cref="source"/>.
+    /// </summary>
+    internal readonly struct InputBinding
+    {
+        public readonly int slot;
+        public readonly BehaviourEngineNode source;
+        public readonly string socket;
+
+        public InputBinding(int slot, BehaviourEngineNode source, string socket)
+        {
+            this.slot = slot;
+            this.source = source;
+            this.socket = socket;
+        }
+    }
+
+    public class BehaviourEngine : IDisposable
     {
         public Graph graph { get; private set; }
         public readonly Dictionary<Node, BehaviourEngineNode> engineNodes = new();
         public GLTFInteractivityAnimationWrapper animationWrapper { get; private set; }
         public readonly PointerInterpolationManager pointerInterpolationManager = new();
-        public readonly VariableInterpolationManager variableInterpolationManager = new();
+        public readonly VariableInterpolationManager variableInterpolationManager;
         public readonly NodeDelayManager nodeDelayManager = new();
 
         /// <summary>False when the graph was rejected; a rejected graph never executes.</summary>
         public bool isValid { get; private set; }
+
+        /// <summary>Native storage for every variable, inline constant and retained output. Null for a rejected graph.</summary>
+        public VariantStore store { get; private set; }
 
         /// <summary>Engine clock in seconds. Replaceable for tests.</summary>
         public Func<double> timeSource = () => Time.timeAsDouble;
@@ -35,8 +58,16 @@ namespace UnityGLTF.Interactivity.Playback
         /// <summary>Runs before onTick so event handlers observe the updated animation state.</summary>
         public event Action onAnimationUpdate;
         public event Action onTick;
+
+        /// <summary>
+        /// Raised after the graph's own event/receive nodes for every custom event occurrence. The dictionary is built
+        /// only when this event has subscribers, so subscribing costs an allocation per event.
+        /// </summary>
         public event Action<int, Dictionary<string, IProperty>> onCustomEventFired;
         public event Action<Flow> onFlowTriggered;
+
+        /// <summary>Raised for event/receive nodes with the occurrence's values and which of them were provided.</summary>
+        internal event Action<int, Variant[], bool[]> customEventFired;
 
         public PointerResolver pointerResolver { get; private set; }
 
@@ -55,10 +86,24 @@ namespace UnityGLTF.Interactivity.Playback
         private readonly HashSet<Ref> _immediatelyStoppedEvents = new();
         private readonly HashSet<Ref> _transitivelyStoppedEvents = new();
 
+        private readonly List<(int slot, Value value)> _constants = new();
+        private readonly Dictionary<(BehaviourEngineNode node, string socket), int> _outputSlots = new();
+        private int[] _variableSlots = Array.Empty<int>();
+
+        // Custom event payloads, one frame per nesting depth so a handler can send events without clobbering its caller's values.
+        private readonly List<Variant[]> _payloadValues = new();
+        private readonly List<bool[]> _payloadProvided = new();
+        private int _payloadDepth;
+
+        /// <summary>
+        /// Validates and compiles the graph. Touches no Unity API, so it may run off the main thread (see <see cref="CreateAsync"/>);
+        /// <see cref="StartPlayback"/> must run on the main thread.
+        /// </summary>
         public BehaviourEngine(Graph graph, PointerResolver pointerResolver)
         {
             this.graph = graph;
             this.pointerResolver = pointerResolver;
+            variableInterpolationManager = new VariableInterpolationManager(this);
 
             isValid = graph != null && graph.isValid && GraphValidator.Validate(graph);
 
@@ -72,6 +117,83 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 engineNodes.Add(graph.nodes[i], NodeRegistry.CreateBehaviourEngineNode(this, graph.nodes[i]));
             }
+
+            Compile();
+        }
+
+        /// <summary>
+        /// Validates and compiles the graph on a worker thread. Call <see cref="StartPlayback"/> (or <see cref="Tick"/>)
+        /// on the main thread once the task completes.
+        /// </summary>
+        public static Task<BehaviourEngine> CreateAsync(Graph graph, PointerResolver pointerResolver, CancellationToken cancellationToken = default)
+        {
+            return Task.Run(() => new BehaviourEngine(graph, pointerResolver), cancellationToken);
+        }
+
+        /// <summary>Assigns a store slot to every variable, inline constant and consumed output socket.</summary>
+        private void Compile()
+        {
+            var slotCount = 0;
+
+            _variableSlots = new int[graph.variables.Count];
+            for (int i = 0; i < _variableSlots.Length; i++)
+                _variableSlots[i] = slotCount++;
+
+            foreach (var kvp in engineNodes)
+            {
+                var node = kvp.Value;
+                var values = kvp.Key.values;
+
+                for (int i = 0; i < values.Count; i++)
+                {
+                    var value = values[i];
+
+                    if (value.node == null)
+                    {
+                        var slot = slotCount++;
+                        _constants.Add((slot, value));
+                        node.inputs[value.id] = new InputBinding(slot, null, null);
+                        continue;
+                    }
+
+                    if (!engineNodes.TryGetValue(value.node, out var source))
+                        continue;
+
+                    var key = (source, value.socket);
+                    if (!_outputSlots.TryGetValue(key, out var outputSlot))
+                    {
+                        outputSlot = slotCount++;
+                        _outputSlots.Add(key, outputSlot);
+                    }
+
+                    node.inputs[value.id] = new InputBinding(outputSlot, source, value.socket);
+                }
+            }
+
+            store = new VariantStore(slotCount);
+
+            for (int i = 0; i < _variableSlots.Length; i++)
+                graph.variables[i].Bind(store, _variableSlots[i]);
+
+            WriteConstants();
+        }
+
+        private void WriteConstants()
+        {
+            for (int i = 0; i < _constants.Count; i++)
+                store[_constants[i].slot] = Variant.FromProperty(_constants[i].value.property);
+        }
+
+        /// <summary>Frees the native value storage. Variables keep their last values in <see cref="Variable.property"/>.</summary>
+        public void Dispose()
+        {
+            if (store == null || store.isDisposed)
+                return;
+
+            for (int i = 0; i < _variableSlots.Length; i++)
+                graph.variables[i].Unbind(store);
+
+            store.Dispose();
         }
 
         public void StartPlayback()
@@ -81,8 +203,13 @@ namespace UnityGLTF.Interactivity.Playback
 
             _started = true;
 
-            // Done here rather than in the constructor because the animation wrapper is attached afterwards.
+            // Done here rather than in the constructor because the animation wrapper is attached afterwards,
+            // and because the constructor may have run off the main thread.
             ResolveStaticReferences();
+            WriteConstants();
+
+            foreach (var node in engineNodes.Values)
+                node.OnEngineReady();
 
             startEvent = CreateEventReference();
             onStart?.Invoke();
@@ -158,8 +285,74 @@ namespace UnityGLTF.Interactivity.Playback
             flowEpoch++;
         }
 
-        /// <summary>Raises a custom event from inside the graph (event/send).</summary>
-        public void FireCustomEvent(int eventIndex, Dictionary<string, IProperty> outValues = null)
+        /// <summary>Reads an input: a constant, or the source's output retained for the current flow epoch.</summary>
+        internal Variant Read(in InputBinding binding)
+        {
+            if (binding.source == null || store.GetStamp(binding.slot) == flowEpoch)
+                return store[binding.slot];
+
+            var epoch = flowEpoch;
+            Variant value;
+
+            try
+            {
+                value = binding.source.GetOutputValue(binding.socket);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                value = default;
+            }
+
+            store[binding.slot] = value;
+            store.SetStamp(binding.slot, epoch);
+            return value;
+        }
+
+        /// <summary>The retained value of an output socket, computing it if no input consumes that socket.</summary>
+        internal Variant ReadOutput(BehaviourEngineNode node, string socket)
+        {
+            if (_outputSlots.TryGetValue((node, socket), out var slot))
+                return Read(new InputBinding(slot, node, socket));
+
+            return node.GetOutputValue(socket);
+        }
+
+        public Variant GetVariable(int variableIndex) => store[_variableSlots[variableIndex]];
+
+        public void SetVariable(int variableIndex, in Variant value) => store[_variableSlots[variableIndex]] = value;
+
+        /// <summary>
+        /// Rents the payload frame for a custom event occurrence; fill it, call <see cref="FireCustomEvent(int, Variant[], bool[])"/>,
+        /// then <see cref="ReturnEventPayload"/>. Frames are reused, so this allocates only the first time a nesting depth is reached.
+        /// </summary>
+        public void RentEventPayload(int valueCount, out Variant[] values, out bool[] provided)
+        {
+            if (_payloadDepth == _payloadValues.Count)
+            {
+                _payloadValues.Add(new Variant[Math.Max(valueCount, 4)]);
+                _payloadProvided.Add(new bool[Math.Max(valueCount, 4)]);
+            }
+            else if (_payloadValues[_payloadDepth].Length < valueCount)
+            {
+                _payloadValues[_payloadDepth] = new Variant[valueCount];
+                _payloadProvided[_payloadDepth] = new bool[valueCount];
+            }
+
+            values = _payloadValues[_payloadDepth];
+            provided = _payloadProvided[_payloadDepth];
+            Array.Clear(provided, 0, provided.Length);
+            _payloadDepth++;
+        }
+
+        public void ReturnEventPayload()
+        {
+            if (_payloadDepth > 0)
+                _payloadDepth--;
+        }
+
+        /// <summary>Raises a custom event from inside the graph (event/send). Values are indexed like the event's definition.</summary>
+        public void FireCustomEvent(int eventIndex, Variant[] values, bool[] provided)
         {
             if (eventIndex < 0 || eventIndex >= graph.customEvents.Count)
                 return;
@@ -171,12 +364,59 @@ namespace UnityGLTF.Interactivity.Playback
 
             try
             {
-                onCustomEventFired?.Invoke(eventIndex, outValues);
+                customEventFired?.Invoke(eventIndex, values, provided);
+
+                if (onCustomEventFired != null)
+                    onCustomEventFired.Invoke(eventIndex, ToDictionary(eventIndex, values, provided));
             }
             finally
             {
                 lastCustomEvent = previous;
             }
+        }
+
+        /// <summary>Raises a custom event with boxed values. Allocates; prefer the payload overload on hot paths.</summary>
+        public void FireCustomEvent(int eventIndex, Dictionary<string, IProperty> outValues = null)
+        {
+            if (eventIndex < 0 || eventIndex >= graph.customEvents.Count)
+                return;
+
+            var definition = graph.customEvents[eventIndex].values;
+            var count = definition?.Count ?? 0;
+
+            RentEventPayload(count, out var values, out var provided);
+
+            try
+            {
+                for (int i = 0; outValues != null && i < count; i++)
+                {
+                    if (outValues.TryGetValue(definition[i].id, out var p) && p != null)
+                    {
+                        values[i] = Variant.FromProperty(p);
+                        provided[i] = !values[i].isNone;
+                    }
+                }
+
+                FireCustomEvent(eventIndex, values, provided);
+            }
+            finally
+            {
+                ReturnEventPayload();
+            }
+        }
+
+        private Dictionary<string, IProperty> ToDictionary(int eventIndex, Variant[] values, bool[] provided)
+        {
+            var definition = graph.customEvents[eventIndex].values;
+            var result = new Dictionary<string, IProperty>();
+
+            for (int i = 0; definition != null && i < definition.Count; i++)
+            {
+                if (provided[i])
+                    result[definition[i].id] = values[i].ToProperty();
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -228,20 +468,6 @@ namespace UnityGLTF.Interactivity.Playback
         public bool IsImmediatelyStopped(Ref eventRef) => _immediatelyStoppedEvents.Contains(eventRef);
         public bool IsTransitivelyStopped(Ref eventRef) => _transitivelyStoppedEvents.Contains(eventRef);
 
-        public IProperty ParseValue(Value v)
-        {
-            if (v.node == null)
-                return v.property;
-
-            var node = engineNodes[v.node];
-            return node.GetRetainedOutputValue(v.socket);
-        }
-
-        public IProperty GetVariableProperty(int variableIndex)
-        {
-            return graph.variables[variableIndex].property;
-        }
-
         public bool TryGetPointer(string pointerString, BehaviourEngineNode engineNode, out IPointer pointer)
         {
             try
@@ -272,7 +498,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
             index = -1;
 
-            if (animation.kind != RefKind.Gltf || animation.collection != "/animations")
+            if (animation.kind != RefKind.Gltf || animation.collectionId != RefCollections.Animations)
                 return false;
 
             if (animationWrapper == null || !animationWrapper.IsValidAnimationIndex(animation.id))
@@ -365,7 +591,7 @@ namespace UnityGLTF.Interactivity.Playback
 
         private bool RefExistsInAsset(Ref r)
         {
-            if (r.collection == "/animations" && animationWrapper != null)
+            if (r.collectionId == RefCollections.Animations && animationWrapper != null)
                 return animationWrapper.IsValidAnimationIndex(r.id);
 
             return pointerResolver.RefExists(r);

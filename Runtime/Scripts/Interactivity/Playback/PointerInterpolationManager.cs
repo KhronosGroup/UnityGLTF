@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Pool;
 using UnityGLTF.Interactivity.Playback.Extensions;
 
 namespace UnityGLTF.Interactivity.Playback
@@ -15,20 +14,13 @@ namespace UnityGLTF.Interactivity.Playback
         public IPointer pointer;
         public double startTime;
         public double duration;
-        public IProperty endValue;
+        public Variant endValue;
         public float2 cp1;
         public float2 cp2;
+        /// <summary>Invoked when the interpolation completes. Nodes create this delegate once, not per activation.</summary>
         public Action done;
-        public IInterpolator interpolator;
+        internal Variant from;
         internal int id;
-    }
-
-    public interface IInterpolator
-    {
-        /// <summary>Applies the value at eased progress <paramref name="q"/>, which may be outside [0, 1].</summary>
-        public void Interpolate(float q);
-        /// <summary>Sets the exact target value.</summary>
-        public void Finish();
     }
 
     public class InterpolatorException : Exception
@@ -40,49 +32,35 @@ namespace UnityGLTF.Interactivity.Playback
 
     public class PointerInterpolationManager
     {
-        public struct Interpolator<T> : IInterpolator
-        {
-            public Action<T> setter;
-            public Func<T, T, float, T> evaluator;
-            public T from;
-            public T to;
-
-            public void Interpolate(float q) => setter(evaluator(from, to, q));
-            public void Finish() => setter(to);
-        }
-
-        private readonly Dictionary<string, PointerInterpolateData> _interpolationsInProgress = new();
+        // Insertion-ordered entries; a pointer has at most one.
+        private readonly List<PointerInterpolateData> _active = new();
+        private readonly List<PointerInterpolateData> _snapshot = new();
         private int _nextId;
 
-        public int activeInterpolationCount => _interpolationsInProgress.Count;
+        public int activeInterpolationCount => _active.Count;
 
         public void OnTick(double now)
         {
             // Snapshot first: done flows may start or stop other interpolations.
-            var temp = ListPool<PointerInterpolateData>.Get();
-            try
-            {
-                foreach (var interp in _interpolationsInProgress)
-                {
-                    temp.Add(interp.Value);
-                }
+            _snapshot.Clear();
+            _snapshot.AddRange(_active);
 
-                foreach (var data in temp)
-                {
-                    if (!_interpolationsInProgress.TryGetValue(data.pointerKey, out var current) || current.id != data.id)
-                        continue;
-
-                    DoInterpolate(current, now);
-                }
-            }
-            finally
+            for (int i = 0; i < _snapshot.Count; i++)
             {
-                ListPool<PointerInterpolateData>.Release(temp);
+                var index = IndexOf(_snapshot[i].pointerKey);
+
+                if (index < 0 || _active[index].id != _snapshot[i].id)
+                    continue;
+
+                DoInterpolate(index, now);
             }
+
+            _snapshot.Clear();
         }
 
-        private void DoInterpolate(PointerInterpolateData data, double now)
+        private void DoInterpolate(int index, double now)
         {
+            var data = _active[index];
             var t = (now - data.startTime) / data.duration;
 
             if (t <= 0)
@@ -90,13 +68,13 @@ namespace UnityGLTF.Interactivity.Playback
 
             if (double.IsNaN(t) || t >= 1)
             {
-                data.interpolator.Finish();
-                _interpolationsInProgress.Remove(data.pointerKey);
+                PointerHelpers.TryWrite(data.pointer, data.endValue);
+                _active.RemoveAt(index);
                 data.done?.Invoke();
                 return;
             }
 
-            data.interpolator.Interpolate(Helpers.Ease((float)t, data.cp1, data.cp2));
+            Apply(data.pointer, data.from, data.endValue, Helpers.Ease((float)t, data.cp1, data.cp2));
         }
 
         /// <summary>
@@ -105,69 +83,74 @@ namespace UnityGLTF.Interactivity.Playback
         /// </summary>
         public void StartInterpolation(ref PointerInterpolateData data)
         {
-            var interpolator = data.endValue switch
-            {
-                Property<float> property => GetInterpolator(property, data),
-                Property<float2> property => GetInterpolator(property, data),
-                Property<float3> property => Processfloat3(property, data),
-                Property<float4> property => Processfloat4(property, data),
-                Property<float2x2> property => GetInterpolator(property, data),
-                Property<float3x3> property => GetInterpolator(property, data),
-                Property<float4x4> property => GetInterpolator(property, data),
+            if (!CanInterpolate(data.pointer, data.endValue.type))
+                throw new InterpolatorException($"Type {data.endValue.GetTypeSignature()} cannot be interpolated on a pointer of type {data.pointer.GetSystemType()}.");
 
-                _ => throw new InterpolatorException($"Type {data.endValue.GetTypeSignature()} is not supported for interpolation."),
-            };
-
-            data.interpolator = interpolator;
+            data.from = PointerHelpers.Read(data.pointer);
             data.id = _nextId++;
 
-            _interpolationsInProgress.Remove(data.pointerKey);
-            _interpolationsInProgress.Add(data.pointerKey, data);
+            StopInterpolation(data.pointerKey);
+            _active.Add(data);
 
             Util.Log($"Starting Interpolation: Start Time {data.startTime}, Duration: {data.duration}");
         }
 
         public bool StopInterpolation(string pointerKey)
         {
-            return pointerKey != null && _interpolationsInProgress.Remove(pointerKey);
+            var index = IndexOf(pointerKey);
+
+            if (index < 0)
+                return false;
+
+            _active.RemoveAt(index);
+            return true;
         }
 
-        private IInterpolator Processfloat3(Property<float3> property, PointerInterpolateData data)
+        private int IndexOf(string pointerKey)
         {
-            return data.pointer switch
-            {
-                Pointer<float3> => GetInterpolator(property, data),
-                Pointer<Color3> => GetInterpolator(new Property<Color3>(property.value.ToColor()), data),
+            if (pointerKey == null)
+                return -1;
 
-                _ => throw new InterpolatorException($"Pointer type {data.pointer.GetSystemType()} is not supported for this float3 property."),
+            for (int i = 0; i < _active.Count; i++)
+            {
+                if (string.Equals(_active[i].pointerKey, pointerKey, StringComparison.Ordinal))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static bool CanInterpolate(IPointer pointer, VariantType type)
+        {
+            return type switch
+            {
+                VariantType.Float => pointer is Pointer<float> p && p.evaluator != null,
+                VariantType.Float2 => pointer is Pointer<float2> p && p.evaluator != null,
+                VariantType.Float3 => (pointer is Pointer<float3> a && a.evaluator != null) || (pointer is Pointer<Color3> b && b.evaluator != null),
+                VariantType.Float4 => (pointer is Pointer<float4> a && a.evaluator != null) || (pointer is Pointer<Color> b && b.evaluator != null) || (pointer is Pointer<quaternion> c && c.evaluator != null),
+                VariantType.Float2x2 => pointer is Pointer<float2x2> p && p.evaluator != null,
+                VariantType.Float3x3 => pointer is Pointer<float3x3> p && p.evaluator != null,
+                VariantType.Float4x4 => pointer is Pointer<float4x4> p && p.evaluator != null,
+                _ => false,
             };
         }
 
-        private IInterpolator Processfloat4(Property<float4> property, PointerInterpolateData data)
+        /// <summary>Writes the pointer's own evaluator result (e.g. slerp for rotations) at eased progress <paramref name="q"/>.</summary>
+        private static void Apply(IPointer pointer, in Variant from, in Variant to, float q)
         {
-            return data.pointer switch
+            switch (pointer)
             {
-                Pointer<float4> => GetInterpolator(property, data),
-                Pointer<Color> => GetInterpolator(new Property<Color>(property.value.ToColor()), data),
-                // Quaternion pointers use their slerp evaluator, as the spec requires for rotations.
-                Pointer<quaternion> => GetInterpolator(new Property<quaternion>(property.value.ToQuaternion()), data),
-
-                _ => throw new InterpolatorException($"Pointer type {data.pointer.GetSystemType()} is not supported for this float4 property."),
-            };
-        }
-
-        private IInterpolator GetInterpolator<T>(Property<T> property, in PointerInterpolateData data)
-        {
-            if (data.pointer is not Pointer<T> p || p.evaluator == null)
-                throw new InterpolatorException($"Pointer type {data.pointer.GetSystemType()} cannot be interpolated to {typeof(T)}.");
-
-            return new Interpolator<T>()
-            {
-                setter = p.setter,
-                evaluator = p.evaluator,
-                from = p.getter(),
-                to = property.value
-            };
+                case Pointer<float> p: p.setter(p.evaluator(from.Float, to.Float, q)); break;
+                case Pointer<float2> p: p.setter(p.evaluator(from.Float2, to.Float2, q)); break;
+                case Pointer<float3> p: p.setter(p.evaluator(from.Float3, to.Float3, q)); break;
+                case Pointer<Color3> p: p.setter(p.evaluator(from.Float3.ToColor(), to.Float3.ToColor(), q)); break;
+                case Pointer<float4> p: p.setter(p.evaluator(from.Float4, to.Float4, q)); break;
+                case Pointer<Color> p: p.setter(p.evaluator(from.Float4.ToColor(), to.Float4.ToColor(), q)); break;
+                case Pointer<quaternion> p: p.setter(p.evaluator(from.Float4.ToQuaternion(), to.Float4.ToQuaternion(), q)); break;
+                case Pointer<float2x2> p: p.setter(p.evaluator(from.Float2x2, to.Float2x2, q)); break;
+                case Pointer<float3x3> p: p.setter(p.evaluator(from.Float3x3, to.Float3x3, q)); break;
+                case Pointer<float4x4> p: p.setter(p.evaluator(from.Float4x4, to.Float4x4, q)); break;
+            }
         }
     }
 }

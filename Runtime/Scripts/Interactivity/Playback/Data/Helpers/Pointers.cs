@@ -30,58 +30,58 @@ namespace UnityGLTF.Interactivity.Playback
 
         public static bool IsReadOnly(IPointer pointer) => pointer is IReadOnlyPointer;
 
-        /// <summary>Reads the pointer's current value as a value socket property.</summary>
-        public static IProperty Read(IPointer pointer)
+        /// <summary>Reads the pointer's current value. Allocation-free.</summary>
+        public static Variant Read(IPointer pointer)
         {
             return pointer switch
             {
-                ReadOnlyPointer<bool> p => new Property<bool>(p.GetValue()),
-                ReadOnlyPointer<int> p => new Property<int>(p.GetValue()),
-                ReadOnlyPointer<float> p => new Property<float>(p.GetValue()),
-                ReadOnlyPointer<Color3> p => new Property<float3>(p.GetValue().ToFloat3()),
-                ReadOnlyPointer<Color> p => new Property<float4>(p.GetValue().ToFloat4()),
-                ReadOnlyPointer<quaternion> p => new Property<float4>(p.GetValue().ToFloat4()),
-                ReadOnlyPointer<float2> p => new Property<float2>(p.GetValue()),
-                ReadOnlyPointer<float3> p => new Property<float3>(p.GetValue()),
-                ReadOnlyPointer<float4> p => new Property<float4>(p.GetValue()),
-                ReadOnlyPointer<float2x2> p => new Property<float2x2>(p.GetValue()),
-                ReadOnlyPointer<float3x3> p => new Property<float3x3>(p.GetValue()),
-                ReadOnlyPointer<float4x4> p => new Property<float4x4>(p.GetValue()),
-                ReadOnlyPointer<Ref> p => new Property<Ref>(p.GetValue()),
-                ObjectIndexPointer p => new Property<int>(p.index),
-                Pointer<bool> p => new Property<bool>(p.GetValue()),
-                Pointer<int> p => new Property<int>(p.GetValue()),
-                Pointer<float> p => new Property<float>(p.GetValue()),
-                Pointer<Color3> p => new Property<float3>(p.GetValue().ToFloat3()),
-                Pointer<Color> p => new Property<float4>(p.GetValue().ToFloat4()),
-                Pointer<quaternion> p => new Property<float4>(p.GetValue().ToFloat4()),
-                Pointer<float2> p => new Property<float2>(p.GetValue()),
-                Pointer<float3> p => new Property<float3>(p.GetValue()),
-                Pointer<float4> p => new Property<float4>(p.GetValue()),
-                Pointer<float2x2> p => new Property<float2x2>(p.GetValue()),
-                Pointer<float3x3> p => new Property<float3x3>(p.GetValue()),
-                Pointer<float4x4> p => new Property<float4x4>(p.GetValue()),
+                ReadOnlyPointer<bool> p => Variant.FromBool(p.GetValue()),
+                ReadOnlyPointer<int> p => Variant.FromInt(p.GetValue()),
+                ReadOnlyPointer<float> p => Variant.FromFloat(p.GetValue()),
+                ReadOnlyPointer<Color3> p => Variant.FromFloat3(p.GetValue().ToFloat3()),
+                ReadOnlyPointer<Color> p => Variant.FromFloat4(p.GetValue().ToFloat4()),
+                ReadOnlyPointer<quaternion> p => Variant.FromFloat4(p.GetValue().ToFloat4()),
+                ReadOnlyPointer<float2> p => Variant.FromFloat2(p.GetValue()),
+                ReadOnlyPointer<float3> p => Variant.FromFloat3(p.GetValue()),
+                ReadOnlyPointer<float4> p => Variant.FromFloat4(p.GetValue()),
+                ReadOnlyPointer<float2x2> p => Variant.FromFloat2x2(p.GetValue()),
+                ReadOnlyPointer<float3x3> p => Variant.FromFloat3x3(p.GetValue()),
+                ReadOnlyPointer<float4x4> p => Variant.FromFloat4x4(p.GetValue()),
+                ReadOnlyPointer<Ref> p => Variant.FromRef(p.GetValue()),
+                ObjectIndexPointer p => Variant.FromInt(p.index),
+                Pointer<bool> p => Variant.FromBool(p.GetValue()),
+                Pointer<int> p => Variant.FromInt(p.GetValue()),
+                Pointer<float> p => Variant.FromFloat(p.GetValue()),
+                Pointer<Color3> p => Variant.FromFloat3(p.GetValue().ToFloat3()),
+                Pointer<Color> p => Variant.FromFloat4(p.GetValue().ToFloat4()),
+                Pointer<quaternion> p => Variant.FromFloat4(p.GetValue().ToFloat4()),
+                Pointer<float2> p => Variant.FromFloat2(p.GetValue()),
+                Pointer<float3> p => Variant.FromFloat3(p.GetValue()),
+                Pointer<float4> p => Variant.FromFloat4(p.GetValue()),
+                Pointer<float2x2> p => Variant.FromFloat2x2(p.GetValue()),
+                Pointer<float3x3> p => Variant.FromFloat3x3(p.GetValue()),
+                Pointer<float4x4> p => Variant.FromFloat4x4(p.GetValue()),
                 _ => throw new InvalidOperationException($"Pointer type {pointer.GetSystemType()} is not supported."),
             };
         }
 
-        /// <summary>Writes a value socket property to a mutable pointer. Returns false on a type mismatch.</summary>
-        public static bool TryWrite(IPointer pointer, IProperty property)
+        /// <summary>Writes a value to a mutable pointer. Returns false on a type mismatch. Allocation-free.</summary>
+        public static bool TryWrite(IPointer pointer, in Variant value)
         {
-            switch (property)
+            switch (value.type)
             {
-                case Property<bool> v when pointer is Pointer<bool> p: p.setter(v.value); return true;
-                case Property<int> v when pointer is Pointer<int> p: p.setter(v.value); return true;
-                case Property<float> v when pointer is Pointer<float> p: p.setter(v.value); return true;
-                case Property<float2> v when pointer is Pointer<float2> p: p.setter(v.value); return true;
-                case Property<float3> v when pointer is Pointer<float3> p: p.setter(v.value); return true;
-                case Property<float3> v when pointer is Pointer<Color3> p: p.setter(v.value.ToColor()); return true;
-                case Property<float4> v when pointer is Pointer<float4> p: p.setter(v.value); return true;
-                case Property<float4> v when pointer is Pointer<Color> p: p.setter(v.value.ToColor()); return true;
-                case Property<float4> v when pointer is Pointer<quaternion> p: p.setter(v.value.ToQuaternion()); return true;
-                case Property<float2x2> v when pointer is Pointer<float2x2> p: p.setter(v.value); return true;
-                case Property<float3x3> v when pointer is Pointer<float3x3> p: p.setter(v.value); return true;
-                case Property<float4x4> v when pointer is Pointer<float4x4> p: p.setter(v.value); return true;
+                case VariantType.Bool when pointer is Pointer<bool> p: p.setter(value.Bool); return true;
+                case VariantType.Int when pointer is Pointer<int> p: p.setter(value.Int); return true;
+                case VariantType.Float when pointer is Pointer<float> p: p.setter(value.Float); return true;
+                case VariantType.Float2 when pointer is Pointer<float2> p: p.setter(value.Float2); return true;
+                case VariantType.Float3 when pointer is Pointer<float3> p: p.setter(value.Float3); return true;
+                case VariantType.Float3 when pointer is Pointer<Color3> p: p.setter(value.Float3.ToColor()); return true;
+                case VariantType.Float4 when pointer is Pointer<float4> p: p.setter(value.Float4); return true;
+                case VariantType.Float4 when pointer is Pointer<Color> p: p.setter(value.Float4.ToColor()); return true;
+                case VariantType.Float4 when pointer is Pointer<quaternion> p: p.setter(value.Float4.ToQuaternion()); return true;
+                case VariantType.Float2x2 when pointer is Pointer<float2x2> p: p.setter(value.Float2x2); return true;
+                case VariantType.Float3x3 when pointer is Pointer<float3x3> p: p.setter(value.Float3x3); return true;
+                case VariantType.Float4x4 when pointer is Pointer<float4x4> p: p.setter(value.Float4x4); return true;
                 default: return false;
             }
         }

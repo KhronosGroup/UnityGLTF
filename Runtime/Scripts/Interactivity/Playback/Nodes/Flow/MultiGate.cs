@@ -97,9 +97,9 @@ namespace UnityGLTF.Interactivity.Playback
             return -1;
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override Variant GetOutputValue(string socket)
         {
-            return new Property<int>(_lastIndex);
+            return Variant.FromInt(_lastIndex);
         }
     }
 }

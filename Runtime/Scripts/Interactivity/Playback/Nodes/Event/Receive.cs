@@ -5,68 +5,73 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class EventReceive : BehaviourEngineNode
     {
-        private readonly Dictionary<string, IProperty> _outValues = new();
         private readonly int _eventToListenFor = -1;
+        private readonly Dictionary<string, int> _valueIndices = new();
+        private Variant[] _initialValues = Array.Empty<Variant>();
+        private Variant[] _values = Array.Empty<Variant>();
         private Ref _event = Ref.Null;
 
         public EventReceive(BehaviourEngine engine, Node node) : base(engine, node)
         {
-            engine.onCustomEventFired += OnEventFired;
+            engine.customEventFired += OnEventFired;
 
             if (!TryGetConfig(ConstStrings.EVENT, out _eventToListenFor))
                 throw new InvalidOperationException("No event provided in the config to listen for.");
 
-            ResetToInitialValues();
+            var definition = engine.graph.customEvents[_eventToListenFor].values;
+            var count = definition?.Count ?? 0;
+
+            for (int i = 0; i < count; i++)
+                _valueIndices[definition[i].id] = i;
+
+            _initialValues = new Variant[count];
+            _values = new Variant[count];
+            ReadInitialValues();
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override void OnEngineReady()
+        {
+            // Static references in initial values are resolved when playback starts.
+            ReadInitialValues();
+        }
+
+        private void ReadInitialValues()
+        {
+            var definition = engine.graph.customEvents[_eventToListenFor].values;
+
+            for (int i = 0; i < _initialValues.Length; i++)
+                _initialValues[i] = Variant.FromProperty(definition[i].property);
+
+            Array.Copy(_initialValues, _values, _values.Length);
+        }
+
+        public override Variant GetOutputValue(string socket)
         {
             if (socket == ConstStrings.EVENT)
-                return new Property<Ref>(_event);
+                return Variant.FromRef(_event);
 
-            if (!_outValues.TryGetValue(socket, out IProperty outValue))
+            if (!_valueIndices.TryGetValue(socket, out var index))
                 throw new ArgumentException($"No output value found for socket {socket}");
 
-            return outValue;
+            return _values[index];
         }
 
-        private void OnEventFired(int eventIndex, Dictionary<string, IProperty> values)
+        private void OnEventFired(int eventIndex, Variant[] values, bool[] provided)
         {
             if (eventIndex != _eventToListenFor || engine.IsImmediatelyStopped(engine.lastCustomEvent))
                 return;
 
             Util.Log($"Received event {engine.graph.customEvents[eventIndex].id} with index {eventIndex}.");
 
-            // Values not provided by this occurrence are reset to their initial or type-default values.
-            ResetToInitialValues();
-
-            if (values != null)
+            // Values not provided by this occurrence, or of the wrong type, are reset to their initial or type-default values.
+            for (int i = 0; i < _values.Length; i++)
             {
-                foreach (var kvp in values)
-                {
-                    if (_outValues.TryGetValue(kvp.Key, out var current) && current.GetSystemType() == kvp.Value?.GetSystemType())
-                        _outValues[kvp.Key] = kvp.Value;
-                }
+                _values[i] = provided[i] && values[i].type == _initialValues[i].type ? values[i] : _initialValues[i];
             }
 
             _event = engine.lastCustomEvent;
 
             TryExecuteFlow(ConstStrings.OUT);
-        }
-
-        private void ResetToInitialValues()
-        {
-            _outValues.Clear();
-
-            var eventData = engine.graph.customEvents[_eventToListenFor];
-
-            if (eventData.values == null)
-                return;
-
-            for (int i = 0; i < eventData.values.Count; i++)
-            {
-                _outValues[eventData.values[i].id] = eventData.values[i].property;
-            }
         }
     }
 }

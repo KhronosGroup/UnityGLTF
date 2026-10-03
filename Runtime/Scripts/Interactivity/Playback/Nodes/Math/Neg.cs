@@ -10,20 +10,20 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            return a switch
+            return a.type switch
             {
-                Property<int> aProp => new Property<int>(-aProp.value),
-                Property<float> aProp => new Property<float>(-aProp.value),
-                Property<float2> aProp => new Property<float2>(-aProp.value),
-                Property<float3> aProp => new Property<float3>(-aProp.value),
-                Property<float4> aProp => new Property<float4>(-aProp.value),
-                Property<float2x2> aProp => new Property<float2x2>(-aProp.value),
-                Property<float3x3> aProp => new Property<float3x3>(-aProp.value),
-                Property<float4x4> aProp => new Property<float4x4>(-aProp.value),
+                VariantType.Int => Variant.FromInt(-a.Int),
+                VariantType.Float => Variant.FromFloat(-a.Float),
+                VariantType.Float2 => Variant.FromFloat2(-a.Float2),
+                VariantType.Float3 => Variant.FromFloat3(-a.Float3),
+                VariantType.Float4 => Variant.FromFloat4(-a.Float4),
+                VariantType.Float2x2 => Variant.FromFloat2x2(-a.Float2x2),
+                VariantType.Float3x3 => Variant.FromFloat3x3(-a.Float3x3),
+                VariantType.Float4x4 => Variant.FromFloat4x4(-a.Float4x4),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

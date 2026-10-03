@@ -10,7 +10,7 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.A, out float4 a);
             TryEvaluateValue(ConstStrings.B, out float4 b);
@@ -43,7 +43,7 @@ namespace UnityGLTF.Interactivity.Playback
                 a.z * ka + b.z * kb,
                 a.w * ka + b.w * kb);
 
-            return new Property<float4>(value);
+            return Variant.FromFloat4(value);
         }
     }
 }

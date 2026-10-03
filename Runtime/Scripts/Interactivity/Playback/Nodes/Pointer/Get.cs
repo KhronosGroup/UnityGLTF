@@ -11,7 +11,7 @@ namespace UnityGLTF.Interactivity.Playback
             PointerAccess.TryCreate(this, out _access);
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             IPointer pointer = null;
             var valid = _access != null && _access.TryResolve(this, out pointer, out _);
@@ -20,11 +20,11 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 case ConstStrings.VALUE:
                     if (!valid)
-                        return _access == null ? new Property<float>(float.NaN) : Helpers.GetDefaultProperty(_access.type);
+                        return _access == null ? Variant.FromFloat(float.NaN) : Variant.Default(_access.type);
                     return PointerHelpers.Read(pointer);
 
                 case ConstStrings.IS_VALID:
-                    return new Property<bool>(valid);
+                    return Variant.FromBool(valid);
             }
 
             throw new InvalidOperationException($"Socket {id} is not valid for this node!");

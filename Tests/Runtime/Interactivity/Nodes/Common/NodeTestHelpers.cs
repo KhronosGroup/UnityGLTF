@@ -169,10 +169,18 @@ namespace UnityGLTF.Interactivity.Playback.Tests
                 // Actually run test.
                 var eng = CreateBehaviourEngineForGraph(test.graph, OnCustomEventFired, test.importer, startPlayback: true);
 
-                while (!_testSuccessful && Time.time < endTime)
+                try
                 {
-                    eng.Tick();
-                    yield return null;
+                    while (!_testSuccessful && Time.time < endTime)
+                    {
+                        eng.Tick();
+                        yield return null;
+                    }
+                }
+                finally
+                {
+                    // Engines hold native memory.
+                    eng.Dispose();
                 }
 
                 Assert.IsTrue(_testSuccessful);

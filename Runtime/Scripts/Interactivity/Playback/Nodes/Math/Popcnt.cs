@@ -10,13 +10,13 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            return a switch
+            return a.type switch
             {
-                Property<int> aProp => new Property<int>(math.countbits(aProp.value)),
+                VariantType.Int => Variant.FromInt(math.countbits(a.Int)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

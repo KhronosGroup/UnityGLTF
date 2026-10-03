@@ -12,12 +12,12 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.UP, out float3 up);
             TryEvaluateValue(ConstStrings.FORWARD, out float3 forward);
 
-            return new Property<float4>(QuaternionFromUpAndForwardDirection(up, forward));
+            return Variant.FromFloat4(QuaternionFromUpAndForwardDirection(up, forward));
         }
 
         private static float4 QuaternionFromUpAndForwardDirection(float3 up, float3 forward)

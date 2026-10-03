@@ -21,11 +21,11 @@ namespace UnityGLTF.Interactivity.Playback
             TryExecuteFlow(ConstStrings.OUT);
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             return id switch
             {
-                ConstStrings.EVENT => new Property<Ref>(_event),
+                ConstStrings.EVENT => Variant.FromRef(_event),
                 _ => throw new InvalidOperationException($"No valid output with name {id}"),
             };
         }

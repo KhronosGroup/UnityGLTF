@@ -10,26 +10,26 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
-            TryEvaluateValue(ConstStrings.C, out IProperty c);
-            TryEvaluateValue(ConstStrings.D, out IProperty d);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
+            TryEvaluateValue(ConstStrings.C, out Variant c);
+            TryEvaluateValue(ConstStrings.D, out Variant d);
 
-            if (a is not Property<float> aFloat)
+            if (a.type != VariantType.Float)
                 throw new InvalidOperationException("Input A is not a float!");
 
-            if (b is not Property<float> bFloat)
+            if (b.type != VariantType.Float)
                 throw new InvalidOperationException("Input B is not a float!");
 
-            if (c is not Property<float> cFloat)
+            if (c.type != VariantType.Float)
                 throw new InvalidOperationException("Input C is not a float!");
 
-            if (d is not Property<float> dFloat)
+            if (d.type != VariantType.Float)
                 throw new InvalidOperationException("Input D is not a float!");
 
-            return new Property<float4>(new float4(aFloat.value, bFloat.value, cFloat.value, dFloat.value));
+            return Variant.FromFloat4(new float4(a.Float, b.Float, c.Float, d.Float));
         }
     }
 }

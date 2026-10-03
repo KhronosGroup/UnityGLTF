@@ -19,13 +19,13 @@ namespace UnityGLTF.Interactivity.Playback
             return order == "xyz" || order == "xzy" || order == "yxz" || order == "yzx" || order == "zxy" || order == "zyx";
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.X, out float x);
             TryEvaluateValue(ConstStrings.Y, out float y);
             TryEvaluateValue(ConstStrings.Z, out float z);
 
-            return new Property<float4>(Compose(_order, x, y, z));
+            return Variant.FromFloat4(Compose(_order, x, y, z));
         }
 
         public static float4 Compose(string order, float x, float y, float z)

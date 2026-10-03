@@ -12,12 +12,12 @@ namespace UnityGLTF.Interactivity.Playback
                 _variableIndex = index;
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             if (_variableIndex < 0 || _variableIndex >= engine.graph.variables.Count)
                 throw new InvalidOperationException($"variable/get has an invalid variable index {_variableIndex}.");
 
-            return engine.GetVariableProperty(_variableIndex);
+            return engine.GetVariable(_variableIndex);
         }
     }
 }

@@ -8,9 +8,9 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            return new Property<float>(math.E);
+            return Variant.FromFloat(math.E);
         }
     }
 }

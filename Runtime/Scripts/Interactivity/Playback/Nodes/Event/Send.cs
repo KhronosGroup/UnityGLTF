@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace UnityGLTF.Interactivity.Playback
 {
     public class EventSend : BehaviourEngineNode
@@ -20,18 +18,30 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             // Only the sockets defined by the custom event are sent; extra input sockets are ignored.
-            var definition = engine.graph.customEvents[_eventIndex];
-            var outValues = new Dictionary<string, IProperty>(definition.values.Count);
+            var definition = engine.graph.customEvents[_eventIndex].values;
+            var count = definition?.Count ?? 0;
 
-            foreach (var v in definition.values)
+            engine.RentEventPayload(count, out var values, out var provided);
+
+            try
             {
-                if (TryEvaluateValue(v.id, out IProperty value))
-                    outValues[v.id] = value;
+                for (int i = 0; i < count; i++)
+                {
+                    if (TryEvaluateValue(definition[i].id, out Variant value))
+                    {
+                        values[i] = value;
+                        provided[i] = true;
+                    }
+                }
+
+                Util.Log($"Sending event index {_eventIndex}");
+
+                engine.FireCustomEvent(_eventIndex, values, provided);
             }
-
-            Util.Log($"Sending event index {_eventIndex}");
-
-            engine.FireCustomEvent(_eventIndex, outValues);
+            finally
+            {
+                engine.ReturnEventPayload();
+            }
 
             TryExecuteFlow(ConstStrings.OUT);
         }

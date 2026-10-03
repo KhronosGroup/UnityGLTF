@@ -10,14 +10,14 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.AXIS, out IProperty axis);
-            TryEvaluateValue(ConstStrings.ANGLE, out IProperty angle);
+            TryEvaluateValue(ConstStrings.AXIS, out Variant axis);
+            TryEvaluateValue(ConstStrings.ANGLE, out Variant angle);
 
-            return axis switch
+            return axis.type switch
             {
-                Property<float3> axisProp when angle is Property<float> angleProp => new Property<float4>(AxisAngle(axisProp.value, angleProp.value)),
+                VariantType.Float3 when angle.type == VariantType.Float => Variant.FromFloat4(AxisAngle(axis.Float3, angle.Float)),
                 _ => throw new InvalidOperationException($"Axis is a {axis.GetTypeSignature()}, expected float3. Angle is a {angle.GetTypeSignature()}, expected float."),
             };
         }

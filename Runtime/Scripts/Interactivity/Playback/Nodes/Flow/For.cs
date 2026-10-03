@@ -13,10 +13,10 @@ namespace UnityGLTF.Interactivity.Playback
                 _index = 0;
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override Variant GetOutputValue(string socket)
         {
             if (socket == ConstStrings.INDEX)
-                return new Property<int>(_index);
+                return Variant.FromInt(_index);
 
             throw new ArgumentException($"Socket {socket} is not valid on this node!");
         }

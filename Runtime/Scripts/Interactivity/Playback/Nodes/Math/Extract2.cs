@@ -10,20 +10,20 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            if (a is not Property<float2> property)
+            if (a.type != VariantType.Float2)
                 throw new InvalidOperationException("Input A is not a float2!");
 
             switch (id)
             {
                 case "0":
-                    return new Property<float>(property.value.x);
+                    return Variant.FromFloat(a.Float2.x);
 
                 case "1":
-                    return new Property<float>(property.value.y);
+                    return Variant.FromFloat(a.Float2.y);
             }
 
             throw new InvalidOperationException($"Socket {id} is not valid for this node!");

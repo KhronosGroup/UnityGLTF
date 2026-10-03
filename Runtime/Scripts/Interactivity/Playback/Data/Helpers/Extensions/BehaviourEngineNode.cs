@@ -73,13 +73,13 @@ namespace UnityGLTF.Interactivity.Playback
 
         public bool TryEvaluateValue<T>(string valueId, out T value)
         {
-            value = default;
-
-            if (!TryEvaluateValue(valueId, out IProperty property) || property is not Property<T> typed)
+            if (!TryEvaluateValue(valueId, out Variant v))
+            {
+                value = default;
                 return false;
+            }
 
-            value = typed.value;
-            return true;
+            return v.TryGet(out value);
         }
 
         public bool TryGetVariableFromConfiguration(out Variable variable, out int index)

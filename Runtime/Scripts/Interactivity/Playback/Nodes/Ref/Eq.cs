@@ -5,12 +5,12 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public RefEq(BehaviourEngine engine, Node node) : base(engine, node) { }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.A, out Ref a);
             TryEvaluateValue(ConstStrings.B, out Ref b);
 
-            return new Property<bool>(a == b);
+            return Variant.FromBool(a == b);
         }
     }
 }

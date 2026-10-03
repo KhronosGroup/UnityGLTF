@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace UnityGLTF.Interactivity.Playback
 {
@@ -14,32 +15,83 @@ namespace UnityGLTF.Interactivity.Playback
     }
 
     /// <summary>
+    /// Interned collection paths ("/nodes", "/animations", ...) so <see cref="Ref"/> stays unmanaged.
+    /// Ids are process-wide and never reused; the common glTF collections have fixed ids.
+    /// </summary>
+    public static class RefCollections
+    {
+        public const int None = 0;
+        public const int Nodes = 1;
+        public const int Meshes = 2;
+        public const int Materials = 3;
+        public const int Animations = 4;
+        public const int Cameras = 5;
+
+        private static readonly object _lock = new();
+        private static readonly List<string> _names = new() { null, "/nodes", "/meshes", "/materials", "/animations", "/cameras" };
+        private static readonly Dictionary<string, int> _ids = new(StringComparer.Ordinal)
+        {
+            ["/nodes"] = Nodes, ["/meshes"] = Meshes, ["/materials"] = Materials, ["/animations"] = Animations, ["/cameras"] = Cameras,
+        };
+
+        public static int GetId(string collection)
+        {
+            if (collection == null)
+                return None;
+
+            lock (_lock)
+            {
+                if (_ids.TryGetValue(collection, out var id))
+                    return id;
+
+                id = _names.Count;
+                _names.Add(collection);
+                _ids.Add(collection, id);
+                return id;
+            }
+        }
+
+        public static string GetName(int id)
+        {
+            lock (_lock)
+            {
+                return id > 0 && id < _names.Count ? _names[id] : null;
+            }
+        }
+    }
+
+    /// <summary>
     /// Opaque reference value used by the "ref" value type of KHR_interactivity.
     /// Two glTF references are equal when they point at the same collection and index,
     /// regardless of whether that object exists, as required by ref/eq.
+    /// Unmanaged so it can live in native value storage; the collection path is interned in <see cref="RefCollections"/>.
     /// </summary>
     public readonly struct Ref : IEquatable<Ref>
     {
         public static readonly Ref Null = default;
 
         public readonly RefKind kind;
-        /// <summary>For glTF references, the JSON pointer of the containing array, e.g. "/nodes".</summary>
-        public readonly string collection;
+        /// <summary>For glTF references, the <see cref="RefCollections"/> id of the containing array.</summary>
+        public readonly int collectionId;
         /// <summary>Index into the collection for glTF references, unique id otherwise.</summary>
         public readonly int id;
 
-        private Ref(RefKind kind, string collection, int id)
+        private Ref(RefKind kind, int collectionId, int id)
         {
             this.kind = kind;
-            this.collection = collection;
+            this.collectionId = collectionId;
             this.id = id;
         }
 
         public bool isNull => kind == RefKind.Null;
 
-        public static Ref Gltf(string collection, int index) => new(RefKind.Gltf, collection, index);
-        public static Ref Delay(int id) => new(RefKind.Delay, null, id);
-        public static Ref Event(int id) => new(RefKind.Event, null, id);
+        /// <summary>For glTF references, the JSON pointer of the containing array, e.g. "/nodes".</summary>
+        public string collection => RefCollections.GetName(collectionId);
+
+        public static Ref Gltf(string collection, int index) => new(RefKind.Gltf, RefCollections.GetId(collection), index);
+        public static Ref Gltf(int collectionId, int index) => new(RefKind.Gltf, collectionId, index);
+        public static Ref Delay(int id) => new(RefKind.Delay, RefCollections.None, id);
+        public static Ref Event(int id) => new(RefKind.Event, RefCollections.None, id);
 
         /// <summary>
         /// Checks RFC 6901 syntax: empty, or starting with '/' with every '~' followed by '0' or '1'.
@@ -131,12 +183,12 @@ namespace UnityGLTF.Interactivity.Playback
 
         public bool Equals(Ref other)
         {
-            return kind == other.kind && id == other.id && string.Equals(collection, other.collection, StringComparison.Ordinal);
+            return kind == other.kind && id == other.id && collectionId == other.collectionId;
         }
 
         public override bool Equals(object obj) => obj is Ref other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine((int)kind, collection, id);
+        public override int GetHashCode() => HashCode.Combine((int)kind, collectionId, id);
 
         public static bool operator ==(Ref a, Ref b) => a.Equals(b);
         public static bool operator !=(Ref a, Ref b) => !a.Equals(b);

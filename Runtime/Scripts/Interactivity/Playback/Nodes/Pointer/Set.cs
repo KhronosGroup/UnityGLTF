@@ -14,7 +14,7 @@ namespace UnityGLTF.Interactivity.Playback
         protected override void Execute(string socket, ValidationResult validationResult)
         {
             // Evaluate all input values, then resolve. Any failure activates "err".
-            if (_access == null || !TryEvaluateValue(ConstStrings.VALUE, out IProperty value) ||
+            if (_access == null || !TryEvaluateValue(ConstStrings.VALUE, out Variant value) ||
                 !_access.TryResolve(this, out var pointer, out var effectivePointer) || PointerHelpers.IsReadOnly(pointer))
             {
                 TryExecuteFlow(ConstStrings.ERR);

@@ -15,12 +15,12 @@ namespace UnityGLTF.Interactivity.Playback
             _declaration = node.declaration ?? FindDeclaration(node.type, engine.graph);
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             Util.Log($"Checking NoOP node for value {id}");
 
             if (TryGetDeclaredOutputType(id, out var typeIndex))
-                return engine.graph.GetDefaultPropertyForType(typeIndex);
+                return Variant.FromProperty(engine.graph.GetDefaultPropertyForType(typeIndex));
 
             // Core operations don't list their sockets in the declaration, so fall back to the operation's spec.
             if (NodeRegistry.nodeSpecs.TryGetValue(node.type, out var spec))
@@ -30,7 +30,7 @@ namespace UnityGLTF.Interactivity.Playback
                 for (int i = 0; outputs != null && i < outputs.Length; i++)
                 {
                     if (outputs[i].id == id && outputs[i].types != null && outputs[i].types.Length > 0)
-                        return Helpers.GetDefaultProperty(outputs[i].types[0]);
+                        return Variant.Default(outputs[i].types[0]);
                 }
             }
 

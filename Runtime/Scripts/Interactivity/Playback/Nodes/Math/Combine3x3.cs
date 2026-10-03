@@ -9,25 +9,25 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            Span<Property<float>> v = stackalloc Property<float>[9];
+            Span<float> v = stackalloc float[9];
 
             for (int i = 0; i < v.Length; i++)
             {
                 TryEvaluateValue(ConstStrings.Letters[i], out var prop);
 
-                if (prop is not Property<float> aFloat)
+                if (prop.type != VariantType.Float)
                     throw new InvalidOperationException($"Input {ConstStrings.Letters[i]} is not a float!");
 
-                v[i] = aFloat;
+                v[i] = prop.Float;
             }
 
-            var c0 = new float3(v[0].value, v[1].value, v[2].value);
-            var c1 = new float3(v[3].value, v[4].value, v[5].value);
-            var c2 = new float3(v[6].value, v[7].value, v[8].value);
+            var c0 = new float3(v[0], v[1], v[2]);
+            var c1 = new float3(v[3], v[4], v[5]);
+            var c2 = new float3(v[6], v[7], v[8]);
 
-            return new Property<float3x3>(new float3x3(c0, c1, c2));
+            return Variant.FromFloat3x3(new float3x3(c0, c1, c2));
         }
     }
 }

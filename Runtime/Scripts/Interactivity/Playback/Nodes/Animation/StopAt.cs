@@ -2,8 +2,11 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class AnimationStopAt : BehaviourEngineNode
     {
+        private readonly System.Action _done;
+
         public AnimationStopAt(BehaviourEngine engine, Node node) : base(engine, node)
         {
+            _done = () => TryExecuteFlow(ConstStrings.DONE);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -20,7 +23,7 @@ namespace UnityGLTF.Interactivity.Playback
             Util.Log($"Stopping animation index {index} at {stopTime}.");
 
             // Does nothing if the animation isn't playing; "out" still activates.
-            engine.StopAnimationAt(index, stopTime, () => TryExecuteFlow(ConstStrings.DONE));
+            engine.StopAnimationAt(index, stopTime, _done);
 
             TryExecuteFlow(ConstStrings.OUT);
         }

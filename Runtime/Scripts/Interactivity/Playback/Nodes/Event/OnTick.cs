@@ -26,13 +26,13 @@ namespace UnityGLTF.Interactivity.Playback
             TryExecuteFlow(ConstStrings.OUT);
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             return id switch
             {
-                ConstStrings.TIME_SINCE_START => new Property<float>(_timeSinceStart),
-                ConstStrings.TIME_SINCE_LAST_TICK => new Property<float>(_timeSinceLastTick),
-                ConstStrings.EVENT => new Property<Ref>(_event),
+                ConstStrings.TIME_SINCE_START => Variant.FromFloat(_timeSinceStart),
+                ConstStrings.TIME_SINCE_LAST_TICK => Variant.FromFloat(_timeSinceLastTick),
+                ConstStrings.EVENT => Variant.FromRef(_event),
                 _ => throw new InvalidOperationException($"No valid output with name {id}"),
             };
         }

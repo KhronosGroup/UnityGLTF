@@ -7,11 +7,15 @@ namespace UnityGLTF.Interactivity.Playback
     {
         /// <summary>Output flow socket ids generated from the "cases" configuration.</summary>
         private readonly HashSet<int> _cases;
+        private readonly Dictionary<int, string> _caseSockets = new();
 
         public FlowSwitch(BehaviourEngine engine, Node node) : base(engine, node)
         {
             // An absent or invalid "cases" configuration means the default configuration: only "default".
             _cases = new HashSet<int>(GraphValidator.GetSwitchCases(node));
+
+            foreach (var c in _cases)
+                _caseSockets[c] = c.ToString(CultureInfo.InvariantCulture);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -23,7 +27,7 @@ namespace UnityGLTF.Interactivity.Playback
             }
 
             // A case present in the configuration activates its socket, if connected, and never "default".
-            TryExecuteFlow(selection.ToString(CultureInfo.InvariantCulture));
+            TryExecuteFlow(_caseSockets[selection]);
         }
     }
 }

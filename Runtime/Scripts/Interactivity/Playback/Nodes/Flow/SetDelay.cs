@@ -8,9 +8,11 @@ namespace UnityGLTF.Interactivity.Playback
         public const double MAX_DURATION_SECONDS = 1e9;
 
         private Ref _lastDelay = Ref.Null;
+        private readonly Action _done;
 
         public FlowSetDelay(BehaviourEngine engine, Node node) : base(engine, node)
         {
+            _done = () => TryExecuteFlow(ConstStrings.DONE);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -32,7 +34,7 @@ namespace UnityGLTF.Interactivity.Playback
                     }
 
                     Util.Log($"Executing delay with duration of {duration}s");
-                    _lastDelay = engine.nodeDelayManager.AddDelay(this, engine.time + duration, () => TryExecuteFlow(ConstStrings.DONE));
+                    _lastDelay = engine.nodeDelayManager.AddDelay(this, engine.time + duration, _done);
 
                     TryExecuteFlow(ConstStrings.OUT);
                     break;
@@ -42,9 +44,9 @@ namespace UnityGLTF.Interactivity.Playback
             }
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override Variant GetOutputValue(string socket)
         {
-            return new Property<Ref>(_lastDelay);
+            return Variant.FromRef(_lastDelay);
         }
     }
 }

@@ -15,6 +15,9 @@ namespace UnityGLTF.Interactivity.Playback
             // The event system delivers the click to the closest collider, which may be an importer box that encloses
             // other nodes. KHR_node_selectability applies the selection to the first selectable node geometry along
             // the ray, so cast again and pick that node.
+            if (playback == null || playback.engine == null)
+                return;
+
             var camera = eventData.pressEventCamera != null ? eventData.pressEventCamera : Camera.main;
             if (camera == null)
                 return;
@@ -35,12 +38,18 @@ namespace UnityGLTF.Interactivity.Playback
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (playback == null || playback.engine == null)
+                return;
+
             var args = CreateRayArgs(gameObject, eventData);
             playback.engine.HoverIn(args);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (playback == null || playback.engine == null)
+                return;
+
             var args = CreateRayArgs(gameObject, eventData);
             playback.engine.HoverOut(args);
         }

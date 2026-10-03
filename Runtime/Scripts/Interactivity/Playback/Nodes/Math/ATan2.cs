@@ -10,17 +10,17 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
 
-            return a switch
+            return a.type switch
             {
-                Property<float> aProp when b is Property<float> bProp => new Property<float>(math.atan2(aProp.value, bProp.value)),
-                Property<float2> aProp when b is Property<float2> bProp => new Property<float2>(math.atan2(aProp.value, bProp.value)),
-                Property<float3> aProp when b is Property<float3> bProp => new Property<float3>(math.atan2(aProp.value, bProp.value)),
-                Property<float4> aProp when b is Property<float4> bProp => new Property<float4>(math.atan2(aProp.value, bProp.value)),
+                VariantType.Float when b.type == VariantType.Float => Variant.FromFloat(math.atan2(a.Float, b.Float)),
+                VariantType.Float2 when b.type == VariantType.Float2 => Variant.FromFloat2(math.atan2(a.Float2, b.Float2)),
+                VariantType.Float3 when b.type == VariantType.Float3 => Variant.FromFloat3(math.atan2(a.Float3, b.Float3)),
+                VariantType.Float4 when b.type == VariantType.Float4 => Variant.FromFloat4(math.atan2(a.Float4, b.Float4)),
                 _ => throw new InvalidOperationException("No supported type found."),
             };
         }

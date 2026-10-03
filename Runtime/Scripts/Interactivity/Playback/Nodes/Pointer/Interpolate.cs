@@ -6,17 +6,19 @@ namespace UnityGLTF.Interactivity.Playback
     public class PointerInterpolate : BehaviourEngineNode
     {
         private readonly PointerAccess _access;
+        private readonly System.Action _done;
 
         public PointerInterpolate(BehaviourEngine engine, Node node) : base(engine, node)
         {
             PointerAccess.TryCreate(this, out _access);
+            _done = () => TryExecuteFlow(ConstStrings.DONE);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
         {
             // Step 1: evaluate all input values.
             if (_access == null ||
-                !TryEvaluateValue(ConstStrings.VALUE, out IProperty target) ||
+                !TryEvaluateValue(ConstStrings.VALUE, out Variant target) ||
                 !TryEvaluateValue(ConstStrings.DURATION, out float duration) ||
                 !TryEvaluateValue(ConstStrings.P1, out float2 p1) ||
                 !TryEvaluateValue(ConstStrings.P2, out float2 p2))
@@ -48,7 +50,7 @@ namespace UnityGLTF.Interactivity.Playback
                 endValue = target,
                 cp1 = p1,
                 cp2 = p2,
-                done = () => TryExecuteFlow(ConstStrings.DONE)
+                done = _done
             };
 
             try

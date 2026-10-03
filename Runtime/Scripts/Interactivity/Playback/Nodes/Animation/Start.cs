@@ -2,8 +2,11 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class AnimationStart : BehaviourEngineNode
     {
+        private readonly System.Action _done;
+
         public AnimationStart(BehaviourEngine engine, Node node) : base(engine, node)
         {
+            _done = () => TryExecuteFlow(ConstStrings.DONE);
         }
 
         protected override void Execute(string socket, ValidationResult validationResult)
@@ -38,7 +41,7 @@ namespace UnityGLTF.Interactivity.Playback
                 stopTime = endTime,
                 speed = speed,
                 unityStartTime = engine.time,
-                endDone = () => TryExecuteFlow(ConstStrings.DONE),
+                endDone = _done,
                 stopDone = null
             });
 

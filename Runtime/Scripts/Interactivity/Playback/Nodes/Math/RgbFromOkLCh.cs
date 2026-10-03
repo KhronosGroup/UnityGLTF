@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.Playback
     {
         public MathRgbFromOkLCh(BehaviourEngine engine, Node node) : base(engine, node) { }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.L, out float l);
             TryEvaluateValue(ConstStrings.C, out float c);
@@ -18,9 +18,9 @@ namespace UnityGLTF.Interactivity.Playback
 
             return id switch
             {
-                ConstStrings.R => new Property<float>(rgb.x),
-                ConstStrings.G => new Property<float>(rgb.y),
-                ConstStrings.B => new Property<float>(rgb.z),
+                ConstStrings.R => Variant.FromFloat(rgb.x),
+                ConstStrings.G => Variant.FromFloat(rgb.y),
+                ConstStrings.B => Variant.FromFloat(rgb.z),
                 _ => throw new InvalidOperationException($"Socket {id} is not valid for this node!"),
             };
         }

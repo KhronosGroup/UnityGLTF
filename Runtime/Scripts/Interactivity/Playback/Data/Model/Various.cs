@@ -59,8 +59,48 @@ namespace UnityGLTF.Interactivity.Playback
     public class Variable
     {
         public string id { get; set; }
-        public IProperty property { get; set; }
         public IProperty initialValue { get; set; }
+
+        private IProperty _property;
+        private VariantStore _store;
+        private int _slot = -1;
+
+        /// <summary>
+        /// The variable's current value. While a running engine owns the variable, the value lives in the engine's
+        /// <see cref="VariantStore"/>; reading this boxes a copy, so playback code uses the store directly.
+        /// </summary>
+        public IProperty property
+        {
+            get => isBound ? _store[_slot].ToProperty() : _property;
+            set
+            {
+                _property = value;
+                if (isBound)
+                    _store[_slot] = Variant.FromProperty(value);
+            }
+        }
+
+        internal bool isBound => _store != null && !_store.isDisposed;
+
+        internal void Bind(VariantStore store, int slot)
+        {
+            _store = store;
+            _slot = slot;
+            store[slot] = Variant.FromProperty(_property);
+        }
+
+        /// <summary>Copies the runtime value back so <see cref="property"/> keeps working after the engine is disposed.</summary>
+        internal void Unbind(VariantStore store)
+        {
+            if (_store != store)
+                return;
+
+            if (!store.isDisposed)
+                _property = store[_slot].ToProperty();
+
+            _store = null;
+            _slot = -1;
+        }
     }
 
     public class Configuration

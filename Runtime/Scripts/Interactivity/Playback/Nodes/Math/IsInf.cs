@@ -9,14 +9,14 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            if (a is not Property<float> fProp)
+            if (a.type != VariantType.Float)
                 throw new InvalidOperationException("Property must be of type float for IsNan!");
 
-            return new Property<bool>(float.IsInfinity(fProp.value));
+            return Variant.FromBool(float.IsInfinity(a.Float));
         }
     }
 }

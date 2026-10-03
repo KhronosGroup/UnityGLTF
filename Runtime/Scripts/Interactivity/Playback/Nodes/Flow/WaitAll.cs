@@ -42,9 +42,9 @@ namespace UnityGLTF.Interactivity.Playback
                 TryExecuteFlow(ConstStrings.OUT);
         }
 
-        public override IProperty GetOutputValue(string socket)
+        public override Variant GetOutputValue(string socket)
         {
-            return new Property<int>(_remainingInputs);
+            return Variant.FromInt(_remainingInputs);
         }
 
         private static void ResetBooleanArray(bool[] arr)

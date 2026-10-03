@@ -23,6 +23,9 @@ namespace UnityGLTF.Interactivity.Playback
         public readonly Dictionary<string, Flow> flows = new();
         public readonly Dictionary<string, Configuration> configuration = new();
 
+        /// <summary>Compiled input sockets: where each input's value lives in the engine's <see cref="VariantStore"/>.</summary>
+        internal readonly Dictionary<string, InputBinding> inputs = new();
+
         public BehaviourEngineNode(BehaviourEngine engine, Node node)
         {
             this.node = node;
@@ -55,30 +58,21 @@ namespace UnityGLTF.Interactivity.Playback
         }
 
         protected virtual void Execute(string socket, ValidationResult validationResult) { }
-        public virtual IProperty GetOutputValue(string socket) => null;
-
-        private readonly Dictionary<string, IProperty> _retainedOutputs = new();
-        private int _retainedEpoch = -1;
 
         /// <summary>
-        /// Output values retained until a node with flow sockets executes (engine flow epoch changes).
-        /// Nodes compute values on first access per epoch; repeated reads return the same value.
+        /// Computes an output value. Called at most once per output socket per flow epoch; the engine retains the result
+        /// in the socket's store slot, as required by the "Sockets" section of the spec.
         /// </summary>
-        public IProperty GetRetainedOutputValue(string socket)
-        {
-            if (_retainedEpoch != engine.flowEpoch)
-            {
-                _retainedOutputs.Clear();
-                _retainedEpoch = engine.flowEpoch;
-            }
+        public virtual Variant GetOutputValue(string socket) => default;
 
-            if (_retainedOutputs.TryGetValue(socket, out var value))
-                return value;
+        /// <summary>
+        /// Called on the main thread before playback starts, after the engine (possibly built off the main thread) is ready.
+        /// Nodes that need Unity objects resolve them here rather than in their constructor.
+        /// </summary>
+        public virtual void OnEngineReady() { }
 
-            value = GetOutputValue(socket);
-            _retainedOutputs[socket] = value;
-            return value;
-        }
+        /// <summary>The output value as retained by the engine for the current flow epoch.</summary>
+        public Variant GetRetainedOutputValue(string socket) => engine.ReadOutput(this, socket);
         public virtual bool ValidateConfiguration(string socket) => true;
         public virtual bool ValidateFlows(string socket) => true;
         public virtual bool ValidateValues(string socket) => true;
@@ -107,19 +101,17 @@ namespace UnityGLTF.Interactivity.Playback
             return hasFlow;
         }
 
-        public bool TryEvaluateValue(string valueId, out IProperty value)
+        /// <summary>Evaluates an input value socket. False when the socket is missing or its source produced no value.</summary>
+        public bool TryEvaluateValue(string valueId, out Variant value)
         {
-            try
+            if (!inputs.TryGetValue(valueId, out var binding))
             {
-                value = engine.ParseValue(values[valueId]);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
                 value = default;
                 return false;
             }
+
+            value = engine.Read(in binding);
+            return !value.isNone;
         }
 
         public bool TryGetConfig<T>(string id, out T value)

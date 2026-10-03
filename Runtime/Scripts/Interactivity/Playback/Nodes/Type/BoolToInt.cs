@@ -8,14 +8,14 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
 
-            if (a is not Property<bool> aProp)
+            if (a.type != VariantType.Bool)
                 throw new InvalidOperationException("Value provided is not a bool! Will not cast to int.");
 
-            return new Property<int>(aProp.value ? 1 : 0);
+            return Variant.FromInt(a.Bool ? 1 : 0);
         }
     }
 }

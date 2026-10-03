@@ -10,21 +10,21 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
-            TryEvaluateValue(ConstStrings.A, out IProperty a);
-            TryEvaluateValue(ConstStrings.B, out IProperty b);
-            TryEvaluateValue(ConstStrings.C, out IProperty c);
+            TryEvaluateValue(ConstStrings.A, out Variant a);
+            TryEvaluateValue(ConstStrings.B, out Variant b);
+            TryEvaluateValue(ConstStrings.C, out Variant c);
 
-            return a switch
+            return a.type switch
             {
-                Property<float> aProp when b is Property<float> bProp && c is Property<float> cProp => new Property<float>(math.lerp(aProp.value, bProp.value, cProp.value)),
-                Property<float2> aProp when b is Property<float2> bProp && c is Property<float2> cProp => new Property<float2>(math.lerp(aProp.value, bProp.value, cProp.value)),
-                Property<float3> aProp when b is Property<float3> bProp && c is Property<float3> cProp => new Property<float3>(math.lerp(aProp.value, bProp.value, cProp.value)),
-                Property<float4> aProp when b is Property<float4> bProp && c is Property<float4> cProp => new Property<float4>(math.lerp(aProp.value, bProp.value, cProp.value)),
-                Property<float2x2> aProp when b is Property<float2x2> bProp && c is Property<float2x2> cProp =>new Property<float2x2>(lerp(aProp.value, bProp.value, cProp.value)),
-                Property<float3x3> aProp when b is Property<float3x3> bProp && c is Property<float3x3> cProp =>new Property<float3x3>(lerp(aProp.value, bProp.value, cProp.value)),
-                Property<float4x4> aProp when b is Property<float4x4> bProp && c is Property<float4x4> cProp =>new Property<float4x4>(lerp(aProp.value, bProp.value, cProp.value)),
+                VariantType.Float when b.type == VariantType.Float && c.type == VariantType.Float => Variant.FromFloat(math.lerp(a.Float, b.Float, c.Float)),
+                VariantType.Float2 when b.type == VariantType.Float2 && c.type == VariantType.Float2 => Variant.FromFloat2(math.lerp(a.Float2, b.Float2, c.Float2)),
+                VariantType.Float3 when b.type == VariantType.Float3 && c.type == VariantType.Float3 => Variant.FromFloat3(math.lerp(a.Float3, b.Float3, c.Float3)),
+                VariantType.Float4 when b.type == VariantType.Float4 && c.type == VariantType.Float4 => Variant.FromFloat4(math.lerp(a.Float4, b.Float4, c.Float4)),
+                VariantType.Float2x2 when b.type == VariantType.Float2x2 && c.type == VariantType.Float2x2 =>Variant.FromFloat2x2(lerp(a.Float2x2, b.Float2x2, c.Float2x2)),
+                VariantType.Float3x3 when b.type == VariantType.Float3x3 && c.type == VariantType.Float3x3 =>Variant.FromFloat3x3(lerp(a.Float3x3, b.Float3x3, c.Float3x3)),
+                VariantType.Float4x4 when b.type == VariantType.Float4x4 && c.type == VariantType.Float4x4 =>Variant.FromFloat4x4(lerp(a.Float4x4, b.Float4x4, c.Float4x4)),
 
                 _ => throw new InvalidOperationException($"No supported type found for input A: {a.GetTypeSignature()} or input type did not match B: {b.GetTypeSignature()}."),
             };

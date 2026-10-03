@@ -12,7 +12,8 @@ namespace UnityGLTF.Interactivity.Playback
         private int _hoverNodeIndex = -1;
         private int _controllerIndex = -1;
 
-        private readonly Transform _parentNode = null;
+        private int _parentIndex = -1;
+        private Transform _parentNode = null;
 
         public EventOnHoverOut(BehaviourEngine engine, Node node) : base(engine, node)
         {
@@ -21,18 +22,23 @@ namespace UnityGLTF.Interactivity.Playback
             if (!configuration.TryGetValue(ConstStrings.NODE_INDEX, out Configuration config))
                 return;
 
-            var parentIndex = ((Property<int>)config.property).value;
-
-            _parentNode = engine.pointerResolver.nodePointers[parentIndex].gameObject.transform;
+            _parentIndex = ((Property<int>)config.property).value;
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override void OnEngineReady()
+        {
+            // Unity objects are resolved on the main thread; the constructor may run on a worker thread.
+            if (_parentIndex >= 0)
+                _parentNode = engine.pointerResolver.nodePointers[_parentIndex].gameObject.transform;
+        }
+
+        public override Variant GetOutputValue(string id)
         {
             return id switch
             {
-                ConstStrings.HOVER_NODE => new Property<Ref>(_hoverNodeIndex >= 0 ? Ref.Gltf("/nodes", _hoverNodeIndex) : Ref.Null),
-                ConstStrings.HOVER_NODE_INDEX => new Property<int>(_hoverNodeIndex),
-                ConstStrings.CONTROLLER_INDEX => new Property<int>(_controllerIndex),
+                ConstStrings.HOVER_NODE => Variant.FromRef(_hoverNodeIndex >= 0 ? Ref.Gltf("/nodes", _hoverNodeIndex) : Ref.Null),
+                ConstStrings.HOVER_NODE_INDEX => Variant.FromInt(_hoverNodeIndex),
+                ConstStrings.CONTROLLER_INDEX => Variant.FromInt(_controllerIndex),
                 _ => throw new InvalidOperationException($"Socket {id} is not valid for this node!"),
             };
         }

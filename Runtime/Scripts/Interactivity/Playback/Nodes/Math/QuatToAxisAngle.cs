@@ -12,14 +12,14 @@ namespace UnityGLTF.Interactivity.Playback
         {
         }
 
-        public override IProperty GetOutputValue(string id)
+        public override Variant GetOutputValue(string id)
         {
             TryEvaluateValue(ConstStrings.A, out float4 a);
 
             return id switch
             {
-                ConstStrings.AXIS => new Property<float3>(Axis(a)),
-                ConstStrings.ANGLE => new Property<float>(Angle(a)),
+                ConstStrings.AXIS => Variant.FromFloat3(Axis(a)),
+                ConstStrings.ANGLE => Variant.FromFloat(Angle(a)),
                 _ => throw new InvalidOperationException($"Requested output {id} is not part of the spec for this node."),
             };
         }

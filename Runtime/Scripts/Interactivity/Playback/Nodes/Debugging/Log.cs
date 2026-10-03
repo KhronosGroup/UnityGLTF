@@ -67,7 +67,7 @@ namespace UnityGLTF.Interactivity.Playback
 
             for (int i = 0; i < _parameters.Count; i++)
             {
-                values[i] = TryEvaluateValue(_parameters[i].id, out IProperty value)
+                values[i] = TryEvaluateValue(_parameters[i].id, out Variant value)
                     ? (value.ToString() ?? string.Empty).Replace("{", "{{").Replace("}", "}}")
                     : string.Empty;
             }
