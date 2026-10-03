@@ -34,12 +34,15 @@ namespace UnityGLTF.Interactivity.Playback
         public readonly Flow flow;
         public readonly BehaviourEngineNode node;
         public readonly string socket;
+        /// <summary>False when the target operation has no input flow socket with this id, so activating it is a no-op.</summary>
+        public readonly bool isInputFlow;
 
         public FlowTarget(Flow flow, BehaviourEngineNode node, string socket)
         {
             this.flow = flow;
             this.node = node;
             this.socket = socket;
+            isInputFlow = node != null && node.HasInputFlow(socket);
         }
     }
 
@@ -334,6 +337,9 @@ namespace UnityGLTF.Interactivity.Playback
             // Same failure as the dictionary lookup this replaces, for a flow to a node outside the engine.
             if (target.node == null)
                 throw new KeyNotFoundException($"Flow target node {target.flow.toNode?.type} is not part of this engine.");
+
+            if (!target.isInputFlow)
+                return;
 
             flowEpoch++;
             onFlowTriggered?.Invoke(target.flow);

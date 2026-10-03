@@ -64,6 +64,9 @@ namespace UnityGLTF.Interactivity.Playback
             {
                 state.speed = 0f;
                 state.enabled = false;
+                // The playhead is wrapped by the spec's rules in SampleAnimation, so the state must not wrap again:
+                // with the importer's Loop mode, sampling at exactly the clip length would show the first frame.
+                state.wrapMode = WrapMode.ClampForever;
                 _animations[j++] = new AnimationData(state);
             }
         }

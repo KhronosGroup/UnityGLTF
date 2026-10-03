@@ -4,10 +4,6 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class EventOnTick : BehaviourEngineNode
     {
-        private float _timeSinceStart = float.NaN;
-        private float _timeSinceLastTick = float.NaN;
-        private Ref _event = Ref.Null;
-
         public EventOnTick(BehaviourEngine engine, Node node) : base(engine, node)
         {
             engine.onTick += OnTick;
@@ -18,11 +14,6 @@ namespace UnityGLTF.Interactivity.Playback
             if (engine.IsImmediatelyStopped(engine.tickEvent))
                 return;
 
-            // All onTick nodes share the engine's per-tick values.
-            _timeSinceStart = engine.timeSinceStart;
-            _timeSinceLastTick = engine.timeSinceLastTick;
-            _event = engine.tickEvent;
-
             TryExecuteFlow(ConstStrings.OUT);
         }
 
@@ -30,9 +21,11 @@ namespace UnityGLTF.Interactivity.Playback
         {
             return id switch
             {
-                ConstStrings.TIME_SINCE_START => Variant.FromFloat(_timeSinceStart),
-                ConstStrings.TIME_SINCE_LAST_TICK => Variant.FromFloat(_timeSinceLastTick),
-                ConstStrings.EVENT => Variant.FromRef(_event),
+                // All onTick nodes share the engine's per-tick values, so every node reports the current tick
+                // even when read by an earlier onTick node's flow before this node's own handler has run.
+                ConstStrings.TIME_SINCE_START => Variant.FromFloat(engine.timeSinceStart),
+                ConstStrings.TIME_SINCE_LAST_TICK => Variant.FromFloat(engine.timeSinceLastTick),
+                ConstStrings.EVENT => Variant.FromRef(engine.tickEvent),
                 _ => throw new InvalidOperationException($"No valid output with name {id}"),
             };
         }

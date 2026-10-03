@@ -15,6 +15,11 @@ namespace UnityGLTF.Interactivity.Playback
             _done = () => TryExecuteFlow(ConstStrings.DONE);
         }
 
+        public override bool HasInputFlow(string socket)
+        {
+            return socket == ConstStrings.IN || socket == ConstStrings.CANCEL;
+        }
+
         protected override void Execute(string socket, ValidationResult validationResult)
         {
             switch (socket)

@@ -14,8 +14,9 @@ namespace UnityGLTF.Interactivity.Playback
         public Pointer<bool> visibility;
         public Pointer<bool> selectability;
         public Pointer<bool> hoverability;
-        public Pointer<float4x4> matrix;
-        public Pointer<float4x4> globalMatrix;
+        // Read-only in the glTF Object Model: both reflect the runtime transform and are changed through TRS.
+        public ReadOnlyPointer<float4x4> matrix;
+        public ReadOnlyPointer<float4x4> globalMatrix;
         public ReadOnlyPointer<int> weightsLength;
         public Pointer<float>[] weights;
         public GameObject gameObject;
@@ -64,19 +65,8 @@ namespace UnityGLTF.Interactivity.Playback
                 evaluator = (a, b, t) => math.lerp(a, b, t)
             };
 
-            matrix = new Pointer<float4x4>()
-            {
-                setter = (v) => tr.SetWorldMatrix(v, worldSpace: false, rightHanded: true),
-                getter = () => tr.GetWorldMatrix(worldSpace: false, rightHanded: true),
-                evaluator = (a, b, t) => a.LerpToComponentwise(b, t) // Spec has floatNxN lerp componentwise.
-            };
-
-            globalMatrix = new Pointer<float4x4>()
-            {
-                setter = (v) => tr.SetWorldMatrix(v, worldSpace: true, rightHanded: true),
-                getter = () => tr.GetWorldMatrix(worldSpace: true, rightHanded: true),
-                evaluator = (a, b, t) => a.LerpToComponentwise(b, t) // Spec has floatNxN lerp componentwise.
-            };
+            matrix = new ReadOnlyPointer<float4x4>(() => tr.GetWorldMatrix(worldSpace: false, rightHanded: true));
+            globalMatrix = new ReadOnlyPointer<float4x4>(() => tr.GetWorldMatrix(worldSpace: true, rightHanded: true));
 
             // TODO: Handle visibility pointers better? Do we report the value back to the extension?
             // Should we make the extension handle the SetActive call so we just change the value of visibility?
@@ -125,7 +115,8 @@ namespace UnityGLTF.Interactivity.Playback
             }
             else
             {
-                weightsLength = default;
+                // A mesh without morph targets has zero weights. Nodes without a mesh have no weights.length (see ProcessNodePointer).
+                weightsLength = new ReadOnlyPointer<int>(() => 0);
                 weights = default;
             }
         }
@@ -148,7 +139,7 @@ namespace UnityGLTF.Interactivity.Playback
                 var a when a.Is(Pointers.ROTATION) => nodePointer.rotation,
                 var a when a.Is(Pointers.SCALE) => nodePointer.scale,
                 var a when a.Is(Pointers.WEIGHTS) => ProcessWeightsPointer(reader, engineNode, nodePointer),
-                var a when a.Is(Pointers.WEIGHTS_LENGTH) => nodePointer.weightsLength,
+                var a when a.Is(Pointers.WEIGHTS_LENGTH) => nodePointer.mesh >= 0 ? nodePointer.weightsLength : PointerHelpers.InvalidPointer(),
                 var a when a.Is(Pointers.EXTENSIONS) => ProcessExtensionPointer(reader, nodePointer),
                 var a when a.Is(Pointers.MATRIX) => nodePointer.matrix,
                 var a when a.Is(Pointers.GLOBAL_MATRIX) => nodePointer.globalMatrix,

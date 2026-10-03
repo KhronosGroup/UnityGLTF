@@ -93,6 +93,12 @@ namespace UnityGLTF.Interactivity.Playback
         protected virtual void Execute(string socket, ValidationResult validationResult) { }
 
         /// <summary>
+        /// Whether the operation has an input flow socket with this id. Flows into any other socket never execute the node,
+        /// like an unconnected socket. Operations with input flows other than "in" override this.
+        /// </summary>
+        public virtual bool HasInputFlow(string socket) => socket == ConstStrings.IN;
+
+        /// <summary>
         /// Computes an output value. Called at most once per output socket per flow epoch; the engine retains the result
         /// in the socket's store slot, as required by the "Sockets" section of the spec.
         /// </summary>

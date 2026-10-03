@@ -19,6 +19,12 @@ namespace UnityGLTF.Interactivity.Playback
             _activated = new bool[_inputFlows];
         }
 
+        public override bool HasInputFlow(string socket)
+        {
+            // Ids are canonical decimal numbers below inputFlows, plus reset.
+            return socket == ConstStrings.RESET || (Ref.TryParseCanonicalIndex(socket.AsSpan(), out var index) && index < _inputFlows);
+        }
+
         protected override void Execute(string socket, ValidationResult validationResult)
         {
             if (socket.Equals(ConstStrings.RESET))

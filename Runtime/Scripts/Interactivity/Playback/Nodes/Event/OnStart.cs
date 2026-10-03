@@ -4,8 +4,6 @@ namespace UnityGLTF.Interactivity.Playback
 {
     public class EventOnStart : BehaviourEngineNode
     {
-        private Ref _event = Ref.Null;
-
         public EventOnStart(BehaviourEngine engine, Node node) : base(engine, node)
         {
             // Subscribed in node order, so multiple onStart nodes activate in JSON order.
@@ -17,7 +15,6 @@ namespace UnityGLTF.Interactivity.Playback
             if (engine.IsImmediatelyStopped(engine.startEvent))
                 return;
 
-            _event = engine.startEvent;
             TryExecuteFlow(ConstStrings.OUT);
         }
 
@@ -25,7 +22,9 @@ namespace UnityGLTF.Interactivity.Playback
         {
             return id switch
             {
-                ConstStrings.EVENT => Variant.FromRef(_event),
+                // Read from the engine rather than copied per node: every onStart node outputs the current occurrence,
+                // even when read by an earlier onStart node's flow before this node's own handler has run.
+                ConstStrings.EVENT => Variant.FromRef(engine.startEvent),
                 _ => throw new InvalidOperationException($"No valid output with name {id}"),
             };
         }
