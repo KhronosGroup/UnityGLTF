@@ -33,7 +33,9 @@ namespace UnityGLTF.Interactivity.Export
                 {
                     if (sequenceNode.FlowConnections.Count > 0)
                         task.ByPassFlow(sequenceNode, Flow_SequenceNode.IdFlowIn, sequenceNode.FlowConnections.First().Key);
-                    
+                    else
+                        task.RemoveFlowConnectionsTo(sequenceNode); // dead end: detach incoming flows
+
                     task.RemoveNode(sequenceNode);
                 }
             }

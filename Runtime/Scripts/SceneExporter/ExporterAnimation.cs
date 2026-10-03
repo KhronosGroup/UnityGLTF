@@ -1447,10 +1447,13 @@ namespace UnityGLTF
 				interpolationType = InterpolationType.STEP;
 			
 			// Assuming all the curves exist now
-			for (var i = 0; i < nbSamples; ++i)
+			// nbSamples is the number of intervals, so there is one more sample than that (the last one at the end of the clip).
+			// A clip without length only has the one sample.
+			var lastSample = length > 0 ? nbSamples : 0;
+			for (var i = 0; i <= lastSample; ++i)
 			{
 				var time = i * deltaTime;
-				if (i == nbSamples - 1) time = length;
+				if (i == lastSample) time = length;
 
 				for (var k = 0; k < curveCount; k++)
 					while (keyframeIndex[k] < keyframes[k].Length - 1 && keyframes[k][keyframeIndex[k]].time < time)
@@ -1463,12 +1466,21 @@ namespace UnityGLTF
 						isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
 				}
 
-				if (isConstant && _times.Count > 0)
+				if (isConstant && _times.Count > 0 && i == lastSample)
+				{
+					// The previous interval already holds its value until just before the end, only the end value is missing
+					var lastTime = _times[_times.Count - 1];
+					if (lastTime < time / speedMultiplier)
+					{
+						_times.Add(time / speedMultiplier);
+						if (!AddValue(time)) return false;
+					}
+				}
+				else if (isConstant && _times.Count > 0)
 				{
 					var lastTime = _times[_times.Count - 1];
 					var t0 = lastTime + 0.0001f;
-					if (i != nbSamples - 1)
-						time += deltaTime * 0.999f;
+					time += deltaTime * 0.999f;
 					_times.Add(t0 / speedMultiplier);
 					_times.Add(time / speedMultiplier);
 					var success = AddValue(time);
@@ -1634,7 +1646,33 @@ namespace UnityGLTF
 			}
 		}
 
+		/// <summary>
+		/// Splits an HDR emission color into a color with components up to 1 and a strength (KHR_materials_emissive_strength).
+		/// Emission colors are HDR color properties, which Unity passes to shaders without color space conversion,
+		/// so they are already linear like glTF's emissiveFactor: color = input / max, strength = max.
+		/// </summary>
 		private static void DecomposeEmissionColor(Color input, out Color output, out float intensity)
+		{
+			output = input;
+			output.a = Mathf.Clamp01(output.a);
+			intensity = Mathf.Max(input.r, input.g, input.b);
+			if (intensity > 1)
+			{
+				output.r /= intensity;
+				output.g /= intensity;
+				output.b /= intensity;
+			}
+			else
+			{
+				intensity = 1;
+			}
+		}
+
+		/// <summary>
+		/// The previous decomposition, still used for Standard and URP materials in Gamma color space,
+		/// where these shaders treat emission colors differently (see ExportMaterial).
+		/// </summary>
+		private static void DecomposeEmissionColorGammaColorSpace(Color input, out Color output, out float intensity)
 		{
 			var emissiveAmount = input.linear;
 			var maxEmissiveAmount = Mathf.Max(emissiveAmount.r, emissiveAmount.g, emissiveAmount.b);
@@ -1722,7 +1760,8 @@ namespace UnityGLTF
 					var isIdentical = ArrayRangeEquals(values, arraySize, lastExportedIndex * arraySize, (i - 1) * arraySize, i * arraySize, (i + 1) * arraySize);
 					if (!isIdentical)
 					{
-						Array.Copy(values, (i - 1) * arraySize, singleFrameWeights, 0, arraySize);
+						lastExportedIndex = i;
+						Array.Copy(values, i * arraySize, singleFrameWeights, 0, arraySize);
 						v2.AddRange(singleFrameWeights);
 						t2.Add(times[i]);
 					}
@@ -1732,8 +1771,8 @@ namespace UnityGLTF
 
 				var max = times.Length - 1;
 				t2.Add(times[max]);
-				var skipped = values.Skip((max - 1) * arraySize).ToArray();
-				v2.AddRange(skipped.Take(arraySize));
+				Array.Copy(values, max * arraySize, singleFrameWeights, 0, arraySize);
+				v2.AddRange(singleFrameWeights);
 			}
 
 			times = t2.ToArray();

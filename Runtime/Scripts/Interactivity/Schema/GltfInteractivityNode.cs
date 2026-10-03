@@ -146,35 +146,41 @@ namespace UnityGLTF.Interactivity.Schema
         
         public virtual JObject SerializeObject()
         {
-            var configs = new JObject();
-            foreach (var config in Configuration)
-                configs.Add(config.Key, config.Value.SerializeObject());
-            
-            var values = new JObject();
-            foreach (var value in ValueInConnection)
-                values.Add(value.Key, value.Value.SerializeObject());
-
-            var flows = new JObject();
-            foreach (var flow in FlowConnections)
-                if (flow.Value.Node != null)
-                    flows.Add(flow.Key, flow.Value.SerializeObject());
-
-            
-            JObject jo = new JObject
+            JObject jo = new JObject()
             {
-                new JProperty("declaration", OpDeclaration),
-                new JProperty("configuration",configs),
-                new JProperty("values", values),
-                new JProperty("flows", flows),
+                new JProperty("declaration", OpDeclaration)
             };
+            
+            // Empty objects are not allowed by the specification, so configuration, values and flows are only
+            // written when they have at least one entry.
+            var serializedConfigs = Configuration
+                .Where(kvp => !string.IsNullOrEmpty(kvp.Key) && kvp.Value != null && kvp.Value.HasValue)
+                .ToList();
+            if (serializedConfigs.Count > 0)
+            {
+                var configs = new JObject();
+                foreach (var config in serializedConfigs)
+                    configs.Add(config.Key, config.Value.SerializeObject());
 
-            // Remove all empty arrays in the first level of the JSON Object
-            jo.SelectTokens("$.*")
-              .OfType<JArray>()
-              .Where(x => x.Type == JTokenType.Array && !x.HasValues)
-              .Select(a => a.Parent)
-              .ToList()
-              .ForEach(a => a.Remove());
+                jo.Add("configuration", configs);
+            }
+
+            if (ValueInConnection.Count > 0)
+            {
+                var values = new JObject();
+                foreach (var value in ValueInConnection)
+                    values.Add(value.Key, value.Value.SerializeObject());
+                jo.Add("values", values);
+            }
+
+            var connectedFlows = FlowConnections.Where(flow => flow.Value.Node != null).ToList();
+            if (connectedFlows.Count > 0)
+            {
+                var flows = new JObject();
+                foreach (var flow in connectedFlows)
+                    flows.Add(flow.Key, flow.Value.SerializeObject());
+                jo.Add("flows", flows);
+            }
 
             return jo;
         }
@@ -183,6 +189,12 @@ namespace UnityGLTF.Interactivity.Schema
         {
             // data field holds index in list of types supported in the extension
             public object Value = null;
+
+            /// <summary>
+            /// False for unset values and empty arrays: configuration values must be non-empty arrays, so these
+            /// are omitted, which selects the default configuration of the operation (e.g. no cases for flow/switch).
+            /// </summary>
+            public bool HasValue => Value != null && !(Value is System.Array array && array.Length == 0);
 
             public JObject SerializeObject()
             {
@@ -224,8 +236,8 @@ namespace UnityGLTF.Interactivity.Schema
                 {
                     new JProperty("type", Type),
                 };
-                ValueSerializer.Serialize(Value, valueObject);
-                
+                ValueSerializer.SerializeDefinitionValue(Value, valueObject, "Event value");
+
                 return valueObject;
             }
             
@@ -244,16 +256,97 @@ namespace UnityGLTF.Interactivity.Schema
         {
             public JObject SerializeObject()
             {
-                return new JObject
+                var jObject = new JObject
                 {
-                    new JProperty("node", Node),
-                    new JProperty("socket", Socket)
+                    new JProperty("node", Node)
                 };
+                // Optional, "in" when omitted
+                if (Socket != null)
+                    jObject.Add(new JProperty("socket", Socket));
+                return jObject;
             }
         }
         
         public static class ValueSerializer
         {
+            // Newtonsoft (on Unity's Mono) writes negative zero as "0.0", which loses the sign.
+            // It is written as a raw JSON number instead, so -0 survives the round trip.
+            private static object Num(double value)
+            {
+                if (value == 0 && System.BitConverter.DoubleToInt64Bits(value) < 0)
+                    return new JRaw("-0.0");
+                return value;
+            }
+
+            private static object Num(float value)
+            {
+                if (value == 0 && System.BitConverter.DoubleToInt64Bits(value) < 0)
+                    return new JRaw("-0.0");
+                return value;
+            }
+
+            private static JArray Nums(params float[] values)
+            {
+                return new JArray(values.Select(Num).ToArray());
+            }
+
+            /// <summary>
+            /// The components of a float based value (float, floatN, floatNxN) in JSON order (matrices column-major),
+            /// or null for other values.
+            /// </summary>
+            public static double[] FloatComponents(object value)
+            {
+                switch (value)
+                {
+                    case float f: return new double[] { f };
+                    case double d: return new[] { d };
+                    case Vector2 v2: return new double[] { v2.x, v2.y };
+                    case Vector3 v3: return new double[] { v3.x, v3.y, v3.z };
+                    case Vector4 v4: return new double[] { v4.x, v4.y, v4.z, v4.w };
+                    case Quaternion q: return new double[] { q.x, q.y, q.z, q.w };
+                    case Color c: return new double[] { c.r, c.g, c.b, c.a };
+                    case GltfFloat2x2 m2: return new double[] { m2.m0, m2.m1, m2.m2, m2.m3 };
+                    case GltfFloat3x3 m3: return new double[] { m3.m0, m3.m1, m3.m2, m3.m3, m3.m4, m3.m5, m3.m6, m3.m7, m3.m8 };
+                    case Matrix4x4 m4:
+                        return new double[]
+                        {
+                            m4.m00, m4.m10, m4.m20, m4.m30,
+                            m4.m01, m4.m11, m4.m21, m4.m31,
+                            m4.m02, m4.m12, m4.m22, m4.m32,
+                            m4.m03, m4.m13, m4.m23, m4.m33,
+                        };
+                    default: return null;
+                }
+            }
+
+            /// <summary> NaN and infinity have no JSON representation (Newtonsoft would write them as strings). </summary>
+            public static bool HasNonFiniteComponents(object value)
+            {
+                var components = FloatComponents(value);
+                return components != null && components.Any(c => double.IsNaN(c) || double.IsInfinity(c));
+            }
+
+            /// <summary> All components NaN: the type-default value of every float type, written by omitting "value". </summary>
+            public static bool IsTypeDefaultNaN(object value)
+            {
+                var components = FloatComponents(value);
+                return components != null && components.All(double.IsNaN);
+            }
+
+            /// <summary>
+            /// Serializes the value of a variable or event value socket. These can't be computed by nodes, so an all-NaN
+            /// value is written as the type-default (no "value"); other NaN/infinity components can't be written.
+            /// </summary>
+            public static void SerializeDefinitionValue(object value, JObject valueObject, string owner)
+            {
+                if (IsTypeDefaultNaN(value))
+                    return;
+                if (HasNonFiniteComponents(value))
+                    Debug.LogError($"{owner}: initial value {value} contains NaN or infinity, which JSON can't represent. " +
+                                   "Use a finite value or set it from a node (math/nan, math/inf) at runtime.");
+                Serialize(value, valueObject);
+            }
+
             public static void Serialize(object value, JObject valueObject)
             {
                 if (value == null)
@@ -266,16 +359,16 @@ namespace UnityGLTF.Interactivity.Schema
                 else
                 if (value is Color color)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(color.r, color.g, color.b, color.a)));
+                    valueObject.Add(new JProperty("value", Nums(color.r, color.g, color.b, color.a)));
                 }
                 else if (value is Color32 color32)
                 {
                     Color col = color32;
-                    valueObject.Add(new JProperty("value", new JArray(col.r, col.g, col.b, col.a)));
+                    valueObject.Add(new JProperty("value", Nums(col.r, col.g, col.b, col.a)));
                 }
                 else if (value is Matrix4x4 m4)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(
+                    valueObject.Add(new JProperty("value", Nums(
                         m4.m00, m4.m10, m4.m20, m4.m30,
                         m4.m01, m4.m11, m4.m21, m4.m31,
                         m4.m02, m4.m12, m4.m22, m4.m32,
@@ -283,31 +376,31 @@ namespace UnityGLTF.Interactivity.Schema
                 }
                 else if (value is GltfFloat2x2 f2x2)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(
+                    valueObject.Add(new JProperty("value", Nums(
                         f2x2.m0, f2x2.m1, f2x2.m2, f2x2.m3)));
                 }
                 else if (value is GltfFloat3x3 f3x3)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(
+                    valueObject.Add(new JProperty("value", Nums(
                         f3x3.m0, f3x3.m1, f3x3.m2,
                         f3x3.m3, f3x3.m4, f3x3.m5,
                         f3x3.m6, f3x3.m7, f3x3.m8)));
                 }
                 else if (value is Vector4 v4)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(v4.x, v4.y, v4.z, v4.w)));
+                    valueObject.Add(new JProperty("value", Nums(v4.x, v4.y, v4.z, v4.w)));
                 }
                 else if (value is Vector3 v3)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(v3.x, v3.y, v3.z)));
+                    valueObject.Add(new JProperty("value", Nums(v3.x, v3.y, v3.z)));
                 }
                 else if (value is Vector2 v2)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(v2.x, v2.y)));
+                    valueObject.Add(new JProperty("value", Nums(v2.x, v2.y)));
                 }
                 else if (value is Quaternion q)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(q.x, q.y, q.z, q.w)));
+                    valueObject.Add(new JProperty("value", Nums(q.x, q.y, q.z, q.w)));
                 }
                 else if (value is bool b)
                 {
@@ -323,7 +416,15 @@ namespace UnityGLTF.Interactivity.Schema
                 }
                 else if (value is float f)
                 {
-                    valueObject.Add(new JProperty("value", new JArray(f)));
+                    valueObject.Add(new JProperty("value", new JArray(Num(f))));
+                }
+                else if (value is double d)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(Num(d))));
+                }
+                else if (value is double[] doubles)
+                {
+                    valueObject.Add(new JProperty("value", new JArray(doubles.Select(Num).ToArray())));
                 }
                 else
                 {
@@ -373,6 +474,11 @@ namespace UnityGLTF.Interactivity.Schema
                     valueObject.Add(new JProperty("type", Type));
 
                     ValueSerializer.Serialize(Value, valueObject);
+                }
+                else if (Node == null && Type != -1)
+                {
+                    // Type-default value (e.g. NaN for float): the type is required
+                    valueObject.Add(new JProperty("type", Type));
                 }
 
                 return valueObject;

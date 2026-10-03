@@ -114,6 +114,8 @@ namespace UnityGLTF
 
 			bool flipValueRange = false;
 			float? valueMultiplier = null;
+			// Morph target weights: one multiplier per blend shape, the values are the weights of all blend shapes per keyframe
+			float[] weightMultipliers = null;
 			bool isTextureTransform = false;
 			bool keepColorAlpha = true;
 			bool convertToLinearColor = false;
@@ -290,11 +292,6 @@ namespace UnityGLTF
 					}
 					break;
 				case SkinnedMeshRenderer skinnedMesh:
-					// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
-					// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
-					var minBlendShapeFrameWeight = 0.0f;
-					var maxBlendShapeFrameWeight = 0.0f;
-
 					var sharedMesh = skinnedMesh.sharedMesh;
 					if (!sharedMesh)
 					{
@@ -302,20 +299,15 @@ namespace UnityGLTF
 						return;
 					}
 
+					// The last frame of each blend shape is exported as its morph target (see ExportBlendShapes),
+					// so each weight is relative to the weight of that blend shape's last frame.
 					var shapeCount = sharedMesh.blendShapeCount;
+					weightMultipliers = new float[shapeCount];
 					for (int index = 0; index < shapeCount; ++index)
 					{
-						var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
-						for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
-						{
-							var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
-							minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
-							maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
-						}
+						var lastFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, sharedMesh.GetBlendShapeFrameCount(index) - 1);
+						weightMultipliers[index] = lastFrameWeight != 0 ? 1.0f / lastFrameWeight : 1.0f;
 					}
-
-					if (maxBlendShapeFrameWeight != 0)
-						valueMultiplier = 1.0f / maxBlendShapeFrameWeight;
 
 					break;
 				case Transform _:
@@ -393,6 +385,13 @@ namespace UnityGLTF
 						{
 							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
 						}
+						else if (weightMultipliers?.Length > 0)
+						{
+							var weights = new float[values.Length];
+							for (var i = 0; i < values.Length; i++)
+								weights[i] = (float)values[i] * weightMultipliers[i % weightMultipliers.Length];
+							Tsampler.Output = ExportAccessor(weights);
+						}
 						else if (valueMultiplier.HasValue)
 						{
 							var multiplier = valueMultiplier.Value;
@@ -429,7 +428,12 @@ namespace UnityGLTF
 							Array.Copy((float[])values[i], 0, floatArray, i * firstLength, firstLength);
 
 						// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
-						if (valueMultiplier.HasValue)
+						if (weightMultipliers?.Length > 0)
+						{
+							for (var i = 0; i < floatArray.Length; i++)
+								floatArray[i] *= weightMultipliers[i % weightMultipliers.Length];
+						}
+						else if (valueMultiplier.HasValue)
 						{
 							for (var i = 0; i < floatArray.Length; i++)
 								floatArray[i] *= valueMultiplier.Value;

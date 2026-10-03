@@ -6,7 +6,7 @@ namespace UnityGLTF.Interactivity.Schema
 
         [FlowInSocketDescription]
         public const string IdFlowIn = "in";
-        [FlowOutSocketDescription]
+        [FlowInSocketDescription]
         public const string IdFlowReset = "reset";
         [InputSocketDescription(GltfTypes.Int)]
         public const string IdN = "n";

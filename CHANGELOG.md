@@ -4,8 +4,35 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.21.0+x0] - 2026-07-06
+## [2.22.0+x0] - 2026-10-02
 - This fork of UnityGLTF includes additional bugfixes and features from XtroTheArctic which are not merged into the original repository yet despite being PR'd.
+
+## [2.22.0] - 2026-10-02
+- add: Asset Importer > root motion support for Mecanim (generic) imports, consistent with the FBX importer: set a Root Node Name, clips get root motion curves (#877)
+- add: Asset Importer > hierarchy dropdown for the Root Node Name field
+- add: Asset Importer > feedback for humanoid avatar bone mapping (#860)
+- add: `KHR_interactivity`: Visual Scripting units with 1:1 export for setting multiple variables, set/cancel delay, throttle, doN, multiGate and integer bitwise operations
+- add: `KHR_interactivity`: export validates value types on connections
+- add: `KHR_interactivity`: `event.name` property
+- change: `KHR_interactivity`: variables use `name` instead of `id`
+- change: humanoid avatars use Unity's auto mapping for bones UnityGLTF doesn't know and store a T-pose
+- change: generic avatars are only created when the file has animations or a root node name is set
+- change: avatar names match the FBX importer
+- change: texture filters are imported based on magFilter (NEAREST imports as Point), minFilter decides between Bilinear and Trilinear
+- fix: skin export with missing bones shifted the joint indices (#873)
+- fix: morph target weights of blend shapes with multiple frames (#899)
+- fix: morph target weight animations were exported one frame late
+- fix: baked animations were missing the second-to-last frame
+- fix: emission export for colors above 1
+- fix: texture wrap modes are exported per axis (wrapT used the U wrap mode)
+- fix: texture export cache ignored the image format (e.g. JPEG bytes exported as image/png)
+- fix: humanoid import in Unity 6.6
+- fix: Animator settings were lost when removing empty root objects
+- fix: SkinnedMeshRenderer bounds on import
+- fix: remapped material dependencies during full reimport (#915)
+- fix: `KHR_interactivity`: export hang, Color alpha, quaternion multiply, implicit value conversions, flow/doN reset input
+- fix: `KHR_interactivity`: spec conformance of the exported JSON, node sorting, number serialization, int types in math/neg and double export
+- fix: `KHR_interactivity`: faster circular flow detection
 
 ## [2.21.0] - 2026-08-14
 - add: Asset Importer > loop settings can now be set per animation clip

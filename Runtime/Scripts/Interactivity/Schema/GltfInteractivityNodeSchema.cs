@@ -74,7 +74,7 @@ namespace UnityGLTF.Interactivity.Schema
             foreach (var field in fields)
             {
                 if (field.FieldType != typeof(string))
-                    return;
+                    continue;
                 
                 var fieldValue = field.GetValue(this) as string;
                 

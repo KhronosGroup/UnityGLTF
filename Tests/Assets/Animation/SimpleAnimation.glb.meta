@@ -1,6 +1,10 @@
 fileFormatVersion: 2
 guid: 941ea53b9d7aafa4886b8bdd2c0f2963
-importerOverride: UnityGLTFEditor:UnityGLTF:GLTFImporter
+importerOverride:
+  nativeImporterType: -2
+  scriptedImporterType:
+    serializedVersion: 2
+    Hash: b0f0efd5afe97376296c08894c84a3f1
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -11,19 +15,48 @@ ScriptedImporter:
   script: {fileID: 11500000, guid: 804e1ce4c496647cfa3f1a1134187c71, type: 3}
   _removeEmptyRootObjects: 1
   _scaleFactor: 1
+  _deduplicateResources: 0
+  _deduplicatedStatistics:
+    meshCountBefore: 0
+    meshCountAfter: 0
+    textureCountBefore: 0
+    textureCountAfter: 0
   _maximumLod: 300
   _readWriteEnabled: 1
   _generateColliders: 0
+  _addColliders: 0
   _swapUvs: 0
   _generateLightmapUVs: 0
+  _importBlendShapeNames: 1
+  _blendShapeFrameWeight:
+    _option: 0
+    _multiplier: 1
   _importNormals: 0
   _importTangents: 0
+  _importCamera: 2
   _importAnimations: 2
+  _mecanimHumanoidFlip: 0
+  _nonHumanoidRootNodeName: 
   _addAnimatorComponent: 0
   _animationLoopTime: 1
   _animationLoopPose: 0
+  _animationLoopSettingsPerClip: 0
   _importMaterials: 1
+  _enableGpuInstancing: 0
+  _texturesReadWriteEnabled: 1
+  _generateMipMaps: 1
   _useSceneNameIdentifier: 1
+  _textureCompression: -50
+  _gltfAsset: '<b>Generator: </b>UnityGLTF
+
+    <b>Version: </b>2.0
+
+    
+
+    <b>Extras:
+    </b>
+
+'
   optimizeGameObjects: 0
   materials:
   - {fileID: 3297912226980038121, guid: 941ea53b9d7aafa4886b8bdd2c0f2963, type: 3}
@@ -36,3 +69,4 @@ ScriptedImporter:
   _extensions: []
   _textures: []
   _mainAssetIdentifier: scenes/SimpleAnimation
+  _importPlugins: []
