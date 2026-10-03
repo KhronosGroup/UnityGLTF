@@ -110,7 +110,7 @@ namespace UnityGLTF
         [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _mecanimHumanoidFlip = false;
-        [SerializeField] internal string _nonHumanoidRootNodeName;
+        [SerializeField] internal string _nonHumanoidRootNodeName = "";
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
         [SerializeField] internal bool _animationLoopPose = false;
@@ -309,6 +309,22 @@ namespace UnityGLTF
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
+	        var serializedImporter = new SerializedObject(this);
+	        var externalObjects = serializedImporter.FindProperty("m_ExternalObjects");
+	        if (externalObjects != null)
+	        {
+		        for (var i = 0; i < externalObjects.arraySize; i++)
+		        {
+			        var externalObject = externalObjects.GetArrayElementAtIndex(i).FindPropertyRelative("second");
+#if UNITY_6000_4_OR_NEWER
+			        var dependencyPath = AssetDatabase.GetAssetPath(externalObject.objectReferenceEntityIdValue);
+#else
+			        var dependencyPath = AssetDatabase.GetAssetPath(externalObject.objectReferenceInstanceIDValue);
+#endif
+			        if (!string.IsNullOrEmpty(dependencyPath) && !string.Equals(dependencyPath, ctx.assetPath, StringComparison.OrdinalIgnoreCase)) ctx.DependsOnArtifact(dependencyPath);
+		        }
+	        }
+
 	        var settings = GLTFSettings.GetDefaultSettings();
 	        
 	        // make a copy, and apply import override settings
@@ -394,7 +410,12 @@ namespace UnityGLTF
                     var t = gltfScene.transform;
                     var existingAnimator = t.GetComponent<Animator>();
                     var hadAnimator = (bool)existingAnimator;
+                    // Keep the animator settings, since the animator gets destroyed and re-added on the new root below
                     var existingAvatar = existingAnimator ? existingAnimator.avatar : default;
+                    var existingController = existingAnimator ? existingAnimator.runtimeAnimatorController : default;
+                    var existingApplyRootMotion = existingAnimator && existingAnimator.applyRootMotion;
+                    var existingUpdateMode = existingAnimator ? existingAnimator.updateMode : default;
+                    var existingCullingMode = existingAnimator ? existingAnimator.cullingMode : default;
                     var rootIsAnimated = false;
                     if (existingAnimator)
                     {
@@ -440,6 +461,10 @@ namespace UnityGLTF
 	                    {
 		                    var newAnimator = gltfScene.AddComponent<Animator>();
 		                    newAnimator.avatar = existingAvatar;
+		                    newAnimator.runtimeAnimatorController = existingController;
+		                    newAnimator.applyRootMotion = existingApplyRootMotion;
+		                    newAnimator.updateMode = existingUpdateMode;
+		                    newAnimator.cullingMode = existingCullingMode;
 	                    }
 
 	                    // Re-target animation clips - when we strip the root, all animations also change and have a different path now.
@@ -604,18 +629,26 @@ namespace UnityGLTF
 	            //     }
                 // }
 
-                if (gltfScene)
-                {
-                    Avatar avatar = null;
+				if (gltfScene)
+				{
+					Avatar avatar = null;
 
-                    if (_importAnimations == AnimationMethod.MecanimHumanoid)
-                        avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
-                    else if (_importAnimations == AnimationMethod.Mecanim)
-                        avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, false, _nonHumanoidRootNodeName);
+					if (_importAnimations == AnimationMethod.MecanimHumanoid)
+						avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
+					// Only create a generic avatar when it's used: for the file's own animations, or for root motion
+					// with clips from other files. Otherwise every static model would get an unused avatar sub-asset.
+					else if (_importAnimations == AnimationMethod.Mecanim && (m_HasAnimationData || !string.IsNullOrEmpty(_nonHumanoidRootNodeName)))
+					{
+						avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, _nonHumanoidRootNodeName, out var rootNodeFound);
+						if (!rootNodeFound)
+							ctx.LogImportWarning($"Root node \"{_nonHumanoidRootNodeName}\" was not found below the root \"{gltfScene.name}\". The avatar is created without a root motion node.");
+						else if (avatar)
+							NonHumanoidSetup.AddRootMotionCurves(gltfScene, _nonHumanoidRootNodeName, animations);
+					}
 
-                    if (avatar)
-                        ctx.AddObjectToAsset("avatar", avatar);
-                }
+					if (avatar)
+						ctx.AddObjectToAsset("avatar", avatar);
+				}
 
                 var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
 

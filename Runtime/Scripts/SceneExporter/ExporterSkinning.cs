@@ -36,15 +36,23 @@ namespace UnityGLTF
 				return;
 			}
 
-			bool allBoneTransformNodesHaveBeenExported = true;
-			for (int i = 0; i < skin.bones.Length; ++i)
+			var skinBones = skin.bones;
+			var bindposes = mesh.bindposes;
+			if (skinBones.Length != bindposes.Length)
 			{
-				if (!skin.bones[i])
+				Debug.LogWarning("SkinnedMeshRenderer " + transform + " has " + skinBones.Length + " bones but its mesh has " + bindposes.Length + " bindposes. Skin information will be skipped.", transform);
+				exportSkinFromNodeMarker.End();
+				return;
+			}
+
+			bool allBoneTransformNodesHaveBeenExported = true;
+			for (int i = 0; i < skinBones.Length; ++i)
+			{
+				if (!skinBones[i])
 				{
-					Debug.LogWarning("Skin has null bone at index " + i + ": " + skin, skin);
 					continue;
 				}
-				var nodeId = GetObjectId(skin.bones[i]);
+				var nodeId = GetObjectId(skinBones[i]);
 				if (!_exportedTransforms.ContainsKey(nodeId))
 				{
 					allBoneTransformNodesHaveBeenExported = false;
@@ -59,24 +67,34 @@ namespace UnityGLTF
 				return;
 			}
 
-			for (int i = 0; i < skin.bones.Length; ++i)
+			// Missing bones (e.g. deleted from an unpacked prefab) can't be left out, since JOINTS_0 and the bindposes
+			// refer to bones by index. Each one is replaced with a new empty node (joints have to be unique) below a stand-in,
+			// so all other joints keep their index.
+			var standIn = skin.rootBone && _exportedTransforms.ContainsKey(GetObjectId(skin.rootBone)) ? skin.rootBone : transform;
+			for (int i = 0; i < skinBones.Length; ++i)
 			{
-				if (!skin.bones[i])
+				int jointNodeId;
+				if (skinBones[i])
 				{
-					continue;
+					jointNodeId = _exportedTransforms[GetObjectId(skinBones[i])];
 				}
-
-				var nodeId = GetObjectId(skin.bones[i]);
+				else
+				{
+					Debug.LogWarning("Skin has null bone at index " + i + ": " + skin + ". Vertices weighted to it will follow " + standIn.name + " instead.", skin);
+					jointNodeId = AddMissingBoneNode(standIn, i);
+					// Keep the vertices where they are in the current pose, relative to the stand-in
+					bindposes[i] = standIn.worldToLocalMatrix * transform.localToWorldMatrix;
+				}
 
 				gltfSkin.Joints.Add(
 					new NodeId
 					{
-						Id = _exportedTransforms[nodeId],
+						Id = jointNodeId,
 						Root = _root
 					});
 			}
 
-			gltfSkin.InverseBindMatrices = ExportAccessor(mesh.bindposes);
+			gltfSkin.InverseBindMatrices = ExportAccessor(bindposes);
 
 			Vector4[] bones = boneWeightToBoneVec4(mesh.boneWeights);
 			Vector4[] weights = boneWeightToWeightVec4(mesh.boneWeights);
@@ -134,6 +152,29 @@ namespace UnityGLTF
 			_root.Skins.Add(gltfSkin);
 
 			exportSkinFromNodeMarker.End();
+		}
+
+		/// <summary>
+		/// Adds an empty node as child of an exported transform, at the same position, to be used as joint for a missing bone.
+		/// </summary>
+		private int AddMissingBoneNode(Transform parent, int boneIndex)
+		{
+			var node = new Node();
+			if (ExportNames)
+			{
+				node.Name = "MissingBone_" + boneIndex;
+			}
+
+			var id = _root.Nodes.Count;
+			_root.Nodes.Add(node);
+
+			var parentNode = _root.Nodes[_exportedTransforms[GetObjectId(parent)]];
+			if (parentNode.Children == null)
+			{
+				parentNode.Children = new List<NodeId>(1);
+			}
+			parentNode.Children.Add(new NodeId { Id = id, Root = _root });
+			return id;
 		}
 
 		private UnityEngine.Mesh GetMeshFromGameObject(GameObject gameObject)

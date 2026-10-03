@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace UnityGLTF.Interactivity.Export
 {
     public class CleanUpTask
@@ -14,10 +16,23 @@ namespace UnityGLTF.Interactivity.Export
         
         public void RemoveNode(GltfInteractivityExportNode node)
         {
-            context.RemoveNode(node);
-            hasChanges = true;
+            // Only a successful removal counts as a change, otherwise the clean up loop never ends
+            if (context.RemoveNode(node))
+                hasChanges = true;
         }
-        
+
+        public void RemoveFlowConnectionsTo(GltfInteractivityExportNode node)
+        {
+            foreach (var n in context.Nodes)
+            {
+                var keys = n.FlowConnections.Where(flow => flow.Value.Node == node.Index).Select(flow => flow.Key).ToList();
+                foreach (var key in keys)
+                    n.FlowConnections.Remove(key);
+                if (keys.Count > 0)
+                    hasChanges = true;
+            }
+        }
+
         public void ByPassFlow(GltfInteractivityExportNode node, string flowIn, string flowOut)
         {
             var flowSocket = node.FlowConnections[flowOut];
