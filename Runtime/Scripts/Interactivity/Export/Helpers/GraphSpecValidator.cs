@@ -461,7 +461,7 @@ namespace UnityGLTF.Interactivity.Export
                     break;
             }
 
-            var schema = SchemaFor(op);
+            var schema = SchemaFor(op, inputTypes);
             if (schema != null)
             {
                 foreach (var input in schema.InputValueSockets)
@@ -519,14 +519,18 @@ namespace UnityGLTF.Interactivity.Export
             }
         }
 
-        private static Dictionary<string, GltfInteractivityNodeSchema> schemasByOp;
+        private static Dictionary<string, List<GltfInteractivityNodeSchema>> schemasByOp;
 
-        /// <summary> UnityGLTF's node schema for an operation, or null if UnityGLTF does not know it. </summary>
-        private static GltfInteractivityNodeSchema SchemaFor(string op)
+        /// <summary>
+        /// UnityGLTF's node schema for an operation, or null if UnityGLTF does not know it. Some operations have
+        /// one schema per overload (e.g. math/transform for float2/float3/float4), so the first schema whose inputs
+        /// accept the inferred input types is used; if none does, the first schema is used to report the mismatch.
+        /// </summary>
+        private static GltfInteractivityNodeSchema SchemaFor(string op, Dictionary<string, string> inputTypes)
         {
             if (schemasByOp == null)
             {
-                var schemas = new Dictionary<string, GltfInteractivityNodeSchema>();
+                var schemas = new Dictionary<string, List<GltfInteractivityNodeSchema>>();
                 foreach (var type in typeof(GltfInteractivityNodeSchema).Assembly.GetTypes())
                 {
                     if (type.IsAbstract || !typeof(GltfInteractivityNodeSchema).IsAssignableFrom(type) || type.GetConstructor(Type.EmptyTypes) == null)
@@ -534,8 +538,11 @@ namespace UnityGLTF.Interactivity.Export
                     try
                     {
                         var schema = (GltfInteractivityNodeSchema)Activator.CreateInstance(type);
-                        if (!string.IsNullOrEmpty(schema.Op) && !schemas.ContainsKey(schema.Op))
-                            schemas.Add(schema.Op, schema);
+                        if (string.IsNullOrEmpty(schema.Op))
+                            continue;
+                        if (!schemas.TryGetValue(schema.Op, out var overloads))
+                            schemas.Add(schema.Op, overloads = new List<GltfInteractivityNodeSchema>());
+                        overloads.Add(schema);
                     }
                     catch (Exception)
                     {
@@ -544,7 +551,21 @@ namespace UnityGLTF.Interactivity.Export
                 }
                 schemasByOp = schemas;
             }
-            return schemasByOp.TryGetValue(op, out var result) ? result : null;
+            if (!schemasByOp.TryGetValue(op, out var candidates))
+                return null;
+            return candidates.FirstOrDefault(candidate => AcceptsInputTypes(candidate, inputTypes)) ?? candidates[0];
+        }
+
+        private static bool AcceptsInputTypes(GltfInteractivityNodeSchema schema, Dictionary<string, string> inputTypes)
+        {
+            foreach (var input in schema.InputValueSockets)
+            {
+                var supported = input.Value.SupportedTypes;
+                if (supported != null && supported.Length > 0 && inputTypes.TryGetValue(input.Key, out var actual)
+                    && Array.IndexOf(supported, actual) < 0)
+                    return false;
+            }
+            return true;
         }
 
         /// <summary>

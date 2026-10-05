@@ -79,5 +79,36 @@ namespace UnityGLTF.Interactivity
                 @"[ { ""type"": 1, ""value"": [ 0.0 ] } ]"));
             Assert.That(issues, Has.Some.Contains("variable/set: input \"0\" is float3, but the variable is float"));
         }
+
+        // math/transform has one schema per overload (float2/float3/float4), the validator must pick the matching one.
+        // types: 0 = float3, 1 = float4, 2 = float4x4
+        private static JObject TransformExtension(int aType, string aValue)
+        {
+            var identity = "[ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]";
+            return JObject.Parse($@"{{ ""graphs"": [ {{
+                ""types"": [ {{ ""signature"": ""float3"" }}, {{ ""signature"": ""float4"" }}, {{ ""signature"": ""float4x4"" }} ],
+                ""variables"": [ {{ ""type"": 1, ""value"": [ 0.0, 0.0, 0.0, 0.0 ] }} ],
+                ""declarations"": [ {{ ""op"": ""math/transform"" }}, {{ ""op"": ""math/dot"" }}, {{ ""op"": ""variable/set"" }} ],
+                ""nodes"": [
+                    {{ ""declaration"": 0, ""values"": {{ ""a"": {{ ""type"": {aType}, ""value"": {aValue} }}, ""b"": {{ ""type"": 2, ""value"": {identity} }} }} }},
+                    {{ ""declaration"": 1, ""values"": {{ ""a"": {{ ""node"": 0, ""socket"": ""value"" }}, ""b"": {{ ""type"": 1, ""value"": [ 1.0, 2.0, 3.0, 4.0 ] }} }} }},
+                    {{ ""declaration"": 2, ""configuration"": {{ ""variables"": {{ ""value"": [ 0 ] }} }},
+                       ""values"": {{ ""0"": {{ ""node"": 0, ""socket"": ""value"" }} }} }} ]
+            }} ], ""graph"": 0 }}");
+        }
+
+        [Test]
+        public void TransformFloat4_IsAccepted()
+        {
+            var issues = TypeIssues(TransformExtension(1, "[ 1.0, 2.0, 3.0, 4.0 ]"));
+            Assert.That(issues, Is.Empty);
+        }
+
+        [Test]
+        public void TransformFloat3WithFloat4x4_IsRejected()
+        {
+            var issues = TypeIssues(TransformExtension(0, "[ 1.0, 2.0, 3.0 ]"));
+            Assert.That(issues, Has.Some.Contains("math/transform: input"));
+        }
     }
 }
