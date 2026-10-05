@@ -4,6 +4,42 @@ using System.IO;
 
 namespace GLTF
 {
+	public enum GLBChunkFormat : uint
+	{
+		JSON = 0x4e4f534a, // ASCII string "JSON" in little-endian order.
+		BIN = 0x004e4942 // ASCII string "BIN\0" in little-endian order.
+	}
+
+	/// <summary>
+	/// Information containing parsed GLB Header
+	/// </summary>
+	public struct GLBHeader
+	{
+		public uint Version { get; set; }
+		public long FileLength { get; set; }
+
+		public long GetFileHeaderSize() => Version == 2 ? 12 : 16;
+		public long GetChunkHeaderSize() => Version == 2 ? 8 : 16;
+		public long GetAlignment() => Version == 2 ? 4 : 8;
+		public long GetAlignmentBitmask() => Version == 2 ? 3 : 7;
+
+		/// <summary>
+		/// ASCII string "glTF" in little-endian order.
+		/// </summary>
+		public static readonly uint GLTF_MAGIC_NUMBER = 0x46546C67;
+	}
+
+	/// <summary>
+	/// Information that contains parsed chunk
+	/// </summary>
+	public struct GLBChunkInfo
+	{
+		public long StartPosition;
+		public long Length;
+		public GLBChunkFormat Type;
+		public uint Encoding;
+	}
+
 	/// <summary>
 	/// Objects containing GLB data and associated parsing information
 	/// </summary>
@@ -41,22 +77,22 @@ namespace GLTF
 		/// <summary>
 		/// Information on JSON chunk
 		/// </summary>
-		public ChunkInfo JsonChunkInfo { get { return _jsonChunkInfo; } internal set { _jsonChunkInfo = value; } }
+		public GLBChunkInfo JsonChunkInfo { get { return _jsonChunkInfo; } internal set { _jsonChunkInfo = value; } }
 
 		/// <summary>
 		/// Information on Binary chunk
 		/// </summary>
-		public ChunkInfo BinaryChunkInfo { get { return _binaryChunkInfo; } internal set { _binaryChunkInfo = value; } }
+		public GLBChunkInfo BinaryChunkInfo { get { return _binaryChunkInfo; } internal set { _binaryChunkInfo = value; } }
 
 		private GLBHeader _glbHeader;
-		private ChunkInfo _jsonChunkInfo;
-		private ChunkInfo _binaryChunkInfo;
+		private GLBChunkInfo _jsonChunkInfo;
+		private GLBChunkInfo _binaryChunkInfo;
 
 		internal GLBObject()
 		{
 		}
 
-		internal void SetFileLength(uint newHeaderLength)
+		internal void SetFileLength(long newHeaderLength)
 		{
 			_glbHeader.FileLength = newHeaderLength;
 		}
@@ -66,7 +102,7 @@ namespace GLTF
 			_jsonChunkInfo.StartPosition = startPosition;
 		}
 
-		internal void SetJsonChunkLength(uint jsonChunkLength)
+		internal void SetJsonChunkLength(long jsonChunkLength)
 		{
 			_jsonChunkInfo.Length = jsonChunkLength;
 		}
@@ -76,7 +112,7 @@ namespace GLTF
 			_binaryChunkInfo.StartPosition = startPosition;
 		}
 
-		internal void SetBinaryChunkLength(uint binaryChunkLength)
+		internal void SetBinaryChunkLength(long binaryChunkLength)
 		{
 			_binaryChunkInfo.Length = binaryChunkLength;
 			if (Root.Buffers == null)

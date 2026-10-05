@@ -396,7 +396,7 @@ namespace UnityGLTF.Timeline
 				logger = new Logger(logHandler),
 			});
 
-			exporter.SaveGLBToStream(stream, sceneName);
+			exporter.SaveGLBToStream(stream, sceneName, 2);
 
 			logHandler.LogAndClear("Export Messages:\n{0}");
 		}
