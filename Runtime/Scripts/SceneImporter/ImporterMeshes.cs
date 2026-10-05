@@ -824,6 +824,13 @@ namespace UnityGLTF
 					BufferId bufferIdPair = null;
 					if (targetAttribute.Value.Value.Sparse == null)
 					{
+						// Accessor without bufferView and without sparse is all zeros (valid per spec, e.g. Blender exports
+						// unchanged morph target normals this way). Skip it, the morph target arrays are zero-initialized.
+						if (targetAttribute.Value.Value.BufferView == null)
+						{
+							continue;
+						}
+
 						bufferIdPair = targetAttribute.Value.Value.BufferView.Value.Buffer;
 					}
 					else
