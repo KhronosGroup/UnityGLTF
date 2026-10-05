@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.22.1] - 2026-10-05
+- fix: null ref on import for morph target accessors without bufferView and sparse (valid per spec, e.g. Blender exports unchanged morph target normals this way)
+- fix: `KHR_interactivity`: export validator picked the wrong schema for operations with multiple overloads (e.g. `math/transform` with float4)
+- fix: missing .meta file
+- 
 ## [2.22.0] - 2026-10-02
 - add: Asset Importer > root motion support for Mecanim (generic) imports, consistent with the FBX importer: set a Root Node Name, clips get root motion curves (#877)
 - add: Asset Importer > hierarchy dropdown for the Root Node Name field
