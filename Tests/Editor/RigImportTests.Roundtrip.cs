@@ -6,6 +6,8 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 using UnityEngine.TestTools;
 using UnityGLTF;
 
@@ -20,6 +22,7 @@ public partial class RigImportTests
 	private const float AngleTolerance = 0.1f;
 	private const float CurveTolerance = 1e-3f;
 	private const float CurveAngleTolerance = 0.5f;
+	private const float HumanPoseTolerance = 2e-3f;
 	// Matches AnimationBakingFramerate in ExporterAnimation.cs
 	private const float ExportFrameRate = 30;
 
@@ -261,6 +264,85 @@ public partial class RigImportTests
 		}
 	}
 
+	/// <summary>
+	/// Exports an instance of the humanoid import with an AnimatorController that has a state for each of the given clips.
+	/// </summary>
+	private static byte[] ExportHumanoid(string fileName, string[] clipNames, System.Action<GameObject, AnimatorState[]> check = null, bool applyRootMotion = true)
+	{
+		var path = Import(HumanoidArmature, AnimationMethod.MecanimHumanoid);
+		var model = LoadModel(path);
+		var instance = Object.Instantiate(model);
+		instance.name = model.name;
+		var controller = new AnimatorController { name = "Export" };
+		var settings = ScriptableObject.CreateInstance<GLTFSettings>();
+		try
+		{
+			controller.AddLayer("Base Layer");
+			var states = LoadClips(path).Where(c => clipNames.Contains(c.name)).Select(clip =>
+			{
+				var state = controller.layers[0].stateMachine.AddState(clip.name);
+				state.motion = clip;
+				return state;
+			}).ToArray();
+			Assert.AreEqual(clipNames.Length, states.Length, "Clips missing in the test asset");
+			var animator = instance.GetComponent<Animator>();
+			animator.runtimeAnimatorController = controller;
+			animator.applyRootMotion = applyRootMotion;
+			// Place the character somewhere else than the origin, the export must keep that
+			instance.transform.position = new Vector3(2, 0, 3);
+
+			settings.UseMainCameraVisibility = false;
+			var exporter = new GLTFSceneExporter(instance.transform, new ExportContext(settings));
+			var bytes = exporter.SaveGLBToByteArray(fileName);
+			check?.Invoke(instance, states);
+			return bytes;
+		}
+		finally
+		{
+			Object.DestroyImmediate(instance);
+			Object.DestroyImmediate(controller);
+			Object.DestroyImmediate(settings);
+		}
+	}
+
+	[Test]
+	public void Export_Humanoid_KeepsAnimatorControllerStates()
+	{
+		// Sampling a humanoid clip used to undo the whole current undo group, which also contained the creation of the
+		// AnimatorController states: the next state was destroyed before its clip was exported
+		var bytes = ExportHumanoid("Export_HumanoidStates", new[] { "Walk", "Idle" }, (instance, states) =>
+		{
+			foreach (var state in states)
+				Assert.IsTrue(state, "Exporting destroyed an AnimatorController state");
+		});
+		var json = GltfFile.Parse(bytes);
+		CollectionAssert.AreEquivalent(new[] { "Walk", "Idle" }, json["animations"].Select(a => (string)a["name"]));
+	}
+
+	[TestCase(true)]
+	[TestCase(false)]
+	public void Export_HumanoidRootMotion_IsExportedOnTheHips(bool applyRootMotion)
+	{
+		// glTF has no root motion, so it's exported on the hips (the character moves like in Unity). A track on the root node
+		// would move the character away from where it's placed. Without Apply Root Motion the clip plays in place in Unity,
+		// and it's exported like that.
+		var bytes = ExportHumanoid("Export_HumanoidRootMotion" + applyRootMotion, new[] { "Walk" }, applyRootMotion: applyRootMotion);
+		var json = GltfFile.Parse(bytes);
+		var animation = json["animations"].Single(a => (string)a["name"] == "Walk");
+		string NodeName(Newtonsoft.Json.Linq.JToken channel) => (string)json["nodes"][(int)channel["target"]["node"]]["name"];
+
+		CollectionAssert.DoesNotContain(animation["channels"].Select(NodeName), "Humanoid_Armature", "The root node shouldn't be animated");
+		var root = json["nodes"].Single(n => (string)n["name"] == "Humanoid_Armature");
+		Assert.AreEqual(3f, (float)root["translation"][2], PositionTolerance, "Position of the root node");
+
+		var hips = animation["channels"].Single(c => NodeName(c) == "Hips" && (string)c["target"]["path"] == "translation");
+		var translations = GltfFile.ReadAccessor(bytes, json, (int)animation["samplers"][(int)hips["sampler"]]["output"]);
+		var first = new Vector3(translations[0][0], translations[0][1], translations[0][2]);
+		var last = new Vector3(translations.Last()[0], translations.Last()[1], translations.Last()[2]);
+		// Walk moves the hips 1.2m forward in 1s
+		Assert.AreEqual(applyRootMotion ? 1.2f : 0f, Vector3.ProjectOnPlane(last - first, Vector3.up).magnitude, 0.01f, $"Hips moved from {first} to {last}");
+	}
+
 	#region Roundtrip helpers
 
 	/// <summary>
@@ -390,6 +472,10 @@ public partial class RigImportTests
 			var expectedBindings = AnimationUtility.GetCurveBindings(expected);
 			var actualBindings = AnimationUtility.GetCurveBindings(actual);
 			string Key(EditorCurveBinding b) => $"{b.path}|{b.type.Name}|{b.propertyName}";
+			// Transform rotations and the Animator's root motion, body and IK goal rotations (MotionQ, RootQ, LeftFootQ, ...)
+			bool IsMuscle(EditorCurveBinding b) => b.type == typeof(Animator) && !Regex.IsMatch(b.propertyName, @"^(Root|Motion|LeftFoot|RightFoot|LeftHand|RightHand)[TQ]\.");
+			bool IsRotation(EditorCurveBinding b) => b.propertyName.StartsWith("m_LocalRotation.") ||
+				b.type == typeof(Animator) && b.propertyName.IndexOf('.') > 0 && b.propertyName[b.propertyName.IndexOf('.') - 1] == 'Q';
 			CollectionAssert.AreEquivalent(expectedBindings.Select(Key), actualBindings.Select(Key), $"Animated properties of clip \"{expected.name}\"");
 
 			// The exporter resamples animations at a fixed frame rate (keys in between are lost), so compare at those times.
@@ -398,7 +484,8 @@ public partial class RigImportTests
 			var actualByKey = actualBindings.ToDictionary(Key);
 			foreach (var binding in expectedBindings)
 			{
-				if (binding.propertyName.StartsWith("m_LocalRotation.") || binding.propertyName.StartsWith("MotionQ.")) continue;
+				// Muscles are compared by the pose they result in, see AssertHumanPosesEqual
+				if (IsRotation(binding) || expected.humanMotion && IsMuscle(binding)) continue;
 				var expectedCurve = AnimationUtility.GetEditorCurve(expected, binding);
 				var actualCurve = AnimationUtility.GetEditorCurve(actual, actualByKey[Key(binding)]);
 				for (var i = 0; i < samples; i++)
@@ -410,7 +497,7 @@ public partial class RigImportTests
 			}
 
 			foreach (var group in expectedBindings
-				         .Where(b => b.propertyName.StartsWith("m_LocalRotation.") || b.propertyName.StartsWith("MotionQ."))
+				         .Where(IsRotation)
 				         .GroupBy(b => (b.path, b.type, prefix: b.propertyName.Substring(0, b.propertyName.IndexOf('.')))))
 			{
 				var (bindingPath, type, prefix) = group.Key;
@@ -429,6 +516,66 @@ public partial class RigImportTests
 						$"Clip \"{expected.name}\", \"{bindingPath}\" {prefix} at {time:F3}s: {e.eulerAngles:F2} vs {a.eulerAngles:F2}");
 				}
 			}
+
+			if (expected.humanMotion)
+				AssertHumanPosesEqual(expectedPath, actualPath, expected, actual, samples);
+		}
+	}
+
+	/// <summary>
+	/// Plays both humanoid clips and compares the positions of the human bones. The muscle curves can't be compared one by one:
+	/// when Unity plays a humanoid clip it spreads the twist of arms and legs over their bones, so a clip that was sampled and
+	/// imported again has different twist muscles for the same joint positions.
+	/// </summary>
+	private static void AssertHumanPosesEqual(string expectedPath, string actualPath, AnimationClip expected, AnimationClip actual, int samples)
+	{
+		var expectedInstance = Object.Instantiate(LoadModel(expectedPath));
+		var actualInstance = Object.Instantiate(LoadModel(actualPath));
+		var graphs = new List<PlayableGraph>();
+		try
+		{
+			AnimationClipPlayable Play(GameObject instance, AnimationClip clip)
+			{
+				var graph = PlayableGraph.Create("RigImportTests");
+				graphs.Add(graph);
+				graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
+				var animator = instance.GetComponent<Animator>();
+				// Root motion is compared with the RootT / RootQ curves
+				animator.applyRootMotion = false;
+				var playable = AnimationClipPlayable.Create(graph, clip);
+				playable.SetApplyFootIK(false);
+				AnimationPlayableOutput.Create(graph, "Animation", animator).SetSourcePlayable(playable);
+				graph.Play();
+				return playable;
+			}
+
+			var expectedPlayable = Play(expectedInstance, expected);
+			var actualPlayable = Play(actualInstance, actual);
+			var boneNames = expectedInstance.GetComponent<Animator>().avatar.humanDescription.human.Select(b => b.boneName).ToArray();
+			Transform[] Bones(GameObject instance) => boneNames.Select(n => instance.GetComponentsInChildren<Transform>(true).First(t => t.name == n)).ToArray();
+			var expectedBones = Bones(expectedInstance);
+			var actualBones = Bones(actualInstance);
+
+			for (var i = 0; i < samples; i++)
+			{
+				var time = expected.length * i / (samples - 1);
+				expectedPlayable.SetTime(time);
+				actualPlayable.SetTime(time);
+				foreach (var graph in graphs) graph.Evaluate(0);
+				for (var b = 0; b < boneNames.Length; b++)
+				{
+					var e = expectedInstance.transform.InverseTransformPoint(expectedBones[b].position);
+					var a = actualInstance.transform.InverseTransformPoint(actualBones[b].position);
+					Assert.Less(Vector3.Distance(e, a), HumanPoseTolerance,
+						$"Clip \"{expected.name}\", position of \"{boneNames[b]}\" at {time:F3}s: {e:F4} vs {a:F4}");
+				}
+			}
+		}
+		finally
+		{
+			foreach (var graph in graphs) graph.Destroy();
+			Object.DestroyImmediate(expectedInstance);
+			Object.DestroyImmediate(actualInstance);
 		}
 	}
 
