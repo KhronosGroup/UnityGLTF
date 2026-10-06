@@ -595,7 +595,10 @@ namespace UnityGLTF
 					Avatar avatar = null;
 
 					if (_importAnimations == AnimationMethod.MecanimHumanoid)
+					{
 						avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
+						HumanoidSetup.ConvertClipsToHumanoid(gltfScene, avatar, animations);
+					}
 					// Only create a generic avatar when it's used: for the file's own animations, or for root motion
 					// with clips from other files. Otherwise every static model would get an unused avatar sub-asset.
 					else if (_importAnimations == AnimationMethod.Mecanim && (m_HasAnimationData || !string.IsNullOrEmpty(_nonHumanoidRootNodeName)))

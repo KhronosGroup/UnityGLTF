@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -28,6 +29,8 @@ public partial class RigImportTests
 	private const string HumanoidMixamo = "Humanoid_Mixamo.glb";
 	private const string HumanoidAPose = "Humanoid_APose.glb";
 	private const string HumanoidUnrealNames = "Humanoid_UnrealNames.glb";
+	// Humanoid_Armature with a "Prop" below RightHand: Walk also spins it, PropOnly only moves the prop
+	private const string HumanoidProps = "Humanoid_Props.glb";
 
 	[OneTimeSetUp]
 	public void OneTimeSetUp()
@@ -499,6 +502,160 @@ public partial class RigImportTests
 
 		Assert.Less(instanceOffset.magnitude, 0.01f, $"Without a root node the instance shouldn't move, but it moved {instanceOffset}");
 		Assert.Greater(Vector3.ProjectOnPlane(rootNodeOffset, Vector3.up).magnitude, 0.5f, "The Root node itself should be animated");
+	}
+
+	#endregion
+
+	#region Humanoid clips
+
+	// https://github.com/KhronosGroup/UnityGLTF/issues/916: humanoid clips used to stay generic (transform curves), so they
+	// couldn't be retargeted and the Animator didn't extract root motion from them
+
+	[TestCase(HumanoidArmature)]
+	[TestCase(HumanoidMixamo)]
+	[TestCase(HumanoidAPose)]
+	[TestCase(HumanoidUnrealNames)]
+	public void Humanoid_ClipsAreHumanoidClips(string file)
+	{
+		var path = Import(file, AnimationMethod.MecanimHumanoid);
+		var model = LoadModel(path);
+		var humanBones = new HashSet<string>(LoadAvatar(path).humanDescription.human.Select(b => b.boneName));
+		var animatorProperties = new HashSet<string>(AnimationUtility.GetAnimatableBindings(model, model)
+			.Where(b => b.type == typeof(Animator)).Select(b => b.propertyName));
+
+		foreach (var clip in LoadClips(path))
+		{
+			Assert.IsTrue(clip.humanMotion, $"Clip \"{clip.name}\" should be a humanoid clip");
+			var bindings = AnimationUtility.GetCurveBindings(clip);
+			foreach (var binding in bindings.Where(b => b.type == typeof(Transform)))
+				Assert.IsFalse(humanBones.Contains(binding.path.Split('/').Last()), $"Clip \"{clip.name}\" still has a transform curve for the human bone \"{binding.path}\"");
+
+			var properties = bindings.Where(b => b.type == typeof(Animator)).Select(b => b.propertyName).ToArray();
+			foreach (var property in properties)
+				Assert.IsTrue(animatorProperties.Contains(property), $"Clip \"{clip.name}\" animates \"{property}\", which isn't a property of the humanoid Animator");
+			foreach (var property in new[] { "RootT.x", "RootQ.w", "LeftFootT.y", "RightFootQ.w", "LeftHandT.z", "RightHandQ.x", "Spine Front-Back", "Left Upper Leg Front-Back", "LeftHand.Thumb.1 Stretched" })
+				CollectionAssert.Contains(properties, property, $"Clip \"{clip.name}\"");
+		}
+	}
+
+	[TestCase(HumanoidArmature, true)]
+	[TestCase(HumanoidArmature, false)]
+	[TestCase(HumanoidMixamo, true)]
+	public void Humanoid_RootMotionMovesInstance(string file, bool removeEmptyRoots)
+	{
+		var path = Import(file, AnimationMethod.MecanimHumanoid, removeEmptyRoots: removeEmptyRoots);
+		var (instanceOffset, _) = PlayClip(path, "Walk", 0.9f);
+
+		// Walk moves the hips 1.2m forward in 1s; with root motion that movement is applied to the instance
+		Assert.AreEqual(1.08f, instanceOffset.z, 0.02f, $"Root motion should move the instance, but it moved {instanceOffset}");
+		Assert.Less(Mathf.Abs(instanceOffset.x), 0.01f, $"The instance should only move forward, but it moved {instanceOffset}");
+	}
+
+	[TestCase(HumanoidArmature, "Walk", false)]
+	[TestCase(HumanoidArmature, "Idle", false)]
+	[TestCase(HumanoidArmature, "Walk", true)]
+	[TestCase(HumanoidMixamo, "Walk", false)]
+	[TestCase(HumanoidAPose, "Walk", false)]
+	// Not Idle for the Unreal names: its avatar has no Chest (Unity's auto mapping skips spine_02), so the chest rotation of Idle can't be played exactly
+	[TestCase(HumanoidUnrealNames, "Walk", false)]
+	public void Humanoid_ClipPlaysTheOriginalPose(string file, string clipName, bool humanoidFlip)
+	{
+		// With root motion the instance moves, so the bones are compared in world space: that also covers the body position.
+		// Muscle space can't represent every pose exactly (e.g. the arms of the A-pose rig are a few mm off).
+		var (maxDistance, worst) = CompareWithGenericImport(file, clipName, humanoidFlip, footIK: false, goalBonesOnly: false);
+		Assert.Less(maxDistance, 0.01f, $"The humanoid clip should play the pose of the generic clip, but {worst} is {maxDistance:F4}m off");
+	}
+
+	[TestCase(HumanoidArmature, "Walk")]
+	[TestCase(HumanoidMixamo, "Idle")]
+	[TestCase(HumanoidAPose, "Walk")]
+	public void Humanoid_FootIK_KeepsHandsAndFeetInPlace(string file, string clipName)
+	{
+		// Foot IK (on by default for clip playables and in Timeline) uses the IK goal curves. Without them the feet are
+		// pulled up to the body. The knees may still bend differently, since IK doesn't fully stretch the legs.
+		var (maxDistance, worst) = CompareWithGenericImport(file, clipName, false, footIK: true, goalBonesOnly: true);
+		Assert.Less(maxDistance, 0.005f, $"With Foot IK hands and feet should stay where the clip has them, but {worst} is {maxDistance:F4}m off");
+	}
+
+	[Test]
+	public void Humanoid_ClipsKeepCurvesOfOtherTransforms()
+	{
+		var path = Import(HumanoidProps, AnimationMethod.MecanimHumanoid);
+		var clips = LoadClips(path);
+		AssertClipBindingsResolve(path);
+
+		var walk = clips.Single(c => c.name == "Walk");
+		Assert.IsTrue(walk.humanMotion);
+		Assert.IsTrue(AnimationUtility.GetCurveBindings(walk).Any(b => b.type == typeof(Transform) && b.path.EndsWith("/Prop") && b.propertyName.StartsWith("m_LocalRotation")),
+			"The humanoid Walk clip should keep the rotation curves of the prop, which isn't part of the human skeleton");
+
+		// A clip that doesn't move the skeleton stays generic, so it doesn't lock the body when played on another layer
+		var propOnly = clips.Single(c => c.name == "PropOnly");
+		Assert.IsFalse(propOnly.humanMotion, "PropOnly doesn't animate the skeleton and should stay generic");
+		CollectionAssert.IsEmpty(AnimationUtility.GetCurveBindings(propOnly).Where(b => b.type == typeof(Animator)), "PropOnly shouldn't get muscle curves");
+	}
+
+	/// <summary>
+	/// Plays a clip of the humanoid import (with root motion) and samples the same clip of a generic import of the file.
+	/// Returns the largest distance between the human bones of both, or only between hands and feet.
+	/// </summary>
+	private static (float maxDistance, string worst) CompareWithGenericImport(string file, string clipName, bool humanoidFlip, bool footIK, bool goalBonesOnly)
+	{
+		var path = $"{TempFolder}/{file}";
+		if (!File.Exists(path)) CopyTestAsset(file, path);
+		Reimport(path, AnimationMethod.MecanimHumanoid, humanoidFlip: humanoidFlip);
+		var genericPath = $"{TempFolder}/Generic_{file}";
+		if (!File.Exists(genericPath)) CopyTestAsset(file, genericPath);
+		Reimport(genericPath, AnimationMethod.Mecanim);
+
+		var goalBones = new[] { "LeftFoot", "RightFoot", "LeftHand", "RightHand" };
+		var boneNames = LoadAvatar(path).humanDescription.human
+			.Where(b => !goalBonesOnly || goalBones.Contains(b.humanName))
+			.Select(b => b.boneName).ToArray();
+
+		var clip = LoadClips(path).Single(c => c.name == clipName);
+		var genericClip = LoadClips(genericPath).Single(c => c.name == clipName);
+		var instance = Object.Instantiate(LoadModel(path));
+		var genericInstance = Object.Instantiate(LoadModel(genericPath));
+		var graph = PlayableGraph.Create("RigImportTests");
+		try
+		{
+			Transform[] Bones(GameObject go) => boneNames.Select(n => go.GetComponentsInChildren<Transform>(true).First(t => t.name == n)).ToArray();
+			var bones = Bones(instance);
+			var genericBones = Bones(genericInstance);
+
+			graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
+			var playable = AnimationClipPlayable.Create(graph, clip);
+			playable.SetApplyFootIK(footIK);
+			AnimationPlayableOutput.Create(graph, "Animation", instance.GetComponent<Animator>()).SetSourcePlayable(playable);
+			graph.Play();
+
+			var maxDistance = 0f;
+			var worst = "";
+			const float step = 1f / 30;
+			var frames = Mathf.FloorToInt(clip.length / step);
+			for (var frame = 0; frame < frames; frame++)
+			{
+				// The Animator moves the instance by the root motion of each step, so the clip is played step by step
+				graph.Evaluate(frame == 0 ? 0 : step);
+				var time = frame * step;
+				genericClip.SampleAnimation(genericInstance, time);
+				for (var i = 0; i < bones.Length; i++)
+				{
+					var distance = Vector3.Distance(bones[i].position, genericBones[i].position);
+					if (distance <= maxDistance) continue;
+					maxDistance = distance;
+					worst = $"\"{boneNames[i]}\" at {time:F2}s";
+				}
+			}
+			return (maxDistance, worst);
+		}
+		finally
+		{
+			graph.Destroy();
+			Object.DestroyImmediate(instance);
+			Object.DestroyImmediate(genericInstance);
+		}
 	}
 
 	#endregion
