@@ -16,6 +16,8 @@ namespace UnityGLTF.Interactivity
         {
             this.pointer = pointer;
         }
+
+        public override string ToString() => pointer;
     }
 
     /// <summary>
