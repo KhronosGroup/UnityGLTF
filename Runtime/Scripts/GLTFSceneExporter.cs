@@ -729,7 +729,8 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = GetFileName(path, fileName, ".glb");
+			// long path to support output paths exceeding MAX_PATH on Windows
+			var fullPath = LongPath.ToLongPath(GetFileName(path, fileName, ".glb"));
 			var dirName = Path.GetDirectoryName(fullPath);
 			if (dirName != null && !Directory.Exists(dirName))
 				Directory.CreateDirectory(dirName);
@@ -872,7 +873,8 @@ namespace UnityGLTF
 				fileName = fileName.Substring(0, fileName.Length - 5);
 			if (toLower.EndsWith(".bin"))
 				fileName = fileName.Substring(0, fileName.Length - 4);
-			var fullPath = GetFileName(path, fileName, ".bin");
+			// long path to support output paths exceeding MAX_PATH on Windows
+			var fullPath = LongPath.ToLongPath(GetFileName(path, fileName, ".bin"));
 			var dirName = Path.GetDirectoryName(fullPath);
 			if (dirName != null && !Directory.Exists(dirName))
 				Directory.CreateDirectory(dirName);
@@ -1348,7 +1350,7 @@ namespace UnityGLTF
 			{
 				var fileInfo = _fileInfos[i];
 
-				var fileOutputPath = Path.Combine(outputPath, fileInfo.uniqueFileName);
+				var fileOutputPath = LongPath.ToLongPath(Path.Combine(outputPath, fileInfo.uniqueFileName));
 
 				var dir = Path.GetDirectoryName(fileOutputPath);
 				if (!Directory.Exists(dir) && dir != null)

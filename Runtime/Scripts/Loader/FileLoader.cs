@@ -68,7 +68,7 @@ namespace UnityGLTF.Loader
 #if UNITY_EDITOR
 			string path = CombinePaths(_rootDirectoryPath, relativeFilePath);
 
-			if (!File.Exists(path))
+			if (!File.Exists(LongPath.ToLongPath(path)))
 			{
 				// Manual combine path with relativeFilePath
 				path = CombinePaths(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");
@@ -98,16 +98,18 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(relativeFilePath));
 			}
 
-			if (File.Exists(relativeFilePath))
-				return File.OpenRead(relativeFilePath);
+			// long paths since the project path + asset path can exceed MAX_PATH on Windows
+			var longRelativeFilePath = LongPath.ToLongPath(relativeFilePath);
+			if (File.Exists(longRelativeFilePath))
+				return File.OpenRead(longRelativeFilePath);
 
 			string pathToLoad = Path.Combine(_rootDirectoryPath, relativeFilePath);
-			if (!File.Exists(pathToLoad))
+			if (!File.Exists(LongPath.ToLongPath(pathToLoad)))
 			{
 				pathToLoad = Uri.UnescapeDataString(Path.Combine(_rootDirectoryPath, relativeFilePath));
 			}
 
-			if (!File.Exists(pathToLoad))
+			if (!File.Exists(LongPath.ToLongPath(pathToLoad)))
 			{
 				if (relativeFilePath.ToLowerInvariant().EndsWith(".bin"))
 					throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad, relativeFilePath);
@@ -117,7 +119,7 @@ namespace UnityGLTF.Loader
 				return new InvalidStream(relativeFilePath, _rootDirectoryPath, pathToLoad);
 			}
 
-			return File.OpenRead(pathToLoad);
+			return File.OpenRead(LongPath.ToLongPath(pathToLoad));
 		}
 
 		internal class InvalidStream: MemoryStream

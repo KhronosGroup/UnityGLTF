@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+- fix: export, export cache and import failing on Windows when file paths exceed 260 characters
+
 ## [2.22.1] - 2026-10-05
 - fix: null ref on import for morph target accessors without bufferView and sparse (valid per spec, e.g. Blender exports unchanged morph target normals this way)
 - fix: `KHR_interactivity`: export validator picked the wrong schema for operations with multiple overloads (e.g. `math/transform` with float4)

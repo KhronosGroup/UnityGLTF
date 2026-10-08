@@ -40,7 +40,8 @@ namespace UnityGLTF.Cache
 			if (asset is Texture tex)
 				seed += $"_{tex.updateCount}";
 			
-			return CacheDirectory + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed;
+			// long path since the cache directory + id can exceed MAX_PATH on Windows
+			return LongPath.ToLongPath(CacheDirectory + "/" + GlobalObjectId.GetGlobalObjectIdSlow(asset) + seed);
 		}
 #endif
 
@@ -62,7 +63,7 @@ namespace UnityGLTF.Cache
 		public static void AddBytes(Object asset, string seed, byte[] bytes)
 		{
 #if UNITY_EDITOR
-			var dir = CacheDirectory;
+			var dir = LongPath.ToLongPath(CacheDirectory);
 			Directory.CreateDirectory(dir);
 			var path = GetPath(asset, seed);
 			// Debug.Log($"Writing {bytes.Length} bytes to cache: {path}");
@@ -72,7 +73,7 @@ namespace UnityGLTF.Cache
 
 		public static void Clear()
 		{
-			var dir = CacheDirectory;
+			var dir = LongPath.ToLongPath(CacheDirectory);
 			if (Directory.Exists(dir))
 			{
 				Directory.Delete(dir, true);
@@ -104,7 +105,7 @@ namespace UnityGLTF.Cache
 
 		public static long CalculateCacheSize(ICollection<FileInfo> files = null)
 		{
-			var dir = CacheDirectory;
+			var dir = LongPath.ToLongPath(CacheDirectory);
 			if (!Directory.Exists(dir)) return 0;
 			var filePaths = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
 			long size = 0;

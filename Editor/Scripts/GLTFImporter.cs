@@ -226,16 +226,17 @@ namespace UnityGLTF
 	        void CheckAndAddDependency(string uri)
 	        {
 		        var combinedPath = FileLoader.CombinePaths(dir, uri);
-		        if (!File.Exists(Path.Combine(dir, uri)))
+		        // long paths since the project path + asset path can exceed MAX_PATH on Windows
+		        if (!File.Exists(LongPath.ToLongPath(Path.Combine(dir, uri))))
 			        uri = Uri.UnescapeDataString(uri);
-		        if (File.Exists(combinedPath))
+		        if (File.Exists(LongPath.ToLongPath(combinedPath)))
 					dependencies.Add(combinedPath);
 		        // TODO check if inside the project/any package, could be an absolute path
-		        else if (File.Exists(uri))
+		        else if (File.Exists(LongPath.ToLongPath(uri)))
 			        dependencies.Add(uri);
 	        }
 
-	        using (var reader = new StreamReader(path))
+	        using (var reader = new StreamReader(LongPath.ToLongPath(path)))
 	        {
 		        try
 		        {
@@ -1059,7 +1060,7 @@ namespace UnityGLTF
 			    DeduplicateResources = _deduplicateResources,
 		    };
 
-		    using (var stream = File.OpenRead(projectFilePath))
+		    using (var stream = File.OpenRead(LongPath.ToLongPath(projectFilePath)))
 		    {
 			    GLTFParser.ParseJson(stream, out var gltfRoot);
 			    

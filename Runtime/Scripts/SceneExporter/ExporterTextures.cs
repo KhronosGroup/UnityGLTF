@@ -56,6 +56,8 @@ namespace UnityGLTF
 				var textureMapType = _imageInfos[t].textureMapType;
 				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
 				_imageExportPaths.Add(fileOutputPath);
+				// long path to support output paths exceeding MAX_PATH on Windows
+				fileOutputPath = LongPath.ToLongPath(fileOutputPath);
 
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
@@ -435,7 +437,7 @@ namespace UnityGLTF
 						break;
 				}
 
-				if (File.Exists(path))
+				if (File.Exists(LongPath.ToLongPath(path)))
 				{
 					if(AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(Texture2D))
 					{
@@ -452,7 +454,8 @@ namespace UnityGLTF
 		private byte[] GetTextureDataFromDisk(Texture texture)
 		{
 #if UNITY_EDITOR
-			var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+			// long path since the project path + asset path can exceed MAX_PATH on Windows
+			var path = LongPath.ToLongPath(UnityEditor.AssetDatabase.GetAssetPath(texture));
 
 			if (File.Exists(path))
 				return File.ReadAllBytes(path);
