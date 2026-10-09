@@ -27,10 +27,14 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             if (!UnitsHelper.GetDefaultValue(unit, "%type", out Type type))
                 return false;
+#if UNITY_6000_5_OR_NEWER
+            var objects = Object.FindObjectsByType(type);
+#else
             if (!UnitsHelper.GetDefaultValue(unit, "%sortMode", out FindObjectsSortMode sortMode)) 
                 return false;
 
             var objects = Object.FindObjectsByType(type, FindObjectsSortMode.None);
+#endif
             var transforms = objects.Select(obj =>
             {
                 if (obj is Transform transform)

@@ -28,7 +28,7 @@ namespace UnityGLTF
 		static Texture BoneAssignmentDotFrameDottedIcon;
 
 		static string[] boneGroupTabs = { "Body", "Head", "Left Hand", "Right Hand" };
-		static new Dictionary<string, string> boneGroups = new()
+		static Dictionary<string, string> boneGroups = new()
 		{
 			{ "Hips", "Body" },
 			{ "Spine", "Body" },

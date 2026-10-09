@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
@@ -508,10 +509,11 @@ namespace UnityGLTF
 					if (memoryStream.TryGetBuffer(out var memStreamBuffer))
 					{
 						NativeArray<byte> nativeBuffer;
-						ulong gcHandle;
+						GCHandle gcHandle;
 						unsafe
 						{
-							var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out gcHandle);
+							gcHandle = GCHandle.Alloc(memStreamBuffer.Array, GCHandleType.Pinned);
+							var ptr = (byte*)gcHandle.AddrOfPinnedObject() + memStreamBuffer.Offset;
 							nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 							NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
@@ -525,7 +527,7 @@ namespace UnityGLTF
 						}
 						finally
 						{
-							UnsafeUtility.ReleaseGCObject(gcHandle);
+							gcHandle.Free();
 						}
 					}
 					else
@@ -552,11 +554,12 @@ namespace UnityGLTF
 				await YieldOnTimeoutAndThrowOnLowMemory();
 
 				NativeArray<byte> nativeBuffer;
-				ulong gcHandle;
+				GCHandle gcHandle;
 				unsafe
 				{
 					
-					var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(buffer, out gcHandle);
+					gcHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+					var ptr = (void*)gcHandle.AddrOfPinnedObject();
 					nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, buffer.Length, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 					NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
@@ -568,7 +571,7 @@ namespace UnityGLTF
 				}
 				finally
 				{
-					UnsafeUtility.ReleaseGCObject(gcHandle);
+					gcHandle.Free();
 				}
 			}
 

@@ -54,7 +54,11 @@ namespace UnityGLTF.Interactivity
         {
             var nodes = UnitBase.Subset(
                 new UnitOptionFilter(true),
+#if UNITY_2023_1_OR_NEWER
+                GraphReference.New(Object.FindAnyObjectByType<ScriptMachine>(), false));
+#else
                 GraphReference.New(Object.FindObjectOfType<ScriptMachine>(), false));
+#endif
 
             nodes = nodes.Where(x => x.valueOutputTypes.Contains(typeof(object)));
             Debug.Log(string.Join('\n', nodes.Select(x => x.haystack).ToArray()));

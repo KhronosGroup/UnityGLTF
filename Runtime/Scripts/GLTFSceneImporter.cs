@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
@@ -244,7 +245,7 @@ namespace UnityGLTF
 		/// </summary>
 		public List<Object> GenericObjectReferences { get; private set; } = new List<Object>();
 
-		private Dictionary<Stream, (NativeArray<byte> array, ulong gcHandle)> _nativeBuffers = new Dictionary<Stream, (NativeArray<byte> array, ulong gcHandle)>(); 
+		private Dictionary<Stream, (NativeArray<byte> array, GCHandle gcHandle)> _nativeBuffers = new Dictionary<Stream, (NativeArray<byte> array, GCHandle gcHandle)>(); 
 #if HAVE_MESHOPT_DECOMPRESS
 		private List<NativeArray<byte>> meshOptNativeBuffers = new List<NativeArray<byte>>();
 #endif
@@ -400,7 +401,8 @@ namespace UnityGLTF
 				{
 					unsafe
 					{
-						var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out var gcHandle);
+						var gcHandle = GCHandle.Alloc(memStreamBuffer.Array, GCHandleType.Pinned);
+						var ptr = (byte*)gcHandle.AddrOfPinnedObject() + memStreamBuffer.Offset;
 						var nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 						NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer,  AtomicSafetyHandle.Create()); 
@@ -429,7 +431,7 @@ namespace UnityGLTF
 			
 			var newNativeBuffer = new NativeArray<byte>(buf, Allocator.Persistent);
 			
-			_nativeBuffers.Add(stream,new (newNativeBuffer,0));
+			_nativeBuffers.Add(stream,new (newNativeBuffer,default));
 			
 			return newNativeBuffer;
 		}
@@ -1614,8 +1616,8 @@ namespace UnityGLTF
 				if (buffer.Value.array.IsCreated)
 					buffer.Value.array.Dispose();
 
-				if (buffer.Value.gcHandle != 0)
-					UnsafeUtility.ReleaseGCObject(buffer.Value.gcHandle);
+				if (buffer.Value.gcHandle.IsAllocated)
+					buffer.Value.gcHandle.Free();
 			}			
 			_nativeBuffers.Clear();
 			
