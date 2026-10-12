@@ -5,6 +5,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- add: `KHR_interactivity`: Visual Scripting units Not Equal, Toggle Flow, Toggle Value, Cooldown, Timer, Break, Switch On Enum, Select On Enum, Null Coalesce and Approximately Equal
+- add: `KHR_interactivity`: Visual Scripting math units Round, Exponentiate, Root, Average, Scalar Normalize, Scalar Move Towards, Per Second, Vector2/Vector3 Angle and Project
+- add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up (exported as `event/onSelect`), On Mouse Enter/Exit (exported as hover events), Late Update and Fixed Update (exported as `event/onTick`)
+- add: `KHR_interactivity`: export of `Mathf.Repeat`, `PingPong`, `InverseLerp`, `MoveTowards`, `DeltaAngle`, `LerpAngle`, `Approximately` and `Log(f, p)`
+- add: `KHR_interactivity`: export of `Vector2/3/4.Dot`, `Scale`, `Min`, `Max`, `Normalize`, `normalized`, `Vector3.Cross`, `Vector2/3.Angle`, `SignedAngle`, `ClampMagnitude`, `Vector3/4.Project` and the vector operators
+- add: `KHR_interactivity`: export of `Quaternion.eulerAngles`, `normalized`, `Normalize`, `RotateTowards` and the `*` operator
+- add: `KHR_interactivity`: export of `Color.r/g/b/a`, `Color.Lerp` / `LerpUnclamped` and the color operators
+- add: `KHR_interactivity`: export of `Random.value`, `rotation`, `rotationUniform`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties
+- add: `KHR_interactivity`: enum values are exported as ints
+- fix: `KHR_interactivity`: static properties of classes (e.g. `Random.value`, `Time.frameCount`) were exported as constant values from the editor
+- fix: `KHR_interactivity`: `Mathf.Epsilon` was exported as Euler's number
+- fix: `KHR_interactivity`: `Mathf.Sign(0)` returned 0 instead of 1
+- fix: `KHR_interactivity`: `Mathf.Log(f, p)` ignored the base
+- fix: `KHR_interactivity`: `Quaternion.Angle` used the wrong exporter, only one input and radians, `Quaternion.ToAngleAxis` returned radians
+- fix: `KHR_interactivity`: `Quaternion.Lerp` / `LerpUnclamped` didn't take the shortest path and didn't normalize the result
+- fix: `KHR_interactivity`: `Matrix4x4` constructor was registered twice, the result depended on the registration order
+- fix: `KHR_interactivity`: overloads which don't match the generic method exporters (e.g. `Mathf.Max(params float[])`) are reported instead of silently dropping inputs
+- fix: `KHR_interactivity`: While loops without coroutines never started
+- fix: `KHR_interactivity`: Equal with Numeric enabled now uses `Mathf.Approximately`
+- fix: `KHR_interactivity`: Null Check compared references with the int -1
+- fix: `KHR_interactivity`: Vector Move Towards with Per Second ignored the max distance check, invoking `Vector3.MoveTowards` failed with flow connections
 
 ## [2.23.0] - 2026-10-12
 - add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`
