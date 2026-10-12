@@ -47,7 +47,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     var source = input.connection.source;
                     if (source.type == typeof(T))
                         return true;
-                    
+                    // A concrete output type decides it (e.g. Matrix4x4.TRS outputs a Matrix4x4, even though it has a Quaternion input).
+                    // Only look further upstream when the output could still hold a T (e.g. object from a chained Generic Multiply)
+                    if (!source.type.IsAssignableFrom(typeof(T)))
+                        return false;
+
                     foreach (var nextInput in source.unit.valueInputs)
                         if (IsTypeInput<T>(nextInput))
                             return true;
