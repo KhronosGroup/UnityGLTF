@@ -34,8 +34,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Floor), new GenericInvokeMathInvokeUnitExporters<Math_FloorNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Ceil), new GenericInvokeMathInvokeUnitExporters<Math_CeilNode>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Round), new GenericInvokeMathInvokeUnitExporters<Math_RoundNode>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.RoundToInt), new GenericInvokeMathInvokeUnitExporters<Type_FloatToIntNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Clamp01), new GenericInvokeMathInvokeUnitExporters<Math_SaturateNode>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Abs), new GenericInvokeMathInvokeUnitExporters<Math_AbsNode>());

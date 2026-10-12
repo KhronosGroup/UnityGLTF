@@ -48,6 +48,67 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return combine.FirstValueOut().ExpectedType(ExpectedType.GtlfType(gltfTypeIndex));
         }
 
+        /// <summary>
+        /// Applies a scalar function to every component of a float, float2, float3 or float4 value.
+        /// </summary>
+        public static ValueOutRef PerComponent(INodeExporter exporter, int gltfTypeIndex, MathOperand value, System.Func<ValueOutRef, ValueOutRef> function)
+        {
+            var count = ComponentCount(gltfTypeIndex);
+            if (count == 1)
+            {
+                if (value.source != null)
+                    return function(value.source);
+                // The function needs a node output: pass Visual Scripting inputs and constants through an add node
+                return function(MathExpression.Float(exporter).Add(value, 0f));
+            }
+
+            GltfInteractivityExportNode extract, combine;
+            switch (count)
+            {
+                case 2: extract = exporter.CreateNode<Math_Extract2Node>(); combine = exporter.CreateNode<Math_Combine2Node>(); break;
+                case 3: extract = exporter.CreateNode<Math_Extract3Node>(); combine = exporter.CreateNode<Math_Combine3Node>(); break;
+                case 4: extract = exporter.CreateNode<Math_Extract4Node>(); combine = exporter.CreateNode<Math_Combine4Node>(); break;
+                default: throw new System.ArgumentException("Unsupported component count: " + count);
+            }
+
+            value.ConnectTo(extract.ValueIn("a")).SetType(TypeRestriction.LimitToType(gltfTypeIndex));
+            string[] sockets = { "a", "b", "c", "d" };
+            for (int i = 0; i < count; i++)
+            {
+                var component = extract.ValueOut(i.ToString()).ExpectedType(ExpectedType.Float);
+                combine.ValueIn(sockets[i]).ConnectToSource(function(component)).SetType(TypeRestriction.LimitToFloat);
+            }
+            return combine.FirstValueOut().ExpectedType(ExpectedType.GtlfType(gltfTypeIndex));
+        }
+
+        /// <summary>
+        /// Mathf.Round: rounds half-way values to the nearest even integer (glTF math/round rounds them away from zero).
+        /// Half-way values: round(x / 2) * 2, otherwise round(x).
+        /// </summary>
+        public static ValueOutRef RoundHalfToEven(INodeExporter exporter, MathOperand x)
+        {
+            var m = MathExpression.Float(exporter);
+            var isHalfWay = m.Compare<Math_EqNode>(m.Abs(m.Sub(x, m.Op<Math_TruncNode>(x))), 0.5f);
+            var even = m.Mul(m.Op<Math_RoundNode>(m.Div(x, 2f)), 2f);
+            return m.Select(isHalfWay, even, m.Op<Math_RoundNode>(x));
+        }
+
+        /// <summary> Mathf.Round for floats and vectors (per component). </summary>
+        public static ValueOutRef RoundHalfToEven(INodeExporter exporter, int gltfTypeIndex, MathOperand value)
+        {
+            if (ComponentCount(gltfTypeIndex) == 1)
+                return RoundHalfToEven(exporter, value);
+            return PerComponent(exporter, gltfTypeIndex, value, component => RoundHalfToEven(exporter, component));
+        }
+
+        /// <summary> Mathf.RoundToInt </summary>
+        public static ValueOutRef RoundToInt(INodeExporter exporter, MathOperand x)
+        {
+            var toInt = exporter.CreateNode<Type_FloatToIntNode>();
+            toInt.ValueIn(Type_FloatToIntNode.IdInputA).ConnectToSource(RoundHalfToEven(exporter, x)).SetType(TypeRestriction.LimitToFloat);
+            return toInt.FirstValueOut().ExpectedType(ExpectedType.Int);
+        }
+
         /// <summary> Mathf.Sign: 1 for f >= 0, otherwise -1 (glTF math/sign returns 0 for 0). </summary>
         public static ValueOutRef Sign(INodeExporter exporter, MathOperand f)
         {

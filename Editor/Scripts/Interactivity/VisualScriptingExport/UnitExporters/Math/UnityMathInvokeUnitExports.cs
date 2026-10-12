@@ -41,6 +41,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeExpressionUnitExport.Register(typeof(Mathf), nameof(Mathf.Sign), (e, unit, p) =>
                 p.Length == 1 ? UnityMathExpressions.Sign(e, p[0]) : null);
 
+            // Unity rounds half-way values to even (2.5 -> 2), glTF math/round away from zero
+            InvokeExpressionUnitExport.Register(typeof(Mathf), nameof(Mathf.Round), (e, unit, p) =>
+                p.Length == 1 ? UnityMathExpressions.RoundHalfToEven(e, p[0]) : null);
+
+            InvokeExpressionUnitExport.Register(typeof(Mathf), nameof(Mathf.RoundToInt), (e, unit, p) =>
+                p.Length == 1 ? UnityMathExpressions.RoundToInt(e, p[0]) : null);
+
             InvokeExpressionUnitExport.Register(typeof(Mathf), nameof(Mathf.Repeat), (e, unit, p) =>
                 p.Length == 2 ? UnityMathExpressions.Repeat(e, p[0], p[1]) : null);
 

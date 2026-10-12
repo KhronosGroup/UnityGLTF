@@ -126,7 +126,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     case Round<TInput, TOutput>.Rounding.Ceiling:
                         return m.Op<Math_CeilNode>(unit.input);
                     default:
-                        return m.Op<Math_RoundNode>(unit.input);
+                        // "Away From Zero" uses Mathf.Round / Mathf.RoundToInt, which round half-way values to even
+                        return UnityMathExpressions.RoundHalfToEven(e, gltfType, unit.input);
                 }
             }
 
