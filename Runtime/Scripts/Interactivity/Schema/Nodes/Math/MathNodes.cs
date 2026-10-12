@@ -11,7 +11,7 @@ namespace UnityGLTF.Interactivity.Schema
         [InputSocketDescription(GltfTypes.Int)]
         public const string IdSelection = "selection";
         
-        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Int, GltfTypes.Float2x2, GltfTypes.Float3x3, GltfTypes.Float4x4)]
+        [InputSocketDescription(GltfTypes.Bool, GltfTypes.Float, GltfTypes.Float2, GltfTypes.Float3, GltfTypes.Float4, GltfTypes.Int, GltfTypes.Float2x2, GltfTypes.Float3x3, GltfTypes.Float4x4, GltfTypes.Ref)]
         public const string IdDefaultValue = "default";
         
         [OutputSocketDescriptionWithTypeDependencyFromInput(IdDefaultValue)]
