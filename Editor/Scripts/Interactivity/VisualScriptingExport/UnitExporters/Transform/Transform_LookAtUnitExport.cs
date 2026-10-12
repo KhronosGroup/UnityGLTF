@@ -34,9 +34,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             TransformHelpers.GetWorldPosition(unitExporter, out var worldPosSelfTargetRef, out var worldPosSelfRef);
             worldPosSelfTargetRef.MapToInputPort(unit.target);
             
+            // direction = target - self
             var subNode = unitExporter.CreateNode<Math_SubNode>();
-            var worldPosInput= subNode.ValueIn("a");
-            subNode.ValueIn("a").ConnectToSource(worldPosSelfRef);
+            var worldPosInput = subNode.ValueIn("a");
+            subNode.ValueIn("b").ConnectToSource(worldPosSelfRef);
             
 
             if (unit.valueInputs.Contains("%target"))
@@ -56,8 +57,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             normalizeNode.FirstValueIn().ConnectToSource(subNode.FirstValueOut());
             
             var lookRotNode = unitExporter.CreateNode<Math_QuatFromUpForwardNode>();
+            lookRotNode.ValueIn(Math_QuatFromUpForwardNode.IdForward).ConnectToSource(normalizeNode.FirstValueOut());
             worldUpRef = lookRotNode.ValueIn(Math_QuatFromUpForwardNode.IdUp);
-            
+
             if (unit.valueInputs.Contains("%worldUp"))
                 worldUpRef.MapToInputPort(unit.valueInputs["%worldUp"]);
             else
