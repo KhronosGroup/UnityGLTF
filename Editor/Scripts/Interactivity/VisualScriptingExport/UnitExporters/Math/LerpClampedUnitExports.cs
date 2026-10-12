@@ -70,8 +70,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector2), nameof(Vector2.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float2")));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float3")));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), nameof(Vector4.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4")));
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4")));
-            
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Color), nameof(Color.Lerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4")));
+
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.Slerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float3"), true));
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Slerp), new LerpClampedInvokeUnitExports(GltfTypes.TypeIndexByGltfSignature("float4"), true));
         }

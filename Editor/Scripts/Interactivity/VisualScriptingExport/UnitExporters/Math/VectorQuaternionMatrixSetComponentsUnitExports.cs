@@ -34,6 +34,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             SetMemberUnitExport.RegisterMemberExporter(typeof(Quaternion), nameof(Quaternion.z), new VectorQuaternionMatrixSetComponentsUnitExports(4, 2) );
             SetMemberUnitExport.RegisterMemberExporter(typeof(Quaternion), nameof(Quaternion.w), new VectorQuaternionMatrixSetComponentsUnitExports(4, 3) );
 
+            SetMemberUnitExport.RegisterMemberExporter(typeof(Color), nameof(Color.r), new VectorQuaternionMatrixSetComponentsUnitExports(4, 0) );
+            SetMemberUnitExport.RegisterMemberExporter(typeof(Color), nameof(Color.g), new VectorQuaternionMatrixSetComponentsUnitExports(4, 1) );
+            SetMemberUnitExport.RegisterMemberExporter(typeof(Color), nameof(Color.b), new VectorQuaternionMatrixSetComponentsUnitExports(4, 2) );
+            SetMemberUnitExport.RegisterMemberExporter(typeof(Color), nameof(Color.a), new VectorQuaternionMatrixSetComponentsUnitExports(4, 3) );
+
             for (int i = 0; i < 16; i++)
                 SetMemberUnitExport.RegisterMemberExporter(typeof(Matrix4x4), MatrixHelpers.MatrixMemberIndex[i], new VectorQuaternionMatrixSetComponentsUnitExports(16, i) );
         }

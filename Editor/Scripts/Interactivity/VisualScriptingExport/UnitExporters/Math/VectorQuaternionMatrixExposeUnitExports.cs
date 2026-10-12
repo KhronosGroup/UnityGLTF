@@ -12,6 +12,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
     public class VectorQuaternionMatrixExposeUnitExports : IUnitExporter
     {
         private static readonly string[] VectorMemberIndex = new string[] { "x", "y", "z", "w" };
+        private static readonly string[] ColorMemberIndex = new string[] { "r", "g", "b", "a" };
         
         public Type unitType
         {
@@ -29,6 +30,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             ExposeUnitExport.RegisterExposeConvert(typeof(Matrix4x4), converter, matrixMembers);
 
             ExposeUnitExport.RegisterExposeConvert(typeof(Quaternion), converter, "x", "y", "z", "w");
+            ExposeUnitExport.RegisterExposeConvert(typeof(Color), converter, ColorMemberIndex);
 
             for (int i = 0; i < 2; i++)
                 GetMemberUnitExport.RegisterMemberExporter(typeof(Vector2), VectorMemberIndex[i], converter);
@@ -40,6 +42,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             {
                 GetMemberUnitExport.RegisterMemberExporter(typeof(Vector4), VectorMemberIndex[i], converter);
                 GetMemberUnitExport.RegisterMemberExporter(typeof(Quaternion), VectorMemberIndex[i], converter);
+                GetMemberUnitExport.RegisterMemberExporter(typeof(Color), ColorMemberIndex[i], converter);
             }
 
             for (int i = 0; i < MatrixHelpers.MatrixMemberIndex.Length; i++)
@@ -71,7 +74,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 schema = typeof(Math_Extract2Node);
             else if (type == typeof(Vector3))
                 schema = typeof(Math_Extract3Node);
-            else if (type == typeof(Vector4) || type == typeof(Quaternion))
+            else if (type == typeof(Vector4) || type == typeof(Quaternion) || type == typeof(Color))
                 schema = typeof(Math_Extract4Node);
             else if (type == typeof(Matrix4x4))
             {
@@ -122,7 +125,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     for (int i = 0; i < VectorMemberIndex.Length; i++)
                     {
-                        if (member.name == VectorMemberIndex[i])
+                        if (member.name == VectorMemberIndex[i] || member.name == ColorMemberIndex[i])
                         {
                             unitExporter.MapValueOutportToSocketName(port, i.ToString(), node);
                             break;
