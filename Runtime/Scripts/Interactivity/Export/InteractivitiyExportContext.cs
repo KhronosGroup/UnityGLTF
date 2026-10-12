@@ -322,6 +322,12 @@ namespace UnityGLTF.Interactivity.Export
             {
                 typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
+            else if (originalValue is System.Enum enumValue)
+            {
+                // Enums are exported as their underlying int value (e.g. for Switch On Enum)
+                convertedValue = System.Convert.ToInt32(enumValue);
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Int);
+            }
             else
             {
                 typeIndex = GltfTypes.TypeIndex(originalValue.GetType());
