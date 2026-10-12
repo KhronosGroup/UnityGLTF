@@ -5,7 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.22.2] - 2026-10-12
+- add: `KHR_interactivity`: export of `Camera.main` projection properties (`fieldOfView`, `aspect`, `nearClipPlane`, `farClipPlane`, `orthographic`, `orthographicSize`) from the `activeCamera` pointers
 - fix: export, export cache and import failing on Windows when file paths exceed 260 characters
+- fix: `KHR_interactivity`: `Transform.TransformPoint` / `InverseTransformPoint` on `Camera.main` used the non-existent `activeCamera/globalMatrix` pointer, the matrix is now composed from `activeCamera/position` and `activeCamera/rotation`
+- fix: `KHR_interactivity`: `Transform.LookAt` export ignored the object's own position and never set the look direction
 
 ## [2.22.1] - 2026-10-05
 - fix: null ref on import for morph target accessors without bufferView and sparse (valid per spec, e.g. Blender exports unchanged morph target normals this way)
