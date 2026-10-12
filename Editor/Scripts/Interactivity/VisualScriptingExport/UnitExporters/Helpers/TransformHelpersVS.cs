@@ -55,7 +55,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             GetLocalVectorFromWorldVector(exporter, worldMatrix, out worldVector, out localVector);
         }
 
-        private static void GetWorldMatrix(INodeExporter exporter, ValueInput target, out ValueOutRef worldMatrix)
+        public static void GetWorldMatrix(INodeExporter exporter, ValueInput target, out ValueOutRef worldMatrix)
         {
             if (UnitsHelper.IsMainCameraInInput(target))
             {
@@ -65,6 +65,53 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             GetWorldMatrix(exporter, out var targetInput, out worldMatrix);
             targetInput.MapToInputPort(target);
+        }
+
+        /// <summary>
+        /// Resolves the glTF parent of a target that is known at export time (literal, default or self).
+        /// The parent is null when the target is a root node in the exported glTF.
+        /// Returns false when the target is only known at runtime.
+        /// </summary>
+        public static bool TryGetExportedParent(UnitExporter unitExporter, ValueInput target, out Transform parent)
+        {
+            parent = null;
+            if (UnitsHelper.IsMainCameraInInput(target) || !unitExporter.IsInputLiteralOrDefaultValue(target, out var value))
+                return false;
+
+            Transform transform = null;
+            if (value is GameObject gameObject)
+                transform = gameObject.transform;
+            else if (value is Component component)
+                transform = component.transform;
+
+            if (transform == null)
+                return false;
+
+            var exporter = unitExporter.vsExportContext.exporter;
+            if (exporter.GetTransformIndex(transform) == -1)
+                return false;
+
+            if (transform.parent != null && exporter.GetTransformIndex(transform.parent) != -1)
+                parent = transform.parent;
+            return true;
+        }
+
+        /// <summary>
+        /// True when the world and local transform of the target are the same in the exported glTF.
+        /// </summary>
+        public static bool IsExportedRoot(UnitExporter unitExporter, ValueInput target)
+        {
+            return TryGetExportedParent(unitExporter, target, out var parent) && parent == null;
+        }
+
+        /// <summary>
+        /// True when both targets are known at export time and have the same parent in the exported glTF.
+        /// </summary>
+        public static bool HaveSameExportedParent(UnitExporter unitExporter, ValueInput targetA, ValueInput targetB)
+        {
+            return TryGetExportedParent(unitExporter, targetA, out var parentA)
+                   && TryGetExportedParent(unitExporter, targetB, out var parentB)
+                   && parentA == parentB;
         }
 
         public static void GetLocalScale(UnitExporter unitExporter, ValueInput target,

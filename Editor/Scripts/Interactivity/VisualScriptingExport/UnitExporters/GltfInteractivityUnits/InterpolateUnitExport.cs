@@ -26,44 +26,84 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             string pointerId = null;
             ValueInRef originalValue = null;
             ValueOutRef convertedValue = null;
-            
+
             var valueType = GltfTypes.Float;
-            if (unitExporter.Context.addUnityGltfSpaceConversion && unit.member.targetType == typeof(Transform))
+            if (unit.member.targetType == typeof(Transform))
             {
                 pointerId = PointersHelper.IdPointerNodeRef;
-                // TODO: transform space conversion for targetValue!!!
-                if (unit.member.name == "localPosition")
+                var spaceConversion = unitExporter.Context.addUnityGltfSpaceConversion;
+                var memberName = unit.member.name;
+                // A root node in the glTF has the same world and local transform, so the world<>local conversion isn't needed
+                if (TransformHelpersVS.IsExportedRoot(unitExporter, unit.target))
+                {
+                    if (memberName == nameof(Transform.position))
+                        memberName = nameof(Transform.localPosition);
+                    else if (memberName == nameof(Transform.rotation))
+                        memberName = nameof(Transform.localRotation);
+                    else if (memberName == nameof(Transform.lossyScale))
+                        memberName = nameof(Transform.localScale);
+                }
+
+                if (memberName == nameof(Transform.localPosition))
                 {
                     pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/translation";
                     valueType = GltfTypes.Float3;
-                    SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
-                    originalValue.MapToInputPort(unit.input);
+                    if (spaceConversion)
+                    {
+                        SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
+                        originalValue.MapToInputPort(unit.input);
+                    }
                 }
-                if (unit.member.name == "position")
+                else if (memberName == nameof(Transform.position))
                 {
+                    // Glb only has local transforms: the world target value is converted once to the
+                    // local target value (with the parent's transform at the start), which is then interpolated
                     pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/translation";
                     valueType = GltfTypes.Float3;
-                    SpaceConversionHelpers.AddSpaceConversion(unitExporter, out originalValue, out convertedValue);
+                    TransformHelpers.GetLocalPositionFromWorldPosition(unitExporter, out var targetInput, out originalValue, out convertedValue);
+                    targetInput.MapToInputPort(unit.target);
                     originalValue.MapToInputPort(unit.input);
                 }
-                else if (unit.member.name == "localRotation")
+                else if (memberName == nameof(Transform.localRotation))
                 {
                     pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/rotation";
                     valueType = GltfTypes.Float4;
-                    SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
-                    originalValue.MapToInputPort(unit.input);
+                    if (spaceConversion)
+                    {
+                        SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
+                        originalValue.MapToInputPort(unit.input);
+                    }
                 }
-                else if (unit.member.name == "rotation")
+                else if (memberName == nameof(Transform.rotation))
                 {
                     pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/rotation";
                     valueType = GltfTypes.Float4;
-                    SpaceConversionHelpers.AddRotationSpaceConversion(unitExporter, out originalValue, out convertedValue);
+                    TransformHelpers.GetLocalRotationFromWorldRotation(unitExporter, out var targetInput, out originalValue, out convertedValue);
+                    targetInput.MapToInputPort(unit.target);
                     originalValue.MapToInputPort(unit.input);
                 }
-                else if (unit.member.name == "localScale")
+                else if (memberName == nameof(Transform.localScale))
                 {
                     pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/scale";
                     valueType = GltfTypes.Float3;
+                }
+                else if (memberName == nameof(Transform.lossyScale))
+                {
+                    // localScale = worldScale * currentLocalScale / currentWorldScale (= worldScale / parentWorldScale)
+                    pointerTemplate = PointersHelper.IdPointerTemplNodeByRef + "/scale";
+                    valueType = GltfTypes.Float3;
+                    TransformHelpersVS.GetLocalScale(unitExporter, unit.target, out var currentLocalScale);
+                    TransformHelpersVS.GetWorldScale(unitExporter, unit.target, out var currentWorldScale);
+
+                    var mul = unitExporter.CreateNode<Math_MulNode>();
+                    originalValue = mul.ValueIn(Math_MulNode.IdValueA);
+                    originalValue.MapToInputPort(unit.input);
+                    mul.ValueIn(Math_MulNode.IdValueB).ConnectToSource(currentLocalScale);
+
+                    var div = unitExporter.CreateNode<Math_DivNode>();
+                    div.ValueIn(Math_DivNode.IdValueA).ConnectToSource(mul.FirstValueOut());
+                    div.ValueIn(Math_DivNode.IdValueB).ConnectToSource(currentWorldScale);
+                    convertedValue = div.FirstValueOut();
                 }
             }
 

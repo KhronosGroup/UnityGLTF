@@ -118,7 +118,24 @@ namespace Unity.VisualScripting
 
         protected override bool IsMemberValid(Member member)
         {
-            return member.isAccessor && member.isSettable;
+            return member.isAccessor && (member.isSettable || IsWorldScale(member));
+        }
+
+        /// <summary>
+        /// Transform.lossyScale is read-only, it gets interpolated by setting the localScale accordingly.
+        /// </summary>
+        public static bool IsWorldScale(Member member)
+        {
+            return member.name == nameof(Transform.lossyScale) && typeof(Transform).IsAssignableFrom(member.targetType);
+        }
+
+        private static void SetWorldScale(Transform transform, Vector3 worldScale)
+        {
+            var parentScale = transform.parent ? transform.parent.lossyScale : Vector3.one;
+            transform.localScale = new Vector3(
+                parentScale.x != 0f ? worldScale.x / parentScale.x : 0f,
+                parentScale.y != 0f ? worldScale.y / parentScale.y : 0f,
+                parentScale.z != 0f ? worldScale.z / parentScale.z : 0f);
         }
         
         private ControlOutput Assign(Flow flow)
@@ -203,7 +220,10 @@ namespace Unity.VisualScripting
             if (!InterpolateHelper.AreValuesEqual(data.lastSetValue, currentSetValue))
                 return false;
             
-            member.Set(target, newValue);
+            if (IsWorldScale(member))
+                SetWorldScale((Transform)target, (Vector3)newValue);
+            else
+                member.Set(target, newValue);
 
             return true;
         }

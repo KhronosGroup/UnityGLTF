@@ -37,6 +37,16 @@ namespace Unity.VisualScripting
         protected override ValueInput point2Port => unit.pointB;
     }
 
+    [Widget(typeof(InterpolateTransform))]
+    public sealed class InterpolateTransformWidget : BezierInterpolateUnitWidget<InterpolateTransform>
+    {
+        public InterpolateTransformWidget(FlowCanvas canvas, InterpolateTransform unit) : base(canvas, unit) { }
+
+        protected override ValueInput point1Port => unit.pointA;
+
+        protected override ValueInput point2Port => unit.pointB;
+    }
+
     public abstract class MaterialInterpolateUnitWidget<TUnit, TValue> : BezierInterpolateUnitWidget<TUnit>
         where TUnit : AbstractMaterialInterpolate<TValue>
     {

@@ -155,12 +155,76 @@ namespace UnityGLTF.Interactivity.Export
             PointersHelper.SetupPointerTemplateAndTargetInput(setPosition, PointersHelper.IdPointerNodeRef,
                 PointersHelper.IdPointerTemplNodeByRef + "/translation", GltfTypes.Float3);
 
-            target = setPosition.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
+            GetLocalPositionFromConvertedWorldPosition(exporter, out target, out convertedPosition, out var localPosition);
+            target = target.Link(setPosition.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef));
+            setPosition.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(localPosition);
 
+            flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
+            flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
+        }
+
+        /// <summary>
+        /// Converts a world position (in Unity space when space conversion is enabled) to the local position
+        /// of the target in glTF space, i.e. the value for its /translation pointer.
+        /// </summary>
+        public static void GetLocalPositionFromWorldPosition(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef worldPosition, out ValueOutRef localPosition)
+        {
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                GetLocalPositionFromConvertedWorldPosition(exporter, out target, out worldPosition, out localPosition);
+                return;
+            }
+
+            SpaceConversionHelpers.AddSpaceConversion(exporter, out worldPosition, out var convertedOutput);
+            GetLocalPositionFromConvertedWorldPosition(exporter, out target, out var convertedInput, out localPosition);
+            convertedInput.ConnectToSource(convertedOutput);
+        }
+
+        public static void GetLocalPositionFromConvertedWorldPosition(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef convertedWorldPosition, out ValueOutRef localPosition)
+        {
+            WorldTRSToLocal(exporter, out target, out var trs, out var trsDecompose);
+            convertedWorldPosition = trs.ValueIn(Math_MatComposeNode.IdInputTranslation);
+            trs.ValueIn(Math_MatComposeNode.IdInputRotation).SetValue(Quaternion.identity);
+            localPosition = trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation);
+        }
+
+        /// <summary>
+        /// Converts a world rotation (in Unity space when space conversion is enabled) to the local rotation
+        /// of the target in glTF space, i.e. the value for its /rotation pointer.
+        /// </summary>
+        public static void GetLocalRotationFromWorldRotation(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef worldRotation, out ValueOutRef localRotation)
+        {
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                GetLocalRotationFromConvertedWorldRotation(exporter, out target, out worldRotation, out localRotation);
+                return;
+            }
+
+            SpaceConversionHelpers.AddRotationSpaceConversion(exporter, out worldRotation, out var convertedOutput);
+            GetLocalRotationFromConvertedWorldRotation(exporter, out target, out var convertedInput, out localRotation);
+            convertedInput.ConnectToSource(convertedOutput);
+        }
+
+        public static void GetLocalRotationFromConvertedWorldRotation(INodeExporter exporter, out ValueInRef target,
+            out ValueInRef convertedWorldRotation, out ValueOutRef localRotation)
+        {
+            WorldTRSToLocal(exporter, out target, out var trs, out var trsDecompose);
+            convertedWorldRotation = trs.ValueIn(Math_MatComposeNode.IdInputRotation);
+            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).SetValue(Vector3.zero);
+            localRotation = trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation);
+        }
+
+        // local = inverse(parentWorld) * worldTRS, with inverse(parentWorld) = localMatrix * inverse(globalMatrix)
+        private static void WorldTRSToLocal(INodeExporter exporter, out ValueInRef target,
+            out GltfInteractivityExportNode trs, out GltfInteractivityExportNode trsDecompose)
+        {
             var localToWorldMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeRef, 
+            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeRef,
                 PointersHelper.IdPointerTemplNodeByRef + "/globalMatrix", GltfTypes.Float4x4);
-            target = localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeRef).Link(target);
+            target = localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
             var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
             inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
@@ -168,29 +232,21 @@ namespace UnityGLTF.Interactivity.Export
             var localMatrix = exporter.CreateNode<Pointer_GetNode>();
             PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeRef,
                 PointersHelper.IdPointerTemplNodeByRef + "/matrix", GltfTypes.Float4x4);
-            target = localMatrix.ValueIn(PointersHelper.IdPointerNodeRef).Link(target);
+            target = target.Link(localMatrix.ValueIn(PointersHelper.IdPointerNodeRef));
 
             var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
             matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
 
-            var trs = exporter.CreateNode<Math_MatComposeNode>();
-            convertedPosition = trs.ValueIn(Math_MatComposeNode.IdInputTranslation);
-            trs.ValueIn(Math_MatComposeNode.IdInputRotation).SetValue(Quaternion.identity);
+            trs = exporter.CreateNode<Math_MatComposeNode>();
             trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
 
             var matrixMultiply2 = exporter.CreateNode<Math_MatMulNode>();
             matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
             matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
 
-            var trsDecompose = exporter.CreateNode<Math_MatDecomposeNode>();
+            trsDecompose = exporter.CreateNode<Math_MatDecomposeNode>();
             trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
-
-            setPosition.ValueIn(Pointer_SetNode.IdValue)
-                .ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputTranslation));
-
-            flowIn = setPosition.FlowIn(Pointer_SetNode.IdFlowIn);
-            flowOut = setPosition.FlowOut(Pointer_SetNode.IdFlowOut);
         }
 
         public static void SetWorldRotation(INodeExporter exporter, out ValueInRef target,
@@ -220,39 +276,10 @@ namespace UnityGLTF.Interactivity.Export
 
             PointersHelper.SetupPointerTemplateAndTargetInput(setRotation, PointersHelper.IdPointerNodeRef,
                 PointersHelper.IdPointerTemplNodeByRef + "/rotation", GltfTypes.Float4);
-            target = setRotation.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef);
 
-            var localToWorldMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localToWorldMatrix, PointersHelper.IdPointerNodeRef,
-                 PointersHelper.IdPointerTemplNodeByRef + "/globalMatrix", GltfTypes.Float4x4);
-            target = target.Link(localToWorldMatrix.ValueIn(PointersHelper.IdPointerNodeRef));
-
-            var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
-            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(localToWorldMatrix.FirstValueOut());
-
-            var localMatrix = exporter.CreateNode<Pointer_GetNode>();
-            PointersHelper.SetupPointerTemplateAndTargetInput(localMatrix, PointersHelper.IdPointerNodeRef,
-                PointersHelper.IdPointerTemplNodeByRef + "/matrix", GltfTypes.Float4x4);
-            target = target.Link(localMatrix.ValueIn(PointersHelper.IdPointerNodeRef));
-
-            var matrixMultiply = exporter.CreateNode<Math_MatMulNode>();
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(inverseMatrix.FirstValueOut());
-            matrixMultiply.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(localMatrix.FirstValueOut());
-
-            var trs = exporter.CreateNode<Math_MatComposeNode>();
-            convertedRotation = trs.ValueIn(Math_MatComposeNode.IdInputRotation);
-            trs.ValueIn(Math_MatComposeNode.IdInputTranslation).SetValue(Vector3.zero);
-            trs.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
-
-            var matrixMultiply2 = exporter.CreateNode<Math_MatMulNode>();
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueB).ConnectToSource(trs.FirstValueOut());
-            matrixMultiply2.ValueIn(Math_MatMulNode.IdValueA).ConnectToSource(matrixMultiply.FirstValueOut());
-
-            var trsDecompose = exporter.CreateNode<Math_MatDecomposeNode>();
-            trsDecompose.ValueIn(Math_MatDecomposeNode.IdInput).ConnectToSource(matrixMultiply2.FirstValueOut());
-
-            setRotation.ValueIn(Pointer_SetNode.IdValue)
-                .ConnectToSource(trsDecompose.ValueOut(Math_MatDecomposeNode.IdOutputRotation));
+            GetLocalRotationFromConvertedWorldRotation(exporter, out target, out convertedRotation, out var localRotation);
+            target = target.Link(setRotation.ValueIn(PointersHelper.IdPointerNodeRef).SetType(TypeRestriction.LimitToRef));
+            setRotation.ValueIn(Pointer_SetNode.IdValue).ConnectToSource(localRotation);
 
             flowIn = setRotation.FlowIn(Pointer_SetNode.IdFlowIn);
             flowOut = setRotation.FlowOut(Pointer_SetNode.IdFlowOut);
