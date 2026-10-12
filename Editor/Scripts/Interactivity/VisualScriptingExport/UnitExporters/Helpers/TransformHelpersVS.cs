@@ -39,6 +39,34 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
         }
         
+        public static void GetWorldVectorFromLocalVector(INodeExporter exporter, ValueInput target,
+            out ValueInRef localVector,
+            out ValueOutRef worldVector)
+        {
+            GetWorldMatrix(exporter, target, out var worldMatrix);
+            GetWorldVectorFromLocalVector(exporter, worldMatrix, out localVector, out worldVector);
+        }
+
+        public static void GetLocalVectorFromWorldVector(INodeExporter exporter, ValueInput target,
+            out ValueInRef worldVector,
+            out ValueOutRef localVector)
+        {
+            GetWorldMatrix(exporter, target, out var worldMatrix);
+            GetLocalVectorFromWorldVector(exporter, worldMatrix, out worldVector, out localVector);
+        }
+
+        private static void GetWorldMatrix(INodeExporter exporter, ValueInput target, out ValueOutRef worldMatrix)
+        {
+            if (UnitsHelper.IsMainCameraInInput(target))
+            {
+                GetWorldMatrixFromMainCamera(exporter, out worldMatrix);
+                return;
+            }
+
+            GetWorldMatrix(exporter, out var targetInput, out worldMatrix);
+            targetInput.MapToInputPort(target);
+        }
+
         public static void GetLocalScale(UnitExporter unitExporter, ValueInput target,
             out ValueOutRef scaleOutput)
         {
@@ -100,7 +128,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             flowInRef.MapToControlInput(flowIn);
             flowOutRef.MapToControlOutput(flowOut);
         }
-        
+
+        public static void SetWorldPosition(UnitExporter unitExporter, ValueInput target,
+            ValueOutRef position, ControlInput flowIn, ControlOutput flowOut)
+        {
+            SetWorldPosition(unitExporter, out var targetInput, out var positionInput, out var flowInRef, out var flowOutRef);
+            targetInput.MapToInputPort(target);
+            positionInput.ConnectToSource(position);
+            flowInRef.MapToControlInput(flowIn);
+            flowOutRef.MapToControlOutput(flowOut);
+        }
+
         public static void SetWorldRotation(UnitExporter unitExporter, ValueInput target,
             ValueInput rotation, ControlInput flowIn, ControlOutput flowOut)
         {

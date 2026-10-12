@@ -49,151 +49,110 @@ namespace UnityGLTF.Interactivity.Export
         public static void CreateQuaternionFromRadEuler(INodeExporter exporter, ValueOutRef radxyz,
             out ValueOutRef result)
         {
+            // Unity's Quaternion.Euler rotates around Z, then X, then Y (extrinsic),
+            // which are the intrinsic Tait-Bryan angles in "yxz" order of math/quatFromAngles
+            var extract = exporter.CreateNode<Math_Extract3Node>();
+            extract.ValueIn(Math_Extract3Node.IdValueIn).ConnectToSource(radxyz).SetType(TypeRestriction.LimitToFloat3);
+
+            var fromAngles = exporter.CreateNode<Math_QuatFromAnglesNode>();
+            fromAngles.Configuration[Math_QuatFromAnglesNode.IdConfigOrder].Value = "yxz";
+            fromAngles.ValueIn(Math_QuatFromAnglesNode.IdX).ConnectToSource(extract.ValueOut(Math_Extract3Node.IdValueOutX));
+            fromAngles.ValueIn(Math_QuatFromAnglesNode.IdY).ConnectToSource(extract.ValueOut(Math_Extract3Node.IdValueOutY));
+            fromAngles.ValueIn(Math_QuatFromAnglesNode.IdZ).ConnectToSource(extract.ValueOut(Math_Extract3Node.IdValueOutZ));
+            result = fromAngles.FirstValueOut().ExpectedType(ExpectedType.Float4);
+        }
+
+        /// <summary>
+        /// Converts a quaternion to Unity euler angles in degrees (ZXY order, each angle in [0, 360)),
+        /// the inverse of <see cref="CreateQuaternionFromRadEuler"/>.
+        /// </summary>
+        public static void QuaternionToEuler(INodeExporter exporter, ValueOutRef quaternion,
+            out ValueOutRef eulerDegrees)
+        {
             /*
-             Based on:
-               float3 s, c;
-               sincos(0.5f * xyz, out s, out c);
-               return quaternion( float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(1.0f, 1.0f, -1.0f, -1.0f)
+               x = asin(clamp(2 * (w*x - y*z), -1, 1))
+               y = atan2(2 * (w*y + x*z), 1 - 2 * (x*x + y*y))
+               z = atan2(2 * (w*z + x*y), 1 - 2 * (x*x + z*z))
             */
+            var q = exporter.CreateNode<Math_Extract4Node>();
+            q.ValueIn(Math_Extract4Node.IdValueIn).ConnectToSource(quaternion).SetType(TypeRestriction.LimitToFloat4);
+            var qx = q.ValueOut(Math_Extract4Node.IdValueOutX);
+            var qy = q.ValueOut(Math_Extract4Node.IdValueOutY);
+            var qz = q.ValueOut(Math_Extract4Node.IdValueOutZ);
+            var qw = q.ValueOut(Math_Extract4Node.IdValueOutW);
 
-            var halfNode = exporter.CreateNode<Math_MulNode>();
-            halfNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
-            halfNode.ValueIn("a").ConnectToSource(radxyz);
-            halfNode.ValueIn("b").SetValue(new Vector3(0.5f, 0.5f, 0.5f)).SetType(TypeRestriction.LimitToFloat3);
-
-     
-            var cosNode = exporter.CreateNode<Math_CosNode>();
-            cosNode.ValueIn("a").ConnectToSource(halfNode.FirstValueOut()).SetType(TypeRestriction.LimitToFloat3);
-            cosNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
-
-            var sinNode = exporter.CreateNode<Math_SinNode>();
-            sinNode.ValueIn("a").ConnectToSource(halfNode.FirstValueOut()).SetType(TypeRestriction.LimitToFloat3);
-            sinNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
-
-
-            var extractXYZSinNode = exporter.CreateNode<Math_Extract3Node>();
-            extractXYZSinNode.ValueIn("a").ConnectToSource(sinNode.FirstValueOut());
-
-            var extractXYZCosNode = exporter.CreateNode<Math_Extract3Node>();
-            extractXYZCosNode.ValueIn("a").ConnectToSource(cosNode.FirstValueOut());
-
-            #region Helpers
-
-            ValueInRef SinX(ValueInRef inSocket)
+            ValueOutRef Combine(ValueOutRef a, ValueOutRef b, ValueOutRef c)
             {
-                inSocket.ConnectToSource(extractXYZSinNode.ValueOut(Math_Extract3Node.IdValueOutX));
-                return inSocket;
+                var combine = exporter.CreateNode<Math_Combine3Node>();
+                if (a != null)
+                    combine.ValueIn(Math_Combine3Node.IdValueA).ConnectToSource(a);
+                else
+                    combine.ValueIn(Math_Combine3Node.IdValueA).SetValue(0f);
+                combine.ValueIn(Math_Combine3Node.IdValueB).ConnectToSource(b);
+                combine.ValueIn(Math_Combine3Node.IdValueC).ConnectToSource(c);
+                return combine.FirstValueOut().ExpectedType(ExpectedType.Float3);
             }
 
-            ValueInRef SinY(ValueInRef inSocket)
+            ValueOutRef Op<T>(ValueOutRef a, ValueOutRef b) where T : GltfInteractivityNodeSchema, new()
             {
-                inSocket.ConnectToSource(extractXYZSinNode.ValueOut(Math_Extract3Node.IdValueOutY));
-                return inSocket;
+                var node = exporter.CreateNode<T>();
+                node.ValueIn("a").ConnectToSource(a).SetType(TypeRestriction.LimitToFloat3);
+                node.ValueIn("b").ConnectToSource(b).SetType(TypeRestriction.LimitToFloat3);
+                return node.FirstValueOut().ExpectedType(ExpectedType.Float3);
             }
 
-            ValueInRef SinZ(ValueInRef inSocket)
+            ValueOutRef OpConst<T>(ValueOutRef a, Vector3 b) where T : GltfInteractivityNodeSchema, new()
             {
-                inSocket.ConnectToSource(extractXYZSinNode.ValueOut(Math_Extract3Node.IdValueOutZ));
-                return inSocket;
+                var node = exporter.CreateNode<T>();
+                node.ValueIn("a").ConnectToSource(a).SetType(TypeRestriction.LimitToFloat3);
+                node.ValueIn("b").SetValue(b).SetType(TypeRestriction.LimitToFloat3);
+                return node.FirstValueOut().ExpectedType(ExpectedType.Float3);
             }
 
-            ValueInRef CosX(ValueInRef inSocket)
-            {
-                inSocket.ConnectToSource(extractXYZCosNode.ValueOut(Math_Extract3Node.IdValueOutX));
-                return inSocket;
-            }
+            var xyz = Combine(qx, qy, qz);
 
-            ValueInRef CosY(ValueInRef inSocket)
-            {
-                inSocket.ConnectToSource(extractXYZCosNode.ValueOut(Math_Extract3Node.IdValueOutY));
-                return inSocket;
-            }
+            // (w*x - y*z, w*y + x*z, w*z + x*y) * 2
+            var wxyz = Op<Math_MulNode>(Combine(qw, qw, qw), xyz);
+            var cross = OpConst<Math_MulNode>(Op<Math_MulNode>(Combine(qy, qx, qx), Combine(qz, qz, qy)), new Vector3(-1f, 1f, 1f));
+            var numerator = OpConst<Math_MulNode>(Op<Math_AddNode>(wxyz, cross), new Vector3(2f, 2f, 2f));
 
-            ValueInRef CosZ(ValueInRef inSocket)
-            {
-                inSocket.ConnectToSource(extractXYZCosNode.ValueOut(Math_Extract3Node.IdValueOutZ));
-                return inSocket;
-            }
+            // (unused, 1 - 2 * (x*x + y*y), 1 - 2 * (x*x + z*z))
+            var xxx = Combine(qx, qx, qx);
+            var _yz = Combine(null, qy, qz);
+            var squares = Op<Math_AddNode>(Op<Math_MulNode>(xxx, xxx), Op<Math_MulNode>(_yz, _yz));
+            var denominator = exporter.CreateNode<Math_SubNode>();
+            denominator.ValueIn(Math_SubNode.IdValueA).SetValue(Vector3.one).SetType(TypeRestriction.LimitToFloat3);
+            denominator.ValueIn(Math_SubNode.IdValueB).ConnectToSource(OpConst<Math_MulNode>(squares, new Vector3(2f, 2f, 2f)));
+            denominator.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            #endregion
-            
-            var four1 = exporter.CreateNode<Math_Combine4Node>();
-            SinX(four1.ValueIn("a"));
-            SinY(four1.ValueIn("b"));
-            SinZ(four1.ValueIn("c"));
-            CosX(four1.ValueIn("d"));
+            var atan2 = Op<Math_Atan2Node>(numerator, denominator.FirstValueOut());
 
-            var four2 = exporter.CreateNode<Math_Combine4Node>();
-            CosY(four2.ValueIn("a"));
-            CosX(four2.ValueIn("b"));
-            CosX(four2.ValueIn("c"));
-            CosY(four2.ValueIn("d"));
+            var clamp = exporter.CreateNode<Math_ClampNode>();
+            clamp.ValueIn(Math_ClampNode.IdValueA).ConnectToSource(numerator).SetType(TypeRestriction.LimitToFloat3);
+            clamp.ValueIn(Math_ClampNode.IdValueB).SetValue(-Vector3.one).SetType(TypeRestriction.LimitToFloat3);
+            clamp.ValueIn(Math_ClampNode.IdValueC).SetValue(Vector3.one).SetType(TypeRestriction.LimitToFloat3);
+            clamp.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            var four3 = exporter.CreateNode<Math_Combine4Node>();
-            CosZ(four3.ValueIn("a"));
-            CosZ(four3.ValueIn("b"));
-            CosY(four3.ValueIn("c"));
-            CosZ(four3.ValueIn("d"));
+            var asin = exporter.CreateNode<Math_AsinNode>();
+            asin.ValueIn(Math_AsinNode.IdValueA).ConnectToSource(clamp.FirstValueOut()).SetType(TypeRestriction.LimitToFloat3);
+            asin.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            var four4 = exporter.CreateNode<Math_Combine4Node>();
-            SinY(four4.ValueIn("a"));
-            SinX(four4.ValueIn("b"));
-            SinX(four4.ValueIn("c"));
-            SinY(four4.ValueIn("d"));
+            var asinExtract = exporter.CreateNode<Math_Extract3Node>();
+            asinExtract.ValueIn(Math_Extract3Node.IdValueIn).ConnectToSource(asin.FirstValueOut());
+            var atan2Extract = exporter.CreateNode<Math_Extract3Node>();
+            atan2Extract.ValueIn(Math_Extract3Node.IdValueIn).ConnectToSource(atan2);
 
-            var four5 = exporter.CreateNode<Math_Combine4Node>();
-            SinZ(four5.ValueIn("a"));
-            SinZ(four5.ValueIn("b"));
-            SinY(four5.ValueIn("c"));
-            SinZ(four5.ValueIn("d"));
+            var radians = Combine(asinExtract.ValueOut(Math_Extract3Node.IdValueOutX),
+                atan2Extract.ValueOut(Math_Extract3Node.IdValueOutY),
+                atan2Extract.ValueOut(Math_Extract3Node.IdValueOutZ));
 
-            var four6 = exporter.CreateNode<Math_Combine4Node>();
-            CosX(four6.ValueIn("a"));
-            CosY(four6.ValueIn("b"));
-            CosZ(four6.ValueIn("c"));
-            SinX(four6.ValueIn("d"));
+            var deg = exporter.CreateNode<Math_DegNode>();
+            deg.ValueIn(Math_DegNode.IdInputA).ConnectToSource(radians).SetType(TypeRestriction.LimitToFloat3);
+            deg.FirstValueOut().ExpectedType(ExpectedType.Float3);
 
-            var four7 = exporter.CreateNode<Math_Combine4Node>();
-            four7.ValueIn("a").SetValue(1f);
-            four7.ValueIn("b").SetValue(1f);
-            four7.ValueIn("c").SetValue(-1f);
-            four7.ValueIn("d").SetValue(-1f);
-
-            // Sum Part 1
-            var mul1 = exporter.CreateNode<Math_MulNode>();
-            mul1.ValueIn("a").ConnectToSource(four1.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul1.ValueIn("b").ConnectToSource(four2.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul1.FirstValueOut().ExpectedType(ExpectedType.Float4);
-
-            var mul2 = exporter.CreateNode<Math_MulNode>();
-            mul2.ValueIn("a").ConnectToSource(mul1.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul2.ValueIn("b").ConnectToSource(four3.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul2.FirstValueOut().ExpectedType(ExpectedType.Float4);
-
-            // Sum Part 2
-            var mul3 = exporter.CreateNode<Math_MulNode>();
-            mul3.ValueIn("a").ConnectToSource(four4.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul3.ValueIn("b").ConnectToSource(four5.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul3.FirstValueOut().ExpectedType(ExpectedType.Float4);
-
-            var mul4 = exporter.CreateNode<Math_MulNode>();
-            mul4.ValueIn("a").ConnectToSource(mul3.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul4.ValueIn("b").ConnectToSource(four6.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul4.FirstValueOut().ExpectedType(ExpectedType.Float4);
-
-            var mul5 = exporter.CreateNode<Math_MulNode>();
-            mul5.ValueIn("a").ConnectToSource(mul4.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul5.ValueIn("b").ConnectToSource(four7.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            mul5.FirstValueOut().ExpectedType(ExpectedType.Float4);
-
-            // Sum
-
-            var sum = exporter.CreateNode<Math_AddNode>();
-            sum.ValueIn("a").ConnectToSource(mul2.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            sum.ValueIn("b").ConnectToSource(mul5.FirstValueOut()).SetType(TypeRestriction.LimitToFloat4);
-            sum.FirstValueOut().ExpectedType(ExpectedType.Float4);
-
-            result = sum.FirstValueOut();
+            // Like Unity, wrap from (-180, 180] to [0, 360)
+            var positive = OpConst<Math_AddNode>(deg.FirstValueOut(), new Vector3(360f, 360f, 360f));
+            eulerDegrees = OpConst<Math_RemNode>(positive, new Vector3(360f, 360f, 360f));
         }
     }
 }

@@ -467,6 +467,78 @@ namespace UnityGLTF.Interactivity.Export
         }
 
 
+        public static void GetWorldMatrix(INodeExporter exporter, out ValueInRef target, out ValueOutRef worldMatrix)
+        {
+            var getMatrix = exporter.CreateNode<Pointer_GetNode>();
+            worldMatrix = getMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+            PointersHelper.SetupPointerTemplateAndTargetInput(getMatrix, PointersHelper.IdPointerNodeRef,
+                PointersHelper.IdPointerTemplNodeByRef + "/globalMatrix", GltfTypes.Float4x4);
+            target = getMatrix.ValueIn(PointersHelper.IdPointerNodeRef);
+        }
+
+        /// <summary>
+        /// Multiplies a vector (w = 0, so position is ignored, scale and rotation are applied) with the matrix.
+        /// Like Unity's Matrix4x4.MultiplyVector.
+        /// </summary>
+        public static void MultiplyVector(INodeExporter exporter, ValueOutRef matrix, out ValueInRef vector,
+            out ValueOutRef result)
+        {
+            var extract = exporter.CreateNode<Math_Extract3Node>();
+            if (exporter.Context.addUnityGltfSpaceConversion)
+            {
+                SpaceConversionHelpers.AddSpaceConversion(exporter, out vector, out var gltfVector);
+                extract.ValueIn(Math_Extract3Node.IdValueIn).ConnectToSource(gltfVector);
+            }
+            else
+                vector = extract.ValueIn(Math_Extract3Node.IdValueIn);
+
+            SetupMultiplyVector(exporter, matrix, extract, out var gltfResult);
+
+            if (!exporter.Context.addUnityGltfSpaceConversion)
+            {
+                result = gltfResult;
+                return;
+            }
+            SpaceConversionHelpers.AddSpaceConversion(exporter, gltfResult, out result);
+        }
+
+        private static void SetupMultiplyVector(INodeExporter exporter, ValueOutRef matrix, GltfInteractivityExportNode extractedVector,
+            out ValueOutRef result)
+        {
+            var vector4 = exporter.CreateNode<Math_Combine4Node>();
+            vector4.ValueIn("a").ConnectToSource(extractedVector.ValueOut(Math_Extract3Node.IdValueOutX));
+            vector4.ValueIn("b").ConnectToSource(extractedVector.ValueOut(Math_Extract3Node.IdValueOutY));
+            vector4.ValueIn("c").ConnectToSource(extractedVector.ValueOut(Math_Extract3Node.IdValueOutZ));
+            vector4.ValueIn("d").SetValue(0f);
+
+            var transform = exporter.CreateNode<Math_Transform_Float4Node>();
+            transform.ValueIn(Math_Transform_Float4Node.IdValueA).ConnectToSource(vector4.FirstValueOut());
+            transform.ValueIn(Math_Transform_Float4Node.IdValueB).ConnectToSource(matrix);
+
+            var extract = exporter.CreateNode<Math_Extract4Node>();
+            extract.ValueIn(Math_Extract4Node.IdValueIn).ConnectToSource(transform.FirstValueOut());
+
+            var vector3 = exporter.CreateNode<Math_Combine3Node>();
+            vector3.ValueIn(Math_Combine3Node.IdValueA).ConnectToSource(extract.ValueOut(Math_Extract4Node.IdValueOutX));
+            vector3.ValueIn(Math_Combine3Node.IdValueB).ConnectToSource(extract.ValueOut(Math_Extract4Node.IdValueOutY));
+            vector3.ValueIn(Math_Combine3Node.IdValueC).ConnectToSource(extract.ValueOut(Math_Extract4Node.IdValueOutZ));
+            result = vector3.FirstValueOut().ExpectedType(ExpectedType.Float3);
+        }
+
+        public static void GetWorldVectorFromLocalVector(INodeExporter exporter, ValueOutRef worldMatrix,
+            out ValueInRef localVector, out ValueOutRef worldVector)
+        {
+            MultiplyVector(exporter, worldMatrix, out localVector, out worldVector);
+        }
+
+        public static void GetLocalVectorFromWorldVector(INodeExporter exporter, ValueOutRef worldMatrix,
+            out ValueInRef worldVector, out ValueOutRef localVector)
+        {
+            var inverseMatrix = exporter.CreateNode<Math_InverseNode>();
+            inverseMatrix.ValueIn(Math_InverseNode.IdValueA).ConnectToSource(worldMatrix);
+            MultiplyVector(exporter, inverseMatrix.FirstValueOut(), out worldVector, out localVector);
+        }
+
         public static void GetWorldScale(INodeExporter exporter, out ValueInRef target, out ValueOutRef worldScale)
         {
             var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
