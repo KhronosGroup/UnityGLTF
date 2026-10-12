@@ -306,7 +306,12 @@ namespace UnityGLTF.Interactivity.Export
         public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
         {
             convertedValue = originalValue;
-            if (originalValue is Transform transform)
+            if (originalValue == null)
+            {
+                // e.g. an unconnected object input: the socket stays empty and gets the null value of its type later
+                typeIndex = -1;
+            }
+            else if (originalValue is Transform transform)
             {
                 typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
