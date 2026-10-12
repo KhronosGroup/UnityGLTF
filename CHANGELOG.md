@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - add: `KHR_interactivity`: export of `Color.r/g/b/a`, `Color.Lerp` / `LerpUnclamped` and the color operators
 - add: `KHR_interactivity`: export of `Random.value`, `rotation`, `rotationUniform`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties
 - add: `KHR_interactivity`: enum values are exported as ints
+- add: `KHR_interactivity`: export of `Color.linear`, `gamma`, `grayscale`, `maxColorComponent`, `Color.HSVToRGB`, `Color.RGBToHSV`, `Mathf.GammaToLinearSpace` and `LinearToGammaSpace`
+- add: `KHR_interactivity`: Visual Scripting units RGB To OkLCh and RGB From OkLCh (`math/rgbToOkLCh`, `math/rgbFromOkLCh`)
 - fix: `KHR_interactivity`: static properties of classes (e.g. `Random.value`, `Time.frameCount`) were exported as constant values from the editor
 - fix: `KHR_interactivity`: `Mathf.Epsilon` was exported as Euler's number
 - fix: `KHR_interactivity`: `Mathf.Sign(0)` returned 0 instead of 1
