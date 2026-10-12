@@ -790,7 +790,7 @@ namespace UnityGLTF
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
 					int newTargetId = targetTr ? GetTransformIndex(targetTr) : -1;
 
-					var targetTrShouldNotBeExported = targetTr && !targetTr.gameObject.activeInHierarchy && !settings.ExportDisabledGameObjects;
+					var targetTrShouldNotBeExported = targetTr && !targetTr.gameObject.activeInHierarchy && !exportDisabledGameObjects;
 
 					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{

@@ -28,6 +28,11 @@ namespace UnityGLTF
 		public ILogger logger;
 		internal readonly GLTFSettings settings;
 
+		/// <summary>
+		/// The exporter currently using this context. Set when the exporter is created, before the plugin instances are created.
+		/// </summary>
+		public GLTFSceneExporter Exporter { get; internal set; }
+
 		public ExportContext() : this(GLTFSettings.GetOrCreateSettings()) { }
 
 		public ExportContext(GLTFSettings settings)
@@ -151,8 +156,20 @@ namespace UnityGLTF
 		
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 		private List<GLTFExportPluginContext> _plugins = new List<GLTFExportPluginContext>();
+		// enabled plugins and their instances (which can be null)
+		private Dictionary<GLTFExportPlugin, GLTFExportPluginContext> _enabledPlugins = new Dictionary<GLTFExportPlugin, GLTFExportPluginContext>();
+		private Dictionary<GLTFExportPlugin, bool> _forcedPluginStates = new Dictionary<GLTFExportPlugin, bool>();
+		private bool _isCreatingPluginInstances = false;
 
 		public IReadOnlyList<GLTFExportPluginContext> Plugins => _plugins;
+
+		/// <summary>
+		/// Overrides <see cref="GLTFSettings.ExportDisabledGameObjects"/> for this export. Can be set by plugins in <see cref="GLTFExportPlugin.CreateInstance"/> (via <see cref="ExportContext.Exporter"/>).
+		/// If it's still null after all plugin instances are created, it's set from the settings.
+		/// </summary>
+		public bool? ExportDisabledGameObjects = null;
+
+		private bool exportDisabledGameObjects => ExportDisabledGameObjects ?? settings.ExportDisabledGameObjects;
 		
 		public struct TextureMapType
 		{
@@ -622,6 +639,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter(Transform[] rootTransforms, ExportContext context)
 		{
 			_exportContext = context;
+			context.Exporter = this;
 			if (context.logger != null)
 				Debug = context.logger;
 			else
@@ -632,14 +650,26 @@ namespace UnityGLTF
 			// legacy: implicit plugin for all the methods on ExportContext
 			_plugins.Add(context.GetExportContextCallbacks());
 			
+
 			// create export plugin instances
+			// plugins can enable/disable other plugins with ForcePluginEnable while their instance is created
+			_isCreatingPluginInstances = true;
 			foreach (var plugin in settings.ExportPlugins)
 			{
-				if (plugin != null && plugin.Enabled)
-				{
-					var instance = plugin.CreateInstance(context);
-					if (instance != null) _plugins.Add(instance);
-				}
+				if (plugin == null || _enabledPlugins.ContainsKey(plugin)) continue;
+				var enabled = _forcedPluginStates.TryGetValue(plugin, out var forcedEnabled) ? forcedEnabled : plugin.Enabled;
+				if (enabled)
+					CreatePluginInstance(plugin);
+			}
+			_isCreatingPluginInstances = false;
+
+			if (!ExportDisabledGameObjects.HasValue)
+				ExportDisabledGameObjects = settings.ExportDisabledGameObjects;
+
+			_visbilityPluginEnabled = _enabledPlugins.Keys.Any(x => x is VisibilityExport);
+			if (_visbilityPluginEnabled && !exportDisabledGameObjects)
+			{
+				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
 			}
 
 			_exportLayerMask = _exportContext.ExportLayers;
@@ -702,14 +732,53 @@ namespace UnityGLTF
 			
 			foreach (var plugin in settings.ExportPlugins)
 			{
-				if (plugin != null && plugin.Enabled && plugin.AssetExtras != null)
+				if (plugin != null && _enabledPlugins.ContainsKey(plugin) && plugin.AssetExtras != null)
 					_root.Asset.PluginExtras.Add(plugin.DisplayName, plugin.AssetExtras);
 			}
-			
-			_visbilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
-			if (_visbilityPluginEnabled && !settings.ExportDisabledGameObjects)
+		}
+
+		private void CreatePluginInstance(GLTFExportPlugin plugin)
+		{
+			// registered before CreateInstance, so the plugin isn't created twice when it's forced from within its own CreateInstance
+			_enabledPlugins[plugin] = null;
+			var instance = plugin.CreateInstance(_exportContext);
+			if (!_enabledPlugins.ContainsKey(plugin)) return; // was force disabled in the meantime
+			if (instance != null) _plugins.Add(instance);
+			_enabledPlugins[plugin] = instance;
+		}
+
+		/// <summary>
+		/// Enables or disables an export plugin for this export, regardless of its setting.
+		/// Can only be called from <see cref="GLTFExportPlugin.CreateInstance"/> (via <see cref="ExportContext.Exporter"/>).
+		/// </summary>
+		public void ForcePluginEnable<T>(bool enable) where T : GLTFExportPlugin
+		{
+			if (!_isCreatingPluginInstances)
 			{
-				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
+				Debug.Log(LogType.Error, $"{nameof(ForcePluginEnable)} can only be called from {nameof(GLTFExportPlugin)}.{nameof(GLTFExportPlugin.CreateInstance)}.");
+				return;
+			}
+
+			var plugin = settings.ExportPlugins.FirstOrDefault(x => x is T);
+			if (!plugin)
+			{
+				if (enable) Debug.Log(LogType.Warning, $"Can't enable export plugin {typeof(T).Name}: it's not registered in the export settings.");
+				return;
+			}
+
+			_forcedPluginStates[plugin] = enable;
+			if (_enabledPlugins.ContainsKey(plugin) == enable)
+				return;
+
+			if (enable)
+			{
+				CreatePluginInstance(plugin);
+			}
+			else
+			{
+				var instance = _enabledPlugins[plugin];
+				if (instance != null) _plugins.Remove(instance);
+				_enabledPlugins.Remove(plugin);
 			}
 		}
 
@@ -1030,7 +1099,7 @@ namespace UnityGLTF
 			var isRoot = _rootTransforms.Contains(transform);
 			if (isRoot) return true;
 			
-			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf)
+			if (!exportDisabledGameObjects && !transform.gameObject.activeSelf)
 			{
 				return false;
 			}
@@ -1126,7 +1195,7 @@ namespace UnityGLTF
 				_animatedNodes.Add(nodeTransform);
 			}
 #endif
-			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject, settings.ExportDisabledGameObjects))
+			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject, exportDisabledGameObjects))
 			{
 				_skinnedNodes.Add(nodeTransform);
 			}
@@ -1279,7 +1348,7 @@ namespace UnityGLTF
 			// add another primitive if the root object also has a mesh
 			if (ShouldExportTransform(transform))
 			{
-				if (ContainsValidRenderer(transform.gameObject, settings.ExportDisabledGameObjects))
+				if (ContainsValidRenderer(transform.gameObject, exportDisabledGameObjects))
 				{
 					prims.Add(transform.gameObject);
 				}

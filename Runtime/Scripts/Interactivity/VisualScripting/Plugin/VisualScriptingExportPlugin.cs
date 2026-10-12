@@ -30,6 +30,7 @@ namespace UnityGLTF.Interactivity.VisualScripting
         
         public override string DisplayName => "KHR_interactivity (VisualScripting)";
         public override string Description => "Exports flow graph data for Visual Scripting ScriptMachines.";
+        public override string Warning => "When exporting with interactivity, KHR_node_visibility, KHR_animation_pointer and \"Export Disabled GameObjects\" are force enabled.";
  
 #if HAVE_VISUAL_SCRIPTING
         [Header("This settings should only be disabled for debugging purposes.")]
@@ -39,6 +40,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
 #if UNITY_EDITOR && HAVE_VISUAL_SCRIPTING
+            UnityGLTF.Interactivity.Export.InteractivityExportContext.ForceRequiredExportSettings(context);
+
             var newContext = new VisualScriptingExportContext();
             newContext.cleanUpAndOptimizeExportedGraph = cleanUpAndOptimizeExportedGraph;
             return newContext;

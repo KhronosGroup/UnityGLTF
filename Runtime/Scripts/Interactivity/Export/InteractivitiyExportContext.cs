@@ -29,7 +29,19 @@ namespace UnityGLTF.Interactivity.Export
         
         public delegate void OnBeforeSerializationDelegate(List<GltfInteractivityExportNode> nodes);
         public event OnBeforeSerializationDelegate OnBeforeSerialization;
-        
+
+        /// <summary>
+        /// Enables the export plugins and settings interactivity depends on.
+        /// Must be called from <see cref="GLTFExportPlugin.CreateInstance"/>.
+        /// </summary>
+        public static void ForceRequiredExportSettings(ExportContext context)
+        {
+            // Graphs can change the visibility of (disabled) nodes and use pointers
+            context.Exporter.ForcePluginEnable<VisibilityExport>(true);
+            context.Exporter.ForcePluginEnable<AnimationPointerExport>(true);
+            context.Exporter.ExportDisabledGameObjects = true;
+        }
+
         public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
         {
             this.exporter = exporter;
