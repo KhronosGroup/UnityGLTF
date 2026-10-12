@@ -1,0 +1,19 @@
+{
+    "name": "UnityGLTF.Interactivity.Playback.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:044607fd7a2ec4483a9d4a82c8ab78a7",
+        "GUID:b5e009300cbc0584fa5c0fa797ef4c5f"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
