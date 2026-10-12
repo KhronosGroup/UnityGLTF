@@ -25,6 +25,28 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 UnitExportLogging.AddErrorLog(unit, "Can't resolve list detection by connections.");
                 return false;
             }
+            // flow/for can't be interrupted, so loops with a Break use the custom loop
+            var breakVariable = LoopBreakHelper.GetBreakVariable(unitExporter, unit);
+            if (breakVariable != -1)
+            {
+                FlowHelpersVS.CreateCustomForLoop(unitExporter, out var startIndex,
+                    out var endIndex, out var step,
+                    out var flowIn, out var currentIndex,
+                    out var loopBody, out var completed, breakVariable);
+
+                startIndex.SetValue(0);
+                step.SetValue(1);
+                ListHelpersVS.GetListCount(list, endIndex);
+                flowIn.MapToControlInput(unit.enter);
+                loopBody.MapToControlOutput(unit.body);
+                completed.MapToControlOutput(unit.exit);
+
+                ListHelpersVS.GetItem(unitExporter, list, currentIndex, out var itemValueSocket);
+                currentIndex.MapToPort(unit.currentIndex);
+                itemValueSocket.MapToPort(unit.currentItem);
+                return true;
+            }
+
             var forLoop = unitExporter.CreateNode<Flow_ForLoopNode>();
             forLoop.Configuration[Flow_ForLoopNode.IdConfigInitialIndex].Value = 0;
             forLoop.ValueIn(Flow_ForLoopNode.IdStartIndex).SetValue(0);

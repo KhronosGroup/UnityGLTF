@@ -12,7 +12,8 @@ namespace UnityGLTF.Interactivity.Export
             out FlowInRef nextStepIn,
             out ValueOutRef currentIndex,
             out FlowOutRef loopBodyOut,
-            out FlowOutRef completed)
+            out FlowOutRef completed,
+            int breakVariable = -1)
         {
             var indexVar =
                 exporter.Context.AddVariableWithIdIfNeeded("ForLoopIndex" + System.Guid.NewGuid().ToString(), 0,
@@ -24,6 +25,11 @@ namespace UnityGLTF.Interactivity.Export
             var setStartIndexVar = VariablesHelpers.SetVariable(exporter, indexVar, out startIndex, out _, out _);
             var branch = exporter.CreateNode<Flow_BranchNode>();
 
+            if (breakVariable != -1)
+            {
+                VariablesHelpers.SetVariableStaticValue(exporter, breakVariable, false, out var resetBreakIn, out _);
+                startSequ.FlowOut("0").ConnectToFlowDestination(resetBreakIn);
+            }
             startSequ.FlowOut("1").ConnectToFlowDestination(setStartIndexVar.FlowIn(Variable_SetNode.IdFlowIn));
             startSequ.FlowOut("2").ConnectToFlowDestination(branch.FlowIn(Flow_BranchNode.IdFlowIn));
 
@@ -65,7 +71,7 @@ namespace UnityGLTF.Interactivity.Export
             conditionSelect.ValueIn("b").ConnectToSource(descendingIndexCondition.FirstValueOut());
             conditionSelect.ValueIn("condition").ConnectToSource(ascendingCondition.FirstValueOut());
 
-            branch.ValueIn(Flow_BranchNode.IdCondition).ConnectToSource(conditionSelect.FirstValueOut());
+            branch.ValueIn(Flow_BranchNode.IdCondition).ConnectToSource(AndNotBroken(exporter, conditionSelect.FirstValueOut(), breakVariable));
         }
 
         public static void CreateCustomForLoop(INodeExporter exporter,
@@ -75,7 +81,8 @@ namespace UnityGLTF.Interactivity.Export
             out FlowInRef flowIn,
             out ValueOutRef currentIndex,
             out FlowOutRef loopBodyOut,
-            out FlowOutRef completed)
+            out FlowOutRef completed,
+            int breakVariable = -1)
         {
             var indexVar = exporter.Context.AddVariableWithIdIfNeeded(
                 "ForLoopIndex" + System.Guid.NewGuid().ToString(), 0, GltfTypes.Int);
@@ -86,6 +93,12 @@ namespace UnityGLTF.Interactivity.Export
             flowIn = setStartIndexVar.FlowIn(Variable_SetNode.IdFlowIn);
             setStartIndexVar.FlowOut(Variable_SetNode.IdFlowOut)
                 .ConnectToFlowDestination(whileNode.FlowIn(Flow_WhileNode.IdFlowIn));
+            if (breakVariable != -1)
+            {
+                VariablesHelpers.SetVariableStaticValue(exporter, breakVariable, false, out var resetBreakIn, out var resetBreakOut);
+                resetBreakOut.ConnectToFlowDestination(flowIn);
+                flowIn = resetBreakIn;
+            }
             completed = whileNode.FlowOut(Flow_WhileNode.IdCompleted);
 
             var ascendingCondition = exporter.CreateNode<Math_LeNode>();
@@ -123,7 +136,26 @@ namespace UnityGLTF.Interactivity.Export
             conditionSelect.ValueIn("b").ConnectToSource(descendingIndexCondition.FirstValueOut());
             conditionSelect.ValueIn("condition").ConnectToSource(ascendingCondition.FirstValueOut());
 
-            whileNode.ValueIn(Flow_WhileNode.IdCondition).ConnectToSource(conditionSelect.FirstValueOut());
+            whileNode.ValueIn(Flow_WhileNode.IdCondition).ConnectToSource(AndNotBroken(exporter, conditionSelect.FirstValueOut(), breakVariable));
+        }
+
+        /// <summary>
+        /// Adds "AND NOT breakVariable" to a loop condition, so a Break can stop the loop. Returns the condition unchanged without a break variable.
+        /// </summary>
+        private static ValueOutRef AndNotBroken(INodeExporter exporter, ValueOutRef condition, int breakVariable)
+        {
+            if (breakVariable == -1)
+                return condition;
+
+            VariablesHelpers.GetVariable(exporter, breakVariable, out var broken);
+            var not = exporter.CreateNode<Math_NotNode>();
+            not.ValueIn(Math_NotNode.IdValueA).ConnectToSource(broken).SetType(TypeRestriction.LimitToBool);
+            not.FirstValueOut().ExpectedType(ExpectedType.Bool);
+
+            var and = exporter.CreateNode<Math_AndNode>();
+            and.ValueIn(Math_AndNode.IdValueA).ConnectToSource(condition).SetType(TypeRestriction.LimitToBool);
+            and.ValueIn(Math_AndNode.IdValueB).ConnectToSource(not.FirstValueOut()).SetType(TypeRestriction.LimitToBool);
+            return and.FirstValueOut().ExpectedType(ExpectedType.Bool);
         }
 
         public static void CreateConditionalWaiting(INodeExporter exporter,
