@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.23.0] - 2026-10-12
+- add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`
+- add: `KHR_interactivity`: export of the `Transform.eulerAngles` / `localEulerAngles` getters
+- add: `KHR_interactivity`: Visual Scripting units World To Local / Local To World Position and Rotation
+- add: `KHR_interactivity`: Interpolate for world `position`, `rotation` and `lossyScale` of a Transform
+- add: `KHR_interactivity`: Interpolate Transform unit, interpolates position, rotation and scale of a Transform to the world pose of another Transform
+- add: `KHR_interactivity`: the Visual Scripting export forces `KHR_node_visibility`, `KHR_animation_pointer` and the export of disabled GameObjects
+- change: `KHR_interactivity`: euler to quaternion conversion uses `math/quatFromAngles`
+- fix: `KHR_interactivity`: `Transform.Translate` ignored `Space.Self` and `relativeTo`
+- fix: `KHR_interactivity`: setting `Transform.eulerAngles` set the local rotation
+- fix: `KHR_interactivity`: Transform interpolations failed to export without Unity/glTF space conversion
+- fix: `KHR_interactivity`: export error for subgraphs with unconnected inputs
+- fix: `KHR_interactivity`: type detection of generic multiply
+- fix: `KHR_interactivity`: missing ref type in `math/switch`
+
 ## [2.22.2] - 2026-10-12
 - add: `KHR_interactivity`: export of `Camera.main` projection properties (`fieldOfView`, `aspect`, `nearClipPlane`, `farClipPlane`, `orthographic`, `orthographicSize`) from the `activeCamera` pointers
 - fix: export, export cache and import failing on Windows when file paths exceed 260 characters
