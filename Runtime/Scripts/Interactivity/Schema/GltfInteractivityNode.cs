@@ -414,6 +414,11 @@ namespace UnityGLTF.Interactivity.Schema
                 {
                     valueObject.Add(new JProperty("value", new JArray(i)));
                 }
+                else if (value is System.Enum enumValue)
+                {
+                    // Enums are exported as their int value
+                    valueObject.Add(new JProperty("value", new JArray(System.Convert.ToInt32(enumValue))));
+                }
                 else if (value is float f)
                 {
                     valueObject.Add(new JProperty("value", new JArray(Num(f))));

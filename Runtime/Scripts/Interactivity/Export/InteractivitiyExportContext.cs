@@ -363,6 +363,10 @@ namespace UnityGLTF.Interactivity.Export
             if (index != -1)
                 return index;
 
+            // Enums are exported as their int value
+            if (defaultValue is System.Enum enumValue)
+                defaultValue = System.Convert.ToInt32(enumValue);
+
             GltfInteractivityGraph.Variable newVariable = new GltfInteractivityGraph.Variable();
             newVariable.Name = id;
             

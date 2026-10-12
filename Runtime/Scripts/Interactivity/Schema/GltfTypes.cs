@@ -307,6 +307,10 @@ namespace UnityGLTF.Interactivity
                 return true;
             }
 
+            // Enums are exported as their int value
+            if (value is Enum enumValue)
+                value = Convert.ToInt32(enumValue);
+
             if (value is int intValue)
             {
                 switch (toTypeSignature)
@@ -411,6 +415,10 @@ namespace UnityGLTF.Interactivity
         
         public static int TypeIndex(Type type)
         {
+            // Enums are exported as their int value
+            if (type != null && type.IsEnum)
+                return TypeIndexByGltfSignature(Int);
+
             for (int i = 0; i < TypesMapping.Length; i++)
             {
                 if (TypesMapping[i].CSharpTypes.Contains(type))
@@ -430,11 +438,50 @@ namespace UnityGLTF.Interactivity
                     return i;
                 }
             }
+
+            // Enums are exported as their int value
+            var type = FindType(csharpType);
+            if (type != null && type.IsEnum)
+                return TypeIndexByGltfSignature(Int);
+            
             return -1;
+        }
+
+        private static readonly System.Collections.Generic.Dictionary<string, Type> FoundTypes = new System.Collections.Generic.Dictionary<string, Type>();
+
+        /// <summary>
+        /// Resolves a type from its full or assembly qualified name.
+        /// </summary>
+        private static Type FindType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return null;
+            if (FoundTypes.TryGetValue(typeName, out var found))
+                return found;
+
+            var type = Type.GetType(typeName, false);
+            if (type == null)
+            {
+                // Full name without assembly, or an assembly qualified name of another assembly version
+                var fullName = typeName.Split(',')[0].Trim();
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    type = assembly.GetType(fullName, false);
+                    if (type != null)
+                        break;
+                }
+            }
+
+            FoundTypes[typeName] = type;
+            return type;
         }
         
         public static TypeMapping GetTypeMapping(Type type)
         {
+            // Enums are exported as their int value
+            if (type != null && type.IsEnum)
+                type = typeof(int);
+
             for (int i = 0; i < TypesMapping.Length; i++)
             {
                 if (TypesMapping[i].CSharpTypes.Contains(type))
