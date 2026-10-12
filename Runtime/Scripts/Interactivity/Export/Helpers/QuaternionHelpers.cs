@@ -69,13 +69,21 @@ namespace UnityGLTF.Interactivity.Export
         public static void QuaternionToEuler(INodeExporter exporter, ValueOutRef quaternion,
             out ValueOutRef eulerDegrees)
         {
+            QuaternionToEuler(exporter, out var quaternionInput, out eulerDegrees);
+            quaternionInput.ConnectToSource(quaternion);
+        }
+
+        /// <inheritdoc cref="QuaternionToEuler(INodeExporter, ValueOutRef, out ValueOutRef)"/>
+        public static void QuaternionToEuler(INodeExporter exporter, out ValueInRef quaternion,
+            out ValueOutRef eulerDegrees)
+        {
             /*
                x = asin(clamp(2 * (w*x - y*z), -1, 1))
                y = atan2(2 * (w*y + x*z), 1 - 2 * (x*x + y*y))
                z = atan2(2 * (w*z + x*y), 1 - 2 * (x*x + z*z))
             */
             var q = exporter.CreateNode<Math_Extract4Node>();
-            q.ValueIn(Math_Extract4Node.IdValueIn).ConnectToSource(quaternion).SetType(TypeRestriction.LimitToFloat4);
+            quaternion = q.ValueIn(Math_Extract4Node.IdValueIn).SetType(TypeRestriction.LimitToFloat4);
             var qx = q.ValueOut(Math_Extract4Node.IdValueOutX);
             var qy = q.ValueOut(Math_Extract4Node.IdValueOutY);
             var qz = q.ValueOut(Math_Extract4Node.IdValueOutZ);
