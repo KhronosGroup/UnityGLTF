@@ -32,6 +32,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             colorNode.FirstValueOut().MapToPort(unit.result);
 
+            unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
         }
     }
