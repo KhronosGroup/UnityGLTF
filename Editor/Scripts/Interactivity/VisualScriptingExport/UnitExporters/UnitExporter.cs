@@ -185,7 +185,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (valueInputPort == null)
                     continue;
 
-                if (IsInputLiteralOrDefaultValue(valueInputPort, out var defaultValue))
+                if (IsInputLiteralOrDefaultValue(valueInputPort, graph, out var defaultValue))
                 {
                     foreach (var inputPort in input.Value)
                     {
@@ -427,20 +427,25 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public bool IsInputLiteralOrDefaultValue(ValueInput inputPort, out object value)
         {
-            if (inputPort.hasValidConnection && inputPort.connections.First().source.unit is GraphInput)
+            return IsInputLiteralOrDefaultValue(inputPort, Graph, out value);
+        }
+
+        private bool IsInputLiteralOrDefaultValue(ValueInput inputPort, VisualScriptingExportContext.ExportGraph graph, out object value)
+        {
+            // Reroute to the SubGraph Unit to get the value. Loop for nested subgraphs whose inputs are also not connected
+            while (graph != null && graph.subGraphUnit != null
+                   && inputPort.hasValidConnection && inputPort.connections.First().source.unit is GraphInput)
             {
-                var subGraphUnit = vsExportContext.currentGraphProcessing.subGraphUnit;
-                if (subGraphUnit != null)
-                {
-                    var graphValueKey = inputPort.connections.First().source.key;
-                    // Reroute to the SubGraph Unit to get the value
-                    inputPort = subGraphUnit.valueInputs[graphValueKey];
-                }
+                var graphValueKey = inputPort.connections.First().source.key;
+                if (!graph.subGraphUnit.valueInputs.Contains(graphValueKey))
+                    break;
+                inputPort = graph.subGraphUnit.valueInputs[graphValueKey];
+                graph = graph.parentGraph;
             }
-            
+
             if (inputPort.hasDefaultValue && !inputPort.hasValidConnection && !inputPort.hasAnyConnection)
             {
-                value = unit.defaultValues[inputPort.key];
+                value = inputPort.unit.defaultValues[inputPort.key];
 
                 if (value == null && (inputPort.type == typeof(GameObject) || inputPort.type.IsSubclassOf(typeof(Component))))
                     // Self reference
