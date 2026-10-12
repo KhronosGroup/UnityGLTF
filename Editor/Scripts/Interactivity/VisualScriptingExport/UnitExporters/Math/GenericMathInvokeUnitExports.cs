@@ -14,7 +14,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine3Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4Node>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4x4Node>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Sin), new GenericInvokeMathInvokeUnitExporters<Math_SinNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Cos), new GenericInvokeMathInvokeUnitExporters<Math_CosNode>());

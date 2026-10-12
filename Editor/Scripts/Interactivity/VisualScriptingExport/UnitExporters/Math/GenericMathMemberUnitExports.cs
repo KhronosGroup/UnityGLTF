@@ -10,7 +10,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public static void Register()
         {
             GetMemberUnitExport.RegisterMemberExporter(typeof(Mathf), nameof(Mathf.PI), new GenericGetMemberMathExporters<Math_PiNode>());
-            GetMemberUnitExport.RegisterMemberExporter(typeof(Mathf), nameof(Mathf.Epsilon), new GenericGetMemberMathExporters<Math_ENode>());
             GetMemberUnitExport.RegisterMemberExporter(typeof(Mathf), nameof(Mathf.Infinity), new GenericGetMemberMathExporters<Math_InfNode>());
             GetMemberUnitExport.RegisterMemberExporter(typeof(Mathf), nameof(float.NaN), new GenericGetMemberMathExporters<Math_NaNNode>());
             GetMemberUnitExport.RegisterMemberExporter(typeof(Vector2), nameof(Vector2.magnitude), new GenericGetMemberMathExporters<Math_LengthNode>());

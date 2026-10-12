@@ -38,8 +38,32 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
+            // Invoke exporters are registered by method name, so every overload ends up here.
+            // Only overloads that match the node's inputs can be mapped 1:1 (e.g. not Mathf.Max(params float[])).
+            int missingInputsFrom = -1;
+            if (unitExporter.unit is InvokeMember invokeMember)
+            {
+                var schema = GltfInteractivityNodeSchema.GetSchema<TSchema>();
+                int socketCount = 0;
+                foreach (var socket in schema.InputValueSockets.Keys)
+                    if (Array.IndexOf(inputSocketNames, socket) != -1)
+                        socketCount++;
+
+                var unitInputCount = invokeMember.valueInputs.Count;
+                if (unitInputCount > socketCount
+                    || (unitInputCount < socketCount && !invokeMember.member.isConstructor))
+                {
+                    UnitExportLogging.AddErrorLog(invokeMember, $"Overload with {unitInputCount} input(s) is not supported, {schema.Op} expects {socketCount}.");
+                    return false;
+                }
+
+                // Constructors with fewer arguments, e.g. new Vector3(x, y): the other components are 0
+                if (unitInputCount < socketCount)
+                    missingInputsFrom = unitInputCount;
+            }
+
             var node = unitExporter.CreateNode<TSchema>();
-            
+
             foreach (var flow in node.FlowConnections)
             {
                 // TODO: Map flow sockets
@@ -65,6 +89,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     if (inputSocketNames[i] == input.Key)
                     {
+                        if (missingInputsFrom != -1 && i >= missingInputsFrom)
+                        {
+                            node.ValueIn(input.Key).SetValue(0f);
+                            continue;
+                        }
                         var valueInput = unitExporter.unit.valueInputs[i];
                         unitExporter.MapInputPortToSocketName(valueInput, input.Key, node);
                     }

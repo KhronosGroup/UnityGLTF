@@ -91,103 +91,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
             
 
-            /*
-                Vector3 current;
-                Vector3 target;
-                float maxDistanceDelta;
-                
-                var num = target - current;
-                var d = Vector3.Dot(num, num);
-                var num4 = Mathf.Sqrt(d) * maxDistanceDelta;
-
-                num = num / num4;
-                var result = current + num;
-                 
-             */
-
             ValueOutRef maxDistanceDeltaPerSecond = null;
             if (addPerSecond)
             {
                 TimeHelpers.AddTickNode(unitExporter, TimeHelpers.GetTimeValueOption.DeltaTime, out var deltaTimeRef);
-                var perSecondMul = unitExporter.CreateNode<Math_MulNode>();
-                perSecondMul.ValueIn("a").ConnectToSource(deltaTimeRef);
-                perSecondMul.ValueIn("b").MapToInputPort(maxDistanceDelta);
-                maxDistanceDeltaPerSecond = perSecondMul.FirstValueOut();
+                maxDistanceDeltaPerSecond = MathExpression.Float(unitExporter).Mul(maxDistanceDelta, deltaTimeRef);
             }
 
-            var subNode = unitExporter.CreateNode<Math_SubNode>();
-            subNode.ValueIn("a").MapToInputPort(target);
-            subNode.ValueIn("b").MapToInputPort(current);
-
-            var lengthNode = unitExporter.CreateNode<Math_LengthNode>();
-            lengthNode.ValueIn("a").ConnectToSource(subNode.FirstValueOut());
-            
-            var divNode = unitExporter.CreateNode<Math_DivNode>();
-            divNode.ValueIn("a").ConnectToSource(subNode.FirstValueOut());
-            divNode.ValueIn("b").ConnectToSource(lengthNode.FirstValueOut());
-
-            var mulNode = unitExporter.CreateNode<Math_MulNode>();
-            mulNode.ValueIn("a").ConnectToSource(divNode.FirstValueOut());
-            if (maxDistanceDeltaPerSecond != null)
-                mulNode.ValueIn("b").ConnectToSource(maxDistanceDeltaPerSecond);
-            else
-                mulNode.ValueIn("b").MapToInputPort(maxDistanceDelta);
-
-
-            var addNode = unitExporter.CreateNode<Math_AddNode>();
-            addNode.ValueIn("a").MapToInputPort(current);
-            addNode.ValueIn("b").ConnectToSource(mulNode.FirstValueOut());
-
-            
-            var selectNode = unitExporter.CreateNode<Math_SelectNode>();
-            selectNode.ValueIn(Math_SelectNode.IdValueA).MapToInputPort(target);
-            selectNode.ValueIn(Math_SelectNode.IdValueB).ConnectToSource(addNode.FirstValueOut());
-
-            var eqNode = unitExporter.CreateNode<Math_EqNode>();
-            eqNode.ValueIn(Math_EqNode.IdValueA).ConnectToSource(lengthNode.FirstValueOut());
-            eqNode.ValueIn(Math_EqNode.IdValueB).SetValue(0f);
-
-            var geNode = unitExporter.CreateNode<Math_GeNode>();
-            if (maxDistanceDeltaPerSecond != null)
-                geNode.ValueIn("b").ConnectToSource(maxDistanceDeltaPerSecond);
-            else
-                geNode.ValueIn("a").MapToInputPort(maxDistanceDelta);
-            geNode.ValueIn("b").SetValue(0f);
-            var leNode = unitExporter.CreateNode<Math_LeNode>();
-            leNode.ValueIn("a").ConnectToSource(lengthNode.FirstValueOut());
-
-            if (maxDistanceDeltaPerSecond != null)
-                leNode.ValueIn("b").ConnectToSource(maxDistanceDeltaPerSecond);
-            else
-                leNode.ValueIn("b").MapToInputPort(maxDistanceDelta);
-
-            var andNode = unitExporter.CreateNode<Math_AndNode>();
-            andNode.ValueIn("a").ConnectToSource(geNode.FirstValueOut());
-            andNode.ValueIn("b").ConnectToSource(leNode.FirstValueOut());
-
-            var orNode = unitExporter.CreateNode<Math_OrNode>();
-            orNode.ValueIn("a").ConnectToSource(eqNode.FirstValueOut());
-            orNode.ValueIn("b").ConnectToSource(andNode.FirstValueOut());
-
-            var eqDeltaZeroNode = unitExporter.CreateNode<Math_EqNode>();
-            if (maxDistanceDeltaPerSecond != null)
-                eqDeltaZeroNode.ValueIn(Math_EqNode.IdValueA).ConnectToSource(maxDistanceDeltaPerSecond);
-            else
-                eqDeltaZeroNode.ValueIn(Math_EqNode.IdValueA).MapToInputPort(maxDistanceDelta);
-            eqDeltaZeroNode.ValueIn(Math_EqNode.IdValueB).SetValue(0f);
-
-            var selectDeltaZeroNode = unitExporter.CreateNode<Math_SelectNode>();
-            selectDeltaZeroNode.ValueIn(Math_SelectNode.IdValueA).MapToInputPort(current);
-            selectDeltaZeroNode.ValueIn(Math_SelectNode.IdValueB).ConnectToSource(selectNode.FirstValueOut());
-            selectDeltaZeroNode.ValueIn(Math_SelectNode.IdCondition).ConnectToSource(eqDeltaZeroNode.FirstValueOut());
-            
-            selectNode.ValueIn(Math_SelectNode.IdCondition).ConnectToSource(orNode.FirstValueOut());
-            
-            selectDeltaZeroNode.FirstValueOut().MapToPort(result);
-            
-            if (invokeUnit != null)
-                unitExporter.ByPassFlow(invokeUnit.enter, invokeUnit.exit);
-
+            var gltfType = GltfTypes.TypeIndex(current.type);
+            var moved = UnityMathExpressions.VectorMoveTowards(unitExporter, gltfType, current, target,
+                maxDistanceDeltaPerSecond != null ? (MathOperand)maxDistanceDeltaPerSecond : maxDistanceDelta);
+            moved.MapToPort(result);
             return true;
         }
     }
