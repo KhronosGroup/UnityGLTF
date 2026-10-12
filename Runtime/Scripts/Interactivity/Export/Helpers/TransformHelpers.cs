@@ -7,8 +7,47 @@ namespace UnityGLTF.Interactivity.Export
     {
         public static string ActiveCameraPositionPointer = "/extensions/KHR_interactivity/activeCamera/position";
         public static string ActiveCameraRotationPointer = "/extensions/KHR_interactivity/activeCamera/rotation";
-        public static string ActiveCameraGlobalMatrix = "/extensions/KHR_interactivity/activeCamera/globalMatrix";
-        public static string ActiveCameraMatrix = "/extensions/KHR_interactivity/activeCamera/matrix";
+
+        /// <summary>
+        /// World matrix of the active camera in glTF space, composed from activeCamera/position and
+        /// activeCamera/rotation (both world space, there is no activeCamera matrix pointer). With space
+        /// conversion, the rotation includes the 180° Y flip between glTF and Unity camera look directions,
+        /// so the matrix matches the transform of the Unity camera.
+        /// </summary>
+        public static void GetWorldMatrixFromMainCamera(INodeExporter exporter, out ValueOutRef worldMatrix)
+        {
+            var getPosition = exporter.CreateNode<Pointer_GetNode>();
+            getPosition.FirstValueOut().ExpectedType(ExpectedType.Float3);
+            PointersHelper.AddPointerConfig(getPosition, ActiveCameraPositionPointer, GltfTypes.Float3);
+
+            var getRotation = exporter.CreateNode<Pointer_GetNode>();
+            getRotation.FirstValueOut().ExpectedType(ExpectedType.Float4);
+            PointersHelper.AddPointerConfig(getRotation, ActiveCameraRotationPointer, GltfTypes.Float4);
+
+            ValueOutRef rotation = getRotation.FirstValueOut();
+            if (exporter.Context.addUnityGltfSpaceConversion)
+                QuaternionHelpers.Invert(exporter, rotation, out rotation);
+
+            var compose = exporter.CreateNode<Math_MatComposeNode>();
+            compose.ValueIn(Math_MatComposeNode.IdInputTranslation).ConnectToSource(getPosition.FirstValueOut());
+            compose.ValueIn(Math_MatComposeNode.IdInputRotation).ConnectToSource(rotation);
+            compose.ValueIn(Math_MatComposeNode.IdInputScale).SetValue(Vector3.one);
+            worldMatrix = compose.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
+        }
+
+        public static void GetWorldPointFromLocalPointOfMainCamera(INodeExporter exporter, out ValueInRef localPoint,
+            out ValueOutRef worldPoint)
+        {
+            GetWorldMatrixFromMainCamera(exporter, out var worldMatrix);
+            GetWorldPointFromLocalPoint(exporter, worldMatrix, out localPoint, out worldPoint);
+        }
+
+        public static void GetLocalPointFromWorldPointOfMainCamera(INodeExporter exporter, out ValueInRef worldPoint,
+            out ValueOutRef localPoint)
+        {
+            GetWorldMatrixFromMainCamera(exporter, out var worldMatrix);
+            GetLocalPointFromWorldPoint(exporter, worldMatrix, out worldPoint, out localPoint);
+        }
 
         public static void GetLocalScale(INodeExporter exporter, out ValueInRef target,
             out ValueOutRef scaleOutput)

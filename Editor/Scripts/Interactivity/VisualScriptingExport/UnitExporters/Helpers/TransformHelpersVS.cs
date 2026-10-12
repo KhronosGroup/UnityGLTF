@@ -13,11 +13,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             if (UnitsHelper.IsMainCameraInInput(target))
             {
-                var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
-                worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-                PointersHelper.AddPointerConfig(worldMatrix, ActiveCameraGlobalMatrix, GltfTypes.Float4x4);
-                
-                GetWorldPointFromLocalPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
+                GetWorldPointFromLocalPointOfMainCamera(exporter, out localPoint, out worldPoint);
             }
             else
             {
@@ -33,11 +29,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         {
             if (UnitsHelper.IsMainCameraInInput(target))
             {
-                var worldMatrix = exporter.CreateNode<Pointer_GetNode>();
-                worldMatrix.FirstValueOut().ExpectedType(ExpectedType.Float4x4);
-                PointersHelper.AddPointerConfig(worldMatrix, ActiveCameraGlobalMatrix, GltfTypes.Float4x4);
-                
-                GetLocalPointFromWorldPoint(exporter, worldMatrix.FirstValueOut(), out localPoint, out worldPoint);
+                GetLocalPointFromWorldPointOfMainCamera(exporter, out localPoint, out worldPoint);
             }
             else
             {
