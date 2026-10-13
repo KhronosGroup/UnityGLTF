@@ -11,7 +11,8 @@ namespace UnityGLTF.Interactivity.Export
     /// Checks the serialized KHR_interactivity extension object against the structural rules of the specification
     /// (JSON schema, "Validation (Informative)" section and the JSON Syntax chapter), plus the value types on
     /// connections: the type flowing into an input socket is inferred from its source and checked against the
-    /// types the operation accepts (taken from UnityGLTF's node schemas). Socket names are not checked.
+    /// types the operation accepts (taken from UnityGLTF's node schemas). Socket names are only checked for
+    /// references to outputs of extension ops, whose output sockets are defined by their declaration.
     /// Works on JSON only, so it also catches problems introduced by the serialization itself.
     /// </summary>
     public static class GraphSpecValidator
@@ -183,6 +184,8 @@ namespace UnityGLTF.Interactivity.Export
 
             var declarations = NonEmptyArray(graph, "declarations", at, assert);
             var declarationOps = new List<string>();
+            // output value sockets of extension ops (defined by their declaration), null for spec ops
+            var declarationOutputs = new List<HashSet<string>>();
             if (declarations != null)
             {
                 var keys = new List<string>();
@@ -193,6 +196,9 @@ namespace UnityGLTF.Interactivity.Export
                     var op = declaration?["op"];
                     assert(op != null && op.Type == JTokenType.String, "declaration op must be a string", location);
                     declarationOps.Add(op?.ToString());
+                    declarationOutputs.Add(declaration != null && declaration["extension"] != null
+                        ? new HashSet<string>(((declaration["outputValueSockets"] as JObject)?.Properties() ?? Enumerable.Empty<JProperty>()).Select(p => p.Name))
+                        : null);
                     if (declaration == null) continue;
 
                     if (!declaration.TryGetValue("extension", out var extension))
@@ -269,6 +275,18 @@ namespace UnityGLTF.Interactivity.Export
                                 "input value socket must reference a node with a lower index", socketLocation);
                             if (socket.TryGetValue("socket", out var socketId))
                                 assert(socketId.Type == JTokenType.String, "input value socket id must be a string", socketLocation);
+
+                            // the output sockets of an extension op are the ones of its declaration
+                            var sourceDeclaration = IsIndex(sourceNode) && (int)sourceNode < i ? (nodes[(int)sourceNode] as JObject)?["declaration"] : null;
+                            var sourceOutputs = IsIndex(sourceDeclaration) && (int)sourceDeclaration < declarationOutputs.Count
+                                ? declarationOutputs[(int)sourceDeclaration] : null;
+                            if (sourceOutputs != null)
+                            {
+                                var sourceSocket = socketId?.Type == JTokenType.String ? (string)socketId : "value";
+                                reject(sourceOutputs.Contains(sourceSocket),
+                                    $"input value socket references output \"{sourceSocket}\" not declared by extension op \"{declarationOps[(int)sourceDeclaration]}\"",
+                                    socketLocation);
+                            }
                             if (socket.TryGetValue("type", out var type))
                                 CheckTypeIndex(type, socketLocation);
                         }
