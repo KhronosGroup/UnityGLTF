@@ -18,5 +18,8 @@ namespace UnityGLTF.Interactivity.Schema
         
         [OutputSocketDescription(GltfTypes.Int)]
         public const string IdOutControllerIndex = "controllerIndex";
+
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdEvent = "event";
     }
 }

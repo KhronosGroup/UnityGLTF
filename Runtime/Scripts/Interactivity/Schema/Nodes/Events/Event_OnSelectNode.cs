@@ -25,6 +25,8 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdValueLocalHitLocation = "selectionPoint";
         [OutputSocketDescription(GltfTypes.Int)]
         public const string IdValueControllerIndex = "controllerIndex";
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdEvent = "event";
 
     }
 }
