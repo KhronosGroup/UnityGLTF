@@ -49,9 +49,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 return;
             }
             
+            // math/slerp interpolates float3 vectors with a float factor
             var saturateNode = unitExporter.CreateNode<Math_SaturateNode>();
-            saturateNode.ValueIn("a").MapToInputPort(unit.valueInputs[2]).SetType(TypeRestriction.LimitToFloat3);
-            saturateNode.FirstValueOut().ExpectedType(ExpectedType.Float3);
+            saturateNode.ValueIn("a").MapToInputPort(unit.valueInputs[2]).SetType(TypeRestriction.LimitToFloat);
+            saturateNode.FirstValueOut().ExpectedType(ExpectedType.Float);
 
             var mixNode = unitExporter.CreateNode<Math_SlerpNode>();
             mixNode.ValueIn("a").MapToInputPort(unit.valueInputs[0]);
