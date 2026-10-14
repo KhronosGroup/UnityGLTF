@@ -887,6 +887,18 @@ namespace UnityGLTF.Interactivity.Export
                 return false;
             }
 
+            // Start at the entries (nodes without incoming flows, e.g. events), so the connection that closes a cycle is
+            // the one going back (e.g. a loop's next step) and not one into the middle of a flow, which would run part of
+            // it later than the rest (e.g. a loop body after the check that waits for it).
+            var hasIncomingFlow = new HashSet<int>();
+            foreach (var node in nodesToSerialize)
+            foreach (var connection in node.FlowConnections.Values)
+                if (connection.Node != null && connection.Node.HasValue)
+                    hasIncomingFlow.Add(connection.Node.Value);
+
+            foreach (var node in nodesToSerialize.ToArray())
+                if (!hasIncomingFlow.Contains(node.Index))
+                    Visit(node.Index);
             foreach (var node in nodesToSerialize.ToArray())
                 Visit(node.Index);
 

@@ -73,10 +73,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     step.MapToInputPort(unit.step);
                     flowIn.MapToControlInput(unit.enter);
                     currentIndex.MapToPort(unit.currentIndex);
-                    loopBody.MapToControlOutput(unit.body);
                     completed.MapToControlOutput(unit.exit);
-                    
-                    var awaiter = CoroutineHelper.AddCoroutineAwaiter(unitExporter, loopBody.node, loopBody.socket.Key);
+
+                    var awaiter = CoroutineHelper.AddBodyAwaiter(unitExporter, loopBody, unit.body);
                     awaiter.FlowOutDoneSocket().ConnectToFlowDestination(nextStep);
                     
                     unitExporter.vsExportContext.OnUnitNodesCreated += (nodes) =>
@@ -84,7 +83,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node as GltfInteractivityUnitExporterNode);
                         if (awaiter == null)
                             return;
-                        awaiter.AddCoroutineWait(unitExporter, completed.node, completed.socket.Key);
+                        awaiter.AddCoroutineWait(unitExporter, flowIn.node, flowIn.socket.Key, completed.node, completed.socket.Key);
                     };
                 }
             }

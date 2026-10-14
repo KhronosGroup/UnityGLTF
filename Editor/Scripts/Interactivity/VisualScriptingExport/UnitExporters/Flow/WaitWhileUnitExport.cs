@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
-    public class WaitWhileUnitExport : IUnitExporter
+    public class WaitWhileUnitExport : IUnitExporter, ICoroutineWait
     {
         public Type unitType { get => typeof(WaitWhileUnit); }
         
@@ -27,6 +27,15 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             condition.MapToInputPort(unit.condition);
             flowIn.MapToControlInput(unit.enter);
             flowWhenDone.MapToControlOutput(unit.exit);
+
+            // an enclosing Sequence or loop waits until the condition was met
+            unitExporter.vsExportContext.OnUnitNodesCreated += (nodes) =>
+            {
+                var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node as GltfInteractivityUnitExporterNode);
+                if (awaiter == null)
+                    return;
+                awaiter.AddCoroutineWait(unitExporter, flowIn.node, flowIn.socket.Key, flowWhenDone.node, flowWhenDone.socket.Key);
+            };
             
             return true;
         }
