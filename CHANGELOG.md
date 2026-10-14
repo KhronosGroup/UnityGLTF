@@ -5,33 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- add: `KHR_interactivity`: Visual Scripting units Not Equal, Toggle Flow, Toggle Value, Cooldown, Timer, Break, Switch On Enum, Select On Enum, Null Coalesce and Approximately Equal
-- add: `KHR_interactivity`: Visual Scripting math units Round, Exponentiate, Root, Average, Scalar Normalize, Scalar Move Towards, Per Second, Vector2/Vector3 Angle and Project
-- add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up (exported as `event/onSelect`), On Mouse Enter/Exit (exported as hover events), Late Update and Fixed Update (exported as `event/onTick`)
-- add: `KHR_interactivity`: export of `Mathf.Repeat`, `PingPong`, `InverseLerp`, `MoveTowards`, `DeltaAngle`, `LerpAngle`, `Approximately` and `Log(f, p)`
-- add: `KHR_interactivity`: export of `Vector2/3/4.Dot`, `Scale`, `Min`, `Max`, `Normalize`, `normalized`, `Vector3.Cross`, `Vector2/3.Angle`, `SignedAngle`, `ClampMagnitude`, `Vector3/4.Project` and the vector operators
-- add: `KHR_interactivity`: export of `Quaternion.eulerAngles`, `normalized`, `Normalize`, `RotateTowards` and the `*` operator
-- add: `KHR_interactivity`: export of `Color.r/g/b/a`, `Color.Lerp` / `LerpUnclamped` and the color operators
-- add: `KHR_interactivity`: export of `Random.value`, `rotation`, `rotationUniform`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties
-- add: `KHR_interactivity`: enum values and variables of enum types are exported as ints
-- add: `KHR_interactivity`: export of `Color.linear`, `gamma`, `grayscale`, `maxColorComponent`, `Color.HSVToRGB`, `Color.RGBToHSV`, `Mathf.GammaToLinearSpace` and `LinearToGammaSpace`
-- add: `KHR_interactivity`: Visual Scripting units RGB To OkLCh and RGB From OkLCh (`math/rgbToOkLCh`, `math/rgbFromOkLCh`)
-- fix: `KHR_interactivity`: static properties of classes (e.g. `Random.value`, `Time.frameCount`) were exported as constant values from the editor
-- fix: `KHR_interactivity`: `Mathf.Epsilon` was exported as Euler's number
-- fix: `KHR_interactivity`: `Mathf.Sign(0)` returned 0 instead of 1
-- fix: `KHR_interactivity`: `Mathf.Log(f, p)` ignored the base
-- fix: `KHR_interactivity`: `Mathf.RoundToInt` truncated instead of rounding; `Mathf.Round`, `RoundToInt` and the Round unit round half-way values to even like Unity
-- fix: `KHR_interactivity`: `Random.insideUnitSphere` and `onUnitSphere` were not uniformly distributed
-- fix: `KHR_interactivity`: `Transform.parent` declared its reference output as int
-- fix: `KHR_interactivity`: export error for unconnected object inputs without value (e.g. Null Check)
-- fix: `KHR_interactivity`: `Quaternion.Angle` used the wrong exporter, only one input and radians, `Quaternion.ToAngleAxis` returned radians
-- fix: `KHR_interactivity`: `Quaternion.Lerp` / `LerpUnclamped` didn't take the shortest path and didn't normalize the result
-- fix: `KHR_interactivity`: `Matrix4x4` constructor was registered twice, the result depended on the registration order
-- fix: `KHR_interactivity`: overloads which don't match the generic method exporters (e.g. `Mathf.Max(params float[])`) are reported instead of silently dropping inputs
-- fix: `KHR_interactivity`: While loops without coroutines never started
-- fix: `KHR_interactivity`: Equal with Numeric enabled now uses `Mathf.Approximately`
-- fix: `KHR_interactivity`: Null Check compared references with the int -1
-- fix: `KHR_interactivity`: Vector Move Towards with Per Second ignored the max distance check, invoking `Vector3.MoveTowards` failed with flow connections
+- add: `KHR_interactivity`: more Visual Scripting units: Not Equal, Approximately Equal, Toggle Flow/Value, Cooldown, Timer, Break, Switch/Select On Enum, Null Coalesce, Round, Exponentiate, Root, Average, Normalize, Move Towards, Per Second, Angle, Project and RGB To/From OkLCh
+- add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up, On Mouse Enter/Exit, Late Update and Fixed Update
+- add: `KHR_interactivity`: export of many more `Mathf`, `Vector2/3/4`, `Quaternion` and `Color` methods, properties and operators, incl. color space and HSV conversions
+- add: `KHR_interactivity`: export of `Random.value`, `rotation`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties; enums are exported as ints
+- fix: `KHR_interactivity`: runtime static members (e.g. `Random.value`, `Time.frameCount`) were exported as constant editor values
+- fix: `KHR_interactivity`: coroutines: For Each, Sequence, Wait Until and Wait While didn't wait, waits in branches that were not taken blocked the flow; While loops without coroutines never started
+- fix: `KHR_interactivity`: results that differed from Unity: `Mathf.Epsilon`, `Sign`, `Log`, `Round` / `RoundToInt`, `Quaternion.Angle`, `ToAngleAxis`, `Lerp`, `Random.insideUnitSphere` / `onUnitSphere`, numeric Equal and Null Check
+- fix: `KHR_interactivity`: export errors for unconnected object inputs and `Vector3.MoveTowards` with flow connections; unsupported overloads (e.g. `Mathf.Max(params float[])`) are reported instead of dropping inputs
 
 ## [2.23.0] - 2026-10-12
 - add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`
