@@ -4,11 +4,10 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Unity.VisualScripting.Flow",
         "Unity.VisualScripting.Core",
-        "Unity.VisualScripting.Flow.Editor",
         "Unity.VisualScripting.Core.Editor",
-        "UnityGLTF.Interactivity.Runtime"
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.Flow.Editor"
     ],
     "includePlatforms": [
         "Editor"
@@ -17,8 +16,7 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "nunit.framework.dll",
-        "Newtonsoft.Json.dll"
+        "nunit.framework.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
