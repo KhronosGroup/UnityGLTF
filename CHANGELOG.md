@@ -4,22 +4,22 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.24.0] - 2026-10-20
 - add: `KHR_interactivity`: more Visual Scripting units: Not Equal, Approximately Equal, Toggle Flow/Value, Cooldown, Timer, Break, Switch/Select On Enum, Null Coalesce, Round, Exponentiate, Root, Average, Normalize, Move Towards, Per Second, Angle, Project and RGB To/From OkLCh
 - add: `KHR_interactivity`: export of `Light.color`, `intensity`, `range` and `spotAngle` (get/set) as `KHR_lights_punctual` pointers
-- add: `KHR_interactivity`: export of `AudioSource.Play`, `Stop`, `Pause` and `UnPause` as `audio/play`, `audio/stop`, `audio/pause` and `audio/unpause` ops declared with `KHR_audio_emitter` (not specified yet), and of `volume`, `loop`, `pitch`, `minDistance` and `maxDistance` (get/set) as `KHR_audio_emitter` pointers
-- add: `KHR_audio_emitter`: export and import of the source `playbackRate` (`AudioSource.pitch`)
+- add: `KHR_interactivity`: [experimental] export of `AudioSource.Play`, `Stop`, `Pause` and `UnPause` as `audio/play`, `audio/stop`, `audio/pause` and `audio/unpause` ops declared with `KHR_audio_emitter` (not specified yet), and of `volume`, `loop`, `pitch`, `minDistance` and `maxDistance` (get/set) as `KHR_audio_emitter` pointers
+- add: `KHR_audio_emitter`: [experimental] export and import of the source `playbackRate` (`AudioSource.pitch`)
 - add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up, On Mouse Enter/Exit, Late Update and Fixed Update
 - add: `KHR_interactivity`: export of many more `Mathf`, `Vector2/3/4`, `Quaternion` and `Color` methods, properties and operators, incl. color space and HSV conversions
 - add: `KHR_interactivity`: export of `Random.value`, `rotation`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties; enums are exported as ints
 - add: humanoid import: "Convert Clips to Humanoid" option (Animation Type Humanoid) converts the clips to humanoid clips (body, IK goal and muscle curves), so they can be retargeted to other humanoids and the Animator extracts root motion from them. Off by default, so existing imports keep their generic clips
-- fix: `KHR_audio_emitter`: the volume was exported to both the emitter and the source gain (applied twice), and all AudioSources on a GameObject used the loop, volume and play on awake settings of the first one
+- fix: `KHR_audio_emitter`: [experimental] the volume was exported to both the emitter and the source gain (applied twice), and all AudioSources on a GameObject used the loop, volume and play on awake settings of the first one
 - fix: `KHR_interactivity`: runtime static members (e.g. `Random.value`, `Time.frameCount`) were exported as constant editor values
 - fix: `KHR_interactivity`: coroutines: For Each, Sequence, Wait Until and Wait While didn't wait, waits in branches that were not taken blocked the flow; While loops without coroutines never started
 - fix: `KHR_interactivity`: results that differed from Unity: `Mathf.Epsilon`, `Sign`, `Log`, `Round` / `RoundToInt`, `Quaternion.Angle`, `ToAngleAxis`, `Lerp`, `Random.insideUnitSphere` / `onUnitSphere`, numeric Equal and Null Check
 - fix: `KHR_interactivity`: export errors for unconnected object inputs and `Vector3.MoveTowards` with flow connections; unsupported overloads (e.g. `Mathf.Max(params float[])`) are reported instead of dropping inputs
-- fix: humanoid animation export: with Apply Root Motion the root motion is baked into the hips instead of a track that moved the root node to the origin; Foot IK no longer changes the exported pose; only the human bones and transforms with own curves get tracks; looping clips exported their first frame as the last frame; exporting several clips from an AnimatorController destroyed its states
 - fix: `KHR_interactivity`: the Visual Scripting export plugin forced `KHR_animation_pointer`, `KHR_node_visibility` and "Export Disabled GameObjects" for every export, not only for exports with Script Machines, so all animations were exported as pointer animations
+- fix: humanoid animation export: with Apply Root Motion the root motion is baked into the hips instead of a track that moved the root node to the origin; Foot IK no longer changes the exported pose; only the human bones and transforms with own curves get tracks; looping clips exported their first frame as the last frame; exporting several clips from an AnimatorController destroyed its states
 
 ## [2.23.0] - 2026-10-12
 - add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`
