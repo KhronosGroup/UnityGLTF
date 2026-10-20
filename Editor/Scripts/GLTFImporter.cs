@@ -51,7 +51,7 @@ namespace UnityGLTF
 #endif
     public class GLTFImporter : ScriptedImporter
     {
-	    private const int ImporterVersion = 9;
+	    private const int ImporterVersion = 10;
 
 	    private static void EnsureShadersAreLoaded()
 	    {
@@ -110,6 +110,7 @@ namespace UnityGLTF
         [SerializeField] internal CameraImportOption _importCamera = CameraImportOption.ImportAndCameraDisabled;
         [SerializeField] internal AnimationMethod _importAnimations = AnimationMethod.Mecanim;
         [SerializeField] internal bool _mecanimHumanoidFlip = false;
+        [SerializeField] internal bool _mecanimHumanoidClips = false;
         [SerializeField] internal string _nonHumanoidRootNodeName = "";
         [SerializeField] internal bool _addAnimatorComponent = false;
         [SerializeField] internal bool _animationLoopTime = true;
@@ -598,7 +599,8 @@ namespace UnityGLTF
 					if (_importAnimations == AnimationMethod.MecanimHumanoid)
 					{
 						avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
-						HumanoidSetup.ConvertClipsToHumanoid(gltfScene, avatar, animations);
+						if (_mecanimHumanoidClips)
+							HumanoidSetup.ConvertClipsToHumanoid(gltfScene, avatar, animations);
 					}
 					// Only create a generic avatar when it's used: for the file's own animations, or for root motion
 					// with clips from other files. Otherwise every static model would get an unused avatar sub-asset.

@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up, On Mouse Enter/Exit, Late Update and Fixed Update
 - add: `KHR_interactivity`: export of many more `Mathf`, `Vector2/3/4`, `Quaternion` and `Color` methods, properties and operators, incl. color space and HSV conversions
 - add: `KHR_interactivity`: export of `Random.value`, `rotation`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties; enums are exported as ints
+- add: humanoid import: "Convert Clips to Humanoid" option (Animation Type Humanoid) converts the clips to humanoid clips (body, IK goal and muscle curves), so they can be retargeted to other humanoids and the Animator extracts root motion from them. Off by default, so existing imports keep their generic clips
 - fix: `KHR_audio_emitter`: the volume was exported to both the emitter and the source gain (applied twice), and all AudioSources on a GameObject used the loop, volume and play on awake settings of the first one
 - fix: `KHR_interactivity`: runtime static members (e.g. `Random.value`, `Time.frameCount`) were exported as constant editor values
 - fix: `KHR_interactivity`: coroutines: For Each, Sequence, Wait Until and Wait While didn't wait, waits in branches that were not taken blocked the flow; While loops without coroutines never started
 - fix: `KHR_interactivity`: results that differed from Unity: `Mathf.Epsilon`, `Sign`, `Log`, `Round` / `RoundToInt`, `Quaternion.Angle`, `ToAngleAxis`, `Lerp`, `Random.insideUnitSphere` / `onUnitSphere`, numeric Equal and Null Check
 - fix: `KHR_interactivity`: export errors for unconnected object inputs and `Vector3.MoveTowards` with flow connections; unsupported overloads (e.g. `Mathf.Max(params float[])`) are reported instead of dropping inputs
+- fix: humanoid animation export: with Apply Root Motion the root motion is baked into the hips instead of a track that moved the root node to the origin; Foot IK no longer changes the exported pose; only the human bones and transforms with own curves get tracks; looping clips exported their first frame as the last frame; exporting several clips from an AnimatorController destroyed its states
 
 ## [2.23.0] - 2026-10-12
 - add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`

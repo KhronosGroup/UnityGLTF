@@ -424,6 +424,7 @@ namespace UnityGLTF
 				var flip = serializedObject.FindProperty(nameof(GLTFImporter._mecanimHumanoidFlip));
 				EditorGUI.indentLevel++;
 				EditorGUILayout.PropertyField(flip, new GUIContent("Flip Forward", "Some formats like VRM have a different forward direction for Avatars. Enable this option if the animation looks inverted."));
+				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._mecanimHumanoidClips)), new GUIContent("Convert Clips to Humanoid", "Convert the clips to humanoid clips (muscle curves), so they can be retargeted to other humanoids and the Animator extracts root motion from them. When off, the clips stay generic and only play on this hierarchy."));
 				EditorGUI.indentLevel--;
 			}
 			else if (animationMethod.enumValueIndex == (int)AnimationMethod.Mecanim)

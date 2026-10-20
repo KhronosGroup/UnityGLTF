@@ -36,6 +36,7 @@ ScriptedImporter:
   _importCamera: 2
   _importAnimations: 2
   _mecanimHumanoidFlip: 0
+  _mecanimHumanoidClips: 0
   _nonHumanoidRootNodeName: 
   _addAnimatorComponent: 0
   _animationLoopTime: 1

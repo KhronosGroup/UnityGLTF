@@ -55,20 +55,20 @@ public partial class RigImportTests
 		AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
 	}
 
-	private static string Import(string file, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true)
+	private static string Import(string file, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true, bool humanoidClips = false)
 	{
 		var path = $"{TempFolder}/{file}";
 		if (!File.Exists(path))
 			CopyTestAsset(file, path);
 
-		Reimport(path, method, rootNodeName, removeEmptyRoots, humanoidFlip, readWrite);
+		Reimport(path, method, rootNodeName, removeEmptyRoots, humanoidFlip, readWrite, humanoidClips);
 		return path;
 	}
 
 	/// <summary>
 	/// Sets the import settings of an asset in the temp folder and reimports it.
 	/// </summary>
-	internal static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true)
+	internal static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true, bool humanoidClips = false)
 	{
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
 		Assert.IsNotNull(importer, $"{path} is not imported with the {nameof(GLTFImporter)}");
@@ -78,6 +78,7 @@ public partial class RigImportTests
 		so.FindProperty("_nonHumanoidRootNodeName").stringValue = rootNodeName;
 		so.FindProperty("_removeEmptyRootObjects").boolValue = removeEmptyRoots;
 		so.FindProperty("_mecanimHumanoidFlip").boolValue = humanoidFlip;
+		so.FindProperty("_mecanimHumanoidClips").boolValue = humanoidClips;
 		so.FindProperty("_readWriteEnabled").boolValue = readWrite;
 		so.ApplyModifiedPropertiesWithoutUndo();
 		importer.SaveAndReimport();
@@ -509,7 +510,24 @@ public partial class RigImportTests
 	#region Humanoid clips
 
 	// https://github.com/KhronosGroup/UnityGLTF/issues/916: humanoid clips used to stay generic (transform curves), so they
-	// couldn't be retargeted and the Animator didn't extract root motion from them
+	// couldn't be retargeted and the Animator didn't extract root motion from them. The conversion is opt-in ("Convert Clips
+	// to Humanoid"), so existing humanoid imports keep playing like before.
+
+	[Test]
+	public void Humanoid_ClipsStayGenericByDefault()
+	{
+		var path = Import(HumanoidArmature, AnimationMethod.MecanimHumanoid);
+		var avatar = LoadAvatar(path);
+		Assert.IsTrue(avatar.isHuman, "The avatar should still be a human avatar");
+		var humanBones = new HashSet<string>(avatar.humanDescription.human.Select(b => b.boneName));
+		foreach (var clip in LoadClips(path))
+		{
+			Assert.IsFalse(clip.humanMotion, $"Clip \"{clip.name}\" should stay generic without \"Convert Clips to Humanoid\"");
+			var bindings = AnimationUtility.GetCurveBindings(clip);
+			CollectionAssert.IsEmpty(bindings.Where(b => b.type == typeof(Animator)), $"Clip \"{clip.name}\" shouldn't get muscle curves");
+			Assert.IsTrue(bindings.Any(b => b.type == typeof(Transform) && humanBones.Contains(b.path.Split('/').Last())), $"Clip \"{clip.name}\" should keep the transform curves of the human bones");
+		}
+	}
 
 	[TestCase(HumanoidArmature)]
 	[TestCase(HumanoidMixamo)]
@@ -517,7 +535,7 @@ public partial class RigImportTests
 	[TestCase(HumanoidUnrealNames)]
 	public void Humanoid_ClipsAreHumanoidClips(string file)
 	{
-		var path = Import(file, AnimationMethod.MecanimHumanoid);
+		var path = Import(file, AnimationMethod.MecanimHumanoid, humanoidClips: true);
 		var model = LoadModel(path);
 		var humanBones = new HashSet<string>(LoadAvatar(path).humanDescription.human.Select(b => b.boneName));
 		var animatorProperties = new HashSet<string>(AnimationUtility.GetAnimatableBindings(model, model)
@@ -543,7 +561,7 @@ public partial class RigImportTests
 	[TestCase(HumanoidMixamo, true)]
 	public void Humanoid_RootMotionMovesInstance(string file, bool removeEmptyRoots)
 	{
-		var path = Import(file, AnimationMethod.MecanimHumanoid, removeEmptyRoots: removeEmptyRoots);
+		var path = Import(file, AnimationMethod.MecanimHumanoid, removeEmptyRoots: removeEmptyRoots, humanoidClips: true);
 		var (instanceOffset, _) = PlayClip(path, "Walk", 0.9f);
 
 		// Walk moves the hips 1.2m forward in 1s; with root motion that movement is applied to the instance
@@ -580,7 +598,7 @@ public partial class RigImportTests
 	[Test]
 	public void Humanoid_ClipsKeepCurvesOfOtherTransforms()
 	{
-		var path = Import(HumanoidProps, AnimationMethod.MecanimHumanoid);
+		var path = Import(HumanoidProps, AnimationMethod.MecanimHumanoid, humanoidClips: true);
 		var clips = LoadClips(path);
 		AssertClipBindingsResolve(path);
 
@@ -603,7 +621,7 @@ public partial class RigImportTests
 	{
 		var path = $"{TempFolder}/{file}";
 		if (!File.Exists(path)) CopyTestAsset(file, path);
-		Reimport(path, AnimationMethod.MecanimHumanoid, humanoidFlip: humanoidFlip);
+		Reimport(path, AnimationMethod.MecanimHumanoid, humanoidFlip: humanoidFlip, humanoidClips: true);
 		var genericPath = $"{TempFolder}/Generic_{file}";
 		if (!File.Exists(genericPath)) CopyTestAsset(file, genericPath);
 		Reimport(genericPath, AnimationMethod.Mecanim);

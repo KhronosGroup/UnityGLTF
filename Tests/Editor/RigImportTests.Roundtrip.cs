@@ -31,23 +31,27 @@ public partial class RigImportTests
 
 	public static IEnumerable<TestCaseData> RoundtripCases()
 	{
-		yield return new TestCaseData(RootMotionEmptyRoot, AnimationMethod.Mecanim, "Root");
-		yield return new TestCaseData(RootMotionEmptyRoot, AnimationMethod.Mecanim, "");
-		yield return new TestCaseData(RootMotionAnimatedRoot, AnimationMethod.Mecanim, "Root");
-		yield return new TestCaseData(StaticNoAnimation, AnimationMethod.Mecanim, "");
-		yield return new TestCaseData(HumanoidArmature, AnimationMethod.MecanimHumanoid, "");
-		yield return new TestCaseData(HumanoidMixamo, AnimationMethod.MecanimHumanoid, "");
-		yield return new TestCaseData(HumanoidAPose, AnimationMethod.MecanimHumanoid, "");
-		yield return new TestCaseData(HumanoidUnrealNames, AnimationMethod.MecanimHumanoid, "");
-		yield return new TestCaseData(HumanoidArmature, AnimationMethod.Mecanim, "Hips");
-		yield return new TestCaseData(AnimationEndOfClip, AnimationMethod.Mecanim, "");
+		yield return new TestCaseData(RootMotionEmptyRoot, AnimationMethod.Mecanim, "Root", false);
+		yield return new TestCaseData(RootMotionEmptyRoot, AnimationMethod.Mecanim, "", false);
+		yield return new TestCaseData(RootMotionAnimatedRoot, AnimationMethod.Mecanim, "Root", false);
+		yield return new TestCaseData(StaticNoAnimation, AnimationMethod.Mecanim, "", false);
+		yield return new TestCaseData(HumanoidArmature, AnimationMethod.MecanimHumanoid, "", false);
+		yield return new TestCaseData(HumanoidMixamo, AnimationMethod.MecanimHumanoid, "", false);
+		yield return new TestCaseData(HumanoidAPose, AnimationMethod.MecanimHumanoid, "", false);
+		yield return new TestCaseData(HumanoidUnrealNames, AnimationMethod.MecanimHumanoid, "", false);
+		yield return new TestCaseData(HumanoidArmature, AnimationMethod.MecanimHumanoid, "", true);
+		yield return new TestCaseData(HumanoidMixamo, AnimationMethod.MecanimHumanoid, "", true);
+		yield return new TestCaseData(HumanoidAPose, AnimationMethod.MecanimHumanoid, "", true);
+		yield return new TestCaseData(HumanoidUnrealNames, AnimationMethod.MecanimHumanoid, "", true);
+		yield return new TestCaseData(HumanoidArmature, AnimationMethod.Mecanim, "Hips", false);
+		yield return new TestCaseData(AnimationEndOfClip, AnimationMethod.Mecanim, "", false);
 	}
 
 	[TestCaseSource(nameof(RoundtripCases))]
-	public void Roundtrip_ImportExportImport_KeepsRigAndAnimations(string file, AnimationMethod method, string rootNodeName)
+	public void Roundtrip_ImportExportImport_KeepsRigAndAnimations(string file, AnimationMethod method, string rootNodeName, bool humanoidClips)
 	{
-		var path = Import(file, method, rootNodeName);
-		var roundtripPath = ExportAndReimport(path, method, rootNodeName);
+		var path = Import(file, method, rootNodeName, humanoidClips: humanoidClips);
+		var roundtripPath = ExportAndReimport(path, method, rootNodeName, humanoidClips);
 
 		AssertHierarchyEqual(path, roundtripPath);
 		AssertMeshesEqual(path, roundtripPath);
@@ -269,7 +273,7 @@ public partial class RigImportTests
 	/// </summary>
 	private static byte[] ExportHumanoid(string fileName, string[] clipNames, System.Action<GameObject, AnimatorState[]> check = null, bool applyRootMotion = true)
 	{
-		var path = Import(HumanoidArmature, AnimationMethod.MecanimHumanoid);
+		var path = Import(HumanoidArmature, AnimationMethod.MecanimHumanoid, humanoidClips: true);
 		var model = LoadModel(path);
 		var instance = Object.Instantiate(model);
 		instance.name = model.name;
@@ -348,7 +352,7 @@ public partial class RigImportTests
 	/// <summary>
 	/// Exports an instance of the imported model, then imports the exported file with the same settings.
 	/// </summary>
-	internal static string ExportAndReimport(string path, AnimationMethod method, string rootNodeName)
+	internal static string ExportAndReimport(string path, AnimationMethod method, string rootNodeName, bool humanoidClips = false)
 	{
 		var model = LoadModel(path);
 		var clips = LoadClips(path);
@@ -385,7 +389,7 @@ public partial class RigImportTests
 		}
 
 		AssetDatabase.ImportAsset(exportPath, ImportAssetOptions.ForceSynchronousImport);
-		Reimport(exportPath, method, rootNodeName);
+		Reimport(exportPath, method, rootNodeName, humanoidClips: humanoidClips);
 		return exportPath;
 	}
 
