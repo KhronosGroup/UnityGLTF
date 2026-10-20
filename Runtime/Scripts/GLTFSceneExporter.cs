@@ -649,7 +649,9 @@ namespace UnityGLTF
 			_plugins.Add(new LegacyCallbacksPlugin());
 			// legacy: implicit plugin for all the methods on ExportContext
 			_plugins.Add(context.GetExportContextCallbacks());
-			
+
+			// Remove invalid transforms. Set before the plugin instances are created, so plugins can check what's exported.
+			_rootTransforms = rootTransforms?.Where(x => x).ToArray() ?? Array.Empty<Transform>();
 
 			// create export plugin instances
 			// plugins can enable/disable other plugins with ForcePluginEnable while their instance is created
@@ -682,9 +684,6 @@ namespace UnityGLTF
 			
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
-
-			// Remove invalid transforms
-			_rootTransforms = rootTransforms?.Where(x => x).ToArray() ?? Array.Empty<Transform>();
 
 			_exportedTransforms = new Dictionary<int, int>();
 			_exportedCameras = new Dictionary<int, int>();

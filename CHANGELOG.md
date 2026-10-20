@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: `KHR_interactivity`: results that differed from Unity: `Mathf.Epsilon`, `Sign`, `Log`, `Round` / `RoundToInt`, `Quaternion.Angle`, `ToAngleAxis`, `Lerp`, `Random.insideUnitSphere` / `onUnitSphere`, numeric Equal and Null Check
 - fix: `KHR_interactivity`: export errors for unconnected object inputs and `Vector3.MoveTowards` with flow connections; unsupported overloads (e.g. `Mathf.Max(params float[])`) are reported instead of dropping inputs
 - fix: humanoid animation export: with Apply Root Motion the root motion is baked into the hips instead of a track that moved the root node to the origin; Foot IK no longer changes the exported pose; only the human bones and transforms with own curves get tracks; looping clips exported their first frame as the last frame; exporting several clips from an AnimatorController destroyed its states
+- fix: `KHR_interactivity`: the Visual Scripting export plugin forced `KHR_animation_pointer`, `KHR_node_visibility` and "Export Disabled GameObjects" for every export, not only for exports with Script Machines, so all animations were exported as pointer animations
 
 ## [2.23.0] - 2026-10-12
 - add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`

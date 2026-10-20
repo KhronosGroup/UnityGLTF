@@ -444,6 +444,15 @@ namespace UnityGLTF.Interactivity.VisualScripting
             OutputUnitLogs();
         }
         
+        private static IEnumerable<ScriptMachine> GetScriptMachines(Transform root) =>
+            root.GetComponentsInChildren<ScriptMachine>(true).Where(x => x.graph != null);
+
+        /// <summary>
+        /// True if any of the roots has a Script Machine that is exported (active, with a graph).
+        /// </summary>
+        public static bool HasScriptMachinesToExport(IEnumerable<Transform> roots) =>
+            roots != null && roots.Any(root => root && GetScriptMachines(root).Any(m => m.isActiveAndEnabled));
+
         /// <summary>
         /// Called after the scene has been exported to add interactivity data.
         /// </summary>
@@ -470,10 +479,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             foreach (var root in exporter.RootTransforms)
             {
                 if (!root) continue;
-                var machines = root
-                    .GetComponentsInChildren<ScriptMachine>(true)
-                    .Where(x => x.graph != null);
-                
+                var machines = GetScriptMachines(root);
+
                 scriptMachines.AddRange(machines.Where(m => m.isActiveAndEnabled));
                 
                 // Just for warning log, we collect the inactive machines, which will be ignored for export

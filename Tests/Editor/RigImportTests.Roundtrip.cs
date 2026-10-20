@@ -323,6 +323,17 @@ public partial class RigImportTests
 		CollectionAssert.AreEquivalent(new[] { "Walk", "Idle" }, json["animations"].Select(a => (string)a["name"]));
 	}
 
+	[Test]
+	public void Export_WithoutScriptMachines_UsesNodeChannels()
+	{
+		// The Visual Scripting export plugin (on by default when Visual Scripting is installed) used to force
+		// KHR_animation_pointer for every export, so all animation channels became pointer channels
+		var json = GltfFile.Parse(ExportHumanoid("Export_WithoutScriptMachines", new[] { "Walk" }));
+		CollectionAssert.DoesNotContain(json["extensionsUsed"]?.Select(e => (string)e) ?? Enumerable.Empty<string>(), "KHR_animation_pointer");
+		foreach (var channel in json["animations"].SelectMany(a => a["channels"]))
+			Assert.IsNotNull(channel["target"]["node"], $"Channel should target a node: {channel["target"]}");
+	}
+
 	[TestCase(true)]
 	[TestCase(false)]
 	public void Export_HumanoidRootMotion_IsExportedOnTheHips(bool applyRootMotion)
@@ -333,13 +344,21 @@ public partial class RigImportTests
 		var bytes = ExportHumanoid("Export_HumanoidRootMotion" + applyRootMotion, new[] { "Walk" }, applyRootMotion: applyRootMotion);
 		var json = GltfFile.Parse(bytes);
 		var animation = json["animations"].Single(a => (string)a["name"] == "Walk");
-		string NodeName(Newtonsoft.Json.Linq.JToken channel) => (string)json["nodes"][(int)channel["target"]["node"]]["name"];
+		// With KHR_animation_pointer enabled (e.g. forced by the Visual Scripting export plugin) the channels target "/nodes/2/translation"
+		(int node, string path) Target(Newtonsoft.Json.Linq.JToken channel)
+		{
+			var target = channel["target"];
+			if (target["node"] != null) return ((int)target["node"], (string)target["path"]);
+			var pointer = ((string)target["extensions"]?["KHR_animation_pointer"]?["pointer"] ?? "").Split('/');
+			return pointer.Length == 4 && pointer[1] == "nodes" ? (int.Parse(pointer[2]), pointer[3]) : (-1, null);
+		}
+		string NodeName(Newtonsoft.Json.Linq.JToken channel) => Target(channel).node < 0 ? null : (string)json["nodes"][Target(channel).node]["name"];
 
 		CollectionAssert.DoesNotContain(animation["channels"].Select(NodeName), "Humanoid_Armature", "The root node shouldn't be animated");
 		var root = json["nodes"].Single(n => (string)n["name"] == "Humanoid_Armature");
 		Assert.AreEqual(3f, (float)root["translation"][2], PositionTolerance, "Position of the root node");
 
-		var hips = animation["channels"].Single(c => NodeName(c) == "Hips" && (string)c["target"]["path"] == "translation");
+		var hips = animation["channels"].Single(c => NodeName(c) == "Hips" && Target(c).path == "translation");
 		var translations = GltfFile.ReadAccessor(bytes, json, (int)animation["samplers"][(int)hips["sampler"]]["output"]);
 		var first = new Vector3(translations[0][0], translations[0][1], translations[0][2]);
 		var last = new Vector3(translations.Last()[0], translations.Last()[1], translations.Last()[2]);

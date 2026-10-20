@@ -8,7 +8,9 @@
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow.Editor",
         "Unity.VisualScripting.Core.Editor",
-        "UnityGLTF.Interactivity.Runtime"
+        "UnityGLTF.Interactivity.Runtime",
+        "UnityGLTFScripts",
+        "UnityGLTF.Interactivity.VisualScripting.ExportPlugin"
     ],
     "includePlatforms": [
         "Editor"
