@@ -50,12 +50,27 @@ namespace UnityGLTF
 		{
 			if (clips == null || string.IsNullOrEmpty(rootNodeName)) return;
 
-			var root = gameObject.transform;
-			var rootNode = root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t != root && t.name == rootNodeName);
-			if (!rootNode) return;
+			if (!gameObject.GetComponentsInChildren<Transform>(true).Any(t => t != gameObject.transform && t.name == rootNodeName)) return;
+
+			// The clips are sampled on a copy: SampleAnimation applies all curves of a clip, not only those of the transforms
+			// (e.g. blend shape weights, visibility), and the imported hierarchy has to keep its own values
+			var copy = Object.Instantiate(gameObject);
+			try
+			{
+				SampleRootMotionCurves(copy, rootNodeName, clips);
+			}
+			finally
+			{
+				Object.DestroyImmediate(copy);
+			}
+		}
+
+		private static void SampleRootMotionCurves(GameObject copy, string rootNodeName, AnimationClip[] clips)
+		{
+			var root = copy.transform;
+			var rootNode = root.GetComponentsInChildren<Transform>(true).First(t => t != root && t.name == rootNodeName);
 			var rootNodePath = AnimationUtility.CalculateTransformPath(rootNode, root);
 
-			// Sampling the clips changes the pose, so remember it
 			var transforms = root.GetComponentsInChildren<Transform>(true);
 			var pose = transforms.Select(t => (t.localPosition, t.localRotation, t.localScale)).ToArray();
 			void RestorePose()
@@ -96,7 +111,7 @@ namespace UnityGLTF
 				var previousRotation = Quaternion.identity;
 				foreach (var time in times)
 				{
-					clip.SampleAnimation(gameObject, time);
+					clip.SampleAnimation(copy, time);
 					var position = root.InverseTransformPoint(rootNode.position);
 					var rotation = Quaternion.Inverse(root.rotation) * rootNode.rotation;
 					// Keep the quaternion in the same hemisphere as the previous key, so interpolation takes the short path
@@ -123,8 +138,6 @@ namespace UnityGLTF
 					AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve("", typeof(Animator), MotionCurveNames[i]), curves[i]);
 				}
 			}
-
-			RestorePose();
 		}
 	}
 }

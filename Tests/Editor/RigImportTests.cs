@@ -31,6 +31,9 @@ public partial class RigImportTests
 	private const string HumanoidUnrealNames = "Humanoid_UnrealNames.glb";
 	// Humanoid_Armature with a "Prop" below RightHand: Walk also spins it, PropOnly only moves the prop
 	private const string HumanoidProps = "Humanoid_Props.glb";
+	// Humanoid_Armature with a "Face" (morph target MouthOpen, weight 0) and a visible "Hat" below Head:
+	// Talk is Walk plus MouthOpen 0 -> 1 and the Hat hidden at the end
+	private const string HumanoidMorphVisibility = "Humanoid_MorphVisibility.glb";
 
 	[OneTimeSetUp]
 	public void OneTimeSetUp()
@@ -611,6 +614,25 @@ public partial class RigImportTests
 		var propOnly = clips.Single(c => c.name == "PropOnly");
 		Assert.IsFalse(propOnly.humanMotion, "PropOnly doesn't animate the skeleton and should stay generic");
 		CollectionAssert.IsEmpty(AnimationUtility.GetCurveBindings(propOnly).Where(b => b.type == typeof(Animator)), "PropOnly shouldn't get muscle curves");
+	}
+
+	[TestCase(AnimationMethod.MecanimHumanoid, "", true)]
+	[TestCase(AnimationMethod.Mecanim, "Hips", false)]
+	public void ClipSampling_KeepsModelValues(AnimationMethod method, string rootNodeName, bool humanoidClips)
+	{
+		// Converting to humanoid clips and adding root motion curves samples the clips. Sampling applies every curve of a
+		// clip, and the model used to keep the values of the last sampled frame (an open mouth and a hidden hat).
+		var path = Import(HumanoidMorphVisibility, method, rootNodeName, humanoidClips: humanoidClips);
+		var talk = LoadClips(path).Single(c => c.name == "Talk");
+		var properties = AnimationUtility.GetCurveBindings(talk).Select(b => b.propertyName).ToArray();
+		CollectionAssert.Contains(properties, "blendShape.MouthOpen", "Talk should animate the morph target");
+		CollectionAssert.Contains(properties, "m_IsActive", "Talk should animate the visibility of the hat");
+		CollectionAssert.Contains(properties, humanoidClips ? "RootT.x" : "MotionT.x", "Talk should have been sampled");
+
+		var model = LoadModel(path);
+		var face = model.GetComponentsInChildren<SkinnedMeshRenderer>(true).Single(r => r.name == "Face");
+		Assert.AreEqual(0f, face.GetBlendShapeWeight(face.sharedMesh.GetBlendShapeIndex("MouthOpen")), "Weight of MouthOpen in the model");
+		Assert.IsTrue(model.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Hat").gameObject.activeSelf, "The hat should be visible in the model");
 	}
 
 	/// <summary>

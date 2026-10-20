@@ -97,69 +97,72 @@ namespace UnityGLTF
 		{
 			if (clips == null || !avatar || !avatar.isHuman) return;
 
-			var root = gameObject.transform;
-			var transforms = root.GetComponentsInChildren<Transform>(true);
 			var boneNames = avatar.humanDescription.human.ToDictionary(b => b.humanName, b => b.boneName);
 			var humanBoneNames = new HashSet<string>(boneNames.Values);
 
 			// Curves of the human bones and of their parents below the root are replaced by the body and muscle curves,
 			// since the body pose already contains the motion of the parents
 			var humanPaths = new HashSet<string>();
-			foreach (var t in transforms)
+			foreach (var t in gameObject.GetComponentsInChildren<Transform>(true))
 			{
-				if (t == root || !humanBoneNames.Contains(t.name)) continue;
-				for (var p = t; p && p != root; p = p.parent)
-					humanPaths.Add(AnimationUtility.CalculateTransformPath(p, root));
+				if (t == gameObject.transform || !humanBoneNames.Contains(t.name)) continue;
+				for (var p = t; p && p != gameObject.transform; p = p.parent)
+					humanPaths.Add(AnimationUtility.CalculateTransformPath(p, gameObject.transform));
 			}
 			if (humanPaths.Count == 0) return;
 
 			var muscleCurveNames = HumanTrait.MuscleName.Select(MuscleCurveName).ToArray();
 
-			// Sampling the clips changes the pose, so remember it
-			var pose = transforms.Select(t => (t.localPosition, t.localRotation, t.localScale)).ToArray();
-			void RestorePose()
-			{
-				for (var i = 0; i < transforms.Length; i++)
-				{
-					transforms[i].localPosition = pose[i].localPosition;
-					transforms[i].localRotation = pose[i].localRotation;
-					transforms[i].localScale = pose[i].localScale;
-				}
-			}
-
-			// The human scale and the feet heights are only available through an Animator that uses the avatar.
-			// After reading them the avatar is removed again: with the human avatar assigned, SampleAnimation evaluates the
-			// clips as humanoid clips, and as they don't have muscle curves yet the skeleton would end up in the zero muscle pose.
-			var animator = gameObject.GetComponent<Animator>();
-			var addedAnimator = !animator;
-			if (addedAnimator) animator = gameObject.AddComponent<Animator>();
-			var animatorAvatar = animator.avatar;
-			animator.avatar = avatar;
-			var humanScale = animator.humanScale;
-			var feetBottomHeight = new[] { animator.leftFeetBottomHeight, animator.rightFeetBottomHeight };
-			animator.avatar = null;
-
-			var goals = new List<IKGoal>();
-			if (AvatarGetPostRotation != null)
-			{
-				for (var i = 0; i < IKGoals.Length; i++)
-				{
-					var (name, bone) = IKGoals[i];
-					var t = boneNames.TryGetValue(HumanTrait.BoneName[(int)bone], out var boneName) ? transforms.FirstOrDefault(x => x.name == boneName) : null;
-					if (!t) continue;
-					goals.Add(new IKGoal
-					{
-						name = name,
-						transform = t,
-						postRotation = (Quaternion)AvatarGetPostRotation.Invoke(avatar, new object[] { (int)bone }),
-						bottomHeight = i < feetBottomHeight.Length ? feetBottomHeight[i] : 0,
-					});
-				}
-			}
-
-			var handler = new HumanPoseHandler(avatar, root);
+			// The clips are sampled on a copy: SampleAnimation applies all curves of a clip, not only those of the transforms
+			// (e.g. blend shape weights, visibility), and the imported hierarchy has to keep its own values.
+			// The root keeps its name, so the avatar's skeleton bones still match.
+			var copy = Object.Instantiate(gameObject);
+			copy.name = gameObject.name;
+			HumanPoseHandler handler = null;
 			try
 			{
+				var root = copy.transform;
+				var transforms = root.GetComponentsInChildren<Transform>(true);
+				var pose = transforms.Select(t => (t.localPosition, t.localRotation, t.localScale)).ToArray();
+				void RestorePose()
+				{
+					for (var i = 0; i < transforms.Length; i++)
+					{
+						transforms[i].localPosition = pose[i].localPosition;
+						transforms[i].localRotation = pose[i].localRotation;
+						transforms[i].localScale = pose[i].localScale;
+					}
+				}
+
+				// The human scale and the feet heights are only available through an Animator that uses the avatar.
+				// After reading them the avatar is removed again: with the human avatar assigned, SampleAnimation evaluates the
+				// clips as humanoid clips, and as they don't have muscle curves yet the skeleton would end up in the zero muscle pose.
+				var animator = copy.GetComponent<Animator>();
+				if (!animator) animator = copy.AddComponent<Animator>();
+				animator.avatar = avatar;
+				var humanScale = animator.humanScale;
+				var feetBottomHeight = new[] { animator.leftFeetBottomHeight, animator.rightFeetBottomHeight };
+				animator.avatar = null;
+
+				var goals = new List<IKGoal>();
+				if (AvatarGetPostRotation != null)
+				{
+					for (var i = 0; i < IKGoals.Length; i++)
+					{
+						var (name, bone) = IKGoals[i];
+						var t = boneNames.TryGetValue(HumanTrait.BoneName[(int)bone], out var boneName) ? transforms.FirstOrDefault(x => x.name == boneName) : null;
+						if (!t) continue;
+						goals.Add(new IKGoal
+						{
+							name = name,
+							transform = t,
+							postRotation = (Quaternion)AvatarGetPostRotation.Invoke(avatar, new object[] { (int)bone }),
+							bottomHeight = i < feetBottomHeight.Length ? feetBottomHeight[i] : 0,
+						});
+					}
+				}
+
+				handler = new HumanPoseHandler(avatar, root);
 				var humanPose = new HumanPose();
 				foreach (var clip in clips)
 				{
@@ -183,7 +186,7 @@ namespace UnityGLTF
 
 					for (var k = 0; k < keyTimes.Length; k++)
 					{
-						clip.SampleAnimation(gameObject, keyTimes[k]);
+						clip.SampleAnimation(copy, keyTimes[k]);
 						handler.GetHumanPose(ref humanPose);
 
 						var bodyRotation = humanPose.bodyRotation;
@@ -232,10 +235,8 @@ namespace UnityGLTF
 			}
 			finally
 			{
-				handler.Dispose();
-				RestorePose();
-				if (addedAnimator) Object.DestroyImmediate(animator);
-				else animator.avatar = animatorAvatar;
+				handler?.Dispose();
+				Object.DestroyImmediate(copy);
 			}
 		}
 
