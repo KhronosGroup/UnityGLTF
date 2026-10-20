@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 - add: `KHR_interactivity`: more Visual Scripting units: Not Equal, Approximately Equal, Toggle Flow/Value, Cooldown, Timer, Break, Switch/Select On Enum, Null Coalesce, Round, Exponentiate, Root, Average, Normalize, Move Towards, Per Second, Angle, Project and RGB To/From OkLCh
+- add: `KHR_interactivity`: export of `Light.color`, `intensity`, `range` and `spotAngle` (get/set) as `KHR_lights_punctual` pointers
+- add: `KHR_interactivity`: export of `AudioSource.Play`, `Stop`, `Pause` and `UnPause` as `audio/play`, `audio/stop`, `audio/pause` and `audio/unpause` ops declared with `KHR_audio_emitter` (not specified yet), and of `volume`, `loop`, `pitch`, `minDistance` and `maxDistance` (get/set) as `KHR_audio_emitter` pointers
+- add: `KHR_audio_emitter`: export and import of the source `playbackRate` (`AudioSource.pitch`)
 - add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up, On Mouse Enter/Exit, Late Update and Fixed Update
 - add: `KHR_interactivity`: export of many more `Mathf`, `Vector2/3/4`, `Quaternion` and `Color` methods, properties and operators, incl. color space and HSV conversions
 - add: `KHR_interactivity`: export of `Random.value`, `rotation`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties; enums are exported as ints
+- fix: `KHR_audio_emitter`: the volume was exported to both the emitter and the source gain (applied twice), and all AudioSources on a GameObject used the loop, volume and play on awake settings of the first one
 - fix: `KHR_interactivity`: runtime static members (e.g. `Random.value`, `Time.frameCount`) were exported as constant editor values
 - fix: `KHR_interactivity`: coroutines: For Each, Sequence, Wait Until and Wait While didn't wait, waits in branches that were not taken blocked the flow; While loops without coroutines never started
 - fix: `KHR_interactivity`: results that differed from Unity: `Mathf.Epsilon`, `Sign`, `Log`, `Round` / `RoundToInt`, `Quaternion.Angle`, `ToAngleAxis`, `Lerp`, `Random.insideUnitSphere` / `onUnitSphere`, numeric Equal and Null Check
