@@ -5,7 +5,7 @@
         "UnityGLTFEditor",
         "UnityGLTFScripts",
         "GLTFSerialization",
-        "UnityGLTF.Plugins.Experimental",
+        "UnityGLTF.Plugins",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow",
         "Unity.VisualScripting.Core.Editor",

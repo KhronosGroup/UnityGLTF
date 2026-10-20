@@ -393,6 +393,7 @@ namespace GLTF.Schema
         public bool? autoPlay;
         public float? gain;
         public bool? loop;
+        public float? playbackRate;
         public AudioDataId audio;
 
         public JObject Serialize()
@@ -407,6 +408,9 @@ namespace GLTF.Schema
 
             if (loop != null) 
                 jo.Add(nameof(loop), loop);
+
+            if (playbackRate != null) 
+                jo.Add(nameof(playbackRate), playbackRate);
     
             if (audio != null)
                 jo.Add(nameof(audio), audio.Id);
@@ -446,6 +450,9 @@ namespace GLTF.Schema
                         break;               
                     case nameof(KHR_AudioSource.loop):
                         audioSource.loop = reader.ReadAsBoolean();
+                        break;               
+                    case nameof(KHR_AudioSource.playbackRate):
+                        audioSource.playbackRate = (float)reader.ReadAsDouble();
                         break;               
                 }
             }    

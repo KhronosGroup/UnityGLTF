@@ -308,6 +308,7 @@ namespace UnityGLTF.Plugins
                 audioSource.loop = source.Value.loop ?? false;
                 audioSource.volume = emitter.gain * (source.Value.gain ?? 1f);
                 audioSource.playOnAwake = source.Value.autoPlay ?? false;
+                audioSource.pitch = source.Value.playbackRate ?? 1f;
                 audioSource.spatialBlend = isGlobal ? 0f : 1.0f;
                 if (!isGlobal && emitter.positional != null)
                 {

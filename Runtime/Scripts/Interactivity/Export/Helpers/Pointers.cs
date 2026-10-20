@@ -26,6 +26,12 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerTemplMeshByRef = $"/meshes/{{{IdPointerMeshRef}}}"; 
         public static readonly string IdPointerTemplNodeByRef = $"/nodes/{{{IdPointerNodeRef}}}"; 
         public static readonly string IdPointerTemplLightByRef = $"/extensions/KHR_lights_punctual/lights/{{{IdPointerLightRef}}}";
+        public static readonly string IdPointerNodeLightByRef = $"{IdPointerTemplNodeByRef}/extensions/KHR_lights_punctual/light";
+
+        public static readonly string IdPointerAudioSourceRef = "sourceRef";
+        public static readonly string IdPointerAudioEmitterRef = "emitterRef";
+        public static readonly string IdPointerTemplAudioSourceByRef = $"/extensions/{KHR_audio_emitter.ExtensionName}/sources/{{{IdPointerAudioSourceRef}}}";
+        public static readonly string IdPointerTemplAudioEmitterByRef = $"/extensions/{KHR_audio_emitter.ExtensionName}/emitters/{{{IdPointerAudioEmitterRef}}}";
 
         public static readonly string IdPointerDelayRef = "delayRef";
         public static readonly string IdPointerTemplDelayByRef = $"/extensions/KHR_interactivity/delays/{{{IdPointerDelayRef}}}";

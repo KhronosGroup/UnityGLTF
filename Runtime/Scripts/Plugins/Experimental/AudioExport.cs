@@ -39,6 +39,7 @@ namespace UnityGLTF.Plugins
 
         private Dictionary<AudioSource, AudioEmitterId> _audioSourceToEmitter = new();
         private Dictionary<AudioSource, Node> _audioSourceToNode = new();
+        private Dictionary<AudioSource, int> _audioSourceToSourceIndex = new();
         
         public class AudioDescription
         {
@@ -49,6 +50,26 @@ namespace UnityGLTF.Plugins
         
         public AudioExportContext(ExportContext context)
         {
+        }
+
+        /// <summary> Index of the KHR_audio_emitter source exported for the AudioSource, -1 if it was not exported. </summary>
+        public int GetSourceIndex(AudioSource audioSource)
+        {
+            if (audioSource && _audioSourceToSourceIndex.TryGetValue(audioSource, out var index)) return index;
+            return -1;
+        }
+
+        /// <summary> Index of the KHR_audio_emitter emitter that plays the AudioSource, -1 if it was not exported. </summary>
+        public int GetEmitterIndex(AudioSource audioSource)
+        {
+            if (audioSource && _audioSourceToEmitter.TryGetValue(audioSource, out var emitterId)) return emitterId.Id;
+            return -1;
+        }
+
+        /// <summary> True if the AudioSource was exported to a positional emitter (spatialBlend >= 0.5). </summary>
+        public bool IsPositional(AudioSource audioSource)
+        {
+            return audioSource && _audioSourceToNode.ContainsKey(audioSource);
         }
 
         private AudioDescription AddAudioSource(AudioSource audioSource, out bool isNew)
@@ -100,7 +121,8 @@ namespace UnityGLTF.Plugins
             var emitter = new KHR_AudioEmitter
             {
                 type = isGlobal ? "global" : "positional",
-                gain = firstAudioSource.volume,
+                // The volume is exported per source, the emitter gain is multiplied with it
+                gain = 1f,
                 name = isGlobal ? "global emitter" : "positional emitter"
             };
             
@@ -147,18 +169,22 @@ namespace UnityGLTF.Plugins
                 _audioExtension.audio.Add(audio);
             }
             
-            foreach (var audioSourceId in audioSourceIds)
+            for (int i = 0; i < audioSourceIds.Count; i++)
             {
+                var audioSourceId = audioSourceIds[i];
+                var audioSource = audioSources[i];
                 var khrAudio = new KHR_AudioSource
                 {
                     audio = new AudioDataId { Id = audioSourceId.Id, Root = gltfRoot },
-                    autoPlay = firstAudioSource.playOnAwake,
-                    loop = firstAudioSource.loop,
-                    gain = firstAudioSource.volume,
+                    autoPlay = audioSource.playOnAwake,
+                    loop = audioSource.loop,
+                    gain = audioSource.volume,
+                    playbackRate = audioSource.pitch != 1f ? audioSource.pitch : null,
                     // TODO: uniquename required?
                     Name = audioSourceId.Clip.name
                 };
 
+                _audioSourceToSourceIndex[audioSource] = _audioExtension.sources.Count;
                 _audioExtension.sources.Add(khrAudio);
             }
 
