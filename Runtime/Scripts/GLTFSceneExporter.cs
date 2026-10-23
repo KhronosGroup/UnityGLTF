@@ -441,14 +441,13 @@ namespace UnityGLTF
 		
 		private Material _normalChannelMaterial;
 
-		private const uint MagicGLTF = 0x46546C67;
 		private const uint Version = 2;
 		private const uint MagicJson = 0x4E4F534A;
 		private const uint MagicBin = 0x004E4942;
 		private const int GLTFHeaderSize = 12;
 		private const int SectionHeaderSize = 8;
 
-		private bool _visbilityPluginEnabled = false;
+		private bool _visibilityPluginEnabled = false;
 		
 		public struct UniqueTexture : IEquatable<UniqueTexture>
 		{
@@ -668,8 +667,8 @@ namespace UnityGLTF
 			if (!ExportDisabledGameObjects.HasValue)
 				ExportDisabledGameObjects = settings.ExportDisabledGameObjects;
 
-			_visbilityPluginEnabled = _enabledPlugins.Keys.Any(x => x is VisibilityExport);
-			if (_visbilityPluginEnabled && !exportDisabledGameObjects)
+			_visibilityPluginEnabled = _enabledPlugins.Keys.Any(x => x is VisibilityExport);
+			if (_visibilityPluginEnabled && !exportDisabledGameObjects)
 			{
 				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
 			}
@@ -876,7 +875,7 @@ namespace UnityGLTF
 
 			animationPointerResolver?.Resolve(this);
 
-			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+			_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 
 			gltfSerializationMarker.Begin();
 			_root.Serialize(jsonWriter, true);
@@ -887,7 +886,7 @@ namespace UnityGLTF
 			jsonWriter.Flush();
 
 			// align to 4-byte boundary to comply with spec.
-			AlignToBoundary(jsonStream);
+			AlignToBoundary(jsonStream, (byte)'_');
 			AlignToBoundary(binStream, 0x00);
 
 			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
@@ -896,7 +895,7 @@ namespace UnityGLTF
 			BinaryWriter writer = new BinaryWriter(stream);
 
 			// write header
-			writer.Write(MagicGLTF);
+			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
 			writer.Write(Version);
 			writer.Write(glbLength);
 
@@ -985,7 +984,7 @@ namespace UnityGLTF
 			{
 				AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 				_buffer.Uri = fileName + ".bin";
-				_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+				_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 			}
 			else
 			{
@@ -1060,14 +1059,14 @@ namespace UnityGLTF
 				"LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
 			};
 
-			var sanitisedNamePart = Regex.Replace(filename, invalidReStr, "_");
+			var sanitizedNamePart = Regex.Replace(filename, invalidReStr, "_");
 			foreach (var reservedWord in reservedWords)
 			{
 				var reservedWordPattern = string.Format("^{0}\\.", reservedWord);
-				sanitisedNamePart = Regex.Replace(sanitisedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
+				sanitizedNamePart = Regex.Replace(sanitizedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
 			}
 
-			return sanitisedNamePart;
+			return sanitizedNamePart;
 		}
 
 		public void DeclareExtensionUsage(string extension, bool isRequired=false)
@@ -1168,7 +1167,7 @@ namespace UnityGLTF
 			
 			var node = new Node();
 
-			if (_visbilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
+			if (_visibilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
 			{
 				DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
 				node.AddExtension(KHR_node_visibility_Factory.EXTENSION_NAME, new KHR_node_visibility { visible = false });
@@ -1182,7 +1181,7 @@ namespace UnityGLTF
 			// TODO think more about how this callback is used – could e.g. be modifying the hierarchy,
 			// and we would want to prevent exporting children of this node.
 			// Could also be that we want to add a mesh based on some condition
-			// (e.g. merged childs, procedural geometry, etc.)
+			// (e.g. merged children, procedural geometry, etc.)
 			beforeNodeExportMarker.Begin();
 			foreach (var plugin in _plugins)
 				plugin?.BeforeNodeExport(this, _root, nodeTransform, node);
@@ -1277,41 +1276,41 @@ namespace UnityGLTF
 			// children that are not primitives get added as child nodes
 			if (nonPrimitives.Length > 0)
 			{
-				var parentOfChilds = node;
+				var parentOfChildren = node;
 
 				// when we're exporting a light or camera, we add an implicit node as first child of the camera/light node.
 				// this ensures that child objects and animations etc. "just work".
 				if (needsInvertedLookDirection)
 				{
-					var inbetween = new Node();
+					var inBetween = new Node();
 
 					if (ExportNames)
 					{
-						inbetween.Name = nodeTransform.name + "-flipped";
+						inBetween.Name = nodeTransform.name + "-flipped";
 					}
 
-					inbetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
+					inBetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
 
-					var inbetweenId = new NodeId
+					var inBetweenId = new NodeId
 					{
 						Id = _root.Nodes.Count,
 						Root = _root
 					};
 
-					_root.Nodes.Add(inbetween);
+					_root.Nodes.Add(inBetween);
 
 					node.Children = new List<NodeId>(1);
-					node.Children.Add(inbetweenId);
+					node.Children.Add(inBetweenId);
 
-					parentOfChilds = inbetween;
+					parentOfChildren = inBetween;
 				}
 
-				parentOfChilds.Children = new List<NodeId>(nonPrimitives.Length);
+				parentOfChildren.Children = new List<NodeId>(nonPrimitives.Length);
 				foreach (var child in nonPrimitives)
 				{
 					if (!ShouldExportTransform(child.transform)) continue;
 					var childNode = ExportNode(child.transform);
-					if (childNode != null) parentOfChilds.Children.Add(childNode);
+					if (childNode != null) parentOfChildren.Children.Add(childNode);
 				}
 			}
 

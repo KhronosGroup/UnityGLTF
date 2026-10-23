@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
@@ -109,7 +109,7 @@ namespace UnityGLTF
 		    /** Reset local position, keep local rotation, keep world scale. This is a heuristic for exporting objects from anywhere in the scene for general usage. */
 		    [InspectorName(("Auto: reset local position, keep local rotation, keep world scale"))]
 		    Auto,
-		    /** Keep local position, rotation, and scale. This is useful if you want to export childs of hierarchies and import them again as childs. */
+		    /** Keep local position, rotation, and scale. This is useful if you want to export children of hierarchies and import them again as childs. */
 		    [InspectorName("Local: keep local position, rotation and scale")]
 		    LocalTransforms,
 		    /** Keep world position, rotation, and scale. This is useful for exporting parts of scenes and keeping all relations between objects the same. */
