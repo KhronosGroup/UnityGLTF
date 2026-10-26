@@ -21,6 +21,12 @@ namespace GLTF.Schema
 		/// </summary>
 		public long ByteLength;
 
+		/// <summary>
+		/// The index of the GLB chunk that stores the buffer's data (glTF 2.1).
+		/// When neither uri nor chunk are defined, the first buffer uses the BIN chunk at index 1.
+		/// </summary>
+		public int? Chunk;
+
 		public GLTFBuffer()
 		{
 		}
@@ -30,6 +36,7 @@ namespace GLTF.Schema
 			if (buffer == null) return;
 			Uri = buffer.Uri;
 			ByteLength = buffer.ByteLength;
+			Chunk = buffer.Chunk;
 		}
 
 		public static GLTFBuffer Deserialize(GLTFRoot root, JsonReader reader)
@@ -47,6 +54,9 @@ namespace GLTF.Schema
 						break;
 					case "byteLength":
 						buffer.ByteLength = (long)reader.ReadDoubleAsUInt64();
+						break;
+					case "chunk":
+						buffer.Chunk = reader.ReadAsInt32();
 						break;
 					default:
 						buffer.DefaultPropertyDeserializer(root, reader);
@@ -69,6 +79,12 @@ namespace GLTF.Schema
 
 			writer.WritePropertyName("byteLength");
 			writer.WriteValue(ByteLength);
+
+			if (Chunk != null)
+			{
+				writer.WritePropertyName("chunk");
+				writer.WriteValue(Chunk.Value);
+			}
 
 			base.Serialize(writer);
 
