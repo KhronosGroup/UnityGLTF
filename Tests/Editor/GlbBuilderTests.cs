@@ -116,6 +116,79 @@ public class GlbBuilderTests
 		Assert.AreEqual(1, file.ParseJson()["bufferViews"].Count(), "bufferView count");
 	}
 
+	private const string BufferJson = "{\"asset\":{\"version\":\"2.0\"},\"buffers\":[{\"byteLength\":8}]}";
+	private static GlbTestFile.Chunk Extra() => new GlbTestFile.Chunk(0x41525458, new byte[8]); // "XTRA"
+
+	private static readonly object[] UnsupportedLayouts =
+	{
+		new object[] { "chunk before JSON", new[] { Extra(), GlbTestFile.Json(BufferJson), GlbTestFile.Bin(new byte[8]) } },
+		new object[] { "chunk after BIN", new[] { GlbTestFile.Json(BufferJson), GlbTestFile.Bin(new byte[8]), Extra() } },
+		new object[] { "two BIN chunks", new[] { GlbTestFile.Json(BufferJson), GlbTestFile.Bin(new byte[8]), GlbTestFile.Bin(new byte[8]) } },
+		new object[] { "encoded BIN chunk", new[] { GlbTestFile.Json(BufferJson), GlbTestFile.Bin(new byte[8], 0x4454535A) } },
+	};
+
+	/// <summary>
+	/// GLBObject models one JSON chunk followed by an optional BIN chunk, so other version 3 layouts can't be edited without losing data.
+	/// </summary>
+	[TestCaseSource(nameof(UnsupportedLayouts))]
+	public void ConstructFromStream_UnsupportedV3Layout_Throws(string layout, GlbTestFile.Chunk[] chunks)
+	{
+		var bytes = GlbTestFile.Write(3, chunks);
+		Assert.Throws<NotSupportedException>(() => GLBBuilder.ConstructFromStream(new MemoryStream(bytes)), layout);
+	}
+
+	[TestCase(2u)]
+	[TestCase(3u)]
+	public void StreamStartPosition_AddBinaryDataAndUpdateStream_KeepsPrefixAndWritesValidGlb(uint version)
+	{
+		var prefix = Encoding.ASCII.GetBytes("PREFIX__PREFIX__");
+		var data = Encoding.ASCII.GetBytes("BINDATA!");
+		var json = "{\"asset\":{\"version\":\"2.0\"},\"buffers\":[{\"byteLength\":8}],\"bufferViews\":[{\"buffer\":0,\"byteLength\":8}]}";
+		var glbBytes = GlbTestFile.Write(version, GlbTestFile.Json(json), GlbTestFile.Bin(data));
+		var stream = new MemoryStream();
+		stream.Write(prefix, 0, prefix.Length);
+		stream.Write(glbBytes, 0, glbBytes.Length);
+
+		var glb = GLBBuilder.ConstructFromStream(stream, streamStartPosition: prefix.Length);
+		var added = Encoding.ASCII.GetBytes("ADDED!!!");
+		var id = GLBBuilder.AddBinaryData(glb, new MemoryStream(added));
+		glb.Root.Nodes = Enumerable.Range(0, 50).Select(i => new Node { Name = "Node" + i }).ToList();
+		GLBBuilder.UpdateStream(glb);
+
+		var bytes = stream.ToArray();
+		Assert.AreEqual(prefix, bytes.Take(prefix.Length).ToArray(), "data before the GLB");
+		var file = ReadGlb(bytes.Skip(prefix.Length).ToArray());
+		Assert.AreEqual(version, file.Version);
+		Assert.AreEqual(50, file.ParseJson()["nodes"].Count(), "node count");
+		Assert.AreEqual("BINDATA!", Encoding.ASCII.GetString(file.Bin(), 0, 8));
+		var offset = (int)(long)file.ParseJson()["bufferViews"][id.Id]["byteOffset"];
+		Assert.AreEqual("ADDED!!!", Encoding.ASCII.GetString(file.Bin(), offset, 8));
+	}
+
+	[TestCase(2u)]
+	[TestCase(3u)]
+	public void ConstructFromGLB_WithOutStream_EditsTheCopy(uint version)
+	{
+		var prefix = Encoding.ASCII.GetBytes("PREFIX__");
+		var data = Encoding.ASCII.GetBytes("BINDATA!");
+		var json = "{\"asset\":{\"version\":\"2.0\"},\"buffers\":[{\"byteLength\":8}],\"bufferViews\":[{\"buffer\":0,\"byteLength\":8}]}";
+		var glbBytes = GlbTestFile.Write(version, GlbTestFile.Json(json), GlbTestFile.Bin(data));
+		var input = new MemoryStream();
+		input.Write(prefix, 0, prefix.Length);
+		input.Write(glbBytes, 0, glbBytes.Length);
+		var inputBytes = input.ToArray();
+
+		var output = new MemoryStream();
+		var glb = GLBBuilder.ConstructFromStream(input, output, streamStartPosition: prefix.Length);
+		GLBBuilder.AddBinaryData(glb, new MemoryStream(Encoding.ASCII.GetBytes("ADDED!!!")));
+		GLBBuilder.UpdateStream(glb);
+
+		Assert.AreEqual(inputBytes, input.ToArray(), "the input stream must not change");
+		var file = ReadGlb(output.ToArray());
+		Assert.AreEqual(version, file.Version);
+		Assert.AreEqual("BINDATA!ADDED!!!", Encoding.ASCII.GetString(file.Bin(), 0, 16));
+	}
+
 	private static GLTFRoot NewRoot() => new GLTFRoot { Asset = new Asset { Version = "2.0" } };
 
 	/// <summary>

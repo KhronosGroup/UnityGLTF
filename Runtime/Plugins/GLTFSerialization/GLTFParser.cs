@@ -119,16 +119,15 @@ namespace GLTF
 			long alignmentBitmask = glbHeader.GetAlignmentBitmask();
 			List<GLBChunkInfo> allChunks = new List<GLBChunkInfo>();
 
-			// we only need to search for top two chunks (the JSON and binary chunks are guaranteed to be the top two chunks)
-			// other chunks can be in the file but we do not care about them
-			for (int i = 0; i < 2; ++i)
+			// Version 3 allows any number of chunks in any order, so read all chunks within the file length
+			long endPosition = System.Math.Min(startPosition + glbHeader.FileLength, stream.Length);
+			while (stream.Position + glbHeader.GetChunkHeaderSize() <= endPosition)
 			{
-				if (stream.Position >= stream.Length)
-				{
-					break;
-				}
-
 				GLBChunkInfo chunkInfo = ParseChunkInfo(stream, glbHeader.Version);
+				if (stream.Position + chunkInfo.Length > endPosition)
+				{
+					throw new GLTFHeaderInvalidException("Chunk length exceeds file length.");
+				}
 				allChunks.Add(chunkInfo);
 				long paddedChunkLength = (chunkInfo.Length + alignmentBitmask) & ~alignmentBitmask; // Align to 4 or 8 bytes.
 				stream.Position += paddedChunkLength;

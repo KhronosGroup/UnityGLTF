@@ -74,8 +74,11 @@ namespace GLTF
 		public static GLBObject ConstructFromGLB(GLTFRoot root, Stream inputGLBStream, Stream outStream = null,
 			long inputGLBStreamStartPosition = 0)
 		{
+			long streamStartPosition = inputGLBStreamStartPosition;
 			if (outStream != null)
 			{
+				// the copy starts at the output stream's current position
+				streamStartPosition = outStream.Position;
 				inputGLBStream.Position = inputGLBStreamStartPosition;
 				inputGLBStream.CopyTo(outStream);
 			}
@@ -85,32 +88,35 @@ namespace GLTF
 			}
 
 			// header information is 4 bytes in, past the magic number
-			inputGLBStream.Position = 4 + inputGLBStreamStartPosition;
-			GLBHeader glbHeader = GLTFParser.ParseGLBHeader(inputGLBStream);
+			outStream.Position = 4 + streamStartPosition;
+			GLBHeader glbHeader = GLTFParser.ParseGLBHeader(outStream);
 
-			inputGLBStream.Position = glbHeader.GetFileHeaderSize() + inputGLBStreamStartPosition;
-			List<GLBChunkInfo> allChunks = GLTFParser.FindChunks(inputGLBStream);
-			GLBChunkInfo jsonChunkInfo = new GLBChunkInfo
+			// GLBObject models a JSON chunk followed by an optional BIN chunk, which is the only layout of version 2.
+			// Other version 3 layouts can't be edited without losing chunks or their encoding.
+			List<GLBChunkInfo> allChunks = GLTFParser.FindChunks(outStream, streamStartPosition);
+			if (allChunks.Count == 0 || allChunks[0].Type != GLBChunkFormat.JSON)
 			{
-				Type = GLBChunkFormat.JSON
-			};
-			GLBChunkInfo binaryChunkInfo = new GLBChunkInfo
+				throw new NotSupportedException("GLBBuilder only supports GLB files whose first chunk is the JSON chunk.");
+			}
+			if (allChunks.Count > 2 || (allChunks.Count == 2 && allChunks[1].Type != GLBChunkFormat.BIN))
 			{
-				Type = GLBChunkFormat.BIN
-			};
-
+				throw new NotSupportedException("GLBBuilder only supports GLB files with a JSON chunk followed by an optional BIN chunk.");
+			}
 			foreach (GLBChunkInfo chunkInfo in allChunks)
 			{
-				switch (chunkInfo.Type)
+				if (chunkInfo.Encoding != 0)
 				{
-					case GLBChunkFormat.JSON:
-						jsonChunkInfo = chunkInfo;
-						break;
-					case GLBChunkFormat.BIN:
-						binaryChunkInfo = chunkInfo;
-						break;
+					throw new NotSupportedException("GLBBuilder only supports plainly encoded GLB chunks.");
 				}
 			}
+
+			GLBChunkInfo jsonChunkInfo = allChunks[0];
+			GLBChunkInfo binaryChunkInfo = allChunks.Count == 2
+				? allChunks[1]
+				: new GLBChunkInfo
+				{
+					Type = GLBChunkFormat.BIN
+				};
 
 			if (jsonChunkInfo.Length == 0)
 			{
@@ -122,7 +128,7 @@ namespace GLTF
 			{
 				Root = root,
 				Stream = outStream,
-				StreamStartPosition = inputGLBStreamStartPosition,
+				StreamStartPosition = streamStartPosition,
 				Header = glbHeader,
 				JsonChunkInfo = jsonChunkInfo,
 				BinaryChunkInfo = binaryChunkInfo
@@ -141,7 +147,7 @@ namespace GLTF
 		{
 			if (inStream == null) throw new ArgumentNullException(nameof(inStream));
 
-			if (inStream.Length > 0)
+			if (inStream.Length > streamStartPosition)
 			{
 				inStream.Position = streamStartPosition;
 
@@ -177,14 +183,14 @@ namespace GLTF
 				JsonChunkInfo = new GLBChunkInfo
 				{
 					Length = 0,
-					StartPosition = glbHeader.GetFileHeaderSize(),
+					StartPosition = streamStartPosition + glbHeader.GetFileHeaderSize(),
 					Type = GLBChunkFormat.JSON,
 					Encoding = 0
 				},
 				BinaryChunkInfo = new GLBChunkInfo
 				{
 					Length = 0,
-					StartPosition = glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize(),
+					StartPosition = streamStartPosition + glbHeader.GetFileHeaderSize() + glbHeader.GetChunkHeaderSize(),
 					Type = GLBChunkFormat.BIN,
 					Encoding = 0
 				},
@@ -253,27 +259,24 @@ namespace GLTF
 			if (glb.Stream == null) throw new ArgumentException("glb Stream cannot be null", nameof(glb));
 			if (binaryData == null) throw new ArgumentNullException(nameof(binaryData));
 
-			return _AddBinaryData(glb, binaryData, createBufferView, streamStartPosition, bufferViewName);
+			return _AddBinaryData(glb, binaryData, createBufferView, streamStartPosition, binaryData.Length - streamStartPosition, bufferViewName);
 		}
 
-		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView, long streamStartPosition, string bufferViewName = null)
+		private static BufferViewId _AddBinaryData(GLBObject glb, Stream binaryData, bool createBufferView, long streamStartPosition, long dataLength, string bufferViewName = null)
 		{
-			long dataLength = binaryData.Length - streamStartPosition;
 			long blobLength = CalculateAlignment(dataLength, glb.Header.GetAlignment());
 			// there was an existing file that had no binary chunk info previously, append the chunk at the end
 			if (glb.BinaryChunkInfo.Length == 0)
 			{
-				glb.SetBinaryChunkStartPosition(glb.Header.FileLength);
+				glb.SetBinaryChunkStartPosition(glb.StreamStartPosition + glb.Header.FileLength);
 			}
 
 			// assuming the binary chunk is the last chunk of the file
 			long blobWritePosition = glb.BinaryChunkInfo.StartPosition + glb.Header.GetChunkHeaderSize() + glb.BinaryChunkInfo.Length;
-			long newGLBSize = blobWritePosition + blobLength;
+			long newGLBSize = blobWritePosition + blobLength - glb.StreamStartPosition;
 			ThrowIfTooLarge(glb.Header.Version, newGLBSize);
-			glb.Stream.SetLength(newGLBSize); // zero-fills the padding after the blob
-			glb.Stream.Position = blobWritePosition;
-			binaryData.Position = streamStartPosition;
-			binaryData.CopyTo(glb.Stream);
+			glb.Stream.SetLength(glb.StreamStartPosition + newGLBSize); // zero-fills the padding after the blob
+			CopyData(binaryData, streamStartPosition, glb.Stream, blobWritePosition, dataLength);
 
 			glb.SetFileLength(newGLBSize);
 			glb.SetBinaryChunkLength(glb.BinaryChunkInfo.Length + blobLength);
@@ -331,7 +334,10 @@ namespace GLTF
 			int previousBufferViewsCount = mergeTo.Root.BufferViews?.Count ?? 0;
 			long previousBufferSize = mergeTo.BinaryChunkInfo.Length;
 			GLTFHelpers.MergeGLTF(mergeTo.Root, mergeFrom.Root);
-			_AddBinaryData(mergeTo, mergeFrom.Stream, false, mergeFrom.BinaryChunkInfo.StartPosition + mergeFrom.Header.GetChunkHeaderSize());
+			if (mergeFrom.BinaryChunkInfo.Length > 0)
+			{
+				_AddBinaryData(mergeTo, mergeFrom.Stream, false, mergeFrom.BinaryChunkInfo.StartPosition + mergeFrom.Header.GetChunkHeaderSize(), mergeFrom.BinaryChunkInfo.Length);
+			}
 
 			if (mergeTo.Root.BufferViews != null)
 			{
@@ -381,7 +387,7 @@ namespace GLTF
 				}
 
 				// trim the end
-				glb.Stream.SetLength(glb.Header.FileLength);
+				glb.Stream.SetLength(glb.StreamStartPosition + glb.Header.FileLength);
 
 				// write glb header
 				WriteHeader(glb.Stream, glb.Header, glb.StreamStartPosition);
@@ -466,15 +472,16 @@ namespace GLTF
 			jsonChunkLength = CalculateAlignment(jsonChunkLength, glbHeader.GetAlignment());
 			long binaryDataLength = oldBinaryChunkInfo.Length;
 			long binaryChunkLength = CalculateAlignment(binaryDataLength, glbHeader.GetAlignment());
-			long jsonChunkStartPosition = glbHeader.GetFileHeaderSize();
+			long jsonChunkStartPosition = glb.StreamStartPosition + glbHeader.GetFileHeaderSize();
 			long binaryChunkStartPosition = jsonChunkStartPosition + chunkHeaderSize + jsonChunkLength;
-			long fileLength = binaryChunkStartPosition + (binaryDataLength > 0 ? chunkHeaderSize + binaryChunkLength : 0);
+			long fileEndPosition = binaryChunkStartPosition + (binaryDataLength > 0 ? chunkHeaderSize + binaryChunkLength : 0);
+			long fileLength = fileEndPosition - glb.StreamStartPosition;
 
 			ThrowIfTooLarge(glbVersion, fileLength);
 
-			if (fileLength > glb.Stream.Length)
+			if (fileEndPosition > glb.Stream.Length)
 			{
-				glb.Stream.SetLength(fileLength);
+				glb.Stream.SetLength(fileEndPosition);
 			}
 
 			if (binaryDataLength > 0)
@@ -489,7 +496,7 @@ namespace GLTF
 				glb.Stream.Write(padding, 0, padding.Length);
 			}
 
-			glb.Stream.SetLength(fileLength);
+			glb.Stream.SetLength(fileEndPosition);
 			glbHeader.FileLength = fileLength;
 			glb.Header = glbHeader;
 			glb.JsonChunkInfo = new GLBChunkInfo
@@ -532,14 +539,20 @@ namespace GLTF
 				return;
 			}
 
+			// copies from the start, which is safe when moving data towards the start of the stream
+			CopyData(stream, sourcePosition, stream, destinationPosition, length);
+		}
+
+		private static void CopyData(Stream source, long sourcePosition, Stream destination, long destinationPosition, long length)
+		{
 			byte[] buffer = new byte[81920];
 			for (long offset = 0; offset < length;)
 			{
-				stream.Position = sourcePosition + offset;
-				int read = stream.Read(buffer, 0, (int)System.Math.Min(buffer.Length, length - offset));
+				source.Position = sourcePosition + offset;
+				int read = source.Read(buffer, 0, (int)System.Math.Min(buffer.Length, length - offset));
 				if (read == 0) throw new EndOfStreamException();
-				stream.Position = destinationPosition + offset;
-				stream.Write(buffer, 0, read);
+				destination.Position = destinationPosition + offset;
+				destination.Write(buffer, 0, read);
 				offset += read;
 			}
 		}
