@@ -11,6 +11,76 @@ namespace GLTF
 {
 	public static class GLTFHelpers
 	{
+		/// <summary>
+		/// Throws a GLTFLoadException if a buffer, bufferView or accessor range doesn't fit into its parent or exceeds 2 GB.
+		/// Buffers are loaded into native arrays, which are limited to int.MaxValue bytes and are read with int offsets.
+		/// </summary>
+		public static void ValidateDataRanges(GLTFRoot root)
+		{
+			var buffers = root.Buffers ?? new List<GLTFBuffer>();
+			var bufferViews = root.BufferViews ?? new List<BufferView>();
+
+			for (int i = 0; i < buffers.Count; i++)
+			{
+				if (buffers[i].ByteLength < 0 || buffers[i].ByteLength > int.MaxValue)
+					throw new GLTFLoadException($"Buffer {i} byteLength {buffers[i].ByteLength} exceeds the supported maximum of 2 GB.");
+			}
+
+			for (int i = 0; i < bufferViews.Count; i++)
+			{
+				var view = bufferViews[i];
+				if (view.ByteOffset < 0 || view.ByteLength < 0 || view.ByteOffset > int.MaxValue || view.ByteLength > int.MaxValue)
+					throw new GLTFLoadException($"BufferView {i} range (byteOffset {view.ByteOffset}, byteLength {view.ByteLength}) exceeds the supported maximum of 2 GB.");
+				if (view.Buffer == null || view.Buffer.Id < 0 || view.Buffer.Id >= buffers.Count)
+					throw new GLTFLoadException($"BufferView {i} references buffer {view.Buffer?.Id}, which doesn't exist.");
+				if (view.ByteOffset + view.ByteLength > buffers[view.Buffer.Id].ByteLength)
+					throw new GLTFLoadException($"BufferView {i} range (byteOffset {view.ByteOffset}, byteLength {view.ByteLength}) exceeds buffer {view.Buffer.Id} byteLength {buffers[view.Buffer.Id].ByteLength}.");
+			}
+
+			if (root.Accessors == null) return;
+			for (int i = 0; i < root.Accessors.Count; i++)
+			{
+				var accessor = root.Accessors[i];
+				Accessor.GetTypeDetails(accessor.ComponentType, out uint componentSize, out _);
+				long elementSize = componentSize * accessor.Type.ComponentCount();
+
+				// Accessors without a bufferView are zero-initialized or filled by extensions (e.g. Draco)
+				if (accessor.BufferView != null)
+				{
+					var view = GetBufferView(bufferViews, accessor.BufferView.Id, $"Accessor {i}");
+					long stride = view.ByteStride > 0 ? view.ByteStride : elementSize;
+					long end = accessor.Count > 0 ? accessor.ByteOffset + stride * (accessor.Count - 1) + elementSize : accessor.ByteOffset;
+					if (accessor.ByteOffset < 0 || accessor.Count < 0 || end > view.ByteLength)
+						throw new GLTFLoadException($"Accessor {i} range (byteOffset {accessor.ByteOffset}, count {accessor.Count}) exceeds bufferView {accessor.BufferView.Id} byteLength {view.ByteLength}.");
+				}
+
+				var sparse = accessor.Sparse;
+				if (sparse == null) continue;
+				if (sparse.Count < 0 || sparse.Count > accessor.Count)
+					throw new GLTFLoadException($"Accessor {i} sparse count {sparse.Count} exceeds accessor count {accessor.Count}.");
+				if (sparse.Indices?.BufferView != null)
+				{
+					Accessor.GetTypeDetails(sparse.Indices.ComponentType, out uint indexSize, out _);
+					var view = GetBufferView(bufferViews, sparse.Indices.BufferView.Id, $"Accessor {i} sparse indices");
+					if (sparse.Indices.ByteOffset < 0 || sparse.Indices.ByteOffset + sparse.Count * indexSize > view.ByteLength)
+						throw new GLTFLoadException($"Accessor {i} sparse indices (byteOffset {sparse.Indices.ByteOffset}, count {sparse.Count}) exceed bufferView {sparse.Indices.BufferView.Id} byteLength {view.ByteLength}.");
+				}
+				if (sparse.Values?.BufferView != null)
+				{
+					var view = GetBufferView(bufferViews, sparse.Values.BufferView.Id, $"Accessor {i} sparse values");
+					if (sparse.Values.ByteOffset < 0 || sparse.Values.ByteOffset + sparse.Count * elementSize > view.ByteLength)
+						throw new GLTFLoadException($"Accessor {i} sparse values (byteOffset {sparse.Values.ByteOffset}, count {sparse.Count}) exceed bufferView {sparse.Values.BufferView.Id} byteLength {view.ByteLength}.");
+				}
+			}
+		}
+
+		private static BufferView GetBufferView(List<BufferView> bufferViews, int id, string user)
+		{
+			if (id < 0 || id >= bufferViews.Count)
+				throw new GLTFLoadException($"{user} references bufferView {id}, which doesn't exist.");
+			return bufferViews[id];
+		}
+
 		private struct PreviousGLTFSizes
 		{
 			public int PreviousBufferCount;
