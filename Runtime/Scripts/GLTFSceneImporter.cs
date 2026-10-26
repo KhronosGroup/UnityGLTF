@@ -529,6 +529,8 @@ namespace UnityGLTF
 					plugin.OnAfterImportRoot(_gltfRoot);
 				}
 
+				GLTFHelpers.ValidateDataRanges(_gltfRoot);
+
 				cancellationToken.ThrowIfCancellationRequested();
 
 				if (_assetCache == null)
@@ -1572,6 +1574,10 @@ namespace UnityGLTF
 				throw new GLTFHeaderInvalidException($"Buffer {bufferIndex} references GLB chunk {binaryChunkIndex}, which is not a BIN chunk.");
 			}
 			GLTFParser.ThrowIfUnsupportedChunkEncoding(chunkInfo);
+			if (chunkInfo.Length < _gltfRoot.Buffers[bufferIndex].ByteLength)
+			{
+				throw new GLTFHeaderInvalidException($"Buffer {bufferIndex} byteLength {_gltfRoot.Buffers[bufferIndex].ByteLength} exceeds the length {chunkInfo.Length} of GLB chunk {binaryChunkIndex}.");
+			}
 			return new BufferCacheData
 			{
 				Stream = _gltfStream.Stream,

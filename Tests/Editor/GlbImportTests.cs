@@ -84,7 +84,45 @@ public class GlbImportTests
 		Assert.Throws<GLTFHeaderInvalidException>(() => GLTFParser.ParseJson(new MemoryStream(bytes), out _));
 	}
 
+	private const string TriangleAccessor = "{\"bufferView\":0,\"componentType\":5126,\"count\":3,\"type\":\"VEC3\",\"min\":[0,0,0],\"max\":[1,2,0]}";
+	private const string TriangleBufferView = "{\"buffer\":0,\"byteLength\":36}";
+
+	// Data ranges in the JSON are 64-bit, but Unity's native arrays are limited to 2 GB and are read with (int) offsets.
+	// Ranges that don't fit their parent or 2 GB have to be refused instead of wrapping around or reading outside the buffer.
+	private static readonly object[] InvalidRanges =
+	{
+		new object[] { "bufferView offset wraps around at 4 GB", "2 GB",
+			TriangleAccessor, "{\"buffer\":0,\"byteOffset\":4294967296,\"byteLength\":36}", Buffer(4294967296 + 36) },
+		new object[] { "bufferView past the end of its buffer", "BufferView 0",
+			TriangleAccessor, "{\"buffer\":0,\"byteOffset\":4,\"byteLength\":36}", Buffer(36) },
+		new object[] { "accessor past the end of its bufferView", "Accessor 0",
+			"{\"bufferView\":0,\"componentType\":5126,\"count\":4,\"type\":\"VEC3\",\"min\":[0,0,0],\"max\":[1,2,0]}", TriangleBufferView, Buffer(36) },
+		new object[] { "accessor offset past the end of its bufferView", "Accessor 0",
+			"{\"bufferView\":0,\"byteOffset\":4,\"componentType\":5126,\"count\":3,\"type\":\"VEC3\",\"min\":[0,0,0],\"max\":[1,2,0]}", TriangleBufferView, Buffer(36) },
+		new object[] { "sparse indices past the end of their bufferView", "Accessor 0",
+			"{\"bufferView\":0,\"componentType\":5126,\"count\":3,\"type\":\"VEC3\",\"min\":[0,0,0],\"max\":[1,2,0]," +
+			"\"sparse\":{\"count\":2,\"indices\":{\"bufferView\":0,\"byteOffset\":34,\"componentType\":5123},\"values\":{\"bufferView\":0}}}",
+			TriangleBufferView, Buffer(36) },
+		new object[] { "buffer longer than its GLB chunk", "chunk",
+			TriangleAccessor, TriangleBufferView, Buffer(48) },
+	};
+
+	[UnityTest]
+	public IEnumerator InvalidDataRange_IsRefused([ValueSource(nameof(InvalidRanges))] object[] testCase)
+	{
+		var (description, error, accessor, bufferView, buffer) = ((string)testCase[0], (string)testCase[1], (string)testCase[2], (string)testCase[3], (string)testCase[4]);
+		LogAssert.Expect(LogType.Error, new Regex(Regex.Escape(error)));
+		return ImportTriangle(GlbTestFile.Write(3,
+			GlbTestFile.Json(TriangleJson(accessor, bufferView, buffer)),
+			GlbTestFile.Bin(Triangle())), expectFailure: true, description: description);
+	}
+
 	private static GlbTestFile.Chunk Extra() => new GlbTestFile.Chunk(ExtraType, Encoding.ASCII.GetBytes("unknown chunk!"));
+
+	private static string TriangleJson(string accessor, string bufferView, string buffer) =>
+		"{\"asset\":{\"version\":\"2.0\"},\"scene\":0,\"scenes\":[{\"nodes\":[0]}],\"nodes\":[{\"mesh\":0}]," +
+		"\"meshes\":[{\"primitives\":[{\"attributes\":{\"POSITION\":0}}]}]," +
+		"\"accessors\":[" + accessor + "],\"bufferViews\":[" + bufferView + "],\"buffers\":[" + buffer + "]}";
 
 	private static string Buffer(long byteLength = 36, int? chunk = null) =>
 		"{\"byteLength\":" + byteLength + (chunk.HasValue ? ",\"chunk\":" + chunk : "") + "}";
@@ -106,7 +144,7 @@ public class GlbImportTests
 		return bytes;
 	}
 
-	private static IEnumerator ImportTriangle(byte[] glb, int bufferIndex = 0, bool expectFailure = false)
+	private static IEnumerator ImportTriangle(byte[] glb, int bufferIndex = 0, bool expectFailure = false, string description = null)
 	{
 		GLTFSceneImporter importer = null;
 		Exception exception = null;
@@ -131,7 +169,7 @@ public class GlbImportTests
 		{
 			if (expectFailure)
 			{
-				Assert.IsNotNull(exception, "import must fail");
+				Assert.IsNotNull(exception, $"import must fail: {description}");
 				yield break;
 			}
 			Assert.IsNull(exception, exception?.ToString());
