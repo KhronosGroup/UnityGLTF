@@ -1563,8 +1563,14 @@ namespace UnityGLTF
 
 		protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
 		{
-			int binaryChunkIndex = bufferIndex + 1; // Chunk 0 is the JSON chunk, chunk 1 is buffer 0.
+			// Buffers reference their chunk by index (glTF 2.1). Without it, buffer 0 uses the BIN chunk at index 1, after the JSON chunk.
+			// Other buffers without a chunk index are undefined in the spec, they keep using the chunk after the previous buffer's chunk.
+			int binaryChunkIndex = _gltfRoot.Buffers[bufferIndex].Chunk ?? bufferIndex + 1;
 			GLBChunkInfo chunkInfo = GLTFParser.SeekToBinaryChunkData(_gltfStream.Stream, binaryChunkIndex, _gltfStream.StartPosition);  // sets stream to correct start position
+			if (chunkInfo.Type != GLBChunkFormat.BIN)
+			{
+				throw new GLTFHeaderInvalidException($"Buffer {bufferIndex} references GLB chunk {binaryChunkIndex}, which is not a BIN chunk.");
+			}
 			GLTFParser.ThrowIfUnsupportedChunkEncoding(chunkInfo);
 			return new BufferCacheData
 			{

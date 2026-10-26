@@ -49,24 +49,7 @@ namespace GLTF
 				{
 					throw new GLTFHeaderInvalidException("There are no more chunks in the stream to read. The GLB file only has " + i + " chunks, but the requested chunk index was " + binaryChunkIndex + ".");
 				}
-				chunkInfo.StartPosition = stream.Position;
-				// Binary format version 2 and 3 have different chunk header sizes and field order.
-				if (glbHeader.Version == 2)
-				{
-					chunkInfo.Length = GetUInt32(stream);
-					chunkInfo.Type = (GLBChunkFormat)GetUInt32(stream);
-					chunkInfo.Encoding = 0;
-				}
-				else if (glbHeader.Version == 3)
-				{
-					chunkInfo.Type = (GLBChunkFormat)GetUInt32(stream);
-					chunkInfo.Encoding = GetUInt32(stream);
-					chunkInfo.Length = (long)GetUInt64(stream);
-				}
-				else
-				{
-					throw new GLTFHeaderInvalidException("Unsupported glTF binary format version " + glbHeader.Version + ". Only versions 2 and 3 are supported.");
-				}
+				chunkInfo = ParseChunkInfo(stream, glbHeader.Version);
 				if (stream.Position + chunkInfo.Length > stream.Length)
 				{
 					throw new GLTFHeaderInvalidException("Chunk length exceeds stream length.");
@@ -85,7 +68,7 @@ namespace GLTF
 			}
 			else if (version == 3)
 			{
-				length = (long)GetUInt64(stream); // 8 -> 16
+				length = GetLength64(stream, "file"); // 8 -> 16
 			}
 			else
 			{
@@ -120,7 +103,7 @@ namespace GLTF
 			{
 				chunkInfo.Type = (GLBChunkFormat)GetUInt32(stream);
 				chunkInfo.Encoding = GetUInt32(stream);
-				chunkInfo.Length = (long)GetUInt64(stream);
+				chunkInfo.Length = GetLength64(stream, "chunk");
 			}
 			else
 			{
@@ -167,12 +150,30 @@ namespace GLTF
 				throw new GLTFHeaderInvalidException("File length does not match GLB file header declared length.");
 			}
 
-			GLBChunkInfo jsonChunkInfo = ParseChunkInfo(stream, glbHeader.Version); // 12 -> 20 or 16 -> 32
-			if (jsonChunkInfo.Type != GLBChunkFormat.JSON)
+			long alignmentBitmask = glbHeader.GetAlignmentBitmask();
+			while (true)
 			{
-				throw new GLTFHeaderInvalidException("First chunk must be of type JSON");
+				if (stream.Position + glbHeader.GetChunkHeaderSize() > stream.Length)
+				{
+					throw new GLTFHeaderInvalidException("GLB file has no JSON chunk");
+				}
+
+				GLBChunkInfo chunkInfo = ParseChunkInfo(stream, glbHeader.Version); // 12 -> 20 or 16 -> 32
+				if (chunkInfo.Type == GLBChunkFormat.JSON)
+				{
+					return chunkInfo;
+				}
+
+				// In binary format version 2, the JSON chunk must be the first chunk.
+				// In version 3, the first chunk that is a JSON chunk is the glTF JSON chunk, other chunks may precede it.
+				if (glbHeader.Version == 2)
+				{
+					throw new GLTFHeaderInvalidException("First chunk must be of type JSON");
+				}
+
+				long paddedChunkLength = (chunkInfo.Length + alignmentBitmask) & ~alignmentBitmask; // Align to 8 bytes.
+				stream.Position += paddedChunkLength;
 			}
-			return jsonChunkInfo;
 		}
 
 		public static void ThrowIfUnsupportedChunkEncoding(GLBChunkInfo chunkInfo)
@@ -214,6 +215,19 @@ namespace GLTF
 				throw new EndOfStreamException("Unexpected end of stream while reading uint32.");
 			}
 			return BitConverter.ToUInt32(headerBuffer, 0);
+		}
+
+		/// <summary>
+		/// Reads a 64-bit length of binary format version 3, whose most significant bit must be 0.
+		/// </summary>
+		private static long GetLength64(Stream stream, string lengthName)
+		{
+			ulong length = GetUInt64(stream);
+			if (length > long.MaxValue)
+			{
+				throw new GLTFHeaderInvalidException("Invalid GLB " + lengthName + " length: the most significant bit must be 0.");
+			}
+			return (long)length;
 		}
 
 		private static ulong GetUInt64(Stream stream)
