@@ -886,7 +886,7 @@ namespace UnityGLTF
 			jsonWriter.Flush();
 
 			// align to 4-byte boundary to comply with spec.
-			AlignToBoundary(jsonStream, (byte)'_');
+			AlignToBoundary(jsonStream, (byte)' ');
 			AlignToBoundary(binStream, 0x00);
 
 			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
