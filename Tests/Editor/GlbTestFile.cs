@@ -9,7 +9,7 @@ using NUnit.Framework;
 /// Writes and reads GLB files independently of GLTFParser and GLBBuilder, following the binary format
 /// version 2 (glTF 2.0) and version 3 (glTF 2.1 draft) layouts.
 /// </summary>
-internal class GlbTestFile
+public class GlbTestFile
 {
 	public const uint Magic = 0x46546C67, JsonType = 0x4E4F534A, BinType = 0x004E4942;
 
