@@ -520,7 +520,7 @@ namespace GLTF
 			}
 		}
 
-		private static void ThrowIfTooLarge(uint glbVersion, long fileLength)
+		internal static void ThrowIfTooLarge(uint glbVersion, long fileLength)
 		{
 			// The file length field of version 2 is 32-bit. Version 3 allows up to 2^63-1 bytes, which fits in a long.
 			if (glbVersion == 2 && fileLength > uint.MaxValue)
