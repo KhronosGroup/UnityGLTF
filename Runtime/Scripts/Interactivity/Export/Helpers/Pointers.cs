@@ -39,8 +39,8 @@ namespace UnityGLTF.Interactivity.Export
         public static readonly string IdPointerEventRef = "eventRef";
         public static readonly string IdPointerTemplEventByRef = $"/extensions/KHR_interactivity/events/{{{IdPointerEventRef}}}";
 
-        public static readonly string IdPointerVisibility = $"{IdPointerTemplNodeByIndex}/extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
-        public static readonly string IdPointerSelectability = $"{IdPointerTemplNodeByIndex}/extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
+        public static readonly string IdPointerVisibilityByIndex = $"{IdPointerTemplNodeByIndex}/extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
+        public static readonly string IdPointerSelectabilityByIndex = $"{IdPointerTemplNodeByIndex}/extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
         public static readonly string IdPointerVisibilityRef = $"{IdPointerTemplNodeByRef}/extensions/{KHR_node_visibility_Factory.EXTENSION_NAME}/{nameof(KHR_node_visibility.visible)}"; 
         public static readonly string IdPointerSelectabilityRef = $"{IdPointerTemplNodeByRef}/extensions/{KHR_node_selectability_Factory.EXTENSION_NAME}/{nameof(KHR_node_selectability.selectable)}";
 
