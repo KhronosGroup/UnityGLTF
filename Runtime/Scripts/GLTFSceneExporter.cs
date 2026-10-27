@@ -20,6 +20,22 @@ using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
+	/// <summary>
+	/// Binary format version of exported GLB files.
+	/// </summary>
+	internal enum GlbVersion
+	{
+		/// <summary>
+		/// glTF 2.0 binary format: 32-bit file and chunk lengths (max. 4 GB), one JSON chunk followed by an optional BIN chunk.
+		/// </summary>
+		V2_32Bit = 2,
+		/// <summary>
+		/// glTF 2.1 binary format (draft, not ratified): 64-bit file and chunk lengths, chunk encodings and any number of chunks.
+		/// Warning: the specification is not final and most loaders can't read version 3 files yet. Use only for testing.
+		/// </summary>
+		V3_64Bit = 3,
+	}
+
 	public class ExportContext
 	{
 		public bool TreatEmptyRootAsScene = false;
@@ -27,6 +43,13 @@ namespace UnityGLTF
 		public LayerMask ExportLayers = -1;
 		public ILogger logger;
 		internal readonly GLTFSettings settings;
+
+		/// <summary>
+		/// Binary format version of exported GLB files. Defaults to <see cref="UnityGLTF.GlbVersion.V2_32Bit"/>.
+		/// Warning: <see cref="UnityGLTF.GlbVersion.V3_64Bit"/> is based on the non-ratified glTF 2.1 draft and most loaders can't read it yet.
+		/// Internal until the draft is ratified, enable the <see cref="Plugins.GlbV3Export"/> plugin to export version 3.
+		/// </summary>
+		internal GlbVersion GlbVersion = GlbVersion.V2_32Bit;
 
 		/// <summary>
 		/// The exporter currently using this context. Set when the exporter is created, before the plugin instances are created.
@@ -441,7 +464,6 @@ namespace UnityGLTF
 		
 		private Material _normalChannelMaterial;
 
-		private const uint Version = 2;
 		private const uint MagicJson = 0x4E4F534A;
 		private const uint MagicBin = 0x004E4942;
 		private const int GLTFHeaderSize = 12;
@@ -889,38 +911,69 @@ namespace UnityGLTF
 			AlignToBoundary(jsonStream, (byte)' ');
 			AlignToBoundary(binStream, 0x00);
 
-			long glbLength = GLTFHeaderSize + SectionHeaderSize +
-				jsonStream.Length + SectionHeaderSize + binStream.Length;
-			GLTF.GLBBuilder.ThrowIfTooLarge(Version, glbLength);
+			var version = (uint)_exportContext.GlbVersion;
+			// Version 2: 12-byte file header, 8-byte chunk headers (length, type), each chunk ends 4-byte aligned (done above).
+			// Version 3: 16-byte file header, 16-byte chunk headers (type, encoding, 64-bit length), each chunk starts 8-byte aligned.
+			long fileHeaderSize = version == 3 ? 16 : GLTFHeaderSize;
+			long chunkHeaderSize = version == 3 ? 16 : SectionHeaderSize;
+			long chunkAlignment = version == 3 ? 8 : 4;
+			long glbLength = fileHeaderSize + chunkHeaderSize + CalculateAlignment(jsonStream.Length, chunkAlignment) +
+				chunkHeaderSize + CalculateAlignment(binStream.Length, chunkAlignment);
+			GLTF.GLBBuilder.ThrowIfTooLarge(version, glbLength);
 
 			BinaryWriter writer = new BinaryWriter(stream);
 
 			// write header
 			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
-			writer.Write(Version);
-			writer.Write((uint)glbLength);
+			writer.Write(version);
+			if (version == 3) writer.Write((ulong)glbLength);
+			else writer.Write((uint)glbLength);
 
 			gltfWriteJsonStreamMarker.Begin();
 			// write JSON chunk header.
-			writer.Write((uint)jsonStream.Length);
-			writer.Write(MagicJson);
+			WriteGlbChunkHeader(writer, version, MagicJson, jsonStream.Length);
 
 			jsonStream.Position = 0;
 			CopyStream(jsonStream, writer);
+			WriteGlbChunkPadding(writer, jsonStream.Length, chunkAlignment);
 			gltfWriteJsonStreamMarker.End();
 
 			gltfWriteBinaryStreamMarker.Begin();
-			writer.Write((uint)binStream.Length);
-			writer.Write(MagicBin);
+			WriteGlbChunkHeader(writer, version, MagicBin, binStream.Length);
 
 			binStream.Position = 0;
 			CopyStream(binStream, writer);
+			WriteGlbChunkPadding(writer, binStream.Length, chunkAlignment);
 			gltfWriteBinaryStreamMarker.End();
 
 			writer.Flush();
 
 			gltfWriteOutMarker.End();
 			exportGltfMarker.End();
+		}
+
+		private static void WriteGlbChunkHeader(BinaryWriter writer, uint version, uint chunkType, long chunkLength)
+		{
+			if (version == 3)
+			{
+				writer.Write(chunkType);
+				writer.Write(0u); // plain encoding
+				writer.Write((ulong)chunkLength);
+			}
+			else
+			{
+				writer.Write((uint)chunkLength);
+				writer.Write(chunkType);
+			}
+		}
+
+		/// <summary>
+		/// Zero padding after a chunk, so the next chunk starts aligned. Version 2 chunks are already padded inside their content.
+		/// </summary>
+		private static void WriteGlbChunkPadding(BinaryWriter writer, long chunkLength, long alignment)
+		{
+			for (long i = chunkLength; i < CalculateAlignment(chunkLength, alignment); i++)
+				writer.Write((byte)0);
 		}
 
 		/// <summary>
