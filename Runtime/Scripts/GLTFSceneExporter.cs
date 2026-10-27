@@ -889,19 +889,20 @@ namespace UnityGLTF
 			AlignToBoundary(jsonStream, (byte)' ');
 			AlignToBoundary(binStream, 0x00);
 
-			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
-				jsonStream.Length + SectionHeaderSize + binStream.Length);
+			long glbLength = GLTFHeaderSize + SectionHeaderSize +
+				jsonStream.Length + SectionHeaderSize + binStream.Length;
+			GLTF.GLBBuilder.ThrowIfTooLarge(Version, glbLength);
 
 			BinaryWriter writer = new BinaryWriter(stream);
 
 			// write header
 			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
 			writer.Write(Version);
-			writer.Write(glbLength);
+			writer.Write((uint)glbLength);
 
 			gltfWriteJsonStreamMarker.Begin();
 			// write JSON chunk header.
-			writer.Write((int)jsonStream.Length);
+			writer.Write((uint)jsonStream.Length);
 			writer.Write(MagicJson);
 
 			jsonStream.Position = 0;
@@ -909,7 +910,7 @@ namespace UnityGLTF
 			gltfWriteJsonStreamMarker.End();
 
 			gltfWriteBinaryStreamMarker.Begin();
-			writer.Write((int)binStream.Length);
+			writer.Write((uint)binStream.Length);
 			writer.Write(MagicBin);
 
 			binStream.Position = 0;
