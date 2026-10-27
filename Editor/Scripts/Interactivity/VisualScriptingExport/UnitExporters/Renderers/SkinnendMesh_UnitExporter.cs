@@ -25,7 +25,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var setWeight = unitExporter.CreateNode<Pointer_SetNode>();
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(setWeight, PointersHelper.IdPointerNodeRef,
-                unit.target,  PointersHelper.IdPointerTemplNodeByRef + "weights/[weightIndex]", GltfTypes.Float);
+                unit.target,  PointersHelper.IdPointerTemplNodeByRef + "/weights/[weightIndex]", GltfTypes.Float);
 
             setWeight.FlowIn(Pointer_SetNode.IdFlowIn).MapToControlInput(unit.enter);
             setWeight.FlowOut(Pointer_SetNode.IdFlowOut).MapToControlOutput(unit.exit);
