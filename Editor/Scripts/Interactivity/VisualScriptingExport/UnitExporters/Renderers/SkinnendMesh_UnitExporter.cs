@@ -60,27 +60,27 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             return true;
         }
     }
-    
+
     public class SkinnendMesh_GetWeightCountUnitExporter : IUnitExporter
     {
         public Type unitType { get => typeof(GetMember); }
-        
+
         [InitializeOnLoadMethod]
         private static void Register()
         {
             GetMemberUnitExport.RegisterMemberExporter(typeof(Mesh), nameof(Mesh.blendShapeCount), new SkinnendMesh_GetWeightCountUnitExporter());
-        } 
-        
+        }
+
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as GetMember;
-            
+
             var getWeightCount = unitExporter.CreateNode<Pointer_GetNode>();
             getWeightCount.FirstValueOut().ExpectedType(ExpectedType.Int).MapToPort(unit.value);
-            
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerMeshRef,
-                unit.target, PointersHelper.IdPointerTemplMeshByRef + "/weights.length", GltfTypes.Int);
-            
+
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(getWeightCount, PointersHelper.IdPointerNodeRef,
+                unit.target, PointersHelper.IdPointerTemplNodeByRef + "/weights.length", GltfTypes.Int);
+
             return true;
         }
     }
