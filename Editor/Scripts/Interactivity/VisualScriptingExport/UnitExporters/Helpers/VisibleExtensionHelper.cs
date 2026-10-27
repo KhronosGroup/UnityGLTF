@@ -8,7 +8,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 {
     public static class VisibleExtensionHelper
     {
-        public static string PointerTemplate => PointersHelper.IdPointerVisibility;
+        public static string PointerTemplateByIndex => PointersHelper.IdPointerVisibilityByIndex;
         public static string PointerTemplateRef => PointersHelper.IdPointerVisibilityRef;
                                                          
         public static void AddExtension(UnitExporter unitExporter, IUnit unit, GltfInteractivityExportNode node)

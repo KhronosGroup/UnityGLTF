@@ -28,7 +28,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             
             PointersHelperVS.SetupPointerTemplateAndTargetInput(selectableNode,
                 PointersHelper.IdPointerNodeRef,
-                unit.target, SelectableExtensionHelper.PointerTemplate,
+                unit.target, SelectableExtensionHelper.PointerTemplateRef,
                 GltfTypes.Bool);
             selectableNode.ValueOut(Pointer_GetNode.IdValue).MapToPort(unit.value);
             return true;
