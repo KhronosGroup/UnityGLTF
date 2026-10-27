@@ -48,7 +48,7 @@ namespace UnityGLTF.Interactivity.Export
                         && glNode1Socket.Socket == glNode2Socket.Socket)
                         isSameValueInput = true;
                     else if (glNode1Socket.Value != null && glNode2Socket.Value != null &&
-                             glNode1Socket.Value == glNode2Socket.Value)
+                             Equals(glNode1Socket.Value, glNode2Socket.Value))
                         isSameValueInput = true;
 
                     if (isSameValueInput)
