@@ -598,7 +598,9 @@ namespace UnityGLTF
 
 					if (_importAnimations == AnimationMethod.MecanimHumanoid)
 					{
-						avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip);
+						avatar = HumanoidSetup.AddAvatarToGameObject(gltfScene, _mecanimHumanoidFlip, out var missingBones);
+						if (missingBones.Length > 0)
+							ctx.LogImportWarning($"No humanoid avatar was created: the required human bones {string.Join(", ", missingBones)} could not be mapped to bones of \"{gltfScene.name}\". Use Mecanim (Generic) animation import for non-humanoid rigs.");
 						if (_mecanimHumanoidClips)
 							HumanoidSetup.ConvertClipsToHumanoid(gltfScene, avatar, animations);
 					}
