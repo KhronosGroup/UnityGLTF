@@ -10,8 +10,9 @@ namespace UnityGLTF
 {
 	internal static class HumanoidSetup
 	{
-		internal static Avatar AddAvatarToGameObject(GameObject gameObject, bool flipForward)
+		internal static Avatar AddAvatarToGameObject(GameObject gameObject, bool flipForward, out string[] missingBones)
 		{
+			missingBones = Array.Empty<string>();
 			var previousRotation = gameObject.transform.rotation;
 			if (flipForward)
 				gameObject.transform.rotation *= Quaternion.Euler(0, 180, 0);
@@ -24,6 +25,10 @@ namespace UnityGLTF
 				description.human = human;
 				description.skeleton = skeleton;
 				description.hasTranslationDoF = hasTranslationDoF;
+
+				// The bone names are a subset of this mapping, so neither attempt below could build an avatar
+				missingBones = GetMissingRequiredBones(human);
+				if (missingBones.Length > 0) return null;
 
 				var avatar = BuildHumanAvatar(gameObject, description);
 				if (!avatar)
@@ -294,6 +299,15 @@ namespace UnityGLTF
 				keys[i] = new Keyframe(times[i], values[i], inTangent, outTangent);
 			}
 			return new AnimationCurve(keys);
+		}
+
+		private static string[] GetMissingRequiredBones(HumanBone[] human)
+		{
+			var mapped = new HashSet<string>(human.Select(b => b.humanName));
+			return Enumerable.Range(0, HumanTrait.BoneCount)
+				.Where(i => HumanTrait.RequiredBone(i) && !mapped.Contains(HumanTrait.BoneName[i]))
+				.Select(i => HumanTrait.BoneName[i])
+				.ToArray();
 		}
 
 		private static Avatar BuildHumanAvatar(GameObject gameObject, HumanDescription description)
