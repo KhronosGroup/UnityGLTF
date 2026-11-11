@@ -851,6 +851,11 @@ namespace UnityGLTF
                     {
                         rend.sharedMaterials = defaultMat;
                     }
+
+										// Clear potential stale data from previous imports
+										m_Materials = Array.Empty<Material>();
+										m_Textures = Array.Empty<Texture>();
+										_textures = new List<TextureInfo>();
                 }
             }
             catch (Exception e)
@@ -1021,9 +1026,9 @@ namespace UnityGLTF
 	        BuildTargetGroup activeTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
 #if UNITY_2023_1_OR_NEWER
 	        var normalEncoding = PlayerSettings.GetNormalMapEncoding(NamedBuildTarget.FromBuildTargetGroup(activeTargetGroup));
-#else				
+#else
 			var normalEncoding = PlayerSettings.GetNormalMapEncoding(activeTargetGroup);
-#endif	        
+#endif
 	        
 			AssetDatabase.RegisterCustomDependency(NormalMapEncodingDependency, Hash128.Compute((int) normalEncoding));
         }
