@@ -174,7 +174,7 @@ namespace UnityGLTF
 			var propertyCount = ShaderUtil.GetPropertyCount(s);
 			for (var i = 0; i < propertyCount; i++)
 			{
-				if (ShaderUtil.GetPropertyType(s, i) != ShaderUtil.ShaderPropertyType.TexEnv) continue;
+				if (s.GetPropertyType(i) != UnityEngine.Rendering.ShaderPropertyType.Texture) continue;
 				if (ShaderUtil.IsShaderPropertyHidden(s, i)) continue;
 				var tex = targetMaterial.GetTexture(ShaderUtil.GetPropertyName(s, i));
 				if (tex) return true;

@@ -194,7 +194,7 @@ namespace UnityGLTF
 			return fileName;
 		}
 
-		private static IEnumerable<(string propName, string propDisplayName, ShaderUtil.ShaderPropertyType type)> GetShaderProperties(Shader shader)
+		private static IEnumerable<(string propName, string propDisplayName, UnityEngine.Rendering.ShaderPropertyType type)> GetShaderProperties(Shader shader)
 		{
 			var c = ShaderUtil.GetPropertyCount(shader);
 			for (var i = 0; i < c; i++)
@@ -206,23 +206,23 @@ namespace UnityGLTF
 				if(propName.StartsWith("unity_")) continue;
 
 				var propDisplayName = ShaderUtil.GetPropertyDescription(shader, i);
-				var type = ShaderUtil.GetPropertyType(shader, i);
+				var type = shader.GetPropertyType(i);
 				yield return (propName, propDisplayName, type);
 			}
 		}
 
-		private static string MethodFromType(string prefix, ShaderUtil.ShaderPropertyType propertyType)
+		private static string MethodFromType(string prefix, UnityEngine.Rendering.ShaderPropertyType propertyType)
 		{
 			switch (propertyType)
 			{
-				case ShaderUtil.ShaderPropertyType.Color:  return prefix + "Color";
-				case ShaderUtil.ShaderPropertyType.Float:  return prefix + "Float";
+				case UnityEngine.Rendering.ShaderPropertyType.Color:   return prefix + "Color";
+				case UnityEngine.Rendering.ShaderPropertyType.Float:   return prefix + "Float";
 #if UNITY_2021_1_OR_NEWER
-				case ShaderUtil.ShaderPropertyType.Int:    return prefix + "Int";
+				case UnityEngine.Rendering.ShaderPropertyType.Int:     return prefix + "Int";
 #endif
-				case ShaderUtil.ShaderPropertyType.Range:  return prefix + "Float";
-				case ShaderUtil.ShaderPropertyType.Vector: return prefix + "Vector";
-				case ShaderUtil.ShaderPropertyType.TexEnv: return prefix + "Texture";
+				case UnityEngine.Rendering.ShaderPropertyType.Range:   return prefix + "Float";
+				case UnityEngine.Rendering.ShaderPropertyType.Vector:  return prefix + "Vector";
+				case UnityEngine.Rendering.ShaderPropertyType.Texture: return prefix + "Texture";
 			}
 
 			return prefix + "UnknownPropertyType"; // compiler error

@@ -742,7 +742,7 @@ namespace UnityGLTF
                         var matTextures = new List<Texture2D>();
                         for (var i = 0; i < ShaderUtil.GetPropertyCount(shader); ++i)
                         {
-                            if (ShaderUtil.GetPropertyType(shader, i) == ShaderUtil.ShaderPropertyType.TexEnv)
+                            if (shader.GetPropertyType(i) == UnityEngine.Rendering.ShaderPropertyType.Texture)
                             {
                                 var propertyName = ShaderUtil.GetPropertyName(shader, i);
                                 var tex = mat.GetTexture(propertyName) as Texture2D;
