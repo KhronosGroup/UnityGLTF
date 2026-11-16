@@ -2,6 +2,7 @@
 using TMPro;
 #endif
 using UnityEngine;
+#if HAVE_UGUI
 using UnityEngine.UI;
 
 namespace UnityGLTF.Plugins
@@ -110,3 +111,4 @@ namespace UnityGLTF.Plugins
         }
     }
 }
+#endif

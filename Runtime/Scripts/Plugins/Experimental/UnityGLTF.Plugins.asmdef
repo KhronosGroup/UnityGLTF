@@ -35,6 +35,11 @@
             "name": "com.unity.modules.unitywebrequestaudio",
             "expression": "",
             "define": "HAVE_WEBREQUESTAUDIO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "",
+            "define": "HAVE_UGUI"
         }
     ],
     "noEngineReferences": false
