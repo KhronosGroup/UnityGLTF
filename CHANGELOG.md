@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.25.0] - 2026-11-16
+- add: import of GLB version 3 files (glTF 2.1 draft): 64-bit file and chunk lengths, chunks before the JSON chunk, and buffers that reference their BIN chunk with `buffer.chunk`
+- add: [experimental] "GLB Version 3 (64-bit)" export plugin, off by default. Version 3 is not ratified yet and most loaders can't read it, so every export logs a warning
+- change: sizes, lengths, offsets and counts in the glTF serialization schema (`Accessor`, `BufferView`, `GLTFBuffer`, sparse accessors) and the GLB types are `long` instead of `int` / `uint`. This is a breaking change for code that uses these APIs
+- change: renamed public API: `ChunkFormat` → `GLBChunkFormat`, `ChunkInfo` → `GLBChunkInfo`, `GLTFParser.SeekToBinaryChunk` → `SeekToBinaryChunkData`, the GLB header constants → `GLB2_FILE_HEADER_SIZE`, `GLB2_CHUNK_HEADER_SIZE` and `GLTF_MAGIC_NUMBER`, `ValuesConvertion` → `ValuesConversion`, and `PointersHelper.IdPointerVisibility` / `IdPointerSelectability` → `IdPointerVisibilityByIndex` / `IdPointerSelectabilityByIndex`
+- fix: Asset Importer: with material import disabled, every reimport logged "AssetImporter is referencing an asset from the previous import" (#917, #918), and the inspector kept stale scene/material/texture data flags
+- fix: humanoid import: rigs without the required humanoid bones logged two native AvatarBuilder warnings. Now one import warning names the missing bones and no avatar is created
+- fix: import refuses buffer, bufferView, accessor and sparse ranges that exceed their parent or 2 GB, and buffers longer than their GLB chunk, instead of reading outside the buffer
+- fix: `KHR_interactivity`: Skinned Mesh blend shape weight units export `nodes/{}/weights` pointers, as `meshes/{}/weights` was removed from the spec (KhronosGroup/glTF#2550), and the weight pointer was missing a `/`
+- fix: `KHR_interactivity`: enabling colliders set `KHR_node_selectability` with an index-based pointer on a node reference
+- fix: `KHR_interactivity`: identical pointer gets with equal constant inputs weren't merged on export, and repeated `globalMatrix` / `matrix` pointer gets are merged now
+- fix: `FindObjectsByType` deprecation warning in Unity 6.4 in the Find Objects Of Type export
+
 ## [2.24.0] - 2026-10-20
 - add: `KHR_interactivity`: more Visual Scripting units: Not Equal, Approximately Equal, Toggle Flow/Value, Cooldown, Timer, Break, Switch/Select On Enum, Null Coalesce, Round, Exponentiate, Root, Average, Normalize, Move Towards, Per Second, Angle, Project and RGB To/From OkLCh
 - add: `KHR_interactivity`: export of `Light.color`, `intensity`, `range` and `spotAngle` (get/set) as `KHR_lights_punctual` pointers
