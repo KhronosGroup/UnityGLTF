@@ -621,6 +621,12 @@ namespace UnityGLTF
 
                 var renderers = gltfScene ? gltfScene.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
 
+                // These describe what the glTF file contains (they drive which inspector tabs are shown),
+                // so they must be updated whether or not materials are imported.
+                m_HasSceneData = gltfScene;
+                m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
+                m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
+
                 if (_importMaterials)
                 {
                     // Get materials
@@ -832,9 +838,6 @@ namespace UnityGLTF
 
                     m_Materials = materials.ToArray();
                     m_Textures = textures.ToArray();
-                    m_HasSceneData = gltfScene;
-                    m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
-                    m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
