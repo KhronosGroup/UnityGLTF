@@ -854,10 +854,10 @@ namespace UnityGLTF
                         rend.sharedMaterials = defaultMat;
                     }
 
-										// Clear potential stale data from previous imports
-										m_Materials = Array.Empty<Material>();
-										m_Textures = Array.Empty<Texture>();
-										_textures = new List<TextureInfo>();
+                    // Clear potential stale data from previous imports
+                    m_Materials = Array.Empty<Material>();
+                    m_Textures = Array.Empty<Texture>();
+                    _textures = new List<TextureInfo>();
                 }
             }
             catch (Exception e)
