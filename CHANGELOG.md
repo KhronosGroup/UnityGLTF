@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+- fix: Asset Importer: a glTF with materials remapped to another glTF (e.g. a material library GLB) failed with "Opening file VirtualArtifacts/Primary/..." on editor startup when the referenced file had changed. Remap targets are now declared as import dependencies up front, so they import first, and the import warns if they can't be read from the .meta file (#919, #920)
+
 ## [2.25.0] - 2026-11-16
 - add: import of GLB version 3 files (glTF 2.1 draft): 64-bit file and chunk lengths, chunks before the JSON chunk, and buffers that reference their BIN chunk with `buffer.chunk`
 - add: [experimental] "GLB Version 3 (64-bit)" export plugin, off by default. Version 3 is not ratified yet and most loaders can't read it, so every export logs a warning
