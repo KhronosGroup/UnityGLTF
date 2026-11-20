@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- fix: Canvas export plugin (experimental): compile errors when the `com.unity.ugui` package is not installed. Without it, the plugin now shows a warning and exports nothing
+- fix: obsolete `ShaderUtil.ShaderPropertyType` / `ShaderUtil.GetPropertyType` warnings in Unity 6.6
 - fix: Asset Importer: a glTF with materials remapped to another glTF (e.g. a material library GLB) failed with "Opening file VirtualArtifacts/Primary/..." on editor startup when the referenced file had changed. Remap targets are now declared as import dependencies up front, so they import first, and the import warns if they can't be read from the .meta file (#919, #920)
 
 ## [2.25.0] - 2026-11-16
