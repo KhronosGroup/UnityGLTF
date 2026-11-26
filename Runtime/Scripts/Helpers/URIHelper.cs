@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -65,6 +66,56 @@ namespace UnityGLTF
 			Regex regex = new Regex(Base64StringInitializer);
 			Match match = regex.Match(uri);
 			return match.Success;
+		}
+
+		private static readonly NormalizationForm[] UnicodeNormalizationForms = { NormalizationForm.FormC, NormalizationForm.FormD };
+
+		/// <summary>
+		/// The spellings of a glTF URI to try when looking for the file: as given, URI-unescaped,
+		/// and both again in Unicode NFC and NFD form. glTF files written on macOS can contain decomposed (NFD)
+		/// names while the file on disk is precomposed (NFC), e.g. after a git checkout on Windows,
+		/// and Windows does not normalize file names.
+		/// <para>
+		/// Spec: glTF 2.0 "URIs / Relative Paths" says relative paths SHOULD undergo syntax-based normalization
+		/// (RFC 3987, 5.3.2), where IRIs SHOULD be created in NFC. An NFD URI is valid but not normalized, and per the
+		/// spec "its use may be unsupported", so loading it is optional support, not a requirement.
+		/// It never changes the result for spec-conforming URIs: the exact spellings are tried first.
+		/// Unescaping is required: per RFC 3987, 5.3.2.3 differences in percent-encoding MUST resolve to the same resource.
+		/// Only canonical forms are used, compatibility forms (NFKC/NFKD) would match other files.
+		/// </para>
+		/// </summary>
+		internal static List<string> GetUriPathVariants(string uri)
+		{
+			var variants = new List<string>(6) { uri };
+			var unescaped = Uri.UnescapeDataString(uri);
+			if (unescaped != uri) variants.Add(unescaped);
+
+			for (int i = 0, count = variants.Count; i < count; i++)
+			{
+				foreach (var form in UnicodeNormalizationForms)
+				{
+					string normalized;
+					try { normalized = variants[i].Normalize(form); }
+					catch (ArgumentException) { continue; } // invalid Unicode, e.g. lone surrogates
+					if (!variants.Contains(normalized)) variants.Add(normalized);
+				}
+			}
+			return variants;
+		}
+
+		/// <summary>
+		/// Combines <paramref name="rootDirectory"/> with each spelling of <paramref name="uri"/> (see <see cref="GetUriPathVariants"/>)
+		/// and returns the first path that exists as a file, or null if none does.
+		/// </summary>
+		internal static string FindExistingFile(string rootDirectory, string uri, Func<string, string, string> combine)
+		{
+			foreach (var variant in GetUriPathVariants(uri))
+			{
+				var path = combine(rootDirectory, variant);
+				if (File.Exists(LongPath.ToLongPath(path)))
+					return path;
+			}
+			return null;
 		}
 	}
 }

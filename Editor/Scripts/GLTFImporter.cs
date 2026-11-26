@@ -220,15 +220,14 @@ namespace UnityGLTF
 
 	        void CheckAndAddDependency(string uri)
 	        {
-		        var combinedPath = FileLoader.CombinePaths(dir, uri);
-		        // long paths since the project path + asset path can exceed MAX_PATH on Windows
-		        if (!File.Exists(LongPath.ToLongPath(Path.Combine(dir, uri))))
-			        uri = Uri.UnescapeDataString(uri);
-		        if (File.Exists(LongPath.ToLongPath(combinedPath)))
-					dependencies.Add(combinedPath);
+		        // tries the URI as given, unescaped (required by the spec), and in NFC/NFD Unicode form (optional support
+		        // for non-normalized URIs), see URIHelper.GetUriPathVariants
+		        var resolvedPath = URIHelper.FindExistingFile(dir, uri, FileLoader.CombinePaths);
+		        if (resolvedPath != null)
+					dependencies.Add(resolvedPath);
 		        // TODO check if inside the project/any package, could be an absolute path
-		        else if (File.Exists(LongPath.ToLongPath(uri)))
-			        dependencies.Add(uri);
+		        else if ((resolvedPath = URIHelper.FindExistingFile(null, uri, (_, p) => p)) != null)
+			        dependencies.Add(resolvedPath);
 	        }
 
 	        using (var reader = new StreamReader(LongPath.ToLongPath(path)))
